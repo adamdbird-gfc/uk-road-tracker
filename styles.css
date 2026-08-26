@@ -29,7 +29,10 @@ button.secondary { background: #e9edf2; color: #172033; }
 .journey-title { font-weight: 700; }
 .journey-meta { font-size: .82rem; color: #657083; margin-top: 3px; }
 .map-heading { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
-#map { height: min(62vh, 620px); min-height: 420px; border-radius: 12px; overflow: hidden; }
+.map-status { margin: 4px 0 10px; white-space: pre-line; }
+.map-status.ok { color: #24663b; }
+.map-status.warn { color: #8a5b00; }
+#map { height: min(62vh, 620px); min-height: 420px; border-radius: 12px; overflow: hidden; background: #eef1f4; }
 .error { color: #a31d1d; background: #fff0f0; border: 1px solid #f4caca; padding: 10px; border-radius: 10px; }
 @media (min-width: 760px) {
   main { padding: 28px; }

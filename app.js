@@ -12,6 +12,7 @@ const journeyList = document.getElementById('journeyList');
 const journeyCount = document.getElementById('journeyCount');
 const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
+const mapStatus = document.getElementById('mapStatus');
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -43,6 +44,7 @@ fileInput.addEventListener('change', async () => {
     }
 
     journeys.forEach(j => j.selected = true);
+    await ensureLeaflet();
     renderAll(file.name);
   } catch (err) {
     summaryCard.classList.add('hidden');
@@ -189,50 +191,168 @@ function updateSelectedCount() {
     journeys.filter(j => j.selected).length.toLocaleString();
 }
 
+async function ensureLeaflet() {
+  if (window.L && typeof window.L.map === 'function') return true;
+
+  if (mapStatus) {
+    mapStatus.className = 'muted map-status warn';
+    mapStatus.textContent = 'Primary map library did not load. Trying fallback…';
+  }
+
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js');
+  } catch (err) {}
+
+  if (window.L && typeof window.L.map === 'function') return true;
+
+  if (mapStatus) {
+    mapStatus.className = 'error map-status';
+    mapStatus.textContent =
+      'The map library could not be loaded on this device/network. Journey parsing still works.';
+  }
+
+  return false;
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
 function initMap() {
-  if (map) return;
+  if (map) {
+    requestAnimationFrame(() => map.invalidateSize(true));
+    return;
+  }
 
-  map = L.map('map', { preferCanvas: true }).setView([54.5, -3], 5.5);
+  if (!window.L || typeof window.L.map !== 'function') {
+    if (mapStatus) {
+      mapStatus.className = 'error map-status';
+      mapStatus.textContent = 'Map unavailable: the Leaflet library did not initialise.';
+    }
+    return;
+  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  try {
+    map = L.map('map', {
+      preferCanvas: true,
+      zoomControl: true
+    }).setView([54.5, -3], 5);
 
-  traceLayer = L.layerGroup().addTo(map);
+    const tiles = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }
+    );
+
+    let anyTileLoaded = false;
+
+    tiles.on('tileload', () => {
+      anyTileLoaded = true;
+    });
+
+    tiles.on('load', () => {
+      if (mapStatus) {
+        mapStatus.className = 'muted map-status ok';
+        mapStatus.textContent =
+          `Map loaded. ${journeys.filter(j => j.selected && j.points.length > 1).length.toLocaleString()} selected journey traces are available.`;
+      }
+    });
+
+    tiles.on('tileerror', () => {
+      if (!anyTileLoaded && mapStatus) {
+        mapStatus.className = 'muted map-status warn';
+        mapStatus.textContent =
+          'The map frame loaded, but OpenStreetMap tiles are not loading on this device/network.';
+      }
+    });
+
+    tiles.addTo(map);
+    traceLayer = L.layerGroup().addTo(map);
+
+    if (mapStatus) {
+      mapStatus.className = 'muted map-status';
+      mapStatus.textContent = 'Map initialised. Loading tiles and journey traces…';
+    }
+
+    requestAnimationFrame(() => {
+      map.invalidateSize(true);
+      requestAnimationFrame(() => map.invalidateSize(true));
+    });
+  } catch (err) {
+    if (mapStatus) {
+      mapStatus.className = 'error map-status';
+      mapStatus.textContent = `Map initialisation failed: ${err.message || err}`;
+    }
+  }
 }
 
 function renderMap() {
-  if (!map) return;
+  if (!map || !traceLayer) return;
+
   traceLayer.clearLayers();
 
-  journeys
-    .filter(j => j.selected && j.points.length > 1)
-    .forEach(j => {
-      L.polyline(
-        j.points.map(p => [p.lat, p.lng]),
-        { weight: 3, opacity: 0.55 }
-      )
-        .addTo(traceLayer)
-        .bindTooltip(
-          `${formatDate(j.start)} · ${j.pathPointCount} Timeline points`
-        );
-    });
+  const drawable = journeys.filter(
+    j => j.selected && j.points.length > 1
+  );
+
+  for (const j of drawable) {
+    L.polyline(
+      j.points.map(p => [p.lat, p.lng]),
+      {
+        weight: 3,
+        opacity: 0.6,
+        interactive: false
+      }
+    ).addTo(traceLayer);
+  }
+
+  requestAnimationFrame(() => map.invalidateSize(true));
+
+  if (mapStatus) {
+    mapStatus.className = 'muted map-status ok';
+    mapStatus.textContent =
+      `Map ready: ${drawable.length.toLocaleString()} journey traces drawn from ` +
+      `${drawable.reduce((n, j) => n + j.points.length, 0).toLocaleString()} coordinates.`;
+  }
 }
 
 function fitSelected() {
-  if (!map) return;
+  if (!map || !window.L) return;
 
   const pts = journeys
     .filter(j => j.selected)
     .flatMap(j => j.points)
+    .filter(validPoint)
     .map(p => [p.lat, p.lng]);
 
-  if (pts.length) {
+  if (!pts.length) {
+    if (mapStatus) {
+      mapStatus.className = 'muted map-status warn';
+      mapStatus.textContent = 'No valid selected coordinates are available to fit on the map.';
+    }
+    return;
+  }
+
+  try {
+    map.invalidateSize(true);
     map.fitBounds(L.latLngBounds(pts), {
       padding: [20, 20],
       maxZoom: 13
     });
+  } catch (err) {
+    if (mapStatus) {
+      mapStatus.className = 'error map-status';
+      mapStatus.textContent = `Could not fit selected journeys: ${err.message || err}`;
+    }
   }
 }
 
