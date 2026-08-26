@@ -1,4 +1,5 @@
 let journeys = [];
+let diagnostics = {};
 let map = null;
 let traceLayer = null;
 
@@ -16,36 +17,40 @@ fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
   if (!file) return;
 
-  fileStatus.className = 'muted';
-  fileStatus.textContent = `Reading ${file.name}…`;
+  resetOutput();
+  status(`Reading ${file.name} (${formatBytes(file.size)})…`);
 
   try {
     const text = await file.text();
-    fileStatus.textContent = `Parsing ${file.name}…`;
+    status(`Read complete. Parsing JSON…`);
     await yieldToBrowser();
 
     const json = JSON.parse(text);
-
-    fileStatus.textContent = 'Finding passenger-vehicle journeys…';
+    status(`JSON parsed. Inspecting Timeline structure…`);
     await yieldToBrowser();
 
-    journeys = extractVehicleJourneys(json);
+    const result = extractVehicleJourneys(json);
+    journeys = result.journeys;
+    diagnostics = result.diagnostics;
 
-    if (!journeys.length) {
+    showDiagnostics(file.name);
+
+    if (!diagnostics.passengerVehicleActivities) {
       throw new Error(
-        'No passenger-vehicle journeys were found. This file does not appear to match the Google Timeline export format this POC supports.'
+        `Diagnostic result: ${diagnostics.semanticSegments.toLocaleString()} semantic segments were found, ` +
+        `but 0 IN_PASSENGER_VEHICLE activities were detected.`
       );
     }
 
     journeys.forEach(j => j.selected = true);
     renderAll(file.name);
   } catch (err) {
-    journeys = [];
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
     nextCard.classList.add('hidden');
     fileStatus.className = 'error';
-    fileStatus.textContent = err.message || String(err);
+    const prefix = Object.keys(diagnostics).length ? diagnosticText() + '\n\n' : '';
+    fileStatus.textContent = prefix + (err.message || String(err));
   }
 });
 
@@ -65,18 +70,50 @@ document.getElementById('selectNone').addEventListener('click', () => {
 
 document.getElementById('fitMap').addEventListener('click', fitSelected);
 
+function resetOutput() {
+  journeys = [];
+  diagnostics = {};
+  fileStatus.className = 'muted';
+  summaryCard.classList.add('hidden');
+  mapCard.classList.add('hidden');
+  nextCard.classList.add('hidden');
+}
+
+function status(text) {
+  fileStatus.className = 'muted';
+  fileStatus.textContent = text;
+}
+
 function yieldToBrowser() {
   return new Promise(resolve => setTimeout(resolve, 0));
 }
 
+function showDiagnostics(fileName) {
+  fileStatus.className = 'muted';
+  fileStatus.style.whiteSpace = 'pre-line';
+  fileStatus.textContent =
+    `${fileName} inspected successfully.\n\n${diagnosticText()}`;
+}
+
+function diagnosticText() {
+  return [
+    `Semantic segments: ${fmt(diagnostics.semanticSegments)}`,
+    `Activity segments: ${fmt(diagnostics.activitySegments)}`,
+    `Passenger-vehicle activities: ${fmt(diagnostics.passengerVehicleActivities)}`,
+    `timelinePath segments: ${fmt(diagnostics.timelinePathSegments)}`,
+    `Timestamped timelinePath points: ${fmt(diagnostics.timelinePathPoints)}`,
+    `Vehicle activities with overlapping path points: ${fmt(diagnostics.vehiclesWithPathPoints)}`,
+    `Vehicle activities with usable start/end anchors: ${fmt(diagnostics.vehiclesWithAnchors)}`,
+    `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`
+  ].join('\n');
+}
+
+function fmt(n) {
+  return Number(n || 0).toLocaleString();
+}
+
 function renderAll(fileName) {
   const points = journeys.reduce((n, j) => n + j.points.length, 0);
-  const traced = journeys.filter(j => j.pathPointCount > 0).length;
-
-  fileStatus.className = 'muted';
-  fileStatus.textContent =
-    `${fileName} loaded: ${journeys.length.toLocaleString()} car journeys found; ` +
-    `${traced.toLocaleString()} have Timeline path points.`;
 
   journeyCount.textContent = journeys.length.toLocaleString();
   pointCount.textContent = points.toLocaleString();
@@ -89,6 +126,7 @@ function renderAll(fileName) {
   initMap();
   renderMap();
   updateSelectedCount();
+
   setTimeout(fitSelected, 100);
 }
 
@@ -126,8 +164,10 @@ function renderJourneyList() {
       detail.push(`${j.googleDistanceKm.toFixed(1)} km Google distance`);
     }
 
-    if (j.pathPointCount === 0) {
-      detail.push('start/end only');
+    if (j.points.length < 2) {
+      detail.push('no drawable trace');
+    } else if (j.pathPointCount === 0) {
+      detail.push('start/end anchors only');
     }
 
     meta.textContent = detail.join(' · ');
@@ -139,11 +179,9 @@ function renderJourneyList() {
 }
 
 function syncCheckboxes() {
-  journeyList
-    .querySelectorAll('input[type=checkbox]')
-    .forEach(cb => {
-      cb.checked = journeys[Number(cb.dataset.i)].selected;
-    });
+  journeyList.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.checked = journeys[Number(cb.dataset.i)].selected;
+  });
 }
 
 function updateSelectedCount() {
@@ -166,7 +204,6 @@ function initMap() {
 
 function renderMap() {
   if (!map) return;
-
   traceLayer.clearLayers();
 
   journeys
@@ -199,38 +236,38 @@ function fitSelected() {
   }
 }
 
-/*
- * Google Timeline export format used by the supplied map-data.zip:
- *
- * data.semanticSegments contains:
- *   - activity segments with activity.topCandidate.type
- *   - separate timelinePath segments covering time windows
- *
- * The detailed path is therefore NOT necessarily nested inside the activity.
- * We build one chronological path-point index and give each car activity the
- * points whose timestamps overlap that activity's start/end times.
- */
 function extractVehicleJourneys(data) {
   const segments = Array.isArray(data?.semanticSegments)
     ? data.semanticSegments
     : [];
 
-  if (!segments.length) return [];
+  const diag = {
+    semanticSegments: segments.length,
+    activitySegments: 0,
+    passengerVehicleActivities: 0,
+    timelinePathSegments: 0,
+    timelinePathPoints: 0,
+    vehiclesWithPathPoints: 0,
+    vehiclesWithAnchors: 0,
+    journeysConstructed: 0
+  };
 
   const pathPoints = [];
 
   for (const seg of segments) {
-    if (!Array.isArray(seg.timelinePath)) continue;
+    if (seg?.activity) diag.activitySegments++;
 
-    for (const item of seg.timelinePath) {
-      const point = parseLocation(item?.point);
-      const timeMs = Date.parse(item?.time || '');
+    if (Array.isArray(seg?.timelinePath)) {
+      diag.timelinePathSegments++;
 
-      if (point && Number.isFinite(timeMs)) {
-        pathPoints.push({
-          ...point,
-          timeMs
-        });
+      for (const item of seg.timelinePath) {
+        const point = parseLocation(item?.point);
+        const timeMs = Date.parse(item?.time || '');
+
+        if (point && Number.isFinite(timeMs)) {
+          pathPoints.push({ ...point, timeMs });
+          diag.timelinePathPoints++;
+        }
       }
     }
   }
@@ -241,43 +278,46 @@ function extractVehicleJourneys(data) {
 
   for (const seg of segments) {
     const activity = seg?.activity;
-    const mode = String(activity?.topCandidate?.type || '').toUpperCase();
+    if (!activity) continue;
 
+    const mode = String(activity?.topCandidate?.type || '').trim().toUpperCase();
     if (mode !== 'IN_PASSENGER_VEHICLE') continue;
+
+    diag.passengerVehicleActivities++;
 
     const startMs = Date.parse(seg.startTime || '');
     const endMs = Date.parse(seg.endTime || '');
 
-    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+    let overlapping = [];
 
-    const from = lowerBound(pathPoints, startMs);
-    const to = upperBound(pathPoints, endMs);
+    if (Number.isFinite(startMs) && Number.isFinite(endMs)) {
+      const from = lowerBound(pathPoints, startMs);
+      const to = upperBound(pathPoints, endMs);
 
-    const overlapping = pathPoints
-      .slice(from, to)
-      .map(({ lat, lng }) => ({ lat, lng }));
+      overlapping = pathPoints
+        .slice(from, to)
+        .map(({ lat, lng }) => ({ lat, lng }));
+    }
+
+    if (overlapping.length) diag.vehiclesWithPathPoints++;
 
     const startPoint = parseLocation(activity?.start?.latLng);
     const endPoint = parseLocation(activity?.end?.latLng);
 
-    /*
-     * Keep Google's activity start/end locations as anchors. This means all
-     * 508 vehicle activities are still represented even where Google recorded
-     * no detailed timelinePath point inside that exact time interval.
-     */
-    const points = [];
+    if (startPoint || endPoint) diag.vehiclesWithAnchors++;
 
+    const points = [];
     if (startPoint) points.push(startPoint);
     points.push(...overlapping);
     if (endPoint) points.push(endPoint);
 
     const cleanPoints = dedupePoints(points).filter(validPoint);
 
-    if (!cleanPoints.length) continue;
-
+    // Important diagnostic behaviour:
+    // do NOT discard a passenger-vehicle activity just because its trace is sparse.
     out.push({
-      start: seg.startTime,
-      end: seg.endTime,
+      start: seg.startTime || null,
+      end: seg.endTime || null,
       points: cleanPoints,
       pathPointCount: overlapping.length,
       googleDistanceKm: Number.isFinite(Number(activity?.distanceMeters))
@@ -287,9 +327,15 @@ function extractVehicleJourneys(data) {
     });
   }
 
-  return out.sort(
-    (a, b) => Date.parse(a.start || '') - Date.parse(b.start || '')
-  );
+  diag.journeysConstructed = out.length;
+
+  out.sort((a, b) => {
+    const aa = Date.parse(a.start || '');
+    const bb = Date.parse(b.start || '');
+    return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
+  });
+
+  return { journeys: out, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
@@ -322,10 +368,6 @@ function parseLocation(v) {
   if (!v) return null;
 
   if (typeof v === 'string') {
-    /*
-     * Supplied Timeline.json uses strings such as:
-     * "51.4309771°, 0.3707566°"
-     */
     const nums = String(v).match(/-?\d+(?:\.\d+)?/g);
 
     if (nums && nums.length >= 2) {
@@ -343,9 +385,7 @@ function parseLocation(v) {
   if (typeof v === 'object') {
     const raw = v.point || v.geo || v.latLng || v.location || v;
 
-    if (typeof raw === 'string') {
-      return parseLocation(raw);
-    }
+    if (typeof raw === 'string') return parseLocation(raw);
 
     if (raw && typeof raw === 'object') {
       const lat = numberish(
@@ -421,4 +461,10 @@ function formatTime(v) {
     hour: '2-digit',
     minute: '2-digit'
   }).format(d);
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes)) return '';
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
