@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>UK Road Tracker POC</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynHTCy9xZVnZQXLJ57Q+fqLg0YQwBv8g=" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Proof of concept</p>
+        <h1>UK Road Tracker</h1>
+        <p class="lede">Import your Google Timeline JSON, identify car journeys, choose which trips to include, and preview the traces on a UK map.</p>
+      </div>
+      <div class="privacy">Your file is processed in your browser. This POC does not upload it anywhere.</div>
+    </header>
+
+    <section class="card import-card">
+      <h2>1. Import Timeline data</h2>
+      <label class="file-button" for="timelineFile">Choose Timeline JSON</label>
+      <input id="timelineFile" type="file" accept="application/json,.json" />
+      <p id="fileStatus" class="muted">No file selected.</p>
+    </section>
+
+    <section id="summaryCard" class="card hidden">
+      <h2>2. Choose journeys</h2>
+      <div class="stats">
+        <div><strong id="journeyCount">0</strong><span>car journeys</span></div>
+        <div><strong id="pointCount">0</strong><span>location points</span></div>
+        <div><strong id="selectedCount">0</strong><span>selected</span></div>
+      </div>
+      <div class="actions">
+        <button id="selectAll">Import all</button>
+        <button id="selectNone" class="secondary">Clear selection</button>
+      </div>
+      <div id="journeyList" class="journey-list"></div>
+    </section>
+
+    <section id="mapCard" class="card hidden">
+      <div class="map-heading">
+        <div>
+          <h2>3. Preview</h2>
+          <p class="muted">Selected Timeline traces. Road matching comes next.</p>
+        </div>
+        <button id="fitMap" class="secondary">Fit selected</button>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <section id="nextCard" class="card hidden">
+      <h2>What this proves</h2>
+      <p>If your real Timeline export loads here and the journeys look sensible, the next engineering step is map-matching these traces to OpenStreetMap road segments and storing a permanent “roads driven” set.</p>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
