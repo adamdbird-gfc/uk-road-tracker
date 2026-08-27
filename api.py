@@ -7,11 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "https://router.project-osrm.org")
-MATCH_RADIUS_METERS = float(os.getenv("MATCH_RADIUS_METERS", "50"))
-OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "10"))
+OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
+RADIUS_ATTEMPTS = [20, 10, 5]
 
-app = FastAPI(title="UK Road Tracker API", version="0.3.0")
+app = FastAPI(title="UK Road Tracker API", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,20 +43,17 @@ def chunk_points(points: List[Point]) -> List[List[Point]]:
     while start < len(points):
         end = min(len(points), start + OSRM_CHUNK_SIZE)
         chunk = points[start:end]
-
         if len(chunk) >= 2:
             chunks.append(chunk)
-
         if end >= len(points):
             break
-
         start += step
 
     return chunks
 
-async def osrm_match_chunk(client: httpx.AsyncClient, points: List[Point], chunk_index: int):
+async def request_match(client, points, radius):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
-    radiuses = ";".join(str(MATCH_RADIUS_METERS) for _ in points)
+    radiuses = ";".join(str(radius) for _ in points)
 
     url = f"{OSRM_BASE_URL.rstrip('/')}/match/v1/driving/{coordinates}"
     params = {
@@ -76,15 +73,32 @@ async def osrm_match_chunk(client: httpx.AsyncClient, points: List[Point], chunk
     except ValueError:
         data = {}
 
-    if response.status_code != 200 or data.get("code") != "Ok":
+    return response, data
+
+async def osrm_match_chunk(client, points: List[Point], chunk_index: int):
+    last_error = None
+
+    for radius in RADIUS_ATTEMPTS:
+        response, data = await request_match(client, points, radius)
+
+        if response.status_code == 200 and data.get("code") == "Ok":
+            return data, radius
+
         code = data.get("code", f"HTTP {response.status_code}")
         message = data.get("message", response.text[:300] or "No details returned.")
-        raise HTTPException(
-            status_code=422,
-            detail=f"Chunk {chunk_index + 1}: {code}: {message}",
-        )
+        last_error = f"{code}: {message}"
 
-    return data
+        # If the public demo rejects the radius search size, retry smaller.
+        if code == "TooBig" and "Radius search size" in message:
+            continue
+
+        # For NoSegment/NoMatch, a smaller radius won't help, so stop here.
+        break
+
+    raise HTTPException(
+        status_code=422,
+        detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
+    )
 
 @app.get("/")
 async def root():
@@ -92,15 +106,15 @@ async def root():
         "service": "UK Road Tracker API",
         "status": "ok",
         "matcher": "OSRM public demo",
-        "version": "0.3.0",
-        "match_radius_m": MATCH_RADIUS_METERS,
+        "version": "0.4.0",
         "chunk_size": OSRM_CHUNK_SIZE,
         "chunk_overlap": OSRM_CHUNK_OVERLAP,
+        "radius_attempts_m": RADIUS_ATTEMPTS,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.3.0"}
+    return {"status": "ok", "version": "0.4.0"}
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
@@ -113,11 +127,13 @@ async def match_journey(payload: MatchRequest):
     matched_distance_m = 0.0
     matched_tracepoints = 0
     tracepoints_seen = 0
+    radiuses_used = []
 
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
             for chunk_index, chunk in enumerate(chunks):
-                data = await osrm_match_chunk(client, chunk, chunk_index)
+                data, radius_used = await osrm_match_chunk(client, chunk, chunk_index)
+                radiuses_used.append(radius_used)
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
                     geometry = matching.get("geometry")
@@ -127,18 +143,17 @@ async def match_journey(payload: MatchRequest):
                     distance = float(matching.get("distance") or 0.0)
                     matched_distance_m += distance
 
-                    features.append(
-                        {
-                            "type": "Feature",
-                            "properties": {
-                                "chunk_index": chunk_index,
-                                "matching_index": matching_index,
-                                "confidence": matching.get("confidence"),
-                                "distance_m": distance,
-                            },
-                            "geometry": geometry,
-                        }
-                    )
+                    features.append({
+                        "type": "Feature",
+                        "properties": {
+                            "chunk_index": chunk_index,
+                            "matching_index": matching_index,
+                            "confidence": matching.get("confidence"),
+                            "distance_m": distance,
+                            "radius_m": radius_used,
+                        },
+                        "geometry": geometry,
+                    })
 
                 tracepoints = data.get("tracepoints") or []
                 matched_tracepoints += sum(tp is not None for tp in tracepoints)
@@ -163,6 +178,7 @@ async def match_journey(payload: MatchRequest):
         "points_sent_to_matcher": tracepoints_seen,
         "matched_tracepoints": matched_tracepoints,
         "matched_distance_m": round(matched_distance_m, 1),
+        "radiuses_used_m": radiuses_used,
         "geojson": {
             "type": "FeatureCollection",
             "features": features,
