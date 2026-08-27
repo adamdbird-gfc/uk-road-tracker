@@ -711,45 +711,30 @@ function motorwayStats(drawable) {
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
       const ref = feature?.properties?.road_ref;
-      if (!ref) continue;
+      const distanceM = Number(feature?.properties?.distance_m || 0);
+      if (!ref || !Number.isFinite(distanceM) || distanceM <= 0) continue;
 
-      if (!roads.has(ref)) roads.set(ref, new Set());
-      const cells = roads.get(ref);
-
-      for (const [a, b] of geometrySegments({
-        type: 'FeatureCollection',
-        features: [feature]
-      })) {
-        addSegmentCorridorCells(cells, a, b);
+      if (!roads.has(ref)) {
+        roads.set(ref, {
+          ref,
+          matchedDistanceM: 0,
+          journeyIds: new Set()
+        });
       }
+
+      const road = roads.get(ref);
+      road.matchedDistanceM += distanceM;
+      road.journeyIds.add(`${journey.start || ''}|${journey.end || ''}`);
     }
   }
 
-  return [...roads.entries()].map(([ref, cells]) => {
-    /*
-     * Each unique corridor cell represents approximately 100 m of physical
-     * motorway route. Both carriageways normally fall into the same cell,
-     * so travelling the same section in the opposite direction doesn't
-     * approximately double the credited mileage.
-     */
-    const drivenKm = cells.size * MOTORWAY_CORRIDOR_CELL_M / 1000;
-    const totalKm = MOTORWAY_LENGTH_KM[ref] || null;
-    const percent = totalKm
-      ? Math.min(100, drivenKm / totalKm * 100)
-      : null;
-
-    return {
-      ref,
-      drivenKm,
-      totalKm,
-      percent,
-      corridorCells: cells.size
-    };
-  }).sort(
-    (a, b) =>
-      (b.percent ?? -1) - (a.percent ?? -1) ||
-      a.ref.localeCompare(b.ref, undefined, {numeric: true})
-  );
+  return [...roads.values()]
+    .map(road => ({
+      ref: road.ref,
+      matchedKm: road.matchedDistanceM / 1000,
+      journeys: road.journeyIds.size
+    }))
+    .sort((a, b) => b.matchedKm - a.matchedKm || a.ref.localeCompare(b.ref, undefined, {numeric:true}));
 }
 
 function renderMotorwayDashboard(drawable) {
@@ -764,6 +749,8 @@ function renderMotorwayDashboard(drawable) {
 
   motorwayCard.classList.remove('hidden');
 
+  const maxKm = Math.max(...stats.map(r => r.matchedKm), 1);
+
   for (const road of stats) {
     const row = document.createElement('div');
     row.className = 'motorway-row';
@@ -774,22 +761,22 @@ function renderMotorwayDashboard(drawable) {
 
     const bar = document.createElement('div');
     bar.className = 'motorway-bar';
+
     const fill = document.createElement('div');
     fill.className = 'motorway-fill';
-    fill.style.width = `${road.percent ?? 0}%`;
+    fill.style.width = `${Math.max(2, road.matchedKm / maxKm * 100)}%`;
     bar.append(fill);
 
-    const pct = document.createElement('div');
-    pct.className = 'motorway-pct';
-    pct.textContent = road.percent === null ? '—' : `${road.percent.toFixed(1)}%`;
+    const value = document.createElement('div');
+    value.className = 'motorway-pct';
+    value.textContent = `${road.matchedKm.toFixed(1)} km`;
 
     const meta = document.createElement('div');
     meta.className = 'motorway-meta';
-    meta.textContent = road.totalKm
-      ? `${road.drivenKm.toFixed(1)} km estimated unique corridor coverage of ${road.totalKm.toFixed(1)} km route length`
-      : `${road.drivenKm.toFixed(1)} km estimated unique corridor coverage · route-length denominator not yet loaded`;
+    meta.textContent =
+      `${road.journeys} matched journey${road.journeys === 1 ? '' : 's'} contributed · completion % pending canonical road sections`;
 
-    row.append(ref, bar, pct, meta);
+    row.append(ref, bar, value, meta);
     motorwayList.append(row);
   }
 }
