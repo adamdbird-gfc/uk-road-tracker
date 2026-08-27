@@ -48,7 +48,7 @@
         </div>
         <progress id="easyProgressBar" value="0" max="100"></progress>
         <div class="actions">
-          <button id="stopEasyImport" class="secondary" type="button">Stop</button>
+          <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
         </div>
       </div>
     </section>
@@ -115,7 +115,7 @@
       </div>
       <p id="m25CanonicalStatus" class="muted canonical-status">Waiting for the M25 reference…</p>
       <button id="m25Retry" class="secondary hidden" type="button">Retry M25 reference</button>
-      <p class="muted canonical-footnote">Reference: OpenStreetMap M25 route relation 106164, loaded live through Overpass and sampled into approximately 100 m sections. Unlike the journey-distance figures above, this denominator is fixed and independent of your driving history.</p>
+      <p class="muted canonical-footnote">Reference: OpenStreetMap M25 route relation 106164, loaded live through Overpass and sampled into approximately 100 m sections. On the optional M25 layers, completed sections are blue and uncompleted sections are red at the same line width.</p>
     </section>
 
     <section id="mapCard" class="card hidden">

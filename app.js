@@ -7,7 +7,8 @@ let creditedLayer = null;
 let mapLayerControl = null;
 let ignoredJourneys = [];
 let importMode = null;
-let stopEasyImportRequested = false;
+let easyImportPaused = false;
+let easyImportRunning = false;
 let distanceUnit = 'miles';
 let m25ReferenceLayer = null;
 let m25CoverageLayer = null;
@@ -151,7 +152,14 @@ document.getElementById('clearMatches').addEventListener('click', clearMatchedRo
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 document.getElementById('stopEasyImport').addEventListener('click', () => {
-  stopEasyImportRequested = true;
+  if (!easyImportRunning) return;
+
+  easyImportPaused = !easyImportPaused;
+  updateEasyImportPauseButton();
+
+  if (!easyImportPaused) {
+    easyProgressText.textContent = easyProgressText.dataset.resumeText || 'Resuming…';
+  }
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
@@ -162,7 +170,8 @@ function resetOutput() {
   diagnostics = {};
   ignoredJourneys = [];
   importMode = null;
-  stopEasyImportRequested = false;
+  easyImportPaused = false;
+  easyImportRunning = false;
   fileStatus.className = 'muted';
   summaryCard.classList.add('hidden');
   mapCard.classList.add('hidden');
@@ -227,6 +236,22 @@ function renderIgnoredJourneys() {
   }
 }
 
+function updateEasyImportPauseButton() {
+  const button = document.getElementById('stopEasyImport');
+  if (!button) return;
+
+  if (!easyImportRunning) {
+    button.textContent = 'Pause';
+    button.disabled = true;
+    button.setAttribute('aria-pressed', 'false');
+    return;
+  }
+
+  button.disabled = false;
+  button.textContent = easyImportPaused ? 'Resume' : 'Pause';
+  button.setAttribute('aria-pressed', String(easyImportPaused));
+}
+
 function startDetailedImport() {
   importMode = 'detailed';
   importModeCard.classList.add('hidden');
@@ -236,9 +261,12 @@ function startDetailedImport() {
 
 async function startEasyImport() {
   importMode = 'easy';
-  stopEasyImportRequested = false;
+  easyImportPaused = false;
+  easyImportRunning = true;
+  updateEasyImportPauseButton();
   importModeCard.classList.add('hidden');
   easyProgress.classList.remove('hidden');
+  updateEasyImportPauseButton();
 
   renderAll('Timeline.json');
   journeyList.style.display = 'none';
@@ -252,7 +280,13 @@ async function startEasyImport() {
   easyProgressBar.value = 0;
 
   for (const journey of candidates) {
-    if (stopEasyImportRequested) break;
+    while (easyImportPaused) {
+      easyProgressText.dataset.resumeText =
+        `${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
+      easyProgressText.textContent =
+        `Paused · ${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
 
     easyProgressText.textContent =
       `${completed} / ${candidates.length} · matching ${formatDate(journey.start)}`;
@@ -286,9 +320,11 @@ async function startEasyImport() {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
 
-  easyProgressText.textContent = stopEasyImportRequested
-    ? `Stopped at ${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`
-    : `Complete · ${succeeded} matched · ${failed} skipped`;
+  easyImportRunning = false;
+  easyImportPaused = false;
+  updateEasyImportPauseButton();
+  easyProgressText.textContent =
+    `Complete · ${succeeded} matched · ${failed} skipped`;
 }
 
 function renderAll(fileName) {
@@ -606,8 +642,8 @@ function initMap() {
         'Credited roads': creditedLayer,
         'Matched journeys': matchedLayer,
         'Raw Timeline traces': traceLayer,
-        'M25 canonical reference': m25ReferenceLayer,
-        'M25 canonical covered sections': m25CoverageLayer
+        'M25 uncompleted sections': m25ReferenceLayer,
+        'M25 completed sections': m25CoverageLayer
       },
       {collapsed: true}
     ).addTo(map);
@@ -962,24 +998,48 @@ function calculateM25Coverage(drawable) {
 
 function renderM25ReferenceLayers() {
   if (!m25ReferenceLayer || !m25CoverageLayer) return;
+
   m25ReferenceLayer.clearLayers();
   m25CoverageLayer.clearLayers();
+
   if (m25Reference.status !== 'ready') return;
 
-  for (const way of m25Reference.canonicalWays) {
-    L.polyline(way.coords.map(p => [p[1],p[0]]), {
-      weight:2, opacity:.55, dashArray:'5,6', interactive:false
-    }).addTo(m25ReferenceLayer);
-  }
+  /*
+   * Draw each canonical anchor as a short section centred on that point.
+   * Completed and uncompleted sections use the same width so the only
+   * visual distinction is status: completed = blue, uncompleted = red.
+   */
+  const anchors = m25Reference.anchors;
 
-  for (const id of m25Reference.coveredAnchorIds) {
-    const a = m25Reference.anchors[id];
-    L.circleMarker([a.lat,a.lng], {
-      radius:2, weight:0, fillOpacity:.85, interactive:false
-    }).addTo(m25CoverageLayer);
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const a = anchors[i];
+    const b = anchors[i + 1];
+
+    // Avoid drawing accidental cross-map joins where sampled ways are not
+    // contiguous in the flattened anchor list.
+    const gapM = haversineMetres([a.lng, a.lat], [b.lng, b.lat]);
+    if (!Number.isFinite(gapM) || gapM > 220) continue;
+
+    const covered =
+      m25Reference.coveredAnchorIds.has(a.id) ||
+      m25Reference.coveredAnchorIds.has(b.id);
+
+    const targetLayer = covered ? m25CoverageLayer : m25ReferenceLayer;
+
+    L.polyline(
+      [
+        [a.lat, a.lng],
+        [b.lat, b.lng]
+      ],
+      {
+        weight: 5,
+        opacity: 0.95,
+        interactive: false,
+        color: covered ? '#2f7df6' : '#d93a3a'
+      }
+    ).addTo(targetLayer);
   }
 }
-
 function renderM25CanonicalDashboard(drawable = null) {
   const totalMiles = M25_CANONICAL_LENGTH_KM * 0.6213711922;
   m25CanonicalTotal.textContent = distanceUnit === 'km'
