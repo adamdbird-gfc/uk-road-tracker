@@ -60,6 +60,11 @@ const CANONICAL_ANCHOR_MATCH_RADIUS_M = 110;
 const CANONICAL_INDEX_CELL_M = 260;
 const CANONICAL_DEDUPE_CELL_M = 110;
 const CANONICAL_DEDUPE_RADIUS_M = 95;
+const CANONICAL_CACHE_VERSION = 'v1';
+const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
+let canonicalCache = null;
+let canonicalCachePromise = null;
+
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
@@ -886,6 +891,55 @@ function nearestCanonicalAnchor(road, point) {
   return best;
 }
 
+
+async function loadCanonicalCache(force = false) {
+  if (!force && canonicalCache) return canonicalCache;
+  if (!force && canonicalCachePromise) return canonicalCachePromise;
+
+  canonicalCachePromise = (async () => {
+    const response = await fetch(CANONICAL_CACHE_URL, {cache: 'no-store'});
+    if (!response.ok) {
+      throw new Error(`Canonical cache returned HTTP ${response.status}.`);
+    }
+
+    const data = await response.json();
+
+    if (!data || data.version !== CANONICAL_CACHE_VERSION || !data.roads) {
+      throw new Error('Canonical motorway cache format/version mismatch.');
+    }
+
+    canonicalCache = data;
+    return data;
+  })();
+
+  try {
+    return await canonicalCachePromise;
+  } finally {
+    canonicalCachePromise = null;
+  }
+}
+
+function hydrateCanonicalRoadFromCache(road, cached) {
+  const anchors = (cached.anchors || []).map((point, id) => {
+    const lng = Number(point[0]);
+    const lat = Number(point[1]);
+    const [x, y] = mercatorXY(lng, lat);
+    return {id, lng, lat, x, y};
+  });
+
+  if (anchors.length < 3) {
+    throw new Error(`${road.ref} cached reference was unexpectedly sparse.`);
+  }
+
+  road.ways = [];
+  road.anchors = anchors;
+  road.anchorIndex = buildAnchorIndex(anchors);
+  road.coveredAnchorIds = new Set();
+  road.totalKm = Number(cached.total_km || anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000);
+  road.status = 'ready';
+  road.source = 'cache';
+}
+
 async function loadCanonicalRoad(ref, force=false) {
   const road=canonicalRoadState(ref);
   if (!force && ['loading','ready'].includes(road.status)) return road;
@@ -896,10 +950,24 @@ async function loadCanonicalRoad(ref, force=false) {
 
   try {
     /*
-     * POC 17 avoids generic route-relation expansion completely.
-     * We query only Great Britain motorway ways whose OSM ref exactly matches
-     * the motorway being measured.
+     * POC 18 first loads a prebuilt canonical motorway cache from GitHub Pages.
+     * Live Overpass construction remains only as a fallback for roads absent
+     * from the cache or while the cache is being expanded.
      */
+    try {
+      const cache = await loadCanonicalCache();
+      const cached = cache.roads?.[road.ref];
+
+      if (cached) {
+        hydrateCanonicalRoadFromCache(road, cached);
+        renderMap();
+        return road;
+      }
+    } catch (cacheErr) {
+      // Fall through to live construction; surface the live result instead.
+      console.warn('Canonical cache unavailable, falling back to Overpass:', cacheErr);
+    }
+
     const escapedRef=road.ref.replace(/"/g,'\\"');
     const query =
       `[out:json][timeout:90];` +
@@ -956,11 +1024,6 @@ async function loadCanonicalRoad(ref, force=false) {
       throw new Error(`No exact-ref OpenStreetMap motorway geometry found for ${road.ref}.`);
     }
 
-    /*
-     * Sample all exact-ref geometry, then spatially merge parallel carriageways.
-     * This makes the denominator represent the physical motorway rather than
-     * accumulating every route-relation member.
-     */
     const anchors=buildCanonicalAnchors(ways);
 
     if (anchors.length<3) {
@@ -973,6 +1036,7 @@ async function loadCanonicalRoad(ref, force=false) {
     road.coveredAnchorIds=new Set();
     road.totalKm=anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000;
     road.status='ready';
+    road.source='live';
 
     renderMap();
     return road;

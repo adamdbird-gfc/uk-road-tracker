@@ -142,3 +142,37 @@ POC 17 now:
 The first acceptance test is the reference length itself. The motorway
 denominator must look physically credible before its completion percentage is
 treated as meaningful.
+
+
+## POC 18 — prebuilt canonical motorway cache
+
+The browser now looks for `canonical-motorways-v1.json` before calling Overpass.
+
+- If a discovered motorway exists in the cache, its canonical anchors are
+  hydrated immediately in-browser.
+- If it is absent, POC 17's live exact-ref Overpass construction remains as a
+  fallback.
+- The dashboard labels each denominator as `cached reference` or `live reference`.
+- This separates reference-network generation from Timeline import, which is
+  the intended production architecture.
+
+The included cache file is an empty schema placeholder. The next operational
+step is to populate it with prebuilt motorway anchor sets and commit it beside
+the frontend. Once populated, users will no longer wait for Overpass during
+normal imports.
+
+
+## POC 18.1 — automatic cache builder
+
+This package adds a GitHub Actions workflow and Python generator.
+
+The workflow runs on GitHub's servers, queries Overpass to discover all GB
+motorway refs, builds the canonical anchor cache, and commits
+`canonical-motorways-v1.json` back into the repository.
+
+Files added:
+- `scripts/build_motorway_cache.py`
+- `.github/workflows/build-motorway-cache.yml`
+
+Once the generated cache commit lands, the frontend uses it automatically and
+normal Timeline imports no longer need to construct motorway references live.
