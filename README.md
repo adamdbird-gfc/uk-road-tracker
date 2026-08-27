@@ -33,3 +33,9 @@ matching backend.
 - Easy import automatically matches every usable journey sequentially.
 - Detailed import preserves journey-by-journey matching.
 - Journeys with fewer than 2 Timeline points are excluded from matching and road credit, but remain visible in an ignored-journeys audit.
+
+
+## POC 9 — Motorway Progress
+Backend v0.5 requests OSRM route steps and returns M-numbered motorway refs plus geometry.
+Frontend progressively builds a motorway dashboard from unique matched geometry.
+Percentages are POC estimates: unique returned geometry divided by a route-length reference denominator.

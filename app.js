@@ -27,6 +27,19 @@ const easyProgressBar = document.getElementById('easyProgressBar');
 const ignoredCard = document.getElementById('ignoredCard');
 const ignoredCount = document.getElementById('ignoredCount');
 const ignoredList = document.getElementById('ignoredList');
+const motorwayCard = document.getElementById('motorwayCard');
+const motorwayList = document.getElementById('motorwayList');
+const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
+
+const MOTORWAY_LENGTH_KM = {
+  M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
+  M11:84.419, M18:45.214, M20:82.586, M23:26.725, M25:189.869, M26:16.462,
+  M27:52.695, M32:7.303, M40:144.651, M42:64.619, M45:13.369, M48:8.899,
+  M49:8.611, M50:34.438, M53:32.032, M54:36.078, M55:19.069, M56:55.688,
+  M57:16.050, M58:18.657, M60:56.734, M61:43.989, M62:153.828, M65:32.238,
+  M66:14.297, M67:7.656, M69:26.269, M180:41.076, M181:4.190,
+  M271:3.537, M602:6.958, M606:4.663, M621:14.803
+};
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -72,6 +85,7 @@ fileInput.addEventListener('change', async () => {
   importModeCard.classList.add('hidden');
   easyProgress.classList.add('hidden');
   ignoredCard.classList.add('hidden');
+  motorwayCard.classList.add('hidden');
     importModeCard.classList.remove('hidden');
     easyProgress.classList.add('hidden');
   } catch (err) {
@@ -216,6 +230,7 @@ async function startEasyImport() {
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
 
       journey.matchedGeoJson = data.geojson;
+      journey.motorwayGeoJson = data.motorway_geojson;
       journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -399,6 +414,7 @@ async function matchJourney(index, button, statusNode) {
     }
 
     journey.matchedGeoJson = data.geojson;
+    journey.motorwayGeoJson = data.motorway_geojson;
     journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -434,6 +450,7 @@ function fitMatchedJourney(journey) {
 function clearMatchedRoads() {
   journeys.forEach(j => {
     delete j.matchedGeoJson;
+    delete j.motorwayGeoJson;
     delete j.matchedDistanceKm;
     delete j.matchedTracepoints;
     delete j.pointsSentToMatcher;
@@ -642,6 +659,85 @@ function buildCreditedSegments(drawable) {
   return [...unique.values()];
 }
 
+function haversineMetres(a, b) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const lat1 = toRad(a[1]), lat2 = toRad(b[1]);
+  const dLat = lat2 - lat1;
+  const dLon = toRad(b[0] - a[0]);
+  const h = Math.sin(dLat/2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function motorwayStats(drawable) {
+  const roads = new Map();
+
+  for (const journey of drawable) {
+    for (const feature of journey.motorwayGeoJson?.features || []) {
+      const ref = feature?.properties?.road_ref;
+      if (!ref) continue;
+
+      if (!roads.has(ref)) roads.set(ref, new Map());
+      const unique = roads.get(ref);
+
+      for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
+        const key = segmentKey(a,b);
+        if (!unique.has(key)) unique.set(key, haversineMetres(a,b));
+      }
+    }
+  }
+
+  return [...roads.entries()].map(([ref, segments]) => {
+    const drivenKm = [...segments.values()].reduce((a,b)=>a+b,0) / 1000;
+    const totalKm = MOTORWAY_LENGTH_KM[ref] || null;
+    const percent = totalKm ? Math.min(100, drivenKm / totalKm * 100) : null;
+    return {ref, drivenKm, totalKm, percent};
+  }).sort((a,b) => (b.percent ?? -1) - (a.percent ?? -1) || a.ref.localeCompare(b.ref, undefined, {numeric:true}));
+}
+
+function renderMotorwayDashboard(drawable) {
+  const stats = motorwayStats(drawable);
+  motorwayList.innerHTML = '';
+  motorwaysDiscovered.textContent = stats.length.toLocaleString();
+
+  if (!stats.length) {
+    motorwayCard.classList.add('hidden');
+    return;
+  }
+
+  motorwayCard.classList.remove('hidden');
+
+  for (const road of stats) {
+    const row = document.createElement('div');
+    row.className = 'motorway-row';
+
+    const ref = document.createElement('div');
+    ref.className = 'motorway-ref';
+    ref.textContent = road.ref;
+
+    const bar = document.createElement('div');
+    bar.className = 'motorway-bar';
+    const fill = document.createElement('div');
+    fill.className = 'motorway-fill';
+    fill.style.width = `${road.percent ?? 0}%`;
+    bar.append(fill);
+
+    const pct = document.createElement('div');
+    pct.className = 'motorway-pct';
+    pct.textContent = road.percent === null ? '—' : `${road.percent.toFixed(1)}%`;
+
+    const meta = document.createElement('div');
+    meta.className = 'motorway-meta';
+    meta.textContent = road.totalKm
+      ? `${road.drivenKm.toFixed(1)} km unique matched geometry of ${road.totalKm.toFixed(1)} km route length`
+      : `${road.drivenKm.toFixed(1)} km unique matched geometry · route-length denominator not yet loaded`;
+
+    row.append(ref, bar, pct, meta);
+    motorwayList.append(row);
+  }
+}
+
 function renderMap() {
   if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
 
@@ -652,6 +748,8 @@ function renderMap() {
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
   );
+
+  renderMotorwayDashboard(drawable);
 
   for (const j of drawable) {
     L.polyline(
