@@ -56,10 +56,10 @@ const MOTORWAY_LENGTH_KM = {
 };
 const CANONICAL_REFERENCE_SAMPLE_M = 100;
 const CANONICAL_MATCH_SAMPLE_M = 25;
-const CANONICAL_ANCHOR_MATCH_RADIUS_M = 90;
-const CANONICAL_INDEX_CELL_M = 220;
-const CANONICAL_DEDUPE_CELL_M = 55;
-const CANONICAL_DEDUPE_RADIUS_M = 45;
+const CANONICAL_ANCHOR_MATCH_RADIUS_M = 110;
+const CANONICAL_INDEX_CELL_M = 260;
+const CANONICAL_DEDUPE_CELL_M = 110;
+const CANONICAL_DEDUPE_RADIUS_M = 95;
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
@@ -890,40 +890,95 @@ async function loadCanonicalRoad(ref, force=false) {
   const road=canonicalRoadState(ref);
   if (!force && ['loading','ready'].includes(road.status)) return road;
 
-  road.status='loading'; road.error=null;
+  road.status='loading';
+  road.error=null;
   renderCanonicalMotorwayDashboard();
 
   try {
+    /*
+     * POC 17 avoids generic route-relation expansion completely.
+     * We query only Great Britain motorway ways whose OSM ref exactly matches
+     * the motorway being measured.
+     */
     const escapedRef=road.ref.replace(/"/g,'\\"');
-    const query=`[out:json][timeout:60];relation["type"="route"]["route"="road"]["ref"="${escapedRef}"];way(r)["highway"="motorway"];out tags geom;`;
-    let response=await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-    if (!response.ok) throw new Error(`Reference service returned HTTP ${response.status}.`);
-    let data=await response.json();
-    let ways=(data.elements || []).map(e=>({id:e.id,coords:overpassWayCoordinates(e)})).filter(w=>w.coords.length>=2);
+    const query =
+      `[out:json][timeout:90];` +
+      `area["ISO3166-1"="GB"][admin_level=2]->.gb;` +
+      `way(area.gb)["highway"="motorway"]["ref"="${escapedRef}"];` +
+      `out tags geom;`;
 
-    if (!ways.length) {
-      const fallback=`[out:json][timeout:60];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"="${escapedRef}"];out tags geom;`;
-      response=await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(fallback)}`);
-      if (!response.ok) throw new Error(`Fallback reference service returned HTTP ${response.status}.`);
-      data=await response.json();
-      ways=(data.elements || []).map(e=>({id:e.id,coords:overpassWayCoordinates(e)})).filter(w=>w.coords.length>=2);
+    const endpoints=[
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter'
+    ];
+
+    let data=null;
+    let lastError=null;
+
+    for (const endpoint of endpoints) {
+      const url=`${endpoint}?data=${encodeURIComponent(query)}`;
+
+      for (let attempt=0; attempt<2; attempt++) {
+        try {
+          const response=await fetch(url);
+
+          if (!response.ok) {
+            lastError=`Reference service returned HTTP ${response.status}.`;
+            if ([429,502,503,504].includes(response.status)) {
+              await new Promise(resolve=>setTimeout(resolve,3000 + attempt*2000));
+              continue;
+            }
+            break;
+          }
+
+          data=await response.json();
+          break;
+        } catch (err) {
+          lastError=err.message || String(err);
+          await new Promise(resolve=>setTimeout(resolve,2500));
+        }
+      }
+
+      if (data) break;
     }
 
-    if (!ways.length) throw new Error(`No OpenStreetMap motorway geometry found for ${road.ref}.`);
+    if (!data) throw new Error(lastError || 'Motorway reference could not be loaded.');
 
+    const ways=(data.elements || [])
+      .map(element=>({
+        id:element.id,
+        tags:element.tags || {},
+        coords:overpassWayCoordinates(element)
+      }))
+      .filter(way=>way.coords.length>=2);
+
+    if (!ways.length) {
+      throw new Error(`No exact-ref OpenStreetMap motorway geometry found for ${road.ref}.`);
+    }
+
+    /*
+     * Sample all exact-ref geometry, then spatially merge parallel carriageways.
+     * This makes the denominator represent the physical motorway rather than
+     * accumulating every route-relation member.
+     */
     const anchors=buildCanonicalAnchors(ways);
-    if (anchors.length < 3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
+
+    if (anchors.length<3) {
+      throw new Error(`${road.ref} reference was unexpectedly sparse.`);
+    }
 
     road.ways=ways;
     road.anchors=anchors;
     road.anchorIndex=buildAnchorIndex(anchors);
     road.coveredAnchorIds=new Set();
-    road.totalKm=anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
+    road.totalKm=anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000;
     road.status='ready';
+
     renderMap();
     return road;
-  } catch(err) {
-    road.status='error'; road.error=err.message || String(err);
+  } catch (err) {
+    road.status='error';
+    road.error=err.message || String(err);
     renderCanonicalMotorwayDashboard();
     return road;
   }

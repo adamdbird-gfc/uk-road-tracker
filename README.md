@@ -115,3 +115,30 @@ Generalises the successful M25 fixed-reference model to every motorway ref disco
 - Completed and uncompleted motorway sections can be viewed as separate map layers.
 
 Production should pre-build, cache and version this reference network rather than querying Overpass from each browser.
+
+## POC 16
+
+- Removed the visible POC version label from the canonical motorway heading.
+- Canonical motorway reference generation is tightened to avoid counting paired
+  carriageways as separate denominator mileage.
+- Public Overpass requests are spaced further apart.
+- Temporary 429/502/503/504 reference failures get one automatic delayed retry.
+- Existing manual Retry motorway references control remains available.
+
+
+## POC 17 — exact-ref canonical motorway references
+
+The generic OSM route-relation expansion used in POC 15/16 could return far
+more geometry than the actual physical motorway.
+
+POC 17 now:
+- queries only Great Britain ways with `highway=motorway`;
+- requires the OSM `ref` to exactly equal the discovered motorway number;
+- samples the exact-ref geometry into ~100 m sections;
+- spatially merges paired carriageways with a wider canonical dedupe radius;
+- falls back to a second public Overpass endpoint;
+- backs off and retries temporary 429/502/503/504 responses.
+
+The first acceptance test is the reference length itself. The motorway
+denominator must look physically credible before its completion percentage is
+treated as meaningful.
