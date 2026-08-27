@@ -13,6 +13,16 @@ SAMPLE_M = 100.0
 DEDUPE_RADIUS_M = 95.0
 DEDUPE_CELL_M = 110.0
 
+DEFAULT_MOTORWAY_REFS = [
+    "M1","M2","M3","M4","M5","M6","M8","M9","M11","M18","M20","M23","M25",
+    "M26","M27","M32","M40","M42","M45","M48","M49","M50","M53","M54","M55",
+    "M56","M57","M58","M60","M61","M62","M65","M66","M67","M69","M73","M74",
+    "M77","M80","M90","M180","M181","M271","M275","M602","M606","M621",
+    "M876","M898",
+    "A1(M)","A3(M)","A48(M)","A57(M)","A58(M)","A64(M)","A66(M)","A74(M)",
+    "A194(M)","A308(M)","A329(M)","A404(M)","A601(M)","A627(M)"
+]
+
 def request_overpass(query, timeout=120):
     data = urllib.parse.urlencode({"data": query}).encode()
     last = None
@@ -94,17 +104,30 @@ def dedupe_points(points):
     return [[round(a["lon"],7), round(a["lat"],7)] for a in anchors]
 
 def discover_refs():
+    """
+    Try to discover motorway refs from Overpass, but never let discovery
+    failure abort the cache build.  The public Overpass API occasionally
+    returns HTTP 500/504 on broad country-wide queries, so we keep a curated
+    fallback list and merge live discoveries into it when available.
+    """
+    refs = set(DEFAULT_MOTORWAY_REFS)
+
     q = '[out:json][timeout:90];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"];out tags;'
-    data=request_overpass(q)
-    refs=set()
-    for el in data.get("elements",[]):
-        ref=(el.get("tags") or {}).get("ref","").strip().upper().replace(" ","")
-        if re.fullmatch(r"(?:M\d+[A-Z]?|A\d+\(M\))", ref):
-            refs.add(ref)
+
+    try:
+        data = request_overpass(q)
+        for el in data.get("elements", []):
+            ref = (el.get("tags") or {}).get("ref", "").strip().upper().replace(" ", "")
+            if re.fullmatch(r"(?:M\d+[A-Z]?|A\d+\(M\))", ref):
+                refs.add(ref)
+    except Exception as e:
+        print(f"Motorway discovery query failed; using fallback list: {e}")
+
     def sort_key(s):
         nums = re.findall(r"\d+", s)
         n = int(nums[0]) if nums else 99999
         return (s.startswith("A"), n, s)
+
     return sorted(refs, key=sort_key)
 
 def fetch_ref(ref):
@@ -140,7 +163,7 @@ def main():
         except Exception as e:
             failures[ref]=str(e)
             print("  FAILED:",e)
-        time.sleep(1.5)
+        time.sleep(2.0)
 
     payload={
         "version":"v1",
