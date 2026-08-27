@@ -5,6 +5,9 @@ let traceLayer = null;
 let matchedLayer = null;
 let creditedLayer = null;
 let mapLayerControl = null;
+let ignoredJourneys = [];
+let importMode = null;
+let stopEasyImportRequested = false;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -17,6 +20,13 @@ const journeyCount = document.getElementById('journeyCount');
 const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
 const mapStatus = document.getElementById('mapStatus');
+const importModeCard = document.getElementById('importModeCard');
+const easyProgress = document.getElementById('easyProgress');
+const easyProgressText = document.getElementById('easyProgressText');
+const easyProgressBar = document.getElementById('easyProgressBar');
+const ignoredCard = document.getElementById('ignoredCard');
+const ignoredCount = document.getElementById('ignoredCount');
+const ignoredList = document.getElementById('ignoredList');
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -35,10 +45,16 @@ fileInput.addEventListener('change', async () => {
     await yieldToBrowser();
 
     const result = extractVehicleJourneys(json);
-    journeys = result.journeys;
+    const allJourneys = result.journeys;
     diagnostics = result.diagnostics;
 
+    ignoredJourneys = allJourneys.filter(j => j.pathPointCount < 2);
+    journeys = allJourneys.filter(j => j.pathPointCount >= 2);
+    diagnostics.usableJourneys = journeys.length;
+    diagnostics.ignoredSparseJourneys = ignoredJourneys.length;
+
     showDiagnostics(file.name);
+    renderIgnoredJourneys();
 
     if (!diagnostics.passengerVehicleActivities) {
       throw new Error(
@@ -49,7 +65,15 @@ fileInput.addEventListener('change', async () => {
 
     journeys.forEach(j => j.selected = true);
     await ensureLeaflet();
-    renderAll(file.name);
+    importMode = null;
+    summaryCard.classList.add('hidden');
+    mapCard.classList.add('hidden');
+    nextCard.classList.add('hidden');
+  importModeCard.classList.add('hidden');
+  easyProgress.classList.add('hidden');
+  ignoredCard.classList.add('hidden');
+    importModeCard.classList.remove('hidden');
+    easyProgress.classList.add('hidden');
   } catch (err) {
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
@@ -76,10 +100,18 @@ document.getElementById('selectNone').addEventListener('click', () => {
 
 document.getElementById('fitMap').addEventListener('click', fitSelected);
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
+document.getElementById('easyImport').addEventListener('click', startEasyImport);
+document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
+document.getElementById('stopEasyImport').addEventListener('click', () => {
+  stopEasyImportRequested = true;
+});
 
 function resetOutput() {
   journeys = [];
   diagnostics = {};
+  ignoredJourneys = [];
+  importMode = null;
+  stopEasyImportRequested = false;
   fileStatus.className = 'muted';
   summaryCard.classList.add('hidden');
   mapCard.classList.add('hidden');
@@ -111,7 +143,9 @@ function diagnosticText() {
     `Timestamped timelinePath points: ${fmt(diagnostics.timelinePathPoints)}`,
     `Vehicle activities with overlapping path points: ${fmt(diagnostics.vehiclesWithPathPoints)}`,
     `Vehicle activities with usable start/end anchors: ${fmt(diagnostics.vehiclesWithAnchors)}`,
-    `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`
+    `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`,
+    `Usable for road matching: ${fmt(diagnostics.usableJourneys)}`,
+    `Ignored — fewer than 2 Timeline points: ${fmt(diagnostics.ignoredSparseJourneys)}`
   ].join('\n');
 }
 
@@ -119,10 +153,98 @@ function fmt(n) {
   return Number(n || 0).toLocaleString();
 }
 
+
+function renderIgnoredJourneys() {
+  ignoredCount.textContent = ignoredJourneys.length.toLocaleString();
+  ignoredList.innerHTML = '';
+
+  if (!ignoredJourneys.length) {
+    ignoredCard.classList.add('hidden');
+    return;
+  }
+
+  ignoredCard.classList.remove('hidden');
+
+  for (const j of ignoredJourneys) {
+    const item = document.createElement('div');
+    item.className = 'ignored-item';
+    item.textContent =
+      `${formatDate(j.start)} · ${formatTime(j.start)}–${formatTime(j.end)} · ` +
+      `${j.pathPointCount} Timeline point${j.pathPointCount === 1 ? '' : 's'}` +
+      `${Number.isFinite(j.googleDistanceKm) ? ` · ${j.googleDistanceKm.toFixed(1)} km Google distance` : ''}`;
+    ignoredList.append(item);
+  }
+}
+
+function startDetailedImport() {
+  importMode = 'detailed';
+  importModeCard.classList.add('hidden');
+  easyProgress.classList.add('hidden');
+  renderAll('Timeline.json');
+}
+
+async function startEasyImport() {
+  importMode = 'easy';
+  stopEasyImportRequested = false;
+  importModeCard.classList.add('hidden');
+  easyProgress.classList.remove('hidden');
+
+  renderAll('Timeline.json');
+  journeyList.style.display = 'none';
+
+  const candidates = journeys.filter(j => j.points.length > 1);
+  let completed = 0;
+  let succeeded = 0;
+  let failed = 0;
+
+  easyProgressBar.max = candidates.length || 1;
+  easyProgressBar.value = 0;
+
+  for (const journey of candidates) {
+    if (stopEasyImportRequested) break;
+
+    easyProgressText.textContent =
+      `${completed} / ${candidates.length} · matching ${formatDate(journey.start)}`;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/match`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({points: journey.points})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+
+      journey.matchedGeoJson = data.geojson;
+      journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
+      journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
+      journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
+      journey.matchQuality = assessMatchQuality(journey, data);
+      succeeded++;
+    } catch (err) {
+      journey.easyImportError = err.message || String(err);
+      failed++;
+    }
+
+    completed++;
+    easyProgressBar.value = completed;
+    easyProgressText.textContent =
+      `${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
+    renderMap();
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+
+  easyProgressText.textContent = stopEasyImportRequested
+    ? `Stopped at ${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`
+    : `Complete · ${succeeded} matched · ${failed} skipped`;
+}
+
 function renderAll(fileName) {
   const points = journeys.reduce((n, j) => n + j.points.length, 0);
 
   journeyCount.textContent = journeys.length.toLocaleString();
+  const journeyLabel = journeyCount.parentElement?.querySelector('span');
+  if (journeyLabel) journeyLabel.textContent = 'usable journeys';
   pointCount.textContent = points.toLocaleString();
 
   summaryCard.classList.remove('hidden');
@@ -130,6 +252,7 @@ function renderAll(fileName) {
   nextCard.classList.remove('hidden');
 
   renderJourneyList();
+  journeyList.style.display = importMode === 'easy' ? 'none' : 'grid';
   initMap();
   renderMap();
   updateSelectedCount();

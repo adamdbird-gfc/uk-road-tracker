@@ -27,3 +27,9 @@ Adds:
 Important: this is still geometry-level deduplication, not canonical OpenStreetMap
 edge-ID deduplication. True OSM road-edge credit belongs in the later v9-style
 matching backend.
+
+
+## POC 8 — easy vs detailed import
+- Easy import automatically matches every usable journey sequentially.
+- Detailed import preserves journey-by-journey matching.
+- Journeys with fewer than 2 Timeline points are excluded from matching and road credit, but remain visible in an ignored-journeys audit.

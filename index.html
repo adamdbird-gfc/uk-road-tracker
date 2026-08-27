@@ -25,6 +25,40 @@
       <label class="file-button" for="timelineFile">Choose Timeline JSON</label>
       <input id="timelineFile" type="file" accept="application/json,.json" />
       <p id="fileStatus" class="muted">No file selected.</p>
+
+      <div id="importModeCard" class="import-modes hidden">
+        <h3>How would you like to set it up?</h3>
+        <div class="mode-grid">
+          <button id="easyImport" class="mode-card" type="button">
+            <strong>Easy import</strong>
+            <span>Automatically match every usable journey and build the cumulative road map.</span>
+          </button>
+          <button id="detailedImport" class="mode-card secondary-mode" type="button">
+            <strong>Detailed import</strong>
+            <span>Review journeys individually and match them one at a time.</span>
+          </button>
+        </div>
+        <p class="muted mode-note">Journeys with fewer than 2 Timeline points are ignored because there is not enough trace data to credit roads reliably.</p>
+      </div>
+
+      <div id="easyProgress" class="easy-progress hidden">
+        <div class="progress-heading">
+          <strong>Easy import progress</strong>
+          <span id="easyProgressText">Waiting…</span>
+        </div>
+        <progress id="easyProgressBar" value="0" max="100"></progress>
+        <div class="actions">
+          <button id="stopEasyImport" class="secondary" type="button">Stop</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="ignoredCard" class="card hidden">
+      <details>
+        <summary><strong><span id="ignoredCount">0</span> journeys ignored — insufficient Timeline trace</strong></summary>
+        <p class="muted">These journeys are kept only for transparency. They are not sent to the matcher and do not count toward credited roads.</p>
+        <div id="ignoredList" class="ignored-list"></div>
+      </details>
     </section>
 
     <section id="summaryCard" class="card hidden">
