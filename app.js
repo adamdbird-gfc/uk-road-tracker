@@ -8,6 +8,7 @@ let mapLayerControl = null;
 let ignoredJourneys = [];
 let importMode = null;
 let stopEasyImportRequested = false;
+let distanceUnit = 'miles';
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -30,6 +31,8 @@ const ignoredList = document.getElementById('ignoredList');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
+const unitMiles = document.getElementById('unitMiles');
+const unitKm = document.getElementById('unitKm');
 
 const MOTORWAY_LENGTH_KM = {
   M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
@@ -122,6 +125,8 @@ document.getElementById('detailedImport').addEventListener('click', startDetaile
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   stopEasyImportRequested = true;
 });
+unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
+unitKm.addEventListener('click', () => setDistanceUnit('km'));
 
 function resetOutput() {
   journeys = [];
@@ -705,6 +710,26 @@ function addSegmentCorridorCells(cellSet, a, b) {
   }
 }
 
+function setDistanceUnit(unit) {
+  distanceUnit = unit === 'km' ? 'km' : 'miles';
+
+  unitMiles.classList.toggle('active', distanceUnit === 'miles');
+  unitKm.classList.toggle('active', distanceUnit === 'km');
+  unitMiles.setAttribute('aria-pressed', String(distanceUnit === 'miles'));
+  unitKm.setAttribute('aria-pressed', String(distanceUnit === 'km'));
+
+  if (map) renderMap();
+}
+
+function displayDistance(km) {
+  if (distanceUnit === 'km') {
+    return `${km.toFixed(1)} km`;
+  }
+
+  const miles = km * 0.6213711922;
+  return `${miles.toFixed(1)} mi`;
+}
+
 function motorwayStats(drawable) {
   const roads = new Map();
 
@@ -769,12 +794,12 @@ function renderMotorwayDashboard(drawable) {
 
     const value = document.createElement('div');
     value.className = 'motorway-pct';
-    value.textContent = `${road.matchedKm.toFixed(1)} km`;
+    value.textContent = displayDistance(road.matchedKm);
 
     const meta = document.createElement('div');
     meta.className = 'motorway-meta';
     meta.textContent =
-      `${road.journeys} matched journey${road.journeys === 1 ? '' : 's'} contributed · completion % pending canonical road sections`;
+      `${road.journeys} matched journey${road.journeys === 1 ? '' : 's'} contributed · ${displayDistance(road.matchedKm)} matched · completion % pending canonical road sections`;
 
     row.append(ref, bar, value, meta);
     motorwayList.append(row);

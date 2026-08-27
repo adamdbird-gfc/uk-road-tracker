@@ -53,3 +53,24 @@ Web-Mercator corridor cells. This means:
 
 The numerator is therefore an estimate of physical motorway corridor covered.
 Canonical OSM section IDs remain the preferred production implementation.
+
+
+## POC 11 — conservative motorway stats
+
+Motorway completion percentages are temporarily removed.
+
+The dashboard now shows matched motorway distance by road reference only. This
+avoids presenting a misleading completion percentage while canonical motorway
+section IDs are being designed.
+
+Next acceptance test:
+- M25 outbound journey credits motorway sections.
+- Reverse journey over the same physical M25 corridor should add little or no
+  new canonical section coverage once the section model is implemented.
+
+
+## POC 12 — miles / km toggle
+
+Motorway distance defaults to miles for UK users. A Miles / km toggle above
+the motorway list switches the displayed matched distances instantly without
+re-running Timeline processing or road matching.

@@ -83,7 +83,13 @@
           <h2>Motorway progress</h2>
           <p class="muted">Discovered from your matched journeys. This POC now shows matched motorway distance only while we build canonical motorway sections for reliable completion percentages.</p>
         </div>
-        <div class="motorway-total"><strong id="motorwaysDiscovered">0</strong><span>discovered</span></div>
+        <div class="motorway-controls">
+          <div class="unit-toggle" role="group" aria-label="Distance units">
+            <button id="unitMiles" type="button" class="unit-option active" aria-pressed="true">Miles</button>
+            <button id="unitKm" type="button" class="unit-option" aria-pressed="false">km</button>
+          </div>
+          <div class="motorway-total"><strong id="motorwaysDiscovered">0</strong><span>discovered</span></div>
+        </div>
       </div>
       <div id="motorwayList" class="motorway-list"></div>
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
