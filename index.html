@@ -95,6 +95,29 @@
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
     </section>
 
+    <section id="m25CanonicalCard" class="card hidden">
+      <div class="canonical-heading">
+        <div>
+          <p class="eyebrow">POC 13</p>
+          <h2>Canonical M25 coverage</h2>
+          <p class="muted">Matched M25 travel is projected onto one fixed OpenStreetMap reference carriageway, so repeat trips and the opposite carriageway credit the same physical sections.</p>
+        </div>
+        <div class="canonical-score">
+          <strong id="m25CanonicalPercent">—</strong>
+          <span>complete</span>
+        </div>
+      </div>
+      <div class="canonical-progress"><div id="m25CanonicalFill" class="canonical-progress-fill"></div></div>
+      <div class="canonical-stats">
+        <div><strong id="m25CanonicalDriven">—</strong><span>estimated unique driven</span></div>
+        <div><strong id="m25CanonicalTotal">116.8 mi</strong><span>reference length</span></div>
+        <div><strong id="m25CanonicalSections">—</strong><span>sections credited</span></div>
+      </div>
+      <p id="m25CanonicalStatus" class="muted canonical-status">Waiting for the M25 reference…</p>
+      <button id="m25Retry" class="secondary hidden" type="button">Retry M25 reference</button>
+      <p class="muted canonical-footnote">Reference: OpenStreetMap M25 route relation 106164, loaded live through Overpass and sampled into approximately 100 m sections. Unlike the journey-distance figures above, this denominator is fixed and independent of your driving history.</p>
+    </section>
+
     <section id="mapCard" class="card hidden">
       <div class="map-heading">
         <div>

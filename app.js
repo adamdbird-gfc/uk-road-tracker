@@ -9,6 +9,16 @@ let ignoredJourneys = [];
 let importMode = null;
 let stopEasyImportRequested = false;
 let distanceUnit = 'miles';
+let m25ReferenceLayer = null;
+let m25CoverageLayer = null;
+let m25Reference = {
+  status: 'idle',
+  error: null,
+  anchors: [],
+  anchorIndex: new Map(),
+  canonicalWays: [],
+  coveredAnchorIds: new Set()
+};
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -33,6 +43,14 @@ const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
 const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
+const m25CanonicalCard = document.getElementById('m25CanonicalCard');
+const m25CanonicalPercent = document.getElementById('m25CanonicalPercent');
+const m25CanonicalFill = document.getElementById('m25CanonicalFill');
+const m25CanonicalDriven = document.getElementById('m25CanonicalDriven');
+const m25CanonicalTotal = document.getElementById('m25CanonicalTotal');
+const m25CanonicalSections = document.getElementById('m25CanonicalSections');
+const m25CanonicalStatus = document.getElementById('m25CanonicalStatus');
+const m25Retry = document.getElementById('m25Retry');
 
 const MOTORWAY_LENGTH_KM = {
   M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
@@ -43,6 +61,14 @@ const MOTORWAY_LENGTH_KM = {
   M66:14.297, M67:7.656, M69:26.269, M180:41.076, M181:4.190,
   M271:3.537, M602:6.958, M606:4.663, M621:14.803
 };
+const M25_RELATION_ID = 106164;
+const M25_CANONICAL_LENGTH_KM = 188.0;
+const M25_REFERENCE_SAMPLE_M = 100;
+const M25_MATCH_SAMPLE_M = 25;
+const M25_ANCHOR_MATCH_RADIUS_M = 85;
+const M25_INDEX_CELL_M = 220;
+const LONDON_REFERENCE_CENTRE = [-0.1278, 51.5074];
+
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
 
@@ -84,6 +110,7 @@ fileInput.addEventListener('change', async () => {
 
     journeys.forEach(j => j.selected = true);
     await ensureLeaflet();
+    loadM25Reference();
     importMode = null;
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
@@ -92,6 +119,7 @@ fileInput.addEventListener('change', async () => {
   easyProgress.classList.add('hidden');
   ignoredCard.classList.add('hidden');
   motorwayCard.classList.add('hidden');
+  m25CanonicalCard.classList.add('hidden');
     importModeCard.classList.remove('hidden');
     easyProgress.classList.add('hidden');
   } catch (err) {
@@ -127,6 +155,7 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
+m25Retry.addEventListener('click', () => loadM25Reference(true));
 
 function resetOutput() {
   journeys = [];
@@ -568,13 +597,17 @@ function initMap() {
     traceLayer = L.layerGroup();
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
+    m25ReferenceLayer = L.layerGroup();
+    m25CoverageLayer = L.layerGroup();
 
     mapLayerControl = L.control.layers(
       {},
       {
         'Credited roads': creditedLayer,
         'Matched journeys': matchedLayer,
-        'Raw Timeline traces': traceLayer
+        'Raw Timeline traces': traceLayer,
+        'M25 canonical reference': m25ReferenceLayer,
+        'M25 canonical covered sections': m25CoverageLayer
       },
       {collapsed: true}
     ).addTo(map);
@@ -719,6 +752,7 @@ function setDistanceUnit(unit) {
   unitKm.setAttribute('aria-pressed', String(distanceUnit === 'km'));
 
   if (map) renderMap();
+  renderM25CanonicalDashboard();
 }
 
 function displayDistance(km) {
@@ -728,6 +762,260 @@ function displayDistance(km) {
 
   const miles = km * 0.6213711922;
   return `${miles.toFixed(1)} mi`;
+}
+
+
+function normalisedAngleDelta(a, b) {
+  let d = b - a;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
+function wayOrientationSign(coords) {
+  if (!Array.isArray(coords) || coords.length < 2) return 0;
+  const centreLng = LONDON_REFERENCE_CENTRE[0];
+  const centreLat = LONDON_REFERENCE_CENTRE[1];
+  const cosLat = Math.cos(centreLat * Math.PI / 180);
+  const angle = point => Math.atan2(point[1] - centreLat, (point[0] - centreLng) * cosLat);
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    total += normalisedAngleDelta(angle(coords[i - 1]), angle(coords[i]));
+  }
+  return total >= 0 ? 1 : -1;
+}
+
+function wayLengthMetres(coords) {
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) total += haversineMetres(coords[i - 1], coords[i]);
+  return total;
+}
+
+function overpassWayCoordinates(element) {
+  return (element?.geometry || [])
+    .map(p => [Number(p.lon), Number(p.lat)])
+    .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+}
+
+function gridKeyXY(x, y, cellM) {
+  return `${Math.floor(x / cellM)},${Math.floor(y / cellM)}`;
+}
+
+function neighbourGridKeys(x, y, cellM) {
+  const gx = Math.floor(x / cellM);
+  const gy = Math.floor(y / cellM);
+  const keys = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) keys.push(`${gx + dx},${gy + dy}`);
+  }
+  return keys;
+}
+
+function sampleLineEvery(coords, spacingM, callback) {
+  for (let i = 1; i < coords.length; i++) {
+    const a = coords[i - 1], b = coords[i];
+    const lengthM = haversineMetres(a, b);
+    if (!Number.isFinite(lengthM) || lengthM <= 0) continue;
+    const samples = Math.max(1, Math.ceil(lengthM / spacingM));
+    for (let s = 0; s < samples; s++) callback(interpolateLngLat(a, b, s / samples));
+  }
+  if (coords.length) callback(coords[coords.length - 1]);
+}
+
+function buildCanonicalAnchors(ways) {
+  const anchors = [];
+  const dedupeIndex = new Map();
+  const dedupeCellM = 55;
+  const dedupeRadiusM = 45;
+
+  function addAnchor(point) {
+    const [x, y] = mercatorXY(point[0], point[1]);
+    for (const key of neighbourGridKeys(x, y, dedupeCellM)) {
+      for (const id of dedupeIndex.get(key) || []) {
+        const c = anchors[id];
+        if (Math.hypot(x - c.x, y - c.y) <= dedupeRadiusM) return;
+      }
+    }
+    const id = anchors.length;
+    anchors.push({id, lng:point[0], lat:point[1], x, y});
+    const key = gridKeyXY(x, y, dedupeCellM);
+    if (!dedupeIndex.has(key)) dedupeIndex.set(key, []);
+    dedupeIndex.get(key).push(id);
+  }
+
+  for (const way of ways) sampleLineEvery(way.coords, M25_REFERENCE_SAMPLE_M, addAnchor);
+  return anchors;
+}
+
+function buildAnchorIndex(anchors) {
+  const index = new Map();
+  for (const anchor of anchors) {
+    const key = gridKeyXY(anchor.x, anchor.y, M25_INDEX_CELL_M);
+    if (!index.has(key)) index.set(key, []);
+    index.get(key).push(anchor.id);
+  }
+  return index;
+}
+
+function nearestM25Anchor(point) {
+  if (m25Reference.status !== 'ready') return null;
+  const [x, y] = mercatorXY(point[0], point[1]);
+  let best = null, bestDistance = M25_ANCHOR_MATCH_RADIUS_M;
+
+  for (const key of neighbourGridKeys(x, y, M25_INDEX_CELL_M)) {
+    for (const id of m25Reference.anchorIndex.get(key) || []) {
+      const a = m25Reference.anchors[id];
+      const d = Math.hypot(x - a.x, y - a.y);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = id;
+      }
+    }
+  }
+  return best;
+}
+
+async function loadM25Reference(force = false) {
+  if (!force && ['loading','ready'].includes(m25Reference.status)) return;
+
+  m25Reference.status = 'loading';
+  m25Reference.error = null;
+  m25Retry.classList.add('hidden');
+  m25CanonicalCard.classList.remove('hidden');
+  m25CanonicalStatus.className = 'muted canonical-status';
+  m25CanonicalStatus.textContent = 'Loading the fixed M25 road reference from OpenStreetMap…';
+
+  try {
+    const query = `[out:json][timeout:60];relation(${M25_RELATION_ID});way(r);out tags geom;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Reference service returned HTTP ${response.status}.`);
+    const data = await response.json();
+
+    const candidates = (data.elements || [])
+      .filter(element => {
+        const tags = element.tags || {};
+        const refs = String(tags.ref || '').toUpperCase().split(';').map(v => v.trim());
+        return tags.highway === 'motorway' && refs.includes('M25');
+      })
+      .map(element => ({id:element.id, coords:overpassWayCoordinates(element)}))
+      .filter(way => way.coords.length >= 2);
+
+    if (!candidates.length) throw new Error('No M25 motorway geometry was returned.');
+
+    const groups = {'1':[], '-1':[]};
+    const lengths = {'1':0, '-1':0};
+
+    for (const way of candidates) {
+      const key = String(wayOrientationSign(way.coords) || 1);
+      groups[key].push(way);
+      lengths[key] += wayLengthMetres(way.coords);
+    }
+
+    const selectedSign = lengths['1'] >= lengths['-1'] ? '1' : '-1';
+    const canonicalWays = groups[selectedSign];
+    const anchors = buildCanonicalAnchors(canonicalWays);
+
+    if (anchors.length < 500) throw new Error(`M25 reference was unexpectedly sparse (${anchors.length} sections).`);
+
+    m25Reference.canonicalWays = canonicalWays;
+    m25Reference.anchors = anchors;
+    m25Reference.anchorIndex = buildAnchorIndex(anchors);
+    m25Reference.coveredAnchorIds = new Set();
+    m25Reference.status = 'ready';
+
+    m25CanonicalStatus.className = 'muted canonical-status ok';
+    m25CanonicalStatus.textContent =
+      `M25 reference ready · ${anchors.length.toLocaleString()} fixed sections from one carriageway.`;
+
+    renderMap();
+  } catch (err) {
+    m25Reference.status = 'error';
+    m25Reference.error = err.message || String(err);
+    m25CanonicalStatus.className = 'muted canonical-status warn';
+    m25CanonicalStatus.textContent = `M25 reference unavailable: ${m25Reference.error}`;
+    m25Retry.classList.remove('hidden');
+    renderM25CanonicalDashboard();
+  }
+}
+
+function calculateM25Coverage(drawable) {
+  const covered = new Set();
+  if (m25Reference.status !== 'ready') return covered;
+
+  for (const journey of drawable) {
+    for (const feature of journey.motorwayGeoJson?.features || []) {
+      if (feature?.properties?.road_ref !== 'M25') continue;
+      for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
+        const lengthM = haversineMetres(a,b);
+        if (!Number.isFinite(lengthM) || lengthM <= 0) continue;
+        const samples = Math.max(1, Math.ceil(lengthM / M25_MATCH_SAMPLE_M));
+        for (let i=0; i<=samples; i++) {
+          const id = nearestM25Anchor(interpolateLngLat(a,b,i/samples));
+          if (id !== null) covered.add(id);
+        }
+      }
+    }
+  }
+  return covered;
+}
+
+function renderM25ReferenceLayers() {
+  if (!m25ReferenceLayer || !m25CoverageLayer) return;
+  m25ReferenceLayer.clearLayers();
+  m25CoverageLayer.clearLayers();
+  if (m25Reference.status !== 'ready') return;
+
+  for (const way of m25Reference.canonicalWays) {
+    L.polyline(way.coords.map(p => [p[1],p[0]]), {
+      weight:2, opacity:.55, dashArray:'5,6', interactive:false
+    }).addTo(m25ReferenceLayer);
+  }
+
+  for (const id of m25Reference.coveredAnchorIds) {
+    const a = m25Reference.anchors[id];
+    L.circleMarker([a.lat,a.lng], {
+      radius:2, weight:0, fillOpacity:.85, interactive:false
+    }).addTo(m25CoverageLayer);
+  }
+}
+
+function renderM25CanonicalDashboard(drawable = null) {
+  const totalMiles = M25_CANONICAL_LENGTH_KM * 0.6213711922;
+  m25CanonicalTotal.textContent = distanceUnit === 'km'
+    ? `${M25_CANONICAL_LENGTH_KM.toFixed(1)} km`
+    : `${totalMiles.toFixed(1)} mi`;
+
+  if (m25Reference.status === 'idle') {
+    m25CanonicalCard.classList.add('hidden');
+    return;
+  }
+  m25CanonicalCard.classList.remove('hidden');
+
+  if (m25Reference.status !== 'ready') {
+    m25CanonicalPercent.textContent='—';
+    m25CanonicalFill.style.width='0%';
+    m25CanonicalDriven.textContent='—';
+    m25CanonicalSections.textContent='—';
+    return;
+  }
+
+  if (drawable) m25Reference.coveredAnchorIds = calculateM25Coverage(drawable);
+
+  const covered=m25Reference.coveredAnchorIds.size;
+  const total=m25Reference.anchors.length;
+  const percent=total ? Math.min(100,covered/total*100) : 0;
+  const drivenKm=M25_CANONICAL_LENGTH_KM*percent/100;
+
+  m25CanonicalPercent.textContent=`${percent.toFixed(1)}%`;
+  m25CanonicalFill.style.width=`${percent}%`;
+  m25CanonicalDriven.textContent=displayDistance(drivenKm);
+  m25CanonicalSections.textContent=`${covered.toLocaleString()} / ${total.toLocaleString()}`;
+  m25CanonicalStatus.className='muted canonical-status ok';
+  m25CanonicalStatus.textContent=
+    `Fixed-reference result: ${covered.toLocaleString()} of ${total.toLocaleString()} M25 sections credited.`;
+
+  renderM25ReferenceLayers();
 }
 
 function motorwayStats(drawable) {
@@ -818,6 +1106,7 @@ function renderMap() {
   );
 
   renderMotorwayDashboard(drawable);
+  renderM25CanonicalDashboard(drawable);
 
   for (const j of drawable) {
     L.polyline(
