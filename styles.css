@@ -39,3 +39,22 @@ button.secondary { background: #e9edf2; color: #172033; }
   .hero { grid-template-columns: 1fr 300px; align-items: end; }
   .card { padding: 24px; }
 }
+
+.journey-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.journey-actions button {
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: .88rem;
+}
+.match-status {
+  margin-top: 7px;
+  font-size: .82rem;
+}
+.match-status.ok { color: #24663b; }
+.match-status.warn { color: #8a5b00; }
+.match-status.error { color: #a31d1d; }

@@ -2,6 +2,8 @@ let journeys = [];
 let diagnostics = {};
 let map = null;
 let traceLayer = null;
+let matchedLayer = null;
+const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
 const fileStatus = document.getElementById('fileStatus');
@@ -136,8 +138,8 @@ function renderJourneyList() {
   journeyList.innerHTML = '';
 
   journeys.forEach((j, i) => {
-    const label = document.createElement('label');
-    label.className = 'journey';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'journey';
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -174,10 +176,80 @@ function renderJourneyList() {
 
     meta.textContent = detail.join(' · ');
 
-    body.append(title, meta);
-    label.append(cb, body);
-    journeyList.append(label);
+    const actions = document.createElement('div');
+    actions.className = 'journey-actions';
+
+    const matchButton = document.createElement('button');
+    matchButton.type = 'button';
+    matchButton.textContent = 'Match road';
+    matchButton.disabled = j.points.length < 2;
+
+    const status = document.createElement('div');
+    status.className = 'match-status';
+    status.textContent = j.points.length < 2
+      ? 'Not enough coordinates to road-match.'
+      : 'Not matched yet.';
+
+    matchButton.addEventListener('click', () => matchJourney(i, matchButton, status));
+
+    actions.append(matchButton);
+    body.append(title, meta, actions, status);
+    wrapper.append(cb, body);
+    journeyList.append(wrapper);
   });
+}
+
+async function matchJourney(index, button, statusNode) {
+  const journey = journeys[index];
+  if (!journey || journey.points.length < 2) return;
+
+  button.disabled = true;
+  statusNode.className = 'match-status warn';
+  statusNode.textContent = 'Sending journey to road matcher…';
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/match`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({points: journey.points})
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.detail || `Road matcher returned HTTP ${response.status}.`);
+    }
+
+    journey.matchedGeoJson = data.geojson;
+    journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
+    journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
+    journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
+
+    statusNode.className = 'match-status ok';
+    statusNode.textContent =
+      `Matched ${journey.matchedTracepoints}/${journey.pointsSentToMatcher} sampled points · ` +
+      `${journey.matchedDistanceKm.toFixed(1)} km matched`;
+
+    renderMap();
+    fitMatchedJourney(journey);
+  } catch (err) {
+    statusNode.className = 'match-status error';
+    statusNode.textContent = err.message || String(err);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function fitMatchedJourney(journey) {
+  if (!map || !journey?.matchedGeoJson || !window.L) return;
+
+  try {
+    const layer = L.geoJSON(journey.matchedGeoJson);
+    const bounds = layer.getBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, {padding: [24, 24], maxZoom: 15});
+    }
+  } catch (err) {}
 }
 
 function syncCheckboxes() {
@@ -277,6 +349,7 @@ function initMap() {
 
     tiles.addTo(map);
     traceLayer = L.layerGroup().addTo(map);
+    matchedLayer = L.layerGroup().addTo(map);
 
     if (mapStatus) {
       mapStatus.className = 'muted map-status';
@@ -296,9 +369,10 @@ function initMap() {
 }
 
 function renderMap() {
-  if (!map || !traceLayer) return;
+  if (!map || !traceLayer || !matchedLayer) return;
 
   traceLayer.clearLayers();
+  matchedLayer.clearLayers();
 
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
@@ -308,20 +382,31 @@ function renderMap() {
     L.polyline(
       j.points.map(p => [p.lat, p.lng]),
       {
-        weight: 3,
-        opacity: 0.6,
+        weight: 2,
+        opacity: 0.30,
         interactive: false
       }
     ).addTo(traceLayer);
+
+    if (j.matchedGeoJson) {
+      L.geoJSON(j.matchedGeoJson, {
+        style: {
+          weight: 5,
+          opacity: 0.95
+        }
+      }).addTo(matchedLayer);
+    }
   }
 
   requestAnimationFrame(() => map.invalidateSize(true));
 
+  const matchedCount = drawable.filter(j => j.matchedGeoJson).length;
+
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
     mapStatus.textContent =
-      `Map ready: ${drawable.length.toLocaleString()} journey traces drawn from ` +
-      `${drawable.reduce((n, j) => n + j.points.length, 0).toLocaleString()} coordinates.`;
+      `Map ready: ${drawable.length.toLocaleString()} raw journey traces · ` +
+      `${matchedCount.toLocaleString()} road-matched journey${matchedCount === 1 ? '' : 's'}.`;
   }
 }
 
