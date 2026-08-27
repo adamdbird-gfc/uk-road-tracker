@@ -37,6 +37,7 @@
       <div class="actions">
         <button id="selectAll">Import all</button>
         <button id="selectNone" class="secondary">Clear selection</button>
+        <button id="clearMatches" class="secondary">Clear matched roads</button>
       </div>
       <p class="muted">Tap <strong>Match road</strong> on a journey to send only that journey&apos;s coordinates to the live backend.</p>
       <div id="journeyList" class="journey-list"></div>
@@ -46,7 +47,7 @@
       <div class="map-heading">
         <div>
           <h2>3. Preview</h2>
-          <p class="muted">Raw Timeline traces are shown lightly. A successfully road-matched journey is drawn more strongly on top.</p>
+          <p class="muted">The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.</p>
         </div>
         <button id="fitMap" class="secondary">Fit selected</button>
       </div>

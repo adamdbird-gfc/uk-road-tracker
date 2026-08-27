@@ -3,6 +3,8 @@ let diagnostics = {};
 let map = null;
 let traceLayer = null;
 let matchedLayer = null;
+let creditedLayer = null;
+let mapLayerControl = null;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -73,6 +75,7 @@ document.getElementById('selectNone').addEventListener('click', () => {
 });
 
 document.getElementById('fitMap').addEventListener('click', fitSelected);
+document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 
 function resetOutput() {
   journeys = [];
@@ -158,6 +161,13 @@ function renderJourneyList() {
     title.textContent =
       `${formatDate(j.start)} · ${formatTime(j.start)}–${formatTime(j.end)}`;
 
+    if (j.matchQuality) {
+      const badge = document.createElement('span');
+      badge.className = `match-badge ${j.matchQuality.level}`;
+      badge.textContent = j.matchQuality.label;
+      title.append(badge);
+    }
+
     const meta = document.createElement('div');
     meta.className = 'journey-meta';
 
@@ -181,14 +191,21 @@ function renderJourneyList() {
 
     const matchButton = document.createElement('button');
     matchButton.type = 'button';
-    matchButton.textContent = 'Match road';
+    matchButton.textContent = j.matchedGeoJson ? 'Re-match road' : 'Match road';
     matchButton.disabled = j.points.length < 2;
 
     const status = document.createElement('div');
-    status.className = 'match-status';
-    status.textContent = j.points.length < 2
-      ? 'Not enough coordinates to road-match.'
-      : 'Not matched yet.';
+    status.className = j.matchedGeoJson
+      ? `match-status ${j.matchQuality?.level === 'high' ? 'ok' : 'warn'}`
+      : 'match-status';
+
+    if (j.matchedGeoJson) {
+      status.textContent = matchStatusText(j);
+    } else {
+      status.textContent = j.points.length < 2
+        ? 'Not enough coordinates to road-match.'
+        : 'Not matched yet.';
+    }
 
     matchButton.addEventListener('click', () => matchJourney(i, matchButton, status));
 
@@ -197,6 +214,44 @@ function renderJourneyList() {
     wrapper.append(cb, body);
     journeyList.append(wrapper);
   });
+}
+
+function assessMatchQuality(journey, data) {
+  const sent = Number(data.points_sent_to_matcher || 0);
+  const matched = Number(data.matched_tracepoints || 0);
+  const coverage = sent > 0 ? matched / sent : 0;
+
+  const confidences = (data.geojson?.features || [])
+    .map(f => Number(f?.properties?.confidence))
+    .filter(Number.isFinite);
+
+  const avgConfidence = confidences.length
+    ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+    : null;
+
+  if (coverage >= 0.9 && (avgConfidence === null || avgConfidence >= 0.65)) {
+    return {level: 'high', label: 'HIGH', coverage, avgConfidence};
+  }
+
+  if (coverage >= 0.65 && (avgConfidence === null || avgConfidence >= 0.30)) {
+    return {level: 'review', label: 'REVIEW', coverage, avgConfidence};
+  }
+
+  return {level: 'low', label: 'LOW', coverage, avgConfidence};
+}
+
+function matchStatusText(journey) {
+  const q = journey.matchQuality;
+  const coverage = q ? `${Math.round(q.coverage * 100)}% point coverage` : '';
+  const confidence = q && Number.isFinite(q.avgConfidence)
+    ? `${Math.round(q.avgConfidence * 100)}% avg confidence`
+    : '';
+
+  return [
+    `${journey.matchedTracepoints}/${journey.pointsSentToMatcher} matched tracepoints`,
+    coverage,
+    confidence
+  ].filter(Boolean).join(' · ');
 }
 
 async function matchJourney(index, button, statusNode) {
@@ -224,12 +279,13 @@ async function matchJourney(index, button, statusNode) {
     journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
+    journey.matchQuality = assessMatchQuality(journey, data);
 
-    statusNode.className = 'match-status ok';
-    statusNode.textContent =
-      `Matched ${journey.matchedTracepoints}/${journey.pointsSentToMatcher} sampled points · ` +
-      `${journey.matchedDistanceKm.toFixed(1)} km matched`;
+    statusNode.className =
+      `match-status ${journey.matchQuality.level === 'high' ? 'ok' : 'warn'}`;
+    statusNode.textContent = matchStatusText(journey);
 
+    renderJourneyList();
     renderMap();
     fitMatchedJourney(journey);
   } catch (err) {
@@ -250,6 +306,18 @@ function fitMatchedJourney(journey) {
       map.fitBounds(bounds, {padding: [24, 24], maxZoom: 15});
     }
   } catch (err) {}
+}
+
+function clearMatchedRoads() {
+  journeys.forEach(j => {
+    delete j.matchedGeoJson;
+    delete j.matchedDistanceKm;
+    delete j.matchedTracepoints;
+    delete j.pointsSentToMatcher;
+    delete j.matchQuality;
+  });
+  renderJourneyList();
+  renderMap();
 }
 
 function syncCheckboxes() {
@@ -332,10 +400,11 @@ function initMap() {
     });
 
     tiles.on('load', () => {
-      if (mapStatus) {
+      if (mapStatus && !journeys.some(j => j.matchedGeoJson)) {
+        const selectedDrawable = journeys.filter(j => j.selected && j.points.length > 1).length;
         mapStatus.className = 'muted map-status ok';
         mapStatus.textContent =
-          `Map loaded. ${journeys.filter(j => j.selected && j.points.length > 1).length.toLocaleString()} selected journey traces are available.`;
+          `Map loaded. ${selectedDrawable.toLocaleString()} selected raw journey trace${selectedDrawable === 1 ? '' : 's'} available.`;
       }
     });
 
@@ -348,8 +417,19 @@ function initMap() {
     });
 
     tiles.addTo(map);
-    traceLayer = L.layerGroup().addTo(map);
-    matchedLayer = L.layerGroup().addTo(map);
+    traceLayer = L.layerGroup();
+    matchedLayer = L.layerGroup();
+    creditedLayer = L.layerGroup().addTo(map);
+
+    mapLayerControl = L.control.layers(
+      {},
+      {
+        'Credited roads': creditedLayer,
+        'Matched journeys': matchedLayer,
+        'Raw Timeline traces': traceLayer
+      },
+      {collapsed: true}
+    ).addTo(map);
 
     if (mapStatus) {
       mapStatus.className = 'muted map-status';
@@ -368,11 +448,83 @@ function initMap() {
   }
 }
 
+function geometrySegments(geojson) {
+  const segments = [];
+
+  for (const feature of geojson?.features || []) {
+    const geometry = feature?.geometry;
+    if (!geometry) continue;
+
+    const lines =
+      geometry.type === 'LineString'
+        ? [geometry.coordinates]
+        : geometry.type === 'MultiLineString'
+          ? geometry.coordinates
+          : [];
+
+    for (const line of lines) {
+      for (let i = 1; i < line.length; i++) {
+        const a = line[i - 1];
+        const b = line[i];
+        if (!Array.isArray(a) || !Array.isArray(b)) continue;
+        segments.push([a, b]);
+      }
+    }
+  }
+
+  return segments;
+}
+
+function pointKey(point) {
+  // 5 decimal places is roughly metre-level in the UK.
+  return `${Number(point[0]).toFixed(5)},${Number(point[1]).toFixed(5)}`;
+}
+
+function segmentKey(a, b) {
+  const aa = pointKey(a);
+  const bb = pointKey(b);
+  return aa < bb ? `${aa}|${bb}` : `${bb}|${aa}`;
+}
+
+function buildCreditedSegments(drawable) {
+  const unique = new Map();
+
+  for (const journey of drawable) {
+    if (!journey.matchedGeoJson) continue;
+
+    for (const [a, b] of geometrySegments(journey.matchedGeoJson)) {
+      const key = segmentKey(a, b);
+
+      if (!unique.has(key)) {
+        unique.set(key, {
+          a,
+          b,
+          journeys: 0,
+          quality: journey.matchQuality?.level || 'review'
+        });
+      }
+
+      const item = unique.get(key);
+      item.journeys += 1;
+
+      // Keep the least-confident status when multiple journeys credit a segment.
+      if (journey.matchQuality?.level === 'low') item.quality = 'low';
+      else if (
+        journey.matchQuality?.level === 'review' &&
+        item.quality === 'high'
+      ) item.quality = 'review';
+    }
+  }
+
+  return [...unique.values()];
+}
+
 function renderMap() {
-  if (!map || !traceLayer || !matchedLayer) return;
+  if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
 
   traceLayer.clearLayers();
   matchedLayer.clearLayers();
+  creditedLayer.clearLayers();
 
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
@@ -383,7 +535,7 @@ function renderMap() {
       j.points.map(p => [p.lat, p.lng]),
       {
         weight: 2,
-        opacity: 0.30,
+        opacity: 0.28,
         interactive: false
       }
     ).addTo(traceLayer);
@@ -391,22 +543,47 @@ function renderMap() {
     if (j.matchedGeoJson) {
       L.geoJSON(j.matchedGeoJson, {
         style: {
-          weight: 5,
-          opacity: 0.95
+          weight: 4,
+          opacity: 0.55,
+          dashArray: j.matchQuality?.level === 'low' ? '5,7' : null
         }
       }).addTo(matchedLayer);
     }
   }
 
+  const credited = buildCreditedSegments(drawable);
+
+  for (const seg of credited) {
+    const line = L.polyline(
+      [
+        [seg.a[1], seg.a[0]],
+        [seg.b[1], seg.b[0]]
+      ],
+      {
+        weight: seg.quality === 'high' ? 5 : 4,
+        opacity: seg.quality === 'low' ? 0.45 : 0.85,
+        dashArray: seg.quality === 'low' ? '4,6' : null
+      }
+    ).addTo(creditedLayer);
+
+    line.bindTooltip(
+      `${seg.journeys} matched journey${seg.journeys === 1 ? '' : 's'} · ${seg.quality.toUpperCase()}`
+    );
+  }
+
   requestAnimationFrame(() => map.invalidateSize(true));
 
   const matchedCount = drawable.filter(j => j.matchedGeoJson).length;
+  const highCount = drawable.filter(j => j.matchQuality?.level === 'high').length;
+  const reviewCount = drawable.filter(
+    j => j.matchQuality && j.matchQuality.level !== 'high'
+  ).length;
 
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
     mapStatus.textContent =
-      `Map ready: ${drawable.length.toLocaleString()} raw journey traces · ` +
-      `${matchedCount.toLocaleString()} road-matched journey${matchedCount === 1 ? '' : 's'}.`;
+      `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
+      `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review).`;
   }
 }
 

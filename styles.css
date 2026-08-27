@@ -58,3 +58,31 @@ button.secondary { background: #e9edf2; color: #172033; }
 .match-status.ok { color: #24663b; }
 .match-status.warn { color: #8a5b00; }
 .match-status.error { color: #a31d1d; }
+
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  margin-left: 6px;
+  font-size: .72rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.match-badge.high { background: #e7f5ec; color: #24663b; }
+.match-badge.review { background: #fff5d8; color: #765300; }
+.match-badge.low { background: #fff0f0; color: #a31d1d; }
+.map-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+.map-summary div {
+  background: #f4f6f8;
+  border-radius: 10px;
+  padding: 9px;
+  text-align: center;
+}
+.map-summary strong { display: block; font-size: 1.15rem; }
+.map-summary span { font-size: .72rem; color: #657083; }
