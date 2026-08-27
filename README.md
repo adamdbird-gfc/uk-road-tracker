@@ -74,3 +74,44 @@ Next acceptance test:
 Motorway distance defaults to miles for UK users. A Miles / km toggle above
 the motorway list switches the displayed matched distances instantly without
 re-running Timeline processing or road matching.
+
+
+## POC 13 — Canonical M25 Coverage
+
+- Loads OpenStreetMap M25 relation 106164 live through Overpass.
+- Separates the two mainline carriageways by their direction around London.
+- Uses one carriageway as the fixed canonical road reference.
+- Samples that reference into approximately 100 m anchor sections.
+- Projects matched M25 geometry from either direction to the nearest canonical
+  section within 85 m.
+- Each fixed section can only be credited once.
+- Completion = credited canonical sections / all canonical sections.
+- Display reference length: 188 km / 116.8 miles.
+
+A production version should cache and version the OSM reference server-side
+rather than loading Overpass from the browser.
+
+
+## POC 14 — pause/resume + M25 completion layers
+
+- Easy Import now uses a Pause / Resume toggle instead of a one-way Stop button.
+  The current progress is retained while paused and processing resumes from the
+  next journey.
+- M25 canonical map layers are now labelled Completed / Uncompleted.
+- Both use the same line width.
+- Completed M25 sections are blue; uncompleted M25 sections are red.
+
+
+## POC 15 — Canonical motorway network
+
+Generalises the successful M25 fixed-reference model to every motorway ref discovered in matched journeys.
+
+- Includes M-roads and A-road motorways such as A1(M).
+- Canonical references are lazy-loaded sequentially from OpenStreetMap/Overpass.
+- Both carriageways are sampled every ~100 m and nearby anchors are spatially deduplicated into one physical-road reference.
+- Journey geometry from either direction projects to the same canonical anchors.
+- Each anchor can be credited only once.
+- Completion percentage is calculated independently for every discovered motorway.
+- Completed and uncompleted motorway sections can be viewed as separate map layers.
+
+Production should pre-build, cache and version this reference network rather than querying Overpass from each browser.

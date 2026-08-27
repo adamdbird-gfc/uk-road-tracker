@@ -12,7 +12,7 @@ OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
 
-app = FastAPI(title="UK Road Tracker API", version="0.5.0")
+app = FastAPI(title="UK Road Tracker API", version="0.6.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,8 +55,8 @@ def motorway_refs(ref):
     refs = []
     for part in re.split(r"[;,/]", ref.upper()):
         cleaned = re.sub(r"\s+", "", part.strip())
-        # POC 9 starts with M-numbered motorways. A1(M) etc can follow.
-        if re.fullmatch(r"M\d+[A-Z]?", cleaned):
+        # Include both conventional M-roads and A-road motorways such as A1(M).
+        if re.fullmatch(r"M\d+[A-Z]?", cleaned) or re.fullmatch(r"A\d+\(M\)", cleaned):
             refs.append(cleaned)
     return refs
 
@@ -103,14 +103,14 @@ async def root():
         "service": "UK Road Tracker API",
         "status": "ok",
         "matcher": "OSRM public demo",
-        "version": "0.5.0",
-        "feature": "motorway step refs",
+        "version": "0.6.0",
+        "feature": "UK motorway step refs including A(M)",
         "chunk_size": OSRM_CHUNK_SIZE,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.5.0"}
+    return {"status": "ok", "version": "0.6.0"}
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):

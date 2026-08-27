@@ -10,16 +10,11 @@ let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
 let distanceUnit = 'miles';
-let m25ReferenceLayer = null;
-let m25CoverageLayer = null;
-let m25Reference = {
-  status: 'idle',
-  error: null,
-  anchors: [],
-  anchorIndex: new Map(),
-  canonicalWays: [],
-  coveredAnchorIds: new Set()
-};
+let canonicalReferenceLayer = null;
+let canonicalCoverageLayer = null;
+let canonicalUncoveredLayer = null;
+const canonicalRoads = new Map();
+let canonicalLoadQueueRunning = false;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -44,14 +39,11 @@ const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
 const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
-const m25CanonicalCard = document.getElementById('m25CanonicalCard');
-const m25CanonicalPercent = document.getElementById('m25CanonicalPercent');
-const m25CanonicalFill = document.getElementById('m25CanonicalFill');
-const m25CanonicalDriven = document.getElementById('m25CanonicalDriven');
-const m25CanonicalTotal = document.getElementById('m25CanonicalTotal');
-const m25CanonicalSections = document.getElementById('m25CanonicalSections');
-const m25CanonicalStatus = document.getElementById('m25CanonicalStatus');
-const m25Retry = document.getElementById('m25Retry');
+const canonicalMotorwayCard = document.getElementById('canonicalMotorwayCard');
+const canonicalMotorwayList = document.getElementById('canonicalMotorwayList');
+const canonicalRoadsReady = document.getElementById('canonicalRoadsReady');
+const canonicalMotorwayStatus = document.getElementById('canonicalMotorwayStatus');
+const canonicalRetry = document.getElementById('canonicalRetry');
 
 const MOTORWAY_LENGTH_KM = {
   M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
@@ -62,13 +54,12 @@ const MOTORWAY_LENGTH_KM = {
   M66:14.297, M67:7.656, M69:26.269, M180:41.076, M181:4.190,
   M271:3.537, M602:6.958, M606:4.663, M621:14.803
 };
-const M25_RELATION_ID = 106164;
-const M25_CANONICAL_LENGTH_KM = 188.0;
-const M25_REFERENCE_SAMPLE_M = 100;
-const M25_MATCH_SAMPLE_M = 25;
-const M25_ANCHOR_MATCH_RADIUS_M = 85;
-const M25_INDEX_CELL_M = 220;
-const LONDON_REFERENCE_CENTRE = [-0.1278, 51.5074];
+const CANONICAL_REFERENCE_SAMPLE_M = 100;
+const CANONICAL_MATCH_SAMPLE_M = 25;
+const CANONICAL_ANCHOR_MATCH_RADIUS_M = 90;
+const CANONICAL_INDEX_CELL_M = 220;
+const CANONICAL_DEDUPE_CELL_M = 55;
+const CANONICAL_DEDUPE_RADIUS_M = 45;
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
@@ -111,7 +102,6 @@ fileInput.addEventListener('change', async () => {
 
     journeys.forEach(j => j.selected = true);
     await ensureLeaflet();
-    loadM25Reference();
     importMode = null;
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
@@ -120,7 +110,7 @@ fileInput.addEventListener('change', async () => {
   easyProgress.classList.add('hidden');
   ignoredCard.classList.add('hidden');
   motorwayCard.classList.add('hidden');
-  m25CanonicalCard.classList.add('hidden');
+  canonicalMotorwayCard.classList.add('hidden');
     importModeCard.classList.remove('hidden');
     easyProgress.classList.add('hidden');
   } catch (err) {
@@ -163,7 +153,7 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
-m25Retry.addEventListener('click', () => loadM25Reference(true));
+canonicalRetry.addEventListener('click', retryCanonicalRoads);
 
 function resetOutput() {
   journeys = [];
@@ -633,8 +623,9 @@ function initMap() {
     traceLayer = L.layerGroup();
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
-    m25ReferenceLayer = L.layerGroup();
-    m25CoverageLayer = L.layerGroup();
+    canonicalReferenceLayer = L.layerGroup();
+    canonicalCoverageLayer = L.layerGroup();
+    canonicalUncoveredLayer = L.layerGroup();
 
     mapLayerControl = L.control.layers(
       {},
@@ -642,8 +633,9 @@ function initMap() {
         'Credited roads': creditedLayer,
         'Matched journeys': matchedLayer,
         'Raw Timeline traces': traceLayer,
-        'M25 uncompleted sections': m25ReferenceLayer,
-        'M25 completed sections': m25CoverageLayer
+        'Canonical motorway references': canonicalReferenceLayer,
+        'Motorway completed sections': canonicalCoverageLayer,
+        'Motorway uncompleted sections': canonicalUncoveredLayer
       },
       {collapsed: true}
     ).addTo(map);
@@ -788,7 +780,7 @@ function setDistanceUnit(unit) {
   unitKm.setAttribute('aria-pressed', String(distanceUnit === 'km'));
 
   if (map) renderMap();
-  renderM25CanonicalDashboard();
+  renderCanonicalMotorwayDashboard();
 }
 
 function displayDistance(km) {
@@ -800,38 +792,6 @@ function displayDistance(km) {
   return `${miles.toFixed(1)} mi`;
 }
 
-
-function normalisedAngleDelta(a, b) {
-  let d = b - a;
-  while (d > Math.PI) d -= Math.PI * 2;
-  while (d < -Math.PI) d += Math.PI * 2;
-  return d;
-}
-
-function wayOrientationSign(coords) {
-  if (!Array.isArray(coords) || coords.length < 2) return 0;
-  const centreLng = LONDON_REFERENCE_CENTRE[0];
-  const centreLat = LONDON_REFERENCE_CENTRE[1];
-  const cosLat = Math.cos(centreLat * Math.PI / 180);
-  const angle = point => Math.atan2(point[1] - centreLat, (point[0] - centreLng) * cosLat);
-  let total = 0;
-  for (let i = 1; i < coords.length; i++) {
-    total += normalisedAngleDelta(angle(coords[i - 1]), angle(coords[i]));
-  }
-  return total >= 0 ? 1 : -1;
-}
-
-function wayLengthMetres(coords) {
-  let total = 0;
-  for (let i = 1; i < coords.length; i++) total += haversineMetres(coords[i - 1], coords[i]);
-  return total;
-}
-
-function overpassWayCoordinates(element) {
-  return (element?.geometry || [])
-    .map(p => [Number(p.lon), Number(p.lat)])
-    .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
-}
 
 function gridKeyXY(x, y, cellM) {
   return `${Math.floor(x / cellM)},${Math.floor(y / cellM)}`;
@@ -858,137 +818,145 @@ function sampleLineEvery(coords, spacingM, callback) {
   if (coords.length) callback(coords[coords.length - 1]);
 }
 
+function overpassWayCoordinates(element) {
+  return (element?.geometry || [])
+    .map(p => [Number(p.lon), Number(p.lat)])
+    .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+}
+
+function normaliseMotorwayRef(ref) {
+  return String(ref || '').toUpperCase().replace(/\s+/g, '');
+}
+
+function canonicalRoadState(ref) {
+  const key = normaliseMotorwayRef(ref);
+  if (!canonicalRoads.has(key)) {
+    canonicalRoads.set(key, {
+      ref:key, status:'idle', error:null, ways:[], anchors:[],
+      anchorIndex:new Map(), coveredAnchorIds:new Set(), totalKm:0
+    });
+  }
+  return canonicalRoads.get(key);
+}
+
 function buildCanonicalAnchors(ways) {
   const anchors = [];
   const dedupeIndex = new Map();
-  const dedupeCellM = 55;
-  const dedupeRadiusM = 45;
 
   function addAnchor(point) {
-    const [x, y] = mercatorXY(point[0], point[1]);
-    for (const key of neighbourGridKeys(x, y, dedupeCellM)) {
+    const [x,y] = mercatorXY(point[0],point[1]);
+    for (const key of neighbourGridKeys(x,y,CANONICAL_DEDUPE_CELL_M)) {
       for (const id of dedupeIndex.get(key) || []) {
-        const c = anchors[id];
-        if (Math.hypot(x - c.x, y - c.y) <= dedupeRadiusM) return;
+        const candidate=anchors[id];
+        if (Math.hypot(x-candidate.x,y-candidate.y) <= CANONICAL_DEDUPE_RADIUS_M) return;
       }
     }
-    const id = anchors.length;
-    anchors.push({id, lng:point[0], lat:point[1], x, y});
-    const key = gridKeyXY(x, y, dedupeCellM);
-    if (!dedupeIndex.has(key)) dedupeIndex.set(key, []);
+    const id=anchors.length;
+    anchors.push({id,lng:point[0],lat:point[1],x,y});
+    const key=gridKeyXY(x,y,CANONICAL_DEDUPE_CELL_M);
+    if (!dedupeIndex.has(key)) dedupeIndex.set(key,[]);
     dedupeIndex.get(key).push(id);
   }
 
-  for (const way of ways) sampleLineEvery(way.coords, M25_REFERENCE_SAMPLE_M, addAnchor);
+  for (const way of ways) sampleLineEvery(way.coords,CANONICAL_REFERENCE_SAMPLE_M,addAnchor);
   return anchors;
 }
 
 function buildAnchorIndex(anchors) {
-  const index = new Map();
+  const index=new Map();
   for (const anchor of anchors) {
-    const key = gridKeyXY(anchor.x, anchor.y, M25_INDEX_CELL_M);
-    if (!index.has(key)) index.set(key, []);
+    const key=gridKeyXY(anchor.x,anchor.y,CANONICAL_INDEX_CELL_M);
+    if (!index.has(key)) index.set(key,[]);
     index.get(key).push(anchor.id);
   }
   return index;
 }
 
-function nearestM25Anchor(point) {
-  if (m25Reference.status !== 'ready') return null;
-  const [x, y] = mercatorXY(point[0], point[1]);
-  let best = null, bestDistance = M25_ANCHOR_MATCH_RADIUS_M;
-
-  for (const key of neighbourGridKeys(x, y, M25_INDEX_CELL_M)) {
-    for (const id of m25Reference.anchorIndex.get(key) || []) {
-      const a = m25Reference.anchors[id];
-      const d = Math.hypot(x - a.x, y - a.y);
-      if (d < bestDistance) {
-        bestDistance = d;
-        best = id;
-      }
+function nearestCanonicalAnchor(road, point) {
+  if (!road || road.status !== 'ready') return null;
+  const [x,y]=mercatorXY(point[0],point[1]);
+  let best=null,bestDistance=CANONICAL_ANCHOR_MATCH_RADIUS_M;
+  for (const key of neighbourGridKeys(x,y,CANONICAL_INDEX_CELL_M)) {
+    for (const id of road.anchorIndex.get(key) || []) {
+      const a=road.anchors[id];
+      const d=Math.hypot(x-a.x,y-a.y);
+      if (d < bestDistance) { bestDistance=d; best=id; }
     }
   }
   return best;
 }
 
-async function loadM25Reference(force = false) {
-  if (!force && ['loading','ready'].includes(m25Reference.status)) return;
+async function loadCanonicalRoad(ref, force=false) {
+  const road=canonicalRoadState(ref);
+  if (!force && ['loading','ready'].includes(road.status)) return road;
 
-  m25Reference.status = 'loading';
-  m25Reference.error = null;
-  m25Retry.classList.add('hidden');
-  m25CanonicalCard.classList.remove('hidden');
-  m25CanonicalStatus.className = 'muted canonical-status';
-  m25CanonicalStatus.textContent = 'Loading the fixed M25 road reference from OpenStreetMap…';
+  road.status='loading'; road.error=null;
+  renderCanonicalMotorwayDashboard();
 
   try {
-    const query = `[out:json][timeout:60];relation(${M25_RELATION_ID});way(r);out tags geom;`;
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-    const response = await fetch(url);
+    const escapedRef=road.ref.replace(/"/g,'\\"');
+    const query=`[out:json][timeout:60];relation["type"="route"]["route"="road"]["ref"="${escapedRef}"];way(r)["highway"="motorway"];out tags geom;`;
+    let response=await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error(`Reference service returned HTTP ${response.status}.`);
-    const data = await response.json();
+    let data=await response.json();
+    let ways=(data.elements || []).map(e=>({id:e.id,coords:overpassWayCoordinates(e)})).filter(w=>w.coords.length>=2);
 
-    const candidates = (data.elements || [])
-      .filter(element => {
-        const tags = element.tags || {};
-        const refs = String(tags.ref || '').toUpperCase().split(';').map(v => v.trim());
-        return tags.highway === 'motorway' && refs.includes('M25');
-      })
-      .map(element => ({id:element.id, coords:overpassWayCoordinates(element)}))
-      .filter(way => way.coords.length >= 2);
-
-    if (!candidates.length) throw new Error('No M25 motorway geometry was returned.');
-
-    const groups = {'1':[], '-1':[]};
-    const lengths = {'1':0, '-1':0};
-
-    for (const way of candidates) {
-      const key = String(wayOrientationSign(way.coords) || 1);
-      groups[key].push(way);
-      lengths[key] += wayLengthMetres(way.coords);
+    if (!ways.length) {
+      const fallback=`[out:json][timeout:60];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"="${escapedRef}"];out tags geom;`;
+      response=await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(fallback)}`);
+      if (!response.ok) throw new Error(`Fallback reference service returned HTTP ${response.status}.`);
+      data=await response.json();
+      ways=(data.elements || []).map(e=>({id:e.id,coords:overpassWayCoordinates(e)})).filter(w=>w.coords.length>=2);
     }
 
-    const selectedSign = lengths['1'] >= lengths['-1'] ? '1' : '-1';
-    const canonicalWays = groups[selectedSign];
-    const anchors = buildCanonicalAnchors(canonicalWays);
+    if (!ways.length) throw new Error(`No OpenStreetMap motorway geometry found for ${road.ref}.`);
 
-    if (anchors.length < 500) throw new Error(`M25 reference was unexpectedly sparse (${anchors.length} sections).`);
+    const anchors=buildCanonicalAnchors(ways);
+    if (anchors.length < 3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
 
-    m25Reference.canonicalWays = canonicalWays;
-    m25Reference.anchors = anchors;
-    m25Reference.anchorIndex = buildAnchorIndex(anchors);
-    m25Reference.coveredAnchorIds = new Set();
-    m25Reference.status = 'ready';
-
-    m25CanonicalStatus.className = 'muted canonical-status ok';
-    m25CanonicalStatus.textContent =
-      `M25 reference ready · ${anchors.length.toLocaleString()} fixed sections from one carriageway.`;
-
+    road.ways=ways;
+    road.anchors=anchors;
+    road.anchorIndex=buildAnchorIndex(anchors);
+    road.coveredAnchorIds=new Set();
+    road.totalKm=anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
+    road.status='ready';
     renderMap();
-  } catch (err) {
-    m25Reference.status = 'error';
-    m25Reference.error = err.message || String(err);
-    m25CanonicalStatus.className = 'muted canonical-status warn';
-    m25CanonicalStatus.textContent = `M25 reference unavailable: ${m25Reference.error}`;
-    m25Retry.classList.remove('hidden');
-    renderM25CanonicalDashboard();
+    return road;
+  } catch(err) {
+    road.status='error'; road.error=err.message || String(err);
+    renderCanonicalMotorwayDashboard();
+    return road;
   }
 }
 
-function calculateM25Coverage(drawable) {
-  const covered = new Set();
-  if (m25Reference.status !== 'ready') return covered;
+async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
+  const queue=[...new Set(refs.map(normaliseMotorwayRef).filter(Boolean))]
+    .filter(ref=>canonicalRoadState(ref).status==='idle');
+  if (!queue.length || canonicalLoadQueueRunning) return;
+  canonicalLoadQueueRunning=true;
+  try {
+    for (const ref of queue) {
+      await loadCanonicalRoad(ref);
+      await new Promise(resolve=>setTimeout(resolve,400));
+    }
+  } finally {
+    canonicalLoadQueueRunning=false;
+  }
+}
 
+function calculateCanonicalCoverageForRoad(road, drawable) {
+  const covered=new Set();
+  if (!road || road.status!=='ready') return covered;
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
-      if (feature?.properties?.road_ref !== 'M25') continue;
+      if (normaliseMotorwayRef(feature?.properties?.road_ref)!==road.ref) continue;
       for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
-        const lengthM = haversineMetres(a,b);
-        if (!Number.isFinite(lengthM) || lengthM <= 0) continue;
-        const samples = Math.max(1, Math.ceil(lengthM / M25_MATCH_SAMPLE_M));
-        for (let i=0; i<=samples; i++) {
-          const id = nearestM25Anchor(interpolateLngLat(a,b,i/samples));
-          if (id !== null) covered.add(id);
+        const lengthM=haversineMetres(a,b);
+        if (!Number.isFinite(lengthM) || lengthM<=0) continue;
+        const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_MATCH_SAMPLE_M));
+        for (let i=0;i<=samples;i++) {
+          const id=nearestCanonicalAnchor(road,interpolateLngLat(a,b,i/samples));
+          if (id!==null) covered.add(id);
         }
       }
     }
@@ -996,86 +964,105 @@ function calculateM25Coverage(drawable) {
   return covered;
 }
 
-function renderM25ReferenceLayers() {
-  if (!m25ReferenceLayer || !m25CoverageLayer) return;
+function renderCanonicalMapLayers() {
+  if (!canonicalReferenceLayer || !canonicalCoverageLayer || !canonicalUncoveredLayer) return;
+  canonicalReferenceLayer.clearLayers();
+  canonicalCoverageLayer.clearLayers();
+  canonicalUncoveredLayer.clearLayers();
 
-  m25ReferenceLayer.clearLayers();
-  m25CoverageLayer.clearLayers();
+  for (const road of canonicalRoads.values()) {
+    if (road.status!=='ready') continue;
 
-  if (m25Reference.status !== 'ready') return;
+    for (const way of road.ways) {
+      L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
+    }
 
-  /*
-   * Draw each canonical anchor as a short section centred on that point.
-   * Completed and uncompleted sections use the same width so the only
-   * visual distinction is status: completed = blue, uncompleted = red.
-   */
-  const anchors = m25Reference.anchors;
-
-  for (let i = 0; i < anchors.length - 1; i++) {
-    const a = anchors[i];
-    const b = anchors[i + 1];
-
-    // Avoid drawing accidental cross-map joins where sampled ways are not
-    // contiguous in the flattened anchor list.
-    const gapM = haversineMetres([a.lng, a.lat], [b.lng, b.lat]);
-    if (!Number.isFinite(gapM) || gapM > 220) continue;
-
-    const covered =
-      m25Reference.coveredAnchorIds.has(a.id) ||
-      m25Reference.coveredAnchorIds.has(b.id);
-
-    const targetLayer = covered ? m25CoverageLayer : m25ReferenceLayer;
-
-    L.polyline(
-      [
-        [a.lat, a.lng],
-        [b.lat, b.lng]
-      ],
-      {
-        weight: 5,
-        opacity: 0.95,
-        interactive: false,
-        color: covered ? '#2f7df6' : '#d93a3a'
-      }
-    ).addTo(targetLayer);
+    for (const anchor of road.anchors) {
+      const covered=road.coveredAnchorIds.has(anchor.id);
+      L.circleMarker([anchor.lat,anchor.lng],{
+        radius:2.7,weight:0,fillOpacity:.95,
+        color:covered ? '#2f7df6' : '#d93a3a',
+        fillColor:covered ? '#2f7df6' : '#d93a3a',interactive:false
+      }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
+    }
   }
 }
-function renderM25CanonicalDashboard(drawable = null) {
-  const totalMiles = M25_CANONICAL_LENGTH_KM * 0.6213711922;
-  m25CanonicalTotal.textContent = distanceUnit === 'km'
-    ? `${M25_CANONICAL_LENGTH_KM.toFixed(1)} km`
-    : `${totalMiles.toFixed(1)} mi`;
 
-  if (m25Reference.status === 'idle') {
-    m25CanonicalCard.classList.add('hidden');
+function renderCanonicalMotorwayDashboard(drawable=null) {
+  const discoveredRefs=drawable
+    ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(f=>normaliseMotorwayRef(f?.properties?.road_ref)).filter(Boolean)))]
+    : [...canonicalRoads.keys()];
+
+  if (!discoveredRefs.length && !canonicalRoads.size) {
+    canonicalMotorwayCard.classList.add('hidden');
     return;
   }
-  m25CanonicalCard.classList.remove('hidden');
+  canonicalMotorwayCard.classList.remove('hidden');
 
-  if (m25Reference.status !== 'ready') {
-    m25CanonicalPercent.textContent='—';
-    m25CanonicalFill.style.width='0%';
-    m25CanonicalDriven.textContent='—';
-    m25CanonicalSections.textContent='—';
-    return;
+  if (drawable) {
+    for (const ref of discoveredRefs) {
+      const road=canonicalRoadState(ref);
+      if (road.status==='ready') road.coveredAnchorIds=calculateCanonicalCoverageForRoad(road,drawable);
+    }
+    ensureCanonicalRoadsForDiscoveredRefs(discoveredRefs);
   }
 
-  if (drawable) m25Reference.coveredAnchorIds = calculateM25Coverage(drawable);
+  const roads=discoveredRefs.map(ref=>canonicalRoadState(ref)).sort((a,b)=>{
+    const ap=a.status==='ready' && a.anchors.length ? a.coveredAnchorIds.size/a.anchors.length : -1;
+    const bp=b.status==='ready' && b.anchors.length ? b.coveredAnchorIds.size/b.anchors.length : -1;
+    return bp-ap || a.ref.localeCompare(b.ref,undefined,{numeric:true});
+  });
 
-  const covered=m25Reference.coveredAnchorIds.size;
-  const total=m25Reference.anchors.length;
-  const percent=total ? Math.min(100,covered/total*100) : 0;
-  const drivenKm=M25_CANONICAL_LENGTH_KM*percent/100;
+  canonicalMotorwayList.innerHTML='';
+  const readyCount=roads.filter(r=>r.status==='ready').length;
+  canonicalRoadsReady.textContent=readyCount.toLocaleString();
+  let loadingCount=0,errorCount=0;
 
-  m25CanonicalPercent.textContent=`${percent.toFixed(1)}%`;
-  m25CanonicalFill.style.width=`${percent}%`;
-  m25CanonicalDriven.textContent=displayDistance(drivenKm);
-  m25CanonicalSections.textContent=`${covered.toLocaleString()} / ${total.toLocaleString()}`;
-  m25CanonicalStatus.className='muted canonical-status ok';
-  m25CanonicalStatus.textContent=
-    `Fixed-reference result: ${covered.toLocaleString()} of ${total.toLocaleString()} M25 sections credited.`;
+  for (const road of roads) {
+    const row=document.createElement('div'); row.className='canonical-road-row';
+    const top=document.createElement('div'); top.className='canonical-road-top';
+    const ref=document.createElement('div'); ref.className='canonical-road-ref'; ref.textContent=road.ref;
+    const progress=document.createElement('div'); progress.className='canonical-road-progress';
+    const fill=document.createElement('div'); fill.className='canonical-road-fill';
+    const pct=document.createElement('div'); pct.className='canonical-road-pct';
+    const meta=document.createElement('div'); meta.className='canonical-road-meta';
 
-  renderM25ReferenceLayers();
+    if (road.status==='ready') {
+      const covered=road.coveredAnchorIds.size,total=road.anchors.length;
+      const percent=total ? Math.min(100,covered/total*100) : 0;
+      const drivenKm=road.totalKm*percent/100;
+      fill.style.width=`${percent}%`; pct.textContent=`${percent.toFixed(1)}%`;
+      meta.textContent=`${displayDistance(drivenKm)} estimated unique · ${covered.toLocaleString()} / ${total.toLocaleString()} canonical sections · ${displayDistance(road.totalKm)} reference`;
+    } else if (road.status==='loading') {
+      loadingCount++; fill.style.width='0%'; pct.textContent='…'; meta.classList.add('canonical-road-loading'); meta.textContent='Loading canonical OpenStreetMap reference…';
+    } else if (road.status==='error') {
+      errorCount++; fill.style.width='0%'; pct.textContent='—'; meta.classList.add('canonical-road-error'); meta.textContent=road.error || 'Reference unavailable.';
+    } else {
+      fill.style.width='0%'; pct.textContent='…'; meta.textContent='Waiting to load reference…';
+    }
+    progress.append(fill); top.append(ref,progress,pct); row.append(top,meta); canonicalMotorwayList.append(row);
+  }
+
+  if (loadingCount) {
+    canonicalMotorwayStatus.className='muted canonical-status';
+    canonicalMotorwayStatus.textContent=`Loading ${loadingCount} motorway reference${loadingCount===1?'':'s'}…`;
+  } else if (errorCount) {
+    canonicalMotorwayStatus.className='muted canonical-status warn';
+    canonicalMotorwayStatus.textContent=`${readyCount} reference${readyCount===1?'':'s'} ready · ${errorCount} need retry/review.`;
+    canonicalRetry.classList.remove('hidden');
+  } else {
+    canonicalMotorwayStatus.className='muted canonical-status ok';
+    canonicalMotorwayStatus.textContent=`${readyCount} canonical motorway reference${readyCount===1?'':'s'} ready.`;
+    canonicalRetry.classList.add('hidden');
+  }
+  renderCanonicalMapLayers();
+}
+
+function retryCanonicalRoads() {
+  const errored=[...canonicalRoads.values()].filter(r=>r.status==='error').map(r=>r.ref);
+  for (const ref of errored) { const road=canonicalRoadState(ref); road.status='idle'; road.error=null; }
+  canonicalRetry.classList.add('hidden');
+  ensureCanonicalRoadsForDiscoveredRefs(errored);
 }
 
 function motorwayStats(drawable) {
@@ -1166,7 +1153,7 @@ function renderMap() {
   );
 
   renderMotorwayDashboard(drawable);
-  renderM25CanonicalDashboard(drawable);
+  renderCanonicalMotorwayDashboard(drawable);
 
   for (const j of drawable) {
     L.polyline(

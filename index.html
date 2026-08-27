@@ -95,27 +95,22 @@
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
     </section>
 
-    <section id="m25CanonicalCard" class="card hidden">
+    <section id="canonicalMotorwayCard" class="card hidden">
       <div class="canonical-heading">
         <div>
-          <p class="eyebrow">POC 13</p>
-          <h2>Canonical M25 coverage</h2>
-          <p class="muted">Matched M25 travel is projected onto one fixed OpenStreetMap reference carriageway, so repeat trips and the opposite carriageway credit the same physical sections.</p>
+          <p class="eyebrow">POC 15</p>
+          <h2>Canonical motorway coverage</h2>
+          <p class="muted">Each discovered motorway is compared against a fixed OpenStreetMap reference, so repeated trips and opposite carriageways credit the same physical road sections.</p>
         </div>
         <div class="canonical-score">
-          <strong id="m25CanonicalPercent">—</strong>
-          <span>complete</span>
+          <strong id="canonicalRoadsReady">0</strong>
+          <span>references ready</span>
         </div>
       </div>
-      <div class="canonical-progress"><div id="m25CanonicalFill" class="canonical-progress-fill"></div></div>
-      <div class="canonical-stats">
-        <div><strong id="m25CanonicalDriven">—</strong><span>estimated unique driven</span></div>
-        <div><strong id="m25CanonicalTotal">116.8 mi</strong><span>reference length</span></div>
-        <div><strong id="m25CanonicalSections">—</strong><span>sections credited</span></div>
-      </div>
-      <p id="m25CanonicalStatus" class="muted canonical-status">Waiting for the M25 reference…</p>
-      <button id="m25Retry" class="secondary hidden" type="button">Retry M25 reference</button>
-      <p class="muted canonical-footnote">Reference: OpenStreetMap M25 route relation 106164, loaded live through Overpass and sampled into approximately 100 m sections. On the optional M25 layers, completed sections are blue and uncompleted sections are red at the same line width.</p>
+      <div id="canonicalMotorwayList" class="canonical-motorway-list"></div>
+      <p id="canonicalMotorwayStatus" class="muted canonical-status">Canonical motorway references will load as motorways are discovered.</p>
+      <button id="canonicalRetry" class="secondary hidden" type="button">Retry motorway references</button>
+      <p class="muted canonical-footnote">References are loaded live from OpenStreetMap through Overpass. Each motorway is sampled into approximately 100 m canonical sections; nearby samples from opposite carriageways are collapsed into one physical section. This remains POC infrastructure — production should cache and version the reference network server-side.</p>
     </section>
 
     <section id="mapCard" class="card hidden">
