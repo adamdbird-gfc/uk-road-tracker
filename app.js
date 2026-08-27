@@ -40,6 +40,9 @@ const MOTORWAY_LENGTH_KM = {
   M66:14.297, M67:7.656, M69:26.269, M180:41.076, M181:4.190,
   M271:3.537, M602:6.958, M606:4.663, M621:14.803
 };
+const MOTORWAY_CORRIDOR_CELL_M = 100;
+const MOTORWAY_SAMPLE_SPACING_M = 25;
+
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -670,6 +673,38 @@ function haversineMetres(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+function mercatorXY(lng, lat) {
+  const R = 6378137;
+  const x = R * lng * Math.PI / 180;
+  const clippedLat = Math.max(-85, Math.min(85, lat));
+  const y = R * Math.log(Math.tan(Math.PI / 4 + clippedLat * Math.PI / 360));
+  return [x, y];
+}
+
+function corridorCellKey(lng, lat) {
+  const [x, y] = mercatorXY(lng, lat);
+  return `${Math.floor(x / MOTORWAY_CORRIDOR_CELL_M)},${Math.floor(y / MOTORWAY_CORRIDOR_CELL_M)}`;
+}
+
+function interpolateLngLat(a, b, t) {
+  return [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t
+  ];
+}
+
+function addSegmentCorridorCells(cellSet, a, b) {
+  const lengthM = haversineMetres(a, b);
+  if (!Number.isFinite(lengthM) || lengthM <= 0) return;
+
+  const samples = Math.max(1, Math.ceil(lengthM / MOTORWAY_SAMPLE_SPACING_M));
+
+  for (let i = 0; i <= samples; i++) {
+    const point = interpolateLngLat(a, b, i / samples);
+    cellSet.add(corridorCellKey(point[0], point[1]));
+  }
+}
+
 function motorwayStats(drawable) {
   const roads = new Map();
 
@@ -678,22 +713,43 @@ function motorwayStats(drawable) {
       const ref = feature?.properties?.road_ref;
       if (!ref) continue;
 
-      if (!roads.has(ref)) roads.set(ref, new Map());
-      const unique = roads.get(ref);
+      if (!roads.has(ref)) roads.set(ref, new Set());
+      const cells = roads.get(ref);
 
-      for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
-        const key = segmentKey(a,b);
-        if (!unique.has(key)) unique.set(key, haversineMetres(a,b));
+      for (const [a, b] of geometrySegments({
+        type: 'FeatureCollection',
+        features: [feature]
+      })) {
+        addSegmentCorridorCells(cells, a, b);
       }
     }
   }
 
-  return [...roads.entries()].map(([ref, segments]) => {
-    const drivenKm = [...segments.values()].reduce((a,b)=>a+b,0) / 1000;
+  return [...roads.entries()].map(([ref, cells]) => {
+    /*
+     * Each unique corridor cell represents approximately 100 m of physical
+     * motorway route. Both carriageways normally fall into the same cell,
+     * so travelling the same section in the opposite direction doesn't
+     * approximately double the credited mileage.
+     */
+    const drivenKm = cells.size * MOTORWAY_CORRIDOR_CELL_M / 1000;
     const totalKm = MOTORWAY_LENGTH_KM[ref] || null;
-    const percent = totalKm ? Math.min(100, drivenKm / totalKm * 100) : null;
-    return {ref, drivenKm, totalKm, percent};
-  }).sort((a,b) => (b.percent ?? -1) - (a.percent ?? -1) || a.ref.localeCompare(b.ref, undefined, {numeric:true}));
+    const percent = totalKm
+      ? Math.min(100, drivenKm / totalKm * 100)
+      : null;
+
+    return {
+      ref,
+      drivenKm,
+      totalKm,
+      percent,
+      corridorCells: cells.size
+    };
+  }).sort(
+    (a, b) =>
+      (b.percent ?? -1) - (a.percent ?? -1) ||
+      a.ref.localeCompare(b.ref, undefined, {numeric: true})
+  );
 }
 
 function renderMotorwayDashboard(drawable) {
@@ -730,8 +786,8 @@ function renderMotorwayDashboard(drawable) {
     const meta = document.createElement('div');
     meta.className = 'motorway-meta';
     meta.textContent = road.totalKm
-      ? `${road.drivenKm.toFixed(1)} km unique matched geometry of ${road.totalKm.toFixed(1)} km route length`
-      : `${road.drivenKm.toFixed(1)} km unique matched geometry · route-length denominator not yet loaded`;
+      ? `${road.drivenKm.toFixed(1)} km estimated unique corridor coverage of ${road.totalKm.toFixed(1)} km route length`
+      : `${road.drivenKm.toFixed(1)} km estimated unique corridor coverage · route-length denominator not yet loaded`;
 
     row.append(ref, bar, pct, meta);
     motorwayList.append(row);

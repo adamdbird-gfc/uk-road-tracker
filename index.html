@@ -81,12 +81,12 @@
       <div class="motorway-heading">
         <div>
           <h2>Motorway progress</h2>
-          <p class="muted">Discovered from your matched journeys. Repeated travel is counted once.</p>
+          <p class="muted">Discovered from your matched journeys. Opposite carriageways and repeated trips are collapsed into shared road corridors.</p>
         </div>
         <div class="motorway-total"><strong id="motorwaysDiscovered">0</strong><span>discovered</span></div>
       </div>
       <div id="motorwayList" class="motorway-list"></div>
-      <p class="muted motorway-footnote">POC percentages use route-length reference data for M-numbered motorways. Geometry deduplication is approximate until the canonical OSM-edge backend is introduced.</p>
+      <p class="muted motorway-footnote">POC percentages use 100 m motorway corridor cells to collapse repeat trips and opposite carriageways. This is much closer to physical route coverage, but canonical OSM road sections remain the production target.</p>
     </section>
 
     <section id="mapCard" class="card hidden">

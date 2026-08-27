@@ -39,3 +39,17 @@ matching backend.
 Backend v0.5 requests OSRM route steps and returns M-numbered motorway refs plus geometry.
 Frontend progressively builds a motorway dashboard from unique matched geometry.
 Percentages are POC estimates: unique returned geometry divided by a route-length reference denominator.
+
+
+## POC 10 — Corridor-based motorway coverage
+
+Motorway completion no longer deduplicates only identical OSRM geometry.
+
+Matched motorway geometry is sampled every 25 m and collapsed into 100 m
+Web-Mercator corridor cells. This means:
+- repeat journeys on the same motorway section count once;
+- clockwise/anticlockwise carriageways usually collapse into the same corridor;
+- small variations in OSRM returned geometry do not create duplicate mileage.
+
+The numerator is therefore an estimate of physical motorway corridor covered.
+Canonical OSM section IDs remain the preferred production implementation.
