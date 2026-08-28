@@ -14,6 +14,12 @@ let distanceUnit = 'miles';
 let onboardingMode = null;
 const manualMotorwayRefs = new Set();
 const manualCoverageByRef = new Map();
+const persistedCoverageByRef = new Map();
+const persistedManualRefs = new Set();
+let persistedDataStartMs = null;
+let persistedDataEndMs = null;
+let persistedSavedAt = null;
+let localSaveTimer = null;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
 let refinementEditMode = null;
@@ -76,6 +82,8 @@ const refinementMark = document.getElementById('refinementMark');
 const refinementErase = document.getElementById('refinementErase');
 const refinementUndo = document.getElementById('refinementUndo');
 const refinementChunkStatus = document.getElementById('refinementChunkStatus');
+const localProgressNotice = document.getElementById('localProgressNotice');
+const localProgressSummary = document.getElementById('localProgressSummary');
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
@@ -108,12 +116,120 @@ const CANONICAL_DEDUPE_CELL_M = 110;
 const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
+const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
+
+function localProgressRoadCount() {
+  return [...persistedCoverageByRef.values()].filter(ids=>ids.size).length;
+}
+
+function updateLocalProgressNotice() {
+  const roadCount=localProgressRoadCount();
+  const hasProgress=roadCount>0 || persistedManualRefs.size>0;
+  localProgressNotice.classList.toggle('hidden',!hasProgress);
+  if (!hasProgress) return;
+
+  const savedLabel=persistedSavedAt
+    ? new Intl.DateTimeFormat('en-GB',{
+        day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
+      }).format(new Date(persistedSavedAt))
+    : 'previously';
+  const range=formatDataDateRange({
+    dataStartMs:persistedDataStartMs,
+    dataEndMs:persistedDataEndMs
+  });
+  localProgressSummary.textContent=
+    `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage · ${range} · saved ${savedLabel}.`;
+}
+
+function loadLocalProgress() {
+  try {
+    const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
+    if (!raw) return;
+    const saved=JSON.parse(raw);
+    if (!saved || saved.version!==1 || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+
+    for (const [id,ids] of Object.entries(saved.coverage || {})) {
+      if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
+    }
+    for (const id of saved.manualMotorways || []) persistedManualRefs.add(String(id));
+    persistedDataStartMs=Number.isFinite(Number(saved.dataStartMs)) ? Number(saved.dataStartMs) : null;
+    persistedDataEndMs=Number.isFinite(Number(saved.dataEndMs)) ? Number(saved.dataEndMs) : null;
+    persistedSavedAt=saved.savedAt || null;
+    if (saved.distanceUnit==='km') distanceUnit='km';
+  } catch (err) {
+    console.warn('Saved local progress could not be read:',err);
+  }
+}
+
+function saveLocalProgressNow() {
+  try {
+    for (const road of canonicalRoads.values()) {
+      if (road.status==='ready' && road.coveredAnchorIds.size) {
+        persistedCoverageByRef.set(road.id,new Set(road.coveredAnchorIds));
+      }
+    }
+
+    const coverage={};
+    for (const [id,ids] of persistedCoverageByRef) {
+      if (ids.size) coverage[id]=[...ids].sort((a,b)=>a-b);
+    }
+
+    persistedSavedAt=new Date().toISOString();
+    localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
+      version:1,
+      canonicalVersion:CANONICAL_CACHE_VERSION,
+      savedAt:persistedSavedAt,
+      distanceUnit,
+      dataStartMs:persistedDataStartMs,
+      dataEndMs:persistedDataEndMs,
+      manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
+      coverage
+    }));
+    updateLocalProgressNotice();
+  } catch (err) {
+    console.warn('Local progress could not be saved:',err);
+  }
+}
+
+function scheduleLocalProgressSave() {
+  clearTimeout(localSaveTimer);
+  localSaveTimer=setTimeout(saveLocalProgressNow,250);
+}
+
+function mergeProgressDateRange(source) {
+  const start=Number(source?.dataStartMs);
+  const end=Number(source?.dataEndMs);
+  if (Number.isFinite(start)) {
+    persistedDataStartMs=persistedDataStartMs===null ? start : Math.min(persistedDataStartMs,start);
+  }
+  if (Number.isFinite(end)) {
+    persistedDataEndMs=persistedDataEndMs===null ? end : Math.max(persistedDataEndMs,end);
+  }
+  if (persistedDataStartMs!==null) source.dataStartMs=persistedDataStartMs;
+  if (persistedDataEndMs!==null) source.dataEndMs=persistedDataEndMs;
+}
+
+function clearLocalProgress() {
+  if (!window.confirm('Delete all motorway progress saved on this device?')) return;
+  localStorage.removeItem(LOCAL_PROGRESS_KEY);
+  persistedCoverageByRef.clear();
+  persistedManualRefs.clear();
+  persistedDataStartMs=null;
+  persistedDataEndMs=null;
+  persistedSavedAt=null;
+  resetTrackingSession();
+  onboardingMode=null;
+  dataSourceCard.classList.add('hidden');
+  manualMotorwayCard.classList.add('hidden');
+  onboardingCard.classList.remove('hidden');
+  updateLocalProgressNotice();
+}
 
 function motorwayRefSort(a, b) {
   return a.localeCompare(b, undefined, {numeric:true});
