@@ -1797,19 +1797,22 @@ function motorwayStats(drawable) {
 
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
-      const ref = feature?.properties?.road_ref;
+      const id=motorwayFeatureId(feature);
+      const parsed=parseMotorwayId(id);
       const distanceM = Number(feature?.properties?.distance_m || 0);
-      if (!ref || !Number.isFinite(distanceM) || distanceM <= 0) continue;
+      if (!id || !Number.isFinite(distanceM) || distanceM <= 0) continue;
 
-      if (!roads.has(ref)) {
-        roads.set(ref, {
-          ref,
+      if (!roads.has(id)) {
+        roads.set(id, {
+          id,
+          ref:parsed.ref,
+          region:parsed.region,
           matchedDistanceM: 0,
           journeyIds: new Set()
         });
       }
 
-      const road = roads.get(ref);
+      const road = roads.get(id);
       road.matchedDistanceM += distanceM;
       road.journeyIds.add(`${journey.start || ''}|${journey.end || ''}`);
     }
@@ -1844,7 +1847,7 @@ function renderMotorwayDashboard(drawable) {
 
     const ref = document.createElement('div');
     ref.className = 'motorway-ref';
-    ref.textContent = road.ref;
+    ref.textContent = road.region==='NI' ? `${road.ref} · NI` : road.ref;
 
     const bar = document.createElement('div');
     bar.className = 'motorway-bar';
