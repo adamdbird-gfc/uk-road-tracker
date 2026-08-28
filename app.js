@@ -10,6 +10,9 @@ let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
 let distanceUnit = 'miles';
+let onboardingMode = null;
+const manualMotorwayRefs = new Set();
+const canonicalRequestedRefs = new Set();
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
@@ -44,6 +47,13 @@ const canonicalMotorwayList = document.getElementById('canonicalMotorwayList');
 const canonicalRoadsReady = document.getElementById('canonicalRoadsReady');
 const canonicalMotorwayStatus = document.getElementById('canonicalMotorwayStatus');
 const canonicalRetry = document.getElementById('canonicalRetry');
+const onboardingCard = document.getElementById('onboardingCard');
+const dataSourceCard = document.getElementById('dataSourceCard');
+const manualMotorwayCard = document.getElementById('manualMotorwayCard');
+const manualMotorwayList = document.getElementById('manualMotorwayList');
+const manualSelectedCount = document.getElementById('manualSelectedCount');
+const mapTitle = document.getElementById('mapTitle');
+const mapIntro = document.getElementById('mapIntro');
 
 const MOTORWAY_LENGTH_KM = {
   M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
@@ -69,6 +79,103 @@ let canonicalCachePromise = null;
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
 
+function motorwayRefSort(a, b) {
+  return a.localeCompare(b, undefined, {numeric:true});
+}
+
+function renderManualMotorwayOptions() {
+  manualMotorwayList.innerHTML = '';
+  for (const ref of Object.keys(MOTORWAY_LENGTH_KM).sort(motorwayRefSort)) {
+    const label = document.createElement('label');
+    label.className = 'manual-motorway-option';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = ref;
+    checkbox.checked = manualMotorwayRefs.has(ref);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) manualMotorwayRefs.add(ref);
+      else {
+        manualMotorwayRefs.delete(ref);
+        canonicalRequestedRefs.delete(ref);
+        canonicalRoads.delete(ref);
+      }
+      updateManualMotorwaySelection();
+    });
+
+    const text = document.createElement('span');
+    text.textContent = ref;
+    label.append(checkbox, text);
+    manualMotorwayList.append(label);
+  }
+}
+
+async function showDataSourceChoice(mode) {
+  onboardingMode = mode;
+  onboardingCard.classList.add('hidden');
+  dataSourceCard.classList.toggle('hidden', mode !== 'data');
+  manualMotorwayCard.classList.toggle('hidden', mode !== 'manual');
+
+  if (mode === 'data') {
+    manualMotorwayRefs.clear();
+    canonicalRequestedRefs.clear();
+    canonicalRoads.clear();
+    mapTitle.textContent = '4. Preview';
+    mapIntro.textContent = 'The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.';
+    return;
+  }
+
+  mapTitle.textContent = '3. Preview';
+  mapIntro.textContent = 'Selected motorways are shown in blue as complete. In the next enhancement, you will be able to refine these into the individual sections you have driven.';
+  mapCard.classList.remove('hidden');
+  nextCard.classList.add('hidden');
+  renderManualMotorwayOptions();
+  await ensureLeaflet();
+  initMap();
+  renderMap();
+}
+
+function returnToOnboarding() {
+  onboardingMode = null;
+  manualMotorwayRefs.clear();
+  canonicalRequestedRefs.clear();
+  canonicalRoads.clear();
+  dataSourceCard.classList.add('hidden');
+  manualMotorwayCard.classList.add('hidden');
+  summaryCard.classList.add('hidden');
+  motorwayCard.classList.add('hidden');
+  canonicalMotorwayCard.classList.add('hidden');
+  mapCard.classList.add('hidden');
+  nextCard.classList.add('hidden');
+  onboardingCard.classList.remove('hidden');
+  renderCanonicalMapLayers();
+}
+
+function setAllManualMotorways(selected) {
+  manualMotorwayRefs.clear();
+  if (selected) {
+    for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
+  } else {
+    canonicalRequestedRefs.clear();
+    canonicalRoads.clear();
+  }
+  renderManualMotorwayOptions();
+  updateManualMotorwaySelection();
+}
+
+function updateManualMotorwaySelection() {
+  manualSelectedCount.textContent = `${manualMotorwayRefs.size} selected`;
+  renderMap();
+  if (manualMotorwayRefs.size) ensureCanonicalRoadsForDiscoveredRefs([...manualMotorwayRefs]);
+}
+
+document.getElementById('hasDataSource').addEventListener('click', () => showDataSourceChoice('data'));
+document.getElementById('noDataSource').addEventListener('click', () => showDataSourceChoice('manual'));
+document.getElementById('changeDataSource').addEventListener('click', returnToOnboarding);
+document.getElementById('changeManualSource').addEventListener('click', returnToOnboarding);
+document.getElementById('selectAllMotorways').addEventListener('click', () => setAllManualMotorways(true));
+document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
+renderManualMotorwayOptions();
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -1060,12 +1167,17 @@ async function loadCanonicalRoad(ref, force=false) {
 }
 
 async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
-  const queue=[...new Set(refs.map(normaliseMotorwayRef).filter(Boolean))]
-    .filter(ref=>canonicalRoadState(ref).status==='idle');
-  if (!queue.length || canonicalLoadQueueRunning) return;
+  for (const ref of refs.map(normaliseMotorwayRef).filter(Boolean)) {
+    canonicalRequestedRefs.add(ref);
+  }
+  if (canonicalLoadQueueRunning) return;
+
   canonicalLoadQueueRunning=true;
   try {
-    for (const ref of queue) {
+    while (true) {
+      const ref=[...canonicalRequestedRefs]
+        .find(candidate=>canonicalRoadState(candidate).status==='idle');
+      if (!ref) break;
       await loadCanonicalRoad(ref);
       await new Promise(resolve=>setTimeout(resolve,400));
     }
@@ -1077,6 +1189,9 @@ async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
 function calculateCanonicalCoverageForRoad(road, drawable) {
   const covered=new Set();
   if (!road || road.status!=='ready') return covered;
+  if (onboardingMode==='manual' && manualMotorwayRefs.has(road.ref)) {
+    return new Set(road.anchors.map(anchor=>anchor.id));
+  }
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
       if (normaliseMotorwayRef(feature?.properties?.road_ref)!==road.ref) continue;
@@ -1151,9 +1266,11 @@ function renderCanonicalMapLayers() {
 }
 
 function renderCanonicalMotorwayDashboard(drawable=null) {
-  const discoveredRefs=drawable
-    ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(f=>normaliseMotorwayRef(f?.properties?.road_ref)).filter(Boolean)))]
-    : [...canonicalRoads.keys()];
+  const discoveredRefs=onboardingMode==='manual'
+    ? [...manualMotorwayRefs].sort(motorwayRefSort)
+    : drawable
+      ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(f=>normaliseMotorwayRef(f?.properties?.road_ref)).filter(Boolean)))]
+      : [...canonicalRoads.keys()];
 
   if (!discoveredRefs.length && !canonicalRoads.size) {
     canonicalMotorwayCard.classList.add('hidden');
@@ -1161,10 +1278,10 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   }
   canonicalMotorwayCard.classList.remove('hidden');
 
-  if (drawable) {
+  if (drawable || onboardingMode==='manual') {
     for (const ref of discoveredRefs) {
       const road=canonicalRoadState(ref);
-      if (road.status==='ready') road.coveredAnchorIds=calculateCanonicalCoverageForRoad(road,drawable);
+      if (road.status==='ready') road.coveredAnchorIds=calculateCanonicalCoverageForRoad(road,drawable || []);
     }
     ensureCanonicalRoadsForDiscoveredRefs(discoveredRefs);
   }
@@ -1368,25 +1485,38 @@ function renderMap() {
 
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
-    mapStatus.textContent =
-      `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
-      `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review).`;
+    if (onboardingMode==='manual') {
+      const ready=[...manualMotorwayRefs]
+        .filter(ref=>canonicalRoadState(ref).status==='ready').length;
+      mapStatus.textContent=manualMotorwayRefs.size
+        ? `${ready} of ${manualMotorwayRefs.size} selected motorway${manualMotorwayRefs.size===1?'':'s'} ready on the map.`
+        : 'Select a motorway above to add it to your map.';
+    } else {
+      mapStatus.textContent =
+        `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
+        `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review).`;
+    }
   }
 }
 
 function fitSelected() {
   if (!map || !window.L) return;
 
-  const pts = journeys
-    .filter(j => j.selected)
-    .flatMap(j => j.points)
-    .filter(validPoint)
-    .map(p => [p.lat, p.lng]);
+  const pts = onboardingMode==='manual'
+    ? [...manualMotorwayRefs]
+        .flatMap(ref=>(canonicalRoads.get(ref)?.anchors || []).map(anchor=>[anchor.lat,anchor.lng]))
+    : journeys
+        .filter(j => j.selected)
+        .flatMap(j => j.points)
+        .filter(validPoint)
+        .map(p => [p.lat, p.lng]);
 
   if (!pts.length) {
     if (mapStatus) {
       mapStatus.className = 'muted map-status warn';
-      mapStatus.textContent = 'No valid selected coordinates are available to fit on the map.';
+      mapStatus.textContent = onboardingMode==='manual'
+        ? 'Select at least one motorway and wait for its reference to load.'
+        : 'No valid selected coordinates are available to fit on the map.';
     }
     return;
   }
