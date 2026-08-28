@@ -48,6 +48,10 @@ const canonicalMotorwayList = document.getElementById('canonicalMotorwayList');
 const canonicalRoadsReady = document.getElementById('canonicalRoadsReady');
 const canonicalMotorwayStatus = document.getElementById('canonicalMotorwayStatus');
 const canonicalRetry = document.getElementById('canonicalRetry');
+const networkProgressPercent = document.getElementById('networkProgressPercent');
+const networkProgressDistance = document.getElementById('networkProgressDistance');
+const networkProgressBar = document.getElementById('networkProgressBar');
+const networkProgressFill = document.getElementById('networkProgressFill');
 const onboardingCard = document.getElementById('onboardingCard');
 const dataSourceCard = document.getElementById('dataSourceCard');
 const manualMotorwayCard = document.getElementById('manualMotorwayCard');
@@ -55,6 +59,11 @@ const manualMotorwayList = document.getElementById('manualMotorwayList');
 const manualSelectedCount = document.getElementById('manualSelectedCount');
 const mapTitle = document.getElementById('mapTitle');
 const mapIntro = document.getElementById('mapIntro');
+
+// 2025 official totals: 2,300 motorway miles in Great Britain plus
+// approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
+const UK_MOTORWAY_NETWORK_MILES = 2365;
+const UK_MOTORWAY_NETWORK_KM = UK_MOTORWAY_NETWORK_MILES / 0.6213711922;
 
 const MOTORWAY_LENGTH_KM = {
   M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
@@ -136,6 +145,12 @@ function resetTrackingSession() {
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
   canonicalRoadsReady.textContent = '0';
+  networkProgressPercent.textContent = '0.0%';
+  networkProgressDistance.textContent = distanceUnit === 'km'
+    ? `0.0 of approximately ${UK_MOTORWAY_NETWORK_KM.toFixed(0)} km`
+    : `0.0 of approximately ${UK_MOTORWAY_NETWORK_MILES.toLocaleString()} miles`;
+  networkProgressFill.style.width = '0%';
+  networkProgressBar.setAttribute('aria-valuenow', '0');
   easyProgressBar.value = 0;
   easyProgressText.textContent = 'Waiting…';
   updateEasyImportPauseButton();
@@ -1317,6 +1332,27 @@ function renderCanonicalMapLayers() {
   }
 }
 
+function renderNetworkCompletion(roads) {
+  const completedKm=roads.reduce((sum,road)=>{
+    if (road.status!=='ready' || !road.anchors.length) return sum;
+    const fraction=Math.min(1,road.coveredAnchorIds.size/road.anchors.length);
+    return sum + road.totalKm*fraction;
+  },0);
+  const percent=Math.min(100,completedKm/UK_MOTORWAY_NETWORK_KM*100);
+  const totalLabel=distanceUnit==='km'
+    ? `approximately ${UK_MOTORWAY_NETWORK_KM.toFixed(0)} km`
+    : `approximately ${UK_MOTORWAY_NETWORK_MILES.toLocaleString()} miles`;
+
+  networkProgressPercent.textContent=`${percent.toFixed(1)}%`;
+  networkProgressDistance.textContent=`${displayDistance(completedKm)} of ${totalLabel}`;
+  networkProgressFill.style.width=`${percent}%`;
+  networkProgressBar.setAttribute('aria-valuenow',percent.toFixed(1));
+  networkProgressBar.setAttribute(
+    'aria-valuetext',
+    `${percent.toFixed(1)} percent, ${displayDistance(completedKm)} completed out of ${totalLabel}`
+  );
+}
+
 function renderCanonicalMotorwayDashboard(drawable=null) {
   const discoveredRefs=onboardingMode==='manual'
     ? [...manualMotorwayRefs].sort(motorwayRefSort)
@@ -1344,6 +1380,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
     return bp-ap || a.ref.localeCompare(b.ref,undefined,{numeric:true});
   });
 
+  renderNetworkCompletion(roads);
   canonicalMotorwayList.innerHTML='';
   const readyCount=roads.filter(r=>r.status==='ready').length;
   canonicalRoadsReady.textContent=readyCount.toLocaleString();
