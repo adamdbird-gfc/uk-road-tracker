@@ -180,7 +180,37 @@
         </div>
         <button id="fitMap" class="secondary">Fit selected</button>
       </div>
-      <p id="mapStatus" class="muted map-status">Map not initialised yet.</p>
+      <div id="refinementPanel" class="refinement-panel hidden">
+        <div class="refinement-heading">
+          <div>
+            <p class="eyebrow">Section editor</p>
+            <h3 id="refinementTitle">Refine motorway</h3>
+          </div>
+          <button id="finishRefinement" class="secondary" type="button">Done</button>
+        </div>
+        <p id="refinementHelp" class="muted">Choose Mark or Erase, then tap the motorway. Each tap changes a forgiving section around that point.</p>
+        <div class="refinement-toolbar" role="group" aria-label="Map editing mode">
+          <button id="refinementMark" type="button" aria-pressed="true">Mark driven</button>
+          <button id="refinementErase" class="secondary" type="button" aria-pressed="false">Erase</button>
+          <button id="refinementUndo" class="secondary" type="button" disabled>Undo</button>
+          <button id="refinementWhole" class="secondary" type="button">Whole motorway</button>
+          <button id="refinementClear" class="secondary" type="button">Clear motorway</button>
+        </div>
+        <details class="keyboard-refinement">
+          <summary><strong>Choose sections with keyboard controls</strong></summary>
+          <p class="muted">Move between geographic areas of the motorway and mark or erase the current area. The map follows your selection.</p>
+          <div class="keyboard-section-controls">
+            <button id="previousRefinementChunk" class="secondary" type="button">Previous area</button>
+            <span id="refinementChunkStatus" role="status" aria-live="polite">Area 1</span>
+            <button id="nextRefinementChunk" class="secondary" type="button">Next area</button>
+          </div>
+          <div class="keyboard-section-actions">
+            <button id="markRefinementChunk" type="button">Mark this area driven</button>
+            <button id="eraseRefinementChunk" class="secondary" type="button">Erase this area</button>
+          </div>
+        </details>
+      </div>
+      <p id="mapStatus" class="muted map-status" aria-live="polite">Map not initialised yet.</p>
       <div id="map"></div>
     </section>
 
@@ -191,6 +221,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260828-ni-region-fix"></script>
+  <script src="app.js?v=20260828-section-editor"></script>
 </body>
 </html>
