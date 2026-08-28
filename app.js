@@ -158,8 +158,12 @@ function loadLocalProgress() {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
     }
     for (const id of saved.manualMotorways || []) persistedManualRefs.add(String(id));
-    persistedDataStartMs=Number.isFinite(Number(saved.dataStartMs)) ? Number(saved.dataStartMs) : null;
-    persistedDataEndMs=Number.isFinite(Number(saved.dataEndMs)) ? Number(saved.dataEndMs) : null;
+    persistedDataStartMs=saved.dataStartMs===null || saved.dataStartMs===undefined
+      ? null
+      : Number.isFinite(Number(saved.dataStartMs)) ? Number(saved.dataStartMs) : null;
+    persistedDataEndMs=saved.dataEndMs===null || saved.dataEndMs===undefined
+      ? null
+      : Number.isFinite(Number(saved.dataEndMs)) ? Number(saved.dataEndMs) : null;
     persistedSavedAt=saved.savedAt || null;
     if (saved.distanceUnit==='km') distanceUnit='km';
   } catch (err) {
@@ -203,8 +207,10 @@ function scheduleLocalProgressSave() {
 }
 
 function mergeProgressDateRange(source) {
-  const start=Number(source?.dataStartMs);
-  const end=Number(source?.dataEndMs);
+  const start=source?.dataStartMs===null || source?.dataStartMs===undefined
+    ? NaN : Number(source.dataStartMs);
+  const end=source?.dataEndMs===null || source?.dataEndMs===undefined
+    ? NaN : Number(source.dataEndMs);
   if (Number.isFinite(start)) {
     persistedDataStartMs=persistedDataStartMs===null ? start : Math.min(persistedDataStartMs,start);
   }
