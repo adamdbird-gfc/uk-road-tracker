@@ -783,10 +783,18 @@ function initMap() {
 
     tiles.on('load', () => {
       if (mapStatus && !journeys.some(j => j.matchedGeoJson)) {
-        const selectedDrawable = journeys.filter(j => j.selected && j.points.length > 1).length;
         mapStatus.className = 'muted map-status ok';
-        mapStatus.textContent =
-          `Map loaded. ${selectedDrawable.toLocaleString()} selected raw journey trace${selectedDrawable === 1 ? '' : 's'} available.`;
+        if (onboardingMode==='manual') {
+          const ready=[...manualMotorwayRefs]
+            .filter(ref=>canonicalRoadState(ref).status==='ready').length;
+          mapStatus.textContent=manualMotorwayRefs.size
+            ? `${ready} of ${manualMotorwayRefs.size} selected motorway${manualMotorwayRefs.size===1?'':'s'} ready on the map.`
+            : 'Select a motorway above to add it to your map.';
+        } else {
+          const selectedDrawable = journeys.filter(j => j.selected && j.points.length > 1).length;
+          mapStatus.textContent =
+            `Map loaded. ${selectedDrawable.toLocaleString()} selected raw journey trace${selectedDrawable === 1 ? '' : 's'} available.`;
+        }
       }
     });
 
@@ -1007,6 +1015,19 @@ function normaliseMotorwayRef(ref) {
   return String(ref || '').toUpperCase().replace(/\s+/g, '');
 }
 
+function isNorthernIrelandCoordinate(lng, lat) {
+  return Number.isFinite(lng) && Number.isFinite(lat) &&
+    lng < -5.3 && lat > 53.9 && lat < 55.6;
+}
+
+function isGreatBritainMotorwayCoordinate(ref, lng, lat) {
+  // M1 and M2 references exist independently in Great Britain and
+  // Northern Ireland. The current canonical catalogue and length table
+  // describe their Great Britain routes.
+  return !['M1','M2'].includes(normaliseMotorwayRef(ref)) ||
+    !isNorthernIrelandCoordinate(lng, lat);
+}
+
 function canonicalReferenceLengthKm(ref, fallbackKm = 0) {
   const canonicalKm = Number(MOTORWAY_LENGTH_KM[normaliseMotorwayRef(ref)]);
   return Number.isFinite(canonicalKm) && canonicalKm > 0 ? canonicalKm : fallbackKm;
@@ -1099,12 +1120,18 @@ async function loadCanonicalCache(force = false) {
 }
 
 function hydrateCanonicalRoadFromCache(road, cached) {
-  const anchors = (cached.anchors || []).map((point, id) => {
-    const lng = Number(point[0]);
-    const lat = Number(point[1]);
-    const [x, y] = mercatorXY(lng, lat);
-    return {id, lng, lat, x, y};
-  });
+  const anchors = (cached.anchors || [])
+    .map(point => [Number(point[0]), Number(point[1])])
+    .filter(point =>
+      Number.isFinite(point[0]) &&
+      Number.isFinite(point[1]) &&
+      isGreatBritainMotorwayCoordinate(road.ref, point[0], point[1])
+    )
+    .map((point, id) => {
+      const [lng, lat] = point;
+      const [x, y] = mercatorXY(lng, lat);
+      return {id, lng, lat, x, y};
+    });
 
   if (anchors.length < 3) {
     throw new Error(`${road.ref} cached reference was unexpectedly sparse.`);
@@ -1200,7 +1227,12 @@ async function loadCanonicalRoad(ref, force=false) {
         tags:element.tags || {},
         coords:overpassWayCoordinates(element)
       }))
-      .filter(way=>way.coords.length>=2);
+      .filter(way=>
+        way.coords.length>=2 &&
+        way.coords.some(point =>
+          isGreatBritainMotorwayCoordinate(road.ref, point[0], point[1])
+        )
+      );
 
     if (!ways.length) {
       throw new Error(`No exact-ref OpenStreetMap motorway geometry found for ${road.ref}.`);
