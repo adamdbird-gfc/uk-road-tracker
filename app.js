@@ -36,6 +36,7 @@ const journeyList = document.getElementById('journeyList');
 const journeyCount = document.getElementById('journeyCount');
 const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
+const dataDateRange = document.getElementById('dataDateRange');
 const mapStatus = document.getElementById('mapStatus');
 const importModeCard = document.getElementById('importModeCard');
 const easyProgress = document.getElementById('easyProgress');
@@ -207,6 +208,7 @@ function resetTrackingSession() {
   journeyCount.textContent = '0';
   pointCount.textContent = '0';
   selectedCount.textContent = '0';
+  dataDateRange.querySelector('span').textContent = 'Date range unavailable';
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
   canonicalRoadsReady.textContent = '0';
@@ -433,8 +435,18 @@ function showDiagnostics(fileName) {
     `${fileName} inspected successfully.\n\n${diagnosticText()}`;
 }
 
+function formatDataDateRange(source=diagnostics) {
+  const start=Number(source?.dataStartMs);
+  const end=Number(source?.dataEndMs);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 'Date range unavailable';
+  const startLabel=formatDate(new Date(start).toISOString());
+  const endLabel=formatDate(new Date(end).toISOString());
+  return startLabel===endLabel ? startLabel : `${startLabel} to ${endLabel}`;
+}
+
 function diagnosticText() {
   return [
+    `Data coverage: ${formatDataDateRange()}`,
     `Semantic segments: ${fmt(diagnostics.semanticSegments)}`,
     `Activity segments: ${fmt(diagnostics.activitySegments)}`,
     `Passenger-vehicle activities: ${fmt(diagnostics.passengerVehicleActivities)}`,
@@ -576,6 +588,7 @@ async function startEasyImport() {
 function renderAll(fileName) {
   const points = journeys.reduce((n, j) => n + j.points.length, 0);
 
+  dataDateRange.querySelector('span').textContent = formatDataDateRange();
   journeyCount.textContent = journeys.length.toLocaleString();
   const journeyLabel = journeyCount.parentElement?.querySelector('span');
   if (journeyLabel) journeyLabel.textContent = 'usable journeys';
@@ -2005,12 +2018,23 @@ function extractVehicleJourneys(data) {
     timelinePathPoints: 0,
     vehiclesWithPathPoints: 0,
     vehiclesWithAnchors: 0,
-    journeysConstructed: 0
+    journeysConstructed: 0,
+    dataStartMs: null,
+    dataEndMs: null
   };
+
+  function recordDataTimestamp(value) {
+    const timeMs=typeof value==='number' ? value : Date.parse(value || '');
+    if (!Number.isFinite(timeMs)) return;
+    diag.dataStartMs=diag.dataStartMs===null ? timeMs : Math.min(diag.dataStartMs,timeMs);
+    diag.dataEndMs=diag.dataEndMs===null ? timeMs : Math.max(diag.dataEndMs,timeMs);
+  }
 
   const pathPoints = [];
 
   for (const seg of segments) {
+    recordDataTimestamp(seg?.startTime);
+    recordDataTimestamp(seg?.endTime);
     if (seg?.activity) diag.activitySegments++;
 
     if (Array.isArray(seg?.timelinePath)) {
@@ -2019,6 +2043,7 @@ function extractVehicleJourneys(data) {
       for (const item of seg.timelinePath) {
         const point = parseLocation(item?.point);
         const timeMs = Date.parse(item?.time || '');
+        recordDataTimestamp(timeMs);
 
         if (point && Number.isFinite(timeMs)) {
           pathPoints.push({ ...point, timeMs });
