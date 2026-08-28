@@ -271,3 +271,5 @@ progress { width: 100%; height: 16px; }
 @media (max-width:520px) {
   .regional-progress-grid { grid-template-columns:1fr; }
 }
+
+.manual-motorway-list { display:block; max-height:none; overflow:visible; }
