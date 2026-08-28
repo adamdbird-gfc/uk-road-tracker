@@ -213,3 +213,27 @@ progress { width: 100%; height: 16px; }
   #networkProgressDistance { max-width:145px; }
 }
 @media (prefers-reduced-motion:reduce) { .network-progress-fill { transition:none; } }
+
+
+.refine-road-button { margin-top:10px; min-height:42px; width:100%; }
+.refinement-panel { margin:4px 0 14px; padding:15px; border:2px solid #b8cff4; border-radius:14px; background:#f4f8ff; }
+.refinement-heading { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.refinement-heading h3 { margin:0; font-size:1.25rem; }
+.refinement-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.refinement-toolbar button[aria-pressed="true"] { background:#2f7df6; color:#fff; }
+.refinement-toolbar button:disabled { opacity:.5; cursor:not-allowed; }
+.keyboard-refinement { margin-top:14px; padding-top:12px; border-top:1px solid #cad8ee; }
+.keyboard-refinement summary { cursor:pointer; min-height:44px; display:flex; align-items:center; }
+.keyboard-section-controls { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; margin:12px 0; }
+.keyboard-section-controls span { text-align:center; font-weight:800; }
+.keyboard-section-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.keyboard-section-actions button { min-height:48px; }
+.refinement-active #map { outline:3px solid #2f7df6; outline-offset:2px; }
+@media (max-width:520px) {
+  .refinement-toolbar button { flex:1 1 calc(50% - 8px); }
+  .keyboard-section-controls { grid-template-columns:1fr 1fr; }
+  .keyboard-section-controls span { grid-column:1 / 3; grid-row:1; padding:7px; }
+  #previousRefinementChunk { grid-column:1; grid-row:2; }
+  #nextRefinementChunk { grid-column:2; grid-row:2; }
+  .keyboard-section-actions { grid-template-columns:1fr; }
+}
