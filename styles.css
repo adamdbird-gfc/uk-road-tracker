@@ -273,3 +273,7 @@ progress { width: 100%; height: 16px; }
 }
 
 .manual-motorway-list { display:block; max-height:none; overflow:visible; }
+
+
+.data-date-range { margin:14px 0; padding:11px 13px; border-radius:11px; background:#eef5ff; color:#174f9e; }
+.data-date-range strong { margin-right:4px; }
