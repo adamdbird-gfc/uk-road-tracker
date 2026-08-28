@@ -9,6 +9,7 @@ let ignoredJourneys = [];
 let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
+let trackingSessionId = 0;
 let distanceUnit = 'miles';
 let onboardingMode = null;
 const manualMotorwayRefs = new Set();
@@ -110,7 +111,60 @@ function renderManualMotorwayOptions() {
   }
 }
 
+function resetTrackingSession() {
+  trackingSessionId++;
+  easyImportPaused = false;
+  easyImportRunning = false;
+  importMode = null;
+  journeys = [];
+  diagnostics = {};
+  ignoredJourneys = [];
+  manualMotorwayRefs.clear();
+  canonicalRequestedRefs.clear();
+  canonicalRoads.clear();
+  canonicalLoadQueueRunning = false;
+
+  fileInput.value = '';
+  fileStatus.className = 'muted';
+  fileStatus.textContent = 'No file selected.';
+  journeyList.innerHTML = '';
+  ignoredList.innerHTML = '';
+  motorwayList.innerHTML = '';
+  canonicalMotorwayList.innerHTML = '';
+  journeyCount.textContent = '0';
+  pointCount.textContent = '0';
+  selectedCount.textContent = '0';
+  ignoredCount.textContent = '0';
+  motorwaysDiscovered.textContent = '0';
+  canonicalRoadsReady.textContent = '0';
+  easyProgressBar.value = 0;
+  easyProgressText.textContent = 'Waiting…';
+  updateEasyImportPauseButton();
+
+  importModeCard.classList.add('hidden');
+  easyProgress.classList.add('hidden');
+  ignoredCard.classList.add('hidden');
+  summaryCard.classList.add('hidden');
+  motorwayCard.classList.add('hidden');
+  canonicalMotorwayCard.classList.add('hidden');
+  mapCard.classList.add('hidden');
+  nextCard.classList.add('hidden');
+
+  for (const layer of [
+    traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
+    canonicalCoverageLayer, canonicalUncoveredLayer
+  ]) {
+    if (layer) layer.clearLayers();
+  }
+
+  if (map) {
+    map.setView([54.5, -3], 5);
+    requestAnimationFrame(() => map.invalidateSize(true));
+  }
+}
+
 async function showDataSourceChoice(mode) {
+  resetTrackingSession();
   onboardingMode = mode;
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.toggle('hidden', mode !== 'data');
@@ -136,19 +190,11 @@ async function showDataSourceChoice(mode) {
 }
 
 function returnToOnboarding() {
+  resetTrackingSession();
   onboardingMode = null;
-  manualMotorwayRefs.clear();
-  canonicalRequestedRefs.clear();
-  canonicalRoads.clear();
   dataSourceCard.classList.add('hidden');
   manualMotorwayCard.classList.add('hidden');
-  summaryCard.classList.add('hidden');
-  motorwayCard.classList.add('hidden');
-  canonicalMotorwayCard.classList.add('hidden');
-  mapCard.classList.add('hidden');
-  nextCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
-  renderCanonicalMapLayers();
 }
 
 function setAllManualMotorways(selected) {
@@ -362,6 +408,7 @@ function startDetailedImport() {
 }
 
 async function startEasyImport() {
+  const sessionId = trackingSessionId;
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
@@ -382,13 +429,17 @@ async function startEasyImport() {
   easyProgressBar.value = 0;
 
   for (const journey of candidates) {
-    while (easyImportPaused) {
+    if (sessionId !== trackingSessionId) return;
+
+    while (easyImportPaused && sessionId === trackingSessionId) {
       easyProgressText.dataset.resumeText =
         `${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
       easyProgressText.textContent =
         `Paused · ${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
       await new Promise(resolve => setTimeout(resolve, 250));
     }
+
+    if (sessionId !== trackingSessionId) return;
 
     easyProgressText.textContent =
       `${completed} / ${candidates.length} · matching ${formatDate(journey.start)}`;
@@ -401,6 +452,7 @@ async function startEasyImport() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+      if (sessionId !== trackingSessionId) return;
 
       journey.matchedGeoJson = data.geojson;
       journey.motorwayGeoJson = data.motorway_geojson;
@@ -422,6 +474,7 @@ async function startEasyImport() {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
 
+  if (sessionId !== trackingSessionId) return;
   easyImportRunning = false;
   easyImportPaused = false;
   updateEasyImportPauseButton();
