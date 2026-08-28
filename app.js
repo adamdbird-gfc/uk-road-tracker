@@ -1708,19 +1708,20 @@ function moveRefinementChunk(direction) {
   updateRefinementChunkStatus(true);
 }
 
-function startMotorwayRefinement(ref) {
-  const road=canonicalRoads.get(ref);
+function startMotorwayRefinement(id) {
+  const road=canonicalRoads.get(id);
   if (!road || road.status!=='ready') return;
-  refinementRoadRef=ref;
+  refinementRoadRef=id;
   refinementUndoStack=[];
   refinementChunks=buildRefinementChunks(road);
   refinementChunkIndex=0;
-  refinementTitle.textContent=`Refine ${ref} sections`;
+  const label=road.region==='NI' ? `${road.ref} (Northern Ireland)` : road.ref;
+  refinementTitle.textContent=`Refine ${label} sections`;
   refinementPanel.classList.remove('hidden');
   mapCard.classList.add('refinement-active');
   manualMotorwayCard.classList.add('hidden');
   canonicalMotorwayCard.classList.add('hidden');
-  mapTitle.textContent=`Refine ${ref}`;
+  mapTitle.textContent=`Refine ${label}`;
   mapIntro.textContent='Tap the motorway to mark or erase sections, or open the keyboard controls to work through geographic areas.';
   refinementUndo.disabled=true;
   setRefinementMode(null);
@@ -1785,7 +1786,7 @@ document.getElementById('eraseRefinementChunk').addEventListener('click',()=>{
 });
 
 function retryCanonicalRoads() {
-  const errored=[...canonicalRoads.values()].filter(r=>r.status==='error').map(r=>r.ref);
+  const errored=[...canonicalRoads.values()].filter(r=>r.status==='error').map(r=>r.id);
   for (const ref of errored) { const road=canonicalRoadState(ref); road.status='idle'; road.error=null; }
   canonicalRetry.classList.add('hidden');
   ensureCanonicalRoadsForDiscoveredRefs(errored);
@@ -1934,7 +1935,7 @@ function renderMap() {
     mapStatus.className = 'muted map-status ok';
     if (refinementRoadRef) {
       mapStatus.textContent=refinementEditMode
-        ? `${refinementEditMode==='mark'?'Add':'Remove'} mode · tap close to the ${refinementRoadRef} line, or use the keyboard section controls.`
+        ? `${refinementEditMode==='mark'?'Add':'Remove'} mode · tap close to the ${canonicalRoads.get(refinementRoadRef)?.ref || 'motorway'} line, or use the keyboard section controls.`
         : 'Choose “Add driven section” or “Remove driven section” before tapping the map.';
     } else if (onboardingMode==='manual') {
       const ready=[...manualMotorwayRefs]
