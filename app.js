@@ -122,7 +122,6 @@ function resetTrackingSession() {
   manualMotorwayRefs.clear();
   canonicalRequestedRefs.clear();
   canonicalRoads.clear();
-  canonicalLoadQueueRunning = false;
 
   fileInput.value = '';
   fileStatus.className = 'muted';
