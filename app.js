@@ -1369,16 +1369,25 @@ async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
   }
 }
 
+function motorwayFeatureId(feature) {
+  const ref=normaliseMotorwayRef(feature?.properties?.road_ref);
+  if (!ref) return null;
+  const firstSegment=geometrySegments({type:'FeatureCollection',features:[feature]})[0];
+  const point=firstSegment?.[0];
+  const region=point && isNorthernIrelandCoordinate(Number(point[0]),Number(point[1])) ? 'NI' : 'GB';
+  return region==='NI' ? `NI:${ref}` : ref;
+}
+
 function calculateCanonicalCoverageForRoad(road, drawable) {
   const covered=new Set();
   if (!road || road.status!=='ready') return covered;
-  if (onboardingMode==='manual' && manualMotorwayRefs.has(road.ref)) {
-    const saved=manualCoverageByRef.get(road.ref);
+  if (onboardingMode==='manual' && manualMotorwayRefs.has(road.id)) {
+    const saved=manualCoverageByRef.get(road.id);
     return saved ? new Set(saved) : new Set(road.anchors.map(anchor=>anchor.id));
   }
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
-      if (normaliseMotorwayRef(feature?.properties?.road_ref)!==road.ref) continue;
+      if (motorwayFeatureId(feature)!==road.id) continue;
       for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
         const lengthM=haversineMetres(a,b);
         if (!Number.isFinite(lengthM) || lengthM<=0) continue;
@@ -1401,7 +1410,7 @@ function renderCanonicalMapLayers() {
 
   for (const road of canonicalRoads.values()) {
     if (road.status!=='ready') continue;
-    if (refinementRoadRef && road.ref!==refinementRoadRef) continue;
+    if (refinementRoadRef && road.id!==refinementRoadRef) continue;
 
     for (const way of road.ways) {
       L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
@@ -1451,16 +1460,31 @@ function renderCanonicalMapLayers() {
 }
 
 function renderNetworkCompletion(roads) {
-  const completedKm=roads.reduce((sum,road)=>{
-    if (road.status!=='ready' || !road.anchors.length) return sum;
+  const completedByRegion={GB:0,NI:0};
+  for (const road of roads) {
+    if (road.status!=='ready' || !road.anchors.length) continue;
     const fraction=Math.min(1,road.coveredAnchorIds.size/road.anchors.length);
-    return sum + road.totalKm*fraction;
-  },0);
+    completedByRegion[road.region]+=road.totalKm*fraction;
+  }
+
+  completedByRegion.GB=Math.min(GB_MOTORWAY_NETWORK_KM,completedByRegion.GB);
+  completedByRegion.NI=Math.min(NI_MOTORWAY_NETWORK_KM,completedByRegion.NI);
+  const completedKm=completedByRegion.GB+completedByRegion.NI;
+  const gbPercent=completedByRegion.GB/GB_MOTORWAY_NETWORK_KM*100;
+  const niPercent=completedByRegion.NI/NI_MOTORWAY_NETWORK_KM*100;
   const percent=Math.min(100,completedKm/UK_MOTORWAY_NETWORK_KM*100);
+
+  const regionalDistance=(km,totalKm,totalMiles)=>
+    `${displayDistance(km)} of approximately ${distanceUnit==='km' ? `${totalKm.toFixed(0)} km` : `${totalMiles.toLocaleString()} miles`}`;
+
+  gbProgressPercent.textContent=`${gbPercent.toFixed(1)}%`;
+  niProgressPercent.textContent=`${niPercent.toFixed(1)}%`;
+  gbProgressDistance.textContent=regionalDistance(completedByRegion.GB,GB_MOTORWAY_NETWORK_KM,GB_MOTORWAY_NETWORK_MILES);
+  niProgressDistance.textContent=regionalDistance(completedByRegion.NI,NI_MOTORWAY_NETWORK_KM,NI_MOTORWAY_NETWORK_MILES);
+
   const totalLabel=distanceUnit==='km'
     ? `approximately ${UK_MOTORWAY_NETWORK_KM.toFixed(0)} km`
     : `approximately ${UK_MOTORWAY_NETWORK_MILES.toLocaleString()} miles`;
-
   networkProgressPercent.textContent=`${percent.toFixed(1)}%`;
   networkProgressDistance.textContent=`${displayDistance(completedKm)} of ${totalLabel}`;
   networkProgressFill.style.width=`${percent}%`;
@@ -1475,7 +1499,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   const discoveredRefs=onboardingMode==='manual'
     ? [...manualMotorwayRefs].sort(motorwayRefSort)
     : drawable
-      ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(f=>normaliseMotorwayRef(f?.properties?.road_ref)).filter(Boolean)))]
+      ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(motorwayFeatureId).filter(Boolean)))]
       : [...canonicalRoads.keys()];
 
   if (!discoveredRefs.length && !canonicalRoads.size) {
@@ -1495,7 +1519,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   const roads=discoveredRefs.map(ref=>canonicalRoadState(ref)).sort((a,b)=>{
     const ap=a.status==='ready' && a.anchors.length ? a.coveredAnchorIds.size/a.anchors.length : -1;
     const bp=b.status==='ready' && b.anchors.length ? b.coveredAnchorIds.size/b.anchors.length : -1;
-    return bp-ap || a.ref.localeCompare(b.ref,undefined,{numeric:true});
+    return bp-ap || a.region.localeCompare(b.region) || a.ref.localeCompare(b.ref,undefined,{numeric:true});
   });
 
   renderNetworkCompletion(roads);
@@ -1507,7 +1531,8 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   for (const road of roads) {
     const row=document.createElement('div'); row.className='canonical-road-row';
     const top=document.createElement('div'); top.className='canonical-road-top';
-    const ref=document.createElement('div'); ref.className='canonical-road-ref'; ref.textContent=road.ref;
+    const ref=document.createElement('div'); ref.className='canonical-road-ref';
+    ref.textContent=road.region==='NI' ? `${road.ref} · NI` : road.ref;
     const progress=document.createElement('div'); progress.className='canonical-road-progress';
     const fill=document.createElement('div'); fill.className='canonical-road-fill';
     const pct=document.createElement('div'); pct.className='canonical-road-pct';
@@ -1532,8 +1557,8 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
       const refineButton=document.createElement('button');
       refineButton.type='button';
       refineButton.className='secondary refine-road-button';
-      refineButton.textContent=`Refine ${road.ref} sections`;
-      refineButton.addEventListener('click',()=>startMotorwayRefinement(road.ref));
+      refineButton.textContent=`Refine ${road.ref}${road.region==='NI'?' (Northern Ireland)':''} sections`;
+      refineButton.addEventListener('click',()=>startMotorwayRefinement(road.id));
       row.append(refineButton);
     }
 
@@ -1576,7 +1601,7 @@ function buildRefinementChunks(road) {
 }
 
 function refinementCoverageSet(road) {
-  const saved=manualCoverageByRef.get(road.ref);
+  const saved=manualCoverageByRef.get(road.id);
   return saved
     ? new Set(saved)
     : new Set(road.anchors.map(anchor=>anchor.id));
@@ -1597,7 +1622,7 @@ function applyRefinementIds(ids, mode=refinementEditMode) {
     if (mode==='erase') coverage.delete(id);
     else coverage.add(id);
   }
-  manualCoverageByRef.set(road.ref,coverage);
+  manualCoverageByRef.set(road.id,coverage);
   road.coveredAnchorIds=new Set(coverage);
   renderCanonicalMotorwayDashboard([]);
   renderMap();
@@ -1725,7 +1750,7 @@ refinementUndo.addEventListener('click',()=>{
   const road=canonicalRoads.get(refinementRoadRef);
   const previous=refinementUndoStack.pop();
   if (!road || !previous) return;
-  manualCoverageByRef.set(road.ref,new Set(previous));
+  manualCoverageByRef.set(road.id,new Set(previous));
   road.coveredAnchorIds=new Set(previous);
   refinementUndo.disabled=!refinementUndoStack.length;
   renderCanonicalMotorwayDashboard([]);
@@ -1742,7 +1767,7 @@ document.getElementById('refinementClear').addEventListener('click',()=>{
   const coverage=refinementCoverageSet(road);
   saveRefinementUndo(coverage);
   const empty=new Set();
-  manualCoverageByRef.set(road.ref,empty);
+  manualCoverageByRef.set(road.id,empty);
   road.coveredAnchorIds=empty;
   renderCanonicalMotorwayDashboard([]);
   renderMap();
