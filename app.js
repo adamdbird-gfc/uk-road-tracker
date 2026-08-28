@@ -436,8 +436,12 @@ function showDiagnostics(fileName) {
 }
 
 function formatDataDateRange(source=diagnostics) {
-  const start=Number(source?.dataStartMs);
-  const end=Number(source?.dataEndMs);
+  if (source?.dataStartMs===null || source?.dataStartMs===undefined ||
+      source?.dataEndMs===null || source?.dataEndMs===undefined) {
+    return 'Date range unavailable';
+  }
+  const start=Number(source.dataStartMs);
+  const end=Number(source.dataEndMs);
   if (!Number.isFinite(start) || !Number.isFinite(end)) return 'Date range unavailable';
   const startLabel=formatDate(new Date(start).toISOString());
   const endLabel=formatDate(new Date(end).toISOString());
