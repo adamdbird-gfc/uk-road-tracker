@@ -80,7 +80,7 @@
         </div>
         <button id="changeManualSource" class="text-button" type="button">Change answer</button>
       </div>
-      <p class="muted">Select every motorway you believe you have driven from end to end. For now, each selection marks the complete motorway as driven. We will add section-by-section refinement next.</p>
+      <p class="muted">Choose from the separate Great Britain and Northern Ireland motorway lists. Each new selection starts as fully driven and can then be refined section by section.</p>
       <div class="manual-actions">
         <button id="selectAllMotorways" class="secondary" type="button">Select all</button>
         <button id="clearAllMotorways" class="secondary" type="button">Clear all</button>
@@ -143,6 +143,18 @@
         <div class="canonical-score">
           <strong id="canonicalRoadsReady">0</strong>
           <span>references ready</span>
+        </div>
+      </div>
+      <div class="regional-progress-grid" aria-label="Regional motorway completion">
+        <div class="regional-progress-card">
+          <span>Great Britain</span>
+          <strong id="gbProgressPercent">0.0%</strong>
+          <small id="gbProgressDistance">0.0 of approximately 2,300 miles</small>
+        </div>
+        <div class="regional-progress-card">
+          <span>Northern Ireland</span>
+          <strong id="niProgressPercent">0.0%</strong>
+          <small id="niProgressDistance">0.0 of approximately 65 miles</small>
         </div>
       </div>
       <div class="network-progress" aria-labelledby="networkProgressTitle">
@@ -232,6 +244,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260828-gb-region-catalogue"></script>
+  <script src="app.js?v=20260828-regional-catalogues"></script>
 </body>
 </html>
