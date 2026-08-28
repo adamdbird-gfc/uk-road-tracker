@@ -289,6 +289,7 @@ function renderManualMotorwayOptions() {
           manualMotorwayRefs.delete(id);
           persistedManualRefs.delete(id);
           manualCoverageByRef.delete(id);
+          persistedCoverageByRef.delete(id);
           canonicalRequestedRefs.delete(id);
           canonicalRoads.delete(id);
         }
@@ -415,6 +416,7 @@ function returnToOnboarding() {
 }
 
 function setAllManualMotorways(selected) {
+  const previouslySelected=[...manualMotorwayRefs];
   manualMotorwayRefs.clear();
   if (selected) {
     for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
@@ -423,7 +425,10 @@ function setAllManualMotorways(selected) {
     for (const id of manualMotorwayRefs) persistedManualRefs.add(id);
   } else {
     persistedManualRefs.clear();
-    manualCoverageByRef.clear();
+    for (const id of previouslySelected) {
+      manualCoverageByRef.delete(id);
+      persistedCoverageByRef.delete(id);
+    }
     canonicalRequestedRefs.clear();
     canonicalRoads.clear();
   }
