@@ -188,10 +188,21 @@
           </div>
           <button id="finishRefinement" class="secondary" type="button">Done</button>
         </div>
-        <p id="refinementHelp" class="muted">Choose Mark or Erase, then tap the motorway. Each tap changes a forgiving section around that point.</p>
-        <div class="refinement-toolbar" role="group" aria-label="Map editing mode">
-          <button id="refinementMark" type="button" aria-pressed="true">Mark driven</button>
-          <button id="refinementErase" class="secondary" type="button" aria-pressed="false">Erase</button>
+        <p id="refinementHelp" class="muted">Choose whether to add or remove driven sections, then tap the motorway. Each tap changes a forgiving section around that point.</p>
+        <div class="refinement-mode-group">
+          <strong>What should tapping the map do?</strong>
+          <div class="refinement-mode-grid" role="group" aria-label="Map editing action">
+            <button id="refinementMark" class="refinement-mode-button add-mode" type="button" aria-pressed="false">
+              <span>Add driven section</span>
+              <small>Turn it blue</small>
+            </button>
+            <button id="refinementErase" class="refinement-mode-button remove-mode" type="button" aria-pressed="false">
+              <span>Remove driven section</span>
+              <small>Turn it red</small>
+            </button>
+          </div>
+        </div>
+        <div class="refinement-toolbar refinement-utility-actions" aria-label="Section editing utilities">
           <button id="refinementUndo" class="secondary" type="button" disabled>Undo</button>
           <button id="refinementWhole" class="secondary" type="button">Whole motorway</button>
           <button id="refinementClear" class="secondary" type="button">Clear motorway</button>
@@ -221,6 +232,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260828-section-editor"></script>
+  <script src="app.js?v=20260828-section-editor-modes"></script>
 </body>
 </html>
