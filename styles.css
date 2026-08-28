@@ -174,3 +174,26 @@ progress { width: 100%; height: 16px; }
 .canonical-road-meta { margin:7px 0 0 68px; font-size:.76rem; color:#657083; line-height:1.35; }
 .canonical-road-loading { color:#8a5b00; }
 .canonical-road-error { color:#a31d1d; }
+
+
+/* Data-source onboarding and manual motorway setup */
+.choice-grid { display:grid; gap:12px; margin-top:18px; }
+.choice-card { display:block; width:100%; min-height:104px; padding:18px; text-align:left; border-radius:14px; }
+.choice-card strong { display:block; margin-bottom:6px; font-size:1.08rem; }
+.choice-card span { display:block; font-weight:500; line-height:1.4; opacity:.9; }
+.secondary-choice { background:#e9edf2; color:#172033; }
+.section-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }
+.section-heading h2 { margin-bottom:0; }
+.text-button { padding:7px 0; background:transparent; color:#345b9d; white-space:nowrap; }
+.manual-actions { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:16px 0; }
+.manual-actions strong { margin-left:auto; color:#24663b; }
+.motorway-checklist { min-width:0; margin:0; padding:0; border:0; }
+.manual-motorway-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.manual-motorway-option { display:flex; align-items:center; gap:10px; min-height:50px; padding:10px 12px; border:1px solid #dfe4ea; border-radius:11px; background:#fff; cursor:pointer; font-weight:800; }
+.manual-motorway-option:has(input:checked) { border-color:#2f7df6; background:#eef5ff; color:#174f9e; }
+.manual-motorway-option input { width:21px; height:21px; margin:0; accent-color:#2f7df6; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media (min-width:600px) {
+  .choice-grid { grid-template-columns:1fr 1fr; }
+  .manual-motorway-list { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
