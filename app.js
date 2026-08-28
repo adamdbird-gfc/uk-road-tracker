@@ -1043,11 +1043,11 @@ function isNorthernIrelandCoordinate(lng, lat) {
 }
 
 function isGreatBritainMotorwayCoordinate(ref, lng, lat) {
-  // M1 and M2 references exist independently in Great Britain and
-  // Northern Ireland. The current canonical catalogue and length table
-  // describe their Great Britain routes.
-  return !['M1','M2'].includes(normaliseMotorwayRef(ref)) ||
-    !isNorthernIrelandCoordinate(lng, lat);
+  // The current canonical catalogue and reference-length table describe
+  // Great Britain routes. Northern Ireland reuses several motorway refs
+  // (including M1, M2, M3 and M5), so region must be part of road identity
+  // rather than maintaining a fragile list of duplicated names.
+  return !isNorthernIrelandCoordinate(lng, lat);
 }
 
 function canonicalReferenceLengthKm(ref, fallbackKm = 0) {
