@@ -15,13 +15,32 @@
       <div>
         <p class="eyebrow">Proof of concept</p>
         <h1>UK Road Tracker</h1>
-        <p class="lede">Import your Google Timeline JSON, identify car journeys, choose which trips to include, and preview the traces on a UK map.</p>
+        <p class="lede">Build a map of the UK motorways you have driven, either from existing journey data or by selecting them yourself.</p>
       </div>
       <div class="privacy">Your file is processed in your browser. This POC does not upload it anywhere.</div>
     </header>
 
-    <section class="card import-card">
-      <h2>1. Import Timeline data</h2>
+    <section id="onboardingCard" class="card onboarding-card">
+      <p class="eyebrow">Let&apos;s get started</p>
+      <h2>Do you have a data source?</h2>
+      <p class="muted">If you have Google Timeline data, we can use it to identify the roads you have driven. If not, you can start by selecting complete motorways manually.</p>
+      <div class="choice-grid">
+        <button id="hasDataSource" class="choice-card" type="button">
+          <strong>Yes, I have data</strong>
+          <span>Import my existing journey data.</span>
+        </button>
+        <button id="noDataSource" class="choice-card secondary-choice" type="button">
+          <strong>No, start manually</strong>
+          <span>Choose the motorways I have driven.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="dataSourceCard" class="card import-card hidden">
+      <div class="section-heading">
+        <h2>2. Import Timeline data</h2>
+        <button id="changeDataSource" class="text-button" type="button">Change answer</button>
+      </div>
       <label class="file-button" for="timelineFile">Choose Timeline JSON</label>
       <input id="timelineFile" type="file" accept="application/json,.json" />
       <p id="fileStatus" class="muted">No file selected.</p>
@@ -53,6 +72,26 @@
       </div>
     </section>
 
+    <section id="manualMotorwayCard" class="card hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Manual setup</p>
+          <h2>2. Which motorways have you driven on?</h2>
+        </div>
+        <button id="changeManualSource" class="text-button" type="button">Change answer</button>
+      </div>
+      <p class="muted">Select every motorway you believe you have driven from end to end. For now, each selection marks the complete motorway as driven. We will add section-by-section refinement next.</p>
+      <div class="manual-actions">
+        <button id="selectAllMotorways" class="secondary" type="button">Select all</button>
+        <button id="clearAllMotorways" class="secondary" type="button">Clear all</button>
+        <strong id="manualSelectedCount">0 selected</strong>
+      </div>
+      <fieldset class="motorway-checklist">
+        <legend class="sr-only">UK motorways</legend>
+        <div id="manualMotorwayList" class="manual-motorway-list"></div>
+      </fieldset>
+    </section>
+
     <section id="ignoredCard" class="card hidden">
       <details>
         <summary><strong><span id="ignoredCount">0</span> journeys ignored — insufficient Timeline trace</strong></summary>
@@ -62,7 +101,7 @@
     </section>
 
     <section id="summaryCard" class="card hidden">
-      <h2>2. Choose journeys</h2>
+      <h2 id="journeyStepTitle">3. Choose journeys</h2>
       <div class="stats">
         <div><strong id="journeyCount">0</strong><span>car journeys</span></div>
         <div><strong id="pointCount">0</strong><span>location points</span></div>
@@ -115,8 +154,8 @@
     <section id="mapCard" class="card hidden">
       <div class="map-heading">
         <div>
-          <h2>3. Preview</h2>
-          <p class="muted">The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.</p>
+          <h2 id="mapTitle">4. Preview</h2>
+          <p id="mapIntro" class="muted">The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.</p>
         </div>
         <button id="fitMap" class="secondary">Fit selected</button>
       </div>
