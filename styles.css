@@ -277,3 +277,13 @@ progress { width: 100%; height: 16px; }
 
 .data-date-range { margin:14px 0; padding:11px 13px; border-radius:11px; background:#eef5ff; color:#174f9e; }
 .data-date-range strong { margin-right:4px; }
+
+
+.local-progress-notice { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:16px; padding:13px; border:1px solid #badfc7; border-radius:12px; background:#e7f5ec; }
+.local-progress-notice > div { display:grid; gap:3px; }
+.local-progress-notice span { color:#356148; font-size:.8rem; line-height:1.4; }
+.local-progress-notice button { flex:0 0 auto; }
+@media (max-width:600px) {
+  .local-progress-notice { align-items:stretch; flex-direction:column; }
+  .local-progress-notice button { width:100%; }
+}
