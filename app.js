@@ -276,9 +276,12 @@ function renderManualMotorwayOptions() {
       checkbox.value=id;
       checkbox.checked=manualMotorwayRefs.has(id);
       checkbox.addEventListener('change',()=>{
-        if (checkbox.checked) manualMotorwayRefs.add(id);
-        else {
+        if (checkbox.checked) {
+          manualMotorwayRefs.add(id);
+          persistedManualRefs.add(id);
+        } else {
           manualMotorwayRefs.delete(id);
+          persistedManualRefs.delete(id);
           manualCoverageByRef.delete(id);
           canonicalRequestedRefs.delete(id);
           canonicalRoads.delete(id);
@@ -386,6 +389,7 @@ async function showDataSourceChoice(mode) {
     return;
   }
 
+  for (const id of persistedManualRefs) manualMotorwayRefs.add(id);
   mapTitle.textContent = '3. Preview';
   mapIntro.textContent = 'Selected motorways are shown in blue as complete. In the next enhancement, you will be able to refine these into the individual sections you have driven.';
   mapCard.classList.remove('hidden');
@@ -409,7 +413,10 @@ function setAllManualMotorways(selected) {
   if (selected) {
     for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
     for (const ref of Object.keys(NI_MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(`NI:${ref}`);
+    persistedManualRefs.clear();
+    for (const id of manualMotorwayRefs) persistedManualRefs.add(id);
   } else {
+    persistedManualRefs.clear();
     manualCoverageByRef.clear();
     canonicalRequestedRefs.clear();
     canonicalRoads.clear();
@@ -420,6 +427,7 @@ function setAllManualMotorways(selected) {
 
 function updateManualMotorwaySelection() {
   manualSelectedCount.textContent = `${manualMotorwayRefs.size} selected`;
+  scheduleLocalProgressSave();
   renderMap();
   if (manualMotorwayRefs.size) ensureCanonicalRoadsForDiscoveredRefs([...manualMotorwayRefs]);
 }
@@ -451,6 +459,8 @@ fileInput.addEventListener('change', async () => {
     const result = extractVehicleJourneys(json);
     const allJourneys = result.journeys;
     diagnostics = result.diagnostics;
+    mergeProgressDateRange(diagnostics);
+    scheduleLocalProgressSave();
 
     ignoredJourneys = allJourneys.filter(j => j.pathPointCount < 2);
     journeys = allJourneys.filter(j => j.pathPointCount >= 2);
@@ -1171,6 +1181,7 @@ function addSegmentCorridorCells(cellSet, a, b) {
 
 function setDistanceUnit(unit) {
   distanceUnit = unit === 'km' ? 'km' : 'miles';
+  scheduleLocalProgressSave();
 
   unitMiles.classList.toggle('active', distanceUnit === 'miles');
   unitKm.classList.toggle('active', distanceUnit === 'km');
@@ -1359,7 +1370,10 @@ function hydrateCanonicalRoadFromCache(road, cached) {
   road.ways = [];
   road.anchors = anchors;
   road.anchorIndex = buildAnchorIndex(anchors);
-  road.coveredAnchorIds = new Set();
+  road.coveredAnchorIds = new Set(
+    [...(persistedCoverageByRef.get(road.id) || [])]
+      .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length)
+  );
   road.totalKm = canonicalReferenceLengthKm(
     road.id,
     Number(cached.total_km || anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000)
@@ -1466,7 +1480,10 @@ async function loadCanonicalRoad(ref, force=false) {
     road.ways=ways;
     road.anchors=anchors;
     road.anchorIndex=buildAnchorIndex(anchors);
-    road.coveredAnchorIds=new Set();
+    road.coveredAnchorIds=new Set(
+      [...(persistedCoverageByRef.get(road.id) || [])]
+        .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length)
+    );
     road.totalKm=canonicalReferenceLengthKm(
       road.id,
       anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000
@@ -1514,11 +1531,15 @@ function motorwayFeatureId(feature) {
 }
 
 function calculateCanonicalCoverageForRoad(road, drawable) {
-  const covered=new Set();
+  const covered=new Set(persistedCoverageByRef.get(road?.id) || []);
   if (!road || road.status!=='ready') return covered;
   if (onboardingMode==='manual' && manualMotorwayRefs.has(road.id)) {
     const saved=manualCoverageByRef.get(road.id);
-    return saved ? new Set(saved) : new Set(road.anchors.map(anchor=>anchor.id));
+    return saved
+      ? new Set(saved)
+      : covered.size
+        ? covered
+        : new Set(road.anchors.map(anchor=>anchor.id));
   }
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
@@ -1534,6 +1555,8 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
       }
     }
   }
+  persistedCoverageByRef.set(road.id,new Set(covered));
+  scheduleLocalProgressSave();
   return covered;
 }
 
