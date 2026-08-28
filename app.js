@@ -16,7 +16,7 @@ const manualMotorwayRefs = new Set();
 const manualCoverageByRef = new Map();
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
-let refinementEditMode = 'mark';
+let refinementEditMode = null;
 let refinementUndoStack = [];
 let refinementChunks = [];
 let refinementChunkIndex = 0;
@@ -1557,6 +1557,12 @@ function nearestRefinementAnchor(road, lat, lng) {
 
 function handleRefinementMapClick(event) {
   if (!refinementRoadRef) return;
+  if (!refinementEditMode) {
+    mapStatus.className='muted map-status warn';
+    mapStatus.textContent='Choose “Add driven section” or “Remove driven section” before tapping the map.';
+    refinementMark.focus();
+    return;
+  }
   const road=canonicalRoads.get(refinementRoadRef);
   if (!road || road.status!=='ready') return;
   const nearest=nearestRefinementAnchor(road,event.latlng.lat,event.latlng.lng);
@@ -1573,13 +1579,20 @@ function handleRefinementMapClick(event) {
 }
 
 function setRefinementMode(mode) {
-  refinementEditMode=mode==='erase' ? 'erase' : 'mark';
-  refinementMark.classList.toggle('secondary',refinementEditMode!=='mark');
-  refinementErase.classList.toggle('secondary',refinementEditMode!=='erase');
+  refinementEditMode=['mark','erase'].includes(mode) ? mode : null;
   refinementMark.setAttribute('aria-pressed',String(refinementEditMode==='mark'));
   refinementErase.setAttribute('aria-pressed',String(refinementEditMode==='erase'));
+
+  if (!refinementEditMode) {
+    mapStatus.className='muted map-status warn';
+    mapStatus.textContent='Choose what tapping the map should do: add a blue driven section or remove one to red.';
+    return;
+  }
+
   mapStatus.className='muted map-status ok';
-  mapStatus.textContent=`${refinementEditMode==='mark'?'Mark':'Erase'} mode active. Tap the motorway to edit an approximately 5 km area.`;
+  mapStatus.textContent=refinementEditMode==='mark'
+    ? 'Add mode active. Tap the motorway to turn an approximately 5 km section blue.'
+    : 'Remove mode active. Tap the motorway to turn an approximately 5 km section red.';
 }
 
 function updateRefinementChunkStatus(focus=false) {
@@ -1623,7 +1636,7 @@ function startMotorwayRefinement(ref) {
   mapTitle.textContent=`Refine ${ref}`;
   mapIntro.textContent='Tap the motorway to mark or erase sections, or open the keyboard controls to work through geographic areas.';
   refinementUndo.disabled=true;
-  setRefinementMode('mark');
+  setRefinementMode(null);
   renderMap();
   const points=road.anchors.map(anchor=>[anchor.lat,anchor.lng]);
   if (points.length) map.fitBounds(L.latLngBounds(points),{padding:[25,25],maxZoom:9});
@@ -1833,7 +1846,9 @@ function renderMap() {
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
     if (refinementRoadRef) {
-      mapStatus.textContent=`${refinementEditMode==='mark'?'Mark':'Erase'} mode · tap close to the ${refinementRoadRef} line, or use the keyboard section controls.`;
+      mapStatus.textContent=refinementEditMode
+        ? `${refinementEditMode==='mark'?'Add':'Remove'} mode · tap close to the ${refinementRoadRef} line, or use the keyboard section controls.`
+        : 'Choose “Add driven section” or “Remove driven section” before tapping the map.';
     } else if (onboardingMode==='manual') {
       const ready=[...manualMotorwayRefs]
         .filter(ref=>canonicalRoadState(ref).status==='ready').length;
