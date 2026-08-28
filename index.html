@@ -145,6 +145,27 @@
           <span>references ready</span>
         </div>
       </div>
+      <div class="network-progress" aria-labelledby="networkProgressTitle">
+        <div class="network-progress-heading">
+          <div>
+            <span id="networkProgressTitle" class="network-progress-label">UK motorway network completion</span>
+            <strong id="networkProgressPercent">0.0%</strong>
+          </div>
+          <span id="networkProgressDistance">0.0 of approximately 2,365 miles</span>
+        </div>
+        <div
+          id="networkProgressBar"
+          class="network-progress-track"
+          role="progressbar"
+          aria-label="UK motorway network completion"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div id="networkProgressFill" class="network-progress-fill"></div>
+        </div>
+        <p class="muted network-progress-note">Compared with the approximately 2,365-mile publicly maintained UK motorway network reported for 2025.</p>
+      </div>
       <div id="canonicalMotorwayList" class="canonical-motorway-list"></div>
       <p id="canonicalMotorwayStatus" class="muted canonical-status">Canonical motorway references will load as motorways are discovered.</p>
       <button id="canonicalRetry" class="secondary hidden" type="button">Retry motorway references</button>
