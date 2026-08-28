@@ -170,7 +170,7 @@ function loadLocalProgress() {
 function saveLocalProgressNow() {
   try {
     for (const road of canonicalRoads.values()) {
-      if (road.status==='ready' && road.coveredAnchorIds.size) {
+      if (road.status==='ready') {
         persistedCoverageByRef.set(road.id,new Set(road.coveredAnchorIds));
       }
     }
@@ -438,7 +438,14 @@ document.getElementById('changeDataSource').addEventListener('click', returnToOn
 document.getElementById('changeManualSource').addEventListener('click', returnToOnboarding);
 document.getElementById('selectAllMotorways').addEventListener('click', () => setAllManualMotorways(true));
 document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
+document.getElementById('clearLocalProgress').addEventListener('click', clearLocalProgress);
+loadLocalProgress();
+unitMiles.classList.toggle('active',distanceUnit==='miles');
+unitKm.classList.toggle('active',distanceUnit==='km');
+unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
+unitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
 renderManualMotorwayOptions();
+updateLocalProgressNotice();
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -1654,10 +1661,13 @@ function renderNetworkCompletion(roads) {
 }
 
 function renderCanonicalMotorwayDashboard(drawable=null) {
+  const sessionRefs=drawable
+    ? drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(motorwayFeatureId).filter(Boolean))
+    : [];
   const discoveredRefs=onboardingMode==='manual'
     ? [...manualMotorwayRefs].sort(motorwayRefSort)
     : drawable
-      ? [...new Set(drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(motorwayFeatureId).filter(Boolean)))]
+      ? [...new Set([...persistedCoverageByRef.keys(),...sessionRefs])].sort(motorwayRefSort)
       : [...canonicalRoads.keys()];
 
   if (!discoveredRefs.length && !canonicalRoads.size) {
@@ -1781,7 +1791,9 @@ function applyRefinementIds(ids, mode=refinementEditMode) {
     else coverage.add(id);
   }
   manualCoverageByRef.set(road.id,coverage);
+  persistedCoverageByRef.set(road.id,new Set(coverage));
   road.coveredAnchorIds=new Set(coverage);
+  scheduleLocalProgressSave();
   renderCanonicalMotorwayDashboard([]);
   renderMap();
   updateRefinementChunkStatus();
@@ -1910,7 +1922,9 @@ refinementUndo.addEventListener('click',()=>{
   const previous=refinementUndoStack.pop();
   if (!road || !previous) return;
   manualCoverageByRef.set(road.id,new Set(previous));
+  persistedCoverageByRef.set(road.id,new Set(previous));
   road.coveredAnchorIds=new Set(previous);
+  scheduleLocalProgressSave();
   refinementUndo.disabled=!refinementUndoStack.length;
   renderCanonicalMotorwayDashboard([]);
   renderMap();
@@ -1927,7 +1941,9 @@ document.getElementById('refinementClear').addEventListener('click',()=>{
   saveRefinementUndo(coverage);
   const empty=new Set();
   manualCoverageByRef.set(road.id,empty);
+  persistedCoverageByRef.set(road.id,empty);
   road.coveredAnchorIds=empty;
+  scheduleLocalProgressSave();
   renderCanonicalMotorwayDashboard([]);
   renderMap();
   updateRefinementChunkStatus();
