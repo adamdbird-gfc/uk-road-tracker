@@ -13,7 +13,13 @@ let trackingSessionId = 0;
 let distanceUnit = 'miles';
 let onboardingMode = null;
 const manualMotorwayRefs = new Set();
+const manualCoverageByRef = new Map();
 const canonicalRequestedRefs = new Set();
+let refinementRoadRef = null;
+let refinementEditMode = 'mark';
+let refinementUndoStack = [];
+let refinementChunks = [];
+let refinementChunkIndex = 0;
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
@@ -59,6 +65,12 @@ const manualMotorwayList = document.getElementById('manualMotorwayList');
 const manualSelectedCount = document.getElementById('manualSelectedCount');
 const mapTitle = document.getElementById('mapTitle');
 const mapIntro = document.getElementById('mapIntro');
+const refinementPanel = document.getElementById('refinementPanel');
+const refinementTitle = document.getElementById('refinementTitle');
+const refinementMark = document.getElementById('refinementMark');
+const refinementErase = document.getElementById('refinementErase');
+const refinementUndo = document.getElementById('refinementUndo');
+const refinementChunkStatus = document.getElementById('refinementChunkStatus');
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
@@ -107,6 +119,7 @@ function renderManualMotorwayOptions() {
       if (checkbox.checked) manualMotorwayRefs.add(ref);
       else {
         manualMotorwayRefs.delete(ref);
+        manualCoverageByRef.delete(ref);
         canonicalRequestedRefs.delete(ref);
         canonicalRoads.delete(ref);
       }
@@ -129,8 +142,13 @@ function resetTrackingSession() {
   diagnostics = {};
   ignoredJourneys = [];
   manualMotorwayRefs.clear();
+  manualCoverageByRef.clear();
   canonicalRequestedRefs.clear();
   canonicalRoads.clear();
+  refinementRoadRef = null;
+  refinementUndoStack = [];
+  refinementChunks = [];
+  refinementChunkIndex = 0;
 
   fileInput.value = '';
   fileStatus.className = 'muted';
@@ -163,6 +181,8 @@ function resetTrackingSession() {
   canonicalMotorwayCard.classList.add('hidden');
   mapCard.classList.add('hidden');
   nextCard.classList.add('hidden');
+  refinementPanel.classList.add('hidden');
+  mapCard.classList.remove('refinement-active');
 
   for (const layer of [
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
@@ -216,6 +236,7 @@ function setAllManualMotorways(selected) {
   if (selected) {
     for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
   } else {
+    manualCoverageByRef.clear();
     canonicalRequestedRefs.clear();
     canonicalRoads.clear();
   }
@@ -807,6 +828,7 @@ function initMap() {
     });
 
     tiles.addTo(map);
+    map.on('click', handleRefinementMapClick);
     traceLayer = L.layerGroup();
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
@@ -1289,7 +1311,8 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
   const covered=new Set();
   if (!road || road.status!=='ready') return covered;
   if (onboardingMode==='manual' && manualMotorwayRefs.has(road.ref)) {
-    return new Set(road.anchors.map(anchor=>anchor.id));
+    const saved=manualCoverageByRef.get(road.ref);
+    return saved ? new Set(saved) : new Set(road.anchors.map(anchor=>anchor.id));
   }
   for (const journey of drawable) {
     for (const feature of journey.motorwayGeoJson?.features || []) {
@@ -1316,6 +1339,7 @@ function renderCanonicalMapLayers() {
 
   for (const road of canonicalRoads.values()) {
     if (road.status!=='ready') continue;
+    if (refinementRoadRef && road.ref!==refinementRoadRef) continue;
 
     for (const way of road.ways) {
       L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
@@ -1440,7 +1464,18 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
     } else {
       fill.style.width='0%'; pct.textContent='…'; meta.textContent='Waiting to load reference…';
     }
-    progress.append(fill); top.append(ref,progress,pct); row.append(top,meta); canonicalMotorwayList.append(row);
+    progress.append(fill); top.append(ref,progress,pct); row.append(top,meta);
+
+    if (onboardingMode==='manual' && road.status==='ready') {
+      const refineButton=document.createElement('button');
+      refineButton.type='button';
+      refineButton.className='secondary refine-road-button';
+      refineButton.textContent=`Refine ${road.ref} sections`;
+      refineButton.addEventListener('click',()=>startMotorwayRefinement(road.ref));
+      row.append(refineButton);
+    }
+
+    canonicalMotorwayList.append(row);
   }
 
   if (loadingCount) {
@@ -1457,6 +1492,197 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   }
   renderCanonicalMapLayers();
 }
+
+function buildRefinementChunks(road) {
+  const groups=new Map();
+  const cellM=8000;
+  for (const anchor of road?.anchors || []) {
+    const key=gridKeyXY(anchor.x,anchor.y,cellM);
+    if (!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push(anchor.id);
+  }
+  return [...groups.values()]
+    .map(ids=>{
+      const anchors=ids.map(id=>road.anchors[id]);
+      return {
+        ids,
+        lat:anchors.reduce((sum,a)=>sum+a.lat,0)/anchors.length,
+        lng:anchors.reduce((sum,a)=>sum+a.lng,0)/anchors.length
+      };
+    })
+    .sort((a,b)=>b.lat-a.lat || a.lng-b.lng);
+}
+
+function refinementCoverageSet(road) {
+  const saved=manualCoverageByRef.get(road.ref);
+  return saved
+    ? new Set(saved)
+    : new Set(road.anchors.map(anchor=>anchor.id));
+}
+
+function saveRefinementUndo(coverage) {
+  refinementUndoStack.push(new Set(coverage));
+  if (refinementUndoStack.length>30) refinementUndoStack.shift();
+  refinementUndo.disabled=false;
+}
+
+function applyRefinementIds(ids, mode=refinementEditMode) {
+  const road=canonicalRoads.get(refinementRoadRef);
+  if (!road || road.status!=='ready' || !ids.length) return;
+  const coverage=refinementCoverageSet(road);
+  saveRefinementUndo(coverage);
+  for (const id of ids) {
+    if (mode==='erase') coverage.delete(id);
+    else coverage.add(id);
+  }
+  manualCoverageByRef.set(road.ref,coverage);
+  road.coveredAnchorIds=new Set(coverage);
+  renderCanonicalMotorwayDashboard([]);
+  renderMap();
+  updateRefinementChunkStatus();
+}
+
+function nearestRefinementAnchor(road, lat, lng) {
+  const [x,y]=mercatorXY(lng,lat);
+  let best=null,bestDistance=12000;
+  for (const anchor of road.anchors) {
+    const distance=Math.hypot(x-anchor.x,y-anchor.y);
+    if (distance<bestDistance) {
+      bestDistance=distance;
+      best=anchor;
+    }
+  }
+  return best;
+}
+
+function handleRefinementMapClick(event) {
+  if (!refinementRoadRef) return;
+  const road=canonicalRoads.get(refinementRoadRef);
+  if (!road || road.status!=='ready') return;
+  const nearest=nearestRefinementAnchor(road,event.latlng.lat,event.latlng.lng);
+  if (!nearest) {
+    mapStatus.className='muted map-status warn';
+    mapStatus.textContent=`Tap closer to the ${road.ref} line.`;
+    return;
+  }
+  const brushRadiusM=5000;
+  const ids=road.anchors
+    .filter(anchor=>Math.hypot(anchor.x-nearest.x,anchor.y-nearest.y)<=brushRadiusM)
+    .map(anchor=>anchor.id);
+  applyRefinementIds(ids);
+}
+
+function setRefinementMode(mode) {
+  refinementEditMode=mode==='erase' ? 'erase' : 'mark';
+  refinementMark.classList.toggle('secondary',refinementEditMode!=='mark');
+  refinementErase.classList.toggle('secondary',refinementEditMode!=='erase');
+  refinementMark.setAttribute('aria-pressed',String(refinementEditMode==='mark'));
+  refinementErase.setAttribute('aria-pressed',String(refinementEditMode==='erase'));
+  mapStatus.className='muted map-status ok';
+  mapStatus.textContent=`${refinementEditMode==='mark'?'Mark':'Erase'} mode active. Tap the motorway to edit an approximately 5 km area.`;
+}
+
+function updateRefinementChunkStatus(focus=false) {
+  const road=canonicalRoads.get(refinementRoadRef);
+  const chunk=refinementChunks[refinementChunkIndex];
+  if (!road || !chunk) {
+    refinementChunkStatus.textContent='No areas available';
+    return;
+  }
+  const coverage=refinementCoverageSet(road);
+  const covered=chunk.ids.filter(id=>coverage.has(id)).length;
+  const state=covered===chunk.ids.length ? 'driven' : covered ? 'partly driven' : 'not driven';
+  refinementChunkStatus.textContent=
+    `Area ${refinementChunkIndex+1} of ${refinementChunks.length} · ${state}`;
+
+  if (focus && map) {
+    const points=chunk.ids.map(id=>road.anchors[id]).map(a=>[a.lat,a.lng]);
+    if (points.length) map.fitBounds(L.latLngBounds(points),{padding:[70,70],maxZoom:11});
+  }
+}
+
+function moveRefinementChunk(direction) {
+  if (!refinementChunks.length) return;
+  refinementChunkIndex=
+    (refinementChunkIndex+direction+refinementChunks.length)%refinementChunks.length;
+  updateRefinementChunkStatus(true);
+}
+
+function startMotorwayRefinement(ref) {
+  const road=canonicalRoads.get(ref);
+  if (!road || road.status!=='ready') return;
+  refinementRoadRef=ref;
+  refinementUndoStack=[];
+  refinementChunks=buildRefinementChunks(road);
+  refinementChunkIndex=0;
+  refinementTitle.textContent=`Refine ${ref} sections`;
+  refinementPanel.classList.remove('hidden');
+  mapCard.classList.add('refinement-active');
+  manualMotorwayCard.classList.add('hidden');
+  canonicalMotorwayCard.classList.add('hidden');
+  mapTitle.textContent=`Refine ${ref}`;
+  mapIntro.textContent='Tap the motorway to mark or erase sections, or open the keyboard controls to work through geographic areas.';
+  refinementUndo.disabled=true;
+  setRefinementMode('mark');
+  renderMap();
+  const points=road.anchors.map(anchor=>[anchor.lat,anchor.lng]);
+  if (points.length) map.fitBounds(L.latLngBounds(points),{padding:[25,25],maxZoom:9});
+  updateRefinementChunkStatus();
+  refinementMark.focus();
+}
+
+function finishMotorwayRefinement() {
+  refinementRoadRef=null;
+  refinementPanel.classList.add('hidden');
+  mapCard.classList.remove('refinement-active');
+  manualMotorwayCard.classList.remove('hidden');
+  canonicalMotorwayCard.classList.remove('hidden');
+  mapTitle.textContent='3. Preview';
+  mapIntro.textContent='Selected motorways are shown in blue where confirmed and red where unconfirmed. Use Refine sections to edit an individual motorway.';
+  renderMap();
+  fitSelected();
+}
+
+document.getElementById('finishRefinement').addEventListener('click',finishMotorwayRefinement);
+refinementMark.addEventListener('click',()=>setRefinementMode('mark'));
+refinementErase.addEventListener('click',()=>setRefinementMode('erase'));
+refinementUndo.addEventListener('click',()=>{
+  const road=canonicalRoads.get(refinementRoadRef);
+  const previous=refinementUndoStack.pop();
+  if (!road || !previous) return;
+  manualCoverageByRef.set(road.ref,new Set(previous));
+  road.coveredAnchorIds=new Set(previous);
+  refinementUndo.disabled=!refinementUndoStack.length;
+  renderCanonicalMotorwayDashboard([]);
+  renderMap();
+  updateRefinementChunkStatus();
+});
+document.getElementById('refinementWhole').addEventListener('click',()=>{
+  const road=canonicalRoads.get(refinementRoadRef);
+  if (road) applyRefinementIds(road.anchors.map(anchor=>anchor.id),'mark');
+});
+document.getElementById('refinementClear').addEventListener('click',()=>{
+  const road=canonicalRoads.get(refinementRoadRef);
+  if (!road) return;
+  const coverage=refinementCoverageSet(road);
+  saveRefinementUndo(coverage);
+  const empty=new Set();
+  manualCoverageByRef.set(road.ref,empty);
+  road.coveredAnchorIds=empty;
+  renderCanonicalMotorwayDashboard([]);
+  renderMap();
+  updateRefinementChunkStatus();
+});
+document.getElementById('previousRefinementChunk').addEventListener('click',()=>moveRefinementChunk(-1));
+document.getElementById('nextRefinementChunk').addEventListener('click',()=>moveRefinementChunk(1));
+document.getElementById('markRefinementChunk').addEventListener('click',()=>{
+  const chunk=refinementChunks[refinementChunkIndex];
+  if (chunk) applyRefinementIds(chunk.ids,'mark');
+});
+document.getElementById('eraseRefinementChunk').addEventListener('click',()=>{
+  const chunk=refinementChunks[refinementChunkIndex];
+  if (chunk) applyRefinementIds(chunk.ids,'erase');
+});
 
 function retryCanonicalRoads() {
   const errored=[...canonicalRoads.values()].filter(r=>r.status==='error').map(r=>r.ref);
