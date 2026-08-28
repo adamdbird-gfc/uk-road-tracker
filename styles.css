@@ -253,3 +253,21 @@ progress { width: 100%; height: 16px; }
 @media (max-width:520px) {
   .refinement-mode-grid { grid-template-columns:1fr; }
 }
+
+
+.motorway-region-group { margin-top:16px; }
+.motorway-region-heading { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:0 0 9px; }
+.motorway-region-heading h3 { margin:0; font-size:1.05rem; }
+.motorway-region-heading span { color:#657083; font-size:.75rem; }
+.motorway-region-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.regional-progress-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+.regional-progress-card { display:grid; gap:4px; padding:13px; border:1px solid #dfe4ea; border-radius:12px; background:#fff; }
+.regional-progress-card span { color:#657083; font-size:.78rem; font-weight:750; }
+.regional-progress-card strong { font-size:1.35rem; }
+.regional-progress-card small { color:#475266; font-size:.72rem; line-height:1.35; }
+@media (min-width:600px) {
+  .motorway-region-options { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media (max-width:520px) {
+  .regional-progress-grid { grid-template-columns:1fr; }
+}
