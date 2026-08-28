@@ -629,8 +629,8 @@ function initMap() {
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
     canonicalReferenceLayer = L.layerGroup();
-    canonicalCoverageLayer = L.layerGroup();
-    canonicalUncoveredLayer = L.layerGroup();
+    canonicalCoverageLayer = L.layerGroup().addTo(map);
+    canonicalUncoveredLayer = L.layerGroup().addTo(map);
 
     mapLayerControl = L.control.layers(
       {},
@@ -639,8 +639,8 @@ function initMap() {
         'Matched journeys': matchedLayer,
         'Raw Timeline traces': traceLayer,
         'Canonical motorway references': canonicalReferenceLayer,
-        'Motorway completed sections': canonicalCoverageLayer,
-        'Motorway uncompleted sections': canonicalUncoveredLayer
+        'Motorway confirmed sections (blue)': canonicalCoverageLayer,
+        'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
       },
       {collapsed: true}
     ).addTo(map);
@@ -833,6 +833,11 @@ function normaliseMotorwayRef(ref) {
   return String(ref || '').toUpperCase().replace(/\s+/g, '');
 }
 
+function canonicalReferenceLengthKm(ref, fallbackKm = 0) {
+  const canonicalKm = Number(MOTORWAY_LENGTH_KM[normaliseMotorwayRef(ref)]);
+  return Number.isFinite(canonicalKm) && canonicalKm > 0 ? canonicalKm : fallbackKm;
+}
+
 function canonicalRoadState(ref) {
   const key = normaliseMotorwayRef(ref);
   if (!canonicalRoads.has(key)) {
@@ -935,7 +940,10 @@ function hydrateCanonicalRoadFromCache(road, cached) {
   road.anchors = anchors;
   road.anchorIndex = buildAnchorIndex(anchors);
   road.coveredAnchorIds = new Set();
-  road.totalKm = Number(cached.total_km || anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000);
+  road.totalKm = canonicalReferenceLengthKm(
+    road.ref,
+    Number(cached.total_km || anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000)
+  );
   road.status = 'ready';
   road.source = 'cache';
 }
@@ -1034,7 +1042,10 @@ async function loadCanonicalRoad(ref, force=false) {
     road.anchors=anchors;
     road.anchorIndex=buildAnchorIndex(anchors);
     road.coveredAnchorIds=new Set();
-    road.totalKm=anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000;
+    road.totalKm=canonicalReferenceLengthKm(
+      road.ref,
+      anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000
+    );
     road.status='ready';
     road.source='live';
 
@@ -1096,13 +1107,28 @@ function renderCanonicalMapLayers() {
       L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
     }
 
-    for (const anchor of road.anchors) {
-      const covered=road.coveredAnchorIds.has(anchor.id);
-      L.circleMarker([anchor.lat,anchor.lng],{
-        radius:2.7,weight:0,fillOpacity:.95,
-        color:covered ? '#2f7df6' : '#d93a3a',
-        fillColor:covered ? '#2f7df6' : '#d93a3a',interactive:false
-      }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
+    for (const way of road.ways) {
+      for (let i=1; i<way.coords.length; i++) {
+        const a=way.coords[i-1], b=way.coords[i];
+        const lengthM=haversineMetres(a,b);
+        if (!Number.isFinite(lengthM) || lengthM<=0) continue;
+        const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_REFERENCE_SAMPLE_M));
+        for (let s=0; s<samples; s++) {
+          const start=interpolateLngLat(a,b,s/samples);
+          const end=interpolateLngLat(a,b,(s+1)/samples);
+          const anchorId=nearestCanonicalAnchor(road,interpolateLngLat(start,end,.5));
+          const covered=anchorId!==null && road.coveredAnchorIds.has(anchorId);
+          L.polyline(
+            [[start[1],start[0]],[end[1],end[0]]],
+            {
+              weight:4,
+              opacity:.9,
+              color:covered ? '#2f7df6' : '#d93a3a',
+              interactive:false
+            }
+          ).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
+        }
+      }
     }
   }
 }
