@@ -1420,7 +1420,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
     canonicalMotorwayCard.classList.add('hidden');
     return;
   }
-  canonicalMotorwayCard.classList.remove('hidden');
+  canonicalMotorwayCard.classList.toggle('hidden',Boolean(refinementRoadRef));
 
   if (drawable || onboardingMode==='manual') {
     for (const ref of discoveredRefs) {
@@ -1832,7 +1832,9 @@ function renderMap() {
 
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
-    if (onboardingMode==='manual') {
+    if (refinementRoadRef) {
+      mapStatus.textContent=`${refinementEditMode==='mark'?'Mark':'Erase'} mode · tap close to the ${refinementRoadRef} line, or use the keyboard section controls.`;
+    } else if (onboardingMode==='manual') {
       const ready=[...manualMotorwayRefs]
         .filter(ref=>canonicalRoadState(ref).status==='ready').length;
       mapStatus.textContent=manualMotorwayRefs.size
