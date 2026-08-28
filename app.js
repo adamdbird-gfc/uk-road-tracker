@@ -1107,27 +1107,44 @@ function renderCanonicalMapLayers() {
       L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
     }
 
-    for (const way of road.ways) {
-      for (let i=1; i<way.coords.length; i++) {
-        const a=way.coords[i-1], b=way.coords[i];
-        const lengthM=haversineMetres(a,b);
-        if (!Number.isFinite(lengthM) || lengthM<=0) continue;
-        const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_REFERENCE_SAMPLE_M));
-        for (let s=0; s<samples; s++) {
-          const start=interpolateLngLat(a,b,s/samples);
-          const end=interpolateLngLat(a,b,(s+1)/samples);
-          const anchorId=nearestCanonicalAnchor(road,interpolateLngLat(start,end,.5));
-          const covered=anchorId!==null && road.coveredAnchorIds.has(anchorId);
-          L.polyline(
-            [[start[1],start[0]],[end[1],end[0]]],
-            {
-              weight:4,
-              opacity:.9,
-              color:covered ? '#2f7df6' : '#d93a3a',
-              interactive:false
-            }
-          ).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
+    if (road.ways.length) {
+      for (const way of road.ways) {
+        for (let i=1; i<way.coords.length; i++) {
+          const a=way.coords[i-1], b=way.coords[i];
+          const lengthM=haversineMetres(a,b);
+          if (!Number.isFinite(lengthM) || lengthM<=0) continue;
+          const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_REFERENCE_SAMPLE_M));
+          for (let s=0; s<samples; s++) {
+            const start=interpolateLngLat(a,b,s/samples);
+            const end=interpolateLngLat(a,b,(s+1)/samples);
+            const anchorId=nearestCanonicalAnchor(road,interpolateLngLat(start,end,.5));
+            const covered=anchorId!==null && road.coveredAnchorIds.has(anchorId);
+            L.polyline(
+              [[start[1],start[0]],[end[1],end[0]]],
+              {
+                weight:4,
+                opacity:.9,
+                color:covered ? '#2f7df6' : '#d93a3a',
+                interactive:false
+              }
+            ).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
+          }
         }
+      }
+    } else {
+      // Cached references store sampled anchors rather than source OSM ways.
+      // Closely spaced markers form the completion line without joining
+      // unrelated motorway branches or carriageways.
+      for (const anchor of road.anchors) {
+        const covered=road.coveredAnchorIds.has(anchor.id);
+        L.circleMarker([anchor.lat,anchor.lng],{
+          radius:3.2,
+          weight:0,
+          fillOpacity:.95,
+          color:covered ? '#2f7df6' : '#d93a3a',
+          fillColor:covered ? '#2f7df6' : '#d93a3a',
+          interactive:false
+        }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
       }
     }
   }
