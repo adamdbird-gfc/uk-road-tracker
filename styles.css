@@ -197,3 +197,19 @@ progress { width: 100%; height: 16px; }
   .choice-grid { grid-template-columns:1fr 1fr; }
   .manual-motorway-list { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
+
+
+.network-progress { margin:18px 0 4px; padding:15px; border-radius:14px; background:#f4f6f8; }
+.network-progress-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:14px; }
+.network-progress-heading > div { display:grid; gap:3px; }
+.network-progress-label { color:#657083; font-size:.78rem; font-weight:700; }
+.network-progress-heading strong { font-size:1.65rem; line-height:1; }
+#networkProgressDistance { color:#475266; font-size:.82rem; text-align:right; }
+.network-progress-track { height:15px; margin-top:12px; overflow:hidden; border-radius:999px; background:#dfe4ea; }
+.network-progress-fill { width:0%; height:100%; border-radius:999px; background:#2f7df6; transition:width .25s ease; }
+.network-progress-note { margin:9px 0 0; font-size:.72rem; line-height:1.4; }
+@media (max-width:520px) {
+  .network-progress-heading { align-items:flex-start; }
+  #networkProgressDistance { max-width:145px; }
+}
+@media (prefers-reduced-motion:reduce) { .network-progress-fill { transition:none; } }
