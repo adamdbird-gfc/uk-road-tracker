@@ -58,6 +58,10 @@ const networkProgressPercent = document.getElementById('networkProgressPercent')
 const networkProgressDistance = document.getElementById('networkProgressDistance');
 const networkProgressBar = document.getElementById('networkProgressBar');
 const networkProgressFill = document.getElementById('networkProgressFill');
+const gbProgressPercent = document.getElementById('gbProgressPercent');
+const gbProgressDistance = document.getElementById('gbProgressDistance');
+const niProgressPercent = document.getElementById('niProgressPercent');
+const niProgressDistance = document.getElementById('niProgressDistance');
 const onboardingCard = document.getElementById('onboardingCard');
 const dataSourceCard = document.getElementById('dataSourceCard');
 const manualMotorwayCard = document.getElementById('manualMotorwayCard');
@@ -74,7 +78,11 @@ const refinementChunkStatus = document.getElementById('refinementChunkStatus');
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
-const UK_MOTORWAY_NETWORK_MILES = 2365;
+const GB_MOTORWAY_NETWORK_MILES = 2300;
+const NI_MOTORWAY_NETWORK_MILES = 65;
+const UK_MOTORWAY_NETWORK_MILES = GB_MOTORWAY_NETWORK_MILES + NI_MOTORWAY_NETWORK_MILES;
+const GB_MOTORWAY_NETWORK_KM = GB_MOTORWAY_NETWORK_MILES / 0.6213711922;
+const NI_MOTORWAY_NETWORK_KM = NI_MOTORWAY_NETWORK_MILES / 0.6213711922;
 const UK_MOTORWAY_NETWORK_KM = UK_MOTORWAY_NETWORK_MILES / 0.6213711922;
 
 const MOTORWAY_LENGTH_KM = {
@@ -85,6 +93,9 @@ const MOTORWAY_LENGTH_KM = {
   M57:16.050, M58:18.657, M60:56.734, M61:43.989, M62:153.828, M65:32.238,
   M66:14.297, M67:7.656, M69:26.269, M180:41.076, M181:4.190,
   M271:3.537, M602:6.958, M606:4.663, M621:14.803
+};
+const NI_MOTORWAY_LENGTH_KM = {
+  M1:61, M2:37, M3:1.3, M5:3.2, M12:2.4, M22:9
 };
 const CANONICAL_REFERENCE_SAMPLE_M = 100;
 const CANONICAL_MATCH_SAMPLE_M = 25;
@@ -107,29 +118,63 @@ function motorwayRefSort(a, b) {
 
 function renderManualMotorwayOptions() {
   manualMotorwayList.innerHTML = '';
-  for (const ref of Object.keys(MOTORWAY_LENGTH_KM).sort(motorwayRefSort)) {
-    const label = document.createElement('label');
-    label.className = 'manual-motorway-option';
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = ref;
-    checkbox.checked = manualMotorwayRefs.has(ref);
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) manualMotorwayRefs.add(ref);
-      else {
-        manualMotorwayRefs.delete(ref);
-        manualCoverageByRef.delete(ref);
-        canonicalRequestedRefs.delete(ref);
-        canonicalRoads.delete(ref);
-      }
-      updateManualMotorwaySelection();
-    });
+  const catalogues=[
+    {
+      region:'GB',
+      title:'Great Britain',
+      note:'England, Scotland and Wales',
+      refs:Object.keys(MOTORWAY_LENGTH_KM)
+    },
+    {
+      region:'NI',
+      title:'Northern Ireland',
+      note:'Measured independently',
+      refs:Object.keys(NI_MOTORWAY_LENGTH_KM)
+    }
+  ];
 
-    const text = document.createElement('span');
-    text.textContent = ref;
-    label.append(checkbox, text);
-    manualMotorwayList.append(label);
+  for (const catalogue of catalogues) {
+    const group=document.createElement('section');
+    group.className='motorway-region-group';
+    const heading=document.createElement('div');
+    heading.className='motorway-region-heading';
+    const title=document.createElement('h3');
+    title.textContent=catalogue.title;
+    const note=document.createElement('span');
+    note.textContent=catalogue.note;
+    const options=document.createElement('div');
+    options.className='motorway-region-options';
+    heading.append(title,note);
+
+    for (const ref of catalogue.refs.sort(motorwayRefSort)) {
+      const id=catalogue.region==='NI' ? `NI:${ref}` : ref;
+      const label=document.createElement('label');
+      label.className='manual-motorway-option';
+
+      const checkbox=document.createElement('input');
+      checkbox.type='checkbox';
+      checkbox.value=id;
+      checkbox.checked=manualMotorwayRefs.has(id);
+      checkbox.addEventListener('change',()=>{
+        if (checkbox.checked) manualMotorwayRefs.add(id);
+        else {
+          manualMotorwayRefs.delete(id);
+          manualCoverageByRef.delete(id);
+          canonicalRequestedRefs.delete(id);
+          canonicalRoads.delete(id);
+        }
+        updateManualMotorwaySelection();
+      });
+
+      const text=document.createElement('span');
+      text.textContent=ref;
+      label.append(checkbox,text);
+      options.append(label);
+    }
+
+    group.append(heading,options);
+    manualMotorwayList.append(group);
   }
 }
 
@@ -163,6 +208,14 @@ function resetTrackingSession() {
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
   canonicalRoadsReady.textContent = '0';
+  gbProgressPercent.textContent = '0.0%';
+  niProgressPercent.textContent = '0.0%';
+  gbProgressDistance.textContent = distanceUnit === 'km'
+    ? `0.0 of approximately ${GB_MOTORWAY_NETWORK_KM.toFixed(0)} km`
+    : `0.0 of approximately ${GB_MOTORWAY_NETWORK_MILES.toLocaleString()} miles`;
+  niProgressDistance.textContent = distanceUnit === 'km'
+    ? `0.0 of approximately ${NI_MOTORWAY_NETWORK_KM.toFixed(0)} km`
+    : `0.0 of approximately ${NI_MOTORWAY_NETWORK_MILES.toLocaleString()} miles`;
   networkProgressPercent.textContent = '0.0%';
   networkProgressDistance.textContent = distanceUnit === 'km'
     ? `0.0 of approximately ${UK_MOTORWAY_NETWORK_KM.toFixed(0)} km`
@@ -235,6 +288,7 @@ function setAllManualMotorways(selected) {
   manualMotorwayRefs.clear();
   if (selected) {
     for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
+    for (const ref of Object.keys(NI_MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(`NI:${ref}`);
   } else {
     manualCoverageByRef.clear();
     canonicalRequestedRefs.clear();
@@ -1042,28 +1096,36 @@ function isNorthernIrelandCoordinate(lng, lat) {
     lng < -5.3 && lat > 53.9 && lat < 55.6;
 }
 
-function isGreatBritainMotorwayCoordinate(ref, lng, lat) {
-  // The current canonical catalogue and reference-length table describe
-  // Great Britain routes. Northern Ireland reuses several motorway refs
-  // (including M1, M2, M3 and M5), so region must be part of road identity
-  // rather than maintaining a fragile list of duplicated names.
-  return !isNorthernIrelandCoordinate(lng, lat);
+function parseMotorwayId(value) {
+  const raw=String(value || '').toUpperCase().replace(/\s+/g,'');
+  const region=raw.startsWith('NI:') ? 'NI' : 'GB';
+  const ref=normaliseMotorwayRef(region==='NI' ? raw.slice(3) : raw);
+  return {id:region==='NI' ? `NI:${ref}` : ref,region,ref};
 }
 
-function canonicalReferenceLengthKm(ref, fallbackKm = 0) {
-  const canonicalKm = Number(MOTORWAY_LENGTH_KM[normaliseMotorwayRef(ref)]);
+function isMotorwayCoordinateForRegion(region, lng, lat) {
+  return region==='NI'
+    ? isNorthernIrelandCoordinate(lng,lat)
+    : !isNorthernIrelandCoordinate(lng,lat);
+}
+
+function canonicalReferenceLengthKm(id, fallbackKm = 0) {
+  const road=parseMotorwayId(id);
+  const catalogue=road.region==='NI' ? NI_MOTORWAY_LENGTH_KM : MOTORWAY_LENGTH_KM;
+  const canonicalKm=Number(catalogue[road.ref]);
   return Number.isFinite(canonicalKm) && canonicalKm > 0 ? canonicalKm : fallbackKm;
 }
 
-function canonicalRoadState(ref) {
-  const key = normaliseMotorwayRef(ref);
-  if (!canonicalRoads.has(key)) {
-    canonicalRoads.set(key, {
-      ref:key, status:'idle', error:null, ways:[], anchors:[],
+function canonicalRoadState(value) {
+  const parsed=parseMotorwayId(value);
+  if (!canonicalRoads.has(parsed.id)) {
+    canonicalRoads.set(parsed.id, {
+      id:parsed.id, ref:parsed.ref, region:parsed.region,
+      status:'idle', error:null, ways:[], anchors:[],
       anchorIndex:new Map(), coveredAnchorIds:new Set(), totalKm:0
     });
   }
-  return canonicalRoads.get(key);
+  return canonicalRoads.get(parsed.id);
 }
 
 function buildCanonicalAnchors(ways) {
@@ -1147,7 +1209,7 @@ function hydrateCanonicalRoadFromCache(road, cached) {
     .filter(point =>
       Number.isFinite(point[0]) &&
       Number.isFinite(point[1]) &&
-      isGreatBritainMotorwayCoordinate(road.ref, point[0], point[1])
+      isMotorwayCoordinateForRegion(road.region, point[0], point[1])
     )
     .map((point, id) => {
       const [lng, lat] = point;
@@ -1164,7 +1226,7 @@ function hydrateCanonicalRoadFromCache(road, cached) {
   road.anchorIndex = buildAnchorIndex(anchors);
   road.coveredAnchorIds = new Set();
   road.totalKm = canonicalReferenceLengthKm(
-    road.ref,
+    road.id,
     Number(cached.total_km || anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000)
   );
   road.status = 'ready';
@@ -1252,7 +1314,7 @@ async function loadCanonicalRoad(ref, force=false) {
       .filter(way=>
         way.coords.length>=2 &&
         way.coords.some(point =>
-          isGreatBritainMotorwayCoordinate(road.ref, point[0], point[1])
+          isMotorwayCoordinateForRegion(road.region, point[0], point[1])
         )
       );
 
@@ -1271,7 +1333,7 @@ async function loadCanonicalRoad(ref, force=false) {
     road.anchorIndex=buildAnchorIndex(anchors);
     road.coveredAnchorIds=new Set();
     road.totalKm=canonicalReferenceLengthKm(
-      road.ref,
+      road.id,
       anchors.length * CANONICAL_REFERENCE_SAMPLE_M / 1000
     );
     road.status='ready';
