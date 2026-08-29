@@ -21,6 +21,7 @@ let persistedDataEndMs = null;
 let persistedSavedAt = null;
 let persistedLegacyCutoffMs = null;
 const persistedProcessedJourneyIds = new Set();
+const persistedMotorwayContributionsByJourney = new Map();
 let localSaveTimer = null;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
@@ -175,6 +176,15 @@ function loadLocalProgress() {
     for (const id of saved.processedJourneyIds || []) {
       if (typeof id==='string' && id) persistedProcessedJourneyIds.add(id);
     }
+    for (const [journeyId,contributions] of Object.entries(saved.motorwayContributionsByJourney || {})) {
+      if (!journeyId || !contributions || typeof contributions!=='object') continue;
+      const clean={};
+      for (const [roadId,distanceM] of Object.entries(contributions)) {
+        const value=Number(distanceM);
+        if (roadId && Number.isFinite(value) && value>0) clean[roadId]=value;
+      }
+      if (Object.keys(clean).length) persistedMotorwayContributionsByJourney.set(journeyId,clean);
+    }
     if (saved.distanceUnit==='km') distanceUnit='km';
   } catch (err) {
     console.warn('Saved local progress could not be read:',err);
@@ -204,6 +214,9 @@ function saveLocalProgressNow() {
       dataEndMs:persistedDataEndMs,
       legacyCutoffMs:persistedLegacyCutoffMs,
       processedJourneyIds:[...persistedProcessedJourneyIds].sort(),
+      motorwayContributionsByJourney:Object.fromEntries(
+        [...persistedMotorwayContributionsByJourney.entries()].sort(([a],[b])=>a.localeCompare(b))
+      ),
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage
     }));
@@ -250,9 +263,28 @@ function journeyWasPreviouslyImported(journey) {
   return persistedLegacyCutoffMs!==null && timeMs!==null && timeMs<=persistedLegacyCutoffMs;
 }
 
+function motorwayContributionsForJourney(journey) {
+  const contributions={};
+  for (const feature of journey?.motorwayGeoJson?.features || []) {
+    const roadId=motorwayFeatureId(feature);
+    const distanceM=Number(feature?.properties?.distance_m || 0);
+    if (!roadId || !Number.isFinite(distanceM) || distanceM<=0) continue;
+    contributions[roadId]=(contributions[roadId] || 0)+distanceM;
+  }
+  return contributions;
+}
+
 function recordJourneyProcessed(journey) {
   const id=journey?.importId || journeyFingerprint(journey);
-  if (id) persistedProcessedJourneyIds.add(id);
+  if (id) {
+    persistedProcessedJourneyIds.add(id);
+    const contributions=motorwayContributionsForJourney(journey);
+    if (Object.keys(contributions).length) {
+      persistedMotorwayContributionsByJourney.set(id,contributions);
+    } else {
+      persistedMotorwayContributionsByJourney.delete(id);
+    }
+  }
   const start=Date.parse(journey?.start || '');
   const end=Date.parse(journey?.end || '');
   if (Number.isFinite(start)) {
@@ -288,6 +320,7 @@ function clearLocalProgress() {
   persistedSavedAt=null;
   persistedLegacyCutoffMs=null;
   persistedProcessedJourneyIds.clear();
+  persistedMotorwayContributionsByJourney.clear();
   resetTrackingSession();
   onboardingMode=null;
   dataSourceCard.classList.add('hidden');
@@ -537,8 +570,19 @@ fileInput.addEventListener('change', async () => {
     const allJourneys = result.journeys;
     diagnostics = result.diagnostics;
 
-    const newJourneys=allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
-    diagnostics.previouslyImportedJourneys=allJourneys.length-newJourneys.length;
+    const needsMileageRebuild=
+      persistedProcessedJourneyIds.size>0 &&
+      persistedMotorwayContributionsByJourney.size===0;
+    const rebuildMileage=needsMileageRebuild && window.confirm(
+      'Your saved motorway coverage predates cumulative mileage saving. ' +
+      'Rebuild the mileage totals from this file now? This is a one-off process and will rematch the earlier journeys. ' +
+      'Choose Cancel to process only genuinely new journeys.'
+    );
+    const newJourneys=rebuildMileage
+      ? allJourneys
+      : allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
+    diagnostics.mileageRebuild=rebuildMileage;
+    diagnostics.previouslyImportedJourneys=rebuildMileage ? 0 : allJourneys.length-newJourneys.length;
     diagnostics.newPassengerVehicleJourneys=newJourneys.length;
 
     ignoredJourneys = newJourneys.filter(j => j.pathPointCount < 2);
@@ -679,10 +723,11 @@ function diagnosticText() {
     `Vehicle activities with usable start/end anchors: ${fmt(diagnostics.vehiclesWithAnchors)}`,
     `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`,
     `Previously imported and skipped: ${fmt(diagnostics.previouslyImportedJourneys)}`,
+    diagnostics.mileageRebuild ? 'Mileage totals: one-off cumulative rebuild selected' : '',
     `New passenger-vehicle journeys: ${fmt(diagnostics.newPassengerVehicleJourneys)}`,
     `New and usable for road matching: ${fmt(diagnostics.usableJourneys)}`,
     `Ignored — fewer than 2 Timeline points: ${fmt(diagnostics.ignoredSparseJourneys)}`
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function fmt(n) {
@@ -2059,38 +2104,43 @@ function retryCanonicalRoads() {
 }
 
 function motorwayStats(drawable) {
-  const roads = new Map();
-
+  const contributionByJourney=new Map(persistedMotorwayContributionsByJourney);
   for (const journey of drawable) {
-    for (const feature of journey.motorwayGeoJson?.features || []) {
-      const id=motorwayFeatureId(feature);
-      const parsed=parseMotorwayId(id);
-      const distanceM = Number(feature?.properties?.distance_m || 0);
-      if (!id || !Number.isFinite(distanceM) || distanceM <= 0) continue;
+    if (!journey.motorwayGeoJson) continue;
+    const journeyId=journey.importId || journeyFingerprint(journey);
+    contributionByJourney.set(journeyId,motorwayContributionsForJourney(journey));
+  }
 
+  const roads=new Map();
+  for (const [journeyId,contributions] of contributionByJourney) {
+    for (const [id,rawDistanceM] of Object.entries(contributions || {})) {
+      const distanceM=Number(rawDistanceM);
+      if (!id || !Number.isFinite(distanceM) || distanceM<=0) continue;
+      const parsed=parseMotorwayId(id);
       if (!roads.has(id)) {
-        roads.set(id, {
+        roads.set(id,{
           id,
           ref:parsed.ref,
           region:parsed.region,
-          matchedDistanceM: 0,
-          journeyIds: new Set()
+          matchedDistanceM:0,
+          journeyIds:new Set()
         });
       }
-
-      const road = roads.get(id);
-      road.matchedDistanceM += distanceM;
-      road.journeyIds.add(`${journey.start || ''}|${journey.end || ''}`);
+      const road=roads.get(id);
+      road.matchedDistanceM+=distanceM;
+      road.journeyIds.add(journeyId);
     }
   }
 
   return [...roads.values()]
-    .map(road => ({
-      ref: road.ref,
-      matchedKm: road.matchedDistanceM / 1000,
-      journeys: road.journeyIds.size
+    .map(road=>({
+      id:road.id,
+      ref:road.ref,
+      region:road.region,
+      matchedKm:road.matchedDistanceM/1000,
+      journeys:road.journeyIds.size
     }))
-    .sort((a, b) => b.matchedKm - a.matchedKm || a.ref.localeCompare(b.ref, undefined, {numeric:true}));
+    .sort((a,b)=>b.matchedKm-a.matchedKm || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
 }
 
 function renderMotorwayDashboard(drawable) {
