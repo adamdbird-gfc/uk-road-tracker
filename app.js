@@ -88,6 +88,7 @@ const refinementUndo = document.getElementById('refinementUndo');
 const refinementChunkStatus = document.getElementById('refinementChunkStatus');
 const localProgressNotice = document.getElementById('localProgressNotice');
 const localProgressSummary = document.getElementById('localProgressSummary');
+const closeSavedProgress = document.getElementById('closeSavedProgress');
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
@@ -478,9 +479,30 @@ function resetTrackingSession() {
   }
 }
 
+async function showSavedProgress() {
+  if (!persistedCoverageByRef.size && !persistedManualRefs.size) return;
+
+  resetTrackingSession();
+  onboardingMode='saved';
+  onboardingCard.classList.add('hidden');
+  dataSourceCard.classList.add('hidden');
+  manualMotorwayCard.classList.add('hidden');
+  closeSavedProgress.classList.remove('hidden');
+  mapTitle.textContent='Your saved Roadprints progress';
+  mapIntro.textContent='This is the motorway coverage saved on this device. Return to the start to import new Timeline data or make manual changes.';
+  mapCard.classList.remove('hidden');
+  nextCard.classList.add('hidden');
+
+  await ensureLeaflet();
+  initMap();
+  renderMap();
+  requestAnimationFrame(()=>map?.invalidateSize(true));
+}
+
 async function showDataSourceChoice(mode) {
   resetTrackingSession();
   onboardingMode = mode;
+  closeSavedProgress.classList.add('hidden');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.toggle('hidden', mode !== 'data');
   manualMotorwayCard.classList.toggle('hidden', mode !== 'manual');
@@ -508,6 +530,7 @@ async function showDataSourceChoice(mode) {
 function returnToOnboarding() {
   resetTrackingSession();
   onboardingMode = null;
+  closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   manualMotorwayCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
@@ -547,7 +570,9 @@ document.getElementById('changeDataSource').addEventListener('click', returnToOn
 document.getElementById('changeManualSource').addEventListener('click', returnToOnboarding);
 document.getElementById('selectAllMotorways').addEventListener('click', () => setAllManualMotorways(true));
 document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
+document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 document.getElementById('clearLocalProgress').addEventListener('click', clearLocalProgress);
+closeSavedProgress.addEventListener('click', returnToOnboarding);
 loadLocalProgress();
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
@@ -1813,7 +1838,9 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
     : [];
   const discoveredRefs=onboardingMode==='manual'
     ? [...manualMotorwayRefs].sort(motorwayRefSort)
-    : drawable
+    : onboardingMode==='saved'
+      ? [...new Set([...persistedCoverageByRef.keys(),...persistedManualRefs])].sort(motorwayRefSort)
+      : drawable
       ? [...new Set([...persistedCoverageByRef.keys(),...sessionRefs])].sort(motorwayRefSort)
       : [...canonicalRoads.keys()];
 
@@ -1823,7 +1850,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   }
   canonicalMotorwayCard.classList.toggle('hidden',Boolean(refinementRoadRef));
 
-  if (drawable || onboardingMode==='manual') {
+  if (drawable || onboardingMode==='manual' || onboardingMode==='saved') {
     for (const ref of discoveredRefs) {
       const road=canonicalRoadState(ref);
       if (road.status==='ready') road.coveredAnchorIds=calculateCanonicalCoverageForRoad(road,drawable || []);
@@ -2272,6 +2299,9 @@ function renderMap() {
       mapStatus.textContent=manualMotorwayRefs.size
         ? `${ready} of ${manualMotorwayRefs.size} selected motorway${manualMotorwayRefs.size===1?'':'s'} ready on the map.`
         : 'Select a motorway above to add it to your map.';
+    } else if (onboardingMode==='saved') {
+      const ready=[...canonicalRoads.values()].filter(road=>road.status==='ready').length;
+      mapStatus.textContent=`Saved progress loaded · ${ready} canonical motorway reference${ready===1?'':'s'} ready.`;
     } else {
       mapStatus.textContent =
         `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
@@ -2283,8 +2313,10 @@ function renderMap() {
 function fitSelected() {
   if (!map || !window.L) return;
 
-  const pts = onboardingMode==='manual'
-    ? [...manualMotorwayRefs]
+  const pts = onboardingMode==='manual' || onboardingMode==='saved'
+    ? [...(onboardingMode==='manual'
+        ? manualMotorwayRefs
+        : new Set([...persistedCoverageByRef.keys(),...persistedManualRefs]))]
         .flatMap(ref=>(canonicalRoads.get(ref)?.anchors || []).map(anchor=>[anchor.lat,anchor.lng]))
     : journeys
         .filter(j => j.selected)
@@ -2297,7 +2329,9 @@ function fitSelected() {
       mapStatus.className = 'muted map-status warn';
       mapStatus.textContent = onboardingMode==='manual'
         ? 'Select at least one motorway and wait for its reference to load.'
-        : 'No valid selected coordinates are available to fit on the map.';
+        : onboardingMode==='saved'
+          ? 'Saved motorway references are still loading. Try Fit selected again shortly.'
+          : 'No valid selected coordinates are available to fit on the map.';
     }
     return;
   }
