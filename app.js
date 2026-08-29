@@ -22,6 +22,7 @@ let persistedSavedAt = null;
 let persistedLegacyCutoffMs = null;
 const persistedProcessedJourneyIds = new Set();
 const persistedMotorwayContributionsByJourney = new Map();
+let persistedMileageHistoryComplete = true;
 let localSaveTimer = null;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
@@ -185,6 +186,9 @@ function loadLocalProgress() {
       }
       if (Object.keys(clean).length) persistedMotorwayContributionsByJourney.set(journeyId,clean);
     }
+    persistedMileageHistoryComplete=typeof saved.mileageHistoryComplete==='boolean'
+      ? saved.mileageHistoryComplete
+      : persistedProcessedJourneyIds.size===0;
     if (saved.distanceUnit==='km') distanceUnit='km';
   } catch (err) {
     console.warn('Saved local progress could not be read:',err);
@@ -217,6 +221,7 @@ function saveLocalProgressNow() {
       motorwayContributionsByJourney:Object.fromEntries(
         [...persistedMotorwayContributionsByJourney.entries()].sort(([a],[b])=>a.localeCompare(b))
       ),
+      mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage
     }));
@@ -321,6 +326,7 @@ function clearLocalProgress() {
   persistedLegacyCutoffMs=null;
   persistedProcessedJourneyIds.clear();
   persistedMotorwayContributionsByJourney.clear();
+  persistedMileageHistoryComplete=true;
   resetTrackingSession();
   onboardingMode=null;
   dataSourceCard.classList.add('hidden');
@@ -572,7 +578,7 @@ fileInput.addEventListener('change', async () => {
 
     const needsMileageRebuild=
       persistedProcessedJourneyIds.size>0 &&
-      persistedMotorwayContributionsByJourney.size===0;
+      !persistedMileageHistoryComplete;
     const rebuildMileage=needsMileageRebuild && window.confirm(
       'Your saved motorway coverage predates cumulative mileage saving. ' +
       'Rebuild the mileage totals from this file now? This is a one-off process and will rematch the earlier journeys. ' +
@@ -853,6 +859,10 @@ async function startEasyImport() {
   easyImportRunning = false;
   easyImportPaused = false;
   updateEasyImportPauseButton();
+  if (diagnostics.mileageRebuild && failed===0) {
+    persistedMileageHistoryComplete=true;
+    scheduleLocalProgressSave();
+  }
   easyProgressText.textContent =
     `Complete · ${succeeded} matched · ${failed} skipped`;
 }
