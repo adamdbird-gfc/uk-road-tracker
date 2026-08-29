@@ -19,6 +19,8 @@ const persistedManualRefs = new Set();
 let persistedDataStartMs = null;
 let persistedDataEndMs = null;
 let persistedSavedAt = null;
+let persistedLegacyCutoffMs = null;
+const persistedProcessedJourneyIds = new Set();
 let localSaveTimer = null;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
@@ -165,6 +167,14 @@ function loadLocalProgress() {
       ? null
       : Number.isFinite(Number(saved.dataEndMs)) ? Number(saved.dataEndMs) : null;
     persistedSavedAt=saved.savedAt || null;
+    const storedLegacyCutoff=Number(saved.legacyCutoffMs);
+    const migratedLegacyCutoff=Number(saved.dataEndMs);
+    persistedLegacyCutoffMs=Number.isFinite(storedLegacyCutoff)
+      ? storedLegacyCutoff
+      : Number.isFinite(migratedLegacyCutoff) ? migratedLegacyCutoff : null;
+    for (const id of saved.processedJourneyIds || []) {
+      if (typeof id==='string' && id) persistedProcessedJourneyIds.add(id);
+    }
     if (saved.distanceUnit==='km') distanceUnit='km';
   } catch (err) {
     console.warn('Saved local progress could not be read:',err);
@@ -192,6 +202,8 @@ function saveLocalProgressNow() {
       distanceUnit,
       dataStartMs:persistedDataStartMs,
       dataEndMs:persistedDataEndMs,
+      legacyCutoffMs:persistedLegacyCutoffMs,
+      processedJourneyIds:[...persistedProcessedJourneyIds].sort(),
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage
     }));
@@ -204,6 +216,51 @@ function saveLocalProgressNow() {
 function scheduleLocalProgressSave() {
   clearTimeout(localSaveTimer);
   localSaveTimer=setTimeout(saveLocalProgressNow,250);
+}
+
+function journeyFingerprint(journey) {
+  const first=journey?.points?.[0];
+  const last=journey?.points?.[journey.points.length-1];
+  const coordinateKey=point=>point
+    ? `${Number(point.lat).toFixed(5)},${Number(point.lng).toFixed(5)}`
+    : '';
+  const distance=Number.isFinite(Number(journey?.googleDistanceKm))
+    ? Number(journey.googleDistanceKm).toFixed(3)
+    : '';
+  return [
+    journey?.start || '',
+    journey?.end || '',
+    distance,
+    coordinateKey(first),
+    coordinateKey(last)
+  ].join('|');
+}
+
+function journeyTimestampMs(journey) {
+  const end=Date.parse(journey?.end || '');
+  if (Number.isFinite(end)) return end;
+  const start=Date.parse(journey?.start || '');
+  return Number.isFinite(start) ? start : null;
+}
+
+function journeyWasPreviouslyImported(journey) {
+  const id=journey?.importId || journeyFingerprint(journey);
+  if (persistedProcessedJourneyIds.has(id)) return true;
+  const timeMs=journeyTimestampMs(journey);
+  return persistedLegacyCutoffMs!==null && timeMs!==null && timeMs<=persistedLegacyCutoffMs;
+}
+
+function recordJourneyProcessed(journey) {
+  const id=journey?.importId || journeyFingerprint(journey);
+  if (id) persistedProcessedJourneyIds.add(id);
+  const start=Date.parse(journey?.start || '');
+  const end=Date.parse(journey?.end || '');
+  if (Number.isFinite(start)) {
+    persistedDataStartMs=persistedDataStartMs===null ? start : Math.min(persistedDataStartMs,start);
+  }
+  if (Number.isFinite(end)) {
+    persistedDataEndMs=persistedDataEndMs===null ? end : Math.max(persistedDataEndMs,end);
+  }
 }
 
 function mergeProgressDateRange(source) {
@@ -229,6 +286,8 @@ function clearLocalProgress() {
   persistedDataStartMs=null;
   persistedDataEndMs=null;
   persistedSavedAt=null;
+  persistedLegacyCutoffMs=null;
+  persistedProcessedJourneyIds.clear();
   resetTrackingSession();
   onboardingMode=null;
   dataSourceCard.classList.add('hidden');
@@ -477,13 +536,18 @@ fileInput.addEventListener('change', async () => {
     const result = extractVehicleJourneys(json);
     const allJourneys = result.journeys;
     diagnostics = result.diagnostics;
-    mergeProgressDateRange(diagnostics);
-    scheduleLocalProgressSave();
 
-    ignoredJourneys = allJourneys.filter(j => j.pathPointCount < 2);
-    journeys = allJourneys.filter(j => j.pathPointCount >= 2);
+    const newJourneys=allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
+    diagnostics.previouslyImportedJourneys=allJourneys.length-newJourneys.length;
+    diagnostics.newPassengerVehicleJourneys=newJourneys.length;
+
+    ignoredJourneys = newJourneys.filter(j => j.pathPointCount < 2);
+    journeys = newJourneys.filter(j => j.pathPointCount >= 2);
     diagnostics.usableJourneys = journeys.length;
     diagnostics.ignoredSparseJourneys = ignoredJourneys.length;
+
+    for (const journey of ignoredJourneys) recordJourneyProcessed(journey);
+    if (ignoredJourneys.length) scheduleLocalProgressSave();
 
     showDiagnostics(file.name);
     renderIgnoredJourneys();
@@ -493,6 +557,17 @@ fileInput.addEventListener('change', async () => {
         `Diagnostic result: ${diagnostics.semanticSegments.toLocaleString()} semantic segments were found, ` +
         `but 0 IN_PASSENGER_VEHICLE activities were detected.`
       );
+    }
+
+    if (!journeys.length) {
+      fileStatus.className = 'muted';
+      fileStatus.textContent =
+        diagnostics.previouslyImportedJourneys
+          ? `${file.name} inspected successfully. No new road-matchable journeys were found. ` +
+            `${diagnostics.previouslyImportedJourneys.toLocaleString()} previously imported journey` +
+            `${diagnostics.previouslyImportedJourneys===1?' was':'s were'} skipped.`
+          : `${file.name} contains no new journeys with enough Timeline points for road matching.`;
+      return;
     }
 
     journeys.forEach(j => j.selected = true);
@@ -603,7 +678,9 @@ function diagnosticText() {
     `Vehicle activities with overlapping path points: ${fmt(diagnostics.vehiclesWithPathPoints)}`,
     `Vehicle activities with usable start/end anchors: ${fmt(diagnostics.vehiclesWithAnchors)}`,
     `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`,
-    `Usable for road matching: ${fmt(diagnostics.usableJourneys)}`,
+    `Previously imported and skipped: ${fmt(diagnostics.previouslyImportedJourneys)}`,
+    `New passenger-vehicle journeys: ${fmt(diagnostics.newPassengerVehicleJourneys)}`,
+    `New and usable for road matching: ${fmt(diagnostics.usableJourneys)}`,
     `Ignored — fewer than 2 Timeline points: ${fmt(diagnostics.ignoredSparseJourneys)}`
   ].join('\n');
 }
@@ -711,6 +788,8 @@ async function startEasyImport() {
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
       journey.matchQuality = assessMatchQuality(journey, data);
+      recordJourneyProcessed(journey);
+      scheduleLocalProgressSave();
       succeeded++;
     } catch (err) {
       journey.easyImportError = err.message || String(err);
@@ -899,6 +978,8 @@ async function matchJourney(index, button, statusNode) {
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
     journey.matchQuality = assessMatchQuality(journey, data);
+    recordJourneyProcessed(journey);
+    scheduleLocalProgressSave();
 
     statusNode.className =
       `match-status ${journey.matchQuality.level === 'high' ? 'ok' : 'warn'}`;
@@ -2278,6 +2359,7 @@ function extractVehicleJourneys(data) {
     });
   }
 
+  for (const journey of out) journey.importId=journeyFingerprint(journey);
   diag.journeysConstructed = out.length;
 
   out.sort((a, b) => {
