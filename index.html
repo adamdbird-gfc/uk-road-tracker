@@ -39,7 +39,10 @@
           <strong>Saved progress found on this device</strong>
           <span id="localProgressSummary">Your saved motorway sections will be restored and merged with new data.</span>
         </div>
-        <button id="clearLocalProgress" class="secondary" type="button">Delete saved progress</button>
+        <div class="local-progress-actions">
+          <button id="viewSavedProgress" type="button">View saved progress</button>
+          <button id="clearLocalProgress" class="secondary" type="button">Delete saved progress</button>
+        </div>
       </div>
     </section>
 
@@ -201,7 +204,10 @@
           <h2 id="mapTitle">4. Preview</h2>
           <p id="mapIntro" class="muted">The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.</p>
         </div>
-        <button id="fitMap" class="secondary">Fit selected</button>
+        <div class="map-heading-actions">
+          <button id="closeSavedProgress" class="text-button hidden" type="button">Back to start</button>
+          <button id="fitMap" class="secondary" type="button">Fit selected</button>
+        </div>
       </div>
       <div id="refinementPanel" class="refinement-panel hidden">
         <div class="refinement-heading">
