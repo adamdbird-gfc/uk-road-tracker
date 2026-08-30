@@ -723,10 +723,92 @@ function yieldToBrowser() {
 }
 
 function showDiagnostics(fileName) {
-  fileStatus.className = 'muted';
-  fileStatus.style.whiteSpace = 'pre-line';
-  fileStatus.textContent =
-    `${fileName} inspected successfully.\n\n${diagnosticText()}`;
+  fileStatus.className = 'file-summary';
+  fileStatus.replaceChildren();
+
+  const heading = document.createElement('div');
+  heading.className = 'file-summary-heading';
+  const tick = document.createElement('span');
+  tick.className = 'file-summary-tick';
+  tick.setAttribute('aria-hidden', 'true');
+  tick.textContent = '✓';
+  const headingText = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = 'Timeline file ready';
+  const subtitle = document.createElement('span');
+  subtitle.textContent = `${fileName} was read successfully.`;
+  headingText.append(title, subtitle);
+  heading.append(tick, headingText);
+
+  const stats = document.createElement('div');
+  stats.className = 'file-summary-stats';
+  stats.append(
+    summaryStat(formatDataDateRange(), 'dates covered'),
+    summaryStat(fmt(diagnostics.usableJourneys), 'new journeys ready'),
+    summaryStat(fmt(diagnostics.previouslyImportedJourneys), 'already imported'),
+    summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use')
+  );
+
+  const explanation = document.createElement('p');
+  explanation.className = 'file-summary-note';
+  explanation.textContent = importSummaryMessage();
+
+  const details = document.createElement('details');
+  details.className = 'technical-details';
+  const detailsSummary = document.createElement('summary');
+  detailsSummary.textContent = 'Technical details';
+  const detailsIntro = document.createElement('p');
+  detailsIntro.textContent = 'These figures show how Roadprints interpreted the Google Timeline file. They are mainly useful for troubleshooting.';
+  const detailList = document.createElement('dl');
+  technicalDiagnosticRows().forEach(([label, value, help]) => {
+    const term = document.createElement('dt');
+    term.textContent = label;
+    if (help) term.title = help;
+    const description = document.createElement('dd');
+    description.textContent = value;
+    detailList.append(term, description);
+  });
+  details.append(detailsSummary, detailsIntro, detailList);
+  fileStatus.append(heading, stats, explanation, details);
+}
+
+function summaryStat(value, label) {
+  const item = document.createElement('div');
+  const strong = document.createElement('strong');
+  strong.textContent = value;
+  const span = document.createElement('span');
+  span.textContent = label;
+  item.append(strong, span);
+  return item;
+}
+
+function importSummaryMessage() {
+  const ready = Number(diagnostics.usableJourneys || 0);
+  const previous = Number(diagnostics.previouslyImportedJourneys || 0);
+  const ignored = Number(diagnostics.ignoredSparseJourneys || 0);
+  const parts = [
+    `${fmt(ready)} new car journey${ready === 1 ? ' is' : 's are'} ready to add to your Roadprints map.`
+  ];
+  if (previous) parts.push(`${fmt(previous)} already imported journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
+  if (ignored) parts.push(`${fmt(ignored)} journey${ignored === 1 ? ' does' : 's do'} not contain enough location detail to match reliably.`);
+  return parts.join(' ');
+}
+
+function technicalDiagnosticRows() {
+  return [
+    ['Timeline entries', fmt(diagnostics.semanticSegments), 'All entries found in the Timeline file, including visits and journeys.'],
+    ['Movement entries', fmt(diagnostics.activitySegments), 'Timeline entries describing movement between places.'],
+    ['Car journey entries', fmt(diagnostics.passengerVehicleActivities), 'Movement entries Google identified as travel in a passenger vehicle.'],
+    ['Recorded route sections', fmt(diagnostics.timelinePathSegments), 'Route traces included in the Timeline file.'],
+    ['Recorded location points', fmt(diagnostics.timelinePathPoints), 'Timestamped positions available for reconstructing routes.'],
+    ['Car journeys with route points', fmt(diagnostics.vehiclesWithPathPoints), 'Car journeys that overlap recorded route positions.'],
+    ['Car journeys with start and end points', fmt(diagnostics.vehiclesWithAnchors), 'Car journeys with enough information to identify their beginning and end.'],
+    ['Journeys reconstructed', fmt(diagnostics.journeysConstructed), 'Journeys Roadprints successfully reconstructed from the source data.'],
+    ['New car journeys found', fmt(diagnostics.newPassengerVehicleJourneys), 'Reconstructed car journeys that were not already saved on this device.'],
+    ['Ready for road matching', fmt(diagnostics.usableJourneys), 'New journeys containing at least two location points.'],
+    ['Unable to use', fmt(diagnostics.ignoredSparseJourneys), 'Journeys with fewer than two location points, which cannot be matched reliably.'],
+    ...(diagnostics.mileageRebuild ? [['Mileage update', 'One-off rebuild selected', 'Earlier journeys will be matched again to rebuild cumulative mileage totals.']] : [])
+  ];
 }
 
 function formatDataDateRange(source=diagnostics) {
