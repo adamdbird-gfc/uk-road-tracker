@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260829-saved-progress" />
+  <link rel="stylesheet" href="styles.css?v=20260830-import-summary" />
 </head>
 <body>
   <main>
@@ -53,7 +53,7 @@
       </div>
       <label class="file-button" for="timelineFile">Choose Timeline JSON</label>
       <input id="timelineFile" type="file" accept="application/json,.json" />
-      <p id="fileStatus" class="muted">No file selected.</p>
+      <div id="fileStatus" class="muted" role="status" aria-live="polite">No file selected.</div>
 
       <div id="importModeCard" class="import-modes hidden">
         <h3>How would you like to set it up?</h3>
@@ -261,6 +261,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260829-saved-progress"></script>
+  <script src="app.js?v=20260830-import-summary"></script>
 </body>
 </html>
