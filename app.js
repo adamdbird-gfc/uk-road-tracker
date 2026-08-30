@@ -106,6 +106,10 @@ const diagnosticPreview = document.getElementById('diagnosticPreview');
 const diagnosticPreviewContent = document.getElementById('diagnosticPreviewContent');
 const SANITISED_DIAGNOSTIC_STORAGE_KEY = 'roadprints.sanitisedTimelineDiagnostic.v1';
 const SANITISED_DIAGNOSTIC_VERSION = 1;
+const DIAGNOSTIC_DB_NAME = 'roadprints-diagnostics';
+const DIAGNOSTIC_DB_VERSION = 1;
+const DIAGNOSTIC_STORE_NAME = 'sanitised-copies';
+const DIAGNOSTIC_RECORD_KEY = 'latest';
 const MAX_DIAGNOSTIC_SEGMENTS = 250;
 const MAX_DIAGNOSTIC_PREVIEW_CHARS = 40000;
 
@@ -633,7 +637,7 @@ unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
 unitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
 renderManualMotorwayOptions();
 updateLocalProgressNotice();
-loadSanitisedDiagnosticCopy();
+loadSanitisedDiagnosticCopy().finally(updateDiagnosticCopyUi);
 updateDiagnosticCopyUi();
 
 fileInput.addEventListener('change', async () => {
@@ -795,7 +799,7 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
-createDiagnosticCopyButton.addEventListener('click', createSanitisedDiagnosticCopy);
+createDiagnosticCopyButton.addEventListener('click', () => createSanitisedDiagnosticCopy());
 reviewDiagnosticCopyButton.addEventListener('click', () => {
   if (!sanitisedDiagnosticCopy) return;
   renderDiagnosticPreview();
@@ -803,15 +807,69 @@ reviewDiagnosticCopyButton.addEventListener('click', () => {
   diagnosticPreview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 });
 downloadDiagnosticCopyButton.addEventListener('click', downloadSanitisedDiagnosticCopy);
-deleteDiagnosticCopyButton.addEventListener('click', deleteSanitisedDiagnosticCopy);
+deleteDiagnosticCopyButton.addEventListener('click', () => deleteSanitisedDiagnosticCopy());
 
-function loadSanitisedDiagnosticCopy() {
+function openDiagnosticDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!globalThis.indexedDB) {
+      reject(new Error('This browser does not provide IndexedDB storage.'));
+      return;
+    }
+
+    const request = indexedDB.open(DIAGNOSTIC_DB_NAME, DIAGNOSTIC_DB_VERSION);
+    request.onerror = () => reject(request.error || new Error('Diagnostic storage could not be opened.'));
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(DIAGNOSTIC_STORE_NAME)) {
+        database.createObjectStore(DIAGNOSTIC_STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+async function diagnosticDatabaseOperation(mode, operation) {
+  const database = await openDiagnosticDatabase();
   try {
-    const stored = localStorage.getItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
-    sanitisedDiagnosticCopy = stored ? JSON.parse(stored) : null;
-  } catch {
+    return await new Promise((resolve, reject) => {
+      const transaction = database.transaction(DIAGNOSTIC_STORE_NAME, mode);
+      const store = transaction.objectStore(DIAGNOSTIC_STORE_NAME);
+      const request = operation(store);
+      request.onerror = () => reject(request.error || new Error('Diagnostic storage operation failed.'));
+      request.onsuccess = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error || new Error('Diagnostic storage transaction was aborted.'));
+    });
+  } finally {
+    database.close();
+  }
+}
+
+function readDiagnosticCopyFromDatabase() {
+  return diagnosticDatabaseOperation('readonly', store => store.get(DIAGNOSTIC_RECORD_KEY));
+}
+
+function writeDiagnosticCopyToDatabase(copy) {
+  return diagnosticDatabaseOperation('readwrite', store => store.put(copy, DIAGNOSTIC_RECORD_KEY));
+}
+
+function deleteDiagnosticCopyFromDatabase() {
+  return diagnosticDatabaseOperation('readwrite', store => store.delete(DIAGNOSTIC_RECORD_KEY));
+}
+
+async function loadSanitisedDiagnosticCopy() {
+  try {
+    sanitisedDiagnosticCopy = await readDiagnosticCopyFromDatabase() || null;
+
+    // Remove any earlier small localStorage copy after migration to IndexedDB.
+    const legacy = localStorage.getItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+    if (!sanitisedDiagnosticCopy && legacy) {
+      sanitisedDiagnosticCopy = JSON.parse(legacy);
+      await writeDiagnosticCopyToDatabase(sanitisedDiagnosticCopy);
+    }
+    if (legacy) localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+  } catch (error) {
     sanitisedDiagnosticCopy = null;
-    localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+    console.warn('Privacy-safe diagnostic copy could not be loaded:', error);
   }
 }
 
@@ -941,7 +999,7 @@ function countSemanticSegments(value) {
   return total;
 }
 
-function createSanitisedDiagnosticCopy() {
+async function createSanitisedDiagnosticCopy() {
   if (!currentTimelineJson) {
     updateDiagnosticCopyUi('Choose and inspect a Timeline JSON file before creating a privacy-safe copy.');
     return;
@@ -980,8 +1038,8 @@ function createSanitisedDiagnosticCopy() {
       data: sanitisedData
     };
 
-    const serialised = JSON.stringify(sanitisedDiagnosticCopy);
-    localStorage.setItem(SANITISED_DIAGNOSTIC_STORAGE_KEY, serialised);
+    await writeDiagnosticCopyToDatabase(sanitisedDiagnosticCopy);
+    localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
     renderDiagnosticPreview();
     updateDiagnosticCopyUi(
       `Privacy-safe copy created and stored on this device. ${retainedSegments.toLocaleString()} of ${originalSegments.toLocaleString()} Timeline segments were retained for analysis.`
@@ -1022,14 +1080,22 @@ function downloadSanitisedDiagnosticCopy() {
   updateDiagnosticCopyUi('Privacy-safe JSON downloaded. Review it before sharing, just as you would any exported file.');
 }
 
-function deleteSanitisedDiagnosticCopy() {
+async function deleteSanitisedDiagnosticCopy() {
   if (!sanitisedDiagnosticCopy) return;
   if (!window.confirm('Delete the privacy-safe diagnostic copy stored on this device?')) return;
-  localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
-  sanitisedDiagnosticCopy = null;
-  diagnosticPreview.open = false;
-  diagnosticPreviewContent.textContent = '';
-  updateDiagnosticCopyUi('Privacy-safe diagnostic copy deleted from this device.');
+
+  try {
+    await deleteDiagnosticCopyFromDatabase();
+    localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+    sanitisedDiagnosticCopy = null;
+    diagnosticPreview.open = false;
+    diagnosticPreviewContent.textContent = '';
+    updateDiagnosticCopyUi('Privacy-safe diagnostic copy deleted from this device.');
+  } catch (error) {
+    updateDiagnosticCopyUi(
+      `The privacy-safe copy could not be deleted: ${error?.message || String(error)}`
+    );
+  }
 }
 
 function resetOutput() {
