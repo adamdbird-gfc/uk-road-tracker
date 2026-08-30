@@ -1525,10 +1525,10 @@ function initMap() {
     mapLayerControl = L.control.layers(
       {},
       {
-        'Credited roads': creditedLayer,
-        'Matched journeys': matchedLayer,
-        'Raw Timeline traces': traceLayer,
-        'Canonical motorway references': canonicalReferenceLayer,
+        'Credited roads (black)': creditedLayer,
+        'Matched journeys (black)': matchedLayer,
+        'Raw Timeline traces (black)': traceLayer,
+        'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
       },
@@ -2058,7 +2058,13 @@ function renderCanonicalMapLayers() {
     if (refinementRoadRef && road.id!==refinementRoadRef) continue;
 
     for (const way of road.ways) {
-      L.polyline(way.coords.map(p=>[p[1],p[0]]),{weight:2,opacity:.3,dashArray:'5,6',interactive:false}).addTo(canonicalReferenceLayer);
+      L.polyline(way.coords.map(p=>[p[1],p[0]]),{
+        weight:2,
+        opacity:.45,
+        dashArray:'5,6',
+        color:'#6b7280',
+        interactive:false
+      }).addTo(canonicalReferenceLayer);
     }
 
     if (road.ways.length) {
@@ -2552,6 +2558,7 @@ function renderMap() {
       {
         weight: 2,
         opacity: 0.28,
+        color: '#111111',
         interactive: false
       }
     ).addTo(traceLayer);
@@ -2561,6 +2568,7 @@ function renderMap() {
         style: {
           weight: 4,
           opacity: 0.55,
+          color: '#111111',
           dashArray: j.matchQuality?.level === 'low' ? '5,7' : null
         }
       }).addTo(matchedLayer);
@@ -2578,6 +2586,7 @@ function renderMap() {
       {
         weight: seg.quality === 'high' ? 5 : 4,
         opacity: seg.quality === 'low' ? 0.45 : 0.85,
+        color: '#111111',
         dashArray: seg.quality === 'low' ? '4,6' : null
       }
     ).addTo(creditedLayer);
