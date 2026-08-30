@@ -24,6 +24,8 @@ let persistedDataEndMs = null;
 let persistedSavedAt = null;
 let persistedLegacyCutoffMs = null;
 const persistedProcessedJourneyIds = new Set();
+const persistedSeenJourneyIds = new Set();
+let persistedSeenJourneyTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 let persistedMileageHistoryComplete = true;
 let localSaveTimer = null;
@@ -193,6 +195,15 @@ function loadLocalProgress() {
     for (const id of saved.processedJourneyIds || []) {
       if (typeof id==='string' && id) persistedProcessedJourneyIds.add(id);
     }
+    const hasSeenJourneyState =
+      saved.seenJourneyTrackingStarted === true ||
+      Array.isArray(saved.seenJourneyIds);
+    persistedSeenJourneyTrackingStarted =
+      hasSeenJourneyState || persistedProcessedJourneyIds.size === 0;
+    for (const id of saved.seenJourneyIds || []) {
+      if (typeof id==='string' && id) persistedSeenJourneyIds.add(id);
+    }
+    for (const id of persistedProcessedJourneyIds) persistedSeenJourneyIds.add(id);
     for (const [journeyId,contributions] of Object.entries(saved.motorwayContributionsByJourney || {})) {
       if (!journeyId || !contributions || typeof contributions!=='object') continue;
       const clean={};
@@ -234,6 +245,8 @@ function saveLocalProgressNow() {
       dataEndMs:persistedDataEndMs,
       legacyCutoffMs:persistedLegacyCutoffMs,
       processedJourneyIds:[...persistedProcessedJourneyIds].sort(),
+      seenJourneyTrackingStarted:persistedSeenJourneyTrackingStarted,
+      seenJourneyIds:[...persistedSeenJourneyIds].sort(),
       motorwayContributionsByJourney:Object.fromEntries(
         [...persistedMotorwayContributionsByJourney.entries()].sort(([a],[b])=>a.localeCompare(b))
       ),
@@ -277,8 +290,17 @@ function journeyTimestampMs(journey) {
   return Number.isFinite(start) ? start : null;
 }
 
+function journeyIdentity(journey) {
+  return journey?.importId || journeyFingerprint(journey);
+}
+
+function recordJourneySeen(journey) {
+  const id=journeyIdentity(journey);
+  if (id) persistedSeenJourneyIds.add(id);
+}
+
 function journeyWasPreviouslyImported(journey) {
-  const id=journey?.importId || journeyFingerprint(journey);
+  const id=journeyIdentity(journey);
   if (persistedProcessedJourneyIds.has(id)) return true;
   const timeMs=journeyTimestampMs(journey);
   return persistedLegacyCutoffMs!==null && timeMs!==null && timeMs<=persistedLegacyCutoffMs;
@@ -296,7 +318,7 @@ function motorwayContributionsForJourney(journey) {
 }
 
 function recordJourneyProcessed(journey) {
-  const id=journey?.importId || journeyFingerprint(journey);
+  const id=journeyIdentity(journey);
   if (id) {
     persistedProcessedJourneyIds.add(id);
     const contributions=motorwayContributionsForJourney(journey);
@@ -341,6 +363,8 @@ function clearLocalProgress() {
   persistedSavedAt=null;
   persistedLegacyCutoffMs=null;
   persistedProcessedJourneyIds.clear();
+  persistedSeenJourneyIds.clear();
+  persistedSeenJourneyTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
   persistedMileageHistoryComplete=true;
   resetTrackingSession();
@@ -630,15 +654,37 @@ fileInput.addEventListener('change', async () => {
       'Rebuild the mileage totals from this file now? This is a one-off process and will rematch the earlier journeys. ' +
       'Choose Cancel to process only genuinely new journeys.'
     );
-    const newJourneys=rebuildMileage
+    const seenBeforeImport = new Set(persistedSeenJourneyIds);
+    const hadReliableSeenJourneyHistory = persistedSeenJourneyTrackingStarted;
+    const candidateJourneys=rebuildMileage
       ? allJourneys
       : allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
-    diagnostics.mileageRebuild=rebuildMileage;
-    diagnostics.previouslyImportedJourneys=rebuildMileage ? 0 : allJourneys.length-newJourneys.length;
-    diagnostics.newPassengerVehicleJourneys=newJourneys.length;
+    const genuinelyNewJourneys = rebuildMileage
+      ? []
+      : candidateJourneys.filter(j =>
+          hadReliableSeenJourneyHistory &&
+          !seenBeforeImport.has(journeyIdentity(j))
+        );
+    const previouslySeenUnmatchedJourneys = rebuildMileage
+      ? []
+      : candidateJourneys.filter(j =>
+          !hadReliableSeenJourneyHistory ||
+          seenBeforeImport.has(journeyIdentity(j))
+        );
 
-    ignoredJourneys = newJourneys.filter(j => j.pathPointCount < 2);
-    journeys = newJourneys.filter(j => j.pathPointCount >= 2);
+    for (const journey of allJourneys) recordJourneySeen(journey);
+    persistedSeenJourneyTrackingStarted=true;
+    scheduleLocalProgressSave();
+
+    diagnostics.mileageRebuild=rebuildMileage;
+    diagnostics.previouslyImportedJourneys=rebuildMileage ? 0 : allJourneys.length-candidateJourneys.length;
+    diagnostics.newPassengerVehicleJourneys=genuinelyNewJourneys.length;
+    diagnostics.previouslySeenUnmatchedJourneys=previouslySeenUnmatchedJourneys.length;
+    diagnostics.seenJourneyMigration=!hadReliableSeenJourneyHistory;
+    diagnostics.journeysReadyForMatching=candidateJourneys.length;
+
+    ignoredJourneys = candidateJourneys.filter(j => j.pathPointCount < 2);
+    journeys = candidateJourneys.filter(j => j.pathPointCount >= 2);
     diagnostics.usableJourneys = journeys.length;
     diagnostics.ignoredSparseJourneys = ignoredJourneys.length;
 
@@ -996,7 +1042,8 @@ function showDiagnostics(fileName) {
   stats.className = 'file-summary-stats';
   stats.append(
     summaryStat(formatDataDateRange(), 'dates covered'),
-    summaryStat(fmt(diagnostics.usableJourneys), 'new journeys ready'),
+    summaryStat(fmt(diagnostics.newPassengerVehicleJourneys), 'genuinely new'),
+    summaryStat(fmt(diagnostics.previouslySeenUnmatchedJourneys), 'available to retry'),
     summaryStat(fmt(diagnostics.previouslyImportedJourneys), 'already imported'),
     summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use')
   );
@@ -1036,13 +1083,24 @@ function summaryStat(value, label) {
 
 function importSummaryMessage() {
   const ready = Number(diagnostics.usableJourneys || 0);
+  const genuinelyNew = Number(diagnostics.newPassengerVehicleJourneys || 0);
+  const retryable = Number(diagnostics.previouslySeenUnmatchedJourneys || 0);
   const previous = Number(diagnostics.previouslyImportedJourneys || 0);
   const ignored = Number(diagnostics.ignoredSparseJourneys || 0);
   const parts = [
-    `${fmt(ready)} new car journey${ready === 1 ? ' is' : 's are'} ready to add to your Roadprints map.`
+    `${fmt(ready)} car journey${ready === 1 ? ' is' : 's are'} ready for road matching.`
   ];
-  if (previous) parts.push(`${fmt(previous)} already imported journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
+  parts.push(`${fmt(genuinelyNew)} ${genuinelyNew === 1 ? 'is a genuinely new journey' : 'are genuinely new journeys'}.`);
+  if (retryable) {
+    parts.push(
+      `${fmt(retryable)} ${retryable === 1 ? 'was seen before but was not successfully matched' : 'were seen before but were not successfully matched'} and can be retried.`
+    );
+  }
+  if (previous) parts.push(`${fmt(previous)} already matched journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
   if (ignored) parts.push(`${fmt(ignored)} journey${ignored === 1 ? ' does' : 's do'} not contain enough location detail to match reliably.`);
+  if (diagnostics.seenJourneyMigration) {
+    parts.push('Roadprints has now created its one-off baseline of journeys previously seen on this device.');
+  }
   return parts.join(' ');
 }
 
@@ -1056,8 +1114,9 @@ function technicalDiagnosticRows() {
     ['Car journeys with route points', fmt(diagnostics.vehiclesWithPathPoints), 'Car journeys that overlap recorded route positions.'],
     ['Car journeys with start and end points', fmt(diagnostics.vehiclesWithAnchors), 'Car journeys with enough information to identify their beginning and end.'],
     ['Journeys reconstructed', fmt(diagnostics.journeysConstructed), 'Journeys Roadprints successfully reconstructed from the source data.'],
-    ['New car journeys found', fmt(diagnostics.newPassengerVehicleJourneys), 'Reconstructed car journeys that were not already saved on this device.'],
-    ['Ready for road matching', fmt(diagnostics.usableJourneys), 'New journeys containing at least two location points.'],
+    ['Genuinely new journeys', fmt(diagnostics.newPassengerVehicleJourneys), 'Journeys never previously seen in an imported file on this device.'],
+    ['Previously seen, unmatched', fmt(diagnostics.previouslySeenUnmatchedJourneys), 'Journeys seen in an earlier import but not successfully road-matched, available to retry.'],
+    ['Ready for road matching', fmt(diagnostics.usableJourneys), 'Genuinely new and retryable journeys containing at least two location points.'],
     ['Unable to use', fmt(diagnostics.ignoredSparseJourneys), 'Journeys with fewer than two location points, which cannot be matched reliably.'],
     ...(diagnostics.mileageRebuild ? [['Mileage update', 'One-off rebuild selected', 'Earlier journeys will be matched again to rebuild cumulative mileage totals.']] : [])
   ];
@@ -1089,8 +1148,9 @@ function diagnosticText() {
     `Journeys constructed: ${fmt(diagnostics.journeysConstructed)}`,
     `Previously imported and skipped: ${fmt(diagnostics.previouslyImportedJourneys)}`,
     diagnostics.mileageRebuild ? 'Mileage totals: one-off cumulative rebuild selected' : '',
-    `New passenger-vehicle journeys: ${fmt(diagnostics.newPassengerVehicleJourneys)}`,
-    `New and usable for road matching: ${fmt(diagnostics.usableJourneys)}`,
+    `Genuinely new passenger-vehicle journeys: ${fmt(diagnostics.newPassengerVehicleJourneys)}`,
+    `Previously seen but unmatched: ${fmt(diagnostics.previouslySeenUnmatchedJourneys)}`,
+    `Ready for road matching: ${fmt(diagnostics.usableJourneys)}`,
     `Ignored — fewer than 2 Timeline points: ${fmt(diagnostics.ignoredSparseJourneys)}`
   ].filter(Boolean).join('\n');
 }
