@@ -17,7 +17,8 @@ const activityList = document.getElementById('testActivityList');
 let activities = [];
 let map = null;
 let rawLayer = null;
-let matchedLayer = null;
+let drivingLayer = null;
+let walkingLayer = null;
 let matching = false;
 let matchRunId = 0;
 
@@ -46,7 +47,7 @@ async function loadTimelineFile() {
     resultsCard.classList.remove('hidden');
     mapCard.classList.toggle('hidden', !activities.length);
     matchButton.disabled = !activities.length;
-    matchButton.textContent = `Match first ${activities.length}`;
+    matchButton.textContent = `Compare first ${activities.length}`;
     progressText.textContent = activities.length
       ? `${activities.length} activities ready. No results have been saved.`
       : 'No walking or running activities with at least two recorded path points were found.';
@@ -75,7 +76,7 @@ async function matchSample() {
   const runId = ++matchRunId;
   matching = true;
   matchButton.disabled = true;
-  matchButton.textContent = 'Matching…';
+  matchButton.textContent = 'Comparing…';
   let succeeded = 0;
   progress.value = 0;
   progressText.className = 'muted map-status';
@@ -85,31 +86,33 @@ async function matchSample() {
     for (let index = 0; index < activities.length; index++) {
       if (runId !== matchRunId) return;
       const activity = activities[index];
-      progressText.textContent = `${index} / ${activities.length} · matching ${formatActivityDate(activity.start)}`;
-      try {
-        const response = await fetch(`${API_BASE_URL}/match`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({points: activity.points})
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
-        if (!data.geojson?.features?.length) throw new Error('Matcher returned no road geometry.');
-        activity.matchedGeoJson = data.geojson;
-        activity.pointsSent = Number(data.points_sent_to_matcher || 0);
-        activity.pointsMatched = Number(data.matched_tracepoints || 0);
-        activity.confidence = averageConfidence(data.geojson);
+      progressText.textContent = `${index} / ${activities.length} · comparing ${formatActivityDate(activity.start)}`;
+      const [drivingResult, walkingResult] = await Promise.allSettled([
+        requestActivityMatch('/match', activity.points),
+        requestActivityMatch('/match-walking', activity.points)
+      ]);
+      if (runId !== matchRunId) return;
+
+      if (drivingResult.status === 'fulfilled') {
+        applyMatchResult(activity, 'driving', drivingResult.value);
+      } else {
+        activity.drivingError = errorText(drivingResult.reason);
+      }
+      if (walkingResult.status === 'fulfilled') {
+        applyMatchResult(activity, 'walking', walkingResult.value);
         activity.result = 'matched';
         succeeded++;
-      } catch (error) {
+      } else {
         activity.result = 'failed';
-        activity.error = error.message || String(error);
+        activity.walkingError = errorText(walkingResult.reason);
       }
       progress.value = index + 1;
       matchedNode.textContent = succeeded.toLocaleString();
       renderList();
       renderMapSafely();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // The public pedestrian test service asks clients to stay at or below
+      // one request per second. Leave a full interval between activities.
+      await new Promise(resolve => setTimeout(resolve, 1100));
     }
     progressText.textContent = `Complete · ${succeeded} matched · ${activities.length - succeeded} rejected by the matcher. Nothing was saved.`;
   } catch (error) {
@@ -119,9 +122,32 @@ async function matchSample() {
     if (runId === matchRunId) {
       matching = false;
       matchButton.disabled = false;
-      matchButton.textContent = `Match first ${activities.length}`;
+      matchButton.textContent = `Compare first ${activities.length}`;
     }
   }
+}
+
+async function requestActivityMatch(path, points) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({points})
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+  if (!data.geojson?.features?.length) throw new Error('Matcher returned no route geometry.');
+  return data;
+}
+
+function applyMatchResult(activity, prefix, data) {
+  activity[`${prefix}GeoJson`] = data.geojson;
+  activity[`${prefix}PointsSent`] = Number(data.points_sent_to_matcher || 0);
+  activity[`${prefix}PointsMatched`] = Number(data.matched_tracepoints || 0);
+  activity[`${prefix}Confidence`] = averageConfidence(data.geojson);
+}
+
+function errorText(error) {
+  return error?.message || String(error);
 }
 
 function extractWalkRunActivities(data) {
@@ -170,21 +196,31 @@ function initMap() {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
   rawLayer = L.layerGroup().addTo(map);
-  matchedLayer = L.layerGroup().addTo(map);
-  L.control.layers({}, {'Raw Timeline traces': rawLayer, 'Matched roads': matchedLayer}).addTo(map);
+  drivingLayer = L.layerGroup().addTo(map);
+  walkingLayer = L.layerGroup().addTo(map);
+  L.control.layers({}, {
+    'Raw Timeline traces': rawLayer,
+    'Driving matches': drivingLayer,
+    'Pedestrian matches': walkingLayer
+  }).addTo(map);
 }
 
 function renderMap() {
   if (!map) return;
   rawLayer.clearLayers();
-  matchedLayer.clearLayers();
+  drivingLayer.clearLayers();
+  walkingLayer.clearLayers();
   for (const activity of activities) {
     L.polyline(activity.points.map(point => [point.lat, point.lng]), {
       color: '#657083', weight: 4, opacity: .75, dashArray: '7,5'
     }).addTo(rawLayer);
-    if (activity.matchedGeoJson) {
-      L.geoJSON(activity.matchedGeoJson, {style: {color: '#16803c', weight: 4, opacity: .85}})
-        .addTo(matchedLayer);
+    if (activity.drivingGeoJson) {
+      L.geoJSON(activity.drivingGeoJson, {style: {color: '#16803c', weight: 4, opacity: .8}})
+        .addTo(drivingLayer);
+    }
+    if (activity.walkingGeoJson) {
+      L.geoJSON(activity.walkingGeoJson, {style: {color: '#2f7df6', weight: 4, opacity: .9}})
+        .addTo(walkingLayer);
     }
   }
 }
@@ -217,10 +253,14 @@ function renderList() {
     const details = [`${activity.points.length} recorded points`];
     if (Number.isFinite(activity.googleDistanceKm)) details.push(`${activity.googleDistanceKm.toFixed(2)} km Google distance`);
     if (activity.result === 'matched') {
-      details.push(`${activity.pointsMatched}/${activity.pointsSent} points matched`);
-      if (Number.isFinite(activity.confidence)) details.push(`${Math.round(activity.confidence * 100)}% confidence`);
+      details.push(`walking ${activity.walkingPointsMatched}/${activity.walkingPointsSent} points`);
+      if (Number.isFinite(activity.walkingConfidence)) details.push(`${Math.round(activity.walkingConfidence * 100)}% walking confidence`);
     }
-    if (activity.error) details.push(activity.error);
+    if (activity.drivingGeoJson) {
+      details.push(`driving ${activity.drivingPointsMatched}/${activity.drivingPointsSent} points`);
+    }
+    if (activity.walkingError) details.push(`walking failed: ${activity.walkingError}`);
+    if (activity.drivingError) details.push(`driving failed: ${activity.drivingError}`);
     meta.textContent = details.join(' · ');
     item.append(heading, meta);
     activityList.append(item);
@@ -235,7 +275,8 @@ function clearTest(clearFile = true) {
   resultsCard.classList.add('hidden');
   mapCard.classList.add('hidden');
   if (rawLayer) rawLayer.clearLayers();
-  if (matchedLayer) matchedLayer.clearLayers();
+  if (drivingLayer) drivingLayer.clearLayers();
+  if (walkingLayer) walkingLayer.clearLayers();
   fileStatus.className = 'muted map-status';
   fileStatus.textContent = clearFile ? 'No file selected.' : 'Reading file…';
 }

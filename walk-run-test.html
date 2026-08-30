@@ -35,10 +35,10 @@
       <div class="test-summary">
         <div><strong id="testFound">0</strong><span>usable activities found</span></div>
         <div><strong id="testSample">0</strong><span>included in test</span></div>
-        <div><strong id="testMatched">0</strong><span>successfully matched</span></div>
+        <div><strong id="testMatched">0</strong><span>pedestrian matches</span></div>
       </div>
       <div class="actions">
-        <button id="matchTestActivities" type="button">Match first 20</button>
+        <button id="matchTestActivities" type="button">Compare both matchers</button>
         <button id="clearTestResults" class="secondary" type="button">Clear test</button>
       </div>
       <progress id="testProgress" value="0" max="20"></progress>
@@ -48,12 +48,12 @@
 
     <section id="testMapCard" class="card hidden">
       <h2>3. Compare the result</h2>
-      <p class="muted">Grey shows Google Timeline’s recorded trace. Green shows the road returned by the existing driving matcher. Large differences reveal activities that should be rejected by future acceptance rules.</p>
-      <div class="test-legend"><span>Raw Timeline trace</span><span class="matched">Matched road</span></div>
+      <p class="muted">Grey shows Google Timeline’s recorded trace. Green shows the existing driving matcher and blue shows the pedestrian matcher. The comparison should reveal detours caused by vehicle-only restrictions.</p>
+      <div class="test-legend"><span>Raw Timeline trace</span><span class="matched">Driving match</span><span class="walking">Pedestrian match</span></div>
       <div id="testMap" aria-label="Walking and running road-matching test map"></div>
     </section>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="walk-run-test.js?v=20260830-walk-run-test-fix"></script>
+  <script src="walk-run-test.js?v=20260830-pedestrian-comparison"></script>
 </body>
 </html>

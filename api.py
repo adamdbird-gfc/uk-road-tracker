@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 from typing import List
@@ -8,11 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "https://router.project-osrm.org")
+FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreetmap.de/routed-foot")
 OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
 
-app = FastAPI(title="UK Road Tracker API", version="0.6.0")
+app = FastAPI(title="UK Road Tracker API", version="0.7.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,10 +62,14 @@ def motorway_refs(ref):
             refs.append(cleaned)
     return refs
 
-async def request_match(client, points, radius):
+async def request_match(client, points, radius, base_url):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
     radiuses = ";".join(str(radius) for _ in points)
-    url = f"{OSRM_BASE_URL.rstrip('/')}/match/v1/driving/{coordinates}"
+    # OSRM profile names in the URL are aliases chosen by the server. The
+    # routed-foot instance is built from a pedestrian graph even though its
+    # public API path, like the car instance, uses the conventional `driving`
+    # alias.
+    url = f"{base_url.rstrip('/')}/match/v1/driving/{coordinates}"
     params = {
         "overview": "full",
         "geometries": "geojson",
@@ -80,10 +86,12 @@ async def request_match(client, points, radius):
         data = {}
     return response, data
 
-async def osrm_match_chunk(client, points, chunk_index):
+async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_seconds=0.0):
     last_error = None
-    for radius in RADIUS_ATTEMPTS:
-        response, data = await request_match(client, points, radius)
+    for attempt_index, radius in enumerate(RADIUS_ATTEMPTS):
+        if attempt_index and polite_delay_seconds:
+            await asyncio.sleep(polite_delay_seconds)
+        response, data = await request_match(client, points, radius, base_url)
         if response.status_code == 200 and data.get("code") == "Ok":
             return data, radius
         code = data.get("code", f"HTTP {response.status_code}")
@@ -103,17 +111,34 @@ async def root():
         "service": "UK Road Tracker API",
         "status": "ok",
         "matcher": "OSRM public demo",
-        "version": "0.6.0",
-        "feature": "UK motorway step refs including A(M)",
+        "version": "0.7.0",
+        "feature": "UK motorway matching plus isolated pedestrian matching",
         "chunk_size": OSRM_CHUNK_SIZE,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.6.0"}
+    return {"status": "ok", "version": "0.7.0"}
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
+    return await match_payload(payload, OSRM_BASE_URL, include_motorways=True)
+
+@app.post("/match-walking")
+async def match_walking_activity(payload: MatchRequest):
+    return await match_payload(
+        payload,
+        FOOT_OSRM_BASE_URL,
+        include_motorways=False,
+        polite_delay_seconds=1.05,
+    )
+
+async def match_payload(
+    payload: MatchRequest,
+    base_url: str,
+    include_motorways: bool,
+    polite_delay_seconds: float = 0.0,
+):
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
 
@@ -125,9 +150,20 @@ async def match_journey(payload: MatchRequest):
     tracepoints_seen = 0
 
     try:
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(
+            timeout=45.0,
+            headers={"User-Agent": "Roadprints-POC/0.7 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"},
+        ) as client:
             for chunk_index, chunk in enumerate(chunks):
-                data, radius_used = await osrm_match_chunk(client, chunk, chunk_index)
+                if chunk_index and polite_delay_seconds:
+                    await asyncio.sleep(polite_delay_seconds)
+                data, radius_used = await osrm_match_chunk(
+                    client,
+                    chunk,
+                    chunk_index,
+                    base_url,
+                    polite_delay_seconds,
+                )
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
                     geometry = matching.get("geometry")
@@ -150,7 +186,7 @@ async def match_journey(payload: MatchRequest):
                         for step in leg.get("steps") or []:
                             refs = motorway_refs(step.get("ref"))
                             step_geometry = step.get("geometry")
-                            if not refs or not step_geometry:
+                            if not include_motorways or not refs or not step_geometry:
                                 continue
                             for road_ref in refs:
                                 motorway_features.append({
