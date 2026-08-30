@@ -1,6 +1,7 @@
 let journeys = [];
 let diagnostics = {};
 const persistedMapJourneys = new Map();
+const persistedActivityTraces = new Map();
 let mapArchiveReadyPromise = Promise.resolve();
 let map = null;
 let traceLayer = null;
@@ -40,6 +41,7 @@ let refinementChunkIndex = 0;
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
+const activityTraceLayers = new Map();
 const canonicalRoads = new Map();
 let canonicalLoadQueueRunning = false;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
@@ -130,14 +132,22 @@ const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 1;
+const MAP_ARCHIVE_DB_VERSION = 2;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
+const ACTIVITY_ARCHIVE_STORE_NAME = 'activity-traces';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
+const ACTIVITY_LAYER_STYLES = {
+  foot:{label:'Walking / running (green)',color:'#16803c',weight:3,opacity:.8},
+  cycling:{label:'Cycling (orange)',color:'#e07800',weight:3,opacity:.85},
+  bus:{label:'Bus (purple)',color:'#7b3fc6',weight:3,opacity:.75,dashArray:'8,5'},
+  rail:{label:'Train / subway / tram (pink)',color:'#c73578',weight:3,opacity:.75,dashArray:'7,5'},
+  ferry:{label:'Ferry (teal)',color:'#008b8b',weight:3,opacity:.8,dashArray:'6,5'}
+};
 const DEFAULT_MAP_CENTER = [53.3, -1.8];
 const DEFAULT_MAP_ZOOM = 6;
 
@@ -155,10 +165,15 @@ function localProgressJourneyCount() {
   return persistedMapJourneys.size;
 }
 
+function localProgressActivityCount() {
+  return persistedActivityTraces.size;
+}
+
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0;
+  const activityCount=localProgressActivityCount();
+  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0 || activityCount>0;
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
 
@@ -173,6 +188,7 @@ function updateLocalProgressNotice() {
   });
   localProgressSummary.textContent=
     `${journeyCount.toLocaleString()} saved matched journey${journeyCount===1?'':'s'} · ` +
+    `${activityCount.toLocaleString()} saved activity trace${activityCount===1?'':'s'} · ` +
     `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage · ${range} · saved ${savedLabel}.`;
 }
 
@@ -189,17 +205,20 @@ function openMapArchiveDatabase() {
       if (!database.objectStoreNames.contains(MAP_ARCHIVE_STORE_NAME)) {
         database.createObjectStore(MAP_ARCHIVE_STORE_NAME,{keyPath:'id'});
       }
+      if (!database.objectStoreNames.contains(ACTIVITY_ARCHIVE_STORE_NAME)) {
+        database.createObjectStore(ACTIVITY_ARCHIVE_STORE_NAME,{keyPath:'id'});
+      }
     };
     request.onsuccess=()=>resolve(request.result);
   });
 }
 
-async function mapArchiveOperation(mode,operation) {
+async function mapArchiveOperation(mode,operation,storeName=MAP_ARCHIVE_STORE_NAME) {
   const database=await openMapArchiveDatabase();
   try {
     return await new Promise((resolve,reject)=>{
-      const transaction=database.transaction(MAP_ARCHIVE_STORE_NAME,mode);
-      const store=transaction.objectStore(MAP_ARCHIVE_STORE_NAME);
+      const transaction=database.transaction(storeName,mode);
+      const store=transaction.objectStore(storeName);
       const request=operation(store);
       request.onerror=()=>reject(request.error || new Error('Saved map operation failed.'));
       request.onsuccess=()=>resolve(request.result);
@@ -242,9 +261,18 @@ function hydrateMapJourney(record) {
 async function loadMapArchive() {
   try {
     const records=await mapArchiveOperation('readonly',store=>store.getAll());
+    const activityRecords=await mapArchiveOperation(
+      'readonly',store=>store.getAll(),ACTIVITY_ARCHIVE_STORE_NAME
+    );
     persistedMapJourneys.clear();
     for (const record of records || []) {
       if (record?.id && record?.matchedGeoJson) persistedMapJourneys.set(record.id,record);
+    }
+    persistedActivityTraces.clear();
+    for (const record of activityRecords || []) {
+      if (record?.id && record?.category && Array.isArray(record?.points) && record.points.length>1) {
+        persistedActivityTraces.set(record.id,record);
+      }
     }
   } catch (err) {
     console.warn('Saved map journeys could not be loaded:',err);
@@ -259,9 +287,33 @@ async function saveJourneyToMapArchive(journey) {
   updateLocalProgressNotice();
 }
 
+async function saveActivityTracesToMapArchive(traces) {
+  const records=(traces || []).filter(trace=>trace?.id && trace?.category && trace?.points?.length>1);
+  if (!records.length) return;
+  const database=await openMapArchiveDatabase();
+  try {
+    await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(ACTIVITY_ARCHIVE_STORE_NAME,'readwrite');
+      const store=transaction.objectStore(ACTIVITY_ARCHIVE_STORE_NAME);
+      for (const record of records) store.put(record);
+      transaction.oncomplete=()=>resolve();
+      transaction.onerror=()=>reject(transaction.error || new Error('Activity traces could not be saved.'));
+      transaction.onabort=()=>reject(transaction.error || new Error('Activity trace storage was aborted.'));
+    });
+    for (const record of records) persistedActivityTraces.set(record.id,record);
+    updateLocalProgressNotice();
+  } finally {
+    database.close();
+  }
+}
+
 async function clearMapArchive() {
-  await mapArchiveOperation('readwrite',store=>store.clear());
+  await Promise.all([
+    mapArchiveOperation('readwrite',store=>store.clear()),
+    mapArchiveOperation('readwrite',store=>store.clear(),ACTIVITY_ARCHIVE_STORE_NAME)
+  ]);
   persistedMapJourneys.clear();
+  persistedActivityTraces.clear();
 }
 
 function savedMapJourneysExcluding(excludedIds=new Set()) {
@@ -643,7 +695,8 @@ function resetTrackingSession() {
 
   for (const layer of [
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
-    canonicalCoverageLayer, canonicalUncoveredLayer
+    canonicalCoverageLayer, canonicalUncoveredLayer,
+    ...activityTraceLayers.values()
   ]) {
     if (layer) layer.clearLayers();
   }
@@ -655,7 +708,7 @@ function resetTrackingSession() {
 
 async function showSavedProgress() {
   await mapArchiveReadyPromise;
-  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedMapJourneys.size) return;
+  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedMapJourneys.size && !persistedActivityTraces.size) return;
 
   resetTrackingSession();
   journeys=savedMapJourneysExcluding();
@@ -665,7 +718,7 @@ async function showSavedProgress() {
   manualMotorwayCard.classList.add('hidden');
   closeSavedProgress.classList.remove('hidden');
   mapTitle.textContent='Your saved Roadprints progress';
-  mapIntro.textContent='This is the motorway coverage saved on this device. Return to the start to import new Timeline data or make manual changes.';
+  mapIntro.textContent='This is the cumulative driving and activity coverage saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
   nextCard.classList.add('hidden');
 
@@ -780,7 +833,12 @@ fileInput.addEventListener('change', async () => {
 
     const result = extractVehicleJourneys(json);
     const allJourneys = result.journeys;
+    const activityTraces = result.activityTraces || [];
     diagnostics = result.diagnostics;
+    if (activityTraces.length) {
+      status(`Saving ${activityTraces.length.toLocaleString()} activity traces…`);
+      await saveActivityTracesToMapArchive(activityTraces);
+    }
 
     const needsMileageRebuild=
       persistedProcessedJourneyIds.size>0 &&
@@ -841,10 +899,10 @@ fileInput.addEventListener('change', async () => {
     showDiagnostics(file.name);
     renderIgnoredJourneys();
 
-    if (!diagnostics.passengerVehicleActivities) {
+    if (!diagnostics.passengerVehicleActivities && !diagnostics.activityTracesConstructed) {
       throw new Error(
         `Diagnostic result: ${diagnostics.semanticSegments.toLocaleString()} semantic segments were found, ` +
-        `but 0 IN_PASSENGER_VEHICLE activities were detected.`
+        `but no usable driving, walking, cycling, bus, rail or ferry traces were detected.`
       );
     }
 
@@ -853,7 +911,16 @@ fileInput.addEventListener('change', async () => {
       fileStatus.textContent =
         `${file.name} inspected successfully. No journeys currently need road matching. ` +
         `${diagnostics.previouslyImportedJourneys.toLocaleString()} successfully processed journey` +
-        `${diagnostics.previouslyImportedJourneys===1?' was':'s were'} safely skipped.`;
+        `${diagnostics.previouslyImportedJourneys===1?' was':'s were'} safely skipped. ` +
+        `${activityTraces.length.toLocaleString()} activity trace${activityTraces.length===1?' was':'s were'} added to the map archive.`;
+      if (activityTraces.length || persistedActivityTraces.size) {
+        mapCard.classList.remove('hidden');
+        nextCard.classList.remove('hidden');
+        await ensureLeaflet();
+        initMap();
+        renderMap();
+        setTimeout(showDefaultUnitedKingdomView,100);
+      }
       return;
     }
 
@@ -977,7 +1044,8 @@ function showDiagnostics(fileName) {
     summaryStat(fmt(diagnostics.newPassengerVehicleJourneys), 'genuinely new'),
     summaryStat(fmt(diagnostics.previouslySeenUnmatchedJourneys), 'available to retry'),
     summaryStat(fmt(diagnostics.previouslyImportedJourneys), 'already imported'),
-    summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use')
+    summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use'),
+    summaryStat(fmt(diagnostics.activityTracesConstructed), 'activity traces')
   );
 
   const explanation = document.createElement('p');
@@ -1030,6 +1098,8 @@ function importSummaryMessage() {
   }
   if (previous) parts.push(`${fmt(previous)} already matched journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
   if (ignored) parts.push(`${fmt(ignored)} journey${ignored === 1 ? ' does' : 's do'} not contain enough location detail to match reliably.`);
+  const activityTraces=Number(diagnostics.activityTracesConstructed || 0);
+  if (activityTraces) parts.push(`${fmt(activityTraces)} walking, cycling or public-transport trace${activityTraces===1?' was':'s were'} added to the activity layers.`);
   if (diagnostics.seenJourneyMigration) {
     parts.push('Roadprints has now created its one-off baseline of journeys previously seen on this device.');
   }
@@ -1041,6 +1111,7 @@ function technicalDiagnosticRows() {
     ['Timeline entries', fmt(diagnostics.semanticSegments), 'All entries found in the Timeline file, including visits and journeys.'],
     ['Movement entries', fmt(diagnostics.activitySegments), 'Timeline entries describing movement between places.'],
     ['Car journey entries', fmt(diagnostics.passengerVehicleActivities), 'Movement entries Google identified as travel in a passenger vehicle.'],
+    ['Activity traces plotted', fmt(diagnostics.activityTracesConstructed), 'Walking, running, cycling, bus, rail, tram, subway and ferry traces with enough recorded path detail.'],
     ['Recorded route sections', fmt(diagnostics.timelinePathSegments), 'Route traces included in the Timeline file.'],
     ['Recorded location points', fmt(diagnostics.timelinePathPoints), 'Timestamped positions available for reconstructing routes.'],
     ['Car journeys with route points', fmt(diagnostics.vehiclesWithPathPoints), 'Car journeys that overlap recorded route positions.'],
@@ -1073,6 +1144,7 @@ function diagnosticText() {
     `Semantic segments: ${fmt(diagnostics.semanticSegments)}`,
     `Activity segments: ${fmt(diagnostics.activitySegments)}`,
     `Passenger-vehicle activities: ${fmt(diagnostics.passengerVehicleActivities)}`,
+    `Activity traces plotted: ${fmt(diagnostics.activityTracesConstructed)}`,
     `timelinePath segments: ${fmt(diagnostics.timelinePathSegments)}`,
     `Timestamped timelinePath points: ${fmt(diagnostics.timelinePathPoints)}`,
     `Vehicle activities with overlapping path points: ${fmt(diagnostics.vehiclesWithPathPoints)}`,
@@ -1500,6 +1572,7 @@ function initMap() {
     // groups are cleared and rebuilt during imports, zooming or refinement.
     const paneOrder = {
       drivenRoadPane: 410,
+      activityTracePane: 415,
       canonicalReferencePane: 420,
       motorwayUnconfirmedPane: 430,
       motorwayConfirmedPane: 440
@@ -1557,6 +1630,15 @@ function initMap() {
     canonicalReferenceLayer = L.layerGroup();
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
+    activityTraceLayers.clear();
+    for (const category of Object.keys(ACTIVITY_LAYER_STYLES)) {
+      activityTraceLayers.set(category,L.layerGroup().addTo(map));
+    }
+
+    const activityOverlays={};
+    for (const [category,layer] of activityTraceLayers) {
+      activityOverlays[ACTIVITY_LAYER_STYLES[category].label]=layer;
+    }
 
     mapLayerControl = L.control.layers(
       {},
@@ -1564,6 +1646,7 @@ function initMap() {
         'Credited roads (black)': creditedLayer,
         'Matched journeys (black)': matchedLayer,
         'Raw Timeline traces (black)': traceLayer,
+        ...activityOverlays,
         'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
@@ -2583,6 +2666,7 @@ function renderMap() {
   traceLayer.clearLayers();
   matchedLayer.clearLayers();
   creditedLayer.clearLayers();
+  for (const layer of activityTraceLayers.values()) layer.clearLayers();
 
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
@@ -2590,6 +2674,23 @@ function renderMap() {
 
   renderMotorwayDashboard(drawable);
   renderCanonicalMotorwayDashboard(drawable);
+
+  for (const trace of persistedActivityTraces.values()) {
+    const style=ACTIVITY_LAYER_STYLES[trace.category];
+    const layer=activityTraceLayers.get(trace.category);
+    if (!style || !layer || !Array.isArray(trace.points) || trace.points.length<2) continue;
+    L.polyline(
+      trace.points.filter(validPoint).map(point=>[point.lat,point.lng]),
+      {
+        color:style.color,
+        weight:style.weight,
+        opacity:style.opacity,
+        dashArray:style.dashArray || null,
+        pane:'activityTracePane',
+        interactive:false
+      }
+    ).addTo(layer);
+  }
 
   for (const j of drawable) {
     L.polyline(
@@ -2641,6 +2742,7 @@ function renderMap() {
   requestAnimationFrame(() => map.invalidateSize(true));
 
   const matchedCount = drawable.filter(j => j.matchedGeoJson).length;
+  const activityTraceCount=persistedActivityTraces.size;
   const highCount = drawable.filter(j => j.matchQuality?.level === 'high').length;
   const reviewCount = drawable.filter(
     j => j.matchQuality && j.matchQuality.level !== 'high'
@@ -2660,11 +2762,15 @@ function renderMap() {
         : 'Select a motorway above to add it to your map.';
     } else if (onboardingMode==='saved') {
       const ready=[...canonicalRoads.values()].filter(road=>road.status==='ready').length;
-      mapStatus.textContent=`Saved progress loaded · ${ready} canonical motorway reference${ready===1?'':'s'} ready.`;
+      mapStatus.textContent=
+        `Saved progress loaded · ${persistedMapJourneys.size.toLocaleString()} matched journey` +
+        `${persistedMapJourneys.size===1?'':'s'} · ${persistedActivityTraces.size.toLocaleString()} activity trace` +
+        `${persistedActivityTraces.size===1?'':'s'} · ${ready} canonical motorway reference${ready===1?'':'s'} ready.`;
     } else {
       mapStatus.textContent =
         `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
-        `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review).`;
+        `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review) · ` +
+        `${activityTraceCount.toLocaleString()} activity trace${activityTraceCount===1?'':'s'}.`;
     }
   }
 }
@@ -2672,16 +2778,22 @@ function renderMap() {
 function fitSelected() {
   if (!map || !window.L) return;
 
-  const pts = onboardingMode==='manual' || onboardingMode==='saved'
-    ? [...(onboardingMode==='manual'
-        ? manualMotorwayRefs
-        : new Set([...persistedCoverageByRef.keys(),...persistedManualRefs]))]
-        .flatMap(ref=>(canonicalRoads.get(ref)?.anchors || []).map(anchor=>[anchor.lat,anchor.lng]))
-    : journeys
-        .filter(j => j.selected)
-        .flatMap(j => j.points)
-        .filter(validPoint)
-        .map(p => [p.lat, p.lng]);
+  const activityPoints=[...persistedActivityTraces.values()]
+    .flatMap(trace=>trace.points || [])
+    .filter(validPoint)
+    .map(point=>[point.lat,point.lng]);
+  const journeyPoints=journeys
+    .filter(journey=>journey.selected)
+    .flatMap(journey=>journey.points)
+    .filter(validPoint)
+    .map(point=>[point.lat,point.lng]);
+  const motorwayPoints=[...(onboardingMode==='manual'
+    ? manualMotorwayRefs
+    : new Set([...persistedCoverageByRef.keys(),...persistedManualRefs]))]
+    .flatMap(ref=>(canonicalRoads.get(ref)?.anchors || []).map(anchor=>[anchor.lat,anchor.lng]));
+  const pts=onboardingMode==='manual'
+    ? motorwayPoints
+    : [...journeyPoints,...activityPoints,...(onboardingMode==='saved' ? motorwayPoints : [])];
 
   if (!pts.length) {
     if (mapStatus) {
@@ -2689,7 +2801,7 @@ function fitSelected() {
       mapStatus.textContent = onboardingMode==='manual'
         ? 'Select at least one motorway and wait for its reference to load.'
         : onboardingMode==='saved'
-          ? 'Saved motorway references are still loading. Try Fit selected again shortly.'
+          ? 'No saved journey, activity or motorway coordinates are available yet.'
           : 'No valid selected coordinates are available to fit on the map.';
     }
     return;
@@ -2709,6 +2821,22 @@ function fitSelected() {
   }
 }
 
+function activityTraceCategory(mode) {
+  if (mode==='WALKING' || mode==='RUNNING') return 'foot';
+  if (mode==='CYCLING' || mode==='ON_BICYCLE' || mode==='IN_BICYCLE') return 'cycling';
+  if (mode==='IN_BUS') return 'bus';
+  if (mode==='IN_TRAIN' || mode==='IN_SUBWAY' || mode==='IN_TRAM') return 'rail';
+  if (mode==='IN_FERRY') return 'ferry';
+  return null;
+}
+
+function activityTraceIdentity(trace) {
+  const first=trace?.points?.[0];
+  const last=trace?.points?.[trace.points.length-1];
+  const key=point=>point ? `${Number(point.lat).toFixed(5)},${Number(point.lng).toFixed(5)}` : '';
+  return [trace?.mode || '',trace?.start || '',trace?.end || '',key(first),key(last)].join('|');
+}
+
 function extractVehicleJourneys(data) {
   const segments = Array.isArray(data?.semanticSegments)
     ? data.semanticSegments
@@ -2723,6 +2851,8 @@ function extractVehicleJourneys(data) {
     vehiclesWithPathPoints: 0,
     vehiclesWithAnchors: 0,
     journeysConstructed: 0,
+    activityTracesConstructed: 0,
+    activityTraceCounts: {},
     dataStartMs: null,
     dataEndMs: null
   };
@@ -2760,15 +2890,17 @@ function extractVehicleJourneys(data) {
   pathPoints.sort((a, b) => a.timeMs - b.timeMs);
 
   const out = [];
+  const activityTraces = [];
 
   for (const seg of segments) {
     const activity = seg?.activity;
     if (!activity) continue;
 
     const mode = String(activity?.topCandidate?.type || '').trim().toUpperCase();
-    if (mode !== 'IN_PASSENGER_VEHICLE') continue;
-
-    diag.passengerVehicleActivities++;
+    const isPassengerVehicle=mode==='IN_PASSENGER_VEHICLE';
+    const activityCategory=activityTraceCategory(mode);
+    if (!isPassengerVehicle && !activityCategory) continue;
+    if (isPassengerVehicle) diag.passengerVehicleActivities++;
 
     const startMs = Date.parse(seg.startTime || '');
     const endMs = Date.parse(seg.endTime || '');
@@ -2784,12 +2916,8 @@ function extractVehicleJourneys(data) {
         .map(({ lat, lng }) => ({ lat, lng }));
     }
 
-    if (overlapping.length) diag.vehiclesWithPathPoints++;
-
     const startPoint = parseLocation(activity?.start?.latLng);
     const endPoint = parseLocation(activity?.end?.latLng);
-
-    if (startPoint || endPoint) diag.vehiclesWithAnchors++;
 
     const points = [];
     if (startPoint) points.push(startPoint);
@@ -2797,6 +2925,28 @@ function extractVehicleJourneys(data) {
     if (endPoint) points.push(endPoint);
 
     const cleanPoints = dedupePoints(points).filter(validPoint);
+
+    if (activityCategory) {
+      // Activity layers use recorded Timeline paths directly. Requiring at
+      // least two recorded path points avoids inventing straight lines from
+      // start/end anchors when Google did not retain a usable trace.
+      if (overlapping.length>1 && cleanPoints.length>1) {
+        const trace={
+          mode,
+          category:activityCategory,
+          start:seg.startTime || null,
+          end:seg.endTime || null,
+          points:cleanPoints.map(point=>({lat:Number(point.lat),lng:Number(point.lng)}))
+        };
+        trace.id=activityTraceIdentity(trace);
+        activityTraces.push(trace);
+        diag.activityTraceCounts[activityCategory]=(diag.activityTraceCounts[activityCategory] || 0)+1;
+      }
+      continue;
+    }
+
+    if (overlapping.length) diag.vehiclesWithPathPoints++;
+    if (startPoint || endPoint) diag.vehiclesWithAnchors++;
 
     // Important diagnostic behaviour:
     // do NOT discard a passenger-vehicle activity just because its trace is sparse.
@@ -2814,6 +2964,7 @@ function extractVehicleJourneys(data) {
 
   for (const journey of out) journey.importId=journeyFingerprint(journey);
   diag.journeysConstructed = out.length;
+  diag.activityTracesConstructed=activityTraces.length;
 
   out.sort((a, b) => {
     const aa = Date.parse(a.start || '');
@@ -2821,7 +2972,9 @@ function extractVehicleJourneys(data) {
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { journeys: out, diagnostics: diag };
+  activityTraces.sort((a,b)=>Date.parse(a.start || '')-Date.parse(b.start || ''));
+
+  return { journeys: out, activityTraces, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
