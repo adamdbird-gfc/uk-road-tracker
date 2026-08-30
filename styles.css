@@ -18,6 +18,23 @@ input[type=file] { position: absolute; width: 1px; height: 1px; overflow: hidden
 .file-button, button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; padding: 11px 15px; font: inherit; font-weight: 700; cursor: pointer; background: #172033; color: white; }
 button.secondary { background: #e9edf2; color: #172033; }
 .muted { color: #657083; }
+.file-summary { margin-top:16px; color:#172033; }
+.file-summary-heading { display:flex; align-items:center; gap:11px; padding:14px; border:1px solid #badfc7; border-radius:12px; background:#e7f5ec; }
+.file-summary-heading strong, .file-summary-heading span { display:block; }
+.file-summary-heading span { margin-top:2px; color:#476052; font-size:.82rem; }
+.file-summary-tick { display:grid !important; place-items:center; flex:0 0 30px; width:30px; height:30px; margin:0 !important; border-radius:50%; background:#24663b; color:#fff !important; font-size:1rem !important; font-weight:800; }
+.file-summary-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+.file-summary-stats div { min-width:0; padding:12px; border-radius:11px; background:#f4f6f8; }
+.file-summary-stats strong { display:block; font-size:1.15rem; line-height:1.2; overflow-wrap:anywhere; }
+.file-summary-stats span { display:block; margin-top:4px; color:#657083; font-size:.75rem; }
+.file-summary-note { margin:10px 2px; color:#475266; font-size:.9rem; line-height:1.5; }
+.technical-details { margin-top:8px; border-top:1px solid #e4e8ed; padding-top:10px; color:#657083; font-size:.82rem; }
+.technical-details summary { width:max-content; max-width:100%; padding:8px 2px; color:#345b9d; cursor:pointer; font-weight:700; }
+.technical-details p { margin:5px 0 10px; line-height:1.45; }
+.technical-details dl { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0; margin:0; }
+.technical-details dt, .technical-details dd { margin:0; padding:8px 0; border-top:1px solid #edf0f3; }
+.technical-details dt { padding-right:12px; }
+.technical-details dd { color:#172033; font-weight:700; text-align:right; }
 .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 14px 0; }
 .stats div { padding: 12px; background: #f4f6f8; border-radius: 12px; text-align: center; }
 .stats strong { display: block; font-size: 1.5rem; }
@@ -38,6 +55,7 @@ button.secondary { background: #e9edf2; color: #172033; }
   main { padding: 28px; }
   .hero { grid-template-columns: 1fr 300px; align-items: end; }
   .card { padding: 24px; }
+  .file-summary-stats { grid-template-columns:1.5fr repeat(3,1fr); }
 }
 
 .journey-actions {
