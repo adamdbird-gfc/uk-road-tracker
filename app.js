@@ -704,11 +704,9 @@ fileInput.addEventListener('change', async () => {
     if (!journeys.length) {
       fileStatus.className = 'muted';
       fileStatus.textContent =
-        diagnostics.previouslyImportedJourneys
-          ? `${file.name} inspected successfully. No new road-matchable journeys were found. ` +
-            `${diagnostics.previouslyImportedJourneys.toLocaleString()} previously imported journey` +
-            `${diagnostics.previouslyImportedJourneys===1?' was':'s were'} skipped.`
-          : `${file.name} contains no new journeys with enough Timeline points for road matching.`;
+        `${file.name} inspected successfully. No journeys currently need road matching. ` +
+        `${diagnostics.previouslyImportedJourneys.toLocaleString()} successfully processed journey` +
+        `${diagnostics.previouslyImportedJourneys===1?' was':'s were'} safely skipped.`;
       return;
     }
 
