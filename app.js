@@ -1,5 +1,8 @@
 let journeys = [];
 let diagnostics = {};
+let currentTimelineJson = null;
+let currentTimelineFileInfo = null;
+let sanitisedDiagnosticCopy = null;
 let map = null;
 let traceLayer = null;
 let matchedLayer = null;
@@ -89,6 +92,18 @@ const refinementChunkStatus = document.getElementById('refinementChunkStatus');
 const localProgressNotice = document.getElementById('localProgressNotice');
 const localProgressSummary = document.getElementById('localProgressSummary');
 const closeSavedProgress = document.getElementById('closeSavedProgress');
+const diagnosticCard = document.getElementById('diagnosticCard');
+const createDiagnosticCopyButton = document.getElementById('createDiagnosticCopy');
+const reviewDiagnosticCopyButton = document.getElementById('reviewDiagnosticCopy');
+const downloadDiagnosticCopyButton = document.getElementById('downloadDiagnosticCopy');
+const deleteDiagnosticCopyButton = document.getElementById('deleteDiagnosticCopy');
+const diagnosticCopyStatus = document.getElementById('diagnosticCopyStatus');
+const diagnosticPreview = document.getElementById('diagnosticPreview');
+const diagnosticPreviewContent = document.getElementById('diagnosticPreviewContent');
+const SANITISED_DIAGNOSTIC_STORAGE_KEY = 'roadprints.sanitisedTimelineDiagnostic.v1';
+const SANITISED_DIAGNOSTIC_VERSION = 1;
+const MAX_DIAGNOSTIC_SEGMENTS = 250;
+const MAX_DIAGNOSTIC_PREVIEW_CHARS = 40000;
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
@@ -580,6 +595,8 @@ unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
 unitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
 renderManualMotorwayOptions();
 updateLocalProgressNotice();
+loadSanitisedDiagnosticCopy();
+updateDiagnosticCopyUi();
 
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
@@ -594,6 +611,10 @@ fileInput.addEventListener('change', async () => {
     await yieldToBrowser();
 
     const json = JSON.parse(text);
+    currentTimelineJson = json;
+    currentTimelineFileInfo = {size: file.size, type: file.type || 'application/json'};
+    diagnosticCard.classList.remove('hidden');
+    updateDiagnosticCopyUi();
     status(`JSON parsed. Inspecting Timeline structure…`);
     await yieldToBrowser();
 
@@ -699,6 +720,237 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
+createDiagnosticCopyButton.addEventListener('click', createSanitisedDiagnosticCopy);
+reviewDiagnosticCopyButton.addEventListener('click', () => {
+  if (!sanitisedDiagnosticCopy) return;
+  renderDiagnosticPreview();
+  diagnosticPreview.open = true;
+  diagnosticPreview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+});
+downloadDiagnosticCopyButton.addEventListener('click', downloadSanitisedDiagnosticCopy);
+deleteDiagnosticCopyButton.addEventListener('click', deleteSanitisedDiagnosticCopy);
+
+function loadSanitisedDiagnosticCopy() {
+  try {
+    const stored = localStorage.getItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+    sanitisedDiagnosticCopy = stored ? JSON.parse(stored) : null;
+  } catch {
+    sanitisedDiagnosticCopy = null;
+    localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+  }
+}
+
+function updateDiagnosticCopyUi(message = '') {
+  const hasCopy = Boolean(sanitisedDiagnosticCopy);
+  diagnosticCard.classList.toggle('hidden', !currentTimelineJson && !hasCopy);
+  reviewDiagnosticCopyButton.disabled = !hasCopy;
+  downloadDiagnosticCopyButton.disabled = !hasCopy;
+  deleteDiagnosticCopyButton.disabled = !hasCopy;
+  diagnosticPreview.classList.toggle('hidden', !hasCopy);
+
+  if (message) {
+    diagnosticCopyStatus.textContent = message;
+    return;
+  }
+  if (!hasCopy) {
+    diagnosticCopyStatus.textContent = currentTimelineJson
+      ? 'No privacy-safe copy is stored. Creating one is optional.'
+      : 'No privacy-safe copy is stored.';
+    return;
+  }
+
+  const count = Number(sanitisedDiagnosticCopy?.sanitisation?.segmentsRetained || 0);
+  const created = new Date(sanitisedDiagnosticCopy.createdAt);
+  const createdText = Number.isNaN(created.getTime())
+    ? 'previously'
+    : created.toLocaleString();
+  diagnosticCopyStatus.textContent =
+    `Privacy-safe copy stored locally (${count.toLocaleString()} representative segments, created ${createdText}).`;
+}
+
+function evenlySample(items, limit) {
+  if (!Array.isArray(items) || items.length <= limit) return Array.isArray(items) ? [...items] : items;
+  const sampled = [];
+  for (let index = 0; index < limit; index++) {
+    sampled.push(items[Math.round(index * (items.length - 1) / (limit - 1))]);
+  }
+  return sampled;
+}
+
+function prepareDiagnosticSource(value, key = '') {
+  if (Array.isArray(value)) {
+    const items = key === 'semanticSegments'
+      ? evenlySample(value, MAX_DIAGNOSTIC_SEGMENTS)
+      : value;
+    return items.map(item => prepareDiagnosticSource(item));
+  }
+  if (!value || typeof value !== 'object') return value;
+
+  const copy = {};
+  for (const [childKey, childValue] of Object.entries(value)) {
+    copy[childKey] = prepareDiagnosticSource(childValue, childKey);
+  }
+  return copy;
+}
+
+function collectDiagnosticTimestamps(value, timestamps = []) {
+  if (Array.isArray(value)) {
+    value.forEach(item => collectDiagnosticTimestamps(item, timestamps));
+    return timestamps;
+  }
+  if (!value || typeof value !== 'object') return timestamps;
+
+  for (const [key, child] of Object.entries(value)) {
+    if (
+      typeof child === 'string' &&
+      /(time|date|start|end)/i.test(key) &&
+      /^\d{4}-\d{2}-\d{2}T/.test(child)
+    ) {
+      const timestamp = Date.parse(child);
+      if (Number.isFinite(timestamp)) timestamps.push(timestamp);
+    }
+    collectDiagnosticTimestamps(child, timestamps);
+  }
+  return timestamps;
+}
+
+function sanitiseDiagnosticValue(value, key, earliestTimestamp) {
+  if (Array.isArray(value)) {
+    return value.map(item => sanitiseDiagnosticValue(item, key, earliestTimestamp));
+  }
+  if (value && typeof value === 'object') {
+    const result = {};
+    for (const [childKey, childValue] of Object.entries(value)) {
+      result[childKey] = sanitiseDiagnosticValue(childValue, childKey, earliestTimestamp);
+    }
+    return result;
+  }
+
+  const coordinateKey = /(^|_)(lat|lng|lon|latitude|longitude)(e7)?$|latlng|coordinate/i;
+  const identifyingKey = /(address|placeid|place_id|deviceid|device_id|photo|name$|url$|uri$|identifier|account|email)/i;
+  const timestampKey = /(time|date|start|end)/i;
+
+  if (coordinateKey.test(key)) {
+    if (typeof value === 'number') return 0;
+    if (typeof value === 'string') return value.startsWith('geo:') ? 'geo:0.000000,0.000000' : '[redacted coordinate]';
+  }
+  if (identifyingKey.test(key) && value !== null && value !== '') {
+    return '[redacted]';
+  }
+  if (
+    typeof value === 'string' &&
+    timestampKey.test(key) &&
+    /^\d{4}-\d{2}-\d{2}T/.test(value)
+  ) {
+    const timestamp = Date.parse(value);
+    if (Number.isFinite(timestamp) && Number.isFinite(earliestTimestamp)) {
+      return new Date(Date.UTC(2000, 0, 1) + (timestamp - earliestTimestamp)).toISOString();
+    }
+  }
+  if (typeof value === 'string') {
+    return value
+      .replace(/geo:-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/gi, 'geo:0.000000,0.000000')
+      .replace(/https?:\/\/\S+/gi, '[redacted URL]');
+  }
+  return value;
+}
+
+function countSemanticSegments(value) {
+  if (Array.isArray(value)) return value.reduce((total, item) => total + countSemanticSegments(item), 0);
+  if (!value || typeof value !== 'object') return 0;
+  let total = 0;
+  for (const [key, child] of Object.entries(value)) {
+    if (key === 'semanticSegments' && Array.isArray(child)) total += child.length;
+    else total += countSemanticSegments(child);
+  }
+  return total;
+}
+
+function createSanitisedDiagnosticCopy() {
+  if (!currentTimelineJson) {
+    updateDiagnosticCopyUi('Choose and inspect a Timeline JSON file before creating a privacy-safe copy.');
+    return;
+  }
+
+  try {
+    const prepared = prepareDiagnosticSource(currentTimelineJson);
+    const timestamps = collectDiagnosticTimestamps(prepared);
+    const earliestTimestamp = timestamps.length ? Math.min(...timestamps) : null;
+    const sanitisedData = sanitiseDiagnosticValue(prepared, '', earliestTimestamp);
+    const originalSegments = countSemanticSegments(currentTimelineJson);
+    const retainedSegments = countSemanticSegments(sanitisedData);
+
+    sanitisedDiagnosticCopy = {
+      format: 'roadprints-sanitised-timeline-diagnostic',
+      version: SANITISED_DIAGNOSTIC_VERSION,
+      createdAt: new Date().toISOString(),
+      source: {
+        originalSizeBytes: currentTimelineFileInfo?.size || null,
+        originalMimeType: currentTimelineFileInfo?.type || 'application/json'
+      },
+      sanitisation: {
+        coordinates: 'replaced with zero values',
+        timestamps: 'shifted so the earliest retained timestamp begins on 2000-01-01',
+        identifiers: 'names, addresses, URLs and identifying references redacted',
+        originalSegments,
+        segmentsRetained: retainedSegments,
+        maximumSegments: MAX_DIAGNOSTIC_SEGMENTS
+      },
+      importDiagnostics: {...diagnostics},
+      data: sanitisedData
+    };
+
+    const serialised = JSON.stringify(sanitisedDiagnosticCopy);
+    localStorage.setItem(SANITISED_DIAGNOSTIC_STORAGE_KEY, serialised);
+    renderDiagnosticPreview();
+    updateDiagnosticCopyUi(
+      `Privacy-safe copy created and stored on this device. ${retainedSegments.toLocaleString()} of ${originalSegments.toLocaleString()} Timeline segments were retained for analysis.`
+    );
+  } catch (error) {
+    sanitisedDiagnosticCopy = null;
+    updateDiagnosticCopyUi(
+      `The privacy-safe copy could not be stored: ${error?.message || String(error)}`
+    );
+  }
+}
+
+function renderDiagnosticPreview() {
+  if (!sanitisedDiagnosticCopy) {
+    diagnosticPreviewContent.textContent = '';
+    return;
+  }
+  const formatted = JSON.stringify(sanitisedDiagnosticCopy, null, 2);
+  diagnosticPreviewContent.textContent = formatted.length > MAX_DIAGNOSTIC_PREVIEW_CHARS
+    ? formatted.slice(0, MAX_DIAGNOSTIC_PREVIEW_CHARS) + '\n\n… Preview shortened. Download the JSON to review the complete sanitised sample.'
+    : formatted;
+}
+
+function downloadSanitisedDiagnosticCopy() {
+  if (!sanitisedDiagnosticCopy) return;
+  const blob = new Blob(
+    [JSON.stringify(sanitisedDiagnosticCopy, null, 2)],
+    {type: 'application/json'}
+  );
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `roadprints-sanitised-timeline-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  updateDiagnosticCopyUi('Privacy-safe JSON downloaded. Review it before sharing, just as you would any exported file.');
+}
+
+function deleteSanitisedDiagnosticCopy() {
+  if (!sanitisedDiagnosticCopy) return;
+  if (!window.confirm('Delete the privacy-safe diagnostic copy stored on this device?')) return;
+  localStorage.removeItem(SANITISED_DIAGNOSTIC_STORAGE_KEY);
+  sanitisedDiagnosticCopy = null;
+  diagnosticPreview.open = false;
+  diagnosticPreviewContent.textContent = '';
+  updateDiagnosticCopyUi('Privacy-safe diagnostic copy deleted from this device.');
+}
 
 function resetOutput() {
   journeys = [];
