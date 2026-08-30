@@ -1489,6 +1489,20 @@ function initMap() {
       zoomControl: true
     }).setView([54.5, -3], 5);
 
+    // Fixed panes keep semantic colours in a stable order even when layer
+    // groups are cleared and rebuilt during imports, zooming or refinement.
+    const paneOrder = {
+      drivenRoadPane: 410,
+      canonicalReferencePane: 420,
+      motorwayUnconfirmedPane: 430,
+      motorwayConfirmedPane: 440
+    };
+    for (const [paneName,zIndex] of Object.entries(paneOrder)) {
+      const pane=map.createPane(paneName);
+      pane.style.zIndex=String(zIndex);
+      pane.style.pointerEvents='none';
+    }
+
     const tiles = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {
@@ -2078,6 +2092,7 @@ function renderCanonicalMapLayers() {
         opacity:.45,
         dashArray:'5,6',
         color:'#6b7280',
+        pane:'canonicalReferencePane',
         interactive:false
       }).addTo(canonicalReferenceLayer);
     }
@@ -2100,6 +2115,7 @@ function renderCanonicalMapLayers() {
                 weight:4,
                 opacity:.9,
                 color:covered ? '#2f7df6' : '#d93a3a',
+                pane:covered ? 'motorwayConfirmedPane' : 'motorwayUnconfirmedPane',
                 interactive:false
               }
             ).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
@@ -2118,6 +2134,7 @@ function renderCanonicalMapLayers() {
           fillOpacity:.95,
           color:covered ? '#2f7df6' : '#d93a3a',
           fillColor:covered ? '#2f7df6' : '#d93a3a',
+          pane:covered ? 'motorwayConfirmedPane' : 'motorwayUnconfirmedPane',
           interactive:false
         }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
       }
@@ -2574,12 +2591,14 @@ function renderMap() {
         weight: 2,
         opacity: 0.28,
         color: '#111111',
+        pane: 'drivenRoadPane',
         interactive: false
       }
     ).addTo(traceLayer);
 
     if (j.matchedGeoJson) {
       L.geoJSON(j.matchedGeoJson, {
+        pane: 'drivenRoadPane',
         style: {
           weight: 4,
           opacity: 0.55,
@@ -2602,6 +2621,7 @@ function renderMap() {
         weight: seg.quality === 'high' ? 5 : 4,
         opacity: seg.quality === 'low' ? 0.45 : 0.85,
         color: '#111111',
+        pane: 'drivenRoadPane',
         dashArray: seg.quality === 'low' ? '4,6' : null
       }
     ).addTo(creditedLayer);
