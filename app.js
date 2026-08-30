@@ -138,6 +138,14 @@ let canonicalCachePromise = null;
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
 const MOTORWAY_SAMPLE_SPACING_M = 25;
+const DEFAULT_MAP_CENTER = [53.3, -1.8];
+const DEFAULT_MAP_ZOOM = 6;
+
+function showDefaultUnitedKingdomView() {
+  if (!map) return;
+  map.setView(DEFAULT_MAP_CENTER,DEFAULT_MAP_ZOOM);
+  requestAnimationFrame(()=>map.invalidateSize(true));
+}
 
 function localProgressRoadCount() {
   return [...persistedCoverageByRef.values()].filter(ids=>ids.size).length;
@@ -641,8 +649,7 @@ function resetTrackingSession() {
   }
 
   if (map) {
-    map.setView([54.5, -3], 5);
-    requestAnimationFrame(() => map.invalidateSize(true));
+    showDefaultUnitedKingdomView();
   }
 }
 
@@ -1232,7 +1239,7 @@ function renderAll(fileName) {
   renderMap();
   updateSelectedCount();
 
-  setTimeout(fitSelected, 100);
+  setTimeout(showDefaultUnitedKingdomView,100);
 }
 
 function renderJourneyList() {
@@ -1487,7 +1494,7 @@ function initMap() {
     map = L.map('map', {
       preferCanvas: true,
       zoomControl: true
-    }).setView([54.5, -3], 5);
+    }).setView(DEFAULT_MAP_CENTER,DEFAULT_MAP_ZOOM);
 
     // Fixed panes keep semantic colours in a stable order even when layer
     // groups are cleared and rebuilt during imports, zooming or refinement.
