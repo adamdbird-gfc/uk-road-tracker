@@ -30,6 +30,7 @@ let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 let persistedMileageHistoryComplete = true;
 let localSaveTimer = null;
+let localProgressDeletionRunning = false;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
 let refinementEditMode = null;
@@ -327,6 +328,7 @@ function loadLocalProgress() {
 }
 
 function saveLocalProgressNow() {
+  if (localProgressDeletionRunning) return;
   try {
     for (const road of canonicalRoads.values()) {
       if (road.status==='ready') {
@@ -367,6 +369,7 @@ function saveLocalProgressNow() {
 }
 
 function scheduleLocalProgressSave() {
+  if (localProgressDeletionRunning) return;
   clearTimeout(localSaveTimer);
   localSaveTimer=setTimeout(saveLocalProgressNow,250);
 }
@@ -461,12 +464,10 @@ function mergeProgressDateRange(source) {
 
 async function clearLocalProgress() {
   if (!window.confirm('Delete all Roadprints progress and saved map journeys from this device?')) return;
+  localProgressDeletionRunning=true;
+  clearTimeout(localSaveTimer);
+  localSaveTimer=null;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
-  try {
-    await clearMapArchive();
-  } catch (err) {
-    console.warn('Saved map journeys could not be deleted:',err);
-  }
   persistedCoverageByRef.clear();
   persistedManualRefs.clear();
   persistedDataStartMs=null;
@@ -480,6 +481,20 @@ async function clearLocalProgress() {
   persistedFileHashTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
   persistedMileageHistoryComplete=true;
+  localProgressNotice.classList.add('hidden');
+
+  try {
+    await clearMapArchive();
+  } catch (err) {
+    console.warn('Saved map journeys could not be deleted:',err);
+    window.alert('The saved map journeys could not be deleted. Please try again.');
+  } finally {
+    // Remove the local save again after the asynchronous archive operation so
+    // no previously queued write can resurrect stale motorway progress.
+    localStorage.removeItem(LOCAL_PROGRESS_KEY);
+    localProgressDeletionRunning=false;
+  }
+
   resetTrackingSession();
   onboardingMode=null;
   dataSourceCard.classList.add('hidden');

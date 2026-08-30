@@ -17,6 +17,9 @@ h2 { margin-top: 0; }
 input[type=file] { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
 .file-button, button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; padding: 11px 15px; font: inherit; font-weight: 700; cursor: pointer; background: #172033; color: white; }
 button.secondary { background: #e9edf2; color: #172033; }
+button.danger-button { background: #b42318; color: #fff; }
+button.danger-button:hover { background: #8f1c13; }
+button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset: 2px; }
 .muted { color: #657083; }
 .file-summary { margin-top:16px; color:#172033; }
 .file-summary-heading { display:flex; align-items:center; gap:11px; padding:14px; border:1px solid #badfc7; border-radius:12px; background:#e7f5ec; }
