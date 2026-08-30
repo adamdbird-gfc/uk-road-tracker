@@ -26,6 +26,8 @@ let persistedLegacyCutoffMs = null;
 const persistedProcessedJourneyIds = new Set();
 const persistedSeenJourneyIds = new Set();
 let persistedSeenJourneyTrackingStarted = true;
+const persistedImportedFileHashes = new Set();
+let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 let persistedMileageHistoryComplete = true;
 let localSaveTimer = null;
@@ -204,6 +206,14 @@ function loadLocalProgress() {
       if (typeof id==='string' && id) persistedSeenJourneyIds.add(id);
     }
     for (const id of persistedProcessedJourneyIds) persistedSeenJourneyIds.add(id);
+    const hasFileHashState =
+      saved.fileHashTrackingStarted === true ||
+      Array.isArray(saved.importedFileHashes);
+    persistedFileHashTrackingStarted =
+      hasFileHashState || persistedProcessedJourneyIds.size === 0;
+    for (const hash of saved.importedFileHashes || []) {
+      if (typeof hash==='string' && hash) persistedImportedFileHashes.add(hash);
+    }
     for (const [journeyId,contributions] of Object.entries(saved.motorwayContributionsByJourney || {})) {
       if (!journeyId || !contributions || typeof contributions!=='object') continue;
       const clean={};
@@ -247,6 +257,8 @@ function saveLocalProgressNow() {
       processedJourneyIds:[...persistedProcessedJourneyIds].sort(),
       seenJourneyTrackingStarted:persistedSeenJourneyTrackingStarted,
       seenJourneyIds:[...persistedSeenJourneyIds].sort(),
+      fileHashTrackingStarted:persistedFileHashTrackingStarted,
+      importedFileHashes:[...persistedImportedFileHashes].sort(),
       motorwayContributionsByJourney:Object.fromEntries(
         [...persistedMotorwayContributionsByJourney.entries()].sort(([a],[b])=>a.localeCompare(b))
       ),
@@ -365,6 +377,8 @@ function clearLocalProgress() {
   persistedProcessedJourneyIds.clear();
   persistedSeenJourneyIds.clear();
   persistedSeenJourneyTrackingStarted=true;
+  persistedImportedFileHashes.clear();
+  persistedFileHashTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
   persistedMileageHistoryComplete=true;
   resetTrackingSession();
@@ -631,12 +645,20 @@ fileInput.addEventListener('change', async () => {
 
   try {
     const text = await file.text();
-    status(`Read complete. Parsing JSON…`);
+    status(`Read complete. Identifying this file…`);
+    const sourceFileHash = await timelineFileHash(text);
+    const fileWasPreviouslySeen = persistedImportedFileHashes.has(sourceFileHash);
+    const hadReliableFileHashHistory = persistedFileHashTrackingStarted;
+    status(`File identified. Parsing JSON…`);
     await yieldToBrowser();
 
     const json = JSON.parse(text);
     currentTimelineJson = json;
-    currentTimelineFileInfo = {size: file.size, type: file.type || 'application/json'};
+    currentTimelineFileInfo = {
+      size: file.size,
+      type: file.type || 'application/json',
+      hash: sourceFileHash
+    };
     diagnosticCard.classList.remove('hidden');
     updateDiagnosticCopyUi();
     status(`JSON parsed. Inspecting Timeline structure…`);
@@ -656,6 +678,7 @@ fileInput.addEventListener('change', async () => {
     );
     const seenBeforeImport = new Set(persistedSeenJourneyIds);
     const hadReliableSeenJourneyHistory = persistedSeenJourneyTrackingStarted;
+    const fileHistoryNeedsBaseline = !hadReliableFileHashHistory;
     const candidateJourneys=rebuildMileage
       ? allJourneys
       : allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
@@ -663,24 +686,32 @@ fileInput.addEventListener('change', async () => {
       ? []
       : candidateJourneys.filter(j =>
           hadReliableSeenJourneyHistory &&
+          hadReliableFileHashHistory &&
+          !fileWasPreviouslySeen &&
           !seenBeforeImport.has(journeyIdentity(j))
         );
     const previouslySeenUnmatchedJourneys = rebuildMileage
       ? []
       : candidateJourneys.filter(j =>
           !hadReliableSeenJourneyHistory ||
+          fileHistoryNeedsBaseline ||
+          fileWasPreviouslySeen ||
           seenBeforeImport.has(journeyIdentity(j))
         );
 
     for (const journey of allJourneys) recordJourneySeen(journey);
     persistedSeenJourneyTrackingStarted=true;
+    persistedImportedFileHashes.add(sourceFileHash);
+    persistedFileHashTrackingStarted=true;
     scheduleLocalProgressSave();
 
     diagnostics.mileageRebuild=rebuildMileage;
     diagnostics.previouslyImportedJourneys=rebuildMileage ? 0 : allJourneys.length-candidateJourneys.length;
     diagnostics.newPassengerVehicleJourneys=genuinelyNewJourneys.length;
     diagnostics.previouslySeenUnmatchedJourneys=previouslySeenUnmatchedJourneys.length;
-    diagnostics.seenJourneyMigration=!hadReliableSeenJourneyHistory;
+    diagnostics.seenJourneyMigration=
+      !hadReliableSeenJourneyHistory || fileHistoryNeedsBaseline;
+    diagnostics.sourceFilePreviouslySeen=fileWasPreviouslySeen;
     diagnostics.journeysReadyForMatching=candidateJourneys.length;
 
     ignoredJourneys = candidateJourneys.filter(j => j.pathPointCount < 2);
@@ -919,7 +950,12 @@ function createSanitisedDiagnosticCopy() {
   try {
     const prepared = prepareDiagnosticSource(currentTimelineJson);
     const timestamps = collectDiagnosticTimestamps(prepared);
-    const earliestTimestamp = timestamps.length ? Math.min(...timestamps) : null;
+    let earliestTimestamp = null;
+    for (const timestamp of timestamps) {
+      earliestTimestamp = earliestTimestamp === null
+        ? timestamp
+        : Math.min(earliestTimestamp, timestamp);
+    }
     const sanitisedData = sanitiseDiagnosticValue(prepared, '', earliestTimestamp);
     const originalSegments = countSemanticSegments(currentTimelineJson);
     const retainedSegments = countSemanticSegments(sanitisedData);
@@ -1016,6 +1052,24 @@ function status(text) {
 
 function yieldToBrowser() {
   return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+async function timelineFileHash(text) {
+  if (globalThis.crypto?.subtle && typeof TextEncoder !== 'undefined') {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(digest)]
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // Deterministic fallback for older browsers. This is an identity check, not security.
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index++) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `fallback-${text.length}-${(hash >>> 0).toString(16)}`;
 }
 
 function showDiagnostics(fileName) {
