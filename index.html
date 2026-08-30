@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260830-indexed-diagnostics" />
+  <link rel="stylesheet" href="styles.css?v=20260830-remove-diagnostic-copy" />
 </head>
 <body>
   <main>
@@ -80,35 +80,6 @@
           <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
         </div>
       </div>
-    </section>
-
-    <section id="diagnosticCard" class="card diagnostic-card hidden">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Optional diagnostic tool</p>
-          <h2>Privacy-safe Timeline copy</h2>
-        </div>
-        <span class="local-only-badge">Stored on this device</span>
-      </div>
-      <p>Create a sanitised sample that preserves the Timeline structure we need for future feature analysis without retaining your real locations or dates.</p>
-      <ul class="diagnostic-privacy-list">
-        <li>Coordinates are replaced with zero values.</li>
-        <li>Dates are shifted to a synthetic timeline while durations remain comparable.</li>
-        <li>Names, addresses, URLs and identifying references are removed.</li>
-        <li>Only a representative sample of up to 250 Timeline segments is retained.</li>
-      </ul>
-      <div class="actions diagnostic-actions">
-        <button id="createDiagnosticCopy" type="button">Create privacy-safe copy</button>
-        <button id="reviewDiagnosticCopy" class="secondary" type="button">Review copy</button>
-        <button id="downloadDiagnosticCopy" class="secondary" type="button">Download JSON</button>
-        <button id="deleteDiagnosticCopy" class="text-button danger-text" type="button">Delete copy</button>
-      </div>
-      <p id="diagnosticCopyStatus" class="muted" role="status" aria-live="polite">No privacy-safe copy is stored.</p>
-      <details id="diagnosticPreview" class="technical-details diagnostic-preview">
-        <summary>Review sanitised contents</summary>
-        <p class="muted">Review this copy before downloading or sharing it. The preview is shortened on screen; the download contains the complete sanitised sample.</p>
-        <pre id="diagnosticPreviewContent"></pre>
-      </details>
     </section>
 
     <section id="manualMotorwayCard" class="card hidden">
@@ -290,6 +261,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260830-indexed-diagnostics"></script>
+  <script src="app.js?v=20260830-remove-diagnostic-copy"></script>
 </body>
 </html>
