@@ -300,6 +300,7 @@ progress { width: 100%; height: 16px; }
 
 
 .local-progress-notice { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:16px; padding:13px; border:1px solid #badfc7; border-radius:12px; background:#e7f5ec; }
+.local-progress-notice.hidden { display:none; }
 .local-progress-notice > div:first-child { display:grid; gap:3px; }
 .local-progress-actions { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
 .local-progress-notice span { color:#356148; font-size:.8rem; line-height:1.4; }
