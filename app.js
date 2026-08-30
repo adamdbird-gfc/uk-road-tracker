@@ -1,5 +1,7 @@
 let journeys = [];
 let diagnostics = {};
+const persistedMapJourneys = new Map();
+let mapArchiveReadyPromise = Promise.resolve();
 let map = null;
 let traceLayer = null;
 let matchedLayer = null;
@@ -126,6 +128,9 @@ const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
+const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
+const MAP_ARCHIVE_DB_VERSION = 1;
+const MAP_ARCHIVE_STORE_NAME = 'journeys';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
@@ -137,9 +142,14 @@ function localProgressRoadCount() {
   return [...persistedCoverageByRef.values()].filter(ids=>ids.size).length;
 }
 
+function localProgressJourneyCount() {
+  return persistedMapJourneys.size;
+}
+
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
-  const hasProgress=roadCount>0 || persistedManualRefs.size>0;
+  const journeyCount=localProgressJourneyCount();
+  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0;
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
 
@@ -153,7 +163,106 @@ function updateLocalProgressNotice() {
     dataEndMs:persistedDataEndMs
   });
   localProgressSummary.textContent=
+    `${journeyCount.toLocaleString()} saved matched journey${journeyCount===1?'':'s'} · ` +
     `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage · ${range} · saved ${savedLabel}.`;
+}
+
+function openMapArchiveDatabase() {
+  return new Promise((resolve,reject)=>{
+    if (!globalThis.indexedDB) {
+      reject(new Error('This browser does not provide IndexedDB storage.'));
+      return;
+    }
+    const request=indexedDB.open(MAP_ARCHIVE_DB_NAME,MAP_ARCHIVE_DB_VERSION);
+    request.onerror=()=>reject(request.error || new Error('Saved map storage could not be opened.'));
+    request.onupgradeneeded=()=>{
+      const database=request.result;
+      if (!database.objectStoreNames.contains(MAP_ARCHIVE_STORE_NAME)) {
+        database.createObjectStore(MAP_ARCHIVE_STORE_NAME,{keyPath:'id'});
+      }
+    };
+    request.onsuccess=()=>resolve(request.result);
+  });
+}
+
+async function mapArchiveOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(MAP_ARCHIVE_STORE_NAME,mode);
+      const store=transaction.objectStore(MAP_ARCHIVE_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved map operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved map transaction was aborted.'));
+    });
+  } finally {
+    database.close();
+  }
+}
+
+function compactMapJourney(journey) {
+  const id=journeyIdentity(journey);
+  if (!id || !journey?.matchedGeoJson) return null;
+  return {
+    id,
+    start:journey.start || '',
+    end:journey.end || '',
+    googleDistanceKm:Number.isFinite(Number(journey.googleDistanceKm)) ? Number(journey.googleDistanceKm) : null,
+    pathPointCount:Number(journey.pathPointCount || journey.points?.length || 0),
+    points:(journey.points || []).filter(validPoint).map(point=>({lat:Number(point.lat),lng:Number(point.lng)})),
+    matchedGeoJson:journey.matchedGeoJson,
+    motorwayGeoJson:journey.motorwayGeoJson || {type:'FeatureCollection',features:[]},
+    matchedDistanceKm:Number(journey.matchedDistanceKm || 0),
+    matchedTracepoints:Number(journey.matchedTracepoints || 0),
+    pointsSentToMatcher:Number(journey.pointsSentToMatcher || 0),
+    matchQuality:journey.matchQuality || null
+  };
+}
+
+function hydrateMapJourney(record) {
+  return {
+    ...record,
+    points:Array.isArray(record?.points) ? record.points : [],
+    pathPointCount:Number(record?.pathPointCount || record?.points?.length || 0),
+    selected:true,
+    _savedArchive:true
+  };
+}
+
+async function loadMapArchive() {
+  try {
+    const records=await mapArchiveOperation('readonly',store=>store.getAll());
+    persistedMapJourneys.clear();
+    for (const record of records || []) {
+      if (record?.id && record?.matchedGeoJson) persistedMapJourneys.set(record.id,record);
+    }
+  } catch (err) {
+    console.warn('Saved map journeys could not be loaded:',err);
+  }
+}
+
+async function saveJourneyToMapArchive(journey) {
+  const record=compactMapJourney(journey);
+  if (!record) throw new Error('The matched journey did not contain saveable map geometry.');
+  await mapArchiveOperation('readwrite',store=>store.put(record));
+  persistedMapJourneys.set(record.id,record);
+  updateLocalProgressNotice();
+}
+
+async function clearMapArchive() {
+  await mapArchiveOperation('readwrite',store=>store.clear());
+  persistedMapJourneys.clear();
+}
+
+function savedMapJourneysExcluding(excludedIds=new Set()) {
+  return [...persistedMapJourneys.values()]
+    .filter(record=>!excludedIds.has(record.id))
+    .map(hydrateMapJourney);
+}
+
+function currentImportJourneys() {
+  return journeys.filter(journey=>!journey._savedArchive);
 }
 
 function loadLocalProgress() {
@@ -350,9 +459,14 @@ function mergeProgressDateRange(source) {
   if (persistedDataEndMs!==null) source.dataEndMs=persistedDataEndMs;
 }
 
-function clearLocalProgress() {
-  if (!window.confirm('Delete all motorway progress saved on this device?')) return;
+async function clearLocalProgress() {
+  if (!window.confirm('Delete all Roadprints progress and saved map journeys from this device?')) return;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
+  try {
+    await clearMapArchive();
+  } catch (err) {
+    console.warn('Saved map journeys could not be deleted:',err);
+  }
   persistedCoverageByRef.clear();
   persistedManualRefs.clear();
   persistedDataStartMs=null;
@@ -518,9 +632,11 @@ function resetTrackingSession() {
 }
 
 async function showSavedProgress() {
-  if (!persistedCoverageByRef.size && !persistedManualRefs.size) return;
+  await mapArchiveReadyPromise;
+  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedMapJourneys.size) return;
 
   resetTrackingSession();
+  journeys=savedMapJourneysExcluding();
   onboardingMode='saved';
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
@@ -612,6 +728,7 @@ document.getElementById('viewSavedProgress').addEventListener('click', showSaved
 document.getElementById('clearLocalProgress').addEventListener('click', clearLocalProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 loadLocalProgress();
+mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
@@ -626,6 +743,7 @@ fileInput.addEventListener('change', async () => {
   status(`Reading ${file.name} (${formatBytes(file.size)})…`);
 
   try {
+    await mapArchiveReadyPromise;
     const text = await file.text();
     status(`Read complete. Identifying this file…`);
     const sourceFileHash = await timelineFileHash(text);
@@ -689,8 +807,10 @@ fileInput.addEventListener('change', async () => {
     diagnostics.journeysReadyForMatching=candidateJourneys.length;
 
     ignoredJourneys = candidateJourneys.filter(j => j.pathPointCount < 2);
-    journeys = candidateJourneys.filter(j => j.pathPointCount >= 2);
-    diagnostics.usableJourneys = journeys.length;
+    const importJourneys = candidateJourneys.filter(j => j.pathPointCount >= 2);
+    const importJourneyIds = new Set(importJourneys.map(journeyIdentity));
+    journeys = [...savedMapJourneysExcluding(importJourneyIds), ...importJourneys];
+    diagnostics.usableJourneys = importJourneys.length;
     diagnostics.ignoredSparseJourneys = ignoredJourneys.length;
 
     for (const journey of ignoredJourneys) recordJourneyProcessed(journey);
@@ -706,7 +826,7 @@ fileInput.addEventListener('change', async () => {
       );
     }
 
-    if (!journeys.length) {
+    if (!importJourneys.length) {
       fileStatus.className = 'muted';
       fileStatus.textContent =
         `${file.name} inspected successfully. No journeys currently need road matching. ` +
@@ -715,7 +835,7 @@ fileInput.addEventListener('change', async () => {
       return;
     }
 
-    journeys.forEach(j => j.selected = true);
+    importJourneys.forEach(j => j.selected = true);
     await ensureLeaflet();
     importMode = null;
     summaryCard.classList.add('hidden');
@@ -739,14 +859,14 @@ fileInput.addEventListener('change', async () => {
 });
 
 document.getElementById('selectAll').addEventListener('click', () => {
-  journeys.forEach(j => j.selected = true);
+  currentImportJourneys().forEach(j => j.selected = true);
   syncCheckboxes();
   renderMap();
   updateSelectedCount();
 });
 
 document.getElementById('selectNone').addEventListener('click', () => {
-  journeys.forEach(j => j.selected = false);
+  currentImportJourneys().forEach(j => j.selected = false);
   syncCheckboxes();
   renderMap();
   updateSelectedCount();
@@ -1008,7 +1128,7 @@ async function startEasyImport() {
   renderAll('Timeline.json');
   journeyList.style.display = 'none';
 
-  const candidates = journeys.filter(j => j.points.length > 1);
+  const candidates = currentImportJourneys().filter(j => j.points.length > 1);
   let completed = 0;
   let succeeded = 0;
   let failed = 0;
@@ -1048,6 +1168,7 @@ async function startEasyImport() {
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
       journey.matchQuality = assessMatchQuality(journey, data);
+      await saveJourneyToMapArchive(journey);
       recordJourneyProcessed(journey);
       scheduleLocalProgressSave();
       succeeded++;
@@ -1077,10 +1198,11 @@ async function startEasyImport() {
 }
 
 function renderAll(fileName) {
-  const points = journeys.reduce((n, j) => n + j.points.length, 0);
+  const importJourneys=currentImportJourneys();
+  const points = importJourneys.reduce((n, j) => n + j.points.length, 0);
 
   dataDateRange.querySelector('span').textContent = formatDataDateRange();
-  journeyCount.textContent = journeys.length.toLocaleString();
+  journeyCount.textContent = importJourneys.length.toLocaleString();
   const journeyLabel = journeyCount.parentElement?.querySelector('span');
   if (journeyLabel) journeyLabel.textContent = 'usable journeys';
   pointCount.textContent = points.toLocaleString();
@@ -1102,6 +1224,7 @@ function renderJourneyList() {
   journeyList.innerHTML = '';
 
   journeys.forEach((j, i) => {
+    if (j._savedArchive) return;
     const wrapper = document.createElement('div');
     wrapper.className = 'journey';
 
@@ -1242,6 +1365,7 @@ async function matchJourney(index, button, statusNode) {
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
     journey.matchQuality = assessMatchQuality(journey, data);
+    await saveJourneyToMapArchive(journey);
     recordJourneyProcessed(journey);
     scheduleLocalProgressSave();
 
@@ -1273,7 +1397,7 @@ function fitMatchedJourney(journey) {
 }
 
 function clearMatchedRoads() {
-  journeys.forEach(j => {
+  currentImportJourneys().forEach(j => {
     delete j.matchedGeoJson;
     delete j.motorwayGeoJson;
     delete j.matchedDistanceKm;
@@ -1293,7 +1417,7 @@ function syncCheckboxes() {
 
 function updateSelectedCount() {
   selectedCount.textContent =
-    journeys.filter(j => j.selected).length.toLocaleString();
+    currentImportJourneys().filter(j => j.selected).length.toLocaleString();
 }
 
 async function ensureLeaflet() {
