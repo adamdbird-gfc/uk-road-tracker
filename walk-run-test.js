@@ -19,6 +19,7 @@ let map = null;
 let rawLayer = null;
 let matchedLayer = null;
 let matching = false;
+let matchRunId = 0;
 
 fileInput.addEventListener('change', loadTimelineFile);
 matchButton.addEventListener('click', matchSample);
@@ -27,6 +28,9 @@ clearButton.addEventListener('click', clearTest);
 async function loadTimelineFile() {
   const file = fileInput.files?.[0];
   if (!file) return;
+  matchRunId++;
+  matching = false;
+  matchButton.disabled = true;
   clearTest(false);
   fileStatus.className = 'muted map-status';
   fileStatus.textContent = `Reading ${file.name}…`;
@@ -60,41 +64,64 @@ async function loadTimelineFile() {
 }
 
 async function matchSample() {
-  if (matching || !activities.length) return;
+  if (!activities.length) {
+    progressText.textContent = 'Choose a Timeline JSON file before starting the test.';
+    return;
+  }
+  if (matching) {
+    progressText.textContent = 'The walking and running test is already running.';
+    return;
+  }
+  const runId = ++matchRunId;
   matching = true;
   matchButton.disabled = true;
+  matchButton.textContent = 'Matching…';
   let succeeded = 0;
   progress.value = 0;
-  for (let index = 0; index < activities.length; index++) {
-    const activity = activities[index];
-    progressText.textContent = `${index} / ${activities.length} · matching ${formatActivityDate(activity.start)}`;
-    try {
-      const response = await fetch(`${API_BASE_URL}/match`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({points: activity.points})
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
-      activity.matchedGeoJson = data.geojson;
-      activity.pointsSent = Number(data.points_sent_to_matcher || 0);
-      activity.pointsMatched = Number(data.matched_tracepoints || 0);
-      activity.confidence = averageConfidence(data.geojson);
-      activity.result = 'matched';
-      succeeded++;
-    } catch (error) {
-      activity.result = 'failed';
-      activity.error = error.message || String(error);
+  progressText.className = 'muted map-status';
+  progressText.textContent = `Starting matcher for ${activities.length} activities…`;
+  await new Promise(resolve => setTimeout(resolve, 0));
+  try {
+    for (let index = 0; index < activities.length; index++) {
+      if (runId !== matchRunId) return;
+      const activity = activities[index];
+      progressText.textContent = `${index} / ${activities.length} · matching ${formatActivityDate(activity.start)}`;
+      try {
+        const response = await fetch(`${API_BASE_URL}/match`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({points: activity.points})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+        if (!data.geojson?.features?.length) throw new Error('Matcher returned no road geometry.');
+        activity.matchedGeoJson = data.geojson;
+        activity.pointsSent = Number(data.points_sent_to_matcher || 0);
+        activity.pointsMatched = Number(data.matched_tracepoints || 0);
+        activity.confidence = averageConfidence(data.geojson);
+        activity.result = 'matched';
+        succeeded++;
+      } catch (error) {
+        activity.result = 'failed';
+        activity.error = error.message || String(error);
+      }
+      progress.value = index + 1;
+      matchedNode.textContent = succeeded.toLocaleString();
+      renderList();
+      renderMapSafely();
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
-    progress.value = index + 1;
-    matchedNode.textContent = succeeded.toLocaleString();
-    renderList();
-    renderMap();
-    await new Promise(resolve => setTimeout(resolve, 200));
+    progressText.textContent = `Complete · ${succeeded} matched · ${activities.length - succeeded} rejected by the matcher. Nothing was saved.`;
+  } catch (error) {
+    progressText.className = 'error map-status';
+    progressText.textContent = `The test stopped unexpectedly: ${error.message || error}`;
+  } finally {
+    if (runId === matchRunId) {
+      matching = false;
+      matchButton.disabled = false;
+      matchButton.textContent = `Match first ${activities.length}`;
+    }
   }
-  progressText.textContent = `Complete · ${succeeded} matched · ${activities.length - succeeded} rejected by the matcher. Nothing was saved.`;
-  matching = false;
-  matchButton.disabled = false;
 }
 
 function extractWalkRunActivities(data) {
@@ -162,6 +189,16 @@ function renderMap() {
   }
 }
 
+function renderMapSafely() {
+  try {
+    renderMap();
+  } catch (error) {
+    console.warn('A test result could not be drawn:', error);
+    progressText.className = 'error map-status';
+    progressText.textContent = `Matching continued, but a map result could not be drawn: ${error.message || error}`;
+  }
+}
+
 function renderList() {
   activityList.innerHTML = '';
   activities.forEach((activity, index) => {
@@ -191,7 +228,8 @@ function renderList() {
 }
 
 function clearTest(clearFile = true) {
-  if (matching) return;
+  if (clearFile) matchRunId++;
+  matching = false;
   activities = [];
   if (clearFile) fileInput.value = '';
   resultsCard.classList.add('hidden');
