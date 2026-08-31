@@ -15,6 +15,7 @@ OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
 
 app = FastAPI(title="UK Road Tracker API", version="0.7.0")
+PLACE_NAME_CACHE = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -119,6 +120,26 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "0.7.0"}
+
+@app.get("/place-name")
+async def place_name(lat: float, lng: float):
+    key = f"{lat:.3f},{lng:.3f}"
+    if key in PLACE_NAME_CACHE:
+        return {"name": PLACE_NAME_CACHE[key]}
+    try:
+        async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent": "Roadprints/0.7 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"}) as client:
+            response = await client.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"format": "jsonv2", "lat": lat, "lon": lng, "zoom": 10, "addressdetails": 1},
+            )
+        data = response.json() if response.status_code == 200 else {}
+        address = data.get("address") or {}
+        name = next((address.get(field) for field in ("city", "town", "village", "suburb", "county", "state") if address.get(field)), None)
+    except (httpx.HTTPError, ValueError):
+        name = None
+    result = name or "Local area"
+    PLACE_NAME_CACHE[key] = result
+    return {"name": result}
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
