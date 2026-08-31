@@ -2173,12 +2173,16 @@ function setDistanceUnit(unit) {
 }
 
 function displayDistance(km) {
+  const format=value=>Number(value).toLocaleString('en-GB',{
+    minimumFractionDigits:1,
+    maximumFractionDigits:1
+  });
   if (distanceUnit === 'km') {
-    return `${km.toFixed(1)} km`;
+    return `${format(km)} km`;
   }
 
   const miles = km * 0.6213711922;
-  return `${miles.toFixed(1)} mi`;
+  return `${format(miles)} mi`;
 }
 
 
@@ -2994,10 +2998,8 @@ function renderMotorwayDashboard(drawable) {
   const stats = motorwayStats(drawable);
   motorwayList.innerHTML = '';
   motorwaysDiscovered.textContent = stats.length.toLocaleString();
-  const currentMiles=[...persistedJourneyMileageById.values()].reduce((sum,value)=>sum+value,0);
-  timelineRoadMileage.textContent=distanceUnit==='km'
-    ? `${currentMiles.toFixed(1)} km`
-    : `${(currentMiles*0.6213711922).toFixed(1)} mi`;
+  const currentRoadKm=[...persistedJourneyMileageById.values()].reduce((sum,value)=>sum+value,0);
+  timelineRoadMileage.textContent=displayDistance(currentRoadKm);
 
   if (!stats.length) {
     motorwayCard.classList.add('hidden');
