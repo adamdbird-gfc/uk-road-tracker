@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260831-central-london-queue" />
+  <link rel="stylesheet" href="styles.css?v=20260831-route-ledger" />
 </head>
 <body>
   <main>
@@ -275,6 +275,15 @@
         <p class="muted">This inventory is local and sends nothing to a matcher. The areas below are approximate activity clusters, used to decide which network tile to add next.</p>
         <div id="coverageAreaList" class="coverage-area-list"></div>
       </div>
+      <div id="coverageLedger" class="coverage-inventory hidden">
+        <p class="eyebrow">Travel and matching ledger</p>
+        <div class="coverage-inventory-summary">
+          <div><strong id="coverageTravelMiles">0.00</strong><span>on-foot miles travelled</span></div>
+          <div><strong id="coverageRepresentatives">0</strong><span>representative routes to match</span></div>
+          <div><strong id="coverageRouteRepeats">0</strong><span>repeat routes not re-matched</span></div>
+        </div>
+        <p id="coverageLedgerDetail" class="muted">Travel mileage counts every recorded activity; coverage only counts unique completed segments.</p>
+      </div>
       <div class="actions">
         <button id="coverageMatchActivities" type="button" disabled>Match Gravesend walking/running</button>
         <button id="coverageClearActivities" class="secondary" type="button" disabled>Reset experimental tile results</button>
@@ -304,7 +313,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js?v=20260831-on-foot-inventory"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
-  <script src="coverage-store.js?v=20260831-central-london-queue"></script>
-  <script src="coverage-preview.js?v=20260831-central-london-queue"></script>
+  <script src="coverage-store.js?v=20260831-route-ledger"></script>
+  <script src="coverage-preview.js?v=20260831-route-ledger"></script>
 </body>
 </html>

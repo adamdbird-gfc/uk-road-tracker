@@ -15,7 +15,7 @@
     tiles: 'network-tiles'
   };
   const MODES = new Set(['driving', 'on_foot', 'cycling']);
-  const STATES = new Set(['queued', 'matching', 'matched', 'ambiguous', 'rejected', 'failed']);
+  const STATES = new Set(['queued', 'matching', 'matched', 'repeat', 'ambiguous', 'rejected', 'failed']);
 
   function open() {
     const resetReady = window.RoadprintsExperimentalCoverageResetReady || Promise.resolve();
@@ -79,7 +79,9 @@
       startedAt: activity.startedAt || null, endedAt: activity.endedAt || null,
       tileIds: [...new Set((activity.tileIds || []).map(String))], points,
       matcherVersion: activity.matcherVersion || null, matchedGeoJson: activity.matchedGeoJson || null,
-      matchError: activity.matchError || null, createdAt: activity.createdAt || new Date().toISOString(),
+      matchError: activity.matchError || null, repeatOf: activity.repeatOf || null,
+      googleDistanceM: Number.isFinite(Number(activity.googleDistanceM)) ? Number(activity.googleDistanceM) : null,
+      createdAt: activity.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
   }
