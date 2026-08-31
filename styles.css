@@ -213,12 +213,22 @@ progress { width: 100%; height: 16px; }
 .test-legend span::before { content:''; display:inline-block; width:18px; height:4px; margin-right:6px; border-radius:3px; vertical-align:middle; background:#657083; }
 .test-legend .matched::before { background:#16803c; }
 .test-legend .walking::before { background:#2f7df6; }
+.coverage-proof-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:14px 0; }
+.coverage-proof-stats div { padding:11px 8px; border-radius:10px; background:#f4f6f8; text-align:center; }
+.coverage-proof-stats strong, .coverage-proof-stats span { display:block; }
+.coverage-proof-stats strong { font-size:1.15rem; }
+.coverage-proof-stats span { margin-top:3px; color:#657083; font-size:.72rem; }
+.coverage-proof-legend .network::before { height:2px; background:#a4acb8; }
+.coverage-proof-legend .combined::before { background:#7b3fc6; }
+.coverage-proof-legend .driven::before { background:#111827; }
+#coverageMap { height:min(68vh,680px); min-height:440px; border-radius:12px; overflow:hidden; background:#eef1f4; }
 #testMap { height:min(62vh,620px); min-height:420px; border-radius:12px; overflow:hidden; background:#eef1f4; }
 .test-activity-list { display:grid; gap:8px; margin-top:12px; }
 .test-activity { padding:11px; border:1px solid #e4e8ed; border-radius:10px; }
 .test-activity-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
 .test-activity-meta { margin-top:4px; color:#657083; font-size:.8rem; }
 @media (max-width:520px) { .test-summary { grid-template-columns:1fr; } }
+@media (min-width:700px) { .coverage-proof-stats { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 .section-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }
 .section-heading h2 { margin-bottom:0; }
 .text-button { padding:7px 0; background:transparent; color:#345b9d; white-space:nowrap; }

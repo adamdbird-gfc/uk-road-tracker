@@ -1,5 +1,8 @@
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 const SAMPLE_LIMIT = 20;
+const GRAVESEND_NETWORK_URL = 'gravesend-network-v1.json.gz';
+const COVERAGE_CELL_M = 20;
+const COVERAGE_MATCH_RADIUS_M = 12;
 
 const fileInput = document.getElementById('testTimelineFile');
 const fileStatus = document.getElementById('testFileStatus');
@@ -13,6 +16,7 @@ const clearButton = document.getElementById('clearTestResults');
 const progress = document.getElementById('testProgress');
 const progressText = document.getElementById('testProgressText');
 const activityList = document.getElementById('testActivityList');
+const coverageStatus = document.getElementById('coverageProofStatus');
 
 let activities = [];
 let map = null;
@@ -21,10 +25,17 @@ let drivingLayer = null;
 let walkingLayer = null;
 let matching = false;
 let matchRunId = 0;
+let coverageMap = null;
+let coverageLayerControl = null;
+let canonicalNetwork = null;
+let canonicalSegments = [];
+let coverageGrid = new Map();
+let savedDrivingMatches = [];
 
 fileInput.addEventListener('change', loadTimelineFile);
 matchButton.addEventListener('click', matchSample);
 clearButton.addEventListener('click', clearTest);
+initCoverageProof();
 
 async function loadTimelineFile() {
   const file = fileInput.files?.[0];
@@ -115,6 +126,7 @@ async function matchSample() {
       await new Promise(resolve => setTimeout(resolve, 1100));
     }
     progressText.textContent = `Complete · ${succeeded} matched · ${activities.length - succeeded} rejected by the matcher. Nothing was saved.`;
+    await rebuildCoverageProof();
   } catch (error) {
     progressText.className = 'error map-status';
     progressText.textContent = `The test stopped unexpectedly: ${error.message || error}`;
@@ -279,6 +291,7 @@ function clearTest(clearFile = true) {
   if (walkingLayer) walkingLayer.clearLayers();
   fileStatus.className = 'muted map-status';
   fileStatus.textContent = clearFile ? 'No file selected.' : 'Reading file…';
+  if (clearFile) rebuildCoverageProof();
 }
 
 function fitAll() {
@@ -324,6 +337,206 @@ function validPoint(point) {
 
 function dedupePoints(points) {
   return points.filter((point, index) => index === 0 || point.lat !== points[index - 1].lat || point.lng !== points[index - 1].lng);
+}
+
+async function initCoverageProof() {
+  try {
+    const [network, driving] = await Promise.all([
+      fetch(GRAVESEND_NETWORK_URL, {cache: 'no-store'}).then(async response => {
+        if (!response.ok) throw new Error(`network HTTP ${response.status}`);
+        if (!globalThis.DecompressionStream) throw new Error('This browser cannot open the compressed test network.');
+        return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+      }),
+      loadSavedDrivingMatches()
+    ]);
+    canonicalNetwork = network;
+    savedDrivingMatches = driving;
+    buildCoverageIndex();
+    initCoverageMap();
+    await rebuildCoverageProof();
+  } catch (error) {
+    coverageStatus.className = 'error map-status';
+    coverageStatus.textContent = `The Gravesend proof could not load: ${error.message || error}`;
+  }
+}
+
+function loadSavedDrivingMatches() {
+  return new Promise(resolve => {
+    if (!globalThis.indexedDB) return resolve([]);
+    const request = indexedDB.open('roadprints-map-archive');
+    request.onerror = () => resolve([]);
+    request.onupgradeneeded = () => request.transaction?.abort();
+    request.onsuccess = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains('journeys')) {
+        database.close();
+        resolve([]);
+        return;
+      }
+      const transaction = database.transaction('journeys', 'readonly');
+      const getAll = transaction.objectStore('journeys').getAll();
+      getAll.onerror = () => { database.close(); resolve([]); };
+      getAll.onsuccess = () => {
+        const matches = (getAll.result || []).map(record => record?.matchedGeoJson).filter(Boolean);
+        database.close();
+        resolve(matches);
+      };
+    };
+  });
+}
+
+function projectCoveragePoint(coordinate) {
+  const bounds = canonicalNetwork.metadata.bounds;
+  const latitude = (bounds.south + bounds.north) / 2;
+  return {
+    x: (coordinate[0] - bounds.west) * 111320 * Math.cos(latitude * Math.PI / 180),
+    y: (coordinate[1] - bounds.south) * 110540
+  };
+}
+
+function coverageCellKey(x, y) {
+  return `${Math.floor(x / COVERAGE_CELL_M)}:${Math.floor(y / COVERAGE_CELL_M)}`;
+}
+
+function buildCoverageIndex() {
+  coverageGrid = new Map();
+  canonicalSegments = canonicalNetwork.features.map(feature => {
+    const [first, last] = feature.geometry.coordinates;
+    const a = projectCoveragePoint(first);
+    const b = projectCoveragePoint(last);
+    const segment = {feature, a, b, modes: new Set(feature.properties.modes || [])};
+    const minX = Math.min(a.x, b.x) - COVERAGE_MATCH_RADIUS_M;
+    const maxX = Math.max(a.x, b.x) + COVERAGE_MATCH_RADIUS_M;
+    const minY = Math.min(a.y, b.y) - COVERAGE_MATCH_RADIUS_M;
+    const maxY = Math.max(a.y, b.y) + COVERAGE_MATCH_RADIUS_M;
+    for (let x = Math.floor(minX / COVERAGE_CELL_M); x <= Math.floor(maxX / COVERAGE_CELL_M); x++) {
+      for (let y = Math.floor(minY / COVERAGE_CELL_M); y <= Math.floor(maxY / COVERAGE_CELL_M); y++) {
+        const key = `${x}:${y}`;
+        if (!coverageGrid.has(key)) coverageGrid.set(key, []);
+        coverageGrid.get(key).push(segment);
+      }
+    }
+    return segment;
+  });
+}
+
+function initCoverageMap() {
+  if (coverageMap) return;
+  const bounds = canonicalNetwork.metadata.bounds;
+  coverageMap = L.map('coverageMap', {preferCanvas: true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(coverageMap);
+  coverageMap.fitBounds([[bounds.south, bounds.west], [bounds.north, bounds.east]], {padding: [8, 8]});
+  setTimeout(() => coverageMap.invalidateSize(true), 50);
+}
+
+async function rebuildCoverageProof() {
+  if (!canonicalNetwork || !coverageMap) return;
+  coverageStatus.className = 'muted map-status';
+  coverageStatus.textContent = 'Attributing saved driving and current pedestrian matches to canonical segments…';
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const modesBySegment = new Map();
+  for (const geojson of savedDrivingMatches) attributeGeometry(geojson, 'driving', modesBySegment);
+  for (const activity of activities) {
+    if (activity.walkingGeoJson) attributeGeometry(activity.walkingGeoJson, 'on_foot', modesBySegment);
+  }
+  renderCoverageProof(modesBySegment);
+}
+
+function attributeGeometry(geojson, mode, modesBySegment) {
+  for (const [start, end] of geoJsonSegments(geojson)) {
+    const a = projectCoveragePoint(start);
+    const b = projectCoveragePoint(end);
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const steps = Math.max(1, Math.ceil(length / 7));
+    for (let index = 0; index <= steps; index++) {
+      const ratio = index / steps;
+      const point = {x: a.x + (b.x - a.x) * ratio, y: a.y + (b.y - a.y) * ratio};
+      let nearest = null;
+      let nearestDistance = COVERAGE_MATCH_RADIUS_M;
+      for (const candidate of coverageGrid.get(coverageCellKey(point.x, point.y)) || []) {
+        if (!candidate.modes.has(mode)) continue;
+        const distance = pointToSegmentDistance(point, candidate.a, candidate.b);
+        if (distance <= nearestDistance) {
+          nearest = candidate;
+          nearestDistance = distance;
+        }
+      }
+      if (nearest) {
+        const id = nearest.feature.properties.segment_id;
+        if (!modesBySegment.has(id)) modesBySegment.set(id, new Set());
+        modesBySegment.get(id).add(mode);
+      }
+    }
+  }
+}
+
+function geoJsonSegments(geojson) {
+  const output = [];
+  for (const feature of geojson?.features || []) {
+    const geometry = feature?.geometry;
+    const lines = geometry?.type === 'LineString' ? [geometry.coordinates]
+      : geometry?.type === 'MultiLineString' ? geometry.coordinates : [];
+    for (const line of lines) {
+      for (let index = 1; index < line.length; index++) output.push([line[index - 1], line[index]]);
+    }
+  }
+  return output;
+}
+
+function pointToSegmentDistance(point, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const denominator = dx * dx + dy * dy;
+  const ratio = denominator ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / denominator)) : 0;
+  return Math.hypot(point.x - (a.x + ratio * dx), point.y - (a.y + ratio * dy));
+}
+
+function renderCoverageProof(modesBySegment) {
+  const completedFeatures = [];
+  const drivingFeatures = [];
+  const walkingFeatures = [];
+  let uniqueM = 0, drivingM = 0, walkingM = 0, sharedM = 0;
+  for (const segment of canonicalSegments) {
+    const id = segment.feature.properties.segment_id;
+    const modes = modesBySegment.get(id);
+    if (!modes?.size) continue;
+    const length = Number(segment.feature.properties.length_m || 0);
+    completedFeatures.push(segment.feature);
+    uniqueM += length;
+    if (modes.has('driving')) { drivingFeatures.push(segment.feature); drivingM += length; }
+    if (modes.has('on_foot')) { walkingFeatures.push(segment.feature); walkingM += length; }
+    if (modes.has('driving') && modes.has('on_foot')) sharedM += length;
+  }
+  const totalM = Number(canonicalNetwork.metadata.total_length_m || 0);
+  setCoverageStat('coverageNetworkMiles', totalM, true);
+  setCoverageStat('coverageUniqueMiles', uniqueM, true);
+  document.getElementById('coveragePercent').textContent = totalM ? `${(uniqueM / totalM * 100).toFixed(2)}%` : '0%';
+  setCoverageStat('coverageDrivingMiles', drivingM, true);
+  setCoverageStat('coverageFootMiles', walkingM, true);
+  setCoverageStat('coverageSharedMiles', sharedM, true);
+
+  if (coverageLayerControl) coverageLayerControl.remove();
+  coverageMap.eachLayer(layer => { if (!(layer instanceof L.TileLayer)) coverageMap.removeLayer(layer); });
+  const lines = features => features.map(feature => feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]));
+  const networkLayer = L.polyline(lines(canonicalNetwork.features), {color: '#a4acb8', weight: 1, opacity: .35}).addTo(coverageMap);
+  const completedLayer = L.polyline(lines(completedFeatures), {color: '#7b3fc6', weight: 5, opacity: .9}).addTo(coverageMap);
+  const drivingLayer = L.polyline(lines(drivingFeatures), {color: '#111827', weight: 4, opacity: .9});
+  const footLayer = L.polyline(lines(walkingFeatures), {color: '#2f7df6', weight: 4, opacity: .95});
+  coverageLayerControl = L.control.layers({}, {
+    'Eligible network': networkLayer,
+    'Completed by any mode': completedLayer,
+    'Driven': drivingLayer,
+    'On foot': footLayer
+  }).addTo(coverageMap);
+  coverageStatus.textContent = `${savedDrivingMatches.length.toLocaleString()} saved driving matches and ${activities.filter(activity => activity.walkingGeoJson).length.toLocaleString()} current on-foot matches analysed. ${completedFeatures.length.toLocaleString()} canonical segments completed.`;
+  document.getElementById('coverageProofDetails').textContent = `Version ${canonicalNetwork.metadata.version}; ${canonicalNetwork.metadata.segment_count.toLocaleString()} direction-independent OpenStreetMap segments inside the fixed boundary. Matcher geometry is attributed within ${COVERAGE_MATCH_RADIUS_M} metres. These rules are deliberately provisional, and this test does not save pedestrian results.`;
+}
+
+function setCoverageStat(id, metres) {
+  document.getElementById(id).textContent = `${(metres / 1609.344).toFixed(2)}`;
 }
 
 function formatActivityDate(value) {

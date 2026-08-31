@@ -6,15 +6,15 @@
   <title>Walking and running matcher test · Roadprints</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260830-walk-run-test" />
+  <link rel="stylesheet" href="styles.css?v=20260831-gravesend-proof" />
 </head>
 <body>
   <main>
     <header class="hero">
       <div>
         <p class="eyebrow">Temporary test feature</p>
-        <h1>Walking &amp; running</h1>
-        <p class="lede">Test the existing road matcher against a small, isolated sample before anything is added to Roadprints.</p>
+        <h1>Bounded coverage test</h1>
+        <p class="lede">Test whether historic driving, walking and running can create one accurate, measurable coverage map in a small Gravesend area.</p>
       </div>
       <div class="privacy">Nothing tested here is saved or added to your motorway progress.</div>
     </header>
@@ -52,8 +52,34 @@
       <div class="test-legend"><span>Raw Timeline trace</span><span class="matched">Driving match</span><span class="walking">Pedestrian match</span></div>
       <div id="testMap" aria-label="Walking and running road-matching test map"></div>
     </section>
+
+    <section id="coverageProofCard" class="card">
+      <p class="eyebrow">Bounded feasibility proof</p>
+      <h2>4. Gravesend combined coverage</h2>
+      <p class="muted">This provisional experiment compares saved driving matches and the pedestrian matches above against every eligible OpenStreetMap road or path in a small Gravesend test area. Shared sections count once overall.</p>
+      <div class="coverage-proof-stats">
+        <div><strong id="coverageNetworkMiles">…</strong><span>eligible network miles</span></div>
+        <div><strong id="coverageUniqueMiles">…</strong><span>unique miles covered</span></div>
+        <div><strong id="coveragePercent">…</strong><span>area completed</span></div>
+        <div><strong id="coverageDrivingMiles">…</strong><span>miles driven</span></div>
+        <div><strong id="coverageFootMiles">…</strong><span>miles on foot</span></div>
+        <div><strong id="coverageSharedMiles">…</strong><span>miles by both modes</span></div>
+      </div>
+      <div id="coverageProofStatus" class="muted map-status" role="status" aria-live="polite">Loading the Gravesend network and saved driving evidence…</div>
+      <div class="test-legend coverage-proof-legend">
+        <span class="network">Eligible network</span>
+        <span class="combined">Completed by any mode</span>
+        <span class="driven">Driven</span>
+        <span class="walking">On foot</span>
+      </div>
+      <div id="coverageMap" aria-label="Combined multimodal Gravesend coverage map"></div>
+      <details class="technical-details">
+        <summary>About this provisional calculation</summary>
+        <p id="coverageProofDetails">The denominator and matching tolerances are experimental and apply only to the displayed Gravesend boundary.</p>
+      </details>
+    </section>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="walk-run-test.js?v=20260830-pedestrian-comparison"></script>
+  <script src="walk-run-test.js?v=20260831-gravesend-proof"></script>
 </body>
 </html>
