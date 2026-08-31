@@ -18,7 +18,8 @@
   const STATES = new Set(['queued', 'matching', 'matched', 'ambiguous', 'rejected', 'failed']);
 
   function open() {
-    return new Promise((resolve, reject) => {
+    const resetReady = window.RoadprintsExperimentalCoverageResetReady || Promise.resolve();
+    return resetReady.then(() => new Promise((resolve, reject) => {
       if (!globalThis.indexedDB) return reject(new Error('This browser does not provide IndexedDB storage.'));
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onerror = () => reject(request.error || new Error('Coverage storage could not be opened.'));
@@ -49,7 +50,7 @@
         }
       };
       request.onsuccess = () => resolve(request.result);
-    });
+    }));
   }
 
   async function transaction(storeName, mode, operation) {
