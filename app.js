@@ -2,6 +2,8 @@ let journeys = [];
 let footActivities = [];
 let footBatches = [];
 let footMatching = false;
+const footPlaceNames = new Map();
+const footPlaceLookups = new Set();
 let diagnostics = {};
 const persistedMapJourneys = new Map();
 const persistedFootActivities = new Map();
@@ -142,6 +144,7 @@ const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
+const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
 const MAP_ARCHIVE_DB_VERSION = 2;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
@@ -885,6 +888,7 @@ document.getElementById('viewSavedProgress').addEventListener('click', showSaved
 document.getElementById('clearLocalProgress').addEventListener('click', clearLocalProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 loadLocalProgress();
+loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
 footArchiveReadyPromise=loadFootActivityArchive();
 unitMiles.classList.toggle('active',distanceUnit==='miles');
@@ -1265,8 +1269,38 @@ function buildFootBatches() {
     byArea.get(key).push(activity);
   }
   footBatches=[...byArea.entries()].map(([area,activities])=>({
-    id:area, area, activities, matched:activities.filter(a=>a.matchedGeoJson).length
+    id:area, area, activities,
+    lat:activities.reduce((sum,item)=>sum+Number(item.points?.[0]?.lat || 0),0)/activities.length,
+    lng:activities.reduce((sum,item)=>sum+Number(item.points?.[0]?.lng || 0),0)/activities.length,
+    matched:activities.filter(a=>a.matchedGeoJson).length
   })).sort((a,b)=>b.activities.length-a.activities.length);
+  resolveFootBatchPlaceNames();
+}
+
+function loadFootPlaceNames() {
+  try {
+    const saved=JSON.parse(localStorage.getItem(FOOT_PLACE_NAMES_KEY) || '{}');
+    for (const [key,value] of Object.entries(saved)) if (typeof value==='string' && value) footPlaceNames.set(key,value);
+  } catch (err) {}
+}
+
+function saveFootPlaceNames() {
+  try { localStorage.setItem(FOOT_PLACE_NAMES_KEY,JSON.stringify(Object.fromEntries(footPlaceNames))); } catch (err) {}
+}
+
+async function resolveFootBatchPlaceNames() {
+  for (const batch of footBatches) {
+    if (footPlaceNames.has(batch.id) || footPlaceLookups.has(batch.id) || !Number.isFinite(batch.lat) || !Number.isFinite(batch.lng)) continue;
+    footPlaceLookups.add(batch.id);
+    try {
+      const response=await fetch(`${API_BASE_URL}/place-name?lat=${encodeURIComponent(batch.lat)}&lng=${encodeURIComponent(batch.lng)}`);
+      const data=await response.json().catch(()=>({}));
+      footPlaceNames.set(batch.id,data.name || 'Local area');
+      saveFootPlaceNames();
+    } catch (err) { footPlaceNames.set(batch.id,'Local area'); }
+    finally { footPlaceLookups.delete(batch.id); renderFootQueue(); }
+    await new Promise(resolve=>setTimeout(resolve,1050));
+  }
 }
 
 function renderFootQueue() {
@@ -1280,7 +1314,7 @@ function renderFootQueue() {
   for (const batch of footBatches) {
     const row=document.createElement('div'); row.className='foot-batch';
     const copy=document.createElement('div');
-    const title=document.createElement('strong'); title.textContent=`Local area ${batch.area}`;
+    const title=document.createElement('strong'); title.textContent=footPlaceNames.get(batch.id) || 'Finding place name…';
     const detail=document.createElement('span'); detail.textContent=`${batch.matched} / ${batch.activities.length} distinct routes matched`;
     copy.append(title,detail);
     const state=document.createElement('span'); state.className=`foot-batch-status ${batch.matched===batch.activities.length?'': 'pending'}`;
