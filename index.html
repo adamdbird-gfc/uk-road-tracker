@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>UK Road Tracker POC</title>
+  <title>Roadprints</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,9 +13,9 @@
   <main>
     <header class="hero">
       <div>
-        <p class="eyebrow">Proof of concept</p>
-        <h1>UK Road Tracker</h1>
-        <p class="lede">Build a map of the UK motorways you have driven, either from existing journey data or by selecting them yourself.</p>
+        <p class="eyebrow">Your journeys, mapped</p>
+        <h1>Roadprints</h1>
+        <p class="lede">Build a living record of the roads you have driven and the places you have explored on foot. Import Google Timeline data or start manually, then watch your map grow journey by journey.</p>
       </div>
       <div class="privacy">Your file is processed in your browser. This POC does not upload it anywhere.</div>
     </header>
@@ -115,6 +115,21 @@
         <p class="muted">These journeys are kept only for transparency. They are not sent to the matcher and do not count toward credited roads.</p>
         <div id="ignoredList" class="ignored-list"></div>
       </details>
+    </section>
+
+    <section id="footQueueCard" class="card hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">On-foot activity queue</p>
+          <h2>Walking and running map</h2>
+        </div>
+        <div id="footQueueTotal" class="motorway-total"><strong>0</strong><span>routes</span></div>
+      </div>
+      <p id="footQueueIntro" class="muted">Preparing your local walking and running route batches…</p>
+      <div id="footBatchList" class="foot-batch-list"></div>
+      <div class="actions">
+        <button id="startFootBatch" type="button">Match next area</button>
+      </div>
     </section>
 
     <section id="summaryCard" class="card hidden">
