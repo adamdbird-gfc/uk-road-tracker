@@ -663,7 +663,7 @@ function resetTrackingSession() {
   networkProgressFill.style.width = '0%';
   networkProgressBar.setAttribute('aria-valuenow', '0');
   easyProgressBar.value = 0;
-  easyProgressText.textContent = 'Waiting…';
+  setEasyProgressStatus('Waiting…','Preparing routes');
   updateEasyImportPauseButton();
 
   importModeCard.classList.add('hidden');
@@ -950,7 +950,7 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
   updateEasyImportPauseButton();
 
   if (!easyImportPaused) {
-    easyProgressText.textContent = easyProgressText.dataset.resumeText || 'Resuming…';
+    setEasyProgressStatus('Resuming…','Continuing road matching');
   }
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
@@ -1171,6 +1171,15 @@ function renderIgnoredJourneys() {
   }
 }
 
+function setEasyProgressStatus(primary, secondary) {
+  easyProgressText.replaceChildren();
+  const headline=document.createElement('strong');
+  headline.textContent=primary;
+  const detail=document.createElement('span');
+  detail.textContent=secondary;
+  easyProgressText.append(headline,detail);
+}
+
 function updateEasyImportPauseButton() {
   const button = document.getElementById('stopEasyImport');
   if (!button) return;
@@ -1219,17 +1228,19 @@ async function startEasyImport() {
     if (sessionId !== trackingSessionId) return;
 
     while (easyImportPaused && sessionId === trackingSessionId) {
-      easyProgressText.dataset.resumeText =
-        `${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
-      easyProgressText.textContent =
-        `Paused · ${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
+      setEasyProgressStatus(
+        `Paused · ${completed} / ${candidates.length}`,
+        `${succeeded} matched · ${failed} skipped`
+      );
       await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     if (sessionId !== trackingSessionId) return;
 
-    easyProgressText.textContent =
-      `${completed} / ${candidates.length} · matching ${formatDate(journey.start)}`;
+    setEasyProgressStatus(
+      `${completed} / ${candidates.length}`,
+      `Matching ${formatDate(journey.start)}`
+    );
 
     try {
       const response = await fetch(`${API_BASE_URL}/match`, {
@@ -1258,8 +1269,10 @@ async function startEasyImport() {
 
     completed++;
     easyProgressBar.value = completed;
-    easyProgressText.textContent =
-      `${completed} / ${candidates.length} · ${succeeded} matched · ${failed} skipped`;
+    setEasyProgressStatus(
+      `${completed} / ${candidates.length}`,
+      `${succeeded} matched · ${failed} skipped`
+    );
     renderMap();
     await new Promise(resolve => setTimeout(resolve, 250));
   }
@@ -1272,8 +1285,7 @@ async function startEasyImport() {
     persistedMileageHistoryComplete=true;
     scheduleLocalProgressSave();
   }
-  easyProgressText.textContent =
-    `Complete · ${succeeded} matched · ${failed} skipped`;
+  setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
 }
 
 function renderAll(fileName) {
