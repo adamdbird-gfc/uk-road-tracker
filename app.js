@@ -1366,6 +1366,7 @@ async function startNextFootBatch() {
   const batch=footBatches.find(item=>item.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError));
   if (!batch) return;
   const candidates=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).slice(0,10);
+  await showFootMap();
   footMatching=true;
   footMatchingError=null;
   footMatchingBatchId=batch.id;
@@ -1389,7 +1390,7 @@ async function startNextFootBatch() {
       }
       footMatchingProgress.completed++;
       renderFootQueue();
-      try { renderMap(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
+      try { renderMap(); fitFootRoutes(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
       await new Promise(resolve=>setTimeout(resolve,1100));
     }
   } catch (err) {
@@ -1398,6 +1399,27 @@ async function startNextFootBatch() {
     footMatching=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue(); renderMap();
   }
+}
+
+async function showFootMap() {
+  const ready=await ensureLeaflet();
+  if (!ready) {
+    footMatchingError='The on-foot routes matched, but the map library could not load on this device.';
+    return;
+  }
+  mapCard.classList.remove('hidden');
+  mapTitle.textContent='On-foot map';
+  mapIntro.textContent='Green lines show walking and running routes matched to the pedestrian network. Each completed batch is added here straight away.';
+  initMap();
+  renderMap();
+  requestAnimationFrame(()=>{ map?.invalidateSize(true); fitFootRoutes(); });
+}
+
+function fitFootRoutes() {
+  if (!map || !window.L) return;
+  const points=footActivities.filter(activity=>activity.matchedGeoJson).flatMap(activity=>activity.points || []);
+  if (!points.length) return;
+  map.fitBounds(L.latLngBounds(points.map(point=>[point.lat,point.lng])),{padding:[24,24],maxZoom:15});
 }
 
 
