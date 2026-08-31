@@ -78,6 +78,7 @@ const footQueueTotal = document.getElementById('footQueueTotal');
 const footQueueIntro = document.getElementById('footQueueIntro');
 const footBatchList = document.getElementById('footBatchList');
 const startFootBatch = document.getElementById('startFootBatch');
+const clearImportedData = document.getElementById('clearImportedData');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
@@ -1052,6 +1053,7 @@ document.getElementById('clearMatches').addEventListener('click', clearMatchedRo
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 startFootBatch.addEventListener('click', startNextFootBatch);
+clearImportedData.addEventListener('click', clearLocalProgress);
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
 
@@ -1294,7 +1296,12 @@ function saveFootPlaceNames() {
 
 async function resolveFootBatchPlaceNames() {
   for (const batch of footBatches) {
-    if (footPlaceNames.has(batch.id) || footPlaceLookups.has(batch.id) || !Number.isFinite(batch.lat) || !Number.isFinite(batch.lng)) continue;
+    const builtInName=friendlyFootAreaName(batch.lat,batch.lng);
+    if (builtInName) {
+      if (footPlaceNames.get(batch.id)!==builtInName) { footPlaceNames.set(batch.id,builtInName); saveFootPlaceNames(); renderFootQueue(); }
+      continue;
+    }
+    if ((footPlaceNames.has(batch.id) && footPlaceNames.get(batch.id)!=='Local area') || footPlaceLookups.has(batch.id) || !Number.isFinite(batch.lat) || !Number.isFinite(batch.lng)) continue;
     footPlaceLookups.add(batch.id);
     try {
       const response=await fetch(`${API_BASE_URL}/place-name?lat=${encodeURIComponent(batch.lat)}&lng=${encodeURIComponent(batch.lng)}`);
@@ -1305,6 +1312,22 @@ async function resolveFootBatchPlaceNames() {
     finally { footPlaceLookups.delete(batch.id); renderFootQueue(); }
     await new Promise(resolve=>setTimeout(resolve,1050));
   }
+}
+
+function friendlyFootAreaName(lat,lng) {
+  const places=[
+    ['Gravesend',51.44,0.37,35],['London',51.51,-0.13,55],['Medway and north Kent',51.36,0.52,45],
+    ['Thanet and the Kent coast',51.36,1.30,60],['Colchester and north Essex',51.89,0.90,55],
+    ['Portsmouth',50.82,-1.09,55],['Sussex coast',50.90,-0.20,85],['Cambridge',52.21,0.12,60],['Northampton',52.24,-0.89,55],
+    ['Luton and south Bedfordshire',51.88,-0.42,55],['Chilterns',51.70,-0.50,70],['Canterbury',51.28,1.08,55],['Ibiza',38.98,1.43,120],
+    ['Sheffield',53.38,-1.47,65],['Liverpool',53.41,-2.99,65],['Fylde Coast',53.76,-3.03,85]
+  ];
+  let nearest=null;
+  for (const [name,placeLat,placeLng,radiusKm] of places) {
+    const distanceKm=Math.hypot((lat-placeLat)*111,(lng-placeLng)*111*Math.cos(lat*Math.PI/180));
+    if (distanceKm<=radiusKm && (!nearest || distanceKm<nearest.distanceKm)) nearest={name,distanceKm};
+  }
+  return nearest?.name || 'UK activity area';
 }
 
 function renderFootQueue() {
