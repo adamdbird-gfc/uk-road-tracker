@@ -333,6 +333,11 @@ async function loadFootActivityArchive() {
     footActivities=[...persistedFootActivities.values()];
     buildFootBatches();
     renderFootQueue();
+    // Saved walking/running routes are a persistent queue: after a refresh or a
+    // browser restart, continue with any representative routes still awaiting a match.
+    if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
+      setTimeout(()=>{ if (!footMatching) void startNextFootBatch(); },0);
+    }
   } catch (err) { console.warn('Saved on-foot activities could not be loaded:',err); }
 }
 
@@ -1415,6 +1420,9 @@ async function startNextFootBatch() {
   } finally {
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue(); renderMap();
+    if (footBatches.some(batch=>batch.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError))) {
+      setTimeout(()=>{ if (!footMatching) void startNextFootBatch(); },1500);
+    }
   }
 }
 
