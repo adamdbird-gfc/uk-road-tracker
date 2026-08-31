@@ -1408,8 +1408,8 @@ async function showFootMap() {
     return;
   }
   mapCard.classList.remove('hidden');
-  mapTitle.textContent='On-foot map';
-  mapIntro.textContent='Green lines show walking and running routes matched to the pedestrian network. Each completed batch is added here straight away.';
+  mapTitle.textContent='Journey map';
+  mapIntro.textContent='One combined map for your journeys: black shows driven routes, green shows walking and running routes, and the layer control lets you compare them with motorway coverage.';
   initMap();
   renderMap();
   requestAnimationFrame(()=>{ map?.invalidateSize(true); fitFootRoutes(); });
