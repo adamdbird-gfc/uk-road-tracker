@@ -188,6 +188,10 @@ function localProgressJourneyCount() {
   return persistedMapJourneys.size;
 }
 
+function shouldShowDataDashboard() {
+  return onboardingMode==='data' || onboardingMode==='saved';
+}
+
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
@@ -832,6 +836,9 @@ async function showSavedProgress() {
   mapIntro.textContent='This is the motorway coverage saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
   nextCard.classList.add('hidden');
+  renderRoadQueue();
+  renderFootQueue();
+  renderCollectiveStats();
 
   await ensureLeaflet();
   initMap();
@@ -1361,6 +1368,7 @@ function friendlyFootAreaName(lat,lng) {
 }
 
 function renderFootQueue() {
+  if (!shouldShowDataDashboard()) { footQueueCard.classList.add('hidden'); return; }
   if (!footActivities.length) { footQueueCard.classList.add('hidden'); return; }
   footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
@@ -1405,6 +1413,7 @@ function segmentDistanceKm(segments) {
 }
 
 function renderRoadQueue() {
+  if (!shouldShowDataDashboard()) { easyProgress.classList.add('hidden'); return; }
   if (easyImportRunning) return;
   const routes=savedRoadRecords();
   const activities=persistedJourneyMileageById.size;
@@ -1421,6 +1430,7 @@ function renderRoadQueue() {
 
 function renderCollectiveStats() {
   if (!travelStatsCard) return;
+  if (!shouldShowDataDashboard()) { travelStatsCard.classList.add('hidden'); return; }
   const drivingKm=[...persistedJourneyMileageById.values()].reduce((total,value)=>total+(Number(value)||0),0);
   const footKm=footActivities.reduce((total,activity)=>total+(Number(activity.googleDistanceKm)||0),0);
   const roadUniqueKm=segmentDistanceKm(buildCreditedSegments(savedRoadRecords()));
@@ -1493,6 +1503,7 @@ async function startNextFootBatch() {
 }
 
 async function showFootMap() {
+  if (!shouldShowDataDashboard()) return true;
   const ready=await ensureLeaflet();
   if (!ready) {
     footMatchingError='The on-foot routes matched, but the map library could not load on this device.';
