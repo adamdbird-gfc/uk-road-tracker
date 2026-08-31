@@ -73,8 +73,14 @@
 
       <div id="easyProgress" class="easy-progress hidden">
         <div class="progress-heading">
-          <strong>Easy import progress</strong>
-          <span id="easyProgressText">Waiting…</span>
+          <div>
+            <p class="eyebrow">Road activity queue</p>
+            <strong>Easy import progress</strong>
+          </div>
+          <div id="easyProgressText" class="progress-status" aria-live="polite">
+            <strong>Waiting…</strong>
+            <span>Preparing routes</span>
+          </div>
         </div>
         <progress id="easyProgressBar" value="0" max="100"></progress>
         <div class="actions">
