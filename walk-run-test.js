@@ -3,6 +3,7 @@ const SAMPLE_LIMIT = 20;
 const GRAVESEND_NETWORK_URL = 'gravesend-network-v1.json.gz';
 const COVERAGE_CELL_M = 20;
 const COVERAGE_MATCH_RADIUS_M = 12;
+const GRAVESEND_BOUNDS = {south: 51.425, west: 0.350, north: 51.445, east: 0.385};
 
 const fileInput = document.getElementById('testTimelineFile');
 const fileStatus = document.getElementById('testFileStatus');
@@ -48,7 +49,7 @@ async function loadTimelineFile() {
   fileStatus.textContent = `Reading ${file.name}…`;
   try {
     const json = JSON.parse(await file.text());
-    const all = extractWalkRunActivities(json);
+    const all = extractWalkRunActivities(json).filter(activity => activity.points.some(isInGravesend));
     activities = all.slice(0, SAMPLE_LIMIT);
     foundNode.textContent = all.length.toLocaleString();
     sampleNode.textContent = activities.length.toLocaleString();
@@ -333,6 +334,11 @@ function parseLocation(value) {
 
 function validPoint(point) {
   return point && point.lat >= -90 && point.lat <= 90 && point.lng >= -180 && point.lng <= 180;
+}
+
+function isInGravesend(point) {
+  return point.lat >= GRAVESEND_BOUNDS.south && point.lat <= GRAVESEND_BOUNDS.north
+    && point.lng >= GRAVESEND_BOUNDS.west && point.lng <= GRAVESEND_BOUNDS.east;
 }
 
 function dedupePoints(points) {
