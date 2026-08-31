@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260831-route-ledger" />
+  <link rel="stylesheet" href="styles.css?v=20260831-dashboard" />
 </head>
 <body>
   <main>
@@ -22,26 +22,15 @@
 
     <section id="onboardingCard" class="card onboarding-card">
       <p class="eyebrow">Let&apos;s get started</p>
-      <h2>Do you have a data source?</h2>
-      <p class="muted">If you have Google Timeline data, we can use it to identify the roads you have driven. If not, you can start by selecting complete motorways manually.</p>
+      <h2>How would you like to start?</h2>
       <div class="choice-grid">
-        <button id="hasDataSource" class="choice-card" type="button">
-          <strong>Yes, I have data</strong>
-          <span>Import my existing journey data.</span>
-        </button>
-        <button id="noDataSource" class="choice-card secondary-choice" type="button">
-          <strong>No, start manually</strong>
-          <span>Choose the motorways I have driven.</span>
-        </button>
+        <button id="hasDataSource" class="choice-card" type="button">Yes, I have data</button>
+        <button id="noDataSource" class="choice-card secondary-choice" type="button">No, start manually</button>
       </div>
       <div id="localProgressNotice" class="local-progress-notice hidden">
-        <div>
-          <strong>Saved progress found on this device</strong>
-          <span id="localProgressSummary">Your saved motorway sections will be restored and merged with new data.</span>
-        </div>
+        <span id="localProgressSummary" class="sr-only">Saved progress is available on this device.</span>
         <div class="local-progress-actions">
-          <button id="viewSavedProgress" type="button">View saved progress</button>
-          <button id="clearLocalProgress" class="danger-button" type="button">Delete saved progress</button>
+          <button id="viewSavedProgress" type="button">View saved data</button>
         </div>
       </div>
     </section>
