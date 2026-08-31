@@ -30,6 +30,12 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .file-summary-stats div { min-width:0; padding:12px; border-radius:11px; background:#f4f6f8; }
 .file-summary-stats strong { display:block; font-size:1.15rem; line-height:1.2; overflow-wrap:anywhere; }
 .file-summary-stats span { display:block; margin-top:4px; color:#657083; font-size:.75rem; }
+.activity-queues { display:grid; grid-template-columns:1fr; gap:8px; margin:10px 0; }
+.activity-queue { padding:13px; border:1px solid #dce3eb; border-radius:11px; background:#fff; }
+.activity-queue strong, .activity-queue span { display:block; }
+.activity-queue span { margin-top:4px; color:#586579; font-size:.8rem; line-height:1.35; }
+.road-queue { border-color:#b8d3ee; background:#f3f8fe; }
+.foot-queue { border-color:#c8ddcf; background:#f4faf5; }
 .file-summary-note { margin:10px 2px; color:#475266; font-size:.9rem; line-height:1.5; }
 .technical-details { margin-top:8px; border-top:1px solid #e4e8ed; padding-top:10px; color:#657083; font-size:.82rem; }
 .technical-details summary { width:max-content; max-width:100%; padding:8px 2px; color:#345b9d; cursor:pointer; font-weight:700; }
@@ -59,6 +65,7 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
   .hero { grid-template-columns: 1fr 300px; align-items: end; }
   .card { padding: 24px; }
   .file-summary-stats { grid-template-columns:1.5fr repeat(3,1fr); }
+  .activity-queues { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 .journey-actions {
   display: flex;
