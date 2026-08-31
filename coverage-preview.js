@@ -1,0 +1,66 @@
+/* Bounded, non-persistent multimodal feasibility preview. */
+(() => {
+  const API_BASE_URL='https://uk-road-tracker-api.onrender.com';
+  const NETWORK_URL='gravesend-network-v1.json.gz';
+  const BOUNDS={south:51.425,west:.350,north:51.445,east:.385};
+  const CELL=20,RADIUS=12,LIMIT=20;
+  const $=id=>document.getElementById(id);
+  const card=$('experimentalCoverageCard'),input=$('coverageTimelineFile'),fileStatus=$('coverageFileStatus');
+  const matchButton=$('coverageMatchActivities'),clearButton=$('coverageClearActivities'),status=$('coverageProofStatus');
+  let network,segments=[],grid=new Map(),savedDriving=[],onFoot=[],map,control;
+
+  input.addEventListener('change',readTimeline);
+  matchButton.addEventListener('click',matchActivities);
+  clearButton.addEventListener('click',()=>{onFoot=[];clearButton.disabled=true;render();});
+  window.addEventListener('roadprints:archivechange',refreshDriving);
+  initialise();
+
+  async function initialise(){
+    try{
+      const [loaded,driving]=await Promise.all([loadNetwork(),loadDriving()]);
+      network=loaded;savedDriving=driving;indexNetwork();initMap();
+      if(savedDriving.length) card.classList.remove('hidden');
+      render();
+    }catch(error){status.className='error map-status';status.textContent=`Coverage preview could not load: ${error.message||error}`;}
+  }
+  async function loadNetwork(){
+    const response=await fetch(NETWORK_URL,{cache:'no-store'});
+    if(!response.ok) throw new Error(`reference network HTTP ${response.status}`);
+    if(!globalThis.DecompressionStream) throw new Error('This browser cannot open the compressed reference network.');
+    return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+  }
+  function loadDriving(){return new Promise(resolve=>{
+    if(!globalThis.indexedDB) return resolve([]);
+    const request=indexedDB.open('roadprints-map-archive');
+    request.onerror=()=>resolve([]);request.onupgradeneeded=()=>request.transaction?.abort();
+    request.onsuccess=()=>{const db=request.result;if(!db.objectStoreNames.contains('journeys')){db.close();return resolve([]);}
+      const get=db.transaction('journeys','readonly').objectStore('journeys').getAll();
+      get.onerror=()=>{db.close();resolve([])};get.onsuccess=()=>{const value=(get.result||[]).map(x=>x?.matchedGeoJson).filter(Boolean);db.close();resolve(value);};
+    };
+  });}
+  async function refreshDriving(){savedDriving=await loadDriving();if(savedDriving.length)card.classList.remove('hidden');render();}
+  function project([lng,lat]){const centre=(BOUNDS.south+BOUNDS.north)/2;return{x:(lng-BOUNDS.west)*111320*Math.cos(centre*Math.PI/180),y:(lat-BOUNDS.south)*110540};}
+  function key(x,y){return `${Math.floor(x/CELL)}:${Math.floor(y/CELL)}`;}
+  function indexNetwork(){segments=network.features.map(feature=>{const [start,end]=feature.geometry.coordinates,a=project(start),b=project(end),item={feature,a,b,modes:new Set(feature.properties.modes||[])};
+    for(let x=Math.floor((Math.min(a.x,b.x)-RADIUS)/CELL);x<=Math.floor((Math.max(a.x,b.x)+RADIUS)/CELL);x++)for(let y=Math.floor((Math.min(a.y,b.y)-RADIUS)/CELL);y<=Math.floor((Math.max(a.y,b.y)+RADIUS)/CELL);y++){const k=`${x}:${y}`;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(item);}return item;});}
+  function initMap(){map=L.map('coverageMap',{preferCanvas:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);map.fitBounds([[BOUNDS.south,BOUNDS.west],[BOUNDS.north,BOUNDS.east]],{padding:[8,8]});setTimeout(()=>map.invalidateSize(true),50);}
+  async function readTimeline(){const file=input.files?.[0];if(!file)return;fileStatus.className='muted map-status';fileStatus.textContent=`Reading ${file.name}…`;
+    try{const activities=extractActivities(JSON.parse(await file.text())).filter(a=>a.points.some(inBounds)).slice(0,LIMIT);onFoot=activities;card.classList.remove('hidden');matchButton.disabled=!onFoot.length;clearButton.disabled=!onFoot.length;
+      fileStatus.textContent=onFoot.length?`${onFoot.length} Gravesend walking/running activities ready. They are temporary and will not be saved.`:'No eligible walking/running activities in the Gravesend test area were found.';render();
+    }catch(error){fileStatus.className='error map-status';fileStatus.textContent=`Could not read this file: ${error.message||error}`;}}
+  async function matchActivities(){const pending=onFoot.filter(a=>!a.geojson);if(!pending.length)return;matchButton.disabled=true;let complete=0;
+    try{for(const activity of pending){status.className='muted map-status';status.textContent=`Matching on-foot activity ${++complete} of ${pending.length}…`;const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});const data=await response.json().catch(()=>({}));if(response.ok&&data.geojson?.features?.length)activity.geojson=data.geojson;else activity.error=data.detail||`HTTP ${response.status}`;await new Promise(resolve=>setTimeout(resolve,1100));}render();
+    }catch(error){status.className='error map-status';status.textContent=`On-foot matching stopped: ${error.message||error}`;}finally{matchButton.disabled=false;}}
+  function extractActivities(data){const semantic=Array.isArray(data?.semanticSegments)?data.semanticSegments:[],all=[];for(const segment of semantic)for(const item of Array.isArray(segment?.timelinePath)?segment.timelinePath:[]){const point=parsePoint(item?.point),time=Date.parse(item?.time||'');if(point&&Number.isFinite(time))all.push({...point,time});}all.sort((a,b)=>a.time-b.time);const result=[];for(const segment of semantic){const type=String(segment?.activity?.topCandidate?.type||'').toUpperCase();if(type!=='WALKING'&&type!=='RUNNING')continue;const start=Date.parse(segment.startTime||''),end=Date.parse(segment.endTime||'');if(!Number.isFinite(start)||!Number.isFinite(end))continue;const points=dedupe(all.filter(point=>point.time>=start&&point.time<=end).map(({lat,lng})=>({lat,lng})));if(points.length>1)result.push({points});}return result;}
+  function parsePoint(value){if(!value)return null;if(typeof value==='string'){const n=value.match(/-?\d+(?:\.\d+)?/g);return n?.length>1?{lat:+n[0],lng:+n[1]}:null;}const raw=value.point||value;const lat=Number(raw.latitude??raw.lat??(Number(raw.latitudeE7)/1e7)),lng=Number(raw.longitude??raw.lng??raw.lon??(Number(raw.longitudeE7)/1e7));return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null;}
+  function dedupe(points){return points.filter((p,i)=>!i||p.lat!==points[i-1].lat||p.lng!==points[i-1].lng);}
+  function inBounds(point){return point.lat>=BOUNDS.south&&point.lat<=BOUNDS.north&&point.lng>=BOUNDS.west&&point.lng<=BOUNDS.east;}
+  function geoSegments(geojson){const out=[];for(const feature of geojson?.features||[]){const g=feature?.geometry,lines=g?.type==='LineString'?[g.coordinates]:g?.type==='MultiLineString'?g.coordinates:[];for(const line of lines)for(let i=1;i<line.length;i++)out.push([line[i-1],line[i]]);}return out;}
+  function pointDistance(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/den)):0;return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);}
+  function attribute(geojson,mode,covered){for(const [start,end] of geoSegments(geojson)){const a=project(start),b=project(end),steps=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/7));for(let i=0;i<=steps;i++){const p={x:a.x+(b.x-a.x)*i/steps,y:a.y+(b.y-a.y)*i/steps};let best,dist=RADIUS;for(const candidate of grid.get(key(p.x,p.y))||[]){if(!candidate.modes.has(mode))continue;const d=pointDistance(p,candidate.a,candidate.b);if(d<=dist){best=candidate;dist=d;}}if(best){const id=best.feature.properties.segment_id;if(!covered.has(id))covered.set(id,new Set());covered.get(id).add(mode);}}}}
+  function render(){if(!network||!map)return;const covered=new Map();savedDriving.forEach(g=>attribute(g,'driving',covered));onFoot.filter(a=>a.geojson).forEach(a=>attribute(a.geojson,'on_foot',covered));const complete=[],drive=[],foot=[];let unique=0,driven=0,walked=0,shared=0;for(const segment of segments){const modes=covered.get(segment.feature.properties.segment_id);if(!modes?.size)continue;const metres=+segment.feature.properties.length_m;complete.push(segment.feature);unique+=metres;if(modes.has('driving')){drive.push(segment.feature);driven+=metres;}if(modes.has('on_foot')){foot.push(segment.feature);walked+=metres;}if(modes.has('driving')&&modes.has('on_foot'))shared+=metres;}
+    stat('coverageNetworkMiles',network.metadata.total_length_m);stat('coverageUniqueMiles',unique);stat('coverageDrivingMiles',driven);stat('coverageFootMiles',walked);stat('coverageSharedMiles',shared);$('coveragePercent').textContent=`${(unique/network.metadata.total_length_m*100).toFixed(2)}%`;
+    if(control)control.remove();map.eachLayer(layer=>{if(!(layer instanceof L.TileLayer))map.removeLayer(layer)});const lines=list=>list.map(f=>f.geometry.coordinates.map(([lng,lat])=>[lat,lng]));const base=L.polyline(lines(network.features),{color:'#a4acb8',weight:1,opacity:.35}).addTo(map),combined=L.polyline(lines(complete),{color:'#7b3fc6',weight:5,opacity:.9}).addTo(map),driving=L.polyline(lines(drive),{color:'#111827',weight:4,opacity:.9}),walking=L.polyline(lines(foot),{color:'#2f7df6',weight:4,opacity:.95});control=L.control.layers({}, {'Eligible network':base,'Completed by any mode':combined,'Driven':driving,'On foot':walking}).addTo(map);
+    const completed=onFoot.filter(a=>a.geojson).length;status.className='muted map-status';status.textContent=`${savedDriving.length} saved driving matches and ${completed} temporary on-foot matches analysed. ${complete.length.toLocaleString()} canonical segments completed.`;$('coverageProofDetails').textContent=`Version ${network.metadata.version}; ${network.metadata.segment_count.toLocaleString()} direction-independent OpenStreetMap segments in the fixed boundary. Matched geometry is attributed within ${RADIUS} metres. On-foot results are not saved.`;}
+  function stat(id,metres){$(id).textContent=(Number(metres||0)/1609.344).toFixed(2);}
+})();

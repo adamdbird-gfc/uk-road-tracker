@@ -257,11 +257,13 @@ async function saveJourneyToMapArchive(journey) {
   await mapArchiveOperation('readwrite',store=>store.put(record));
   persistedMapJourneys.set(record.id,record);
   updateLocalProgressNotice();
+  window.dispatchEvent(new Event('roadprints:archivechange'));
 }
 
 async function clearMapArchive() {
   await mapArchiveOperation('readwrite',store=>store.clear());
   persistedMapJourneys.clear();
+  window.dispatchEvent(new Event('roadprints:archivechange'));
 }
 
 function savedMapJourneysExcluding(excludedIds=new Set()) {

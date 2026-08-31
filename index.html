@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260830-walk-run-test" />
+  <link rel="stylesheet" href="styles.css?v=20260831-coverage-preview" />
 </head>
 <body>
   <main>
@@ -34,7 +34,6 @@
           <span>Choose the motorways I have driven.</span>
         </button>
       </div>
-      <a class="test-feature-link" href="walk-run-test.html">Test feature</a>
       <div id="localProgressNotice" class="local-progress-notice hidden">
         <div>
           <strong>Saved progress found on this device</strong>
@@ -255,6 +254,33 @@
       <div id="map"></div>
     </section>
 
+    <section id="experimentalCoverageCard" class="card hidden">
+      <p class="eyebrow">Experimental coverage preview</p>
+      <h2>Gravesend: driven + on foot</h2>
+      <p class="muted">A bounded proof of one combined coverage map. Saved driving matches are read from this device; walking and running results are temporary and must be tested from a Timeline file below.</p>
+      <label class="file-button" for="coverageTimelineFile">Choose Timeline JSON for on-foot test</label>
+      <input id="coverageTimelineFile" type="file" accept="application/json,.json" />
+      <div id="coverageFileStatus" class="muted map-status" role="status" aria-live="polite">Saved driving evidence will load automatically.</div>
+      <div class="actions">
+        <button id="coverageMatchActivities" type="button" disabled>Match Gravesend walking/running</button>
+        <button id="coverageClearActivities" class="secondary" type="button" disabled>Clear temporary on-foot result</button>
+      </div>
+      <div class="coverage-proof-stats">
+        <div><strong id="coverageNetworkMiles">…</strong><span>eligible network miles</span></div>
+        <div><strong id="coverageUniqueMiles">…</strong><span>unique miles covered</span></div>
+        <div><strong id="coveragePercent">…</strong><span>area completed</span></div>
+        <div><strong id="coverageDrivingMiles">…</strong><span>miles driven</span></div>
+        <div><strong id="coverageFootMiles">…</strong><span>miles on foot</span></div>
+        <div><strong id="coverageSharedMiles">…</strong><span>miles by both modes</span></div>
+      </div>
+      <div id="coverageProofStatus" class="muted map-status" role="status" aria-live="polite">Loading the bounded reference network…</div>
+      <div class="test-legend coverage-proof-legend">
+        <span class="network">Eligible network</span><span class="combined">Completed by any mode</span><span class="driven">Driven</span><span class="walking">On foot</span>
+      </div>
+      <div id="coverageMap" aria-label="Combined multimodal Gravesend coverage map"></div>
+      <details class="technical-details"><summary>About this experimental calculation</summary><p id="coverageProofDetails">This is a provisional, fixed-area feasibility test. On-foot results are not stored in your Roadprints progress.</p></details>
+    </section>
+
     <section id="nextCard" class="card hidden">
       <h2>What this proves</h2>
       <p>If your real Timeline export loads here and the journeys look sensible, the next engineering step is map-matching these traces to OpenStreetMap road segments and storing a permanent “roads driven” set.</p>
@@ -262,6 +288,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260830-uk-default-view"></script>
+  <script src="app.js?v=20260831-coverage-preview"></script>
+  <script src="coverage-preview.js?v=20260831-coverage-preview"></script>
 </body>
 </html>
