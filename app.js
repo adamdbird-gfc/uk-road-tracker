@@ -218,6 +218,9 @@ function compactMapJourney(journey) {
     start:journey.start || '',
     end:journey.end || '',
     googleDistanceKm:Number.isFinite(Number(journey.googleDistanceKm)) ? Number(journey.googleDistanceKm) : null,
+    repeatJourneyIds:Array.isArray(journey.repeatJourneyIds) ? journey.repeatJourneyIds : null,
+    repeatCount:Number(journey.repeatCount || 1),
+    repeatDistanceKm:Number(journey.repeatDistanceKm || journey.googleDistanceKm || 0),
     pathPointCount:Number(journey.pathPointCount || journey.points?.length || 0),
     points:(journey.points || []).filter(validPoint).map(point=>({lat:Number(point.lat),lng:Number(point.lng)})),
     matchedGeoJson:journey.matchedGeoJson,
@@ -402,6 +405,34 @@ function journeyFingerprint(journey) {
   ].join('|');
 }
 
+function routeRepeatFingerprint(journey) {
+  const first=journey?.points?.[0];
+  const last=journey?.points?.[journey.points.length-1];
+  const cell=point=>point
+    ? `${(Math.round(Number(point.lat)*500)/500).toFixed(3)},${(Math.round(Number(point.lng)*500)/500).toFixed(3)}`
+    : '';
+  const distance=Number(journey?.googleDistanceKm);
+  const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*2)/2).toFixed(1) : '';
+  return [journey?.travelMode || 'ROAD', cell(first), cell(last), distanceBucket].join('|');
+}
+
+function groupRepeatedJourneys(source) {
+  const groups=new Map();
+  for (const journey of source) {
+    const key=routeRepeatFingerprint(journey);
+    if (!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push(journey);
+  }
+  return [...groups.values()].map(group=>{
+    const ordered=[...group].sort((a,b)=>(b.pathPointCount || 0)-(a.pathPointCount || 0));
+    const representative=ordered[0];
+    representative.repeatJourneyIds=group.map(journeyIdentity);
+    representative.repeatCount=group.length;
+    representative.repeatDistanceKm=group.reduce((total,journey)=>total+(Number(journey.googleDistanceKm) || 0),0);
+    return representative;
+  });
+}
+
 function journeyTimestampMs(journey) {
   const end=Date.parse(journey?.end || '');
   if (Number.isFinite(end)) return end;
@@ -437,8 +468,11 @@ function motorwayContributionsForJourney(journey) {
 }
 
 function recordJourneyProcessed(journey) {
-  const id=journeyIdentity(journey);
-  if (id) {
+  const ids=Array.isArray(journey?.repeatJourneyIds) && journey.repeatJourneyIds.length
+    ? journey.repeatJourneyIds
+    : [journeyIdentity(journey)];
+  for (const id of ids) {
+    if (!id) continue;
     persistedProcessedJourneyIds.add(id);
     const contributions=motorwayContributionsForJourney(journey);
     if (Object.keys(contributions).length) {
@@ -780,8 +814,9 @@ fileInput.addEventListener('change', async () => {
     status(`JSON parsed. Inspecting Timeline structure…`);
     await yieldToBrowser();
 
-    const result = extractVehicleJourneys(json);
-    const allJourneys = result.journeys;
+    const result = extractTimelineActivities(json);
+    const allJourneys = result.roadJourneys;
+    const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
 
     const needsMileageRebuild=
@@ -828,10 +863,18 @@ fileInput.addEventListener('change', async () => {
     diagnostics.seenJourneyMigration=
       !hadReliableSeenJourneyHistory || fileHistoryNeedsBaseline;
     diagnostics.sourceFilePreviouslySeen=fileWasPreviouslySeen;
-    diagnostics.journeysReadyForMatching=candidateJourneys.length;
+    const groupedRoadJourneys=groupRepeatedJourneys(candidateJourneys);
+    const groupedOnFootJourneys=groupRepeatedJourneys(onFootJourneys);
+    diagnostics.roadActivities=allJourneys.length;
+    diagnostics.roadDistinctRoutes=groupedRoadJourneys.length;
+    diagnostics.roadRepeatActivities=Math.max(0,candidateJourneys.length-groupedRoadJourneys.length);
+    diagnostics.onFootActivities=onFootJourneys.length;
+    diagnostics.onFootDistinctRoutes=groupedOnFootJourneys.length;
+    diagnostics.onFootRepeatActivities=Math.max(0,onFootJourneys.length-groupedOnFootJourneys.length);
+    diagnostics.journeysReadyForMatching=groupedRoadJourneys.length;
 
-    ignoredJourneys = candidateJourneys.filter(j => j.pathPointCount < 2);
-    const importJourneys = candidateJourneys.filter(j => j.pathPointCount >= 2);
+    ignoredJourneys = groupedRoadJourneys.filter(j => j.pathPointCount < 2);
+    const importJourneys = groupedRoadJourneys.filter(j => j.pathPointCount >= 2);
     const importJourneyIds = new Set(importJourneys.map(journeyIdentity));
     journeys = [...savedMapJourneysExcluding(importJourneyIds), ...importJourneys];
     diagnostics.usableJourneys = importJourneys.length;
@@ -976,11 +1019,23 @@ function showDiagnostics(fileName) {
   stats.className = 'file-summary-stats';
   stats.append(
     summaryStat(formatDataDateRange(), 'dates covered'),
-    summaryStat(fmt(diagnostics.newPassengerVehicleJourneys), 'genuinely new'),
-    summaryStat(fmt(diagnostics.previouslySeenUnmatchedJourneys), 'available to retry'),
-    summaryStat(fmt(diagnostics.previouslyImportedJourneys), 'already imported'),
+    summaryStat(fmt(diagnostics.roadActivities), 'road activities'),
+    summaryStat(fmt(diagnostics.roadDistinctRoutes), 'road routes to match'),
+    summaryStat(fmt(diagnostics.roadRepeatActivities), 'repeat road activities'),
+    summaryStat(fmt(diagnostics.onFootActivities), 'on-foot activities'),
+    summaryStat(fmt(diagnostics.onFootDistinctRoutes), 'on-foot routes queued'),
     summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use')
   );
+
+  const queues=document.createElement('div');
+  queues.className='activity-queues';
+  const roadQueue=document.createElement('div');
+  roadQueue.className='activity-queue road-queue';
+  roadQueue.innerHTML=`<strong>Easy load road activities</strong><span>${fmt(diagnostics.roadActivities)} activities · ${fmt(diagnostics.roadDistinctRoutes)} routes to match · ${fmt(diagnostics.roadRepeatActivities)} repeats grouped</span>`;
+  const footQueue=document.createElement('div');
+  footQueue.className='activity-queue foot-queue';
+  footQueue.innerHTML=`<strong>Easy load on-foot activities</strong><span>${fmt(diagnostics.onFootActivities)} activities · ${fmt(diagnostics.onFootDistinctRoutes)} distinct routes · held separately from road matching</span>`;
+  queues.append(roadQueue,footQueue);
 
   const explanation = document.createElement('p');
   explanation.className = 'file-summary-note';
@@ -1002,7 +1057,7 @@ function showDiagnostics(fileName) {
     detailList.append(term, description);
   });
   details.append(detailsSummary, detailsIntro, detailList);
-  fileStatus.append(heading, stats, explanation, details);
+  fileStatus.append(heading, stats, queues, explanation, details);
 }
 
 function summaryStat(value, label) {
@@ -1017,19 +1072,15 @@ function summaryStat(value, label) {
 
 function importSummaryMessage() {
   const ready = Number(diagnostics.usableJourneys || 0);
-  const genuinelyNew = Number(diagnostics.newPassengerVehicleJourneys || 0);
-  const retryable = Number(diagnostics.previouslySeenUnmatchedJourneys || 0);
+  const repeats = Number(diagnostics.roadRepeatActivities || 0);
+  const onFoot = Number(diagnostics.onFootActivities || 0);
   const previous = Number(diagnostics.previouslyImportedJourneys || 0);
   const ignored = Number(diagnostics.ignoredSparseJourneys || 0);
   const parts = [
     `${fmt(ready)} car journey${ready === 1 ? ' is' : 's are'} ready for road matching.`
   ];
-  parts.push(`${fmt(genuinelyNew)} ${genuinelyNew === 1 ? 'is a genuinely new journey' : 'are genuinely new journeys'}.`);
-  if (retryable) {
-    parts.push(
-      `${fmt(retryable)} ${retryable === 1 ? 'was seen before but was not successfully matched' : 'were seen before but were not successfully matched'} and can be retried.`
-    );
-  }
+  if (repeats) parts.push(`${fmt(repeats)} repeat road ${repeats === 1 ? 'activity has' : 'activities have'} been grouped with a representative route, so their mileage can be retained without extra matching calls.`);
+  if (onFoot) parts.push(`${fmt(onFoot)} walking or running ${onFoot === 1 ? 'activity is' : 'activities are'} held in the separate on-foot queue; they are not sent to the road matcher.`);
   if (previous) parts.push(`${fmt(previous)} already matched journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
   if (ignored) parts.push(`${fmt(ignored)} journey${ignored === 1 ? ' does' : 's do'} not contain enough location detail to match reliably.`);
   if (diagnostics.seenJourneyMigration) {
@@ -1042,15 +1093,19 @@ function technicalDiagnosticRows() {
   return [
     ['Timeline entries', fmt(diagnostics.semanticSegments), 'All entries found in the Timeline file, including visits and journeys.'],
     ['Movement entries', fmt(diagnostics.activitySegments), 'Timeline entries describing movement between places.'],
-    ['Car journey entries', fmt(diagnostics.passengerVehicleActivities), 'Movement entries Google identified as travel in a passenger vehicle.'],
+    ['Road activity entries', fmt(diagnostics.passengerVehicleActivities), 'Movement entries Google identified as travel in a passenger vehicle.'],
+    ['On-foot activity entries', fmt(diagnostics.onFootActivities), 'Movement entries Google identified as walking, running or pedestrian travel.'],
     ['Recorded route sections', fmt(diagnostics.timelinePathSegments), 'Route traces included in the Timeline file.'],
     ['Recorded location points', fmt(diagnostics.timelinePathPoints), 'Timestamped positions available for reconstructing routes.'],
     ['Car journeys with route points', fmt(diagnostics.vehiclesWithPathPoints), 'Car journeys that overlap recorded route positions.'],
     ['Car journeys with start and end points', fmt(diagnostics.vehiclesWithAnchors), 'Car journeys with enough information to identify their beginning and end.'],
-    ['Journeys reconstructed', fmt(diagnostics.journeysConstructed), 'Journeys Roadprints successfully reconstructed from the source data.'],
+    ['Road journeys reconstructed', fmt(diagnostics.journeysConstructed), 'Road journeys Roadprints successfully reconstructed from the source data.'],
+    ['Distinct road routes', fmt(diagnostics.roadDistinctRoutes), 'Conservatively grouped road patterns. One representative from each group is sent to road matching.'],
+    ['Repeat road activities', fmt(diagnostics.roadRepeatActivities), 'Activities grouped with a representative road route. They avoid repeat matcher calls while retaining their mileage.'],
+    ['Distinct on-foot routes', fmt(diagnostics.onFootDistinctRoutes), 'Walking and running patterns placed in the separate on-foot queue for a future matching feature.'],
     ['Genuinely new journeys', fmt(diagnostics.newPassengerVehicleJourneys), 'Journeys never previously seen in an imported file on this device.'],
     ['Previously seen, unmatched', fmt(diagnostics.previouslySeenUnmatchedJourneys), 'Journeys seen in an earlier import but not successfully road-matched, available to retry.'],
-    ['Ready for road matching', fmt(diagnostics.usableJourneys), 'Genuinely new and retryable journeys containing at least two location points.'],
+    ['Ready for road matching', fmt(diagnostics.usableJourneys), 'Distinct road routes containing at least two location points.'],
     ['Unable to use', fmt(diagnostics.ignoredSparseJourneys), 'Journeys with fewer than two location points, which cannot be matched reliably.'],
     ...(diagnostics.mileageRebuild ? [['Mileage update', 'One-off rebuild selected', 'Earlier journeys will be matched again to rebuild cumulative mileage totals.']] : [])
   ];
@@ -2711,7 +2766,7 @@ function fitSelected() {
   }
 }
 
-function extractVehicleJourneys(data) {
+function extractTimelineActivities(data) {
   const segments = Array.isArray(data?.semanticSegments)
     ? data.semanticSegments
     : [];
@@ -2720,6 +2775,7 @@ function extractVehicleJourneys(data) {
     semanticSegments: segments.length,
     activitySegments: 0,
     passengerVehicleActivities: 0,
+    onFootActivities: 0,
     timelinePathSegments: 0,
     timelinePathPoints: 0,
     vehiclesWithPathPoints: 0,
@@ -2761,16 +2817,20 @@ function extractVehicleJourneys(data) {
 
   pathPoints.sort((a, b) => a.timeMs - b.timeMs);
 
-  const out = [];
+  const roadJourneys = [];
+  const onFootJourneys = [];
 
   for (const seg of segments) {
     const activity = seg?.activity;
     if (!activity) continue;
 
     const mode = String(activity?.topCandidate?.type || '').trim().toUpperCase();
-    if (mode !== 'IN_PASSENGER_VEHICLE') continue;
+    const isRoad=mode === 'IN_PASSENGER_VEHICLE';
+    const isOnFoot=mode === 'WALKING' || mode === 'RUNNING' || mode === 'IN_PEDESTRIAN';
+    if (!isRoad && !isOnFoot) continue;
 
-    diag.passengerVehicleActivities++;
+    if (isRoad) diag.passengerVehicleActivities++;
+    if (isOnFoot) diag.onFootActivities++;
 
     const startMs = Date.parse(seg.startTime || '');
     const endMs = Date.parse(seg.endTime || '');
@@ -2800,9 +2860,8 @@ function extractVehicleJourneys(data) {
 
     const cleanPoints = dedupePoints(points).filter(validPoint);
 
-    // Important diagnostic behaviour:
-    // do NOT discard a passenger-vehicle activity just because its trace is sparse.
-    out.push({
+    // Keep sparse activities for an honest queue summary, but do not send them to a matcher.
+    const journey={
       start: seg.startTime || null,
       end: seg.endTime || null,
       points: cleanPoints,
@@ -2810,20 +2869,23 @@ function extractVehicleJourneys(data) {
       googleDistanceKm: Number.isFinite(Number(activity?.distanceMeters))
         ? Number(activity.distanceMeters) / 1000
         : null,
+      travelMode:isRoad ? 'ROAD' : mode,
       selected: true
-    });
+    };
+    if (isRoad) roadJourneys.push(journey);
+    else onFootJourneys.push(journey);
   }
 
-  for (const journey of out) journey.importId=journeyFingerprint(journey);
-  diag.journeysConstructed = out.length;
+  for (const journey of [...roadJourneys,...onFootJourneys]) journey.importId=journeyFingerprint(journey);
+  diag.journeysConstructed = roadJourneys.length;
 
-  out.sort((a, b) => {
+  for (const list of [roadJourneys,onFootJourneys]) list.sort((a, b) => {
     const aa = Date.parse(a.start || '');
     const bb = Date.parse(b.start || '');
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { journeys: out, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
