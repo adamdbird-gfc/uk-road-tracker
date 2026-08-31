@@ -34,6 +34,7 @@ let persistedSeenJourneyTrackingStarted = true;
 const persistedImportedFileHashes = new Set();
 let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
+const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
 let localSaveTimer = null;
 let localProgressDeletionRunning = false;
@@ -76,6 +77,7 @@ const startFootBatch = document.getElementById('startFootBatch');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
+const timelineRoadMileage = document.getElementById('timelineRoadMileage');
 const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
 const canonicalMotorwayCard = document.getElementById('canonicalMotorwayCard');
@@ -295,6 +297,8 @@ async function saveJourneyToMapArchive(journey) {
 async function clearMapArchive() {
   await mapArchiveOperation('readwrite',store=>store.clear());
   persistedMapJourneys.clear();
+  persistedJourneyMileageById.clear();
+  persistedMotorwayContributionsByJourney.clear();
   await footArchiveOperation('readwrite',store=>store.clear());
   persistedFootActivities.clear();
   footActivities=[];
@@ -372,7 +376,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || saved.version!==1 || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -410,7 +414,7 @@ function loadLocalProgress() {
     for (const hash of saved.importedFileHashes || []) {
       if (typeof hash==='string' && hash) persistedImportedFileHashes.add(hash);
     }
-    for (const [journeyId,contributions] of Object.entries(saved.motorwayContributionsByJourney || {})) {
+    for (const [journeyId,contributions] of Object.entries(saved.version>=2 ? saved.motorwayContributionsByJourney || {} : {})) {
       if (!journeyId || !contributions || typeof contributions!=='object') continue;
       const clean={};
       for (const [roadId,distanceM] of Object.entries(contributions)) {
@@ -418,6 +422,10 @@ function loadLocalProgress() {
         if (roadId && Number.isFinite(value) && value>0) clean[roadId]=value;
       }
       if (Object.keys(clean).length) persistedMotorwayContributionsByJourney.set(journeyId,clean);
+    }
+    for (const [journeyId,distanceKm] of Object.entries(saved.journeyMileageById || {})) {
+      const value=Number(distanceKm);
+      if (journeyId && Number.isFinite(value) && value>=0) persistedJourneyMileageById.set(journeyId,value);
     }
     persistedMileageHistoryComplete=typeof saved.mileageHistoryComplete==='boolean'
       ? saved.mileageHistoryComplete
@@ -444,7 +452,7 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:1,
+      version:2,
       canonicalVersion:CANONICAL_CACHE_VERSION,
       savedAt:persistedSavedAt,
       distanceUnit,
@@ -459,6 +467,7 @@ function saveLocalProgressNow() {
       motorwayContributionsByJourney:Object.fromEntries(
         [...persistedMotorwayContributionsByJourney.entries()].sort(([a],[b])=>a.localeCompare(b))
       ),
+      journeyMileageById:Object.fromEntries([...persistedJourneyMileageById.entries()].sort(([a],[b])=>a.localeCompare(b))),
       mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage
@@ -515,6 +524,7 @@ function groupRepeatedJourneys(source) {
     const ordered=[...group].sort((a,b)=>(b.pathPointCount || 0)-(a.pathPointCount || 0));
     const representative=ordered[0];
     representative.repeatJourneyIds=group.map(journeyIdentity);
+    representative.repeatJourneyMileage=Object.fromEntries(group.map(journey=>[journeyIdentity(journey),Number(journey.googleDistanceKm || 0)]));
     representative.repeatCount=group.length;
     representative.repeatDistanceKm=group.reduce((total,journey)=>total+(Number(journey.googleDistanceKm) || 0),0);
     return representative;
@@ -562,13 +572,13 @@ function recordJourneyProcessed(journey) {
   for (const id of ids) {
     if (!id) continue;
     persistedProcessedJourneyIds.add(id);
-    const contributions=motorwayContributionsForJourney(journey);
-    if (Object.keys(contributions).length) {
-      persistedMotorwayContributionsByJourney.set(id,contributions);
-    } else {
-      persistedMotorwayContributionsByJourney.delete(id);
-    }
+    const mileage=Number(journey?.repeatJourneyMileage?.[id] ?? journey?.googleDistanceKm);
+    if (Number.isFinite(mileage) && mileage>=0) persistedJourneyMileageById.set(id,mileage);
   }
+  const representativeId=journeyIdentity(journey);
+  const contributions=motorwayContributionsForJourney(journey);
+  if (representativeId && Object.keys(contributions).length) persistedMotorwayContributionsByJourney.set(representativeId,contributions);
+  else if (representativeId) persistedMotorwayContributionsByJourney.delete(representativeId);
   const start=Date.parse(journey?.start || '');
   const end=Date.parse(journey?.end || '');
   if (Number.isFinite(start)) {
@@ -735,6 +745,7 @@ function resetTrackingSession() {
   dataDateRange.querySelector('span').textContent = 'Date range unavailable';
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
+  timelineRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   canonicalRoadsReady.textContent = '0';
   gbProgressPercent.textContent = '0.0%';
   niProgressPercent.textContent = '0.0%';
@@ -2761,6 +2772,10 @@ function renderMotorwayDashboard(drawable) {
   const stats = motorwayStats(drawable);
   motorwayList.innerHTML = '';
   motorwaysDiscovered.textContent = stats.length.toLocaleString();
+  const currentMiles=[...persistedJourneyMileageById.values()].reduce((sum,value)=>sum+value,0);
+  timelineRoadMileage.textContent=distanceUnit==='km'
+    ? `${currentMiles.toFixed(1)} km`
+    : `${(currentMiles*0.6213711922).toFixed(1)} mi`;
 
   if (!stats.length) {
     motorwayCard.classList.add('hidden');
