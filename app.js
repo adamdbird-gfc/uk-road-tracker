@@ -2,6 +2,8 @@ let journeys = [];
 let footActivities = [];
 let footBatches = [];
 let footMatching = false;
+let footMatchingBatchId = null;
+let footMatchingProgress = null;
 const footPlaceNames = new Map();
 const footPlaceLookups = new Set();
 let diagnostics = {};
@@ -315,7 +317,8 @@ function compactFootActivity(activity) {
     id:journeyIdentity(activity), start:activity.start || '', end:activity.end || '',
     travelMode:activity.travelMode || 'WALKING', googleDistanceKm:Number(activity.googleDistanceKm || 0),
     pathPointCount:Number(activity.pathPointCount || 0), points:(activity.points || []).filter(validPoint),
-    matchedGeoJson:activity.matchedGeoJson || null, matchQuality:activity.matchQuality || null
+    matchedGeoJson:activity.matchedGeoJson || null, matchQuality:activity.matchQuality || null,
+    matchError:activity.matchError || null
   };
 }
 
@@ -357,7 +360,7 @@ async function saveFootActivityMatch(activity) {
   const ids=Array.isArray(activity.repeatJourneyIds) && activity.repeatJourneyIds.length ? activity.repeatJourneyIds : [journeyIdentity(activity)];
   for (const id of ids) {
     const source=persistedFootActivities.get(id) || activity;
-    const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,matchQuality:activity.matchQuality});
+    const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,matchQuality:activity.matchQuality,matchError:activity.matchError});
     await footArchiveOperation('readwrite',store=>store.put(record));
     persistedFootActivities.set(record.id,{...record,selected:true});
   }
@@ -1272,7 +1275,8 @@ function buildFootBatches() {
     id:area, area, activities,
     lat:activities.reduce((sum,item)=>sum+Number(item.points?.[0]?.lat || 0),0)/activities.length,
     lng:activities.reduce((sum,item)=>sum+Number(item.points?.[0]?.lng || 0),0)/activities.length,
-    matched:activities.filter(a=>a.matchedGeoJson).length
+    matched:activities.filter(a=>a.matchedGeoJson).length,
+    failed:activities.filter(a=>a.matchError).length
   })).sort((a,b)=>b.activities.length-a.activities.length);
   resolveFootBatchPlaceNames();
 }
@@ -1308,42 +1312,60 @@ function renderFootQueue() {
   footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
+  const failed=footBatches.reduce((n,b)=>n+b.failed,0);
   footQueueTotal.querySelector('strong').textContent=distinct.toLocaleString();
-  footQueueIntro.textContent=`${footActivities.length.toLocaleString()} activities · ${distinct.toLocaleString()} distinct routes · ${matched.toLocaleString()} matched. Areas are processed one at a time to keep pedestrian-matcher requests controlled.`;
+  footQueueIntro.textContent=footMatchingProgress
+    ? `Matching ${footMatchingProgress.completed} / ${footMatchingProgress.total} routes in ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable to match.`
+    : `${footActivities.length.toLocaleString()} activities · ${distinct.toLocaleString()} distinct routes · ${matched.toLocaleString()} matched${failed ? ` · ${failed.toLocaleString()} unable to match` : ''}. Areas are processed in small slices to keep pedestrian-matcher requests controlled.`;
   footBatchList.innerHTML='';
   for (const batch of footBatches) {
     const row=document.createElement('div'); row.className='foot-batch';
     const copy=document.createElement('div');
     const title=document.createElement('strong'); title.textContent=footPlaceNames.get(batch.id) || 'Finding place name…';
-    const detail=document.createElement('span'); detail.textContent=`${batch.matched} / ${batch.activities.length} distinct routes matched`;
+    const detail=document.createElement('span'); detail.textContent=`${batch.matched} / ${batch.activities.length} matched${batch.failed ? ` · ${batch.failed} unable to match` : ''}`;
     copy.append(title,detail);
-    const state=document.createElement('span'); state.className=`foot-batch-status ${batch.matched===batch.activities.length?'': 'pending'}`;
-    state.textContent=batch.matched===batch.activities.length ? 'Complete' : 'Queued';
+    const pending=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length;
+    const state=document.createElement('span'); state.className=`foot-batch-status ${footMatchingBatchId===batch.id ? 'running' : pending ? 'pending' : ''}`;
+    state.textContent=footMatchingBatchId===batch.id ? 'Matching' : pending ? 'Queued' : batch.failed ? 'Needs review' : 'Complete';
     row.append(copy,state); footBatchList.append(row);
   }
-  const next=footBatches.find(batch=>batch.matched<batch.activities.length);
+  const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
   startFootBatch.disabled=footMatching || !next;
-  startFootBatch.textContent=footMatching ? 'Matching area…' : next ? `Match next area (${next.activities.length-next.matched} routes)` : 'All areas matched';
+  const nextCount=next ? Math.min(10,next.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length) : 0;
+  startFootBatch.textContent=footMatching ? 'Matching routes…' : next ? `Match next routes (${nextCount})` : 'All areas processed';
 }
 
 async function startNextFootBatch() {
   if (footMatching) return;
-  const batch=footBatches.find(item=>item.matched<item.activities.length);
+  const batch=footBatches.find(item=>item.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError));
   if (!batch) return;
-  footMatching=true; renderFootQueue();
+  const candidates=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).slice(0,10);
+  footMatching=true;
+  footMatchingBatchId=batch.id;
+  footMatchingProgress={area:footPlaceNames.get(batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
+  renderFootQueue();
   try {
-    for (const activity of batch.activities.filter(item=>!item.matchedGeoJson)) {
+    for (const activity of candidates) {
       const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
       const data=await response.json().catch(()=>({}));
-      if (!response.ok) { activity.matchError=data.detail || `HTTP ${response.status}`; continue; }
-      activity.matchedGeoJson=data.geojson;
-      activity.matchQuality=assessMatchQuality(activity,data);
+      if (!response.ok) {
+        activity.matchError=data.detail || `HTTP ${response.status}`;
+        footMatchingProgress.failed++;
+      } else {
+        activity.matchedGeoJson=data.geojson;
+        activity.matchQuality=assessMatchQuality(activity,data);
+        batch.matched++;
+        footMatchingProgress.succeeded++;
+      }
       await saveFootActivityMatch(activity);
-      batch.matched++;
+      footMatchingProgress.completed++;
       renderFootQueue(); renderMap();
       await new Promise(resolve=>setTimeout(resolve,1100));
     }
-  } finally { footMatching=false; buildFootBatches(); renderFootQueue(); renderMap(); }
+  } finally {
+    footMatching=false; footMatchingBatchId=null; footMatchingProgress=null;
+    buildFootBatches(); renderFootQueue(); renderMap();
+  }
 }
 
 
