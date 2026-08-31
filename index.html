@@ -118,17 +118,20 @@
     </section>
 
     <section id="footQueueCard" class="card hidden">
-      <div class="section-heading">
+      <div class="progress-heading">
         <div>
           <p class="eyebrow">On-foot activity queue</p>
-          <h2>Walking and running map</h2>
+          <strong>Walking and running progress</strong>
         </div>
-        <div id="footQueueTotal" class="motorway-total"><strong>0</strong><span>routes</span></div>
+        <div id="footProgressText" class="progress-status" aria-live="polite">
+          <strong>Waiting…</strong>
+          <span>Preparing routes</span>
+        </div>
       </div>
-      <p id="footQueueIntro" class="muted">Preparing your local walking and running route batches…</p>
-      <div id="footBatchList" class="foot-batch-list"></div>
+      <progress id="footProgressBar" value="0" max="100"></progress>
       <div class="actions">
-        <button id="startFootBatch" type="button">Match next area</button>
+        <button id="startFootBatch" type="button">Match queued routes</button>
+        <button id="pauseFootMatching" class="secondary hidden" type="button" aria-pressed="false">Pause</button>
         <button id="clearImportedData" class="danger-button" type="button">Delete all saved data</button>
       </div>
     </section>
