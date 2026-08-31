@@ -1,11 +1,17 @@
 let journeys = [];
+let footActivities = [];
+let footBatches = [];
+let footMatching = false;
 let diagnostics = {};
 const persistedMapJourneys = new Map();
+const persistedFootActivities = new Map();
 let mapArchiveReadyPromise = Promise.resolve();
+let footArchiveReadyPromise = Promise.resolve();
 let map = null;
 let traceLayer = null;
 let matchedLayer = null;
 let creditedLayer = null;
+let footLayer = null;
 let mapLayerControl = null;
 let ignoredJourneys = [];
 let importMode = null;
@@ -62,6 +68,11 @@ const easyProgressBar = document.getElementById('easyProgressBar');
 const ignoredCard = document.getElementById('ignoredCard');
 const ignoredCount = document.getElementById('ignoredCount');
 const ignoredList = document.getElementById('ignoredList');
+const footQueueCard = document.getElementById('footQueueCard');
+const footQueueTotal = document.getElementById('footQueueTotal');
+const footQueueIntro = document.getElementById('footQueueIntro');
+const footBatchList = document.getElementById('footBatchList');
+const startFootBatch = document.getElementById('startFootBatch');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
@@ -130,8 +141,9 @@ const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 1;
+const MAP_ARCHIVE_DB_VERSION = 2;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
+const FOOT_ACTIVITY_STORE_NAME = 'foot-activities';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
@@ -189,6 +201,9 @@ function openMapArchiveDatabase() {
       if (!database.objectStoreNames.contains(MAP_ARCHIVE_STORE_NAME)) {
         database.createObjectStore(MAP_ARCHIVE_STORE_NAME,{keyPath:'id'});
       }
+      if (!database.objectStoreNames.contains(FOOT_ACTIVITY_STORE_NAME)) {
+        database.createObjectStore(FOOT_ACTIVITY_STORE_NAME,{keyPath:'id'});
+      }
     };
     request.onsuccess=()=>resolve(request.result);
   });
@@ -208,6 +223,20 @@ async function mapArchiveOperation(mode,operation) {
   } finally {
     database.close();
   }
+}
+
+async function footArchiveOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(FOOT_ACTIVITY_STORE_NAME,mode);
+      const store=transaction.objectStore(FOOT_ACTIVITY_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved on-foot activity operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved on-foot activity transaction was aborted.'));
+    });
+  } finally { database.close(); }
 }
 
 function compactMapJourney(journey) {
@@ -266,7 +295,66 @@ async function saveJourneyToMapArchive(journey) {
 async function clearMapArchive() {
   await mapArchiveOperation('readwrite',store=>store.clear());
   persistedMapJourneys.clear();
+  await footArchiveOperation('readwrite',store=>store.clear());
+  persistedFootActivities.clear();
+  footActivities=[];
+  footBatches=[];
+  renderFootQueue();
   window.dispatchEvent(new Event('roadprints:archivechange'));
+}
+
+function compactFootActivity(activity) {
+  return {
+    id:journeyIdentity(activity), start:activity.start || '', end:activity.end || '',
+    travelMode:activity.travelMode || 'WALKING', googleDistanceKm:Number(activity.googleDistanceKm || 0),
+    pathPointCount:Number(activity.pathPointCount || 0), points:(activity.points || []).filter(validPoint),
+    matchedGeoJson:activity.matchedGeoJson || null, matchQuality:activity.matchQuality || null
+  };
+}
+
+async function loadFootActivityArchive() {
+  try {
+    const records=await footArchiveOperation('readonly',store=>store.getAll());
+    persistedFootActivities.clear();
+    for (const record of records || []) if (record?.id) persistedFootActivities.set(record.id,{...record,selected:true});
+    footActivities=[...persistedFootActivities.values()];
+    buildFootBatches();
+    renderFootQueue();
+  } catch (err) { console.warn('Saved on-foot activities could not be loaded:',err); }
+}
+
+async function saveFootActivities(activities) {
+  const database=await openMapArchiveDatabase();
+  try {
+    await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(FOOT_ACTIVITY_STORE_NAME,'readwrite');
+      const store=transaction.objectStore(FOOT_ACTIVITY_STORE_NAME);
+      for (const activity of activities) {
+        const record=compactFootActivity(activity);
+        const prior=persistedFootActivities.get(record.id);
+        store.put(prior?.matchedGeoJson ? {...record,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality} : record);
+      }
+      transaction.oncomplete=resolve;
+      transaction.onerror=()=>reject(transaction.error || new Error('Could not save on-foot activities.'));
+    });
+    for (const activity of activities) {
+      const record=compactFootActivity(activity), prior=persistedFootActivities.get(record.id);
+      persistedFootActivities.set(record.id,prior?.matchedGeoJson ? {...record,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality,selected:true} : {...record,selected:true});
+    }
+    footActivities=[...persistedFootActivities.values()];
+    buildFootBatches(); renderFootQueue();
+  } finally { database.close(); }
+}
+
+async function saveFootActivityMatch(activity) {
+  const ids=Array.isArray(activity.repeatJourneyIds) && activity.repeatJourneyIds.length ? activity.repeatJourneyIds : [journeyIdentity(activity)];
+  for (const id of ids) {
+    const source=persistedFootActivities.get(id) || activity;
+    const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,matchQuality:activity.matchQuality});
+    await footArchiveOperation('readwrite',store=>store.put(record));
+    persistedFootActivities.set(record.id,{...record,selected:true});
+  }
+  footActivities=[...persistedFootActivities.values()];
 }
 
 function savedMapJourneysExcluding(excludedIds=new Set()) {
@@ -787,6 +875,7 @@ document.getElementById('clearLocalProgress').addEventListener('click', clearLoc
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 loadLocalProgress();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
+footArchiveReadyPromise=loadFootActivityArchive();
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
@@ -801,7 +890,7 @@ fileInput.addEventListener('change', async () => {
   status(`Reading ${file.name} (${formatBytes(file.size)})…`);
 
   try {
-    await mapArchiveReadyPromise;
+    await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
     const text = await file.text();
     status(`Read complete. Identifying this file…`);
     const sourceFileHash = await timelineFileHash(text);
@@ -818,6 +907,7 @@ fileInput.addEventListener('change', async () => {
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
+    await saveFootActivities(onFootJourneys);
 
     const needsMileageRebuild=
       persistedProcessedJourneyIds.size>0 &&
@@ -943,6 +1033,7 @@ document.getElementById('fitMap').addEventListener('click', fitSelected);
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
+startFootBatch.addEventListener('click', startNextFootBatch);
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
 
@@ -1146,6 +1237,68 @@ function diagnosticText() {
 
 function fmt(n) {
   return Number(n || 0).toLocaleString();
+}
+
+function footAreaKey(activity) {
+  const point=activity?.points?.[0];
+  if (!point) return 'Unknown area';
+  return `${(Math.floor(Number(point.lat)*10)/10).toFixed(1)}, ${(Math.floor(Number(point.lng)*10)/10).toFixed(1)}`;
+}
+
+function buildFootBatches() {
+  const representatives=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2));
+  const byArea=new Map();
+  for (const activity of representatives) {
+    const key=footAreaKey(activity);
+    if (!byArea.has(key)) byArea.set(key,[]);
+    byArea.get(key).push(activity);
+  }
+  footBatches=[...byArea.entries()].map(([area,activities])=>({
+    id:area, area, activities, matched:activities.filter(a=>a.matchedGeoJson).length
+  })).sort((a,b)=>b.activities.length-a.activities.length);
+}
+
+function renderFootQueue() {
+  if (!footActivities.length) { footQueueCard.classList.add('hidden'); return; }
+  footQueueCard.classList.remove('hidden');
+  const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
+  const matched=footBatches.reduce((n,b)=>n+b.matched,0);
+  footQueueTotal.querySelector('strong').textContent=distinct.toLocaleString();
+  footQueueIntro.textContent=`${footActivities.length.toLocaleString()} activities · ${distinct.toLocaleString()} distinct routes · ${matched.toLocaleString()} matched. Areas are processed one at a time to keep pedestrian-matcher requests controlled.`;
+  footBatchList.innerHTML='';
+  for (const batch of footBatches) {
+    const row=document.createElement('div'); row.className='foot-batch';
+    const copy=document.createElement('div');
+    const title=document.createElement('strong'); title.textContent=`Local area ${batch.area}`;
+    const detail=document.createElement('span'); detail.textContent=`${batch.matched} / ${batch.activities.length} distinct routes matched`;
+    copy.append(title,detail);
+    const state=document.createElement('span'); state.className=`foot-batch-status ${batch.matched===batch.activities.length?'': 'pending'}`;
+    state.textContent=batch.matched===batch.activities.length ? 'Complete' : 'Queued';
+    row.append(copy,state); footBatchList.append(row);
+  }
+  const next=footBatches.find(batch=>batch.matched<batch.activities.length);
+  startFootBatch.disabled=footMatching || !next;
+  startFootBatch.textContent=footMatching ? 'Matching area…' : next ? `Match next area (${next.activities.length-next.matched} routes)` : 'All areas matched';
+}
+
+async function startNextFootBatch() {
+  if (footMatching) return;
+  const batch=footBatches.find(item=>item.matched<item.activities.length);
+  if (!batch) return;
+  footMatching=true; renderFootQueue();
+  try {
+    for (const activity of batch.activities.filter(item=>!item.matchedGeoJson)) {
+      const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) { activity.matchError=data.detail || `HTTP ${response.status}`; continue; }
+      activity.matchedGeoJson=data.geojson;
+      activity.matchQuality=assessMatchQuality(activity,data);
+      await saveFootActivityMatch(activity);
+      batch.matched++;
+      renderFootQueue(); renderMap();
+      await new Promise(resolve=>setTimeout(resolve,1100));
+    }
+  } finally { footMatching=false; buildFootBatches(); renderFootQueue(); renderMap(); }
 }
 
 
@@ -1623,6 +1776,7 @@ function initMap() {
     traceLayer = L.layerGroup();
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
+    footLayer = L.layerGroup().addTo(map);
     canonicalReferenceLayer = L.layerGroup();
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
@@ -1633,6 +1787,7 @@ function initMap() {
         'Credited roads (black)': creditedLayer,
         'Matched journeys (black)': matchedLayer,
         'Raw Timeline traces (black)': traceLayer,
+        'On-foot paths (green)': footLayer,
         'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
@@ -2652,6 +2807,7 @@ function renderMap() {
   traceLayer.clearLayers();
   matchedLayer.clearLayers();
   creditedLayer.clearLayers();
+  footLayer?.clearLayers();
 
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
@@ -2683,6 +2839,11 @@ function renderMap() {
         }
       }).addTo(matchedLayer);
     }
+  }
+
+  for (const activity of footActivities) {
+    if (!activity.matchedGeoJson || !footLayer) continue;
+    L.geoJSON(activity.matchedGeoJson,{style:{color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane'}}).addTo(footLayer);
   }
 
   const credited = buildCreditedSegments(drawable);
