@@ -62,21 +62,22 @@
         </div>
       </div>
 
-      <div id="easyProgress" class="easy-progress hidden">
-        <div class="progress-heading">
-          <div>
-            <p class="eyebrow">Road activity queue</p>
-            <strong>Easy import progress</strong>
-          </div>
-          <div id="easyProgressText" class="progress-status" aria-live="polite">
-            <strong>Waiting…</strong>
-            <span>Preparing routes</span>
-          </div>
+    </section>
+
+    <section id="easyProgress" class="card matcher-card easy-progress hidden">
+      <div class="progress-heading">
+        <div>
+          <p class="eyebrow">Road activity queue</p>
+          <strong>Driving progress</strong>
         </div>
-        <progress id="easyProgressBar" value="0" max="100"></progress>
-        <div class="actions">
-          <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
+        <div id="easyProgressText" class="progress-status" aria-live="polite">
+          <strong>Waiting…</strong>
+          <span>Preparing routes</span>
         </div>
+      </div>
+      <progress id="easyProgressBar" value="0" max="100"></progress>
+      <div class="actions">
+        <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
       </div>
     </section>
 
@@ -126,6 +127,26 @@
       </div>
     </section>
 
+    <section id="travelStatsCard" class="card travel-stats-card hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Your travel record</p>
+          <h2>Collective statistics</h2>
+        </div>
+      </div>
+      <div class="travel-stats-grid">
+        <div class="travel-stat primary"><span>Total distance</span><strong id="totalDistanceTravelled">0 mi</strong></div>
+        <div class="travel-stat"><span>By driving</span><strong id="drivingDistanceTravelled">0 mi</strong></div>
+        <div class="travel-stat"><span>On foot</span><strong id="footDistanceTravelled">0 mi</strong></div>
+        <div class="travel-stat primary"><span>Unique distance</span><strong id="uniqueDistanceTravelled">0 mi</strong></div>
+        <div class="travel-stat"><span>Unique driving</span><strong id="uniqueDrivingDistance">0 mi</strong></div>
+        <div class="travel-stat"><span>Unique on foot</span><strong id="uniqueFootDistance">0 mi</strong></div>
+        <div class="travel-stat"><span>Driving that was unique</span><strong id="uniqueDrivingPercent">0.0%</strong></div>
+        <div class="travel-stat"><span>Activities recorded</span><strong id="recordedActivityCount">0</strong></div>
+      </div>
+      <p class="muted travel-stats-note">Totals retain every Timeline activity. Unique figures combine matching evidence so repeated routes count once within each travel mode.</p>
+    </section>
+
     <section id="summaryCard" class="card hidden">
       <h2 id="journeyStepTitle">3. Choose journeys</h2>
       <div class="stats">
@@ -146,11 +167,11 @@
       <div id="journeyList" class="journey-list"></div>
     </section>
 
-    <section id="motorwayCard" class="card hidden">
-      <div class="motorway-heading">
+    <details id="motorwayCard" class="card motorway-details hidden">
+      <summary class="details-summary motorway-heading">
         <div>
-          <h2>Motorway progress</h2>
-          <p class="muted">Motorway figures use directly matched evidence only. Total road mileage comes from Google Timeline, so repeat routes do not invent mileage on individual motorways.</p>
+          <h2>Motorway aggregate</h2>
+          <p class="muted">Matched motorway mileage and the roads discovered from your driving.</p>
         </div>
         <div class="motorway-controls">
           <div class="unit-toggle" role="group" aria-label="Distance units">
@@ -160,22 +181,23 @@
           <div class="motorway-total"><strong id="timelineRoadMileage">0 mi</strong><span>Timeline road miles</span></div>
           <div class="motorway-total"><strong id="motorwaysDiscovered">0</strong><span>discovered</span></div>
         </div>
-      </div>
+      </summary>
+      <p class="muted motorway-expanded-intro">Motorway figures use directly matched evidence only. Total road mileage comes from Google Timeline, so repeat routes do not invent mileage on individual motorways.</p>
       <div id="motorwayList" class="motorway-list"></div>
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
-    </section>
+    </details>
 
-    <section id="canonicalMotorwayCard" class="card hidden">
-      <div class="canonical-heading">
+    <details id="canonicalMotorwayCard" class="card canonical-details hidden">
+      <summary class="details-summary canonical-heading">
         <div>
-                    <h2>Canonical motorway coverage</h2>
+          <h2>Motorway progress</h2>
           <p class="muted">Each discovered motorway is compared against a fixed OpenStreetMap reference, so repeated trips and opposite carriageways credit the same physical road sections.</p>
         </div>
         <div class="canonical-score">
           <strong id="canonicalRoadsReady">0</strong>
           <span>references ready</span>
         </div>
-      </div>
+      </summary>
       <div class="regional-progress-grid" aria-label="Regional motorway completion">
         <div class="regional-progress-card">
           <span>Great Britain</span>
@@ -213,7 +235,7 @@
       <p id="canonicalMotorwayStatus" class="muted canonical-status">Canonical motorway references will load as motorways are discovered.</p>
       <button id="canonicalRetry" class="secondary hidden" type="button">Retry motorway references</button>
       <p class="muted canonical-footnote">Canonical motorway references are loaded from a prebuilt cache first; live exact-ref OpenStreetMap/Overpass construction is used only as a fallback. Each motorway is sampled into approximately 100 m canonical sections; nearby samples from opposite carriageways are collapsed into one physical section. This remains POC infrastructure — production should cache and version the reference network server-side.</p>
-    </section>
+    </details>
 
     <section id="mapCard" class="card hidden">
       <div class="map-heading">
@@ -282,7 +304,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260831-on-foot-inventory"></script>
+  <script src="app.js?v=20260831-dashboard"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
