@@ -911,7 +911,6 @@ document.getElementById('changeManualSource').addEventListener('click', returnTo
 document.getElementById('selectAllMotorways').addEventListener('click', () => setAllManualMotorways(true));
 document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
-document.getElementById('clearLocalProgress').addEventListener('click', clearLocalProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 loadLocalProgress();
 loadFootPlaceNames();
