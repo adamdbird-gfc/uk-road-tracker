@@ -122,9 +122,16 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .mode-card span { display: block; font-weight: 500; line-height: 1.4; opacity: .9; }
 .secondary-mode { background: #e9edf2; color: #172033; }
 .mode-note { margin: 12px 2px 0; font-size: .88rem; }
-.easy-progress { margin-top: 16px; padding: 14px; border-radius: 12px; background: #f4f6f8; }
-.progress-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
-progress { width: 100%; height: 16px; }
+.easy-progress { margin-top:16px; padding:18px; border:1px solid #dde5ee; border-radius:16px; background:linear-gradient(135deg,#f6f9fc,#edf3f9); }
+.progress-heading { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:16px; }
+.progress-heading .eyebrow { margin-bottom:4px; color:#526b85; }
+.progress-heading > div:first-child > strong { display:block; font-size:1.2rem; }
+.progress-status { min-width:152px; padding:10px 12px; border-radius:12px; background:#fff; text-align:right; box-shadow:0 1px 0 rgba(23,32,51,.06); }
+.progress-status strong, .progress-status span { display:block; }
+.progress-status strong { font-size:1.12rem; line-height:1.15; }
+.progress-status span { margin-top:3px; color:#586579; font-size:.78rem; }
+.easy-progress progress { width:100%; height:12px; accent-color:#1477d4; }
+.easy-progress .actions { margin:16px 0 0; }
 .ignored-list { display: grid; gap: 6px; margin-top: 10px; max-height: 240px; overflow: auto; }
 .ignored-item { padding: 8px 10px; border-radius: 8px; background: #f4f6f8; font-size: .84rem; color: #657083; }
 @media (min-width: 760px) { .mode-grid { grid-template-columns: 1fr 1fr; } }
@@ -136,7 +143,7 @@ progress { width: 100%; height: 16px; }
 .motorway-total span { display:block; color:#657083; font-size:.72rem; }
 .motorway-list { display:grid; gap:13px; margin-top:14px; }
 .motorway-row { display:grid; grid-template-columns:52px 1fr 58px; gap:10px; align-items:center; }
-.motorway-ref { font-weight:800; font-size:1rem; }
+.motorway-ref { display:inline-flex; width:max-content; min-width:48px; justify-content:center; align-items:center; padding:5px 7px; border:1px solid #003f78; border-radius:4px; background:#005eb8; color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 1px rgba(0,36,76,.2); font-family:Arial,sans-serif; font-weight:800; font-size:.9rem; letter-spacing:.02em; line-height:1; }
 .motorway-bar { height:13px; background:#e6e9ee; border-radius:999px; overflow:hidden; }
 .motorway-fill { height:100%; background:#172033; border-radius:999px; min-width:2px; }
 .motorway-pct { text-align:right; font-weight:800; }
