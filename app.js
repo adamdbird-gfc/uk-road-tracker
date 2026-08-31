@@ -1507,6 +1507,12 @@ async function startEasyImport() {
   renderAll('Timeline.json');
   journeyList.style.display = 'none';
 
+  // The road and pedestrian matchers are independently throttled, so both queues
+  // can progress at the same time without adding pressure to either service.
+  if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
+    void startNextFootBatch();
+  }
+
   const candidates = currentImportJourneys().filter(j => j.points.length > 1);
   let completed = 0;
   let succeeded = 0;
@@ -1577,9 +1583,6 @@ async function startEasyImport() {
     scheduleLocalProgressSave();
   }
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
-  if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
-    await startNextFootBatch();
-  }
 }
 
 function renderAll(fileName) {
