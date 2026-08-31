@@ -22,7 +22,7 @@ TILES = {
     "gravesend": {"south": 51.425, "west": 0.350, "north": 51.445, "east": 0.385},
     # Covers the Charing Cross / Salisbury Square walking corridor and nearby
     # central-London activity without downloading the whole London network.
-    "central-london": {"south": 51.495, "west": -0.155, "north": 51.515, "east": -0.105},
+    "central-london": {"south": 51.500, "west": -0.145, "north": 51.515, "east": -0.105},
 }
 BOUNDS = TILES["gravesend"]
 ROWS = 4
@@ -147,10 +147,6 @@ def main() -> None:
                 "id": f"osm:{way_id}:{low}:{high}",
                 "properties": {
                     "segment_id": f"osm:{way_id}:{low}:{high}",
-                    "osm_way_id": way_id,
-                    "highway": highway,
-                    "name": tags.get("name"),
-                    "ref": tags.get("ref"),
                     "modes": modes,
                     "length_m": round(length, 2),
                 },
