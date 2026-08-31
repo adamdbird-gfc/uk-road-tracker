@@ -1577,6 +1577,9 @@ async function startEasyImport() {
     scheduleLocalProgressSave();
   }
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
+  if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
+    await startNextFootBatch();
+  }
 }
 
 function renderAll(fileName) {
