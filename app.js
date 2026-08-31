@@ -2540,7 +2540,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   for (const road of roads) {
     const row=document.createElement('div'); row.className='canonical-road-row';
     const top=document.createElement('div'); top.className='canonical-road-top';
-    const ref=document.createElement('div'); ref.className='canonical-road-ref';
+    const ref=document.createElement('div'); ref.className='canonical-road-ref motorway-ref';
     ref.textContent=road.region==='NI' ? `${road.ref} · NI` : road.ref;
     const progress=document.createElement('div'); progress.className='canonical-road-progress';
     const fill=document.createElement('div'); fill.className='canonical-road-fill';
