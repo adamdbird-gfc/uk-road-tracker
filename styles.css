@@ -235,10 +235,8 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 
 
 /* Data-source onboarding and manual motorway setup */
-.choice-grid { display:grid; gap:12px; margin-top:18px; }
-.choice-card { display:block; width:100%; min-height:104px; padding:18px; text-align:left; border-radius:14px; }
-.choice-card strong { display:block; margin-bottom:6px; font-size:1.08rem; }
-.choice-card span { display:block; font-weight:500; line-height:1.4; opacity:.9; }
+.choice-grid { display:grid; gap:10px; margin-top:18px; }
+.choice-card { display:block; width:100%; min-height:52px; padding:12px; text-align:center; border-radius:12px; }
 .secondary-choice { background:#e9edf2; color:#172033; }
 .test-feature-link { display:inline-flex; align-items:center; justify-content:center; margin-top:12px; padding:10px 14px; border:1px dashed #8a96a8; border-radius:10px; color:#345b9d; font-weight:700; text-decoration:none; }
 .test-feature-link:hover { background:#f4f6f8; }
@@ -376,16 +374,11 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .data-date-range strong { margin-right:4px; }
 
 
-.local-progress-notice { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:16px; padding:13px; border:1px solid #badfc7; border-radius:12px; background:#e7f5ec; }
+.local-progress-notice { display:flex; justify-content:center; margin-top:10px; }
 .local-progress-notice.hidden { display:none; }
-.local-progress-notice > div:first-child { display:grid; gap:3px; }
-.local-progress-actions { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-.local-progress-notice span { color:#356148; font-size:.8rem; line-height:1.4; }
-.local-progress-notice button { flex:0 0 auto; }
+.local-progress-actions { display:flex; width:100%; }
+.local-progress-notice button { width:100%; }
 .map-heading-actions { display:flex; align-items:center; gap:8px; }
 @media (max-width:600px) {
-  .local-progress-notice { align-items:stretch; flex-direction:column; }
-  .local-progress-actions { align-items:stretch; flex-direction:column; }
-  .local-progress-notice button { width:100%; }
   .map-heading-actions { align-items:stretch; flex-direction:column; }
 }
