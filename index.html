@@ -56,18 +56,19 @@
       <div id="fileStatus" class="muted" role="status" aria-live="polite">No file selected.</div>
 
       <div id="importModeCard" class="import-modes hidden">
-        <h3>How would you like to set it up?</h3>
+        <p class="eyebrow">Road activity queue</p>
+        <h3>How would you like to match these routes?</h3>
         <div class="mode-grid">
           <button id="easyImport" class="mode-card" type="button">
-            <strong>Easy import</strong>
-            <span>Automatically match every usable journey and build the cumulative road map.</span>
+            <strong>Easy load road activities</strong>
+            <span>Match one representative for each repeated road pattern and build the cumulative road map.</span>
           </button>
           <button id="detailedImport" class="mode-card secondary-mode" type="button">
-            <strong>Detailed import</strong>
-            <span>Review journeys individually and match them one at a time.</span>
+            <strong>Review road activities</strong>
+            <span>Review the representative routes individually and match them one at a time.</span>
           </button>
         </div>
-        <p class="muted mode-note">Journeys with fewer than 2 Timeline points are ignored because there is not enough trace data to credit roads reliably.</p>
+        <p class="muted mode-note">Walking and running activity is held separately for the future on-foot tracker. Road routes with fewer than 2 Timeline points are not sent to the matcher.</p>
       </div>
 
       <div id="easyProgress" class="easy-progress hidden">
