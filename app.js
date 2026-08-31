@@ -886,10 +886,10 @@ fileInput.addEventListener('change', async () => {
     showDiagnostics(file.name);
     renderIgnoredJourneys();
 
-    if (!diagnostics.passengerVehicleActivities) {
+    if (!diagnostics.passengerVehicleActivities && !diagnostics.onFootActivities) {
       throw new Error(
         `Diagnostic result: ${diagnostics.semanticSegments.toLocaleString()} semantic segments were found, ` +
-        `but 0 IN_PASSENGER_VEHICLE activities were detected.`
+        `but no road or on-foot activities were detected.`
       );
     }
 
