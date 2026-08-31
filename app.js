@@ -81,6 +81,17 @@ const footProgressBar = document.getElementById('footProgressBar');
 const startFootBatch = document.getElementById('startFootBatch');
 const pauseFootMatching = document.getElementById('pauseFootMatching');
 const clearImportedData = document.getElementById('clearImportedData');
+const travelStatsCard = document.getElementById('travelStatsCard');
+const travelStats = {
+  total:document.getElementById('totalDistanceTravelled'),
+  driving:document.getElementById('drivingDistanceTravelled'),
+  foot:document.getElementById('footDistanceTravelled'),
+  uniqueTotal:document.getElementById('uniqueDistanceTravelled'),
+  uniqueDriving:document.getElementById('uniqueDrivingDistance'),
+  uniqueFoot:document.getElementById('uniqueFootDistance'),
+  uniqueDrivingPercent:document.getElementById('uniqueDrivingPercent'),
+  activities:document.getElementById('recordedActivityCount')
+};
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
@@ -288,6 +299,8 @@ async function loadMapArchive() {
     for (const record of records || []) {
       if (record?.id && record?.matchedGeoJson) persistedMapJourneys.set(record.id,record);
     }
+    renderRoadQueue();
+    renderCollectiveStats();
   } catch (err) {
     console.warn('Saved map journeys could not be loaded:',err);
   }
@@ -333,6 +346,7 @@ async function loadFootActivityArchive() {
     footActivities=[...persistedFootActivities.values()];
     buildFootBatches();
     renderFootQueue();
+    renderCollectiveStats();
     // Saved walking/running routes are a persistent queue: after a refresh or a
     // browser restart, continue with any representative routes still awaiting a match.
     if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
@@ -360,7 +374,7 @@ async function saveFootActivities(activities) {
       persistedFootActivities.set(record.id,prior?.matchedGeoJson ? {...record,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality,selected:true} : {...record,selected:true});
     }
     footActivities=[...persistedFootActivities.values()];
-    buildFootBatches(); renderFootQueue();
+    buildFootBatches(); renderFootQueue(); renderCollectiveStats();
   } finally { database.close(); }
 }
 
@@ -373,6 +387,7 @@ async function saveFootActivityMatch(activity) {
     persistedFootActivities.set(record.id,{...record,selected:true});
   }
   footActivities=[...persistedFootActivities.values()];
+  renderCollectiveStats();
 }
 
 function savedMapJourneysExcluding(excludedIds=new Set()) {
@@ -1080,6 +1095,8 @@ document.getElementById('stopEasyImport').addEventListener('click', () => {
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
+unitMiles.addEventListener('click', event => event.stopPropagation());
+unitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 
 function resetOutput() {
@@ -1376,6 +1393,56 @@ function setFootProgressStatus(primary, secondary) {
   footProgressText.append(headline,detail);
 }
 
+function savedRoadRecords() {
+  const records=new Map(persistedMapJourneys);
+  for (const journey of journeys) {
+    if (journey?.matchedGeoJson) records.set(journeyIdentity(journey),journey);
+  }
+  return [...records.values()];
+}
+
+function segmentDistanceKm(segments) {
+  return segments.reduce((total,segment)=>total+haversineMetres(segment.a,segment.b)/1000,0);
+}
+
+function renderRoadQueue() {
+  if (easyImportRunning) return;
+  const routes=savedRoadRecords();
+  const activities=persistedJourneyMileageById.size;
+  if (!routes.length && !activities) return;
+  easyProgress.classList.remove('hidden');
+  easyProgressBar.max=Math.max(routes.length,1);
+  easyProgressBar.value=routes.length;
+  setEasyProgressStatus(
+    'Complete',
+    `${routes.length.toLocaleString()} route pattern${routes.length===1?'':'s'} mapped · ${activities.toLocaleString()} driving activit${activities===1?'y':'ies'}`
+  );
+  updateEasyImportPauseButton();
+}
+
+function renderCollectiveStats() {
+  if (!travelStatsCard) return;
+  const drivingKm=[...persistedJourneyMileageById.values()].reduce((total,value)=>total+(Number(value)||0),0);
+  const footKm=footActivities.reduce((total,activity)=>total+(Number(activity.googleDistanceKm)||0),0);
+  const roadUniqueKm=segmentDistanceKm(buildCreditedSegments(savedRoadRecords()));
+  const footRepresentatives=groupRepeatedJourneys(footActivities.filter(activity=>activity?.points?.length>=2));
+  const footUniqueKm=segmentDistanceKm(buildCreditedSegments(footRepresentatives));
+  const totalKm=drivingKm+footKm;
+  const uniqueKm=roadUniqueKm+footUniqueKm;
+  const hasData=totalKm>0 || uniqueKm>0 || footActivities.length || persistedMapJourneys.size;
+  travelStatsCard.classList.toggle('hidden',!hasData);
+  if (!hasData) return;
+
+  travelStats.total.textContent=displayDistance(totalKm);
+  travelStats.driving.textContent=displayDistance(drivingKm);
+  travelStats.foot.textContent=displayDistance(footKm);
+  travelStats.uniqueTotal.textContent=displayDistance(uniqueKm);
+  travelStats.uniqueDriving.textContent=displayDistance(roadUniqueKm);
+  travelStats.uniqueFoot.textContent=displayDistance(footUniqueKm);
+  travelStats.uniqueDrivingPercent.textContent=drivingKm ? `${(roadUniqueKm/drivingKm*100).toFixed(1)}%` : '0.0%';
+  travelStats.activities.textContent=(persistedJourneyMileageById.size+footActivities.length).toLocaleString();
+}
+
 async function startNextFootBatch() {
   if (footMatching) return;
   const candidates=footBatches.flatMap(batch=>batch.activities.map(activity=>({batch,activity})))
@@ -1483,6 +1550,8 @@ function updateEasyImportPauseButton() {
   const button = document.getElementById('stopEasyImport');
   if (!button) return;
 
+  button.classList.toggle('hidden',!easyImportRunning);
+
   if (!easyImportRunning) {
     button.textContent = 'Pause';
     button.disabled = true;
@@ -1509,6 +1578,7 @@ async function startEasyImport() {
   easyImportRunning = true;
   updateEasyImportPauseButton();
   importModeCard.classList.add('hidden');
+  dataSourceCard.classList.add('hidden');
   easyProgress.classList.remove('hidden');
   updateEasyImportPauseButton();
 
@@ -1591,6 +1661,7 @@ async function startEasyImport() {
     scheduleLocalProgressSave();
   }
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
+  renderRoadQueue();
 }
 
 function renderAll(fileName) {
@@ -2958,6 +3029,8 @@ function renderMotorwayDashboard(drawable) {
 }
 
 function renderMap() {
+  renderRoadQueue();
+  renderCollectiveStats();
   if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
 
   traceLayer.clearLayers();
