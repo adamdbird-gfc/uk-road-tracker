@@ -4,6 +4,7 @@ let footBatches = [];
 let footMatching = false;
 let footMatchingBatchId = null;
 let footMatchingProgress = null;
+let footMatchingError = null;
 const footPlaceNames = new Map();
 const footPlaceLookups = new Set();
 let diagnostics = {};
@@ -1337,7 +1338,9 @@ function renderFootQueue() {
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
   footQueueTotal.querySelector('strong').textContent=distinct.toLocaleString();
-  footQueueIntro.textContent=footMatchingProgress
+  footQueueIntro.textContent=footMatchingError
+    ? `The last on-foot matching attempt stopped: ${footMatchingError}`
+    : footMatchingProgress
     ? `Matching ${footMatchingProgress.completed} / ${footMatchingProgress.total} routes in ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable to match.`
     : `${footActivities.length.toLocaleString()} activities · ${distinct.toLocaleString()} distinct routes · ${matched.toLocaleString()} matched${failed ? ` · ${failed.toLocaleString()} unable to match` : ''}. Areas are processed in small slices to keep pedestrian-matcher requests controlled.`;
   footBatchList.innerHTML='';
@@ -1364,27 +1367,33 @@ async function startNextFootBatch() {
   if (!batch) return;
   const candidates=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).slice(0,10);
   footMatching=true;
+  footMatchingError=null;
   footMatchingBatchId=batch.id;
   footMatchingProgress={area:footPlaceNames.get(batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
   renderFootQueue();
   try {
     for (const activity of candidates) {
-      const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
-      const data=await response.json().catch(()=>({}));
-      if (!response.ok) {
-        activity.matchError=data.detail || `HTTP ${response.status}`;
-        footMatchingProgress.failed++;
-      } else {
+      try {
+        const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
+        const data=await response.json().catch(()=>({}));
+        if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
         activity.matchedGeoJson=data.geojson;
         activity.matchQuality=assessMatchQuality(activity,data);
+        await saveFootActivityMatch(activity);
         batch.matched++;
         footMatchingProgress.succeeded++;
+      } catch (err) {
+        activity.matchError=err.message || String(err);
+        footMatchingProgress.failed++;
+        try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
       }
-      await saveFootActivityMatch(activity);
       footMatchingProgress.completed++;
-      renderFootQueue(); renderMap();
+      renderFootQueue();
+      try { renderMap(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
       await new Promise(resolve=>setTimeout(resolve,1100));
     }
+  } catch (err) {
+    footMatchingError=err.message || String(err);
   } finally {
     footMatching=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue(); renderMap();
