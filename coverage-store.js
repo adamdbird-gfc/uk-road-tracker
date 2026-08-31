@@ -77,7 +77,8 @@
       id: String(activity.id), sourceId: String(activity.sourceId || ''), mode, state,
       startedAt: activity.startedAt || null, endedAt: activity.endedAt || null,
       tileIds: [...new Set((activity.tileIds || []).map(String))], points,
-      matcherVersion: activity.matcherVersion || null, createdAt: activity.createdAt || new Date().toISOString(),
+      matcherVersion: activity.matcherVersion || null, matchedGeoJson: activity.matchedGeoJson || null,
+      matchError: activity.matchError || null, createdAt: activity.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
   }
@@ -106,12 +107,24 @@
     return transaction(STORES.tiles, 'readwrite', store => store.put({...tile, updatedAt: new Date().toISOString()}));
   }
   function getAll(storeName) { return transaction(storeName, 'readonly', store => store.getAll()); }
+  async function clearActivitiesForTile(tileId) {
+    const db = await open();
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORES.activities, 'readwrite');
+        const request = tx.objectStore(STORES.activities).index('by-tile').openCursor(IDBKeyRange.only(String(tileId)));
+        request.onerror = () => reject(request.error || new Error('Coverage activity removal failed.'));
+        request.onsuccess = () => { const cursor = request.result; if (cursor) { cursor.delete(); cursor.continue(); } };
+        tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error || new Error('Coverage activity removal was aborted.'));
+      });
+    } finally { db.close(); }
+  }
 
   window.RoadprintsCoverageStore = Object.freeze({
     DB_NAME, DB_VERSION, STORES, putActivity, putEvidence, putJob, putTile,
     getActivities: () => getAll(STORES.activities),
     getEvidence: () => getAll(STORES.evidence),
     getJobs: () => getAll(STORES.jobs),
-    getTiles: () => getAll(STORES.tiles)
+    getTiles: () => getAll(STORES.tiles), clearActivitiesForTile
   });
 })();

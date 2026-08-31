@@ -12,12 +12,19 @@ import json
 import math
 import time
 import gzip
+import argparse
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-BOUNDS = {"south": 51.425, "west": 0.350, "north": 51.445, "east": 0.385}
+TILES = {
+    "gravesend": {"south": 51.425, "west": 0.350, "north": 51.445, "east": 0.385},
+    # Covers the Charing Cross / Salisbury Square walking corridor and nearby
+    # central-London activity without downloading the whole London network.
+    "central-london": {"south": 51.495, "west": -0.155, "north": 51.515, "east": -0.105},
+}
+BOUNDS = TILES["gravesend"]
 ROWS = 4
 COLUMNS = 4
 USER_AGENT = "Roadprints-POC/0.1 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"
@@ -25,7 +32,7 @@ OUTPUT = Path(__file__).resolve().parents[1] / "gravesend-network-v1.json.gz"
 
 EXCLUDED_HIGHWAYS = {
     "abandoned", "construction", "elevator", "platform", "proposed",
-    "raceway", "razed", "rest_area", "services",
+    "raceway", "razed", "rest_area", "services", "street_lamp",
 }
 NON_DRIVING_HIGHWAYS = {
     "bridleway", "corridor", "cycleway", "footway", "path", "pedestrian",
@@ -80,6 +87,12 @@ def fetch_tile(west: float, south: float, east: float, north: float) -> bytes:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tile", choices=sorted(TILES), nargs="?", default="gravesend")
+    args = parser.parse_args()
+    global BOUNDS, OUTPUT
+    BOUNDS = TILES[args.tile]
+    OUTPUT = Path(__file__).resolve().parents[1] / f"{args.tile}-network-v1.json.gz"
     lat_step = (BOUNDS["north"] - BOUNDS["south"]) / ROWS
     lon_step = (BOUNDS["east"] - BOUNDS["west"]) / COLUMNS
     nodes: dict[int, tuple[float, float]] = {}
@@ -151,7 +164,7 @@ def main() -> None:
     result = {
         "type": "FeatureCollection",
         "metadata": {
-            "name": "Gravesend bounded multimodal feasibility network",
+            "name": f"{args.tile.replace('-', ' ').title()} bounded multimodal feasibility network",
             "version": "v1",
             "source": "OpenStreetMap contributors",
             "license": "ODbL",

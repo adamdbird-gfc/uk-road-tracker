@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260831-on-foot-inventory" />
+  <link rel="stylesheet" href="styles.css?v=20260831-central-london-queue" />
 </head>
 <body>
   <main>
@@ -256,8 +256,13 @@
 
     <section id="experimentalCoverageCard" class="card hidden">
       <p class="eyebrow">Experimental coverage preview</p>
-      <h2>Gravesend: driven + on foot</h2>
+      <h2 id="coverageTitle">Gravesend: driven + on foot</h2>
       <p class="muted">A bounded proof of one combined coverage map. Saved driving matches are read from this device; walking and running results are temporary and must be tested from a Timeline file below.</p>
+      <label class="coverage-tile-label" for="coverageTile">Experimental area</label>
+      <select id="coverageTile">
+        <option value="gravesend">Gravesend, Kent</option>
+        <option value="central-london">Central London</option>
+      </select>
       <label class="file-button" for="coverageTimelineFile">Choose Timeline JSON for on-foot inventory</label>
       <input id="coverageTimelineFile" type="file" accept="application/json,.json" />
       <div id="coverageFileStatus" class="muted map-status" role="status" aria-live="polite">Saved driving evidence will load automatically.</div>
@@ -265,14 +270,14 @@
         <div class="coverage-inventory-summary">
           <div><strong id="coverageUsableActivities">0</strong><span>usable walk/run activities</span></div>
           <div><strong id="coverageAreaCount">0</strong><span>areas represented</span></div>
-          <div><strong id="coverageGravesendActivities">0</strong><span>in the current Gravesend tile</span></div>
+          <div><strong id="coverageGravesendActivities">0</strong><span id="coverageTileActivityLabel">in the current Gravesend tile</span></div>
         </div>
         <p class="muted">This inventory is local and sends nothing to a matcher. The areas below are approximate activity clusters, used to decide which network tile to add next.</p>
         <div id="coverageAreaList" class="coverage-area-list"></div>
       </div>
       <div class="actions">
         <button id="coverageMatchActivities" type="button" disabled>Match Gravesend walking/running</button>
-        <button id="coverageClearActivities" class="secondary" type="button" disabled>Clear temporary on-foot result</button>
+        <button id="coverageClearActivities" class="secondary" type="button" disabled>Reset experimental tile results</button>
       </div>
       <div class="coverage-proof-stats">
         <div><strong id="coverageNetworkMiles">…</strong><span>eligible network miles</span></div>
@@ -298,7 +303,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js?v=20260831-on-foot-inventory"></script>
-  <script src="coverage-store.js?v=20260831-coverage-model"></script>
-  <script src="coverage-preview.js?v=20260831-on-foot-inventory"></script>
+  <script src="coverage-store.js?v=20260831-central-london-queue"></script>
+  <script src="coverage-preview.js?v=20260831-central-london-queue"></script>
 </body>
 </html>
