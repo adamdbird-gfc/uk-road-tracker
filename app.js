@@ -2,6 +2,7 @@ let journeys = [];
 let footActivities = [];
 let footBatches = [];
 let footMatching = false;
+let footMatchingPaused = false;
 let footMatchingBatchId = null;
 let footMatchingProgress = null;
 let footMatchingError = null;
@@ -75,10 +76,10 @@ const ignoredCard = document.getElementById('ignoredCard');
 const ignoredCount = document.getElementById('ignoredCount');
 const ignoredList = document.getElementById('ignoredList');
 const footQueueCard = document.getElementById('footQueueCard');
-const footQueueTotal = document.getElementById('footQueueTotal');
-const footQueueIntro = document.getElementById('footQueueIntro');
-const footBatchList = document.getElementById('footBatchList');
+const footProgressText = document.getElementById('footProgressText');
+const footProgressBar = document.getElementById('footProgressBar');
 const startFootBatch = document.getElementById('startFootBatch');
+const pauseFootMatching = document.getElementById('pauseFootMatching');
 const clearImportedData = document.getElementById('clearImportedData');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
@@ -1054,6 +1055,13 @@ document.getElementById('clearMatches').addEventListener('click', clearMatchedRo
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 startFootBatch.addEventListener('click', startNextFootBatch);
+pauseFootMatching.addEventListener('click',()=>{
+  if (!footMatching) return;
+  footMatchingPaused=!footMatchingPaused;
+  pauseFootMatching.textContent=footMatchingPaused ? 'Resume' : 'Pause';
+  pauseFootMatching.setAttribute('aria-pressed',String(footMatchingPaused));
+  renderFootQueue();
+});
 clearImportedData.addEventListener('click', clearLocalProgress);
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
@@ -1337,43 +1345,52 @@ function renderFootQueue() {
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
-  footQueueTotal.querySelector('strong').textContent=distinct.toLocaleString();
-  footQueueIntro.textContent=footMatchingError
-    ? `The last on-foot matching attempt stopped: ${footMatchingError}`
-    : footMatchingProgress
-    ? `Matching ${footMatchingProgress.completed} / ${footMatchingProgress.total} routes in ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable to match.`
-    : `${footActivities.length.toLocaleString()} activities · ${distinct.toLocaleString()} distinct routes · ${matched.toLocaleString()} matched${failed ? ` · ${failed.toLocaleString()} unable to match` : ''}. Areas are processed in small slices to keep pedestrian-matcher requests controlled.`;
-  footBatchList.innerHTML='';
-  for (const batch of footBatches) {
-    const row=document.createElement('div'); row.className='foot-batch';
-    const copy=document.createElement('div');
-    const title=document.createElement('strong'); title.textContent=footPlaceNames.get(batch.id) || 'Finding place name…';
-    const detail=document.createElement('span'); detail.textContent=`${batch.matched} / ${batch.activities.length} matched${batch.failed ? ` · ${batch.failed} unable to match` : ''}`;
-    copy.append(title,detail);
-    const pending=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length;
-    const state=document.createElement('span'); state.className=`foot-batch-status ${footMatchingBatchId===batch.id ? 'running' : pending ? 'pending' : ''}`;
-    state.textContent=footMatchingBatchId===batch.id ? 'Matching' : pending ? 'Queued' : batch.failed ? 'Needs review' : 'Complete';
-    row.append(copy,state); footBatchList.append(row);
-  }
+  footProgressBar.max=distinct || 1;
+  footProgressBar.value=Math.min(distinct,matched+failed);
+  setFootProgressStatus(
+    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : `${matched + failed} / ${distinct}`,
+    footMatchingError ? footMatchingError : footMatchingProgress
+      ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
+      : `${matched} matched${failed ? ` · ${failed} unable` : ''} · ${footActivities.length} activities`
+  );
   const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
   startFootBatch.disabled=footMatching || !next;
-  const nextCount=next ? Math.min(10,next.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length) : 0;
-  startFootBatch.textContent=footMatching ? 'Matching routes…' : next ? `Match next routes (${nextCount})` : 'All areas processed';
+  const queued=footBatches.reduce((count,batch)=>count+batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length,0);
+  startFootBatch.textContent=footMatching ? 'Matching queued routes…' : next ? `Match queued routes (${queued})` : 'All areas processed';
+  pauseFootMatching.classList.toggle('hidden',!footMatching);
+  pauseFootMatching.textContent=footMatchingPaused ? 'Resume' : 'Pause';
+  pauseFootMatching.setAttribute('aria-pressed',String(footMatchingPaused));
+}
+
+function setFootProgressStatus(primary, secondary) {
+  footProgressText.replaceChildren();
+  const headline=document.createElement('strong');
+  headline.textContent=primary;
+  const detail=document.createElement('span');
+  detail.textContent=secondary;
+  footProgressText.append(headline,detail);
 }
 
 async function startNextFootBatch() {
   if (footMatching) return;
-  const batch=footBatches.find(item=>item.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError));
-  if (!batch) return;
-  const candidates=batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).slice(0,10);
+  const candidates=footBatches.flatMap(batch=>batch.activities.map(activity=>({batch,activity})))
+    .filter(({activity})=>!activity.matchedGeoJson && !activity.matchError);
+  if (!candidates.length) return;
   await showFootMap();
   footMatching=true;
+  footMatchingPaused=false;
   footMatchingError=null;
-  footMatchingBatchId=batch.id;
-  footMatchingProgress={area:footPlaceNames.get(batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
+  footMatchingBatchId=candidates[0].batch.id;
+  footMatchingProgress={area:footPlaceNames.get(candidates[0].batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
   renderFootQueue();
   try {
-    for (const activity of candidates) {
+    for (const {batch,activity} of candidates) {
+      while (footMatchingPaused) {
+        renderFootQueue();
+        await new Promise(resolve=>setTimeout(resolve,250));
+      }
+      footMatchingBatchId=batch.id;
+      footMatchingProgress.area=footPlaceNames.get(batch.id) || 'this local area';
       try {
         const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
         const data=await response.json().catch(()=>({}));
@@ -1390,13 +1407,13 @@ async function startNextFootBatch() {
       }
       footMatchingProgress.completed++;
       renderFootQueue();
-      try { renderMap(); fitFootRoutes(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
+      try { renderMap(); if (footMatchingProgress.completed===1) fitFootRoutes(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
       await new Promise(resolve=>setTimeout(resolve,1100));
     }
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
-    footMatching=false; footMatchingBatchId=null; footMatchingProgress=null;
+    footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue(); renderMap();
   }
 }
