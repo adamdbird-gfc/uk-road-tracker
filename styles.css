@@ -149,6 +149,13 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .motorway-pct { text-align:right; font-weight:800; }
 .motorway-meta { grid-column:2 / 4; margin-top:-7px; font-size:.72rem; color:#657083; }
 .motorway-footnote { margin-top:16px; font-size:.78rem; }
+.foot-batch-list { display:grid; gap:8px; margin-top:14px; }
+.foot-batch { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:11px 12px; border:1px solid #c8ddcf; border-radius:11px; background:#f4faf5; }
+.foot-batch strong, .foot-batch span { display:block; }
+.foot-batch span { margin-top:3px; color:#587063; font-size:.78rem; }
+.foot-batch-status { padding:5px 8px; border-radius:999px; background:#dff1e4; color:#24663b; font-size:.74rem; font-weight:800; }
+.foot-batch-status.pending { background:#e9edf2; color:#556276; }
+.foot-batch-status.running { background:#e4f0ff; color:#145eaa; }
 
 .motorway-controls {
   display: flex;
