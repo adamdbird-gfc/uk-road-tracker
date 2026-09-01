@@ -62,6 +62,8 @@ let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
 const canonicalRoads = new Map();
 let canonicalLoadQueueRunning = false;
+let canonicalCoverageDirty = true;
+let motorwayAggregateDirty = true;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 
 const fileInput = document.getElementById('timelineFile');
@@ -649,6 +651,8 @@ function motorwayContributionsForJourney(journey) {
 }
 
 function recordJourneyProcessed(journey) {
+  canonicalCoverageDirty=true;
+  motorwayAggregateDirty=true;
   const ids=Array.isArray(journey?.repeatJourneyIds) && journey.repeatJourneyIds.length
     ? journey.repeatJourneyIds
     : [journeyIdentity(journey)];
@@ -980,6 +984,8 @@ mapCorrectionUndo.addEventListener('click',()=>{
   const previous=mapCorrectionUndoStack.pop();
   if (!previous) return;
   restoreMapCorrectionState(previous);
+  canonicalCoverageDirty=true;
+  motorwayAggregateDirty=true;
   mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
   scheduleLocalProgressSave();
   renderMap();
@@ -2329,7 +2335,12 @@ function handleMapCorrectionMapClick(event) {
     if (mapCorrectionMode==='restore') removedSegmentEvidence.delete(key);
     else removedSegmentEvidence.set(key,new Set(segment.journeyIds));
   }
+  const roadChanged=targets.some(segment=>segment.hasRoadEvidence);
   recordCanonicalCorrectionForSegments(targets,mapCorrectionMode);
+  if (roadChanged) {
+    canonicalCoverageDirty=true;
+    motorwayAggregateDirty=true;
+  }
   mapCorrectionUndo.disabled=false;
   scheduleLocalProgressSave();
   renderMap();
@@ -2608,6 +2619,7 @@ async function loadCanonicalRoad(ref, force=false) {
 
       if (cached) {
         hydrateCanonicalRoadFromCache(road, cached);
+        canonicalCoverageDirty=true;
         renderMap();
         return road;
       }
@@ -2696,6 +2708,7 @@ async function loadCanonicalRoad(ref, force=false) {
     );
     road.status='ready';
     road.source='live';
+    canonicalCoverageDirty=true;
 
     renderMap();
     return road;
@@ -2916,11 +2929,16 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   }
   canonicalMotorwayCard.classList.toggle('hidden',Boolean(refinementRoadRef));
 
-  if (drawable || onboardingMode==='manual' || onboardingMode==='saved') {
+  const shouldRecalculateCoverage=canonicalCoverageDirty &&
+    (drawable || onboardingMode==='manual' || onboardingMode==='saved');
+  if (shouldRecalculateCoverage) {
     for (const ref of discoveredRefs) {
       const road=canonicalRoadState(ref);
       if (road.status==='ready') road.coveredAnchorIds=calculateCanonicalCoverageForRoad(road,drawable || []);
     }
+    canonicalCoverageDirty=false;
+  }
+  if (drawable || onboardingMode==='manual' || onboardingMode==='saved') {
     ensureCanonicalRoadsForDiscoveredRefs(discoveredRefs);
   }
 
@@ -3316,7 +3334,8 @@ function renderMap() {
   // motorway summary/reference recalculates must never prevent it rendering.
   let dashboardError=null;
   try {
-    renderMotorwayDashboard(drawable);
+    renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
+    motorwayAggregateDirty=false;
   } catch (err) {
     dashboardError=err;
     console.error('Roadprints motorway mileage summary could not refresh:',err);
