@@ -14,7 +14,7 @@ OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
 
-app = FastAPI(title="UK Road Tracker API", version="0.7.0")
+app = FastAPI(title="UK Road Tracker API", version="0.8.0")
 PLACE_NAME_CACHE = {}
 
 app.add_middleware(
@@ -123,14 +123,14 @@ async def root():
         "service": "UK Road Tracker API",
         "status": "ok",
         "matcher": "OSRM public demo",
-        "version": "0.7.0",
-        "feature": "UK motorway matching plus isolated pedestrian matching",
+        "version": "0.8.0",
+        "feature": "UK motorway and A-road matching plus isolated pedestrian matching",
         "chunk_size": OSRM_CHUNK_SIZE,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.7.0"}
+    return {"status": "ok", "version": "0.8.0"}
 
 @app.get("/place-name")
 async def place_name(lat: float, lng: float):
