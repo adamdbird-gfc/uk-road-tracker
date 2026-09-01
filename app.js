@@ -2671,6 +2671,15 @@ async function hydrateCanonicalRoadFromDevice(road) {
   return true;
 }
 
+// A motorway reference can be restored without re-running the costly coverage
+// and mileage calculations. Keep the map and its reference count truthful as
+// each saved/cache road arrives; otherwise a long restore looks like a broken
+// empty map until the very last motorway has completed.
+function refreshCanonicalRestoreDisplay() {
+  renderCanonicalMotorwayDashboard();
+  if (map) renderMap({deferCalculations:true});
+}
+
 async function loadCanonicalRoad(ref, force=false) {
   const road=canonicalRoadState(ref);
   if (!force && ['loading','ready'].includes(road.status)) return road;
@@ -2688,7 +2697,7 @@ async function loadCanonicalRoad(ref, force=false) {
     try {
       if (!force && await hydrateCanonicalRoadFromDevice(road)) {
         if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
-        if (!canonicalLoadQueueRunning) renderMap();
+        refreshCanonicalRestoreDisplay();
         return road;
       }
     } catch (deviceErr) {
@@ -2705,7 +2714,7 @@ async function loadCanonicalRoad(ref, force=false) {
         hydrateCanonicalRoadFromCache(road, cached);
         void saveCanonicalRoadReference(road);
         if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
-        if (!canonicalLoadQueueRunning) renderMap();
+        refreshCanonicalRestoreDisplay();
         return road;
       }
     } catch (cacheErr) {
@@ -2796,12 +2805,12 @@ async function loadCanonicalRoad(ref, force=false) {
     void saveCanonicalRoadReference(road);
     if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
 
-    if (!canonicalLoadQueueRunning) renderMap();
+    refreshCanonicalRestoreDisplay();
     return road;
   } catch (err) {
     road.status='error';
     road.error=err.message || String(err);
-    if (!canonicalLoadQueueRunning) renderCanonicalMotorwayDashboard();
+    renderCanonicalMotorwayDashboard();
     return road;
   }
 }
