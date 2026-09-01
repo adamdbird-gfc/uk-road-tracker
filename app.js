@@ -633,7 +633,10 @@ function motorwayContributionsForJourney(journey) {
     const distanceM=Number(feature?.properties?.distance_m || 0);
     if (!roadId || !Number.isFinite(distanceM) || distanceM<=0) continue;
     const segments=geometrySegments({type:'FeatureCollection',features:[feature]});
-    const totalGeometryM=segmentDistanceKm(segments)*1000;
+    const totalGeometryM=segments.reduce(
+      (total,[a,b])=>total+haversineMetres(a,b),
+      0
+    );
     const retainedGeometryM=segments
       .filter(([a,b])=>!segmentEvidenceIsRemoved(segmentKey(a,b),journeyId))
       .reduce((total,[a,b])=>total+haversineMetres(a,b),0);
