@@ -2198,7 +2198,10 @@ function initMap() {
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
     footLayer = L.layerGroup().addTo(map);
-    aRoadLayer = L.layerGroup().addTo(map);
+    // A-road geometry can be much denser than the motorway network. Keep this
+    // optional layer off until the user chooses it, so opening saved progress
+    // never asks a phone to paint every matched A-road step at UK scale.
+    aRoadLayer = L.layerGroup();
     canonicalReferenceLayer = L.layerGroup();
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
@@ -2217,6 +2220,13 @@ function initMap() {
       },
       {collapsed: true}
     ).addTo(map);
+
+    map.on('overlayadd',event=>{
+      if (event.layer===aRoadLayer) renderMap({deferCalculations:true});
+    });
+    map.on('overlayremove',event=>{
+      if (event.layer===aRoadLayer) aRoadLayer.clearLayers();
+    });
 
     if (mapStatus) {
       mapStatus.className = 'muted map-status';
@@ -3574,7 +3584,14 @@ function renderARoadDashboard(drawable) {
   const rows=[...roads.values()].sort((a,b)=>b.distanceM-a.distanceM || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
   aRoadList.innerHTML='';
   aRoadsDiscovered.textContent=rows.length.toLocaleString();
-  aRoadCard.classList.toggle('hidden',!rows.length);
+  aRoadCard.classList.toggle('hidden',!shouldShowDataDashboard());
+  if (!rows.length) {
+    const empty=document.createElement('p');
+    empty.className='muted motorway-expanded-intro';
+    empty.textContent='No numbered A roads have been identified from the matched driving data yet.';
+    aRoadList.append(empty);
+    return;
+  }
   for (const road of rows) {
     const row=document.createElement('div'); row.className='motorway-row';
     const ref=document.createElement('div'); ref.className='motorway-ref a-road-ref'; ref.textContent=road.ref;
@@ -3671,13 +3688,28 @@ function renderMap({deferCalculations=false}={}) {
     }).addTo(footLayer);
   }
 
-  const aRoadFeatures=drawable.flatMap(journey=>journey.aRoadGeoJson?.features || []);
-  if (aRoadFeatures.length && aRoadLayer) {
-    L.geoJSON({type:'FeatureCollection',features:aRoadFeatures},{
-      pane:'aRoadConfirmedPane',
-      style:{color:'#187a3b',weight:5,opacity:.9},
-      interactive:false
-    }).addTo(aRoadLayer);
+  if (aRoadLayer && map.hasLayer(aRoadLayer)) {
+    const pathsByRef=new Map();
+    for (const journey of drawable) {
+      for (const feature of journey.aRoadGeoJson?.features || []) {
+        const ref=aRoadFeatureId(feature) || 'A road';
+        if (!pathsByRef.has(ref)) pathsByRef.set(ref,[]);
+        const paths=pathsByRef.get(ref);
+        const geometry=feature?.geometry;
+        const lines=geometry?.type==='LineString' ? [geometry.coordinates] :
+          geometry?.type==='MultiLineString' ? geometry.coordinates : [];
+        for (const line of lines) {
+          const path=(line || []).map(point=>[Number(point[1]),Number(point[0])])
+            .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]));
+          if (path.length>1) paths.push(path);
+        }
+      }
+    }
+    for (const paths of pathsByRef.values()) {
+      L.polyline(paths,{
+        color:'#187a3b',weight:5,opacity:.9,pane:'aRoadConfirmedPane',interactive:false
+      }).addTo(aRoadLayer);
+    }
   }
 
   const credited = buildCreditedSegments(drawable);
