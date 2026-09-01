@@ -2823,14 +2823,62 @@ async function loadCanonicalRoad(ref, force=false) {
   }
 }
 
+async function hydrateSavedCanonicalRoads(refs) {
+  const roads=refs
+    .map(normaliseMotorwayRef)
+    .filter(Boolean)
+    .map(canonicalRoadState);
+
+  // Saved progress is tied to the fixed, versioned reference bundled with the
+  // app. Hydrate that complete set in one operation instead of reading a
+  // separate IndexedDB record for every motorway: one damaged/slow record
+  // must never hold the saved map at 21 of 22.
+  let cache;
+  try {
+    cache=await loadCanonicalCache();
+  } catch (err) {
+    for (const road of roads) {
+      if (road.status==='ready') continue;
+      road.status='error';
+      road.error='The saved motorway reference file could not be loaded.';
+    }
+    refreshCanonicalRestoreDisplay();
+    return;
+  }
+
+  for (const road of roads) {
+    if (road.status==='ready') continue;
+    const cached=cache.roads?.[road.ref];
+    if (!cached) {
+      road.status='error';
+      road.error=`${road.ref} is not available in the saved motorway reference cache.`;
+      continue;
+    }
+    try {
+      hydrateCanonicalRoadFromCache(road,cached);
+      void saveCanonicalRoadReference(road);
+    } catch (err) {
+      road.status='error';
+      road.error=err.message || String(err);
+    }
+  }
+  refreshCanonicalRestoreDisplay();
+}
+
 async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
   for (const ref of refs.map(normaliseMotorwayRef).filter(Boolean)) {
     canonicalRequestedRefs.add(ref);
   }
   if (canonicalLoadQueueRunning) return;
+  if (onboardingMode==='saved' &&
+      ![...canonicalRequestedRefs].some(ref=>canonicalRoadState(ref).status==='idle')) return;
 
   canonicalLoadQueueRunning=true;
   try {
+    if (onboardingMode==='saved') {
+      await hydrateSavedCanonicalRoads([...canonicalRequestedRefs]);
+      return;
+    }
     while (true) {
       const ref=[...canonicalRequestedRefs]
         .find(candidate=>canonicalRoadState(candidate).status==='idle');
