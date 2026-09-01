@@ -2677,7 +2677,7 @@ async function loadCanonicalRoad(ref, force=false) {
 
   road.status='loading';
   road.error=null;
-  renderCanonicalMotorwayDashboard();
+  if (!canonicalLoadQueueRunning) renderCanonicalMotorwayDashboard();
 
   try {
     /*
@@ -2688,7 +2688,7 @@ async function loadCanonicalRoad(ref, force=false) {
     try {
       if (!force && await hydrateCanonicalRoadFromDevice(road)) {
         if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
-        renderMap();
+        if (!canonicalLoadQueueRunning) renderMap();
         return road;
       }
     } catch (deviceErr) {
@@ -2705,7 +2705,7 @@ async function loadCanonicalRoad(ref, force=false) {
         hydrateCanonicalRoadFromCache(road, cached);
         void saveCanonicalRoadReference(road);
         if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
-        renderMap();
+        if (!canonicalLoadQueueRunning) renderMap();
         return road;
       }
     } catch (cacheErr) {
@@ -2796,12 +2796,12 @@ async function loadCanonicalRoad(ref, force=false) {
     void saveCanonicalRoadReference(road);
     if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
 
-    renderMap();
+    if (!canonicalLoadQueueRunning) renderMap();
     return road;
   } catch (err) {
     road.status='error';
     road.error=err.message || String(err);
-    renderCanonicalMotorwayDashboard();
+    if (!canonicalLoadQueueRunning) renderCanonicalMotorwayDashboard();
     return road;
   }
 }
@@ -2818,11 +2818,15 @@ async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
       const ref=[...canonicalRequestedRefs]
         .find(candidate=>canonicalRoadState(candidate).status==='idle');
       if (!ref) break;
-      await loadCanonicalRoad(ref);
-      await new Promise(resolve=>setTimeout(resolve,400));
+      const road=await loadCanonicalRoad(ref);
+      // The pause protects live Overpass requests. Device and bundled-cache
+      // references are local/one-request restores, so queue them without a
+      // visible per-motorway delay.
+      if (road?.source==='live') await new Promise(resolve=>setTimeout(resolve,400));
     }
   } finally {
     canonicalLoadQueueRunning=false;
+    if (map) renderMap();
   }
 }
 
