@@ -1473,6 +1473,14 @@ function savedRoadRecords() {
   return [...records.values()];
 }
 
+function savedOnFootRecords() {
+  return footActivities.filter(activity=>activity?.matchedGeoJson);
+}
+
+function editableMappedActivities() {
+  return [...savedRoadRecords(),...savedOnFootRecords()];
+}
+
 function segmentDistanceKm(segments) {
   return segments.reduce((total,segment)=>total+haversineMetres(segment.a,segment.b)/1000,0);
 }
@@ -2085,10 +2093,10 @@ function initMap() {
     mapLayerControl = L.control.layers(
       {},
       {
-        'Credited roads (black)': creditedLayer,
+        'Road journeys (black)': creditedLayer,
         'Matched journeys (black)': matchedLayer,
         'Raw Timeline traces (black)': traceLayer,
-        'On-foot paths (green)': footLayer,
+        'On-foot journeys (green)': footLayer,
         'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
@@ -2191,6 +2199,7 @@ function buildCreditedSegments(drawable, {includeRemoved=false}={}) {
           b,
           journeys: 0,
           journeyIds: new Set(),
+          hasRoadEvidence:false,
           quality: journey.matchQuality?.level || 'review'
         });
       }
@@ -2198,6 +2207,7 @@ function buildCreditedSegments(drawable, {includeRemoved=false}={}) {
       const item = unique.get(key);
       item.journeys += 1;
       if (journeyId) item.journeyIds.add(journeyId);
+      if (!journey.travelMode || journey.travelMode==='ROAD') item.hasRoadEvidence=true;
 
       // Keep the least-confident status when multiple journeys credit a segment.
       if (journey.matchQuality?.level === 'low') item.quality = 'low';
@@ -2247,18 +2257,18 @@ function setMapCorrectionMode(mode) {
   mapCorrectionRestore.setAttribute('aria-pressed',String(mapCorrectionMode==='restore'));
   if (!mapCorrectionMode) {
     mapStatus.className='muted map-status warn';
-    mapStatus.textContent='Choose whether tapping should remove or restore a credited road section.';
+    mapStatus.textContent='Choose whether tapping should remove or restore a credited map section.';
     return;
   }
   mapStatus.className='muted map-status ok';
   mapStatus.textContent=mapCorrectionMode==='remove'
-    ? 'Remove mode active. Tap a black credited road to remove a short section.'
-    : 'Restore mode active. Tap a corrected road section to put it back on the map.';
+    ? 'Remove mode active. Tap a credited map section to remove it.'
+    : 'Restore mode active. Tap a corrected map section to put it back on the map.';
 }
 
 function correctionTargetsNear(latlng, includeRemoved) {
   const point=[Number(latlng.lng),Number(latlng.lat)];
-  const candidates=buildCreditedSegments(savedRoadRecords(),{includeRemoved})
+  const candidates=buildCreditedSegments(editableMappedActivities(),{includeRemoved})
     .map(segment=>({...segment,distanceM:distancePointToSegmentM(point,segment.a,segment.b)}))
     .sort((a,b)=>a.distanceM-b.distanceM);
 
@@ -2279,6 +2289,7 @@ function correctionTargetsNear(latlng, includeRemoved) {
 
 function recordCanonicalCorrectionForSegments(segments, mode) {
   for (const segment of segments) {
+    if (!segment.hasRoadEvidence) continue;
     for (const road of canonicalRoads.values()) {
       if (road.status!=='ready') continue;
       const nearby=road.anchors.filter(anchor=>
@@ -2305,7 +2316,7 @@ function handleMapCorrectionMapClick(event) {
   const targets=correctionTargetsNear(event.latlng,mapCorrectionMode==='restore');
   if (!targets.length) {
     mapStatus.className='muted map-status warn';
-    mapStatus.textContent='Tap closer to a black credited road section.';
+    mapStatus.textContent='Tap closer to a credited map section.';
     return;
   }
   mapCorrectionUndoStack.push({
@@ -2328,7 +2339,7 @@ function handleMapCorrectionMapClick(event) {
 }
 
 function startMapCorrection() {
-  if (!shouldShowDataDashboard() || !savedRoadRecords().some(record=>record.matchedGeoJson)) return;
+  if (!shouldShowDataDashboard() || !editableMappedActivities().length) return;
   mapCorrectionUndoStack=[];
   mapCorrectionUndo.disabled=true;
   mapCorrectionPanel.classList.remove('hidden');
@@ -3285,10 +3296,10 @@ function renderMotorwayDashboard(drawable) {
 function renderMap() {
   renderRoadQueue();
   renderCollectiveStats();
-  const hasCreditedRoads=savedRoadRecords().some(journey=>journey?.matchedGeoJson);
+  const hasCreditedRoutes=editableMappedActivities().length>0;
   mapCorrectionStartButton.classList.toggle(
     'hidden',
-    !shouldShowDataDashboard() || !hasCreditedRoads || !mapCorrectionPanel.classList.contains('hidden')
+    !shouldShowDataDashboard() || !hasCreditedRoutes || !mapCorrectionPanel.classList.contains('hidden')
   );
   if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
 
@@ -3344,7 +3355,13 @@ function renderMap() {
 
   for (const activity of footActivities) {
     if (!activity.matchedGeoJson || !footLayer) continue;
-    L.geoJSON(activity.matchedGeoJson,{style:{color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane'}}).addTo(footLayer);
+    const activityId=journeyIdentity(activity);
+    for (const [a,b] of geometrySegments(activity.matchedGeoJson)) {
+      if (segmentEvidenceIsRemoved(segmentKey(a,b),activityId)) continue;
+      L.polyline([[a[1],a[0]],[b[1],b[0]]],{
+        color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane'
+      }).addTo(footLayer);
+    }
   }
 
   const credited = buildCreditedSegments(drawable);
@@ -3383,7 +3400,7 @@ function renderMap() {
       mapStatus.textContent='Your saved routes are shown. Motorway figures are refreshing after an update.';
     } else if (!mapCorrectionPanel.classList.contains('hidden')) {
       mapStatus.textContent=mapCorrectionMode
-        ? `${mapCorrectionMode==='remove'?'Remove':'Restore'} mode · tap a black credited road section.`
+        ? `${mapCorrectionMode==='remove'?'Remove':'Restore'} mode · tap a credited map section.`
         : 'Choose “Remove incorrect section” or “Restore a section” before tapping the map.';
     } else if (refinementRoadRef) {
       mapStatus.textContent=refinementEditMode
@@ -3400,7 +3417,7 @@ function renderMap() {
       mapStatus.textContent=`Saved progress loaded · ${ready} canonical motorway reference${ready===1?'':'s'} ready.`;
     } else {
       mapStatus.textContent =
-        `Credited roads: ${credited.length.toLocaleString()} unique geometry segments · ` +
+        `Credited road routes: ${credited.length.toLocaleString()} unique geometry segments · ` +
         `${matchedCount.toLocaleString()} matched journeys (${highCount} high confidence, ${reviewCount} review).`;
     }
   }
