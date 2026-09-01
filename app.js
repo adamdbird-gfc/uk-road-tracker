@@ -2257,10 +2257,21 @@ function correctionTargetsNear(latlng, includeRemoved) {
   const point=[Number(latlng.lng),Number(latlng.lat)];
   const candidates=buildCreditedSegments(savedRoadRecords(),{includeRemoved})
     .map(segment=>({...segment,distanceM:distancePointToSegmentM(point,segment.a,segment.b)}))
-    .filter(segment=>segment.distanceM<=175);
-  // The deliberately small brush removes a usable short stretch without
-  // accidentally taking a neighbouring road from a dense town-centre map.
-  return candidates;
+    .sort((a,b)=>a.distanceM-b.distanceM);
+
+  if (!includeRemoved) {
+    // Map matching can contain many tiny links at one junction. Removing only
+    // the closest one makes this a true precision tool for things such as a
+    // private spur or a wrong turn, rather than a broad-area eraser.
+    return candidates[0]?.distanceM<=45 ? [candidates[0]] : [];
+  }
+
+  // Restore is intentionally more forgiving: it lets someone recover a
+  // previous broad correction in one tap, including corrections made before
+  // the precision tool was introduced.
+  return candidates.filter(segment=>
+    segment.distanceM<=220 && removedSegmentEvidence.has(segmentKey(segment.a,segment.b))
+  );
 }
 
 function recordCanonicalCorrectionForSegments(segments, mode) {
