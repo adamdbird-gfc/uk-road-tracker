@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260831-dashboard" />
+  <link rel="stylesheet" href="styles.css?v=20260901-map-corrections" />
 </head>
 <body>
   <main>
@@ -234,7 +234,34 @@
         </div>
         <div class="map-heading-actions">
           <button id="closeSavedProgress" class="text-button hidden" type="button">Back to start</button>
+          <button id="startMapCorrection" class="secondary hidden" type="button">Correct map</button>
           <button id="fitMap" class="secondary" type="button">Fit selected</button>
+        </div>
+      </div>
+      <div id="mapCorrectionPanel" class="refinement-panel hidden">
+        <div class="refinement-heading">
+          <div>
+            <p class="eyebrow">Map correction</p>
+            <h3>Remove an incorrect route</h3>
+          </div>
+          <button id="finishMapCorrection" class="secondary" type="button">Done</button>
+        </div>
+        <p class="muted">Tap a black credited road that you did not travel. Roadprints removes the current matching evidence for a short stretch, updates unique distance and motorway progress, and keeps the correction when you add more Timeline data. A genuinely new journey can still earn that stretch back.</p>
+        <div class="refinement-mode-group">
+          <strong>What should tapping the map do?</strong>
+          <div class="refinement-mode-grid" role="group" aria-label="Map correction action">
+            <button id="mapCorrectionRemove" class="refinement-mode-button remove-mode" type="button" aria-pressed="false">
+              <span>Remove incorrect section</span>
+              <small>Take it off the map</small>
+            </button>
+            <button id="mapCorrectionRestore" class="refinement-mode-button add-mode" type="button" aria-pressed="false">
+              <span>Restore a section</span>
+              <small>Put it back on the map</small>
+            </button>
+          </div>
+        </div>
+        <div class="refinement-toolbar refinement-utility-actions" aria-label="Map correction utilities">
+          <button id="mapCorrectionUndo" class="secondary" type="button" disabled>Undo</button>
         </div>
       </div>
       <div id="refinementPanel" class="refinement-panel hidden">
@@ -293,7 +320,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260831-display-numbers"></script>
+  <script src="app.js?v=20260901-map-corrections"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
