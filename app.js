@@ -42,6 +42,11 @@ let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
+// A correction removes the evidence supplied by the journeys that existed when
+// the user made it. New Timeline journeys are deliberately not in these sets,
+// so fresh evidence can restore a section without overwriting the correction.
+const removedSegmentEvidence = new Map();
+const canonicalRemovalEvidenceByRef = new Map();
 let localSaveTimer = null;
 let localProgressDeletionRunning = false;
 const canonicalRequestedRefs = new Set();
@@ -50,6 +55,8 @@ let refinementEditMode = null;
 let refinementUndoStack = [];
 let refinementChunks = [];
 let refinementChunkIndex = 0;
+let mapCorrectionMode = null;
+let mapCorrectionUndoStack = [];
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
@@ -127,6 +134,12 @@ const refinementChunkStatus = document.getElementById('refinementChunkStatus');
 const localProgressNotice = document.getElementById('localProgressNotice');
 const localProgressSummary = document.getElementById('localProgressSummary');
 const closeSavedProgress = document.getElementById('closeSavedProgress');
+const mapCorrectionStartButton = document.getElementById('startMapCorrection');
+const mapCorrectionPanel = document.getElementById('mapCorrectionPanel');
+const mapCorrectionFinishButton = document.getElementById('finishMapCorrection');
+const mapCorrectionRemove = document.getElementById('mapCorrectionRemove');
+const mapCorrectionRestore = document.getElementById('mapCorrectionRestore');
+const mapCorrectionUndo = document.getElementById('mapCorrectionUndo');
 
 // 2025 official totals: 2,300 motorway miles in Great Britain plus
 // approximately 65 miles in Northern Ireland (0.4% of 25,970 km).
@@ -409,7 +422,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -460,6 +473,22 @@ function loadLocalProgress() {
       const value=Number(distanceKm);
       if (journeyId && Number.isFinite(value) && value>=0) persistedJourneyMileageById.set(journeyId,value);
     }
+    for (const [segmentId,journeyIds] of Object.entries(saved.removedSegmentEvidence || {})) {
+      if (!segmentId || !Array.isArray(journeyIds)) continue;
+      const ids=new Set(journeyIds.filter(id=>typeof id==='string' && id));
+      if (ids.size) removedSegmentEvidence.set(segmentId,ids);
+    }
+    for (const [roadId,anchors] of Object.entries(saved.canonicalRemovalEvidence || {})) {
+      if (!roadId || !anchors || typeof anchors!=='object') continue;
+      const byAnchor=new Map();
+      for (const [anchorId,journeyIds] of Object.entries(anchors)) {
+        const id=Number(anchorId);
+        if (!Number.isInteger(id) || !Array.isArray(journeyIds)) continue;
+        const ids=new Set(journeyIds.filter(value=>typeof value==='string' && value));
+        if (ids.size) byAnchor.set(id,ids);
+      }
+      if (byAnchor.size) canonicalRemovalEvidenceByRef.set(roadId,byAnchor);
+    }
     persistedMileageHistoryComplete=typeof saved.mileageHistoryComplete==='boolean'
       ? saved.mileageHistoryComplete
       : persistedProcessedJourneyIds.size===0;
@@ -485,7 +514,7 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:2,
+      version:3,
       canonicalVersion:CANONICAL_CACHE_VERSION,
       savedAt:persistedSavedAt,
       distanceUnit,
@@ -503,7 +532,16 @@ function saveLocalProgressNow() {
       journeyMileageById:Object.fromEntries([...persistedJourneyMileageById.entries()].sort(([a],[b])=>a.localeCompare(b))),
       mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
-      coverage
+      coverage,
+      removedSegmentEvidence:Object.fromEntries(
+        [...removedSegmentEvidence.entries()].map(([segmentId,journeyIds])=>[segmentId,[...journeyIds].sort()])
+      ),
+      canonicalRemovalEvidence:Object.fromEntries(
+        [...canonicalRemovalEvidenceByRef.entries()].map(([roadId,anchors])=>[
+          roadId,
+          Object.fromEntries([...anchors.entries()].map(([anchorId,journeyIds])=>[anchorId,[...journeyIds].sort()]))
+        ])
+      )
     }));
     updateLocalProgressNotice();
   } catch (err) {
@@ -589,11 +627,20 @@ function journeyWasPreviouslyImported(journey) {
 
 function motorwayContributionsForJourney(journey) {
   const contributions={};
+  const journeyId=journeyIdentity(journey);
   for (const feature of journey?.motorwayGeoJson?.features || []) {
     const roadId=motorwayFeatureId(feature);
     const distanceM=Number(feature?.properties?.distance_m || 0);
     if (!roadId || !Number.isFinite(distanceM) || distanceM<=0) continue;
-    contributions[roadId]=(contributions[roadId] || 0)+distanceM;
+    const segments=geometrySegments({type:'FeatureCollection',features:[feature]});
+    const totalGeometryM=segmentDistanceKm(segments)*1000;
+    const retainedGeometryM=segments
+      .filter(([a,b])=>!segmentEvidenceIsRemoved(segmentKey(a,b),journeyId))
+      .reduce((total,[a,b])=>total+haversineMetres(a,b),0);
+    const retainedDistanceM=totalGeometryM>0
+      ? distanceM*Math.max(0,Math.min(1,retainedGeometryM/totalGeometryM))
+      : distanceM;
+    if (retainedDistanceM>0) contributions[roadId]=(contributions[roadId] || 0)+retainedDistanceM;
   }
   return contributions;
 }
@@ -655,6 +702,8 @@ async function clearLocalProgress() {
   persistedImportedFileHashes.clear();
   persistedFileHashTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
+  removedSegmentEvidence.clear();
+  canonicalRemovalEvidenceByRef.clear();
   persistedMileageHistoryComplete=true;
   localProgressNotice.classList.add('hidden');
 
@@ -807,6 +856,7 @@ function resetTrackingSession() {
   mapCard.classList.add('hidden');
   nextCard.classList.add('hidden');
   refinementPanel.classList.add('hidden');
+  mapCorrectionPanel.classList.add('hidden');
   mapCard.classList.remove('refinement-active');
 
   for (const layer of [
@@ -919,6 +969,18 @@ document.getElementById('selectAllMotorways').addEventListener('click', () => se
 document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
+mapCorrectionStartButton.addEventListener('click',startMapCorrection);
+mapCorrectionFinishButton.addEventListener('click',finishMapCorrection);
+mapCorrectionRemove.addEventListener('click',()=>setMapCorrectionMode('remove'));
+mapCorrectionRestore.addEventListener('click',()=>setMapCorrectionMode('restore'));
+mapCorrectionUndo.addEventListener('click',()=>{
+  const previous=mapCorrectionUndoStack.pop();
+  if (!previous) return;
+  restoreMapCorrectionState(previous);
+  mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
+  scheduleLocalProgressSave();
+  renderMap();
+});
 loadLocalProgress();
 loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
@@ -2005,7 +2067,10 @@ function initMap() {
     });
 
     tiles.addTo(map);
-    map.on('click', handleRefinementMapClick);
+    map.on('click', event=>{
+      if (!mapCorrectionPanel.classList.contains('hidden')) handleMapCorrectionMapClick(event);
+      else handleRefinementMapClick(event);
+    });
     traceLayer = L.layerGroup();
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
@@ -2083,26 +2148,53 @@ function segmentKey(a, b) {
   return aa < bb ? `${aa}|${bb}` : `${bb}|${aa}`;
 }
 
-function buildCreditedSegments(drawable) {
+function cloneRemovalEvidence(source) {
+  return new Map([...source.entries()].map(([key,ids])=>[key,new Set(ids)]));
+}
+
+function cloneCanonicalRemovalEvidence(source) {
+  return new Map([...source.entries()].map(([roadId,anchors])=>[
+    roadId,new Map([...anchors.entries()].map(([anchorId,ids])=>[anchorId,new Set(ids)]))
+  ]));
+}
+
+function restoreMapCorrectionState(snapshot) {
+  removedSegmentEvidence.clear();
+  for (const [key,ids] of snapshot.segments) removedSegmentEvidence.set(key,new Set(ids));
+  canonicalRemovalEvidenceByRef.clear();
+  for (const [roadId,anchors] of snapshot.canonical) {
+    canonicalRemovalEvidenceByRef.set(roadId,new Map([...anchors.entries()].map(([id,ids])=>[id,new Set(ids)])));
+  }
+}
+
+function segmentEvidenceIsRemoved(key, journeyId) {
+  return Boolean(journeyId && removedSegmentEvidence.get(key)?.has(journeyId));
+}
+
+function buildCreditedSegments(drawable, {includeRemoved=false}={}) {
   const unique = new Map();
 
   for (const journey of drawable) {
     if (!journey.matchedGeoJson) continue;
+    const journeyId=journeyIdentity(journey);
 
     for (const [a, b] of geometrySegments(journey.matchedGeoJson)) {
       const key = segmentKey(a, b);
+      if (!includeRemoved && segmentEvidenceIsRemoved(key,journeyId)) continue;
 
       if (!unique.has(key)) {
         unique.set(key, {
           a,
           b,
           journeys: 0,
+          journeyIds: new Set(),
           quality: journey.matchQuality?.level || 'review'
         });
       }
 
       const item = unique.get(key);
       item.journeys += 1;
+      if (journeyId) item.journeyIds.add(journeyId);
 
       // Keep the least-confident status when multiple journeys credit a segment.
       if (journey.matchQuality?.level === 'low') item.quality = 'low';
@@ -2133,6 +2225,111 @@ function mercatorXY(lng, lat) {
   const clippedLat = Math.max(-85, Math.min(85, lat));
   const y = R * Math.log(Math.tan(Math.PI / 4 + clippedLat * Math.PI / 360));
   return [x, y];
+}
+
+function distancePointToSegmentM(pointLngLat, a, b) {
+  const [px,py]=mercatorXY(pointLngLat[0],pointLngLat[1]);
+  const [ax,ay]=mercatorXY(a[0],a[1]);
+  const [bx,by]=mercatorXY(b[0],b[1]);
+  const dx=bx-ax, dy=by-ay;
+  const lengthSquared=dx*dx+dy*dy;
+  if (!lengthSquared) return Math.hypot(px-ax,py-ay);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/lengthSquared));
+  return Math.hypot(px-(ax+dx*t),py-(ay+dy*t));
+}
+
+function setMapCorrectionMode(mode) {
+  mapCorrectionMode=['remove','restore'].includes(mode) ? mode : null;
+  mapCorrectionRemove.setAttribute('aria-pressed',String(mapCorrectionMode==='remove'));
+  mapCorrectionRestore.setAttribute('aria-pressed',String(mapCorrectionMode==='restore'));
+  if (!mapCorrectionMode) {
+    mapStatus.className='muted map-status warn';
+    mapStatus.textContent='Choose whether tapping should remove or restore a credited road section.';
+    return;
+  }
+  mapStatus.className='muted map-status ok';
+  mapStatus.textContent=mapCorrectionMode==='remove'
+    ? 'Remove mode active. Tap a black credited road to remove a short section.'
+    : 'Restore mode active. Tap a corrected road section to put it back on the map.';
+}
+
+function correctionTargetsNear(latlng, includeRemoved) {
+  const point=[Number(latlng.lng),Number(latlng.lat)];
+  const candidates=buildCreditedSegments(savedRoadRecords(),{includeRemoved})
+    .map(segment=>({...segment,distanceM:distancePointToSegmentM(point,segment.a,segment.b)}))
+    .filter(segment=>segment.distanceM<=175);
+  // The deliberately small brush removes a usable short stretch without
+  // accidentally taking a neighbouring road from a dense town-centre map.
+  return candidates;
+}
+
+function recordCanonicalCorrectionForSegments(segments, mode) {
+  for (const segment of segments) {
+    for (const road of canonicalRoads.values()) {
+      if (road.status!=='ready') continue;
+      const nearby=road.anchors.filter(anchor=>
+        distancePointToSegmentM([anchor.lng,anchor.lat],segment.a,segment.b)<=CANONICAL_ANCHOR_MATCH_RADIUS_M
+      );
+      if (!nearby.length) continue;
+      if (!canonicalRemovalEvidenceByRef.has(road.id)) canonicalRemovalEvidenceByRef.set(road.id,new Map());
+      const removals=canonicalRemovalEvidenceByRef.get(road.id);
+      for (const anchor of nearby) {
+        if (mode==='restore') removals.delete(anchor.id);
+        else removals.set(anchor.id,new Set(segment.journeyIds));
+      }
+      if (!removals.size) canonicalRemovalEvidenceByRef.delete(road.id);
+    }
+  }
+}
+
+function handleMapCorrectionMapClick(event) {
+  if (!mapCorrectionMode) {
+    setMapCorrectionMode(null);
+    mapCorrectionRemove.focus();
+    return;
+  }
+  const targets=correctionTargetsNear(event.latlng,mapCorrectionMode==='restore');
+  if (!targets.length) {
+    mapStatus.className='muted map-status warn';
+    mapStatus.textContent='Tap closer to a black credited road section.';
+    return;
+  }
+  mapCorrectionUndoStack.push({
+    segments:cloneRemovalEvidence(removedSegmentEvidence),
+    canonical:cloneCanonicalRemovalEvidence(canonicalRemovalEvidenceByRef)
+  });
+  if (mapCorrectionUndoStack.length>30) mapCorrectionUndoStack.shift();
+  for (const segment of targets) {
+    const key=segmentKey(segment.a,segment.b);
+    if (mapCorrectionMode==='restore') removedSegmentEvidence.delete(key);
+    else removedSegmentEvidence.set(key,new Set(segment.journeyIds));
+  }
+  recordCanonicalCorrectionForSegments(targets,mapCorrectionMode);
+  mapCorrectionUndo.disabled=false;
+  scheduleLocalProgressSave();
+  renderMap();
+  const verb=mapCorrectionMode==='remove' ? 'Removed' : 'Restored';
+  mapStatus.className='muted map-status ok';
+  mapStatus.textContent=`${verb} ${targets.length} credited map segment${targets.length===1?'':'s'}.`;
+}
+
+function startMapCorrection() {
+  if (!shouldShowDataDashboard() || !savedRoadRecords().some(record=>record.matchedGeoJson)) return;
+  mapCorrectionUndoStack=[];
+  mapCorrectionUndo.disabled=true;
+  mapCorrectionPanel.classList.remove('hidden');
+  mapCard.classList.add('refinement-active');
+  mapCorrectionStartButton.classList.add('hidden');
+  setMapCorrectionMode(null);
+  renderMap();
+  mapCorrectionRemove.focus();
+}
+
+function finishMapCorrection() {
+  mapCorrectionMode=null;
+  mapCorrectionPanel.classList.add('hidden');
+  mapCard.classList.remove('refinement-active');
+  renderMap();
 }
 
 function corridorCellKey(lng, lat) {
@@ -2525,19 +2722,49 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
         ? covered
         : new Set(road.anchors.map(anchor=>anchor.id));
   }
+  const evidenceByAnchor=new Map();
+  const removedEvidenceByAnchor=new Map();
   for (const journey of drawable) {
+    const journeyId=journeyIdentity(journey);
     for (const feature of journey.motorwayGeoJson?.features || []) {
       if (motorwayFeatureId(feature)!==road.id) continue;
       for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
         const lengthM=haversineMetres(a,b);
         if (!Number.isFinite(lengthM) || lengthM<=0) continue;
         const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_MATCH_SAMPLE_M));
+        const removed=segmentEvidenceIsRemoved(segmentKey(a,b),journeyId);
         for (let i=0;i<=samples;i++) {
           const id=nearestCanonicalAnchor(road,interpolateLngLat(a,b,i/samples));
-          if (id!==null) covered.add(id);
+          if (removed) {
+            if (id!==null && journeyId) {
+              if (!removedEvidenceByAnchor.has(id)) removedEvidenceByAnchor.set(id,new Set());
+              removedEvidenceByAnchor.get(id).add(journeyId);
+            }
+            continue;
+          }
+          if (id!==null) {
+            covered.add(id);
+            if (journeyId) {
+              if (!evidenceByAnchor.has(id)) evidenceByAnchor.set(id,new Set());
+              evidenceByAnchor.get(id).add(journeyId);
+            }
+          }
         }
       }
     }
+  }
+  // Corrections take precedence over evidence that was already on the map at
+  // the time of editing. Evidence from a later import has a different journey
+  // ID and therefore restores the canonical motorway section naturally.
+  const allRemovalEvidence=new Map(canonicalRemovalEvidenceByRef.get(road.id) || []);
+  for (const [anchorId,journeyIds] of removedEvidenceByAnchor) {
+    if (!allRemovalEvidence.has(anchorId)) allRemovalEvidence.set(anchorId,new Set());
+    for (const journeyId of journeyIds) allRemovalEvidence.get(anchorId).add(journeyId);
+  }
+  for (const [anchorId,removedJourneyIds] of allRemovalEvidence) {
+    const evidence=evidenceByAnchor.get(anchorId);
+    if (!evidence || [...evidence].every(id=>removedJourneyIds.has(id))) covered.delete(anchorId);
+    else covered.add(anchorId);
   }
   persistedCoverageByRef.set(road.id,new Set(covered));
   scheduleLocalProgressSave();
@@ -2893,6 +3120,7 @@ function startMotorwayRefinement(id) {
 function finishMotorwayRefinement() {
   refinementRoadRef=null;
   refinementPanel.classList.add('hidden');
+  mapCorrectionPanel.classList.add('hidden');
   mapCard.classList.remove('refinement-active');
   manualMotorwayCard.classList.remove('hidden');
   canonicalMotorwayCard.classList.remove('hidden');
@@ -3043,6 +3271,11 @@ function renderMotorwayDashboard(drawable) {
 function renderMap() {
   renderRoadQueue();
   renderCollectiveStats();
+  const hasCreditedRoads=savedRoadRecords().some(journey=>journey?.matchedGeoJson);
+  mapCorrectionStartButton.classList.toggle(
+    'hidden',
+    !shouldShowDataDashboard() || !hasCreditedRoads || !mapCorrectionPanel.classList.contains('hidden')
+  );
   if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
 
   traceLayer.clearLayers();
@@ -3119,7 +3352,11 @@ function renderMap() {
 
   if (mapStatus) {
     mapStatus.className = 'muted map-status ok';
-    if (refinementRoadRef) {
+    if (!mapCorrectionPanel.classList.contains('hidden')) {
+      mapStatus.textContent=mapCorrectionMode
+        ? `${mapCorrectionMode==='remove'?'Remove':'Restore'} mode · tap a black credited road section.`
+        : 'Choose “Remove incorrect section” or “Restore a section” before tapping the map.';
+    } else if (refinementRoadRef) {
       mapStatus.textContent=refinementEditMode
         ? `${refinementEditMode==='mark'?'Add':'Remove'} mode · tap close to the ${canonicalRoads.get(refinementRoadRef)?.ref || 'motorway'} line, or use the keyboard section controls.`
         : 'Choose “Add driven section” or “Remove driven section” before tapping the map.';
