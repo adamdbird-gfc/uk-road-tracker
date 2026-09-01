@@ -63,6 +63,17 @@ def motorway_refs(ref):
             refs.append(cleaned)
     return refs
 
+def a_road_refs(ref):
+    """Return ordinary numbered A-road refs, leaving A(M) with motorways."""
+    if not ref:
+        return []
+    refs = []
+    for part in re.split(r"[;,/]", ref.upper()):
+        cleaned = re.sub(r"\s+", "", part.strip())
+        if re.fullmatch(r"A\d+[A-Z]?", cleaned):
+            refs.append(cleaned)
+    return refs
+
 async def request_match(client, points, radius, base_url):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
     radiuses = ";".join(str(radius) for _ in points)
@@ -166,6 +177,7 @@ async def match_payload(
     chunks = chunk_points(payload.points)
     features = []
     motorway_features = []
+    a_road_features = []
     matched_distance_m = 0.0
     matched_tracepoints = 0
     tracepoints_seen = 0
@@ -205,12 +217,24 @@ async def match_payload(
 
                     for leg in matching.get("legs") or []:
                         for step in leg.get("steps") or []:
-                            refs = motorway_refs(step.get("ref"))
+                            motorway_road_refs = motorway_refs(step.get("ref"))
+                            a_road_refs_for_step = a_road_refs(step.get("ref"))
                             step_geometry = step.get("geometry")
-                            if not include_motorways or not refs or not step_geometry:
+                            if not include_motorways or not step_geometry:
                                 continue
-                            for road_ref in refs:
+                            for road_ref in motorway_road_refs:
                                 motorway_features.append({
+                                    "type": "Feature",
+                                    "properties": {
+                                        "road_ref": road_ref,
+                                        "name": step.get("name") or "",
+                                        "distance_m": float(step.get("distance") or 0.0),
+                                        "chunk_index": chunk_index,
+                                    },
+                                    "geometry": step_geometry,
+                                })
+                            for road_ref in a_road_refs_for_step:
+                                a_road_features.append({
                                     "type": "Feature",
                                     "properties": {
                                         "road_ref": road_ref,
@@ -240,4 +264,5 @@ async def match_payload(
         "matched_distance_m": round(matched_distance_m, 1),
         "geojson": {"type": "FeatureCollection", "features": features},
         "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
+        "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
     }
