@@ -178,9 +178,10 @@ const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 2;
+const MAP_ARCHIVE_DB_VERSION = 3;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
 const FOOT_ACTIVITY_STORE_NAME = 'foot-activities';
+const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
@@ -245,6 +246,9 @@ function openMapArchiveDatabase() {
       if (!database.objectStoreNames.contains(FOOT_ACTIVITY_STORE_NAME)) {
         database.createObjectStore(FOOT_ACTIVITY_STORE_NAME,{keyPath:'id'});
       }
+      if (!database.objectStoreNames.contains(CANONICAL_ROAD_STORE_NAME)) {
+        database.createObjectStore(CANONICAL_ROAD_STORE_NAME,{keyPath:'id'});
+      }
     };
     request.onsuccess=()=>resolve(request.result);
   });
@@ -276,6 +280,20 @@ async function footArchiveOperation(mode,operation) {
       request.onerror=()=>reject(request.error || new Error('Saved on-foot activity operation failed.'));
       request.onsuccess=()=>resolve(request.result);
       transaction.onabort=()=>reject(transaction.error || new Error('Saved on-foot activity transaction was aborted.'));
+    });
+  } finally { database.close(); }
+}
+
+async function canonicalRoadArchiveOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(CANONICAL_ROAD_STORE_NAME,mode);
+      const store=transaction.objectStore(CANONICAL_ROAD_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved motorway reference operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved motorway reference transaction was aborted.'));
     });
   } finally { database.close(); }
 }
@@ -341,6 +359,7 @@ async function clearMapArchive() {
   persistedJourneyMileageById.clear();
   persistedMotorwayContributionsByJourney.clear();
   await footArchiveOperation('readwrite',store=>store.clear());
+  await canonicalRoadArchiveOperation('readwrite',store=>store.clear());
   persistedFootActivities.clear();
   footActivities=[];
   footBatches=[];
@@ -2626,6 +2645,32 @@ function hydrateCanonicalRoadFromCache(road, cached) {
   road.source = 'cache';
 }
 
+function canonicalRoadArchiveRecord(road) {
+  return {
+    id:road.id,
+    version:CANONICAL_CACHE_VERSION,
+    totalKm:road.totalKm,
+    anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat])
+  };
+}
+
+async function saveCanonicalRoadReference(road) {
+  if (!road || road.status!=='ready' || road.anchors.length<3) return;
+  try {
+    await canonicalRoadArchiveOperation('readwrite',store=>store.put(canonicalRoadArchiveRecord(road)));
+  } catch (err) {
+    console.warn('Motorway reference could not be retained on this device:',err);
+  }
+}
+
+async function hydrateCanonicalRoadFromDevice(road) {
+  const stored=await canonicalRoadArchiveOperation('readonly',store=>store.get(road.id));
+  if (!stored || stored.version!==CANONICAL_CACHE_VERSION || !Array.isArray(stored.anchors)) return false;
+  hydrateCanonicalRoadFromCache(road,{anchors:stored.anchors,total_km:stored.totalKm});
+  road.source='device';
+  return true;
+}
+
 async function loadCanonicalRoad(ref, force=false) {
   const road=canonicalRoadState(ref);
   if (!force && ['loading','ready'].includes(road.status)) return road;
@@ -2641,11 +2686,24 @@ async function loadCanonicalRoad(ref, force=false) {
      * from the cache or while the cache is being expanded.
      */
     try {
+      if (!force && await hydrateCanonicalRoadFromDevice(road)) {
+        canonicalCoverageDirty=true;
+        renderMap();
+        return road;
+      }
+    } catch (deviceErr) {
+      // The reference can be rebuilt from the bundled cache if device storage
+      // is unavailable or holds an older version.
+      console.warn('Saved motorway reference could not be read:',deviceErr);
+    }
+
+    try {
       const cache = await loadCanonicalCache();
       const cached = cache.roads?.[road.ref];
 
       if (cached) {
         hydrateCanonicalRoadFromCache(road, cached);
+        void saveCanonicalRoadReference(road);
         canonicalCoverageDirty=true;
         renderMap();
         return road;
@@ -2735,6 +2793,7 @@ async function loadCanonicalRoad(ref, force=false) {
     );
     road.status='ready';
     road.source='live';
+    void saveCanonicalRoadReference(road);
     canonicalCoverageDirty=true;
 
     renderMap();
