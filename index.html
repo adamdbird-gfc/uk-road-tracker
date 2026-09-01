@@ -176,6 +176,18 @@
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
     </details>
 
+    <details id="aRoadCard" class="card motorway-details hidden">
+      <summary class="details-summary motorway-heading">
+        <div>
+          <h2>A-road progress</h2>
+          <p class="muted">Numbered A roads identified from your matched driving.</p>
+        </div>
+        <div class="motorway-total"><strong id="aRoadsDiscovered">0</strong><span>discovered</span></div>
+      </summary>
+      <p class="muted motorway-expanded-intro">Confirmed A-road stretches are shown in green on the map. A-road reference sections will use the same green/red completion language as motorways.</p>
+      <div id="aRoadList" class="motorway-list"></div>
+    </details>
+
     <details id="canonicalMotorwayCard" class="card canonical-details hidden">
       <summary class="details-summary canonical-heading">
         <div>
@@ -315,6 +327,8 @@
     </section>
 
     <div class="delete-data-action">
+      <button id="clearRoadData" class="delete-data-link" type="button">Delete road data</button>
+      <button id="clearFootData" class="delete-data-link" type="button">Delete on-foot data</button>
       <button id="clearImportedData" class="delete-data-link" type="button">Delete all saved data</button>
     </div>
   </main>
