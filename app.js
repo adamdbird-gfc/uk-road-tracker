@@ -2687,7 +2687,7 @@ async function loadCanonicalRoad(ref, force=false) {
      */
     try {
       if (!force && await hydrateCanonicalRoadFromDevice(road)) {
-        canonicalCoverageDirty=true;
+        if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
         renderMap();
         return road;
       }
@@ -2704,7 +2704,7 @@ async function loadCanonicalRoad(ref, force=false) {
       if (cached) {
         hydrateCanonicalRoadFromCache(road, cached);
         void saveCanonicalRoadReference(road);
-        canonicalCoverageDirty=true;
+        if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
         renderMap();
         return road;
       }
@@ -2794,7 +2794,7 @@ async function loadCanonicalRoad(ref, force=false) {
     road.status='ready';
     road.source='live';
     void saveCanonicalRoadReference(road);
-    canonicalCoverageDirty=true;
+    if (!persistedCoverageByRef.has(road.id)) canonicalCoverageDirty=true;
 
     renderMap();
     return road;
@@ -3505,6 +3505,7 @@ function renderMap({deferCalculations=false}={}) {
 
   if (mapStatus) {
     mapStatus.className = dashboardError ? 'muted map-status warn' : 'muted map-status ok';
+    mapStatus.classList.remove('hidden');
     if (dashboardError) {
       mapStatus.textContent='Your saved routes are shown. Motorway figures are refreshing after an update.';
     } else if (!mapCorrectionPanel.classList.contains('hidden')) {
@@ -3523,7 +3524,13 @@ function renderMap({deferCalculations=false}={}) {
         : 'Select a motorway above to add it to your map.';
     } else if (onboardingMode==='saved') {
       const ready=[...canonicalRoads.values()].filter(road=>road.status==='ready').length;
-      mapStatus.textContent=`Saved progress loaded · ${ready} canonical motorway reference${ready===1?'':'s'} ready.`;
+      const expected=new Set([...persistedCoverageByRef.keys(),...persistedManualRefs]).size;
+      if (expected && ready>=expected) {
+        mapStatus.textContent='';
+        mapStatus.classList.add('hidden');
+      } else {
+        mapStatus.textContent=`Restoring saved motorway map · ${ready} of ${expected} references ready.`;
+      }
     } else {
       mapStatus.textContent =
         `Credited road routes: ${credited.length.toLocaleString()} unique geometry segments · ` +
