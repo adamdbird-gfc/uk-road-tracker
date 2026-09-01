@@ -57,6 +57,7 @@ let refinementChunks = [];
 let refinementChunkIndex = 0;
 let mapCorrectionMode = null;
 let mapCorrectionUndoStack = [];
+let mapCorrectionChangesPending = false;
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
@@ -986,9 +987,9 @@ mapCorrectionUndo.addEventListener('click',()=>{
   restoreMapCorrectionState(previous);
   canonicalCoverageDirty=true;
   motorwayAggregateDirty=true;
+  mapCorrectionChangesPending=true;
   mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
-  scheduleLocalProgressSave();
-  renderMap();
+  renderMap({deferCalculations:true});
 });
 loadLocalProgress();
 loadFootPlaceNames();
@@ -2342,22 +2343,23 @@ function handleMapCorrectionMapClick(event) {
     motorwayAggregateDirty=true;
   }
   mapCorrectionUndo.disabled=false;
-  scheduleLocalProgressSave();
-  renderMap();
+  mapCorrectionChangesPending=true;
+  renderMap({deferCalculations:true});
   const verb=mapCorrectionMode==='remove' ? 'Removed' : 'Restored';
   mapStatus.className='muted map-status ok';
-  mapStatus.textContent=`${verb} ${targets.length} credited map segment${targets.length===1?'':'s'}.`;
+  mapStatus.textContent=`${verb} ${targets.length} credited map segment${targets.length===1?'':'s'}. Save changes when you are finished editing.`;
 }
 
 function startMapCorrection() {
   if (!shouldShowDataDashboard() || !editableMappedActivities().length) return;
   mapCorrectionUndoStack=[];
+  mapCorrectionChangesPending=false;
   mapCorrectionUndo.disabled=true;
   mapCorrectionPanel.classList.remove('hidden');
   mapCard.classList.add('refinement-active');
   mapCorrectionStartButton.classList.add('hidden');
   setMapCorrectionMode(null);
-  renderMap();
+  renderMap({deferCalculations:true});
   mapCorrectionRemove.focus();
 }
 
@@ -2365,6 +2367,8 @@ function finishMapCorrection() {
   mapCorrectionMode=null;
   mapCorrectionPanel.classList.add('hidden');
   mapCard.classList.remove('refinement-active');
+  if (mapCorrectionChangesPending) scheduleLocalProgressSave();
+  mapCorrectionChangesPending=false;
   renderMap();
 }
 
@@ -3311,9 +3315,11 @@ function renderMotorwayDashboard(drawable) {
   }
 }
 
-function renderMap() {
-  renderRoadQueue();
-  renderCollectiveStats();
+function renderMap({deferCalculations=false}={}) {
+  if (!deferCalculations) {
+    renderRoadQueue();
+    renderCollectiveStats();
+  }
   const hasCreditedRoutes=editableMappedActivities().length>0;
   mapCorrectionStartButton.classList.toggle(
     'hidden',
@@ -3333,18 +3339,20 @@ function renderMap() {
   // The saved route layer is the primary record. A temporary issue while a
   // motorway summary/reference recalculates must never prevent it rendering.
   let dashboardError=null;
-  try {
-    renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
-    motorwayAggregateDirty=false;
-  } catch (err) {
-    dashboardError=err;
-    console.error('Roadprints motorway mileage summary could not refresh:',err);
-  }
-  try {
-    renderCanonicalMotorwayDashboard(drawable);
-  } catch (err) {
-    dashboardError=dashboardError || err;
-    console.error('Roadprints canonical motorway map could not refresh:',err);
+  if (!deferCalculations) {
+    try {
+      renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
+      motorwayAggregateDirty=false;
+    } catch (err) {
+      dashboardError=err;
+      console.error('Roadprints motorway mileage summary could not refresh:',err);
+    }
+    try {
+      renderCanonicalMotorwayDashboard(drawable);
+    } catch (err) {
+      dashboardError=dashboardError || err;
+      console.error('Roadprints canonical motorway map could not refresh:',err);
+    }
   }
 
   for (const j of drawable) {
