@@ -3287,8 +3287,16 @@ function renderMap() {
     j => j.selected && j.points.length > 1
   );
 
-  renderMotorwayDashboard(drawable);
-  renderCanonicalMotorwayDashboard(drawable);
+  // The saved route layer is the primary record. A temporary issue while a
+  // motorway summary/reference recalculates must never prevent it rendering.
+  let dashboardError=null;
+  try {
+    renderMotorwayDashboard(drawable);
+    renderCanonicalMotorwayDashboard(drawable);
+  } catch (err) {
+    dashboardError=err;
+    console.error('Roadprints motorway dashboard could not refresh:',err);
+  }
 
   for (const j of drawable) {
     L.polyline(
@@ -3351,8 +3359,10 @@ function renderMap() {
   ).length;
 
   if (mapStatus) {
-    mapStatus.className = 'muted map-status ok';
-    if (!mapCorrectionPanel.classList.contains('hidden')) {
+    mapStatus.className = dashboardError ? 'muted map-status warn' : 'muted map-status ok';
+    if (dashboardError) {
+      mapStatus.textContent='Your saved routes are shown. Motorway figures are refreshing after an update.';
+    } else if (!mapCorrectionPanel.classList.contains('hidden')) {
       mapStatus.textContent=mapCorrectionMode
         ? `${mapCorrectionMode==='remove'?'Remove':'Restore'} mode · tap a black credited road section.`
         : 'Choose “Remove incorrect section” or “Restore a section” before tapping the map.';
