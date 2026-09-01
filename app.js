@@ -14,6 +14,7 @@ const persistedFootActivities = new Map();
 let mapArchiveReadyPromise = Promise.resolve();
 let footArchiveReadyPromise = Promise.resolve();
 let map = null;
+let mapRenderingRequested = false;
 let traceLayer = null;
 let matchedLayer = null;
 let creditedLayer = null;
@@ -79,6 +80,7 @@ const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
 const dataDateRange = document.getElementById('dataDateRange');
 const mapStatus = document.getElementById('mapStatus');
+const loadMapButton = document.getElementById('loadMap');
 const importModeCard = document.getElementById('importModeCard');
 const easyProgress = document.getElementById('easyProgress');
 const easyProgressText = document.getElementById('easyProgressText');
@@ -1248,6 +1250,19 @@ document.getElementById('selectNone').addEventListener('click', () => {
 });
 
 document.getElementById('fitMap').addEventListener('click', fitSelected);
+loadMapButton.addEventListener('click',async ()=>{
+  mapRenderingRequested=true;
+  loadMapButton.disabled=true;
+  loadMapButton.textContent='Loading map…';
+  const ready=await ensureLeaflet();
+  if (ready) {
+    initMap();
+    renderMap();
+    requestAnimationFrame(()=>map?.invalidateSize(true));
+  }
+  loadMapButton.disabled=false;
+  loadMapButton.textContent='Reload map';
+});
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
@@ -2116,6 +2131,13 @@ function loadScript(src) {
 }
 
 function initMap() {
+  if (!mapRenderingRequested) {
+    if (mapStatus) {
+      mapStatus.className='muted map-status';
+      mapStatus.textContent='Map paused to keep this page responsive. Tap “Load map” when you are ready to view it.';
+    }
+    return;
+  }
   if (map) {
     requestAnimationFrame(() => map.invalidateSize(true));
     return;
@@ -3618,20 +3640,12 @@ function renderMap({deferCalculations=false}={}) {
     'hidden',
     !shouldShowDataDashboard() || !hasCreditedRoutes || !mapCorrectionPanel.classList.contains('hidden')
   );
-  if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
-
-  traceLayer.clearLayers();
-  matchedLayer.clearLayers();
-  creditedLayer.clearLayers();
-  footLayer?.clearLayers();
-  aRoadLayer?.clearLayers();
-
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
   );
 
-  // The saved route layer is the primary record. A temporary issue while a
-  // motorway summary/reference recalculates must never prevent it rendering.
+  // Keep the lightweight summary cards available before the user opts in to
+  // loading the map itself.
   let dashboardError=null;
   if (!deferCalculations) {
     try {
@@ -3649,6 +3663,13 @@ function renderMap({deferCalculations=false}={}) {
       console.error('Roadprints canonical motorway map could not refresh:',err);
     }
   }
+  if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
+
+  traceLayer.clearLayers();
+  matchedLayer.clearLayers();
+  creditedLayer.clearLayers();
+  footLayer?.clearLayers();
+  aRoadLayer?.clearLayers();
 
   for (const j of drawable) {
     L.polyline(
