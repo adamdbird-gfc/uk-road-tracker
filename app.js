@@ -2722,6 +2722,14 @@ async function loadCanonicalRoad(ref, force=false) {
       console.warn('Canonical cache unavailable, falling back to Overpass:', cacheErr);
     }
 
+    // Opening saved progress must be deterministic and quick. A historical
+    // reference that is absent from both device storage and the bundled cache
+    // must not leave the entire restore queue waiting on a live Overpass call.
+    // It is shown as unavailable and can be retried deliberately instead.
+    if (!force && onboardingMode==='saved') {
+      throw new Error(`${road.ref} is not available in the saved motorway reference cache.`);
+    }
+
     const escapedRef=road.ref.replace(/"/g,'\\"');
     const query =
       `[out:json][timeout:90];` +
@@ -3537,10 +3545,13 @@ function renderMap({deferCalculations=false}={}) {
         : 'Select a motorway above to add it to your map.';
     } else if (onboardingMode==='saved') {
       const ready=[...canonicalRoads.values()].filter(road=>road.status==='ready').length;
+      const unavailable=[...canonicalRoads.values()].filter(road=>road.status==='error').length;
       const expected=new Set([...persistedCoverageByRef.keys(),...persistedManualRefs]).size;
       if (expected && ready>=expected) {
         mapStatus.textContent='';
         mapStatus.classList.add('hidden');
+      } else if (unavailable) {
+        mapStatus.textContent=`Saved motorway map loaded · ${ready} of ${expected} references ready · ${unavailable} unavailable reference${unavailable===1?'':'s'} shown in Motorway progress.`;
       } else {
         mapStatus.textContent=`Restoring saved motorway map · ${ready} of ${expected} references ready.`;
       }
