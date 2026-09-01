@@ -978,8 +978,9 @@ function resetTrackingSession() {
 }
 
 async function showSavedProgress() {
-  await mapArchiveReadyPromise;
-  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedMapJourneys.size) return;
+  await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
+  if (!persistedCoverageByRef.size && !persistedManualRefs.size &&
+      !persistedMapJourneys.size && !persistedFootActivities.size) return;
 
   resetTrackingSession();
   journeys=savedMapJourneysExcluding();
@@ -989,7 +990,7 @@ async function showSavedProgress() {
   manualMotorwayCard.classList.add('hidden');
   closeSavedProgress.classList.remove('hidden');
   mapTitle.textContent='Your saved Roadprints progress';
-  mapIntro.textContent='This is the motorway coverage saved on this device. Return to the start to import new Timeline data or make manual changes.';
+  mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
   nextCard.classList.add('hidden');
   renderRoadQueue();
@@ -1092,7 +1093,7 @@ mapCorrectionUndo.addEventListener('click',()=>{
 loadLocalProgress();
 loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
-footArchiveReadyPromise=loadFootActivityArchive();
+footArchiveReadyPromise=loadFootActivityArchive().finally(updateLocalProgressNotice);
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
