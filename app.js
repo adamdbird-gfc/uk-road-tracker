@@ -3012,16 +3012,32 @@ function renderCanonicalMapLayers() {
       }
     } else {
       // Cached references store sampled anchors rather than source OSM ways.
-      // Closely spaced markers form the completion line without joining
-      // unrelated motorway branches or carriageways.
+      // Draw contiguous runs as multi-polylines instead of creating a Leaflet
+      // marker for every 100 m anchor. A full saved map otherwise creates many
+      // thousands of SVG elements before the user can interact with it.
+      const runs={covered:[],uncovered:[]};
+      let previous=null;
+      let current=null;
+      let currentKind=null;
       for (const anchor of road.anchors) {
         const covered=road.coveredAnchorIds.has(anchor.id);
-        L.circleMarker([anchor.lat,anchor.lng],{
-          radius:3.2,
-          weight:0,
-          fillOpacity:.95,
+        const kind=covered ? 'covered' : 'uncovered';
+        const isContinuous=previous &&
+          haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
+        if (!current || currentKind!==kind || !isContinuous) {
+          current=[];
+          runs[kind].push(current);
+          currentKind=kind;
+        }
+        current.push([anchor.lat,anchor.lng]);
+        previous=anchor;
+      }
+      for (const [kind,paths] of Object.entries(runs)) {
+        const covered=kind==='covered';
+        L.polyline(paths.filter(path=>path.length>1),{
+          weight:4,
+          opacity:.9,
           color:covered ? '#005eb8' : '#d93a3a',
-          fillColor:covered ? '#005eb8' : '#d93a3a',
           pane:covered ? 'motorwayConfirmedPane' : 'motorwayUnconfirmedPane',
           interactive:false
         }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
@@ -3531,37 +3547,37 @@ function renderMap({deferCalculations=false}={}) {
     }
   }
 
+  const footPaths=[];
   for (const activity of footActivities) {
     if (!activity.matchedGeoJson || !footLayer) continue;
     const activityId=journeyIdentity(activity);
     for (const [a,b] of geometrySegments(activity.matchedGeoJson)) {
       if (segmentEvidenceIsRemoved(segmentKey(a,b),activityId)) continue;
-      L.polyline([[a[1],a[0]],[b[1],b[0]]],{
-        color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane'
-      }).addTo(footLayer);
+      footPaths.push([[a[1],a[0]],[b[1],b[0]]]);
     }
+  }
+  if (footPaths.length) {
+    L.polyline(footPaths,{
+      color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane',interactive:false
+    }).addTo(footLayer);
   }
 
   const credited = buildCreditedSegments(drawable);
-
+  const creditedPaths={high:[],review:[],low:[]};
   for (const seg of credited) {
-    const line = L.polyline(
-      [
-        [seg.a[1], seg.a[0]],
-        [seg.b[1], seg.b[0]]
-      ],
-      {
-        weight: seg.quality === 'high' ? 5 : 4,
-        opacity: seg.quality === 'low' ? 0.45 : 0.85,
-        color: '#111111',
-        pane: 'drivenRoadPane',
-        dashArray: seg.quality === 'low' ? '4,6' : null
-      }
-    ).addTo(creditedLayer);
-
-    line.bindTooltip(
-      `${seg.journeys} matched journey${seg.journeys === 1 ? '' : 's'} · ${seg.quality.toUpperCase()}`
-    );
+    const quality=creditedPaths[seg.quality] ? seg.quality : 'review';
+    creditedPaths[quality].push([[seg.a[1],seg.a[0]],[seg.b[1],seg.b[0]]]);
+  }
+  for (const [quality,paths] of Object.entries(creditedPaths)) {
+    if (!paths.length) continue;
+    L.polyline(paths,{
+      weight:quality==='high' ? 5 : 4,
+      opacity:quality==='low' ? .45 : .85,
+      color:'#111111',
+      pane:'drivenRoadPane',
+      dashArray:quality==='low' ? '4,6' : null,
+      interactive:false
+    }).addTo(creditedLayer);
   }
 
   requestAnimationFrame(() => map.invalidateSize(true));
