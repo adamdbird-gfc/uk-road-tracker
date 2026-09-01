@@ -495,6 +495,13 @@ function loadLocalProgress() {
     persistedMileageHistoryComplete=typeof saved.mileageHistoryComplete==='boolean'
       ? saved.mileageHistoryComplete
       : persistedProcessedJourneyIds.size===0;
+    // A completed save already contains the canonical motorway sections and
+    // per-journey motorway contributions. Reuse those on "View saved data";
+    // only new matches or saved map edits make either calculation dirty again.
+    if (persistedCoverageByRef.size) canonicalCoverageDirty=false;
+    if (persistedMotorwayContributionsByJourney.size && persistedMileageHistoryComplete) {
+      motorwayAggregateDirty=false;
+    }
     if (saved.distanceUnit==='km') distanceUnit='km';
   } catch (err) {
     console.warn('Saved local progress could not be read:',err);
@@ -674,6 +681,16 @@ function recordJourneyProcessed(journey) {
   }
   if (Number.isFinite(end)) {
     persistedDataEndMs=persistedDataEndMs===null ? end : Math.max(persistedDataEndMs,end);
+  }
+}
+
+function persistCorrectedMotorwayContributions() {
+  for (const journey of savedRoadRecords()) {
+    const id=journeyIdentity(journey);
+    if (!id) continue;
+    const contributions=motorwayContributionsForJourney(journey);
+    if (Object.keys(contributions).length) persistedMotorwayContributionsByJourney.set(id,contributions);
+    else persistedMotorwayContributionsByJourney.delete(id);
   }
 }
 
@@ -2367,7 +2384,13 @@ function finishMapCorrection() {
   mapCorrectionMode=null;
   mapCorrectionPanel.classList.add('hidden');
   mapCard.classList.remove('refinement-active');
-  if (mapCorrectionChangesPending) scheduleLocalProgressSave();
+  if (mapCorrectionChangesPending) {
+    if (motorwayAggregateDirty) {
+      persistCorrectedMotorwayContributions();
+      motorwayAggregateDirty=false;
+    }
+    scheduleLocalProgressSave();
+  }
   mapCorrectionChangesPending=false;
   renderMap();
 }
