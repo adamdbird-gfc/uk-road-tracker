@@ -2809,7 +2809,7 @@ function renderCanonicalMapLayers() {
               {
                 weight:4,
                 opacity:.9,
-                color:covered ? '#2f7df6' : '#d93a3a',
+                color:covered ? '#005eb8' : '#d93a3a',
                 pane:covered ? 'motorwayConfirmedPane' : 'motorwayUnconfirmedPane',
                 interactive:false
               }
@@ -2827,8 +2827,8 @@ function renderCanonicalMapLayers() {
           radius:3.2,
           weight:0,
           fillOpacity:.95,
-          color:covered ? '#2f7df6' : '#d93a3a',
-          fillColor:covered ? '#2f7df6' : '#d93a3a',
+          color:covered ? '#005eb8' : '#d93a3a',
+          fillColor:covered ? '#005eb8' : '#d93a3a',
           pane:covered ? 'motorwayConfirmedPane' : 'motorwayUnconfirmedPane',
           interactive:false
         }).addTo(covered ? canonicalCoverageLayer : canonicalUncoveredLayer);
