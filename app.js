@@ -18,6 +18,7 @@ let traceLayer = null;
 let matchedLayer = null;
 let creditedLayer = null;
 let footLayer = null;
+let aRoadLayer = null;
 let mapLayerControl = null;
 let ignoredJourneys = [];
 let importMode = null;
@@ -91,6 +92,8 @@ const footProgressBar = document.getElementById('footProgressBar');
 const startFootBatch = document.getElementById('startFootBatch');
 const pauseFootMatching = document.getElementById('pauseFootMatching');
 const clearImportedData = document.getElementById('clearImportedData');
+const clearRoadData = document.getElementById('clearRoadData');
+const clearFootData = document.getElementById('clearFootData');
 const travelStatsCard = document.getElementById('travelStatsCard');
 const travelStats = {
   total:document.getElementById('totalDistanceTravelled'),
@@ -105,6 +108,9 @@ const travelStats = {
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
+const aRoadCard = document.getElementById('aRoadCard');
+const aRoadList = document.getElementById('aRoadList');
+const aRoadsDiscovered = document.getElementById('aRoadsDiscovered');
 const timelineRoadMileage = document.getElementById('timelineRoadMileage');
 const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
@@ -212,7 +218,7 @@ function shouldShowDataDashboard() {
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0;
+  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0 || persistedFootActivities.size>0;
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
 
@@ -226,7 +232,8 @@ function updateLocalProgressNotice() {
     dataEndMs:persistedDataEndMs
   });
   localProgressSummary.textContent=
-    `${journeyCount.toLocaleString()} saved matched journey${journeyCount===1?'':'s'} · ` +
+    `${journeyCount.toLocaleString()} saved matched road journey${journeyCount===1?'':'s'} · ` +
+    `${persistedFootActivities.size.toLocaleString()} on-foot activit${persistedFootActivities.size===1?'y':'ies'} · ` +
     `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage · ${range} · saved ${savedLabel}.`;
 }
 
@@ -313,6 +320,7 @@ function compactMapJourney(journey) {
     points:(journey.points || []).filter(validPoint).map(point=>({lat:Number(point.lat),lng:Number(point.lng)})),
     matchedGeoJson:journey.matchedGeoJson,
     motorwayGeoJson:journey.motorwayGeoJson || {type:'FeatureCollection',features:[]},
+    aRoadGeoJson:journey.aRoadGeoJson || {type:'FeatureCollection',features:[]},
     matchedDistanceKm:Number(journey.matchedDistanceKm || 0),
     matchedTracepoints:Number(journey.matchedTracepoints || 0),
     pointsSentToMatcher:Number(journey.pointsSentToMatcher || 0),
@@ -353,18 +361,27 @@ async function saveJourneyToMapArchive(journey) {
   window.dispatchEvent(new Event('roadprints:archivechange'));
 }
 
-async function clearMapArchive() {
+async function clearRoadArchive() {
   await mapArchiveOperation('readwrite',store=>store.clear());
   persistedMapJourneys.clear();
   persistedJourneyMileageById.clear();
   persistedMotorwayContributionsByJourney.clear();
-  await footArchiveOperation('readwrite',store=>store.clear());
   await canonicalRoadArchiveOperation('readwrite',store=>store.clear());
+  window.dispatchEvent(new Event('roadprints:archivechange'));
+}
+
+async function clearFootArchive() {
+  await footArchiveOperation('readwrite',store=>store.clear());
   persistedFootActivities.clear();
   footActivities=[];
   footBatches=[];
   renderFootQueue();
   window.dispatchEvent(new Event('roadprints:archivechange'));
+}
+
+async function clearMapArchive() {
+  await clearRoadArchive();
+  await clearFootArchive();
 }
 
 function compactFootActivity(activity) {
@@ -728,12 +745,7 @@ function mergeProgressDateRange(source) {
   if (persistedDataEndMs!==null) source.dataEndMs=persistedDataEndMs;
 }
 
-async function clearLocalProgress() {
-  if (!window.confirm('Delete all Roadprints progress and saved map journeys from this device?')) return;
-  localProgressDeletionRunning=true;
-  clearTimeout(localSaveTimer);
-  localSaveTimer=null;
-  localStorage.removeItem(LOCAL_PROGRESS_KEY);
+function resetRoadProgressState() {
   persistedCoverageByRef.clear();
   persistedManualRefs.clear();
   persistedDataStartMs=null;
@@ -746,9 +758,57 @@ async function clearLocalProgress() {
   persistedImportedFileHashes.clear();
   persistedFileHashTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
+  persistedJourneyMileageById.clear();
   removedSegmentEvidence.clear();
   canonicalRemovalEvidenceByRef.clear();
   persistedMileageHistoryComplete=true;
+}
+
+async function clearRoadDataOnly() {
+  if (!window.confirm('Delete saved driving journeys, motorway progress and A-road progress? Your walking and running data will be kept.')) return;
+  localProgressDeletionRunning=true;
+  clearTimeout(localSaveTimer);
+  localSaveTimer=null;
+  resetRoadProgressState();
+
+  try {
+    await clearRoadArchive();
+  } catch (err) {
+    console.warn('Saved road journeys could not be deleted:',err);
+    window.alert('The saved road journeys could not be deleted. Please try again.');
+  } finally {
+    localProgressDeletionRunning=false;
+  }
+
+  journeys=[];
+  canonicalRoads.clear();
+  canonicalRequestedRefs.clear();
+  renderMap();
+  saveLocalProgressNow();
+  updateLocalProgressNotice();
+}
+
+async function clearFootDataOnly() {
+  if (!window.confirm('Delete saved walking and running data? Your driving, motorway and A-road progress will be kept.')) return;
+  try {
+    await clearFootArchive();
+  } catch (err) {
+    console.warn('Saved on-foot activities could not be deleted:',err);
+    window.alert('The saved on-foot activities could not be deleted. Please try again.');
+    return;
+  }
+  renderMap();
+  saveLocalProgressNow();
+  updateLocalProgressNotice();
+}
+
+async function clearLocalProgress() {
+  if (!window.confirm('Delete all Roadprints progress, driving journeys and walking/running data from this device?')) return;
+  localProgressDeletionRunning=true;
+  clearTimeout(localSaveTimer);
+  localSaveTimer=null;
+  localStorage.removeItem(LOCAL_PROGRESS_KEY);
+  resetRoadProgressState();
   localProgressNotice.classList.add('hidden');
 
   try {
@@ -757,8 +817,6 @@ async function clearLocalProgress() {
     console.warn('Saved map journeys could not be deleted:',err);
     window.alert('The saved map journeys could not be deleted. Please try again.');
   } finally {
-    // Remove the local save again after the asynchronous archive operation so
-    // no previously queued write can resurrect stale motorway progress.
     localStorage.removeItem(LOCAL_PROGRESS_KEY);
     localProgressDeletionRunning=false;
   }
@@ -864,6 +922,7 @@ function resetTrackingSession() {
   journeyList.innerHTML = '';
   ignoredList.innerHTML = '';
   motorwayList.innerHTML = '';
+  aRoadList.innerHTML = '';
   canonicalMotorwayList.innerHTML = '';
   journeyCount.textContent = '0';
   pointCount.textContent = '0';
@@ -871,6 +930,7 @@ function resetTrackingSession() {
   dataDateRange.querySelector('span').textContent = 'Date range unavailable';
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
+  aRoadsDiscovered.textContent = '0';
   timelineRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   canonicalRoadsReady.textContent = '0';
   gbProgressPercent.textContent = '0.0%';
@@ -896,6 +956,7 @@ function resetTrackingSession() {
   ignoredCard.classList.add('hidden');
   summaryCard.classList.add('hidden');
   motorwayCard.classList.add('hidden');
+  aRoadCard.classList.add('hidden');
   canonicalMotorwayCard.classList.add('hidden');
   mapCard.classList.add('hidden');
   nextCard.classList.add('hidden');
@@ -905,7 +966,8 @@ function resetTrackingSession() {
 
   for (const layer of [
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
-    canonicalCoverageLayer, canonicalUncoveredLayer
+    canonicalCoverageLayer, canonicalUncoveredLayer,
+    aRoadLayer
   ]) {
     if (layer) layer.clearLayers();
   }
@@ -1197,6 +1259,8 @@ pauseFootMatching.addEventListener('click',()=>{
   renderFootQueue();
 });
 clearImportedData.addEventListener('click', clearLocalProgress);
+clearRoadData.addEventListener('click', clearRoadDataOnly);
+clearFootData.addEventListener('click', clearFootDataOnly);
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
 
@@ -1627,7 +1691,7 @@ async function showFootMap() {
   }
   mapCard.classList.remove('hidden');
   mapTitle.textContent='Journey map';
-  mapIntro.textContent='One combined map for your journeys: black shows driven routes, green shows walking and running routes, and the layer control lets you compare them with motorway coverage.';
+  mapIntro.textContent='One combined map for your journeys: black shows driven routes, purple shows walking and running routes, and the layer control lets you compare them with motorway and A-road coverage.';
   initMap();
   renderMap();
   requestAnimationFrame(()=>{ map?.invalidateSize(true); fitFootRoutes(); });
@@ -1755,6 +1819,7 @@ async function startEasyImport() {
 
       journey.matchedGeoJson = data.geojson;
       journey.motorwayGeoJson = data.motorway_geojson;
+      journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
       journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -1954,6 +2019,7 @@ async function matchJourney(index, button, statusNode) {
 
     journey.matchedGeoJson = data.geojson;
     journey.motorwayGeoJson = data.motorway_geojson;
+    journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
     journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -1993,6 +2059,7 @@ function clearMatchedRoads() {
   currentImportJourneys().forEach(j => {
     delete j.matchedGeoJson;
     delete j.motorwayGeoJson;
+    delete j.aRoadGeoJson;
     delete j.matchedDistanceKm;
     delete j.matchedTracepoints;
     delete j.pointsSentToMatcher;
@@ -2073,6 +2140,7 @@ function initMap() {
       drivenRoadPane: 410,
       canonicalReferencePane: 420,
       motorwayUnconfirmedPane: 430,
+      aRoadConfirmedPane: 435,
       motorwayConfirmedPane: 440
     };
     for (const [paneName,zIndex] of Object.entries(paneOrder)) {
@@ -2129,6 +2197,7 @@ function initMap() {
     matchedLayer = L.layerGroup();
     creditedLayer = L.layerGroup().addTo(map);
     footLayer = L.layerGroup().addTo(map);
+    aRoadLayer = L.layerGroup().addTo(map);
     canonicalReferenceLayer = L.layerGroup();
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
@@ -2139,7 +2208,8 @@ function initMap() {
         'Road journeys (black)': creditedLayer,
         'Matched journeys (black)': matchedLayer,
         'Raw Timeline traces (black)': traceLayer,
-        'On-foot journeys (green)': footLayer,
+        'On-foot journeys (purple)': footLayer,
+        'A-road confirmed sections (green)': aRoadLayer,
         'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
@@ -3482,6 +3552,42 @@ function renderMotorwayDashboard(drawable) {
   }
 }
 
+function aRoadFeatureId(feature) {
+  const ref=String(feature?.properties?.road_ref || '').toUpperCase().replace(/\s+/g,'');
+  return /^A\d+[A-Z]?$/.test(ref) ? ref : null;
+}
+
+function renderARoadDashboard(drawable) {
+  const roads=new Map();
+  for (const journey of drawable) {
+    for (const feature of journey.aRoadGeoJson?.features || []) {
+      const ref=aRoadFeatureId(feature);
+      const distanceM=Number(feature?.properties?.distance_m || 0);
+      if (!ref || !Number.isFinite(distanceM) || distanceM<=0) continue;
+      const road=roads.get(ref) || {ref,distanceM:0,journeys:new Set()};
+      road.distanceM+=distanceM;
+      road.journeys.add(journeyIdentity(journey));
+      roads.set(ref,road);
+    }
+  }
+  const rows=[...roads.values()].sort((a,b)=>b.distanceM-a.distanceM || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
+  aRoadList.innerHTML='';
+  aRoadsDiscovered.textContent=rows.length.toLocaleString();
+  aRoadCard.classList.toggle('hidden',!rows.length);
+  for (const road of rows) {
+    const row=document.createElement('div'); row.className='motorway-row';
+    const ref=document.createElement('div'); ref.className='motorway-ref a-road-ref'; ref.textContent=road.ref;
+    const bar=document.createElement('div'); bar.className='motorway-bar';
+    const fill=document.createElement('div'); fill.className='motorway-fill a-road-fill';
+    fill.style.width=`${Math.max(2,road.distanceM/Math.max(...rows.map(item=>item.distanceM),1)*100)}%`;
+    bar.append(fill);
+    const value=document.createElement('div'); value.className='motorway-pct'; value.textContent=displayDistance(road.distanceM/1000);
+    const meta=document.createElement('div'); meta.className='motorway-meta';
+    meta.textContent=`${road.journeys.size} matched journey${road.journeys.size===1?'':'s'} contributed · ${displayDistance(road.distanceM/1000)} matched`;
+    row.append(ref,bar,value,meta); aRoadList.append(row);
+  }
+}
+
 function renderMap({deferCalculations=false}={}) {
   if (!deferCalculations) {
     renderRoadQueue();
@@ -3498,6 +3604,7 @@ function renderMap({deferCalculations=false}={}) {
   matchedLayer.clearLayers();
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
+  aRoadLayer?.clearLayers();
 
   const drawable = journeys.filter(
     j => j.selected && j.points.length > 1
@@ -3510,6 +3617,7 @@ function renderMap({deferCalculations=false}={}) {
     try {
       renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
       motorwayAggregateDirty=false;
+      renderARoadDashboard(drawable);
     } catch (err) {
       dashboardError=err;
       console.error('Roadprints motorway mileage summary could not refresh:',err);
@@ -3558,8 +3666,17 @@ function renderMap({deferCalculations=false}={}) {
   }
   if (footPaths.length) {
     L.polyline(footPaths,{
-      color:'#16803c',weight:4,opacity:.86,pane:'drivenRoadPane',interactive:false
+      color:'#7642a8',weight:4,opacity:.86,pane:'drivenRoadPane',interactive:false
     }).addTo(footLayer);
+  }
+
+  const aRoadFeatures=drawable.flatMap(journey=>journey.aRoadGeoJson?.features || []);
+  if (aRoadFeatures.length && aRoadLayer) {
+    L.geoJSON({type:'FeatureCollection',features:aRoadFeatures},{
+      pane:'aRoadConfirmedPane',
+      style:{color:'#187a3b',weight:5,opacity:.9},
+      interactive:false
+    }).addTo(aRoadLayer);
   }
 
   const credited = buildCreditedSegments(drawable);
