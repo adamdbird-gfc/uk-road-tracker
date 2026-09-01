@@ -2951,8 +2951,10 @@ async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
     canonicalRequestedRefs.add(ref);
   }
   if (canonicalLoadQueueRunning) return;
-  if (onboardingMode==='saved' &&
-      ![...canonicalRequestedRefs].some(ref=>canonicalRoadState(ref).status==='idle')) return;
+  // Do not start an empty queue. Its completion renders the map, which used
+  // to immediately call this function again and caused a full-render loop
+  // once all motorway references were already ready.
+  if (![...canonicalRequestedRefs].some(ref=>canonicalRoadState(ref).status==='idle')) return;
 
   canonicalLoadQueueRunning=true;
   try {
