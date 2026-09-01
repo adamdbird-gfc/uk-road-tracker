@@ -3292,10 +3292,15 @@ function renderMap() {
   let dashboardError=null;
   try {
     renderMotorwayDashboard(drawable);
-    renderCanonicalMotorwayDashboard(drawable);
   } catch (err) {
     dashboardError=err;
-    console.error('Roadprints motorway dashboard could not refresh:',err);
+    console.error('Roadprints motorway mileage summary could not refresh:',err);
+  }
+  try {
+    renderCanonicalMotorwayDashboard(drawable);
+  } catch (err) {
+    dashboardError=dashboardError || err;
+    console.error('Roadprints canonical motorway map could not refresh:',err);
   }
 
   for (const j of drawable) {
