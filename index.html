@@ -17,7 +17,6 @@
         <h1>Roadprints</h1>
         <p class="lede">Build a living record of the roads you have driven and the places you have explored on foot. Import Google Timeline data or start manually, then watch your map grow journey by journey.</p>
       </div>
-      <div class="privacy">Your file is processed in your browser. This POC does not upload it anywhere.</div>
     </header>
 
     <section id="onboardingCard" class="card onboarding-card">
@@ -179,12 +178,19 @@
     <details id="aRoadCard" class="card motorway-details hidden">
       <summary class="details-summary motorway-heading">
         <div>
-          <h2>A-road progress</h2>
-          <p class="muted">Numbered A roads identified from your matched driving.</p>
+          <h2>A-road aggregate</h2>
+          <p class="muted">Matched A-road mileage and the roads discovered from your driving.</p>
         </div>
-        <div class="motorway-total"><strong id="aRoadsDiscovered">0</strong><span>discovered</span></div>
+        <div class="motorway-controls">
+          <div class="unit-toggle" role="group" aria-label="Distance units">
+            <button id="aRoadUnitMiles" type="button" class="unit-option active" aria-pressed="true">Miles</button>
+            <button id="aRoadUnitKm" type="button" class="unit-option" aria-pressed="false">km</button>
+          </div>
+          <div class="motorway-total"><strong id="aRoadMileage">0 mi</strong><span>Matched A-road miles</span></div>
+          <div class="motorway-total"><strong id="aRoadsDiscovered">0</strong><span>discovered</span></div>
+        </div>
       </summary>
-      <p class="muted motorway-expanded-intro">Confirmed A-road stretches are shown in green on the map. A-road reference sections will use the same green/red completion language as motorways.</p>
+      <p class="muted motorway-expanded-intro">A-road figures use directly matched evidence only. Repeated routes do not invent mileage on individual A roads.</p>
       <div id="aRoadList" class="motorway-list"></div>
     </details>
 
@@ -335,7 +341,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260901-on-demand-map"></script>
+  <script src="app.js?v=20260902-viewport-performance"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
