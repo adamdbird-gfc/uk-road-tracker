@@ -3180,7 +3180,13 @@ function renderCanonicalMapLayers() {
           runs[kind].push(current);
           currentKind=kind;
         }
-        if (!current.length && previous) current.push([previous.lat,previous.lng]);
+        // A cache can contain separate motorway branches. Only carry the
+        // preceding anchor into a new visible run when it is genuinely the
+        // adjacent 100 m sample; otherwise Leaflet draws a false diagonal
+        // between distant sections.
+        if (!current.length && previous && isContinuous) {
+          current.push([previous.lat,previous.lng]);
+        }
         current.push([anchor.lat,anchor.lng]);
         previous=anchor;
       }
