@@ -21,6 +21,8 @@ let creditedLayer = null;
 let footLayer = null;
 let aRoadLayer = null;
 let mapLayerControl = null;
+let mapGeometryRefreshTimer = null;
+let creditedMapSegmentCache = {signature:null,segments:[]};
 let ignoredJourneys = [];
 let importMode = null;
 let easyImportPaused = false;
@@ -113,9 +115,12 @@ const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
 const aRoadCard = document.getElementById('aRoadCard');
 const aRoadList = document.getElementById('aRoadList');
 const aRoadsDiscovered = document.getElementById('aRoadsDiscovered');
+const aRoadMileage = document.getElementById('aRoadMileage');
 const timelineRoadMileage = document.getElementById('timelineRoadMileage');
 const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
+const aRoadUnitMiles = document.getElementById('aRoadUnitMiles');
+const aRoadUnitKm = document.getElementById('aRoadUnitKm');
 const canonicalMotorwayCard = document.getElementById('canonicalMotorwayCard');
 const canonicalMotorwayList = document.getElementById('canonicalMotorwayList');
 const canonicalRoadsReady = document.getElementById('canonicalRoadsReady');
@@ -933,6 +938,7 @@ function resetTrackingSession() {
   ignoredCount.textContent = '0';
   motorwaysDiscovered.textContent = '0';
   aRoadsDiscovered.textContent = '0';
+  aRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   timelineRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   canonicalRoadsReady.textContent = '0';
   gbProgressPercent.textContent = '0.0%';
@@ -1100,6 +1106,10 @@ unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
 unitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
+aRoadUnitMiles.classList.toggle('active',distanceUnit==='miles');
+aRoadUnitKm.classList.toggle('active',distanceUnit==='km');
+aRoadUnitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
+aRoadUnitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
 renderManualMotorwayOptions();
 updateLocalProgressNotice();
 fileInput.addEventListener('change', async () => {
@@ -1291,6 +1301,10 @@ unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
 unitKm.addEventListener('click', () => setDistanceUnit('km'));
 unitMiles.addEventListener('click', event => event.stopPropagation());
 unitKm.addEventListener('click', event => event.stopPropagation());
+aRoadUnitMiles.addEventListener('click', () => setDistanceUnit('miles'));
+aRoadUnitKm.addEventListener('click', () => setDistanceUnit('km'));
+aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
+aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 
 function resetOutput() {
@@ -1881,12 +1895,15 @@ function renderAll(fileName) {
   if (journeyLabel) journeyLabel.textContent = 'usable journeys';
   pointCount.textContent = points.toLocaleString();
 
-  summaryCard.classList.remove('hidden');
+  // The old per-journey chooser is retained in the DOM only for the detailed
+  // import fallback. Automatic imports already manage the queue themselves,
+  // so rendering hundreds of hidden journey rows wastes mobile memory.
+  summaryCard.classList.add('hidden');
   mapCard.classList.remove('hidden');
   nextCard.classList.remove('hidden');
 
-  renderJourneyList();
-  journeyList.style.display = importMode === 'easy' ? 'none' : 'grid';
+  journeyList.innerHTML='';
+  journeyList.style.display='none';
   initMap();
   renderMap();
   updateSelectedCount();
@@ -2216,15 +2233,17 @@ function initMap() {
       if (!mapCorrectionPanel.classList.contains('hidden')) handleMapCorrectionMapClick(event);
       else handleRefinementMapClick(event);
     });
-    traceLayer = L.layerGroup();
-    matchedLayer = L.layerGroup();
+    // The raw and matched-route layers were useful while validating the
+    // matcher, but duplicate a large amount of geometry on a normal map.
+    traceLayer = null;
+    matchedLayer = null;
     creditedLayer = L.layerGroup().addTo(map);
     footLayer = L.layerGroup().addTo(map);
     // A-road geometry can be much denser than the motorway network. Keep this
     // optional layer off until the user chooses it, so opening saved progress
     // never asks a phone to paint every matched A-road step at UK scale.
     aRoadLayer = L.layerGroup();
-    canonicalReferenceLayer = L.layerGroup();
+    canonicalReferenceLayer = null;
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
 
@@ -2232,11 +2251,8 @@ function initMap() {
       {},
       {
         'Road journeys (black)': creditedLayer,
-        'Matched journeys (black)': matchedLayer,
-        'Raw Timeline traces (black)': traceLayer,
         'On-foot journeys (purple)': footLayer,
         'A-road confirmed sections (green)': aRoadLayer,
-        'Canonical motorway references (grey)': canonicalReferenceLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
       },
@@ -2248,6 +2264,15 @@ function initMap() {
     });
     map.on('overlayremove',event=>{
       if (event.layer===aRoadLayer) aRoadLayer.clearLayers();
+    });
+    // Refresh only after the pan or zoom has settled, not while the gesture
+    // is in progress.
+    map.on('moveend zoomend',()=>{
+      clearTimeout(mapGeometryRefreshTimer);
+      mapGeometryRefreshTimer=setTimeout(()=>{
+        renderMap({deferCalculations:true});
+        renderCanonicalMapLayers();
+      },80);
     });
 
     if (mapStatus) {
@@ -2322,6 +2347,7 @@ function restoreMapCorrectionState(snapshot) {
   for (const [roadId,anchors] of snapshot.canonical) {
     canonicalRemovalEvidenceByRef.set(roadId,new Map([...anchors.entries()].map(([id,ids])=>[id,new Set(ids)])));
   }
+  creditedMapSegmentCache.signature=null;
 }
 
 function segmentEvidenceIsRemoved(key, journeyId) {
@@ -2365,6 +2391,21 @@ function buildCreditedSegments(drawable, {includeRemoved=false}={}) {
   }
 
   return [...unique.values()];
+}
+
+function creditedSegmentsForMap(drawable) {
+  // Panning does not alter the underlying evidence. Retaining this lightweight
+  // index avoids rebuilding all 134k+ unique segments after every move.
+  const signature=drawable.map(j=>[
+    journeyIdentity(j),
+    j.selected ? 1 : 0,
+    j.matchedGeoJson?.features?.length || 0,
+    j.matchQuality?.level || ''
+  ].join(':')).join('|')+`:${removedSegmentEvidence.size}`;
+  if (creditedMapSegmentCache.signature!==signature) {
+    creditedMapSegmentCache={signature,segments:buildCreditedSegments(drawable)};
+  }
+  return creditedMapSegmentCache.segments;
 }
 
 function haversineMetres(a, b) {
@@ -2475,6 +2516,7 @@ function handleMapCorrectionMapClick(event) {
     if (mapCorrectionMode==='restore') removedSegmentEvidence.delete(key);
     else removedSegmentEvidence.set(key,new Set(segment.journeyIds));
   }
+  creditedMapSegmentCache.signature=null;
   const roadChanged=targets.some(segment=>segment.hasRoadEvidence);
   recordCanonicalCorrectionForSegments(targets,mapCorrectionMode);
   if (roadChanged) {
@@ -2549,8 +2591,12 @@ function setDistanceUnit(unit) {
   unitKm.classList.toggle('active', distanceUnit === 'km');
   unitMiles.setAttribute('aria-pressed', String(distanceUnit === 'miles'));
   unitKm.setAttribute('aria-pressed', String(distanceUnit === 'km'));
+  aRoadUnitMiles.classList.toggle('active', distanceUnit === 'miles');
+  aRoadUnitKm.classList.toggle('active', distanceUnit === 'km');
+  aRoadUnitMiles.setAttribute('aria-pressed', String(distanceUnit === 'miles'));
+  aRoadUnitKm.setAttribute('aria-pressed', String(distanceUnit === 'km'));
 
-  if (map) renderMap();
+  renderMap();
   renderCanonicalMotorwayDashboard();
 }
 
@@ -3070,30 +3116,21 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
 }
 
 function renderCanonicalMapLayers() {
-  if (!canonicalReferenceLayer || !canonicalCoverageLayer || !canonicalUncoveredLayer) return;
-  canonicalReferenceLayer.clearLayers();
+  if (!canonicalCoverageLayer || !canonicalUncoveredLayer) return;
+  canonicalReferenceLayer?.clearLayers();
   canonicalCoverageLayer.clearLayers();
   canonicalUncoveredLayer.clearLayers();
+  const bounds=visibleMapBounds();
 
   for (const road of canonicalRoads.values()) {
     if (road.status!=='ready') continue;
     if (refinementRoadRef && road.id!==refinementRoadRef) continue;
 
-    for (const way of road.ways) {
-      L.polyline(way.coords.map(p=>[p[1],p[0]]),{
-        weight:2,
-        opacity:.45,
-        dashArray:'5,6',
-        color:'#6b7280',
-        pane:'canonicalReferencePane',
-        interactive:false
-      }).addTo(canonicalReferenceLayer);
-    }
-
     if (road.ways.length) {
       for (const way of road.ways) {
         for (let i=1; i<way.coords.length; i++) {
           const a=way.coords[i-1], b=way.coords[i];
+          if (!segmentIntersectsMapBounds(a,b,bounds)) continue;
           const lengthM=haversineMetres(a,b);
           if (!Number.isFinite(lengthM) || lengthM<=0) continue;
           const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_REFERENCE_SAMPLE_M));
@@ -3125,15 +3162,25 @@ function renderCanonicalMapLayers() {
       let current=null;
       let currentKind=null;
       for (const anchor of road.anchors) {
+        const anchorPoint=[anchor.lng,anchor.lat];
         const covered=road.coveredAnchorIds.has(anchor.id);
         const kind=covered ? 'covered' : 'uncovered';
         const isContinuous=previous &&
           haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
+        const isVisible=!previous || segmentIntersectsMapBounds(
+          [previous.lng,previous.lat],anchorPoint,bounds
+        );
+        if (!isVisible) {
+          if (current?.length>1) current=null;
+          previous=anchor;
+          continue;
+        }
         if (!current || currentKind!==kind || !isContinuous) {
           current=[];
           runs[kind].push(current);
           currentKind=kind;
         }
+        if (!current.length && previous) current.push([previous.lat,previous.lng]);
         current.push([anchor.lat,anchor.lng]);
         previous=anchor;
       }
@@ -3592,7 +3639,7 @@ function aRoadFeatureId(feature) {
   return /^A\d+[A-Z]?$/.test(ref) ? ref : null;
 }
 
-function renderARoadDashboard(drawable) {
+function aRoadStats(drawable) {
   const roads=new Map();
   for (const journey of drawable) {
     for (const feature of journey.aRoadGeoJson?.features || []) {
@@ -3605,29 +3652,84 @@ function renderARoadDashboard(drawable) {
       roads.set(ref,road);
     }
   }
-  const rows=[...roads.values()].sort((a,b)=>b.distanceM-a.distanceM || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
+  return [...roads.values()]
+    .map(road=>({
+      ...road,
+      matchedKm:road.distanceM/1000,
+      journeys:road.journeys.size
+    }))
+    .sort((a,b)=>b.matchedKm-a.matchedKm || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
+}
+
+function renderARoadDashboard(drawable) {
+  const rows=aRoadStats(drawable);
   aRoadList.innerHTML='';
   aRoadsDiscovered.textContent=rows.length.toLocaleString();
-  aRoadCard.classList.toggle('hidden',!shouldShowDataDashboard());
+  aRoadMileage.textContent=displayDistance(rows.reduce((sum,road)=>sum+road.matchedKm,0));
   if (!rows.length) {
-    const empty=document.createElement('p');
-    empty.className='muted motorway-expanded-intro';
-    empty.textContent='No numbered A roads have been identified from the matched driving data yet.';
-    aRoadList.append(empty);
+    aRoadCard.classList.add('hidden');
     return;
   }
+  aRoadCard.classList.remove('hidden');
+  const maxKm=Math.max(...rows.map(road=>road.matchedKm),1);
   for (const road of rows) {
     const row=document.createElement('div'); row.className='motorway-row';
     const ref=document.createElement('div'); ref.className='motorway-ref a-road-ref'; ref.textContent=road.ref;
     const bar=document.createElement('div'); bar.className='motorway-bar';
     const fill=document.createElement('div'); fill.className='motorway-fill a-road-fill';
-    fill.style.width=`${Math.max(2,road.distanceM/Math.max(...rows.map(item=>item.distanceM),1)*100)}%`;
+    fill.style.width=`${Math.max(2,road.matchedKm/maxKm*100)}%`;
     bar.append(fill);
-    const value=document.createElement('div'); value.className='motorway-pct'; value.textContent=displayDistance(road.distanceM/1000);
+    const value=document.createElement('div'); value.className='motorway-pct'; value.textContent=displayDistance(road.matchedKm);
     const meta=document.createElement('div'); meta.className='motorway-meta';
-    meta.textContent=`${road.journeys.size} matched journey${road.journeys.size===1?'':'s'} contributed · ${displayDistance(road.distanceM/1000)} matched`;
+    meta.textContent=`${road.journeys} matched journey${road.journeys===1?'':'s'} contributed · ${displayDistance(road.matchedKm)} matched · completion % pending canonical road sections`;
     row.append(ref,bar,value,meta); aRoadList.append(row);
   }
+}
+
+function visibleMapBounds() {
+  return map?.getBounds?.().pad(.12) || null;
+}
+
+function segmentIntersectsMapBounds(a,b,bounds) {
+  if (!bounds) return true;
+  const west=bounds.getWest(), east=bounds.getEast();
+  const south=bounds.getSouth(), north=bounds.getNorth();
+  return Math.max(a[0],b[0])>=west && Math.min(a[0],b[0])<=east &&
+    Math.max(a[1],b[1])>=south && Math.min(a[1],b[1])<=north;
+}
+
+function geometryPathsInMapBounds(geometry,bounds) {
+  const lines=geometry?.type==='LineString' ? [geometry.coordinates] :
+    geometry?.type==='MultiLineString' ? geometry.coordinates : [];
+  const paths=[];
+  for (const line of lines) {
+    let current=[];
+    for (let index=1; index<(line || []).length; index++) {
+      const a=line[index-1], b=line[index];
+      if (!Array.isArray(a) || !Array.isArray(b) || !segmentIntersectsMapBounds(a,b,bounds)) {
+        if (current.length>1) paths.push(current);
+        current=[];
+        continue;
+      }
+      if (!current.length) current.push([Number(a[1]),Number(a[0])]);
+      current.push([Number(b[1]),Number(b[0])]);
+    }
+    if (current.length>1) paths.push(current);
+  }
+  return paths;
+}
+
+function mapOverviewSegmentLimit() {
+  const zoom=map?.getZoom?.() || DEFAULT_MAP_ZOOM;
+  if (zoom<7) return 28000;
+  if (zoom<9) return 55000;
+  return 110000;
+}
+
+function reducePathsForMap(paths,limit) {
+  if (paths.length<=limit) return paths;
+  const stride=Math.ceil(paths.length/limit);
+  return paths.filter((_,index)=>index%stride===0);
 }
 
 function renderMap({deferCalculations=false}={}) {
@@ -3663,38 +3765,12 @@ function renderMap({deferCalculations=false}={}) {
       console.error('Roadprints canonical motorway map could not refresh:',err);
     }
   }
-  if (!map || !traceLayer || !matchedLayer || !creditedLayer) return;
+  if (!map || !creditedLayer) return;
 
-  traceLayer.clearLayers();
-  matchedLayer.clearLayers();
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
   aRoadLayer?.clearLayers();
-
-  for (const j of drawable) {
-    L.polyline(
-      j.points.map(p => [p.lat, p.lng]),
-      {
-        weight: 2,
-        opacity: 0.28,
-        color: '#111111',
-        pane: 'drivenRoadPane',
-        interactive: false
-      }
-    ).addTo(traceLayer);
-
-    if (j.matchedGeoJson) {
-      L.geoJSON(j.matchedGeoJson, {
-        pane: 'drivenRoadPane',
-        style: {
-          weight: 4,
-          opacity: 0.55,
-          color: '#111111',
-          dashArray: j.matchQuality?.level === 'low' ? '5,7' : null
-        }
-      }).addTo(matchedLayer);
-    }
-  }
+  const bounds=visibleMapBounds();
 
   const footPaths=[];
   for (const activity of footActivities) {
@@ -3702,6 +3778,7 @@ function renderMap({deferCalculations=false}={}) {
     const activityId=journeyIdentity(activity);
     for (const [a,b] of geometrySegments(activity.matchedGeoJson)) {
       if (segmentEvidenceIsRemoved(segmentKey(a,b),activityId)) continue;
+      if (!segmentIntersectsMapBounds(a,b,bounds)) continue;
       footPaths.push([[a[1],a[0]],[b[1],b[0]]]);
     }
   }
@@ -3718,14 +3795,7 @@ function renderMap({deferCalculations=false}={}) {
         const ref=aRoadFeatureId(feature) || 'A road';
         if (!pathsByRef.has(ref)) pathsByRef.set(ref,[]);
         const paths=pathsByRef.get(ref);
-        const geometry=feature?.geometry;
-        const lines=geometry?.type==='LineString' ? [geometry.coordinates] :
-          geometry?.type==='MultiLineString' ? geometry.coordinates : [];
-        for (const line of lines) {
-          const path=(line || []).map(point=>[Number(point[1]),Number(point[0])])
-            .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]));
-          if (path.length>1) paths.push(path);
-        }
+        paths.push(...geometryPathsInMapBounds(feature?.geometry,bounds));
       }
     }
     for (const paths of pathsByRef.values()) {
@@ -3735,15 +3805,16 @@ function renderMap({deferCalculations=false}={}) {
     }
   }
 
-  const credited = buildCreditedSegments(drawable);
+  const credited = creditedSegmentsForMap(drawable);
   const creditedPaths={high:[],review:[],low:[]};
   for (const seg of credited) {
+    if (!segmentIntersectsMapBounds(seg.a,seg.b,bounds)) continue;
     const quality=creditedPaths[seg.quality] ? seg.quality : 'review';
     creditedPaths[quality].push([[seg.a[1],seg.a[0]],[seg.b[1],seg.b[0]]]);
   }
   for (const [quality,paths] of Object.entries(creditedPaths)) {
     if (!paths.length) continue;
-    L.polyline(paths,{
+    L.polyline(reducePathsForMap(paths,mapOverviewSegmentLimit()),{
       weight:quality==='high' ? 5 : 4,
       opacity:quality==='low' ? .45 : .85,
       color:'#111111',
