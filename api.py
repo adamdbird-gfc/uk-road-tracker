@@ -178,6 +178,7 @@ async def match_payload(
     features = []
     motorway_features = []
     a_road_features = []
+    other_road_features = []
     matched_distance_m = 0.0
     matched_tracepoints = 0
     tracepoints_seen = 0
@@ -244,6 +245,16 @@ async def match_payload(
                                     },
                                     "geometry": step_geometry,
                                 })
+                            if not motorway_road_refs and not a_road_refs_for_step:
+                                other_road_features.append({
+                                    "type": "Feature",
+                                    "properties": {
+                                        "name": step.get("name") or "",
+                                        "distance_m": float(step.get("distance") or 0.0),
+                                        "chunk_index": chunk_index,
+                                    },
+                                    "geometry": step_geometry,
+                                })
 
                 tracepoints = data.get("tracepoints") or []
                 matched_tracepoints += sum(tp is not None for tp in tracepoints)
@@ -265,4 +276,5 @@ async def match_payload(
         "geojson": {"type": "FeatureCollection", "features": features},
         "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
         "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
+        "other_road_geojson": {"type": "FeatureCollection", "features": other_road_features},
     }
