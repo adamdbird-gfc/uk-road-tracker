@@ -74,6 +74,7 @@ const canonicalARoadRequestedRefs = new Set();
 let canonicalARoadQueueRunning = false;
 let canonicalARoadCoverageDirty = true;
 let canonicalARoadLoadStarted = false;
+let canonicalARoadNextBatchTimer = null;
 let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
@@ -868,6 +869,8 @@ async function clearRoadDataOnly() {
   canonicalARoads.clear();
   canonicalARoadRequestedRefs.clear();
   canonicalARoadLoadStarted=false;
+  clearTimeout(canonicalARoadNextBatchTimer);
+  canonicalARoadNextBatchTimer=null;
   renderMap();
   saveLocalProgressNow();
   updateLocalProgressNotice();
@@ -999,6 +1002,8 @@ function resetTrackingSession() {
   canonicalARoadRequestedRefs.clear();
   canonicalARoads.clear();
   canonicalARoadLoadStarted=false;
+  clearTimeout(canonicalARoadNextBatchTimer);
+  canonicalARoadNextBatchTimer=null;
   refinementRoadRef = null;
   refinementUndoStack = [];
   refinementChunks = [];
@@ -1384,7 +1389,7 @@ aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 function startCanonicalARoadLoading() {
-  if (canonicalARoadLoadStarted) return;
+  if (canonicalARoadQueueRunning || canonicalARoadNextBatchTimer) return;
   const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.key);
   if (!refs.length) return;
   canonicalARoadLoadStarted=true;
@@ -2310,8 +2315,10 @@ function initMap() {
       drivenRoadPane: 410,
       canonicalReferencePane: 420,
       motorwayUnconfirmedPane: 430,
-      aRoadConfirmedPane: 435,
-      aRoadUnconfirmedPane: 437,
+      // Incomplete A-road reference is deliberately behind completed
+      // coverage, so small matching gaps cannot visually punch through green.
+      aRoadUnconfirmedPane: 435,
+      aRoadConfirmedPane: 437,
       motorwayConfirmedPane: 440
     };
     for (const [paneName,zIndex] of Object.entries(paneOrder)) {
@@ -3800,7 +3807,9 @@ function canonicalARoadState(key) {
   const parsed=parseARoadKey(key);
   if (!parsed) return null;
   const {region,ref}=parsed;
-  const id=`A:${region}:${ref}`;
+  // Coverage anchor ids are positional. Include the reference-data version so
+  // a former source cannot colour a newly rebuilt official centreline.
+  const id=`A:${CANONICAL_A_ROAD_CACHE_VERSION}:${region}:${ref}`;
   if (!canonicalARoads.has(id)) {
     canonicalARoads.set(id,{
       id,key:parsed.key,region,ref,status:'idle',error:null,ways:[],anchors:[],
@@ -3876,10 +3885,11 @@ async function fetchCanonicalARoadWays(road) {
   return cached;
 }
 
-async function loadCanonicalARoad(key,force=false) {
+async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
   const road=canonicalARoadState(key);
   if (!road || (!force && ['loading','ready'].includes(road.status))) return road;
-  road.status='loading'; road.error=null; renderCanonicalARoadDashboard();
+  road.status='loading'; road.error=null;
+  if (!deferRender) renderCanonicalARoadDashboard();
   try {
     if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
     const cached=await fetchCanonicalARoadWays(road);
@@ -3895,8 +3905,10 @@ async function loadCanonicalARoad(key,force=false) {
   } catch (err) {
     road.status='error'; road.error=err.message || String(err);
   }
-  renderCanonicalARoadDashboard();
-  renderCanonicalARoadMapLayers();
+  if (!deferRender) {
+    renderCanonicalARoadDashboard();
+    renderCanonicalARoadMapLayers();
+  }
   return road;
 }
 
@@ -3930,18 +3942,33 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   if (canonicalARoadQueueRunning) return;
   canonicalARoadQueueRunning=true;
   let loaded=0;
+  let available=new Map();
   try {
-    const available=await loadCanonicalARoadCacheIndex();
+    available=await loadCanonicalARoadCacheIndex();
     while (loaded<limit) {
       const key=[...canonicalARoadRequestedRefs].find(candidate=>
         available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
       );
       if (!key) break;
-      await loadCanonicalARoad(key);
+      // A batch commits to the map only once. Repainting Leaflet for every
+      // downloaded road was the source of the visible stalls during loading.
+      await loadCanonicalARoad(key,false,{deferRender:true});
       loaded++;
       await new Promise(resolve=>setTimeout(resolve,350));
     }
   } finally {
+    const moreAvailable=canonicalARoadCard.open && [...canonicalARoadRequestedRefs]
+      .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
+    clearTimeout(canonicalARoadNextBatchTimer);
+    canonicalARoadNextBatchTimer=null;
+    if (moreAvailable) {
+      // Keep progressing in modest batches while the user is viewing this
+      // panel, leaving the main thread free between network requests.
+      canonicalARoadNextBatchTimer=setTimeout(()=>{
+        canonicalARoadNextBatchTimer=null;
+        void ensureCanonicalARoadsForDiscoveredRefs([],{limit});
+      },1200);
+    }
     canonicalARoadQueueRunning=false;
     renderCanonicalARoadDashboard();
     renderCanonicalARoadMapLayers();
