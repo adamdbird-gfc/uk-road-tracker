@@ -1381,11 +1381,10 @@ canonicalARoadCard.addEventListener('toggle',()=>{
   canonicalARoadLoadStarted=true;
   ensureCanonicalARoadsForDiscoveredRefs(aRoadStats(canonicalARoadDrawable()).map(road=>road.ref));
 });
-canonicalARoadRetry.addEventListener('click',()=>{
-  const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.ref);
-  for (const road of canonicalARoads.values()) if (road.status==='error') road.status='idle';
-  ensureCanonicalARoadsForDiscoveredRefs(refs);
-});
+// A-road references are generated centrally. There is intentionally no
+// client-side retry/load button: pressing one cannot make a missing static
+// reference appear, and previously gave the misleading appearance of work.
+canonicalARoadRetry.addEventListener('click',()=>{});
 
 function resetOutput() {
   journeys = [];
@@ -3999,13 +3998,14 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   }
   canonicalARoadCoverageDirty=false;
   const pending=roads.filter(road=>road.status==='idle').length;
-  const actionableErrors=errors.filter(road=>!/reference is being prepared/i.test(road.error || ''));
-  canonicalARoadRetry.classList.toggle('hidden',!pending && !actionableErrors.length);
-  canonicalARoadRetry.textContent=actionableErrors.length ? 'Retry A-road references' : `Load next ${Math.min(12,pending)} A-road references`;
+  canonicalARoadRetry.classList.add('hidden');
+  canonicalARoadRetry.disabled=true;
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
   canonicalARoadStatus.textContent=loading.length
     ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
-    : `${ready.length} of ${roads.length} A-road references ready${pending?` · ${pending} queued.`:'.'}`;
+    : errors.length
+      ? `${ready.length} of ${roads.length} A-road references ready · the remaining references are being prepared.`
+      : `${ready.length} of ${roads.length} A-road references ready${pending?` · ${pending} queued.`:'.'}`;
 }
 
 function renderCanonicalARoadMapLayers() {
