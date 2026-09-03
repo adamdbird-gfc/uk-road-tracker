@@ -212,6 +212,7 @@ const CANONICAL_A_ROAD_CACHE_VERSION = 'v4';
 const CANONICAL_A_ROAD_CACHE_ROOT = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}`;
 const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${encodeURIComponent(file)}`;
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
+const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
@@ -3875,14 +3876,27 @@ async function loadCanonicalARoadCacheIndex() {
 async function fetchCanonicalARoadWays(road) {
   const entry=canonicalARoadCacheEntries.get(road.key);
   if (!entry) throw new Error(`${road.ref} ${road.region==='NI'?'Northern Ireland ':''}reference is being prepared.`);
-  const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(entry.file),{cache:'no-store'});
-  if (response.status===404) throw new Error(`${road.ref} reference is being prepared.`);
-  if (!response.ok) throw new Error(`A-road reference cache returned HTTP ${response.status}.`);
-  const cached=await response.json();
-  if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(cached.anchors)) {
-    throw new Error(`${road.ref} reference cache format is invalid.`);
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS);
+  try {
+    const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(entry.file),{
+      cache:'no-store',signal:controller.signal
+    });
+    if (response.status===404) throw new Error(`${road.ref} reference is being prepared.`);
+    if (!response.ok) throw new Error(`A-road reference cache returned HTTP ${response.status}.`);
+    const cached=await response.json();
+    if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(cached.anchors)) {
+      throw new Error(`${road.ref} reference cache format is invalid.`);
+    }
+    return cached;
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(`${road.ref} reference request timed out; the remaining roads will continue loading.`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  return cached;
 }
 
 async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
