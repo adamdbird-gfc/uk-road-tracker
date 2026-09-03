@@ -533,14 +533,17 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
     }
-    for (const [id,ids] of Object.entries(saved.aRoadCoverage || {})) {
-      if (Array.isArray(ids)) persistedARoadCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
-    }
+    // A-road anchor coverage is deliberately not restored from localStorage.
+    // At national scale it can contain hundreds of thousands of positional
+    // ids, making synchronous JSON parse/save freeze mobile browsers. The
+    // compact reference geometry is retained in IndexedDB and coverage is
+    // rebuilt safely from the saved matched journeys instead.
+    persistedARoadCoverageByRef.clear();
     for (const id of saved.manualMotorways || []) persistedManualRefs.add(String(id));
     persistedDataStartMs=saved.dataStartMs===null || saved.dataStartMs===undefined
       ? null
@@ -640,7 +643,7 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:3,
+      version:4,
       canonicalVersion:CANONICAL_CACHE_VERSION,
       savedAt:persistedSavedAt,
       distanceUnit,
@@ -659,9 +662,6 @@ function saveLocalProgressNow() {
       mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage,
-      aRoadCoverage:Object.fromEntries(
-        [...persistedARoadCoverageByRef.entries()].map(([id,ids])=>[id,[...ids].sort((a,b)=>a-b)])
-      ),
       removedSegmentEvidence:Object.fromEntries(
         [...removedSegmentEvidence.entries()].map(([segmentId,journeyIds])=>[segmentId,[...journeyIds].sort()])
       ),
