@@ -74,7 +74,7 @@ const canonicalARoadRequestedRefs = new Set();
 let canonicalARoadQueueRunning = false;
 let canonicalARoadCoverageDirty = true;
 let canonicalARoadLoadStarted = false;
-let canonicalARoadNextBatchTimer = null;
+let canonicalARoadWorkerEpoch = 0;
 let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
@@ -870,8 +870,7 @@ async function clearRoadDataOnly() {
   canonicalARoads.clear();
   canonicalARoadRequestedRefs.clear();
   canonicalARoadLoadStarted=false;
-  clearTimeout(canonicalARoadNextBatchTimer);
-  canonicalARoadNextBatchTimer=null;
+  canonicalARoadWorkerEpoch++;
   renderMap();
   saveLocalProgressNow();
   updateLocalProgressNotice();
@@ -1003,8 +1002,7 @@ function resetTrackingSession() {
   canonicalARoadRequestedRefs.clear();
   canonicalARoads.clear();
   canonicalARoadLoadStarted=false;
-  clearTimeout(canonicalARoadNextBatchTimer);
-  canonicalARoadNextBatchTimer=null;
+  canonicalARoadWorkerEpoch++;
   refinementRoadRef = null;
   refinementUndoStack = [];
   refinementChunks = [];
@@ -1390,7 +1388,7 @@ aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 function startCanonicalARoadLoading() {
-  if (canonicalARoadQueueRunning || canonicalARoadNextBatchTimer) return;
+  if (canonicalARoadQueueRunning) return;
   const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.key);
   if (!refs.length) return;
   canonicalARoadLoadStarted=true;
@@ -3955,41 +3953,42 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   }
   if (canonicalARoadQueueRunning) return;
   canonicalARoadQueueRunning=true;
-  let loaded=0;
+  const workerEpoch=canonicalARoadWorkerEpoch;
   let available=new Map();
   try {
     available=await loadCanonicalARoadCacheIndex();
-    while (loaded<limit) {
-      const key=[...canonicalARoadRequestedRefs].find(candidate=>
-        available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
-      );
-      if (!key) break;
-      // A batch commits to the map only once. Repainting Leaflet for every
-      // downloaded road was the source of the visible stalls during loading.
-      await loadCanonicalARoad(key,false,{deferRender:true});
-      loaded++;
-      await new Promise(resolve=>setTimeout(resolve,350));
+    while (workerEpoch===canonicalARoadWorkerEpoch) {
+      let loaded=0;
+      while (loaded<limit && workerEpoch===canonicalARoadWorkerEpoch) {
+        const key=[...canonicalARoadRequestedRefs].find(candidate=>
+          available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
+        );
+        if (!key) break;
+        // A batch commits to the map only once. Repainting Leaflet for every
+        // downloaded road was the source of the visible stalls during loading.
+        await loadCanonicalARoad(key,false,{deferRender:true});
+        loaded++;
+        await new Promise(resolve=>setTimeout(resolve,350));
+      }
+
+      // Saved-data restoration is asynchronous on mobile. Refresh the request
+      // set from the full, current journey record before the next batch.
+      for (const road of aRoadStats(canonicalARoadDrawable())) {
+        const state=canonicalARoadState(road.key);
+        if (state) canonicalARoadRequestedRefs.add(state.key);
+      }
+      const moreAvailable=[...canonicalARoadRequestedRefs]
+        .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
+      renderCanonicalARoadDashboard();
+      renderCanonicalARoadMapLayers();
+      scheduleLocalProgressSave();
+      if (!moreAvailable || !loaded) break;
+
+      // This is one persistent worker rather than a chain of separate timer
+      // callbacks, which Android Chrome can suspend after a few iterations.
+      await new Promise(resolve=>setTimeout(resolve,1200));
     }
   } finally {
-    // Saved-data restoration is asynchronous on mobile. Refresh the request
-    // set from the full, current journey record before deciding whether the
-    // next batch is due, rather than relying on the first partial render.
-    for (const road of aRoadStats(canonicalARoadDrawable())) {
-      const state=canonicalARoadState(road.key);
-      if (state) canonicalARoadRequestedRefs.add(state.key);
-    }
-    const moreAvailable=[...canonicalARoadRequestedRefs]
-      .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
-    clearTimeout(canonicalARoadNextBatchTimer);
-    canonicalARoadNextBatchTimer=null;
-    if (moreAvailable) {
-      // Keep progressing in modest batches in the background, leaving the
-      // main thread free between network requests and across panel re-renders.
-      canonicalARoadNextBatchTimer=setTimeout(()=>{
-        canonicalARoadNextBatchTimer=null;
-        void ensureCanonicalARoadsForDiscoveredRefs([],{limit});
-      },1200);
-    }
     canonicalARoadQueueRunning=false;
     renderCanonicalARoadDashboard();
     renderCanonicalARoadMapLayers();
