@@ -258,6 +258,10 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .canonical-road-meta { margin:7px 0 0; font-size:.76rem; color:#657083; line-height:1.35; }
 .canonical-road-loading { color:#8a5b00; }
 .canonical-road-error { color:#a31d1d; }
+.canonical-pagination { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:14px; }
+.canonical-pagination .muted { margin:0; text-align:center; font-size:.78rem; }
+.canonical-pagination button { flex:0 0 auto; }
+@media (max-width:520px) { .canonical-pagination { flex-wrap:wrap; } .canonical-pagination .muted { order:3; width:100%; } }
 
 
 /* Data-source onboarding and manual motorway setup */
