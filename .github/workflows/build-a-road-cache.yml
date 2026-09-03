@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "scripts/build_a_road_cache.py"
+      - "scripts/build_os_open_roads_a_cache.py"
       - ".github/workflows/build-a-road-cache.yml"
 
 permissions:
@@ -18,7 +19,7 @@ concurrency:
 jobs:
   build-cache:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 55
 
     steps:
       - uses: actions/checkout@v4
@@ -27,30 +28,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Build checkpointed batches
+      - name: Build official Great Britain references
         id: build
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python scripts/build_os_open_roads_a_cache.py
+          git add canonical-a-roads-v4 || true
           CHANGED=false
-          for BATCH in 1 2; do
-            python scripts/build_a_road_cache.py
-            git add canonical-a-roads-v2 || true
-            git diff --cached --quiet && break
-            git commit -m "Build canonical A-road cache batch $BATCH"
-            # The web app can be published while this long-running build is
-            # fetching OpenStreetMap data. Rebase the cache-only commit onto
-            # that newer site change before pushing it.
+          if ! git diff --cached --quiet; then
+            git commit -m "Build official Great Britain A-road references"
             git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
             CHANGED=true
-          done
+          fi
           echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
-      - name: Queue next cache run
-        if: steps.build.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "Queueing the next resumable A-road cache run..."
-          gh workflow run build-a-road-cache.yml --ref "${GITHUB_REF_NAME}"
