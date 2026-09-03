@@ -1,20 +1,35 @@
 name: Build A-road cache
+
 on:
   workflow_dispatch:
   push:
-    paths: ["scripts/build_a_road_cache.py", ".github/workflows/build-a-road-cache.yml"]
-permissions: {contents: write, actions: write}
-concurrency: {group: a-road-cache-builder, cancel-in-progress: false}
+    paths:
+      - "scripts/build_a_road_cache.py"
+      - ".github/workflows/build-a-road-cache.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: a-road-cache-builder
+  cancel-in-progress: false
+
 jobs:
   build-cache:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with:
+          python-version: "3.12"
+
       - name: Build checkpointed batches
         id: build
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -30,5 +45,8 @@ jobs:
           echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
       - name: Queue next cache run
         if: steps.build.outputs.changed == 'true'
-        env: {GH_TOKEN: ${{ github.token }}}
-        run: gh workflow run build-a-road-cache.yml --ref "${GITHUB_REF_NAME}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Queueing the next resumable A-road cache run..."
+          gh workflow run build-a-road-cache.yml --ref "${GITHUB_REF_NAME}"
