@@ -20,6 +20,7 @@ let matchedLayer = null;
 let creditedLayer = null;
 let footLayer = null;
 let aRoadLayer = null;
+let liveImportLayer = null;
 let mapLayerControl = null;
 let mapGeometryRefreshTimer = null;
 let creditedMapSegmentCache = {signature:null,segments:[]};
@@ -70,6 +71,7 @@ let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
+const LIVE_IMPORT_BATCH_SIZE = 20;
 
 const fileInput = document.getElementById('timelineFile');
 const fileStatus = document.getElementById('fileStatus');
@@ -975,7 +977,7 @@ function resetTrackingSession() {
   for (const layer of [
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
     canonicalCoverageLayer, canonicalUncoveredLayer,
-    aRoadLayer
+    aRoadLayer, liveImportLayer
   ]) {
     if (layer) layer.clearLayers();
   }
@@ -1673,6 +1675,7 @@ async function startNextFootBatch() {
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
   footMatchingProgress={area:footPlaceNames.get(candidates[0].batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
+  let lastFootMapBatchCount=0;
   renderFootQueue();
   try {
     for (const {batch,activity} of candidates) {
@@ -1691,6 +1694,9 @@ async function startNextFootBatch() {
         await saveFootActivityMatch(activity);
         batch.matched++;
         footMatchingProgress.succeeded++;
+        if (easyImportRunning) {
+          appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
+        }
       } catch (err) {
         activity.matchError=err.message || String(err);
         footMatchingProgress.failed++;
@@ -1698,14 +1704,26 @@ async function startNextFootBatch() {
       }
       footMatchingProgress.completed++;
       renderFootQueue();
-      try { renderMap(); if (footMatchingProgress.completed===1) fitFootRoutes(); } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
+      try {
+        if (easyImportRunning) {
+          if (footMatchingProgress.completed-lastFootMapBatchCount>=LIVE_IMPORT_BATCH_SIZE) {
+            refreshImportMapBatch();
+            lastFootMapBatchCount=footMatchingProgress.completed;
+          }
+          if (footMatchingProgress.completed===1) fitFootRoutes();
+        } else {
+          renderMap();
+          if (footMatchingProgress.completed===1) fitFootRoutes();
+        }
+      } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
       await new Promise(resolve=>setTimeout(resolve,1100));
     }
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
-    buildFootBatches(); renderFootQueue(); renderMap();
+    buildFootBatches(); renderFootQueue();
+    if (!easyImportRunning) renderMap();
     if (footBatches.some(batch=>batch.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError))) {
       setTimeout(()=>{ if (!footMatching) void startNextFootBatch(); },1500);
     }
@@ -1796,6 +1814,9 @@ async function startEasyImport() {
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
+  // Automatic matching is the one time the map should open by itself: it is
+  // the live progress display, rather than a heavy saved-map restore.
+  mapRenderingRequested=true;
   updateEasyImportPauseButton();
   importModeCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
@@ -1815,6 +1836,7 @@ async function startEasyImport() {
   let completed = 0;
   let succeeded = 0;
   let failed = 0;
+  let lastRoadMapBatchCount = 0;
 
   easyProgressBar.max = candidates.length || 1;
   easyProgressBar.value = 0;
@@ -1857,6 +1879,7 @@ async function startEasyImport() {
       await saveJourneyToMapArchive(journey);
       recordJourneyProcessed(journey);
       scheduleLocalProgressSave();
+      appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
       succeeded++;
     } catch (err) {
       journey.easyImportError = err.message || String(err);
@@ -1869,7 +1892,10 @@ async function startEasyImport() {
       `${completed} / ${candidates.length}`,
       `${succeeded} matched · ${failed} skipped`
     );
-    renderMap();
+    if (succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE) {
+      refreshImportMapBatch();
+      lastRoadMapBatchCount=succeeded;
+    }
     await new Promise(resolve => setTimeout(resolve, 250));
   }
 
@@ -1882,6 +1908,7 @@ async function startEasyImport() {
     scheduleLocalProgressSave();
   }
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
+  refreshImportMapBatch();
   renderRoadQueue();
 }
 
@@ -2239,6 +2266,9 @@ function initMap() {
     matchedLayer = null;
     creditedLayer = L.layerGroup().addTo(map);
     footLayer = L.layerGroup().addTo(map);
+    // A temporary layer lets an automatic import visibly grow the map one
+    // route at a time without rebuilding all saved geometry after each match.
+    liveImportLayer = L.layerGroup().addTo(map);
     // A-road geometry can be much denser than the motorway network. Keep this
     // optional layer off until the user chooses it, so opening saved progress
     // never asks a phone to paint every matched A-road step at UK scale.
@@ -2260,7 +2290,7 @@ function initMap() {
     ).addTo(map);
 
     map.on('overlayadd',event=>{
-      if (event.layer===aRoadLayer) renderMap({deferCalculations:true});
+      if (event.layer===aRoadLayer) renderMap({deferCalculations:true,preserveLive:true});
     });
     map.on('overlayremove',event=>{
       if (event.layer===aRoadLayer) aRoadLayer.clearLayers();
@@ -2270,7 +2300,7 @@ function initMap() {
     map.on('moveend zoomend',()=>{
       clearTimeout(mapGeometryRefreshTimer);
       mapGeometryRefreshTimer=setTimeout(()=>{
-        renderMap({deferCalculations:true});
+        renderMap({deferCalculations:true,preserveLive:true});
         renderCanonicalMapLayers();
       },80);
     });
@@ -3731,7 +3761,22 @@ function reducePathsForMap(paths,limit) {
   return paths.filter((_,index)=>index%stride===0);
 }
 
-function renderMap({deferCalculations=false}={}) {
+function appendLiveImportGeometry(activity,{color,weight,opacity=.86}={}) {
+  if (!map || !liveImportLayer || !activity?.matchedGeoJson || !window.L) return;
+  L.geoJSON(activity.matchedGeoJson,{
+    pane:'drivenRoadPane',
+    style:{color,weight,opacity,interactive:false}
+  }).addTo(liveImportLayer);
+}
+
+function refreshImportMapBatch() {
+  // Consolidate occasionally. This applies deduplication and updates the
+  // dashboard without turning every newly matched route into a full redraw.
+  renderMap();
+  liveImportLayer?.clearLayers();
+}
+
+function renderMap({deferCalculations=false,preserveLive=false}={}) {
   if (!deferCalculations) {
     renderRoadQueue();
     renderCollectiveStats();
@@ -3769,6 +3814,7 @@ function renderMap({deferCalculations=false}={}) {
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
   aRoadLayer?.clearLayers();
+  if (!preserveLive) liveImportLayer?.clearLayers();
   const bounds=visibleMapBounds();
 
   const footPaths=[];
