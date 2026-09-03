@@ -73,6 +73,8 @@ const canonicalARoads = new Map();
 const canonicalARoadRequestedRefs = new Set();
 let canonicalARoadQueueRunning = false;
 let canonicalARoadCoverageDirty = true;
+let canonicalARoadCoverageRefreshRunning = false;
+let canonicalARoadCoverageRefreshProgress = 0;
 let canonicalARoadLoadStarted = false;
 let canonicalARoadWorkerEpoch = 0;
 let canonicalLoadQueueRunning = false;
@@ -3828,12 +3830,22 @@ function canonicalARoadAnchors(points) {
     .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],component:point[2],x,y}; });
 }
 
+function canonicalARoadBounds(anchors) {
+  if (!anchors?.length) return null;
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  for (const anchor of anchors) {
+    west=Math.min(west,anchor.lng); east=Math.max(east,anchor.lng);
+    south=Math.min(south,anchor.lat); north=Math.max(north,anchor.lat);
+  }
+  return {west,east,south,north};
+}
+
 async function hydrateCanonicalARoadFromDevice(road) {
   const stored=await canonicalARoadArchiveOperation('readonly',store=>store.get(road.id));
   if (!stored || stored.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(stored.anchors)) return false;
   const anchors=canonicalARoadAnchors(stored.anchors);
   if (anchors.length<3) return false;
-  road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
+  road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
   road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
   road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
@@ -3907,7 +3919,7 @@ async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
     const cached=await fetchCanonicalARoadWays(road);
     const anchors=canonicalARoadAnchors(cached.anchors);
     if (anchors.length<3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
-    road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
+    road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
     road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
       .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
     road.totalKm=Number(cached.total_km) || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
@@ -3946,6 +3958,30 @@ function calculateCanonicalARoadCoverage(road,drawable) {
   return covered;
 }
 
+function requestCanonicalARoadCoverageRefresh() {
+  if (canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning || !canonicalARoadCoverageDirty) return;
+  canonicalARoadCoverageRefreshRunning=true;
+  const drawable=canonicalARoadDrawable();
+  const ready=[...canonicalARoads.values()].filter(road=>road.status==='ready');
+  canonicalARoadCoverageRefreshProgress=0;
+  void (async()=>{
+    try {
+      for (const road of ready) {
+        calculateCanonicalARoadCoverage(road,drawable);
+        canonicalARoadCoverageRefreshProgress++;
+        // Yield frequently enough that scrolling and input remain responsive.
+        await new Promise(resolve=>setTimeout(resolve,0));
+      }
+      canonicalARoadCoverageDirty=false;
+      scheduleLocalProgressSave();
+    } finally {
+      canonicalARoadCoverageRefreshRunning=false;
+      renderCanonicalARoadDashboard();
+      renderCanonicalARoadMapLayers();
+    }
+  })();
+}
+
 async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   for (const key of refs) {
     const road=canonicalARoadState(key);
@@ -3980,7 +4016,6 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
       const moreAvailable=[...canonicalARoadRequestedRefs]
         .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
       renderCanonicalARoadDashboard();
-      renderCanonicalARoadMapLayers();
       scheduleLocalProgressSave();
       if (!moreAvailable || !loaded) break;
 
@@ -3991,8 +4026,7 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   } finally {
     canonicalARoadQueueRunning=false;
     renderCanonicalARoadDashboard();
-    renderCanonicalARoadMapLayers();
-    scheduleLocalProgressSave();
+    requestCanonicalARoadCoverageRefresh();
   }
 }
 
@@ -4090,7 +4124,6 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   canonicalARoadList.innerHTML='';
   for (const road of roads) {
     const preparing=road.status==='error' && /reference is being prepared/i.test(road.error || '');
-    if (road.status==='ready' && canonicalARoadCoverageDirty) calculateCanonicalARoadCoverage(road,drawable);
     const totalKm=road.totalKm || 0;
     const coveredKm=totalKm && road.anchors.length
       ? totalKm*road.coveredAnchorIds.size/road.anchors.length : 0;
@@ -4109,36 +4142,42 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       : road.status==='error' ? road.error : road.status==='loading' ? 'Building fixed reference…' : 'Reference queued for progressive loading.';
     row.append(top,meta); canonicalARoadList.append(row);
   }
-  canonicalARoadCoverageDirty=false;
   const pending=roads.filter(road=>road.status==='idle').length;
   canonicalARoadRetry.classList.add('hidden');
   canonicalARoadRetry.disabled=true;
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
-  canonicalARoadStatus.textContent=loading.length
-    ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
-    : errors.length
-      ? `${ready.length} of ${roads.length} A-road references ready · one or more available references need attention.`
+  canonicalARoadStatus.textContent=canonicalARoadCoverageRefreshRunning
+    ? `Applying saved coverage to ${canonicalARoadCoverageRefreshProgress} of ${ready.length} A-road references…`
+    : loading.length
+      ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
+      : errors.length
+      ? `${ready.length} of ${roads.length} A-road references ready · ${errors.length} reference${errors.length===1?'':'s'} could not be loaded.`
       : !canonicalARoadCacheIndexAvailable
         ? `${ready.length} of ${roads.length} A-road references ready · the reference cache is being prepared.`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
   // Mobile browsers may restore an expanded <details> state after reload
   // without emitting a toggle event. Start the available cache load here too.
   if (canonicalARoadCard.open) startCanonicalARoadLoading();
+  requestCanonicalARoadCoverageRefresh();
 }
 
 function renderCanonicalARoadMapLayers() {
+  if (canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning) return;
   if (!canonicalARoadCoverageLayer || !canonicalARoadUncoveredLayer) return;
   canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
   const bounds=visibleMapBounds();
-  const drawable=canonicalARoadDrawable();
-  for (const road of canonicalARoads.values()) {
-    if (road.status!=='ready') continue;
-    if (canonicalARoadCoverageDirty) calculateCanonicalARoadCoverage(road,drawable);
+  const roads=[...canonicalARoads.values()].filter(road=>
+    road.status==='ready' && canonicalARoadIntersectsMapBounds(road,bounds)
+  );
+  const visibleAnchors=roads.reduce((total,road)=>total+road.anchors.length,0);
+  const samplingStep=Math.max(1,Math.ceil(visibleAnchors/30000));
+  for (const road of roads) {
     const runs={covered:[],uncovered:[]};
     let previous=null,current=null,currentKind=null;
-    for (const anchor of road.anchors) {
+    for (let index=0; index<road.anchors.length; index+=samplingStep) {
+      const anchor=road.anchors[index];
       const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
-      const continuous=previous && previous.component===anchor.component && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
+      const continuous=previous && previous.component===anchor.component && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=Math.max(250,samplingStep*150);
       const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
       if (!visible) { current=null; previous=anchor; continue; }
       if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
@@ -4153,7 +4192,12 @@ function renderCanonicalARoadMapLayers() {
       }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
     }
   }
-  canonicalARoadCoverageDirty=false;
+}
+
+function canonicalARoadIntersectsMapBounds(road,bounds) {
+  if (!bounds || !road.bounds) return true;
+  return road.bounds.east>=bounds.getWest() && road.bounds.west<=bounds.getEast() &&
+    road.bounds.north>=bounds.getSouth() && road.bounds.south<=bounds.getNorth();
 }
 
 function visibleMapBounds() {
