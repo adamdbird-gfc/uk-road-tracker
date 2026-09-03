@@ -13,8 +13,10 @@ FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreet
 OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
+OVERPASS_INTERPRETER_URL = "https://overpass-api.de/api/interpreter"
+CANONICAL_A_ROAD_CACHE = {}
 
-app = FastAPI(title="UK Road Tracker API", version="0.8.0")
+app = FastAPI(title="UK Road Tracker API", version="0.9.0")
 PLACE_NAME_CACHE = {}
 
 app.add_middleware(
@@ -123,14 +125,54 @@ async def root():
         "service": "UK Road Tracker API",
         "status": "ok",
         "matcher": "OSRM public demo",
-        "version": "0.8.0",
+        "version": "0.9.0",
         "feature": "UK motorway and A-road matching plus isolated pedestrian matching",
         "chunk_size": OSRM_CHUNK_SIZE,
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.8.0"}
+    return {"status": "ok", "version": "0.9.0"}
+
+@app.get("/canonical-a-road/{road_ref}")
+async def canonical_a_road(road_ref: str):
+    """Return compact, exact-reference A-road geometry for the browser cache."""
+    ref = re.sub(r"\s+", "", road_ref.upper())
+    if not re.fullmatch(r"A\d+[A-Z]?", ref):
+        raise HTTPException(status_code=400, detail="A numbered A-road reference is required.")
+    if ref in CANONICAL_A_ROAD_CACHE:
+        return CANONICAL_A_ROAD_CACHE[ref]
+
+    ref_pattern = rf"(^|[;,/]){re.escape(ref)}($|[;,/])"
+    query = (
+        "[out:json][timeout:120];"
+        'area["ISO3166-1"="GB"][admin_level=2]->.gb;'
+        'way(area.gb)["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]'
+        f'["ref"~"{ref_pattern}"];out geom;'
+    )
+    try:
+        async with httpx.AsyncClient(timeout=130.0, headers={"User-Agent": "Roadprints/0.9 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"}) as client:
+            response = await client.get(OVERPASS_INTERPRETER_URL, params={"data": query})
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"A-road reference service returned HTTP {response.status_code}.")
+        elements = response.json().get("elements") or []
+    except (httpx.HTTPError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="A-road reference service could not be reached.") from exc
+
+    ways = []
+    for element in elements:
+        coords = [
+            [float(point["lon"]), float(point["lat"])]
+            for point in element.get("geometry") or []
+            if "lon" in point and "lat" in point
+        ]
+        if len(coords) >= 2:
+            ways.append({"id": element.get("id"), "coords": coords})
+    if not ways:
+        raise HTTPException(status_code=404, detail=f"No OpenStreetMap reference geometry found for {ref}.")
+    result = {"ref": ref, "ways": ways}
+    CANONICAL_A_ROAD_CACHE[ref] = result
+    return result
 
 @app.get("/place-name")
 async def place_name(lat: float, lng: float):
