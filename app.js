@@ -3977,6 +3977,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   canonicalARoadsReady.textContent=ready.length.toLocaleString();
   canonicalARoadList.innerHTML='';
   for (const road of roads) {
+    const preparing=road.status==='error' && /reference is being prepared/i.test(road.error || '');
     if (road.status==='ready' && canonicalARoadCoverageDirty) calculateCanonicalARoadCoverage(road,drawable);
     const totalKm=road.totalKm || 0;
     const coveredKm=totalKm && road.anchors.length
@@ -3988,9 +3989,9 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
     const progress=document.createElement('div'); progress.className='canonical-road-progress';
     const fill=document.createElement('div'); fill.className='canonical-road-fill'; fill.style.width=`${percent}%`; progress.append(fill);
     const value=document.createElement('div'); value.className='canonical-road-pct';
-    value.textContent=road.status==='ready' ? `${percent.toFixed(1)}%` : road.status==='loading' ? 'Loading' : road.status==='error' ? 'Retry' : 'Queued';
+    value.textContent=road.status==='ready' ? `${percent.toFixed(1)}%` : road.status==='loading' ? 'Loading' : preparing ? 'Preparing' : road.status==='error' ? 'Unavailable' : 'Queued';
     top.append(ref,progress,value);
-    const meta=document.createElement('p'); meta.className=`canonical-road-meta ${road.status==='error'?'canonical-road-error':road.status==='loading'?'canonical-road-loading':''}`;
+    const meta=document.createElement('p'); meta.className=`canonical-road-meta ${road.status==='error' && !preparing?'canonical-road-error':road.status==='loading'?'canonical-road-loading':''}`;
     meta.textContent=road.status==='ready'
       ? `${displayDistance(coveredKm)} of ${displayDistance(totalKm)} complete`
       : road.status==='error' ? road.error : road.status==='loading' ? 'Building fixed reference…' : 'Reference queued for progressive loading.';
@@ -3998,8 +3999,9 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   }
   canonicalARoadCoverageDirty=false;
   const pending=roads.filter(road=>road.status==='idle').length;
-  canonicalARoadRetry.classList.toggle('hidden',!pending && !errors.length);
-  canonicalARoadRetry.textContent=errors.length ? 'Retry A-road references' : `Load next ${Math.min(12,pending)} A-road references`;
+  const actionableErrors=errors.filter(road=>!/reference is being prepared/i.test(road.error || ''));
+  canonicalARoadRetry.classList.toggle('hidden',!pending && !actionableErrors.length);
+  canonicalARoadRetry.textContent=actionableErrors.length ? 'Retry A-road references' : `Load next ${Math.min(12,pending)} A-road references`;
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
   canonicalARoadStatus.textContent=loading.length
     ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
