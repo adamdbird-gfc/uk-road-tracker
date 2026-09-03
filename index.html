@@ -194,17 +194,6 @@
       <div id="aRoadList" class="motorway-list"></div>
     </details>
 
-    <section id="otherRoadCard" class="card motorway-details hidden">
-      <div class="details-summary motorway-heading">
-        <div>
-          <h2>Other</h2>
-          <p class="muted">Matched mileage on B roads, local roads and other non-motorway, non-A-road driving.</p>
-        </div>
-        <div class="motorway-total"><strong id="otherRoadMileage">0 mi</strong><span>matched other-road miles</span></div>
-      </div>
-      <p class="muted motorway-expanded-intro">These roads are included in your travel record but do not have a national completion reference.</p>
-    </section>
-
     <details id="canonicalMotorwayCard" class="card canonical-details hidden">
       <summary class="details-summary canonical-heading">
         <div>
@@ -271,6 +260,17 @@
       <p id="canonicalARoadStatus" class="muted canonical-status">A-road references will be prepared from your matched driving.</p>
       <button id="canonicalARoadRetry" class="secondary hidden" type="button">Retry A-road references</button>
     </details>
+
+    <section id="otherRoadCard" class="card other-road-card hidden">
+      <div class="motorway-heading">
+        <div>
+          <h2>Other</h2>
+          <p class="muted">Matched mileage on B roads, local roads and other non-motorway, non-A-road driving.</p>
+        </div>
+        <div class="motorway-total"><strong id="otherRoadMileage">0 mi</strong><span>matched other-road miles</span></div>
+      </div>
+      <p class="muted other-road-note">These roads are included in your travel record but do not have a national completion reference.</p>
+    </section>
 
     <section id="mapCard" class="card hidden">
       <div class="map-heading">
@@ -355,11 +355,6 @@
       <div id="map"></div>
     </section>
 
-    <section id="nextCard" class="card hidden">
-      <h2>What this proves</h2>
-      <p>If your real Timeline export loads here and the journeys look sensible, the next engineering step is map-matching these traces to OpenStreetMap road segments and storing a permanent “roads driven” set.</p>
-    </section>
-
     <div class="delete-data-action">
       <button id="clearRoadData" class="delete-data-link" type="button">Delete road data</button>
       <button id="clearFootData" class="delete-data-link" type="button">Delete on-foot data</button>
@@ -368,7 +363,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260903-smooth-live-import"></script>
+  <script src="app.js?v=20260903-dashboard-tidy"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
