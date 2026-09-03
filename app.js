@@ -210,6 +210,7 @@ const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
 const CANONICAL_A_ROAD_CACHE_VERSION = 'v1';
 const CANONICAL_A_ROAD_CACHE_URL = ref => `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/${encodeURIComponent(ref)}.json`;
+const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
@@ -220,6 +221,9 @@ const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
 const CANONICAL_A_ROAD_STORE_NAME = 'canonical-a-roads';
 let canonicalCache = null;
 let canonicalCachePromise = null;
+let canonicalARoadCacheRefs = new Set();
+let canonicalARoadCacheIndexPromise = null;
+let canonicalARoadCacheIndexAvailable = false;
 
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
@@ -1082,6 +1086,9 @@ async function showSavedProgress() {
   mapTitle.textContent='Your saved Roadprints progress';
   mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
+  // Saved maps must render on arrival. The old deferred-map experiment left
+  // this screen announcing a nonexistent “Load map” action.
+  mapRenderingRequested=true;
   nextCard?.classList.add('hidden');
   renderRoadQueue();
   renderFootQueue();
@@ -3801,6 +3808,28 @@ async function saveCanonicalARoadReference(road) {
   catch (err) { console.warn('A-road reference could not be retained on this device:',err); }
 }
 
+async function loadCanonicalARoadCacheIndex() {
+  if (canonicalARoadCacheIndexPromise) return canonicalARoadCacheIndexPromise;
+  canonicalARoadCacheIndexPromise=(async()=>{
+    try {
+      const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-store'});
+      if (!response.ok) throw new Error(`A-road cache index returned HTTP ${response.status}.`);
+      const index=await response.json();
+      const roads=index?.roads && typeof index.roads==='object' ? Object.keys(index.roads) : [];
+      canonicalARoadCacheRefs=new Set(roads);
+      canonicalARoadCacheIndexAvailable=true;
+    } catch (err) {
+      // The cache is built independently from the app. An absent index simply
+      // means there is nothing to request yet, not an error for every road.
+      canonicalARoadCacheRefs.clear();
+      canonicalARoadCacheIndexAvailable=false;
+      console.info('A-road cache index is not available yet:',err);
+    }
+    return canonicalARoadCacheRefs;
+  })();
+  return canonicalARoadCacheIndexPromise;
+}
+
 async function fetchCanonicalARoadWays(ref) {
   const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(ref),{cache:'no-store'});
   if (response.status===404) throw new Error(`${ref} reference is being prepared. Retry shortly.`);
@@ -3860,30 +3889,31 @@ function calculateCanonicalARoadCoverage(road,drawable) {
   return covered;
 }
 
-function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
+async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   for (const ref of refs) {
     const road=canonicalARoadState(ref);
     if (road) canonicalARoadRequestedRefs.add(road.ref);
   }
   if (canonicalARoadQueueRunning) return;
   canonicalARoadQueueRunning=true;
-  (async()=>{
-    let loaded=0;
-    try {
-      while (loaded<limit) {
-        const ref=[...canonicalARoadRequestedRefs].find(candidate=>canonicalARoadState(candidate)?.status==='idle');
-        if (!ref) break;
-        await loadCanonicalARoad(ref);
-        loaded++;
-        await new Promise(resolve=>setTimeout(resolve,350));
-      }
-    } finally {
-      canonicalARoadQueueRunning=false;
-      renderCanonicalARoadDashboard();
-      renderCanonicalARoadMapLayers();
-      scheduleLocalProgressSave();
+  let loaded=0;
+  try {
+    const available=await loadCanonicalARoadCacheIndex();
+    while (loaded<limit) {
+      const ref=[...canonicalARoadRequestedRefs].find(candidate=>
+        available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
+      );
+      if (!ref) break;
+      await loadCanonicalARoad(ref);
+      loaded++;
+      await new Promise(resolve=>setTimeout(resolve,350));
     }
-  })();
+  } finally {
+    canonicalARoadQueueRunning=false;
+    renderCanonicalARoadDashboard();
+    renderCanonicalARoadMapLayers();
+    scheduleLocalProgressSave();
+  }
 }
 
 function aRoadStats(drawable) {
@@ -3973,6 +4003,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   const ready=roads.filter(road=>road.status==='ready');
   const loading=roads.filter(road=>road.status==='loading');
   const errors=roads.filter(road=>road.status==='error');
+  const available=roads.filter(road=>canonicalARoadCacheRefs.has(road.ref));
   canonicalARoadsReady.textContent=ready.length.toLocaleString();
   canonicalARoadList.innerHTML='';
   for (const road of roads) {
@@ -4004,8 +4035,10 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   canonicalARoadStatus.textContent=loading.length
     ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
     : errors.length
-      ? `${ready.length} of ${roads.length} A-road references ready · the remaining references are being prepared.`
-      : `${ready.length} of ${roads.length} A-road references ready${pending?` · ${pending} queued.`:'.'}`;
+      ? `${ready.length} of ${roads.length} A-road references ready · one or more available references need attention.`
+      : !canonicalARoadCacheIndexAvailable
+        ? `${ready.length} of ${roads.length} A-road references ready · the reference cache is being prepared.`
+        : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
 }
 
 function renderCanonicalARoadMapLayers() {
