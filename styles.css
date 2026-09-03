@@ -157,6 +157,8 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .delete-data-link { min-height:auto; padding:5px; border-radius:0; background:transparent; color:#b42318; font-size:.85rem; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
 .delete-data-link:hover { background:transparent; color:#8f1c13; }
 .delete-data-link:focus-visible { outline:3px solid #f3a69f; outline-offset:3px; }
+.delete-data-link:disabled { color:#9aa1ad; cursor:not-allowed; text-decoration:none; }
+.delete-data-link:disabled:hover { background:transparent; color:#9aa1ad; }
 
 .travel-stats-card { padding:18px; }
 .travel-stats-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:14px; }
