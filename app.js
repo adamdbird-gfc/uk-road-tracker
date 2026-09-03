@@ -79,7 +79,11 @@ let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
-const LIVE_IMPORT_BATCH_SIZE = 20;
+// The live map is a progress cue, not the durable full-detail renderer. Keep
+// its work deliberately sparse so a large import never makes page scrolling
+// compete with Leaflet painting.
+const LIVE_IMPORT_BATCH_SIZE = 50;
+const LIVE_IMPORT_PREVIEW_INTERVAL = 5;
 
 const fileInput = document.getElementById('timelineFile');
 const fileStatus = document.getElementById('fileStatus');
@@ -92,7 +96,6 @@ const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
 const dataDateRange = document.getElementById('dataDateRange');
 const mapStatus = document.getElementById('mapStatus');
-const loadMapButton = document.getElementById('loadMap');
 const importModeCard = document.getElementById('importModeCard');
 const easyProgress = document.getElementById('easyProgress');
 const easyProgressText = document.getElementById('easyProgressText');
@@ -1338,19 +1341,6 @@ document.getElementById('selectNone').addEventListener('click', () => {
 });
 
 document.getElementById('fitMap').addEventListener('click', fitSelected);
-loadMapButton.addEventListener('click',async ()=>{
-  mapRenderingRequested=true;
-  loadMapButton.disabled=true;
-  loadMapButton.textContent='Loading map…';
-  const ready=await ensureLeaflet();
-  if (ready) {
-    initMap();
-    renderMap();
-    requestAnimationFrame(()=>map?.invalidateSize(true));
-  }
-  loadMapButton.disabled=false;
-  loadMapButton.textContent='Reload map';
-});
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
@@ -1780,7 +1770,10 @@ async function startNextFootBatch() {
         await saveFootActivityMatch(activity);
         batch.matched++;
         footMatchingProgress.succeeded++;
-        if (easyImportRunning) {
+        if (easyImportRunning && (
+          footMatchingProgress.succeeded===1 ||
+          footMatchingProgress.succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0
+        )) {
           appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
         }
       } catch (err) {
@@ -1967,8 +1960,10 @@ async function startEasyImport() {
       await saveJourneyToMapArchive(journey);
       recordJourneyProcessed(journey);
       scheduleLocalProgressSave();
-      appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
       succeeded++;
+      if (succeeded===1 || succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0) {
+        appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
+      }
     } catch (err) {
       journey.easyImportError = err.message || String(err);
       failed++;
@@ -4091,7 +4086,7 @@ function reducePathsForMap(paths,limit) {
   return paths.filter((_,index)=>index%stride===0);
 }
 
-function liveImportPreviewPaths(geojson,maxPoints=240) {
+function liveImportPreviewPaths(geojson,maxPoints=120) {
   const lines=[];
   for (const feature of geojson?.features || []) {
     const geometry=feature?.geometry;
