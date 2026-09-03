@@ -3801,22 +3801,16 @@ async function saveCanonicalARoadReference(road) {
 }
 
 async function fetchCanonicalARoadWays(ref) {
-  const escaped=ref.replace(/"/g,'\\"');
-  const query=`[out:json][timeout:90];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["ref"="${escaped}"]["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"];out tags geom;`;
-  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
-  let lastError=null;
-  for (const endpoint of endpoints) {
-    try {
-      const response=await fetch(`${endpoint}?data=${encodeURIComponent(query)}`);
-      if (!response.ok) { lastError=`Reference service returned HTTP ${response.status}.`; continue; }
-      const data=await response.json();
-      const ways=(data.elements || []).map(element=>({id:element.id,coords:overpassWayCoordinates(element)}))
-        .filter(way=>way.coords.length>=2);
-      if (ways.length) return ways;
-      lastError=`No exact-ref OpenStreetMap geometry found for ${ref}.`;
-    } catch (err) { lastError=err.message || String(err); }
-  }
-  throw new Error(lastError || `A-road reference for ${ref} could not be loaded.`);
+  const response=await fetch(`${API_BASE_URL}/canonical-a-road/${encodeURIComponent(ref)}`);
+  const data=await response.json().catch(()=>({}));
+  if (!response.ok) throw new Error(data.detail || `A-road reference service returned HTTP ${response.status}.`);
+  const ways=(data.ways || []).map(way=>({
+    id:way.id,
+    coords:(way.coords || []).map(point=>[Number(point[0]),Number(point[1])])
+      .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
+  })).filter(way=>way.coords.length>=2);
+  if (!ways.length) throw new Error(`No OpenStreetMap reference geometry found for ${ref}.`);
+  return ways;
 }
 
 async function loadCanonicalARoad(ref,force=false) {
