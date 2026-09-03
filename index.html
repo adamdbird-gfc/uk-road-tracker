@@ -194,6 +194,17 @@
       <div id="aRoadList" class="motorway-list"></div>
     </details>
 
+    <section id="otherRoadCard" class="card motorway-details hidden">
+      <div class="details-summary motorway-heading">
+        <div>
+          <h2>Other</h2>
+          <p class="muted">Matched mileage on B roads, local roads and other non-motorway, non-A-road driving.</p>
+        </div>
+        <div class="motorway-total"><strong id="otherRoadMileage">0 mi</strong><span>matched other-road miles</span></div>
+      </div>
+      <p class="muted motorway-expanded-intro">These roads are included in your travel record but do not have a national completion reference.</p>
+    </section>
+
     <details id="canonicalMotorwayCard" class="card canonical-details hidden">
       <summary class="details-summary canonical-heading">
         <div>
@@ -242,6 +253,23 @@
       <p id="canonicalMotorwayStatus" class="muted canonical-status">Canonical motorway references will load as motorways are discovered.</p>
       <button id="canonicalRetry" class="secondary hidden" type="button">Retry motorway references</button>
       <p class="muted canonical-footnote">Canonical motorway references are loaded from a prebuilt cache first; live exact-ref OpenStreetMap/Overpass construction is used only as a fallback. Each motorway is sampled into approximately 100 m canonical sections; nearby samples from opposite carriageways are collapsed into one physical section. This remains POC infrastructure — production should cache and version the reference network server-side.</p>
+    </details>
+
+    <details id="canonicalARoadCard" class="card canonical-details a-road-canonical-details hidden">
+      <summary class="details-summary canonical-heading">
+        <div>
+          <h2>A-road progress</h2>
+          <p class="muted">Each discovered A road is compared with a fixed OpenStreetMap reference, so driven sections are credited once.</p>
+        </div>
+        <div class="canonical-score a-road-score">
+          <strong id="canonicalARoadsReady">0</strong>
+          <span>references ready</span>
+        </div>
+      </summary>
+      <p class="muted motorway-expanded-intro">Completed A-road sections are green and incomplete sections red. References are built progressively and retained on this device.</p>
+      <div id="canonicalARoadList" class="canonical-motorway-list"></div>
+      <p id="canonicalARoadStatus" class="muted canonical-status">A-road references will be prepared from your matched driving.</p>
+      <button id="canonicalARoadRetry" class="secondary hidden" type="button">Retry A-road references</button>
     </details>
 
     <section id="mapCard" class="card hidden">
@@ -341,7 +369,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260903-live-import-animation"></script>
+  <script src="app.js?v=20260903-a-road-coverage-other-mileage"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
