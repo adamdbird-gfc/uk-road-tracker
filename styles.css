@@ -177,8 +177,23 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .motorway-details > :not(summary),.canonical-details > :not(summary) { margin-left:18px; margin-right:18px; }
 .motorway-details > .motorway-footnote,.canonical-details > .canonical-footnote { margin-bottom:18px; }
 .motorway-expanded-intro { margin-top:0; }
-.other-road-note { margin:16px 0 0; }
+.details-summary.motorway-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; }
+.details-summary.motorway-heading::after { grid-column:2; grid-row:1; }
+.aggregate-title { grid-column:1; grid-row:1; }
+.aggregate-title h2 { margin:0; }
+.details-summary.motorway-heading .motorway-controls { grid-column:1 / -1; grid-row:2; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; width:100%; }
+.details-summary.motorway-heading .unit-toggle { grid-column:1 / -1; justify-self:start; }
+.details-summary.motorway-heading .motorway-total { min-width:0; width:100%; box-sizing:border-box; padding:12px 16px; }
+.details-summary.motorway-heading .motorway-total strong { font-size:1.45rem; line-height:1.15; overflow-wrap:anywhere; }
+.details-summary.motorway-heading .motorway-total span { margin-top:3px; font-size:.78rem; }
+.aggregate-summary { grid-column:1 / -1; grid-row:3; margin:7px 0 0; }
 .other-road-card { padding:18px; }
+.other-road-card h2 { margin:0 0 12px; }
+.other-road-total { width:100%; box-sizing:border-box; text-align:center; background:#f4f6f8; border-radius:12px; padding:12px 16px; }
+.other-road-total strong { display:block; font-size:1.45rem; line-height:1.15; overflow-wrap:anywhere; }
+.other-road-total span { display:block; margin-top:3px; color:#657083; font-size:.78rem; }
+.other-road-intro { margin:16px 0 0; }
+.other-road-note { margin:16px 0 0; }
 
 .motorway-controls {
   display: flex;
@@ -208,6 +223,7 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 @media (max-width: 520px) {
   .motorway-heading { align-items: flex-start; }
   .motorway-controls { flex-direction: column; align-items: flex-end; }
+  .details-summary.motorway-heading .motorway-controls { align-items:stretch; }
 }
 
 .canonical-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }
