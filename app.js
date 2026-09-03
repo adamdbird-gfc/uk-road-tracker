@@ -34,6 +34,7 @@ let onboardingMode = null;
 const manualMotorwayRefs = new Set();
 const manualCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
+const persistedARoadCoverageByRef = new Map();
 const persistedManualRefs = new Set();
 let persistedDataStartMs = null;
 let persistedDataEndMs = null;
@@ -66,7 +67,14 @@ let mapCorrectionChangesPending = false;
 let canonicalReferenceLayer = null;
 let canonicalCoverageLayer = null;
 let canonicalUncoveredLayer = null;
+let canonicalARoadCoverageLayer = null;
+let canonicalARoadUncoveredLayer = null;
 const canonicalRoads = new Map();
+const canonicalARoads = new Map();
+const canonicalARoadRequestedRefs = new Set();
+let canonicalARoadQueueRunning = false;
+let canonicalARoadCoverageDirty = true;
+let canonicalARoadLoadStarted = false;
 let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
@@ -123,11 +131,18 @@ const unitMiles = document.getElementById('unitMiles');
 const unitKm = document.getElementById('unitKm');
 const aRoadUnitMiles = document.getElementById('aRoadUnitMiles');
 const aRoadUnitKm = document.getElementById('aRoadUnitKm');
+const otherRoadCard = document.getElementById('otherRoadCard');
+const otherRoadMileage = document.getElementById('otherRoadMileage');
 const canonicalMotorwayCard = document.getElementById('canonicalMotorwayCard');
 const canonicalMotorwayList = document.getElementById('canonicalMotorwayList');
 const canonicalRoadsReady = document.getElementById('canonicalRoadsReady');
 const canonicalMotorwayStatus = document.getElementById('canonicalMotorwayStatus');
 const canonicalRetry = document.getElementById('canonicalRetry');
+const canonicalARoadCard = document.getElementById('canonicalARoadCard');
+const canonicalARoadList = document.getElementById('canonicalARoadList');
+const canonicalARoadsReady = document.getElementById('canonicalARoadsReady');
+const canonicalARoadStatus = document.getElementById('canonicalARoadStatus');
+const canonicalARoadRetry = document.getElementById('canonicalARoadRetry');
 const networkProgressPercent = document.getElementById('networkProgressPercent');
 const networkProgressDistance = document.getElementById('networkProgressDistance');
 const networkProgressBar = document.getElementById('networkProgressBar');
@@ -193,10 +208,11 @@ const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 3;
+const MAP_ARCHIVE_DB_VERSION = 4;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
 const FOOT_ACTIVITY_STORE_NAME = 'foot-activities';
 const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
+const CANONICAL_A_ROAD_STORE_NAME = 'canonical-a-roads';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 
@@ -265,6 +281,9 @@ function openMapArchiveDatabase() {
       if (!database.objectStoreNames.contains(CANONICAL_ROAD_STORE_NAME)) {
         database.createObjectStore(CANONICAL_ROAD_STORE_NAME,{keyPath:'id'});
       }
+      if (!database.objectStoreNames.contains(CANONICAL_A_ROAD_STORE_NAME)) {
+        database.createObjectStore(CANONICAL_A_ROAD_STORE_NAME,{keyPath:'id'});
+      }
     };
     request.onsuccess=()=>resolve(request.result);
   });
@@ -314,6 +333,20 @@ async function canonicalRoadArchiveOperation(mode,operation) {
   } finally { database.close(); }
 }
 
+async function canonicalARoadArchiveOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(CANONICAL_A_ROAD_STORE_NAME,mode);
+      const store=transaction.objectStore(CANONICAL_A_ROAD_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved A-road reference operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved A-road reference transaction was aborted.'));
+    });
+  } finally { database.close(); }
+}
+
 function compactMapJourney(journey) {
   const id=journeyIdentity(journey);
   if (!id || !journey?.matchedGeoJson) return null;
@@ -330,6 +363,7 @@ function compactMapJourney(journey) {
     matchedGeoJson:journey.matchedGeoJson,
     motorwayGeoJson:journey.motorwayGeoJson || {type:'FeatureCollection',features:[]},
     aRoadGeoJson:journey.aRoadGeoJson || {type:'FeatureCollection',features:[]},
+    otherRoadGeoJson:journey.otherRoadGeoJson || null,
     matchedDistanceKm:Number(journey.matchedDistanceKm || 0),
     matchedTracepoints:Number(journey.matchedTracepoints || 0),
     pointsSentToMatcher:Number(journey.pointsSentToMatcher || 0),
@@ -376,6 +410,7 @@ async function clearRoadArchive() {
   persistedJourneyMileageById.clear();
   persistedMotorwayContributionsByJourney.clear();
   await canonicalRoadArchiveOperation('readwrite',store=>store.clear());
+  await canonicalARoadArchiveOperation('readwrite',store=>store.clear());
   window.dispatchEvent(new Event('roadprints:archivechange'));
 }
 
@@ -475,6 +510,9 @@ function loadLocalProgress() {
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
     }
+    for (const [id,ids] of Object.entries(saved.aRoadCoverage || {})) {
+      if (Array.isArray(ids)) persistedARoadCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
+    }
     for (const id of saved.manualMotorways || []) persistedManualRefs.add(String(id));
     persistedDataStartMs=saved.dataStartMs===null || saved.dataStartMs===undefined
       ? null
@@ -561,6 +599,11 @@ function saveLocalProgressNow() {
         persistedCoverageByRef.set(road.id,new Set(road.coveredAnchorIds));
       }
     }
+    for (const road of canonicalARoads.values()) {
+      if (road.status==='ready') {
+        persistedARoadCoverageByRef.set(road.id,new Set(road.coveredAnchorIds));
+      }
+    }
 
     const coverage={};
     for (const [id,ids] of persistedCoverageByRef) {
@@ -588,6 +631,9 @@ function saveLocalProgressNow() {
       mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage,
+      aRoadCoverage:Object.fromEntries(
+        [...persistedARoadCoverageByRef.entries()].map(([id,ids])=>[id,[...ids].sort((a,b)=>a-b)])
+      ),
       removedSegmentEvidence:Object.fromEntries(
         [...removedSegmentEvidence.entries()].map(([segmentId,journeyIds])=>[segmentId,[...journeyIds].sort()])
       ),
@@ -705,6 +751,7 @@ function motorwayContributionsForJourney(journey) {
 
 function recordJourneyProcessed(journey) {
   canonicalCoverageDirty=true;
+  canonicalARoadCoverageDirty=true;
   motorwayAggregateDirty=true;
   const ids=Array.isArray(journey?.repeatJourneyIds) && journey.repeatJourneyIds.length
     ? journey.repeatJourneyIds
@@ -768,6 +815,7 @@ function resetRoadProgressState() {
   persistedFileHashTrackingStarted=true;
   persistedMotorwayContributionsByJourney.clear();
   persistedJourneyMileageById.clear();
+  persistedARoadCoverageByRef.clear();
   removedSegmentEvidence.clear();
   canonicalRemovalEvidenceByRef.clear();
   persistedMileageHistoryComplete=true;
@@ -792,6 +840,9 @@ async function clearRoadDataOnly() {
   journeys=[];
   canonicalRoads.clear();
   canonicalRequestedRefs.clear();
+  canonicalARoads.clear();
+  canonicalARoadRequestedRefs.clear();
+  canonicalARoadLoadStarted=false;
   renderMap();
   saveLocalProgressNow();
   updateLocalProgressNotice();
@@ -920,6 +971,9 @@ function resetTrackingSession() {
   manualCoverageByRef.clear();
   canonicalRequestedRefs.clear();
   canonicalRoads.clear();
+  canonicalARoadRequestedRefs.clear();
+  canonicalARoads.clear();
+  canonicalARoadLoadStarted=false;
   refinementRoadRef = null;
   refinementUndoStack = [];
   refinementChunks = [];
@@ -933,6 +987,7 @@ function resetTrackingSession() {
   motorwayList.innerHTML = '';
   aRoadList.innerHTML = '';
   canonicalMotorwayList.innerHTML = '';
+  canonicalARoadList.innerHTML = '';
   journeyCount.textContent = '0';
   pointCount.textContent = '0';
   selectedCount.textContent = '0';
@@ -941,6 +996,7 @@ function resetTrackingSession() {
   motorwaysDiscovered.textContent = '0';
   aRoadsDiscovered.textContent = '0';
   aRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
+  otherRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   timelineRoadMileage.textContent = distanceUnit === 'km' ? '0 km' : '0 mi';
   canonicalRoadsReady.textContent = '0';
   gbProgressPercent.textContent = '0.0%';
@@ -967,7 +1023,9 @@ function resetTrackingSession() {
   summaryCard.classList.add('hidden');
   motorwayCard.classList.add('hidden');
   aRoadCard.classList.add('hidden');
+  otherRoadCard.classList.add('hidden');
   canonicalMotorwayCard.classList.add('hidden');
+  canonicalARoadCard.classList.add('hidden');
   mapCard.classList.add('hidden');
   nextCard.classList.add('hidden');
   refinementPanel.classList.add('hidden');
@@ -977,6 +1035,7 @@ function resetTrackingSession() {
   for (const layer of [
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
     canonicalCoverageLayer, canonicalUncoveredLayer,
+    canonicalARoadCoverageLayer, canonicalARoadUncoveredLayer,
     aRoadLayer, liveImportLayer
   ]) {
     if (layer) layer.clearLayers();
@@ -1095,6 +1154,7 @@ mapCorrectionUndo.addEventListener('click',()=>{
   if (!previous) return;
   restoreMapCorrectionState(previous);
   canonicalCoverageDirty=true;
+  canonicalARoadCoverageDirty=true;
   motorwayAggregateDirty=true;
   mapCorrectionChangesPending=true;
   mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
@@ -1308,6 +1368,16 @@ aRoadUnitKm.addEventListener('click', () => setDistanceUnit('km'));
 aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
+canonicalARoadCard.addEventListener('toggle',()=>{
+  if (!canonicalARoadCard.open || canonicalARoadLoadStarted) return;
+  canonicalARoadLoadStarted=true;
+  ensureCanonicalARoadsForDiscoveredRefs(aRoadStats(canonicalARoadDrawable()).map(road=>road.ref));
+});
+canonicalARoadRetry.addEventListener('click',()=>{
+  const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.ref);
+  for (const road of canonicalARoads.values()) if (road.status==='error') road.status='idle';
+  ensureCanonicalARoadsForDiscoveredRefs(refs);
+});
 
 function resetOutput() {
   journeys = [];
@@ -1872,6 +1942,7 @@ async function startEasyImport() {
       journey.matchedGeoJson = data.geojson;
       journey.motorwayGeoJson = data.motorway_geojson;
       journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
+      journey.otherRoadGeoJson = data.other_road_geojson || {type:'FeatureCollection',features:[]};
       journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -2080,6 +2151,7 @@ async function matchJourney(index, button, statusNode) {
     journey.matchedGeoJson = data.geojson;
     journey.motorwayGeoJson = data.motorway_geojson;
     journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
+    journey.otherRoadGeoJson = data.other_road_geojson || {type:'FeatureCollection',features:[]};
     journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -2120,6 +2192,7 @@ function clearMatchedRoads() {
     delete j.matchedGeoJson;
     delete j.motorwayGeoJson;
     delete j.aRoadGeoJson;
+    delete j.otherRoadGeoJson;
     delete j.matchedDistanceKm;
     delete j.matchedTracepoints;
     delete j.pointsSentToMatcher;
@@ -2208,6 +2281,7 @@ function initMap() {
       canonicalReferencePane: 420,
       motorwayUnconfirmedPane: 430,
       aRoadConfirmedPane: 435,
+      aRoadUnconfirmedPane: 437,
       motorwayConfirmedPane: 440
     };
     for (const [paneName,zIndex] of Object.entries(paneOrder)) {
@@ -2276,6 +2350,8 @@ function initMap() {
     canonicalReferenceLayer = null;
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
+    canonicalARoadCoverageLayer = L.layerGroup().addTo(map);
+    canonicalARoadUncoveredLayer = L.layerGroup().addTo(map);
 
     mapLayerControl = L.control.layers(
       {},
@@ -2283,6 +2359,8 @@ function initMap() {
         'Road journeys (black)': creditedLayer,
         'On-foot journeys (purple)': footLayer,
         'A-road confirmed sections (green)': aRoadLayer,
+        'A-road incomplete sections (red)': canonicalARoadUncoveredLayer,
+        'A-road completed sections (green)': canonicalARoadCoverageLayer,
         'Motorway confirmed sections (blue)': canonicalCoverageLayer,
         'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
       },
@@ -2302,6 +2380,7 @@ function initMap() {
       mapGeometryRefreshTimer=setTimeout(()=>{
         renderMap({deferCalculations:true,preserveLive:true});
         renderCanonicalMapLayers();
+        renderCanonicalARoadMapLayers();
       },80);
     });
 
@@ -2551,6 +2630,7 @@ function handleMapCorrectionMapClick(event) {
   recordCanonicalCorrectionForSegments(targets,mapCorrectionMode);
   if (roadChanged) {
     canonicalCoverageDirty=true;
+    canonicalARoadCoverageDirty=true;
     motorwayAggregateDirty=true;
   }
   mapCorrectionUndo.disabled=false;
@@ -3668,6 +3748,135 @@ function aRoadFeatureId(feature) {
   return /^A\d+[A-Z]?$/.test(ref) ? ref : null;
 }
 
+function canonicalARoadState(ref) {
+  const normalised=aRoadFeatureId({properties:{road_ref:ref}});
+  if (!normalised) return null;
+  const id=`A:${normalised}`;
+  if (!canonicalARoads.has(id)) {
+    canonicalARoads.set(id,{
+      id,ref:normalised,status:'idle',error:null,ways:[],anchors:[],
+      anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:0,source:null
+    });
+  }
+  return canonicalARoads.get(id);
+}
+
+function canonicalARoadArchiveRecord(road) {
+  return {id:road.id,version:'v1',totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat])};
+}
+
+async function hydrateCanonicalARoadFromDevice(road) {
+  const stored=await canonicalARoadArchiveOperation('readonly',store=>store.get(road.id));
+  if (!stored || stored.version!=='v1' || !Array.isArray(stored.anchors)) return false;
+  const anchors=stored.anchors.map(point=>[Number(point[0]),Number(point[1])])
+    .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
+    .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
+  if (anchors.length<3) return false;
+  road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
+  road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
+    .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
+  road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
+  road.status='ready'; road.source='device';
+  return true;
+}
+
+async function saveCanonicalARoadReference(road) {
+  if (!road || road.status!=='ready' || road.anchors.length<3) return;
+  try { await canonicalARoadArchiveOperation('readwrite',store=>store.put(canonicalARoadArchiveRecord(road))); }
+  catch (err) { console.warn('A-road reference could not be retained on this device:',err); }
+}
+
+async function fetchCanonicalARoadWays(ref) {
+  const escaped=ref.replace(/"/g,'\\"');
+  const query=`[out:json][timeout:90];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["ref"="${escaped}"]["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"];out tags geom;`;
+  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+  let lastError=null;
+  for (const endpoint of endpoints) {
+    try {
+      const response=await fetch(`${endpoint}?data=${encodeURIComponent(query)}`);
+      if (!response.ok) { lastError=`Reference service returned HTTP ${response.status}.`; continue; }
+      const data=await response.json();
+      const ways=(data.elements || []).map(element=>({id:element.id,coords:overpassWayCoordinates(element)}))
+        .filter(way=>way.coords.length>=2);
+      if (ways.length) return ways;
+      lastError=`No exact-ref OpenStreetMap geometry found for ${ref}.`;
+    } catch (err) { lastError=err.message || String(err); }
+  }
+  throw new Error(lastError || `A-road reference for ${ref} could not be loaded.`);
+}
+
+async function loadCanonicalARoad(ref,force=false) {
+  const road=canonicalARoadState(ref);
+  if (!road || (!force && ['loading','ready'].includes(road.status))) return road;
+  road.status='loading'; road.error=null; renderCanonicalARoadDashboard();
+  try {
+    if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
+    const ways=await fetchCanonicalARoadWays(road.ref);
+    const anchors=buildCanonicalAnchors(ways);
+    if (anchors.length<3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
+    road.ways=ways; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
+    road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
+      .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
+    road.totalKm=anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
+    road.status='ready'; road.source='live';
+    void saveCanonicalARoadReference(road);
+    canonicalARoadCoverageDirty=true;
+  } catch (err) {
+    road.status='error'; road.error=err.message || String(err);
+  }
+  renderCanonicalARoadDashboard();
+  renderCanonicalARoadMapLayers();
+  return road;
+}
+
+function calculateCanonicalARoadCoverage(road,drawable) {
+  if (!road || road.status!=='ready') return new Set();
+  const covered=new Set(persistedARoadCoverageByRef.get(road.id) || []);
+  for (const journey of drawable) {
+    for (const feature of journey.aRoadGeoJson?.features || []) {
+      if (aRoadFeatureId(feature)!==road.ref) continue;
+      for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
+        if (segmentEvidenceIsRemoved(segmentKey(a,b))) continue;
+        const lengthM=haversineMetres(a,b);
+        const samples=Math.max(1,Math.ceil(lengthM/CANONICAL_MATCH_SAMPLE_M));
+        for (let i=0;i<=samples;i++) {
+          const id=nearestCanonicalAnchor(road,interpolateLngLat(a,b,i/samples));
+          if (id!==null) covered.add(id);
+        }
+      }
+    }
+  }
+  road.coveredAnchorIds=covered;
+  persistedARoadCoverageByRef.set(road.id,new Set(covered));
+  return covered;
+}
+
+function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
+  for (const ref of refs) {
+    const road=canonicalARoadState(ref);
+    if (road) canonicalARoadRequestedRefs.add(road.ref);
+  }
+  if (canonicalARoadQueueRunning) return;
+  canonicalARoadQueueRunning=true;
+  (async()=>{
+    let loaded=0;
+    try {
+      while (loaded<limit) {
+        const ref=[...canonicalARoadRequestedRefs].find(candidate=>canonicalARoadState(candidate)?.status==='idle');
+        if (!ref) break;
+        await loadCanonicalARoad(ref);
+        loaded++;
+        await new Promise(resolve=>setTimeout(resolve,350));
+      }
+    } finally {
+      canonicalARoadQueueRunning=false;
+      renderCanonicalARoadDashboard();
+      renderCanonicalARoadMapLayers();
+      scheduleLocalProgressSave();
+    }
+  })();
+}
+
 function aRoadStats(drawable) {
   const roads=new Map();
   for (const journey of drawable) {
@@ -3713,6 +3922,105 @@ function renderARoadDashboard(drawable) {
     meta.textContent=`${road.journeys} matched journey${road.journeys===1?'':'s'} contributed · ${displayDistance(road.matchedKm)} matched · completion % pending canonical road sections`;
     row.append(ref,bar,value,meta); aRoadList.append(row);
   }
+}
+
+function featureCollectionDistanceKm(collection) {
+  return (collection?.features || []).reduce((total,feature)=>{
+    const metres=Number(feature?.properties?.distance_m || 0);
+    return total+(Number.isFinite(metres) && metres>0 ? metres/1000 : 0);
+  },0);
+}
+
+function renderOtherRoadDashboard(drawable) {
+  let matchedKm=0;
+  let matchedJourneys=0;
+  for (const journey of drawable) {
+    if (!journey.matchedGeoJson) continue;
+    const classified=journey.otherRoadGeoJson;
+    const fallbackKm=Math.max(0,
+      Number(journey.matchedDistanceKm || 0)-
+      featureCollectionDistanceKm(journey.motorwayGeoJson)-
+      featureCollectionDistanceKm(journey.aRoadGeoJson)
+    );
+    matchedKm+=classified ? featureCollectionDistanceKm(classified) : fallbackKm;
+    matchedJourneys++;
+  }
+  otherRoadMileage.textContent=displayDistance(matchedKm);
+  otherRoadCard.classList.toggle('hidden',!shouldShowDataDashboard() || !matchedJourneys);
+}
+
+function canonicalARoadDrawable() {
+  return journeys.filter(journey=>journey.selected && journey.points.length>1);
+}
+
+function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
+  const refs=aRoadStats(drawable).map(road=>road.ref);
+  canonicalARoadCard.classList.toggle('hidden',!shouldShowDataDashboard() || !refs.length);
+  if (!refs.length) return;
+  const roads=refs.map(canonicalARoadState).filter(Boolean);
+  const ready=roads.filter(road=>road.status==='ready');
+  const loading=roads.filter(road=>road.status==='loading');
+  const errors=roads.filter(road=>road.status==='error');
+  canonicalARoadsReady.textContent=ready.length.toLocaleString();
+  canonicalARoadList.innerHTML='';
+  for (const road of roads) {
+    if (road.status==='ready' && canonicalARoadCoverageDirty) calculateCanonicalARoadCoverage(road,drawable);
+    const totalKm=road.totalKm || 0;
+    const coveredKm=totalKm && road.anchors.length
+      ? totalKm*road.coveredAnchorIds.size/road.anchors.length : 0;
+    const percent=totalKm ? Math.min(100,coveredKm/totalKm*100) : 0;
+    const row=document.createElement('div'); row.className='canonical-road-row';
+    const top=document.createElement('div'); top.className='canonical-road-top';
+    const ref=document.createElement('div'); ref.className='canonical-road-ref'; ref.textContent=road.ref;
+    const progress=document.createElement('div'); progress.className='canonical-road-progress';
+    const fill=document.createElement('div'); fill.className='canonical-road-fill'; fill.style.width=`${percent}%`; progress.append(fill);
+    const value=document.createElement('div'); value.className='canonical-road-pct';
+    value.textContent=road.status==='ready' ? `${percent.toFixed(1)}%` : road.status==='loading' ? 'Loading' : road.status==='error' ? 'Retry' : 'Queued';
+    top.append(ref,progress,value);
+    const meta=document.createElement('p'); meta.className=`canonical-road-meta ${road.status==='error'?'canonical-road-error':road.status==='loading'?'canonical-road-loading':''}`;
+    meta.textContent=road.status==='ready'
+      ? `${displayDistance(coveredKm)} of ${displayDistance(totalKm)} complete`
+      : road.status==='error' ? road.error : road.status==='loading' ? 'Building fixed reference…' : 'Reference queued for progressive loading.';
+    row.append(top,meta); canonicalARoadList.append(row);
+  }
+  canonicalARoadCoverageDirty=false;
+  const pending=roads.filter(road=>road.status==='idle').length;
+  canonicalARoadRetry.classList.toggle('hidden',!pending && !errors.length);
+  canonicalARoadRetry.textContent=errors.length ? 'Retry A-road references' : `Load next ${Math.min(12,pending)} A-road references`;
+  canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
+  canonicalARoadStatus.textContent=loading.length
+    ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
+    : `${ready.length} of ${roads.length} A-road references ready${pending?` · ${pending} queued.`:'.'}`;
+}
+
+function renderCanonicalARoadMapLayers() {
+  if (!canonicalARoadCoverageLayer || !canonicalARoadUncoveredLayer) return;
+  canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
+  const bounds=visibleMapBounds();
+  const drawable=canonicalARoadDrawable();
+  for (const road of canonicalARoads.values()) {
+    if (road.status!=='ready') continue;
+    if (canonicalARoadCoverageDirty) calculateCanonicalARoadCoverage(road,drawable);
+    const runs={covered:[],uncovered:[]};
+    let previous=null,current=null,currentKind=null;
+    for (const anchor of road.anchors) {
+      const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
+      const continuous=previous && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
+      const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
+      if (!visible) { current=null; previous=anchor; continue; }
+      if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
+      if (!current.length && previous && continuous) current.push([previous.lat,previous.lng]);
+      current.push([anchor.lat,anchor.lng]); previous=anchor;
+    }
+    for (const [kind,paths] of Object.entries(runs)) {
+      const covered=kind==='covered';
+      L.polyline(paths.filter(path=>path.length>1),{
+        weight:4,opacity:.9,color:covered?'#187a3b':'#d93a3a',
+        pane:covered?'aRoadConfirmedPane':'aRoadUnconfirmedPane',interactive:false
+      }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
+    }
+  }
+  canonicalARoadCoverageDirty=false;
 }
 
 function visibleMapBounds() {
@@ -3798,6 +4106,7 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
       renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
       motorwayAggregateDirty=false;
       renderARoadDashboard(drawable);
+      renderOtherRoadDashboard(drawable);
     } catch (err) {
       dashboardError=err;
       console.error('Roadprints motorway mileage summary could not refresh:',err);
@@ -3808,8 +4117,16 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
       dashboardError=dashboardError || err;
       console.error('Roadprints canonical motorway map could not refresh:',err);
     }
+    try {
+      renderCanonicalARoadDashboard(drawable);
+    } catch (err) {
+      dashboardError=dashboardError || err;
+      console.error('Roadprints canonical A-road map could not refresh:',err);
+    }
   }
   if (!map || !creditedLayer) return;
+
+  renderCanonicalARoadMapLayers();
 
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
