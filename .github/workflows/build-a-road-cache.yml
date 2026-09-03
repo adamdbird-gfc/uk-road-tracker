@@ -39,6 +39,10 @@ jobs:
             git add canonical-a-roads-v1 || true
             git diff --cached --quiet && break
             git commit -m "Build canonical A-road cache batch $BATCH"
+            # The web app can be published while this long-running build is
+            # fetching OpenStreetMap data. Rebase the cache-only commit onto
+            # that newer site change before pushing it.
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
             CHANGED=true
           done
