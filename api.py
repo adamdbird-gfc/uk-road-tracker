@@ -13,7 +13,10 @@ FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreet
 OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
-OVERPASS_INTERPRETER_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_INTERPRETER_URLS = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+]
 CANONICAL_A_ROAD_CACHE = {}
 
 app = FastAPI(title="UK Road Tracker API", version="0.9.0")
@@ -143,21 +146,28 @@ async def canonical_a_road(road_ref: str):
     if ref in CANONICAL_A_ROAD_CACHE:
         return CANONICAL_A_ROAD_CACHE[ref]
 
+    # The boundary-aware regex also catches ways carrying multiple route refs.
     ref_pattern = rf"(^|[;,/]){re.escape(ref)}($|[;,/])"
     query = (
-        "[out:json][timeout:120];"
-        'area["ISO3166-1"="GB"][admin_level=2]->.gb;'
-        'way(area.gb)["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]'
-        f'["ref"~"{ref_pattern}"];out geom;'
+        "[out:json][timeout:60];"
+        'way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]'
+        f'["ref"~"{ref_pattern}"](49.8,-8.7,60.9,2.1);out geom;'
     )
-    try:
-        async with httpx.AsyncClient(timeout=130.0, headers={"User-Agent": "Roadprints/0.9 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"}) as client:
-            response = await client.get(OVERPASS_INTERPRETER_URL, params={"data": query})
-        if response.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"A-road reference service returned HTTP {response.status_code}.")
-        elements = response.json().get("elements") or []
-    except (httpx.HTTPError, ValueError) as exc:
-        raise HTTPException(status_code=502, detail="A-road reference service could not be reached.") from exc
+    elements = None
+    last_error = None
+    for endpoint in OVERPASS_INTERPRETER_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=75.0, headers={"User-Agent": "Roadprints/0.9 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"}) as client:
+                response = await client.post(endpoint, data={"data": query})
+            if response.status_code != 200:
+                last_error = f"HTTP {response.status_code}"
+                continue
+            elements = response.json().get("elements") or []
+            break
+        except (httpx.HTTPError, ValueError) as exc:
+            last_error = str(exc)
+    if elements is None:
+        raise HTTPException(status_code=502, detail="A-road reference service could not be reached. Please retry shortly.")
 
     ways = []
     for element in elements:
