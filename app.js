@@ -208,6 +208,8 @@ const CANONICAL_DEDUPE_CELL_M = 110;
 const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
+const CANONICAL_A_ROAD_CACHE_VERSION = 'v1';
+const CANONICAL_A_ROAD_CACHE_URL = ref => `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/${encodeURIComponent(ref)}.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
@@ -3801,16 +3803,14 @@ async function saveCanonicalARoadReference(road) {
 }
 
 async function fetchCanonicalARoadWays(ref) {
-  const response=await fetch(`${API_BASE_URL}/canonical-a-road/${encodeURIComponent(ref)}`);
-  const data=await response.json().catch(()=>({}));
-  if (!response.ok) throw new Error(data.detail || `A-road reference service returned HTTP ${response.status}.`);
-  const ways=(data.ways || []).map(way=>({
-    id:way.id,
-    coords:(way.coords || []).map(point=>[Number(point[0]),Number(point[1])])
-      .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
-  })).filter(way=>way.coords.length>=2);
-  if (!ways.length) throw new Error(`No OpenStreetMap reference geometry found for ${ref}.`);
-  return ways;
+  const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(ref),{cache:'no-store'});
+  if (response.status===404) throw new Error(`${ref} reference is being prepared. Retry shortly.`);
+  if (!response.ok) throw new Error(`A-road reference cache returned HTTP ${response.status}.`);
+  const cached=await response.json();
+  if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(cached.anchors)) {
+    throw new Error(`${ref} reference cache format is invalid.`);
+  }
+  return cached;
 }
 
 async function loadCanonicalARoad(ref,force=false) {
@@ -3819,14 +3819,16 @@ async function loadCanonicalARoad(ref,force=false) {
   road.status='loading'; road.error=null; renderCanonicalARoadDashboard();
   try {
     if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
-    const ways=await fetchCanonicalARoadWays(road.ref);
-    const anchors=buildCanonicalAnchors(ways);
+    const cached=await fetchCanonicalARoadWays(road.ref);
+    const anchors=(cached.anchors || []).map(point=>[Number(point[0]),Number(point[1])])
+      .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
+      .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
     if (anchors.length<3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
-    road.ways=ways; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
+    road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
     road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
       .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
-    road.totalKm=anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
-    road.status='ready'; road.source='live';
+    road.totalKm=Number(cached.total_km) || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
+    road.status='ready'; road.source='cache';
     void saveCanonicalARoadReference(road);
     canonicalARoadCoverageDirty=true;
   } catch (err) {
