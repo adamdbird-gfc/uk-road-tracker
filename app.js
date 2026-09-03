@@ -19,7 +19,6 @@ let traceLayer = null;
 let matchedLayer = null;
 let creditedLayer = null;
 let footLayer = null;
-let aRoadLayer = null;
 let liveImportLayer = null;
 let mapLayerControl = null;
 let mapGeometryRefreshTimer = null;
@@ -208,7 +207,7 @@ const CANONICAL_DEDUPE_CELL_M = 110;
 const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
-const CANONICAL_A_ROAD_CACHE_VERSION = 'v2';
+const CANONICAL_A_ROAD_CACHE_VERSION = 'v4';
 const CANONICAL_A_ROAD_CACHE_ROOT = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}`;
 const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${encodeURIComponent(file)}`;
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
@@ -1062,7 +1061,7 @@ function resetTrackingSession() {
     traceLayer, matchedLayer, creditedLayer, canonicalReferenceLayer,
     canonicalCoverageLayer, canonicalUncoveredLayer,
     canonicalARoadCoverageLayer, canonicalARoadUncoveredLayer,
-    aRoadLayer, liveImportLayer
+    liveImportLayer
   ]) {
     if (layer) layer.clearLayers();
   }
@@ -1384,10 +1383,18 @@ aRoadUnitKm.addEventListener('click', () => setDistanceUnit('km'));
 aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
-canonicalARoadCard.addEventListener('toggle',()=>{
-  if (!canonicalARoadCard.open || canonicalARoadLoadStarted) return;
+function startCanonicalARoadLoading() {
+  if (canonicalARoadLoadStarted) return;
+  const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.key);
+  if (!refs.length) return;
   canonicalARoadLoadStarted=true;
-  ensureCanonicalARoadsForDiscoveredRefs(aRoadStats(canonicalARoadDrawable()).map(road=>road.key));
+  void ensureCanonicalARoadsForDiscoveredRefs(refs).catch(err=>{
+    console.error('Roadprints A-road references could not start:',err);
+    canonicalARoadLoadStarted=false;
+  });
+}
+canonicalARoadCard.addEventListener('toggle',()=>{
+  if (canonicalARoadCard.open) startCanonicalARoadLoading();
 });
 // A-road references are generated centrally. There is intentionally no
 // client-side retry/load button: pressing one cannot make a missing static
@@ -2366,10 +2373,6 @@ function initMap() {
     // A temporary layer lets an automatic import visibly grow the map one
     // route at a time without rebuilding all saved geometry after each match.
     liveImportLayer = L.layerGroup().addTo(map);
-    // A-road geometry can be much denser than the motorway network. Keep this
-    // optional layer off until the user chooses it, so opening saved progress
-    // never asks a phone to paint every matched A-road step at UK scale.
-    aRoadLayer = L.layerGroup();
     canonicalReferenceLayer = null;
     canonicalCoverageLayer = L.layerGroup().addTo(map);
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
@@ -2381,21 +2384,14 @@ function initMap() {
       {
         'Road journeys (black)': creditedLayer,
         'On-foot journeys (purple)': footLayer,
-        'A-road confirmed sections (green)': aRoadLayer,
-        'A-road incomplete sections (red)': canonicalARoadUncoveredLayer,
         'A-road completed sections (green)': canonicalARoadCoverageLayer,
-        'Motorway confirmed sections (blue)': canonicalCoverageLayer,
-        'Motorway unconfirmed sections (red)': canonicalUncoveredLayer
+        'A-road incomplete sections (red)': canonicalARoadUncoveredLayer,
+        'Motorway completed sections (blue)': canonicalCoverageLayer,
+        'Motorway incomplete sections (red)': canonicalUncoveredLayer
       },
       {collapsed: true}
     ).addTo(map);
 
-    map.on('overlayadd',event=>{
-      if (event.layer===aRoadLayer) renderMap({deferCalculations:true,preserveLive:true});
-    });
-    map.on('overlayremove',event=>{
-      if (event.layer===aRoadLayer) aRoadLayer.clearLayers();
-    });
     // Refresh only after the pan or zoom has settled, not while the gesture
     // is in progress.
     map.on('moveend zoomend',()=>{
@@ -3815,15 +3811,19 @@ function canonicalARoadState(key) {
 }
 
 function canonicalARoadArchiveRecord(road) {
-  return {id:road.id,version:CANONICAL_A_ROAD_CACHE_VERSION,totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat])};
+  return {id:road.id,version:CANONICAL_A_ROAD_CACHE_VERSION,totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat,anchor.component || 0])};
+}
+
+function canonicalARoadAnchors(points) {
+  return (points || []).map(point=>[Number(point[0]),Number(point[1]),Number(point[2] || 0)])
+    .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
+    .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],component:point[2],x,y}; });
 }
 
 async function hydrateCanonicalARoadFromDevice(road) {
   const stored=await canonicalARoadArchiveOperation('readonly',store=>store.get(road.id));
   if (!stored || stored.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(stored.anchors)) return false;
-  const anchors=stored.anchors.map(point=>[Number(point[0]),Number(point[1])])
-    .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
-    .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
+  const anchors=canonicalARoadAnchors(stored.anchors);
   if (anchors.length<3) return false;
   road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
   road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
@@ -3883,9 +3883,7 @@ async function loadCanonicalARoad(key,force=false) {
   try {
     if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
     const cached=await fetchCanonicalARoadWays(road);
-    const anchors=(cached.anchors || []).map(point=>[Number(point[0]),Number(point[1])])
-      .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
-      .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
+    const anchors=canonicalARoadAnchors(cached.anchors);
     if (anchors.length<3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
     road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors);
     road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
@@ -4076,6 +4074,9 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       : !canonicalARoadCacheIndexAvailable
         ? `${ready.length} of ${roads.length} A-road references ready · the reference cache is being prepared.`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
+  // Mobile browsers may restore an expanded <details> state after reload
+  // without emitting a toggle event. Start the available cache load here too.
+  if (canonicalARoadCard.open) startCanonicalARoadLoading();
 }
 
 function renderCanonicalARoadMapLayers() {
@@ -4090,7 +4091,7 @@ function renderCanonicalARoadMapLayers() {
     let previous=null,current=null,currentKind=null;
     for (const anchor of road.anchors) {
       const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
-      const continuous=previous && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
+      const continuous=previous && previous.component===anchor.component && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=250;
       const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
       if (!visible) { current=null; previous=anchor; continue; }
       if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
@@ -4229,7 +4230,6 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
 
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
-  aRoadLayer?.clearLayers();
   if (!preserveLive) liveImportLayer?.clearLayers();
   const bounds=visibleMapBounds();
 
@@ -4247,23 +4247,6 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
     L.polyline(footPaths,{
       color:'#7642a8',weight:4,opacity:.86,pane:'drivenRoadPane',interactive:false
     }).addTo(footLayer);
-  }
-
-  if (aRoadLayer && map.hasLayer(aRoadLayer)) {
-    const pathsByRef=new Map();
-    for (const journey of drawable) {
-      for (const feature of journey.aRoadGeoJson?.features || []) {
-        const ref=aRoadFeatureId(feature) || 'A road';
-        if (!pathsByRef.has(ref)) pathsByRef.set(ref,[]);
-        const paths=pathsByRef.get(ref);
-        paths.push(...geometryPathsInMapBounds(feature?.geometry,bounds));
-      }
-    }
-    for (const paths of pathsByRef.values()) {
-      L.polyline(paths,{
-        color:'#187a3b',weight:5,opacity:.9,pane:'aRoadConfirmedPane',interactive:false
-      }).addTo(aRoadLayer);
-    }
   }
 
   const credited = creditedSegmentsForMap(drawable);
