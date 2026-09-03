@@ -79,6 +79,23 @@ def a_road_refs(ref):
             refs.append(cleaned)
     return refs
 
+def a_road_region(geometry):
+    """Classify an A-road step for canonical reference matching.
+
+    The separate island networks reuse A-road numbers, so the region is part
+    of the identity. A matched step is wholly within one network.
+    """
+    coordinates = (geometry or {}).get("coordinates") or []
+    while coordinates and isinstance(coordinates[0], list):
+        coordinates = coordinates[0]
+    if not isinstance(coordinates, list) or len(coordinates) < 2:
+        return "GB"
+    try:
+        lng, lat = float(coordinates[0]), float(coordinates[1])
+    except (TypeError, ValueError):
+        return "GB"
+    return "NI" if -8.5 <= lng <= -5.0 and 53.8 <= lat <= 55.5 else "GB"
+
 async def request_match(client, points, radius, base_url):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
     radiuses = ";".join(str(radius) for _ in points)
@@ -294,6 +311,7 @@ async def match_payload(
                                         "name": step.get("name") or "",
                                         "distance_m": float(step.get("distance") or 0.0),
                                         "chunk_index": chunk_index,
+                                        "road_region": a_road_region(step_geometry),
                                     },
                                     "geometry": step_geometry,
                                 })
