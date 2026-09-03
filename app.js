@@ -376,7 +376,9 @@ function compactMapJourney(journey) {
     matchedGeoJson:journey.matchedGeoJson,
     motorwayGeoJson:journey.motorwayGeoJson || {type:'FeatureCollection',features:[]},
     aRoadGeoJson:journey.aRoadGeoJson || {type:'FeatureCollection',features:[]},
-    otherRoadGeoJson:journey.otherRoadGeoJson || null,
+    otherRoadDistanceKm:typeof journey.otherRoadDistanceKm==='number' && Number.isFinite(journey.otherRoadDistanceKm)
+      ? journey.otherRoadDistanceKm
+      : null,
     matchedDistanceKm:Number(journey.matchedDistanceKm || 0),
     matchedTracepoints:Number(journey.matchedTracepoints || 0),
     pointsSentToMatcher:Number(journey.pointsSentToMatcher || 0),
@@ -1956,7 +1958,8 @@ async function startEasyImport() {
       journey.matchedGeoJson = data.geojson;
       journey.motorwayGeoJson = data.motorway_geojson;
       journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
-      journey.otherRoadGeoJson = data.other_road_geojson || {type:'FeatureCollection',features:[]};
+      journey.otherRoadDistanceKm = Number(data.other_road_distance_m || 0) / 1000;
+      delete journey.otherRoadGeoJson;
       journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
       journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
       journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -2165,7 +2168,8 @@ async function matchJourney(index, button, statusNode) {
     journey.matchedGeoJson = data.geojson;
     journey.motorwayGeoJson = data.motorway_geojson;
     journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
-    journey.otherRoadGeoJson = data.other_road_geojson || {type:'FeatureCollection',features:[]};
+    journey.otherRoadDistanceKm = Number(data.other_road_distance_m || 0) / 1000;
+    delete journey.otherRoadGeoJson;
     journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
     journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
     journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
@@ -2207,6 +2211,7 @@ function clearMatchedRoads() {
     delete j.motorwayGeoJson;
     delete j.aRoadGeoJson;
     delete j.otherRoadGeoJson;
+    delete j.otherRoadDistanceKm;
     delete j.matchedDistanceKm;
     delete j.matchedTracepoints;
     delete j.pointsSentToMatcher;
@@ -3951,12 +3956,15 @@ function renderOtherRoadDashboard(drawable) {
   for (const journey of drawable) {
     if (!journey.matchedGeoJson) continue;
     const classified=journey.otherRoadGeoJson;
+    const exactKm=journey.otherRoadDistanceKm;
     const fallbackKm=Math.max(0,
       Number(journey.matchedDistanceKm || 0)-
       featureCollectionDistanceKm(journey.motorwayGeoJson)-
       featureCollectionDistanceKm(journey.aRoadGeoJson)
     );
-    matchedKm+=classified ? featureCollectionDistanceKm(classified) : fallbackKm;
+    matchedKm+=typeof exactKm==='number' && Number.isFinite(exactKm)
+      ? Math.max(0,exactKm)
+      : classified ? featureCollectionDistanceKm(classified) : fallbackKm;
     matchedJourneys++;
   }
   otherRoadMileage.textContent=displayDistance(matchedKm);
@@ -4083,12 +4091,26 @@ function reducePathsForMap(paths,limit) {
   return paths.filter((_,index)=>index%stride===0);
 }
 
+function liveImportPreviewPaths(geojson,maxPoints=240) {
+  const lines=[];
+  for (const feature of geojson?.features || []) {
+    const geometry=feature?.geometry;
+    if (geometry?.type==='LineString') lines.push(geometry.coordinates || []);
+    if (geometry?.type==='MultiLineString') lines.push(...(geometry.coordinates || []));
+  }
+  const pointCount=lines.reduce((total,line)=>total+line.length,0);
+  const stride=Math.max(1,Math.ceil(pointCount/maxPoints));
+  return lines.map(line=>{
+    if (line.length<=2 || stride===1) return line.map(([lng,lat])=>[lat,lng]);
+    const preview=line.filter((_,index)=>index===0 || index===line.length-1 || index%stride===0);
+    return preview.map(([lng,lat])=>[lat,lng]);
+  }).filter(line=>line.length>1);
+}
+
 function appendLiveImportGeometry(activity,{color,weight,opacity=.86}={}) {
   if (!map || !liveImportLayer || !activity?.matchedGeoJson || !window.L) return;
-  L.geoJSON(activity.matchedGeoJson,{
-    pane:'drivenRoadPane',
-    style:{color,weight,opacity,interactive:false}
-  }).addTo(liveImportLayer);
+  const paths=liveImportPreviewPaths(activity.matchedGeoJson);
+  if (paths.length) L.polyline(paths,{color,weight,opacity,pane:'drivenRoadPane',interactive:false}).addTo(liveImportLayer);
 }
 
 function refreshImportMapBatch() {
