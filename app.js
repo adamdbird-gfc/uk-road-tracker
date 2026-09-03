@@ -1046,7 +1046,7 @@ function resetTrackingSession() {
   canonicalMotorwayCard.classList.add('hidden');
   canonicalARoadCard.classList.add('hidden');
   mapCard.classList.add('hidden');
-  nextCard.classList.add('hidden');
+  nextCard?.classList.add('hidden');
   refinementPanel.classList.add('hidden');
   mapCorrectionPanel.classList.add('hidden');
   mapCard.classList.remove('refinement-active');
@@ -1080,7 +1080,7 @@ async function showSavedProgress() {
   mapTitle.textContent='Your saved Roadprints progress';
   mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
-  nextCard.classList.add('hidden');
+  nextCard?.classList.add('hidden');
   renderRoadQueue();
   renderFootQueue();
   renderCollectiveStats();
@@ -1112,7 +1112,7 @@ async function showDataSourceChoice(mode) {
   mapTitle.textContent = '3. Preview';
   mapIntro.textContent = 'Selected motorways are shown in blue as complete. In the next enhancement, you will be able to refine these into the individual sections you have driven.';
   mapCard.classList.remove('hidden');
-  nextCard.classList.add('hidden');
+  nextCard?.classList.add('hidden');
   renderManualMotorwayOptions();
   await ensureLeaflet();
   initMap();
@@ -1308,7 +1308,7 @@ fileInput.addEventListener('change', async () => {
     importMode = null;
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
-    nextCard.classList.add('hidden');
+    nextCard?.classList.add('hidden');
   importModeCard.classList.add('hidden');
   easyProgress.classList.add('hidden');
   ignoredCard.classList.add('hidden');
@@ -1319,7 +1319,7 @@ fileInput.addEventListener('change', async () => {
   } catch (err) {
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
-    nextCard.classList.add('hidden');
+    nextCard?.classList.add('hidden');
     fileStatus.className = 'error';
     const prefix = Object.keys(diagnostics).length ? diagnosticText() + '\n\n' : '';
     fileStatus.textContent = prefix + (err.message || String(err));
@@ -1395,7 +1395,7 @@ function resetOutput() {
   fileStatus.className = 'muted';
   summaryCard.classList.add('hidden');
   mapCard.classList.add('hidden');
-  nextCard.classList.add('hidden');
+  nextCard?.classList.add('hidden');
 }
 
 function status(text) {
@@ -2010,7 +2010,7 @@ function renderAll(fileName) {
   // so rendering hundreds of hidden journey rows wastes mobile memory.
   summaryCard.classList.add('hidden');
   mapCard.classList.remove('hidden');
-  nextCard.classList.remove('hidden');
+  nextCard?.classList.remove('hidden');
 
   journeyList.innerHTML='';
   journeyList.style.display='none';
