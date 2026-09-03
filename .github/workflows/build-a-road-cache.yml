@@ -36,7 +36,7 @@ jobs:
           CHANGED=false
           for BATCH in 1 2; do
             python scripts/build_a_road_cache.py
-            git add canonical-a-roads-v1 || true
+            git add canonical-a-roads-v2 || true
             git diff --cached --quiet && break
             git commit -m "Build canonical A-road cache batch $BATCH"
             # The web app can be published while this long-running build is
