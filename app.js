@@ -3957,13 +3957,20 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
       await new Promise(resolve=>setTimeout(resolve,350));
     }
   } finally {
-    const moreAvailable=canonicalARoadCard.open && [...canonicalARoadRequestedRefs]
+    // Saved-data restoration is asynchronous on mobile. Refresh the request
+    // set from the full, current journey record before deciding whether the
+    // next batch is due, rather than relying on the first partial render.
+    for (const road of aRoadStats(canonicalARoadDrawable())) {
+      const state=canonicalARoadState(road.key);
+      if (state) canonicalARoadRequestedRefs.add(state.key);
+    }
+    const moreAvailable=[...canonicalARoadRequestedRefs]
       .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
     clearTimeout(canonicalARoadNextBatchTimer);
     canonicalARoadNextBatchTimer=null;
     if (moreAvailable) {
-      // Keep progressing in modest batches while the user is viewing this
-      // panel, leaving the main thread free between network requests.
+      // Keep progressing in modest batches in the background, leaving the
+      // main thread free between network requests and across panel re-renders.
       canonicalARoadNextBatchTimer=setTimeout(()=>{
         canonicalARoadNextBatchTimer=null;
         void ensureCanonicalARoadsForDiscoveredRefs([],{limit});
