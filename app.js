@@ -240,10 +240,23 @@ function shouldShowDataDashboard() {
   return onboardingMode==='data' || onboardingMode==='saved';
 }
 
+function updateDataDeletionControls() {
+  const hasRoadData=
+    persistedMapJourneys.size>0 ||
+    persistedManualRefs.size>0 ||
+    persistedCoverageByRef.size>0 ||
+    persistedARoadCoverageByRef.size>0;
+  const hasFootData=persistedFootActivities.size>0;
+  clearRoadData.disabled=!hasRoadData;
+  clearFootData.disabled=!hasFootData;
+  clearImportedData.disabled=!hasRoadData && !hasFootData;
+}
+
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
   const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0 || persistedFootActivities.size>0;
+  updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
 
@@ -833,6 +846,7 @@ async function clearRoadDataOnly() {
   } catch (err) {
     console.warn('Saved road journeys could not be deleted:',err);
     window.alert('The saved road journeys could not be deleted. Please try again.');
+    return;
   } finally {
     localProgressDeletionRunning=false;
   }
