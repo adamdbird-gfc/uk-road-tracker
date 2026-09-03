@@ -208,8 +208,9 @@ const CANONICAL_DEDUPE_CELL_M = 110;
 const CANONICAL_DEDUPE_RADIUS_M = 95;
 const CANONICAL_CACHE_VERSION = 'v1';
 const CANONICAL_CACHE_URL = `canonical-motorways-${CANONICAL_CACHE_VERSION}.json`;
-const CANONICAL_A_ROAD_CACHE_VERSION = 'v1';
-const CANONICAL_A_ROAD_CACHE_URL = ref => `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/${encodeURIComponent(ref)}.json`;
+const CANONICAL_A_ROAD_CACHE_VERSION = 'v2';
+const CANONICAL_A_ROAD_CACHE_ROOT = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}`;
+const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${encodeURIComponent(file)}`;
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
@@ -221,7 +222,7 @@ const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
 const CANONICAL_A_ROAD_STORE_NAME = 'canonical-a-roads';
 let canonicalCache = null;
 let canonicalCachePromise = null;
-let canonicalARoadCacheRefs = new Set();
+let canonicalARoadCacheEntries = new Map();
 let canonicalARoadCacheIndexPromise = null;
 let canonicalARoadCacheIndexAvailable = false;
 
@@ -1386,7 +1387,7 @@ canonicalRetry.addEventListener('click', retryCanonicalRoads);
 canonicalARoadCard.addEventListener('toggle',()=>{
   if (!canonicalARoadCard.open || canonicalARoadLoadStarted) return;
   canonicalARoadLoadStarted=true;
-  ensureCanonicalARoadsForDiscoveredRefs(aRoadStats(canonicalARoadDrawable()).map(road=>road.ref));
+  ensureCanonicalARoadsForDiscoveredRefs(aRoadStats(canonicalARoadDrawable()).map(road=>road.key));
 });
 // A-road references are generated centrally. There is intentionally no
 // client-side retry/load button: pressing one cannot make a missing static
@@ -3770,13 +3771,43 @@ function aRoadFeatureId(feature) {
   return /^A\d+[A-Z]?$/.test(ref) ? ref : null;
 }
 
-function canonicalARoadState(ref) {
-  const normalised=aRoadFeatureId({properties:{road_ref:ref}});
-  if (!normalised) return null;
-  const id=`A:${normalised}`;
+function featureFirstLngLat(feature) {
+  const geometry=feature?.geometry;
+  const coordinates=geometry?.coordinates;
+  if (!coordinates) return null;
+  let point=coordinates;
+  while (Array.isArray(point) && Array.isArray(point[0])) point=point[0];
+  return Array.isArray(point) && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))
+    ? [Number(point[0]),Number(point[1])] : null;
+}
+
+function aRoadFeatureRegion(feature) {
+  const saved=String(feature?.properties?.road_region || '').toUpperCase();
+  if (saved==='GB' || saved==='NI') return saved;
+  // Existing imports pre-date the region field. Northern Ireland's compact
+  // bounding box is sufficient here: an A road cannot cross the Irish Sea.
+  const point=featureFirstLngLat(feature);
+  return point && point[0]>=-8.5 && point[0]<=-5.0 && point[1]>=53.8 && point[1]<=55.5 ? 'NI' : 'GB';
+}
+
+function aRoadFeatureKey(feature) {
+  const ref=aRoadFeatureId(feature);
+  return ref ? `${aRoadFeatureRegion(feature)}:${ref}` : null;
+}
+
+function parseARoadKey(value) {
+  const match=String(value || '').toUpperCase().match(/^(GB|NI):(A\d+[A-Z]?)$/);
+  return match ? {key:match[0],region:match[1],ref:match[2]} : null;
+}
+
+function canonicalARoadState(key) {
+  const parsed=parseARoadKey(key);
+  if (!parsed) return null;
+  const {region,ref}=parsed;
+  const id=`A:${region}:${ref}`;
   if (!canonicalARoads.has(id)) {
     canonicalARoads.set(id,{
-      id,ref:normalised,status:'idle',error:null,ways:[],anchors:[],
+      id,key:parsed.key,region,ref,status:'idle',error:null,ways:[],anchors:[],
       anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:0,source:null
     });
   }
@@ -3784,12 +3815,12 @@ function canonicalARoadState(ref) {
 }
 
 function canonicalARoadArchiveRecord(road) {
-  return {id:road.id,version:'v1',totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat])};
+  return {id:road.id,version:CANONICAL_A_ROAD_CACHE_VERSION,totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat])};
 }
 
 async function hydrateCanonicalARoadFromDevice(road) {
   const stored=await canonicalARoadArchiveOperation('readonly',store=>store.get(road.id));
-  if (!stored || stored.version!=='v1' || !Array.isArray(stored.anchors)) return false;
+  if (!stored || stored.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(stored.anchors)) return false;
   const anchors=stored.anchors.map(point=>[Number(point[0]),Number(point[1])])
     .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
     .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
@@ -3815,39 +3846,43 @@ async function loadCanonicalARoadCacheIndex() {
       const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-store'});
       if (!response.ok) throw new Error(`A-road cache index returned HTTP ${response.status}.`);
       const index=await response.json();
-      const roads=index?.roads && typeof index.roads==='object' ? Object.keys(index.roads) : [];
-      canonicalARoadCacheRefs=new Set(roads);
+      if (index?.version!==CANONICAL_A_ROAD_CACHE_VERSION) throw new Error('A-road cache index has an incompatible version.');
+      const entries=Object.entries(index?.roads && typeof index.roads==='object' ? index.roads : {})
+        .filter(([key,value])=>parseARoadKey(key) && value && typeof value.file==='string');
+      canonicalARoadCacheEntries=new Map(entries);
       canonicalARoadCacheIndexAvailable=true;
     } catch (err) {
       // The cache is built independently from the app. An absent index simply
       // means there is nothing to request yet, not an error for every road.
-      canonicalARoadCacheRefs.clear();
+      canonicalARoadCacheEntries.clear();
       canonicalARoadCacheIndexAvailable=false;
       console.info('A-road cache index is not available yet:',err);
     }
-    return canonicalARoadCacheRefs;
+    return canonicalARoadCacheEntries;
   })();
   return canonicalARoadCacheIndexPromise;
 }
 
-async function fetchCanonicalARoadWays(ref) {
-  const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(ref),{cache:'no-store'});
-  if (response.status===404) throw new Error(`${ref} reference is being prepared. Retry shortly.`);
+async function fetchCanonicalARoadWays(road) {
+  const entry=canonicalARoadCacheEntries.get(road.key);
+  if (!entry) throw new Error(`${road.ref} ${road.region==='NI'?'Northern Ireland ':''}reference is being prepared.`);
+  const response=await fetch(CANONICAL_A_ROAD_CACHE_URL(entry.file),{cache:'no-store'});
+  if (response.status===404) throw new Error(`${road.ref} reference is being prepared.`);
   if (!response.ok) throw new Error(`A-road reference cache returned HTTP ${response.status}.`);
   const cached=await response.json();
   if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(cached.anchors)) {
-    throw new Error(`${ref} reference cache format is invalid.`);
+    throw new Error(`${road.ref} reference cache format is invalid.`);
   }
   return cached;
 }
 
-async function loadCanonicalARoad(ref,force=false) {
-  const road=canonicalARoadState(ref);
+async function loadCanonicalARoad(key,force=false) {
+  const road=canonicalARoadState(key);
   if (!road || (!force && ['loading','ready'].includes(road.status))) return road;
   road.status='loading'; road.error=null; renderCanonicalARoadDashboard();
   try {
     if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
-    const cached=await fetchCanonicalARoadWays(road.ref);
+    const cached=await fetchCanonicalARoadWays(road);
     const anchors=(cached.anchors || []).map(point=>[Number(point[0]),Number(point[1])])
       .filter(point=>Number.isFinite(point[0]) && Number.isFinite(point[1]))
       .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],x,y}; });
@@ -3872,7 +3907,7 @@ function calculateCanonicalARoadCoverage(road,drawable) {
   const covered=new Set(persistedARoadCoverageByRef.get(road.id) || []);
   for (const journey of drawable) {
     for (const feature of journey.aRoadGeoJson?.features || []) {
-      if (aRoadFeatureId(feature)!==road.ref) continue;
+      if (aRoadFeatureKey(feature)!==road.key) continue;
       for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
         if (segmentEvidenceIsRemoved(segmentKey(a,b))) continue;
         const lengthM=haversineMetres(a,b);
@@ -3890,9 +3925,9 @@ function calculateCanonicalARoadCoverage(road,drawable) {
 }
 
 async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
-  for (const ref of refs) {
-    const road=canonicalARoadState(ref);
-    if (road) canonicalARoadRequestedRefs.add(road.ref);
+  for (const key of refs) {
+    const road=canonicalARoadState(key);
+    if (road) canonicalARoadRequestedRefs.add(road.key);
   }
   if (canonicalARoadQueueRunning) return;
   canonicalARoadQueueRunning=true;
@@ -3900,11 +3935,11 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   try {
     const available=await loadCanonicalARoadCacheIndex();
     while (loaded<limit) {
-      const ref=[...canonicalARoadRequestedRefs].find(candidate=>
+      const key=[...canonicalARoadRequestedRefs].find(candidate=>
         available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
       );
-      if (!ref) break;
-      await loadCanonicalARoad(ref);
+      if (!key) break;
+      await loadCanonicalARoad(key);
       loaded++;
       await new Promise(resolve=>setTimeout(resolve,350));
     }
@@ -3921,12 +3956,14 @@ function aRoadStats(drawable) {
   for (const journey of drawable) {
     for (const feature of journey.aRoadGeoJson?.features || []) {
       const ref=aRoadFeatureId(feature);
+      const region=aRoadFeatureRegion(feature);
+      const key=ref ? `${region}:${ref}` : null;
       const distanceM=Number(feature?.properties?.distance_m || 0);
-      if (!ref || !Number.isFinite(distanceM) || distanceM<=0) continue;
-      const road=roads.get(ref) || {ref,distanceM:0,journeys:new Set()};
+      if (!key || !Number.isFinite(distanceM) || distanceM<=0) continue;
+      const road=roads.get(key) || {key,region,ref,distanceM:0,journeys:new Set()};
       road.distanceM+=distanceM;
       road.journeys.add(journeyIdentity(journey));
-      roads.set(ref,road);
+      roads.set(key,road);
     }
   }
   return [...roads.values()]
@@ -3935,7 +3972,7 @@ function aRoadStats(drawable) {
       matchedKm:road.distanceM/1000,
       journeys:road.journeys.size
     }))
-    .sort((a,b)=>b.matchedKm-a.matchedKm || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
+    .sort((a,b)=>b.matchedKm-a.matchedKm || a.region.localeCompare(b.region) || a.ref.localeCompare(b.ref,undefined,{numeric:true}));
 }
 
 function renderARoadDashboard(drawable) {
@@ -3951,7 +3988,7 @@ function renderARoadDashboard(drawable) {
   const maxKm=Math.max(...rows.map(road=>road.matchedKm),1);
   for (const road of rows) {
     const row=document.createElement('div'); row.className='motorway-row';
-    const ref=document.createElement('div'); ref.className='motorway-ref a-road-ref'; ref.textContent=road.ref;
+    const ref=document.createElement('div'); ref.className='motorway-ref a-road-ref'; ref.textContent=road.region==='NI' ? `${road.ref} · NI` : road.ref;
     const bar=document.createElement('div'); bar.className='motorway-bar';
     const fill=document.createElement('div'); fill.className='motorway-fill a-road-fill';
     fill.style.width=`${Math.max(2,road.matchedKm/maxKm*100)}%`;
@@ -3996,14 +4033,14 @@ function canonicalARoadDrawable() {
 }
 
 function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
-  const refs=aRoadStats(drawable).map(road=>road.ref);
+  const refs=aRoadStats(drawable).map(road=>road.key);
   canonicalARoadCard.classList.toggle('hidden',!shouldShowDataDashboard() || !refs.length);
   if (!refs.length) return;
   const roads=refs.map(canonicalARoadState).filter(Boolean);
   const ready=roads.filter(road=>road.status==='ready');
   const loading=roads.filter(road=>road.status==='loading');
   const errors=roads.filter(road=>road.status==='error');
-  const available=roads.filter(road=>canonicalARoadCacheRefs.has(road.ref));
+  const available=roads.filter(road=>canonicalARoadCacheEntries.has(road.key));
   canonicalARoadsReady.textContent=ready.length.toLocaleString();
   canonicalARoadList.innerHTML='';
   for (const road of roads) {
@@ -4015,7 +4052,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
     const percent=totalKm ? Math.min(100,coveredKm/totalKm*100) : 0;
     const row=document.createElement('div'); row.className='canonical-road-row';
     const top=document.createElement('div'); top.className='canonical-road-top';
-    const ref=document.createElement('div'); ref.className='canonical-road-ref'; ref.textContent=road.ref;
+    const ref=document.createElement('div'); ref.className='canonical-road-ref'; ref.textContent=road.region==='NI' ? `${road.ref} · NI` : road.ref;
     const progress=document.createElement('div'); progress.className='canonical-road-progress';
     const fill=document.createElement('div'); fill.className='canonical-road-fill'; fill.style.width=`${percent}%`; progress.append(fill);
     const value=document.createElement('div'); value.className='canonical-road-pct';
