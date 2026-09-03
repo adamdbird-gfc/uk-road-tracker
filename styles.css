@@ -234,6 +234,7 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .canonical-score span { display:block; font-size:.72rem; color:#657083; }
 .a-road-score { background:#e8f5eb; color:#0f5c2b; }
 .a-road-canonical-details .canonical-road-fill { background:#187a3b; }
+.canonical-details:not(.a-road-canonical-details) .canonical-road-fill { background:#005eb8; }
 .a-road-canonical-details .canonical-road-ref { display:inline-flex; width:68px; min-height:28px; align-items:center; justify-content:center; border:1px solid #0f5c2b; border-radius:4px; background:#187a3b; color:#fff; font-family:Arial,sans-serif; font-size:.86rem; }
 .canonical-progress { width:100%; height:16px; margin:16px 0 12px; overflow:hidden; background:#e6e9ee; border-radius:999px; }
 .canonical-progress-fill { width:0%; height:100%; background:#172033; border-radius:999px; transition:width .25s ease; }
