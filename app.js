@@ -77,6 +77,8 @@ let canonicalARoadCoverageRefreshRunning = false;
 let canonicalARoadCoverageRefreshProgress = 0;
 let canonicalARoadLoadStarted = false;
 let canonicalARoadWorkerEpoch = 0;
+let canonicalARoadPage = 0;
+const CANONICAL_A_ROAD_PAGE_SIZE = 12;
 let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
@@ -148,6 +150,9 @@ const canonicalARoadList = document.getElementById('canonicalARoadList');
 const canonicalARoadsReady = document.getElementById('canonicalARoadsReady');
 const canonicalARoadStatus = document.getElementById('canonicalARoadStatus');
 const canonicalARoadRetry = document.getElementById('canonicalARoadRetry');
+const canonicalARoadPrevious = document.getElementById('canonicalARoadPrevious');
+const canonicalARoadNext = document.getElementById('canonicalARoadNext');
+const canonicalARoadPageStatus = document.getElementById('canonicalARoadPageStatus');
 const networkProgressPercent = document.getElementById('networkProgressPercent');
 const networkProgressDistance = document.getElementById('networkProgressDistance');
 const networkProgressBar = document.getElementById('networkProgressBar');
@@ -872,6 +877,7 @@ async function clearRoadDataOnly() {
   canonicalARoads.clear();
   canonicalARoadRequestedRefs.clear();
   canonicalARoadLoadStarted=false;
+  canonicalARoadPage=0;
   canonicalARoadWorkerEpoch++;
   renderMap();
   saveLocalProgressNow();
@@ -1004,6 +1010,7 @@ function resetTrackingSession() {
   canonicalARoadRequestedRefs.clear();
   canonicalARoads.clear();
   canonicalARoadLoadStarted=false;
+  canonicalARoadPage=0;
   canonicalARoadWorkerEpoch++;
   refinementRoadRef = null;
   refinementUndoStack = [];
@@ -1390,8 +1397,8 @@ aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 function startCanonicalARoadLoading() {
-  if (canonicalARoadQueueRunning) return;
-  const refs=aRoadStats(canonicalARoadDrawable()).map(road=>road.key);
+  if (canonicalARoadQueueRunning || canonicalARoadLoadStarted) return;
+  const refs=canonicalARoadPageKeys();
   if (!refs.length) return;
   canonicalARoadLoadStarted=true;
   void ensureCanonicalARoadsForDiscoveredRefs(refs).catch(err=>{
@@ -1402,6 +1409,8 @@ function startCanonicalARoadLoading() {
 canonicalARoadCard.addEventListener('toggle',()=>{
   if (canonicalARoadCard.open) startCanonicalARoadLoading();
 });
+canonicalARoadPrevious.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage-1));
+canonicalARoadNext.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage+1));
 // A-road references are generated centrally. There is intentionally no
 // client-side retry/load button: pressing one cannot make a missing static
 // reference appear, and previously gave the misleading appearance of work.
@@ -3814,7 +3823,7 @@ function canonicalARoadState(key) {
   if (!canonicalARoads.has(id)) {
     canonicalARoads.set(id,{
       id,key:parsed.key,region,ref,status:'idle',error:null,ways:[],anchors:[],
-      anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:0,source:null
+      anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:0,source:null,coverageCalculated:false
     });
   }
   return canonicalARoads.get(id);
@@ -3850,6 +3859,7 @@ async function hydrateCanonicalARoadFromDevice(road) {
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
   road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
   road.status='ready'; road.source='device';
+  road.coverageCalculated=false;
   return true;
 }
 
@@ -3924,6 +3934,7 @@ async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
       .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
     road.totalKm=Number(cached.total_km) || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
     road.status='ready'; road.source='cache';
+    road.coverageCalculated=false;
     void saveCanonicalARoadReference(road);
     canonicalARoadCoverageDirty=true;
   } catch (err) {
@@ -3954,6 +3965,7 @@ function calculateCanonicalARoadCoverage(road,drawable) {
     }
   }
   road.coveredAnchorIds=covered;
+  road.coverageCalculated=true;
   persistedARoadCoverageByRef.set(road.id,new Set(covered));
   return covered;
 }
@@ -3962,7 +3974,7 @@ function requestCanonicalARoadCoverageRefresh() {
   if (canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning || !canonicalARoadCoverageDirty) return;
   canonicalARoadCoverageRefreshRunning=true;
   const drawable=canonicalARoadDrawable();
-  const ready=[...canonicalARoads.values()].filter(road=>road.status==='ready');
+  const ready=[...canonicalARoads.values()].filter(road=>road.status==='ready' && !road.coverageCalculated);
   canonicalARoadCoverageRefreshProgress=0;
   void (async()=>{
     try {
@@ -3993,9 +4005,8 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   let available=new Map();
   try {
     available=await loadCanonicalARoadCacheIndex();
-    while (workerEpoch===canonicalARoadWorkerEpoch) {
-      let loaded=0;
-      while (loaded<limit && workerEpoch===canonicalARoadWorkerEpoch) {
+    let loaded=0;
+    while (loaded<limit && workerEpoch===canonicalARoadWorkerEpoch) {
         const key=[...canonicalARoadRequestedRefs].find(candidate=>
           available.has(candidate) && canonicalARoadState(candidate)?.status==='idle'
         );
@@ -4005,23 +4016,6 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
         await loadCanonicalARoad(key,false,{deferRender:true});
         loaded++;
         await new Promise(resolve=>setTimeout(resolve,350));
-      }
-
-      // Saved-data restoration is asynchronous on mobile. Refresh the request
-      // set from the full, current journey record before the next batch.
-      for (const road of aRoadStats(canonicalARoadDrawable())) {
-        const state=canonicalARoadState(road.key);
-        if (state) canonicalARoadRequestedRefs.add(state.key);
-      }
-      const moreAvailable=[...canonicalARoadRequestedRefs]
-        .some(key=>available.has(key) && canonicalARoadState(key)?.status==='idle');
-      renderCanonicalARoadDashboard();
-      scheduleLocalProgressSave();
-      if (!moreAvailable || !loaded) break;
-
-      // This is one persistent worker rather than a chain of separate timer
-      // callbacks, which Android Chrome can suspend after a few iterations.
-      await new Promise(resolve=>setTimeout(resolve,1200));
     }
   } finally {
     canonicalARoadQueueRunning=false;
@@ -4111,18 +4105,36 @@ function canonicalARoadDrawable() {
   return journeys.filter(journey=>journey.selected && journey.points.length>1);
 }
 
+function canonicalARoadPageKeys(drawable=canonicalARoadDrawable()) {
+  return aRoadStats(drawable)
+    .slice(canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE,(canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE)
+    .map(road=>road.key);
+}
+
+function showCanonicalARoadPage(page) {
+  const total=aRoadStats(canonicalARoadDrawable()).length;
+  const lastPage=Math.max(0,Math.ceil(total/CANONICAL_A_ROAD_PAGE_SIZE)-1);
+  canonicalARoadPage=Math.max(0,Math.min(page,lastPage));
+  const refs=canonicalARoadPageKeys();
+  renderCanonicalARoadDashboard();
+  if (refs.length) void ensureCanonicalARoadsForDiscoveredRefs(refs,{limit:CANONICAL_A_ROAD_PAGE_SIZE});
+}
+
 function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   const refs=aRoadStats(drawable).map(road=>road.key);
   canonicalARoadCard.classList.toggle('hidden',!shouldShowDataDashboard() || !refs.length);
   if (!refs.length) return;
   const roads=refs.map(canonicalARoadState).filter(Boolean);
+  const pageCount=Math.max(1,Math.ceil(roads.length/CANONICAL_A_ROAD_PAGE_SIZE));
+  canonicalARoadPage=Math.min(canonicalARoadPage,pageCount-1);
+  const pageRoads=roads.slice(canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE,(canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE);
   const ready=roads.filter(road=>road.status==='ready');
-  const loading=roads.filter(road=>road.status==='loading');
+  const loading=pageRoads.filter(road=>road.status==='loading');
   const errors=roads.filter(road=>road.status==='error');
   const available=roads.filter(road=>canonicalARoadCacheEntries.has(road.key));
   canonicalARoadsReady.textContent=ready.length.toLocaleString();
   canonicalARoadList.innerHTML='';
-  for (const road of roads) {
+  for (const road of pageRoads) {
     const preparing=road.status==='error' && /reference is being prepared/i.test(road.error || '');
     const totalKm=road.totalKm || 0;
     const coveredKm=totalKm && road.anchors.length
@@ -4143,6 +4155,10 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
     row.append(top,meta); canonicalARoadList.append(row);
   }
   const pending=roads.filter(road=>road.status==='idle').length;
+  canonicalARoadPrevious.disabled=canonicalARoadPage===0;
+  canonicalARoadNext.disabled=canonicalARoadPage>=pageCount-1;
+  canonicalARoadPageStatus.textContent=`Showing ${canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE+1}–${Math.min((canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE,roads.length)} of ${roads.length} A roads`;
+  canonicalARoadNext.textContent=canonicalARoadPage>=pageCount-1 ? 'All A roads shown' : 'Next 12 A roads';
   canonicalARoadRetry.classList.add('hidden');
   canonicalARoadRetry.disabled=true;
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
