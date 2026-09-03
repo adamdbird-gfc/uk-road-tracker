@@ -46,9 +46,9 @@ let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
-// A correction removes the evidence supplied by the journeys that existed when
-// the user made it. New Timeline journeys are deliberately not in these sets,
-// so fresh evidence can restore a section without overwriting the correction.
+// A correction is a persistent local exclusion for the selected map segment.
+// Imports may add fresh journeys, but cannot silently reinstate a correction;
+// the user restores it deliberately from the map editor.
 const removedSegmentEvidence = new Map();
 const canonicalRemovalEvidenceByRef = new Map();
 let localSaveTimer = null;
@@ -2350,8 +2350,8 @@ function restoreMapCorrectionState(snapshot) {
   creditedMapSegmentCache.signature=null;
 }
 
-function segmentEvidenceIsRemoved(key, journeyId) {
-  return Boolean(journeyId && removedSegmentEvidence.get(key)?.has(journeyId));
+function segmentEvidenceIsRemoved(key) {
+  return removedSegmentEvidence.has(key);
 }
 
 function buildCreditedSegments(drawable, {includeRemoved=false}={}) {
@@ -3066,7 +3066,6 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
         ? covered
         : new Set(road.anchors.map(anchor=>anchor.id));
   }
-  const evidenceByAnchor=new Map();
   const removedEvidenceByAnchor=new Map();
   for (const journey of drawable) {
     const journeyId=journeyIdentity(journey);
@@ -3088,27 +3087,21 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
           }
           if (id!==null) {
             covered.add(id);
-            if (journeyId) {
-              if (!evidenceByAnchor.has(id)) evidenceByAnchor.set(id,new Set());
-              evidenceByAnchor.get(id).add(journeyId);
-            }
           }
         }
       }
     }
   }
-  // Corrections take precedence over evidence that was already on the map at
-  // the time of editing. Evidence from a later import has a different journey
-  // ID and therefore restores the canonical motorway section naturally.
+  // Corrections take precedence over all imported evidence. Restoring a
+  // motorway section is an explicit map-editor action, not a side effect of
+  // loading another Timeline export.
   const allRemovalEvidence=new Map(canonicalRemovalEvidenceByRef.get(road.id) || []);
   for (const [anchorId,journeyIds] of removedEvidenceByAnchor) {
     if (!allRemovalEvidence.has(anchorId)) allRemovalEvidence.set(anchorId,new Set());
     for (const journeyId of journeyIds) allRemovalEvidence.get(anchorId).add(journeyId);
   }
-  for (const [anchorId,removedJourneyIds] of allRemovalEvidence) {
-    const evidence=evidenceByAnchor.get(anchorId);
-    if (!evidence || [...evidence].every(id=>removedJourneyIds.has(id))) covered.delete(anchorId);
-    else covered.add(anchorId);
+  for (const anchorId of allRemovalEvidence.keys()) {
+    covered.delete(anchorId);
   }
   persistedCoverageByRef.set(road.id,new Set(covered));
   scheduleLocalProgressSave();
