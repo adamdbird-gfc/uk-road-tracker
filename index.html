@@ -7,24 +7,28 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260901-map-corrections" />
+  <link rel="stylesheet" href="styles.css?v=20260904-roadprints-brand" />
 </head>
 <body>
   <main>
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Your journeys, mapped</p>
-        <h1>Roadprints</h1>
-        <p class="lede">Build a living record of the roads you have driven and the places you have explored on foot. Import Google Timeline data or start manually, then watch your map grow journey by journey.</p>
-      </div>
-    </header>
+    <div id="startExperience" class="start-experience">
+      <header class="hero">
+        <svg class="roadprints-mark" viewBox="0 0 120 120" role="img" aria-label="Roadprints: footprints following a road into the distance">
+          <path class="mark-road" d="M11 112 43 49Q51 32 60 13q9 19 17 36l32 63H11Z" />
+          <path class="mark-edge" d="M11 112 43 49Q51 32 60 13" />
+          <path class="mark-edge" d="M109 112 77 49Q69 32 60 13" />
+          <path class="mark-arrow" d="m60 8 9 11h-6v8h-6v-8h-6L60 8Z" />
+          <g class="mark-prints"><ellipse cx="60" cy="92" rx="7" ry="10"/><ellipse cx="60" cy="78" rx="5.5" ry="8"/><ellipse cx="60" cy="65" rx="4.2" ry="6"/><ellipse cx="60" cy="54" rx="3" ry="4.5"/></g>
+        </svg>
+        <h1>roadprints</h1>
+        <p class="start-tagline">Every road tells your story.</p>
+      </header>
 
     <section id="onboardingCard" class="card onboarding-card">
-      <p class="eyebrow">Let&apos;s get started</p>
-      <h2>How would you like to start?</h2>
+      <h2 class="sr-only">Choose how to start</h2>
       <div class="choice-grid">
-        <button id="hasDataSource" class="choice-card" type="button">Yes, I have data</button>
-        <button id="noDataSource" class="choice-card secondary-choice" type="button">No, start manually</button>
+        <button id="hasDataSource" class="choice-card" type="button">I have Timeline data</button>
+        <button id="noDataSource" class="choice-card secondary-choice" type="button">Start manually</button>
       </div>
       <div id="localProgressNotice" class="local-progress-notice hidden">
         <span id="localProgressSummary" class="sr-only">Saved progress is available on this device.</span>
@@ -33,6 +37,7 @@
         </div>
       </div>
     </section>
+    </div>
 
     <section id="dataSourceCard" class="card import-card hidden">
       <div class="section-heading">
