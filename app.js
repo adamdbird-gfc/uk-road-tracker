@@ -34,6 +34,7 @@ const manualMotorwayRefs = new Set();
 const manualCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
 const persistedARoadCoverageByRef = new Map();
+const persistedARoadReferenceSummary = new Map();
 const persistedManualRefs = new Set();
 let persistedDataStartMs = null;
 let persistedDataEndMs = null;
@@ -543,6 +544,12 @@ function loadLocalProgress() {
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
     }
+    for (const [id,summary] of Object.entries(saved.aRoadReferenceSummary || {})) {
+      if (!summary || !Number.isFinite(Number(summary.totalKm)) || !Number.isFinite(Number(summary.anchorCount))) continue;
+      persistedARoadReferenceSummary.set(id,{
+        totalKm:Number(summary.totalKm),anchorCount:Number(summary.anchorCount),coveredCount:Number(summary.coveredCount || 0)
+      });
+    }
     // A-road anchor coverage is deliberately not restored from localStorage.
     // At national scale it can contain hundreds of thousands of positional
     // ids, making synchronous JSON parse/save freeze mobile browsers. The
@@ -638,6 +645,10 @@ function saveLocalProgressNow() {
     for (const road of canonicalARoads.values()) {
       if (road.status==='ready') {
         persistedARoadCoverageByRef.set(road.id,new Set(road.coveredAnchorIds));
+        persistedARoadReferenceSummary.set(road.id,{
+          totalKm:road.totalKm,anchorCount:road.anchors.length || road.anchorCount || 0,
+          coveredCount:road.coveredAnchorIds.size || road.coveredAnchorCount || 0
+        });
       }
     }
 
@@ -667,6 +678,7 @@ function saveLocalProgressNow() {
       mileageHistoryComplete:persistedMileageHistoryComplete,
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage,
+      aRoadReferenceSummary:Object.fromEntries(persistedARoadReferenceSummary),
       removedSegmentEvidence:Object.fromEntries(
         [...removedSegmentEvidence.entries()].map(([segmentId,journeyIds])=>[segmentId,[...journeyIds].sort()])
       ),
@@ -849,6 +861,7 @@ function resetRoadProgressState() {
   persistedMotorwayContributionsByJourney.clear();
   persistedJourneyMileageById.clear();
   persistedARoadCoverageByRef.clear();
+  persistedARoadReferenceSummary.clear();
   removedSegmentEvidence.clear();
   canonicalRemovalEvidenceByRef.clear();
   persistedMileageHistoryComplete=true;
@@ -3737,8 +3750,8 @@ function renderMotorwayDashboard(drawable) {
   const stats = motorwayStats(drawable);
   motorwayList.innerHTML = '';
   motorwaysDiscovered.textContent = stats.length.toLocaleString();
-  const currentRoadKm=[...persistedJourneyMileageById.values()].reduce((sum,value)=>sum+value,0);
-  timelineRoadMileage.textContent=displayDistance(currentRoadKm);
+  const matchedMotorwayKm=stats.reduce((sum,road)=>sum+road.matchedKm,0);
+  timelineRoadMileage.textContent=displayDistance(matchedMotorwayKm);
 
   if (!stats.length) {
     motorwayCard.classList.add('hidden');
@@ -3821,9 +3834,12 @@ function canonicalARoadState(key) {
   // a former source cannot colour a newly rebuilt official centreline.
   const id=`A:${CANONICAL_A_ROAD_CACHE_VERSION}:${region}:${ref}`;
   if (!canonicalARoads.has(id)) {
+    const saved=persistedARoadReferenceSummary.get(id);
     canonicalARoads.set(id,{
-      id,key:parsed.key,region,ref,status:'idle',error:null,ways:[],anchors:[],
-      anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:0,source:null,coverageCalculated:false
+      id,key:parsed.key,region,ref,status:saved?'ready':'idle',error:null,ways:[],anchors:[],
+      anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:saved?.totalKm || 0,
+      anchorCount:saved?.anchorCount || 0,coveredAnchorCount:saved?.coveredCount || 0,
+      source:saved?'summary':null,coverageCalculated:Boolean(saved)
     });
   }
   return canonicalARoads.get(id);
@@ -3858,6 +3874,7 @@ async function hydrateCanonicalARoadFromDevice(road) {
   road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
   road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
+  road.anchorCount=anchors.length;
   road.status='ready'; road.source='device';
   road.coverageCalculated=false;
   canonicalARoadCoverageDirty=true;
@@ -3934,6 +3951,7 @@ async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
     road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
       .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
     road.totalKm=Number(cached.total_km) || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
+    road.anchorCount=anchors.length;
     road.status='ready'; road.source='cache';
     road.coverageCalculated=false;
     void saveCanonicalARoadReference(road);
@@ -3966,6 +3984,7 @@ function calculateCanonicalARoadCoverage(road,drawable) {
     }
   }
   road.coveredAnchorIds=covered;
+  road.coveredAnchorCount=covered.size;
   road.coverageCalculated=true;
   persistedARoadCoverageByRef.set(road.id,new Set(covered));
   return covered;
@@ -4149,8 +4168,10 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   for (const road of pageRoads) {
     const preparing=road.status==='error' && /reference is being prepared/i.test(road.error || '');
     const totalKm=road.totalKm || 0;
-    const coveredKm=totalKm && road.anchors.length
-      ? totalKm*road.coveredAnchorIds.size/road.anchors.length : 0;
+    const anchorCount=road.anchors.length || road.anchorCount || 0;
+    const coveredCount=road.coveredAnchorIds.size || road.coveredAnchorCount || 0;
+    const coveredKm=totalKm && anchorCount
+      ? totalKm*coveredCount/anchorCount : 0;
     const percent=totalKm ? Math.min(100,coveredKm/totalKm*100) : 0;
     const row=document.createElement('div'); row.className='canonical-road-row';
     const top=document.createElement('div'); top.className='canonical-road-top';
