@@ -185,6 +185,27 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .travel-stats-note { margin:13px 0 0; font-size:.76rem; line-height:1.4; }
 @media (min-width:640px) { .travel-stats-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 
+.achievements-card { padding:18px; }
+.achievements-heading { align-items:center; }
+.achievements-heading h2 { margin-bottom:0; }
+.achievement-count { flex:0 0 auto; padding:7px 10px; border-radius:999px; background:#edf4ff; color:#124f92; font-size:.78rem; }
+.achievement-list { display:grid; gap:9px; margin-top:14px; }
+.achievement { display:flex; align-items:center; gap:12px; padding:13px; border:1px solid #dbe3ec; border-radius:13px; background:#f7f9fb; }
+.achievement.unlocked { border-color:#c9a24a; background:linear-gradient(135deg,#fff9e7,#fffdf7); }
+.achievement-icon { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border-radius:50%; background:#e8edf2; font-size:1.35rem; }
+.achievement.unlocked .achievement-icon { background:#f2b544; }
+.achievement strong,.achievement span:not(.achievement-icon) { display:block; }
+.achievement strong { color:#172033; }
+.achievement span:not(.achievement-icon) { margin-top:3px; color:#657083; font-size:.79rem; line-height:1.35; }
+.achievement-celebration { position:fixed; z-index:3000; inset:0; display:grid; place-items:center; padding:20px; background:rgba(7,17,34,.7); }
+.achievement-celebration.hidden { display:none; }
+.achievement-celebration-card { width:min(100%,390px); padding:28px 24px 24px; border-radius:20px; background:#fff; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.28); }
+.achievement-celebration-icon { display:grid; place-items:center; width:66px; height:66px; margin:0 auto 14px; border-radius:50%; background:#f2b544; font-size:2rem; }
+.achievement-celebration-card .eyebrow { color:#735300; }
+.achievement-celebration-card h2 { margin:0 0 10px; }
+.achievement-celebration-card p { margin:8px 0; line-height:1.45; }
+.achievement-celebration-card button { width:100%; margin-top:15px; background:#14213d; }
+
 .motorway-details,.canonical-details { padding:0; overflow:hidden; }
 .details-summary { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:18px; cursor:pointer; list-style:none; }
 .details-summary::-webkit-details-marker { display:none; }
