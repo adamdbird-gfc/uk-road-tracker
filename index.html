@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260904-roadprints-brand" />
+  <link rel="stylesheet" href="styles.css?v=20260906-m62-summit" />
 </head>
 <body>
   <main>
@@ -138,6 +138,17 @@
         <div class="travel-stat"><span>Activities recorded</span><strong id="recordedActivityCount">0</strong></div>
       </div>
       <p class="muted travel-stats-note">Totals retain every Timeline activity. Unique figures combine matching evidence so repeated routes count once within each travel mode.</p>
+    </section>
+
+    <section id="achievementsCard" class="card achievements-card hidden" aria-labelledby="achievementsTitle">
+      <div class="section-heading achievements-heading">
+        <div>
+          <p class="eyebrow">Roadside achievements</p>
+          <h2 id="achievementsTitle">Achievements</h2>
+        </div>
+        <strong id="achievementCount" class="achievement-count">0 of 1</strong>
+      </div>
+      <div id="achievementList" class="achievement-list"></div>
     </section>
 
     <section id="summaryCard" class="card hidden">
@@ -368,8 +379,19 @@
     </div>
   </main>
 
+  <div id="achievementCelebration" class="achievement-celebration hidden" role="dialog" aria-modal="true" aria-labelledby="achievementCelebrationTitle">
+    <div class="achievement-celebration-card">
+      <div class="achievement-celebration-icon" aria-hidden="true">🏔️</div>
+      <p class="eyebrow">Achievement unlocked</p>
+      <h2 id="achievementCelebrationTitle">M62 Summit</h2>
+      <p>You’ve crossed the UK’s highest motorway point: 372 m (1,221 ft) above sea level.</p>
+      <p class="muted">Windy Hill, on the Pennine section of the M62.</p>
+      <button id="closeAchievementCelebration" type="button">Claim achievement</button>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260904-a-road-summary-v13"></script>
+  <script src="app.js?v=20260906-m62-summit-v14"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
