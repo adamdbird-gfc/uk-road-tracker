@@ -48,6 +48,8 @@ let persistedFileHashTrackingStarted = true;
 const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
+const persistedAchievements = new Map();
+let achievementCelebrationOpen = false;
 // A correction is a persistent local exclusion for the selected map segment.
 // Imports may add fresh journeys, but cannot silently reinstate a correction;
 // the user restores it deliberately from the map editor.
@@ -127,6 +129,11 @@ const travelStats = {
   uniqueDrivingPercent:document.getElementById('uniqueDrivingPercent'),
   activities:document.getElementById('recordedActivityCount')
 };
+const achievementsCard = document.getElementById('achievementsCard');
+const achievementCount = document.getElementById('achievementCount');
+const achievementList = document.getElementById('achievementList');
+const achievementCelebration = document.getElementById('achievementCelebration');
+const closeAchievementCelebration = document.getElementById('closeAchievementCelebration');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
@@ -234,6 +241,20 @@ let canonicalCachePromise = null;
 let canonicalARoadCacheEntries = new Map();
 let canonicalARoadCacheIndexPromise = null;
 let canonicalARoadCacheIndexAvailable = false;
+
+// Achievement locations are assessed against the same fixed motorway anchors
+// used for completion, never a raw Timeline point. This keeps a celebration
+// tied to evidence that the user was actually on that motorway.
+const ROADPRINTS_ACHIEVEMENTS = [{
+  id:'m62-summit',
+  icon:'🏔️',
+  title:'M62 Summit',
+  description:'Cross the UK’s highest motorway point at Windy Hill.',
+  detail:'372 m (1,221 ft) above sea level · M62, near junction 22',
+  roadId:'M62',
+  summit:[-2.018561,53.62982],
+  radiusM:350
+}];
 
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
@@ -602,6 +623,13 @@ function loadLocalProgress() {
       const value=Number(distanceKm);
       if (journeyId && Number.isFinite(value) && value>=0) persistedJourneyMileageById.set(journeyId,value);
     }
+    for (const [id,achievement] of Object.entries(saved.achievements || {})) {
+      if (!id || !achievement || typeof achievement!=='object') continue;
+      persistedAchievements.set(id,{
+        unlockedAt:typeof achievement.unlockedAt==='string' ? achievement.unlockedAt : null,
+        announced:achievement.announced===true
+      });
+    }
     for (const [segmentId,journeyIds] of Object.entries(saved.removedSegmentEvidence || {})) {
       if (!segmentId || !Array.isArray(journeyIds)) continue;
       const ids=new Set(journeyIds.filter(id=>typeof id==='string' && id));
@@ -676,6 +704,7 @@ function saveLocalProgressNow() {
       ),
       journeyMileageById:Object.fromEntries([...persistedJourneyMileageById.entries()].sort(([a],[b])=>a.localeCompare(b))),
       mileageHistoryComplete:persistedMileageHistoryComplete,
+      achievements:Object.fromEntries(persistedAchievements),
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       coverage,
       aRoadReferenceSummary:Object.fromEntries(persistedARoadReferenceSummary),
@@ -1199,6 +1228,10 @@ document.getElementById('selectAllMotorways').addEventListener('click', () => se
 document.getElementById('clearAllMotorways').addEventListener('click', () => setAllManualMotorways(false));
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
+closeAchievementCelebration.addEventListener('click',hideAchievementCelebration);
+achievementCelebration.addEventListener('click',event=>{
+  if (event.target===achievementCelebration) hideAchievementCelebration();
+});
 mapCorrectionStartButton.addEventListener('click',startMapCorrection);
 mapCorrectionFinishButton.addEventListener('click',finishMapCorrection);
 mapCorrectionRemove.addEventListener('click',()=>setMapCorrectionMode('remove'));
@@ -1782,6 +1815,77 @@ function renderCollectiveStats() {
   travelStats.uniqueFoot.textContent=displayDistance(footUniqueKm);
   travelStats.uniqueDrivingPercent.textContent=drivingKm ? `${(roadUniqueKm/drivingKm*100).toFixed(1)}%` : '0.0%';
   travelStats.activities.textContent=(persistedJourneyMileageById.size+footActivities.length).toLocaleString();
+}
+
+function achievementIsEarned(definition) {
+  const road=canonicalRoads.get(definition.roadId);
+  if (!road || road.status!=='ready' || !road.coveredAnchorIds.size) return false;
+  const [summitX,summitY]=mercatorXY(definition.summit[0],definition.summit[1]);
+  return road.anchors.some(anchor=>
+    road.coveredAnchorIds.has(anchor.id) &&
+    Math.hypot(anchor.x-summitX,anchor.y-summitY)<=definition.radiusM
+  );
+}
+
+function hideAchievementCelebration() {
+  achievementCelebrationOpen=false;
+  achievementCelebration.classList.add('hidden');
+}
+
+function showAchievementCelebration() {
+  if (achievementCelebrationOpen) return;
+  achievementCelebrationOpen=true;
+  achievementCelebration.classList.remove('hidden');
+  closeAchievementCelebration.focus({preventScroll:true});
+}
+
+function evaluateAchievements() {
+  let changed=false;
+  let newlyUnlocked=false;
+  for (const definition of ROADPRINTS_ACHIEVEMENTS) {
+    if (persistedAchievements.has(definition.id) || !achievementIsEarned(definition)) continue;
+    persistedAchievements.set(definition.id,{unlockedAt:new Date().toISOString(),announced:false});
+    newlyUnlocked=true;
+    changed=true;
+  }
+  if (changed) scheduleLocalProgressSave();
+  renderAchievements();
+  if (newlyUnlocked) {
+    for (const record of persistedAchievements.values()) record.announced=true;
+    scheduleLocalProgressSave();
+    showAchievementCelebration();
+  }
+}
+
+function renderAchievements() {
+  if (!achievementsCard || !achievementList) return;
+  const hasData=shouldShowDataDashboard() && (
+    persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size
+  );
+  achievementsCard.classList.toggle('hidden',!hasData);
+  if (!hasData) return;
+
+  const earnedCount=ROADPRINTS_ACHIEVEMENTS.filter(definition=>persistedAchievements.has(definition.id)).length;
+  achievementCount.textContent=`${earnedCount} of ${ROADPRINTS_ACHIEVEMENTS.length}`;
+  achievementList.innerHTML='';
+  for (const definition of ROADPRINTS_ACHIEVEMENTS) {
+    const unlocked=persistedAchievements.has(definition.id);
+    const item=document.createElement('article');
+    item.className=`achievement ${unlocked?'unlocked':'locked'}`;
+    const icon=document.createElement('span');
+    icon.className='achievement-icon';
+    icon.textContent=unlocked ? definition.icon : '🔒';
+    const copy=document.createElement('div');
+    const title=document.createElement('strong');
+    title.textContent=definition.title;
+    const description=document.createElement('span');
+    description.textContent=unlocked
+      ? `Unlocked · ${definition.detail}`
+      : `${definition.description} ${definition.detail}`;
+    copy.append(title,description);
+    item.append(icon,copy);
+    achievementList.append(item);
+  }
 }
 
 async function startNextFootBatch() {
@@ -3419,6 +3523,7 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
     }
     canonicalCoverageDirty=false;
   }
+  evaluateAchievements();
   if (drawable || onboardingMode==='manual' || onboardingMode==='saved') {
     ensureCanonicalRoadsForDiscoveredRefs(discoveredRefs);
   }
