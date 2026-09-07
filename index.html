@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260907-import-screen" />
+  <link rel="stylesheet" href="styles.css?v=20260907-auto-processing" />
 </head>
 <body>
   <main>
@@ -46,7 +46,7 @@
       <input id="timelineFile" type="file" accept="application/json,.json" />
       <div id="fileStatus" class="muted import-file-status" role="status" aria-live="polite">No file selected.</div>
 
-      <div id="importModeCard" class="import-modes hidden">
+      <div id="importModeCard" class="import-modes hidden" aria-hidden="true">
         <div class="mode-grid">
           <button id="easyImport" class="mode-card" type="button">Match data automatically</button>
           <button id="detailedImport" class="mode-card secondary-mode" type="button">Manually add data</button>
