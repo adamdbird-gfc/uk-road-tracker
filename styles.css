@@ -507,3 +507,14 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .processing-active .actions { margin:24px 0 0; }
 .processing-active .actions .secondary { background:rgba(255,255,255,.94); color:#0b1c50; }
 @media (max-width:480px) { .processing-active #easyProgress,.processing-active #footQueueCard { padding:26px 30px; } .processing-active .progress-status { width:48%; } }
+
+
+/* Stack each progress card's live count beneath its title. */
+main.processing-active { padding:22px; }
+.processing-active .progress-heading { display:block; }
+.processing-active .progress-status { width:100%; margin-top:16px; text-align:left; }
+.processing-active .progress-status strong { font-size:1.5rem; }
+.processing-active .progress-status span { font-size:.9rem; }
+.processing-active #easyProgress,
+.processing-active #footQueueCard { margin-top:0; margin-bottom:20px; }
+@media (max-width:480px) { main.processing-active { padding:18px; } .processing-active #easyProgress,.processing-active #footQueueCard { padding:25px 24px; } .processing-active .progress-status { width:100%; } }
