@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260907-logo-crop-v2" />
+  <link rel="stylesheet" href="styles.css?v=20260907-import-screen" />
 </head>
 <body>
   <main>
@@ -34,13 +34,17 @@
     </div>
 
     <section id="dataSourceCard" class="card import-card hidden">
-      <div class="section-heading">
-        <h2>2. Import Timeline data</h2>
+      <div class="section-heading import-heading">
+        <div>
+          <p class="eyebrow">Timeline import</p>
+          <h2>Bring your journeys to Roadprints</h2>
+          <p class="import-intro">Choose your Google Timeline JSON file to map the roads and paths that tell your story.</p>
+        </div>
         <button id="changeDataSource" class="text-button close-button" type="button" aria-label="Close import">Close</button>
       </div>
-      <label class="file-button" for="timelineFile">Choose Timeline JSON</label>
+      <label class="file-button import-file-button" for="timelineFile"><span class="upload-symbol" aria-hidden="true">↑</span><span>Choose Timeline JSON</span><small>Saved only on this device</small></label>
       <input id="timelineFile" type="file" accept="application/json,.json" />
-      <div id="fileStatus" class="muted" role="status" aria-live="polite">No file selected.</div>
+      <div id="fileStatus" class="muted import-file-status" role="status" aria-live="polite">No file selected.</div>
 
       <div id="importModeCard" class="import-modes hidden">
         <div class="mode-grid">
