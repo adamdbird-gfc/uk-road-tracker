@@ -470,3 +470,20 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .import-file-button small { margin-top:3px; color:rgba(9,34,76,.72); font-size:.76rem; font-weight:650; }
 .import-file-status { margin:11px 2px 0; color:#c2cde0; font-size:.9rem; }
 @media (max-width:759px) { #dataSourceCard.import-card { margin:0; min-height:100svh; padding:40px 28px; border:0; border-radius:0; background:transparent; box-shadow:none; } }
+
+
+/* Keep import processing focused on the two live journey queues. */
+.processing-active > section:not(#easyProgress):not(#footQueueCard),
+.processing-active > details,
+.processing-active > .delete-data-action { display:none !important; }
+.processing-active #easyProgress,
+.processing-active #footQueueCard { display:block !important; max-width:620px; margin:28px auto 0; }
+.processing-active #easyProgress { border:1px solid rgba(44,185,166,.28); background:linear-gradient(145deg,rgba(25,48,100,.96),rgba(10,27,73,.98)); color:#f3f6f7; box-shadow:0 16px 38px rgba(0,0,0,.18); }
+.processing-active #easyProgress .eyebrow { color:#2cb9a6; }
+.processing-active #easyProgress .progress-status { background:rgba(255,255,255,.1); color:#fff; box-shadow:none; }
+.processing-active #easyProgress .progress-status span { color:#c2cde0; }
+.processing-active #easyProgress progress { accent-color:#2cb9a6; }
+.processing-active #footQueueCard { border-color:rgba(44,185,166,.3); background:linear-gradient(145deg,rgba(19,61,88,.96),rgba(10,43,67,.98)); color:#f3f6f7; box-shadow:0 16px 38px rgba(0,0,0,.18); }
+.processing-active #footQueueCard .eyebrow { color:#69ddcc; }
+.processing-active #footQueueCard .progress-status { background:rgba(255,255,255,.1); color:#fff; box-shadow:none; }
+.processing-active #footQueueCard .progress-status span { color:#c2cde0; }
