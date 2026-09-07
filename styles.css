@@ -1,11 +1,12 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #172033;
-  background: #f4f6f8;
+  background: #14213d;
 }
 * { box-sizing: border-box; }
+html, body { min-height: 100%; background: #14213d; }
 body { margin: 0; }
-main { width: min(1100px, 100%); margin: 0 auto; padding: 18px; }
+main { width: min(1100px, 100%); min-height:100svh; margin: 0 auto; padding: 18px; background:#14213d; }
 .hero { display: grid; gap: 14px; padding: 20px 4px 14px; }
 .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .75rem; font-weight: 700; margin: 0 0 6px; }
 h1 { font-size: clamp(2rem, 7vw, 4rem); line-height: .98; margin: 0; }
@@ -13,7 +14,7 @@ h2 { margin-top: 0; }
 .lede { max-width: 760px; font-size: 1.05rem; line-height: 1.55; }
 .start-experience { min-height:calc(100svh - 36px); display:flex; flex-direction:column; justify-content:center; padding:26px 8px; border-radius:24px; background:#14213d; color:#f3f6f7; }
 .start-experience .hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:0; }
-.roadprints-mark { width:118px; height:118px; margin-bottom:12px; overflow:visible; }
+.roadprints-mark { width:132px; height:132px; margin-bottom:12px; overflow:visible; shape-rendering:geometricPrecision; }
 .mark-road { fill:#14213d; }
 .mark-edge { fill:none; stroke:#2cb9a6; stroke-width:10; stroke-linecap:round; stroke-linejoin:round; }
 .mark-arrow,.mark-prints { fill:#f2b544; }
@@ -170,11 +171,13 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 #footQueueCard progress { width:100%; height:12px; accent-color:#2e8b57; }
 #footQueueCard .actions { margin:16px 0 0; }
 .delete-data-action { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 18px; padding:10px 0 20px; }
-.delete-data-link { min-height:auto; padding:5px; border-radius:0; background:transparent; color:#b42318; font-size:.85rem; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
-.delete-data-link:hover { background:transparent; color:#8f1c13; }
+.delete-data-link { min-height:auto; padding:5px; border-radius:0; background:transparent; color:rgba(243,246,247,.68); font-size:.85rem; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+.delete-data-link:hover { background:transparent; color:#fff; }
 .delete-data-link:focus-visible { outline:3px solid #f3a69f; outline-offset:3px; }
-.delete-data-link:disabled { color:#9aa1ad; cursor:not-allowed; text-decoration:none; }
-.delete-data-link:disabled:hover { background:transparent; color:#9aa1ad; }
+.delete-data-link:disabled { color:rgba(243,246,247,.32); cursor:not-allowed; text-decoration:none; }
+.delete-data-link:disabled:hover { background:transparent; color:rgba(243,246,247,.32); }
+#dataSourceCard:not(.hidden) ~ .delete-data-action { display:none; }
+@media (max-width: 759px) { main { padding:0; } .start-experience { min-height:100svh; border-radius:0; padding:32px 28px; } .start-experience + .card { margin:18px; } }
 
 .travel-stats-card { padding:18px; }
 .travel-stats-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:14px; }
