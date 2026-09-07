@@ -2145,6 +2145,7 @@ async function startEasyImport() {
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
   refreshImportMapBatch();
   renderRoadQueue();
+  activateRoadprintsScreen('map');
 }
 
 function renderAll(fileName) {
@@ -4858,3 +4859,8 @@ function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+function activateRoadprintsScreen(screen) { const shell=document.querySelector('main'),nav=document.getElementById('appNavigation'); if(!shell||!nav)return; shell.classList.add('app-ready');shell.dataset.activeScreen=screen;nav.classList.remove('hidden');nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));if(screen==='map')setTimeout(()=>map?.invalidateSize(),80);}
+document.getElementById('appNavigation')?.addEventListener('click',event=>{const button=event.target.closest('[data-screen]');if(button)activateRoadprintsScreen(button.dataset.screen);});
+const aRoadBackgroundStatus=document.getElementById('aRoadBackgroundStatus'),aRoadBackgroundText=document.getElementById('aRoadBackgroundText');aRoadBackgroundStatus?.addEventListener('click',()=>activateRoadprintsScreen('progress'));
+new MutationObserver(()=>{if(!canonicalARoadStatus||!aRoadBackgroundStatus)return;const active=!canonicalARoadCard.classList.contains('hidden')&&!/ready|complete/i.test(canonicalARoadStatus.textContent||'');aRoadBackgroundStatus.classList.toggle('hidden',!active);if(active&&aRoadBackgroundText)aRoadBackgroundText.textContent=canonicalARoadStatus.textContent;}).observe(canonicalARoadStatus,{childList:true,characterData:true,subtree:true});
