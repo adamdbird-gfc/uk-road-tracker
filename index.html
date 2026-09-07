@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260907-map-polish-v2" />
+  <link rel="stylesheet" href="styles.css?v=20260907-map-header" />
 </head>
 <body>
   <main>
@@ -367,7 +367,7 @@
         </details>
       </div>
       <p id="mapStatus" class="muted map-status" aria-live="polite">Map not initialised yet.</p>
-      <div id="map"></div><button id="aRoadBackgroundStatus" class="a-road-background-status hidden" type="button"><span class="status-dot"></span><span><strong>A-road progress updating</strong><small id="aRoadBackgroundText">Preparing road references</small></span></button>
+      <header class="map-brand-header"><img src="assets/roadprints-original-mark.svg?v=20260907-crop-v2" alt="" /><strong>roadprints</strong></header><div id="map"></div><button id="aRoadBackgroundStatus" class="a-road-background-status hidden" type="button"><span class="status-dot"></span><span><strong>A-road progress updating</strong><small id="aRoadBackgroundText">Preparing road references</small></span></button>
     </section>
 
     <nav id="appNavigation" class="app-navigation hidden" aria-label="Roadprints navigation"><button type="button" class="app-nav-item active" data-screen="map"><span>⌖</span>Map</button><button type="button" class="app-nav-item" data-screen="journeys"><span>▤</span>Journeys</button><button type="button" class="app-nav-item" data-screen="progress"><span>▥</span>Progress</button><button type="button" class="app-nav-item" data-screen="achievements"><span>★</span>Achievements</button></nav>
