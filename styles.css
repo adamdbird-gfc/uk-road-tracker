@@ -564,3 +564,15 @@ main.app-ready #map .leaflet-control-zoom a { display:grid; place-items:center; 
 main.app-ready #map .leaflet-control-zoom a + a { border-top:1px solid rgba(11,28,80,.14); }
 main.app-ready #mapCard .map-heading-actions button { display:grid; place-items:center; width:48px; height:48px; padding:0; border-radius:14px; }
 main.app-ready .a-road-background-status { bottom:96px; z-index:1001; }
+
+
+/* Stack full tab content over the retained map canvas. */
+main.app-ready[data-active-screen="journeys"],main.app-ready[data-active-screen="progress"],main.app-ready[data-active-screen="achievements"] { min-height:100svh; padding:76px 18px 94px; overflow-y:auto; }
+main.app-ready[data-active-screen="journeys"] > #mapCard,main.app-ready[data-active-screen="progress"] > #mapCard,main.app-ready[data-active-screen="achievements"] > #mapCard { position:fixed; inset:0; z-index:0; height:100svh; }
+main.app-ready[data-active-screen="journeys"] > [data-app-screen="journeys"],main.app-ready[data-active-screen="progress"] > [data-app-screen="progress"],main.app-ready[data-active-screen="achievements"] > [data-app-screen="achievements"] { position:relative; z-index:1100; top:auto; right:auto; bottom:auto; left:auto; display:block !important; margin:0 0 14px !important; padding:18px; overflow:visible; border-radius:16px; background:rgba(255,255,255,.97); box-shadow:0 8px 28px rgba(0,0,0,.14); }
+main.app-ready .map-brand-header { cursor:pointer; border:0; text-align:left; }
+main.app-ready #map .leaflet-top.leaflet-right { top:76px !important; right:18px; }
+main.app-ready #mapCard .map-heading { top:134px; right:18px; }
+main.app-ready #mapCard .map-heading-actions button { width:52px; height:52px; min-width:52px; min-height:52px; }
+main.app-ready #mapCard .map-heading-actions #fitMap::before { font-size:2.15rem; }
+main.app-ready #mapCard .map-heading-actions #startMapCorrection::before { font-size:2.05rem; }
