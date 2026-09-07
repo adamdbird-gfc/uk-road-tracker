@@ -591,3 +591,7 @@ main.app-ready #mapCard .map-heading-actions #startMapCorrection::before { font-
 
 /* The A-road worker must stay visible while the Map tab is active. */
 main.app-ready[data-active-screen="map"] .a-road-background-status.hidden { display:flex !important; }
+
+
+/* Match the status card's footer gap to its 18px side insets. */
+main.app-ready .a-road-background-status { bottom:126px; }
