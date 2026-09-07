@@ -1382,8 +1382,10 @@ fileInput.addEventListener('change', async () => {
   ignoredCard.classList.add('hidden');
   motorwayCard.classList.add('hidden');
   canonicalMotorwayCard.classList.add('hidden');
-    importModeCard.classList.remove('hidden');
-    easyProgress.classList.add('hidden');
+    importModeCard.classList.add('hidden');
+    easyProgress.classList.remove('hidden');
+    document.querySelector('main')?.classList.add('processing-active');
+    void startEasyImport();
   } catch (err) {
     summaryCard.classList.add('hidden');
     mapCard.classList.add('hidden');
@@ -2038,6 +2040,7 @@ function startDetailedImport() {
 
 async function startEasyImport() {
   const sessionId = trackingSessionId;
+  if (easyImportRunning) return;
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
@@ -2133,6 +2136,7 @@ async function startEasyImport() {
   if (sessionId !== trackingSessionId) return;
   easyImportRunning = false;
   easyImportPaused = false;
+  document.querySelector('main')?.classList.remove('processing-active');
   updateEasyImportPauseButton();
   if (diagnostics.mileageRebuild && failed===0) {
     persistedMileageHistoryComplete=true;
