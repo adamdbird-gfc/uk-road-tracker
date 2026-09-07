@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260907-stacked-progress" />
+  <link rel="stylesheet" href="styles.css?v=20260907-map-first" />
 </head>
 <body>
   <main>
@@ -118,7 +118,7 @@
       </div>
     </section>
 
-    <section id="travelStatsCard" class="card travel-stats-card hidden">
+    <section id="travelStatsCard" data-app-screen="progress" class="card travel-stats-card hidden">
       <div class="section-heading">
         <div>
           <p class="eyebrow">Your travel record</p>
@@ -138,7 +138,7 @@
       <p class="muted travel-stats-note">Totals retain every Timeline activity. Unique figures combine matching evidence so repeated routes count once within each travel mode.</p>
     </section>
 
-    <section id="achievementsCard" class="card achievements-card hidden" aria-labelledby="achievementsTitle">
+    <section id="achievementsCard" data-app-screen="achievements" class="card achievements-card hidden" aria-labelledby="achievementsTitle">
       <div class="section-heading achievements-heading">
         <div>
           <p class="eyebrow">Roadside achievements</p>
@@ -149,7 +149,7 @@
       <div id="achievementList" class="achievement-list"></div>
     </section>
 
-    <section id="summaryCard" class="card hidden">
+    <section id="summaryCard" data-app-screen="journeys" class="card hidden">
       <h2 id="journeyStepTitle">3. Choose journeys</h2>
       <div class="stats">
         <div><strong id="journeyCount">0</strong><span>car journeys</span></div>
@@ -169,7 +169,7 @@
       <div id="journeyList" class="journey-list"></div>
     </section>
 
-    <details id="motorwayCard" class="card motorway-details hidden">
+    <details id="motorwayCard" data-app-screen="progress" class="card motorway-details hidden">
       <summary class="details-summary motorway-heading">
         <div class="aggregate-title">
           <h2>Motorway aggregate</h2>
@@ -189,7 +189,7 @@
       <p class="muted motorway-footnote">Completion percentages are temporarily hidden because the current geometry-based deduplication can over-count opposite carriageways and repeated matches. Canonical motorway sections are the next accuracy milestone.</p>
     </details>
 
-    <details id="aRoadCard" class="card motorway-details hidden">
+    <details id="aRoadCard" data-app-screen="progress" class="card motorway-details hidden">
       <summary class="details-summary motorway-heading">
         <div class="aggregate-title">
           <h2>A-road aggregate</h2>
@@ -208,7 +208,7 @@
       <div id="aRoadList" class="motorway-list"></div>
     </details>
 
-    <details id="canonicalMotorwayCard" class="card canonical-details hidden">
+    <details id="canonicalMotorwayCard" data-app-screen="progress" class="card canonical-details hidden">
       <summary class="details-summary canonical-heading">
         <div>
           <h2>Motorway progress</h2>
@@ -258,7 +258,7 @@
       <p class="muted canonical-footnote">Canonical motorway references are loaded from a prebuilt cache first; live exact-ref OpenStreetMap/Overpass construction is used only as a fallback. Each motorway is sampled into approximately 100 m canonical sections; nearby samples from opposite carriageways are collapsed into one physical section. This remains POC infrastructure — production should cache and version the reference network server-side.</p>
     </details>
 
-    <details id="canonicalARoadCard" class="card canonical-details a-road-canonical-details hidden">
+    <details id="canonicalARoadCard" data-app-screen="progress" class="card canonical-details a-road-canonical-details hidden">
       <summary class="details-summary canonical-heading">
         <div>
           <h2>A-road progress</h2>
@@ -280,14 +280,14 @@
       <button id="canonicalARoadRetry" class="secondary hidden" type="button">Retry A-road references</button>
     </details>
 
-    <section id="otherRoadCard" class="card other-road-card hidden">
+    <section id="otherRoadCard" data-app-screen="progress" class="card other-road-card hidden">
       <h2>Other</h2>
       <div class="other-road-total"><strong id="otherRoadMileage">0 mi</strong><span>matched other-road miles</span></div>
       <p class="muted other-road-intro">Matched mileage on B roads, local roads and other non-motorway, non-A-road driving.</p>
       <p class="muted other-road-note">These roads are included in your travel record but do not have a national completion reference.</p>
     </section>
 
-    <section id="mapCard" class="card hidden">
+    <section id="mapCard" data-app-screen="map" class="card hidden">
       <div class="map-heading">
         <div>
           <h2 id="mapTitle">4. Preview</h2>
@@ -367,8 +367,10 @@
         </details>
       </div>
       <p id="mapStatus" class="muted map-status" aria-live="polite">Map not initialised yet.</p>
-      <div id="map"></div>
+      <div id="map"></div><button id="aRoadBackgroundStatus" class="a-road-background-status hidden" type="button"><span class="status-dot"></span><span><strong>A-road progress updating</strong><small id="aRoadBackgroundText">Preparing road references</small></span></button>
     </section>
+
+    <nav id="appNavigation" class="app-navigation hidden" aria-label="Roadprints navigation"><button type="button" class="app-nav-item active" data-screen="map"><span>⌖</span>Map</button><button type="button" class="app-nav-item" data-screen="journeys"><span>▤</span>Journeys</button><button type="button" class="app-nav-item" data-screen="progress"><span>▥</span>Progress</button><button type="button" class="app-nav-item" data-screen="achievements"><span>★</span>Achievements</button></nav>
 
     <div class="delete-data-action">
       <button id="clearRoadData" class="delete-data-link" type="button">Delete road data</button>
