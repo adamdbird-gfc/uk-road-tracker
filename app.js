@@ -4868,3 +4868,5 @@ new MutationObserver(()=>{if(!canonicalARoadStatus||!aRoadBackgroundStatus)retur
 function refreshARoadBackgroundStatus(){ if(!aRoadBackgroundStatus)return; const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map'; aRoadBackgroundStatus.classList.toggle('hidden',!mapOpen); if(aRoadBackgroundText){ const text=canonicalARoadStatus?.textContent?.trim(); aRoadBackgroundText.textContent='Road references are updating in the background'; } }
 const originalActivateRoadprintsScreen=activateRoadprintsScreen; activateRoadprintsScreen=function(screen){ originalActivateRoadprintsScreen(screen); refreshARoadBackgroundStatus(); };
 setTimeout(refreshARoadBackgroundStatus,0);
+
+document.getElementById('mapBrandMenu')?.addEventListener('click',()=>{ document.querySelector('main')?.classList.remove('app-ready'); document.getElementById('appNavigation')?.classList.add('hidden'); returnToOnboarding(); });
