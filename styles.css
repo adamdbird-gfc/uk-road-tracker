@@ -531,3 +531,12 @@ main.app-ready #mapCard .map-heading-actions button { min-width:48px; min-height
 main.app-ready #mapCard .map-heading-actions #fitMap::before { content:'⌖'; font-size:1.55rem; line-height:1; }
 main.app-ready #mapCard .map-heading-actions #startMapCorrection::before { content:'✎'; font-size:1.45rem; line-height:1; }
 main.app-ready #mapCard .map-heading-actions #closeSavedProgress { display:none; }
+
+
+/* Final map control and background-work positioning. */
+main.app-ready #mapStatus { display:none !important; }
+main.app-ready #mapCard .map-heading { top:94px; right:18px; }
+main.app-ready #mapCard .map-heading-actions button { width:48px; height:48px; min-width:48px; min-height:48px; }
+main.app-ready .a-road-background-status { right:18px; left:18px; bottom:86px; max-width:none; min-height:58px; padding:11px 14px; border-radius:16px; }
+main.app-ready .a-road-background-status strong { font-size:.87rem; letter-spacing:.01em; }
+main.app-ready .a-road-background-status small { font-size:.76rem; line-height:1.25; }
