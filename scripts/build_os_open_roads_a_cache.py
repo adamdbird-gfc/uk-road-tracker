@@ -107,6 +107,15 @@ def load_links():
             roads.setdefault(ref,[]).append((float(length_m or 0),[bng_to_wgs84(x,y) for x,y in line]))
     connection.close(); return roads
 
+def geodesic_length_m(line):
+    radius=6371000
+    total=0
+    for (lng1,lat1),(lng2,lat2) in zip(line,line[1:]):
+        dlat=math.radians(lat2-lat1); dlng=math.radians(lng2-lng1)
+        a=math.sin(dlat/2)**2+math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlng/2)**2
+        total+=2*radius*math.atan2(math.sqrt(a),math.sqrt(1-a))
+    return total
+
 def load_osm_fallback_links(ref):
     """Fetch a short-lived reference gap from OSM for the static build only."""
     query=(
@@ -127,7 +136,7 @@ def load_osm_fallback_links(ref):
         geometry=element.get("geometry") or []
         if len(geometry)<2: continue
         line=[[point["lon"],point["lat"]] for point in geometry]
-        links.append((0.0,line))
+        links.append((geodesic_length_m(line),line))
     return links
 
 def add_osm_fallbacks(roads):
