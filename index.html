@@ -90,6 +90,17 @@
         <legend class="sr-only">UK motorways</legend>
         <div id="manualMotorwayList" class="manual-motorway-list"></div>
       </fieldset>
+      <section class="manual-a-road-section" aria-labelledby="manualARoadTitle">
+        <p class="eyebrow">A-road starter network</p>
+        <h2 id="manualARoadTitle">Which A roads have you driven on?</h2>
+        <p class="muted">Start with single- and double-digit A roads. Captured roads are protected, so only genuinely new roads can be added manually.</p>
+        <div class="manual-actions">
+          <button id="selectAllARoads" class="secondary" type="button">Select all</button>
+          <button id="clearAllARoads" class="secondary" type="button">Clear all</button>
+          <strong id="manualARoadSelectedCount">0 selected</strong>
+        </div>
+        <fieldset class="motorway-checklist"><legend class="sr-only">Starter A roads</legend><div id="manualARoadList" class="manual-motorway-list"></div></fieldset>
+      </section>
     </section>
 
     <section id="ignoredCard" class="card hidden">
@@ -391,7 +402,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260908-captured-motorways"></script>
+  <script src="app.js?v=20260908-manual-a-roads"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
