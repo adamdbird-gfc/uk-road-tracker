@@ -2024,7 +2024,10 @@ function savedOnFootRecords() {
 }
 
 function editableMappedActivities() {
-  return [...savedRoadRecords(),...savedOnFootRecords()];
+  const roads=focusedJourneyId
+    ? savedRoadRecords().filter(record=>journeyIdentity(record)===focusedJourneyId)
+    : savedRoadRecords();
+  return focusedJourneyId ? roads : [...roads,...savedOnFootRecords()];
 }
 
 function segmentDistanceKm(segments) {
