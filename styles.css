@@ -754,3 +754,92 @@ main.app-ready #map .leaflet-control-zoom a + a { border-top:2px solid rgba(0,0,
 
 /* Never surface the A-road worker chip without real A-road activity. */
 main.app-ready[data-active-screen="map"] .a-road-background-status.hidden { display:none !important; }
+
+
+/* Progress: a complete Roadprints destination, not a translucent map overlay. */
+main.app-ready[data-active-screen="progress"] {
+  min-height:100svh;
+  background:#0b1c50;
+}
+main.app-ready[data-active-screen="progress"] > #mapCard { display:none !important; }
+main.app-ready[data-active-screen="progress"] > [data-app-screen="progress"] {
+  position:relative;
+  z-index:1100;
+  margin:0 18px 14px !important;
+  padding:20px;
+  border:1px solid rgba(105,221,204,.2);
+  border-radius:18px;
+  background:#142958 !important;
+  color:#f3f6f7;
+  box-shadow:0 10px 26px rgba(0,0,0,.18);
+}
+main.app-ready[data-active-screen="progress"] > [data-app-screen="progress"]:first-of-type { margin-top:0 !important; }
+main.app-ready[data-active-screen="progress"] .details-summary { color:#fff; }
+main.app-ready[data-active-screen="progress"] h2,
+main.app-ready[data-active-screen="progress"] h3,
+main.app-ready[data-active-screen="progress"] strong { color:#fff; }
+main.app-ready[data-active-screen="progress"] .muted,
+main.app-ready[data-active-screen="progress"] .aggregate-summary,
+main.app-ready[data-active-screen="progress"] .motorway-expanded-intro,
+main.app-ready[data-active-screen="progress"] .canonical-road-meta,
+main.app-ready[data-active-screen="progress"] .network-progress-note { color:#c2cde0; }
+main.app-ready[data-active-screen="progress"] .motorway-total,
+main.app-ready[data-active-screen="progress"] .canonical-score,
+main.app-ready[data-active-screen="progress"] .regional-progress-card,
+main.app-ready[data-active-screen="progress"] .network-progress,
+main.app-ready[data-active-screen="progress"] .other-road-total {
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.07);
+  color:#fff;
+}
+main.app-ready[data-active-screen="progress"] .motorway-total span,
+main.app-ready[data-active-screen="progress"] .canonical-score span,
+main.app-ready[data-active-screen="progress"] .regional-progress-card span,
+main.app-ready[data-active-screen="progress"] .regional-progress-card small,
+main.app-ready[data-active-screen="progress"] #networkProgressDistance { color:#c2cde0; }
+main.app-ready[data-active-screen="progress"] .network-progress-label { color:#69ddcc; }
+main.app-ready[data-active-screen="progress"] .network-progress-fill { background:linear-gradient(90deg,#2cb9a6,#69ddcc); }
+main.app-ready[data-active-screen="progress"] .network-progress-track,
+main.app-ready[data-active-screen="progress"] .motorway-bar,
+main.app-ready[data-active-screen="progress"] .canonical-road-progress { background:rgba(0,0,0,.4); }
+main.app-ready[data-active-screen="progress"] .motorway-fill,
+main.app-ready[data-active-screen="progress"] .canonical-road-fill { background:#2cb9a6; }
+main.app-ready[data-active-screen="progress"] .a-road-fill,
+main.app-ready[data-active-screen="progress"] #canonicalARoadCard .canonical-road-fill { background:#2f9b59; }
+
+/* Retain road-sign colour coding, with contrast strong enough for the dark screen. */
+main.app-ready[data-active-screen="progress"] .motorway-ref,
+main.app-ready[data-active-screen="progress"] .canonical-road-ref {
+  display:inline-flex;
+  width:max-content;
+  min-width:56px;
+  justify-content:center;
+  align-items:center;
+  padding:6px 9px;
+  border:1px solid #2989d5;
+  border-radius:5px;
+  background:#0067b1;
+  color:#fff !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24);
+  font-family:Arial,sans-serif;
+  font-size:.86rem;
+  font-weight:850;
+  letter-spacing:.02em;
+  line-height:1;
+}
+main.app-ready[data-active-screen="progress"] .a-road-ref,
+main.app-ready[data-active-screen="progress"] #canonicalARoadCard .canonical-road-ref {
+  border-color:#2f9b59;
+  background:#176f39;
+}
+main.app-ready[data-active-screen="progress"] .canonical-road-row {
+  padding:13px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:14px;
+  background:rgba(0,0,0,.15);
+}
+main.app-ready[data-active-screen="progress"] .canonical-road-pct,
+main.app-ready[data-active-screen="progress"] .motorway-pct { color:#fff; }
+main.app-ready[data-active-screen="progress"] .unit-option { background:rgba(255,255,255,.1); color:#c2cde0; }
+main.app-ready[data-active-screen="progress"] .unit-option.active { background:#f7c450; color:#0b1c50; }
+main.app-ready[data-active-screen="progress"] .canonical-pagination button { background:rgba(255,255,255,.12); color:#fff; }
