@@ -623,3 +623,9 @@ main.manual-setup-active .manual-motorway-option input { accent-color:#2cb9a6; }
 main.manual-setup-active .manual-motorway-option.captured-motorway { position:relative; border-color:rgba(255,255,255,.08); background:rgba(255,255,255,.035); color:rgba(243,246,247,.42); cursor:not-allowed; }
 main.manual-setup-active .manual-motorway-option.captured-motorway input { opacity:.35; cursor:not-allowed; }
 main.manual-setup-active .manual-motorway-option.captured-motorway small { margin-left:auto; padding:4px 7px; border-radius:999px; background:rgba(255,255,255,.08); color:rgba(243,246,247,.52); font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+
+
+/* Manual A-road catalogue follows the motorway setup without adding visual noise. */
+main.manual-setup-active .manual-a-road-section { margin-top:42px; padding-top:32px; border-top:1px solid rgba(255,255,255,.16); }
+main.manual-setup-active .manual-a-road-section h2 { font-size:clamp(1.45rem,6vw,2rem); }
+main.manual-setup-active .manual-a-road-section > .muted { margin:12px 0 22px; }
