@@ -253,16 +253,58 @@ let canonicalARoadCacheIndexAvailable = false;
 // Achievement locations are assessed against the same fixed motorway anchors
 // used for completion, never a raw Timeline point. This keeps a celebration
 // tied to evidence that the user was actually on that motorway.
-const ROADPRINTS_ACHIEVEMENTS = [{
-  id:'m62-summit',
-  icon:'🏔️',
-  title:'M62 Summit',
-  description:'Cross the UK’s highest motorway point at Windy Hill.',
-  detail:'372 m (1,221 ft) above sea level · M62, near junction 22',
-  roadId:'M62',
-  summit:[-2.018561,53.62982],
-  radiusM:350
-}];
+const ROADPRINTS_ACHIEVEMENTS = [
+  {
+    id:'motorway-quarter',
+    icon:'¼',
+    title:'Quarter Marker',
+    description:'Complete one quarter of the UK motorway network.',
+    detail:'25% of the UK motorway network completed',
+    type:'network-percent', target:25
+  },
+  {
+    id:'motorway-halfway',
+    icon:'½',
+    title:'Halfway There',
+    description:'Complete half of the UK motorway network.',
+    detail:'50% of the UK motorway network completed',
+    type:'network-percent', target:50
+  },
+  {
+    id:'motorway-three-quarters',
+    icon:'¾',
+    title:'The Home Straight',
+    description:'Complete three quarters of the UK motorway network.',
+    detail:'75% of the UK motorway network completed',
+    type:'network-percent', target:75
+  },
+  {
+    id:'motorway-complete',
+    icon:'★',
+    title:'Completed It, Mate',
+    description:'Complete the entire UK motorway network.',
+    detail:'100% of the UK motorway network completed',
+    type:'network-percent', target:100
+  },
+  {
+    id:'m1-pioneer',
+    icon:'①',
+    title:'The Pioneer',
+    description:'Drive on the M1, Britain’s first motorway.',
+    detail:'M1 · Britain’s first motorway, opened in 1959',
+    type:'motorway-visited', roadId:'M1'
+  },
+  {
+    id:'m62-summit',
+    icon:'🏔️',
+    title:'M62 Summit',
+    description:'Cross the UK’s highest motorway point at Windy Hill.',
+    detail:'372 m (1,221 ft) above sea level · M62, near junction 22',
+    type:'summit', roadId:'M62',
+    summit:[-2.018561,53.62982],
+    radiusM:350
+  }
+];
 
 
 const MOTORWAY_CORRIDOR_CELL_M = 100;
@@ -1935,7 +1977,28 @@ function renderCollectiveStats() {
   travelStats.activities.textContent=(persistedJourneyMileageById.size+footActivities.length).toLocaleString();
 }
 
+function motorwayNetworkCompletionPercent() {
+  const completedByRegion={GB:0,NI:0};
+  for (const road of canonicalRoads.values()) {
+    if (road.status!=='ready' || !road.anchors.length) continue;
+    const fraction=Math.min(1,road.coveredAnchorIds.size/road.anchors.length);
+    completedByRegion[road.region]+=road.totalKm*fraction;
+  }
+  completedByRegion.GB=Math.min(GB_MOTORWAY_NETWORK_KM,completedByRegion.GB);
+  completedByRegion.NI=Math.min(NI_MOTORWAY_NETWORK_KM,completedByRegion.NI);
+  return Math.min(100,(completedByRegion.GB+completedByRegion.NI)/UK_MOTORWAY_NETWORK_KM*100);
+}
+
 function achievementIsEarned(definition) {
+  if (definition.type==='network-percent') return motorwayNetworkCompletionPercent() >= definition.target;
+  if (definition.type==='motorway-visited') {
+    const road=canonicalRoads.get(definition.roadId);
+    return Boolean(
+      persistedManualRefs.has(definition.roadId) ||
+      persistedCoverageByRef.get(definition.roadId)?.size ||
+      (road?.status==='ready' && road.coveredAnchorIds.size)
+    );
+  }
   const road=canonicalRoads.get(definition.roadId);
   if (!road || road.status!=='ready' || !road.coveredAnchorIds.size) return false;
   const [summitX,summitY]=mercatorXY(definition.summit[0],definition.summit[1]);
@@ -1978,7 +2041,7 @@ function evaluateAchievements() {
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
   const hasData=shouldShowDataDashboard() && (
-    persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size
+    persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size || persistedManualARoadRefs.size
   );
   achievementsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
@@ -1994,13 +2057,13 @@ function renderAchievements() {
     icon.className='achievement-icon';
     icon.textContent=unlocked ? definition.icon : '🔒';
     const copy=document.createElement('div');
+    const eyebrow=document.createElement('small');
+    eyebrow.textContent=unlocked ? 'Unlocked' : 'Next milestone';
     const title=document.createElement('strong');
     title.textContent=definition.title;
     const description=document.createElement('span');
-    description.textContent=unlocked
-      ? `Unlocked · ${definition.detail}`
-      : `${definition.description} ${definition.detail}`;
-    copy.append(title,description);
+    description.textContent=unlocked ? definition.detail : definition.description;
+    copy.append(eyebrow,title,description);
     item.append(icon,copy);
     achievementList.append(item);
   }
