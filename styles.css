@@ -629,3 +629,78 @@ main.manual-setup-active .manual-motorway-option.captured-motorway small { margi
 main.manual-setup-active .manual-a-road-section { margin-top:42px; padding-top:32px; border-top:1px solid rgba(255,255,255,.16); }
 main.manual-setup-active .manual-a-road-section h2 { font-size:clamp(1.45rem,6vw,2rem); }
 main.manual-setup-active .manual-a-road-section > .muted { margin:12px 0 22px; }
+
+
+/* Achievements are a destination in their own right: no map competes for attention. */
+main.app-ready[data-active-screen="achievements"] > #achievementsCard {
+  position:fixed;
+  z-index:1101;
+  inset:58px 0 76px;
+  display:block !important;
+  min-height:0;
+  margin:0 !important;
+  padding:30px 22px 42px;
+  overflow-y:auto;
+  border:0;
+  border-radius:0;
+  background:#0b1c50 !important;
+  color:#f3f6f7;
+  box-shadow:none;
+}
+main.app-ready[data-active-screen="achievements"] > #achievementsCard .eyebrow { color:#69ddcc; }
+main.app-ready[data-active-screen="achievements"] > #achievementsCard h2 { color:#fff; font-size:clamp(2rem,9vw,2.7rem); }
+main.app-ready[data-active-screen="achievements"] .achievements-heading { align-items:flex-start; margin-bottom:26px; }
+main.app-ready[data-active-screen="achievements"] .achievement-count {
+  padding:8px 11px;
+  border-radius:999px;
+  background:rgba(255,255,255,.11);
+  color:#f7c450;
+  font-size:.82rem;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-list { display:grid; gap:12px; }
+main.app-ready[data-active-screen="achievements"] .achievement {
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:15px;
+  align-items:center;
+  margin:0;
+  padding:17px;
+  border-radius:18px;
+}
+main.app-ready[data-active-screen="achievements"] .achievement.unlocked {
+  border:1px solid rgba(247,196,80,.65);
+  background:linear-gradient(135deg,rgba(247,196,80,.2),rgba(44,185,166,.18));
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+main.app-ready[data-active-screen="achievements"] .achievement.locked {
+  border:1px solid rgba(255,255,255,.11);
+  background:rgba(255,255,255,.06);
+  opacity:.78;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-icon {
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  border-radius:17px;
+  background:#f7c450;
+  color:#0b1c50;
+  font-size:1.85rem;
+  font-weight:900;
+  line-height:1;
+}
+main.app-ready[data-active-screen="achievements"] .achievement.locked .achievement-icon {
+  background:rgba(255,255,255,.11);
+  color:#c2cde0;
+  font-size:1.45rem;
+}
+main.app-ready[data-active-screen="achievements"] .achievement > div { display:grid; gap:3px; }
+main.app-ready[data-active-screen="achievements"] .achievement small {
+  color:#69ddcc;
+  font-size:.68rem;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+main.app-ready[data-active-screen="achievements"] .achievement strong { color:#fff; font-size:1.12rem; }
+main.app-ready[data-active-screen="achievements"] .achievement span:not(.achievement-icon) { color:#c2cde0; font-size:.84rem; line-height:1.35; }
