@@ -929,3 +929,19 @@ main.app-ready[data-active-screen="progress"] .a-road-canonical-details .canonic
   font-size:.7rem;
   text-decoration:underline;
 }
+
+
+/* Motorway cards mirror the A-road layout: figures first, full-width completion bar below. */
+main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-road-top {
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px 12px;
+}
+main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-road-progress {
+  grid-column:1 / -1;
+  grid-row:2;
+  width:100%;
+  height:10px;
+}
+main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-road-fill {
+  background:#1677c8;
+}
