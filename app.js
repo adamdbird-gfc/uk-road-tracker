@@ -257,6 +257,7 @@ let canonicalCachePromise = null;
 let canonicalARoadCacheEntries = new Map();
 let canonicalARoadCacheIndexPromise = null;
 let canonicalARoadCacheIndexAvailable = false;
+let canonicalARoadCacheIndexError = null;
 
 // Achievement locations are assessed against the same fixed motorway anchors
 // used for completion, never a raw Timeline point. This keeps a celebration
@@ -1639,10 +1640,12 @@ canonicalARoadCard.addEventListener('toggle',()=>{
 });
 canonicalARoadPrevious.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage-1));
 canonicalARoadNext.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage+1));
-// A-road references are generated centrally. There is intentionally no
-// client-side retry/load button: pressing one cannot make a missing static
-// reference appear, and previously gave the misleading appearance of work.
-canonicalARoadRetry.addEventListener('click',()=>{});
+canonicalARoadRetry.addEventListener('click',()=>{
+  canonicalARoadCacheIndexPromise=null;
+  canonicalARoadCacheIndexError=null;
+  canonicalARoadLoadStarted=false;
+  startCanonicalARoadLoading();
+});
 
 function resetOutput() {
   journeys = [];
@@ -4385,11 +4388,16 @@ async function loadCanonicalARoadCacheIndex() {
         .filter(([key,value])=>parseARoadKey(key) && value && typeof value.file==='string');
       canonicalARoadCacheEntries=new Map(entries);
       canonicalARoadCacheIndexAvailable=true;
+      canonicalARoadCacheIndexError=null;
     } catch (err) {
       // The cache is built independently from the app. An absent index simply
       // means there is nothing to request yet, not an error for every road.
       canonicalARoadCacheEntries.clear();
       canonicalARoadCacheIndexAvailable=false;
+      canonicalARoadCacheIndexError=err?.message || String(err);
+      // Allow an explicit retry instead of caching a transient failed fetch for
+      // the rest of this browser session.
+      canonicalARoadCacheIndexPromise=null;
       console.info('A-road cache index is not available yet:',err);
     }
     return canonicalARoadCacheEntries;
@@ -4697,8 +4705,9 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   canonicalARoadNext.disabled=canonicalARoadPage>=pageCount-1;
   canonicalARoadPageStatus.textContent=`Showing ${canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE+1}–${Math.min((canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE,roads.length)} of ${roads.length} A roads`;
   canonicalARoadNext.textContent=canonicalARoadPage>=pageCount-1 ? 'All A roads shown' : 'Next 12 A roads';
-  canonicalARoadRetry.classList.add('hidden');
-  canonicalARoadRetry.disabled=true;
+  canonicalARoadRetry.classList.toggle('hidden',canonicalARoadCacheIndexAvailable);
+  canonicalARoadRetry.disabled=canonicalARoadCacheIndexAvailable;
+  canonicalARoadRetry.textContent='Retry A-road reference index';
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
   canonicalARoadStatus.textContent=canonicalARoadCoverageRefreshRunning
     ? `Applying saved coverage to ${canonicalARoadCoverageRefreshProgress} of ${ready.length} A-road references…`
@@ -4707,7 +4716,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       : errors.length
       ? `${ready.length} of ${roads.length} A-road references ready · ${errors.map(road=>`${road.region==='NI'?'NI ':''}${road.ref}: ${road.error || 'unavailable'}`).join(' · ')}`
       : !canonicalARoadCacheIndexAvailable
-        ? `${ready.length} of ${roads.length} A-road references ready · the reference cache is being prepared.`
+        ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
   // Mobile browsers may restore an expanded <details> state after reload
   // without emitting a toggle event. Start the available cache load here too.
@@ -4718,6 +4727,11 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
 function renderCanonicalARoadMapLayers() {
   // Ready roads must remain visible while other references are still queued.
   if (!canonicalARoadCoverageLayer || !canonicalARoadUncoveredLayer) return;
+  // The layer-control can retain an old unchecked state after a mobile restore.
+  // A-road coverage is part of the default Roadprints map, so reattach it when
+  // rendering the active coverage.
+  if (!map?.hasLayer(canonicalARoadCoverageLayer)) canonicalARoadCoverageLayer.addTo(map);
+  if (!map?.hasLayer(canonicalARoadUncoveredLayer)) canonicalARoadUncoveredLayer.addTo(map);
   canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
   const bounds=visibleMapBounds();
   const roads=[...canonicalARoads.values()].filter(road=>
@@ -4741,7 +4755,7 @@ function renderCanonicalARoadMapLayers() {
     for (const [kind,paths] of Object.entries(runs)) {
       const covered=kind==='covered';
       L.polyline(paths.filter(path=>path.length>1),{
-        weight:4,opacity:.9,color:covered?'#187a3b':'#d93a3a',
+        weight:5,opacity:1,color:covered?'#189447':'#d93a3a',
         pane:covered?'aRoadConfirmedPane':'aRoadUnconfirmedPane',interactive:false
       }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
     }
