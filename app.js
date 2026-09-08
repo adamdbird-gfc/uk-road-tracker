@@ -292,6 +292,7 @@ function updateDataDeletionControls() {
   const hasRoadData=
     persistedMapJourneys.size>0 ||
     persistedManualRefs.size>0 ||
+    persistedManualARoadRefs.size>0 ||
     persistedCoverageByRef.size>0 ||
     persistedARoadCoverageByRef.size>0;
   const hasFootData=persistedFootActivities.size>0;
@@ -303,7 +304,7 @@ function updateDataDeletionControls() {
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || journeyCount>0 || persistedFootActivities.size>0;
+  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || persistedManualARoadRefs.size>0 || journeyCount>0 || persistedFootActivities.size>0;
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
@@ -888,6 +889,7 @@ function mergeProgressDateRange(source) {
 function resetRoadProgressState() {
   persistedCoverageByRef.clear();
   persistedManualRefs.clear();
+  persistedManualARoadRefs.clear();
   persistedDataStartMs=null;
   persistedDataEndMs=null;
   persistedSavedAt=null;
@@ -1228,10 +1230,12 @@ function resetTrackingSession() {
 
 async function showSavedProgress() {
   await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
-  if (!persistedCoverageByRef.size && !persistedManualRefs.size &&
+  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedManualARoadRefs.size &&
       !persistedMapJourneys.size && !persistedFootActivities.size) return;
 
   resetTrackingSession();
+  for (const id of persistedManualRefs) manualMotorwayRefs.add(id);
+  for (const key of persistedManualARoadRefs) manualARoadRefs.add(key);
   journeys=savedMapJourneysExcluding();
   onboardingMode='saved';
   onboardingCard.classList.add('hidden');
@@ -4363,8 +4367,7 @@ function activeARoadKeys(drawable=canonicalARoadDrawable()) {
 
 function canonicalARoadPageKeys(drawable=canonicalARoadDrawable()) {
   return [...activeARoadKeys(drawable)]
-    .slice(canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE,(canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE)
-    .map(road=>road.key);
+    .slice(canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE,(canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE);
 }
 
 function showCanonicalARoadPage(page) {
