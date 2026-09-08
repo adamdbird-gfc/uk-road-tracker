@@ -948,7 +948,7 @@ function mergeProgressDateRange(source) {
   if (persistedDataEndMs!==null) source.dataEndMs=persistedDataEndMs;
 }
 
-function resetRoadProgressState() {
+function resetRoadProgressState({clearExclusions=false}={}) {
   persistedCoverageByRef.clear();
   persistedManualRefs.clear();
   persistedManualARoadRefs.clear();
@@ -958,6 +958,7 @@ function resetRoadProgressState() {
   persistedLegacyCutoffMs=null;
   persistedProcessedJourneyIds.clear();
   persistedSeenJourneyIds.clear();
+  if (clearExclusions) excludedJourneyIds.clear();
   persistedSeenJourneyTrackingStarted=true;
   persistedImportedFileHashes.clear();
   persistedFileHashTrackingStarted=true;
@@ -1020,7 +1021,7 @@ async function clearLocalProgress() {
   clearTimeout(localSaveTimer);
   localSaveTimer=null;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
-  resetRoadProgressState();
+  resetRoadProgressState({clearExclusions:true});
   localProgressNotice.classList.add('hidden');
 
   try {
