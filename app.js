@@ -4705,7 +4705,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
     : loading.length
       ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
       : errors.length
-      ? `${ready.length} of ${roads.length} A-road references ready · ${errors.length} reference${errors.length===1?'':'s'} could not be loaded.`
+      ? `${ready.length} of ${roads.length} A-road references ready · ${errors.map(road=>`${road.region==='NI'?'NI ':''}${road.ref}: ${road.error || 'unavailable'}`).join(' · ')}`
       : !canonicalARoadCacheIndexAvailable
         ? `${ready.length} of ${roads.length} A-road references ready · the reference cache is being prepared.`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
