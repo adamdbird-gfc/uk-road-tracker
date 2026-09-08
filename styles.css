@@ -717,3 +717,36 @@ main.app-ready #mapCard .map-heading-actions button {
   border-radius:6px;
   background-clip:padding-box;
 }
+
+
+/* Put Leaflet zoom controls in the same Roadprints control family. */
+main.app-ready #map .leaflet-top.leaflet-left {
+  top:calc(100% - 300px);
+  right:30px;
+  left:auto;
+}
+main.app-ready #map .leaflet-top.leaflet-left .leaflet-control-zoom {
+  display:grid;
+  gap:0;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+main.app-ready #map .leaflet-control-zoom a {
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  min-width:48px;
+  min-height:48px;
+  margin:0;
+  border:2px solid rgba(0,0,0,.2) !important;
+  border-radius:6px !important;
+  background:rgba(255,255,255,.96);
+  background-clip:padding-box;
+  color:#0b1c50;
+  font-size:28px;
+  line-height:1;
+}
+main.app-ready #map .leaflet-control-zoom a + a { border-top:2px solid rgba(0,0,0,.2) !important; }
