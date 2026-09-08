@@ -1159,6 +1159,7 @@ async function showSavedProgress() {
 async function showDataSourceChoice(mode) {
   resetTrackingSession();
   onboardingMode = mode;
+  document.querySelector('main')?.classList.toggle('manual-setup-active', mode === 'manual');
   closeSavedProgress.classList.add('hidden');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.toggle('hidden', mode !== 'data');
@@ -1185,6 +1186,7 @@ async function showDataSourceChoice(mode) {
 }
 
 function returnToOnboarding() {
+  document.querySelector('main')?.classList.remove('manual-setup-active');
   resetTrackingSession();
   onboardingMode = null;
   closeSavedProgress.classList.add('hidden');
