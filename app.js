@@ -4747,8 +4747,14 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
 }
 
 function renderCanonicalARoadMapLayers() {
-  // Ready roads must remain visible while other references are still queued.
+  // The completion list can finish in the background. Never build Leaflet
+  // geometry while a full-screen panel is active: that blocks the footer.
   if (!canonicalARoadCoverageLayer || !canonicalARoadUncoveredLayer) return;
+  if (document.querySelector('main')?.dataset.activeScreen!=='map') {
+    canonicalARoadCoverageLayer.clearLayers();
+    canonicalARoadUncoveredLayer.clearLayers();
+    return;
+  }
   // The layer-control can retain an old unchecked state after a mobile restore.
   // A-road coverage is part of the default Roadprints map, so reattach it when
   // rendering the active coverage.
@@ -5304,7 +5310,20 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function activateRoadprintsScreen(screen) { const shell=document.querySelector('main'),nav=document.getElementById('appNavigation'); if(!shell||!nav)return; shell.classList.add('app-ready');shell.dataset.activeScreen=screen;nav.classList.remove('hidden');nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));if(screen==='map')setTimeout(()=>map?.invalidateSize(),80);}
+function activateRoadprintsScreen(screen) {
+  const shell=document.querySelector('main'),nav=document.getElementById('appNavigation');
+  if(!shell||!nav)return;
+  shell.classList.add('app-ready');
+  shell.dataset.activeScreen=screen;
+  nav.classList.remove('hidden');
+  nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
+  if(screen==='map') {
+    setTimeout(()=>{
+      map?.invalidateSize();
+      renderCanonicalARoadMapLayers();
+    },80);
+  }
+}
 document.getElementById('appNavigation')?.addEventListener('click',event=>{
   const button=event.target.closest('[data-screen]');
   if(!button) return;
