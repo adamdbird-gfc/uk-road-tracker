@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260908-progress-v2" />
+  <link rel="stylesheet" href="styles.css?v=20260908-journey-log-v1" />
 </head>
 <body>
   <main>
@@ -160,6 +160,18 @@
       <div id="achievementList" class="achievement-list"></div>
     </section>
 
+    <section id="journeyLogCard" data-app-screen="journeys" class="card journey-log-card hidden" aria-labelledby="journeyLogTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Your travel record</p>
+          <h2 id="journeyLogTitle">Journeys</h2>
+        </div>
+        <strong id="journeyLogCount" class="journey-log-count">0</strong>
+      </div>
+      <p class="muted">Choose a journey to inspect its route and correct any section that does not belong.</p>
+      <div id="journeyLogList" class="journey-log-list"></div>
+    </section>
+
     <section id="summaryCard" data-app-screen="journeys" class="card hidden">
       <h2 id="journeyStepTitle">3. Choose journeys</h2>
       <div class="stats">
@@ -299,6 +311,10 @@
     </section>
 
     <section id="mapCard" data-app-screen="map" class="card hidden">
+      <div id="journeyFocusBar" class="journey-focus-bar hidden">
+        <span>Viewing one journey</span>
+        <button id="closeJourneyFocus" type="button">Back to journeys</button>
+      </div>
       <div class="map-heading">
         <div>
           <h2 id="mapTitle">4. Preview</h2>
@@ -402,7 +418,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260908-a-road-chip-v2"></script>
+  <script src="app.js?v=20260908-journey-log-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
