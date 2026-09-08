@@ -5050,10 +5050,7 @@ function refreshARoadBackgroundStatus(){
   if(!aRoadBackgroundStatus)return;
   const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map';
   const hasARoadData=typeof activeARoadKeys==='function' && activeARoadKeys().size>0;
-  const statusText=canonicalARoadStatus?.textContent?.trim() || '';
-  const workActive=canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning ||
-    (hasARoadData && !/ready|complete/i.test(statusText));
-  const visible=mapOpen && hasARoadData && workActive;
+  const visible=mapOpen && hasARoadData;
   aRoadBackgroundStatus.classList.toggle('hidden',!visible);
   if(visible && aRoadBackgroundText) aRoadBackgroundText.textContent='Road references are updating in the background';
 }
