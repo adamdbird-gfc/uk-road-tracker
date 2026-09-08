@@ -1625,7 +1625,7 @@ aRoadUnitMiles.addEventListener('click', event => event.stopPropagation());
 aRoadUnitKm.addEventListener('click', event => event.stopPropagation());
 canonicalRetry.addEventListener('click', retryCanonicalRoads);
 function startCanonicalARoadLoading() {
-  if (canonicalARoadQueueRunning || canonicalARoadLoadStarted) return;
+  if (canonicalARoadQueueRunning) return;
   const refs=[...activeARoadKeys()];
   if (!refs.length) return;
   canonicalARoadLoadStarted=true;
@@ -4511,6 +4511,15 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
   let available=new Map();
   try {
     available=await loadCanonicalARoadCacheIndex();
+    // Do not leave an unavailable reference permanently labelled “queued”.
+    // It should not block the ready references from rendering.
+    for (const key of canonicalARoadRequestedRefs) {
+      const road=canonicalARoadState(key);
+      if (road?.status==='idle' && !available.has(key)) {
+        road.status='error';
+        road.error=`${road.ref} reference is not available yet.`;
+      }
+    }
     let moreAvailable=true;
     while (moreAvailable && workerEpoch===canonicalARoadWorkerEpoch) {
       let loaded=0;
@@ -4707,7 +4716,7 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
 }
 
 function renderCanonicalARoadMapLayers() {
-  if (canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning) return;
+  // Ready roads must remain visible while other references are still queued.
   if (!canonicalARoadCoverageLayer || !canonicalARoadUncoveredLayer) return;
   canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
   const bounds=visibleMapBounds();
