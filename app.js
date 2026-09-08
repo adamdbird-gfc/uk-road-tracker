@@ -4822,7 +4822,8 @@ function renderCanonicalARoadMapLayers() {
   // National A-road geometry can run to millions of anchors. The map is a
   // responsive preview, so scale its draw budget to the current zoom.
   const zoom=map?.getZoom?.() || DEFAULT_MAP_ZOOM;
-  const anchorBudget=zoom<7 ? 2500 : zoom<9 ? 5000 : 9000;
+  const anchorBudget=zoom<7 ? 18000 : zoom<9 ? 24000 : 30000;
+  const strokeWeight=zoom<7 ? 9 : zoom<9 ? 8 : 7;
   const samplingStep=Math.max(1,Math.ceil(visibleAnchors/anchorBudget));
   for (const road of roads) {
     const runs={covered:[],uncovered:[]};
@@ -4840,7 +4841,7 @@ function renderCanonicalARoadMapLayers() {
     for (const [kind,paths] of Object.entries(runs)) {
       const covered=kind==='covered';
       L.polyline(paths.filter(path=>path.length>1),{
-        weight:7,opacity:1,color:covered?'#32c96b':'#d93a3a',
+        weight:strokeWeight,opacity:1,color:covered?'#32c96b':'#d93a3a',
         pane:covered?'aRoadConfirmedPane':'aRoadUnconfirmedPane',interactive:false
       }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
     }
