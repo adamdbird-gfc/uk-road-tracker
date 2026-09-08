@@ -17,6 +17,10 @@ ARCHIVE = Path(".cache/oproad_gpkg_gb.zip")
 GPKG = Path(".cache/oproad_gb.gpkg")
 DOWNLOAD_URL = "https://api.os.uk/downloads/v1/products/OpenRoads/downloads?area=GB&format=GeoPackage&redirect"
 SAMPLE_M = 100
+# Newly opened routes can appear in OpenStreetMap before the next OS Open Roads
+# release. These fallbacks are resolved only while building the static cache.
+OSM_FALLBACK_REFS = ("A1026",)
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 def download_source():
     if GPKG.exists(): return
@@ -103,6 +107,39 @@ def load_links():
             roads.setdefault(ref,[]).append((float(length_m or 0),[bng_to_wgs84(x,y) for x,y in line]))
     connection.close(); return roads
 
+def load_osm_fallback_links(ref):
+    """Fetch a short-lived reference gap from OSM for the static build only."""
+    query=(
+        '[out:json][timeout:120];'
+        'area["ISO3166-1"="GB"][admin_level=2]->.gb;'
+        f'way(area.gb)["highway"]["ref"~"(^|;){ref}(;|$)"];'
+        'out geom;'
+    )
+    request=urllib.request.Request(
+        OVERPASS_URL,
+        data=query.encode("utf-8"),
+        headers={"Content-Type":"application/x-www-form-urlencoded","User-Agent":"roadprints-cache-builder"},
+    )
+    with urllib.request.urlopen(request, timeout=180) as response:
+        payload=json.load(response)
+    links=[]
+    for element in payload.get("elements",[]):
+        geometry=element.get("geometry") or []
+        if len(geometry)<2: continue
+        line=[[point["lon"],point["lat"]] for point in geometry]
+        links.append((0.0,line))
+    return links
+
+def add_osm_fallbacks(roads):
+    for ref in OSM_FALLBACK_REFS:
+        if roads.get(ref): continue
+        print(f"OS Open Roads has no {ref}; building its static fallback from OpenStreetMap…")
+        links=load_osm_fallback_links(ref)
+        if not links:
+            raise RuntimeError(f"OpenStreetMap fallback returned no geometry for {ref}.")
+        roads[ref]=links
+    return roads
+
 def build(roads):
     OUT.mkdir(exist_ok=True); index={"version":"v4","region":"GB","roads":{},"failures":{},"source":"OS Open Roads"}
     for ref,links in sorted(roads.items(),key=lambda item:(int(item[0][1:]),item[0])):
@@ -118,4 +155,4 @@ def build(roads):
     index["generated_at"]=datetime.now(timezone.utc).isoformat(); INDEX.write_text(json.dumps(index,separators=(",",":")))
     print(f"Wrote {len(index['roads'])} official Great Britain A-road references.")
 
-if __name__ == "__main__": build(load_links())
+if __name__ == "__main__": build(add_osm_fallbacks(load_links()))
