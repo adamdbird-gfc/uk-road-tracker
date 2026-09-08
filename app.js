@@ -1636,9 +1636,9 @@ function startCanonicalARoadLoading() {
     canonicalARoadLoadStarted=false;
   });
 }
-canonicalARoadCard.addEventListener('toggle',()=>{
-  if (canonicalARoadCard.open) startCanonicalARoadLoading();
-});
+// Opening this panel is presentation only. Large reference work is user-led,
+ // never a side effect of browser state restoration during startup.
+canonicalARoadCard.addEventListener('toggle',()=>renderCanonicalARoadDashboard());
 canonicalARoadPrevious.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage-1));
 canonicalARoadNext.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage+1));
 canonicalARoadRetry.addEventListener('click',async()=>{
@@ -4736,9 +4736,12 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
   canonicalARoadNext.disabled=canonicalARoadPage>=pageCount-1;
   canonicalARoadPageStatus.textContent=`Showing ${canonicalARoadPage*CANONICAL_A_ROAD_PAGE_SIZE+1}–${Math.min((canonicalARoadPage+1)*CANONICAL_A_ROAD_PAGE_SIZE,roads.length)} of ${roads.length} A roads`;
   canonicalARoadNext.textContent=canonicalARoadPage>=pageCount-1 ? 'All A roads shown' : 'Next 12 A roads';
-  canonicalARoadRetry.classList.toggle('hidden',canonicalARoadCacheIndexAvailable);
-  canonicalARoadRetry.disabled=canonicalARoadCacheIndexAvailable;
-  canonicalARoadRetry.textContent='Retry A-road reference index';
+  const canLoadARoads=pending>0 && !canonicalARoadQueueRunning;
+  canonicalARoadRetry.classList.toggle('hidden',!canLoadARoads);
+  canonicalARoadRetry.disabled=!canLoadARoads;
+  canonicalARoadRetry.textContent=canonicalARoadCacheIndexAvailable
+    ? 'Load A-road completion references'
+    : 'Check A-road reference index';
   canonicalARoadStatus.className=`muted canonical-status ${errors.length?'warn':ready.length?'ok':''}`;
   canonicalARoadStatus.textContent=canonicalARoadCoverageRefreshRunning
     ? `Applying saved coverage to ${canonicalARoadCoverageRefreshProgress} of ${ready.length} A-road references…`
@@ -4749,12 +4752,9 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       : !canonicalARoadCacheIndexAvailable
         ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
-  // Do not recursively restart the national A-road queue when the index
-  // request itself has failed. A retry is explicit and only retries the index.
-  if (canonicalARoadCard.open && canonicalARoadCacheIndexAvailable && pending && !canonicalARoadLoadStarted) {
-    startCanonicalARoadLoading();
-  }
-  requestCanonicalARoadCoverageRefresh();
+  // Reference loading is always explicit. Restoring an expanded panel must not
+  // turn the 168-road cache into a startup task.
+
 }
 
 function renderCanonicalARoadMapLayers() {
