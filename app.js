@@ -989,6 +989,8 @@ function renderManualMotorwayOptions() {
     }
   ];
 
+  const importedRefs=importedMotorwayRefs();
+
   for (const catalogue of catalogues) {
     const group=document.createElement('section');
     group.className='motorway-region-group';
@@ -1005,12 +1007,14 @@ function renderManualMotorwayOptions() {
     for (const ref of catalogue.refs.sort(motorwayRefSort)) {
       const id=catalogue.region==='NI' ? `NI:${ref}` : ref;
       const label=document.createElement('label');
-      label.className='manual-motorway-option';
+      const captured=importedRefs.has(id);
+      label.className='manual-motorway-option' + (captured ? ' captured-motorway' : '');
 
       const checkbox=document.createElement('input');
       checkbox.type='checkbox';
       checkbox.value=id;
       checkbox.checked=manualMotorwayRefs.has(id);
+      checkbox.disabled=captured;
       checkbox.addEventListener('change',()=>{
         if (checkbox.checked) {
           manualMotorwayRefs.add(id);
@@ -1029,12 +1033,27 @@ function renderManualMotorwayOptions() {
       const text=document.createElement('span');
       text.textContent=ref;
       label.append(checkbox,text);
+      if (captured) {
+        const status=document.createElement('small');
+        status.textContent='Captured';
+        label.append(status);
+      }
       options.append(label);
     }
 
     group.append(heading,options);
     manualMotorwayList.append(group);
   }
+}
+
+function importedMotorwayRefs() {
+  const refs=new Set();
+  for (const contributions of persistedMotorwayContributionsByJourney.values()) {
+    for (const [ref,distanceM] of Object.entries(contributions || {})) {
+      if (Number(distanceM)>0) refs.add(ref);
+    }
+  }
+  return refs;
 }
 
 function resetTrackingSession() {
@@ -1199,8 +1218,9 @@ function setAllManualMotorways(selected) {
   const previouslySelected=[...manualMotorwayRefs];
   manualMotorwayRefs.clear();
   if (selected) {
-    for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(ref);
-    for (const ref of Object.keys(NI_MOTORWAY_LENGTH_KM)) manualMotorwayRefs.add(`NI:${ref}`);
+    const importedRefs=importedMotorwayRefs();
+    for (const ref of Object.keys(MOTORWAY_LENGTH_KM)) if (!importedRefs.has(ref)) manualMotorwayRefs.add(ref);
+    for (const ref of Object.keys(NI_MOTORWAY_LENGTH_KM)) if (!importedRefs.has(`NI:${ref}`)) manualMotorwayRefs.add(`NI:${ref}`);
     persistedManualRefs.clear();
     for (const id of manualMotorwayRefs) persistedManualRefs.add(id);
   } else {
