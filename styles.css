@@ -704,3 +704,16 @@ main.app-ready[data-active-screen="achievements"] .achievement small {
 }
 main.app-ready[data-active-screen="achievements"] .achievement strong { color:#fff; font-size:1.12rem; }
 main.app-ready[data-active-screen="achievements"] .achievement span:not(.achievement-icon) { color:#c2cde0; font-size:.84rem; line-height:1.35; }
+
+
+/* Roadprints map action controls — matched to the requested native-control treatment. */
+main.app-ready #mapCard .map-heading-actions { gap:0; }
+main.app-ready #mapCard .map-heading-actions button {
+  width:48px;
+  height:48px;
+  min-width:48px;
+  min-height:48px;
+  border:2px solid rgba(0,0,0,.2);
+  border-radius:6px;
+  background-clip:padding-box;
+}
