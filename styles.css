@@ -750,3 +750,7 @@ main.app-ready #map .leaflet-control-zoom a {
   line-height:1;
 }
 main.app-ready #map .leaflet-control-zoom a + a { border-top:2px solid rgba(0,0,0,.2) !important; }
+
+
+/* Never surface the A-road worker chip without real A-road activity. */
+main.app-ready[data-active-screen="map"] .a-road-background-status.hidden { display:none !important; }
