@@ -87,6 +87,7 @@ const CANONICAL_A_ROAD_PAGE_SIZE = 12;
 let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
+let focusedJourneyId = null;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 // The live map is a progress cue, not the durable full-detail renderer. Keep
 // its work deliberately sparse so a large import never makes page scrolling
@@ -100,6 +101,11 @@ const summaryCard = document.getElementById('summaryCard');
 const mapCard = document.getElementById('mapCard');
 const nextCard = document.getElementById('nextCard');
 const journeyList = document.getElementById('journeyList');
+const journeyLogCard = document.getElementById('journeyLogCard');
+const journeyLogList = document.getElementById('journeyLogList');
+const journeyLogCount = document.getElementById('journeyLogCount');
+const journeyFocusBar = document.getElementById('journeyFocusBar');
+const closeJourneyFocus = document.getElementById('closeJourneyFocus');
 const journeyCount = document.getElementById('journeyCount');
 const pointCount = document.getElementById('pointCount');
 const selectedCount = document.getElementById('selectedCount');
@@ -473,7 +479,8 @@ function compactMapJourney(journey) {
     matchedDistanceKm:Number(journey.matchedDistanceKm || 0),
     matchedTracepoints:Number(journey.matchedTracepoints || 0),
     pointsSentToMatcher:Number(journey.pointsSentToMatcher || 0),
-    matchQuality:journey.matchQuality || null
+    matchQuality:journey.matchQuality || null,
+    title:String(journey.title || '')
   };
 }
 
@@ -496,6 +503,7 @@ async function loadMapArchive() {
     }
     renderRoadQueue();
     renderCollectiveStats();
+    renderJourneyLog();
   } catch (err) {
     console.warn('Saved map journeys could not be loaded:',err);
   }
@@ -507,6 +515,7 @@ async function saveJourneyToMapArchive(journey) {
   await mapArchiveOperation('readwrite',store=>store.put(record));
   persistedMapJourneys.set(record.id,record);
   updateLocalProgressNotice();
+  renderJourneyLog();
   window.dispatchEvent(new Event('roadprints:archivechange'));
 }
 
@@ -1294,6 +1303,7 @@ async function showSavedProgress() {
   renderRoadQueue();
   renderFootQueue();
   renderCollectiveStats();
+  renderJourneyLog();
 
   await ensureLeaflet();
   initMap();
@@ -1923,6 +1933,90 @@ function savedRoadRecords() {
     if (journey?.matchedGeoJson) records.set(journeyIdentity(journey),journey);
   }
   return [...records.values()];
+}
+
+function renderJourneyLog() {
+  if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
+  const records=savedRoadRecords()
+    .filter(record=>record?.matchedGeoJson)
+    .sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
+  const hasData=shouldShowDataDashboard() && records.length>0;
+  journeyLogCard.classList.toggle('hidden',!hasData);
+  if (!hasData) return;
+  journeyLogCount.textContent=records.length.toLocaleString();
+  journeyLogList.innerHTML='';
+  for (const record of records.slice(0,50)) {
+    const id=journeyIdentity(record);
+    const item=document.createElement('article');
+    item.className='journey-log-item';
+    const copy=document.createElement('div');
+    const date=document.createElement('small');
+    date.textContent=(record.start ? formatDate(record.start) : 'Saved journey')+
+      (record.start ? ' · '+formatTime(record.start) : '');
+    const title=document.createElement('strong');
+    title.textContent=record.title || 'Untitled journey';
+    const meta=document.createElement('span');
+    const distance=Number(record.repeatDistanceKm || record.googleDistanceKm || record.matchedDistanceKm || 0);
+    const repeats=Number(record.repeatCount || 1);
+    meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+
+      (repeats>1 ? ' · repeated journey pattern ×'+repeats : ' · unique route pattern');
+    copy.append(date,title,meta);
+    const actions=document.createElement('div');
+    actions.className='journey-log-actions';
+    const rename=document.createElement('button');
+    rename.type='button'; rename.className='secondary'; rename.textContent='Rename';
+    rename.addEventListener('click',()=>renameSavedJourney(id));
+    const view=document.createElement('button');
+    view.type='button'; view.textContent='View & refine';
+    view.addEventListener('click',()=>openJourneyFocus(id));
+    actions.append(rename,view);
+    item.append(copy,actions);
+    journeyLogList.append(item);
+  }
+}
+
+async function renameSavedJourney(id) {
+  const record=persistedMapJourneys.get(id);
+  if (!record) return;
+  const proposed=window.prompt('Name this journey',record.title || '');
+  if (proposed===null) return;
+  const title=proposed.trim();
+  const updated={...record,title};
+  try {
+    await mapArchiveOperation('readwrite',store=>store.put(updated));
+    persistedMapJourneys.set(id,updated);
+    const inSession=journeys.find(journey=>journeyIdentity(journey)===id);
+    if (inSession) inSession.title=title;
+    renderJourneyLog();
+  } catch (err) {
+    console.warn('Journey name could not be saved:',err);
+    window.alert('The journey name could not be saved. Please try again.');
+  }
+}
+
+function openJourneyFocus(id) {
+  const record=persistedMapJourneys.get(id);
+  if (!record) return;
+  if (!journeys.some(journey=>journeyIdentity(journey)===id)) journeys.push(hydrateMapJourney(record));
+  focusedJourneyId=id;
+  journeyFocusBar?.classList.remove('hidden');
+  activateRoadprintsScreen('map');
+  renderMap();
+  const journey=journeys.find(candidate=>journeyIdentity(candidate)===id) || hydrateMapJourney(record);
+  const points=(journey.points || []).filter(validPoint);
+  setTimeout(()=>{
+    if (map && window.L && points.length>1) {
+      map.fitBounds(L.latLngBounds(points.map(point=>[point.lat,point.lng])),{padding:[36,36],maxZoom:15});
+      renderMap({deferCalculations:true});
+    }
+  },80);
+}
+
+function closeJourneyFocusView() {
+  focusedJourneyId=null;
+  journeyFocusBar?.classList.add('hidden');
+  renderMap();
+  activateRoadprintsScreen('journeys');
 }
 
 function savedOnFootRecords() {
@@ -4628,31 +4722,35 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
     'hidden',
     !shouldShowDataDashboard() || !hasCreditedRoutes || !mapCorrectionPanel.classList.contains('hidden')
   );
-  const drawable = journeys.filter(
+  const allDrawable = journeys.filter(
     j => j.selected && j.points.length > 1
   );
+  const drawable=focusedJourneyId
+    ? allDrawable.filter(journey=>journeyIdentity(journey)===focusedJourneyId)
+    : allDrawable;
+  journeyFocusBar?.classList.toggle('hidden',!focusedJourneyId);
 
   // Keep the lightweight summary cards available before the user opts in to
   // loading the map itself.
   let dashboardError=null;
   if (!deferCalculations) {
     try {
-      renderMotorwayDashboard(motorwayAggregateDirty ? drawable : []);
+      renderMotorwayDashboard(motorwayAggregateDirty ? allDrawable : []);
       motorwayAggregateDirty=false;
-      renderARoadDashboard(drawable);
-      renderOtherRoadDashboard(drawable);
+      renderARoadDashboard(allDrawable);
+      renderOtherRoadDashboard(allDrawable);
     } catch (err) {
       dashboardError=err;
       console.error('Roadprints motorway mileage summary could not refresh:',err);
     }
     try {
-      renderCanonicalMotorwayDashboard(drawable);
+      renderCanonicalMotorwayDashboard(allDrawable);
     } catch (err) {
       dashboardError=dashboardError || err;
       console.error('Roadprints canonical motorway map could not refresh:',err);
     }
     try {
-      renderCanonicalARoadDashboard(drawable);
+      renderCanonicalARoadDashboard(allDrawable);
     } catch (err) {
       dashboardError=dashboardError || err;
       console.error('Roadprints canonical A-road map could not refresh:',err);
@@ -5043,7 +5141,17 @@ function formatBytes(bytes) {
 }
 
 function activateRoadprintsScreen(screen) { const shell=document.querySelector('main'),nav=document.getElementById('appNavigation'); if(!shell||!nav)return; shell.classList.add('app-ready');shell.dataset.activeScreen=screen;nav.classList.remove('hidden');nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));if(screen==='map')setTimeout(()=>map?.invalidateSize(),80);}
-document.getElementById('appNavigation')?.addEventListener('click',event=>{const button=event.target.closest('[data-screen]');if(button)activateRoadprintsScreen(button.dataset.screen);});
+document.getElementById('appNavigation')?.addEventListener('click',event=>{
+  const button=event.target.closest('[data-screen]');
+  if(!button) return;
+  if(button.dataset.screen==='map' && focusedJourneyId) {
+    focusedJourneyId=null;
+    journeyFocusBar?.classList.add('hidden');
+    renderMap();
+  }
+  activateRoadprintsScreen(button.dataset.screen);
+});
+closeJourneyFocus?.addEventListener('click',closeJourneyFocusView);
 const aRoadBackgroundStatus=document.getElementById('aRoadBackgroundStatus'),aRoadBackgroundText=document.getElementById('aRoadBackgroundText');aRoadBackgroundStatus?.addEventListener('click',()=>activateRoadprintsScreen('progress'));
 new MutationObserver(()=>{if(!canonicalARoadStatus||!aRoadBackgroundStatus)return;const active=!canonicalARoadCard.classList.contains('hidden')&&!/ready|complete/i.test(canonicalARoadStatus.textContent||'');aRoadBackgroundStatus.classList.toggle('hidden',!active);if(active&&aRoadBackgroundText)aRoadBackgroundText.textContent=canonicalARoadStatus.textContent;}).observe(canonicalARoadStatus,{childList:true,characterData:true,subtree:true});
 function refreshARoadBackgroundStatus(){
