@@ -1943,6 +1943,12 @@ function renderJourneyLog() {
   const hasData=shouldShowDataDashboard() && records.length>0;
   journeyLogCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
+  const patternTotals=new Map();
+  for (const record of records) {
+    const key=routeRepeatFingerprint(record);
+    const trips=Math.max(1,Number(record.repeatCount || 1));
+    patternTotals.set(key,(patternTotals.get(key) || 0)+trips);
+  }
   journeyLogCount.textContent=records.length.toLocaleString();
   journeyLogList.innerHTML='';
   for (const record of records.slice(0,50)) {
@@ -1956,10 +1962,13 @@ function renderJourneyLog() {
     const title=document.createElement('strong');
     title.textContent=record.title || 'Untitled journey';
     const meta=document.createElement('span');
-    const distance=Number(record.repeatDistanceKm || record.googleDistanceKm || record.matchedDistanceKm || 0);
-    const repeats=Number(record.repeatCount || 1);
-    meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+
-      (repeats>1 ? ' · repeated journey pattern ×'+repeats : ' · unique route pattern');
+    const distance=Number(record.googleDistanceKm || record.matchedDistanceKm || record.repeatDistanceKm || 0);
+    const recordTrips=Math.max(1,Number(record.repeatCount || 1));
+    const patternTrips=patternTotals.get(routeRepeatFingerprint(record)) || recordTrips;
+    const patternLabel=patternTrips>1
+      ? ` · repeated route pattern · ${patternTrips} journeys`
+      : ' · no similar route recorded';
+    meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+patternLabel;
     copy.append(date,title,meta);
     const actions=document.createElement('div');
     actions.className='journey-log-actions';
