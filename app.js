@@ -290,8 +290,8 @@ const ROADPRINTS_ACHIEVEMENTS = [
     id:'m1-pioneer',
     icon:'①',
     title:'The Pioneer',
-    description:'Drive on the M1, Britain’s first motorway.',
-    detail:'M1 · Britain’s first motorway, opened in 1959',
+    description:'Drive on the M1, Britain’s first inter-urban motorway.',
+    detail:'M1 · Britain’s first inter-urban motorway, opened in 1959',
     type:'motorway-visited', roadId:'M1'
   },
   {
