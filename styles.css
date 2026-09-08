@@ -617,3 +617,9 @@ main.manual-setup-active .manual-motorway-option { border-color:rgba(255,255,255
 main.manual-setup-active .manual-motorway-option:has(input:checked) { border-color:#2cb9a6; background:rgba(44,185,166,.2); color:#fff; }
 main.manual-setup-active .manual-motorway-option input { accent-color:#2cb9a6; }
 @media (min-width:760px) { main.manual-setup-active #manualMotorwayCard { margin:auto; min-height:100svh; padding:56px 42px; } }
+
+
+/* Imported motorway evidence cannot be added again manually. */
+main.manual-setup-active .manual-motorway-option.captured-motorway { position:relative; border-color:rgba(255,255,255,.08); background:rgba(255,255,255,.035); color:rgba(243,246,247,.42); cursor:not-allowed; }
+main.manual-setup-active .manual-motorway-option.captured-motorway input { opacity:.35; cursor:not-allowed; }
+main.manual-setup-active .manual-motorway-option.captured-motorway small { margin-left:auto; padding:4px 7px; border-radius:999px; background:rgba(255,255,255,.08); color:rgba(243,246,247,.52); font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
