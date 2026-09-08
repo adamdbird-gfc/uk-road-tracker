@@ -8,7 +8,8 @@ const failures=[];
 const mustContain=[
   'coverage:[...road.coveredAnchorIds].sort((a,b)=>a-b)',
   'const storedCoverage=Array.isArray(stored.coverage)',
-  "color:covered?'#189447':'#d93a3a'",
+  "const anchorBudget=zoom<7 ? 18000 : zoom<9 ? 24000 : 30000;",
+  "color:covered?'#32c96b':'#d93a3a'",
   "dataset.activeScreen!=='map'",
   'async function hydrateCanonicalARoadsForMap()'
 ];
