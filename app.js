@@ -1641,11 +1641,20 @@ canonicalARoadCard.addEventListener('toggle',()=>{
 });
 canonicalARoadPrevious.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage-1));
 canonicalARoadNext.addEventListener('click',()=>showCanonicalARoadPage(canonicalARoadPage+1));
-canonicalARoadRetry.addEventListener('click',()=>{
+canonicalARoadRetry.addEventListener('click',async()=>{
+  // This must be a light retry: refreshing a tiny manifest is safe, while
+  // restarting all discovered roads can monopolise a mobile browser.
+  canonicalARoadRetry.disabled=true;
+  canonicalARoadRetry.textContent='Checking A-road reference index…';
   canonicalARoadCacheIndexPromise=null;
   canonicalARoadCacheIndexError=null;
-  canonicalARoadLoadStarted=false;
-  startCanonicalARoadLoading();
+  try {
+    await loadCanonicalARoadCacheIndex();
+    canonicalARoadLoadStarted=false;
+    if (canonicalARoadCacheIndexAvailable) startCanonicalARoadLoading();
+  } finally {
+    renderCanonicalARoadDashboard();
+  }
 });
 
 function resetOutput() {
@@ -4740,9 +4749,11 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       : !canonicalARoadCacheIndexAvailable
         ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
         : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
-  // Mobile browsers may restore an expanded <details> state after reload
-  // without emitting a toggle event. Start the available cache load here too.
-  if (canonicalARoadCard.open) startCanonicalARoadLoading();
+  // Do not recursively restart the national A-road queue when the index
+  // request itself has failed. A retry is explicit and only retries the index.
+  if (canonicalARoadCard.open && canonicalARoadCacheIndexAvailable && pending && !canonicalARoadLoadStarted) {
+    startCanonicalARoadLoading();
+  }
   requestCanonicalARoadCoverageRefresh();
 }
 
