@@ -843,3 +843,12 @@ main.app-ready[data-active-screen="progress"] .motorway-pct { color:#fff; }
 main.app-ready[data-active-screen="progress"] .unit-option { background:rgba(255,255,255,.1); color:#c2cde0; }
 main.app-ready[data-active-screen="progress"] .unit-option.active { background:#f7c450; color:#0b1c50; }
 main.app-ready[data-active-screen="progress"] .canonical-pagination button { background:rgba(255,255,255,.12); color:#fff; }
+
+
+/* Keep numerical travel-stat tiles legible against their pale card surface. */
+main.app-ready[data-active-screen="progress"] .travel-stat,
+main.app-ready[data-active-screen="progress"] .travel-stat span,
+main.app-ready[data-active-screen="progress"] .travel-stat strong {
+  color:#0b1c50;
+}
+main.app-ready[data-active-screen="progress"] .travel-stat span { color:#50617f; }
