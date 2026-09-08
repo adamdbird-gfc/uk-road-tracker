@@ -1261,6 +1261,9 @@ async function showSavedProgress() {
 }
 
 async function showDataSourceChoice(mode) {
+  // Wait for device-stored journey evidence before building the manual list,
+  // so imported A roads cannot briefly appear selectable after a reload.
+  if (mode==='manual') await mapArchiveReadyPromise;
   resetTrackingSession();
   onboardingMode = mode;
   document.querySelector('main')?.classList.toggle('manual-setup-active', mode === 'manual');
