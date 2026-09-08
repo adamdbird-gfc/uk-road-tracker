@@ -4379,8 +4379,10 @@ async function saveCanonicalARoadReference(road) {
 async function loadCanonicalARoadCacheIndex() {
   if (canonicalARoadCacheIndexPromise) return canonicalARoadCacheIndexPromise;
   canonicalARoadCacheIndexPromise=(async()=>{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
     try {
-      const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-store'});
+      const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-store',signal:controller.signal});
       if (!response.ok) throw new Error(`A-road cache index returned HTTP ${response.status}.`);
       const index=await response.json();
       if (index?.version!==CANONICAL_A_ROAD_CACHE_VERSION) throw new Error('A-road cache index has an incompatible version.');
@@ -4390,21 +4392,22 @@ async function loadCanonicalARoadCacheIndex() {
       canonicalARoadCacheIndexAvailable=true;
       canonicalARoadCacheIndexError=null;
     } catch (err) {
-      // The cache is built independently from the app. An absent index simply
-      // means there is nothing to request yet, not an error for every road.
       canonicalARoadCacheEntries.clear();
       canonicalARoadCacheIndexAvailable=false;
-      canonicalARoadCacheIndexError=err?.message || String(err);
-      // Allow an explicit retry instead of caching a transient failed fetch for
-      // the rest of this browser session.
+      canonicalARoadCacheIndexError=controller.signal.aborted
+        ? 'A-road cache index request timed out after 15 seconds.'
+        : (err?.message || String(err));
+      // Do not keep a transient failure forever: the retry button can make a
+      // fresh request after a connection or Pages deployment settles.
       canonicalARoadCacheIndexPromise=null;
-      console.info('A-road cache index is not available yet:',err);
+      console.info('A-road cache index is not available:',err);
+    } finally {
+      clearTimeout(timeout);
     }
     return canonicalARoadCacheEntries;
   })();
   return canonicalARoadCacheIndexPromise;
 }
-
 async function fetchCanonicalARoadWays(road) {
   const entry=canonicalARoadCacheEntries.get(road.key);
   if (!entry) throw new Error(`${road.ref} ${road.region==='NI'?'Northern Ireland ':''}reference is being prepared.`);
@@ -4738,7 +4741,11 @@ function renderCanonicalARoadMapLayers() {
     road.status==='ready' && canonicalARoadIntersectsMapBounds(road,bounds)
   );
   const visibleAnchors=roads.reduce((total,road)=>total+road.anchors.length,0);
-  const samplingStep=Math.max(1,Math.ceil(visibleAnchors/30000));
+  // National A-road geometry can run to millions of anchors. The map is a
+  // responsive preview, so scale its draw budget to the current zoom.
+  const zoom=map?.getZoom?.() || DEFAULT_MAP_ZOOM;
+  const anchorBudget=zoom<7 ? 2500 : zoom<9 ? 5000 : 9000;
+  const samplingStep=Math.max(1,Math.ceil(visibleAnchors/anchorBudget));
   for (const road of roads) {
     const runs={covered:[],uncovered:[]};
     let previous=null,current=null,currentKind=null;
