@@ -44,6 +44,7 @@ let persistedSavedAt = null;
 let persistedLegacyCutoffMs = null;
 const persistedProcessedJourneyIds = new Set();
 const persistedSeenJourneyIds = new Set();
+const excludedJourneyIds = new Set();
 let persistedSeenJourneyTrackingStarted = true;
 const persistedImportedFileHashes = new Set();
 let persistedFileHashTrackingStarted = true;
@@ -572,6 +573,7 @@ async function loadFootActivityArchive() {
 }
 
 async function saveFootActivities(activities) {
+  activities=activities.filter(activity=>!excludedJourneyIds.has(journeyIdentity(activity)));
   const database=await openMapArchiveDatabase();
   try {
     await new Promise((resolve,reject)=>{
@@ -621,7 +623,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3,4,5].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4,5,6].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -662,6 +664,9 @@ function loadLocalProgress() {
       hasSeenJourneyState || persistedProcessedJourneyIds.size === 0;
     for (const id of saved.seenJourneyIds || []) {
       if (typeof id==='string' && id) persistedSeenJourneyIds.add(id);
+    }
+    for (const id of saved.excludedJourneyIds || []) {
+      if (typeof id==='string' && id) excludedJourneyIds.add(id);
     }
     for (const id of persistedProcessedJourneyIds) persistedSeenJourneyIds.add(id);
     const hasFileHashState =
@@ -749,7 +754,7 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:5,
+      version:6,
       canonicalVersion:CANONICAL_CACHE_VERSION,
       savedAt:persistedSavedAt,
       distanceUnit,
@@ -759,6 +764,7 @@ function saveLocalProgressNow() {
       processedJourneyIds:[...persistedProcessedJourneyIds].sort(),
       seenJourneyTrackingStarted:persistedSeenJourneyTrackingStarted,
       seenJourneyIds:[...persistedSeenJourneyIds].sort(),
+      excludedJourneyIds:[...excludedJourneyIds].sort(),
       fileHashTrackingStarted:persistedFileHashTrackingStarted,
       importedFileHashes:[...persistedImportedFileHashes].sort(),
       motorwayContributionsByJourney:Object.fromEntries(
@@ -861,6 +867,7 @@ function recordJourneySeen(journey) {
 
 function journeyWasPreviouslyImported(journey) {
   const id=journeyIdentity(journey);
+  if (excludedJourneyIds.has(id)) return true;
   if (persistedProcessedJourneyIds.has(id)) return true;
   const timeMs=journeyTimestampMs(journey);
   return persistedLegacyCutoffMs!==null && timeMs!==null && timeMs<=persistedLegacyCutoffMs;
@@ -1986,7 +1993,10 @@ function renderJourneyLog() {
     const view=document.createElement('button');
     view.type='button'; view.textContent='View & refine';
     view.addEventListener('click',()=>openJourneyFocus(id,record.logType));
-    actions.append(rename,view);
+    const remove=document.createElement('button');
+    remove.type='button'; remove.className='secondary journey-log-remove'; remove.textContent='Remove';
+    remove.addEventListener('click',()=>deleteSavedJourney(id,record.logType));
+    actions.append(rename,view,remove);
     item.append(copy,actions);
     journeyLogList.append(item);
   }
@@ -2016,6 +2026,52 @@ async function renameSavedJourney(id,type='road') {
   } catch (err) {
     console.warn('Journey name could not be saved:',err);
     window.alert('The journey name could not be saved. Please try again.');
+  }
+}
+
+async function deleteSavedJourney(id,type='road') {
+  const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
+  const record=records.get(id);
+  if (!record) return;
+  const label=type==='foot' ? 'this on-foot activity' : 'this driving journey';
+  if (!window.confirm(`Remove ${label}? It will be excluded from future Timeline imports on this device.`)) return;
+  const excludedIds=Array.isArray(record.repeatJourneyIds) && record.repeatJourneyIds.length
+    ? record.repeatJourneyIds : [id];
+  for (const excludedId of excludedIds) {
+    if (!excludedId) continue;
+    excludedJourneyIds.add(excludedId);
+    persistedProcessedJourneyIds.delete(excludedId);
+    persistedSeenJourneyIds.delete(excludedId);
+    persistedJourneyMileageById.delete(excludedId);
+  }
+  try {
+    if (type==='foot') {
+      await footArchiveOperation('readwrite',store=>store.delete(id));
+      persistedFootActivities.delete(id);
+      footActivities=footActivities.filter(activity=>journeyIdentity(activity)!==id);
+      buildFootBatches();
+      renderFootQueue();
+    } else {
+      await mapArchiveOperation('readwrite',store=>store.delete(id));
+      persistedMapJourneys.delete(id);
+      persistedMotorwayContributionsByJourney.delete(id);
+      journeys=journeys.filter(journey=>journeyIdentity(journey)!==id);
+      canonicalCoverageDirty=true;
+      canonicalARoadCoverageDirty=true;
+      motorwayAggregateDirty=true;
+    }
+    if (focusedJourneyId===id) {
+      focusedJourneyId=null;
+      focusedJourneyType=null;
+      journeyFocusBar?.classList.add('hidden');
+    }
+    renderCollectiveStats();
+    renderJourneyLog();
+    renderMap();
+    scheduleLocalProgressSave();
+  } catch (err) {
+    console.warn('Journey could not be removed:',err);
+    window.alert('The journey could not be removed. Please try again.');
   }
 }
 
