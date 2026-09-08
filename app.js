@@ -243,6 +243,7 @@ const CANONICAL_A_ROAD_CACHE_VERSION = 'v4';
 const CANONICAL_A_ROAD_CACHE_ROOT = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}`;
 const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${encodeURIComponent(file)}`;
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
+const CANONICAL_A_ROAD_INDEX_STORAGE_KEY = `roadprints:canonical-a-road-index:${CANONICAL_A_ROAD_CACHE_VERSION}`;
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
@@ -4379,28 +4380,44 @@ async function saveCanonicalARoadReference(road) {
 async function loadCanonicalARoadCacheIndex() {
   if (canonicalARoadCacheIndexPromise) return canonicalARoadCacheIndexPromise;
   canonicalARoadCacheIndexPromise=(async()=>{
+    const useEntries=(entries,{cached=false}={})=>{
+      canonicalARoadCacheEntries=new Map(entries);
+      canonicalARoadCacheIndexAvailable=true;
+      canonicalARoadCacheIndexError=cached
+        ? 'Using the last verified A-road reference index while a network refresh is unavailable.'
+        : null;
+    };
+    const parseIndex=index=>Object.entries(index?.roads && typeof index.roads==='object' ? index.roads : {})
+      .filter(([key,value])=>parseARoadKey(key) && value && typeof value.file==='string');
+    let cachedEntries=[];
+    try {
+      cachedEntries=parseIndex(JSON.parse(localStorage.getItem(CANONICAL_A_ROAD_INDEX_STORAGE_KEY)||'{}'));
+    } catch (_) {
+      localStorage.removeItem(CANONICAL_A_ROAD_INDEX_STORAGE_KEY);
+    }
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),15000);
     try {
-      const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-store',signal:controller.signal});
+      const response=await fetch(CANONICAL_A_ROAD_CACHE_INDEX_URL,{cache:'no-cache',signal:controller.signal});
       if (!response.ok) throw new Error(`A-road cache index returned HTTP ${response.status}.`);
       const index=await response.json();
       if (index?.version!==CANONICAL_A_ROAD_CACHE_VERSION) throw new Error('A-road cache index has an incompatible version.');
-      const entries=Object.entries(index?.roads && typeof index.roads==='object' ? index.roads : {})
-        .filter(([key,value])=>parseARoadKey(key) && value && typeof value.file==='string');
-      canonicalARoadCacheEntries=new Map(entries);
-      canonicalARoadCacheIndexAvailable=true;
-      canonicalARoadCacheIndexError=null;
+      const entries=parseIndex(index);
+      if (!entries.length) throw new Error('A-road cache index contains no usable references.');
+      localStorage.setItem(CANONICAL_A_ROAD_INDEX_STORAGE_KEY,JSON.stringify(index));
+      useEntries(entries);
     } catch (err) {
-      canonicalARoadCacheEntries.clear();
-      canonicalARoadCacheIndexAvailable=false;
-      canonicalARoadCacheIndexError=controller.signal.aborted
-        ? 'A-road cache index request timed out after 15 seconds.'
-        : (err?.message || String(err));
-      // Do not keep a transient failure forever: the retry button can make a
-      // fresh request after a connection or Pages deployment settles.
-      canonicalARoadCacheIndexPromise=null;
-      console.info('A-road cache index is not available:',err);
+      if (cachedEntries.length) {
+        useEntries(cachedEntries,{cached:true});
+      } else {
+        canonicalARoadCacheEntries.clear();
+        canonicalARoadCacheIndexAvailable=false;
+        canonicalARoadCacheIndexError=controller.signal.aborted
+          ? 'A-road cache index request timed out after 15 seconds.'
+          : (err?.message || String(err));
+        canonicalARoadCacheIndexPromise=null;
+        console.info('A-road cache index is not available:',err);
+      }
     } finally {
       clearTimeout(timeout);
     }
