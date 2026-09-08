@@ -5046,7 +5046,17 @@ function activateRoadprintsScreen(screen) { const shell=document.querySelector('
 document.getElementById('appNavigation')?.addEventListener('click',event=>{const button=event.target.closest('[data-screen]');if(button)activateRoadprintsScreen(button.dataset.screen);});
 const aRoadBackgroundStatus=document.getElementById('aRoadBackgroundStatus'),aRoadBackgroundText=document.getElementById('aRoadBackgroundText');aRoadBackgroundStatus?.addEventListener('click',()=>activateRoadprintsScreen('progress'));
 new MutationObserver(()=>{if(!canonicalARoadStatus||!aRoadBackgroundStatus)return;const active=!canonicalARoadCard.classList.contains('hidden')&&!/ready|complete/i.test(canonicalARoadStatus.textContent||'');aRoadBackgroundStatus.classList.toggle('hidden',!active);if(active&&aRoadBackgroundText)aRoadBackgroundText.textContent=canonicalARoadStatus.textContent;}).observe(canonicalARoadStatus,{childList:true,characterData:true,subtree:true});
-function refreshARoadBackgroundStatus(){ if(!aRoadBackgroundStatus)return; const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map'; aRoadBackgroundStatus.classList.toggle('hidden',!mapOpen); if(aRoadBackgroundText){ const text=canonicalARoadStatus?.textContent?.trim(); aRoadBackgroundText.textContent='Road references are updating in the background'; } }
+function refreshARoadBackgroundStatus(){
+  if(!aRoadBackgroundStatus)return;
+  const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map';
+  const hasARoadData=typeof activeARoadKeys==='function' && activeARoadKeys().size>0;
+  const statusText=canonicalARoadStatus?.textContent?.trim() || '';
+  const workActive=canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning ||
+    (hasARoadData && !/ready|complete/i.test(statusText));
+  const visible=mapOpen && hasARoadData && workActive;
+  aRoadBackgroundStatus.classList.toggle('hidden',!visible);
+  if(visible && aRoadBackgroundText) aRoadBackgroundText.textContent='Road references are updating in the background';
+}
 const originalActivateRoadprintsScreen=activateRoadprintsScreen; activateRoadprintsScreen=function(screen){ originalActivateRoadprintsScreen(screen); refreshARoadBackgroundStatus(); };
 setTimeout(refreshARoadBackgroundStatus,0);
 
