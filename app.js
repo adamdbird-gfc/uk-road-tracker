@@ -4760,9 +4760,11 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
       ? `Building ${loading.length} A-road reference${loading.length===1?'':'s'}…`
       : errors.length
       ? `${ready.length} of ${roads.length} A-road references ready · ${errors.map(road=>`${road.region==='NI'?'NI ':''}${road.ref}: ${road.error || 'unavailable'}`).join(' · ')}`
-      : !canonicalARoadCacheIndexAvailable
-        ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
-        : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
+      : ready.length===roads.length
+        ? `${ready.length} of ${roads.length} A-road references ready.`
+        : !canonicalARoadCacheIndexAvailable
+          ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
+          : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
   // Reference loading is always explicit. Restoring an expanded panel must not
   // turn the 168-road cache into a startup task.
 
@@ -4838,7 +4840,7 @@ function renderCanonicalARoadMapLayers() {
     for (const [kind,paths] of Object.entries(runs)) {
       const covered=kind==='covered';
       L.polyline(paths.filter(path=>path.length>1),{
-        weight:5,opacity:1,color:covered?'#189447':'#d93a3a',
+        weight:7,opacity:1,color:covered?'#32c96b':'#d93a3a',
         pane:covered?'aRoadConfirmedPane':'aRoadUnconfirmedPane',interactive:false
       }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
     }
