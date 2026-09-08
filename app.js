@@ -847,7 +847,7 @@ function journeyTimestampMs(journey) {
 }
 
 function journeyIdentity(journey) {
-  return journey?.importId || journeyFingerprint(journey);
+  return journey?.id || journey?.importId || journeyFingerprint(journey);
 }
 
 function recordJourneySeen(journey) {
@@ -2813,8 +2813,11 @@ function initMap() {
       clearTimeout(mapGeometryRefreshTimer);
       mapGeometryRefreshTimer=setTimeout(()=>{
         renderMap({deferCalculations:true,preserveLive:true});
-        renderCanonicalMapLayers();
-        renderCanonicalARoadMapLayers();
+        if (focusedJourneyId) clearReferenceMapLayers();
+        else {
+          renderCanonicalMapLayers();
+          renderCanonicalARoadMapLayers();
+        }
       },80);
     });
 
@@ -3650,6 +3653,14 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
   persistedCoverageByRef.set(road.id,new Set(covered));
   scheduleLocalProgressSave();
   return covered;
+}
+
+function clearReferenceMapLayers() {
+  canonicalReferenceLayer?.clearLayers();
+  canonicalCoverageLayer?.clearLayers();
+  canonicalUncoveredLayer?.clearLayers();
+  canonicalARoadCoverageLayer?.clearLayers();
+  canonicalARoadUncoveredLayer?.clearLayers();
 }
 
 function renderCanonicalMapLayers() {
@@ -4761,7 +4772,11 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
   }
   if (!map || !creditedLayer) return;
 
-  renderCanonicalARoadMapLayers();
+  if (focusedJourneyId) {
+    clearReferenceMapLayers();
+  } else {
+    renderCanonicalARoadMapLayers();
+  }
 
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
@@ -4769,7 +4784,7 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
   const bounds=visibleMapBounds();
 
   const footPaths=[];
-  for (const activity of footActivities) {
+  for (const activity of (focusedJourneyId ? [] : footActivities)) {
     if (!activity.matchedGeoJson || !footLayer) continue;
     const activityId=journeyIdentity(activity);
     for (const [a,b] of geometrySegments(activity.matchedGeoJson)) {
@@ -5156,7 +5171,7 @@ document.getElementById('appNavigation')?.addEventListener('click',event=>{
 });
 closeJourneyFocus?.addEventListener('click',closeJourneyFocusView);
 const aRoadBackgroundStatus=document.getElementById('aRoadBackgroundStatus'),aRoadBackgroundText=document.getElementById('aRoadBackgroundText');aRoadBackgroundStatus?.addEventListener('click',()=>activateRoadprintsScreen('progress'));
-new MutationObserver(()=>{if(!canonicalARoadStatus||!aRoadBackgroundStatus)return;const active=!canonicalARoadCard.classList.contains('hidden')&&!/ready|complete/i.test(canonicalARoadStatus.textContent||'');aRoadBackgroundStatus.classList.toggle('hidden',!active);if(active&&aRoadBackgroundText)aRoadBackgroundText.textContent=canonicalARoadStatus.textContent;}).observe(canonicalARoadStatus,{childList:true,characterData:true,subtree:true});
+new MutationObserver(()=>refreshARoadBackgroundStatus()).observe(canonicalARoadStatus,{childList:true,characterData:true,subtree:true});
 function refreshARoadBackgroundStatus(){
   if(!aRoadBackgroundStatus)return;
   const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map';
