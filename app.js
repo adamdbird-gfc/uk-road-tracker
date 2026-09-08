@@ -4757,6 +4757,31 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
 
 }
 
+let canonicalARoadMapHydrationRunning=false;
+async function hydrateCanonicalARoadsForMap() {
+  if (canonicalARoadMapHydrationRunning || document.querySelector('main')?.dataset.activeScreen!=='map') return;
+  canonicalARoadMapHydrationRunning=true;
+  try {
+    const refs=[...activeARoadKeys()];
+    let hydrated=0;
+    for (const key of refs) {
+      if (document.querySelector('main')?.dataset.activeScreen!=='map') break;
+      const road=canonicalARoadState(key);
+      if (!road || road.status!=='ready' || road.anchors.length) continue;
+      const restored=await hydrateCanonicalARoadFromDevice(road);
+      if (!restored) continue;
+      hydrated++;
+      if (hydrated%6===0) {
+        renderCanonicalARoadMapLayers();
+        await new Promise(resolve=>setTimeout(resolve,0));
+      }
+    }
+    if (hydrated) renderCanonicalARoadMapLayers();
+  } finally {
+    canonicalARoadMapHydrationRunning=false;
+  }
+}
+
 function renderCanonicalARoadMapLayers() {
   // The completion list can finish in the background. Never build Leaflet
   // geometry while a full-screen panel is active: that blocks the footer.
@@ -5332,6 +5357,7 @@ function activateRoadprintsScreen(screen) {
     setTimeout(()=>{
       map?.invalidateSize();
       renderCanonicalARoadMapLayers();
+      void hydrateCanonicalARoadsForMap();
     },80);
   }
 }
