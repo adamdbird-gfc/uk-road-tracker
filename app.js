@@ -4345,7 +4345,15 @@ function canonicalARoadState(key) {
 }
 
 function canonicalARoadArchiveRecord(road) {
-  return {id:road.id,version:CANONICAL_A_ROAD_CACHE_VERSION,totalKm:road.totalKm,anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat,anchor.component || 0])};
+  // IndexedDB can retain positional coverage safely without making startup
+  // parse a national-scale list from localStorage.
+  return {
+    id:road.id,
+    version:CANONICAL_A_ROAD_CACHE_VERSION,
+    totalKm:road.totalKm,
+    anchors:road.anchors.map(anchor=>[anchor.lng,anchor.lat,anchor.component || 0]),
+    coverage:[...road.coveredAnchorIds].sort((a,b)=>a-b)
+  };
 }
 
 function canonicalARoadAnchors(points) {
@@ -4370,12 +4378,15 @@ async function hydrateCanonicalARoadFromDevice(road) {
   const anchors=canonicalARoadAnchors(stored.anchors);
   if (anchors.length<3) return false;
   road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
-  road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
+  const storedCoverage=Array.isArray(stored.coverage) ? stored.coverage : persistedARoadCoverageByRef.get(road.id) || [];
+  road.coveredAnchorIds=new Set([...storedCoverage]
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
   road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
   road.anchorCount=anchors.length;
   road.status='ready'; road.source='device';
-  road.coverageCalculated=false;
+  // Legacy archive entries have geometry only. Rebuild once, then persist the
+  // result in IndexedDB so subsequent map opens are immediate and green.
+  road.coverageCalculated=Array.isArray(stored.coverage);
   canonicalARoadCoverageDirty=true;
   return true;
 }
@@ -4770,10 +4781,14 @@ async function hydrateCanonicalARoadsForMap() {
       if (!road || road.status!=='ready' || road.anchors.length) continue;
       const restored=await hydrateCanonicalARoadFromDevice(road);
       if (!restored) continue;
+      if (!road.coverageCalculated) {
+        calculateCanonicalARoadCoverage(road,canonicalARoadDrawable());
+        void saveCanonicalARoadReference(road);
+      }
       hydrated++;
-      if (hydrated%6===0) {
+      if (hydrated%12===0) {
         renderCanonicalARoadMapLayers();
-        await new Promise(resolve=>setTimeout(resolve,0));
+        await new Promise(resolve=>setTimeout(resolve,16));
       }
     }
     if (hydrated) renderCanonicalARoadMapLayers();
