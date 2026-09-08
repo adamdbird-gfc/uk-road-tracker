@@ -819,7 +819,10 @@ function routeRepeatFingerprint(journey) {
     : '';
   const distance=Number(journey?.googleDistanceKm);
   const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*2)/2).toFixed(1) : '';
-  return [journey?.travelMode || 'ROAD', cell(first), cell(last), distanceBucket].join('|');
+  // A return journey covers the same route in the opposite direction.  Sort
+  // endpoints so A→B and B→A are recognised as one repeat pattern.
+  const [endpointA,endpointB]=[cell(first),cell(last)].sort();
+  return [journey?.travelMode || 'ROAD', endpointA, endpointB, distanceBucket].join('|');
 }
 
 function groupRepeatedJourneys(source) {
@@ -1960,8 +1963,8 @@ function renderJourneyLog() {
     const copy=document.createElement('div');
     const date=document.createElement('small');
     const modeLabel=record.logType==='foot'
-      ? (record.travelMode==='RUNNING' ? 'RUNNING' : 'ON FOOT')
-      : 'DRIVING';
+      ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT')
+      : '🚗 DRIVING';
     date.textContent=modeLabel+' · '+(record.start ? formatDate(record.start) : 'Saved journey')+
       (record.start ? ' · '+formatTime(record.start) : '');
     const title=document.createElement('strong');
