@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260907-status-gap" />
+  <link rel="stylesheet" href="styles.css?v=20260908-manual-setup" />
 </head>
 <body>
   <main>
@@ -75,12 +75,12 @@
     <section id="manualMotorwayCard" class="card hidden">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Manual setup</p>
-          <h2>2. Which motorways have you driven on?</h2>
+          <p class="eyebrow">Manual motorway setup</p>
+          <h2>Which motorways have you driven on?</h2>
         </div>
-        <button id="changeManualSource" class="text-button" type="button">Change answer</button>
+        <button id="changeManualSource" class="text-button close-button" type="button" aria-label="Close manual setup">Close</button>
       </div>
-      <p class="muted">Choose from the separate Great Britain and Northern Ireland motorway lists. Each new selection starts as fully driven and can then be refined section by section.</p>
+      <p class="muted">Select every motorway you have driven on. You can refine individual sections on the map afterwards.</p>
       <div class="manual-actions">
         <button id="selectAllMotorways" class="secondary" type="button">Select all</button>
         <button id="clearAllMotorways" class="secondary" type="button">Clear all</button>
