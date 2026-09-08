@@ -4831,7 +4831,13 @@ function renderCanonicalARoadMapLayers() {
     for (let index=0; index<road.anchors.length; index+=samplingStep) {
       const anchor=road.anchors[index];
       const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
-      const continuous=previous && previous.component===anchor.component && haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat])<=Math.max(250,samplingStep*150);
+      const gap=previous ? haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat]) : Infinity;
+      // OS Open Roads stores successive links as separate components. At the
+      // overview zoom, safely stitch close endpoints so national routes read
+      // as lines rather than isolated dots; retain strict topology close in.
+      const overviewJoin=zoom<7 && gap<=1500;
+      const continuous=previous && (overviewJoin || previous.component===anchor.component) &&
+        gap<=Math.max(250,Math.min(1500,samplingStep*150));
       const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
       if (!visible) { current=null; previous=anchor; continue; }
       if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
