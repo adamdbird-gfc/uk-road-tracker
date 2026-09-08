@@ -88,6 +88,7 @@ let canonicalLoadQueueRunning = false;
 let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
 let focusedJourneyId = null;
+let focusedJourneyType = null;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 // The live map is a progress cue, not the durable full-detail renderer. Keep
 // its work deliberately sparse so a large import never makes page scrolling
@@ -1937,9 +1938,10 @@ function savedRoadRecords() {
 
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
-  const records=savedRoadRecords()
-    .filter(record=>record?.matchedGeoJson)
-    .sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
+  const records=[
+    ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({...record,logType:'road'})),
+    ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'}))
+  ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
   const hasData=shouldShowDataDashboard() && records.length>0;
   journeyLogCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
@@ -1954,10 +1956,13 @@ function renderJourneyLog() {
   for (const record of records.slice(0,50)) {
     const id=journeyIdentity(record);
     const item=document.createElement('article');
-    item.className='journey-log-item';
+    item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : '');
     const copy=document.createElement('div');
     const date=document.createElement('small');
-    date.textContent=(record.start ? formatDate(record.start) : 'Saved journey')+
+    const modeLabel=record.logType==='foot'
+      ? (record.travelMode==='RUNNING' ? 'RUNNING' : 'ON FOOT')
+      : 'DRIVING';
+    date.textContent=modeLabel+' · '+(record.start ? formatDate(record.start) : 'Saved journey')+
       (record.start ? ' · '+formatTime(record.start) : '');
     const title=document.createElement('strong');
     title.textContent=record.title || 'Untitled journey';
@@ -1974,28 +1979,36 @@ function renderJourneyLog() {
     actions.className='journey-log-actions';
     const rename=document.createElement('button');
     rename.type='button'; rename.className='secondary'; rename.textContent='Rename';
-    rename.addEventListener('click',()=>renameSavedJourney(id));
+    rename.addEventListener('click',()=>renameSavedJourney(id,record.logType));
     const view=document.createElement('button');
     view.type='button'; view.textContent='View & refine';
-    view.addEventListener('click',()=>openJourneyFocus(id));
+    view.addEventListener('click',()=>openJourneyFocus(id,record.logType));
     actions.append(rename,view);
     item.append(copy,actions);
     journeyLogList.append(item);
   }
 }
 
-async function renameSavedJourney(id) {
-  const record=persistedMapJourneys.get(id);
+async function renameSavedJourney(id,type='road') {
+  const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
+  const record=records.get(id);
   if (!record) return;
   const proposed=window.prompt('Name this journey',record.title || '');
   if (proposed===null) return;
   const title=proposed.trim();
   const updated={...record,title};
   try {
-    await mapArchiveOperation('readwrite',store=>store.put(updated));
-    persistedMapJourneys.set(id,updated);
-    const inSession=journeys.find(journey=>journeyIdentity(journey)===id);
-    if (inSession) inSession.title=title;
+    if (type==='foot') {
+      await footArchiveOperation('readwrite',store=>store.put(updated));
+      persistedFootActivities.set(id,updated);
+      const inSession=footActivities.find(activity=>journeyIdentity(activity)===id);
+      if (inSession) inSession.title=title;
+    } else {
+      await mapArchiveOperation('readwrite',store=>store.put(updated));
+      persistedMapJourneys.set(id,updated);
+      const inSession=journeys.find(journey=>journeyIdentity(journey)===id);
+      if (inSession) inSession.title=title;
+    }
     renderJourneyLog();
   } catch (err) {
     console.warn('Journey name could not be saved:',err);
@@ -2003,15 +2016,18 @@ async function renameSavedJourney(id) {
   }
 }
 
-function openJourneyFocus(id) {
-  const record=persistedMapJourneys.get(id);
+function openJourneyFocus(id,type='road') {
+  const record=(type==='foot' ? persistedFootActivities : persistedMapJourneys).get(id);
   if (!record) return;
-  if (!journeys.some(journey=>journeyIdentity(journey)===id)) journeys.push(hydrateMapJourney(record));
+  if (type==='road' && !journeys.some(journey=>journeyIdentity(journey)===id)) journeys.push(hydrateMapJourney(record));
   focusedJourneyId=id;
+  focusedJourneyType=type;
   journeyFocusBar?.classList.remove('hidden');
   activateRoadprintsScreen('map');
   renderMap();
-  const journey=journeys.find(candidate=>journeyIdentity(candidate)===id) || hydrateMapJourney(record);
+  const journey=type==='foot'
+    ? (footActivities.find(candidate=>journeyIdentity(candidate)===id) || record)
+    : (journeys.find(candidate=>journeyIdentity(candidate)===id) || hydrateMapJourney(record));
   const points=(journey.points || []).filter(validPoint);
   setTimeout(()=>{
     if (map && window.L && points.length>1) {
@@ -2023,6 +2039,7 @@ function openJourneyFocus(id) {
 
 function closeJourneyFocusView() {
   focusedJourneyId=null;
+  focusedJourneyType=null;
   journeyFocusBar?.classList.add('hidden');
   renderMap();
   activateRoadprintsScreen('journeys');
@@ -2033,6 +2050,9 @@ function savedOnFootRecords() {
 }
 
 function editableMappedActivities() {
+  if (focusedJourneyId && focusedJourneyType==='foot') {
+    return savedOnFootRecords().filter(record=>journeyIdentity(record)===focusedJourneyId);
+  }
   const roads=focusedJourneyId
     ? savedRoadRecords().filter(record=>journeyIdentity(record)===focusedJourneyId)
     : savedRoadRecords();
@@ -4748,9 +4768,9 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
   const allDrawable = journeys.filter(
     j => j.selected && j.points.length > 1
   );
-  const drawable=focusedJourneyId
+  const drawable=focusedJourneyId && focusedJourneyType==='road'
     ? allDrawable.filter(journey=>journeyIdentity(journey)===focusedJourneyId)
-    : allDrawable;
+    : focusedJourneyId ? [] : allDrawable;
   journeyFocusBar?.classList.toggle('hidden',!focusedJourneyId);
 
   // Keep the lightweight summary cards available before the user opts in to
@@ -4793,7 +4813,10 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
   const bounds=visibleMapBounds();
 
   const footPaths=[];
-  for (const activity of (focusedJourneyId ? [] : footActivities)) {
+  const visibleFootActivities=focusedJourneyId
+    ? (focusedJourneyType==='foot' ? footActivities.filter(activity=>journeyIdentity(activity)===focusedJourneyId) : [])
+    : footActivities;
+  for (const activity of visibleFootActivities) {
     if (!activity.matchedGeoJson || !footLayer) continue;
     const activityId=journeyIdentity(activity);
     for (const [a,b] of geometrySegments(activity.matchedGeoJson)) {
@@ -5173,6 +5196,7 @@ document.getElementById('appNavigation')?.addEventListener('click',event=>{
   if(!button) return;
   if(button.dataset.screen==='map' && focusedJourneyId) {
     focusedJourneyId=null;
+    focusedJourneyType=null;
     journeyFocusBar?.classList.add('hidden');
     renderMap();
   }
