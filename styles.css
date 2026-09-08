@@ -889,3 +889,5 @@ main.app-ready[data-active-screen="journeys"] > #journeyLogCard .muted { color:#
 .journey-focus-bar span { font-size:.78rem; font-weight:800; }
 .journey-focus-bar button { min-height:34px; padding:6px 9px; border:0; border-radius:6px; background:#f7c450; color:#0b1c50; font-size:.72rem; font-weight:850; }
 @media (max-width:560px) { .journey-log-item { display:grid; } .journey-log-actions { width:100%; } }
+
+main.app-ready[data-active-screen="journeys"] > #journeyLogCard.hidden { display:none !important; }
