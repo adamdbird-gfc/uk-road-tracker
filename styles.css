@@ -917,3 +917,15 @@ main.app-ready[data-active-screen="progress"] .a-road-canonical-details .canonic
 main.app-ready[data-active-screen="progress"] .a-road-canonical-details .canonical-road-meta {
   margin-top:8px;
 }
+
+
+/* Removing a logged activity is deliberate but should remain easy to reach. */
+.journey-log-actions .journey-log-remove {
+  grid-column:1 / -1;
+  min-height:34px;
+  border:0;
+  background:transparent;
+  color:#f1b1ac;
+  font-size:.7rem;
+  text-decoration:underline;
+}
