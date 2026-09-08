@@ -595,3 +595,25 @@ main.app-ready[data-active-screen="map"] .a-road-background-status.hidden { disp
 
 /* Match the status card's footer gap to its 18px side insets. */
 main.app-ready .a-road-background-status { bottom:126px; }
+
+
+/* Focused manual motorway setup. */
+main.manual-setup-active { min-height:100svh; padding:0; background:#0b1c50; }
+main.manual-setup-active > :not(#manualMotorwayCard) { display:none !important; }
+#manualMotorwayCard { max-width:760px; }
+main.manual-setup-active #manualMotorwayCard { display:block; min-height:100svh; margin:0; padding:40px 28px 48px; border:0; border-radius:0; background:linear-gradient(145deg,#193064,#0b1c50); color:#f3f6f7; box-shadow:none; }
+main.manual-setup-active #manualMotorwayCard .eyebrow { color:#2cb9a6; }
+main.manual-setup-active #manualMotorwayCard h2 { margin:0; color:#fff; font-size:clamp(1.75rem,7vw,2.45rem); line-height:1.1; }
+main.manual-setup-active #manualMotorwayCard > .muted { margin:18px 0 24px; color:#c2cde0; font-size:1rem; line-height:1.5; }
+main.manual-setup-active #manualMotorwayCard .close-button { color:#c2cde0; }
+main.manual-setup-active #manualMotorwayCard .close-button:hover { color:#fff; }
+main.manual-setup-active .manual-actions { margin:0 0 24px; }
+main.manual-setup-active .manual-actions .secondary { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.15); }
+main.manual-setup-active .manual-actions .secondary:first-child { background:#2cb9a6; color:#09224c; border-color:#2cb9a6; }
+main.manual-setup-active .manual-actions strong { color:#69ddcc; }
+main.manual-setup-active .motorway-region-heading h3 { color:#fff; }
+main.manual-setup-active .motorway-region-heading span { color:#c2cde0; }
+main.manual-setup-active .manual-motorway-option { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.07); color:#fff; }
+main.manual-setup-active .manual-motorway-option:has(input:checked) { border-color:#2cb9a6; background:rgba(44,185,166,.2); color:#fff; }
+main.manual-setup-active .manual-motorway-option input { accent-color:#2cb9a6; }
+@media (min-width:760px) { main.manual-setup-active #manualMotorwayCard { margin:auto; min-height:100svh; padding:56px 42px; } }
