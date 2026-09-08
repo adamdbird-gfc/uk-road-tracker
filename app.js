@@ -4482,6 +4482,11 @@ async function ensureCanonicalARoadsForDiscoveredRefs(refs,{limit=12}={}) {
     canonicalARoadQueueRunning=false;
     canonicalARoadCoverageDirty=false;
     renderCanonicalARoadDashboard();
+    // Loads in this worker deliberately defer per-road Leaflet rendering.
+    // Commit the finished batch once so ready A-road references actually
+    // become visible on the map.
+    renderCanonicalARoadMapLayers();
+    refreshARoadBackgroundStatus();
     scheduleLocalProgressSave();
   }
 }
@@ -5211,8 +5216,11 @@ new MutationObserver(()=>refreshARoadBackgroundStatus()).observe(canonicalARoadS
 function refreshARoadBackgroundStatus(){
   if(!aRoadBackgroundStatus)return;
   const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map';
-  const hasARoadData=typeof activeARoadKeys==='function' && activeARoadKeys().size>0;
-  const visible=mapOpen && hasARoadData;
+  const keys=typeof activeARoadKeys==='function' ? [...activeARoadKeys()] : [];
+  const states=typeof canonicalARoadState==='function' ? keys.map(canonicalARoadState).filter(Boolean) : [];
+  const stillWorking=canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning ||
+    states.some(road=>road.status==='idle' || road.status==='loading');
+  const visible=mapOpen && keys.length>0 && stillWorking;
   aRoadBackgroundStatus.classList.toggle('hidden',!visible);
   if(visible && aRoadBackgroundText) aRoadBackgroundText.textContent='Road references are updating in the background';
 }
