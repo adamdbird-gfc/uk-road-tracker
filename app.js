@@ -4649,8 +4649,19 @@ function canonicalARoadDrawable() {
   return journeys.filter(journey=>journey.selected && journey.points.length>1);
 }
 
+function isStarterCanonicalARoadKey(key) {
+  const parsed=parseARoadKey(key);
+  // The POC reference network intentionally starts with A1–A99. Higher
+  // numbered A roads still count in raw mileage but do not yet have a
+  // completion reference or map overlay.
+  return Boolean(parsed && /^A\d{1,2}$/.test(parsed.ref));
+}
+
 function activeARoadKeys(drawable=canonicalARoadDrawable()) {
-  return new Set([...aRoadStats(drawable).map(road=>road.key),...manualARoadRefs]);
+  return new Set(
+    [...aRoadStats(drawable).map(road=>road.key),...manualARoadRefs]
+      .filter(isStarterCanonicalARoadKey)
+  );
 }
 
 function canonicalARoadPageKeys(drawable=canonicalARoadDrawable()) {
@@ -4738,6 +4749,7 @@ function renderCanonicalARoadMapLayers() {
   canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
   const bounds=visibleMapBounds();
   const roads=[...canonicalARoads.values()].filter(road=>
+    isStarterCanonicalARoadKey(road.key) &&
     road.status==='ready' && canonicalARoadIntersectsMapBounds(road,bounds)
   );
   const visibleAnchors=roads.reduce((total,road)=>total+road.anchors.length,0);
