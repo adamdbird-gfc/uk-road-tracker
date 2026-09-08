@@ -19,7 +19,7 @@ DOWNLOAD_URL = "https://api.os.uk/downloads/v1/products/OpenRoads/downloads?area
 SAMPLE_M = 100
 # Newly opened routes can appear in OpenStreetMap before the next OS Open Roads
 # release. These fallbacks are resolved only while building the static cache.
-OSM_FALLBACK_REFS = ("A1026",)
+OSM_FALLBACK_BOUNDS = {"A1026":"51.47,-0.04,51.54,0.08"}
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 def download_source():
@@ -118,10 +118,10 @@ def geodesic_length_m(line):
 
 def load_osm_fallback_links(ref):
     """Fetch a short-lived reference gap from OSM for the static build only."""
+    bounds=OSM_FALLBACK_BOUNDS[ref]
     query=(
-        '[out:json][timeout:120];'
-        'area["ISO3166-1"="GB"][admin_level=2]->.gb;'
-        f'way(area.gb)["highway"]["ref"~"(^|;){ref}(;|$)"];'
+        '[out:json][timeout:60];'
+        f'way["highway"]["ref"~"(^|;){ref}(;|$)"]({bounds});'
         'out geom;'
     )
     request=urllib.request.Request(
@@ -140,7 +140,7 @@ def load_osm_fallback_links(ref):
     return links
 
 def add_osm_fallbacks(roads):
-    for ref in OSM_FALLBACK_REFS:
+    for ref in OSM_FALLBACK_BOUNDS:
         if roads.get(ref): continue
         print(f"OS Open Roads has no {ref}; building its static fallback from OpenStreetMap…")
         links=load_osm_fallback_links(ref)
