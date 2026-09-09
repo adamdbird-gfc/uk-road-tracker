@@ -149,6 +149,48 @@ def add_osm_fallbacks(roads):
         roads[ref]=links
     return roads
 
+def stitch_links(links):
+    """Join adjacent RoadLinks into maximal continuous paths.
+
+    RoadLinks split at every junction, but their end coordinates are
+    topological.  Joining degree-two endpoints here retains the road shape
+    without asking the browser to guess across unrelated links.
+    """
+    lines=[line for _,line in links if len(line)>=2]
+    if not lines: return []
+    def endpoint_key(point):
+        return (round(point[0],6),round(point[1],6))
+    adjacency={}
+    for index,line in enumerate(lines):
+        adjacency.setdefault(endpoint_key(line[0]),[]).append((index,False))
+        adjacency.setdefault(endpoint_key(line[-1]),[]).append((index,True))
+    used=set()
+    def walk(index,at_end):
+        line=list(reversed(lines[index])) if at_end else list(lines[index])
+        used.add(index)
+        output=line
+        current_key=endpoint_key(output[-1])
+        while len(adjacency.get(current_key,[]))==2:
+            next_link=next((item for item in adjacency[current_key] if item[0] not in used),None)
+            if not next_link: break
+            next_index,next_at_end=next_link
+            next_line=list(reversed(lines[next_index])) if next_at_end else list(lines[next_index])
+            used.add(next_index)
+            output.extend(next_line[1:])
+            current_key=endpoint_key(output[-1])
+        return output
+    # Start at junctions/endpoints so each straight chain is represented once.
+    for index,line in enumerate(lines):
+        if index in used: continue
+        start_key,end_key=endpoint_key(line[0]),endpoint_key(line[-1])
+        if len(adjacency[start_key])!=2:
+            yield walk(index,False)
+        elif len(adjacency[end_key])!=2:
+            yield walk(index,True)
+    # Remaining links are closed loops where every endpoint has degree two.
+    for index in range(len(lines)):
+        if index not in used: yield walk(index,False)
+
 def build(roads):
     OUT.mkdir(exist_ok=True); index={"version":"v5","region":"GB","roads":{},"failures":{},"source":"OS Open Roads"}
     for ref,links in sorted(roads.items(),key=lambda item:(int(item[0][1:]),item[0])):
@@ -156,7 +198,7 @@ def build(roads):
         # Flattening all points discarded topology in the browser and caused
         # short links to disappear during zoom-level sampling.
         paths=[]
-        for component,(_,line) in enumerate(links):
+        for component,line in enumerate(stitch_links(links)):
             sampled=[[*point,component] for point in sample_line(line)]
             if len(sampled)>=2: paths.append(sampled)
         anchor_count=sum(len(path) for path in paths)
