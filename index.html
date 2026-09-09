@@ -449,13 +449,13 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260909-roadside-pack-v31"></script>
+  <script src="app.js?v=20260909-roadside-pack-v32"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
   <script>
     // Keep the welcome screen in sync with Roadprints' IndexedDB archives even
     // when a reference-cache migration makes the normal progress summary wait.
     (() => {
-      const reveal = () => document.getElementById('localProgressNotice')?.classList.remove('hidden');
+      const reveal = () => { document.querySelector('main')?.classList.add('has-saved-progress'); document.getElementById('localProgressNotice')?.classList.remove('hidden'); };
       try {
         if (localStorage.getItem('uk-road-tracker-progress-v1')) reveal();
       } catch {}
