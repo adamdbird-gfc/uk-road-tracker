@@ -4835,9 +4835,9 @@ function renderCanonicalARoadMapLayers() {
       // OS Open Roads stores successive links as separate components. At the
       // overview zoom, safely stitch close endpoints so national routes read
       // as lines rather than isolated dots; retain strict topology close in.
-      const overviewJoin=zoom<7 && gap<=1500;
+      const overviewJoin=zoom<7 && gap<=5000;
       const continuous=previous && (overviewJoin || previous.component===anchor.component) &&
-        gap<=Math.max(250,Math.min(1500,samplingStep*150));
+        gap<=Math.max(250,Math.min(5000,samplingStep*200));
       const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
       if (!visible) { current=null; previous=anchor; continue; }
       if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
