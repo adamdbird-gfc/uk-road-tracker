@@ -643,16 +643,22 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3,4,5,6,7].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4,5,6,7].includes(saved.version)) return;
+    const canonicalCacheCompatible=saved.canonicalVersion===CANONICAL_CACHE_VERSION;
 
-    for (const [id,ids] of Object.entries(saved.coverage || {})) {
-      if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
-    }
-    for (const [id,summary] of Object.entries(saved.aRoadReferenceSummary || {})) {
-      if (!summary || !Number.isFinite(Number(summary.totalKm)) || !Number.isFinite(Number(summary.anchorCount))) continue;
-      persistedARoadReferenceSummary.set(id,{
-        totalKm:Number(summary.totalKm),anchorCount:Number(summary.anchorCount),coveredCount:Number(summary.coveredCount || 0)
-      });
+    // A cache revision must never make a user's journey history disappear.
+    // Retain ordinary saved progress; only reuse coverage geometry when it was
+    // created against this same canonical reference version.
+    if (canonicalCacheCompatible) {
+      for (const [id,ids] of Object.entries(saved.coverage || {})) {
+        if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
+      }
+      for (const [id,summary] of Object.entries(saved.aRoadReferenceSummary || {})) {
+        if (!summary || !Number.isFinite(Number(summary.totalKm)) || !Number.isFinite(Number(summary.anchorCount))) continue;
+        persistedARoadReferenceSummary.set(id,{
+          totalKm:Number(summary.totalKm),anchorCount:Number(summary.anchorCount),coveredCount:Number(summary.coveredCount || 0)
+        });
+      }
     }
     // A-road anchor coverage is deliberately not restored from localStorage.
     // At national scale it can contain hundreds of thousands of positional
