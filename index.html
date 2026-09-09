@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260909-roadside-pack-v10" />
+  <link rel="stylesheet" href="styles.css?v=20260908-journey-removal-v8" />
 </head>
 <body>
   <main>
@@ -159,37 +159,6 @@
       </div>
       <div id="achievementList" class="achievement-list"></div>
     </section>
-
-    <section id="roadsideCollectionCard" data-app-screen="achievements" class="card roadside-collection-card hidden" aria-labelledby="roadsideCollectionTitle">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Roadprints Collections</p>
-          <h2 id="roadsideCollectionTitle">UK motorway services</h2>
-        </div>
-        <strong id="roadsideCollectionStatus" class="roadside-collection-status">Locked</strong>
-      </div>
-      <p id="roadsideCollectionProgress" class="muted">Collect every motorway service area from the confirmed stops in your Timeline.</p>
-      <ul id="roadsideCollectionVisits" class="roadside-collection-visits"></ul>
-      <button id="openRoadsidePack" type="button">Unlock Roadside Pack</button>
-    </section>
-
-    <div id="roadsidePackPreview" class="collection-unlock-modal hidden" role="dialog" aria-modal="true" aria-labelledby="roadsidePackPreviewTitle">
-      <section class="collection-unlock-sheet">
-        <p class="eyebrow">Purchase preview</p>
-        <h2 id="roadsidePackPreviewTitle">Roadside Pack</h2>
-        <p>Turn confirmed Timeline stops into a collection of UK motorway service areas.</p>
-        <ul>
-          <li>One tick per service area, regardless of direction or bridge access.</li>
-          <li>Confirmed stops only — passing along a motorway never earns a visit.</li>
-          <li>Collection progress and future roadside achievements.</li>
-        </ul>
-        <p class="muted">This POC does not process payment. Unlocking only simulates a purchased entitlement on this device.</p>
-        <div class="actions">
-          <button id="unlockRoadsidePackForTesting" type="button">Unlock for testing</button>
-          <button id="closeRoadsidePackPreview" type="button" class="secondary">Not now</button>
-        </div>
-      </section>
-    </div>
 
     <section id="journeyLogCard" data-app-screen="journeys" class="card journey-log-card hidden" aria-labelledby="journeyLogTitle">
       <div class="section-heading">
@@ -449,31 +418,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260909-roadside-pack-v32"></script>
+  <script src="app.js?v=20260909-progressive-journey-log-v26"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
-  <script>
-    // Keep the welcome screen in sync with Roadprints' IndexedDB archives even
-    // when a reference-cache migration makes the normal progress summary wait.
-    (() => {
-      const reveal = () => { document.querySelector('main')?.classList.add('has-saved-progress'); document.getElementById('localProgressNotice')?.classList.remove('hidden'); };
-      try {
-        if (localStorage.getItem('uk-road-tracker-progress-v1')) reveal();
-      } catch {}
-      if (!('indexedDB' in window)) return;
-      const request = indexedDB.open('roadprints-map-archive', 4);
-      request.onsuccess = () => {
-        const db = request.result;
-        const stores = ['journeys', 'foot-activities'].filter(name => db.objectStoreNames.contains(name));
-        if (!stores.length) { db.close(); return; }
-        const transaction = db.transaction(stores, 'readonly');
-        let found = false;
-        for (const name of stores) {
-          const count = transaction.objectStore(name).count();
-          count.onsuccess = () => { if (count.result > 0) found = true; };
-        }
-        transaction.oncomplete = () => { if (found) reveal(); db.close(); };
-      };
-    })();
-  </script>
 </body>
 </html>
