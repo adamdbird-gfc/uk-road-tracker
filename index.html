@@ -449,7 +449,31 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260909-roadside-pack-v30"></script>
+  <script src="app.js?v=20260909-roadside-pack-v31"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
+  <script>
+    // Keep the welcome screen in sync with Roadprints' IndexedDB archives even
+    // when a reference-cache migration makes the normal progress summary wait.
+    (() => {
+      const reveal = () => document.getElementById('localProgressNotice')?.classList.remove('hidden');
+      try {
+        if (localStorage.getItem('uk-road-tracker-progress-v1')) reveal();
+      } catch {}
+      if (!('indexedDB' in window)) return;
+      const request = indexedDB.open('roadprints-map-archive', 4);
+      request.onsuccess = () => {
+        const db = request.result;
+        const stores = ['journeys', 'foot-activities'].filter(name => db.objectStoreNames.contains(name));
+        if (!stores.length) { db.close(); return; }
+        const transaction = db.transaction(stores, 'readonly');
+        let found = false;
+        for (const name of stores) {
+          const count = transaction.objectStore(name).count();
+          count.onsuccess = () => { if (count.result > 0) found = true; };
+        }
+        transaction.oncomplete = () => { if (found) reveal(); db.close(); };
+      };
+    })();
+  </script>
 </body>
 </html>
