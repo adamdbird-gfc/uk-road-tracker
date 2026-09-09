@@ -374,7 +374,7 @@ function updateDataDeletionControls() {
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=roadCount>0 || persistedManualRefs.size>0 || persistedManualARoadRefs.size>0 || journeyCount>0 || persistedFootActivities.size>0;
+  const hasProgress=hasSavedDashboardProgress();
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
@@ -1322,10 +1322,20 @@ function resetTrackingSession() {
   }
 }
 
+function hasSavedDashboardProgress() {
+  return Boolean(
+    persistedCoverageByRef.size ||
+    persistedManualRefs.size ||
+    persistedManualARoadRefs.size ||
+    persistedMapJourneys.size ||
+    persistedFootActivities.size ||
+    persistedConfirmedTimelineVisits.size
+  );
+}
+
 async function showSavedProgress() {
   await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
-  if (!persistedCoverageByRef.size && !persistedManualRefs.size && !persistedManualARoadRefs.size &&
-      !persistedMapJourneys.size && !persistedFootActivities.size) return;
+  if (!hasSavedDashboardProgress()) return;
 
   resetTrackingSession();
   for (const id of persistedManualRefs) manualMotorwayRefs.add(id);
@@ -1393,10 +1403,13 @@ function returnToOnboarding() {
   document.querySelector('main')?.classList.remove('manual-setup-active');
   resetTrackingSession();
   onboardingMode = null;
+  roadsideCollectionCard?.classList.add('hidden');
+  closeRoadsidePackPreview();
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   manualMotorwayCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
+  updateLocalProgressNotice();
 }
 
 function setAllManualMotorways(selected) {
@@ -2374,11 +2387,17 @@ function matchedMotorwayServiceVisits() {
 
 function renderRoadsideCollection() {
   if (!roadsideCollectionCard) return;
-  const hasData=shouldShowDataDashboard() && (
+  const shell=document.querySelector('main');
+  const isAchievementsScreen=shell?.classList.contains('app-ready') &&
+    shell.dataset.activeScreen==='achievements';
+  const hasData=isAchievementsScreen && shouldShowDataDashboard() && (
     persistedMapJourneys.size || persistedConfirmedTimelineVisits.size
   );
   roadsideCollectionCard.classList.toggle('hidden',!hasData);
-  if (!hasData) return;
+  if (!hasData) {
+    closeRoadsidePackPreview();
+    return;
+  }
 
   if (!roadsidePackUnlocked) {
     roadsideCollectionStatus.textContent='Locked · one-off collection pack';
@@ -2428,7 +2447,11 @@ function renderAchievements() {
     persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size || persistedManualARoadRefs.size
   );
   achievementsCard.classList.toggle('hidden',!hasData);
-  if (!hasData) return;
+  if (!hasData) {
+    roadsideCollectionCard?.classList.add('hidden');
+    closeRoadsidePackPreview();
+    return;
+  }
   renderRoadsideCollection();
 
   const earnedCount=ROADPRINTS_ACHIEVEMENTS.filter(definition=>persistedAchievements.has(definition.id)).length;
@@ -5627,6 +5650,7 @@ function activateRoadprintsScreen(screen) {
   shell.dataset.activeScreen=screen;
   nav.classList.remove('hidden');
   nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
+  if (screen==='achievements') renderAchievements();
   if(screen==='map') {
     setTimeout(()=>{
       map?.invalidateSize();
