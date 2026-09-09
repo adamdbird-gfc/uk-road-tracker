@@ -9,7 +9,10 @@ const mustContain=[
   'coverage:[...road.coveredAnchorIds].sort((a,b)=>a-b)',
   'const storedCoverage=Array.isArray(stored.coverage)',
   "const anchorBudget=zoom<7 ? 18000 : zoom<9 ? 24000 : 30000;",
-  "const overviewJoin=zoom<7 && gap<=5000;",
+  "function canonicalARoadGeometry(paths,fallbackAnchors=[])",
+  "function sampledCanonicalARoadPath(path,stride)",
+  "short link can never become a dot",
+  "lineCap:'round',lineJoin:'round'",
   "color:covered?'#32c96b':'#d93a3a'",
   "dataset.activeScreen!=='map'",
   'async function hydrateCanonicalARoadsForMap()'
