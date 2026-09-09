@@ -6,6 +6,7 @@ party while somebody is using the map. A Timeline visit can then be matched
 against a known service-area point as confirmed collection evidence.
 """
 import json
+import math, re
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
@@ -54,8 +55,54 @@ def is_near_motorway(lat,lng,index,cell_size):
     for dx in (-1,0,1):
         for dy in (-1,0,1):
             for mx,my in index.get((cell[0]+dx,cell[1]+dy),()):
-                if (x-mx)**2+(y-my)**2 <= 950**2: return True
+                if (x-mx)**2+(y-my)**2 <= 650**2: return True
     return False
+
+def haversine_m(a,b):
+    lat1,lng1,lat2,lng2=map(math.radians,[a[0],a[1],b[0],b[1]])
+    dlat,dlng=lat2-lat1,lng2-lng1
+    value=math.sin(dlat/2)**2+math.cos(lat1)*math.cos(lat2)*math.sin(dlng/2)**2
+    return 2*6371000*math.atan2(math.sqrt(value),math.sqrt(1-value))
+
+def collection_name(value):
+    value=re.sub(r"\b(northbound|southbound|eastbound|westbound|north|south|east|west)\b","",value.casefold())
+    value=re.sub(r"\b(service station|services|service area)\b","",value)
+    return re.sub(r"[^a-z0-9]+"," ",value).strip()
+
+def deduplicate_services(services):
+    groups=[]
+    for service in services:
+        key=collection_name(service["name"])
+        matched=None
+        if key:
+            for group in groups:
+                if group["key"]!=key: continue
+                if any(haversine_m((service["lat"],service["lng"]),point)<=2500 for point in group["points"]):
+                    matched=group; break
+        if not matched:
+            matched={"key":key,"members":[],"points":[]}
+            groups.append(matched)
+        matched["members"].append(service)
+        matched["points"].append((service["lat"],service["lng"]))
+
+    collection=[]
+    for group in groups:
+        members=group["members"]
+        # Prefer the least directional source label, then retain every mapped
+        # point for matching a confirmed visit on either carriageway.
+        representative=min(members,key=lambda item:(len(item["name"]),item["name"]))
+        points=[{"lat":lat,"lng":lng} for lat,lng in group["points"]]
+        collection.append({
+            "id":"msa:"+group["key"]+":"+str(round(sum(point["lat"] for point in points)/len(points),4))+":"+str(round(sum(point["lng"] for point in points)/len(points),4)),
+            "name":representative["name"],
+            "lat":round(sum(point["lat"] for point in points)/len(points),6),
+            "lng":round(sum(point["lng"] for point in points)/len(points),6),
+            "operator":representative["operator"],
+            "road":representative["road"],
+            "points":points,
+            "source_ids":[member["id"] for member in members],
+        })
+    return sorted(collection,key=lambda item:(item["name"].casefold(),item["id"]))
 
 def main():
     request=Request(
@@ -89,7 +136,7 @@ def main():
             "operator":operator or None,
             "road":str(tags.get("ref") or tags.get("motorway") or "").strip() or None,
         })
-    services.sort(key=lambda item:(item["name"].casefold(),item["id"]))
+    services=deduplicate_services(services)
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps({
         "version":"v1",
