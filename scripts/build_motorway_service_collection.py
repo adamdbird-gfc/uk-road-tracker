@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 
 OUT=Path("collections/uk-motorway-services-v1.json")
 OVERPASS_URL="https://overpass-api.de/api/interpreter"
+MAJOR_OPERATORS=("moto","roadchef","welcome break","extra","westmorland","applegreen","eg on the move")
 
 QUERY="""[out:json][timeout:180];
 area["ISO3166-1"="GB"][boundary=administrative]->.uk;
@@ -40,13 +41,18 @@ def main():
         if not isinstance(lat,(int,float)) or not isinstance(lng,(int,float)): continue
         tags=element.get("tags") or {}
         name=str(tags.get("name") or tags.get("operator") or "").strip()
-        if not name: continue
+        operator=str(tags.get("operator") or "").strip()
+        searchable=f"{name} {operator}".casefold()
+        # Do not treat every roadside fuel stop as a motorway service area.
+        # Keep named services and established motorway-service operators only.
+        if not name or ("service" not in searchable and not any(value in searchable for value in MAJOR_OPERATORS)):
+            continue
         services.append({
             "id":f"osm:{element.get('type')}:{element.get('id')}",
             "name":name,
             "lat":round(lat,6),
             "lng":round(lng,6),
-            "operator":str(tags.get("operator") or "").strip() or None,
+            "operator":operator or None,
             "road":str(tags.get("ref") or tags.get("motorway") or "").strip() or None,
         })
     services.sort(key=lambda item:(item["name"].casefold(),item["id"]))
