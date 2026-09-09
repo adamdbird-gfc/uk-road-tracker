@@ -374,7 +374,7 @@ function updateDataDeletionControls() {
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=hasSavedDashboardProgress();
+  const hasProgress=hasSavedDashboardProgress() || hasSavedProgressHint();
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
@@ -1333,9 +1333,17 @@ function hasSavedDashboardProgress() {
   );
 }
 
+function hasSavedProgressHint() {
+  try {
+    return Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
+  } catch {
+    return false;
+  }
+}
+
 async function showSavedProgress() {
   await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
-  if (!hasSavedDashboardProgress()) return;
+  if (!hasSavedDashboardProgress() && !hasSavedProgressHint()) return;
 
   resetTrackingSession();
   for (const id of persistedManualRefs) manualMotorwayRefs.add(id);
