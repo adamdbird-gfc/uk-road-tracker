@@ -11,7 +11,7 @@ from pathlib import Path
 
 from build_motorway_cache import sample_line
 
-OUT = Path("canonical-a-roads-v4")
+OUT = Path("canonical-a-roads-v5")
 INDEX = OUT / "index.json"
 ARCHIVE = Path(".cache/oproad_gpkg_gb.zip")
 GPKG = Path(".cache/oproad_gb.gpkg")
@@ -150,15 +150,20 @@ def add_osm_fallbacks(roads):
     return roads
 
 def build(roads):
-    OUT.mkdir(exist_ok=True); index={"version":"v4","region":"GB","roads":{},"failures":{},"source":"OS Open Roads"}
+    OUT.mkdir(exist_ok=True); index={"version":"v5","region":"GB","roads":{},"failures":{},"source":"OS Open Roads"}
     for ref,links in sorted(roads.items(),key=lambda item:(int(item[0][1:]),item[0])):
-        anchors=[]
+        # Keep each official RoadLink as a distinct, continuous geometry path.
+        # Flattening all points discarded topology in the browser and caused
+        # short links to disappear during zoom-level sampling.
+        paths=[]
         for component,(_,line) in enumerate(links):
-            anchors.extend([[*point,component] for point in sample_line(line)])
-        if len(anchors)<3: continue
+            sampled=[[*point,component] for point in sample_line(line)]
+            if len(sampled)>=2: paths.append(sampled)
+        anchor_count=sum(len(path) for path in paths)
+        if anchor_count<3: continue
         total_km=sum(length for length,_ in links)/1000
-        record={"version":"v4","id":f"GB:{ref}","region":"GB","ref":ref,"anchors":anchors,
-                "total_km":round(total_km,3),"component_count":len(links),"source":"OS Open Roads"}
+        record={"version":"v5","id":f"GB:{ref}","region":"GB","ref":ref,"paths":paths,
+                "total_km":round(total_km,3),"component_count":len(paths),"source":"OS Open Roads"}
         filename=f"GB-{ref}.json"; (OUT/filename).write_text(json.dumps(record,separators=(",",":")))
         index["roads"][f"GB:{ref}"]={"file":filename,"total_km":record["total_km"]}
     index["generated_at"]=datetime.now(timezone.utc).isoformat(); INDEX.write_text(json.dumps(index,separators=(",",":")))
