@@ -4335,7 +4335,7 @@ function canonicalARoadState(key) {
   if (!canonicalARoads.has(id)) {
     const saved=persistedARoadReferenceSummary.get(id);
     canonicalARoads.set(id,{
-      id,key:parsed.key,region,ref,status:saved?'ready':'idle',error:null,ways:[],anchors:[],
+      id,key:parsed.key,region,ref,status:saved?'ready':'idle',error:null,ways:[],anchors:[],paths:[],
       anchorIndex:new Map(),coveredAnchorIds:new Set(),totalKm:saved?.totalKm || 0,
       anchorCount:saved?.anchorCount || 0,coveredAnchorCount:saved?.coveredCount || 0,
       source:saved?'summary':null,coverageCalculated:Boolean(saved)
@@ -4362,6 +4362,45 @@ function canonicalARoadAnchors(points) {
     .map((point,id)=>{ const [x,y]=mercatorXY(point[0],point[1]); return {id,lng:point[0],lat:point[1],component:point[2],x,y}; });
 }
 
+function canonicalARoadPathsFromAnchors(anchors) {
+  const paths=[]; let current=[]; let component=null;
+  for (const anchor of anchors || []) {
+    if (!current.length || anchor.component===component) current.push(anchor);
+    else { if (current.length>1) paths.push(current); current=[anchor]; }
+    component=anchor.component;
+  }
+  if (current.length>1) paths.push(current);
+  return paths;
+}
+
+function canonicalARoadGeometry(paths,fallbackAnchors=[]) {
+  if (Array.isArray(paths) && paths.some(path=>Array.isArray(path))) {
+    const anchors=[]; const normalisedPaths=[];
+    for (const rawPath of paths) {
+      const path=[];
+      for (const raw of rawPath || []) {
+        const point=[Number(raw?.[0]),Number(raw?.[1]),Number(raw?.[2] || 0)];
+        if (!Number.isFinite(point[0]) || !Number.isFinite(point[1])) continue;
+        const [x,y]=mercatorXY(point[0],point[1]);
+        const anchor={id:anchors.length,lng:point[0],lat:point[1],component:point[2],x,y};
+        anchors.push(anchor); path.push(anchor);
+      }
+      if (path.length>1) normalisedPaths.push(path);
+    }
+    return {anchors,paths:normalisedPaths};
+  }
+  const anchors=canonicalARoadAnchors(fallbackAnchors);
+  return {anchors,paths:canonicalARoadPathsFromAnchors(anchors)};
+}
+
+function sampledCanonicalARoadPath(path,stride) {
+  if (!path || path.length<3 || stride<=1) return path || [];
+  const sampled=[path[0]];
+  for (let index=stride; index<path.length-1; index+=stride) sampled.push(path[index]);
+  if (sampled[sampled.length-1]!==path[path.length-1]) sampled.push(path[path.length-1]);
+  return sampled;
+}
+
 function canonicalARoadBounds(anchors) {
   if (!anchors?.length) return null;
   let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
@@ -4375,9 +4414,10 @@ function canonicalARoadBounds(anchors) {
 async function hydrateCanonicalARoadFromDevice(road) {
   const stored=await canonicalARoadArchiveOperation('readonly',store=>store.get(road.id));
   if (!stored || stored.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(stored.anchors)) return false;
-  const anchors=canonicalARoadAnchors(stored.anchors);
+  const geometry=canonicalARoadGeometry(stored.paths,stored.anchors);
+  const anchors=geometry.anchors;
   if (anchors.length<3) return false;
-  road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
+  road.ways=[]; road.anchors=anchors; road.paths=geometry.paths; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
   const storedCoverage=Array.isArray(stored.coverage) ? stored.coverage : persistedARoadCoverageByRef.get(road.id) || [];
   road.coveredAnchorIds=new Set([...storedCoverage]
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
@@ -4457,7 +4497,8 @@ async function fetchCanonicalARoadWays(road) {
     if (response.status===404) throw new Error(`${road.ref} reference is being prepared.`);
     if (!response.ok) throw new Error(`A-road reference cache returned HTTP ${response.status}.`);
     const cached=await response.json();
-    if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION || !Array.isArray(cached.anchors)) {
+    if (!cached || cached.version!==CANONICAL_A_ROAD_CACHE_VERSION ||
+      (!Array.isArray(cached.paths) && !Array.isArray(cached.anchors))) {
       throw new Error(`${road.ref} reference cache format is invalid.`);
     }
     return cached;
@@ -4479,9 +4520,10 @@ async function loadCanonicalARoad(key,force=false,{deferRender=false}={}) {
   try {
     if (!force && await hydrateCanonicalARoadFromDevice(road)) return road;
     const cached=await fetchCanonicalARoadWays(road);
-    const anchors=canonicalARoadAnchors(cached.anchors);
+    const geometry=canonicalARoadGeometry(cached.paths,cached.anchors);
+    const anchors=geometry.anchors;
     if (anchors.length<3) throw new Error(`${road.ref} reference was unexpectedly sparse.`);
-    road.ways=[]; road.anchors=anchors; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
+    road.ways=[]; road.anchors=anchors; road.paths=geometry.paths; road.anchorIndex=buildAnchorIndex(anchors); road.bounds=canonicalARoadBounds(anchors);
     road.coveredAnchorIds=new Set([...(persistedARoadCoverageByRef.get(road.id) || [])]
       .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
     road.totalKm=Number(cached.total_km) || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000;
@@ -4808,52 +4850,53 @@ function renderCanonicalARoadMapLayers() {
     canonicalARoadUncoveredLayer.clearLayers();
     return;
   }
-  // The layer-control can retain an old unchecked state after a mobile restore.
-  // A-road coverage is part of the default Roadprints map, so reattach it when
-  // rendering the active coverage.
   if (!map?.hasLayer(canonicalARoadCoverageLayer)) canonicalARoadCoverageLayer.addTo(map);
   if (!map?.hasLayer(canonicalARoadUncoveredLayer)) canonicalARoadUncoveredLayer.addTo(map);
   canonicalARoadCoverageLayer.clearLayers(); canonicalARoadUncoveredLayer.clearLayers();
+
   const bounds=visibleMapBounds();
   const roads=[...canonicalARoads.values()].filter(road=>
     road.status==='ready' && canonicalARoadIntersectsMapBounds(road,bounds)
   );
   const visibleAnchors=roads.reduce((total,road)=>total+road.anchors.length,0);
-  // National A-road geometry can run to millions of anchors. The map is a
-  // responsive preview, so scale its draw budget to the current zoom.
   const zoom=map?.getZoom?.() || DEFAULT_MAP_ZOOM;
+  // Simplify within an already-continuous path. Crucially, first and last
+  // points of every road link remain, so a short link can never become a dot.
   const anchorBudget=zoom<7 ? 18000 : zoom<9 ? 24000 : 30000;
-  const strokeWeight=zoom<7 ? 9 : zoom<9 ? 8 : 7;
   const samplingStep=Math.max(1,Math.ceil(visibleAnchors/anchorBudget));
+  const strokeWeight=zoom<7 ? 8 : zoom<9 ? 7 : 6;
+
   for (const road of roads) {
     const runs={covered:[],uncovered:[]};
-    let previous=null,current=null,currentKind=null;
-    for (let index=0; index<road.anchors.length; index+=samplingStep) {
-      const anchor=road.anchors[index];
-      const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
-      const gap=previous ? haversineMetres([previous.lng,previous.lat],[anchor.lng,anchor.lat]) : Infinity;
-      // OS Open Roads stores successive links as separate components. At the
-      // overview zoom, safely stitch close endpoints so national routes read
-      // as lines rather than isolated dots; retain strict topology close in.
-      const overviewJoin=zoom<7 && gap<=5000;
-      const continuous=previous && (overviewJoin || previous.component===anchor.component) &&
-        gap<=Math.max(250,Math.min(5000,samplingStep*200));
-      const visible=!previous || segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds);
-      if (!visible) { current=null; previous=anchor; continue; }
-      if (!current || currentKind!==kind || !continuous) { current=[]; runs[kind].push(current); currentKind=kind; }
-      if (!current.length && previous && continuous) current.push([previous.lat,previous.lng]);
-      current.push([anchor.lat,anchor.lng]); previous=anchor;
+    for (const path of road.paths || canonicalARoadPathsFromAnchors(road.anchors)) {
+      const sampled=sampledCanonicalARoadPath(path,samplingStep);
+      let previous=null,current=null,currentKind=null;
+      for (const anchor of sampled) {
+        if (!previous) { previous=anchor; continue; }
+        if (!segmentIntersectsMapBounds([previous.lng,previous.lat],[anchor.lng,anchor.lat],bounds)) {
+          current=null; previous=anchor; continue;
+        }
+        const kind=road.coveredAnchorIds.has(anchor.id) ? 'covered' : 'uncovered';
+        if (!current || currentKind!==kind) {
+          current=[[previous.lat,previous.lng]];
+          runs[kind].push(current);
+          currentKind=kind;
+        }
+        current.push([anchor.lat,anchor.lng]);
+        previous=anchor;
+      }
     }
     for (const [kind,paths] of Object.entries(runs)) {
       const covered=kind==='covered';
-      L.polyline(paths.filter(path=>path.length>1),{
+      if (!paths.length) continue;
+      L.polyline(paths,{
         weight:strokeWeight,opacity:1,color:covered?'#32c96b':'#d93a3a',
+        lineCap:'round',lineJoin:'round',
         pane:covered?'aRoadConfirmedPane':'aRoadUnconfirmedPane',interactive:false
       }).addTo(covered?canonicalARoadCoverageLayer:canonicalARoadUncoveredLayer);
     }
   }
 }
-
 function canonicalARoadIntersectsMapBounds(road,bounds) {
   if (!bounds || !road.bounds) return true;
   return road.bounds.east>=bounds.getWest() && road.bounds.west<=bounds.getEast() &&
