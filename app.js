@@ -52,6 +52,10 @@ const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
 const persistedAchievements = new Map();
+const persistedConfirmedTimelineVisits = new Map();
+let motorwayServiceCollection = [];
+let motorwayServiceCollectionPromise = null;
+let roadsidePackUnlocked = false;
 let achievementCelebrationOpen = false;
 // A correction is a persistent local exclusion for the selected map segment.
 // Imports may add fresh journeys, but cannot silently reinstate a correction;
@@ -145,6 +149,14 @@ const travelStats = {
 };
 const achievementsCard = document.getElementById('achievementsCard');
 const achievementCount = document.getElementById('achievementCount');
+const roadsideCollectionCard = document.getElementById('roadsideCollectionCard');
+const roadsideCollectionStatus = document.getElementById('roadsideCollectionStatus');
+const roadsideCollectionProgress = document.getElementById('roadsideCollectionProgress');
+const roadsideCollectionVisits = document.getElementById('roadsideCollectionVisits');
+const openRoadsidePack = document.getElementById('openRoadsidePack');
+const roadsidePackPreview = document.getElementById('roadsidePackPreview');
+const closeRoadsidePackPreview = document.getElementById('closeRoadsidePackPreview');
+const unlockRoadsidePackForTesting = document.getElementById('unlockRoadsidePackForTesting');
 const achievementList = document.getElementById('achievementList');
 const achievementCelebration = document.getElementById('achievementCelebration');
 const closeAchievementCelebration = document.getElementById('closeAchievementCelebration');
@@ -251,6 +263,8 @@ const CANONICAL_A_ROAD_INDEX_STORAGE_KEY = `roadprints:canonical-a-road-index:${
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
+const MOTORWAY_SERVICE_COLLECTION_URL = 'collections/uk-motorway-services-v1.json';
+const ROADSIDE_PACK_ID = 'roadside-pack-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
 const MAP_ARCHIVE_DB_VERSION = 4;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
@@ -629,7 +643,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3,4,5,6].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4,5,6,7].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -703,6 +717,15 @@ function loadLocalProgress() {
         announced:achievement.announced===true
       });
     }
+    roadsidePackUnlocked=saved.entitlements?.[ROADSIDE_PACK_ID]===true;
+    for (const visit of saved.confirmedTimelineVisits || []) {
+      const lat=Number(visit?.lat),lng=Number(visit?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const cleaned={id:String(visit.id || ''),start:visit.start || null,end:visit.end || null,lat,lng,
+        name:typeof visit.name==='string' ? visit.name : null};
+      if (!cleaned.id) cleaned.id=timelineVisitFingerprint(cleaned);
+      persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
+    }
     for (const [segmentId,journeyIds] of Object.entries(saved.removedSegmentEvidence || {})) {
       if (!segmentId || !Array.isArray(journeyIds)) continue;
       const ids=new Set(journeyIds.filter(id=>typeof id==='string' && id));
@@ -760,8 +783,10 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:6,
+      version:7,
       canonicalVersion:CANONICAL_CACHE_VERSION,
+      entitlements:{[ROADSIDE_PACK_ID]:roadsidePackUnlocked},
+      confirmedTimelineVisits:[...persistedConfirmedTimelineVisits.values()],
       savedAt:persistedSavedAt,
       distanceUnit,
       dataStartMs:persistedDataStartMs,
@@ -1414,6 +1439,15 @@ document.getElementById('clearAllARoads').addEventListener('click', () => setAll
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 closeAchievementCelebration.addEventListener('click',hideAchievementCelebration);
+openRoadsidePack?.addEventListener('click',()=>{ if (!roadsidePackUnlocked) openRoadsidePackPreview(); });
+closeRoadsidePackPreview?.addEventListener('click',closeRoadsidePackPreview);
+roadsidePackPreview?.addEventListener('click',event=>{ if (event.target===roadsidePackPreview) closeRoadsidePackPreview(); });
+unlockRoadsidePackForTesting?.addEventListener('click',()=>{
+  roadsidePackUnlocked=true;
+  scheduleLocalProgressSave();
+  closeRoadsidePackPreview();
+  renderRoadsideCollection();
+});
 achievementCelebration.addEventListener('click',event=>{
   if (event.target===achievementCelebration) hideAchievementCelebration();
 });
@@ -1472,6 +1506,7 @@ fileInput.addEventListener('change', async () => {
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
+    saveConfirmedTimelineVisits(result.confirmedVisits || []);
     await saveFootActivities(onFootJourneys);
 
     const needsMileageRebuild=
@@ -2292,6 +2327,101 @@ function evaluateAchievements() {
   }
 }
 
+function timelineVisitFingerprint(visit) {
+  return [
+    visit?.start || '', visit?.end || '',
+    Number(visit?.lat).toFixed(5),Number(visit?.lng).toFixed(5)
+  ].join('|');
+}
+
+function saveConfirmedTimelineVisits(visits) {
+  for (const visit of visits || []) {
+    const lat=Number(visit?.lat),lng=Number(visit?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const cleaned={...visit,lat,lng};
+    cleaned.id=String(cleaned.id || timelineVisitFingerprint(cleaned));
+    persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
+  }
+  scheduleLocalProgressSave();
+}
+
+async function loadMotorwayServiceCollection() {
+  if (motorwayServiceCollectionPromise) return motorwayServiceCollectionPromise;
+  motorwayServiceCollectionPromise=(async()=>{
+    const response=await fetch(MOTORWAY_SERVICE_COLLECTION_URL,{cache:'no-cache'});
+    if (!response.ok) throw new Error(`Roadside collection returned HTTP ${response.status}.`);
+    const data=await response.json();
+    motorwayServiceCollection=(data?.version==='v1' && Array.isArray(data.services))
+      ? data.services.filter(service=>Number.isFinite(Number(service?.lat)) && Number.isFinite(Number(service?.lng)))
+      : [];
+    if (!motorwayServiceCollection.length) throw new Error('Roadside collection contains no usable service areas.');
+    return motorwayServiceCollection;
+  })().catch(error=>{ motorwayServiceCollectionPromise=null; throw error; });
+  return motorwayServiceCollectionPromise;
+}
+
+function matchedMotorwayServiceVisits() {
+  const matches=[];
+  for (const service of motorwayServiceCollection) {
+    const locations=Array.isArray(service.points) && service.points.length ? service.points : [service];
+    const visits=[...persistedConfirmedTimelineVisits.values()].filter(visit=>
+      locations.some(point=>haversineMetres([visit.lng,visit.lat],[Number(point.lng),Number(point.lat)])<=350)
+    );
+    if (visits.length) matches.push({service,visits});
+  }
+  return matches.sort((a,b)=>a.service.name.localeCompare(b.service.name));
+}
+
+function renderRoadsideCollection() {
+  if (!roadsideCollectionCard) return;
+  const hasData=shouldShowDataDashboard() && (
+    persistedMapJourneys.size || persistedConfirmedTimelineVisits.size
+  );
+  roadsideCollectionCard.classList.toggle('hidden',!hasData);
+  if (!hasData) return;
+
+  if (!roadsidePackUnlocked) {
+    roadsideCollectionStatus.textContent='Locked · one-off collection pack';
+    roadsideCollectionProgress.textContent='Unlock to turn your confirmed Timeline stops into motorway service-area completions.';
+    roadsideCollectionVisits.replaceChildren();
+    openRoadsidePack.textContent='Unlock Roadside Pack';
+    return;
+  }
+
+  roadsideCollectionStatus.textContent='Loading your confirmed stops…';
+  roadsideCollectionProgress.textContent='Matching confirmed Timeline visits against motorway service areas.';
+  openRoadsidePack.textContent='Roadside Pack unlocked';
+  openRoadsidePack.disabled=true;
+  void loadMotorwayServiceCollection().then(()=>{
+    const matches=matchedMotorwayServiceVisits();
+    roadsideCollectionStatus.textContent='Unlocked · confirmed Timeline visits';
+    roadsideCollectionProgress.textContent=`${matches.length} of ${motorwayServiceCollection.length} motorway service areas completed`;
+    roadsideCollectionVisits.replaceChildren();
+    for (const {service,visits} of matches.slice(0,8)) {
+      const item=document.createElement('li');
+      const latest=[...visits].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''))[0];
+      item.textContent=`${service.name} · visited ${latest?.start ? formatDate(latest.start) : 'on a recorded stop'}`;
+      roadsideCollectionVisits.append(item);
+    }
+    if (matches.length>8) {
+      const more=document.createElement('li');
+      more.textContent=`+${matches.length-8} more completed service areas`;
+      roadsideCollectionVisits.append(more);
+    }
+  }).catch(error=>{
+    roadsideCollectionStatus.textContent='Collection reference unavailable';
+    roadsideCollectionProgress.textContent=error?.message || 'Try again when you are online.';
+  });
+}
+
+function openRoadsidePackPreview() {
+  roadsidePackPreview?.classList.remove('hidden');
+}
+
+function closeRoadsidePackPreview() {
+  roadsidePackPreview?.classList.add('hidden');
+}
+
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
   const hasData=shouldShowDataDashboard() && (
@@ -2299,6 +2429,7 @@ function renderAchievements() {
   );
   achievementsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
+  renderRoadsideCollection();
 
   const earnedCount=ROADPRINTS_ACHIEVEMENTS.filter(definition=>persistedAchievements.has(definition.id)).length;
   achievementCount.textContent=`${earnedCount} of ${ROADPRINTS_ACHIEVEMENTS.length}`;
@@ -5230,6 +5361,7 @@ function extractTimelineActivities(data) {
     vehiclesWithPathPoints: 0,
     vehiclesWithAnchors: 0,
     journeysConstructed: 0,
+    confirmedVisits: 0,
     dataStartMs: null,
     dataEndMs: null
   };
@@ -5242,11 +5374,31 @@ function extractTimelineActivities(data) {
   }
 
   const pathPoints = [];
+  const confirmedVisits = [];
 
   for (const seg of segments) {
     recordDataTimestamp(seg?.startTime);
     recordDataTimestamp(seg?.endTime);
     if (seg?.activity) diag.activitySegments++;
+    const visit=seg?.visit || seg?.placeVisit;
+    if (visit) {
+      const point=parseLocation(
+        visit?.topCandidate?.placeLocation?.latLng ||
+        visit?.topCandidate?.placeLocation ||
+        visit?.location || visit?.latLng
+      );
+      if (point) {
+        const confirmed={
+          start:seg.startTime || visit?.startTime || null,
+          end:seg.endTime || visit?.endTime || null,
+          lat:point.lat,lng:point.lng,
+          name:visit?.topCandidate?.placeLocation?.name || visit?.topCandidate?.placeLocation?.address || null
+        };
+        confirmed.id=timelineVisitFingerprint(confirmed);
+        confirmedVisits.push(confirmed);
+        diag.confirmedVisits++;
+      }
+    }
 
     if (Array.isArray(seg?.timelinePath)) {
       diag.timelinePathSegments++;
@@ -5334,7 +5486,7 @@ function extractTimelineActivities(data) {
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { roadJourneys, onFootJourneys, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, confirmedVisits, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
