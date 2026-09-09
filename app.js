@@ -90,6 +90,10 @@ let canonicalCoverageDirty = true;
 let motorwayAggregateDirty = true;
 let focusedJourneyId = null;
 let focusedJourneyType = null;
+let journeyLogVisibleCount = 0;
+let journeyLogSignature = '';
+let journeyLogObserver = null;
+const JOURNEY_LOG_PAGE_SIZE = 30;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 // The live map is a progress cue, not the durable full-detail renderer. Keep
 // its work deliberately sparse so a large import never makes page scrolling
@@ -1966,9 +1970,20 @@ function renderJourneyLog() {
     ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({...record,logType:'road'})),
     ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'}))
   ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
+
   const hasData=shouldShowDataDashboard() && records.length>0;
   journeyLogCard.classList.toggle('hidden',!hasData);
+  if (journeyLogObserver) { journeyLogObserver.disconnect(); journeyLogObserver=null; }
   if (!hasData) return;
+
+  // Retain the user's position during ordinary re-renders, but reset when the
+  // underlying journey set changes (import, delete or a different saved state).
+  const signature=records.map(record=>`${record.logType}:${journeyIdentity(record)}:${record.start || ''}`).join('|');
+  if (signature!==journeyLogSignature) {
+    journeyLogSignature=signature;
+    journeyLogVisibleCount=0;
+  }
+
   const patternTotals=new Map();
   for (const record of records) {
     const key=routeRepeatFingerprint(record);
@@ -1976,8 +1991,9 @@ function renderJourneyLog() {
     patternTotals.set(key,(patternTotals.get(key) || 0)+trips);
   }
   journeyLogCount.textContent=records.length.toLocaleString();
-  journeyLogList.innerHTML='';
-  for (const record of records.slice(0,50)) {
+  journeyLogList.replaceChildren();
+
+  const renderRecord=record=>{
     const id=journeyIdentity(record);
     const item=document.createElement('article');
     item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : '');
@@ -1999,6 +2015,7 @@ function renderJourneyLog() {
       : ' · no similar route recorded';
     meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+patternLabel;
     copy.append(date,title,meta);
+
     const actions=document.createElement('div');
     actions.className='journey-log-actions';
     const rename=document.createElement('button');
@@ -2012,10 +2029,48 @@ function renderJourneyLog() {
     remove.addEventListener('click',()=>deleteSavedJourney(id,record.logType));
     actions.append(rename,view,remove);
     item.append(copy,actions);
-    journeyLogList.append(item);
-  }
-}
+    return item;
+  };
 
+  let pagination=null;
+  const appendNextPage=()=>{
+    if (pagination) { pagination.remove(); pagination=null; }
+    const next=Math.min(records.length,journeyLogVisibleCount+JOURNEY_LOG_PAGE_SIZE);
+    const fragment=document.createDocumentFragment();
+    for (const record of records.slice(journeyLogVisibleCount,next)) fragment.append(renderRecord(record));
+    journeyLogList.append(fragment);
+    journeyLogVisibleCount=next;
+    if (journeyLogVisibleCount>=records.length) return;
+
+    pagination=document.createElement('div');
+    pagination.className='journey-log-pagination';
+    const note=document.createElement('span');
+    note.textContent=`Showing ${journeyLogVisibleCount.toLocaleString()} of ${records.length.toLocaleString()} journeys`;
+    const more=document.createElement('button');
+    more.type='button'; more.className='secondary'; more.textContent='Load older journeys';
+    more.addEventListener('click',appendNextPage);
+    const sentinel=document.createElement('div');
+    sentinel.className='journey-log-sentinel';
+    sentinel.setAttribute('aria-hidden','true');
+    pagination.append(note,more,sentinel);
+    journeyLogList.append(pagination);
+
+    if ('IntersectionObserver' in window) {
+      if (journeyLogObserver) journeyLogObserver.disconnect();
+      journeyLogObserver=new IntersectionObserver(entries=>{
+        if (entries.some(entry=>entry.isIntersecting)) appendNextPage();
+      },{root:null,rootMargin:'0px 0px 700px 0px',threshold:0});
+      journeyLogObserver.observe(sentinel);
+    }
+  };
+
+  const initiallyVisible=Math.min(
+    records.length,
+    Math.max(JOURNEY_LOG_PAGE_SIZE,journeyLogVisibleCount)
+  );
+  journeyLogVisibleCount=0;
+  while (journeyLogVisibleCount<initiallyVisible) appendNextPage();
+}
 async function renameSavedJourney(id,type='road') {
   const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
   const record=records.get(id);
