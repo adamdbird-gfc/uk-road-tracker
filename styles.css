@@ -986,3 +986,7 @@ main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-
 main.app-ready[data-active-screen="achievements"] > #roadsideCollectionCard:not(.hidden) {
   display:grid !important;
 }
+
+
+/* A confirmed local archive always exposes the saved-data entry point. */
+main.has-saved-progress #localProgressNotice { display:flex !important; }
