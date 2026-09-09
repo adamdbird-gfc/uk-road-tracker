@@ -1,0 +1,37 @@
+name: Build motorway services collection
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/build_motorway_service_collection.py"
+      - ".github/workflows/build-motorway-service-collection.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: motorway-service-collection
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build collection cache
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python scripts/build_motorway_service_collection.py
+          git add collections/uk-motorway-services-v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Build UK motorway services collection"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi
