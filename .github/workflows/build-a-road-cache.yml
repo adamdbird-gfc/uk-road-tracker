@@ -35,7 +35,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python scripts/build_os_open_roads_a_cache.py
-          git add canonical-a-roads-v4 || true
+          git add canonical-a-roads-v5 || true
           CHANGED=false
           if ! git diff --cached --quiet; then
             git commit -m "Build official Great Britain A-road references"
