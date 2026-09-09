@@ -33,20 +33,18 @@ def mercator(lng,lat):
     return radius*math.radians(lng), radius*math.log(math.tan(math.pi/4+math.radians(lat)/2))
 
 def motorway_proximity_index():
-    query='''[out:json][timeout:180];
-area["ISO3166-1"="GB"][boundary=administrative]->.uk;
-way["highway"="motorway"](area.uk);
-out geom;'''
-    request=Request(OVERPASS_URL,data=urlencode({"data":query}).encode("utf-8"),
-      headers={"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Roadprints service collection builder"})
-    with urlopen(request,timeout=240) as response: payload=json.load(response)
+    # Reuse Roadprints' committed motorway anchors rather than issuing a second
+    # national Overpass request; this makes the collection build predictable.
+    cache=json.loads(Path("canonical-motorways-v1.json").read_text())
     cell_size=1200
     index={}
-    for way in payload.get("elements",[]):
-        for point in way.get("geometry") or []:
-            if not isinstance(point.get("lat"),(int,float)) or not isinstance(point.get("lon"),(int,float)): continue
-            x,y=mercator(point["lon"],point["lat"])
-            cell=(round(x//cell_size),round(y//cell_size))
+    for road in (cache.get("roads") or {}).values():
+        for point in road.get("anchors") or []:
+            if not isinstance(point,list) or len(point)<2: continue
+            lng,lat=point[0],point[1]
+            if not isinstance(lat,(int,float)) or not isinstance(lng,(int,float)): continue
+            x,y=mercator(lng,lat)
+            cell=(int(x//cell_size),int(y//cell_size))
             index.setdefault(cell,[]).append((x,y))
     return index,cell_size
 
