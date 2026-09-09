@@ -978,3 +978,11 @@ main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-
 }
 .collection-unlock-sheet h2 { margin:3px 0 10px; }
 .collection-unlock-sheet ul { display:grid; gap:9px; margin:16px 0; padding-left:20px; color:#dce7fb; }
+
+
+
+/* Collections are part of the signed-in app shell, never the welcome screen. */
+#roadsideCollectionCard { display:none; }
+main.app-ready[data-active-screen="achievements"] > #roadsideCollectionCard:not(.hidden) {
+  display:grid !important;
+}
