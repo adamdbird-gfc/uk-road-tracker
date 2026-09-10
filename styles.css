@@ -875,6 +875,13 @@ main.app-ready[data-active-screen="journeys"] > #journeyLogCard .eyebrow { color
 main.app-ready[data-active-screen="journeys"] > #journeyLogCard h2 { color:#fff; font-size:clamp(2rem,9vw,2.7rem); }
 main.app-ready[data-active-screen="journeys"] > #journeyLogCard .muted { color:#c2cde0; }
 .journey-log-count { padding:8px 11px; border-radius:999px; background:rgba(255,255,255,.11); color:#f7c450; }
+.journey-log-filters { display:flex; gap:8px; margin:16px 0 4px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.journey-log-filters::-webkit-scrollbar { display:none; }
+.journey-log-filters button { flex:0 0 auto; min-height:34px; padding:7px 12px; border:1px solid rgba(105,221,204,.28); border-radius:999px; background:rgba(255,255,255,.07); color:#eaf2ff; font-size:.78rem; font-weight:800; }
+.journey-log-filters button.active { border-color:#f7c450; background:#f7c450; color:#0b1c50; }
+.journey-log-filters button.hidden { display:none; }
+.journey-log-empty { padding:18px 0 4px; }
+
 .journey-log-list { display:grid; gap:12px; margin-top:22px; }
 .journey-log-item { display:flex; justify-content:space-between; gap:16px; padding:16px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(255,255,255,.07); }
 .journey-log-item > div:first-child { display:grid; gap:4px; min-width:0; }
