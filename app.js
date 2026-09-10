@@ -1029,6 +1029,7 @@ async function clearLocalProgress() {
   localSaveTimer=null;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
   localStorage.removeItem('roadprints:collection-entitlements:v1');
+  window.dispatchEvent(new CustomEvent('roadprints:collection-entitlement-change',{detail:{collection:'service-stations',unlocked:false}}));
   resetRoadProgressState({clearExclusions:true});
   localProgressNotice.classList.add('hidden');
 
@@ -2968,7 +2969,7 @@ function initMap() {
       {collapsed: true}
     ).addTo(map);
 
-    window.roadprintsMapContext={map,serviceStationLayer};
+    window.roadprintsMapContext={map,mapLayerControl,serviceStationLayer};
     window.dispatchEvent(new CustomEvent('roadprints:map-ready',{detail:window.roadprintsMapContext}));
 
     // Refresh only after the pan or zoom has settled, not while the gesture
