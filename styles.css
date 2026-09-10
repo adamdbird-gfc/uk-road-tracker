@@ -1079,3 +1079,45 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
   opacity: .9;
 }
 .service-station-check input:disabled { cursor: default; }
+
+
+/* Progress layout: align core cards and provide quick navigation on long records. */
+main.app-ready[data-active-screen="progress"] .motorway-details > .details-summary,
+main.app-ready[data-active-screen="progress"] .canonical-details > .details-summary,
+main.app-ready[data-active-screen="progress"] .service-station-progress > .details-summary {
+  padding: 0;
+}
+main.app-ready[data-active-screen="progress"] .motorway-details > :not(summary),
+main.app-ready[data-active-screen="progress"] .canonical-details > :not(summary),
+main.app-ready[data-active-screen="progress"] .service-station-progress > :not(summary) {
+  margin-left: 0;
+  margin-right: 0;
+}
+main.app-ready[data-active-screen="progress"] [data-app-screen="progress"] {
+  scroll-margin-top: 88px;
+}
+.progress-jump-menu {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.progress-jump-menu::-webkit-scrollbar { display: none; }
+.progress-jump-menu a {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid rgba(105,221,204,.26);
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  color: #eaf2ff;
+  font-size: .78rem;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+}
+.progress-jump-menu a:focus-visible {
+  outline: 3px solid #f7c450;
+  outline-offset: 2px;
+}

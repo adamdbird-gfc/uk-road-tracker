@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-service-progress-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260910-progress-layout-v1" />
 </head>
 <body>
   <main>
@@ -147,6 +147,14 @@
         <div class="travel-stat"><span>Activities recorded</span><strong id="recordedActivityCount">0</strong></div>
       </div>
       <p class="muted travel-stats-note">Totals retain every Timeline activity. Unique figures combine matching evidence so repeated routes count once within each travel mode.</p>
+      <nav class="progress-jump-menu" aria-label="Jump to progress section">
+        <a href="#motorwayCard">Motorways</a>
+        <a href="#aRoadCard">A roads</a>
+        <a href="#canonicalMotorwayCard">Motorway progress</a>
+        <a href="#canonicalARoadCard">A-road progress</a>
+        <a href="#otherRoadCard">Other roads</a>
+        <a href="#serviceStationProgressCard" data-service-station-jump hidden>Services</a>
+      </nav>
     </section>
 
     <section id="achievementsCard" data-app-screen="achievements" class="card achievements-card hidden" aria-labelledby="achievementsTitle">
@@ -192,19 +200,6 @@
       <div id="journeyList" class="journey-list"></div>
     </section>
 
-
-    <details id="serviceStationProgressCard" data-app-screen="progress" class="card service-station-progress hidden" open>
-      <summary class="details-summary service-station-progress-heading">
-        <div>
-          <p class="eyebrow">Roadprints Collections</p>
-          <h2>Service station progress</h2>
-          <p class="muted">Motorway service areas, grouped by motorway.</p>
-        </div>
-        <strong id="serviceStationProgressCount" class="service-station-progress-count">0 of 111</strong>
-      </summary>
-      <p class="muted service-station-progress-note">Confirmed visits will be added here in a later step. For now, this is the full motorway-services reference list.</p>
-      <div id="serviceStationProgressList" class="service-station-progress-list" aria-live="polite"></div>
-    </details>
 
     <details id="motorwayCard" data-app-screen="progress" class="card motorway-details hidden">
       <summary class="details-summary motorway-heading">
@@ -323,6 +318,19 @@
       <p class="muted other-road-intro">Matched mileage on B roads, local roads and other non-motorway, non-A-road driving.</p>
       <p class="muted other-road-note">These roads are included in your travel record but do not have a national completion reference.</p>
     </section>
+
+    <details id="serviceStationProgressCard" data-app-screen="progress" class="card service-station-progress hidden" open>
+      <summary class="details-summary service-station-progress-heading">
+        <div>
+          <p class="eyebrow">Roadprints Collections</p>
+          <h2>Service station progress</h2>
+          <p class="muted">Motorway service areas, grouped by motorway.</p>
+        </div>
+        <strong id="serviceStationProgressCount" class="service-station-progress-count">0 of 111</strong>
+      </summary>
+      <p class="muted service-station-progress-note">Confirmed visits will be added here in a later step. For now, this is the full motorway-services reference list.</p>
+      <div id="serviceStationProgressList" class="service-station-progress-list" aria-live="polite"></div>
+    </details>
 
     <section id="collectionsCatalogCard" data-app-screen="collections" class="card collections-catalog-card hidden" aria-labelledby="collectionsTitle">
       <p class="eyebrow">Roadprints</p>
@@ -450,7 +458,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js?v=20260910-services-layer-v2"></script>
   <script src="service-station-map-layer.js?v=20260910-services-layer-v3"></script>
-  <script src="service-station-progress.js?v=20260910-service-progress-v2"></script>
+  <script src="service-station-progress.js?v=20260910-progress-layout-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
   <script src="collections-catalog.js?v=20260910-unlock-v3"></script>
 </body>
