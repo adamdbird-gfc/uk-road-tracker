@@ -975,3 +975,38 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
 .collection-card-list{display:grid;gap:14px;margin-top:24px}.collection-card{display:grid;gap:14px;padding:16px;border:1px solid rgba(105,221,204,.32);border-radius:16px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}.collection-card-heading{display:flex;align-items:center;gap:13px}.collection-logo{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.12);font-weight:900;font-size:1.35rem}.collection-logo.mcd{color:#f7c450;font-family:Arial,sans-serif;font-size:2.25rem;line-height:1}.collection-logo.parkrun{background:#3b8f69;color:#fff;font-size:2rem;font-family:Arial,sans-serif}.collection-logo.carbon{color:#69ddcc;font-size:1rem}.collection-card h3{margin:0;color:#fff;font-size:1.15rem}.collection-card p:not(.collection-status){margin:0;color:#c2cde0;line-height:1.42}.collection-status{margin:0 0 2px;color:#f7c450;font-size:.7rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.collection-card button{justify-self:start;min-width:112px;background:transparent;border:1px solid rgba(247,196,80,.7);color:#f7c450}.collection-card button:hover{background:rgba(247,196,80,.12)}
 
 .collection-card.unlocked{border-color:rgba(105,221,204,.8);background:linear-gradient(135deg,rgba(44,185,166,.18),rgba(255,255,255,.07))}.collection-card.unlocked .collection-status{color:#69ddcc}.collection-card.unlocked button{border-color:rgba(105,221,204,.8);color:#69ddcc}.collection-toast{position:fixed;z-index:3000;right:18px;bottom:94px;max-width:calc(100% - 36px);padding:12px 15px;border:1px solid rgba(105,221,204,.45);border-radius:12px;background:#10275d;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.28);font-weight:700}.collection-toast.hidden{display:none}
+
+
+/* Collections: grey map pins are the unvisited motorway service-station state. */
+.roadprints-service-station-icon {
+  background: transparent;
+  border: 0;
+}
+.roadprints-service-station-pin {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  background: #738094;
+  border: 2px solid #d9e0e8;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 5px rgba(7, 19, 53, .42);
+  transform: rotate(-45deg);
+}
+.roadprints-service-station-pin > span {
+  display: block;
+  font-size: 15px;
+  line-height: 1;
+  filter: grayscale(.38) saturate(.72);
+  transform: rotate(45deg);
+}
+.service-station-popup h3 {
+  margin: 0 0 3px;
+  color: #10275b;
+  font-size: 1rem;
+}
+.service-station-popup p {
+  margin: 0;
+  color: #536078;
+  font-size: .84rem;
+}

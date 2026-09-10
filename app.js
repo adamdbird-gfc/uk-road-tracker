@@ -21,6 +21,7 @@ let creditedLayer = null;
 let footLayer = null;
 let liveImportLayer = null;
 let mapLayerControl = null;
+let serviceStationLayer = null;
 let mapGeometryRefreshTimer = null;
 let creditedMapSegmentCache = {signature:null,segments:[]};
 let ignoredJourneys = [];
@@ -2951,12 +2952,14 @@ function initMap() {
     canonicalUncoveredLayer = L.layerGroup().addTo(map);
     canonicalARoadCoverageLayer = L.layerGroup().addTo(map);
     canonicalARoadUncoveredLayer = L.layerGroup().addTo(map);
+    serviceStationLayer = L.layerGroup().addTo(map);
 
     mapLayerControl = L.control.layers(
       {},
       {
         'Road journeys (black)': creditedLayer,
         'On-foot journeys (purple)': footLayer,
+        'Motorway service stations (unvisited)': serviceStationLayer,
         'A-road completed sections (green)': canonicalARoadCoverageLayer,
         'A-road incomplete sections (red)': canonicalARoadUncoveredLayer,
         'Motorway completed sections (blue)': canonicalCoverageLayer,
@@ -2964,6 +2967,9 @@ function initMap() {
       },
       {collapsed: true}
     ).addTo(map);
+
+    window.roadprintsMapContext={map,serviceStationLayer};
+    window.dispatchEvent(new CustomEvent('roadprints:map-ready',{detail:window.roadprintsMapContext}));
 
     // Refresh only after the pan or zoom has settled, not while the gesture
     // is in progress.
