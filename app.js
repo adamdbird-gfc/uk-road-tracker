@@ -52,12 +52,6 @@ const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
 const persistedAchievements = new Map();
-const persistedConfirmedTimelineVisits = new Map();
-let motorwayServiceCollection = [];
-let motorwayServiceCollectionPromise = null;
-let roadsidePackUnlocked = false;
-let serviceCollectionMap = null;
-let serviceCollectionMarkers = null;
 let achievementCelebrationOpen = false;
 // A correction is a persistent local exclusion for the selected map segment.
 // Imports may add fresh journeys, but cannot silently reinstate a correction;
@@ -151,18 +145,6 @@ const travelStats = {
 };
 const achievementsCard = document.getElementById('achievementsCard');
 const achievementCount = document.getElementById('achievementCount');
-const roadsideCollectionCard = document.getElementById('roadsideCollectionCard');
-const roadsideCollectionStatus = document.getElementById('roadsideCollectionStatus');
-const roadsideCollectionProgress = document.getElementById('roadsideCollectionProgress');
-const roadsideCollectionVisits = document.getElementById('roadsideCollectionVisits');
-const roadsideVisitCount = document.getElementById('roadsideVisitCount');
-const roadsideCollectionAchievements = document.getElementById('roadsideCollectionAchievements');
-const roadsideCollectionAchievementCount = document.getElementById('roadsideCollectionAchievementCount');
-const serviceCollectionMapElement = document.getElementById('serviceCollectionMap');
-const openRoadsidePack = document.getElementById('openRoadsidePack');
-const roadsidePackPreview = document.getElementById('roadsidePackPreview');
-const roadsidePackPreviewCloseButton = document.getElementById('closeRoadsidePackPreview');
-const unlockRoadsidePackForTesting = document.getElementById('unlockRoadsidePackForTesting');
 const achievementList = document.getElementById('achievementList');
 const achievementCelebration = document.getElementById('achievementCelebration');
 const closeAchievementCelebration = document.getElementById('closeAchievementCelebration');
@@ -269,8 +251,6 @@ const CANONICAL_A_ROAD_INDEX_STORAGE_KEY = `roadprints:canonical-a-road-index:${
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
-const MOTORWAY_SERVICE_COLLECTION_URL = 'collections/uk-motorway-services-v1.json';
-const ROADSIDE_PACK_ID = 'roadside-pack-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
 const MAP_ARCHIVE_DB_VERSION = 4;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
@@ -649,7 +629,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3,4,5,6,7].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4,5,6].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -723,12 +703,6 @@ function loadLocalProgress() {
         announced:achievement.announced===true
       });
     }
-    roadsidePackUnlocked=saved.entitlements?.[ROADSIDE_PACK_ID]===true;
-    for (const visit of saved.confirmedTimelineVisits || []) {
-      const lat=Number(visit?.lat),lng=Number(visit?.lng); if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const cleaned={id:String(visit.id || ''),start:visit.start || null,end:visit.end || null,lat,lng,name:typeof visit.name==='string' ? visit.name : null};
-      if (!cleaned.id) cleaned.id=timelineVisitFingerprint(cleaned); persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
-    }
     for (const [segmentId,journeyIds] of Object.entries(saved.removedSegmentEvidence || {})) {
       if (!segmentId || !Array.isArray(journeyIds)) continue;
       const ids=new Set(journeyIds.filter(id=>typeof id==='string' && id));
@@ -786,10 +760,8 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:7,
+      version:6,
       canonicalVersion:CANONICAL_CACHE_VERSION,
-      entitlements:{[ROADSIDE_PACK_ID]:roadsidePackUnlocked},
-      confirmedTimelineVisits:[...persistedConfirmedTimelineVisits.values()],
       savedAt:persistedSavedAt,
       distanceUnit,
       dataStartMs:persistedDataStartMs,
@@ -1442,10 +1414,6 @@ document.getElementById('clearAllARoads').addEventListener('click', () => setAll
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 closeAchievementCelebration.addEventListener('click',hideAchievementCelebration);
-openRoadsidePack?.addEventListener('click',()=>{ if (!roadsidePackUnlocked) roadsidePackPreview?.classList.remove('hidden'); });
-roadsidePackPreviewCloseButton?.addEventListener('click',()=>roadsidePackPreview?.classList.add('hidden'));
-roadsidePackPreview?.addEventListener('click',event=>{ if (event.target===roadsidePackPreview) roadsidePackPreview.classList.add('hidden'); });
-unlockRoadsidePackForTesting?.addEventListener('click',()=>{ roadsidePackUnlocked=true; scheduleLocalProgressSave(); roadsidePackPreview?.classList.add('hidden'); renderRoadsideCollection(); });
 achievementCelebration.addEventListener('click',event=>{
   if (event.target===achievementCelebration) hideAchievementCelebration();
 });
@@ -1504,7 +1472,6 @@ fileInput.addEventListener('change', async () => {
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
-    saveConfirmedTimelineVisits(result.confirmedVisits || []);
     await saveFootActivities(onFootJourneys);
 
     const needsMileageRebuild=
@@ -2325,13 +2292,6 @@ function evaluateAchievements() {
   }
 }
 
-function timelineVisitFingerprint(visit) { return [visit?.start || '',visit?.end || '',Number(visit?.lat).toFixed(5),Number(visit?.lng).toFixed(5)].join('|'); }
-function saveConfirmedTimelineVisits(visits) { for (const visit of visits || []) { const lat=Number(visit?.lat),lng=Number(visit?.lng); if (!Number.isFinite(lat)||!Number.isFinite(lng)) continue; const cleaned={...visit,lat,lng}; cleaned.id=String(cleaned.id||timelineVisitFingerprint(cleaned)); persistedConfirmedTimelineVisits.set(cleaned.id,cleaned); } scheduleLocalProgressSave(); }
-async function loadMotorwayServiceCollection() { if (motorwayServiceCollectionPromise) return motorwayServiceCollectionPromise; motorwayServiceCollectionPromise=Promise.race([fetch(MOTORWAY_SERVICE_COLLECTION_URL+'?v=20260910',{cache:'reload'}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('The service-area reference timed out. Please try again.')),12000))]).then(response=>{if(!response.ok)throw new Error('Collection reference unavailable.');return response.json();}).then(data=>{motorwayServiceCollection=Array.isArray(data?.services)?data.services.filter(s=>Number.isFinite(Number(s?.lat))&&Number.isFinite(Number(s?.lng))):[];if(!motorwayServiceCollection.length)throw new Error('Collection reference unavailable.');return motorwayServiceCollection;}).catch(error=>{motorwayServiceCollectionPromise=null;throw error;}); return motorwayServiceCollectionPromise; }
-function matchedMotorwayServiceVisits() { const matches=[]; for(const service of motorwayServiceCollection){const locations=Array.isArray(service.points)&&service.points.length?service.points:[service];const visits=[...persistedConfirmedTimelineVisits.values()].filter(visit=>locations.some(point=>haversineMetres([visit.lng,visit.lat],[Number(point.lng),Number(point.lat)])<=350));if(visits.length)matches.push({service,visits});}return matches.sort((a,b)=>a.service.name.localeCompare(b.service.name)); }
-const ROADSIDE_COLLECTION_ACHIEVEMENTS=[{title:'First stop',required:1},{title:'Ten stops',required:10},{title:'Halfway there',required:56}];
-function renderRoadsideCollection() { if(!roadsideCollectionCard)return;const hasData=shouldShowDataDashboard()&&(persistedMapJourneys.size||persistedConfirmedTimelineVisits.size);roadsideCollectionCard.classList.toggle('hidden',!hasData);if(!hasData)return;if(!roadsidePackUnlocked){roadsideCollectionStatus.textContent='Locked · one-off collection pack';roadsideCollectionProgress.textContent='Unlock to turn your confirmed Timeline stops into motorway service-area completions.';roadsideCollectionVisits.replaceChildren();roadsideVisitCount.textContent='Unlock to view';roadsideCollectionAchievements.replaceChildren();roadsideCollectionAchievementCount.textContent='Locked';serviceCollectionMapElement.classList.add('hidden');openRoadsidePack.textContent='Unlock Roadside Pack';return;}roadsideCollectionStatus.textContent='Loading your confirmed stops…';openRoadsidePack.textContent='Roadside Pack unlocked';openRoadsidePack.disabled=true;void loadMotorwayServiceCollection().then(()=>{const matches=matchedMotorwayServiceVisits(),rawEvents=matches.flatMap(({service,visits})=>visits.map(visit=>({service,visit}))).sort((a,b)=>Date.parse(a.visit.start||'')-Date.parse(b.visit.start||'')),events=[];for(const event of rawEvents){const previous=events[events.length-1],gap=previous?Math.abs(Date.parse(event.visit.start||'')-Date.parse(previous.visit.start||'')):Infinity;if(previous&&previous.service.id===event.service.id&&gap<=45*60*1000)continue;events.push(event);}events.reverse();roadsideCollectionStatus.textContent='Unlocked · confirmed Timeline visits';roadsideCollectionProgress.textContent=`${matches.length} of ${motorwayServiceCollection.length} motorway service areas completed`;roadsideVisitCount.textContent=events.length===1?'1 stop':`${events.length} stops`;roadsideCollectionVisits.replaceChildren();for(const {service,visit} of events.slice(0,12)){const item=document.createElement('li');item.textContent=`${service.name} · ${visit.start?`${formatDate(visit.start)}${formatTime(visit.start)?' · '+formatTime(visit.start):''}`:'on a recorded stop'}`;roadsideCollectionVisits.append(item);}if(events.length>12){const item=document.createElement('li');item.textContent=`+${events.length-12} earlier confirmed stops`;roadsideCollectionVisits.append(item);}roadsideCollectionAchievements.replaceChildren();const earned=ROADSIDE_COLLECTION_ACHIEVEMENTS.filter(a=>matches.length>=a.required).length;roadsideCollectionAchievementCount.textContent=`${earned} of ${ROADSIDE_COLLECTION_ACHIEVEMENTS.length}`;for(const achievement of ROADSIDE_COLLECTION_ACHIEVEMENTS){const item=document.createElement('div');const unlocked=matches.length>=achievement.required;item.className=`collection-achievement ${unlocked?'unlocked':'locked'}`;item.innerHTML=`<span class="collection-achievement-icon" aria-hidden="true">${unlocked?'★':'○'}</span><span><strong>${achievement.title}</strong><small>${unlocked?'Unlocked':`${matches.length} of ${achievement.required} service areas`}</small></span>`;roadsideCollectionAchievements.append(item);}serviceCollectionMapElement.classList.remove('hidden');if(!serviceCollectionMap){serviceCollectionMap=L.map(serviceCollectionMapElement,{zoomControl:true,attributionControl:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(serviceCollectionMap);serviceCollectionMarkers=L.layerGroup().addTo(serviceCollectionMap);}serviceCollectionMarkers.clearLayers();const completed=new Set(matches.map(m=>m.service.id));for(const service of motorwayServiceCollection){const done=completed.has(service.id);L.circleMarker([service.lat,service.lng],{radius:done?6:4,color:done?'#9c6500':'#47658d',weight:1,fillColor:done?'#f2b544':'#91a4bf',fillOpacity:done ? .98 : .58}).bindTooltip(`${service.name}${done?' · completed':''}`).addTo(serviceCollectionMarkers);}serviceCollectionMap.fitBounds(L.latLngBounds(motorwayServiceCollection.map(s=>[s.lat,s.lng])),{padding:[12,12],maxZoom:6});requestAnimationFrame(()=>serviceCollectionMap.invalidateSize());}).catch(error=>{roadsideCollectionStatus.textContent='Collection reference unavailable';roadsideCollectionProgress.textContent=error.message;openRoadsidePack.disabled=false;openRoadsidePack.textContent='Try again';}); }
-
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
   const hasData=shouldShowDataDashboard() && (
@@ -2339,7 +2299,6 @@ function renderAchievements() {
   );
   achievementsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
-  renderRoadsideCollection();
 
   const earnedCount=ROADPRINTS_ACHIEVEMENTS.filter(definition=>persistedAchievements.has(definition.id)).length;
   achievementCount.textContent=`${earnedCount} of ${ROADPRINTS_ACHIEVEMENTS.length}`;
@@ -5271,7 +5230,6 @@ function extractTimelineActivities(data) {
     vehiclesWithPathPoints: 0,
     vehiclesWithAnchors: 0,
     journeysConstructed: 0,
-    confirmedVisits: 0,
     dataStartMs: null,
     dataEndMs: null
   };
@@ -5284,14 +5242,11 @@ function extractTimelineActivities(data) {
   }
 
   const pathPoints = [];
-  const confirmedVisits = [];
 
   for (const seg of segments) {
     recordDataTimestamp(seg?.startTime);
     recordDataTimestamp(seg?.endTime);
     if (seg?.activity) diag.activitySegments++;
-    const visit=seg?.visit || seg?.placeVisit;
-    if (visit) { const point=parseLocation(visit?.topCandidate?.placeLocation?.latLng || visit?.topCandidate?.placeLocation || visit?.location || visit?.latLng); if(point){ const confirmed={start:seg.startTime||visit?.startTime||null,end:seg.endTime||visit?.endTime||null,lat:point.lat,lng:point.lng,name:null}; confirmed.id=timelineVisitFingerprint(confirmed);confirmedVisits.push(confirmed);diag.confirmedVisits++; } }
 
     if (Array.isArray(seg?.timelinePath)) {
       diag.timelinePathSegments++;
@@ -5379,7 +5334,7 @@ function extractTimelineActivities(data) {
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { roadJourneys, onFootJourneys, confirmedVisits, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
@@ -5520,8 +5475,6 @@ function activateRoadprintsScreen(screen) {
   shell.dataset.activeScreen=screen;
   nav.classList.remove('hidden');
   nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
-  if(screen==='collections') renderRoadsideCollection();
-  if(screen==='journeys'||screen==='achievements') renderRoadsideMainSurfaces();
   if(screen==='map') {
     setTimeout(()=>{
       map?.invalidateSize();
@@ -5559,12 +5512,3 @@ const originalActivateRoadprintsScreen=activateRoadprintsScreen; activateRoadpri
 setTimeout(refreshARoadBackgroundStatus,0);
 
 document.getElementById('mapBrandMenu')?.addEventListener('click',()=>{ document.querySelector('main')?.classList.remove('app-ready'); document.getElementById('appNavigation')?.classList.add('hidden'); returnToOnboarding(); });
-
-// Roadside Pack content belongs in the app once unlocked: Collections remains the catalogue.
-const roadsideJourneyCard=document.getElementById('roadsideJourneyCard'),roadsideJourneyCount=document.getElementById('roadsideJourneyCount'),roadsideJourneyList=document.getElementById('roadsideJourneyList'),roadsideAchievementCard=document.getElementById('roadsideAchievementCard'),roadsideAchievementCount=document.getElementById('roadsideAchievementCount'),roadsideAchievementList=document.getElementById('roadsideAchievementList');
-function roadsideEvents(matches){return matches.flatMap(({service,visits})=>visits.map(visit=>({service,visit}))).sort((a,b)=>Date.parse(b.visit.start||'')-Date.parse(a.visit.start||''));}
-function roadsideFirstVisits(matches){return matches.map(({service,visits})=>({service,visit:[...visits].sort((a,b)=>Date.parse(a.start||'')-Date.parse(b.start||''))[0]})).sort((a,b)=>Date.parse(a.visit.start||'')-Date.parse(b.visit.start||''));}
-function roadsideDuration(visit){const ms=Date.parse(visit?.end||'')-Date.parse(visit?.start||'');return Number.isFinite(ms)&&ms>=60000?Math.round(ms/60000)+' min stop':'Confirmed stop';}
-function renderRoadsideMainSurfaces(){if(!roadsidePackUnlocked||!shouldShowDataDashboard())return;void loadMotorwayServiceCollection().then(()=>{const matches=matchedMotorwayServiceVisits(),events=roadsideEvents(matches),firsts=roadsideFirstVisits(matches);roadsideJourneyCard.classList.remove('hidden');roadsideJourneyCount.textContent=events.length===1?'1 stop':events.length+' stops';roadsideJourneyList.replaceChildren();for(const {service,visit} of events){const item=document.createElement('article');item.className='roadside-journey-item';item.innerHTML='<strong>'+service.name+'</strong><span>'+formatDate(visit.start)+(formatTime(visit.start)?' · '+formatTime(visit.start):'')+'</span><small>'+roadsideDuration(visit)+'</small>';roadsideJourneyList.append(item);}roadsideAchievementCard.classList.remove('hidden');const defs=[['First stop',1,'Collect your first unique motorway service area.'],['Ten stops',10,'Collect 10 unique motorway service areas.'],['Halfway there',56,'Collect 56 unique motorway service areas.']];const earned=defs.filter(([,needed])=>firsts.length>=needed).length;roadsideAchievementCount.textContent=earned+' of '+defs.length;roadsideAchievementList.replaceChildren();for(const [title,needed,detail] of defs){const unlocked=firsts.length>=needed;const item=document.createElement('div');item.className='achievement '+(unlocked?'unlocked':'locked');item.innerHTML='<span class="achievement-icon">'+(unlocked?'★':'○')+'</span><span><strong>'+title+'</strong><span>'+(unlocked?'Unlocked on '+formatDate(firsts[needed-1].visit.start):firsts.length+' of '+needed+' unique services')+'</span></span>';roadsideAchievementList.append(item);}}).catch(()=>{});}
-const roadsideOriginalRenderAchievements=renderAchievements;renderAchievements=function(){roadsideOriginalRenderAchievements();renderRoadsideMainSurfaces();};
-const roadsideOriginalRenderJourneyLog=renderJourneyLog;renderJourneyLog=function(){roadsideOriginalRenderJourneyLog();renderRoadsideMainSurfaces();};
