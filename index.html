@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-service-journeys-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260910-journey-filters-v1" />
 </head>
 <body>
   <main>
@@ -204,6 +204,12 @@
         <strong id="journeyLogCount" class="journey-log-count">0</strong>
       </div>
       <p class="muted">Choose a journey to inspect its route and correct any section that does not belong.</p>
+      <div id="journeyLogFilters" class="journey-log-filters" aria-label="Filter journeys">
+        <button type="button" class="active" data-journey-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-journey-filter="driving" aria-pressed="false">Driving</button>
+        <button type="button" data-journey-filter="foot" aria-pressed="false">On foot</button>
+        <button type="button" data-journey-filter="service" aria-pressed="false">⛽ Services</button>
+      </div>
       <div id="journeyLogList" class="journey-log-list"></div>
     </section>
 
@@ -483,7 +489,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260910-service-journeys-v1"></script>
+  <script src="app.js?v=20260910-journey-filters-v1"></script>
   <script src="service-station-map-layer.js?v=20260910-services-layer-v3"></script>
   <script src="service-station-progress.js?v=20260910-progress-layout-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
