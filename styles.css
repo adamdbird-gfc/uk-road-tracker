@@ -1051,6 +1051,11 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
 }
 .service-station-progress-note { margin: 0 0 16px; }
 .service-station-progress-list { display: grid; gap: 16px; }
+.service-station-region-group { display:grid; gap:12px; }
+.service-station-region-group + .service-station-region-group { margin-top:24px; padding-top:20px; border-top:1px solid rgba(255,255,255,.18); }
+.service-station-region-group > h3 { margin:0; color:#69ddcc; font-size:1.05rem; }
+.service-station-region-group > span { margin-top:-8px; color:#aebbd3; font-size:.82rem; }
+
 .service-station-road-group {
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.14);
