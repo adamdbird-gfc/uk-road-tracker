@@ -5521,6 +5521,7 @@ function activateRoadprintsScreen(screen) {
   nav.classList.remove('hidden');
   nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
   if(screen==='collections') renderRoadsideCollection();
+  if(screen==='journeys'||screen==='achievements') renderRoadsideMainSurfaces();
   if(screen==='map') {
     setTimeout(()=>{
       map?.invalidateSize();
