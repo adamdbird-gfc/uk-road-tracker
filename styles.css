@@ -1004,6 +1004,15 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
   box-shadow: 0 2px 5px rgba(7, 19, 53, .42);
   transform: rotate(-45deg);
 }
+.roadprints-service-station-icon.is-visited .roadprints-service-station-pin {
+  background: #f7c450;
+  border-color: #fff2c6;
+  box-shadow: 0 2px 8px rgba(247,196,80,.72);
+}
+.roadprints-service-station-icon.is-visited .roadprints-service-station-pin > span {
+  filter: none;
+}
+
 .roadprints-service-station-pin > span {
   position: absolute;
   top: 50%;
