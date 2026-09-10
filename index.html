@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-progress-layout-v2" />
+  <link rel="stylesheet" href="styles.css?v=20260910-service-achievements-v1" />
 </head>
 <body>
   <main>
@@ -166,6 +166,33 @@
         <strong id="achievementCount" class="achievement-count">0 of 6</strong>
       </div>
       <div id="achievementList" class="achievement-list"></div>
+      <section id="serviceStationAchievements" class="service-station-achievements hidden" aria-labelledby="serviceStationAchievementsTitle">
+        <div class="service-station-achievements-heading">
+          <div>
+            <p class="eyebrow">Roadprints Collections</p>
+            <h3 id="serviceStationAchievementsTitle">Service station achievements</h3>
+          </div>
+          <strong>0 of 4</strong>
+        </div>
+        <div class="service-station-achievement-list">
+          <article class="service-station-achievement">
+            <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
+            <div><p>Milestone</p><h4>First stop</h4><span>Visit your first motorway service area.</span></div>
+          </article>
+          <article class="service-station-achievement">
+            <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
+            <div><p>Milestone</p><h4>Ten stops</h4><span>Visit 10 different motorway service areas.</span></div>
+          </article>
+          <article class="service-station-achievement">
+            <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
+            <div><p>Special stop</p><h4>Moneybags</h4><span>Stop at Norton Canes on the M6 Toll.</span></div>
+          </article>
+          <article class="service-station-achievement">
+            <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
+            <div><p>Special stop</p><h4>Being Posh</h4><span>Stop at Peterborough Services on the A1(M).</span></div>
+          </article>
+        </div>
+      </section>
     </section>
 
     <section id="journeyLogCard" data-app-screen="journeys" class="card journey-log-card hidden" aria-labelledby="journeyLogTitle">
@@ -460,6 +487,6 @@
   <script src="service-station-map-layer.js?v=20260910-services-layer-v3"></script>
   <script src="service-station-progress.js?v=20260910-progress-layout-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
-  <script src="collections-catalog.js?v=20260910-unlock-v3"></script>
+  <script src="collections-catalog.js?v=20260910-service-achievements-v1"></script>
 </body>
 </html>

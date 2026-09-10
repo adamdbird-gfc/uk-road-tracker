@@ -1121,3 +1121,72 @@ main.app-ready[data-active-screen="progress"] [data-app-screen="progress"] {
   outline: 3px solid #f7c450;
   outline-offset: 2px;
 }
+
+
+/* Collections: placeholder service-station achievements on the shared achievements page. */
+.service-station-achievements {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.service-station-achievements-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.service-station-achievements-heading h3 {
+  margin: 2px 0 0;
+  font-size: 1.18rem;
+}
+.service-station-achievements-heading > strong {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+  color: #f7c450;
+  font-size: .78rem;
+}
+.service-station-achievement-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.service-station-achievement {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
+  background: rgba(255,255,255,.06);
+}
+.service-station-achievement-icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  font-size: 1.2rem;
+}
+.service-station-achievement p {
+  margin: 0;
+  color: #69ddcc;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.service-station-achievement h4 {
+  margin: 3px 0;
+  color: #fff;
+  font-size: 1rem;
+}
+.service-station-achievement div > span {
+  display: block;
+  color: #c2cde0;
+  font-size: .8rem;
+  line-height: 1.35;
+}
