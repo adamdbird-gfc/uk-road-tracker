@@ -318,6 +318,16 @@ const ROADPRINTS_ACHIEVEMENTS = [
     type:'summit', roadId:'M62',
     summit:[-2.018561,53.62982],
     radiusM:350
+  },
+  {
+    id:'angel-of-the-north',
+    icon:'👼',
+    title:'I Saw an Angel',
+    description:'Drive the A1 alongside the Angel of the North in Gateshead.',
+    detail:'A1 · Angel of the North, Gateshead',
+    type:'a-road-landmark', roadId:'GB:A1',
+    landmark:[-1.5908431,54.91330845],
+    radiusM:250
   }
 ];
 
@@ -2254,6 +2264,15 @@ function achievementIsEarned(definition) {
       persistedManualRefs.has(definition.roadId) ||
       persistedCoverageByRef.get(definition.roadId)?.size ||
       (road?.status==='ready' && road.coveredAnchorIds.size)
+    );
+  }
+  if (definition.type==='a-road-landmark') {
+    const road=canonicalARoadState(definition.roadId);
+    if (!road || road.status!=='ready' || !road.coveredAnchorIds.size) return false;
+    const [landmarkX,landmarkY]=mercatorXY(definition.landmark[0],definition.landmark[1]);
+    return road.anchors.some(anchor=>
+      road.coveredAnchorIds.has(anchor.id) &&
+      Math.hypot(anchor.x-landmarkX,anchor.y-landmarkY)<=definition.radiusM
     );
   }
   const road=canonicalRoads.get(definition.roadId);
