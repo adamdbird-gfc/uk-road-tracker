@@ -1013,3 +1013,69 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
   color: #536078;
   font-size: .84rem;
 }
+
+
+/* Collections: motorway service-station progress. */
+.service-station-progress[open] > summary { margin-bottom: 18px; }
+.service-station-progress-heading { align-items: start; }
+.service-station-progress-heading h2 { margin: 2px 0 6px; }
+.service-station-progress-heading .muted { margin: 0; }
+.service-station-progress-count {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+  color: #f7c450;
+  font-size: .88rem;
+  white-space: nowrap;
+}
+.service-station-progress-note { margin: 0 0 16px; }
+.service-station-progress-list { display: grid; gap: 16px; }
+.service-station-road-group {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  background: rgba(5,17,55,.27);
+}
+.service-station-road-group h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  font-size: 1rem;
+}
+.service-station-road-group h3 small { color: #c2cde0; font-size: .78rem; font-weight: 700; }
+.service-station-road-ref {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: #1677c8;
+  color: #fff;
+  font-size: .83rem;
+  letter-spacing: .02em;
+}
+.service-station-checklist { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.service-station-checklist li + li { border-top: 1px solid rgba(255,255,255,.08); }
+.service-station-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 14px;
+  color: #eef3fb;
+  font-size: .92rem;
+}
+.service-station-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #2cb9a6;
+  opacity: .9;
+}
+.service-station-check input:disabled { cursor: default; }

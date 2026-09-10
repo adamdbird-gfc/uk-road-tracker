@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-services-layer-v2" />
+  <link rel="stylesheet" href="styles.css?v=20260910-service-progress-v1" />
 </head>
 <body>
   <main>
@@ -191,6 +191,20 @@
       <p class="muted">Tap <strong>Match road</strong> on a journey to send only that journey&apos;s coordinates to the live backend.</p>
       <div id="journeyList" class="journey-list"></div>
     </section>
+
+
+    <details id="serviceStationProgressCard" data-app-screen="progress" class="card service-station-progress hidden" open>
+      <summary class="details-summary service-station-progress-heading">
+        <div>
+          <p class="eyebrow">Roadprints Collections</p>
+          <h2>Service station progress</h2>
+          <p class="muted">Motorway service areas, grouped by motorway.</p>
+        </div>
+        <strong id="serviceStationProgressCount" class="service-station-progress-count">0 of 111</strong>
+      </summary>
+      <p class="muted service-station-progress-note">Confirmed visits will be added here in a later step. For now, this is the full motorway-services reference list.</p>
+      <div id="serviceStationProgressList" class="service-station-progress-list" aria-live="polite"></div>
+    </details>
 
     <details id="motorwayCard" data-app-screen="progress" class="card motorway-details hidden">
       <summary class="details-summary motorway-heading">
@@ -436,6 +450,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js?v=20260910-services-layer-v1"></script>
   <script src="service-station-map-layer.js?v=20260910-services-layer-v1"></script>
+  <script src="service-station-progress.js?v=20260910-service-progress-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
   <script src="collections-catalog.js?v=20260910-unlock-v2"></script>
 </body>
