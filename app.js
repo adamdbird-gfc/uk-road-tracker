@@ -94,6 +94,7 @@ let focusedJourneyId = null;
 let focusedJourneyType = null;
 let journeyLogVisibleCount = 0;
 let journeyLogSignature = '';
+let journeyLogFilter = 'all';
 let journeyLogObserver = null;
 const JOURNEY_LOG_PAGE_SIZE = 30;
 const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
@@ -2022,16 +2023,40 @@ function serviceStopDurationLabel(record) {
 
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
-  const records=[
+  const allRecords=[
     ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({...record,logType:'road'})),
     ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'})),
     ...savedServiceStationRecords().map(record=>({...record,logType:'service'}))
   ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
 
-  const hasData=shouldShowDataDashboard() && records.length>0;
+  const servicesUnlocked=savedServiceStationRecords().length>0 ||
+    (()=>{ try { return Boolean(JSON.parse(localStorage.getItem('roadprints:collection-entitlements:v1') || '{}')['service-stations']); } catch (_) { return false; } })();
+  if (journeyLogFilter==='service' && !servicesUnlocked) journeyLogFilter='all';
+  const filters=document.getElementById('journeyLogFilters');
+  filters?.classList.toggle('hidden',!shouldShowDataDashboard() || !allRecords.length);
+  filters?.querySelector('[data-journey-filter="service"]')?.classList.toggle('hidden',!servicesUnlocked);
+  filters?.querySelectorAll('[data-journey-filter]').forEach(button=>{
+    button.classList.toggle('active',button.dataset.journeyFilter===journeyLogFilter);
+    button.setAttribute('aria-pressed',String(button.dataset.journeyFilter===journeyLogFilter));
+  });
+  const records=journeyLogFilter==='all' ? allRecords : allRecords.filter(record=>
+    journeyLogFilter==='driving' ? record.logType==='road' :
+    journeyLogFilter==='foot' ? record.logType==='foot' : record.logType==='service'
+  );
+
+  const hasData=shouldShowDataDashboard() && allRecords.length>0;
   journeyLogCard.classList.toggle('hidden',!hasData);
   if (journeyLogObserver) { journeyLogObserver.disconnect(); journeyLogObserver=null; }
   if (!hasData) return;
+  if (!records.length) {
+    journeyLogCount.textContent='0';
+    journeyLogList.replaceChildren();
+    const empty=document.createElement('p');
+    empty.className='muted journey-log-empty';
+    empty.textContent='No journeys match this filter yet.';
+    journeyLogList.append(empty);
+    return;
+  }
 
   const signature=records.map(record=>record.logType+':'+(record.serviceId || journeyIdentity(record))+':'+(record.start || '')).join('|');
   if (signature!==journeyLogSignature) { journeyLogSignature=signature; journeyLogVisibleCount=0; }
@@ -2108,6 +2133,13 @@ function renderJourneyLog() {
   while (journeyLogVisibleCount<initiallyVisible) appendNextPage();
 }
 window.addEventListener('roadprints:service-station-ledger-updated',()=>renderJourneyLog());
+window.addEventListener('roadprints:collection-entitlement-change',()=>renderJourneyLog());
+document.getElementById('journeyLogFilters')?.addEventListener('click',event=>{
+  const button=event.target.closest('[data-journey-filter]');
+  if (!button) return;
+  journeyLogFilter=button.dataset.journeyFilter || 'all';
+  renderJourneyLog();
+});
 
 async function renameSavedJourney(id,type='road') {
   const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
