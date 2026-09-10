@@ -1190,3 +1190,8 @@ main.app-ready[data-active-screen="progress"] [data-app-screen="progress"] {
   font-size: .8rem;
   line-height: 1.35;
 }
+
+/* Never show a collection progress card before the tabbed app view is active. */
+main:not(.app-ready) #serviceStationProgressCard {
+  display: none !important;
+}
