@@ -881,6 +881,10 @@ main.app-ready[data-active-screen="journeys"] > #journeyLogCard .muted { color:#
 .journey-log-item small { color:#69ddcc; font-size:.7rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .journey-log-item strong { overflow:hidden; color:#fff; font-size:1.05rem; text-overflow:ellipsis; white-space:nowrap; }
 .journey-log-item span { color:#c2cde0; font-size:.8rem; }
+.journey-log-service { border-color:rgba(105,221,204,.46); background:linear-gradient(135deg,rgba(45,185,170,.18),rgba(255,255,255,.07)); }
+.journey-log-service small { color:#f7c450; }
+.journey-log-service strong { white-space:normal; }
+
 .journey-log-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; align-self:center; }
 .journey-log-actions button { min-height:40px; padding:7px 10px; font-size:.75rem; white-space:nowrap; }
 .journey-log-actions .secondary { border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.11); color:#fff; }
