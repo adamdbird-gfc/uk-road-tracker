@@ -994,11 +994,14 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
   transform: rotate(-45deg);
 }
 .roadprints-service-station-pin > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: block;
   font-size: 15px;
   line-height: 1;
   filter: grayscale(.38) saturate(.72);
-  transform: rotate(45deg);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 .service-station-popup h3 {
   margin: 0 0 3px;
