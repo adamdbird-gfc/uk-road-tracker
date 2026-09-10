@@ -956,3 +956,11 @@ main.app-ready[data-active-screen="progress"] #canonicalMotorwayCard .canonical-
 }
 .journey-log-pagination button { min-height:42px; }
 .journey-log-sentinel { width:100%; height:1px; }
+
+/* Collections shell: deliberately isolated from app data and map layers. */
+.app-navigation{grid-template-columns:repeat(5,1fr)}
+main.app-ready[data-active-screen="collections"]{min-height:100svh;padding:76px 18px 94px;background:#0b1c50;overflow-y:auto}
+main.app-ready[data-active-screen="collections"]>#mapCard{display:none!important}
+main.app-ready[data-active-screen="collections"]>#collectionsCatalogCard{display:block!important;margin:0!important;padding:22px 18px;border:0;border-radius:16px;background:#0b1c50;color:#fff;box-shadow:none}
+main.app-ready[data-active-screen="collections"]>#collectionsCatalogCard .eyebrow{color:#69ddcc}
+main.app-ready[data-active-screen="collections"]>#collectionsCatalogCard h2{margin:0;color:#fff;font-size:clamp(2rem,9vw,2.7rem)}
