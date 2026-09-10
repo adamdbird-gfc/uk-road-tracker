@@ -1999,11 +1999,33 @@ function savedRoadRecords() {
   return [...records.values()];
 }
 
+function savedServiceStationRecords() {
+  try {
+    const entitlements=JSON.parse(localStorage.getItem('roadprints:collection-entitlements:v1') || '{}');
+    if (!entitlements['service-stations']) return [];
+    const ledger=JSON.parse(localStorage.getItem('roadprints:service-station-ledger:v1') || '{}');
+    return Array.isArray(ledger?.visits) ? ledger.visits.filter(visit=>visit && visit.serviceId && visit.start) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function serviceStopDurationLabel(record) {
+  const start=Date.parse(record?.start || '');
+  const end=Date.parse(record?.end || '');
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end<=start) return 'Confirmed Timeline stop';
+  const minutes=Math.round((end-start)/60000);
+  if (minutes<60) return minutes+' min stop';
+  const hours=Math.floor(minutes/60),remainder=minutes%60;
+  return remainder ? hours+'h '+remainder+'m stop' : hours+'h stop';
+}
+
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
   const records=[
     ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({...record,logType:'road'})),
-    ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'}))
+    ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'})),
+    ...savedServiceStationRecords().map(record=>({...record,logType:'service'}))
   ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
 
   const hasData=shouldShowDataDashboard() && records.length>0;
@@ -2011,16 +2033,11 @@ function renderJourneyLog() {
   if (journeyLogObserver) { journeyLogObserver.disconnect(); journeyLogObserver=null; }
   if (!hasData) return;
 
-  // Retain the user's position during ordinary re-renders, but reset when the
-  // underlying journey set changes (import, delete or a different saved state).
-  const signature=records.map(record=>`${record.logType}:${journeyIdentity(record)}:${record.start || ''}`).join('|');
-  if (signature!==journeyLogSignature) {
-    journeyLogSignature=signature;
-    journeyLogVisibleCount=0;
-  }
+  const signature=records.map(record=>record.logType+':'+(record.serviceId || journeyIdentity(record))+':'+(record.start || '')).join('|');
+  if (signature!==journeyLogSignature) { journeyLogSignature=signature; journeyLogVisibleCount=0; }
 
   const patternTotals=new Map();
-  for (const record of records) {
+  for (const record of records.filter(record=>record.logType!=='service')) {
     const key=routeRepeatFingerprint(record);
     const trips=Math.max(1,Number(record.repeatCount || 1));
     patternTotals.set(key,(patternTotals.get(key) || 0)+trips);
@@ -2029,28 +2046,26 @@ function renderJourneyLog() {
   journeyLogList.replaceChildren();
 
   const renderRecord=record=>{
-    const id=journeyIdentity(record);
     const item=document.createElement('article');
-    item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : '');
+    item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : record.logType==='service' ? ' journey-log-service' : '');
     const copy=document.createElement('div');
     const date=document.createElement('small');
-    const modeLabel=record.logType==='foot'
-      ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT')
-      : '🚗 DRIVING';
-    date.textContent=modeLabel+' · '+(record.start ? formatDate(record.start) : 'Saved journey')+
-      (record.start ? ' · '+formatTime(record.start) : '');
+    const modeLabel=record.logType==='foot' ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
+    date.textContent=modeLabel+(record.logType==='service' && record.road ? ' · '+record.road : '')+(record.start ? ' · '+formatDate(record.start)+' · '+formatTime(record.start) : '')+(record.logType==='service' && record.isFirstVisit ? ' · FIRST VISIT' : '');
     const title=document.createElement('strong');
-    title.textContent=record.title || 'Untitled journey';
+    title.textContent=record.logType==='service' ? record.serviceName : (record.title || 'Untitled journey');
     const meta=document.createElement('span');
+    if (record.logType==='service') {
+      meta.textContent=serviceStopDurationLabel(record)+' · confirmed Timeline stop';
+      copy.append(date,title,meta); item.append(copy); return item;
+    }
     const distance=Number(record.googleDistanceKm || record.matchedDistanceKm || record.repeatDistanceKm || 0);
     const recordTrips=Math.max(1,Number(record.repeatCount || 1));
     const patternTrips=patternTotals.get(routeRepeatFingerprint(record)) || recordTrips;
-    const patternLabel=patternTrips>1
-      ? ` · repeated route pattern · ${patternTrips} journeys`
-      : ' · no similar route recorded';
-    meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+patternLabel;
+    meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+(patternTrips>1 ? ' · repeated route pattern · '+patternTrips+' journeys' : ' · no similar route recorded');
     copy.append(date,title,meta);
 
+    const id=journeyIdentity(record);
     const actions=document.createElement('div');
     actions.className='journey-log-actions';
     const rename=document.createElement('button');
@@ -2062,9 +2077,7 @@ function renderJourneyLog() {
     const remove=document.createElement('button');
     remove.type='button'; remove.className='secondary journey-log-remove'; remove.textContent='Remove';
     remove.addEventListener('click',()=>deleteSavedJourney(id,record.logType));
-    actions.append(rename,view,remove);
-    item.append(copy,actions);
-    return item;
+    actions.append(rename,view,remove); item.append(copy,actions); return item;
   };
 
   let pagination=null;
@@ -2073,39 +2086,29 @@ function renderJourneyLog() {
     const next=Math.min(records.length,journeyLogVisibleCount+JOURNEY_LOG_PAGE_SIZE);
     const fragment=document.createDocumentFragment();
     for (const record of records.slice(journeyLogVisibleCount,next)) fragment.append(renderRecord(record));
-    journeyLogList.append(fragment);
-    journeyLogVisibleCount=next;
+    journeyLogList.append(fragment); journeyLogVisibleCount=next;
     if (journeyLogVisibleCount>=records.length) return;
-
-    pagination=document.createElement('div');
-    pagination.className='journey-log-pagination';
+    pagination=document.createElement('div'); pagination.className='journey-log-pagination';
     const note=document.createElement('span');
-    note.textContent=`Showing ${journeyLogVisibleCount.toLocaleString()} of ${records.length.toLocaleString()} journeys`;
+    note.textContent='Showing '+journeyLogVisibleCount.toLocaleString()+' of '+records.length.toLocaleString()+' journeys';
     const more=document.createElement('button');
     more.type='button'; more.className='secondary'; more.textContent='Load older journeys';
     more.addEventListener('click',appendNextPage);
     const sentinel=document.createElement('div');
-    sentinel.className='journey-log-sentinel';
-    sentinel.setAttribute('aria-hidden','true');
-    pagination.append(note,more,sentinel);
-    journeyLogList.append(pagination);
-
+    sentinel.className='journey-log-sentinel'; sentinel.setAttribute('aria-hidden','true');
+    pagination.append(note,more,sentinel); journeyLogList.append(pagination);
     if ('IntersectionObserver' in window) {
       if (journeyLogObserver) journeyLogObserver.disconnect();
-      journeyLogObserver=new IntersectionObserver(entries=>{
-        if (entries.some(entry=>entry.isIntersecting)) appendNextPage();
-      },{root:null,rootMargin:'0px 0px 700px 0px',threshold:0});
+      journeyLogObserver=new IntersectionObserver(entries=>{ if (entries.some(entry=>entry.isIntersecting)) appendNextPage(); },{root:null,rootMargin:'0px 0px 700px 0px',threshold:0});
       journeyLogObserver.observe(sentinel);
     }
   };
-
-  const initiallyVisible=Math.min(
-    records.length,
-    Math.max(JOURNEY_LOG_PAGE_SIZE,journeyLogVisibleCount)
-  );
+  const initiallyVisible=Math.min(records.length,Math.max(JOURNEY_LOG_PAGE_SIZE,journeyLogVisibleCount));
   journeyLogVisibleCount=0;
   while (journeyLogVisibleCount<initiallyVisible) appendNextPage();
 }
+window.addEventListener('roadprints:service-station-ledger-updated',()=>renderJourneyLog());
+
 async function renameSavedJourney(id,type='road') {
   const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
   const record=records.get(id);
