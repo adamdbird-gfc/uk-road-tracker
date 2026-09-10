@@ -53,6 +53,7 @@ const persistedMotorwayContributionsByJourney = new Map();
 const persistedJourneyMileageById = new Map();
 let persistedMileageHistoryComplete = true;
 const persistedAchievements = new Map();
+const persistedConfirmedTimelineVisits = new Map();
 let achievementCelebrationOpen = false;
 // A correction is a persistent local exclusion for the selected map segment.
 // Imports may add fresh journeys, but cannot silently reinstate a correction;
@@ -640,7 +641,7 @@ function loadLocalProgress() {
     const raw=localStorage.getItem(LOCAL_PROGRESS_KEY);
     if (!raw) return;
     const saved=JSON.parse(raw);
-    if (!saved || ![1,2,3,4,5,6,7].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
+    if (!saved || ![1,2,3,4,5,6,7,8].includes(saved.version) || saved.canonicalVersion!==CANONICAL_CACHE_VERSION) return;
 
     for (const [id,ids] of Object.entries(saved.coverage || {})) {
       if (Array.isArray(ids)) persistedCoverageByRef.set(id,new Set(ids.map(Number).filter(Number.isInteger)));
@@ -714,6 +715,19 @@ function loadLocalProgress() {
         announced:achievement.announced===true
       });
     }
+    for (const visit of saved.confirmedTimelineVisits || []) {
+      const lat=Number(visit?.lat),lng=Number(visit?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const cleaned={
+        id:String(visit?.id || ''),
+        start:visit?.start || null,
+        end:visit?.end || null,
+        lat,lng,
+        name:typeof visit?.name==='string' ? visit.name : null
+      };
+      if (!cleaned.id) cleaned.id=timelineVisitFingerprint(cleaned);
+      persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
+    }
     for (const [segmentId,journeyIds] of Object.entries(saved.removedSegmentEvidence || {})) {
       if (!segmentId || !Array.isArray(journeyIds)) continue;
       const ids=new Set(journeyIds.filter(id=>typeof id==='string' && id));
@@ -771,7 +785,7 @@ function saveLocalProgressNow() {
 
     persistedSavedAt=new Date().toISOString();
     localStorage.setItem(LOCAL_PROGRESS_KEY,JSON.stringify({
-      version:6,
+      version:8,
       canonicalVersion:CANONICAL_CACHE_VERSION,
       savedAt:persistedSavedAt,
       distanceUnit,
@@ -790,6 +804,7 @@ function saveLocalProgressNow() {
       journeyMileageById:Object.fromEntries([...persistedJourneyMileageById.entries()].sort(([a],[b])=>a.localeCompare(b))),
       mileageHistoryComplete:persistedMileageHistoryComplete,
       achievements:Object.fromEntries(persistedAchievements),
+      confirmedTimelineVisits:[...persistedConfirmedTimelineVisits.values()],
       manualMotorways:[...persistedManualRefs].sort(motorwayRefSort),
       manualARoads:[...persistedManualARoadRefs].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),
       coverage,
@@ -994,6 +1009,9 @@ async function clearRoadDataOnly() {
   clearTimeout(localSaveTimer);
   localSaveTimer=null;
   resetRoadProgressState();
+  persistedConfirmedTimelineVisits.clear();
+  localStorage.removeItem('roadprints:service-station-ledger:v1');
+  window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
 
   try {
     await clearRoadArchive();
@@ -1038,6 +1056,9 @@ async function clearLocalProgress() {
   clearTimeout(localSaveTimer);
   localSaveTimer=null;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
+  persistedConfirmedTimelineVisits.clear();
+  localStorage.removeItem('roadprints:service-station-ledger:v1');
+  window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
   localStorage.removeItem('roadprints:collection-entitlements:v1');
   window.dispatchEvent(new CustomEvent('roadprints:collection-entitlement-change',{detail:{collection:'service-stations',unlocked:false}}));
   resetRoadProgressState({clearExclusions:true});
@@ -1486,6 +1507,7 @@ fileInput.addEventListener('change', async () => {
     const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
     await saveFootActivities(onFootJourneys);
+    saveConfirmedTimelineVisits(result.confirmedVisits || []);
 
     const needsMileageRebuild=
       persistedProcessedJourneyIds.size>0 &&
@@ -5242,6 +5264,34 @@ function fitSelected() {
   }
 }
 
+function timelineVisitFingerprint(visit) {
+  const lat=Number(visit?.lat),lng=Number(visit?.lng);
+  return [
+    visit?.start || '',
+    visit?.end || '',
+    Number.isFinite(lat) ? lat.toFixed(5) : '',
+    Number.isFinite(lng) ? lng.toFixed(5) : ''
+  ].join('|');
+}
+
+function saveConfirmedTimelineVisits(visits) {
+  for (const visit of visits || []) {
+    const lat=Number(visit?.lat),lng=Number(visit?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const cleaned={
+      id:String(visit?.id || ''),
+      start:visit?.start || null,
+      end:visit?.end || null,
+      lat,lng,
+      name:typeof visit?.name==='string' ? visit.name : null
+    };
+    if (!cleaned.id) cleaned.id=timelineVisitFingerprint(cleaned);
+    persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
+  }
+  scheduleLocalProgressSave();
+  window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
+}
+
 function extractTimelineActivities(data) {
   const segments = Array.isArray(data?.semanticSegments)
     ? data.semanticSegments
@@ -5252,6 +5302,7 @@ function extractTimelineActivities(data) {
     activitySegments: 0,
     passengerVehicleActivities: 0,
     onFootActivities: 0,
+    confirmedVisits: 0,
     timelinePathSegments: 0,
     timelinePathPoints: 0,
     vehiclesWithPathPoints: 0,
@@ -5269,11 +5320,32 @@ function extractTimelineActivities(data) {
   }
 
   const pathPoints = [];
+  const confirmedVisits = [];
 
   for (const seg of segments) {
     recordDataTimestamp(seg?.startTime);
     recordDataTimestamp(seg?.endTime);
     if (seg?.activity) diag.activitySegments++;
+
+    const visit=seg?.visit || seg?.placeVisit;
+    if (visit) {
+      const point=parseLocation(
+        visit?.topCandidate?.placeLocation?.latLng ||
+        visit?.topCandidate?.placeLocation ||
+        visit?.location || visit?.latLng
+      );
+      if (point) {
+        const confirmed={
+          start:seg.startTime || visit?.startTime || null,
+          end:seg.endTime || visit?.endTime || null,
+          lat:point.lat,lng:point.lng,
+          name:visit?.topCandidate?.placeLocation?.name || visit?.topCandidate?.placeLocation?.address || null
+        };
+        confirmed.id=timelineVisitFingerprint(confirmed);
+        confirmedVisits.push(confirmed);
+        diag.confirmedVisits++;
+      }
+    }
 
     if (Array.isArray(seg?.timelinePath)) {
       diag.timelinePathSegments++;
@@ -5361,7 +5433,7 @@ function extractTimelineActivities(data) {
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { roadJourneys, onFootJourneys, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, confirmedVisits, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
