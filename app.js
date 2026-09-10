@@ -5288,7 +5288,7 @@ function saveConfirmedTimelineVisits(visits) {
     if (!cleaned.id) cleaned.id=timelineVisitFingerprint(cleaned);
     persistedConfirmedTimelineVisits.set(cleaned.id,cleaned);
   }
-  scheduleLocalProgressSave();
+  saveLocalProgressNow();
   window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
 }
 
