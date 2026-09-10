@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-progress-layout-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260910-progress-layout-v2" />
 </head>
 <body>
   <main>
@@ -150,10 +150,10 @@
       <nav class="progress-jump-menu" aria-label="Jump to progress section">
         <a href="#motorwayCard">Motorways</a>
         <a href="#aRoadCard">A roads</a>
+        <a href="#serviceStationProgressCard" data-service-station-jump hidden>Services</a>
         <a href="#canonicalMotorwayCard">Motorway progress</a>
         <a href="#canonicalARoadCard">A-road progress</a>
         <a href="#otherRoadCard">Other roads</a>
-        <a href="#serviceStationProgressCard" data-service-station-jump hidden>Services</a>
       </nav>
     </section>
 
@@ -319,7 +319,7 @@
       <p class="muted other-road-note">These roads are included in your travel record but do not have a national completion reference.</p>
     </section>
 
-    <details id="serviceStationProgressCard" data-app-screen="progress" class="card service-station-progress hidden" open>
+    <details id="serviceStationProgressCard" data-app-screen="progress" class="card service-station-progress hidden">
       <summary class="details-summary service-station-progress-heading">
         <div>
           <p class="eyebrow">Roadprints Collections</p>
