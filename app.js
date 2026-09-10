@@ -2294,35 +2294,13 @@ function evaluateAchievements() {
 
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
-  const hasData=shouldShowDataDashboard() && (
-    persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size || persistedManualARoadRefs.size
-  );
+  const hasData=shouldShowDataDashboard() && (persistedMapJourneys.size || persistedCoverageByRef.size || persistedManualRefs.size || persistedManualARoadRefs.size);
   achievementsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
-
   const earnedCount=ROADPRINTS_ACHIEVEMENTS.filter(definition=>persistedAchievements.has(definition.id)).length;
-  achievementCount.textContent=`${earnedCount} of ${ROADPRINTS_ACHIEVEMENTS.length}`;
-  achievementList.innerHTML='';
-  for (const definition of ROADPRINTS_ACHIEVEMENTS) {
-    const unlocked=persistedAchievements.has(definition.id);
-    const item=document.createElement('article');
-    item.className=`achievement ${unlocked?'unlocked':'locked'}`;
-    const icon=document.createElement('span');
-    icon.className='achievement-icon';
-    icon.textContent=unlocked ? definition.icon : '🔒';
-    const copy=document.createElement('div');
-    const eyebrow=document.createElement('small');
-    eyebrow.textContent=unlocked ? 'Unlocked' : 'Next milestone';
-    const title=document.createElement('strong');
-    title.textContent=definition.title;
-    const description=document.createElement('span');
-    description.textContent=unlocked ? definition.detail : definition.description;
-    copy.append(eyebrow,title,description);
-    item.append(icon,copy);
-    achievementList.append(item);
-  }
+  achievementCount.textContent=earnedCount+' of '+ROADPRINTS_ACHIEVEMENTS.length;
+  achievementList.innerHTML=ROADPRINTS_ACHIEVEMENTS.map(definition=>{const unlocked=persistedAchievements.has(definition.id);return '<article class="achievement '+(unlocked?'unlocked':'locked')+'"><span class="achievement-icon">'+(unlocked?definition.icon:'🔒')+'</span><div><small>'+ (unlocked?'Unlocked':'Next milestone')+'</small><strong>'+definition.title+'</strong><span>'+ (unlocked?definition.detail:definition.description)+'</span></div></article>';}).join('');
 }
-
 async function startNextFootBatch() {
   if (footMatching) return;
   const candidates=footBatches.flatMap(batch=>batch.activities.map(activity=>({batch,activity})))
