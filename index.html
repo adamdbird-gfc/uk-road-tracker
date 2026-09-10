@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-shared-header-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260910-collection-cards-v1" />
 </head>
 <body>
   <main>
@@ -313,6 +313,13 @@
     <section id="collectionsCatalogCard" data-app-screen="collections" class="card collections-catalog-card hidden" aria-labelledby="collectionsTitle">
       <p class="eyebrow">Roadprints</p>
       <h2 id="collectionsTitle">Collections</h2>
+      <div class="collection-card-list">
+        <article class="collection-card locked"><div class="collection-card-heading"><span class="collection-logo fuel" aria-hidden="true">⛽</span><div><p class="collection-status">Locked</p><h3>Service stations</h3></div></div><p>Collect every motorway service area you stop at.</p><button type="button">Unlock</button></article>
+        <article class="collection-card locked"><div class="collection-card-heading"><span class="collection-logo spoons" aria-hidden="true">🍻</span><div><p class="collection-status">Locked</p><h3>Wetherspoons</h3></div></div><p>Keep a record of the Spoons pubs you have visited.</p><button type="button">Unlock</button></article>
+        <article class="collection-card locked"><div class="collection-card-heading"><span class="collection-logo mcd" aria-hidden="true">M</span><div><p class="collection-status">Locked</p><h3>McDonald’s</h3></div></div><p>Collect the restaurants that have fuelled your journeys.</p><button type="button">Unlock</button></article>
+        <article class="collection-card locked"><div class="collection-card-heading"><span class="collection-logo parkrun" aria-hidden="true">p</span><div><p class="collection-status">Locked</p><h3>parkrun venues</h3></div></div><p>Track every parkrun venue you have completed.</p><button type="button">Unlock</button></article>
+        <article class="collection-card locked"><div class="collection-card-heading"><span class="collection-logo carbon" aria-hidden="true">CO₂</span><div><p class="collection-status">Locked</p><h3>Carbon calculator</h3></div></div><p>Understand the estimated carbon impact of your travel.</p><button type="button">Unlock</button></article>
+      </div>
     </section>
 
     <section id="mapCard" data-app-screen="map" class="card hidden">
@@ -425,7 +432,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260910-shared-header-v1"></script>
+  <script src="app.js?v=20260910-collection-cards-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
 </body>
 </html>
