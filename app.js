@@ -1027,6 +1027,7 @@ async function clearLocalProgress() {
   clearTimeout(localSaveTimer);
   localSaveTimer=null;
   localStorage.removeItem(LOCAL_PROGRESS_KEY);
+  localStorage.removeItem('roadprints:collection-entitlements:v1');
   resetRoadProgressState({clearExclusions:true});
   localProgressNotice.classList.add('hidden');
 
