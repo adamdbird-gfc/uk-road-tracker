@@ -29,6 +29,8 @@ let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
 let trackingSessionId = 0;
+let importFootStartedAt = null;
+let importFootResult = null;
 let distanceUnit = 'miles';
 let onboardingMode = null;
 const manualMotorwayRefs = new Set();
@@ -2761,6 +2763,8 @@ async function startEasyImport() {
   // The road and pedestrian matchers are independently throttled, so both queues
   // can progress at the same time without adding pressure to either service.
   if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
+    importFootStartedAt=Date.now();
+    importFootResult=null;
     void startNextFootBatch();
   }
 
@@ -2838,9 +2842,7 @@ async function startEasyImport() {
   }
 
   if (sessionId !== trackingSessionId) return;
-  easyImportRunning = false;
-  easyImportPaused = false;
-  document.querySelector('main')?.classList.remove('processing-active');
+  // Keep the queue workspace on screen until on-foot matching has completed.
   updateEasyImportPauseButton();
   if (diagnostics.mileageRebuild && failed===0) {
     persistedMileageHistoryComplete=true;
@@ -2853,19 +2855,15 @@ async function startEasyImport() {
     }
   }
   if (sessionId !== trackingSessionId) return;
-  setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
+  const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
+  const elapsed=elapsedSeconds>=60 ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s` : `${elapsedSeconds}s`;
+  const footDetail=importFootResult ? ` · on foot: ${importFootResult}` : '';
+  setEasyProgressStatus('Import complete', `Driving: ${succeeded} matched, ${failed} skipped in ${elapsed}${footDetail}`);
+  document.getElementById('plotImportedMap')?.classList.remove('hidden');
   refreshImportMapBatch();
   renderRoadQueue();
-  activateRoadprintsScreen('map');
-  showDefaultUnitedKingdomView();
   if (mapStatus) {
-    const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
-    const elapsed=elapsedSeconds>=60
-      ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s`
-      : `${elapsedSeconds}s`;
-    mapStatus.className='muted map-status ok';
-    mapStatus.textContent=`Import complete in ${elapsed} · driving: ${succeeded} matched, ${failed} skipped.`;
-    mapStatus.classList.remove('hidden');
+    mapStatus.classList.add('hidden');
   }
 }
 
