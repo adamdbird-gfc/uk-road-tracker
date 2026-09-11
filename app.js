@@ -2860,6 +2860,9 @@ async function startEasyImport() {
     }
   }
   if (sessionId !== trackingSessionId) return;
+  easyImportRunning=false;
+  easyImportPaused=false;
+  updateEasyImportPauseButton();
   const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
   const elapsed=elapsedSeconds>=60 ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s` : `${elapsedSeconds}s`;
   const footDetail=importFootResult ? ` · on foot: ${importFootResult}` : '';
