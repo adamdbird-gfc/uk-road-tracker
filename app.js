@@ -359,7 +359,7 @@ const ROADPRINTS_ACHIEVEMENTS = [
     type:'crossing-set',
     crossings:[
       {id:'dartford',title:'Dartford Crossing',hint:'A282 · bridge or tunnels',locations:[[0.265,51.462]],radiusM:900},
-      {id:'severn',title:'Severn Crossing',hint:'M4 or M48',locations:[[-2.642,51.551],[-2.647,51.612]],radiusM:700},
+      {id:'severn',title:'Severn Crossing',hint:'M4 or M48',locations:[[-2.695,51.553],[-2.642,51.553],[-2.592,51.553],[-2.705,51.611],[-2.647,51.611],[-2.590,51.611]],radiusM:1250},
       {id:'humber',title:'Humber Bridge',hint:'A15 · near Hull',locations:[[-0.317,53.708]],radiusM:550},
       {id:'blackwall',title:'Blackwall Tunnel',hint:'A102 · London',locations:[[0.007,51.500]],radiusM:350},
       {id:'tyne',title:'Tyne Tunnels',hint:'A19 · near Jarrow',locations:[[-1.495,54.985]],radiusM:550},
