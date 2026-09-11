@@ -589,7 +589,8 @@ function compactFootActivity(activity) {
     travelMode:activity.travelMode || 'WALKING', googleDistanceKm:Number(activity.googleDistanceKm || 0),
     pathPointCount:Number(activity.pathPointCount || 0), points:(activity.points || []).filter(validPoint),
     matchedGeoJson:activity.matchedGeoJson || null, matchQuality:activity.matchQuality || null,
-    matchError:activity.matchError || null
+    matchError:activity.matchError || null,
+    title:String(activity.title || '')
   };
 }
 
@@ -620,14 +621,20 @@ async function saveFootActivities(activities) {
       for (const activity of activities) {
         const record=compactFootActivity(activity);
         const prior=persistedFootActivities.get(record.id);
-        store.put(prior?.matchedGeoJson ? {...record,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality} : record);
+        // Timeline does not provide a user title. Preserve the name the user
+        // gave this on-foot activity when the same activity is reimported.
+        const title=record.title.trim() ? record.title : String(prior?.title || '');
+        const updated={...record,title};
+        store.put(prior?.matchedGeoJson ? {...updated,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality} : updated);
       }
       transaction.oncomplete=resolve;
       transaction.onerror=()=>reject(transaction.error || new Error('Could not save on-foot activities.'));
     });
     for (const activity of activities) {
       const record=compactFootActivity(activity), prior=persistedFootActivities.get(record.id);
-      persistedFootActivities.set(record.id,prior?.matchedGeoJson ? {...record,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality,selected:true} : {...record,selected:true});
+      const title=record.title.trim() ? record.title : String(prior?.title || '');
+      const updated={...record,title};
+      persistedFootActivities.set(record.id,prior?.matchedGeoJson ? {...updated,matchedGeoJson:prior.matchedGeoJson,matchQuality:prior.matchQuality,selected:true} : {...updated,selected:true});
     }
     footActivities=[...persistedFootActivities.values()];
     buildFootBatches(); renderFootQueue(); renderCollectiveStats();
