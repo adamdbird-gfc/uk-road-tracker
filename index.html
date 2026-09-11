@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260910-service-clusters-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260911-service-completion-v1" />
 </head>
 <body>
   <main>
@@ -175,21 +175,21 @@
           <strong>0 of 4</strong>
         </div>
         <div class="service-station-achievement-list">
-          <article class="service-station-achievement">
+          <article class="service-station-achievement" data-service-achievement="first-stop">
             <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
-            <div><p>Milestone</p><h4>First stop</h4><span>Visit your first motorway service area.</span></div>
+            <div><p data-achievement-status>Locked</p><h4>First stop</h4><span>Visit your first motorway service area.</span></div>
           </article>
-          <article class="service-station-achievement">
+          <article class="service-station-achievement" data-service-achievement="ten-stops">
             <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
-            <div><p>Milestone</p><h4>Ten stops</h4><span>Visit 10 different motorway service areas.</span></div>
+            <div><p data-achievement-status>Locked</p><h4>Ten stops</h4><span>Visit 10 different motorway service areas.</span></div>
           </article>
-          <article class="service-station-achievement">
+          <article class="service-station-achievement" data-service-achievement="moneybags">
             <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
-            <div><p>Special stop</p><h4>Moneybags</h4><span>Stop at Norton Canes on the M6 Toll.</span></div>
+            <div><p data-achievement-status>Locked</p><h4>Moneybags</h4><span>Stop at Norton Canes on the M6 Toll.</span></div>
           </article>
-          <article class="service-station-achievement">
+          <article class="service-station-achievement" data-service-achievement="being-posh">
             <span class="service-station-achievement-icon" aria-hidden="true">🔒</span>
-            <div><p>Special stop</p><h4>Being Posh</h4><span>Stop at Peterborough Services on the A1(M).</span></div>
+            <div><p data-achievement-status>Locked</p><h4>Being Posh</h4><span>Stop at Peterborough Services on the A1(M).</span></div>
           </article>
         </div>
       </section>
@@ -489,9 +489,9 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260910-journey-filters-v1"></script>
-  <script src="service-station-map-layer.js?v=20260911-norton-canes-v1"></script>
-  <script src="service-station-progress.js?v=20260911-norton-canes-v1"></script>
+  <script src="app.js?v=20260911-service-completion-v1"></script>
+  <script src="service-station-map-layer.js?v=20260911-service-completion-v1"></script>
+  <script src="service-station-progress.js?v=20260911-service-completion-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
   <script src="collections-catalog.js?v=20260910-service-achievements-v1"></script>
 <script src="service-station-ledger.js?v=20260911-norton-canes-v1"></script>
