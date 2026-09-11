@@ -4,7 +4,7 @@
   const PROGRESS_KEY='uk-road-tracker-progress-v1';
   const ENTITLEMENT_KEY='roadprints:collection-entitlements:v1';
   const LEDGER_KEY='roadprints:service-station-ledger:v1';
-  const SERVICES_URL='collections/uk-motorway-services-v1.json';
+  const SERVICES_URL='collections/uk-motorway-services-v1.json?v=20260911-norton-canes-v1';
   const MATCH_RADIUS_M=350;
   const DUPLICATE_WINDOW_MS=45*60*1000;
   let cataloguePromise=null;
