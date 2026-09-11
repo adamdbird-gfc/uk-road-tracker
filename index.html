@@ -46,6 +46,15 @@
       <input id="timelineFile" type="file" accept="application/json,.json" />
       <div id="fileStatus" class="muted import-file-status" role="status" aria-live="polite">No file selected.</div>
 
+      <details class="timeline-import-help">
+        <summary>Where do I find my Timeline file?</summary>
+        <div class="timeline-import-help-content">
+          <p><strong>Android</strong> — Settings → Location → Location services → Timeline → Export Timeline data. Save the JSON file to Downloads.</p>
+          <p><strong>iPhone</strong> — Google Maps → profile picture → Settings → Personal content → Export Timeline data → Save to Files.</p>
+          <p class="muted">Then select the saved JSON file here. It remains on this device.</p>
+        </div>
+      </details>
+
       <div id="importModeCard" class="import-modes hidden" aria-hidden="true">
         <div class="mode-grid">
           <button id="easyImport" class="mode-card" type="button">Match data automatically</button>
