@@ -1297,3 +1297,49 @@ main:not(.app-ready) #serviceStationProgressCard {
 .achievement-crossing-progress li strong { color:#657083; }
 .achievement-crossing-progress li.complete strong { color:#172033; }
 .achievement-crossing-progress li span { margin:0; text-align:right; font-size:.72rem; }
+
+/* This achievement has a full-width progress panel beneath its normal card intro. */
+main.app-ready[data-active-screen="achievements"] .achievement.achievement-crossing-set {
+  display:block;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-main {
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:15px;
+  align-items:center;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-main > div {
+  display:grid;
+  gap:3px;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress {
+  width:100%;
+  margin:16px 0 0;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress summary {
+  color:#69ddcc;
+  font-size:.78rem;
+  font-weight:850;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-meter {
+  height:8px;
+  margin:11px 0 10px;
+  background:rgba(255,255,255,.22);
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-meter span {
+  background:#f7c450;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress li {
+  border-color:rgba(255,255,255,.18);
+  color:#c2cde0;
+  font-size:.86rem;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress li strong,
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress li.complete strong {
+  color:#fff;
+  font-size:1rem;
+}
+main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .achievement-crossing-progress li span {
+  color:#c2cde0;
+  font-size:.76rem;
+}
