@@ -2043,7 +2043,7 @@ function renderFootQueue() {
     footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : `${matched + failed} / ${distinct}`,
     footMatchingError ? footMatchingError : footMatchingProgress
       ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
-      : `${matched} matched${failed ? ` · ${failed} unable` : ''} · ${footActivities.length} activities`
+      : `${matched} matched${failed ? ` · ${failed} unable` : ''} · ${footActivities.length} activities${importFootResult ? ` · ${importFootResult}` : ''}`
   );
   const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
   startFootBatch.disabled=footMatching || !next;
@@ -2662,7 +2662,7 @@ async function startNextFootBatch() {
     if (importFootStartedAt && footMatchingProgress) {
       const seconds=Math.max(1,Math.round((Date.now()-importFootStartedAt)/1000));
       const elapsed=seconds>=60 ? `${Math.floor(seconds/60)}m ${seconds%60}s` : `${seconds}s`;
-      importFootResult=`${footMatchingProgress.succeeded} matched, ${footMatchingProgress.failed} unable in ${elapsed}`;
+      importFootResult=`completed in ${elapsed}`;
     }
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue();
@@ -2860,7 +2860,9 @@ async function startEasyImport() {
     scheduleLocalProgressSave();
   }
   if (footMatching) {
-    setEasyProgressStatus('Road matching complete','Finishing on-foot routes');
+    const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
+    const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
+    setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
       await new Promise(resolve=>setTimeout(resolve,200));
     }
