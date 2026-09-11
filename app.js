@@ -55,6 +55,8 @@ let persistedMileageHistoryComplete = true;
 const persistedAchievements = new Map();
 const persistedConfirmedTimelineVisits = new Map();
 let achievementCelebrationOpen = false;
+let achievementCelebrationQueue = [];
+let achievementCelebrationIndex = 0;
 // A correction is a persistent local exclusion for the selected map segment.
 // Imports may add fresh journeys, but cannot silently reinstate a correction;
 // the user restores it deliberately from the map editor.
@@ -151,6 +153,13 @@ const achievementCount = document.getElementById('achievementCount');
 const achievementList = document.getElementById('achievementList');
 const achievementCelebration = document.getElementById('achievementCelebration');
 const closeAchievementCelebration = document.getElementById('closeAchievementCelebration');
+const previousAchievementCelebration = document.getElementById('previousAchievementCelebration');
+const nextAchievementCelebration = document.getElementById('nextAchievementCelebration');
+const achievementCelebrationPosition = document.getElementById('achievementCelebrationPosition');
+const achievementCelebrationIcon = document.getElementById('achievementCelebrationIcon');
+const achievementCelebrationTitle = document.getElementById('achievementCelebrationTitle');
+const achievementCelebrationDescription = document.getElementById('achievementCelebrationDescription');
+const achievementCelebrationDetail = document.getElementById('achievementCelebrationDetail');
 const motorwayCard = document.getElementById('motorwayCard');
 const motorwayList = document.getElementById('motorwayList');
 const motorwaysDiscovered = document.getElementById('motorwaysDiscovered');
@@ -1461,6 +1470,16 @@ document.getElementById('clearAllARoads').addEventListener('click', () => setAll
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 closeAchievementCelebration.addEventListener('click',hideAchievementCelebration);
+previousAchievementCelebration?.addEventListener('click',()=>{
+  if (achievementCelebrationIndex<=0) return;
+  achievementCelebrationIndex--;
+  renderAchievementCelebration();
+});
+nextAchievementCelebration?.addEventListener('click',()=>{
+  if (achievementCelebrationIndex>=achievementCelebrationQueue.length-1) return;
+  achievementCelebrationIndex++;
+  renderAchievementCelebration();
+});
 achievementCelebration.addEventListener('click',event=>{
   if (event.target===achievementCelebration) hideAchievementCelebration();
 });
@@ -2355,34 +2374,73 @@ function achievementIsEarned(definition) {
   );
 }
 
+function renderAchievementCelebration() {
+  const definition=achievementCelebrationQueue[achievementCelebrationIndex];
+  if (!definition) return;
+  if (achievementCelebrationIcon) achievementCelebrationIcon.textContent=definition.icon || '★';
+  if (achievementCelebrationTitle) achievementCelebrationTitle.textContent=definition.title;
+  if (achievementCelebrationDescription) achievementCelebrationDescription.textContent=definition.description || '';
+  if (achievementCelebrationDetail) achievementCelebrationDetail.textContent=definition.detail || '';
+  const multiple=achievementCelebrationQueue.length>1;
+  previousAchievementCelebration?.classList.toggle('hidden',!multiple);
+  nextAchievementCelebration?.classList.toggle('hidden',!multiple);
+  if (previousAchievementCelebration) previousAchievementCelebration.disabled=achievementCelebrationIndex===0;
+  if (nextAchievementCelebration) nextAchievementCelebration.disabled=achievementCelebrationIndex===achievementCelebrationQueue.length-1;
+  if (achievementCelebrationPosition) {
+    achievementCelebrationPosition.textContent=multiple
+      ? (achievementCelebrationIndex+1)+' of '+achievementCelebrationQueue.length
+      : '';
+    achievementCelebrationPosition.classList.toggle('hidden',!multiple);
+  }
+  if (closeAchievementCelebration) {
+    closeAchievementCelebration.textContent=multiple && achievementCelebrationIndex<achievementCelebrationQueue.length-1
+      ? 'Claim all achievements'
+      : 'Claim achievement';
+  }
+}
+
 function hideAchievementCelebration() {
   achievementCelebrationOpen=false;
+  achievementCelebrationQueue=[];
+  achievementCelebrationIndex=0;
   achievementCelebration.classList.add('hidden');
 }
 
-function showAchievementCelebration() {
+function showAchievementCelebration(definitions=[]) {
+  const known=new Set(achievementCelebrationQueue.map(definition=>definition.id));
+  for (const definition of definitions) {
+    if (definition?.id && !known.has(definition.id)) {
+      achievementCelebrationQueue.push(definition);
+      known.add(definition.id);
+    }
+  }
+  if (!achievementCelebrationQueue.length) return;
+  achievementCelebrationIndex=0;
+  renderAchievementCelebration();
   if (achievementCelebrationOpen) return;
   achievementCelebrationOpen=true;
   achievementCelebration.classList.remove('hidden');
   closeAchievementCelebration.focus({preventScroll:true});
 }
 
+function unlockAchievement(definition) {
+  if (!definition?.id || persistedAchievements.has(definition.id)) return false;
+  persistedAchievements.set(definition.id,{unlockedAt:new Date().toISOString(),announced:true});
+  scheduleLocalProgressSave();
+  showAchievementCelebration([definition]);
+  return true;
+}
+
+window.roadprintsUnlockAchievement=unlockAchievement;
+
 function evaluateAchievements() {
-  let changed=false;
-  let newlyUnlocked=false;
+  const newlyUnlocked=[];
   for (const definition of ROADPRINTS_ACHIEVEMENTS) {
-    if (persistedAchievements.has(definition.id) || !achievementIsEarned(definition)) continue;
-    persistedAchievements.set(definition.id,{unlockedAt:new Date().toISOString(),announced:false});
-    newlyUnlocked=true;
-    changed=true;
+    if (!achievementIsEarned(definition)) continue;
+    if (unlockAchievement(definition)) newlyUnlocked.push(definition);
   }
-  if (changed) scheduleLocalProgressSave();
   renderAchievements();
-  if (newlyUnlocked) {
-    for (const record of persistedAchievements.values()) record.announced=true;
-    scheduleLocalProgressSave();
-    showAchievementCelebration();
-  }
+  if (newlyUnlocked.length>1) showAchievementCelebration(newlyUnlocked);
 }
 
 function renderAchievements() {
