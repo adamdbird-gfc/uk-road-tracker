@@ -2654,7 +2654,9 @@ async function startNextFootBatch() {
           if (footMatchingProgress.completed===1) fitFootRoutes();
         }
       } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
-      await new Promise(resolve=>setTimeout(resolve,1100));
+      // Keep the UI responsive without inserting a full second of idle time
+      // after each on-foot match.
+      await new Promise(resolve=>setTimeout(resolve,100));
     }
   } catch (err) {
     footMatchingError=err.message || String(err);
