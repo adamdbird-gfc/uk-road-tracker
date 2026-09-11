@@ -330,6 +330,16 @@ const ROADPRINTS_ACHIEVEMENTS = [
     type:'a-road-landmark', roadId:'GB:A1',
     landmark:[-1.5908431,54.91330845],
     radiusM:250
+  },
+  {
+    id:'stonehenge-solstice',
+    icon:'🌞',
+    title:'Enjoying the Solstice',
+    description:'Drive the A303 past Stonehenge.',
+    detail:'A303 · Stonehenge, Wiltshire',
+    type:'a-road-landmark', roadId:'GB:A303',
+    landmark:[-1.8262,51.1789],
+    radiusM:500
   }
 ];
 
