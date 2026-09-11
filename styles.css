@@ -1123,6 +1123,25 @@ main.app-ready[data-active-screen="map"] .tab-brand-header{display:none}
   opacity: .9;
 }
 .service-station-check input:disabled { cursor: default; }
+.service-station-check:not(.timeline-confirmed) { cursor:pointer; }
+.service-station-check small {
+  margin-left:auto;
+  color:#69ddcc;
+  font-size:.7rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.service-station-achievement.is-unlocked {
+  border-color:rgba(247,196,80,.72);
+  background:linear-gradient(135deg,rgba(247,196,80,.18),rgba(45,185,170,.16));
+}
+.service-station-achievement.is-unlocked .service-station-achievement-icon {
+  background:#f7c450;
+  color:#0b1c50;
+}
+.service-station-achievement.is-unlocked p { color:#69ddcc; }
+
 
 
 /* Progress layout: align core cards and provide quick navigation on long records. */
