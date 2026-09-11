@@ -2859,9 +2859,9 @@ async function startEasyImport() {
     persistedMileageHistoryComplete=true;
     scheduleLocalProgressSave();
   }
+  const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
+  const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
   if (footMatching) {
-    const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
-    const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
     setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
       await new Promise(resolve=>setTimeout(resolve,200));
@@ -2871,12 +2871,9 @@ async function startEasyImport() {
   easyImportRunning=false;
   easyImportPaused=false;
   updateEasyImportPauseButton();
-  const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
-  const elapsed=elapsedSeconds>=60 ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s` : `${elapsedSeconds}s`;
-  const footDetail=importFootResult ? ` · on foot: ${importFootResult}` : '';
   refreshImportMapBatch();
   renderRoadQueue();
-  setEasyProgressStatus('Import complete', `Driving: ${succeeded} matched, ${failed} skipped in ${elapsed}${footDetail}`);
+  setEasyProgressStatus('Road matching complete', `${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
   document.getElementById('plotImportedMap')?.classList.remove('hidden');
   if (mapStatus) {
     mapStatus.classList.add('hidden');
