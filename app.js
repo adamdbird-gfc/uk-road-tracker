@@ -1485,6 +1485,14 @@ achievementCelebration.addEventListener('click',event=>{
 });
 mapCorrectionStartButton.addEventListener('click',startMapCorrection);
 mapCorrectionFinishButton.addEventListener('click',finishMapCorrection);
+// Mobile browsers may suspend a tab before a delayed task can run. Persist any
+// in-progress correction synchronously as the page is being left.
+window.addEventListener('pagehide',()=>{
+  if (!mapCorrectionChangesPending) return;
+  if (motorwayAggregateDirty) persistCorrectedMotorwayContributions();
+  saveLocalProgressNow();
+});
+
 mapCorrectionRemove.addEventListener('click',()=>setMapCorrectionMode('remove'));
 mapCorrectionRestore.addEventListener('click',()=>setMapCorrectionMode('restore'));
 mapCorrectionUndo.addEventListener('click',()=>{
@@ -3385,10 +3393,15 @@ function handleMapCorrectionMapClick(event) {
   }
   mapCorrectionUndo.disabled=false;
   mapCorrectionChangesPending=true;
+  // A correction is durable as soon as it is made. “Done” now only closes the
+  // editor, so a refresh, accidental navigation or mobile browser suspension
+  // cannot discard an already-applied section change.
+  if (roadChanged) persistCorrectedMotorwayContributions();
+  saveLocalProgressNow();
   renderMap({deferCalculations:true});
   const verb=mapCorrectionMode==='remove' ? 'Removed' : 'Restored';
   mapStatus.className='muted map-status ok';
-  mapStatus.textContent=`${verb} ${targets.length} credited map segment${targets.length===1?'':'s'}. Save changes when you are finished editing.`;
+  mapStatus.textContent=`${verb} ${targets.length} credited map segment${targets.length===1?'':'s'} · saved.`;
 }
 
 function startMapCorrection() {
@@ -3413,7 +3426,7 @@ function finishMapCorrection() {
       persistCorrectedMotorwayContributions();
       motorwayAggregateDirty=false;
     }
-    scheduleLocalProgressSave();
+    saveLocalProgressNow();
   }
   mapCorrectionChangesPending=false;
   renderMap();
