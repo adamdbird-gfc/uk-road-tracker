@@ -2831,7 +2831,9 @@ async function startEasyImport() {
       refreshImportMapBatch();
       lastRoadMapBatchCount=succeeded;
     }
-    await new Promise(resolve => setTimeout(resolve, 250));
+    // Yield briefly so progress remains responsive, without adding a
+    // quarter-second idle period after every completed matcher request.
+    await new Promise(resolve => setTimeout(resolve, 20));
   }
 
   if (sessionId !== trackingSessionId) return;
