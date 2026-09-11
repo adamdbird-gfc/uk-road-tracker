@@ -75,6 +75,15 @@
       'moneybags':complete.has('msa:norton-canes:52.6643:-1.9688'),
       'being-posh':complete.has('msa:peterborough:52.5314:-0.3215')
     };
+    const celebrationDefinitions=[
+      {id:'service-first-stop',rule:'first-stop',icon:'⛽',title:'First stop',description:'Your first motorway service area is on the board.',detail:'Roadprints Collections · Service stations'},
+      {id:'service-ten-stops',rule:'ten-stops',icon:'🔟',title:'Ten stops',description:'Ten different motorway service areas collected.',detail:'Roadprints Collections · Service stations'},
+      {id:'service-moneybags',rule:'moneybags',icon:'💰',title:'Moneybags',description:'You stopped at Norton Canes on the M6 Toll.',detail:'M6 Toll · Norton Canes Services'},
+      {id:'service-being-posh',rule:'being-posh',icon:'🎩',title:'Being Posh',description:'You stopped at Peterborough Services on the A1(M).',detail:'A1(M) · Peterborough Services'}
+    ];
+    celebrationDefinitions.forEach(definition=>{
+      if(rules[definition.rule]) window.roadprintsUnlockAchievement?.(definition);
+    });
     const unlockedCount=Object.values(rules).filter(Boolean).length;
     if(countNode)countNode.textContent=unlockedCount+' of '+Object.keys(rules).length;
     achievements.querySelectorAll('[data-service-achievement]').forEach(item=>{
