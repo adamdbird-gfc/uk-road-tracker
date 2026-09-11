@@ -2222,6 +2222,7 @@ function openJourneyFocus(id,type='road') {
   if (type==='road' && !journeys.some(journey=>journeyIdentity(journey)===id)) journeys.push(hydrateMapJourney(record));
   focusedJourneyId=id;
   focusedJourneyType=type;
+  window.dispatchEvent(new CustomEvent('roadprints:journey-focus-change',{detail:{active:true}}));
   journeyFocusBar?.classList.remove('hidden');
   activateRoadprintsScreen('map');
   renderMap();
@@ -2240,6 +2241,7 @@ function openJourneyFocus(id,type='road') {
 function closeJourneyFocusView() {
   focusedJourneyId=null;
   focusedJourneyType=null;
+  window.dispatchEvent(new CustomEvent('roadprints:journey-focus-change',{detail:{active:false}}));
   journeyFocusBar?.classList.add('hidden');
   renderMap();
   activateRoadprintsScreen('journeys');
