@@ -16,12 +16,15 @@
   };
   const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const visitedServiceIds=()=>{
+    const ids=new Set();
     try {
       const ledger=JSON.parse(localStorage.getItem(LEDGER_KEY)||'{}');
-      return new Set((ledger?.visits||[]).map(visit=>visit?.serviceId).filter(Boolean));
-    } catch (_) {
-      return new Set();
-    }
+      (ledger?.visits||[]).forEach(visit=>{if(visit?.serviceId)ids.add(visit.serviceId);});
+    } catch (_) {}
+    try {
+      JSON.parse(localStorage.getItem('roadprints:service-station-manual-visits:v1')||'[]').forEach(id=>{if(typeof id==='string')ids.add(id);});
+    } catch (_) {}
+    return ids;
   };
   async function loadServices(){
     if(!servicesPromise) {
@@ -121,5 +124,6 @@
     if(event.detail?.collection==='service-stations') render(window.roadprintsMapContext,{force:true});
   });
   window.addEventListener('roadprints:service-station-ledger-updated',()=>render(window.roadprintsMapContext,{force:true}));
+  window.addEventListener('roadprints:service-station-completion-updated',()=>render(window.roadprintsMapContext,{force:true}));
   if(window.roadprintsMapContext) render(window.roadprintsMapContext);
 })();
