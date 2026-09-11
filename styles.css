@@ -1285,3 +1285,15 @@ main.app-ready[data-active-screen="progress"] [data-app-screen="progress"] {
 main:not(.app-ready) #serviceStationProgressCard {
   display: none !important;
 }
+
+.achievement-crossing-set { display:block; }
+.achievement-main { display:flex; align-items:center; gap:12px; }
+.achievement-crossing-progress { margin:12px 0 0 54px; }
+.achievement-crossing-progress summary { cursor:pointer; color:#124f92; font-size:.8rem; font-weight:800; }
+.achievement-crossing-meter { height:7px; margin:10px 0; overflow:hidden; border-radius:99px; background:#dce4ef; }
+.achievement-crossing-meter span { display:block; height:100%; margin:0; background:#f2b544; }
+.achievement-crossing-progress ul { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.achievement-crossing-progress li { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid #e3e8ef; color:#657083; font-size:.78rem; }
+.achievement-crossing-progress li strong { color:#657083; }
+.achievement-crossing-progress li.complete strong { color:#172033; }
+.achievement-crossing-progress li span { margin:0; text-align:right; font-size:.72rem; }
