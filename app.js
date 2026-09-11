@@ -2845,10 +2845,18 @@ async function startEasyImport() {
     persistedMileageHistoryComplete=true;
     scheduleLocalProgressSave();
   }
+  if (footMatching) {
+    setEasyProgressStatus('Road matching complete','Finishing on-foot routes');
+    while (footMatching && sessionId===trackingSessionId) {
+      await new Promise(resolve=>setTimeout(resolve,200));
+    }
+  }
+  if (sessionId !== trackingSessionId) return;
   setEasyProgressStatus('Complete', `${succeeded} matched · ${failed} skipped`);
   refreshImportMapBatch();
   renderRoadQueue();
   activateRoadprintsScreen('map');
+  showDefaultUnitedKingdomView();
 }
 
 function renderAll(fileName) {
