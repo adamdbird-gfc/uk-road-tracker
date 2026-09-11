@@ -8,7 +8,7 @@
   const LAYER_LABEL='Motorway service stations';
   const CLUSTER_ZOOM_MAX=8;
   const CLUSTER_CELL_PX=56;
-  let renderedLayer=null,servicesPromise=null,boundMap=null,lastContext=null;
+  let renderedLayer=null,servicesPromise=null,boundMap=null,lastContext=null,journeyFocusActive=false;
 
   const isUnlocked=()=>{
     try { return JSON.parse(localStorage.getItem(ENTITLEMENT_KEY)||'{}')['service-stations']===true; }
@@ -98,7 +98,7 @@
     const layer=context?.serviceStationLayer;
     if(!layer||!window.L)return;
     lastContext=context;
-    if(!isUnlocked()){hide(context);return;}
+    if(!isUnlocked()||journeyFocusActive){hide(context);return;}
     bindMap(context);
     context.mapLayerControl?.removeLayer(layer);
     context.mapLayerControl?.addOverlay(layer,LAYER_LABEL);
@@ -125,5 +125,6 @@
   });
   window.addEventListener('roadprints:service-station-ledger-updated',()=>render(window.roadprintsMapContext,{force:true}));
   window.addEventListener('roadprints:service-station-completion-updated',()=>render(window.roadprintsMapContext,{force:true}));
+  window.addEventListener('roadprints:journey-focus-change',event=>{journeyFocusActive=event.detail?.active===true;render(window.roadprintsMapContext,{force:true});});
   if(window.roadprintsMapContext) render(window.roadprintsMapContext);
 })();
