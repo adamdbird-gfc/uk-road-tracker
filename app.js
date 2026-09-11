@@ -2653,6 +2653,11 @@ async function startNextFootBatch() {
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
+    if (importFootStartedAt && footMatchingProgress) {
+      const seconds=Math.max(1,Math.round((Date.now()-importFootStartedAt)/1000));
+      const elapsed=seconds>=60 ? `${Math.floor(seconds/60)}m ${seconds%60}s` : `${seconds}s`;
+      importFootResult=`${footMatchingProgress.succeeded} matched, ${footMatchingProgress.failed} unable in ${elapsed}`;
+    }
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
     buildFootBatches(); renderFootQueue();
     if (!easyImportRunning) renderMap();
