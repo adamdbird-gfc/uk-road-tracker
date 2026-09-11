@@ -1343,3 +1343,33 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
   color:#c2cde0;
   font-size:.76rem;
 }
+
+
+/* Timeline import help stays compact until the user needs it. */
+.timeline-import-help {
+  margin:22px 0 0;
+  border-top:1px solid rgba(194,205,224,.28);
+  color:#f3f6f7;
+}
+.timeline-import-help summary {
+  padding:16px 0 4px;
+  color:#67d5cc;
+  font-weight:750;
+  cursor:pointer;
+}
+.timeline-import-help-content {
+  padding:6px 0 2px;
+}
+.timeline-import-help-content p {
+  margin:0 0 12px;
+  color:#d3dced;
+  font-size:.92rem;
+  line-height:1.5;
+}
+.timeline-import-help-content strong {
+  color:#fff;
+}
+.timeline-import-help-content .muted {
+  color:#aebdd5;
+  font-size:.84rem;
+}
