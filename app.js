@@ -349,6 +349,23 @@ const ROADPRINTS_ACHIEVEMENTS = [
     type:'a-road-landmark', roadId:'GB:A303',
     landmark:[-1.8262,51.1789],
     radiusM:500
+  },
+  {
+    id:'spanning-the-nation',
+    icon:'🌉',
+    title:'Spanning the Nation',
+    description:'Complete the UK’s great road crossings.',
+    detail:'Seven great road crossings completed',
+    type:'crossing-set',
+    crossings:[
+      {id:'dartford',title:'Dartford Crossing',hint:'A282 · bridge or tunnels',locations:[[0.265,51.462]],radiusM:900},
+      {id:'severn',title:'Severn Crossing',hint:'M4 or M48',locations:[[-2.642,51.551],[-2.647,51.612]],radiusM:700},
+      {id:'humber',title:'Humber Bridge',hint:'A15 · near Hull',locations:[[-0.317,53.708]],radiusM:550},
+      {id:'blackwall',title:'Blackwall Tunnel',hint:'A102 · London',locations:[[0.007,51.500]],radiusM:350},
+      {id:'tyne',title:'Tyne Tunnels',hint:'A19 · near Jarrow',locations:[[-1.495,54.985]],radiusM:550},
+      {id:'mersey',title:'Mersey Tunnel',hint:'Kingsway or Queensway',locations:[[-2.993,53.405]],radiusM:650},
+      {id:'queensferry',title:'Queensferry Crossing',hint:'M90 · Forth',locations:[[-3.415,56.001]],radiusM:650}
+    ]
   }
 ];
 
@@ -2361,7 +2378,48 @@ function motorwayNetworkCompletionPercent() {
   return Math.min(100,(completedByRegion.GB+completedByRegion.NI)/UK_MOTORWAY_NETWORK_KM*100);
 }
 
+let crossingProgressCache={signature:null,entries:null};
+
+function crossingSetProgress(definition) {
+  const records=savedRoadRecords();
+  const byId=new Map(records.map(record=>[journeyIdentity(record),record]));
+  const segments=creditedSegmentsForMap(records);
+  const signature=(creditedMapSegmentCache.signature || '')+'|'+records.length+'|'+definition.id;
+  if (crossingProgressCache.signature===signature) return crossingProgressCache.entries;
+
+  const entries=definition.crossings.map(crossing=>({
+    ...crossing,
+    journeyIds:new Set(),
+    completed:false,
+    completedAt:null
+  }));
+
+  // Use the matched road geometry, rather than one road reference alone: a
+  // crossing can be reached via a tunnel or a bridge, and both must count.
+  for (const segment of segments) {
+    for (const entry of entries) {
+      const nearby=entry.locations.some(([lng,lat])=>
+        distancePointToSegmentM([lng,lat],segment.a,segment.b)<=entry.radiusM
+      );
+      if (!nearby) continue;
+      for (const id of segment.journeyIds) entry.journeyIds.add(id);
+    }
+  }
+  for (const entry of entries) {
+    const dates=[...entry.journeyIds]
+      .map(id=>Date.parse(byId.get(id)?.start || ''))
+      .filter(Number.isFinite)
+      .sort((a,b)=>a-b);
+    entry.completed=entry.journeyIds.size>0;
+    entry.completedAt=dates.length ? new Date(dates[0]).toISOString() : null;
+    delete entry.journeyIds;
+  }
+  crossingProgressCache={signature,entries};
+  return entries;
+}
+
 function achievementIsEarned(definition) {
+  if (definition.type==='crossing-set') return crossingSetProgress(definition).every(entry=>entry.completed);
   if (definition.type==='network-percent') return motorwayNetworkCompletionPercent() >= definition.target;
   if (definition.type==='motorway-visited') {
     const road=canonicalRoads.get(definition.roadId);
@@ -2477,14 +2535,44 @@ function renderAchievements() {
     icon.className='achievement-icon';
     icon.textContent=unlocked ? definition.icon : '🔒';
     const copy=document.createElement('div');
+    const progress=definition.type==='crossing-set' ? crossingSetProgress(definition) : null;
+    const completeCount=progress ? progress.filter(entry=>entry.completed).length : 0;
     const eyebrow=document.createElement('small');
-    eyebrow.textContent=unlocked ? 'Unlocked' : 'Next milestone';
+    eyebrow.textContent=unlocked ? 'Unlocked' : progress ? completeCount+' of '+progress.length+' crossings' : 'Next milestone';
     const title=document.createElement('strong');
     title.textContent=definition.title;
     const description=document.createElement('span');
-    description.textContent=unlocked ? definition.detail : definition.description;
+    description.textContent=unlocked ? definition.detail : progress ? completeCount+' of '+progress.length+' great road crossings completed' : definition.description;
     copy.append(eyebrow,title,description);
-    item.append(icon,copy);
+    if (!progress) {
+      item.append(icon,copy);
+    } else {
+      item.classList.add('achievement-crossing-set');
+      const main=document.createElement('div');
+      main.className='achievement-main';
+      main.append(icon,copy);
+      const details=document.createElement('details');
+      details.className='achievement-crossing-progress';
+      const summary=document.createElement('summary');
+      summary.textContent='View crossing checklist';
+      const meter=document.createElement('div');
+      meter.className='achievement-crossing-meter';
+      const fill=document.createElement('span');
+      fill.style.width=(completeCount/progress.length*100)+'%';
+      meter.append(fill);
+      const checklist=document.createElement('ul');
+      for (const entry of progress) {
+        const row=document.createElement('li');
+        row.className=entry.completed ? 'complete' : '';
+        const name=document.createElement('strong');
+        name.textContent=(entry.completed ? '✓ ' : '○ ')+entry.title;
+        const status=document.createElement('span');
+        status.textContent=entry.completedAt ? 'First crossed '+formatDate(entry.completedAt) : entry.hint;
+        row.append(name,status); checklist.append(row);
+      }
+      details.append(summary,meter,checklist);
+      item.append(main,details);
+    }
     achievementList.append(item);
   }
 }
