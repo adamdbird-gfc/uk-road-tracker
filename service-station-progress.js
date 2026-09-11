@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const DATA_URL='collections/uk-motorway-services-v1.json',ENTITLEMENT_KEY='roadprints:collection-entitlements:v1';
+const DATA_URL='collections/uk-motorway-services-v1.json?v=20260911-norton-canes-v1',ENTITLEMENT_KEY='roadprints:collection-entitlements:v1';
 const card=document.getElementById('serviceStationProgressCard'),list=document.getElementById('serviceStationProgressList'),count=document.getElementById('serviceStationProgressCount'),jump=document.querySelector('[data-service-station-jump]');
 if(!card||!list||!count)return;
 let loaded=false;
