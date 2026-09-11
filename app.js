@@ -1700,6 +1700,12 @@ document.getElementById('selectNone').addEventListener('click', () => {
 document.getElementById('fitMap').addEventListener('click', fitSelected);
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
+document.getElementById('plotImportedMap')?.addEventListener('click',()=>{
+  document.querySelector('main')?.classList.remove('processing-active');
+  activateRoadprintsScreen('map');
+  renderMap();
+  showDefaultUnitedKingdomView();
+});
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 startFootBatch.addEventListener('click', startNextFootBatch);
 pauseFootMatching.addEventListener('click',()=>{
@@ -2866,10 +2872,10 @@ async function startEasyImport() {
   const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
   const elapsed=elapsedSeconds>=60 ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s` : `${elapsedSeconds}s`;
   const footDetail=importFootResult ? ` · on foot: ${importFootResult}` : '';
-  setEasyProgressStatus('Import complete', `Driving: ${succeeded} matched, ${failed} skipped in ${elapsed}${footDetail}`);
-  document.getElementById('plotImportedMap')?.classList.remove('hidden');
   refreshImportMapBatch();
   renderRoadQueue();
+  setEasyProgressStatus('Import complete', `Driving: ${succeeded} matched, ${failed} skipped in ${elapsed}${footDetail}`);
+  document.getElementById('plotImportedMap')?.classList.remove('hidden');
   if (mapStatus) {
     mapStatus.classList.add('hidden');
   }
