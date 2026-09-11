@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260911-service-completion-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260911-achievement-carousel-v1" />
 </head>
 <body>
   <main>
@@ -479,19 +479,24 @@
 
   <div id="achievementCelebration" class="achievement-celebration hidden" role="dialog" aria-modal="true" aria-labelledby="achievementCelebrationTitle">
     <div class="achievement-celebration-card">
-      <div class="achievement-celebration-icon" aria-hidden="true">🏔️</div>
+      <div id="achievementCelebrationIcon" class="achievement-celebration-icon" aria-hidden="true">🏔️</div>
       <p class="eyebrow">Achievement unlocked</p>
-      <h2 id="achievementCelebrationTitle">M62 Summit</h2>
-      <p>You’ve crossed the UK’s highest motorway point: 372 m (1,221 ft) above sea level.</p>
-      <p class="muted">Windy Hill, on the Pennine section of the M62.</p>
+      <h2 id="achievementCelebrationTitle">Achievement</h2>
+      <p id="achievementCelebrationDescription"></p>
+      <p id="achievementCelebrationDetail" class="muted"></p>
+      <div class="achievement-celebration-carousel">
+        <button id="previousAchievementCelebration" class="secondary hidden" type="button" aria-label="Previous achievement">←</button>
+        <span id="achievementCelebrationPosition" class="hidden" aria-live="polite"></span>
+        <button id="nextAchievementCelebration" class="secondary hidden" type="button" aria-label="Next achievement">→</button>
+      </div>
       <button id="closeAchievementCelebration" type="button">Claim achievement</button>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260911-solstice-achievement-v1"></script>
+  <script src="app.js?v=20260911-achievement-carousel-v1"></script>
   <script src="service-station-map-layer.js?v=20260911-focus-layer-v1"></script>
-  <script src="service-station-progress.js?v=20260911-service-completion-v1"></script>
+  <script src="service-station-progress.js?v=20260911-achievement-carousel-v1"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
   <script src="collections-catalog.js?v=20260910-service-achievements-v1"></script>
 <script src="service-station-ledger.js?v=20260911-norton-canes-v1"></script>
