@@ -2741,6 +2741,7 @@ function startDetailedImport() {
 
 async function startEasyImport() {
   const sessionId = trackingSessionId;
+  const importStartedAt=Date.now();
   if (easyImportRunning) return;
   importMode = 'easy';
   easyImportPaused = false;
@@ -2857,6 +2858,15 @@ async function startEasyImport() {
   renderRoadQueue();
   activateRoadprintsScreen('map');
   showDefaultUnitedKingdomView();
+  if (mapStatus) {
+    const elapsedSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
+    const elapsed=elapsedSeconds>=60
+      ? `${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s`
+      : `${elapsedSeconds}s`;
+    mapStatus.className='muted map-status ok';
+    mapStatus.textContent=`Import complete in ${elapsed} · driving: ${succeeded} matched, ${failed} skipped.`;
+    mapStatus.classList.remove('hidden');
+  }
 }
 
 function renderAll(fileName) {
