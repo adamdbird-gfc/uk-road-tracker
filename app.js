@@ -1012,7 +1012,9 @@ async function clearRoadDataOnly() {
   resetRoadProgressState();
   persistedConfirmedTimelineVisits.clear();
   localStorage.removeItem('roadprints:service-station-ledger:v1');
+  localStorage.removeItem('roadprints:service-station-manual-visits:v1');
   window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
+  window.dispatchEvent(new Event('roadprints:service-station-completion-updated'));
 
   try {
     await clearRoadArchive();
