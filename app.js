@@ -5878,3 +5878,80 @@ const originalActivateRoadprintsScreen=activateRoadprintsScreen; activateRoadpri
 setTimeout(refreshARoadBackgroundStatus,0);
 
 document.getElementById('mapBrandMenu')?.addEventListener('click',()=>{ document.querySelector('main')?.classList.remove('app-ready'); document.getElementById('appNavigation')?.classList.add('hidden'); returnToOnboarding(); });
+
+
+const roadDiscoveryLedger = new Map();
+const roadDiscoveryByJourneyId = new Map();
+let roadDiscoverySignature = '';
+
+function roadDiscoveryKey(feature) {
+  const props=feature && feature.properties || {};
+  const ref=String(props.ref || props.road_ref || '').trim().toUpperCase();
+  const name=String(props.name || props.road_name || '').trim();
+  const kind=String(props.highway || '').toLowerCase();
+  if ((!ref && !name) || /_link$|^(service|footway|path|steps|cycleway)$/.test(kind)) return null;
+  const category=/^(M[0-9]+|A[0-9]+\(M\))$/.test(ref) ? 'Motorways' : /^A[0-9]+$/.test(ref) ? 'A roads' : /^B[0-9]+$/.test(ref) ? 'B roads' : 'Local roads';
+  return {id:ref ? 'ref:'+ref : 'name:'+name.toLowerCase(),label:ref || name,category};
+}
+function rebuildRoadDiscoveryLedger() {
+  const records=[...savedRoadRecords().filter(r=>r && r.matchedGeoJson).map(r=>({record:r,mode:'driving'})),...footActivities.filter(r=>r && r.matchedGeoJson).map(r=>({record:r,mode:'foot'}))].sort((a,b)=>Date.parse(a.record.start || '')-Date.parse(b.record.start || ''));
+  const signature=records.map(item=>item.mode+':'+journeyIdentity(item.record)+':'+(item.record.matchedGeoJson.features || []).length).join('|');
+  if (signature===roadDiscoverySignature) return;
+  roadDiscoverySignature=signature; roadDiscoveryLedger.clear(); roadDiscoveryByJourneyId.clear();
+  for (const item of records) {
+    const seen=new Map(), newRoads=[];
+    for (const feature of item.record.matchedGeoJson.features || []) {
+      const road=roadDiscoveryKey(feature); if (road) seen.set(road.id,road);
+    }
+    for (const road of seen.values()) {
+      let entry=roadDiscoveryLedger.get(road.id);
+      if (!entry) { entry={...road,driven:false,onFoot:false}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
+      if (item.mode==='driving') entry.driven=true; else entry.onFoot=true;
+    }
+    roadDiscoveryByJourneyId.set(item.mode+':'+journeyIdentity(item.record),newRoads);
+  }
+}
+function renderRoadDiscovery() {
+  const card=document.getElementById('roadDiscoveryCard'), count=document.getElementById('roadDiscoveryCount'), summary=document.getElementById('roadDiscoverySummary'), list=document.getElementById('roadDiscoveryList');
+  if (!card || !count || !summary || !list) return;
+  rebuildRoadDiscoveryLedger();
+  const roads=[...roadDiscoveryLedger.values()].sort((a,b)=>a.category.localeCompare(b.category)||a.label.localeCompare(b.label,'en-GB',{numeric:true}));
+  card.classList.toggle('hidden',!shouldShowDataDashboard() || !roads.length);
+  if (!roads.length) return;
+  count.textContent=roads.length.toLocaleString();
+  const driven=roads.filter(road=>road.driven).length, foot=roads.filter(road=>road.onFoot).length;
+  summary.textContent=driven.toLocaleString()+' driven · '+foot.toLocaleString()+' on foot';
+  list.replaceChildren();
+  for (const category of ['Motorways','A roads','B roads','Local roads']) {
+    const entries=roads.filter(road=>road.category===category); if (!entries.length) continue;
+    const group=document.createElement('section'), title=document.createElement('h3'), rows=document.createElement('ul');
+    group.className='road-discovery-group'; title.textContent=category+' · '+entries.length.toLocaleString();
+    for (const road of entries) { const row=document.createElement('li'), label=document.createElement('strong'), state=document.createElement('span'); label.textContent=road.label; state.textContent=road.driven && road.onFoot ? 'Driven + on foot' : road.driven ? 'Driven' : 'On foot'; row.append(label,state); rows.append(row); }
+    group.append(title,rows); list.append(group);
+  }
+}
+const renderCollectiveStatsWithDiscovery=renderCollectiveStats;
+renderCollectiveStats=function() { renderCollectiveStatsWithDiscovery(); renderRoadDiscovery(); };
+
+
+const renderJourneyLogWithDiscovery=renderJourneyLog;
+renderJourneyLog=function() {
+  renderJourneyLogWithDiscovery();
+  rebuildRoadDiscoveryLedger();
+  const items=[...document.querySelectorAll('#journeyLogList .journey-log-item')];
+  const records=[
+    ...savedRoadRecords().filter(record=>record && record.matchedGeoJson).map(record=>({...record,logType:'road'})),
+    ...footActivities.filter(record=>record && record.points && record.points.length>1).map(record=>({...record,logType:'foot'}))
+  ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
+  const filtered=journeyLogFilter==='driving' ? records.filter(record=>record.logType==='road') : journeyLogFilter==='foot' ? records.filter(record=>record.logType==='foot') : journeyLogFilter==='service' ? [] : records;
+  for (let index=0;index<items.length && index<filtered.length;index++) {
+    const record=filtered[index], roads=roadDiscoveryByJourneyId.get((record.logType==='foot' ? 'foot' : 'driving')+':'+journeyIdentity(record));
+    if (!roads || !roads.length) continue;
+    const copy=items[index].querySelector(':scope > div');
+    if (!copy || copy.querySelector('.journey-discovery')) continue;
+    const details=document.createElement('details'), title=document.createElement('summary'), list=document.createElement('ul');
+    details.className='journey-discovery'; title.textContent=roads.length.toLocaleString()+' new road'+(roads.length===1 ? '' : 's');
+    for (const road of roads.sort((a,b)=>a.label.localeCompare(b.label,'en-GB',{numeric:true}))) { const row=document.createElement('li'); row.textContent=road.label; list.append(row); }
+    details.append(title,list); copy.append(details);
+  }
+};
