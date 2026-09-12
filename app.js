@@ -5969,3 +5969,87 @@ renderJourneyLog=function() {
     details.append(title,list); copy.append(details);
   }
 };
+
+const ROAD_DISCOVERY_PLACE_NAMES_KEY='roadprints-road-discovery-places-v1';
+const roadDiscoveryPlaces=new Map();
+let roadDiscoveryPlaceQueueRunning=false;
+
+function roadDiscoveryFirstPoint(feature) {
+  const geometry=feature?.geometry || {};
+  let coordinates=geometry.coordinates;
+  while (Array.isArray(coordinates) && Array.isArray(coordinates[0]) && Array.isArray(coordinates[0][0])) coordinates=coordinates[0];
+  const point=Array.isArray(coordinates) ? coordinates[0] : null;
+  return Array.isArray(point) && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))
+    ? {lng:Number(point[0]),lat:Number(point[1])} : null;
+}
+function roadDiscoveryPlaceKey(point) {
+  return point ? point.lat.toFixed(3)+','+point.lng.toFixed(3) : '';
+}
+function loadRoadDiscoveryPlaces() {
+  if (roadDiscoveryPlaces.size) return;
+  try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(ROAD_DISCOVERY_PLACE_NAMES_KEY) || '{}'))) if (typeof value==='string' && value) roadDiscoveryPlaces.set(key,value); } catch (err) {}
+}
+function saveRoadDiscoveryPlaces() {
+  try { localStorage.setItem(ROAD_DISCOVERY_PLACE_NAMES_KEY,JSON.stringify(Object.fromEntries(roadDiscoveryPlaces))); } catch (err) {}
+}
+const roadDiscoveryKeyWithPoint=roadDiscoveryKey;
+roadDiscoveryKey=function(feature) {
+  const road=roadDiscoveryKeyWithPoint(feature);
+  return road ? {...road,point:roadDiscoveryFirstPoint(feature)} : null;
+};
+async function resolveRoadDiscoveryPlaces() {
+  if (roadDiscoveryPlaceQueueRunning || easyImportRunning) return;
+  loadRoadDiscoveryPlaces();
+  const pending=[...roadDiscoveryLedger.values()].filter(road=>road.category==='Local roads' && road.point && !roadDiscoveryPlaces.has(roadDiscoveryPlaceKey(road.point)));
+  if (!pending.length) return;
+  roadDiscoveryPlaceQueueRunning=true;
+  try {
+    for (const road of pending) {
+      if (easyImportRunning) break;
+      const key=roadDiscoveryPlaceKey(road.point);
+      if (!key || roadDiscoveryPlaces.has(key)) continue;
+      try {
+        const response=await fetch(API_BASE_URL+'/place-name?lat='+encodeURIComponent(road.point.lat)+'&lng='+encodeURIComponent(road.point.lng));
+        const data=await response.json().catch(()=>({}));
+        roadDiscoveryPlaces.set(key,data.name || 'Local area');
+      } catch (err) { roadDiscoveryPlaces.set(key,'Local area'); }
+      saveRoadDiscoveryPlaces();
+      renderRoadDiscovery();
+      await new Promise(resolve=>setTimeout(resolve,1050));
+    }
+  } finally { roadDiscoveryPlaceQueueRunning=false; }
+}
+function roadDiscoveryLocality(road) {
+  loadRoadDiscoveryPlaces();
+  return road.point ? roadDiscoveryPlaces.get(roadDiscoveryPlaceKey(road.point)) || 'Assigning area…' : 'Local area';
+}
+renderRoadDiscovery=function() {
+  const card=document.getElementById('roadDiscoveryCard'),count=document.getElementById('roadDiscoveryCount'),summary=document.getElementById('roadDiscoverySummary'),list=document.getElementById('roadDiscoveryList');
+  if (!card || !count || !summary || !list) return;
+  rebuildRoadDiscoveryLedger();
+  const roads=[...roadDiscoveryLedger.values()].sort((a,b)=>a.category.localeCompare(b.category)||a.label.localeCompare(b.label,'en-GB',{numeric:true}));
+  card.classList.toggle('hidden',!shouldShowDataDashboard() || !roads.length); if (!roads.length) return;
+  const driven=roads.filter(road=>road.driven).length,foot=roads.filter(road=>road.onFoot).length;
+  count.textContent=roads.length.toLocaleString(); summary.textContent=driven.toLocaleString()+' driven · '+foot.toLocaleString()+' on foot'; list.replaceChildren();
+  for (const category of ['Motorways','A roads','B roads','Local roads']) {
+    const entries=roads.filter(road=>road.category===category); if (!entries.length) continue;
+    const group=document.createElement('details'),title=document.createElement('summary');
+    group.className='road-discovery-group'; title.textContent=category+' · '+entries.length.toLocaleString(); group.append(title);
+    if (category!=='Local roads') {
+      const rows=document.createElement('ul');
+      for (const road of entries) { const row=document.createElement('li'),label=document.createElement('strong'),state=document.createElement('span'); label.textContent=road.label; state.textContent=road.driven && road.onFoot ? 'Driven + on foot' : road.driven ? 'Driven' : 'On foot'; row.append(label,state);rows.append(row); }
+      group.append(rows);
+    } else {
+      const byTown=new Map();
+      for (const road of entries) { const town=roadDiscoveryLocality(road); if (!byTown.has(town)) byTown.set(town,[]); byTown.get(town).push(road); }
+      for (const town of [...byTown.keys()].sort((a,b)=>a.localeCompare(b,'en-GB'))) {
+        const townDetails=document.createElement('details'),townTitle=document.createElement('summary'),rows=document.createElement('ul');
+        townDetails.className='road-discovery-town'; townTitle.textContent=town+' · '+byTown.get(town).length.toLocaleString();
+        for (const road of byTown.get(town).sort((a,b)=>a.label.localeCompare(b.label,'en-GB',{numeric:true}))) { const row=document.createElement('li'),label=document.createElement('strong'),state=document.createElement('span'); label.textContent=road.label; state.textContent=road.driven && road.onFoot ? 'Driven + on foot' : road.driven ? 'Driven' : 'On foot'; row.append(label,state);rows.append(row); }
+        townDetails.append(townTitle,rows); group.append(townDetails);
+      }
+    }
+    list.append(group);
+  }
+  void resolveRoadDiscoveryPlaces();
+};
