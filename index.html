@@ -158,6 +158,7 @@
       </div>
       <p class="muted travel-stats-note">Totals retain every Timeline activity. Unique figures combine matching evidence so repeated routes count once within each travel mode.</p>
       <nav class="progress-jump-menu" aria-label="Jump to progress section">
+        <a href="#roadDiscoveryCard">Road discovery</a>
         <a href="#motorwayCard">Motorways</a>
         <a href="#aRoadCard">A roads</a>
         <a href="#serviceStationProgressCard" data-service-station-jump hidden>Services</a>
@@ -166,6 +167,8 @@
         <a href="#otherRoadCard">Other roads</a>
       </nav>
     </section>
+
+    <details id="roadDiscoveryCard" data-app-screen="progress" class="card road-discovery-card hidden"><summary class="details-summary road-discovery-heading"><div><p class="eyebrow">Every road tells your story</p><h2>Road discovery</h2><p id="roadDiscoverySummary" class="muted">0 driven · 0 on foot</p></div><div class="road-discovery-total"><strong id="roadDiscoveryCount">0</strong><span>roads discovered</span></div></summary><p class="muted road-discovery-intro">A road is discovered when you have travelled any matched section of it. This is a record of where you have been, not a completion percentage.</p><div id="roadDiscoveryList" class="road-discovery-list"></div></details>
 
     <section id="achievementsCard" data-app-screen="achievements" class="card achievements-card hidden" aria-labelledby="achievementsTitle">
       <div class="section-heading achievements-heading">
