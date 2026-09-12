@@ -5970,7 +5970,7 @@ renderJourneyLog=function() {
   }
 };
 
-const ROAD_DISCOVERY_PLACE_NAMES_KEY='roadprints-road-discovery-places-v1';
+const ROAD_DISCOVERY_PLACE_NAMES_KEY='roadprints-road-discovery-places-v2';
 const roadDiscoveryPlaces=new Map();
 let roadDiscoveryPlaceQueueRunning=false;
 
