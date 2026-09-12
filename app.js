@@ -5908,7 +5908,14 @@ function rebuildRoadDiscoveryLedger() {
       ? item.record.roadGeoJson.features
       : [...(item.record.motorwayGeoJson?.features || []),...(item.record.aRoadGeoJson?.features || [])];
     for (const feature of discoveryFeatures) {
-      const road=roadDiscoveryKey(feature); if (road) seen.set(road.id,road);
+      const rawRef=String(feature?.properties?.road_ref || feature?.properties?.ref || '');
+      const refs=rawRef.split(/[;,/]/).map(ref=>ref.trim()).filter(Boolean);
+      const variants=refs.length>1
+        ? refs.map(ref=>({...feature,properties:{...(feature.properties || {}),road_ref:ref}}))
+        : [feature];
+      for (const variant of variants) {
+        const road=roadDiscoveryKey(variant); if (road) seen.set(road.id,road);
+      }
     }
     for (const road of seen.values()) {
       let entry=roadDiscoveryLedger.get(road.id);
