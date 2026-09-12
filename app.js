@@ -6084,10 +6084,20 @@ async function renderGravesendExplorer() {
 const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
 renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
 
-const LOCAL_TOWN_INVENTORY_KEY='roadprints-local-town-inventories-v1';
+const LOCAL_TOWN_INVENTORY_KEY='roadprints-local-town-inventories-v2';
 const localTownInventories=new Map(); let localTownInventoryRunning=false;
+// Gravesend is a previously verified Roadprints inventory. It keeps the
+// established 767-road denominator available while the live service refreshes
+// the remaining towns.
+const localTownInventoryBaselines={Gravesend:767};
 try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}'))) localTownInventories.set(key,value); } catch (_) {}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
+function setLocalTownSummary(town,discovered,inventory){
+  const text=inventory?.count
+    ? town+' · '+discovered.toLocaleString()+' of '+inventory.count.toLocaleString()+' · '+Math.round(discovered/inventory.count*100)+'%'
+    : town+' · '+discovered.toLocaleString()+' roads · checking coverage…';
+  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(summary=>{if(summary.dataset.town===town)summary.textContent=text;});
+}
 renderGravesendExplorer=async function(){};
 async function updateLocalTownInventories() {
  if(localTownInventoryRunning||easyImportRunning)return; localTownInventoryRunning=true;
@@ -6095,13 +6105,32 @@ async function updateLocalTownInventories() {
   const towns=new Map();
   for(const road of roadDiscoveryLedger.values()) if(road.category==='Local roads'&&road.point){const town=roadDiscoveryLocality(road);if(!towns.has(town))towns.set(town,[]);towns.get(town).push(road);}
   for(const [town,roads] of towns){
-   const point=roads[0].point,key=town+'|'+roadDiscoveryPlaceKey(point);let inventory=localTownInventories.get(key);
-   if(!inventory){try{const response=await fetch(API_BASE_URL+'/local-road-inventory?lat='+encodeURIComponent(point.lat)+'&lng='+encodeURIComponent(point.lng));inventory=await response.json();if(response.ok){localTownInventories.set(key,inventory);saveLocalTownInventories();}}catch(_){}}
-   if(!inventory?.roads)continue; const eligible=new Set(inventory.roads.map(name=>name.toLocaleLowerCase('en-GB')));const discovered=roads.filter(road=>eligible.has(road.label.toLocaleLowerCase('en-GB'))).length;const percent=inventory.count?Math.round(discovered/inventory.count*100):0;
-   document.querySelectorAll('.road-discovery-town summary').forEach(summary=>{if(summary.textContent.startsWith(town+' · '))summary.textContent=town+' · '+discovered+' of '+inventory.count+' · '+percent+'%';});
+   const discovered=roads.length;
+   const key=town+'|'+roadDiscoveryPlaceKey(roads[0].point);
+   let inventory=localTownInventories.get(key);
+   if(!inventory && localTownInventoryBaselines[town]) inventory={count:localTownInventoryBaselines[town],source:'verified baseline'};
+   setLocalTownSummary(town,discovered,inventory);
+   if(inventory?.count) continue;
+   try {
+     const controller=new AbortController(), timeout=window.setTimeout(()=>controller.abort(),40000);
+     const response=await fetch(API_BASE_URL+'/local-road-inventory?lat='+encodeURIComponent(roads[0].point.lat)+'&lng='+encodeURIComponent(roads[0].point.lng),{signal:controller.signal});
+     window.clearTimeout(timeout);
+     const result=await response.json();
+     if(response.ok && result?.count){localTownInventories.set(key,result);saveLocalTownInventories();setLocalTownSummary(town,discovered,result);}
+     else setLocalTownSummary(town,discovered,null);
+   } catch (_) { setLocalTownSummary(town,discovered,null); }
    await new Promise(resolve=>setTimeout(resolve,1050));
   }
  }finally{localTownInventoryRunning=false}
 }
 const renderRoadDiscoveryWithTownInventories=renderRoadDiscovery;
-renderRoadDiscovery=function(){renderRoadDiscoveryWithTownInventories();document.querySelectorAll('.gravesend-explorer').forEach(node=>node.remove());void updateLocalTownInventories();};
+renderRoadDiscovery=function(){
+  renderRoadDiscoveryWithTownInventories();
+  document.querySelectorAll('.gravesend-explorer').forEach(node=>node.remove());
+  document.querySelectorAll('.road-discovery-town summary').forEach(summary=>{
+    const town=summary.textContent.split(' · ')[0]; summary.dataset.town=town;
+    const roads=summary.closest('.road-discovery-town')?.querySelectorAll('li').length||0;
+    setLocalTownSummary(town,roads,null);
+  });
+  void updateLocalTownInventories();
+};
