@@ -1487,3 +1487,5 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
     right:1rem;
   }
 }
+
+@media (max-width:420px) { .road-discovery-town summary { position:relative; } }
