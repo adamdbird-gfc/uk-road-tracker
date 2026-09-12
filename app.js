@@ -532,6 +532,7 @@ function compactMapJourney(journey) {
     matchedGeoJson:journey.matchedGeoJson,
     motorwayGeoJson:journey.motorwayGeoJson || {type:'FeatureCollection',features:[]},
     aRoadGeoJson:journey.aRoadGeoJson || {type:'FeatureCollection',features:[]},
+    roadGeoJson:journey.roadGeoJson || {type:'FeatureCollection',features:[]},
     otherRoadDistanceKm:typeof journey.otherRoadDistanceKm==='number' && Number.isFinite(journey.otherRoadDistanceKm)
       ? journey.otherRoadDistanceKm
       : null,
@@ -607,7 +608,7 @@ function compactFootActivity(activity) {
     id:journeyIdentity(activity), start:activity.start || '', end:activity.end || '',
     travelMode:activity.travelMode || 'WALKING', googleDistanceKm:Number(activity.googleDistanceKm || 0),
     pathPointCount:Number(activity.pathPointCount || 0), points:(activity.points || []).filter(validPoint),
-    matchedGeoJson:activity.matchedGeoJson || null, matchQuality:activity.matchQuality || null,
+    matchedGeoJson:activity.matchedGeoJson || null, roadGeoJson:activity.roadGeoJson || {type:'FeatureCollection',features:[]}, matchQuality:activity.matchQuality || null,
     matchError:activity.matchError || null,
     title:String(activity.title || '')
   };
@@ -664,7 +665,7 @@ async function saveFootActivityMatch(activity) {
   const ids=Array.isArray(activity.repeatJourneyIds) && activity.repeatJourneyIds.length ? activity.repeatJourneyIds : [journeyIdentity(activity)];
   for (const id of ids) {
     const source=persistedFootActivities.get(id) || activity;
-    const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,matchQuality:activity.matchQuality,matchError:activity.matchError});
+    const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,roadGeoJson:activity.roadGeoJson,matchQuality:activity.matchQuality,matchError:activity.matchError});
     await footArchiveOperation('readwrite',store=>store.put(record));
     persistedFootActivities.set(record.id,{...record,selected:true});
   }
@@ -2619,6 +2620,7 @@ async function startNextFootBatch() {
       const data=await response.json().catch(()=>({}));
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
       activity.matchedGeoJson=data.geojson;
+      activity.roadGeoJson=data.road_geojson || {type:'FeatureCollection',features:[]};
       activity.matchQuality=assessMatchQuality(activity,data);
       await saveFootActivityMatch(activity);
       batch.matched++;
@@ -2826,6 +2828,7 @@ async function startEasyImport() {
       journey.matchedGeoJson = data.geojson;
       journey.motorwayGeoJson = data.motorway_geojson;
       journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
+      journey.roadGeoJson = data.road_geojson || {type:'FeatureCollection',features:[]};
       journey.otherRoadDistanceKm = Number(data.other_road_distance_m || 0) / 1000;
       delete journey.otherRoadGeoJson;
       journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
@@ -3097,6 +3100,7 @@ function clearMatchedRoads() {
     delete j.matchedGeoJson;
     delete j.motorwayGeoJson;
     delete j.aRoadGeoJson;
+    delete j.roadGeoJson;
     delete j.otherRoadGeoJson;
     delete j.otherRoadDistanceKm;
     delete j.matchedDistanceKm;
@@ -5900,7 +5904,10 @@ function rebuildRoadDiscoveryLedger() {
   roadDiscoverySignature=signature; roadDiscoveryLedger.clear(); roadDiscoveryByJourneyId.clear();
   for (const item of records) {
     const seen=new Map(), newRoads=[];
-    for (const feature of item.record.matchedGeoJson.features || []) {
+    const discoveryFeatures=(item.record.roadGeoJson && item.record.roadGeoJson.features && item.record.roadGeoJson.features.length)
+      ? item.record.roadGeoJson.features
+      : [...(item.record.motorwayGeoJson?.features || []),...(item.record.aRoadGeoJson?.features || [])];
+    for (const feature of discoveryFeatures) {
       const road=roadDiscoveryKey(feature); if (road) seen.set(road.id,road);
     }
     for (const road of seen.values()) {
