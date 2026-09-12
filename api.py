@@ -247,6 +247,7 @@ async def match_payload(
     features = []
     motorway_features = []
     a_road_features = []
+    road_features = []
     other_road_distance_m = 0.0
     matched_distance_m = 0.0
     matched_tracepoints = 0
