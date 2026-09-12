@@ -210,11 +210,11 @@ async def place_name(lat: float, lng: float):
         async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent": "Roadprints/0.7 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"}) as client:
             response = await client.get(
                 "https://nominatim.openstreetmap.org/reverse",
-                params={"format": "jsonv2", "lat": lat, "lon": lng, "zoom": 10, "addressdetails": 1},
+                params={"format": "jsonv2", "lat": lat, "lon": lng, "zoom": 14, "addressdetails": 1},
             )
         data = response.json() if response.status_code == 200 else {}
         address = data.get("address") or {}
-        name = next((address.get(field) for field in ("city", "town", "village", "suburb", "county", "state") if address.get(field)), None)
+        name = next((address.get(field) for field in ("town", "village", "suburb", "city_district", "city", "county", "state") if address.get(field)), None)
     except (httpx.HTTPError, ValueError):
         name = None
     result = name or "Local area"
