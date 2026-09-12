@@ -1377,7 +1377,9 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
 .road-discovery-card{scroll-margin-top:1rem}.road-discovery-heading{align-items:center}.road-discovery-heading h2{margin:.15rem 0}.road-discovery-total{min-width:5.5rem;text-align:right}.road-discovery-total strong{display:block;font-size:1.65rem;color:var(--accent,#ffca4d)}.road-discovery-total span{display:block;font-size:.82rem;color:var(--muted,#c4cedf)}.road-discovery-intro{margin:.9rem 0 1rem}.road-discovery-group{border:1px solid rgba(131,174,223,.24);border-radius:16px;overflow:hidden;margin-top:.8rem}.road-discovery-group summary{margin:0;padding:.8rem 1rem;font-size:1rem;background:rgba(255,255,255,.045);cursor:pointer;list-style:none}.road-discovery-group summary::-webkit-details-marker{display:none}.road-discovery-group summary::after{content:'⌄';float:right;color:var(--muted,#c4cedf)}.road-discovery-group[open] summary::after{transform:rotate(180deg)}.road-discovery-group ul{list-style:none;margin:0;padding:0}.road-discovery-group li{display:flex;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border-top:1px solid rgba(131,174,223,.17)}.road-discovery-group li span{color:var(--muted,#c4cedf);text-align:right;font-size:.9rem}
 
 .road-discovery-town{border-top:1px solid rgba(131,174,223,.17)}.road-discovery-town summary{padding:.7rem 1rem;cursor:pointer;list-style:none;font-weight:700}.road-discovery-town summary::-webkit-details-marker{display:none}.road-discovery-town summary::after{content:'⌄';float:right;color:var(--muted,#c4cedf)}.road-discovery-town[open] summary::after{transform:rotate(180deg)}
-\n.road-discovery-heading{display:block}.road-discovery-total{margin-top:.65rem;text-align:left}.gravesend-explorer{display:grid;gap:.25rem;padding:.85rem 1rem;border-top:1px solid rgba(131,174,223,.17);background:rgba(255,255,255,.035)}.gravesend-explorer strong{font-size:1.05rem}.gravesend-explorer span{font-weight:700;color:var(--accent,#ffca4d)}.gravesend-explorer small{color:var(--muted,#c4cedf)}\n
+
+.road-discovery-heading{display:block}.road-discovery-total{margin-top:.65rem;text-align:left}.gravesend-explorer{display:grid;gap:.25rem;padding:.85rem 1rem;border-top:1px solid rgba(131,174,223,.17);background:rgba(255,255,255,.035)}.gravesend-explorer strong{font-size:1.05rem}.gravesend-explorer span{font-weight:700;color:var(--accent,#ffca4d)}.gravesend-explorer small{color:var(--muted,#c4cedf)}
+
 /* Road discovery has a single full-width introduction before its accordions. */
 .details-summary.road-discovery-heading {
   display:block !important;
@@ -1401,4 +1403,87 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
 }
 .road-discovery-town summary {
   line-height:1.35;
+}
+
+/* Road discovery: a conventional full-width card header. */
+#roadDiscoveryCard > summary.road-discovery-heading {
+  display:grid !important;
+  grid-template-columns:minmax(0, 1fr) !important;
+  align-items:start;
+  gap:0;
+}
+#roadDiscoveryCard > summary.road-discovery-heading > div:first-child {
+  grid-column:1;
+  width:100%;
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-total {
+  grid-column:1;
+  display:flex;
+  width:auto;
+  align-items:baseline;
+  gap:.45rem;
+  margin:.65rem 0 0;
+  text-align:left;
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-total strong {
+  font-size:1.85rem;
+  line-height:1;
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-total span {
+  font-size:.9rem;
+}
+
+/* Town name remains the primary scan target; coverage is a compact metric. */
+.road-discovery-town summary {
+  display:flex;
+  align-items:center;
+  gap:.7rem;
+}
+.road-discovery-town-name {
+  min-width:0;
+}
+.road-discovery-town-metric {
+  display:flex;
+  align-items:baseline;
+  gap:.35rem;
+  margin-left:auto;
+  padding:.23rem .45rem;
+  border-radius:999px;
+  background:rgba(255,202,77,.13);
+  color:var(--accent,#ffca4d);
+  white-space:nowrap;
+  font-size:.83rem;
+}
+.road-discovery-town-metric strong {
+  color:#fff;
+  font-size:.92rem;
+}
+.road-discovery-town-metric small {
+  color:var(--accent,#ffca4d);
+  font:inherit;
+  font-weight:750;
+}
+.road-discovery-town-metric.is-pending {
+  background:rgba(194,205,224,.10);
+}
+.road-discovery-town-metric.is-pending small {
+  color:var(--muted,#c4cedf);
+  font-weight:600;
+}
+.road-discovery-town-metric.is-unavailable {
+  white-space:normal;
+  text-align:right;
+}
+@media (max-width:420px) {
+  .road-discovery-town summary {
+    flex-wrap:wrap;
+    padding-right:2.2rem;
+  }
+  .road-discovery-town-metric {
+    margin-left:0;
+  }
+  .road-discovery-town summary::after {
+    position:absolute;
+    right:1rem;
+  }
 }
