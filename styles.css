@@ -1489,3 +1489,5 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
 }
 
 @media (max-width:420px) { .road-discovery-town summary { position:relative; } }
+
+.road-discovery-town-metric{border:0;cursor:pointer}.road-discovery-town-metric:disabled{cursor:default;opacity:1}.road-discovery-town-metric:not(:disabled){background:rgba(103,213,204,.18);color:#67d5cc;font-weight:750}
