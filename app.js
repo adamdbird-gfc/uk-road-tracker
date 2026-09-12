@@ -6053,3 +6053,27 @@ renderRoadDiscovery=function() {
   }
   void resolveRoadDiscoveryPlaces();
 };
+
+const GRAVESEND_INVENTORY_KEY='roadprints-gravesend-inventory-v1';
+let gravesendInventoryLoading=false;
+async function renderGravesendExplorer() {
+  const list=document.getElementById('roadDiscoveryList'); if (!list) return;
+  let inventory; try { inventory=JSON.parse(localStorage.getItem(GRAVESEND_INVENTORY_KEY) || 'null'); } catch (_) {}
+  if (!inventory && !gravesendInventoryLoading) {
+    gravesendInventoryLoading=true;
+    try { const response=await fetch(API_BASE_URL+'/local-road-inventory/gravesend'); inventory=await response.json(); if (response.ok) localStorage.setItem(GRAVESEND_INVENTORY_KEY,JSON.stringify(inventory)); }
+    catch (_) {} finally { gravesendInventoryLoading=false; if (inventory) renderRoadDiscovery(); }
+  }
+  let card=list.querySelector('.gravesend-explorer'); if (!card) { card=document.createElement('section'); card.className='road-discovery-group gravesend-explorer'; list.prepend(card); }
+  if (!inventory?.roads) { card.textContent='Loading Gravesend Explorer…'; return; }
+  const eligible=new Set(inventory.roads.map(name=>name.toLocaleLowerCase('en-GB')));
+  const discovered=[...roadDiscoveryLedger.values()].filter(road=>road.category==='Local roads' && eligible.has(road.label.toLocaleLowerCase('en-GB')));
+  const percent=inventory.count ? Math.round(discovered.length/inventory.count*100) : 0;
+  card.replaceChildren();
+  const title=document.createElement('h3'); title.textContent='Gravesend Explorer';
+  const value=document.createElement('p'); value.textContent=discovered.length.toLocaleString()+' of '+inventory.count.toLocaleString()+' named local roads discovered · '+percent+'%';
+  const note=document.createElement('small'); note.textContent='Roadprints-defined Gravesend area · named public local roads only';
+  card.append(title,value,note);
+}
+const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
+renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
