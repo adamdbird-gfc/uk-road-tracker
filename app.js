@@ -6092,10 +6092,10 @@ const localTownInventories=new Map(); let localTownInventoryRunning=false;
 const localTownInventoryBaselines={Gravesend:767};
 try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}'))) localTownInventories.set(key,value); } catch (_) {}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
-function setLocalTownSummary(town,discovered,inventory){
+function setLocalTownSummary(town,discovered,inventory,status='checking'){
   const text=inventory?.count
     ? town+' · '+discovered.toLocaleString()+' of '+inventory.count.toLocaleString()+' · '+Math.round(discovered/inventory.count*100)+'%'
-    : town+' · '+discovered.toLocaleString()+' roads · checking coverage…';
+    : town+' · '+discovered.toLocaleString()+' roads · '+(status==='unavailable'?'coverage unavailable':'checking coverage…');
   document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(summary=>{if(summary.dataset.town===town)summary.textContent=text;});
 }
 renderGravesendExplorer=async function(){};
@@ -6112,13 +6112,13 @@ async function updateLocalTownInventories() {
    setLocalTownSummary(town,discovered,inventory);
    if(inventory?.count) continue;
    try {
-     const controller=new AbortController(), timeout=window.setTimeout(()=>controller.abort(),40000);
+     const controller=new AbortController(), timeout=window.setTimeout(()=>controller.abort(),20000);
      const response=await fetch(API_BASE_URL+'/local-road-inventory?lat='+encodeURIComponent(roads[0].point.lat)+'&lng='+encodeURIComponent(roads[0].point.lng),{signal:controller.signal});
      window.clearTimeout(timeout);
      const result=await response.json();
      if(response.ok && result?.count){localTownInventories.set(key,result);saveLocalTownInventories();setLocalTownSummary(town,discovered,result);}
-     else setLocalTownSummary(town,discovered,null);
-   } catch (_) { setLocalTownSummary(town,discovered,null); }
+     else setLocalTownSummary(town,discovered,null,'unavailable');
+   } catch (_) { setLocalTownSummary(town,discovered,null,'unavailable'); }
    await new Promise(resolve=>setTimeout(resolve,1050));
   }
  }finally{localTownInventoryRunning=false}
