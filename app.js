@@ -6093,10 +6093,25 @@ const localTownInventoryBaselines={Gravesend:767};
 try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}'))) localTownInventories.set(key,value); } catch (_) {}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
 function setLocalTownSummary(town,discovered,inventory,status='checking'){
-  const text=inventory?.count
-    ? town+' · '+discovered.toLocaleString()+' of '+inventory.count.toLocaleString()+' · '+Math.round(discovered/inventory.count*100)+'%'
-    : town+' · '+discovered.toLocaleString()+' roads · '+(status==='unavailable'?'coverage unavailable':'checking coverage…');
-  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(summary=>{if(summary.dataset.town===town)summary.textContent=text;});
+  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(summary=>{
+    if(summary.dataset.town!==town) return;
+    const name=document.createElement('span');
+    name.className='road-discovery-town-name';
+    name.textContent=town;
+    const metric=document.createElement('span');
+    metric.className='road-discovery-town-metric'+(inventory?.count?'':' is-pending')+(status==='unavailable'?' is-unavailable':'');
+    const amount=document.createElement('strong');
+    amount.textContent=inventory?.count
+      ? discovered.toLocaleString()+' / '+inventory.count.toLocaleString()
+      : discovered.toLocaleString()+' roads';
+    metric.append(amount);
+    const detail=document.createElement('small');
+    detail.textContent=inventory?.count
+      ? Math.round(discovered/inventory.count*100)+'%'
+      : status==='unavailable' ? 'coverage unavailable' : 'checking coverage…';
+    metric.append(detail);
+    summary.replaceChildren(name,metric);
+  });
 }
 renderGravesendExplorer=async function(){};
 async function updateLocalTownInventories() {
