@@ -405,7 +405,7 @@ async def local_road_inventory_elements(query):
     """
     async def attempt(endpoint):
         try:
-            async with httpx.AsyncClient(timeout=32.0, headers={"User-Agent":"Roadprints/1.1"}) as client:
+            async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent":"Roadprints/1.1"}) as client:
                 response = await client.post(endpoint, data={"data": query})
             if response.status_code != 200:
                 return None
@@ -433,7 +433,7 @@ async def local_road_inventory(lat: float, lng: float, radius_km: float = 3.5):
     lat_delta=radius_km/111.0
     lng_delta=radius_km/(111.0*max(0.2,abs(__import__("math").cos(__import__("math").radians(lat)))))
     south,west,north,east=lat-lat_delta,lng-lng_delta,lat+lat_delta,lng+lng_delta
-    query="[out:json][timeout:25];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
+    query="[out:json][timeout:12];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
     elements=await local_road_inventory_elements(query)
     if elements is None: raise HTTPException(status_code=502,detail="The local road inventory could not be loaded.")
     roads=sorted({str(item.get("tags",{}).get("name","")).strip() for item in elements if item.get("tags",{}).get("name")})
