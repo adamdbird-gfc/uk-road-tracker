@@ -6084,68 +6084,15 @@ async function renderGravesendExplorer() {
 const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
 renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
 
-const LOCAL_TOWN_INVENTORY_KEY='roadprints-local-town-inventories-v2';
-const localTownInventories=new Map(); let localTownInventoryRunning=false;
-// Gravesend is a previously verified Roadprints inventory. It keeps the
-// established 767-road denominator available while the live service refreshes
-// the remaining towns.
-const localTownInventoryBaselines={Gravesend:767};
-try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}'))) localTownInventories.set(key,value); } catch (_) {}
+const LOCAL_TOWN_INVENTORY_KEY='roadprints-local-town-inventories-v3';
+const localTownInventories=new Map(), localTownInventoryStates=new Map();
+try{for(const [k,v] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}')))localTownInventories.set(k,v)}catch(_){}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
-function setLocalTownSummary(town,discovered,inventory,status='checking'){
-  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(summary=>{
-    if(summary.dataset.town!==town) return;
-    const name=document.createElement('span');
-    name.className='road-discovery-town-name';
-    name.textContent=town;
-    const metric=document.createElement('span');
-    metric.className='road-discovery-town-metric'+(inventory?.count?'':' is-pending')+(status==='unavailable'?' is-unavailable':'');
-    const amount=document.createElement('strong');
-    amount.textContent=inventory?.count
-      ? discovered.toLocaleString()+' / '+inventory.count.toLocaleString()
-      : discovered.toLocaleString()+' roads';
-    metric.append(amount);
-    const detail=document.createElement('small');
-    detail.textContent=inventory?.count
-      ? Math.round(discovered/inventory.count*100)+'%'
-      : status==='unavailable' ? 'coverage unavailable' : 'checking coverage…';
-    metric.append(detail);
-    summary.replaceChildren(name,metric);
-  });
-}
+function townKey(town,point){return town+'|'+roadDiscoveryPlaceKey(point)}
+function setTown(town,roads){
+ const key=townKey(town,roads[0].point),inv=localTownInventories.get(key),state=localTownInventoryStates.get(key)||'idle';
+ document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(inv?.count){m.textContent=roads.length+' / '+inv.count+' · '+Math.round(roads.length/inv.count*100)+'%';m.disabled=true}else{m.textContent=state==='loading'?'Loading…':state==='failed'?'Failed · Retry':'Calculate';m.onclick=()=>calculateTown(town,roads)}x.replaceChildren(n,m)})}
+async function calculateTown(town,roads){const key=townKey(town,roads[0].point);if(localTownInventoryStates.get(key)==='loading')return;localTownInventoryStates.set(key,'loading');setTown(town,roads);try{const c=new AbortController(),t=setTimeout(()=>c.abort(),20000),r=await fetch(API_BASE_URL+'/local-road-inventory?lat='+roads[0].point.lat+'&lng='+roads[0].point.lng,{signal:c.signal});clearTimeout(t);const v=await r.json();if(!r.ok||!v?.count)throw Error();localTownInventories.set(key,v);saveLocalTownInventories();localTownInventoryStates.delete(key)}catch(_){localTownInventoryStates.set(key,'failed')}setTown(town,roads)}
 renderGravesendExplorer=async function(){};
-async function updateLocalTownInventories() {
- if(localTownInventoryRunning||easyImportRunning)return; localTownInventoryRunning=true;
- try {
-  const towns=new Map();
-  for(const road of roadDiscoveryLedger.values()) if(road.category==='Local roads'&&road.point){const town=roadDiscoveryLocality(road);if(!towns.has(town))towns.set(town,[]);towns.get(town).push(road);}
-  for(const [town,roads] of towns){
-   const discovered=roads.length;
-   const key=town+'|'+roadDiscoveryPlaceKey(roads[0].point);
-   let inventory=localTownInventories.get(key);
-   if(!inventory && localTownInventoryBaselines[town]) inventory={count:localTownInventoryBaselines[town],source:'verified baseline'};
-   setLocalTownSummary(town,discovered,inventory);
-   if(inventory?.count) continue;
-   try {
-     const controller=new AbortController(), timeout=window.setTimeout(()=>controller.abort(),20000);
-     const response=await fetch(API_BASE_URL+'/local-road-inventory?lat='+encodeURIComponent(roads[0].point.lat)+'&lng='+encodeURIComponent(roads[0].point.lng),{signal:controller.signal});
-     window.clearTimeout(timeout);
-     const result=await response.json();
-     if(response.ok && result?.count){localTownInventories.set(key,result);saveLocalTownInventories();setLocalTownSummary(town,discovered,result);}
-     else setLocalTownSummary(town,discovered,null,'unavailable');
-   } catch (_) { setLocalTownSummary(town,discovered,null,'unavailable'); }
-   await new Promise(resolve=>setTimeout(resolve,1050));
-  }
- }finally{localTownInventoryRunning=false}
-}
-const renderRoadDiscoveryWithTownInventories=renderRoadDiscovery;
-renderRoadDiscovery=function(){
-  renderRoadDiscoveryWithTownInventories();
-  document.querySelectorAll('.gravesend-explorer').forEach(node=>node.remove());
-  document.querySelectorAll('.road-discovery-town summary').forEach(summary=>{
-    const town=summary.textContent.split(' · ')[0]; summary.dataset.town=town;
-    const roads=summary.closest('.road-discovery-town')?.querySelectorAll('li').length||0;
-    setLocalTownSummary(town,roads,null);
-  });
-  void updateLocalTownInventories();
-};
+const renderRoadDiscoveryOnDemand=renderRoadDiscovery;
+renderRoadDiscovery=function(){renderRoadDiscoveryOnDemand();document.querySelectorAll('.gravesend-explorer').forEach(x=>x.remove());const towns=new Map();for(const r of roadDiscoveryLedger.values())if(r.category==='Local roads'&&r.point){const t=roadDiscoveryLocality(r);(towns.get(t)||towns.set(t,[]).get(t)).push(r)}document.querySelectorAll('.road-discovery-town summary').forEach(x=>x.dataset.town=x.textContent.split(' · ')[0]);for(const [t,r] of towns)setTown(t,r)};
