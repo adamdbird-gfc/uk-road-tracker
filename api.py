@@ -290,7 +290,22 @@ async def match_payload(
                             motorway_road_refs = motorway_refs(step.get("ref"))
                             a_road_refs_for_step = a_road_refs(step.get("ref"))
                             step_geometry = step.get("geometry")
-                            if not include_motorways or not step_geometry:
+                            if not step_geometry:
+                                continue
+                            # Retain the OSRM step attribution for Road discovery.
+                            # Unlike the route overview, this identifies the actual
+                            # named or numbered road beneath each part of the trip.
+                            road_features.append({
+                                "type": "Feature",
+                                "properties": {
+                                    "road_ref": step.get("ref") or "",
+                                    "name": step.get("name") or "",
+                                    "distance_m": float(step.get("distance") or 0.0),
+                                    "chunk_index": chunk_index,
+                                },
+                                "geometry": step_geometry,
+                            })
+                            if not include_motorways:
                                 continue
                             for road_ref in motorway_road_refs:
                                 motorway_features.append({
@@ -342,5 +357,6 @@ async def match_payload(
         "geojson": {"type": "FeatureCollection", "features": features},
         "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
         "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
+        "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
