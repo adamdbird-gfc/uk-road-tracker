@@ -392,3 +392,25 @@ async def gravesend_local_road_inventory():
     roads = sorted({str(item.get("tags", {}).get("name", "")).strip() for item in elements if item.get("tags", {}).get("name")})
     GRAVESEND_ROAD_INVENTORY = {"area":"Gravesend","count":len(roads),"roads":roads,"bounds":GRAVESEND_BOUNDS}
     return GRAVESEND_ROAD_INVENTORY
+
+LOCAL_ROAD_AREA_INVENTORY_CACHE = {}
+@app.get("/local-road-inventory")
+async def local_road_inventory(lat: float, lng: float, radius_km: float = 3.5):
+    radius_km=max(1.0,min(6.0,radius_km))
+    key=f"{lat:.3f},{lng:.3f},{radius_km:.1f}"
+    if key in LOCAL_ROAD_AREA_INVENTORY_CACHE: return LOCAL_ROAD_AREA_INVENTORY_CACHE[key]
+    lat_delta=radius_km/111.0
+    lng_delta=radius_km/(111.0*max(0.2,abs(__import__("math").cos(__import__("math").radians(lat)))))
+    south,west,north,east=lat-lat_delta,lng-lng_delta,lat+lat_delta,lng+lng_delta
+    query="[out:json][timeout:60];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
+    elements=None
+    for endpoint in OVERPASS_INTERPRETER_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=75.0,headers={"User-Agent":"Roadprints/1.0"}) as client: response=await client.post(endpoint,data={"data":query})
+            if response.status_code==200: elements=response.json().get("elements") or []; break
+        except (httpx.HTTPError,ValueError): continue
+    if elements is None: raise HTTPException(status_code=502,detail="The local road inventory could not be loaded.")
+    roads=sorted({str(item.get("tags",{}).get("name","")).strip() for item in elements if item.get("tags",{}).get("name")})
+    result={"count":len(roads),"roads":roads,"bounds":[south,west,north,east]}
+    LOCAL_ROAD_AREA_INVENTORY_CACHE[key]=result
+    return result
