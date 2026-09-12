@@ -361,3 +361,34 @@ async def match_payload(
         "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
+
+
+GRAVESEND_ROAD_INVENTORY = None
+GRAVESEND_BOUNDS = (51.415, 0.330, 51.466, 0.405)
+
+@app.get("/local-road-inventory/gravesend")
+async def gravesend_local_road_inventory():
+    global GRAVESEND_ROAD_INVENTORY
+    if GRAVESEND_ROAD_INVENTORY:
+        return GRAVESEND_ROAD_INVENTORY
+    south, west, north, east = GRAVESEND_BOUNDS
+    query = (
+        "[out:json][timeout:60];"
+        'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'
+        f"({south},{west},{north},{east});out tags;"
+    )
+    elements = None
+    for endpoint in OVERPASS_INTERPRETER_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=75.0, headers={"User-Agent":"Roadprints/1.0"}) as client:
+                response = await client.post(endpoint, data={"data": query})
+            if response.status_code == 200:
+                elements = response.json().get("elements") or []
+                break
+        except (httpx.HTTPError, ValueError):
+            continue
+    if elements is None:
+        raise HTTPException(status_code=502, detail="The Gravesend road inventory could not be loaded. Please retry shortly.")
+    roads = sorted({str(item.get("tags", {}).get("name", "")).strip() for item in elements if item.get("tags", {}).get("name")})
+    GRAVESEND_ROAD_INVENTORY = {"area":"Gravesend","count":len(roads),"roads":roads,"bounds":GRAVESEND_BOUNDS}
+    return GRAVESEND_ROAD_INVENTORY
