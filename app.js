@@ -6083,3 +6083,25 @@ async function renderGravesendExplorer() {
 }
 const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
 renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
+
+const LOCAL_TOWN_INVENTORY_KEY='roadprints-local-town-inventories-v1';
+const localTownInventories=new Map(); let localTownInventoryRunning=false;
+try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}'))) localTownInventories.set(key,value); } catch (_) {}
+function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
+renderGravesendExplorer=async function(){};
+async function updateLocalTownInventories() {
+ if(localTownInventoryRunning||easyImportRunning)return; localTownInventoryRunning=true;
+ try {
+  const towns=new Map();
+  for(const road of roadDiscoveryLedger.values()) if(road.category==='Local roads'&&road.point){const town=roadDiscoveryLocality(road);if(!towns.has(town))towns.set(town,[]);towns.get(town).push(road);}
+  for(const [town,roads] of towns){
+   const point=roads[0].point,key=town+'|'+roadDiscoveryPlaceKey(point);let inventory=localTownInventories.get(key);
+   if(!inventory){try{const response=await fetch(API_BASE_URL+'/local-road-inventory?lat='+encodeURIComponent(point.lat)+'&lng='+encodeURIComponent(point.lng));inventory=await response.json();if(response.ok){localTownInventories.set(key,inventory);saveLocalTownInventories();}}catch(_){}}
+   if(!inventory?.roads)continue; const eligible=new Set(inventory.roads.map(name=>name.toLocaleLowerCase('en-GB')));const discovered=roads.filter(road=>eligible.has(road.label.toLocaleLowerCase('en-GB'))).length;const percent=inventory.count?Math.round(discovered/inventory.count*100):0;
+   document.querySelectorAll('.road-discovery-town summary').forEach(summary=>{if(summary.textContent.startsWith(town+' · '))summary.textContent=town+' · '+discovered+' of '+inventory.count+' · '+percent+'%';});
+   await new Promise(resolve=>setTimeout(resolve,1050));
+  }
+ }finally{localTownInventoryRunning=false}
+}
+const renderRoadDiscoveryWithTownInventories=renderRoadDiscovery;
+renderRoadDiscovery=function(){renderRoadDiscoveryWithTownInventories();document.querySelectorAll('.gravesend-explorer').forEach(node=>node.remove());void updateLocalTownInventories();};
