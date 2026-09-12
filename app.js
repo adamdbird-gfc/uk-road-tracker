@@ -2609,44 +2609,34 @@ async function startNextFootBatch() {
   footMatchingPaused=false;
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
-  footMatchingProgress={area:footPlaceNames.get(candidates[0].batch.id) || 'this local area',completed:0,total:candidates.length,succeeded:0,failed:0};
-  let lastFootMapBatchCount=0;
-  renderFootQueue();
-  try {
-    for (const {batch,activity} of candidates) {
-      while (footMatchingPaused) {
-        renderFootQueue();
-        await new Promise(resolve=>setTimeout(resolve,250));
+  footMatchingProgress={area:'walking and running routes',completed:0,total:candidates.length,succeeded:0,failed:0};
+  let cursor=0,lastFootMapBatchCount=0;
+
+  const processCandidate=async ({batch,activity})=>{
+    footMatchingBatchId=batch.id;
+    try {
+      const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+      activity.matchedGeoJson=data.geojson;
+      activity.matchQuality=assessMatchQuality(activity,data);
+      await saveFootActivityMatch(activity);
+      batch.matched++;
+      footMatchingProgress.succeeded++;
+      if (easyImportRunning && (footMatchingProgress.succeeded===1 || footMatchingProgress.succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0)) {
+        appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
       }
-      footMatchingBatchId=batch.id;
-      footMatchingProgress.area=footPlaceNames.get(batch.id) || 'this local area';
-      try {
-        const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
-        const data=await response.json().catch(()=>({}));
-        if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
-        activity.matchedGeoJson=data.geojson;
-        activity.matchQuality=assessMatchQuality(activity,data);
-        await saveFootActivityMatch(activity);
-        batch.matched++;
-        footMatchingProgress.succeeded++;
-        if (easyImportRunning && (
-          footMatchingProgress.succeeded===1 ||
-          footMatchingProgress.succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0
-        )) {
-          appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
-        }
-      } catch (err) {
-        activity.matchError=err.message || String(err);
-        footMatchingProgress.failed++;
-        try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
-      }
+    } catch (err) {
+      activity.matchError=err.message || String(err);
+      footMatchingProgress.failed++;
+      try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
+    } finally {
       footMatchingProgress.completed++;
       renderFootQueue();
       try {
         if (easyImportRunning) {
           if (footMatchingProgress.completed-lastFootMapBatchCount>=LIVE_IMPORT_BATCH_SIZE) {
-            refreshImportMapBatch();
-            lastFootMapBatchCount=footMatchingProgress.completed;
+            refreshImportMapBatch(); lastFootMapBatchCount=footMatchingProgress.completed;
           }
           if (footMatchingProgress.completed===1) fitFootRoutes();
         } else {
@@ -2654,10 +2644,25 @@ async function startNextFootBatch() {
           if (footMatchingProgress.completed===1) fitFootRoutes();
         }
       } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
-      // Keep the UI responsive without inserting a full second of idle time
-      // after each on-foot match.
+    }
+  };
+
+  const worker=async()=>{
+    while (true) {
+      while (footMatchingPaused) {
+        renderFootQueue();
+        await new Promise(resolve=>setTimeout(resolve,250));
+      }
+      const candidate=candidates[cursor++];
+      if (!candidate) return;
+      await processCandidate(candidate);
       await new Promise(resolve=>setTimeout(resolve,100));
     }
+  };
+
+  renderFootQueue();
+  try {
+    await Promise.all(Array.from({length:Math.min(2,candidates.length)},worker));
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
