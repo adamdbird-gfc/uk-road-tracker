@@ -16,6 +16,8 @@ RADIUS_ATTEMPTS = [20, 10, 5]
 OVERPASS_INTERPRETER_URLS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://overpass.nchc.org.tw/api/interpreter",
 ]
 CANONICAL_A_ROAD_CACHE = {}
 
@@ -394,6 +396,35 @@ async def gravesend_local_road_inventory():
     return GRAVESEND_ROAD_INVENTORY
 
 LOCAL_ROAD_AREA_INVENTORY_CACHE = {}
+
+async def local_road_inventory_elements(query):
+    """Ask several public mirrors together, returning the first usable result.
+
+    Inventory is ancillary to matching, so it must fail quickly and never make
+    the app appear frozen behind a single overloaded Overpass server.
+    """
+    async def attempt(endpoint):
+        try:
+            async with httpx.AsyncClient(timeout=32.0, headers={"User-Agent":"Roadprints/1.1"}) as client:
+                response = await client.post(endpoint, data={"data": query})
+            if response.status_code != 200:
+                return None
+            return response.json().get("elements") or []
+        except (httpx.HTTPError, ValueError):
+            return None
+
+    tasks = [asyncio.create_task(attempt(endpoint)) for endpoint in OVERPASS_INTERPRETER_URLS]
+    try:
+        for task in asyncio.as_completed(tasks):
+            elements = await task
+            if elements is not None:
+                return elements
+        return None
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+
 @app.get("/local-road-inventory")
 async def local_road_inventory(lat: float, lng: float, radius_km: float = 3.5):
     radius_km=max(1.0,min(6.0,radius_km))
@@ -402,13 +433,8 @@ async def local_road_inventory(lat: float, lng: float, radius_km: float = 3.5):
     lat_delta=radius_km/111.0
     lng_delta=radius_km/(111.0*max(0.2,abs(__import__("math").cos(__import__("math").radians(lat)))))
     south,west,north,east=lat-lat_delta,lng-lng_delta,lat+lat_delta,lng+lng_delta
-    query="[out:json][timeout:60];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
-    elements=None
-    for endpoint in OVERPASS_INTERPRETER_URLS:
-        try:
-            async with httpx.AsyncClient(timeout=75.0,headers={"User-Agent":"Roadprints/1.0"}) as client: response=await client.post(endpoint,data={"data":query})
-            if response.status_code==200: elements=response.json().get("elements") or []; break
-        except (httpx.HTTPError,ValueError): continue
+    query="[out:json][timeout:25];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
+    elements=await local_road_inventory_elements(query)
     if elements is None: raise HTTPException(status_code=502,detail="The local road inventory could not be loaded.")
     roads=sorted({str(item.get("tags",{}).get("name","")).strip() for item in elements if item.get("tags",{}).get("name")})
     result={"count":len(roads),"roads":roads,"bounds":[south,west,north,east]}
