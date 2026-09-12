@@ -1491,3 +1491,34 @@ main.app-ready[data-active-screen="achievements"] .achievement-crossing-set .ach
 @media (max-width:420px) { .road-discovery-town summary { position:relative; } }
 
 .road-discovery-town-metric{border:0;cursor:pointer}.road-discovery-town-metric:disabled{cursor:default;opacity:1}.road-discovery-town-metric:not(:disabled){background:rgba(103,213,204,.18);color:#67d5cc;font-weight:750}
+
+/* Road discovery uses the same compact aggregate structure as the motorway
+   and A-road cards, while its detailed lists remain beneath the disclosure. */
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summary,
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > :not(summary) {
+  margin-left:0;
+  margin-right:0;
+}
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summary {
+  padding:0;
+}
+#roadDiscoveryCard > summary.road-discovery-heading {
+  grid-template-columns:minmax(0,1fr) auto !important;
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-controls {
+  grid-template-columns:minmax(0,1fr);
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-total {
+  width:100%;
+  min-width:0;
+  margin:0;
+  text-align:center;
+}
+#roadDiscoveryCard > summary.road-discovery-heading .road-discovery-total strong {
+  font-size:1.45rem;
+}
+.road-discovery-helper {
+  margin:0 0 14px;
+  font-size:.84rem;
+  line-height:1.45;
+}
