@@ -5931,7 +5931,7 @@ function renderRoadDiscovery() {
   list.replaceChildren();
   for (const category of ['Motorways','A roads','B roads','Local roads']) {
     const entries=roads.filter(road=>road.category===category); if (!entries.length) continue;
-    const group=document.createElement('section'), title=document.createElement('h3'), rows=document.createElement('ul');
+    const group=document.createElement('details'), title=document.createElement('summary'), rows=document.createElement('ul');
     group.className='road-discovery-group'; title.textContent=category+' · '+entries.length.toLocaleString();
     for (const road of entries) { const row=document.createElement('li'), label=document.createElement('strong'), state=document.createElement('span'); label.textContent=road.label; state.textContent=road.driven && road.onFoot ? 'Driven + on foot' : road.driven ? 'Driven' : 'On foot'; row.append(label,state); rows.append(row); }
     group.append(title,rows); list.append(group);
