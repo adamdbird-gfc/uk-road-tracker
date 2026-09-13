@@ -255,7 +255,11 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
     url="https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query"
     params={"geometry":json.dumps({"paths":paths}),"geometryType":arc_type,"inSR":"4326","spatialRel":"esriSpatialRelIntersects","outFields":"BUA22CD,BUA22NM","returnGeometry":"false","f":"json"}
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client: response=await client.get(url,params=params)
+        # A named road may have many matched step geometries.  Sending the
+        # polyline in a GET query can exceed an intermediary URL limit and be
+        # reported as a misleading 404. ArcGIS accepts the same parameters as
+        # a form POST, keeping the geometry in the request body.
+        async with httpx.AsyncClient(timeout=20.0) as client: response=await client.post(url,data=params)
         if response.status_code!=200: raise HTTPException(status_code=502,detail=f"ONS boundary query returned HTTP {response.status_code}.")
         return {"settlements":[{"code":f["attributes"].get("BUA22CD"),"name":f["attributes"].get("BUA22NM")} for f in response.json().get("features",[])]}
     except httpx.TimeoutException:
