@@ -42,6 +42,8 @@ def build(name):
     roads=sorted(roads)
     result={"version":1,"source":"ONS Built Up Areas (December 2022) Boundaries GB","code":feature["properties"]["BUA22CD"],"name":feature["properties"]["BUA22NM"],"count":len(roads),"roads":roads}
     OUT.mkdir(exist_ok=True); (OUT/(result["code"]+".json")).write_text(json.dumps(result,separators=(",",":")))
+    boundary_feature={"type":"Feature","properties":{"code":result["code"],"name":result["name"]},"geometry":geometry}
+    (OUT/(result["code"]+"-boundary.geojson")).write_text(json.dumps(boundary_feature,separators=(",",":")))
     print(json.dumps(result,indent=2))
 
 if __name__=="__main__": build(" ".join(sys.argv[1:]) or "Gravesend")
