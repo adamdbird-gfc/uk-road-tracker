@@ -1,0 +1,26 @@
+name: Build settlement inventories
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install boundary tools
+        run: python -m pip install shapely
+      - name: Build proof settlements
+        run: |
+          python scripts/build_settlement_inventory.py Gravesend
+          python scripts/build_settlement_inventory.py "Gillingham (Medway)"
+          python scripts/build_settlement_inventory.py Haverhill
+      - name: Upload settlement inventory cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: settlement-inventories-v1
+          path: settlement-inventories-v1/
