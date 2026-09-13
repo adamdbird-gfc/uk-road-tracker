@@ -550,7 +550,6 @@ main.app-ready { padding:0; min-height:100svh; } main.app-ready > [data-app-scre
 
 /* Map controls replace the old map-page header. */
 main.app-ready > #easyProgress,
-main.app-ready > #footQueueCard,
 main.app-ready > #ignoredCard { display:none !important; }
 main.app-ready #mapCard .map-heading { top:18px; left:auto; right:18px; width:auto; }
 main.app-ready #mapCard .map-heading-actions { display:grid; grid-template-columns:1fr; gap:8px; }
