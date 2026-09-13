@@ -6117,3 +6117,7 @@ const roadDiscoveryLocalityByBoundary=roadDiscoveryLocality;
 roadDiscoveryLocality=function(road){if(!road?.point)return null;const key=settlementAreaKey(road.point);if(!roadDiscoverySettlementAreas.has(key)){void resolveRoadDiscoverySettlement(road.point);return roadDiscoveryLocalityByBoundary(road)}const settlement=roadDiscoverySettlementAreas.get(key);return settlement===undefined?roadDiscoveryLocalityByBoundary(road):settlement};
 const renderRoadDiscoveryBySettlement=renderRoadDiscovery;
 renderRoadDiscovery=function(){renderRoadDiscoveryBySettlement();document.querySelectorAll('.road-discovery-town').forEach(group=>{if(group.querySelector('summary')?.dataset.town==='null')group.remove()})};
+// Settlement membership needs matched-road geometry, not the representative
+// point held by the discovery ledger. Keep the established locality grouping
+// until that resolver is available, so no discovered local roads disappear.
+roadDiscoveryLocality=roadDiscoveryLocalityByBoundary;
