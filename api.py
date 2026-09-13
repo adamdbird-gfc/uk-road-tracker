@@ -14,6 +14,7 @@ FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreet
 OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
+FOOT_RADIUS_ATTEMPTS = [25, 45, 70]
 OVERPASS_INTERPRETER_URLS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -126,9 +127,9 @@ async def request_match(client, points, radius, base_url):
         data = {}
     return response, data
 
-async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_seconds=0.0):
+async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_seconds=0.0, radius_attempts=RADIUS_ATTEMPTS, retry_no_match=False):
     last_error = None
-    for attempt_index, radius in enumerate(RADIUS_ATTEMPTS):
+    for attempt_index, radius in enumerate(radius_attempts):
         if attempt_index and polite_delay_seconds:
             await asyncio.sleep(polite_delay_seconds)
         response, data = await request_match(client, points, radius, base_url)
@@ -138,6 +139,8 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         message = data.get("message", response.text[:300] or "No details returned.")
         last_error = f"{code}: {message}"
         if code == "TooBig" and "Radius search size" in message:
+            continue
+        if retry_no_match and code == "NoMatch":
             continue
         break
     raise HTTPException(
@@ -262,6 +265,8 @@ async def match_walking_activity(payload: MatchRequest):
         FOOT_OSRM_BASE_URL,
         include_motorways=False,
         polite_delay_seconds=1.05,
+        radius_attempts=FOOT_RADIUS_ATTEMPTS,
+        retry_no_match=True,
     )
 
 async def match_payload(
@@ -269,6 +274,8 @@ async def match_payload(
     base_url: str,
     include_motorways: bool,
     polite_delay_seconds: float = 0.0,
+    radius_attempts=RADIUS_ATTEMPTS,
+    retry_no_match: bool = False,
 ):
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
@@ -297,6 +304,8 @@ async def match_payload(
                     chunk_index,
                     base_url,
                     polite_delay_seconds,
+                    radius_attempts,
+                    retry_no_match,
                 )
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
@@ -391,4 +400,3 @@ async def match_payload(
         "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
-
