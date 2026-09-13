@@ -283,6 +283,28 @@ async def foot_router_diagnostic():
             detail=f"Foot-router connection failed: {exc.__class__.__name__}: {exc}",
         ) from exc
 
+@app.get("/diagnostics/foot-router-match")
+async def foot_router_match_diagnostic():
+    """Temporary end-to-end test of the same OSRM Match endpoint used by walks."""
+    points = [
+        Point(lat=51.4400, lng=0.3700),
+        Point(lat=51.4405, lng=0.3710),
+    ]
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response, data = await request_match(client, points, 45, FOOT_OSRM_BASE_URL)
+        return {
+            "reachable": True,
+            "status": response.status_code,
+            "matcher_code": data.get("code"),
+            "matcher_message": data.get("message"),
+        }
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Foot-router match failed: {exc.__class__.__name__}: {exc}",
+        ) from exc
+
 async def match_payload(
     payload: MatchRequest,
     base_url: str,
