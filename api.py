@@ -23,6 +23,7 @@ CANONICAL_A_ROAD_CACHE = {}
 
 app = FastAPI(title="UK Road Tracker API", version="0.9.0")
 PLACE_NAME_CACHE = {}
+SETTLEMENT_POINT_CACHE = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -222,6 +223,21 @@ async def place_name(lat: float, lng: float):
     result = name or "Local area"
     PLACE_NAME_CACHE[key] = result
     return {"name": result}
+
+@app.get("/settlement-for-point")
+async def settlement_for_point(lat: float, lng: float):
+    key=f"{lat:.5f},{lng:.5f}"
+    if key in SETTLEMENT_POINT_CACHE: return SETTLEMENT_POINT_CACHE[key]
+    url="https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query"
+    params={"geometry":f"{lng},{lat}","geometryType":"esriGeometryPoint","inSR":"4326","spatialRel":"esriSpatialRelIntersects","outFields":"BUA22CD,BUA22NM","returnGeometry":"false","f":"json"}
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client: response=await client.get(url,params=params)
+        features=(response.json() if response.status_code==200 else {}).get("features") or []
+        attrs=features[0].get("attributes",{}) if features else {}
+        result={"code":attrs.get("BUA22CD"),"name":attrs.get("BUA22NM")}
+    except (httpx.HTTPError,ValueError): result={"code":None,"name":None}
+    SETTLEMENT_POINT_CACHE[key]=result
+    return result
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
