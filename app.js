@@ -2763,6 +2763,33 @@ function startDetailedImport() {
   renderAll('Timeline.json');
 }
 
+// Public OSRM instances are shared infrastructure. Two concurrent journeys
+// substantially reduce an import's elapsed time while remaining conservative
+// enough to avoid turning a large Timeline import into a burst of traffic.
+const ROAD_IMPORT_CONCURRENCY=2;
+const ROAD_MATCH_RETRY_DELAYS_MS=[750,2000];
+function isRetryableRoadMatchStatus(status){return status===429||status>=500}
+async function requestRoadMatchWithRetry(journey,sessionId){
+  let lastError;
+  for(let attempt=0;attempt<=ROAD_MATCH_RETRY_DELAYS_MS.length;attempt++){
+    if(sessionId!==trackingSessionId)throw Error('Import session changed');
+    try{
+      const response=await fetch(`${API_BASE_URL}/match`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:journey.points})});
+      const data=await response.json().catch(()=>({}));
+      if(response.ok)return data;
+      const error=Error(data.detail||`HTTP ${response.status}`);
+      error.retryable=isRetryableRoadMatchStatus(response.status);
+      throw error;
+    }catch(error){
+      lastError=error;
+      const retryable=error?.retryable!==false;
+      if(!retryable||attempt===ROAD_MATCH_RETRY_DELAYS_MS.length)break;
+      await new Promise(resolve=>setTimeout(resolve,ROAD_MATCH_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+  throw lastError||Error('Road matcher unavailable');
+}
+
 async function startEasyImport() {
   const sessionId = trackingSessionId;
   const importStartedAt=Date.now();
@@ -2795,74 +2822,52 @@ async function startEasyImport() {
   let succeeded = 0;
   let failed = 0;
   let lastRoadMapBatchCount = 0;
+  let nextCandidateIndex=0;
 
   easyProgressBar.max = candidates.length || 1;
   easyProgressBar.value = 0;
 
-  for (const journey of candidates) {
-    if (sessionId !== trackingSessionId) return;
-
-    while (easyImportPaused && sessionId === trackingSessionId) {
-      setEasyProgressStatus(
-        `Paused · ${completed} / ${candidates.length}`,
-        `${succeeded} matched · ${failed} skipped`
-      );
-      await new Promise(resolve => setTimeout(resolve, 250));
-    }
-
-    if (sessionId !== trackingSessionId) return;
-
-    setEasyProgressStatus(
-      `${completed} / ${candidates.length}`,
-      `Matching ${formatDate(journey.start)}`
-    );
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/match`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({points: journey.points})
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
-      if (sessionId !== trackingSessionId) return;
-
-      journey.matchedGeoJson = data.geojson;
-      journey.motorwayGeoJson = data.motorway_geojson;
-      journey.aRoadGeoJson = data.a_road_geojson || {type:'FeatureCollection',features:[]};
-      journey.roadGeoJson = data.road_geojson || {type:'FeatureCollection',features:[]};
-      journey.otherRoadDistanceKm = Number(data.other_road_distance_m || 0) / 1000;
-      delete journey.otherRoadGeoJson;
-      journey.matchedDistanceKm = Number(data.matched_distance_m || 0) / 1000;
-      journey.matchedTracepoints = Number(data.matched_tracepoints || 0);
-      journey.pointsSentToMatcher = Number(data.points_sent_to_matcher || 0);
-      journey.matchQuality = assessMatchQuality(journey, data);
-      await saveJourneyToMapArchive(journey);
-      recordJourneyProcessed(journey);
-      scheduleLocalProgressSave();
-      succeeded++;
-      if (succeeded===1 || succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0) {
-        appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
+  async function worker(){
+    while(sessionId===trackingSessionId){
+      while(easyImportPaused&&sessionId===trackingSessionId){
+        setEasyProgressStatus(`Paused · ${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
+        await new Promise(resolve=>setTimeout(resolve,250));
       }
-    } catch (err) {
-      journey.easyImportError = err.message || String(err);
-      failed++;
+      const index=nextCandidateIndex++;
+      if(index>=candidates.length||sessionId!==trackingSessionId)return;
+      const journey=candidates[index];
+      setEasyProgressStatus(`${completed} / ${candidates.length}`,`Matching up to ${ROAD_IMPORT_CONCURRENCY} journeys at once`);
+      try{
+        const data=await requestRoadMatchWithRetry(journey,sessionId);
+        if(sessionId!==trackingSessionId)return;
+        journey.matchedGeoJson=data.geojson;
+        journey.motorwayGeoJson=data.motorway_geojson;
+        journey.aRoadGeoJson=data.a_road_geojson||{type:'FeatureCollection',features:[]};
+        journey.roadGeoJson=data.road_geojson||{type:'FeatureCollection',features:[]};
+        journey.otherRoadDistanceKm=Number(data.other_road_distance_m||0)/1000;
+        delete journey.otherRoadGeoJson;
+        journey.matchedDistanceKm=Number(data.matched_distance_m||0)/1000;
+        journey.matchedTracepoints=Number(data.matched_tracepoints||0);
+        journey.pointsSentToMatcher=Number(data.points_sent_to_matcher||0);
+        journey.matchQuality=assessMatchQuality(journey,data);
+        await saveJourneyToMapArchive(journey);
+        recordJourneyProcessed(journey);
+        scheduleLocalProgressSave();
+        succeeded++;
+        if(succeeded===1||succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0)appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
+      }catch(err){
+        if(sessionId!==trackingSessionId)return;
+        journey.easyImportError=err.message||String(err);
+        failed++;
+      }
+      completed++;
+      easyProgressBar.value=completed;
+      setEasyProgressStatus(`${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
+      if(succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE){refreshImportMapBatch();lastRoadMapBatchCount=succeeded}
+      await new Promise(resolve=>setTimeout(resolve,20));
     }
-
-    completed++;
-    easyProgressBar.value = completed;
-    setEasyProgressStatus(
-      `${completed} / ${candidates.length}`,
-      `${succeeded} matched · ${failed} skipped`
-    );
-    if (succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE) {
-      refreshImportMapBatch();
-      lastRoadMapBatchCount=succeeded;
-    }
-    // Yield briefly so progress remains responsive, without adding a
-    // quarter-second idle period after every completed matcher request.
-    await new Promise(resolve => setTimeout(resolve, 20));
   }
+  await Promise.all(Array.from({length:Math.min(ROAD_IMPORT_CONCURRENCY,candidates.length)},worker));
 
   if (sessionId !== trackingSessionId) return;
   // Keep the queue workspace on screen until on-foot matching has completed.
