@@ -12,10 +12,14 @@ def get_json(url, params):
     with urllib.request.urlopen(url+"?"+urllib.parse.urlencode(params),timeout=90) as r:
         return json.load(r)
 
-def build(name):
-    ons=get_json(ONS,{"where":f"BUA22NM='{name.replace("'","''")}'","outFields":"BUA22CD,BUA22NM","returnGeometry":"true","f":"geojson"})
+def build(identifier):
+    # The queue uses stable ONS codes. Names remain supported for the manual
+    # workflow and for local diagnostics.
+    is_code=bool(__import__('re').fullmatch(r'[EW]\d{8}', identifier))
+    where=f"BUA22CD='{identifier}'" if is_code else f"BUA22NM='{identifier.replace("'","''")}'"
+    ons=get_json(ONS,{"where":where,"outFields":"BUA22CD,BUA22NM","returnGeometry":"true","f":"geojson"})
     features=ons.get("features",[])
-    if len(features)!=1: raise SystemExit(f"Expected one ONS built-up area for {name!r}; found {len(features)}")
+    if len(features)!=1: raise SystemExit(f"Expected one ONS built-up area for {identifier!r}; found {len(features)}")
     feature=features[0]; geometry=feature["geometry"]
     boundary=shape(geometry); west,south,east,north=boundary.bounds; roads=set()
     step=.025
