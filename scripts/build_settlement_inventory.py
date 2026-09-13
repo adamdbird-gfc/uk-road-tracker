@@ -26,13 +26,15 @@ def build(name):
         query='[out:json][timeout:60];way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]('+str(lat)+','+str(lng)+','+str(min(lat+step,north))+','+str(min(lng+step,east))+');out tags geom;'
         data=urllib.parse.urlencode({"data":query}).encode()
         osm=None
-        for endpoint in OVERPASS:
-          try:
-            request=urllib.request.Request(endpoint,data=data,method="POST",headers={"User-Agent":"Roadprints settlement inventory builder/1.0"})
-            with urllib.request.urlopen(request,timeout=120) as r: osm=json.load(r)
-            break
-          except Exception: time.sleep(1)
-        if osm is None: raise RuntimeError("No Overpass mirror returned this settlement tile")
+        for cycle in range(3):
+          for endpoint in OVERPASS:
+            try:
+              request=urllib.request.Request(endpoint,data=data,method="POST",headers={"User-Agent":"Roadprints settlement inventory builder/1.0"})
+              with urllib.request.urlopen(request,timeout=120) as r: osm=json.load(r)
+              break
+            except Exception: time.sleep(2+cycle*3)
+          if osm is not None: break
+        if osm is None: raise RuntimeError(f"No Overpass mirror returned settlement tile {lng:.4f},{lat:.4f}")
         for e in osm.get("elements",[]):
           coords=[(p["lon"],p["lat"]) for p in e.get("geometry",[])]
           name=e.get("tags",{}).get("name","").strip()
