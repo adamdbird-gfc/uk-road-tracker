@@ -13,6 +13,14 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install shapely
-      - run: python scripts/build_settlement_inventory.py ${{ inputs.settlements }}
+      - name: Build requested settlements
+        env:
+          SETTLEMENTS: ${{ inputs.settlements }}
+        run: |
+          IFS=',' read -ra towns <<< "$SETTLEMENTS"
+          for town in "${towns[@]}"; do
+            town="$(echo "$town" | xargs)"
+            python scripts/build_settlement_inventory.py "$town"
+          done
       - uses: actions/upload-artifact@v4
         with: {name: settlement-inventory-batch, path: settlement-inventories-v1}
