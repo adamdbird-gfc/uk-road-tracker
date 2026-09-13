@@ -6065,51 +6065,20 @@ renderRoadDiscovery=function() {
   void resolveRoadDiscoveryPlaces();
 };
 
-const GRAVESEND_INVENTORY_KEY='roadprints-gravesend-inventory-v1';
-let gravesendInventoryLoading=false;
-async function renderGravesendExplorer() {
-  const list=document.getElementById('roadDiscoveryList'); if (!list) return;
-  const localGroup=[...list.querySelectorAll('.road-discovery-group')].find(group=>group.querySelector('summary')?.textContent.startsWith('Local roads'));
-  if (!localGroup) return;
-  let inventory; try { inventory=JSON.parse(localStorage.getItem(GRAVESEND_INVENTORY_KEY) || 'null'); } catch (_) {}
-  if (!inventory && !gravesendInventoryLoading) {
-    gravesendInventoryLoading=true;
-    try { const response=await fetch(API_BASE_URL+'/local-road-inventory/gravesend'); inventory=await response.json(); if (response.ok) localStorage.setItem(GRAVESEND_INVENTORY_KEY,JSON.stringify(inventory)); }
-    catch (_) {} finally { gravesendInventoryLoading=false; if (inventory) renderRoadDiscovery(); }
-  }
-  let card=localGroup.querySelector('.gravesend-explorer'); if (!card) { card=document.createElement('section'); card.className='gravesend-explorer'; localGroup.insertBefore(card,localGroup.querySelector('.road-discovery-town')); }
-  if (!inventory?.roads) { card.textContent='Loading Gravesend Explorer…'; return; }
-  const [south,west,north,east]=inventory.bounds || [];
-  const eligible=new Set(inventory.roads.map(name=>name.toLocaleLowerCase('en-GB')));
-  const discovered=[...roadDiscoveryLedger.values()].filter(road=>{
-    const point=road.point;
-    return road.category==='Local roads' && point && point.lat>=south && point.lat<=north && point.lng>=west && point.lng<=east && eligible.has(road.label.toLocaleLowerCase('en-GB'));
-  });
-  const percent=inventory.count ? Math.round(discovered.length/inventory.count*100) : 0;
-  card.replaceChildren();
-  const title=document.createElement('strong'); title.textContent='Gravesend Explorer';
-  const value=document.createElement('span'); value.textContent=discovered.length.toLocaleString()+' of '+inventory.count.toLocaleString()+' named local roads discovered · '+percent+'%';
-  const note=document.createElement('small'); note.textContent='Roadprints-defined Gravesend area · named public local roads only';
-  card.append(title,value,note);
-}
-const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
-renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
-
 const LOCAL_TOWN_INVENTORY_KEY='roadprints-settlement-inventories-v2';
 const SETTLEMENT_INVENTORY_INDEX_URL='settlement-catalogue-v1.json?v=20260913-counts-seven';
-// Kept alongside the catalogue until its next full data refresh. The key is
-// the stable ONS BUA code, so every user uses the same inventory total.
-const SETTLEMENT_INVENTORY_COUNTS={E63003586:4,E63003709:364,E63004165:199,E63005039:295,E63005055:16,E63005058:488,E63005204:900};
+const SETTLEMENT_INVENTORY_MANIFEST_URL='settlement-inventory-manifest-v1.json?v=1';
 const localTownInventories=new Map(), localTownInventoryStates=new Map();
-let settlementInventoryIndexPromise,settlementBoundaryLayer,settlementBoundaryMode=false,settlementQueueRunning=0;
+let settlementInventoryIndexPromise,settlementInventoryManifestPromise,settlementBoundaryLayer,settlementBoundaryMode=false,settlementQueueRunning=0;
 const settlementQueue=[],SETTLEMENT_QUEUE_LIMIT=4;
 try{for(const [k,v] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}')))localTownInventories.set(k,v)}catch(_){}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
 function townKey(town,point){return town+'|'+roadDiscoveryPlaceKey(point)}
 function normaliseSettlementName(value){return String(value||'').trim().toLocaleLowerCase('en-GB').replace(/\s+/g,' ')}
 function normaliseRoadName(value){return String(value||'').trim().toLocaleLowerCase('en-GB').replace(/\s+/g,' ')}
-async function loadSettlementInventoryIndex(){if(!settlementInventoryIndexPromise)settlementInventoryIndexPromise=fetch(SETTLEMENT_INVENTORY_INDEX_URL,{cache:'no-cache'}).then(async response=>{if(!response.ok)throw Error('Settlement cache unavailable');const data=await response.json();return new Map((data.settlements||[]).flatMap(entry=>[entry.name,...(entry.aliases||[])].map(alias=>[normaliseSettlementName(alias),entry])))});return settlementInventoryIndexPromise}
-async function fetchTownInventory(town){const settlements=await loadSettlementInventoryIndex(),entry=settlements.get(normaliseSettlementName(town)),count=Number(entry?.count??SETTLEMENT_INVENTORY_COUNTS[entry?.code]);if(!entry||entry.status!=='available'||!Number.isFinite(count))return null;return {...entry,count}}
+async function loadSettlementInventoryManifest(){if(!settlementInventoryManifestPromise)settlementInventoryManifestPromise=fetch(SETTLEMENT_INVENTORY_MANIFEST_URL,{cache:'no-cache'}).then(async response=>{if(!response.ok)throw Error('Settlement manifest unavailable');const data=await response.json();return new Map((data.inventories||[]).map(entry=>[entry.code,entry]))});return settlementInventoryManifestPromise}
+async function loadSettlementInventoryIndex(){if(!settlementInventoryIndexPromise)settlementInventoryIndexPromise=Promise.all([fetch(SETTLEMENT_INVENTORY_INDEX_URL,{cache:'no-cache'}),loadSettlementInventoryManifest()]).then(async([response,manifest])=>{if(!response.ok)throw Error('Settlement catalogue unavailable');const data=await response.json();return new Map((data.settlements||[]).flatMap(entry=>{const merged={...entry,...(manifest.get(entry.code)||{})};return [merged.name,...(merged.aliases||[])].map(alias=>[normaliseSettlementName(alias),merged])}))});return settlementInventoryIndexPromise}
+async function fetchTownInventory(town){const entry=(await loadSettlementInventoryIndex()).get(normaliseSettlementName(town)),count=Number(entry?.count);if(!entry||entry.status!=='available'||!Number.isFinite(count))return null;return entry}
 function setTown(town,roads){
  const key=townKey(town,roads[0].point),inv=localTownInventories.get(key),state=localTownInventoryStates.get(key)||'idle';
  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const discovered=roads.length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='unavailable'?'Inventory building':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
@@ -6118,24 +6087,8 @@ function queueTownInventory(town,roads){const key=townKey(town,roads[0].point);i
 function runSettlementQueue(){while(settlementQueueRunning<SETTLEMENT_QUEUE_LIMIT&&settlementQueue.length){const next=settlementQueue.shift();settlementQueueRunning++;calculateTown(next.town,next.roads).finally(()=>{settlementQueueRunning--;runSettlementQueue()})}}
 function clearSettlementBoundary(){settlementBoundaryMode=false;settlementBoundaryLayer?.remove();settlementBoundaryLayer=null;document.getElementById('settlementBoundaryReturn')?.remove();if(map){showDefaultUnitedKingdomView();renderMap();renderCanonicalMapLayers();renderCanonicalARoadMapLayers()}refreshARoadBackgroundStatus?.()}
 async function showSettlementBoundary(town,inventory){const response=await fetch('settlement-inventories-v1/'+encodeURIComponent(inventory.code)+'-boundary.geojson');if(!response.ok)throw Error('Settlement boundary unavailable');const boundary=await response.json();settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();settlementBoundaryLayer=L.geoJSON(boundary,{style:{color:'#f7c450',weight:3,fillColor:'#f7c450',fillOpacity:.18,interactive:false}}).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Viewing settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)}
-renderGravesendExplorer=async function(){};
-const renderRoadDiscoveryOnDemand=renderRoadDiscovery;
-renderRoadDiscovery=function(){renderRoadDiscoveryOnDemand();document.querySelectorAll('.gravesend-explorer').forEach(x=>x.remove());const towns=new Map();for(const r of roadDiscoveryLedger.values())if(r.category==='Local roads'&&r.point){const t=roadDiscoveryLocality(r);if(!t)continue;(towns.get(t)||towns.set(t,[]).get(t)).push(r)}document.querySelectorAll('.road-discovery-town summary').forEach(x=>x.dataset.town=x.textContent.split(' · ')[0]);for(const [t,r] of towns){setTown(t,r);queueTownInventory(t,r)}};
-
-const roadDiscoverySettlementAreas=new Map(),roadDiscoverySettlementPending=new Set();
-function settlementAreaKey(point){return point?point.lat.toFixed(5)+','+point.lng.toFixed(5):''}
-async function resolveRoadDiscoverySettlement(point){const key=settlementAreaKey(point);if(!key||roadDiscoverySettlementAreas.has(key)||roadDiscoverySettlementPending.has(key))return;roadDiscoverySettlementPending.add(key);try{const response=await fetch(API_BASE_URL+'/settlement-for-point?lat='+encodeURIComponent(point.lat)+'&lng='+encodeURIComponent(point.lng));if(!response.ok)throw Error('Settlement resolver unavailable');const data=await response.json();roadDiscoverySettlementAreas.set(key,data?.name||null)}catch(_){roadDiscoverySettlementAreas.set(key,undefined)}finally{roadDiscoverySettlementPending.delete(key);renderRoadDiscovery()}}
-const roadDiscoveryLocalityByBoundary=roadDiscoveryLocality;
-roadDiscoveryLocality=function(road){if(!road?.point)return null;const key=settlementAreaKey(road.point);if(!roadDiscoverySettlementAreas.has(key)){void resolveRoadDiscoverySettlement(road.point);return roadDiscoveryLocalityByBoundary(road)}const settlement=roadDiscoverySettlementAreas.get(key);return settlement===undefined?roadDiscoveryLocalityByBoundary(road):settlement};
-const renderRoadDiscoveryBySettlement=renderRoadDiscovery;
-renderRoadDiscovery=function(){renderRoadDiscoveryBySettlement();document.querySelectorAll('.road-discovery-town').forEach(group=>{if(group.querySelector('summary')?.dataset.town==='null')group.remove()})};
-// Settlement membership needs matched-road geometry, not the representative
-// point held by the discovery ledger. Keep the established locality grouping
-// until that resolver is available, so no discovered local roads disappear.
-roadDiscoveryLocality=roadDiscoveryLocalityByBoundary;
-
-// Temporary QA surface: compares legacy place labels with ONS boundary
-// intersections without changing the user-facing discovery ledger.
+// Resolve local roads against the official ONS boundary service in the
+// background; the user-facing ledger changes only once a result is available.
 const SETTLEMENT_CHECK_CACHE_KEY='roadprints-settlement-check-v1';
 const settlementCheckResults=new Map(),settlementCheckPending=new Set(),settlementCheckQueue=[];
 try{for(const [key,value] of Object.entries(JSON.parse(localStorage.getItem(SETTLEMENT_CHECK_CACHE_KEY)||'{}')))if(value&&!value.error)settlementCheckResults.set(key,value)}catch(_){}
