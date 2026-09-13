@@ -6029,8 +6029,8 @@ renderRoadDiscovery=function() {
   rebuildRoadDiscoveryLedger();
   const roads=[...roadDiscoveryLedger.values()].sort((a,b)=>a.category.localeCompare(b.category)||a.label.localeCompare(b.label,'en-GB',{numeric:true}));
   card.classList.toggle('hidden',!shouldShowDataDashboard() || !roads.length); if (!roads.length) return;
-  const driven=roads.filter(road=>road.driven).length,foot=roads.filter(road=>road.onFoot).length;
-  count.textContent=roads.length.toLocaleString(); summary.textContent=driven.toLocaleString()+' driven · '+foot.toLocaleString()+' on foot'; list.replaceChildren();
+  const driven=roads.filter(road=>road.driven).length,foot=roads.filter(road=>road.onFoot).length,both=roads.filter(road=>road.driven&&road.onFoot).length;
+  count.textContent=roads.length.toLocaleString(); summary.textContent=driven.toLocaleString()+' driven · '+foot.toLocaleString()+' on foot'+(both?' · '+both.toLocaleString()+' in both':''); list.replaceChildren();
   for (const category of ['Motorways','A roads','B roads','Local roads']) {
     const entries=roads.filter(road=>road.category===category); if (!entries.length) continue;
     const group=document.createElement('details'),title=document.createElement('summary');
