@@ -8,7 +8,7 @@ for offset in range(0,9000,1000):
     page=json.load(urllib.request.urlopen(URL+'?'+query))['features']
     features.extend(page)
     if len(page)<1000: break
-available={'E63003709','E63005058','E63005204'}
+available={'E63003586','E63003709','E63004165','E63005039','E63005055','E63005058','E63005204'}
 aliases={'E63005204':['Gillingham']}
 settlements=[{'code':f['attributes']['BUA22CD'],'name':f['attributes']['BUA22NM'],'aliases':aliases.get(f['attributes']['BUA22CD'],[]),'centre':[f['attributes'].get('LAT'),f['attributes'].get('LONG')],'status':'available' if f['attributes']['BUA22CD'] in available else 'pending'} for f in features]
 json.dump({'version':1,'source':'ONS Built Up Areas (December 2022) Boundaries GB','settlements':settlements},open('settlement-catalogue-v1.json','w'),separators=(',',':'))
