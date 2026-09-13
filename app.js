@@ -6085,7 +6085,7 @@ const renderRoadDiscoveryWithGravesend=renderRoadDiscovery;
 renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void renderGravesendExplorer(); };
 
 const LOCAL_TOWN_INVENTORY_KEY='roadprints-settlement-inventories-v1';
-const SETTLEMENT_INVENTORY_INDEX_URL='settlement-catalogue-v1.json';
+const SETTLEMENT_INVENTORY_INDEX_URL='settlement-catalogue-v1.json?v=20260913-available-seven';
 const localTownInventories=new Map(), localTownInventoryStates=new Map();
 let settlementInventoryIndexPromise,settlementBoundaryLayer,settlementBoundaryMode=false,settlementQueueRunning=0;
 const settlementQueue=[],SETTLEMENT_QUEUE_LIMIT=4;
