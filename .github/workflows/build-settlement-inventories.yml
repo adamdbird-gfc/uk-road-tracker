@@ -2,6 +2,11 @@ name: Build settlement inventories
 
 on:
   workflow_dispatch:
+    inputs:
+      settlements:
+        description: "Comma-separated official ONS settlement names"
+        required: false
+        default: "Gravesend, Gillingham (Medway), Haverhill"
 
 jobs:
   build:
@@ -14,11 +19,15 @@ jobs:
           python-version: '3.12'
       - name: Install boundary tools
         run: python -m pip install shapely
-      - name: Build proof settlements
+      - name: Build requested settlements
+        env:
+          SETTLEMENTS: ${{ inputs.settlements }}
         run: |
-          python scripts/build_settlement_inventory.py Gravesend
-          python scripts/build_settlement_inventory.py "Gillingham (Medway)"
-          python scripts/build_settlement_inventory.py Haverhill
+          IFS=',' read -ra towns <<< "$SETTLEMENTS"
+          for town in "${towns[@]}"; do
+            town="$(echo "$town" | xargs)"
+            python scripts/build_settlement_inventory.py "$town"
+          done
       - name: Upload settlement inventory cache
         uses: actions/upload-artifact@v4
         with:
