@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "source": "ONS Built Up Areas (December 2022) Boundaries GB",
+  "settlements": [
+    {"code": "E63003709", "name": "Haverhill", "aliases": ["Haverhill"]},
+    {"code": "E63005058", "name": "Gravesend", "aliases": ["Gravesend"]},
+    {"code": "E63005204", "name": "Gillingham (Medway)", "aliases": ["Gillingham", "Gillingham (Medway)"]}
+  ]
+}
