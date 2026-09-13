@@ -120,12 +120,21 @@ async def request_match(client, points, radius, base_url):
         "gaps": "split",
         "radiuses": radiuses,
     }
-    response = await client.get(url, params=params)
-    try:
-        data = response.json()
-    except ValueError:
-        data = {}
-    return response, data
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = await client.get(url, params=params)
+            try:
+                data = response.json()
+            except ValueError:
+                data = {}
+            return response, data
+        except httpx.TransportError as exc:
+            last_error = exc
+            if attempt == 2:
+                raise
+            await asyncio.sleep(1.5 * (attempt + 1))
+    raise last_error
 
 async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_seconds=0.0, radius_attempts=RADIUS_ATTEMPTS, retry_no_match=False):
     last_error = None
