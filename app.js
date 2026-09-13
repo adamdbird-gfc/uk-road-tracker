@@ -1397,6 +1397,9 @@ async function showSavedProgress() {
   mapTitle.textContent='Your saved Roadprints progress';
   mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data or make manual changes.';
   mapCard.classList.remove('hidden');
+  // Switch screens before waiting for Leaflet, so “View data” never exposes
+  // the previously active Progress panel during a mobile cold start.
+  activateRoadprintsScreen('map');
   // Saved maps must render on arrival. The old deferred-map experiment left
   // this screen announcing a nonexistent “Load map” action.
   mapRenderingRequested=true;
@@ -1409,7 +1412,6 @@ async function showSavedProgress() {
   await ensureLeaflet();
   initMap();
   renderMap();
-  activateRoadprintsScreen('map');
   requestAnimationFrame(()=>map?.invalidateSize(true));
 }
 
