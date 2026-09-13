@@ -5916,12 +5916,21 @@ function rebuildRoadDiscoveryLedger() {
         ? refs.map(ref=>({...feature,properties:{...(feature.properties || {}),road_ref:ref}}))
         : [feature];
       for (const variant of variants) {
-        const road=roadDiscoveryKey(variant); if (road) seen.set(road.id,road);
+        const road=roadDiscoveryKey(variant); if (road) {
+          // Keep the matched feature geometry as evidence.  The visible ledger
+          // still de-duplicates by road identity, but settlement assignment
+          // must later use the travelled geometry rather than a place label.
+          const evidence={geometry:variant.geometry,journeyId:journeyIdentity(item.record),mode:item.mode};
+          const existing=seen.get(road.id);
+          if(existing) existing.evidence.push(evidence);
+          else seen.set(road.id,{...road,evidence:[evidence]});
+        }
       }
     }
     for (const road of seen.values()) {
       let entry=roadDiscoveryLedger.get(road.id);
-      if (!entry) { entry={...road,driven:false,onFoot:false}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
+      if (!entry) { entry={...road,driven:false,onFoot:false,evidence:[]}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
+      entry.evidence.push(...road.evidence);
       if (item.mode==='driving') entry.driven=true; else entry.onFoot=true;
     }
     roadDiscoveryByJourneyId.set(item.mode+':'+journeyIdentity(item.record),newRoads);
