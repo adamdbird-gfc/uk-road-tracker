@@ -14,7 +14,7 @@ FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreet
 OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
-FOOT_RADIUS_ATTEMPTS = [25, 45, 70]
+FOOT_RADIUS_ATTEMPTS = [20, 10, 5]
 OVERPASS_INTERPRETER_URLS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
