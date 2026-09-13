@@ -269,6 +269,20 @@ async def match_walking_activity(payload: MatchRequest):
         retry_no_match=True,
     )
 
+@app.get("/diagnostics/foot-router")
+async def foot_router_diagnostic():
+    """Temporary connectivity check for the third-party pedestrian router."""
+    url = f"{FOOT_OSRM_BASE_URL.rstrip('/')}/nearest/v1/driving/0.3700,51.4400"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url, params={"number": 1})
+        return {"reachable": True, "status": response.status_code}
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Foot-router connection failed: {exc.__class__.__name__}: {exc}",
+        ) from exc
+
 async def match_payload(
     payload: MatchRequest,
     base_url: str,
