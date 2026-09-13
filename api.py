@@ -256,10 +256,12 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
     params={"geometry":json.dumps({"paths":paths}),"geometryType":arc_type,"inSR":"4326","spatialRel":"esriSpatialRelIntersects","outFields":"BUA22CD,BUA22NM","returnGeometry":"false","f":"json"}
     try:
         async with httpx.AsyncClient(timeout=20.0) as client: response=await client.get(url,params=params)
-        if response.status_code!=200: raise HTTPException(status_code=502,detail="ONS settlement service unavailable.")
+        if response.status_code!=200: raise HTTPException(status_code=502,detail=f"ONS boundary query returned HTTP {response.status_code}.")
         return {"settlements":[{"code":f["attributes"].get("BUA22CD"),"name":f["attributes"].get("BUA22NM")} for f in response.json().get("features",[])]}
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504,detail="ONS boundary query timed out.")
     except httpx.HTTPError:
-        raise HTTPException(status_code=502,detail="ONS settlement service unavailable.")
+        raise HTTPException(status_code=502,detail="ONS boundary query failed.")
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
