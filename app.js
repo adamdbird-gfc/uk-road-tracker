@@ -31,6 +31,7 @@ let easyImportRunning = false;
 let trackingSessionId = 0;
 let importFootStartedAt = null;
 let importFootResult = null;
+let importRoadResult = null;
 let distanceUnit = 'miles';
 let onboardingMode = null;
 const manualMotorwayRefs = new Set();
@@ -1710,7 +1711,10 @@ document.getElementById('plotImportedMap')?.addEventListener('click',()=>{
   showDefaultUnitedKingdomView();
 });
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
-startFootBatch.addEventListener('click', startNextFootBatch);
+startFootBatch.addEventListener('click',()=>{
+  if(footActivities.some(activity=>!activity.matchedGeoJson&&activity.matchError))void retryUnableFootMatches();
+  else void startNextFootBatch();
+});
 pauseFootMatching.addEventListener('click',()=>{
   if (!footMatching) return;
   footMatchingPaused=!footMatchingPaused;
@@ -2040,21 +2044,41 @@ function renderFootQueue() {
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
+  const retryable=footBatches.reduce((n,b)=>n+b.activities.filter(item=>!item.matchedGeoJson&&item.matchError).length,0);
   footProgressBar.max=distinct || 1;
   footProgressBar.value=Math.min(distinct,matched+failed);
   setFootProgressStatus(
-    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : `${matched + failed} / ${distinct}`,
+    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : 'Complete',
     footMatchingError ? footMatchingError : footMatchingProgress
       ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
-      : `${matched} matched${failed ? ` · ${failed} unable` : ''} · ${footActivities.length} activities${importFootResult ? ` · ${importFootResult}` : ''}`
+      : `${matched.toLocaleString()} route${matched===1?'':'s'} mapped${failed ? ` · ${failed.toLocaleString()} unable to match` : ''} · ${footActivities.length.toLocaleString()} on-foot activities${importFootResult ? ` · ${importFootResult}` : ''}`
   );
   const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
-  startFootBatch.disabled=footMatching || !next;
+  startFootBatch.disabled=footMatching || (!next && !retryable);
   const queued=footBatches.reduce((count,batch)=>count+batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length,0);
-  startFootBatch.textContent=footMatching ? 'Matching queued routes…' : next ? `Match queued routes (${queued})` : 'All areas processed';
+  startFootBatch.textContent=footMatching ? 'Matching queued routes…' : next ? `Match queued routes (${queued})` : retryable ? `Retry unable routes (${retryable})` : 'All routes processed';
   pauseFootMatching.classList.toggle('hidden',!footMatching);
   pauseFootMatching.textContent=footMatchingPaused ? 'Resume' : 'Pause';
   pauseFootMatching.setAttribute('aria-pressed',String(footMatchingPaused));
+}
+
+async function retryUnableFootMatches(){
+  const retries=footActivities.filter(activity=>!activity.matchedGeoJson&&activity.matchError);
+  if(!retries.length)return;
+  await footArchiveOperation('readwrite',store=>{
+    for(const activity of retries){
+      delete activity.matchError;
+      const record=compactFootActivity(activity);
+      store.put(record);
+      persistedFootActivities.set(record.id,{...record,selected:true});
+    }
+  });
+  footActivities=[...persistedFootActivities.values()];
+  importFootStartedAt=Date.now();
+  importFootResult=null;
+  buildFootBatches();
+  renderFootQueue();
+  void startNextFootBatch();
 }
 
 function setFootProgressStatus(primary, secondary) {
@@ -2348,7 +2372,7 @@ function renderRoadQueue() {
   easyProgressBar.value=routes.length;
   setEasyProgressStatus(
     'Complete',
-    `${routes.length.toLocaleString()} route pattern${routes.length===1?'':'s'} mapped · ${activities.toLocaleString()} driving activit${activities===1?'y':'ies'}`
+    `${routes.length.toLocaleString()} route pattern${routes.length===1?'':'s'} mapped · ${activities.toLocaleString()} driving activit${activities===1?'y':'ies'}${importRoadResult ? ` · ${importRoadResult}` : ''}`
   );
   updateEasyImportPauseButton();
 }
@@ -2797,6 +2821,7 @@ async function startEasyImport() {
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
+  importRoadResult=null;
   // Automatic matching is the one time the map should open by itself: it is
   // the live progress display, rather than a heavy saved-map restore.
   mapRenderingRequested=true;
@@ -2878,6 +2903,7 @@ async function startEasyImport() {
   }
   const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
   const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
+  importRoadResult=`completed in ${roadElapsed}`;
   if (footMatching) {
     setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
