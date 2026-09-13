@@ -3284,7 +3284,7 @@ function initMap() {
     map.on('moveend zoomend',()=>{
       clearTimeout(mapGeometryRefreshTimer);
       mapGeometryRefreshTimer=setTimeout(()=>{
-        renderMap({deferCalculations:true,preserveLive:true});
+        if(settlementBoundaryMode)return;renderMap({deferCalculations:true,preserveLive:true});
         if (focusedJourneyId) clearReferenceMapLayers();
         else {
           renderCanonicalMapLayers();
@@ -5845,7 +5845,7 @@ function activateRoadprintsScreen(screen) {
   shell.dataset.activeScreen=screen;
   nav.classList.remove('hidden');
   nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
-  if(screen==='map') {
+  if(screen==='map' && !settlementBoundaryMode) {
     setTimeout(()=>{
       map?.invalidateSize();
       renderCanonicalARoadMapLayers();
@@ -5856,7 +5856,7 @@ function activateRoadprintsScreen(screen) {
 document.getElementById('appNavigation')?.addEventListener('click',event=>{
   const button=event.target.closest('[data-screen]');
   if(!button) return;
-  if(button.dataset.screen==='map' && focusedJourneyId) {
+  if(settlementBoundaryMode){clearSettlementBoundary()}if(button.dataset.screen==='map' && focusedJourneyId) {
     focusedJourneyId=null;
     focusedJourneyType=null;
     journeyFocusBar?.classList.add('hidden');
@@ -5874,7 +5874,7 @@ function refreshARoadBackgroundStatus(){
   const states=typeof canonicalARoadState==='function' ? keys.map(canonicalARoadState).filter(Boolean) : [];
   const stillWorking=canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning ||
     states.some(road=>road.status==='idle' || road.status==='loading');
-  const visible=mapOpen && keys.length>0 && stillWorking;
+  const visible=mapOpen && !settlementBoundaryMode && keys.length>0 && stillWorking;
   aRoadBackgroundStatus.classList.toggle('hidden',!visible);
   if(visible && aRoadBackgroundText) aRoadBackgroundText.textContent='Road references are updating in the background';
 }
@@ -6087,7 +6087,7 @@ renderRoadDiscovery=function() { renderRoadDiscoveryWithGravesend(); void render
 const LOCAL_TOWN_INVENTORY_KEY='roadprints-settlement-inventories-v1';
 const SETTLEMENT_INVENTORY_INDEX_URL='settlement-inventories-v1/index.json';
 const localTownInventories=new Map(), localTownInventoryStates=new Map();
-let settlementInventoryIndexPromise,settlementBoundaryLayer;
+let settlementInventoryIndexPromise,settlementBoundaryLayer,settlementBoundaryMode=false;
 try{for(const [k,v] of Object.entries(JSON.parse(localStorage.getItem(LOCAL_TOWN_INVENTORY_KEY)||'{}')))localTownInventories.set(k,v)}catch(_){}
 function saveLocalTownInventories(){try{localStorage.setItem(LOCAL_TOWN_INVENTORY_KEY,JSON.stringify(Object.fromEntries(localTownInventories)))}catch(_){}}
 function townKey(town,point){return town+'|'+roadDiscoveryPlaceKey(point)}
@@ -6099,8 +6099,8 @@ function setTown(town,roads){
  const key=townKey(town,roads[0].point),inv=localTownInventories.get(key),state=localTownInventoryStates.get(key)||'idle';
  document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const eligible=new Set((inv.roads||[]).map(normaliseRoadName)),discovered=roads.filter(road=>eligible.has(normaliseRoadName(road.label))).length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='unavailable'?'Inventory building':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
 async function calculateTown(town,roads){const key=townKey(town,roads[0].point);if(localTownInventoryStates.get(key)==='loading')return;localTownInventoryStates.set(key,'loading');setTown(town,roads);try{const inventory=await fetchTownInventory(town);if(!inventory){localTownInventoryStates.set(key,'unavailable')}else{localTownInventories.set(key,inventory);saveLocalTownInventories();localTownInventoryStates.delete(key)}}catch(error){console.warn('Settlement road-count lookup failed:',error);localTownInventoryStates.set(key,'failed')}setTown(town,roads)}
-function clearSettlementBoundary(){settlementBoundaryLayer?.remove();settlementBoundaryLayer=null;document.getElementById('settlementBoundaryReturn')?.remove();if(map)showDefaultUnitedKingdomView()}
-async function showSettlementBoundary(town,inventory){const response=await fetch('settlement-inventories-v1/'+encodeURIComponent(inventory.code)+'-boundary.geojson');if(!response.ok)throw Error('Settlement boundary unavailable');const boundary=await response.json();mapRenderingRequested=true;activateRoadprintsScreen('map');setTimeout(()=>{initMap();if(!map||!window.L)return;clearSettlementBoundary();settlementBoundaryLayer=L.geoJSON(boundary,{style:{color:'#f7c450',weight:3,fillColor:'#f7c450',fillOpacity:.18,interactive:false}}).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='town-count-map-return';bar.innerHTML='<strong>'+town+' settlement boundary</strong><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13})},100)}
+function clearSettlementBoundary(){settlementBoundaryMode=false;settlementBoundaryLayer?.remove();settlementBoundaryLayer=null;document.getElementById('settlementBoundaryReturn')?.remove();if(map){showDefaultUnitedKingdomView();renderMap();renderCanonicalMapLayers();renderCanonicalARoadMapLayers()}refreshARoadBackgroundStatus?.()}
+async function showSettlementBoundary(town,inventory){const response=await fetch('settlement-inventories-v1/'+encodeURIComponent(inventory.code)+'-boundary.geojson');if(!response.ok)throw Error('Settlement boundary unavailable');const boundary=await response.json();settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();settlementBoundaryLayer=L.geoJSON(boundary,{style:{color:'#f7c450',weight:3,fillColor:'#f7c450',fillOpacity:.18,interactive:false}}).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Viewing settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)}
 renderGravesendExplorer=async function(){};
 const renderRoadDiscoveryOnDemand=renderRoadDiscovery;
 renderRoadDiscovery=function(){renderRoadDiscoveryOnDemand();document.querySelectorAll('.gravesend-explorer').forEach(x=>x.remove());const towns=new Map();for(const r of roadDiscoveryLedger.values())if(r.category==='Local roads'&&r.point){const t=roadDiscoveryLocality(r);(towns.get(t)||towns.set(t,[]).get(t)).push(r)}document.querySelectorAll('.road-discovery-town summary').forEach(x=>x.dataset.town=x.textContent.split(' · ')[0]);for(const [t,r] of towns){setTown(t,r);const key=townKey(t,r[0].point);if(!localTownInventories.has(key)&&!localTownInventoryStates.has(key))void calculateTown(t,r)}};
