@@ -2045,19 +2045,22 @@ function renderFootQueue() {
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
   const retryable=footBatches.reduce((n,b)=>n+b.activities.filter(item=>!item.matchedGeoJson&&item.matchError).length,0);
+  const lastFootError=footActivities.find(activity=>!activity.matchedGeoJson&&activity.matchError)?.matchError || '';
   footProgressBar.max=distinct || 1;
   footProgressBar.value=Math.min(distinct,matched+failed);
   setFootProgressStatus(
-    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : 'Complete',
+    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : retryable ? 'Needs retry' : 'Complete',
     footMatchingError ? footMatchingError : footMatchingProgress
       ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
-      : `${matched.toLocaleString()} route${matched===1?'':'s'} mapped${failed ? ` · ${failed.toLocaleString()} unable to match` : ''} · ${footActivities.length.toLocaleString()} on-foot activities${importFootResult ? ` · ${importFootResult}` : ''}`
+      : retryable
+        ? `${retryable.toLocaleString()} route${retryable===1?'':'s'} could not be matched. Last issue: ${lastFootError}`
+        : `${matched.toLocaleString()} route${matched===1?'':'s'} mapped${failed ? ` · ${failed.toLocaleString()} unable to match` : ''} · ${footActivities.length.toLocaleString()} on-foot activities${importFootResult ? ` · ${importFootResult}` : ''}`
   );
   const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
   startFootBatch.disabled=footMatching || (!next && !retryable);
   startFootBatch.classList.toggle('hidden',footMatching || (!next && !retryable));
   const queued=footBatches.reduce((count,batch)=>count+batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length,0);
-  startFootBatch.textContent=footMatching ? 'Matching queued routes…' : next ? `Match queued routes (${queued})` : retryable ? `Retry unable routes (${retryable})` : 'All routes processed';
+  startFootBatch.textContent=footMatching ? 'Matching queued routes…' : retryable ? `Retry unable routes (${retryable})` : next ? `Match queued routes (${queued})` : 'All routes processed';
   pauseFootMatching.classList.toggle('hidden',!footMatching);
   pauseFootMatching.textContent=footMatchingPaused ? 'Resume' : 'Pause';
   pauseFootMatching.setAttribute('aria-pressed',String(footMatchingPaused));
@@ -2690,13 +2693,15 @@ async function startNextFootBatch() {
       if (!candidate) return;
       await processCandidate(candidate);
       if (footMatchingError) return;
-      await new Promise(resolve=>setTimeout(resolve,100));
+      // Public pedestrian routing is shared infrastructure. Keep it to one
+      // request at a time and leave space between activities.
+      await new Promise(resolve=>setTimeout(resolve,1250));
     }
   };
 
   renderFootQueue();
   try {
-    await Promise.all(Array.from({length:Math.min(2,candidates.length)},worker));
+    await Promise.all(Array.from({length:Math.min(1,candidates.length)},worker));
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
