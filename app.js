@@ -2055,6 +2055,7 @@ function renderFootQueue() {
   );
   const next=footBatches.find(batch=>batch.activities.some(item=>!item.matchedGeoJson && !item.matchError));
   startFootBatch.disabled=footMatching || (!next && !retryable);
+  startFootBatch.classList.toggle('hidden',footMatching || (!next && !retryable));
   const queued=footBatches.reduce((count,batch)=>count+batch.activities.filter(item=>!item.matchedGeoJson && !item.matchError).length,0);
   startFootBatch.textContent=footMatching ? 'Matching queued routes…' : next ? `Match queued routes (${queued})` : retryable ? `Retry unable routes (${retryable})` : 'All routes processed';
   pauseFootMatching.classList.toggle('hidden',!footMatching);
