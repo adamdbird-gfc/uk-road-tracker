@@ -2638,7 +2638,7 @@ async function startNextFootBatch() {
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
   footMatchingProgress={area:'walking and running routes',completed:0,total:candidates.length,succeeded:0,failed:0};
-  let cursor=0,lastFootMapBatchCount=0;
+  let cursor=0,lastFootMapBatchCount=0,consecutiveFailures=0;
 
   const processCandidate=async ({batch,activity})=>{
     footMatchingBatchId=batch.id;
@@ -2652,6 +2652,7 @@ async function startNextFootBatch() {
       await saveFootActivityMatch(activity);
       batch.matched++;
       footMatchingProgress.succeeded++;
+      consecutiveFailures=0;
       if (easyImportRunning && (footMatchingProgress.succeeded===1 || footMatchingProgress.succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0)) {
         appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
       }
@@ -2659,6 +2660,8 @@ async function startNextFootBatch() {
       activity.matchError=err.message || String(err);
       footMatchingProgress.failed++;
       try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
+      consecutiveFailures++;
+      if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
     } finally {
       footMatchingProgress.completed++;
       renderFootQueue();
@@ -2678,6 +2681,7 @@ async function startNextFootBatch() {
 
   const worker=async()=>{
     while (true) {
+      if (footMatchingError) return;
       while (footMatchingPaused) {
         renderFootQueue();
         await new Promise(resolve=>setTimeout(resolve,250));
@@ -2685,6 +2689,7 @@ async function startNextFootBatch() {
       const candidate=candidates[cursor++];
       if (!candidate) return;
       await processCandidate(candidate);
+      if (footMatchingError) return;
       await new Promise(resolve=>setTimeout(resolve,100));
     }
   };
