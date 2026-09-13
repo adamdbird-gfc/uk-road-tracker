@@ -24,7 +24,6 @@ CANONICAL_A_ROAD_CACHE = {}
 
 app = FastAPI(title="UK Road Tracker API", version="0.9.0")
 PLACE_NAME_CACHE = {}
-SETTLEMENT_POINT_CACHE = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -228,21 +227,6 @@ async def place_name(lat: float, lng: float):
     PLACE_NAME_CACHE[key] = result
     return {"name": result}
 
-@app.get("/settlement-for-point")
-async def settlement_for_point(lat: float, lng: float):
-    key=f"{lat:.5f},{lng:.5f}"
-    if key in SETTLEMENT_POINT_CACHE: return SETTLEMENT_POINT_CACHE[key]
-    url="https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query"
-    params={"geometry":f"{lng},{lat}","geometryType":"esriGeometryPoint","inSR":"4326","spatialRel":"esriSpatialRelIntersects","outFields":"BUA22CD,BUA22NM","returnGeometry":"false","f":"json"}
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client: response=await client.get(url,params=params)
-        features=(response.json() if response.status_code==200 else {}).get("features") or []
-        attrs=features[0].get("attributes",{}) if features else {}
-        result={"code":attrs.get("BUA22CD"),"name":attrs.get("BUA22NM")}
-    except (httpx.HTTPError,ValueError): result={"code":None,"name":None}
-    SETTLEMENT_POINT_CACHE[key]=result
-    return result
-
 @app.post("/settlements-for-geometry")
 async def settlements_for_geometry(payload: SettlementGeometryRequest):
     geometry=payload.geometry or {}
@@ -408,79 +392,3 @@ async def match_payload(
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
 
-
-GRAVESEND_ROAD_INVENTORY = None
-GRAVESEND_BOUNDS = (51.415, 0.330, 51.466, 0.405)
-
-@app.get("/local-road-inventory/gravesend")
-async def gravesend_local_road_inventory():
-    global GRAVESEND_ROAD_INVENTORY
-    if GRAVESEND_ROAD_INVENTORY:
-        return GRAVESEND_ROAD_INVENTORY
-    south, west, north, east = GRAVESEND_BOUNDS
-    query = (
-        "[out:json][timeout:60];"
-        'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'
-        f"({south},{west},{north},{east});out tags;"
-    )
-    elements = None
-    for endpoint in OVERPASS_INTERPRETER_URLS:
-        try:
-            async with httpx.AsyncClient(timeout=75.0, headers={"User-Agent":"Roadprints/1.0"}) as client:
-                response = await client.post(endpoint, data={"data": query})
-            if response.status_code == 200:
-                elements = response.json().get("elements") or []
-                break
-        except (httpx.HTTPError, ValueError):
-            continue
-    if elements is None:
-        raise HTTPException(status_code=502, detail="The Gravesend road inventory could not be loaded. Please retry shortly.")
-    roads = sorted({str(item.get("tags", {}).get("name", "")).strip() for item in elements if item.get("tags", {}).get("name")})
-    GRAVESEND_ROAD_INVENTORY = {"area":"Gravesend","count":len(roads),"roads":roads,"bounds":GRAVESEND_BOUNDS}
-    return GRAVESEND_ROAD_INVENTORY
-
-LOCAL_ROAD_AREA_INVENTORY_CACHE = {}
-
-async def local_road_inventory_elements(query):
-    """Ask several public mirrors together, returning the first usable result.
-
-    Inventory is ancillary to matching, so it must fail quickly and never make
-    the app appear frozen behind a single overloaded Overpass server.
-    """
-    async def attempt(endpoint):
-        try:
-            async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent":"Roadprints/1.1"}) as client:
-                response = await client.post(endpoint, data={"data": query})
-            if response.status_code != 200:
-                return None
-            return response.json().get("elements") or []
-        except (httpx.HTTPError, ValueError):
-            return None
-
-    tasks = [asyncio.create_task(attempt(endpoint)) for endpoint in OVERPASS_INTERPRETER_URLS]
-    try:
-        for task in asyncio.as_completed(tasks):
-            elements = await task
-            if elements is not None:
-                return elements
-        return None
-    finally:
-        for task in tasks:
-            if not task.done():
-                task.cancel()
-
-@app.get("/local-road-inventory")
-async def local_road_inventory(lat: float, lng: float, radius_km: float = 3.5):
-    radius_km=max(1.0,min(6.0,radius_km))
-    key=f"{lat:.3f},{lng:.3f},{radius_km:.1f}"
-    if key in LOCAL_ROAD_AREA_INVENTORY_CACHE: return LOCAL_ROAD_AREA_INVENTORY_CACHE[key]
-    lat_delta=radius_km/111.0
-    lng_delta=radius_km/(111.0*max(0.2,abs(__import__("math").cos(__import__("math").radians(lat)))))
-    south,west,north,east=lat-lat_delta,lng-lng_delta,lat+lat_delta,lng+lng_delta
-    query="[out:json][timeout:12];"+'way["highway"~"^(residential|unclassified|tertiary|living_street)$"]["name"]'+f"({south},{west},{north},{east});out tags;"
-    elements=await local_road_inventory_elements(query)
-    if elements is None: raise HTTPException(status_code=502,detail="The local road inventory could not be loaded.")
-    roads=sorted({str(item.get("tags",{}).get("name","")).strip() for item in elements if item.get("tags",{}).get("name")})
-    result={"count":len(roads),"roads":roads,"bounds":[south,west,north,east]}
-    LOCAL_ROAD_AREA_INVENTORY_CACHE[key]=result
-    return result
