@@ -1,7 +1,8 @@
 import asyncio
+import json
 import os
 import re
-from typing import List
+from typing import Any, List
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -43,6 +44,9 @@ class Point(BaseModel):
 
 class MatchRequest(BaseModel):
     points: List[Point]
+
+class SettlementGeometryRequest(BaseModel):
+    geometry: dict[str, Any]
 
 def chunk_points(points):
     if len(points) <= OSRM_CHUNK_SIZE:
@@ -238,6 +242,24 @@ async def settlement_for_point(lat: float, lng: float):
     except (httpx.HTTPError,ValueError): result={"code":None,"name":None}
     SETTLEMENT_POINT_CACHE[key]=result
     return result
+
+@app.post("/settlements-for-geometry")
+async def settlements_for_geometry(payload: SettlementGeometryRequest):
+    geometry=payload.geometry or {}
+    geometry_type=geometry.get("type")
+    coordinates=geometry.get("coordinates")
+    if geometry_type not in {"LineString","MultiLineString"} or not coordinates:
+        raise HTTPException(status_code=400,detail="A matched line geometry is required.")
+    arc_type="esriGeometryPolyline"
+    paths=[coordinates] if geometry_type=="LineString" else coordinates
+    url="https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query"
+    params={"geometry":json.dumps({"paths":paths}),"geometryType":arc_type,"inSR":"4326","spatialRel":"esriSpatialRelIntersects","outFields":"BUA22CD,BUA22NM","returnGeometry":"false","f":"json"}
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client: response=await client.get(url,params=params)
+        if response.status_code!=200: raise HTTPException(status_code=502,detail="ONS settlement service unavailable.")
+        return {"settlements":[{"code":f["attributes"].get("BUA22CD"),"name":f["attributes"].get("BUA22NM")} for f in response.json().get("features",[])]}
+    except httpx.HTTPError:
+        raise HTTPException(status_code=502,detail="ONS settlement service unavailable.")
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
