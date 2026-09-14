@@ -567,12 +567,23 @@ main.app-ready { padding:0; min-height:100svh; } main.app-ready > [data-app-scre
 /* Map controls replace the old map-page header. */
 main.app-ready > #easyProgress,
 main.app-ready > #ignoredCard { display:none !important; }
-main.app-ready.import-status-open > #easyProgress { position:fixed; z-index:1300; top:70px; right:18px; bottom:18px; left:18px; display:block !important; max-width:620px; margin:auto; overflow-y:auto; }
+main.app-ready.import-status-open > #easyProgress {
+  position:fixed;
+  z-index:1100;
+  top:58px;
+  right:0;
+  bottom:calc(70px + env(safe-area-inset-bottom));
+  left:0;
+  display:block !important;
+  max-width:none;
+  margin:0;
+  overflow-y:auto;
+}
 main.app-ready.import-status-open .import-status-close { display:inline-flex; }
 main.app-ready.import-status-open > #easyProgress {
   padding:28px 30px;
   border:1px solid rgba(44,185,166,.28);
-  border-radius:22px;
+  border-radius:0;
   background:linear-gradient(145deg,rgba(25,48,100,.98),rgba(10,27,73,.99));
   color:#f3f6f7;
   box-shadow:0 20px 52px rgba(0,0,0,.42);
