@@ -66,8 +66,8 @@
     <section id="easyProgress" class="card matcher-card easy-progress hidden">
       <div class="progress-heading">
         <div>
-          <p class="eyebrow">Road activity queue</p>
-          <strong>Driving progress</strong>
+          <p class="eyebrow">Your Roadprint is forming</p>
+          <strong>Reading your travel story</strong>
         </div>
         <div id="easyProgressText" class="progress-status" aria-live="polite">
           <strong>Waiting…</strong>
@@ -75,6 +75,12 @@
         </div>
       </div>
       <progress id="easyProgressBar" value="0" max="100"></progress>
+      <div class="import-readiness" aria-label="Roadprint availability">
+        <div class="import-readiness-row" data-import-stage="journeys"><span class="import-readiness-icon" aria-hidden="true">▤</span><span><strong>Journeys</strong><small>Organising your travel story</small></span><em>Preparing</em></div>
+        <div class="import-readiness-row" data-import-stage="map"><span class="import-readiness-icon" aria-hidden="true">⌖</span><span><strong>Map</strong><small>Preparing your first view</small></span><em>Preparing</em></div>
+        <div class="import-readiness-row" data-import-stage="progress"><span class="import-readiness-icon" aria-hidden="true">▥</span><span><strong>Road discovery</strong><small>Finding the roads beneath your journeys</small></span><em>Waiting</em></div>
+        <div class="import-readiness-row" data-import-stage="achievements"><span class="import-readiness-icon" aria-hidden="true">★</span><span><strong>Achievements</strong><small>Looking for moments worth celebrating</small></span><em>Waiting</em></div>
+      </div>
       <div class="actions">
         <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
         <button id="plotImportedMap" class="hidden" type="button">Plot on map</button>
