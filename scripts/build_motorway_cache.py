@@ -17,7 +17,7 @@ BATCH_SIZE = 6
 MAX_FAILURE_ATTEMPTS = 3
 
 DEFAULT_MOTORWAY_REFS = [
-    "M1","M2","M3","M4","M5","M6","M8","M9","M11","M18","M20","M23","M25",
+    "M1","M2","M3","M4","M5","M6","M6 Toll","M8","M9","M11","M18","M20","M23","M25",
     "M26","M27","M32","M40","M42","M45","M48","M49","M50","M53","M54","M55",
     "M56","M57","M58","M60","M61","M62","M65","M66","M67","M69","M73","M74",
     "M77","M80","M90","M180","M181","M271","M275","M602","M606","M621",
@@ -129,7 +129,12 @@ def discover_refs():
     return sorted(refs, key=sort_key)
 
 def fetch_ref(ref):
-    q = f'[out:json][timeout:120];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"="{ref}"];out body geom;'
+    if ref == "M6 Toll":
+        q = ('[out:json][timeout:120];area["ISO3166-1"="GB"][admin_level=2]->.gb;'
+             '(way(area.gb)["highway"="motorway"]["ref"~"^M6 ?T(oll)?$",i];'
+             'way(area.gb)["highway"="motorway"]["name"~"^M6 Toll$",i];);out body geom;')
+    else:
+        q = f'[out:json][timeout:120];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"="{ref}"];out body geom;'
     data = request_overpass(q)
     ways = []
     for el in data.get("elements", []):
