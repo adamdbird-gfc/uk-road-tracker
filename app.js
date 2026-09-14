@@ -2418,6 +2418,7 @@ async function startNextFootBatch() {
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
   footMatchingProgress={area:'walking and running routes',completed:0,total:candidates.length,succeeded:0,failed:0};
+  setImportReadiness('foot','working',`Matching 0 of ${candidates.length.toLocaleString()} walking and running routes`);
   let cursor=0,lastFootMapBatchCount=0,consecutiveFailures=0;
 
   const processCandidate=async ({batch,activity})=>{
@@ -2444,6 +2445,7 @@ async function startNextFootBatch() {
       if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
     } finally {
       footMatchingProgress.completed++;
+      setImportReadiness('foot','working',`Matched ${footMatchingProgress.completed.toLocaleString()} of ${footMatchingProgress.total.toLocaleString()} walking and running routes`);
       renderFootQueue();
       try {
         if (easyImportRunning) {
@@ -2482,6 +2484,12 @@ async function startNextFootBatch() {
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
+    if (footMatchingProgress) {
+      const footDetail=footMatchingError
+        ? `Walking matching paused after ${footMatchingProgress.completed.toLocaleString()} of ${footMatchingProgress.total.toLocaleString()} routes`
+        : `${footMatchingProgress.succeeded.toLocaleString()} walking and running routes are ready`;
+      setImportReadiness('foot',footMatchingError ? 'working' : 'ready',footDetail);
+    }
     if (importFootStartedAt && footMatchingProgress) {
       const seconds=Math.max(1,Math.round((Date.now()-importFootStartedAt)/1000));
       const elapsed=seconds>=60 ? `${Math.floor(seconds/60)}m ${seconds%60}s` : `${seconds}s`;
@@ -2562,8 +2570,10 @@ function setImportReadiness(stage, state, detail) {
 }
 
 function beginImportReadiness(total) {
+  const pendingFoot=footActivities.filter(activity=>!activity.matchedGeoJson && !activity.matchError).length;
   setImportReadiness('journeys','ready','Your journeys are ready to explore');
   setImportReadiness('map','working','Preparing your first map');
+  setImportReadiness('foot',pendingFoot ? 'working' : 'ready',pendingFoot ? `Preparing ${pendingFoot.toLocaleString()} walking and running route${pendingFoot===1?'':'s'}` : 'No walking or running routes need matching');
   setImportReadiness('progress','working',`Finding roads in ${total.toLocaleString()} journey${total===1?'':'s'}`);
   setImportReadiness('achievements','working','Looking for moments worth celebrating');
 }
@@ -5711,6 +5721,7 @@ function activateRoadprintsScreen(screen) {
 document.getElementById('appNavigation')?.addEventListener('click',event=>{
   const button=event.target.closest('[data-screen]');
   if(!button) return;
+  closeImportStatusView();
   if(settlementBoundaryMode){clearSettlementBoundary()}if(button.dataset.screen==='map' && focusedJourneyId) {
     focusedJourneyId=null;
     focusedJourneyType=null;
