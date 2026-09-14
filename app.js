@@ -2723,6 +2723,7 @@ async function startEasyImport() {
         setImportReadiness('achievements','working','Checking your road discoveries');
         if (succeeded===1) {
           setImportNavigationAvailability(['map']);
+          document.querySelector('main')?.classList.remove('processing-active');
           activateRoadprintsScreen('map');
         }
       }
