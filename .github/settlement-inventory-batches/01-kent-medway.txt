@@ -1,4 +1,5 @@
 # First Roadprints local-road inventory batch, selected from the user's export.
+# Retried as independent settlement builds after the sequential job timed out.
 E63004964
 E63005234
 E63005283
@@ -7,4 +8,3 @@ E63005145
 E63005084
 E63005030
 E63005041
-
