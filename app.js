@@ -125,6 +125,7 @@ const importModeCard = document.getElementById('importModeCard');
 const easyProgress = document.getElementById('easyProgress');
 const easyProgressText = document.getElementById('easyProgressText');
 const easyProgressBar = document.getElementById('easyProgressBar');
+const importReadiness = document.querySelector('.import-readiness');
 const ignoredCard = document.getElementById('ignoredCard');
 const ignoredCount = document.getElementById('ignoredCount');
 const ignoredList = document.getElementById('ignoredList');
@@ -2542,6 +2543,23 @@ function setEasyProgressStatus(primary, secondary) {
   easyProgressText.append(headline,detail);
 }
 
+function setImportReadiness(stage, state, detail) {
+  const row=importReadiness?.querySelector(`[data-import-stage="${stage}"]`);
+  if (!row) return;
+  row.dataset.state=state;
+  const copy=row.querySelector('small');
+  const label=row.querySelector('em');
+  if (detail && copy) copy.textContent=detail;
+  if (label) label.textContent=state==='ready' ? 'Ready' : state==='working' ? 'Discovering' : 'Waiting';
+}
+
+function beginImportReadiness(total) {
+  setImportReadiness('journeys','ready','Your journeys are ready to explore');
+  setImportReadiness('map','working','Preparing your first map');
+  setImportReadiness('progress','working',`Finding roads in ${total.toLocaleString()} journey${total===1?'':'s'}`);
+  setImportReadiness('achievements','working','Looking for moments worth celebrating');
+}
+
 function updateEasyImportPauseButton() {
   const button = document.getElementById('stopEasyImport');
   if (!button) return;
@@ -2631,6 +2649,7 @@ async function startEasyImport() {
 
   easyProgressBar.max = candidates.length || 1;
   easyProgressBar.value = 0;
+  beginImportReadiness(candidates.length);
 
   async function worker(){
     while(sessionId===trackingSessionId){
@@ -2667,6 +2686,11 @@ async function startEasyImport() {
       }
       completed++;
       easyProgressBar.value=completed;
+      setImportReadiness('progress','working',`Finding roads in ${completed.toLocaleString()} of ${candidates.length.toLocaleString()} journeys`);
+      if (succeeded) {
+        setImportReadiness('map','ready','Your first map is ready');
+        setImportReadiness('achievements','working','Checking your road discoveries');
+      }
       setEasyProgressStatus(`${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
       if(succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE){refreshImportMapBatch();lastRoadMapBatchCount=succeeded}
       await new Promise(resolve=>setTimeout(resolve,20));
@@ -2684,6 +2708,7 @@ async function startEasyImport() {
   const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
   const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
   importRoadResult=`completed in ${roadElapsed}`;
+  setImportReadiness('progress','ready',`${succeeded.toLocaleString()} journey${succeeded===1?'':'s'} added to road discovery`);
   if (footMatching) {
     setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
@@ -2691,6 +2716,7 @@ async function startEasyImport() {
     }
   }
   if (sessionId !== trackingSessionId) return;
+  setImportReadiness('achievements','ready','Your achievements are ready to explore');
   easyImportRunning=false;
   easyImportPaused=false;
   updateEasyImportPauseButton();
