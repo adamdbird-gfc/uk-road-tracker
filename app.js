@@ -2048,6 +2048,10 @@ function friendlyFootAreaName(lat,lng) {
 function renderFootQueue() {
   if (!shouldShowDataDashboard()) { footQueueCard.classList.add('hidden'); return; }
   if (!footActivities.length) { footQueueCard.classList.add('hidden'); return; }
+  // The walking queue belongs to the initial combined import workspace. Once
+  // saved progress is open, matching may resume quietly in the background but
+  // it must not occupy the permanent Progress screen.
+  if (!easyImportRunning) { footQueueCard.classList.add('hidden'); return; }
   footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
