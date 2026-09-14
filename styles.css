@@ -569,6 +569,24 @@ main.app-ready > #easyProgress,
 main.app-ready > #ignoredCard { display:none !important; }
 main.app-ready.import-status-open > #easyProgress { position:fixed; z-index:1300; top:70px; right:18px; bottom:18px; left:18px; display:block !important; max-width:620px; margin:auto; overflow-y:auto; }
 main.app-ready.import-status-open .import-status-close { display:inline-flex; }
+main.app-ready.import-status-open > #easyProgress {
+  padding:28px 30px;
+  border:1px solid rgba(44,185,166,.28);
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(25,48,100,.98),rgba(10,27,73,.99));
+  color:#f3f6f7;
+  box-shadow:0 20px 52px rgba(0,0,0,.42);
+}
+main.app-ready.import-status-open > #easyProgress .eyebrow { color:#2cb9a6; }
+main.app-ready.import-status-open > #easyProgress .progress-status {
+  min-width:0;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  box-shadow:none;
+}
+main.app-ready.import-status-open > #easyProgress .progress-status span { color:#c2cde0; }
+main.app-ready.import-status-open > #easyProgress progress { accent-color:#2cb9a6; }
 main.app-ready #mapCard .map-heading { top:18px; left:auto; right:18px; width:auto; }
 main.app-ready #mapCard .map-heading-actions { display:grid; grid-template-columns:1fr; gap:8px; }
 main.app-ready #mapCard .map-heading-actions button { min-width:48px; min-height:48px; padding:9px 12px; border:1px solid rgba(11,28,80,.16); border-radius:14px; background:rgba(255,255,255,.96); color:#0b1c50; box-shadow:0 4px 14px rgba(0,0,0,.2); font-size:0; }
