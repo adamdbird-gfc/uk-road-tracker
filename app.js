@@ -102,8 +102,10 @@ const API_BASE_URL = 'https://uk-road-tracker-api.onrender.com';
 // The live map is a progress cue, not the durable full-detail renderer. Keep
 // its work deliberately sparse so a large import never makes page scrolling
 // compete with Leaflet painting.
-const LIVE_IMPORT_BATCH_SIZE = 50;
-const LIVE_IMPORT_PREVIEW_INTERVAL = 5;
+const LIVE_IMPORT_BATCH_SIZE = 10;
+// Make each completed journey visibly join the map. The full map is still
+// consolidated in small batches so the experience stays responsive.
+const LIVE_IMPORT_PREVIEW_INTERVAL = 1;
 
 const fileInput = document.getElementById('timelineFile');
 const fileStatus = document.getElementById('fileStatus');
