@@ -1313,8 +1313,6 @@ aRoadUnitMiles.classList.toggle('active',distanceUnit==='miles');
 aRoadUnitKm.classList.toggle('active',distanceUnit==='km');
 aRoadUnitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
 aRoadUnitKm.setAttribute('aria-pressed',String(distanceUnit==='km'));
-renderManualMotorwayOptions();
-renderManualARoadOptions();
 updateLocalProgressNotice();
 fileInput.addEventListener('change', async () => {
   const file = fileInput.files?.[0];
