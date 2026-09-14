@@ -531,6 +531,10 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .processing-active #easyProgress progress::-moz-progress-bar { background:linear-gradient(90deg,#e39d25,#f7c450); border-radius:999px; }
 .processing-active #footQueueCard progress::-webkit-progress-value { background:linear-gradient(90deg,#1d9f92,#51d4c1); border-radius:999px; }
 .processing-active #footQueueCard progress::-moz-progress-bar { background:linear-gradient(90deg,#1d9f92,#51d4c1); border-radius:999px; }
+.import-status-button { position:fixed; z-index:1250; top:11px; right:16px; display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:7px 10px; border:1px solid rgba(255,255,255,.2); border-radius:18px; background:rgba(11,28,80,.94); color:#fff; font-size:.75rem; font-weight:750; box-shadow:0 3px 12px rgba(0,0,0,.2); }
+.import-status-button.hidden { display:none; }
+.import-status-button > span { width:8px; height:8px; border-radius:50%; background:#f7c450; animation:roadprintsPulse 1.6s infinite; }
+.import-status-close { display:none; }
 .import-readiness { display:grid; gap:8px; margin-top:18px; }
 .import-readiness-row { display:grid; grid-template-columns:30px 1fr auto; gap:10px; align-items:center; padding:10px 0; border-top:1px solid rgba(255,255,255,.1); color:#aebbd2; }
 .import-readiness-icon { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.08); color:#aebbd2; font-size:1rem; }
@@ -541,6 +545,8 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .import-readiness-row[data-state="working"] .import-readiness-icon { color:#f7c450; animation:roadprintsPulse 1.6s infinite; }
 .import-readiness-row[data-state="ready"] .import-readiness-icon { background:rgba(44,185,166,.22); color:#69ddcc; animation:none; }
 .import-readiness-row[data-state="ready"] em { color:#69ddcc; }
+.app-nav-item.import-navigation-pending { color:rgba(191,203,225,.42); opacity:.75; }
+.app-nav-item.import-navigation-pending span { animation:roadprintsPulse 1.8s infinite; }
 .processing-active .actions { margin:24px 0 0; }
 .processing-active .actions .secondary { background:rgba(255,255,255,.94); color:#0b1c50; }
 @media (max-width:480px) { .processing-active #easyProgress,.processing-active #footQueueCard { padding:26px 30px; } .processing-active .progress-status { width:48%; } }
@@ -561,6 +567,8 @@ main.app-ready { padding:0; min-height:100svh; } main.app-ready > [data-app-scre
 /* Map controls replace the old map-page header. */
 main.app-ready > #easyProgress,
 main.app-ready > #ignoredCard { display:none !important; }
+main.app-ready.import-status-open > #easyProgress { position:fixed; z-index:1300; top:70px; right:18px; bottom:18px; left:18px; display:block !important; max-width:620px; margin:auto; overflow-y:auto; }
+main.app-ready.import-status-open .import-status-close { display:inline-flex; }
 main.app-ready #mapCard .map-heading { top:18px; left:auto; right:18px; width:auto; }
 main.app-ready #mapCard .map-heading-actions { display:grid; grid-template-columns:1fr; gap:8px; }
 main.app-ready #mapCard .map-heading-actions button { min-width:48px; min-height:48px; padding:9px 12px; border:1px solid rgba(11,28,80,.16); border-radius:14px; background:rgba(255,255,255,.96); color:#0b1c50; box-shadow:0 4px 14px rgba(0,0,0,.2); font-size:0; }
