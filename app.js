@@ -233,7 +233,7 @@ const NI_MOTORWAY_NETWORK_KM = NI_MOTORWAY_NETWORK_MILES / 0.6213711922;
 const UK_MOTORWAY_NETWORK_KM = UK_MOTORWAY_NETWORK_MILES / 0.6213711922;
 
 const MOTORWAY_LENGTH_KM = {
-  M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978,
+  M1:311.946, M2:41.210, M3:98.947, M4:194.212, M5:260.202, M6:423.978, 'M6 Toll':43.0,
   M11:84.419, M18:45.214, M20:82.586, M23:26.725, M25:189.869, M26:16.462,
   M27:52.695, M32:7.303, M40:144.651, M42:64.619, M45:13.369, M48:8.899,
   M49:8.611, M50:34.438, M53:32.032, M54:36.078, M55:19.069, M56:55.688,
@@ -956,7 +956,7 @@ function journeyWasPreviouslyImported(journey) {
 function motorwayContributionsForJourney(journey) {
   const contributions={};
   const journeyId=journeyIdentity(journey);
-  for (const feature of journey?.motorwayGeoJson?.features || []) {
+  for (const feature of journeyMotorwayFeatures(journey)) {
     const roadId=motorwayFeatureId(feature);
     const distanceM=Number(feature?.properties?.distance_m || 0);
     if (!roadId || !Number.isFinite(distanceM) || distanceM<=0) continue;
@@ -3705,7 +3705,21 @@ function overpassWayCoordinates(element) {
 }
 
 function normaliseMotorwayRef(ref) {
-  return String(ref || '').toUpperCase().replace(/\s+/g, '');
+  const cleaned=String(ref || '').toUpperCase().replace(/\s+/g, '');
+  return cleaned==='M6T' || cleaned==='M6TOLL' ? 'M6 Toll' : cleaned;
+}
+
+function isM6TollFeature(feature) {
+  return normaliseMotorwayRef(feature?.properties?.road_ref) === 'M6 Toll';
+}
+
+function journeyMotorwayFeatures(journey) {
+  const motorwayFeatures=journey?.motorwayGeoJson?.features || [];
+  // Older imports predate M6 Toll motorway classification. Recover those
+  // steps from the retained road-discovery evidence without double-counting
+  // newly imported journeys, where the backend already provides them here.
+  if (motorwayFeatures.some(isM6TollFeature)) return motorwayFeatures;
+  return [...motorwayFeatures,...(journey?.roadGeoJson?.features || []).filter(isM6TollFeature)];
 }
 
 function isNorthernIrelandCoordinate(lng, lat) {
@@ -3939,11 +3953,9 @@ async function loadCanonicalRoad(ref, force=false) {
     }
 
     const escapedRef=road.ref.replace(/"/g,'\\"');
-    const query =
-      `[out:json][timeout:90];` +
-      `area["ISO3166-1"="GB"][admin_level=2]->.gb;` +
-      `way(area.gb)["highway"="motorway"]["ref"="${escapedRef}"];` +
-      `out tags geom;`;
+    const query = road.ref==='M6 Toll'
+      ? `[out:json][timeout:90];area["ISO3166-1"="GB"][admin_level=2]->.gb;(way(area.gb)["highway"="motorway"]["ref"~"^M6 ?T(oll)?$",i];way(area.gb)["highway"="motorway"]["name"~"^M6 Toll$",i];);out tags geom;`
+      : `[out:json][timeout:90];area["ISO3166-1"="GB"][admin_level=2]->.gb;way(area.gb)["highway"="motorway"]["ref"="${escapedRef}"];out tags geom;`;
 
     const endpoints=[
       'https://overpass-api.de/api/interpreter',
@@ -4128,7 +4140,7 @@ function calculateCanonicalCoverageForRoad(road, drawable) {
   const removedEvidenceByAnchor=new Map();
   for (const journey of drawable) {
     const journeyId=journeyIdentity(journey);
-    for (const feature of journey.motorwayGeoJson?.features || []) {
+    for (const feature of journeyMotorwayFeatures(journey)) {
       if (motorwayFeatureId(feature)!==road.id) continue;
       for (const [a,b] of geometrySegments({type:'FeatureCollection',features:[feature]})) {
         const lengthM=haversineMetres(a,b);
@@ -4302,7 +4314,7 @@ function renderNetworkCompletion(roads) {
 
 function renderCanonicalMotorwayDashboard(drawable=null) {
   const sessionRefs=drawable
-    ? drawable.flatMap(j=>(j.motorwayGeoJson?.features || []).map(motorwayFeatureId).filter(Boolean))
+    ? drawable.flatMap(j=>journeyMotorwayFeatures(j).map(motorwayFeatureId).filter(Boolean))
     : [];
   const discoveredRefs=onboardingMode==='manual'
     ? [...manualMotorwayRefs].sort(motorwayRefSort)
@@ -5120,13 +5132,16 @@ function renderOtherRoadDashboard(drawable) {
     if (!journey.matchedGeoJson) continue;
     const classified=journey.otherRoadGeoJson;
     const exactKm=journey.otherRoadDistanceKm;
+    const reclassifiedM6TollKm=(journey.motorwayGeoJson?.features || []).some(isM6TollFeature)
+      ? 0
+      : featureCollectionDistanceKm({type:'FeatureCollection',features:(journey.roadGeoJson?.features || []).filter(isM6TollFeature)});
     const fallbackKm=Math.max(0,
       Number(journey.matchedDistanceKm || 0)-
-      featureCollectionDistanceKm(journey.motorwayGeoJson)-
+      featureCollectionDistanceKm({type:'FeatureCollection',features:journeyMotorwayFeatures(journey)})-
       featureCollectionDistanceKm(journey.aRoadGeoJson)
     );
     matchedKm+=typeof exactKm==='number' && Number.isFinite(exactKm)
-      ? Math.max(0,exactKm)
+      ? Math.max(0,exactKm-reclassifiedM6TollKm)
       : classified ? featureCollectionDistanceKm(classified) : fallbackKm;
     matchedJourneys++;
   }
@@ -5931,10 +5946,10 @@ function roadDiscoveryKey(feature) {
   if ((!ref && !name) || /_link$|^(service|footway|path|steps|cycleway)$/.test(kind)) return null;
   // Some OSM features carry an internal-looking number as their entire name
   // or ref.  It is not a road name, so do not surface it as a discovery.
-  const numericRef=/^\d+$/.test(ref),numericName=/^\d+$/.test(name);
+  const numericRef=/^\d+(?:[.,]\d+)?$/.test(ref),numericName=/^\d+(?:[.,]\d+)?$/.test(name);
   if ((!ref && numericName) || (numericRef && (!name || numericName))) return null;
-  const displayRef=numericRef ? '' : ref;
-  const category=/^(M[0-9]+|A[0-9]+\(M\))$/.test(displayRef) ? 'Motorways' : /^A[0-9]+$/.test(displayRef) ? 'A roads' : /^B[0-9]+$/.test(displayRef) ? 'B roads' : 'Local roads';
+  const displayRef=numericRef ? '' : normaliseMotorwayRef(ref) || ref;
+  const category=/^(M[0-9]+|A[0-9]+\(M\)|M6 Toll)$/.test(displayRef) ? 'Motorways' : /^A[0-9]+$/.test(displayRef) ? 'A roads' : /^B[0-9]+$/.test(displayRef) ? 'B roads' : 'Local roads';
   return {id:displayRef ? 'ref:'+displayRef : 'name:'+name.toLowerCase(),label:displayRef || name,category};
 }
 function rebuildRoadDiscoveryLedger() {
