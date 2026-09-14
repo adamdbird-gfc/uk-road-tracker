@@ -126,6 +126,8 @@ const easyProgress = document.getElementById('easyProgress');
 const easyProgressText = document.getElementById('easyProgressText');
 const easyProgressBar = document.getElementById('easyProgressBar');
 const importReadiness = document.querySelector('.import-readiness');
+const importStatusButton = document.getElementById('importStatusButton');
+const closeImportStatus = document.getElementById('closeImportStatus');
 const ignoredCard = document.getElementById('ignoredCard');
 const ignoredCount = document.getElementById('ignoredCount');
 const ignoredList = document.getElementById('ignoredList');
@@ -1474,6 +1476,8 @@ document.getElementById('plotImportedMap')?.addEventListener('click',()=>{
   renderMap();
   showDefaultUnitedKingdomView();
 });
+importStatusButton?.addEventListener('click',openImportStatus);
+closeImportStatus?.addEventListener('click',closeImportStatusView);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 startFootBatch.addEventListener('click',()=>{
   if(footActivities.some(activity=>!activity.matchedGeoJson&&activity.matchError))void retryUnableFootMatches();
@@ -2407,6 +2411,7 @@ async function startNextFootBatch() {
   if (!candidates.length) return;
   await showFootMap();
   footMatching=true;
+  updateImportStatusButton();
   footMatchingPaused=false;
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
@@ -2481,6 +2486,7 @@ async function startNextFootBatch() {
       importFootResult=`completed in ${elapsed}`;
     }
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
+    updateImportStatusButton();
     buildFootBatches(); renderFootQueue();
     if (!easyImportRunning) renderMap();
     if (footBatches.some(batch=>batch.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError))) {
@@ -2560,6 +2566,30 @@ function beginImportReadiness(total) {
   setImportReadiness('achievements','working','Looking for moments worth celebrating');
 }
 
+function updateImportStatusButton() {
+  if (!importStatusButton) return;
+  importStatusButton.classList.toggle('hidden',!(easyImportRunning || footMatching));
+}
+
+function openImportStatus() {
+  if (!easyImportRunning && !footMatching) return;
+  document.querySelector('main')?.classList.add('import-status-open');
+}
+
+function closeImportStatusView() {
+  document.querySelector('main')?.classList.remove('import-status-open');
+}
+
+function setImportNavigationAvailability(readyScreens) {
+  const ready=new Set(readyScreens);
+  document.querySelectorAll('#appNavigation [data-screen]').forEach(button=>{
+    const available=ready.has(button.dataset.screen);
+    button.disabled=!available;
+    button.classList.toggle('import-navigation-pending',!available);
+    button.setAttribute('aria-disabled',String(!available));
+  });
+}
+
 function updateEasyImportPauseButton() {
   const button = document.getElementById('stopEasyImport');
   if (!button) return;
@@ -2619,6 +2649,7 @@ async function startEasyImport() {
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
+  updateImportStatusButton();
   importRoadResult=null;
   // Automatic matching is the one time the map should open by itself: it is
   // the live progress display, rather than a heavy saved-map restore.
@@ -2690,6 +2721,10 @@ async function startEasyImport() {
       if (succeeded) {
         setImportReadiness('map','ready','Your first map is ready');
         setImportReadiness('achievements','working','Checking your road discoveries');
+        if (succeeded===1) {
+          setImportNavigationAvailability(['map']);
+          activateRoadprintsScreen('map');
+        }
       }
       setEasyProgressStatus(`${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
       if(succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE){refreshImportMapBatch();lastRoadMapBatchCount=succeeded}
@@ -2718,6 +2753,8 @@ async function startEasyImport() {
   if (sessionId !== trackingSessionId) return;
   setImportReadiness('achievements','ready','Your achievements are ready to explore');
   easyImportRunning=false;
+  setImportNavigationAvailability(['map','journeys','progress','achievements','collections']);
+  updateImportStatusButton();
   easyImportPaused=false;
   updateEasyImportPauseButton();
   refreshImportMapBatch();
