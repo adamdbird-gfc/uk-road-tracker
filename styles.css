@@ -531,6 +531,16 @@ button.danger-button:focus-visible { outline: 3px solid #f3a69f; outline-offset:
 .processing-active #easyProgress progress::-moz-progress-bar { background:linear-gradient(90deg,#e39d25,#f7c450); border-radius:999px; }
 .processing-active #footQueueCard progress::-webkit-progress-value { background:linear-gradient(90deg,#1d9f92,#51d4c1); border-radius:999px; }
 .processing-active #footQueueCard progress::-moz-progress-bar { background:linear-gradient(90deg,#1d9f92,#51d4c1); border-radius:999px; }
+.import-readiness { display:grid; gap:8px; margin-top:18px; }
+.import-readiness-row { display:grid; grid-template-columns:30px 1fr auto; gap:10px; align-items:center; padding:10px 0; border-top:1px solid rgba(255,255,255,.1); color:#aebbd2; }
+.import-readiness-icon { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.08); color:#aebbd2; font-size:1rem; }
+.import-readiness-row strong,.import-readiness-row small { display:block; }
+.import-readiness-row strong { color:#edf2f7; font-size:.9rem; }
+.import-readiness-row small { margin-top:2px; color:#b7c3d8; font-size:.72rem; }
+.import-readiness-row em { color:#b7c3d8; font-size:.72rem; font-style:normal; font-weight:700; }
+.import-readiness-row[data-state="working"] .import-readiness-icon { color:#f7c450; animation:roadprintsPulse 1.6s infinite; }
+.import-readiness-row[data-state="ready"] .import-readiness-icon { background:rgba(44,185,166,.22); color:#69ddcc; animation:none; }
+.import-readiness-row[data-state="ready"] em { color:#69ddcc; }
 .processing-active .actions { margin:24px 0 0; }
 .processing-active .actions .secondary { background:rgba(255,255,255,.94); color:#0b1c50; }
 @media (max-width:480px) { .processing-active #easyProgress,.processing-active #footQueueCard { padding:26px 30px; } .processing-active .progress-status { width:48%; } }
