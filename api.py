@@ -71,7 +71,9 @@ def motorway_refs(ref):
     for part in re.split(r"[;,/]", ref.upper()):
         cleaned = re.sub(r"\s+", "", part.strip())
         # Include both conventional M-roads and A-road motorways such as A1(M).
-        if re.fullmatch(r"M\d+[A-Z]?", cleaned) or re.fullmatch(r"A\d+\(M\)", cleaned):
+        if cleaned in {"M6T", "M6TOLL"}:
+            refs.append("M6 Toll")
+        elif re.fullmatch(r"M\d+[A-Z]?", cleaned) or re.fullmatch(r"A\d+\(M\)", cleaned):
             refs.append(cleaned)
     return refs
 
