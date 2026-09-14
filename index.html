@@ -22,7 +22,6 @@
       <h2 class="sr-only">Choose how to start</h2>
       <div class="choice-grid">
         <button id="hasDataSource" class="choice-card" type="button">I have Timeline data</button>
-        <button id="noDataSource" class="choice-card secondary-choice" type="button">Start manually</button>
       </div>
       <div id="localProgressNotice" class="local-progress-notice hidden">
         <span id="localProgressSummary" class="sr-only">Saved progress is available on this device.</span>
@@ -80,37 +79,6 @@
         <button id="stopEasyImport" class="secondary" type="button" aria-pressed="false">Pause</button>
         <button id="plotImportedMap" class="hidden" type="button">Plot on map</button>
       </div>
-    </section>
-
-    <section id="manualMotorwayCard" class="card hidden">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Manual motorway setup</p>
-          <h2>Which motorways have you driven on?</h2>
-        </div>
-        <button id="changeManualSource" class="text-button close-button" type="button" aria-label="Close manual setup">Close</button>
-      </div>
-      <p class="muted">Select every motorway you have driven on. You can refine individual sections on the map afterwards.</p>
-      <div class="manual-actions">
-        <button id="selectAllMotorways" class="secondary" type="button">Select all</button>
-        <button id="clearAllMotorways" class="secondary" type="button">Clear all</button>
-        <strong id="manualSelectedCount">0 selected</strong>
-      </div>
-      <fieldset class="motorway-checklist">
-        <legend class="sr-only">UK motorways</legend>
-        <div id="manualMotorwayList" class="manual-motorway-list"></div>
-      </fieldset>
-      <section class="manual-a-road-section" aria-labelledby="manualARoadTitle">
-        <p class="eyebrow">A-road starter network</p>
-        <h2 id="manualARoadTitle">Which A roads have you driven on?</h2>
-        <p class="muted">Start with single- and double-digit A roads. Captured roads are protected, so only genuinely new roads can be added manually.</p>
-        <div class="manual-actions">
-          <button id="selectAllARoads" class="secondary" type="button">Select all</button>
-          <button id="clearAllARoads" class="secondary" type="button">Clear all</button>
-          <strong id="manualARoadSelectedCount">0 selected</strong>
-        </div>
-        <fieldset class="motorway-checklist"><legend class="sr-only">Starter A roads</legend><div id="manualARoadList" class="manual-motorway-list"></div></fieldset>
-      </section>
     </section>
 
     <section id="ignoredCard" class="card hidden">
