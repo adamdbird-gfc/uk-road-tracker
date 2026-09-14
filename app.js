@@ -28,6 +28,7 @@ let ignoredJourneys = [];
 let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
+let importMapReady = false;
 let trackingSessionId = 0;
 let importFootStartedAt = null;
 let importFootResult = null;
@@ -2418,7 +2419,7 @@ async function startNextFootBatch() {
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
   footMatchingProgress={area:'walking and running routes',completed:0,total:candidates.length,succeeded:0,failed:0};
-  setImportReadiness('foot','working',`Matching 0 of ${candidates.length.toLocaleString()} walking and running routes`);
+  setImportReadiness('foot','working',`0 / ${candidates.length.toLocaleString()} walking and running journeys matched`);
   let cursor=0,lastFootMapBatchCount=0,consecutiveFailures=0;
 
   const processCandidate=async ({batch,activity})=>{
@@ -2445,7 +2446,7 @@ async function startNextFootBatch() {
       if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
     } finally {
       footMatchingProgress.completed++;
-      setImportReadiness('foot','working',`Matched ${footMatchingProgress.completed.toLocaleString()} of ${footMatchingProgress.total.toLocaleString()} walking and running routes`);
+      setImportReadiness('foot','working',`${footMatchingProgress.completed.toLocaleString()} / ${footMatchingProgress.total.toLocaleString()} walking and running journeys matched`);
       renderFootQueue();
       try {
         if (easyImportRunning) {
@@ -2573,14 +2574,14 @@ function beginImportReadiness(total) {
   const pendingFoot=footActivities.filter(activity=>!activity.matchedGeoJson && !activity.matchError).length;
   setImportReadiness('journeys','ready','Your journeys are ready to explore');
   setImportReadiness('map','working','Preparing your first map');
-  setImportReadiness('foot',pendingFoot ? 'working' : 'ready',pendingFoot ? `Preparing ${pendingFoot.toLocaleString()} walking and running route${pendingFoot===1?'':'s'}` : 'No walking or running routes need matching');
+  setImportReadiness('foot',pendingFoot ? 'working' : 'ready',pendingFoot ? `0 / ${pendingFoot.toLocaleString()} walking and running journeys matched` : 'No walking or running journeys need matching');
   setImportReadiness('progress','working',`Finding roads in ${total.toLocaleString()} journey${total===1?'':'s'}`);
   setImportReadiness('achievements','working','Looking for moments worth celebrating');
 }
 
 function updateImportStatusButton() {
   if (!importStatusButton) return;
-  importStatusButton.classList.toggle('hidden',!(easyImportRunning || footMatching));
+  importStatusButton.classList.toggle('hidden',!(importMapReady && (easyImportRunning || footMatching)));
 }
 
 function openImportStatus() {
@@ -2661,6 +2662,7 @@ async function startEasyImport() {
   importMode = 'easy';
   easyImportPaused = false;
   easyImportRunning = true;
+  importMapReady = false;
   updateImportStatusButton();
   importRoadResult=null;
   // Automatic matching is the one time the map should open by itself: it is
@@ -2734,7 +2736,9 @@ async function startEasyImport() {
         setImportReadiness('map','ready','Your first map is ready');
         setImportReadiness('achievements','working','Checking your road discoveries');
         if (succeeded===1) {
-          setImportNavigationAvailability(['map']);
+          importMapReady=true;
+          updateImportStatusButton();
+          setImportNavigationAvailability(['map','journeys']);
           document.querySelector('main')?.classList.remove('processing-active');
           activateRoadprintsScreen('map');
         }
