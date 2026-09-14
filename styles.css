@@ -1522,3 +1522,7 @@ main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summ
   font-size:.84rem;
   line-height:1.45;
 }
+
+/* On-foot matching continues in the background; it is not a Progress-screen
+   destination and must never displace the saved dashboard. */
+#footQueueCard { display:none !important; }
