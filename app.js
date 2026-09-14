@@ -2366,19 +2366,10 @@ function segmentDistanceKm(segments) {
 }
 
 function renderRoadQueue() {
-  if (!shouldShowDataDashboard()) { easyProgress.classList.add('hidden'); return; }
-  if (easyImportRunning) return;
-  const routes=savedRoadRecords();
-  const activities=persistedJourneyMileageById.size;
-  if (!routes.length && !activities) return;
-  easyProgress.classList.remove('hidden');
-  easyProgressBar.max=Math.max(routes.length,1);
-  easyProgressBar.value=routes.length;
-  setEasyProgressStatus(
-    'Complete',
-    `${routes.length.toLocaleString()} route pattern${routes.length===1?'':'s'} mapped · ${activities.toLocaleString()} driving activit${activities===1?'y':'ies'}${importRoadResult ? ` · ${importRoadResult}` : ''}`
-  );
-  updateEasyImportPauseButton();
+  // This card is a live import workspace, not a permanent Progress-screen
+  // summary.  Once road matching is complete, the Road discovery and
+  // collective-statistics cards provide the durable record instead.
+  if (!easyImportRunning) easyProgress.classList.add('hidden');
 }
 
 function renderCollectiveStats() {
@@ -5938,8 +5929,13 @@ function roadDiscoveryKey(feature) {
   const name=String(props.name || props.road_name || '').trim();
   const kind=String(props.highway || '').toLowerCase();
   if ((!ref && !name) || /_link$|^(service|footway|path|steps|cycleway)$/.test(kind)) return null;
-  const category=/^(M[0-9]+|A[0-9]+\(M\))$/.test(ref) ? 'Motorways' : /^A[0-9]+$/.test(ref) ? 'A roads' : /^B[0-9]+$/.test(ref) ? 'B roads' : 'Local roads';
-  return {id:ref ? 'ref:'+ref : 'name:'+name.toLowerCase(),label:ref || name,category};
+  // Some OSM features carry an internal-looking number as their entire name
+  // or ref.  It is not a road name, so do not surface it as a discovery.
+  const numericRef=/^\d+$/.test(ref),numericName=/^\d+$/.test(name);
+  if ((!ref && numericName) || (numericRef && (!name || numericName))) return null;
+  const displayRef=numericRef ? '' : ref;
+  const category=/^(M[0-9]+|A[0-9]+\(M\))$/.test(displayRef) ? 'Motorways' : /^A[0-9]+$/.test(displayRef) ? 'A roads' : /^B[0-9]+$/.test(displayRef) ? 'B roads' : 'Local roads';
+  return {id:displayRef ? 'ref:'+displayRef : 'name:'+name.toLowerCase(),label:displayRef || name,category};
 }
 function rebuildRoadDiscoveryLedger() {
   const records=[...savedRoadRecords().filter(r=>r && r.matchedGeoJson).map(r=>({record:r,mode:'driving'})),...footActivities.filter(r=>r && r.matchedGeoJson).map(r=>({record:r,mode:'foot'}))].sort((a,b)=>Date.parse(a.record.start || '')-Date.parse(b.record.start || ''));
