@@ -12,9 +12,41 @@ on:
       - '.github/settlement-inventory-batches/*.txt'
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    outputs:
+      settlements: ${{ steps.matrix.outputs.settlements }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        name: Prepare settlement jobs
+        env:
+          SETTLEMENTS: ${{ inputs.settlements }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          from pathlib import Path
+
+          requested = [item.strip() for item in os.environ.get("SETTLEMENTS", "").split(",") if item.strip()]
+          if not requested:
+              batch_file = next(Path(".github/settlement-inventory-batches").glob("*.txt"))
+              requested = [
+                  line.strip() for line in batch_file.read_text().splitlines()
+                  if line.strip() and not line.lstrip().startswith("#")
+              ]
+          print("settlements=" + json.dumps(requested))
+          PY
+
+  build:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.settlements != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        settlement: ${{ fromJSON(needs.prepare.outputs.settlements) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,26 +54,12 @@ jobs:
           python-version: '3.12'
       - name: Install boundary tools
         run: python -m pip install shapely
-      - name: Build requested settlements
-        env:
-          SETTLEMENTS: ${{ inputs.settlements }}
-        run: |
-          if [[ -n "$SETTLEMENTS" ]]; then
-            IFS=',' read -ra towns <<< "$SETTLEMENTS"
-            for town in "${towns[@]}"; do
-              town="$(echo "$town" | xargs)"
-              python scripts/build_settlement_inventory.py "$town"
-            done
-          else
-            batch_file="$(find .github/settlement-inventory-batches -name '*.txt' -print -quit)"
-            test -n "$batch_file"
-            while IFS= read -r settlement; do
-              [[ -z "$settlement" || "$settlement" == \#* ]] && continue
-              python scripts/build_settlement_inventory.py "$settlement"
-            done < "$batch_file"
-          fi
-      - name: Upload settlement inventory cache
+      - name: Build settlement inventory
+        run: python scripts/build_settlement_inventory.py "${{ matrix.settlement }}"
+      - name: Upload settlement inventory
         uses: actions/upload-artifact@v4
         with:
-          name: settlement-inventories-v1
-          path: settlement-inventories-v1/
+          name: settlement-inventory-${{ matrix.settlement }}
+          path: |
+            settlement-inventories-v1/${{ matrix.settlement }}.json
+            settlement-inventories-v1/${{ matrix.settlement }}-boundary.geojson
