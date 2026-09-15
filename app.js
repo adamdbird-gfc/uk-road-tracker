@@ -1276,6 +1276,11 @@ function returnToOnboarding() {
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
+  // Keep matching alive, but never let its workspace leak into the splash.
+  document.querySelector('main')?.classList.remove('processing-active');
+  easyProgress.classList.add('hidden');
+  footQueueCard.classList.add('hidden');
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching);
   updateImportStatusButton();
 }
 
@@ -1829,9 +1834,8 @@ function renderFootQueue() {
   // it must not occupy the permanent Progress screen.
   if (!easyImportRunning) { footQueueCard.classList.add('hidden'); return; }
   // The unified import card owns walking status throughout an automatic import.
+  // Keep calculating its values even though the legacy card itself is hidden.
   footQueueCard.classList.add('hidden');
-  return;
-  footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
