@@ -1596,3 +1596,8 @@ main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summ
 .foot-import-summary .progress-status { width:100%; min-width:0; box-sizing:border-box; }
 .easy-progress .progress-heading > div:first-child,
 .foot-import-summary > div:first-child { width:100%; }
+
+
+/* The import stages stack rather than competing for one row. */
+.processing-active .easy-progress .progress-heading { display:grid; grid-template-columns:1fr; gap:12px; }
+.processing-active .easy-progress .progress-status { width:100%; min-width:0; box-sizing:border-box; }
