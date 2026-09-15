@@ -6,6 +6,8 @@ from typing import Any, List
 
 import httpx
 from fastapi import FastAPI, HTTPException
+
+from database import database_state, initialise_database
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -23,7 +25,7 @@ OVERPASS_INTERPRETER_URLS = [
 ]
 CANONICAL_A_ROAD_CACHE = {}
 
-app = FastAPI(title="UK Road Tracker API", version="0.9.0")
+app = FastAPI(title="UK Road Tracker API", version="0.10.0")
 PLACE_NAME_CACHE = {}
 
 app.add_middleware(
@@ -159,6 +161,10 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
     )
 
+@app.on_event("startup")
+async def startup_database() -> None:
+    initialise_database()
+
 @app.get("/")
 async def root():
     return {
@@ -172,7 +178,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.9.0"}
+    return {"status": "ok", "version": "0.10.0", "database": database_state}
 
 @app.get("/canonical-a-road/{road_ref}")
 async def canonical_a_road(road_ref: str):
