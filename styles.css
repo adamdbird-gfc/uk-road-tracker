@@ -1579,3 +1579,11 @@ main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summ
 .journey-road-list { display:grid; gap:3px; margin-top:9px; padding-top:9px; border-top:1px solid rgba(11,28,80,.1); }
 .journey-road-list small { color:#4b648c; font-size:.7rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
 .journey-road-list span { color:#173560; font-size:.78rem; line-height:1.4; font-weight:700; }
+
+
+/* One coherent import story: driving, on foot, then what is ready. */
+.foot-import-summary { display:grid; grid-template-columns:1fr auto; gap:10px 14px; align-items:center; margin-top:18px; padding:16px 0; border-top:1px solid rgba(255,255,255,.12); }
+.foot-import-summary .eyebrow { margin:0 0 2px; }
+.foot-import-summary > div:first-child > strong { display:block; color:#f3f6f7; font-size:1rem; }
+.foot-import-summary .progress-status { min-width:0; width:auto; }
+.foot-import-summary progress { grid-column:1 / -1; width:100%; height:10px; accent-color:#69ddcc; }
