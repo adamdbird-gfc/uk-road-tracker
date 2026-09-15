@@ -1573,3 +1573,9 @@ main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summ
 /* On-foot matching continues in the background; it is not a Progress-screen
    destination and must never displace the saved dashboard. */
 #footQueueCard { display:none !important; }
+
+
+/* Journey cards reveal the roads found on each completed route. */
+.journey-road-list { display:grid; gap:3px; margin-top:9px; padding-top:9px; border-top:1px solid rgba(11,28,80,.1); }
+.journey-road-list small { color:#4b648c; font-size:.7rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.journey-road-list span { color:#173560; font-size:.78rem; line-height:1.4; font-weight:700; }
