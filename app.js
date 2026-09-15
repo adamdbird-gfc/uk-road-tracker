@@ -1899,6 +1899,25 @@ function serviceStopDurationLabel(record) {
   return remainder ? hours+'h '+remainder+'m stop' : hours+'h stop';
 }
 
+function roadLabelsForJourney(record) {
+  const features=(record.roadGeoJson?.features?.length
+    ? record.roadGeoJson.features
+    : [...(record.motorwayGeoJson?.features || []),...(record.aRoadGeoJson?.features || [])]);
+  const labels=new Map();
+  for (const feature of features) {
+    const raw=String(feature?.properties?.road_ref || feature?.properties?.ref || '');
+    const refs=raw.split(/[;,/]/).map(ref=>ref.trim()).filter(Boolean);
+    const variants=refs.length>1
+      ? refs.map(ref=>({...feature,properties:{...(feature.properties || {}),road_ref:ref}}))
+      : [feature];
+    for (const variant of variants) {
+      const road=roadDiscoveryKey(variant);
+      if (road) labels.set(road.id,road.label);
+    }
+  }
+  return [...labels.values()].sort((a,b)=>a.localeCompare(b,'en-GB',{numeric:true}));
+}
+
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
   const allRecords=[
@@ -1967,6 +1986,18 @@ function renderJourneyLog() {
     const patternTrips=patternTotals.get(routeRepeatFingerprint(record)) || recordTrips;
     meta.textContent=(distance>0 ? displayDistance(distance) : 'Distance unavailable')+(patternTrips>1 ? ' · repeated route pattern · '+patternTrips+' journeys' : ' · no similar route recorded');
     copy.append(date,title,meta);
+    const roadLabels=roadLabelsForJourney(record);
+    if (roadLabels.length) {
+      const roads=document.createElement('div');
+      roads.className='journey-road-list';
+      const heading=document.createElement('small');
+      heading.textContent='Unique roads travelled';
+      const list=document.createElement('span');
+      const visible=roadLabels.slice(0,8);
+      list.textContent=visible.join(' · ')+(roadLabels.length>visible.length ? ` · +${roadLabels.length-visible.length} more` : '');
+      roads.append(heading,list);
+      copy.append(roads);
+    }
 
     const id=journeyIdentity(record);
     const actions=document.createElement('div');
@@ -2329,6 +2360,10 @@ function unlockAchievement(definition) {
   if (!definition?.id || persistedAchievements.has(definition.id)) return false;
   persistedAchievements.set(definition.id,{unlockedAt:new Date().toISOString(),announced:true});
   scheduleLocalProgressSave();
+  if (importMapReady && (easyImportRunning || footMatching)) {
+    setImportReadiness('achievements','ready','Your first achievement is ready to explore');
+    setImportNavigationAvailability(['map','journeys','achievements']);
+  }
   showAchievementCelebration([definition]);
   return true;
 }
@@ -2410,7 +2445,8 @@ function renderAchievements() {
 async function startNextFootBatch() {
   if (footMatching) return;
   const candidates=footBatches.flatMap(batch=>batch.activities.map(activity=>({batch,activity})))
-    .filter(({activity})=>!activity.matchedGeoJson && !activity.matchError);
+    .filter(({activity})=>!activity.matchedGeoJson && !activity.matchError)
+    .sort((a,b)=>Date.parse(b.activity.end || b.activity.start || '')-Date.parse(a.activity.end || a.activity.start || ''));
   if (!candidates.length) return;
   await showFootMap();
   footMatching=true;
@@ -2685,7 +2721,11 @@ async function startEasyImport() {
     void startNextFootBatch();
   }
 
-  const candidates = currentImportJourneys().filter(j => j.points.length > 1);
+  // Present and process the most recent trips first. Road first-discovery
+  // attribution remains chronological in rebuildRoadDiscoveryLedger().
+  const candidates = currentImportJourneys()
+    .filter(j => j.points.length > 1)
+    .sort((a,b)=>Date.parse(b.end || b.start || '')-Date.parse(a.end || a.start || ''));
   let completed = 0;
   let succeeded = 0;
   let failed = 0;
@@ -2721,6 +2761,8 @@ async function startEasyImport() {
         journey.matchQuality=assessMatchQuality(journey,data);
         await saveJourneyToMapArchive(journey);
         recordJourneyProcessed(journey);
+        rebuildRoadDiscoveryLedger();
+        renderJourneyLog();
         scheduleLocalProgressSave();
         succeeded++;
         if(succeeded===1||succeeded%LIVE_IMPORT_PREVIEW_INTERVAL===0)appendLiveImportGeometry(journey,{color:'#111111',weight:4,opacity:.78});
@@ -2738,7 +2780,7 @@ async function startEasyImport() {
         if (succeeded===1) {
           importMapReady=true;
           updateImportStatusButton();
-          setImportNavigationAvailability(['map','journeys']);
+          setImportNavigationAvailability(persistedAchievements.size ? ['map','journeys','achievements'] : ['map','journeys']);
           document.querySelector('main')?.classList.remove('processing-active');
           activateRoadprintsScreen('map');
         }
