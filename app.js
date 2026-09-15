@@ -31,7 +31,7 @@ let easyImportRunning = false;
 let importMapReady = false;
 // A single, persistent view of work in flight. Individual matchers update
 // their own counters, while screens consult this coordinator for availability.
-const importSession = { active:false, mapReady:false, statusOpen:false };
+const importSession = { active:false, mapReady:false, statusOpen:false, roadComplete:false, footComplete:true };
 let trackingSessionId = 0;
 let importFootStartedAt = null;
 let importFootResult = null;
@@ -2576,6 +2576,7 @@ async function startNextFootBatch() {
       importFootResult=`completed in ${elapsed}`;
     }
     footMatching=false; footMatchingPaused=false; footMatchingBatchId=null; footMatchingProgress=null;
+    importSession.footComplete=!footMatchingError && !footBatches.some(batch=>batch.activities.some(activity=>!activity.matchedGeoJson && !activity.matchError));
     updateImportStatusButton();
     buildFootBatches(); renderFootQueue();
     if (!easyImportRunning) renderMap();
@@ -2664,6 +2665,7 @@ function syncImportSession() {
   const shell=document.querySelector('main');
   shell?.classList.toggle('import-running',importSession.active);
   if (!importSession.active) importSession.statusOpen=false;
+  updateImportNavigationFromCoordinator();
   if (importStatusButton) {
     importStatusButton.classList.toggle('hidden',!(importSession.mapReady && importSession.active));
   }
@@ -2694,6 +2696,15 @@ function closeImportStatusView() {
   document.querySelector('main')?.classList.remove('import-status-open');
   easyProgress.style.removeProperty('display');
   importStatusButton?.setAttribute('aria-expanded','false');
+}
+
+function updateImportNavigationFromCoordinator() {
+  const ready=importSession.roadComplete && importSession.footComplete
+    ? ['map','journeys','progress','achievements','collections']
+    : importSession.mapReady
+      ? (persistedAchievements.size ? ['map','journeys','achievements'] : ['map','journeys'])
+      : [];
+  setImportNavigationAvailability(ready);
 }
 
 function setImportNavigationAvailability(readyScreens) {
@@ -2766,6 +2777,8 @@ async function startEasyImport() {
   easyImportPaused = false;
   easyImportRunning = true;
   importMapReady = false;
+  importSession.roadComplete=false;
+  importSession.footComplete=!footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError);
   updateImportStatusButton();
   importRoadResult=null;
   // Automatic matching is the one time the map should open by itself: it is
@@ -2847,7 +2860,7 @@ async function startEasyImport() {
         if (succeeded===1) {
           importMapReady=true;
           updateImportStatusButton();
-          setImportNavigationAvailability(persistedAchievements.size ? ['map','journeys','achievements'] : ['map','journeys']);
+          updateImportNavigationFromCoordinator();
           document.querySelector('main')?.classList.remove('processing-active');
           activateRoadprintsScreen('map');
         }
@@ -2878,8 +2891,9 @@ async function startEasyImport() {
   }
   if (sessionId !== trackingSessionId) return;
   setImportReadiness('achievements','ready','Your achievements are ready to explore');
+  importSession.roadComplete=true;
+  importSession.footComplete=true;
   easyImportRunning=false;
-  setImportNavigationAvailability(['map','journeys','progress','achievements','collections']);
   updateImportStatusButton();
   easyImportPaused=false;
   updateEasyImportPauseButton();
