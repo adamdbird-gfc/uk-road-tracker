@@ -1255,6 +1255,10 @@ async function showSavedProgress() {
 }
 
 async function showDataSourceChoice() {
+  if (easyImportRunning || footMatching) {
+    returnToOnboarding();
+    return;
+  }
   resetTrackingSession();
   onboardingMode = 'data';
   closeSavedProgress.classList.add('hidden');
@@ -1265,11 +1269,14 @@ async function showDataSourceChoice() {
 }
 
 function returnToOnboarding() {
-  resetTrackingSession();
+  // Returning to the splash is navigation, not cancellation. Keep a live
+  // import running so Saved data and Growing can take the user back to it.
+  if (!easyImportRunning && !footMatching) resetTrackingSession();
   onboardingMode = null;
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
+  updateImportStatusButton();
 }
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
