@@ -1613,3 +1613,7 @@ main.import-running #hasDataSource { display:none !important; }
 /* The reopened Growing view keeps the same stacked hierarchy as first load. */
 main.app-ready.import-status-open .easy-progress .progress-heading { display:grid; grid-template-columns:1fr; gap:12px; }
 main.app-ready.import-status-open .easy-progress .progress-status { width:100%; min-width:0; box-sizing:border-box; }
+
+
+/* Growing is a global overlay, independent of the currently selected tab. */
+main.app-ready.import-status-open #easyProgress { display:block !important; }
