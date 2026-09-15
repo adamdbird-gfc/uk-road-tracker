@@ -1502,7 +1502,12 @@ document.getElementById('plotImportedMap')?.addEventListener('click',()=>{
   renderMap();
   showDefaultUnitedKingdomView();
 });
+// The persistent Growing control sits above every tab overlay. Delegating its
+// click preserves the action if a tab rebuilds while matching continues.
 importStatusButton?.addEventListener('click',openImportStatus);
+document.addEventListener('click',event=>{
+  if (event.target.closest('#importStatusButton')) openImportStatus();
+});
 closeImportStatus?.addEventListener('click',closeImportStatusView);
 document.getElementById('detailedImport').addEventListener('click', startDetailedImport);
 startFootBatch.addEventListener('click',()=>{
@@ -2681,12 +2686,14 @@ function openImportStatus() {
   // per-screen rules until the user deliberately closes it.
   easyProgress.classList.remove('hidden');
   easyProgress.style.display='block';
+  importStatusButton?.setAttribute('aria-expanded','true');
 }
 
 function closeImportStatusView() {
   importSession.statusOpen=false;
   document.querySelector('main')?.classList.remove('import-status-open');
   easyProgress.style.removeProperty('display');
+  importStatusButton?.setAttribute('aria-expanded','false');
 }
 
 function setImportNavigationAvailability(readyScreens) {
