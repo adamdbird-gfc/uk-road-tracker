@@ -137,6 +137,8 @@ const ignoredList = document.getElementById('ignoredList');
 const footQueueCard = document.getElementById('footQueueCard');
 const footProgressText = document.getElementById('footProgressText');
 const footProgressBar = document.getElementById('footProgressBar');
+const footImportSummaryText = document.getElementById('footImportSummaryText');
+const footImportSummaryBar = document.getElementById('footImportSummaryBar');
 const startFootBatch = document.getElementById('startFootBatch');
 const pauseFootMatching = document.getElementById('pauseFootMatching');
 const clearImportedData = document.getElementById('clearImportedData');
@@ -1222,8 +1224,11 @@ async function showSavedProgress() {
   await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
   if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size) return;
 
-  resetTrackingSession();
-  journeys=savedMapJourneysExcluding();
+  const importStillRunning=easyImportRunning || footMatching;
+  if (!importStillRunning) {
+    resetTrackingSession();
+    journeys=savedMapJourneysExcluding();
+  }
   onboardingMode='saved';
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
@@ -1816,6 +1821,9 @@ function renderFootQueue() {
   // saved progress is open, matching may resume quietly in the background but
   // it must not occupy the permanent Progress screen.
   if (!easyImportRunning) { footQueueCard.classList.add('hidden'); return; }
+  // The unified import card owns this summary; keep the legacy queue card
+  // available only for non-progressive recovery flows.
+  if (importMapReady) { footQueueCard.classList.add('hidden'); return; }
   footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
@@ -1824,6 +1832,10 @@ function renderFootQueue() {
   const lastFootError=footActivities.find(activity=>!activity.matchedGeoJson&&activity.matchError)?.matchError || '';
   footProgressBar.max=distinct || 1;
   footProgressBar.value=Math.min(distinct,matched+failed);
+  if (footImportSummaryBar) {
+    footImportSummaryBar.max=distinct || 1;
+    footImportSummaryBar.value=Math.min(distinct,matched+failed);
+  }
   setFootProgressStatus(
     footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : retryable ? 'Needs retry' : 'Complete',
     footMatchingError ? footMatchingError : footMatchingProgress
@@ -1868,6 +1880,9 @@ function setFootProgressStatus(primary, secondary) {
   const detail=document.createElement('span');
   detail.textContent=secondary;
   footProgressText.append(headline,detail);
+  if (footImportSummaryText) {
+    footImportSummaryText.replaceChildren(headline.cloneNode(true),detail.cloneNode(true));
+  }
 }
 
 function savedRoadRecords() {
