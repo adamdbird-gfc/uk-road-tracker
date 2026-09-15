@@ -1832,7 +1832,7 @@ function renderFootQueue() {
   // The walking queue belongs to the initial combined import workspace. Once
   // saved progress is open, matching may resume quietly in the background but
   // it must not occupy the permanent Progress screen.
-  if (!easyImportRunning) { footQueueCard.classList.add('hidden'); return; }
+  if (!easyImportRunning && !footMatching) { footQueueCard.classList.add('hidden'); return; }
   // The unified import card owns walking status throughout an automatic import.
   // Keep calculating its values even though the legacy card itself is hidden.
   footQueueCard.classList.add('hidden');
