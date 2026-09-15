@@ -2637,8 +2637,13 @@ function beginImportReadiness(total) {
 }
 
 function updateImportStatusButton() {
-  if (!importStatusButton) return;
-  importStatusButton.classList.toggle('hidden',!(importMapReady && (easyImportRunning || footMatching)));
+  const importActive=easyImportRunning || footMatching;
+  if (importStatusButton) {
+    importStatusButton.classList.toggle('hidden',!(importMapReady && importActive));
+  }
+  // A second Timeline import would compete with the live one and make the
+  // splash page imply that processing has stopped.
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',importActive);
 }
 
 function openImportStatus() {
