@@ -1,11 +1,15 @@
 import asyncio
 import json
+import logging
 import os
 import re
+import time
+from collections import defaultdict, deque
 from typing import Any, List
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from database import database_state, initialise_database
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,17 +28,21 @@ OVERPASS_INTERPRETER_URLS = [
     "https://overpass.nchc.org.tw/api/interpreter",
 ]
 CANONICAL_A_ROAD_CACHE = {}
+logger = logging.getLogger("roadprints.api")
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+MAX_MATCH_POINTS = int(os.getenv("MAX_MATCH_POINTS", "500"))
+RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
+RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+RATE_LIMITED_PATHS = {"/match", "/match-walking", "/settlements-for-geometry"}
+request_windows = defaultdict(deque)
 
 app = FastAPI(title="UK Road Tracker API", version="0.10.0")
 PLACE_NAME_CACHE = {}
+ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://adamdbird-gfc.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://adamdbird-gfc.github.io",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -45,7 +53,7 @@ class Point(BaseModel):
     lng: float = Field(ge=-180, le=180)
 
 class MatchRequest(BaseModel):
-    points: List[Point]
+    points: List[Point] = Field(min_length=2, max_length=MAX_MATCH_POINTS)
 
 class SettlementGeometryRequest(BaseModel):
     geometry: dict[str, Any]
@@ -160,6 +168,22 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         status_code=422,
         detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
     )
+
+@app.middleware("http")
+async def request_guard(request: Request, call_next):
+    if request.url.path in RATE_LIMITED_PATHS:
+        client = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        window = request_windows[client]
+        while window and now - window[0] >= RATE_LIMIT_WINDOW_SECONDS:
+            window.popleft()
+        if len(window) >= RATE_LIMIT_REQUESTS:
+            return JSONResponse(status_code=429, content={"detail": "Too many requests. Please retry shortly."})
+        window.append(now)
+    started = time.monotonic()
+    response = await call_next(request)
+    logger.info("request method=%s path=%s status=%s duration_ms=%d", request.method, request.url.path, response.status_code, (time.monotonic() - started) * 1000)
+    return response
 
 @app.on_event("startup")
 async def startup_database() -> None:
