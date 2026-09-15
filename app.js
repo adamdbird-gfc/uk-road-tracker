@@ -29,6 +29,9 @@ let importMode = null;
 let easyImportPaused = false;
 let easyImportRunning = false;
 let importMapReady = false;
+// A single, persistent view of work in flight. Individual matchers update
+// their own counters, while screens consult this coordinator for availability.
+const importSession = { active:false, mapReady:false, statusOpen:false };
 let trackingSessionId = 0;
 let importFootStartedAt = null;
 let importFootResult = null;
@@ -2650,25 +2653,40 @@ function beginImportReadiness(total) {
   setImportReadiness('achievements','working','Looking for moments worth celebrating');
 }
 
-function updateImportStatusButton() {
-  const importActive=easyImportRunning || footMatching;
-  if (importStatusButton) {
-    importStatusButton.classList.toggle('hidden',!(importMapReady && importActive));
-  }
+function syncImportSession() {
+  importSession.active=easyImportRunning || footMatching;
+  importSession.mapReady=importMapReady;
   const shell=document.querySelector('main');
-  shell?.classList.toggle('import-running',importActive);
+  shell?.classList.toggle('import-running',importSession.active);
+  if (!importSession.active) importSession.statusOpen=false;
+  if (importStatusButton) {
+    importStatusButton.classList.toggle('hidden',!(importSession.mapReady && importSession.active));
+  }
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
-  document.getElementById('hasDataSource')?.classList.toggle('hidden',importActive);
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active);
+}
+
+function updateImportStatusButton() {
+  syncImportSession();
 }
 
 function openImportStatus() {
-  if (!easyImportRunning && !footMatching) return;
-  document.querySelector('main')?.classList.add('import-status-open');
+  syncImportSession();
+  if (!importSession.active) return;
+  importSession.statusOpen=true;
+  const shell=document.querySelector('main');
+  shell?.classList.add('app-ready','import-status-open');
+  // The status sheet is global, not a child of Map. Inline display wins over
+  // per-screen rules until the user deliberately closes it.
+  easyProgress.classList.remove('hidden');
+  easyProgress.style.display='block';
 }
 
 function closeImportStatusView() {
+  importSession.statusOpen=false;
   document.querySelector('main')?.classList.remove('import-status-open');
+  easyProgress.style.removeProperty('display');
 }
 
 function setImportNavigationAvailability(readyScreens) {
