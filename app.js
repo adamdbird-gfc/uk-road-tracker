@@ -1230,6 +1230,7 @@ async function showSavedProgress() {
     journeys=savedMapJourneysExcluding();
   }
   onboardingMode='saved';
+  document.querySelector('main')?.classList.remove('onboarding-active');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   closeSavedProgress.classList.remove('hidden');
@@ -1261,6 +1262,7 @@ async function showDataSourceChoice() {
   }
   resetTrackingSession();
   onboardingMode = 'data';
+  document.querySelector('main')?.classList.remove('onboarding-active');
   closeSavedProgress.classList.add('hidden');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.remove('hidden');
@@ -1276,6 +1278,7 @@ function returnToOnboarding() {
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
+  document.querySelector('main')?.classList.add('onboarding-active');
   // Keep matching alive, but never let its workspace leak into the splash.
   document.querySelector('main')?.classList.remove('processing-active');
   easyProgress.classList.add('hidden');
@@ -2652,6 +2655,8 @@ function updateImportStatusButton() {
   if (importStatusButton) {
     importStatusButton.classList.toggle('hidden',!(importMapReady && importActive));
   }
+  const shell=document.querySelector('main');
+  shell?.classList.toggle('import-running',importActive);
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
   document.getElementById('hasDataSource')?.classList.toggle('hidden',importActive);
