@@ -1,0 +1,12 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), checksum TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reference_sources (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_key TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, source_version TEXT, licence TEXT, retrieved_at TIMESTAMPTZ, notes TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS settlements (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_id UUID REFERENCES reference_sources(id), external_code TEXT NOT NULL, name TEXT NOT NULL, nation TEXT, region TEXT, county TEXT, is_active BOOLEAN NOT NULL DEFAULT TRUE, UNIQUE (source_id, external_code));
+CREATE TABLE IF NOT EXISTS settlement_aliases (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), settlement_id UUID NOT NULL REFERENCES settlements(id) ON DELETE CASCADE, alias TEXT NOT NULL, UNIQUE (settlement_id, alias));
+CREATE TABLE IF NOT EXISTS settlement_boundaries (settlement_id UUID PRIMARY KEY REFERENCES settlements(id) ON DELETE CASCADE, source_id UUID REFERENCES reference_sources(id), geometry GEOMETRY(MULTIPOLYGON, 4326) NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX IF NOT EXISTS settlement_boundaries_geometry_idx ON settlement_boundaries USING GIST (geometry);
+CREATE TABLE IF NOT EXISTS road_references (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_id UUID REFERENCES reference_sources(id), road_ref TEXT NOT NULL, road_kind TEXT NOT NULL CHECK (road_kind IN ('motorway', 'a_road')), network_region TEXT NOT NULL DEFAULT 'GB', display_name TEXT, metadata JSONB NOT NULL DEFAULT '{}'::jsonb, UNIQUE (source_id, road_ref, road_kind, network_region));
+COMMENT ON TABLE reference_sources IS 'Versioned provenance for shared UK reference data only.';
+COMMENT ON TABLE settlements IS 'Shared UK settlement catalogue. No user journey data.';
+COMMENT ON TABLE settlement_boundaries IS 'Shared geographic reference boundaries. No user journey data.';
+COMMENT ON TABLE road_references IS 'Shared motorway and A-road metadata. No user journey data.';
