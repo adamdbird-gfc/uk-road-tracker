@@ -1821,9 +1821,9 @@ function renderFootQueue() {
   // saved progress is open, matching may resume quietly in the background but
   // it must not occupy the permanent Progress screen.
   if (!easyImportRunning) { footQueueCard.classList.add('hidden'); return; }
-  // The unified import card owns this summary; keep the legacy queue card
-  // available only for non-progressive recovery flows.
-  if (importMapReady) { footQueueCard.classList.add('hidden'); return; }
+  // The unified import card owns walking status throughout an automatic import.
+  footQueueCard.classList.add('hidden');
+  return;
   footQueueCard.classList.remove('hidden');
   const distinct=groupRepeatedJourneys(footActivities.filter(a=>a.points?.length>=2)).length;
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
