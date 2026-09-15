@@ -5918,6 +5918,8 @@ renderCollectiveStats=function() { renderCollectiveStatsWithDiscovery(); renderR
 
 const renderJourneyLogWithDiscovery=renderJourneyLog;
 renderJourneyLog=function() {
+  const openDiscoveries=new Set([...document.querySelectorAll('#journeyLogList .journey-discovery[open]')]
+    .map(details=>details.dataset.journeyKey).filter(Boolean));
   renderJourneyLogWithDiscovery();
   rebuildRoadDiscoveryLedger();
   const items=[...document.querySelectorAll('#journeyLogList .journey-log-item')];
@@ -5932,7 +5934,10 @@ renderJourneyLog=function() {
     const copy=items[index].querySelector(':scope > div');
     if (!copy || copy.querySelector('.journey-discovery')) continue;
     const details=document.createElement('details'), title=document.createElement('summary'), list=document.createElement('ul');
-    details.className='journey-discovery'; title.textContent=roads.length.toLocaleString()+' new road'+(roads.length===1 ? '' : 's');
+    details.className='journey-discovery';
+    details.dataset.journeyKey=record.logType+':'+journeyIdentity(record);
+    details.open=openDiscoveries.has(details.dataset.journeyKey);
+    title.textContent=roads.length.toLocaleString()+' new road'+(roads.length===1 ? '' : 's');
     for (const road of roads.sort((a,b)=>a.label.localeCompare(b.label,'en-GB',{numeric:true}))) { const row=document.createElement('li'); row.textContent=road.label; list.append(row); }
     details.append(title,list); copy.append(details);
   }
