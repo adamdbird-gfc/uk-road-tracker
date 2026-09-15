@@ -1960,6 +1960,8 @@ function renderJourneyLog() {
   journeyLogCard.classList.toggle('hidden',!hasData);
   if (journeyLogObserver) { journeyLogObserver.disconnect(); journeyLogObserver=null; }
   if (!hasData) return;
+  const openJourneyDetails=new Set([...journeyLogList.querySelectorAll('details[open]')]
+    .map(detail=>detail.querySelector('summary')?.textContent || '').filter(Boolean));
   if (!records.length) {
     journeyLogCount.textContent='0';
     journeyLogList.replaceChildren();
@@ -2055,6 +2057,10 @@ function renderJourneyLog() {
   const initiallyVisible=Math.min(records.length,Math.max(JOURNEY_LOG_PAGE_SIZE,journeyLogVisibleCount));
   journeyLogVisibleCount=0;
   while (journeyLogVisibleCount<initiallyVisible) appendNextPage();
+  journeyLogList.querySelectorAll('details').forEach(detail=>{
+    const key=detail.querySelector('summary')?.textContent || '';
+    if (openJourneyDetails.has(key)) detail.open=true;
+  });
 }
 window.addEventListener('roadprints:service-station-ledger-updated',()=>renderJourneyLog());
 window.addEventListener('roadprints:collection-entitlement-change',()=>renderJourneyLog());
