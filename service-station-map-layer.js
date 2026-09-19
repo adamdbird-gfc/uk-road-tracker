@@ -2,7 +2,7 @@
   'use strict';
 
   const DATA_URL='collections/uk-motorway-services-v1.json?v=20260911-norton-canes-v1';
-  const ENTITLEMENT_KEY='roadprints:collection-entitlements:v1';
+  const ENTITLEMENT_KEY='roadprints:collection-entitlements:v2';
   const LEDGER_KEY='roadprints:service-station-ledger:v1';
   const FUEL_MARK='⛽';
   const LAYER_LABEL='Motorway service stations';
