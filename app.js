@@ -2500,7 +2500,11 @@ function evaluateAchievements() {
 
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
+  // A fresh import may have rendered journeys before its local archive has
+  // settled. Those journeys are still enough evidence to show the main
+  // achievement list; the individual rules remain evidence-derived.
   const hasData=shouldShowDataDashboard() && (
+    journeys.some(journey=>journey?.selected && journey?.points?.length>1) ||
     persistedMapJourneys.size || persistedCoverageByRef.size
   );
   achievementsCard.classList.toggle('hidden',!hasData);
