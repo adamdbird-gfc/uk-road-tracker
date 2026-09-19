@@ -1368,6 +1368,7 @@ fileInput.addEventListener('change', async () => {
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
     diagnostics = result.diagnostics;
+    Object.assign(diagnostics, classifyImportSupport(allJourneys, onFootJourneys));
     await saveFootActivities(onFootJourneys);
     saveConfirmedTimelineVisits(result.confirmedVisits || []);
 
@@ -1633,7 +1634,9 @@ function saveImportCoordinatorSession(fileName, sourceFileHash, summary) {
         roadActivities: Number(summary.roadActivities || 0),
         onFootActivities: Number(summary.onFootActivities || 0),
         usableRoadRoutes: Number(summary.usableJourneys || 0),
-        ignoredRoutes: Number(summary.ignoredSparseJourneys || 0)
+        ignoredRoutes: Number(summary.ignoredSparseJourneys || 0),
+        ukSupportedActivities: Number(summary.ukSupportedActivities || 0),
+        outsideSupportedActivities: Number(summary.outsideSupportedActivities || 0)
       }
     }));
     importCoordinatorStatus = 'Import summary saved on this device. Your Timeline file and journeys are not uploaded.';
@@ -1656,6 +1659,28 @@ async function verifyImportCoordinatorCompatibility() {
     // handshake cannot be reached. No Timeline content is ever retried or sent.
     console.info('Import coordinator compatibility check unavailable:', error);
   }
+}
+
+function isUKSupportedCoordinate(point) {
+  const lat = Number(point?.lat);
+  const lng = Number(point?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  const inGreatBritain = lat >= 49.8 && lat <= 61.1 && lng >= -8.8 && lng <= 2.2;
+  const inNorthernIreland = lat >= 53.8 && lat <= 55.5 && lng >= -8.5 && lng <= -5.0;
+  return inGreatBritain || inNorthernIreland;
+}
+
+function classifyImportSupport(roadJourneys, onFootJourneys) {
+  const activities = [...(roadJourneys || []), ...(onFootJourneys || [])];
+  let ukSupportedActivities = 0;
+  let outsideSupportedActivities = 0;
+  for (const activity of activities) {
+    const supported = (activity.points || []).some(isUKSupportedCoordinate);
+    activity.ukSupportStatus = supported ? 'uk_supported' : 'outside_supported_area';
+    if (supported) ukSupportedActivities++;
+    else outsideSupportedActivities++;
+  }
+  return {ukSupportedActivities, outsideSupportedActivities};
 }
 
 function showDiagnostics(fileName) {
@@ -1685,7 +1710,8 @@ function showDiagnostics(fileName) {
     summaryStat(fmt(diagnostics.roadRepeatActivities), 'repeat road activities'),
     summaryStat(fmt(diagnostics.onFootActivities), 'on-foot activities'),
     summaryStat(fmt(diagnostics.onFootDistinctRoutes), 'on-foot routes queued'),
-    summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use')
+    summaryStat(fmt(diagnostics.ignoredSparseJourneys), 'unable to use'),
+    summaryStat(fmt(diagnostics.outsideSupportedActivities), 'outside current UK scope')
   );
 
   const queues=document.createElement('div');
@@ -1741,6 +1767,7 @@ function importSummaryMessage() {
   const onFoot = Number(diagnostics.onFootActivities || 0);
   const previous = Number(diagnostics.previouslyImportedJourneys || 0);
   const ignored = Number(diagnostics.ignoredSparseJourneys || 0);
+  const outsideSupported = Number(diagnostics.outsideSupportedActivities || 0);
   const parts = [
     `${fmt(ready)} car journey${ready === 1 ? ' is' : 's are'} ready for road matching.`
   ];
@@ -1748,6 +1775,7 @@ function importSummaryMessage() {
   if (onFoot) parts.push(`${fmt(onFoot)} walking or running ${onFoot === 1 ? 'activity is' : 'activities are'} held in the separate on-foot queue; they are not sent to the road matcher.`);
   if (previous) parts.push(`${fmt(previous)} already matched journey${previous === 1 ? ' has' : 's have'} been safely skipped.`);
   if (ignored) parts.push(`${fmt(ignored)} journey${ignored === 1 ? ' does' : 's do'} not contain enough location detail to match reliably.`);
+  if (outsideSupported) parts.push(`${fmt(outsideSupported)} activity${outsideSupported === 1 ? ' is' : 'ies are'} outside the current UK support area and is recorded separately for the future UK-only pipeline.`);
   if (diagnostics.seenJourneyMigration) {
     parts.push('Roadprints has now created its one-off baseline of journeys previously seen on this device.');
   }
