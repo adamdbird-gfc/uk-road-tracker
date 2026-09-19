@@ -11,7 +11,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from database import database_state, initialise_database
+from database import database_state, initialise_database, reference_catalogue_status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -208,6 +208,14 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "0.11.0", "database": database_state}
+
+@app.get("/reference-catalogue/status")
+async def reference_catalogue():
+    """Expose readiness of shared public UK references only."""
+    return {
+        "catalogue": reference_catalogue_status(),
+        "contains_personal_data": False,
+    }
 
 @app.get("/import-coordinator/capabilities")
 async def import_coordinator_capabilities():
