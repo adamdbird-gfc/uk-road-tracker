@@ -297,7 +297,8 @@ const ROADPRINTS_ACHIEVEMENTS = [
     title:'Halfway There',
     description:'Complete half of the UK motorway network.',
     detail:'50% of the UK motorway network completed',
-    type:'network-percent', target:50  },
+    type:'network-percent', target:50
+  },
   {
     id:'motorway-three-quarters',
     icon:'¾',
@@ -596,7 +597,8 @@ async function clearRoadArchive() {
 }
 
 async function clearFootArchive() {
-  await footArchiveOperation('readwrite',store=>store.clear());  persistedFootActivities.clear();
+  await footArchiveOperation('readwrite',store=>store.clear());
+  persistedFootActivities.clear();
   footActivities=[];
   footBatches=[];
   renderFootQueue();
@@ -896,6 +898,7 @@ function journeyFingerprint(journey) {
     coordinateKey(last)
   ].join('|');
 }
+
 function routeRepeatFingerprint(journey) {
   const first=journey?.points?.[0];
   const last=journey?.points?.[journey.points.length-1];
@@ -1194,7 +1197,8 @@ function resetTrackingSession() {
   importModeCard.classList.add('hidden');
   easyProgress.classList.add('hidden');
   ignoredCard.classList.add('hidden');
-  summaryCard.classList.add('hidden');  motorwayCard.classList.add('hidden');
+  summaryCard.classList.add('hidden');
+  motorwayCard.classList.add('hidden');
   aRoadCard.classList.add('hidden');
   otherRoadCard.classList.add('hidden');
   canonicalMotorwayCard.classList.add('hidden');
@@ -1495,7 +1499,8 @@ document.getElementById('fitMap').addEventListener('click', fitSelected);
 document.getElementById('clearMatches').addEventListener('click', clearMatchedRoads);
 document.getElementById('easyImport').addEventListener('click', startEasyImport);
 document.getElementById('plotImportedMap')?.addEventListener('click',()=>{
-  document.querySelector('main')?.classList.remove('processing-active');  activateRoadprintsScreen('map');
+  document.querySelector('main')?.classList.remove('processing-active');
+  activateRoadprintsScreen('map');
   renderMap();
   showDefaultUnitedKingdomView();
 });
@@ -1839,7 +1844,8 @@ function loadFootPlaceNames() {
   } catch (err) {}
 }
 
-function saveFootPlaceNames() {  try { localStorage.setItem(FOOT_PLACE_NAMES_KEY,JSON.stringify(Object.fromEntries(footPlaceNames))); } catch (err) {}
+function saveFootPlaceNames() {
+  try { localStorage.setItem(FOOT_PLACE_NAMES_KEY,JSON.stringify(Object.fromEntries(footPlaceNames))); } catch (err) {}
 }
 
 async function resolveFootBatchPlaceNames() {
@@ -2138,7 +2144,8 @@ async function renameSavedJourney(id,type='road') {
   const records=type==='foot' ? persistedFootActivities : persistedMapJourneys;
   const record=records.get(id);
   if (!record) return;
-  const proposed=window.prompt('Name this journey',record.title || '');  if (proposed===null) return;
+  const proposed=window.prompt('Name this journey',record.title || '');
+  if (proposed===null) return;
   const title=proposed.trim();
   const updated={...record,title};
   try {
@@ -2438,6 +2445,7 @@ function showAchievementCelebration(definitions=[]) {
   achievementCelebration.classList.remove('hidden');
   closeAchievementCelebration.focus({preventScroll:true});
 }
+
 function unlockAchievement(definition) {
   if (!definition?.id || persistedAchievements.has(definition.id)) return false;
   persistedAchievements.set(definition.id,{unlockedAt:new Date().toISOString(),announced:true});
@@ -2736,6 +2744,7 @@ function closeImportStatusView() {
   easyProgress.style.removeProperty('display');
   importStatusButton?.setAttribute('aria-expanded','false');
 }
+
 function updateImportNavigationFromCoordinator() {
   const ready=importSession.roadComplete && importSession.footComplete
     ? ['map','journeys','progress','achievements','collections']
@@ -3035,7 +3044,8 @@ function renderJourneyList() {
 
     if (j.matchedGeoJson) {
       status.textContent = matchStatusText(j);
-    } else {      status.textContent = j.points.length < 2
+    } else {
+      status.textContent = j.points.length < 2
         ? 'Not enough coordinates to road-match.'
         : 'Not matched yet.';
     }
@@ -3334,7 +3344,8 @@ function initMap() {
         if(settlementBoundaryMode)return;renderMap({deferCalculations:true,preserveLive:true});
         if (focusedJourneyId) clearReferenceMapLayers();
         else {
-          renderCanonicalMapLayers();          renderCanonicalARoadMapLayers();
+          renderCanonicalMapLayers();
+          renderCanonicalARoadMapLayers();
         }
       },80);
     });
@@ -3633,6 +3644,7 @@ function corridorCellKey(lng, lat) {
   const [x, y] = mercatorXY(lng, lat);
   return `${Math.floor(x / MOTORWAY_CORRIDOR_CELL_M)},${Math.floor(y / MOTORWAY_CORRIDOR_CELL_M)}`;
 }
+
 function interpolateLngLat(a, b, t) {
   return [
     a[0] + (b[0] - a[0]) * t,
@@ -3932,7 +3944,8 @@ async function loadCanonicalRoad(ref, force=false) {
         refreshCanonicalRestoreDisplay();
         return road;
       }
-    } catch (deviceErr) {      // The reference can be rebuilt from the bundled cache if device storage
+    } catch (deviceErr) {
+      // The reference can be rebuilt from the bundled cache if device storage
       // is unavailable or holds an older version.
       console.warn('Saved motorway reference could not be read:',deviceErr);
     }
@@ -4231,7 +4244,8 @@ function renderCanonicalMapLayers() {
       // marker for every 100 m anchor. A full saved map otherwise creates many
       // thousands of SVG elements before the user can interact with it.
       const runs={covered:[],uncovered:[]};
-      let previous=null;      let current=null;
+      let previous=null;
+      let current=null;
       let currentKind=null;
       for (const anchor of road.anchors) {
         const anchorPoint=[anchor.lng,anchor.lat];
@@ -4530,7 +4544,8 @@ function moveRefinementChunk(direction) {
 function startMotorwayRefinement(id) {
   const road=canonicalRoads.get(id);
   if (!road || road.status!=='ready') return;
-  refinementRoadRef=id;  refinementUndoStack=[];
+  refinementRoadRef=id;
+  refinementUndoStack=[];
   refinementChunks=buildRefinementChunks(road);
   refinementChunkIndex=0;
   const label=road.region==='NI' ? `${road.ref} (Northern Ireland)` : road.ref;
@@ -4829,7 +4844,8 @@ async function hydrateCanonicalARoadFromDevice(road) {
   const storedCoverage=Array.isArray(stored.coverage) ? stored.coverage : persistedARoadCoverageByRef.get(road.id) || [];
   road.coveredAnchorIds=new Set([...storedCoverage]
     .filter(id=>Number.isInteger(id) && id>=0 && id<anchors.length));
-  road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);  road.anchorCount=anchors.length;
+  road.totalKm=Number(stored.totalKm || anchors.length*CANONICAL_REFERENCE_SAMPLE_M/1000);
+  road.anchorCount=anchors.length;
   road.status='ready'; road.source='device';
   // Legacy archive entries have geometry only. Rebuild once, then persist the
   // result in IndexedDB so subsequent map opens are immediate and green.
@@ -5128,7 +5144,8 @@ function renderOtherRoadDashboard(drawable) {
     matchedKm+=typeof exactKm==='number' && Number.isFinite(exactKm)
       ? Math.max(0,exactKm-reclassifiedM6TollKm)
       : classified ? featureCollectionDistanceKm(classified) : fallbackKm;
-    matchedJourneys++;  }
+    matchedJourneys++;
+  }
   otherRoadMileage.textContent=displayDistance(matchedKm);
   otherRoadCard.classList.toggle('hidden',!shouldShowDataDashboard() || !matchedJourneys);
 }
@@ -5427,7 +5444,8 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
     } catch (err) {
       dashboardError=dashboardError || err;
       console.error('Roadprints canonical A-road map could not refresh:',err);
-    }  }
+    }
+  }
   if (!map || !creditedLayer) return;
 
   if (focusedJourneyId) {
@@ -5727,6 +5745,7 @@ function extractTimelineActivities(data) {
 
   return { roadJourneys, onFootJourneys, confirmedVisits, diagnostics: diag };
 }
+
 function lowerBound(arr, target) {
   let lo = 0;
   let hi = arr.length;
@@ -6025,7 +6044,8 @@ function roadDiscoveryFirstPoint(feature) {
 function roadDiscoveryPlaceKey(point) {
   return point ? point.lat.toFixed(3)+','+point.lng.toFixed(3) : '';
 }
-function loadRoadDiscoveryPlaces() {  if (roadDiscoveryPlaces.size) return;
+function loadRoadDiscoveryPlaces() {
+  if (roadDiscoveryPlaces.size) return;
   try { for (const [key,value] of Object.entries(JSON.parse(localStorage.getItem(ROAD_DISCOVERY_PLACE_NAMES_KEY) || '{}'))) if (typeof value==='string' && value) roadDiscoveryPlaces.set(key,value); } catch (err) {}
 }
 function saveRoadDiscoveryPlaces() {
