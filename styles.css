@@ -1258,6 +1258,11 @@ main.app-ready[data-active-screen="progress"] [data-app-screen="progress"] {
   outline-offset: 2px;
 }
 
+/* Collection shortcuts must be absent until their entitlement is unlocked. */
+.progress-jump-menu a[hidden] {
+  display: none !important;
+}
+
 
 /* Collections: placeholder service-station achievements on the shared achievements page. */
 .service-station-achievements {
