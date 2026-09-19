@@ -5940,8 +5940,10 @@ function refreshARoadBackgroundStatus(){
   const mapOpen=document.querySelector('main')?.dataset.activeScreen==='map';
   const keys=typeof activeARoadKeys==='function' ? [...activeARoadKeys()] : [];
   const states=typeof canonicalARoadState==='function' ? keys.map(canonicalARoadState).filter(Boolean) : [];
+  // An idle reference is merely eligible to load; it is not background work.
+  // Only show this chip while the browser has an actual load or coverage pass running.
   const stillWorking=canonicalARoadQueueRunning || canonicalARoadCoverageRefreshRunning ||
-    states.some(road=>road.status==='idle' || road.status==='loading');
+    states.some(road=>road.status==='loading');
   const visible=mapOpen && !settlementBoundaryMode && keys.length>0 && stillWorking;
   aRoadBackgroundStatus.classList.toggle('hidden',!visible);
   if(visible && aRoadBackgroundText) aRoadBackgroundText.textContent='Road references are updating in the background';
