@@ -33,10 +33,10 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 MAX_MATCH_POINTS = int(os.getenv("MAX_MATCH_POINTS", "500"))
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
 RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
-RATE_LIMITED_PATHS = {"/match", "/match-walking", "/settlements-for-geometry"}
+RATE_LIMITED_PATHS = {"/match", "/match-walking", "/settlements-for-geometry", "/import-coordinator"}
 request_windows = defaultdict(deque)
 
-app = FastAPI(title="UK Road Tracker API", version="0.10.0")
+app = FastAPI(title="UK Road Tracker API", version="0.11.0")
 PLACE_NAME_CACHE = {}
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://adamdbird-gfc.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin.strip()]
 
@@ -57,6 +57,11 @@ class MatchRequest(BaseModel):
 
 class SettlementGeometryRequest(BaseModel):
     geometry: dict[str, Any]
+
+class ImportCoordinatorHandshake(BaseModel):
+    """Compatibility handshake deliberately limited to non-personal data."""
+    contract_version: int = Field(ge=1, le=1)
+    contains_personal_data: bool = False
 
 def chunk_points(points):
     if len(points) <= OSRM_CHUNK_SIZE:
@@ -202,7 +207,34 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.10.0", "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "database": database_state}
+
+@app.get("/import-coordinator/capabilities")
+async def import_coordinator_capabilities():
+    """Describe the privacy-safe first import slice without receiving travel data."""
+    return {
+        "contract_version": 1,
+        "mode": "client_persisted",
+        "accepted_source": "google_timeline",
+        "accepts_personal_data": False,
+        "remote_retention": "none",
+        "message": "Timeline files, journeys and import progress remain on this device.",
+    }
+
+@app.post("/import-coordinator")
+async def import_coordinator_handshake(payload: ImportCoordinatorHandshake):
+    """Reject any attempt to introduce hidden journey uploads in this prototype."""
+    if payload.contains_personal_data:
+        raise HTTPException(
+            status_code=400,
+            detail="This coordinator does not accept Timeline files, journeys, routes or personal data.",
+        )
+    return {
+        "compatible": True,
+        "contract_version": payload.contract_version,
+        "storage": "on_device",
+        "remote_retention": "none",
+    }
 
 @app.get("/canonical-a-road/{road_ref}")
 async def canonical_a_road(road_ref: str):
@@ -247,8 +279,7 @@ async def canonical_a_road(road_ref: str):
             ways.append({"id": element.get("id"), "coords": coords})
     if not ways:
         raise HTTPException(status_code=404, detail=f"No OpenStreetMap reference geometry found for {ref}.")
-    result = {"ref": ref, "ways": ways}
-    CANONICAL_A_ROAD_CACHE[ref] = result
+    result = {"ref": ref, "ways": ways}    CANONICAL_A_ROAD_CACHE[ref] = result
     return result
 
 @app.get("/place-name")
