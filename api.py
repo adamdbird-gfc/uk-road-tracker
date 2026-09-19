@@ -498,13 +498,3 @@ async def match_payload(
     return {
         "status": "ok",
         "input_points": len(payload.points),
-        "chunks_used": len(chunks),
-        "points_sent_to_matcher": tracepoints_seen,
-        "matched_tracepoints": matched_tracepoints,
-        "matched_distance_m": round(matched_distance_m, 1),
-        "geojson": {"type": "FeatureCollection", "features": features},
-        "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
-        "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
-        "road_geojson": {"type": "FeatureCollection", "features": road_features},
-        "other_road_distance_m": round(other_road_distance_m, 1),
-    }
