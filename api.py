@@ -279,7 +279,8 @@ async def canonical_a_road(road_ref: str):
             ways.append({"id": element.get("id"), "coords": coords})
     if not ways:
         raise HTTPException(status_code=404, detail=f"No OpenStreetMap reference geometry found for {ref}.")
-    result = {"ref": ref, "ways": ways}    CANONICAL_A_ROAD_CACHE[ref] = result
+    result = {"ref": ref, "ways": ways}
+    CANONICAL_A_ROAD_CACHE[ref] = result
     return result
 
 @app.get("/place-name")
@@ -498,3 +499,13 @@ async def match_payload(
     return {
         "status": "ok",
         "input_points": len(payload.points),
+        "chunks_used": len(chunks),
+        "points_sent_to_matcher": tracepoints_seen,
+        "matched_tracepoints": matched_tracepoints,
+        "matched_distance_m": round(matched_distance_m, 1),
+        "geojson": {"type": "FeatureCollection", "features": features},
+        "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
+        "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
+        "road_geojson": {"type": "FeatureCollection", "features": road_features},
+        "other_road_distance_m": round(other_road_distance_m, 1),
+    }
