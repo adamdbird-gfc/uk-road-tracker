@@ -93,6 +93,42 @@ def load_settlement_catalogue(cursor) -> None:
     )
 
 
+
+def reference_catalogue_status() -> dict:
+    """Return only shared-reference readiness; never query personal data."""
+    unavailable = {
+        "status": database_state["status"],
+        "settlements": 0,
+        "settlement_boundaries": 0,
+        "gb_a_roads": 0,
+        "sources": 0,
+    }
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return unavailable
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                      (SELECT COUNT(*) FROM settlements WHERE is_active),
+                      (SELECT COUNT(*) FROM settlement_boundaries),
+                      (SELECT COUNT(*) FROM road_references
+                       WHERE road_kind = 'a_road' AND network_region = 'GB'),
+                      (SELECT COUNT(*) FROM reference_sources)
+                    """
+                )
+                settlements, boundaries, a_roads, sources = cursor.fetchone()
+        return {
+            "status": "ready",
+            "settlements": settlements,
+            "settlement_boundaries": boundaries,
+            "gb_a_roads": a_roads,
+            "sources": sources,
+        }
+    except Exception:
+        return unavailable
+
 def initialise_database() -> None:
     if not DATABASE_URL:
         return
