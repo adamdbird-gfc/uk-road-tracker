@@ -829,6 +829,12 @@ main.app-ready #map .leaflet-control-zoom a + a { border-top:2px solid rgba(0,0,
 main.app-ready[data-active-screen="map"] .a-road-background-status.hidden { display:none !important; }
 
 
+/* Screen layout must never override a card's own visibility decision. */
+main.app-ready[data-active-screen="progress"] > [data-app-screen="progress"].hidden,
+main.app-ready[data-active-screen="achievements"] > #achievementsCard.hidden {
+  display:none !important;
+}
+
 /* Progress: a complete Roadprints destination, not a translucent map overlay. */
 main.app-ready[data-active-screen="progress"] {
   min-height:100svh;
