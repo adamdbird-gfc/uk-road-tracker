@@ -2500,13 +2500,11 @@ function evaluateAchievements() {
 
 function renderAchievements() {
   if (!achievementsCard || !achievementList) return;
-  // A fresh import may have rendered journeys before its local archive has
-  // settled. Those journeys are still enough evidence to show the main
-  // achievement list; the individual rules remain evidence-derived.
-  const hasData=shouldShowDataDashboard() && (
-    journeys.some(journey=>journey?.selected && journey?.points?.length>1) ||
-    persistedMapJourneys.size || persistedCoverageByRef.size
-  );
+  // The footer is only available after Roadprints has entered the saved-data
+  // or imported-data experience. At that point the standard achievement board
+  // must remain reachable, even while local restoration is still settling.
+  // The splash screen is protected because it never receives .app-ready.
+  const hasData=document.querySelector('main')?.classList.contains('app-ready')===true;
   achievementsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
 
