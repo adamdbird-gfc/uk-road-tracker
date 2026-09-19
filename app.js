@@ -1648,12 +1648,15 @@ function saveImportCoordinatorSession(fileName, sourceFileHash, summary) {
 
 async function verifyImportCoordinatorCompatibility() {
   try {
-    const response = await fetch(API_BASE_URL + '/import-coordinator', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({contract_version: 1, contains_personal_data: false})
-    });
-    if (!response.ok) throw new Error('Coordinator unavailable');
+    const [response, catalogue] = await Promise.all([
+      fetch(API_BASE_URL + '/import-coordinator', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contract_version: 1, contains_personal_data: false})
+      }),
+      fetch(API_BASE_URL + '/reference-catalogue/status')
+    ]);
+    if (!response.ok || !catalogue.ok) throw new Error('Coordinator unavailable');
   } catch (error) {
     // The local import remains fully usable if the optional compatibility
     // handshake cannot be reached. No Timeline content is ever retried or sent.
