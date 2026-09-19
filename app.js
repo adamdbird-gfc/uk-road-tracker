@@ -5914,6 +5914,9 @@ function activateRoadprintsScreen(screen) {
   shell.dataset.activeScreen=screen;
   nav.classList.remove('hidden');
   nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
+  // This screen may have first rendered during splash setup, before app-ready
+  // existed. Refresh it at the point the user actually opens the tab.
+  if(screen==='achievements') renderAchievements();
   if(screen==='map' && !settlementBoundaryMode) {
     setTimeout(()=>{
       map?.invalidateSize();
