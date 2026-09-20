@@ -6504,7 +6504,9 @@ function roadDiscoveryDisclosureKey(details){
   if(details.id==='roadDiscoveryCard')return 'card';
   const summary=details.querySelector(':scope > summary');
   const label=summary?.dataset.town||summary?.textContent?.split(' · ')[0]?.trim()||'';
-  return (details.classList.contains('road-discovery-group')?'group:':'town:')+label;
+  const type=details.classList.contains('road-discovery-group')?'group:'
+    :details.classList.contains('road-discovery-county')?'county:':'town:';
+  return type+label;
 }
 function captureRoadDiscoveryDisclosureState(card){
   const open=new Set();
@@ -6666,15 +6668,100 @@ async function showSettlementBoundary(town,inventory){
 // Resolve local roads against the official ONS boundary service in the
 // background; the user-facing ledger changes only once a result is available.
 const SETTLEMENT_CHECK_CACHE_KEY='roadprints-settlement-check-v1';
+const SETTLEMENT_METADATA_CACHE_KEY='roadprints-settlement-metadata-v1';
 const settlementCheckResults=new Map(),settlementCheckPending=new Set(),settlementCheckQueue=[];
+const settlementMetadataByName=new Map(),settlementMetadataPending=new Set();
 try{for(const [key,value] of Object.entries(JSON.parse(localStorage.getItem(SETTLEMENT_CHECK_CACHE_KEY)||'{}')))if(value&&!value.error)settlementCheckResults.set(key,value)}catch(_){}
+try{for(const [key,value] of Object.entries(JSON.parse(localStorage.getItem(SETTLEMENT_METADATA_CACHE_KEY)||'{}')))settlementMetadataByName.set(key,value)}catch(_){}
 function saveSettlementCheckResults(){try{localStorage.setItem(SETTLEMENT_CHECK_CACHE_KEY,JSON.stringify(Object.fromEntries(settlementCheckResults)))}catch(_){}}
+function saveSettlementMetadata(){try{localStorage.setItem(SETTLEMENT_METADATA_CACHE_KEY,JSON.stringify(Object.fromEntries(settlementMetadataByName)))}catch(_){}}
+function rememberSettlementMetadata(settlement){if(!settlement?.name)return;settlementMetadataByName.set(normaliseSettlementName(settlement.name),settlement)}
+async function hydrateSettlementMetadata(townEntries){
+  for(const entry of townEntries.values())if(entry.settlement)rememberSettlementMetadata(entry.settlement);
+  const names=[...townEntries.keys()].filter(name=>!settlementMetadataByName.has(normaliseSettlementName(name))&&!settlementMetadataPending.has(normaliseSettlementName(name)));
+  if(!names.length)return;
+  names.forEach(name=>settlementMetadataPending.add(normaliseSettlementName(name)));
+  try{
+    const response=await fetch(API_BASE_URL+'/settlement-metadata',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names})});
+    if(!response.ok)throw Error('Settlement metadata unavailable');
+    const data=await response.json();
+    const matches=new Map();
+    for(const settlement of data.settlements||[]){
+      const key=normaliseSettlementName(settlement.name);
+      (matches.get(key)||matches.set(key,[]).get(key)).push(settlement);
+    }
+    for(const name of names){
+      const key=normaliseSettlementName(name),found=matches.get(key)||[];
+      settlementMetadataByName.set(key,found.length===1?found[0]:{name,county:null});
+    }
+    saveSettlementMetadata();
+  }catch(error){
+    console.warn('Settlement county metadata lookup failed:',error);
+  }finally{
+    names.forEach(name=>settlementMetadataPending.delete(normaliseSettlementName(name)));
+    renderRoadDiscovery();
+  }
+}
 let settlementCheckWorkers=0;
 function queueSettlementCheck(road){if(settlementCheckResults.has(road.id)||settlementCheckPending.has(road.id))return;settlementCheckPending.add(road.id);settlementCheckQueue.push(road);runSettlementChecks()}
-function runSettlementChecks(){while(settlementCheckWorkers<1&&settlementCheckQueue.length){const road=settlementCheckQueue.shift();settlementCheckWorkers++;(async()=>{try{const names=new Set();for(const evidence of road.evidence||[]){const response=await fetch(API_BASE_URL+'/settlements-for-geometry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({geometry:evidence.geometry})});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.detail||'Boundary check unavailable');for(const settlement of data.settlements||[])if(settlement.name)names.add(settlement.name);await new Promise(resolve=>setTimeout(resolve,250))}settlementCheckResults.set(road.id,{names:[...names]});saveSettlementCheckResults()}catch(error){settlementCheckResults.set(road.id,{error:String(error.message||error)})}finally{settlementCheckPending.delete(road.id);settlementCheckWorkers--;renderRoadDiscovery();evaluateAchievements();runSettlementChecks()}})()}}
+function runSettlementChecks(){while(settlementCheckWorkers<1&&settlementCheckQueue.length){const road=settlementCheckQueue.shift();settlementCheckWorkers++;(async()=>{try{const settlements=new Map();for(const evidence of road.evidence||[]){const response=await fetch(API_BASE_URL+'/settlements-for-geometry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({geometry:evidence.geometry})});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.detail||'Boundary check unavailable');for(const settlement of data.settlements||[])if(settlement.name)settlements.set(settlement.code||normaliseSettlementName(settlement.name),settlement);await new Promise(resolve=>setTimeout(resolve,250))}const values=[...settlements.values()];settlementCheckResults.set(road.id,{names:values.map(settlement=>settlement.name),settlements:values});saveSettlementCheckResults()}catch(error){settlementCheckResults.set(road.id,{error:String(error.message||error)})}finally{settlementCheckPending.delete(road.id);settlementCheckWorkers--;renderRoadDiscovery();evaluateAchievements();runSettlementChecks()}})()}}
 function queueSettlementChecksForLedger(){for(const road of roadDiscoveryLedger.values())if(road.category==='Local roads')queueSettlementCheck(road)}
 const renderRoadDiscoveryWithSettlementCheck=renderRoadDiscovery;
-function renderBoundarySettlementLedger(){const list=document.getElementById('roadDiscoveryList'),card=document.getElementById('roadDiscoveryCard'),roads=[...roadDiscoveryLedger.values()].filter(road=>road.category==='Local roads');if(!list||!card||!roads.length||roads.some(road=>!settlementCheckResults.has(road.id)))return;const openDisclosures=captureRoadDiscoveryDisclosureState(card),legacy=[...list.querySelectorAll('.road-discovery-group')].find(group=>group.querySelector('summary')?.textContent.startsWith('Local roads'));if(!legacy)return;const towns=new Map(),unresolved=[];for(const road of roads){const result=settlementCheckResults.get(road.id);if(result.error){unresolved.push(road);continue}for(const town of result.names)(towns.get(town)||towns.set(town,[]).get(town)).push(road)}const group=document.createElement('details'),title=document.createElement('summary');group.className='road-discovery-group';title.textContent='Local roads · '+roads.length.toLocaleString();group.append(title);restoreRoadDiscoveryDisclosureState(group,openDisclosures);for(const town of [...towns.keys()].sort((a,b)=>a.localeCompare(b,'en-GB'))){const entries=towns.get(town),townDetails=document.createElement('details'),townTitle=document.createElement('summary'),rows=document.createElement('ul');townDetails.className='road-discovery-town';townTitle.dataset.town=town;townTitle.textContent=town+' · '+entries.length.toLocaleString();restoreRoadDiscoveryDisclosureState(townDetails,openDisclosures);for(const road of entries.sort((a,b)=>a.label.localeCompare(b.label,'en-GB'))){const row=document.createElement('li'),label=document.createElement('strong'),state=document.createElement('span');label.textContent=road.label;state.textContent=road.driven&&road.onFoot?'Driven + on foot':road.driven?'Driven':'On foot';row.append(label,state);rows.append(row)}townDetails.append(townTitle,rows);group.append(townDetails);setTown(town,entries)}if(unresolved.length){const detail=document.createElement('details'),summary=document.createElement('summary'),rows=document.createElement('ul');detail.className='road-discovery-town';summary.textContent='Unresolved local roads · '+unresolved.length;restoreRoadDiscoveryDisclosureState(detail,openDisclosures);for(const road of unresolved){const row=document.createElement('li');row.textContent=road.label;rows.append(row)}detail.append(summary,rows);group.append(detail)}legacy.replaceWith(group);restoreRoadDiscoveryDisclosureState(card,openDisclosures)}
+function settlementCountyLabel(town,entry){
+  const settlement=entry?.settlement||settlementMetadataByName.get(normaliseSettlementName(town));
+  return settlement?.county||settlement?.region||settlement?.nation||'Other UK areas';
+}
+function renderBoundarySettlementLedger(){
+  const list=document.getElementById('roadDiscoveryList'),card=document.getElementById('roadDiscoveryCard'),roads=[...roadDiscoveryLedger.values()].filter(road=>road.category==='Local roads');
+  if(!list||!card||!roads.length||roads.some(road=>!settlementCheckResults.has(road.id)))return;
+  const openDisclosures=captureRoadDiscoveryDisclosureState(card),legacy=[...list.querySelectorAll('.road-discovery-group')].find(group=>group.querySelector('summary')?.textContent.startsWith('Local roads'));
+  if(!legacy)return;
+  const towns=new Map(),unresolved=[];
+  for(const road of roads){
+    const result=settlementCheckResults.get(road.id);
+    if(result.error){unresolved.push(road);continue}
+    const metadataByName=new Map((result.settlements||[]).map(settlement=>[settlement.name,settlement]));
+    for(const town of result.names||[]){
+      const entry=towns.get(town)||{roads:[],settlement:metadataByName.get(town)};
+      if(!entry.settlement&&metadataByName.get(town))entry.settlement=metadataByName.get(town);
+      entry.roads.push(road);towns.set(town,entry);
+    }
+  }
+  void hydrateSettlementMetadata(towns);
+  const group=document.createElement('details'),title=document.createElement('summary');
+  group.className='road-discovery-group';title.textContent='Local roads · '+roads.length.toLocaleString();group.append(title);restoreRoadDiscoveryDisclosureState(group,openDisclosures);
+  const counties=new Map();
+  for(const [town,entry] of towns){
+    const county=settlementCountyLabel(town,entry);
+    (counties.get(county)||counties.set(county,[]).get(county)).push([town,entry]);
+  }
+  const townRows=[];
+  for(const county of [...counties.keys()].sort((a,b)=>a.localeCompare(b,'en-GB'))){
+    const countyEntries=counties.get(county),countyDetails=document.createElement('details'),countyTitle=document.createElement('summary');
+    countyDetails.className='road-discovery-county';
+    const countyRoadCount=countyEntries.reduce((total,[,entry])=>total+entry.roads.length,0);
+    countyTitle.textContent=county+' · '+countyEntries.length+' settlement'+(countyEntries.length===1?'':'s')+' · '+countyRoadCount.toLocaleString()+' roads';
+    countyDetails.append(countyTitle);restoreRoadDiscoveryDisclosureState(countyDetails,openDisclosures);
+    for(const [town,entry] of countyEntries.sort(([a],[b])=>a.localeCompare(b,'en-GB'))){
+      const entries=entry.roads,townDetails=document.createElement('details'),townTitle=document.createElement('summary'),rows=document.createElement('ul');
+      townDetails.className='road-discovery-town';townTitle.dataset.town=town;townTitle.textContent=town+' · '+entries.length.toLocaleString();restoreRoadDiscoveryDisclosureState(townDetails,openDisclosures);
+      for(const road of entries.sort((a,b)=>a.label.localeCompare(b.label,'en-GB'))){
+        const row=document.createElement('li'),label=document.createElement('strong'),state=document.createElement('span');
+        label.textContent=road.label;state.textContent=road.driven&&road.onFoot?'Driven + on foot':road.driven?'Driven':'On foot';row.append(label,state);rows.append(row);
+      }
+      townDetails.append(townTitle,rows);countyDetails.append(townDetails);townRows.push([town,entries]);
+    }
+    group.append(countyDetails);
+  }
+  if(unresolved.length){
+    const detail=document.createElement('details'),summary=document.createElement('summary'),rows=document.createElement('ul');
+    detail.className='road-discovery-town';summary.textContent='Unresolved local roads · '+unresolved.length;restoreRoadDiscoveryDisclosureState(detail,openDisclosures);
+    for(const road of unresolved){const row=document.createElement('li');row.textContent=road.label;rows.append(row)}
+    detail.append(summary,rows);group.append(detail);
+  }
+  legacy.replaceWith(group);restoreRoadDiscoveryDisclosureState(card,openDisclosures);
+  for(const [town,entries] of townRows)setTown(town,entries);
+}
 renderRoadDiscovery=function(){renderRoadDiscoveryWithSettlementCheck();queueSettlementChecksForLedger();renderBoundarySettlementLedger()};
 function refreshBoundarySettlementMetrics(){const towns=new Map();for(const road of roadDiscoveryLedger.values())if(road.category==='Local roads'){const result=settlementCheckResults.get(road.id);if(!result||result.error)continue;for(const town of result.names)(towns.get(town)||towns.set(town,[]).get(town)).push(road)}for(const [town,roads] of towns){setTown(town,roads);queueTownInventory(town,roads)}}
 const renderRoadDiscoveryWithBoundaryMetrics=renderRoadDiscovery;
