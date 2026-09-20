@@ -67,14 +67,19 @@
       <div class="progress-heading">
         <div>
           <p class="eyebrow">Your Roadprint is forming</p>
-          <strong>Reading your travel story</strong>
+          <strong>Processing your journeys</strong>
         </div>
         <div id="easyProgressText" class="progress-status" aria-live="polite">
-          <strong>Waiting…</strong>
-          <span>Preparing routes</span>
+          <strong>Preparing…</strong>
+          <span>Preparing your journeys</span>
         </div>
       </div>
       <progress id="easyProgressBar" value="0" max="100"></progress>
+      <div id="roadImportSummary" class="foot-import-summary">
+        <div><p class="eyebrow">On the road</p><strong>Driving</strong></div>
+        <div id="roadImportSummaryText" class="progress-status"><strong>Waiting…</strong><span>Preparing routes</span></div>
+        <progress id="roadImportSummaryBar" value="0" max="100"></progress>
+      </div>
       <div id="footImportSummary" class="foot-import-summary">
         <div><p class="eyebrow">On foot</p><strong>Walking and running</strong></div>
         <div id="footImportSummaryText" class="progress-status"><strong>Waiting…</strong><span>Preparing routes</span></div>
@@ -489,7 +494,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20260920-import-live-map-v2"></script>
+  <script src="app.js?v=20260920-collective-import-v3"></script>
   <script src="service-station-map-layer.js?v=20260919-entitlement-v2"></script>
   <script src="service-station-progress.js?v=20260919-entitlement-v2"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
