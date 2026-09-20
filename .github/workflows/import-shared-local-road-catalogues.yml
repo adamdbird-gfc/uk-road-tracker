@@ -1,10 +1,13 @@
 name: Import shared local-road catalogues
 
 on:
-  push:
-    paths:
-      - '.github/reference-inventory-batches/*.txt'
   workflow_dispatch:
+    inputs:
+      batch_file:
+        description: 'Repository-relative batch file of official settlement codes'
+        required: true
+        default: '.github/reference-inventory-batches/kent-medway-pilot.txt'
+        type: string
 
 permissions:
   contents: read
@@ -27,16 +30,25 @@ jobs:
           python -m pip install -r requirements-reference-ingestion.txt
       - name: Read bounded settlement batch
         id: batch
+        shell: bash
         run: |
-          batch_file="$(find .github/reference-inventory-batches -name '*.txt' -print -quit)"
-          test -n "$batch_file"
+          batch_file="${{ inputs.batch_file }}"
+          case "$batch_file" in
+            .github/reference-inventory-batches/*.txt) ;;
+            *) echo "Batch file must be inside .github/reference-inventory-batches"; exit 1 ;;
+          esac
+          test -f "$batch_file"
           python - "$batch_file" <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           codes = [
               line.strip() for line in open(sys.argv[1], encoding="utf-8")
               if line.strip() and not line.lstrip().startswith("#")
           ]
-          if not codes or any(not code.startswith("E") or len(code) != 9 for code in codes):
+          if not codes or len(codes) > 100:
+              raise SystemExit("Batch must contain between 1 and 100 settlements")
+          if len(set(codes)) != len(codes):
+              raise SystemExit("Batch contains duplicate settlement codes")
+          if any(not code.startswith("E") or len(code) != 9 for code in codes):
               raise SystemExit("Batch must contain official nine-character E settlement codes only")
           print("codes=" + json.dumps(codes))
           PY
