@@ -165,6 +165,22 @@ def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]
     return {code: len(entries) for code, entries in roads.items()}
 
 
+def mark_failed(connection, codes: list[str], error: Exception) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE settlement_inventories AS inventory
+            SET status = 'failed', failed_at = NOW(),
+                failure_code = %s, updated_at = NOW()
+            FROM settlements AS settlement
+            WHERE inventory.settlement_id = settlement.id
+              AND settlement.external_code = ANY(%s)
+            """,
+            (error.__class__.__name__, codes),
+        )
+    connection.commit()
+
+
 def main() -> None:
     options = arguments()
     database_url = os.environ.get("DATABASE_URL")
@@ -172,7 +188,12 @@ def main() -> None:
         raise SystemExit("DATABASE_URL is required")
     try:
         with psycopg.connect(database_url) as connection:
-            counts = import_catalogues(connection, options)
+            try:
+                counts = import_catalogues(connection, options)
+            except Exception as error:
+                connection.rollback()
+                mark_failed(connection, list(dict.fromkeys(options.settlement)), error)
+                raise
     except Exception as error:
         raise SystemExit(f"Inventory import failed: {error.__class__.__name__}: {error}") from error
     print(json.dumps({"status": "ready", "settlements": counts}, sort_keys=True))
