@@ -1659,11 +1659,16 @@ exportPendingSettlementInventories?.addEventListener('click',()=>void preparePen
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
 
+  // This is the one visible import control, so it pauses/resumes both queues.
+  // An already in-flight request may finish and checkpoint once, then each
+  // worker stops before taking its next Journey.
   easyImportPaused = !easyImportPaused;
+  footMatchingPaused = easyImportPaused;
   updateEasyImportPauseButton();
+  renderFootQueue();
 
   if (!easyImportPaused) {
-    setEasyProgressStatus('Resuming…','Continuing road matching');
+    setEasyProgressStatus('Resuming…','Continuing driving and on-foot matching');
   }
 });
 unitMiles.addEventListener('click', () => setDistanceUnit('miles'));
@@ -2704,7 +2709,8 @@ async function startNextFootBatch() {
   await showFootMap();
   footMatching=true;
   updateImportStatusButton();
-  footMatchingPaused=false;
+  // Honour an import-wide pause even if this queue starts moments later.
+  footMatchingPaused=easyImportPaused;
   footMatchingError=null;
   footMatchingBatchId=candidates[0].batch.id;
   footMatchingProgress={area:'walking and running routes',completed:0,total:candidates.length,succeeded:0,failed:0};
