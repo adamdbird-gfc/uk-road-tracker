@@ -11,7 +11,12 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from database import database_state, initialise_database, reference_catalogue_status
+from database import (
+    database_state,
+    find_settlements_for_geometry,
+    initialise_database,
+    reference_catalogue_status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -318,6 +323,13 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
     coordinates=geometry.get("coordinates")
     if geometry_type not in {"LineString","MultiLineString"} or not coordinates:
         raise HTTPException(status_code=400,detail="A matched line geometry is required.")
+    # The shared PostGIS catalogue is preferred whenever it has the relevant
+    # public boundary. It reads the transient geometry and returns facts only;
+    # no Journey or route record is stored remotely.
+    catalogue_matches=find_settlements_for_geometry(geometry)
+    if catalogue_matches:
+        return {"settlements":catalogue_matches}
+
     arc_type="esriGeometryPolyline"
     paths=[coordinates] if geometry_type=="LineString" else coordinates
     url="https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query"
