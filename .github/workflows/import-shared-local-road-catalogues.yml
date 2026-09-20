@@ -1,0 +1,66 @@
+name: Import shared local-road catalogues
+
+on:
+  push:
+    paths:
+      - '.github/reference-inventory-batches/*.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reference-data tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes osmium-tool
+          python -m pip install -r requirements-reference-ingestion.txt
+      - name: Read bounded settlement batch
+        id: batch
+        run: |
+          batch_file="$(find .github/reference-inventory-batches -name '*.txt' -print -quit)"
+          test -n "$batch_file"
+          python - "$batch_file" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          codes = [
+              line.strip() for line in open(sys.argv[1], encoding="utf-8")
+              if line.strip() and not line.lstrip().startswith("#")
+          ]
+          if not codes or any(not code.startswith("E") or len(code) != 9 for code in codes):
+              raise SystemExit("Batch must contain official nine-character E settlement codes only")
+          print("codes=" + json.dumps(codes))
+          PY
+      - name: Build shared catalogue from public source
+        shell: bash
+        run: |
+          test -n "$DATABASE_URL" || { echo "REFERENCE_INGEST_DATABASE_URL is not configured"; exit 1; }
+          source_date="$(date -u +%F)"
+          curl --fail --location --retry 3 --retry-delay 5 \
+            --output great-britain.osm.pbf \
+            https://download.geofabrik.de/europe/great-britain-latest.osm.pbf
+          osmium tags-filter great-britain.osm.pbf \
+            w/highway=residential,unclassified,tertiary,living_street \
+            --overwrite -o eligible-local-roads.osm.pbf
+          osmium export eligible-local-roads.osm.pbf \
+            --overwrite -f geojsonseq -o eligible-local-roads.geojsonseq
+          args=()
+          for code in $(echo '${{ steps.batch.outputs.codes }}' | jq -r '.[]'); do
+            args+=(--settlement "$code")
+          done
+          python scripts/import_local_road_inventory.py \
+            --features eligible-local-roads.geojsonseq \
+            --source-version "$source_date" \
+            "${args[@]}"
+      - name: Remove raw source files
+        if: always()
+        run: rm -f great-britain.osm.pbf eligible-local-roads.osm.pbf eligible-local-roads.geojsonseq
