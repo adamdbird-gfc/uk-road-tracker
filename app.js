@@ -13,6 +13,10 @@ const persistedMapJourneys = new Map();
 const persistedFootActivities = new Map();
 let mapArchiveReadyPromise = Promise.resolve();
 let footArchiveReadyPromise = Promise.resolve();
+let pendingRoadImportReadyPromise = Promise.resolve();
+let pendingRoadImport = null;
+let pendingRoadImportSaveChain = Promise.resolve();
+let activeRoadImportSource = {fileName:null, sourceFileHash:null};
 let map = null;
 let mapRenderingRequested = false;
 let traceLayer = null;
@@ -267,11 +271,12 @@ const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 4;
+const MAP_ARCHIVE_DB_VERSION = 5;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
 const FOOT_ACTIVITY_STORE_NAME = 'foot-activities';
 const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
 const CANONICAL_A_ROAD_STORE_NAME = 'canonical-a-roads';
+const PENDING_ROAD_IMPORT_STORE_NAME = 'pending-road-import';
 let canonicalCache = null;
 let canonicalCachePromise = null;
 let canonicalARoadCacheEntries = new Map();
@@ -407,6 +412,7 @@ function shouldShowDataDashboard() {
 function updateDataDeletionControls() {
   const hasRoadData=
     persistedMapJourneys.size>0 ||
+    pendingRoadImportCandidates().length>0 ||
     persistedCoverageByRef.size>0 ||
     persistedARoadCoverageByRef.size>0;
   const hasFootData=persistedFootActivities.size>0;
@@ -418,7 +424,8 @@ function updateDataDeletionControls() {
 function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
-  const hasProgress=roadCount>0 || journeyCount>0 || persistedFootActivities.size>0;
+  const resumableRoads=pendingRoadImportCandidates().length;
+  const hasProgress=roadCount>0 || journeyCount>0 || resumableRoads>0 || persistedFootActivities.size>0;
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
@@ -435,7 +442,7 @@ function updateLocalProgressNotice() {
   localProgressSummary.textContent=
     `${journeyCount.toLocaleString()} saved matched road journey${journeyCount===1?'':'s'} · ` +
     `${persistedFootActivities.size.toLocaleString()} on-foot activit${persistedFootActivities.size===1?'y':'ies'} · ` +
-    `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage · ${range} · saved ${savedLabel}.`;
+    `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage${resumableRoads ? ` · ${resumableRoads.toLocaleString()} road journey${resumableRoads===1?'':'s'} ready to resume` : ''} · ${range} · saved ${savedLabel}.`;
 }
 
 function openMapArchiveDatabase() {
@@ -459,6 +466,9 @@ function openMapArchiveDatabase() {
       }
       if (!database.objectStoreNames.contains(CANONICAL_A_ROAD_STORE_NAME)) {
         database.createObjectStore(CANONICAL_A_ROAD_STORE_NAME,{keyPath:'id'});
+      }
+      if (!database.objectStoreNames.contains(PENDING_ROAD_IMPORT_STORE_NAME)) {
+        database.createObjectStore(PENDING_ROAD_IMPORT_STORE_NAME,{keyPath:'id'});
       }
     };
     request.onsuccess=()=>resolve(request.result);
@@ -593,7 +603,108 @@ async function clearRoadArchive() {
   persistedMotorwayContributionsByJourney.clear();
   await canonicalRoadArchiveOperation('readwrite',store=>store.clear());
   await canonicalARoadArchiveOperation('readwrite',store=>store.clear());
+  await clearPendingRoadImport();
   window.dispatchEvent(new Event('roadprints:archivechange'));
+}
+
+async function pendingRoadImportOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(PENDING_ROAD_IMPORT_STORE_NAME,mode);
+      const store=transaction.objectStore(PENDING_ROAD_IMPORT_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved road-import queue operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved road-import queue transaction was aborted.'));
+    });
+  } finally { database.close(); }
+}
+
+function compactPendingRoadJourney(journey) {
+  const id=journeyIdentity(journey);
+  if (!id) return null;
+  return {
+    id,
+    start:journey.start || '', end:journey.end || '',
+    travelMode:journey.travelMode || 'ROAD',
+    googleDistanceKm:Number.isFinite(Number(journey.googleDistanceKm)) ? Number(journey.googleDistanceKm) : null,
+    pathPointCount:Number(journey.pathPointCount || journey.points?.length || 0),
+    points:(journey.points || []).filter(validPoint).map(point=>({lat:Number(point.lat),lng:Number(point.lng)})),
+    repeatJourneyIds:Array.isArray(journey.repeatJourneyIds) ? journey.repeatJourneyIds : null,
+    repeatJourneyMileage:journey.repeatJourneyMileage || null,
+    repeatCount:Number(journey.repeatCount || 1),
+    repeatDistanceKm:Number(journey.repeatDistanceKm || journey.googleDistanceKm || 0)
+  };
+}
+
+function hydratePendingRoadJourney(record) {
+  return {...record, importId:record.id, selected:true, _pendingRoadQueue:true};
+}
+
+function pendingRoadImportCandidates() {
+  return (pendingRoadImport?.items || [])
+    .filter(item=>['pending','failed'].includes(item?.state) && !persistedMapJourneys.has(item?.journey?.id))
+    .map(item=>hydratePendingRoadJourney(item.journey));
+}
+
+async function loadPendingRoadImport() {
+  try {
+    const record=await pendingRoadImportOperation('readonly',store=>store.get('active'));
+    if (!record || record.version!==1 || !Array.isArray(record.items)) return;
+    pendingRoadImport=record;
+  } catch (err) {
+    console.warn('Saved road-import queue could not be loaded:',err);
+  }
+}
+
+function savePendingRoadImport() {
+  pendingRoadImportSaveChain=pendingRoadImportSaveChain.then(async()=>{
+    if (!pendingRoadImport) return;
+    pendingRoadImport.updatedAt=new Date().toISOString();
+    await pendingRoadImportOperation('readwrite',store=>store.put(pendingRoadImport));
+  });
+  return pendingRoadImportSaveChain;
+}
+
+async function clearPendingRoadImport() {
+  pendingRoadImport=null;
+  pendingRoadImportSaveChain=pendingRoadImportSaveChain.then(() =>
+    pendingRoadImportOperation('readwrite',store=>store.delete('active'))
+  );
+  await pendingRoadImportSaveChain;
+}
+
+async function preparePendingRoadImport(candidates) {
+  const signature=candidates.map(journeyIdentity).filter(Boolean).sort().join('|');
+  if (pendingRoadImport?.signature===signature) return pendingRoadImportCandidates();
+  const items=candidates.map(compactPendingRoadJourney).filter(Boolean).map(journey=>({journey,state:'pending',attempts:0,error:null}));
+  pendingRoadImport={
+    id:'active',version:1,signature,
+    sourceFileHash:activeRoadImportSource.sourceFileHash || null,
+    sourceFileName:activeRoadImportSource.fileName || null,
+    createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),items
+  };
+  await savePendingRoadImport();
+  updateLocalProgressNotice();
+  return pendingRoadImportCandidates();
+}
+
+async function checkpointPendingRoadJourney(journey,state,error=null) {
+  const id=journeyIdentity(journey);
+  const item=pendingRoadImport?.items?.find(candidate=>candidate?.journey?.id===id);
+  if (!item) return;
+  item.state=state;
+  item.error=error ? String(error) : null;
+  item.attempts=Number(item.attempts || 0)+1;
+  await savePendingRoadImport();
+  updateLocalProgressNotice();
+}
+
+async function finishPendingRoadImportIfComplete() {
+  if (!pendingRoadImport?.items?.length) return;
+  if (pendingRoadImport.items.every(item=>item.state==='completed')) await clearPendingRoadImport();
+  updateLocalProgressNotice();
 }
 
 async function clearFootArchive() {
@@ -1224,13 +1335,13 @@ function resetTrackingSession() {
 }
 
 async function showSavedProgress() {
-  await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
-  if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size) return;
+  await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
+  if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) return;
 
   const importStillRunning=easyImportRunning || footMatching;
   if (!importStillRunning) {
     resetTrackingSession();
-    journeys=savedMapJourneysExcluding();
+    journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
   }
   onboardingMode='saved';
   document.querySelector('main')?.classList.remove('onboarding-active');
@@ -1256,6 +1367,9 @@ async function showSavedProgress() {
   initMap();
   renderMap();
   requestAnimationFrame(()=>map?.invalidateSize(true));
+  if (!importStillRunning && pendingRoadImportCandidates().length) {
+    setTimeout(()=>void startEasyImport(),0);
+  }
 }
 
 async function showDataSourceChoice() {
@@ -1334,6 +1448,7 @@ loadLocalProgress();
 loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
 footArchiveReadyPromise=loadFootActivityArchive().finally(updateLocalProgressNotice);
+pendingRoadImportReadyPromise=loadPendingRoadImport().finally(updateLocalProgressNotice);
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
@@ -1351,10 +1466,11 @@ fileInput.addEventListener('change', async () => {
   status(`Reading ${file.name} (${formatBytes(file.size)})…`);
 
   try {
-    await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise]);
+    await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
     const text = await file.text();
     status(`Read complete. Identifying this file…`);
     const sourceFileHash = await timelineFileHash(text);
+    activeRoadImportSource={fileName:file.name,sourceFileHash};
     const fileWasPreviouslySeen = persistedImportedFileHashes.has(sourceFileHash);
     const hadReliableFileHashHistory = persistedFileHashTrackingStarted;
     status(`File identified. Parsing JSON…`);
@@ -2827,6 +2943,10 @@ function startDetailedImport() {
 // enough to avoid turning a large Timeline import into a burst of traffic.
 const ROAD_IMPORT_CONCURRENCY=2;
 const ROAD_MATCH_RETRY_DELAYS_MS=[750,2000];
+function roadImportProgressLabel(completed,total) {
+  const percent=total ? Math.round(completed/total*100) : 100;
+  return `${percent}% · ${completed} / ${total}`;
+}
 function isRetryableRoadMatchStatus(status){return status===429||status>=500}
 async function requestRoadMatchWithRetry(journey,sessionId){
   let lastError;
@@ -2883,9 +3003,12 @@ async function startEasyImport() {
 
   // Present and process the most recent trips first. Road first-discovery
   // attribution remains chronological in rebuildRoadDiscoveryLedger().
-  const candidates = currentImportJourneys()
+  const initialCandidates = currentImportJourneys()
     .filter(j => j.points.length > 1)
     .sort((a,b)=>Date.parse(b.end || b.start || '')-Date.parse(a.end || a.start || ''));
+  // Checkpoint every candidate before the first request, so a refresh or
+  // browser restart can resume the remaining local queue without the file.
+  const candidates = await preparePendingRoadImport(initialCandidates);
   let completed = 0;
   let succeeded = 0;
   let failed = 0;
@@ -2899,13 +3022,13 @@ async function startEasyImport() {
   async function worker(){
     while(sessionId===trackingSessionId){
       while(easyImportPaused&&sessionId===trackingSessionId){
-        setEasyProgressStatus(`Paused · ${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
+        setEasyProgressStatus(`Paused · ${roadImportProgressLabel(completed,candidates.length)}`,`${succeeded} matched · ${failed} retryable`);
         await new Promise(resolve=>setTimeout(resolve,250));
       }
       const index=nextCandidateIndex++;
       if(index>=candidates.length||sessionId!==trackingSessionId)return;
       const journey=candidates[index];
-      setEasyProgressStatus(`${completed} / ${candidates.length}`,`Matching up to ${ROAD_IMPORT_CONCURRENCY} journeys at once`);
+      setEasyProgressStatus(roadImportProgressLabel(completed,candidates.length),`Matching up to ${ROAD_IMPORT_CONCURRENCY} journeys at once`);
       try{
         const data=await requestRoadMatchWithRetry(journey,sessionId);
         if(sessionId!==trackingSessionId)return;
@@ -2921,6 +3044,7 @@ async function startEasyImport() {
         journey.matchQuality=assessMatchQuality(journey,data);
         await saveJourneyToMapArchive(journey);
         recordJourneyProcessed(journey);
+        await checkpointPendingRoadJourney(journey,'completed');
         rebuildRoadDiscoveryLedger();
         renderJourneyLog();
         scheduleLocalProgressSave();
@@ -2929,6 +3053,7 @@ async function startEasyImport() {
       }catch(err){
         if(sessionId!==trackingSessionId)return;
         journey.easyImportError=err.message||String(err);
+        await checkpointPendingRoadJourney(journey,'failed',journey.easyImportError);
         failed++;
       }
       completed++;
@@ -2945,7 +3070,7 @@ async function startEasyImport() {
           activateRoadprintsScreen('map');
         }
       }
-      setEasyProgressStatus(`${completed} / ${candidates.length}`,`${succeeded} matched · ${failed} skipped`);
+      setEasyProgressStatus(roadImportProgressLabel(completed,candidates.length),`${succeeded} matched · ${failed} retryable`);
       if(succeeded-lastRoadMapBatchCount>=LIVE_IMPORT_BATCH_SIZE){refreshImportMapBatch();lastRoadMapBatchCount=succeeded}
       await new Promise(resolve=>setTimeout(resolve,20));
     }
@@ -2953,6 +3078,7 @@ async function startEasyImport() {
   await Promise.all(Array.from({length:Math.min(ROAD_IMPORT_CONCURRENCY,candidates.length)},worker));
 
   if (sessionId !== trackingSessionId) return;
+  await finishPendingRoadImportIfComplete();
   // Keep the queue workspace on screen until on-foot matching has completed.
   updateEasyImportPauseButton();
   if (diagnostics.mileageRebuild && failed===0) {
@@ -2964,7 +3090,7 @@ async function startEasyImport() {
   importRoadResult=`completed in ${roadElapsed}`;
   setImportReadiness('progress','ready',`${succeeded.toLocaleString()} journey${succeeded===1?'':'s'} added to road discovery`);
   if (footMatching) {
-    setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
+    setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
       await new Promise(resolve=>setTimeout(resolve,200));
     }
@@ -2979,7 +3105,7 @@ async function startEasyImport() {
   updateEasyImportPauseButton();
   refreshImportMapBatch();
   renderRoadQueue();
-  setEasyProgressStatus('Road matching complete', `${succeeded} matched · ${failed} skipped · completed in ${roadElapsed}`);
+  setEasyProgressStatus('Road matching complete', `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
   document.getElementById('plotImportedMap')?.classList.remove('hidden');
   if (mapStatus) {
     mapStatus.classList.add('hidden');
