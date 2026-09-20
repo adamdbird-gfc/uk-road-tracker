@@ -157,6 +157,7 @@ const footImportSummaryBar = document.getElementById('footImportSummaryBar');
 const startFootBatch = document.getElementById('startFootBatch');
 const pauseFootMatching = document.getElementById('pauseFootMatching');
 const retryFootImport = document.getElementById('retryFootImport');
+const retryRoadImport = document.getElementById('retryRoadImport');
 const clearImportedData = document.getElementById('clearImportedData');
 const clearRoadData = document.getElementById('clearRoadData');
 const clearFootData = document.getElementById('clearFootData');
@@ -1759,6 +1760,7 @@ startFootBatch.addEventListener('click',()=>{
   else void startNextFootBatch();
 });
 retryFootImport?.addEventListener('click',()=>void retryUnableFootMatches());
+retryRoadImport?.addEventListener('click',()=>void startEasyImport());
 pauseFootMatching.addEventListener('click',()=>{
   if (!footMatching) return;
   footMatchingPaused=!footMatchingPaused;
@@ -2210,6 +2212,7 @@ function renderFootQueue() {
     retryFootImport.disabled=footMatching || !retryable;
     retryFootImport.textContent=`Retry on-foot routes (${retryable.toLocaleString()})`;
   }
+  renderRoadRetryAction();
 }
 
 async function retryUnableFootMatches(){
@@ -2987,6 +2990,10 @@ function setEasyProgressStatus(primary, secondary) {
   target.append(headline,detail);
 }
 
+function roadRetryCount() {
+  return currentImportJourneys().filter(journey=>journey.easyImportError).length;
+}
+
 function footRetryCount() {
   return footActivities.filter(activity=>!activity.matchedGeoJson && activity.matchError).length;
 }
@@ -3009,14 +3016,16 @@ function renderCollectiveImportProgress() {
   const completed=Math.min(total,Number(roadImportProgress.completed || 0)+Number(footImportProgress.completed || 0));
   const percent=total ? Math.round(completed/total*100) : 0;
   const retryableFoot=footRetryCount();
+  const retryableRoad=roadRetryCount();
+  const retryableTotal=retryableFoot+retryableRoad;
   easyProgressText.replaceChildren();
   const headline=document.createElement('strong');
-  headline.textContent=retryableFoot
+  headline.textContent=retryableTotal
     ? `Needs retry · ${completed.toLocaleString()} / ${total.toLocaleString()} processed`
     : total ? `${percent}% · ${completed.toLocaleString()} / ${total.toLocaleString()}` : 'Preparing…';
   const detail=document.createElement('span');
-  detail.textContent=retryableFoot
-    ? `${retryableFoot.toLocaleString()} on-foot route${retryableFoot===1?' needs':'s need'} another attempt`
+  detail.textContent=retryableTotal
+    ? `${retryableTotal.toLocaleString()} route${retryableTotal===1?' needs':'s need'} another attempt`
     : total ? 'Your road and on-foot journeys are being processed' : 'Preparing your journeys';
   easyProgressText.append(headline,detail);
   easyProgressBar.max=total || 1;
@@ -3043,7 +3052,7 @@ function beginImportReadiness(total) {
 }
 
 function syncImportSession() {
-  importSession.active=easyImportRunning || footMatching || hasFootRetryableWork();
+  importSession.active=easyImportRunning || footMatching || hasFootRetryableWork() || roadRetryCount()>0;
   importSession.mapReady=importMapReady;
   const shell=document.querySelector('main');
   shell?.classList.toggle('import-running',importSession.active);
@@ -3060,8 +3069,17 @@ function syncImportSession() {
   document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active);
 }
 
+function renderRoadRetryAction() {
+  if (!retryRoadImport) return;
+  const retryable=roadRetryCount();
+  retryRoadImport.classList.toggle('hidden', easyImportRunning || !retryable);
+  retryRoadImport.disabled=easyImportRunning || !retryable;
+  retryRoadImport.textContent=`Retry road routes (${retryable.toLocaleString()})`;
+}
+
 function updateImportStatusButton() {
   syncImportSession();
+  renderRoadRetryAction();
 }
 
 function openImportStatus() {
@@ -3229,6 +3247,7 @@ async function startEasyImport() {
       try{
         const data=await requestRoadMatchWithRetry(journey,sessionId);
         if(sessionId!==trackingSessionId)return;
+        delete journey.easyImportError;
         journey.matchedGeoJson=data.geojson;
         journey.motorwayGeoJson=data.motorway_geojson;
         journey.aRoadGeoJson=data.a_road_geojson||{type:'FeatureCollection',features:[]};
@@ -3311,7 +3330,8 @@ async function startEasyImport() {
   // for navigation or for the on-foot queue to finish.
   renderMap();
   renderRoadQueue();
-  setEasyProgressStatus(footNeedsRetry ? 'On-foot matching needs retry' : 'Road matching complete', footNeedsRetry ? 'Your driving results are ready. Retry the remaining on-foot routes when the shared route service has recovered.' : `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
+  const roadNeedsRetry=roadRetryCount()>0;
+  setEasyProgressStatus(roadNeedsRetry ? 'Road matching needs retry' : footNeedsRetry ? 'On-foot matching needs retry' : 'Road matching complete', roadNeedsRetry ? 'Retry the remaining road routes. Completed journeys remain safely saved.' : footNeedsRetry ? 'Your driving results are ready. Retry the remaining on-foot routes when the shared route service has recovered.' : `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
   document.getElementById('plotImportedMap')?.classList.remove('hidden');
   if (mapStatus) {
     mapStatus.classList.add('hidden');
