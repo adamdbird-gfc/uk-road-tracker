@@ -40,6 +40,8 @@ let trackingSessionId = 0;
 let importFootStartedAt = null;
 let importFootResult = null;
 let importRoadResult = null;
+let roadImportProgress = {completed:0,total:0};
+let footImportProgress = {completed:0,total:0};
 let distanceUnit = 'miles';
 let onboardingMode = null;
 const refinedCoverageByRef = new Map();
@@ -144,6 +146,8 @@ const ignoredList = document.getElementById('ignoredList');
 const footQueueCard = document.getElementById('footQueueCard');
 const footProgressText = document.getElementById('footProgressText');
 const footProgressBar = document.getElementById('footProgressBar');
+const roadImportSummaryText = document.getElementById('roadImportSummaryText');
+const roadImportSummaryBar = document.getElementById('roadImportSummaryBar');
 const footImportSummaryText = document.getElementById('footImportSummaryText');
 const footImportSummaryBar = document.getElementById('footImportSummaryBar');
 const startFootBatch = document.getElementById('startFootBatch');
@@ -1302,7 +1306,11 @@ function resetTrackingSession() {
   networkProgressFill.style.width = '0%';
   networkProgressBar.setAttribute('aria-valuenow', '0');
   easyProgressBar.value = 0;
+  roadImportSummaryBar && (roadImportSummaryBar.value = 0);
+  roadImportProgress = {completed:0,total:0};
+  footImportProgress = {completed:0,total:0};
   setEasyProgressStatus('Waiting…','Preparing routes');
+  renderCollectiveImportProgress();
   updateEasyImportPauseButton();
 
   importModeCard.classList.add('hidden');
@@ -2048,6 +2056,8 @@ function renderFootQueue() {
   const lastFootError=footActivities.find(activity=>!activity.matchedGeoJson&&activity.matchError)?.matchError || '';
   footProgressBar.max=distinct || 1;
   footProgressBar.value=Math.min(distinct,matched+failed);
+  footImportProgress={completed:Math.min(distinct,matched+failed),total:distinct};
+  renderCollectiveImportProgress();
   if (footImportSummaryBar) {
     footImportSummaryBar.max=distinct || 1;
     footImportSummaryBar.value=Math.min(distinct,matched+failed);
@@ -2828,12 +2838,30 @@ function renderIgnoredJourneys() {
 }
 
 function setEasyProgressStatus(primary, secondary) {
-  easyProgressText.replaceChildren();
+  // Road remains a distinct queue beneath the collective Roadprint total.
+  const target=roadImportSummaryText || easyProgressText;
+  target.replaceChildren();
   const headline=document.createElement('strong');
   headline.textContent=primary;
   const detail=document.createElement('span');
   detail.textContent=secondary;
+  target.append(headline,detail);
+}
+
+function renderCollectiveImportProgress() {
+  const roadTotal=Number(roadImportProgress.total || 0);
+  const footTotal=Number(footImportProgress.total || 0);
+  const total=roadTotal+footTotal;
+  const completed=Math.min(total,Number(roadImportProgress.completed || 0)+Number(footImportProgress.completed || 0));
+  const percent=total ? Math.round(completed/total*100) : 0;
+  easyProgressText.replaceChildren();
+  const headline=document.createElement('strong');
+  headline.textContent=total ? `${percent}% · ${completed.toLocaleString()} / ${total.toLocaleString()}` : 'Preparing…';
+  const detail=document.createElement('span');
+  detail.textContent=total ? 'Your road and on-foot journeys are being processed' : 'Preparing your journeys';
   easyProgressText.append(headline,detail);
+  easyProgressBar.max=total || 1;
+  easyProgressBar.value=completed;
 }
 
 function setImportReadiness(stage, state, detail) {
@@ -3018,8 +3046,12 @@ async function startEasyImport() {
   let lastRoadMapBatchCount = 0;
   let nextCandidateIndex=0;
 
-  easyProgressBar.max = candidates.length || 1;
-  easyProgressBar.value = 0;
+  roadImportProgress={completed:0,total:candidates.length};
+  if (roadImportSummaryBar) {
+    roadImportSummaryBar.max=candidates.length || 1;
+    roadImportSummaryBar.value=0;
+  }
+  renderCollectiveImportProgress();
   beginImportReadiness(candidates.length);
 
   async function worker(){
@@ -3060,7 +3092,9 @@ async function startEasyImport() {
         failed++;
       }
       completed++;
-      easyProgressBar.value=completed;
+      roadImportProgress={completed,total:candidates.length};
+      if (roadImportSummaryBar) roadImportSummaryBar.value=completed;
+      renderCollectiveImportProgress();
       setImportReadiness('progress','working',`Finding roads in ${completed.toLocaleString()} of ${candidates.length.toLocaleString()} journeys`);
       if (succeeded) {
         setImportReadiness('map','ready','Your first map is ready');
