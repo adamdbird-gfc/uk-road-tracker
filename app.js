@@ -2727,7 +2727,7 @@ function unlockAchievement(definition) {
   scheduleLocalProgressSave();
   if (importMapReady && (easyImportRunning || footMatching)) {
     setImportReadiness('achievements','ready','Your first achievement is ready to explore');
-    setImportNavigationAvailability(['map','journeys','achievements']);
+    updateImportStatusButton();
   }
   showAchievementCelebration([definition]);
   return true;
@@ -4458,6 +4458,9 @@ async function ensureCanonicalRoadsForDiscoveredRefs(refs) {
     }
   } finally {
     canonicalLoadQueueRunning=false;
+    // References may have become ready after the previous calculation pass.
+    // Re-derive coverage before renderMap evaluates achievements.
+    canonicalCoverageDirty=true;
     if (map) renderMap();
   }
 }
