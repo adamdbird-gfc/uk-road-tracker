@@ -3261,6 +3261,10 @@ async function startEasyImport() {
   easyImportPaused=false;
   updateEasyImportPauseButton();
   refreshImportMapBatch();
+  // The live map deliberately defers expensive coverage calculations. Once
+  // driving is complete, run that derivation immediately rather than waiting
+  // for navigation or for the on-foot queue to finish.
+  renderMap();
   renderRoadQueue();
   setEasyProgressStatus('Road matching complete', `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
   document.getElementById('plotImportedMap')?.classList.remove('hidden');
