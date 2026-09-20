@@ -2860,10 +2860,11 @@ async function startNextFootBatch() {
       }
     } catch (err) {
       activity.matchError=err.message || String(err);
-      footMatchingProgress.failed++;
       if (/temporarily rate-limited|HTTP 429/i.test(activity.matchError)) {
+        activity.matchError='Walking route matching is temporarily limited by its shared provider. Retry the remaining routes a little later.';
         footMatchingError='Walking route matching is temporarily limited by its shared provider. Your completed routes are safe; retry the remaining routes a little later.';
       }
+      footMatchingProgress.failed++;
       try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
       consecutiveFailures++;
       if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
