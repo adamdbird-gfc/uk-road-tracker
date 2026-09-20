@@ -307,6 +307,34 @@ def settlement_inventory_status(external_code: str) -> dict | None:
         return None
 
 
+
+def settlement_boundary_geojson(external_code: str) -> dict | None:
+    """Return shared public settlement boundary geometry, never Journey data."""
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return None
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT s.external_code, s.name, ST_AsGeoJSON(b.geometry)
+                    FROM settlements AS s
+                    JOIN settlement_boundaries AS b ON b.settlement_id = s.id
+                    WHERE s.external_code = %s AND s.is_active
+                    """,
+                    (external_code,),
+                )
+                row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "type": "Feature",
+            "properties": {"code": row[0], "name": row[1]},
+            "geometry": json.loads(row[2]),
+        }
+    except Exception:
+        return None
+
 def request_settlement_inventory(external_code: str) -> dict | None:
     """Deduplicate a public settlement inventory request without route data."""
     if not DATABASE_URL or database_state["status"] != "ready":
