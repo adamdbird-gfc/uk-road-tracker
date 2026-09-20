@@ -16,6 +16,8 @@ from database import (
     find_settlements_for_geometry,
     initialise_database,
     reference_catalogue_status,
+    request_settlement_inventory,
+    settlement_inventory_status,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -67,6 +69,9 @@ class ImportCoordinatorHandshake(BaseModel):
     """Compatibility handshake deliberately limited to non-personal data."""
     contract_version: int = Field(ge=1, le=1)
     contains_personal_data: bool = False
+
+class SettlementInventoryRequest(BaseModel):
+    settlement_code: str = Field(pattern=r"^[A-Z]\\d{8}$")
 
 def chunk_points(points):
     if len(points) <= OSRM_CHUNK_SIZE:
@@ -315,6 +320,25 @@ async def place_name(lat: float, lng: float):
     result = name or "Local area"
     PLACE_NAME_CACHE[key] = result
     return {"name": result}
+
+@app.get("/settlement-inventories/{settlement_code}")
+async def get_settlement_inventory(settlement_code: str):
+    code = settlement_code.upper()
+    if not re.fullmatch(r"[A-Z]\\d{8}", code):
+        raise HTTPException(status_code=400, detail="A valid settlement code is required.")
+    inventory = settlement_inventory_status(code)
+    if inventory is None:
+        raise HTTPException(status_code=404, detail="Settlement inventory status is unavailable.")
+    return {"inventory": inventory, "contains_personal_data": False}
+
+
+@app.post("/settlement-inventories/request")
+async def request_inventory(payload: SettlementInventoryRequest):
+    inventory = request_settlement_inventory(payload.settlement_code.upper())
+    if inventory is None:
+        raise HTTPException(status_code=404, detail="Settlement inventory request could not be registered.")
+    return {"inventory": inventory, "contains_personal_data": False}
+
 
 @app.post("/settlements-for-geometry")
 async def settlements_for_geometry(payload: SettlementGeometryRequest):
