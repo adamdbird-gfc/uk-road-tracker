@@ -2863,7 +2863,10 @@ function syncImportSession() {
   if (!importSession.active) importSession.statusOpen=false;
   updateImportNavigationFromCoordinator();
   if (importStatusButton) {
-    importStatusButton.classList.toggle('hidden',!(importSession.mapReady && importSession.active));
+    // Growing is the global route back to the import sheet. It must be
+    // available throughout any active import, including the first transition
+    // from the status card to Map.
+    importStatusButton.classList.toggle('hidden',!importSession.active);
   }
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
@@ -5555,9 +5558,10 @@ function appendLiveImportGeometry(activity,{color,weight,opacity=.86}={}) {
 }
 
 function refreshImportMapBatch() {
-  // Consolidate occasionally. This applies deduplication and updates the
-  // dashboard without turning every newly matched route into a full redraw.
-  renderMap();
+  // Consolidate into the durable cumulative layer without first blanking the
+  // live preview. On a mobile map that blank frame made each new journey look
+  // as though earlier routes had vanished.
+  renderMap({deferCalculations:true,preserveLive:true});
   liveImportLayer?.clearLayers();
 }
 
@@ -6046,6 +6050,8 @@ function activateRoadprintsScreen(screen) {
   // This screen may have first rendered during splash setup, before app-ready
   // existed. Refresh it at the point the user actually opens the tab.
   if(screen==='achievements') renderAchievements();
+  // Screen navigation must not accidentally hide the global import status.
+  updateImportStatusButton();
   if(screen==='map' && !settlementBoundaryMode) {
     setTimeout(()=>{
       map?.invalidateSize();
