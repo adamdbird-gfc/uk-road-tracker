@@ -28,7 +28,7 @@ A new IndexedDB record will store one active road-import queue:
 - source file hash and display name;
 - compact pending Journey candidates: local identifiers, dates, mode, Timeline distance, repeat metadata and route points;
 - pending, completed, failed and retry counters;
-- a short rolling throughput sample for a new estimated completion time.
+- a short rolling throughput sample for internal diagnostic use only.
 
 The record never leaves the device. It is deleted only when every pending item has either completed or has been deliberately cleared with the user’s road-data reset.
 
@@ -42,20 +42,17 @@ The record never leaves the device. It is deleted only when every pending item h
 6. Resume pending work in the foreground when the user re-enters saved Roadprints data.
 7. Keep failed items visible as retryable work; do not silently discard them.
 
-## Estimated completion
+## User-visible progress
 
-After enough completed samples to avoid a misleading early guess, show:
+Show matching progress as a percentage alongside completed and remaining journey counts.
 
-- completed and remaining journeys;
-- estimated time remaining;
-- a plain-language note that estimates adapt to route complexity and connection speed.
-
-A new session recalculates its estimate from newly observed work; the underlying pending/completed counts remain durable.
+Do not show a time-based countdown, completion deadline or other promise of when matching will finish. Matching speed legitimately varies with route complexity and network conditions; the percentage and counts update truthfully as work completes.
 
 ## Acceptance criteria
 
 - Interrupting a road import does not require selecting the file again to continue.
 - Already matched Journeys are not rematched or duplicated.
 - Progress, mileage, coverage and corrections remain intact.
+- Progress displays a percentage and completed/remaining counts, with no ETA countdown.
 - The ten-journey test file completes normally.
 - No Timeline file, Journey, route point, queue record or user identity is stored remotely.
