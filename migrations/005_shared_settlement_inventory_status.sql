@@ -1,7 +1,7 @@
 -- Shared, versioned settlement inventory status. This table contains only
 -- public settlement-reference work; it never records journeys, routes or users.
 CREATE TABLE IF NOT EXISTS settlement_inventories (
-    settlement_id BIGINT PRIMARY KEY REFERENCES settlements(id) ON DELETE CASCADE,
+    settlement_id UUID PRIMARY KEY REFERENCES settlements(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'building', 'ready', 'failed')),
     road_count INTEGER CHECK (road_count IS NULL OR road_count >= 0),
