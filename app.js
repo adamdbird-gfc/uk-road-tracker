@@ -2178,7 +2178,7 @@ function renderFootQueue() {
   const matched=footBatches.reduce((n,b)=>n+b.matched,0);
   const failed=footBatches.reduce((n,b)=>n+b.failed,0);
   const retryable=footBatches.reduce((n,b)=>n+b.activities.filter(item=>!item.matchedGeoJson&&item.matchError).length,0);
-  const lastFootError=footActivities.find(activity=>!activity.matchedGeoJson&&activity.matchError)?.matchError || '';
+  const lastFootError=friendlyFootError(footActivities.find(activity=>!activity.matchedGeoJson&&activity.matchError)?.matchError);
   footProgressBar.max=distinct || 1;
   footProgressBar.value=Math.min(distinct,matched+failed);
   footImportProgress={completed:Math.min(distinct,matched+failed),total:distinct};
@@ -2989,6 +2989,13 @@ function setEasyProgressStatus(primary, secondary) {
 
 function footRetryCount() {
   return footActivities.filter(activity=>!activity.matchedGeoJson && activity.matchError).length;
+}
+
+function friendlyFootError(error) {
+  const message=String(error || '');
+  return /temporarily rate-limited|HTTP 429|Bandwidth limit exceeded/i.test(message)
+    ? 'The walking route service is temporarily limited. Retry a little later.'
+    : message;
 }
 
 function hasFootRetryableWork() {
