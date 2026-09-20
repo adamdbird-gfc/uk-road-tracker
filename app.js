@@ -1346,9 +1346,13 @@ async function showSavedProgress() {
   await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
   if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) return;
 
-  const importStillRunning=easyImportRunning || footMatching;
-  if (!importStillRunning) {
-    resetTrackingSession();
+  const roadImportStillRunning=easyImportRunning;
+  const footImportStillRunning=footMatching;
+  // Road and on-foot recovery are independent. On-foot may have resumed from
+  // its archive before the user opens saved data; that must not prevent the
+  // pending road queue from being restored and started.
+  if (!roadImportStillRunning) {
+    if (!footImportStillRunning) resetTrackingSession();
     journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
   }
   onboardingMode='saved';
@@ -1375,7 +1379,7 @@ async function showSavedProgress() {
   initMap();
   renderMap();
   requestAnimationFrame(()=>map?.invalidateSize(true));
-  if (!importStillRunning && pendingRoadImportCandidates().length) {
+  if (!roadImportStillRunning && pendingRoadImportCandidates().length) {
     setTimeout(()=>void startEasyImport(),0);
   }
 }
