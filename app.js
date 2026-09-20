@@ -682,6 +682,7 @@ async function loadMapArchive() {
     renderRoadQueue();
     renderCollectiveStats();
     renderJourneyLog();
+    updateImportStatusButton();
   } catch (err) {
     console.warn('Saved map journeys could not be loaded:',err);
   }
@@ -847,6 +848,7 @@ async function loadFootActivityArchive() {
     buildFootBatches();
     renderFootQueue();
     renderCollectiveStats();
+    updateImportStatusButton();
     // Saved walking/running routes are a persistent queue: after a refresh or a
     // browser restart, continue with any representative routes still awaiting a match.
     if (footActivities.some(activity=>!activity.matchedGeoJson && !activity.matchError)) {
@@ -3045,12 +3047,13 @@ function closeImportStatusView() {
 }
 
 function updateImportNavigationFromCoordinator() {
-  // Driving reaches useful Roadprints results independently of the slower
-  // walking/running queue. Unlock those screens as soon as that road work is
-  // ready; later on-foot matches enrich them in place.
+  // A page refresh clears the transient session but never the device-local
+  // Journey archive. Saved data must therefore restore navigation directly.
+  const hasSavedJourneys=persistedMapJourneys.size>0 || persistedFootActivities.size>0;
+  const hasSavedRoadProgress=hasSavedJourneys || persistedCoverageByRef.size>0 || persistedARoadCoverageByRef.size>0;
   const ready=[];
-  if (importSession.mapReady) ready.push('map','journeys');
-  if (importSession.roadComplete) ready.push('progress','achievements','collections');
+  if (importSession.mapReady || hasSavedJourneys) ready.push('map','journeys');
+  if (importSession.roadComplete || hasSavedRoadProgress) ready.push('progress','achievements','collections');
   setImportNavigationAvailability(ready);
 }
 
