@@ -600,6 +600,16 @@ async function saveRoadDiscoveryEvidence(journey,mode) {
   persistedRoadDiscoveryEvidence.set(record.id,record);
 }
 
+async function recordRoadDiscoveryEvidence(journey,mode) {
+  try {
+    await saveRoadDiscoveryEvidence(journey,mode);
+  } catch (err) {
+    // The proven journey archive remains the source of truth during this
+    // transition. A derived-record failure must never interrupt an import.
+    console.warn('Road-discovery evidence could not be saved:',err);
+  }
+}
+
 async function loadRoadDiscoveryArchive() {
   try {
     const records=await roadDiscoveryArchiveOperation('readonly',store=>store.getAll());
@@ -620,7 +630,7 @@ async function backfillRoadDiscoveryEvidence() {
   for (const item of candidates) {
     const id=item.mode+':'+journeyIdentity(item.record);
     if (persistedRoadDiscoveryEvidence.get(id)?.version===ROAD_DISCOVERY_DERIVATION_VERSION) continue;
-    await saveRoadDiscoveryEvidence(item.record,item.mode);
+    await recordRoadDiscoveryEvidence(item.record,item.mode);
   }
 }
 
@@ -682,7 +692,7 @@ async function saveJourneyToMapArchive(journey) {
   if (!record) throw new Error('The matched journey did not contain saveable map geometry.');
   await mapArchiveOperation('readwrite',store=>store.put(record));
   persistedMapJourneys.set(record.id,record);
-  await saveRoadDiscoveryEvidence(record,'driving');
+  await recordRoadDiscoveryEvidence(record,'driving');
   updateLocalProgressNotice();
   renderJourneyLog();
   window.dispatchEvent(new Event('roadprints:archivechange'));
@@ -882,7 +892,7 @@ async function saveFootActivityMatch(activity) {
     const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,roadGeoJson:activity.roadGeoJson,matchQuality:activity.matchQuality,matchError:activity.matchError});
     await footArchiveOperation('readwrite',store=>store.put(record));
     persistedFootActivities.set(record.id,{...record,selected:true});
-    await saveRoadDiscoveryEvidence(record,'foot');
+    await recordRoadDiscoveryEvidence(record,'foot');
   }
   footActivities=[...persistedFootActivities.values()];
   renderCollectiveStats();
