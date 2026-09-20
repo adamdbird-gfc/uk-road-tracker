@@ -6561,7 +6561,20 @@ function normaliseSettlementName(value){return String(value||'').trim().toLocale
 function normaliseRoadName(value){return String(value||'').trim().toLocaleLowerCase('en-GB').replace(/\s+/g,' ')}
 async function loadSettlementInventoryManifest(){if(!settlementInventoryManifestPromise)settlementInventoryManifestPromise=fetch(SETTLEMENT_INVENTORY_MANIFEST_URL,{cache:'no-cache'}).then(async response=>{if(!response.ok)throw Error('Settlement manifest unavailable');const data=await response.json();return new Map((data.inventories||[]).map(entry=>[entry.code,entry]))});return settlementInventoryManifestPromise}
 async function loadSettlementInventoryIndex(){if(!settlementInventoryIndexPromise)settlementInventoryIndexPromise=Promise.all([fetch(SETTLEMENT_INVENTORY_INDEX_URL,{cache:'no-cache'}),loadSettlementInventoryManifest()]).then(async([response,manifest])=>{if(!response.ok)throw Error('Settlement catalogue unavailable');const data=await response.json();return new Map((data.settlements||[]).flatMap(entry=>{const merged={...entry,...(manifest.get(entry.code)||{})};return [merged.name,...(merged.aliases||[])].map(alias=>[normaliseSettlementName(alias),merged])}))});return settlementInventoryIndexPromise}
-async function fetchTownInventory(town){const entry=(await loadSettlementInventoryIndex()).get(normaliseSettlementName(town)),count=Number(entry?.count);if(!entry||entry.status!=='available'||!Number.isFinite(count))return null;return entry}
+async function fetchTownInventory(town){
+  const entry=(await loadSettlementInventoryIndex()).get(normaliseSettlementName(town));
+  const count=Number(entry?.count);
+  if(!entry)return null;
+  if(entry.status==='available'&&Number.isFinite(count))return entry;
+  if(!entry.code)return null;
+  const response=await fetch(`${API_BASE_URL}/settlement-inventories/${encodeURIComponent(entry.code)}`);
+  if(!response.ok)throw Error('Shared settlement inventory status is unavailable');
+  const shared=(await response.json()).inventory;
+  if(shared?.status==='ready'&&Number.isFinite(Number(shared.road_count))){
+    return {...entry,status:'available',count:Number(shared.road_count),source:'shared'};
+  }
+  return {...entry,status:shared?.status||'not_requested',shared};
+}
 async function preparePendingSettlementInventoryUpdate(){
   if(!exportPendingSettlementInventories)return;
   exportPendingSettlementInventories.disabled=true;
@@ -6603,8 +6616,29 @@ async function preparePendingSettlementInventoryUpdate(){
 }
 function setTown(town,roads){
  const key=townKey(town,roads[0].point),inv=localTownInventories.get(key),state=localTownInventoryStates.get(key)||'idle';
- document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const discovered=roads.length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='unavailable'?'Inventory building':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
-async function calculateTown(town,roads){const key=townKey(town,roads[0].point);if(localTownInventoryStates.get(key)==='loading')return;localTownInventoryStates.set(key,'loading');setTown(town,roads);try{const inventory=await Promise.race([fetchTownInventory(town),new Promise((_,reject)=>setTimeout(()=>reject(Error('Settlement inventory timed out')),20000))]);if(!inventory){localTownInventoryStates.set(key,'unavailable')}else{localTownInventories.set(key,inventory);saveLocalTownInventories();localTownInventoryStates.delete(key)}}catch(error){console.warn('Settlement road-count lookup failed:',error);localTownInventoryStates.set(key,'failed')}setTown(town,roads)}
+ document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const discovered=roads.length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='building'?'Inventory building':state==='pending'?'Inventory queued':state==='not_requested'||state==='unavailable'?'Inventory pending':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
+async function calculateTown(town,roads){
+  const key=townKey(town,roads[0].point);
+  if(localTownInventoryStates.get(key)==='loading')return;
+  localTownInventoryStates.set(key,'loading');
+  setTown(town,roads);
+  try{
+    const inventory=await Promise.race([fetchTownInventory(town),new Promise((_,reject)=>setTimeout(()=>reject(Error('Settlement inventory timed out')),20000))]);
+    if(!inventory){
+      localTownInventoryStates.set(key,'not_requested');
+    }else if(inventory.status==='available'&&Number.isFinite(Number(inventory.count))){
+      localTownInventories.set(key,inventory);
+      saveLocalTownInventories();
+      localTownInventoryStates.delete(key);
+    }else{
+      localTownInventoryStates.set(key,inventory.status||'not_requested');
+    }
+  }catch(error){
+    console.warn('Settlement inventory status lookup failed:',error);
+    localTownInventoryStates.set(key,'failed');
+  }
+  setTown(town,roads);
+}
 function queueTownInventory(town,roads){const key=townKey(town,roads[0].point);if(localTownInventories.has(key)||localTownInventoryStates.has(key)||settlementQueue.some(item=>item.key===key))return;settlementQueue.push({town,roads,key});runSettlementQueue()}
 function runSettlementQueue(){while(settlementQueueRunning<SETTLEMENT_QUEUE_LIMIT&&settlementQueue.length){const next=settlementQueue.shift();settlementQueueRunning++;calculateTown(next.town,next.roads).finally(()=>{settlementQueueRunning--;runSettlementQueue()})}}
 function clearSettlementBoundary(){settlementBoundaryMode=false;settlementBoundaryLayer?.remove();settlementBoundaryLayer=null;document.getElementById('settlementBoundaryReturn')?.remove();if(map){showDefaultUnitedKingdomView();renderMap();renderCanonicalMapLayers();renderCanonicalARoadMapLayers()}refreshARoadBackgroundStatus?.()}
