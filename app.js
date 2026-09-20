@@ -2072,7 +2072,9 @@ function renderFootQueue() {
     footImportSummaryBar.value=Math.min(distinct,matched+failed);
   }
   setFootProgressStatus(
-    footMatchingError ? 'Stopped' : footMatchingProgress ? `${footMatchingProgress.completed} / ${footMatchingProgress.total}` : retryable ? 'Needs retry' : 'Complete',
+    footMatchingError ? 'Stopped' : footMatchingProgress
+      ? (footMatchingPaused ? `Paused · ${footMatchingProgress.completed} / ${footMatchingProgress.total}` : `${footMatchingProgress.completed} / ${footMatchingProgress.total}`)
+      : retryable ? 'Needs retry' : 'Complete',
     footMatchingError ? footMatchingError : footMatchingProgress
       ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
       : retryable
