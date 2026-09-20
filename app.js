@@ -6642,7 +6642,27 @@ async function calculateTown(town,roads){
 function queueTownInventory(town,roads){const key=townKey(town,roads[0].point);if(localTownInventories.has(key)||localTownInventoryStates.has(key)||settlementQueue.some(item=>item.key===key))return;settlementQueue.push({town,roads,key});runSettlementQueue()}
 function runSettlementQueue(){while(settlementQueueRunning<SETTLEMENT_QUEUE_LIMIT&&settlementQueue.length){const next=settlementQueue.shift();settlementQueueRunning++;calculateTown(next.town,next.roads).finally(()=>{settlementQueueRunning--;runSettlementQueue()})}}
 function clearSettlementBoundary(){settlementBoundaryMode=false;settlementBoundaryLayer?.remove();settlementBoundaryLayer=null;document.getElementById('settlementBoundaryReturn')?.remove();if(map){showDefaultUnitedKingdomView();renderMap();renderCanonicalMapLayers();renderCanonicalARoadMapLayers()}refreshARoadBackgroundStatus?.()}
-async function showSettlementBoundary(town,inventory){const response=await fetch('settlement-inventories-v1/'+encodeURIComponent(inventory.code)+'-boundary.geojson');if(!response.ok)throw Error('Settlement boundary unavailable');const boundary=await response.json();settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();settlementBoundaryLayer=L.geoJSON(boundary,{style:{color:'#f7c450',weight:3,fillColor:'#f7c450',fillOpacity:.18,interactive:false}}).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Viewing settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)}
+async function loadSettlementBoundary(inventory){
+  if(inventory?.code){
+    try{
+      const sharedResponse=await fetch(`${API_BASE_URL}/settlement-boundaries/${encodeURIComponent(inventory.code)}`);
+      if(sharedResponse.ok){
+        const shared=await sharedResponse.json();
+        if(shared?.boundary)return shared.boundary;
+      }
+    }catch(error){
+      console.warn('Shared settlement boundary lookup failed:',error);
+    }
+  }
+  const response=await fetch('settlement-inventories-v1/'+encodeURIComponent(inventory.code)+'-boundary.geojson');
+  if(!response.ok)throw Error('Settlement boundary unavailable');
+  return response.json();
+}
+async function showSettlementBoundary(town,inventory){
+  const boundary=await loadSettlementBoundary(inventory);
+  settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');
+  setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();settlementBoundaryLayer=L.geoJSON(boundary,{style:{color:'#f7c450',weight:3,fillColor:'#f7c450',fillOpacity:.18,interactive:false}}).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Viewing settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)
+}
 // Resolve local roads against the official ONS boundary service in the
 // background; the user-facing ledger changes only once a result is available.
 const SETTLEMENT_CHECK_CACHE_KEY='roadprints-settlement-check-v1';
