@@ -1,6 +1,8 @@
 import hashlib
 import json
 import os
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import psycopg
@@ -128,6 +130,122 @@ def reference_catalogue_status() -> dict:
         }
     except Exception:
         return unavailable
+
+
+# This deliberately small next batch consists of settlements that Roadprints
+# has already encountered. It is not a national geometry import.
+SETTLEMENT_BOUNDARY_SEED_CODES = (
+    "E63000498",  # Dalton-in-Furness
+    "E63004165",  # Great Dunmow
+    "E63005055",  # Lower Higham
+    "E63005466",  # Maidstone
+    "E63005039",  # Northfleet
+    "E63005580",  # Reigate
+)
+ONS_BUA_FEATURE_SERVICE = (
+    "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/"
+    "BUA_2022_GB/FeatureServer/0/query"
+)
+SETTLEMENT_BOUNDARY_SEED_DATASET_KEY = "settlement_boundaries_seed_v1"
+
+
+def load_seed_settlement_boundaries(cursor) -> None:
+    """Load a small, idempotent set of official GB settlement boundaries.
+
+    The data is shared reference geometry only. This loader is intentionally
+    bounded; it neither accepts nor queries Roadprints Journey data.
+    """
+    cursor.execute(
+        "SELECT id FROM reference_sources WHERE source_key = %s",
+        ("ons_bua_2022_gb",),
+    )
+    source = cursor.fetchone()
+    if not source:
+        return
+    source_id = source[0]
+
+    cursor.execute(
+        """
+        SELECT s.external_code
+        FROM settlement_boundaries AS boundary
+        JOIN settlements AS s ON s.id = boundary.settlement_id
+        WHERE s.source_id = %s
+          AND s.external_code = ANY(%s)
+        """,
+        (source_id, list(SETTLEMENT_BOUNDARY_SEED_CODES)),
+    )
+    existing_codes = {row[0] for row in cursor.fetchall()}
+    missing_codes = [
+        code for code in SETTLEMENT_BOUNDARY_SEED_CODES if code not in existing_codes
+    ]
+    if not missing_codes:
+        return
+
+    where = "BUA22CD IN (" + ",".join(
+        "'" + code.replace("'", "''") + "'" for code in missing_codes
+    ) + ")"
+    query = urllib.parse.urlencode(
+        {
+            "where": where,
+            "outFields": "BUA22CD,BUA22NM",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "geojson",
+        }
+    )
+    try:
+        with urllib.request.urlopen(
+            ONS_BUA_FEATURE_SERVICE + "?" + query, timeout=30
+        ) as response:
+            payload = json.load(response)
+    except Exception:
+        # The live fallback remains available. A temporary public-source
+        # outage must never make the application or its database unavailable.
+        return
+
+    loaded_codes = []
+    geometry_fingerprints = []
+    for feature in payload.get("features", []):
+        attributes = feature.get("properties") or {}
+        code = attributes.get("BUA22CD")
+        geometry = feature.get("geometry")
+        if code not in missing_codes or not isinstance(geometry, dict):
+            continue
+        geometry_json = json.dumps(geometry, separators=(",", ":"), sort_keys=True)
+        cursor.execute(
+            """
+            INSERT INTO settlement_boundaries (settlement_id, source_id, geometry)
+            SELECT s.id, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)
+            FROM settlements AS s
+            WHERE s.source_id = %s AND s.external_code = %s
+            ON CONFLICT (settlement_id) DO UPDATE
+              SET source_id = EXCLUDED.source_id,
+                  geometry = EXCLUDED.geometry,
+                  updated_at = NOW()
+            """,
+            (source_id, geometry_json, source_id, code),
+        )
+        if cursor.rowcount:
+            loaded_codes.append(code)
+            geometry_fingerprints.append(code + ":" + geometry_json)
+
+    if not loaded_codes:
+        return
+    checksum = hashlib.sha256(
+        "\n".join(sorted(geometry_fingerprints)).encode("utf-8")
+    ).hexdigest()
+    cursor.execute(
+        """
+        INSERT INTO reference_data_loads
+          (source_id, dataset_key, checksum, row_count)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (source_id, dataset_key) DO UPDATE
+        SET checksum = EXCLUDED.checksum,
+            row_count = EXCLUDED.row_count,
+            loaded_at = NOW()
+        """,
+        (source_id, SETTLEMENT_BOUNDARY_SEED_DATASET_KEY, checksum, len(loaded_codes)),
+    )
 
 
 def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
