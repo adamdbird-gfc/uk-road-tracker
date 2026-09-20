@@ -6294,7 +6294,22 @@ function rebuildRoadDiscoveryLedger() {
         }
       }
     }
-    for (const road of seen.values()) {
+    // Only read the new derived record when it exactly describes the
+    // journey's current matched-road facts. Otherwise the established
+    // feature calculation remains the fallback for this journey alone.
+    const storedEvidence=persistedRoadDiscoveryEvidence.get(item.mode+':'+journeyIdentity(item.record));
+    const currentRoads=[...seen.values()].map(road=>({id:road.id,label:road.label,category:road.category})).sort((a,b)=>a.id.localeCompare(b.id));
+    const storedRoads=Array.isArray(storedEvidence?.roads)
+      ? storedEvidence.roads.map(road=>({id:road.id,label:road.label,category:road.category})).sort((a,b)=>a.id.localeCompare(b.id))
+      : [];
+    const evidenceMatches=storedEvidence?.version===ROAD_DISCOVERY_DERIVATION_VERSION
+      && storedEvidence.matchedFeatureCount===discoveryFeatures.length
+      && storedRoads.length===currentRoads.length
+      && storedRoads.every((road,index)=>road.id===currentRoads[index].id&&road.label===currentRoads[index].label&&road.category===currentRoads[index].category);
+    const ledgerRoads=evidenceMatches
+      ? storedRoads.map(road=>({...road,evidence:seen.get(road.id)?.evidence || [],point:seen.get(road.id)?.point}))
+      : [...seen.values()];
+    for (const road of ledgerRoads) {
       let entry=roadDiscoveryLedger.get(road.id);
       if (!entry) { entry={...road,driven:false,onFoot:false,evidence:[]}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
       entry.evidence.push(...road.evidence);
