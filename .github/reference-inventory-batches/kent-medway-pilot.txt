@@ -1,0 +1,14 @@
+# Kent/Medway validation batch for the shared local-road catalogue.
+# Shared reference codes only — never personal journey data.
+# Includes established towns for parity checks and the first two new catalogues.
+E63004964
+E63005030
+E63005041
+E63005058
+E63005084
+E63005204
+E63005212
+E63005234
+E63005283
+E63005466
+E63005580
