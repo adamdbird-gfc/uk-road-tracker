@@ -358,6 +358,39 @@ def request_settlement_inventory(external_code: str) -> dict | None:
     except Exception:
         return None
 
+
+def settlement_metadata(names: list[str]) -> list[dict] | None:
+    """Return shared settlement display metadata, never Journey information."""
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return None
+    clean_names = sorted({name.strip() for name in names if name and name.strip()})
+    if not clean_names:
+        return []
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT external_code, name, nation, region, county
+                    FROM settlements
+                    WHERE is_active AND name = ANY(%s)
+                    ORDER BY name, external_code
+                    """,
+                    (clean_names,),
+                )
+                return [
+                    {
+                        "code": external_code,
+                        "name": name,
+                        "nation": nation,
+                        "region": region,
+                        "county": county,
+                    }
+                    for external_code, name, nation, region, county in cursor.fetchall()
+                ]
+    except Exception:
+        return None
+
 def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
     """Find shared settlement boundaries intersecting transient route geometry.
 
@@ -373,7 +406,7 @@ def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT s.external_code, s.name
+                    SELECT s.external_code, s.name, s.nation, s.region, s.county
                     FROM settlement_boundaries AS boundary
                     JOIN settlements AS s ON s.id = boundary.settlement_id
                     WHERE s.is_active
@@ -386,8 +419,8 @@ def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
                     (geometry_json,),
                 )
                 return [
-                    {"code": external_code, "name": name}
-                    for external_code, name in cursor.fetchall()
+                    {"code": external_code, "name": name, "nation": nation, "region": region, "county": county}
+                    for external_code, name, nation, region, county in cursor.fetchall()
                 ]
     except Exception:
         # Reference lookup must remain an optional acceleration while coverage
