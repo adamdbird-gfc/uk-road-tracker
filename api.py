@@ -71,7 +71,7 @@ class ImportCoordinatorHandshake(BaseModel):
     contains_personal_data: bool = False
 
 class SettlementInventoryRequest(BaseModel):
-    settlement_code: str = Field(pattern=r"^[A-Z]\\d{8}$")
+    settlement_code: str = Field(pattern=r"^[A-Z]\d{8}$")
 
 def chunk_points(points):
     if len(points) <= OSRM_CHUNK_SIZE:
@@ -324,7 +324,7 @@ async def place_name(lat: float, lng: float):
 @app.get("/settlement-inventories/{settlement_code}")
 async def get_settlement_inventory(settlement_code: str):
     code = settlement_code.upper()
-    if not re.fullmatch(r"[A-Z]\\d{8}", code):
+    if not re.fullmatch(r"[A-Z]\d{8}", code):
         raise HTTPException(status_code=400, detail="A valid settlement code is required.")
     inventory = settlement_inventory_status(code)
     if inventory is None:
