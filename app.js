@@ -2076,7 +2076,7 @@ function renderFootQueue() {
       ? (footMatchingPaused ? `Paused · ${footMatchingProgress.completed} / ${footMatchingProgress.total}` : `${footMatchingProgress.completed} / ${footMatchingProgress.total}`)
       : retryable ? 'Needs retry' : 'Complete',
     footMatchingError ? footMatchingError : footMatchingProgress
-      ? `${footMatchingPaused ? 'Paused in' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
+      ? `${footMatchingPaused ? 'Paused' : 'Matching'} ${footMatchingProgress.area} · ${footMatchingProgress.succeeded} matched · ${footMatchingProgress.failed} unable`
       : retryable
         ? `${retryable.toLocaleString()} route${retryable===1?'':'s'} could not be matched. Last issue: ${lastFootError}`
         : `${matched.toLocaleString()} route${matched===1?'':'s'} mapped${failed ? ` · ${failed.toLocaleString()} unable to match` : ''} · ${footActivities.length.toLocaleString()} on-foot activities${importFootResult ? ` · ${importFootResult}` : ''}`
