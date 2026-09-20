@@ -19,6 +19,7 @@ from database import (
     request_settlement_inventory,
     settlement_boundary_geojson,
     settlement_inventory_status,
+    settlement_metadata,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -73,6 +74,9 @@ class ImportCoordinatorHandshake(BaseModel):
 
 class SettlementInventoryRequest(BaseModel):
     settlement_code: str = Field(pattern=r"^[A-Z]\d{8}$")
+
+class SettlementMetadataRequest(BaseModel):
+    names: List[str] = Field(min_length=1, max_length=500)
 
 def chunk_points(points):
     if len(points) <= OSRM_CHUNK_SIZE:
@@ -350,6 +354,14 @@ async def request_inventory(payload: SettlementInventoryRequest):
     if inventory is None:
         raise HTTPException(status_code=404, detail="Settlement inventory request could not be registered.")
     return {"inventory": inventory, "contains_personal_data": False}
+
+
+@app.post("/settlement-metadata")
+async def get_settlement_metadata(payload: SettlementMetadataRequest):
+    metadata = settlement_metadata(payload.names)
+    if metadata is None:
+        raise HTTPException(status_code=503, detail="Settlement metadata is unavailable.")
+    return {"settlements": metadata, "contains_personal_data": False}
 
 
 @app.post("/settlements-for-geometry")
