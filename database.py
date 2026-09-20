@@ -129,6 +129,43 @@ def reference_catalogue_status() -> dict:
     except Exception:
         return unavailable
 
+
+def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
+    """Find shared settlement boundaries intersecting transient route geometry.
+
+    This reads only public reference data.  Callers must not persist or log the
+    supplied route geometry; an empty result means the caller may use its
+    existing fallback while the national boundary catalogue is still growing.
+    """
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return None
+    try:
+        geometry_json = json.dumps(geometry, separators=(",", ":"))
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT s.external_code, s.name
+                    FROM settlement_boundaries AS boundary
+                    JOIN settlements AS s ON s.id = boundary.settlement_id
+                    WHERE s.is_active
+                      AND ST_Intersects(
+                        boundary.geometry,
+                        ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)
+                      )
+                    ORDER BY s.name
+                    """,
+                    (geometry_json,),
+                )
+                return [
+                    {"code": external_code, "name": name}
+                    for external_code, name in cursor.fetchall()
+                ]
+    except Exception:
+        # Reference lookup must remain an optional acceleration while coverage
+        # is partial.  The existing boundary service remains the safe fallback.
+        return None
+
 def initialise_database() -> None:
     if not DATABASE_URL:
         return
