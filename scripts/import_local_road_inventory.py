@@ -112,7 +112,7 @@ def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]
         for line_number, line in enumerate(stream, start=1):
             if not line.strip():
                 continue
-            record = line.strip().lstrip("\\x1e").strip()
+            record = line.strip().lstrip("\x1e").strip()
             if not record:
                 continue
             feature = json.loads(record)
