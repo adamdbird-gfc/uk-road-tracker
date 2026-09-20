@@ -17,6 +17,7 @@ from database import (
     initialise_database,
     reference_catalogue_status,
     request_settlement_inventory,
+    settlement_boundary_geojson,
     settlement_inventory_status,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -330,6 +331,17 @@ async def get_settlement_inventory(settlement_code: str):
     if inventory is None:
         raise HTTPException(status_code=404, detail="Settlement inventory status is unavailable.")
     return {"inventory": inventory, "contains_personal_data": False}
+
+
+@app.get("/settlement-boundaries/{settlement_code}")
+async def get_settlement_boundary(settlement_code: str):
+    code = settlement_code.upper()
+    if not re.fullmatch(r"[A-Z]\d{8}", code):
+        raise HTTPException(status_code=400, detail="A valid settlement code is required.")
+    boundary = settlement_boundary_geojson(code)
+    if boundary is None:
+        raise HTTPException(status_code=404, detail="Settlement boundary is unavailable.")
+    return {"boundary": boundary, "contains_personal_data": False}
 
 
 @app.post("/settlement-inventories/request")
