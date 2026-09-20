@@ -317,6 +317,7 @@ def initialise_database() -> None:
                         (migration.name, checksum),
                     )
                 load_settlement_catalogue(cursor)
+                load_seed_settlement_boundaries(cursor)
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
