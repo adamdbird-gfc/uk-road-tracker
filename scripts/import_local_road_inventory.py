@@ -15,6 +15,7 @@ from pathlib import Path
 
 import psycopg
 from shapely.geometry import shape
+from shapely.strtree import STRtree
 
 ELIGIBLE_CLASSES = {"residential", "unclassified", "tertiary", "living_street"}
 SOURCE_KEY = "osm_gb_local_roads"
@@ -86,6 +87,12 @@ def load_boundaries(cursor, codes: list[str]) -> dict[str, tuple[str, object]]:
     return boundaries
 
 
+def build_boundary_index(boundaries: dict[str, tuple[str, object]]) -> tuple[list[str], STRtree]:
+    """Index settlement boundaries once so a source feature checks only nearby towns."""
+    codes = list(boundaries)
+    return codes, STRtree([boundaries[code][1] for code in codes])
+
+
 def mark_building(cursor, codes: list[str]) -> None:
     cursor.execute(
         """
@@ -108,6 +115,7 @@ def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]
     connection.commit()
 
     roads: dict[str, dict[str, tuple[str, str | None]]] = {code: {} for code in codes}
+    boundary_codes, boundary_tree = build_boundary_index(boundaries)
     with options.features.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, start=1):
             if not line.strip():
@@ -124,13 +132,9 @@ def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]
             road_geometry = shape(geometry)
             if road_geometry.is_empty:
                 continue
-            for code, (_, boundary) in boundaries.items():
-                if boundary.bounds[0] > road_geometry.bounds[2] or boundary.bounds[2] < road_geometry.bounds[0]:
-                    continue
-                if boundary.bounds[1] > road_geometry.bounds[3] or boundary.bounds[3] < road_geometry.bounds[1]:
-                    continue
-                if boundary.intersects(road_geometry):
-                    roads[code][road_name] = (road_class, feature_id)
+            for position in boundary_tree.query(road_geometry, predicate="intersects"):
+                code = boundary_codes[int(position)]
+                roads[code][road_name] = (road_class, feature_id)
 
     with connection.cursor() as cursor:
         source = source_id(cursor, options.source_version)
