@@ -2979,8 +2979,9 @@ function startDetailedImport() {
 const ROAD_IMPORT_CONCURRENCY=2;
 const ROAD_MATCH_RETRY_DELAYS_MS=[750,2000];
 function roadImportProgressLabel(completed,total) {
-  const percent=total ? Math.round(completed/total*100) : 100;
-  return `${percent}% · ${completed} / ${total}`;
+  // Percentages belong to the overall Roadprint total. Individual queues use
+  // clear counts because they progress at different rates.
+  return `${completed} / ${total}`;
 }
 function isRetryableRoadMatchStatus(status){return status===429||status>=500}
 async function requestRoadMatchWithRetry(journey,sessionId){
