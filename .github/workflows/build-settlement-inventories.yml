@@ -7,9 +7,6 @@ on:
         description: "Comma-separated official ONS settlement names"
         required: false
         default: "Gravesend, Gillingham (Medway), Haverhill"
-  push:
-    paths:
-      - '.github/settlement-inventory-batches/*.txt'
 
 jobs:
   prepare:
