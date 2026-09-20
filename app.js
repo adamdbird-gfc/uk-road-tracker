@@ -3045,11 +3045,12 @@ function closeImportStatusView() {
 }
 
 function updateImportNavigationFromCoordinator() {
-  const ready=importSession.roadComplete && importSession.footComplete
-    ? ['map','journeys','progress','achievements','collections']
-    : importSession.mapReady
-      ? (persistedAchievements.size ? ['map','journeys','achievements'] : ['map','journeys'])
-      : [];
+  // Driving reaches useful Roadprints results independently of the slower
+  // walking/running queue. Unlock those screens as soon as that road work is
+  // ready; later on-foot matches enrich them in place.
+  const ready=[];
+  if (importSession.mapReady) ready.push('map','journeys');
+  if (importSession.roadComplete) ready.push('progress','achievements','collections');
   setImportNavigationAvailability(ready);
 }
 
@@ -3245,7 +3246,10 @@ async function startEasyImport() {
   const roadSeconds=Math.max(1,Math.round((Date.now()-importStartedAt)/1000));
   const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
   importRoadResult=`completed in ${roadElapsed}`;
+  importSession.roadComplete=true;
   setImportReadiness('progress','ready',`${succeeded.toLocaleString()} journey${succeeded===1?'':'s'} added to road discovery`);
+  setImportReadiness('achievements','ready','Your road achievements are ready; on-foot discoveries will continue updating');
+  updateImportStatusButton();
   if (footMatching) {
     setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
     while (footMatching && sessionId===trackingSessionId) {
@@ -3254,7 +3258,6 @@ async function startEasyImport() {
   }
   if (sessionId !== trackingSessionId) return;
   setImportReadiness('achievements','ready','Your achievements are ready to explore');
-  importSession.roadComplete=true;
   importSession.footComplete=true;
   easyImportRunning=false;
   updateImportStatusButton();
