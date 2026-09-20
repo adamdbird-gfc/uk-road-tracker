@@ -276,7 +276,7 @@ const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${enc
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
 const CANONICAL_A_ROAD_INDEX_STORAGE_KEY = `roadprints:canonical-a-road-index:${CANONICAL_A_ROAD_CACHE_VERSION}`;
 const CANONICAL_A_ROAD_LOAD_REQUEST_KEY = `roadprints:canonical-a-road-load-request:${CANONICAL_A_ROAD_CACHE_VERSION}`;
-let canonicalARoadLoadRequested = localStorage.getItem(CANONICAL_A_ROAD_LOAD_REQUEST_KEY)==='true';
+let canonicalARoadLoadRequested = localStorage.getItem(CANONICAL_A_ROAD_LOAD_REQUEST_KEY)==='true' || Boolean(localStorage.getItem(CANONICAL_A_ROAD_INDEX_STORAGE_KEY));
 let canonicalARoadResumeAttempted = false;
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
