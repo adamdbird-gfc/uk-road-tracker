@@ -156,6 +156,7 @@ const footImportSummaryText = document.getElementById('footImportSummaryText');
 const footImportSummaryBar = document.getElementById('footImportSummaryBar');
 const startFootBatch = document.getElementById('startFootBatch');
 const pauseFootMatching = document.getElementById('pauseFootMatching');
+const retryFootImport = document.getElementById('retryFootImport');
 const clearImportedData = document.getElementById('clearImportedData');
 const clearRoadData = document.getElementById('clearRoadData');
 const clearFootData = document.getElementById('clearFootData');
@@ -1757,6 +1758,7 @@ startFootBatch.addEventListener('click',()=>{
   if(footActivities.some(activity=>!activity.matchedGeoJson&&activity.matchError))void retryUnableFootMatches();
   else void startNextFootBatch();
 });
+retryFootImport?.addEventListener('click',()=>void retryUnableFootMatches());
 pauseFootMatching.addEventListener('click',()=>{
   if (!footMatching) return;
   footMatchingPaused=!footMatchingPaused;
@@ -2168,7 +2170,7 @@ function renderFootQueue() {
   // The walking queue belongs to the initial combined import workspace. Once
   // saved progress is open, matching may resume quietly in the background but
   // it must not occupy the permanent Progress screen.
-  if (!easyImportRunning && !footMatching) { footQueueCard.classList.add('hidden'); return; }
+  if (!easyImportRunning && !footMatching && !hasFootRetryableWork()) { footQueueCard.classList.add('hidden'); return; }
   // The unified import card owns walking status throughout an automatic import.
   // Keep calculating its values even though the legacy card itself is hidden.
   footQueueCard.classList.add('hidden');
@@ -2203,6 +2205,11 @@ function renderFootQueue() {
   pauseFootMatching.classList.toggle('hidden',!footMatching);
   pauseFootMatching.textContent=footMatchingPaused ? 'Resume' : 'Pause';
   pauseFootMatching.setAttribute('aria-pressed',String(footMatchingPaused));
+  if (retryFootImport) {
+    retryFootImport.classList.toggle('hidden', footMatching || !retryable);
+    retryFootImport.disabled=footMatching || !retryable;
+    retryFootImport.textContent=`Retry on-foot routes (${retryable.toLocaleString()})`;
+  }
 }
 
 async function retryUnableFootMatches(){
@@ -2217,9 +2224,11 @@ async function retryUnableFootMatches(){
     }
   });
   footActivities=[...persistedFootActivities.values()];
+  footMatchingError=null;
   importFootStartedAt=Date.now();
   importFootResult=null;
   buildFootBatches();
+  updateImportStatusButton();
   renderFootQueue();
   void startNextFootBatch();
 }
@@ -2852,6 +2861,9 @@ async function startNextFootBatch() {
     } catch (err) {
       activity.matchError=err.message || String(err);
       footMatchingProgress.failed++;
+      if (/temporarily rate-limited|HTTP 429/i.test(activity.matchError)) {
+        footMatchingError='Walking route matching is temporarily limited by its shared provider. Your completed routes are safe; retry the remaining routes a little later.';
+      }
       try { await saveFootActivityMatch(activity); } catch (saveError) { footMatchingError=`${activity.matchError}. It could not be saved: ${saveError.message || saveError}`; }
       consecutiveFailures++;
       if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
@@ -2974,17 +2986,30 @@ function setEasyProgressStatus(primary, secondary) {
   target.append(headline,detail);
 }
 
+function footRetryCount() {
+  return footActivities.filter(activity=>!activity.matchedGeoJson && activity.matchError).length;
+}
+
+function hasFootRetryableWork() {
+  return footRetryCount()>0;
+}
+
 function renderCollectiveImportProgress() {
   const roadTotal=Number(roadImportProgress.total || 0);
   const footTotal=Number(footImportProgress.total || 0);
   const total=roadTotal+footTotal;
   const completed=Math.min(total,Number(roadImportProgress.completed || 0)+Number(footImportProgress.completed || 0));
   const percent=total ? Math.round(completed/total*100) : 0;
+  const retryableFoot=footRetryCount();
   easyProgressText.replaceChildren();
   const headline=document.createElement('strong');
-  headline.textContent=total ? `${percent}% · ${completed.toLocaleString()} / ${total.toLocaleString()}` : 'Preparing…';
+  headline.textContent=retryableFoot
+    ? `Needs retry · ${completed.toLocaleString()} / ${total.toLocaleString()} processed`
+    : total ? `${percent}% · ${completed.toLocaleString()} / ${total.toLocaleString()}` : 'Preparing…';
   const detail=document.createElement('span');
-  detail.textContent=total ? 'Your road and on-foot journeys are being processed' : 'Preparing your journeys';
+  detail.textContent=retryableFoot
+    ? `${retryableFoot.toLocaleString()} on-foot route${retryableFoot===1?' needs':'s need'} another attempt`
+    : total ? 'Your road and on-foot journeys are being processed' : 'Preparing your journeys';
   easyProgressText.append(headline,detail);
   easyProgressBar.max=total || 1;
   easyProgressBar.value=completed;
@@ -3010,7 +3035,7 @@ function beginImportReadiness(total) {
 }
 
 function syncImportSession() {
-  importSession.active=easyImportRunning || footMatching;
+  importSession.active=easyImportRunning || footMatching || hasFootRetryableWork();
   importSession.mapReady=importMapReady;
   const shell=document.querySelector('main');
   shell?.classList.toggle('import-running',importSession.active);
@@ -3265,8 +3290,9 @@ async function startEasyImport() {
     }
   }
   if (sessionId !== trackingSessionId) return;
+  const footNeedsRetry=hasFootRetryableWork();
   setImportReadiness('achievements','ready','Your achievements are ready to explore');
-  importSession.footComplete=true;
+  importSession.footComplete=!footNeedsRetry;
   easyImportRunning=false;
   updateImportStatusButton();
   easyImportPaused=false;
@@ -3277,7 +3303,7 @@ async function startEasyImport() {
   // for navigation or for the on-foot queue to finish.
   renderMap();
   renderRoadQueue();
-  setEasyProgressStatus('Road matching complete', `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
+  setEasyProgressStatus(footNeedsRetry ? 'On-foot matching needs retry' : 'Road matching complete', footNeedsRetry ? 'Your driving results are ready. Retry the remaining on-foot routes when the shared route service has recovered.' : `${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
   document.getElementById('plotImportedMap')?.classList.remove('hidden');
   if (mapStatus) {
     mapStatus.classList.add('hidden');
