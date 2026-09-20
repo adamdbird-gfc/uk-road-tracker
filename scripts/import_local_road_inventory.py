@@ -112,7 +112,7 @@ def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]
         for line_number, line in enumerate(stream, start=1):
             if not line.strip():
                 continue
-            feature = json.loads(line)
+            feature = json.loads(line.lstrip("\\x1e"))
             details = feature_properties(feature)
             geometry = feature.get("geometry")
             if not details or not isinstance(geometry, dict):
