@@ -275,6 +275,9 @@ const CANONICAL_A_ROAD_CACHE_ROOT = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_
 const CANONICAL_A_ROAD_CACHE_URL = file => `${CANONICAL_A_ROAD_CACHE_ROOT}/${encodeURIComponent(file)}`;
 const CANONICAL_A_ROAD_CACHE_INDEX_URL = `canonical-a-roads-${CANONICAL_A_ROAD_CACHE_VERSION}/index.json`;
 const CANONICAL_A_ROAD_INDEX_STORAGE_KEY = `roadprints:canonical-a-road-index:${CANONICAL_A_ROAD_CACHE_VERSION}`;
+const CANONICAL_A_ROAD_LOAD_REQUEST_KEY = `roadprints:canonical-a-road-load-request:${CANONICAL_A_ROAD_CACHE_VERSION}`;
+let canonicalARoadLoadRequested = localStorage.getItem(CANONICAL_A_ROAD_LOAD_REQUEST_KEY)==='true';
+let canonicalARoadResumeAttempted = false;
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
@@ -1793,6 +1796,8 @@ function startCanonicalARoadLoading() {
   if (canonicalARoadQueueRunning) return;
   const refs=[...activeARoadKeys()];
   if (!refs.length) return;
+  canonicalARoadLoadRequested=true;
+  try { localStorage.setItem(CANONICAL_A_ROAD_LOAD_REQUEST_KEY,'true'); } catch (_) {}
   canonicalARoadLoadStarted=true;
   void ensureCanonicalARoadsForDiscoveredRefs(refs).catch(err=>{
     console.error('Roadprints A-road references could not start:',err);
@@ -4659,10 +4664,12 @@ function renderCanonicalMotorwayDashboard(drawable=null) {
   const sessionRefs=drawable
     ? drawable.flatMap(j=>journeyMotorwayFeatures(j).map(motorwayFeatureId).filter(Boolean))
     : [];
-  const discoveredRefs=onboardingMode==='saved'
-    ? [...persistedCoverageByRef.keys()].sort(motorwayRefSort)
-    : drawable
-      ? [...new Set([...persistedCoverageByRef.keys(),...sessionRefs])].sort(motorwayRefSort)
+  // Saved journeys retain their motorway features, so use them to restore
+  // references after a refresh even before coverage has been recalculated.
+  const discoveredRefs=drawable
+    ? [...new Set([...persistedCoverageByRef.keys(),...sessionRefs])].sort(motorwayRefSort)
+    : onboardingMode==='saved'
+      ? [...persistedCoverageByRef.keys()].sort(motorwayRefSort)
       : [...canonicalRoads.keys()];
 
   if (!discoveredRefs.length && !canonicalRoads.size) {
@@ -5560,8 +5567,13 @@ function renderCanonicalARoadDashboard(drawable=canonicalARoadDrawable()) {
         : !canonicalARoadCacheIndexAvailable
           ? `${ready.length} of ${roads.length} A-road references ready · cache index unavailable: ${canonicalARoadCacheIndexError || 'unknown error'}`
           : `${ready.length} of ${roads.length} A-road references ready${available.length>ready.length?` · ${available.length-ready.length} available to load.`:pending?` · ${pending} queued.`:'.'}`;
-  // Reference loading is always explicit. Restoring an expanded panel must not
-  // turn the 168-road cache into a startup task.
+  // A user-requested A-road reference pass survives refresh/re-entry. This
+  // remains opt-in: without that explicit request, saved history is not turned
+  // into a large reference-loading task.
+  if (canonicalARoadLoadRequested && !canonicalARoadResumeAttempted && pending>0) {
+    canonicalARoadResumeAttempted=true;
+    setTimeout(startCanonicalARoadLoading,0);
+  }
 
 }
 
