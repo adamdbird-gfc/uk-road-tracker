@@ -11,7 +11,11 @@ const footPlaceLookups = new Set();
 let diagnostics = {};
 const persistedMapJourneys = new Map();
 const persistedFootActivities = new Map();
+// Step 8: compact, versioned local evidence derived from a successful match.
+// It deliberately contains road facts only; journey geometry remains in the local archive.
+const persistedRoadDiscoveryEvidence = new Map();
 let mapArchiveReadyPromise = Promise.resolve();
+let roadDiscoveryArchiveReadyPromise = Promise.resolve();
 let footArchiveReadyPromise = Promise.resolve();
 let pendingRoadImportReadyPromise = Promise.resolve();
 let pendingRoadImport = null;
@@ -275,12 +279,14 @@ const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
-const MAP_ARCHIVE_DB_VERSION = 5;
+const MAP_ARCHIVE_DB_VERSION = 6;
 const MAP_ARCHIVE_STORE_NAME = 'journeys';
 const FOOT_ACTIVITY_STORE_NAME = 'foot-activities';
 const CANONICAL_ROAD_STORE_NAME = 'canonical-roads';
 const CANONICAL_A_ROAD_STORE_NAME = 'canonical-a-roads';
 const PENDING_ROAD_IMPORT_STORE_NAME = 'pending-road-import';
+const ROAD_DISCOVERY_STORE_NAME = 'road-discovery';
+const ROAD_DISCOVERY_DERIVATION_VERSION = 1;
 let canonicalCache = null;
 let canonicalCachePromise = null;
 let canonicalARoadCacheEntries = new Map();
@@ -474,6 +480,9 @@ function openMapArchiveDatabase() {
       if (!database.objectStoreNames.contains(PENDING_ROAD_IMPORT_STORE_NAME)) {
         database.createObjectStore(PENDING_ROAD_IMPORT_STORE_NAME,{keyPath:'id'});
       }
+      if (!database.objectStoreNames.contains(ROAD_DISCOVERY_STORE_NAME)) {
+        database.createObjectStore(ROAD_DISCOVERY_STORE_NAME,{keyPath:'id'});
+      }
     };
     request.onsuccess=()=>resolve(request.result);
   });
@@ -537,6 +546,84 @@ async function canonicalARoadArchiveOperation(mode,operation) {
   } finally { database.close(); }
 }
 
+async function roadDiscoveryArchiveOperation(mode,operation) {
+  const database=await openMapArchiveDatabase();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const transaction=database.transaction(ROAD_DISCOVERY_STORE_NAME,mode);
+      const store=transaction.objectStore(ROAD_DISCOVERY_STORE_NAME);
+      const request=operation(store);
+      request.onerror=()=>reject(request.error || new Error('Saved road-discovery operation failed.'));
+      request.onsuccess=()=>resolve(request.result);
+      transaction.onabort=()=>reject(transaction.error || new Error('Saved road-discovery transaction was aborted.'));
+    });
+  } finally { database.close(); }
+}
+
+function discoveryFeaturesForJourney(journey) {
+  const roadFeatures=journey?.roadGeoJson?.features;
+  return Array.isArray(roadFeatures) && roadFeatures.length
+    ? roadFeatures
+    : [...(journey?.motorwayGeoJson?.features || []),...(journey?.aRoadGeoJson?.features || [])];
+}
+
+function deriveRoadDiscoveryEvidence(journey,mode) {
+  const journeyId=journeyIdentity(journey);
+  if (!journeyId || !journey?.matchedGeoJson) return null;
+  const roads=new Map();
+  for (const feature of discoveryFeaturesForJourney(journey)) {
+    const rawRef=String(feature?.properties?.road_ref || feature?.properties?.ref || '');
+    const refs=rawRef.split(/[;,/]/).map(ref=>ref.trim()).filter(Boolean);
+    const variants=refs.length>1
+      ? refs.map(ref=>({...feature,properties:{...(feature.properties || {}),road_ref:ref}}))
+      : [feature];
+    for (const variant of variants) {
+      const road=roadDiscoveryKey(variant);
+      if (road) roads.set(road.id,{id:road.id,label:road.label,category:road.category});
+    }
+  }
+  return {
+    id:mode+':'+journeyId,
+    journeyId,
+    mode,
+    version:ROAD_DISCOVERY_DERIVATION_VERSION,
+    derivedAt:new Date().toISOString(),
+    matchedFeatureCount:discoveryFeaturesForJourney(journey).length,
+    roads:[...roads.values()].sort((a,b)=>a.category.localeCompare(b.category)||a.label.localeCompare(b.label,'en-GB',{numeric:true}))
+  };
+}
+
+async function saveRoadDiscoveryEvidence(journey,mode) {
+  const record=deriveRoadDiscoveryEvidence(journey,mode);
+  if (!record) return;
+  await roadDiscoveryArchiveOperation('readwrite',store=>store.put(record));
+  persistedRoadDiscoveryEvidence.set(record.id,record);
+}
+
+async function loadRoadDiscoveryArchive() {
+  try {
+    const records=await roadDiscoveryArchiveOperation('readonly',store=>store.getAll());
+    persistedRoadDiscoveryEvidence.clear();
+    for (const record of records || []) {
+      if (record?.id && record.version===ROAD_DISCOVERY_DERIVATION_VERSION) persistedRoadDiscoveryEvidence.set(record.id,record);
+    }
+  } catch (err) {
+    console.warn('Saved road-discovery evidence could not be loaded:',err);
+  }
+}
+
+async function backfillRoadDiscoveryEvidence() {
+  const candidates=[
+    ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({record,mode:'driving'})),
+    ...footActivities.filter(record=>record?.matchedGeoJson).map(record=>({record,mode:'foot'}))
+  ];
+  for (const item of candidates) {
+    const id=item.mode+':'+journeyIdentity(item.record);
+    if (persistedRoadDiscoveryEvidence.get(id)?.version===ROAD_DISCOVERY_DERIVATION_VERSION) continue;
+    await saveRoadDiscoveryEvidence(item.record,item.mode);
+  }
+}
+
 function compactMapJourney(journey) {
   const id=journeyIdentity(journey);
   if (!id || !journey?.matchedGeoJson) return null;
@@ -595,6 +682,7 @@ async function saveJourneyToMapArchive(journey) {
   if (!record) throw new Error('The matched journey did not contain saveable map geometry.');
   await mapArchiveOperation('readwrite',store=>store.put(record));
   persistedMapJourneys.set(record.id,record);
+  await saveRoadDiscoveryEvidence(record,'driving');
   updateLocalProgressNotice();
   renderJourneyLog();
   window.dispatchEvent(new Event('roadprints:archivechange'));
@@ -607,6 +695,8 @@ async function clearRoadArchive() {
   persistedMotorwayContributionsByJourney.clear();
   await canonicalRoadArchiveOperation('readwrite',store=>store.clear());
   await canonicalARoadArchiveOperation('readwrite',store=>store.clear());
+  await roadDiscoveryArchiveOperation('readwrite',store=>store.clear());
+  persistedRoadDiscoveryEvidence.clear();
   await clearPendingRoadImport();
   window.dispatchEvent(new Event('roadprints:archivechange'));
 }
@@ -716,6 +806,8 @@ async function clearFootArchive() {
   persistedFootActivities.clear();
   footActivities=[];
   footBatches=[];
+  await roadDiscoveryArchiveOperation('readwrite',store=>store.clear());
+  persistedRoadDiscoveryEvidence.clear();
   renderFootQueue();
   window.dispatchEvent(new Event('roadprints:archivechange'));
 }
@@ -790,6 +882,7 @@ async function saveFootActivityMatch(activity) {
     const record=compactFootActivity({...source,matchedGeoJson:activity.matchedGeoJson,roadGeoJson:activity.roadGeoJson,matchQuality:activity.matchQuality,matchError:activity.matchError});
     await footArchiveOperation('readwrite',store=>store.put(record));
     persistedFootActivities.set(record.id,{...record,selected:true});
+    await saveRoadDiscoveryEvidence(record,'foot');
   }
   footActivities=[...persistedFootActivities.values()];
   renderCollectiveStats();
@@ -1460,7 +1553,11 @@ loadLocalProgress();
 loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
 footArchiveReadyPromise=loadFootActivityArchive().finally(updateLocalProgressNotice);
+roadDiscoveryArchiveReadyPromise=loadRoadDiscoveryArchive();
 pendingRoadImportReadyPromise=loadPendingRoadImport().finally(updateLocalProgressNotice);
+Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,roadDiscoveryArchiveReadyPromise])
+  .then(()=>backfillRoadDiscoveryEvidence())
+  .catch(error=>console.warn('Saved road-discovery evidence could not be refreshed:',error));
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
