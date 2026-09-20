@@ -248,6 +248,88 @@ def load_seed_settlement_boundaries(cursor) -> None:
     )
 
 
+
+# Initial public inventory requests are deliberately bounded to settlements
+# already encountered in Roadprints. They are shared reference work only.
+SETTLEMENT_INVENTORY_SEED_CODES = (
+    "E63005466",  # Maidstone
+    "E63005580",  # Reigate
+)
+
+
+def load_seed_inventory_requests(cursor) -> None:
+    cursor.execute(
+        """
+        INSERT INTO settlement_inventories (settlement_id, status)
+        SELECT id, 'pending'
+        FROM settlements
+        WHERE external_code = ANY(%s)
+        ON CONFLICT (settlement_id) DO NOTHING
+        """,
+        (list(SETTLEMENT_INVENTORY_SEED_CODES),),
+    )
+
+
+def settlement_inventory_status(external_code: str) -> dict | None:
+    """Return a public shared inventory status, never Journey information."""
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return None
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT s.external_code, s.name, i.status, i.road_count,
+                           i.source_key, i.source_version, i.inventory_version,
+                           i.requested_at, i.build_started_at, i.completed_at,
+                           i.failure_code
+                    FROM settlements AS s
+                    LEFT JOIN settlement_inventories AS i ON i.settlement_id = s.id
+                    WHERE s.external_code = %s AND s.is_active
+                    """,
+                    (external_code,),
+                )
+                row = cursor.fetchone()
+        if not row:
+            return None
+        keys = (
+            "code", "name", "status", "road_count", "source_key",
+            "source_version", "inventory_version", "requested_at",
+            "build_started_at", "completed_at", "failure_code",
+        )
+        result = dict(zip(keys, row))
+        result["status"] = result["status"] or "not_requested"
+        for key in ("requested_at", "build_started_at", "completed_at"):
+            if result[key] is not None:
+                result[key] = result[key].isoformat()
+        return result
+    except Exception:
+        return None
+
+
+def request_settlement_inventory(external_code: str) -> dict | None:
+    """Deduplicate a public settlement inventory request without route data."""
+    if not DATABASE_URL or database_state["status"] != "ready":
+        return None
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO settlement_inventories (settlement_id, status)
+                    SELECT id, 'pending'
+                    FROM settlements
+                    WHERE external_code = %s AND is_active
+                    ON CONFLICT (settlement_id) DO NOTHING
+                    RETURNING settlement_id
+                    """,
+                    (external_code,),
+                )
+                connection.commit()
+        return settlement_inventory_status(external_code)
+    except Exception:
+        return None
+
 def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
     """Find shared settlement boundaries intersecting transient route geometry.
 
@@ -318,6 +400,7 @@ def initialise_database() -> None:
                     )
                 load_settlement_catalogue(cursor)
                 load_seed_settlement_boundaries(cursor)
+                load_seed_inventory_requests(cursor)
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
