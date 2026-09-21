@@ -1,0 +1,28 @@
+name: Load shared settlement county metadata
+
+on:
+  push:
+    paths:
+      - '.github/reference-data-loads/settlement-counties-v1.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reference-data dependencies
+        run: python -m pip install -r requirements-reference-ingestion.txt
+      - name: Load official county and unitary-area metadata
+        run: |
+          test -n "$DATABASE_URL" || { echo "REFERENCE_INGEST_DATABASE_URL is not configured"; exit 1; }
+          python scripts/load_settlement_counties.py --source-version "$(date -u +%F)"
