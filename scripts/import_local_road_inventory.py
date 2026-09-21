@@ -94,14 +94,17 @@ def build_boundary_index(boundaries: dict[str, tuple[str, object]]) -> tuple[lis
 
 
 def mark_building(cursor, codes: list[str]) -> None:
+    """Create or update shared status rows for every administrator-selected reference."""
     cursor.execute(
         """
-        UPDATE settlement_inventories AS inventory
-        SET status = 'building', build_started_at = NOW(), failed_at = NULL,
-            failure_code = NULL, updated_at = NOW()
-        FROM settlements AS settlement
-        WHERE inventory.settlement_id = settlement.id
-          AND settlement.external_code = ANY(%s)
+        INSERT INTO settlement_inventories
+          (settlement_id, status, build_started_at, failed_at, failure_code, updated_at)
+        SELECT id, 'building', NOW(), NULL, NULL, NOW()
+        FROM settlements
+        WHERE external_code = ANY(%s) AND is_active
+        ON CONFLICT (settlement_id) DO UPDATE
+        SET status = 'building', build_started_at = EXCLUDED.build_started_at,
+            failed_at = NULL, failure_code = NULL, updated_at = EXCLUDED.updated_at
         """,
         (codes,),
     )
