@@ -6668,7 +6668,7 @@ async function showSettlementBoundary(town,inventory){
 // Resolve local roads against the official ONS boundary service in the
 // background; the user-facing ledger changes only once a result is available.
 const SETTLEMENT_CHECK_CACHE_KEY='roadprints-settlement-check-v1';
-const SETTLEMENT_METADATA_CACHE_KEY='roadprints-settlement-metadata-v1';
+const SETTLEMENT_METADATA_CACHE_KEY='roadprints-settlement-metadata-v2';
 const settlementCheckResults=new Map(),settlementCheckPending=new Set(),settlementCheckQueue=[];
 const settlementMetadataByName=new Map(),settlementMetadataPending=new Set();
 try{for(const [key,value] of Object.entries(JSON.parse(localStorage.getItem(SETTLEMENT_CHECK_CACHE_KEY)||'{}')))if(value&&!value.error)settlementCheckResults.set(key,value)}catch(_){}
