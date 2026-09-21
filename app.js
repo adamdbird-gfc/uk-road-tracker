@@ -161,8 +161,6 @@ const retryRoadImport = document.getElementById('retryRoadImport');
 const clearImportedData = document.getElementById('clearImportedData');
 const clearRoadData = document.getElementById('clearRoadData');
 const clearFootData = document.getElementById('clearFootData');
-const exportPendingSettlementInventories = document.getElementById('exportPendingSettlementInventories');
-const pendingSettlementInventoryStatus = document.getElementById('pendingSettlementInventoryStatus');
 const travelStatsCard = document.getElementById('travelStatsCard');
 const travelStats = {
   total:document.getElementById('totalDistanceTravelled'),
@@ -1771,7 +1769,6 @@ pauseFootMatching.addEventListener('click',()=>{
 clearImportedData.addEventListener('click', clearLocalProgress);
 clearRoadData.addEventListener('click', clearRoadDataOnly);
 clearFootData.addEventListener('click', clearFootDataOnly);
-exportPendingSettlementInventories?.addEventListener('click',()=>void preparePendingSettlementInventoryUpdate());
 document.getElementById('stopEasyImport').addEventListener('click', () => {
   if (!easyImportRunning) return;
 
@@ -6563,6 +6560,15 @@ function normaliseSettlementName(value){return String(value||'').trim().toLocale
 function normaliseRoadName(value){return String(value||'').trim().toLocaleLowerCase('en-GB').replace(/\s+/g,' ')}
 async function loadSettlementInventoryManifest(){if(!settlementInventoryManifestPromise)settlementInventoryManifestPromise=fetch(SETTLEMENT_INVENTORY_MANIFEST_URL,{cache:'no-cache'}).then(async response=>{if(!response.ok)throw Error('Settlement manifest unavailable');const data=await response.json();return new Map((data.inventories||[]).map(entry=>[entry.code,entry]))});return settlementInventoryManifestPromise}
 async function loadSettlementInventoryIndex(){if(!settlementInventoryIndexPromise)settlementInventoryIndexPromise=Promise.all([fetch(SETTLEMENT_INVENTORY_INDEX_URL,{cache:'no-cache'}),loadSettlementInventoryManifest()]).then(async([response,manifest])=>{if(!response.ok)throw Error('Settlement catalogue unavailable');const data=await response.json();return new Map((data.settlements||[]).flatMap(entry=>{const merged={...entry,...(manifest.get(entry.code)||{})};return [merged.name,...(merged.aliases||[])].map(alias=>[normaliseSettlementName(alias),merged])}))});return settlementInventoryIndexPromise}
+async function requestSharedTownInventory(entry){
+  const response=await fetch(`${API_BASE_URL}/settlement-inventories/request`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({settlement_code:entry.code})
+  });
+  if(!response.ok)throw Error('Shared settlement inventory request is unavailable');
+  return (await response.json()).inventory;
+}
 async function fetchTownInventory(town){
   const entry=(await loadSettlementInventoryIndex()).get(normaliseSettlementName(town));
   const count=Number(entry?.count);
@@ -6570,55 +6576,23 @@ async function fetchTownInventory(town){
   if(entry.status==='available'&&Number.isFinite(count))return entry;
   if(!entry.code)return null;
   const response=await fetch(`${API_BASE_URL}/settlement-inventories/${encodeURIComponent(entry.code)}`);
-  if(!response.ok)throw Error('Shared settlement inventory status is unavailable');
-  const shared=(await response.json()).inventory;
+  let shared;
+  if(response.ok){
+    shared=(await response.json()).inventory;
+  }else if(response.status===404){
+    shared=await requestSharedTownInventory(entry);
+  }else{
+    throw Error('Shared settlement inventory status is unavailable');
+  }
+  if(!shared||shared.status==='not_requested')shared=await requestSharedTownInventory(entry);
   if(shared?.status==='ready'&&Number.isFinite(Number(shared.road_count))){
     return {...entry,status:'available',count:Number(shared.road_count),source:'shared'};
   }
-  return {...entry,status:shared?.status||'not_requested',shared};
-}
-async function preparePendingSettlementInventoryUpdate(){
-  if(!exportPendingSettlementInventories)return;
-  exportPendingSettlementInventories.disabled=true;
-  if(pendingSettlementInventoryStatus)pendingSettlementInventoryStatus.textContent='Preparing settlement list…';
-  try{
-    rebuildRoadDiscoveryLedger();
-    const index=await loadSettlementInventoryIndex();
-    const onsRequests=new Map(),outsideOns=new Set();
-    for(const road of roadDiscoveryLedger.values()){
-      if(road.category!=='Local roads')continue;
-      const names=settlementCheckResults.get(road.id)?.names || [];
-      for(const name of names){
-        const entry=index.get(normaliseSettlementName(name));
-        if(entry?.status!=='available'){
-          if(entry?.code)onsRequests.set(entry.code,{code:entry.code,name:entry.name});
-          else outsideOns.add(name);
-        }
-      }
-      if(!names.length){
-        const locality=roadDiscoveryLocality(road);
-        if(locality&&!['Assigning area…','Local area','UK activity area'].includes(locality))outsideOns.add(locality);
-      }
-    }
-    const payload={
-      version:1,
-      purpose:'Roadprints settlement inventory batch request',
-      ons_settlements:[...onsRequests.values()].sort((a,b)=>a.name.localeCompare(b.name,'en-GB')),
-      outside_ons_places:[...outsideOns].sort((a,b)=>a.localeCompare(b,'en-GB'))
-    };
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob),link=document.createElement('a');
-    link.href=url;link.download='roadprints-settlement-inventory-request.json';
-    document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
-    if(pendingSettlementInventoryStatus)pendingSettlementInventoryStatus.textContent=`Prepared ${payload.ons_settlements.length.toLocaleString()} pending ONS settlement${payload.ons_settlements.length===1?'':'s'}${payload.outside_ons_places.length?` and ${payload.outside_ons_places.length.toLocaleString()} place${payload.outside_ons_places.length===1?'':'s'} for non-ONS review`:''}.`;
-  }catch(error){
-    console.warn('Settlement inventory request could not be prepared:',error);
-    if(pendingSettlementInventoryStatus)pendingSettlementInventoryStatus.textContent='Could not prepare the settlement list. Please try again.';
-  }finally{exportPendingSettlementInventories.disabled=false;}
+  return {...entry,status:shared?.status||'pending',shared};
 }
 function setTown(town,roads){
  const key=townKey(town,roads[0].point),inv=localTownInventories.get(key),state=localTownInventoryStates.get(key)||'idle';
- document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const discovered=roads.length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='building'?'Inventory building':state==='pending'?'Inventory queued':state==='not_requested'||state==='unavailable'?'Inventory pending':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
+ document.querySelectorAll('.road-discovery-town summary[data-town]').forEach(x=>{if(x.dataset.town!==town)return;const n=document.createElement('span'),m=document.createElement('button');n.className='road-discovery-town-name';n.textContent=town;m.className='road-discovery-town-metric';m.type='button';if(Number.isFinite(Number(inv?.count))){const discovered=roads.length;m.textContent=discovered+' / '+inv.count+' · '+Math.round(discovered/inv.count*100)+'%';m.disabled=true;const view=document.createElement('button');view.className='town-count-map-quick';view.textContent='Show on map';view.onclick=e=>{e.preventDefault();e.stopPropagation();void showSettlementBoundary(town,inv)};x.replaceChildren(n,m,view)}else{m.textContent=state==='building'?'Inventory building':state==='pending'||state==='not_requested'||state==='unavailable'?'Inventory pending':state==='failed'?'Unavailable':'Loading…';m.disabled=true;x.replaceChildren(n,m)}})}
 async function calculateTown(town,roads){
   const key=townKey(town,roads[0].point);
   if(localTownInventoryStates.get(key)==='loading')return;
