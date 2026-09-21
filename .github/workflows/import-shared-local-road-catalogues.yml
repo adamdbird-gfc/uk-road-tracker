@@ -8,6 +8,9 @@ on:
         required: true
         default: '.github/reference-inventory-batches/kent-medway-pilot.txt'
         type: string
+  push:
+    paths:
+      - '.github/reference-data-loads/kent-medway-pilot-v1.txt'
 
 permissions:
   contents: read
@@ -32,7 +35,7 @@ jobs:
         id: batch
         shell: bash
         run: |
-          batch_file="${{ inputs.batch_file }}"
+          batch_file="${{ inputs.batch_file || '.github/reference-inventory-batches/kent-medway-pilot.txt' }}"
           case "$batch_file" in
             .github/reference-inventory-batches/*.txt) ;;
             *) echo "Batch file must be inside .github/reference-inventory-batches"; exit 1 ;;
