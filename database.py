@@ -137,9 +137,16 @@ def reference_catalogue_status() -> dict:
 SETTLEMENT_BOUNDARY_SEED_CODES = (
     "E63000498",  # Dalton-in-Furness
     "E63004165",  # Great Dunmow
+    "E63004964",  # Allhallows
+    "E63005030",  # Dartford
+    "E63005041",  # Ebbsfleet Valley
     "E63005055",  # Lower Higham
-    "E63005466",  # Maidstone
+    "E63005084",  # Darenth
     "E63005039",  # Northfleet
+    "E63005212",  # Chatham
+    "E63005234",  # Ash (Sevenoaks)
+    "E63005283",  # Blue Bell Hill
+    "E63005466",  # Maidstone
     "E63005580",  # Reigate
 )
 ONS_BUA_FEATURE_SERVICE = (
