@@ -3,3 +3,5 @@ Kent/Medway shared local-road catalogue pilot
 This marker starts the bounded reference-data batch defined in
 .github/reference-inventory-batches/kent-medway-pilot.txt.
 Only public official settlement reference codes are processed.
+
+Final status-materialisation pass: 2026-09-21T17:24:00Z
