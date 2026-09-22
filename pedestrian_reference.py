@@ -84,7 +84,7 @@ class WayCollector(osmium.SimpleHandler):
         super().__init__()
         self.cursor = cursor
         self.source_id = source_id
-        self.area = area
+        self.reference_area = area
         self.rows = []
         self.rows_loaded = 0
 
@@ -114,7 +114,7 @@ class WayCollector(osmium.SimpleHandler):
             logger.info(
                 "loaded %s public pedestrian ways for %s",
                 self.rows_loaded,
-                self.area.key,
+                self.reference_area.key,
             )
         self.rows = []
 
@@ -137,7 +137,7 @@ class WayCollector(osmium.SimpleHandler):
         }
         geometry = json.dumps({"type": "LineString", "coordinates": compact}, separators=(",", ":"))
         self.rows.append((
-            self.source_id, str(way.id), self.area.area_code, kind,
+            self.source_id, str(way.id), self.reference_area.area_code, kind,
             json.dumps(public_tags, separators=(",", ":")), _length_metres(compact), geometry,
         ))
         if len(self.rows) >= 1000:
