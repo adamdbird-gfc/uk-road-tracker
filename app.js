@@ -2850,7 +2850,7 @@ async function startNextFootBatch() {
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
       activity.matchedGeoJson=data.geojson;
       activity.roadGeoJson=data.road_geojson || {type:'FeatureCollection',features:[]};
-      activity.referenceMatched=data.matcher === 'kent_preloaded_reference_v1';
+      activity.referenceMatched=/^kent_preloaded_network_v\d+$/.test(data.matcher || '');
       activity.matchQuality=assessMatchQuality(activity,data);
       await saveFootActivityMatch(activity);
       batch.matched++;
