@@ -103,6 +103,7 @@ def reference_catalogue_status() -> dict:
         "settlements": 0,
         "settlement_boundaries": 0,
         "gb_a_roads": 0,
+        "pedestrian_segments": 0,
         "sources": 0,
     }
     if not DATABASE_URL or database_state["status"] != "ready":
@@ -117,15 +118,17 @@ def reference_catalogue_status() -> dict:
                       (SELECT COUNT(*) FROM settlement_boundaries),
                       (SELECT COUNT(*) FROM road_references
                        WHERE road_kind = 'a_road' AND network_region = 'GB'),
+                      (SELECT COUNT(*) FROM pedestrian_reference_segments),
                       (SELECT COUNT(*) FROM reference_sources)
                     """
                 )
-                settlements, boundaries, a_roads, sources = cursor.fetchone()
+                settlements, boundaries, a_roads, pedestrian_segments, sources = cursor.fetchone()
         return {
             "status": "ready",
             "settlements": settlements,
             "settlement_boundaries": boundaries,
             "gb_a_roads": a_roads,
+            "pedestrian_segments": pedestrian_segments,
             "sources": sources,
         }
     except Exception:
