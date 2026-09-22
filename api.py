@@ -11,8 +11,6 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from kent_foot_reference import KentReferenceUnavailable, match_kent_foot_reference, supports_kent_reference
-
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -408,15 +406,6 @@ async def match_journey(payload: MatchRequest):
 
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
-    # Kent prototype: snap transient Timeline points to a cached public path
-    # reference.  No Journey, route or account data is retained.  The proven
-    # pedestrian router remains the safe fallback while the reference is cold,
-    # incomplete or outside the bounded prototype.
-    if supports_kent_reference(payload.points):
-        try:
-            return await match_kent_foot_reference(payload.points)
-        except KentReferenceUnavailable as exc:
-            logger.info("Kent foot reference unavailable; using pedestrian-router fallback: %s", exc)
     return await match_payload(
         payload,
         FOOT_OSRM_BASE_URL,
