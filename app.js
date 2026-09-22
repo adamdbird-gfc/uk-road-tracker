@@ -2850,6 +2850,7 @@ async function startNextFootBatch() {
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
       activity.matchedGeoJson=data.geojson;
       activity.roadGeoJson=data.road_geojson || {type:'FeatureCollection',features:[]};
+      activity.referenceMatched=data.matcher === 'kent_preloaded_reference_v1';
       activity.matchQuality=assessMatchQuality(activity,data);
       await saveFootActivityMatch(activity);
       batch.matched++;
@@ -2897,9 +2898,12 @@ async function startNextFootBatch() {
       if (!candidate) return;
       await processCandidate(candidate);
       if (footMatchingError) return;
-      // Public pedestrian routing is shared infrastructure. Keep it to one
-      // request at a time and leave space between activities.
-      await new Promise(resolve=>setTimeout(resolve,1250));
+      // Prepared references are local to our shared backend, so no courtesy
+      // delay is needed. The established delay remains for the temporary
+      // third-party fallback used outside loaded areas.
+      if (!candidate.activity.referenceMatched) {
+        await new Promise(resolve=>setTimeout(resolve,1250));
+      }
     }
   };
 
