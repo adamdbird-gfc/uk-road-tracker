@@ -443,138 +443,185 @@ def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
 
 
 def match_kent_pedestrian_reference(points: list[dict]) -> dict | None:
-    """Snap transient Kent trace points to the prepared public reference.
+    """Match a Kent trace through the connected preloaded pedestrian network.
 
-    This function receives only the current route request and makes no write.
-    It returns None outside the loaded reference coverage so callers can retain
-    their existing behaviour while further counties are prepared.
+    The database is the sole reference source. The transient points are used
+    only for this request and are never written or logged as a Journey.
     """
     if not DATABASE_URL or database_state["status"] != "ready" or len(points) < 2:
         return None
     try:
-        values = []
-        params = []
-        for index, point in enumerate(points):
-            lat = float(point["lat"])
-            lng = float(point["lng"])
-            values.append("(%s, %s, %s)")
-            params.extend((index, lng, lat))
-        sql = f"""
-            WITH input_points(point_index, lng, lat) AS (
-                VALUES {", ".join(values)}
-            ),
-            prepared_points AS (
-                SELECT point_index,
-                       ST_SetSRID(ST_MakePoint(lng, lat), 4326) AS geometry
-                FROM input_points
-            )
-            SELECT p.point_index,
-                   segment.source_feature_id,
-                   segment.segment_kind,
-                   segment.tags,
-                   ST_AsGeoJSON(segment.geometry),
-                   ST_X(ST_ClosestPoint(segment.geometry, p.geometry)) AS snapped_lng,
-                   ST_Y(ST_ClosestPoint(segment.geometry, p.geometry)) AS snapped_lat,
-                   ST_Distance(segment.geometry::geography, p.geometry::geography) AS distance_m
-            FROM prepared_points AS p
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM pedestrian_reference_segments
-                WHERE area_code = %s
-                  AND ST_DWithin(
-                    geometry,
-                    p.geometry,
-                    0.0018
-                  )
-                ORDER BY geometry <-> p.geometry
-                LIMIT 1
-            ) AS segment ON TRUE
-            ORDER BY p.point_index
-        """
+        trace = [(float(point["lng"]), float(point["lat"])) for point in points]
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    # Build a compact, route-local graph from the prepared Kent reference.
+    # A generous margin allows a sensible detour around parks, one-way streets
+    # or barriers without loading the whole county into application memory.
+    west = min(point[0] for point in trace) - 0.008
+    east = max(point[0] for point in trace) + 0.008
+    south = min(point[1] for point in trace) - 0.006
+    north = max(point[1] for point in trace) + 0.006
+    try:
         with psycopg.connect(DATABASE_URL) as connection:
             with connection.cursor() as cursor:
-                cursor.execute(sql, (*params, "GB-KENT"))
+                cursor.execute(
+                    """
+                    SELECT source_feature_id, segment_kind, tags,
+                           ST_AsGeoJSON(geometry)
+                    FROM pedestrian_reference_segments
+                    WHERE area_code = %s
+                      AND geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    """,
+                    ("GB-KENT", west, south, east, north),
+                )
                 rows = cursor.fetchall()
     except Exception:
         return None
-
-    snapped = []
-    for row in rows:
-        point_index, feature_id, kind, tags, geometry_json, lng, lat, distance_m = row
-        if feature_id is None or distance_m is None or distance_m > 120:
-            continue
-        snapped.append({
-            "index": point_index,
-            "feature_id": feature_id,
-            "kind": kind,
-            "tags": tags or {},
-            "geometry": json.loads(geometry_json),
-            "lng": float(lng),
-            "lat": float(lat),
-            "distance_m": float(distance_m),
-        })
-
-    minimum_coverage = max(2, int(len(points) * 0.75))
-    if len(snapped) < minimum_coverage:
+    if not rows:
         return None
 
-    snapped.sort(key=lambda point: point["index"])
-    coordinates = [[point["lng"], point["lat"]] for point in snapped]
+    from heapq import heappop, heappush
+    from math import asin, cos, radians, sin, sqrt
+
+    def vertex_key(coord: list[float] | tuple[float, float]) -> tuple[int, int]:
+        # OSM node coordinates are shared exactly between adjoining ways; this
+        # stable key preserves those joins without an additional node table.
+        return (round(float(coord[0]) * 10_000_000), round(float(coord[1]) * 10_000_000))
+
+    def length_metres(a, b) -> float:
+        lat1, lat2 = radians(a[1]), radians(b[1])
+        delta_lat, delta_lng = radians(b[1] - a[1]), radians(b[0] - a[0])
+        term = sin(delta_lat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(delta_lng / 2) ** 2
+        return 6371008.8 * 2 * asin(min(1.0, sqrt(term)))
+
+    vertices: dict[tuple[int, int], list[float]] = {}
+    adjacency: dict[tuple[int, int], list[tuple[tuple[int, int], float, str]]] = {}
+    features: dict[str, dict] = {}
+    for feature_id, kind, tags, geometry_json in rows:
+        geometry = json.loads(geometry_json)
+        coords = geometry.get("coordinates") or []
+        if len(coords) < 2:
+            continue
+        features[feature_id] = {
+            "type": "Feature",
+            "properties": {
+                "road_ref": (tags or {}).get("ref", ""),
+                "name": (tags or {}).get("name", ""),
+                "distance_m": 0.0,
+                "reference_kind": kind,
+            },
+            "geometry": geometry,
+        }
+        for raw_a, raw_b in zip(coords, coords[1:]):
+            a, b = vertex_key(raw_a), vertex_key(raw_b)
+            if a == b:
+                continue
+            vertices.setdefault(a, [float(raw_a[0]), float(raw_a[1])])
+            vertices.setdefault(b, [float(raw_b[0]), float(raw_b[1])])
+            distance = length_metres(vertices[a], vertices[b])
+            adjacency.setdefault(a, []).append((b, distance, feature_id))
+            adjacency.setdefault(b, []).append((a, distance, feature_id))
+
+    if not vertices:
+        return None
+
+    def nearest_vertex(point):
+        # The route-local graph keeps this direct scan small and avoids adding
+        # a second personal-location index to shared storage.
+        nearest = None
+        nearest_distance = float("inf")
+        for key, candidate in vertices.items():
+            distance = length_metres(point, candidate)
+            if distance < nearest_distance:
+                nearest, nearest_distance = key, distance
+        return nearest, nearest_distance
+
+    snapped_vertices = []
+    for point in trace:
+        key, distance = nearest_vertex(point)
+        if key is None or distance > 120:
+            return None
+        snapped_vertices.append(key)
+
+    def shortest_path(start_key, end_key):
+        if start_key == end_key:
+            return [start_key], []
+        distances = {start_key: 0.0}
+        previous = {}
+        queue = [(0.0, start_key)]
+        visited = 0
+        while queue and visited < 150_000:
+            current_distance, current = heappop(queue)
+            if current_distance != distances.get(current):
+                continue
+            if current == end_key:
+                break
+            visited += 1
+            for neighbour, cost, feature_id in adjacency.get(current, []):
+                candidate = current_distance + cost
+                if candidate < distances.get(neighbour, float("inf")):
+                    distances[neighbour] = candidate
+                    previous[neighbour] = (current, feature_id)
+                    heappush(queue, (candidate, neighbour))
+        if end_key not in previous:
+            return None
+        path = [end_key]
+        feature_ids = []
+        current = end_key
+        while current != start_key:
+            prior, feature_id = previous[current]
+            path.append(prior)
+            feature_ids.append(feature_id)
+            current = prior
+        path.reverse()
+        feature_ids.reverse()
+        return path, feature_ids
+
+    route_keys = [snapped_vertices[0]]
+    used_feature_ids = []
+    for start_key, end_key in zip(snapped_vertices, snapped_vertices[1:]):
+        result = shortest_path(start_key, end_key)
+        if result is None:
+            return None
+        path, feature_ids = result
+        route_keys.extend(path[1:])
+        used_feature_ids.extend(feature_ids)
+
+    coordinates = [vertices[key] for key in route_keys]
     if len(coordinates) < 2:
         return None
-
-    def line_length_metres(line: list[list[float]]) -> float:
-        from math import asin, cos, radians, sin, sqrt
-        total = 0.0
-        for (lng_a, lat_a), (lng_b, lat_b) in zip(line, line[1:]):
-            lat1, lat2 = radians(lat_a), radians(lat_b)
-            delta_lat, delta_lng = radians(lat_b - lat_a), radians(lng_b - lng_a)
-            term = sin(delta_lat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(delta_lng / 2) ** 2
-            total += 6371008.8 * 2 * asin(min(1.0, sqrt(term)))
-        return total
-
+    matched_distance = sum(
+        length_metres(a, b) for a, b in zip(coordinates, coordinates[1:])
+    )
+    unique_feature_ids = list(dict.fromkeys(used_feature_ids))
     route_feature = {
         "type": "Feature",
         "properties": {
             "reference_area": "Kent",
-            "matcher": "kent_preloaded_reference_v1",
-            "confidence": round(len(snapped) / len(points), 3),
+            "matcher": "kent_preloaded_network_v2",
+            "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
-    road_features = []
-    seen_features = set()
-    for point in snapped:
-        if point["feature_id"] in seen_features:
-            continue
-        seen_features.add(point["feature_id"])
-        tags = point["tags"]
-        road_features.append({
-            "type": "Feature",
-            "properties": {
-                "road_ref": tags.get("ref", ""),
-                "name": tags.get("name", ""),
-                "distance_m": 0.0,
-                "reference_kind": point["kind"],
-            },
-            "geometry": point["geometry"],
-        })
-
-    matched_distance = line_length_metres(coordinates)
     return {
         "status": "ok",
-        "matcher": "kent_preloaded_reference_v1",
+        "matcher": "kent_preloaded_network_v2",
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),
-        "matched_tracepoints": len(snapped),
+        "matched_tracepoints": len(points),
         "matched_distance_m": round(matched_distance, 1),
         "geojson": {"type": "FeatureCollection", "features": [route_feature]},
         "motorway_geojson": {"type": "FeatureCollection", "features": []},
         "a_road_geojson": {"type": "FeatureCollection", "features": []},
-        "road_geojson": {"type": "FeatureCollection", "features": road_features},
+        "road_geojson": {
+            "type": "FeatureCollection",
+            "features": [features[feature_id] for feature_id in unique_feature_ids if feature_id in features],
+        },
         "other_road_distance_m": 0.0,
     }
+
 
 def initialise_database() -> None:
     if not DATABASE_URL:
