@@ -6,7 +6,14 @@ or correction is accepted or persisted.
 """
 
 import json
+import logging
 import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    force=True,
+)
 
 from database import database_state, initialise_database, reference_catalogue_status
 
