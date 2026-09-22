@@ -31,8 +31,9 @@ class ReferenceArea:
     source_url: str
 
 
-# The UK extract is the intended nationwide source. Kent stays as the proven
-# pilot and lets the service remain useful while a national load is prepared.
+# Kent stays as the proven pilot. A national import must use smaller official
+# regional extracts: a whole-UK PBF requires more memory than the deliberately
+# small one-off job can safely provide.
 REFERENCE_AREAS = {
     "kent": ReferenceArea(
         key="kent",
@@ -49,6 +50,8 @@ REFERENCE_AREAS = {
         source_url="https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf",
     ),
 }
+
+GEOFABRIK_INDEX_URL = "https://download.geofabrik.de/index-v1-nogeom.json"
 
 WALKABLE_HIGHWAYS = {
     "bridleway", "corridor", "cycleway", "footway", "living_street", "path",
@@ -107,6 +110,12 @@ class WayCollector(osmium.SimpleHandler):
             self.rows,
         )
         self.rows_loaded += len(self.rows)
+        if self.rows_loaded % 50000 == 0:
+            logger.info(
+                "loaded %s public pedestrian ways for %s",
+                self.rows_loaded,
+                self.area.key,
+            )
         self.rows = []
 
     def way(self, way):
@@ -135,14 +144,95 @@ class WayCollector(osmium.SimpleHandler):
             self._flush()
 
 
-def _requested_area_keys() -> list[str]:
+def _uk_regional_reference_areas() -> list[ReferenceArea]:
+    """Return safe-size official extracts for the complete UK reference build.
+
+    England is expanded to Geofabrik's leaf regions; Scotland, Wales and the
+    Ireland/Northern Ireland extract are separate manageable sources. The app
+    only submits UK journeys for discovery, so public Irish geometry is never
+    queried for an out-of-scope user journey.
+    """
+    logger.info("reading Geofabrik regional extract index for UK reference build")
+    with urllib.request.urlopen(GEOFABRIK_INDEX_URL, timeout=60) as response:
+        payload = json.load(response)
+
+    properties = [
+        feature.get("properties") or {}
+        for feature in payload.get("features") or []
+    ]
+    by_id = {
+        item.get("id"): item
+        for item in properties
+        if item.get("id") and (item.get("urls") or {}).get("pbf")
+    }
+    children = {
+        item.get("parent")
+        for item in properties
+        if item.get("parent")
+    }
+
+    def is_descendant_of(item_id: str, ancestor: str) -> bool:
+        current = by_id.get(item_id)
+        seen = set()
+        while current and current.get("parent") and current.get("parent") not in seen:
+            parent = current["parent"]
+            if parent == ancestor:
+                return True
+            seen.add(parent)
+            current = by_id.get(parent)
+        return False
+
+    selected = [
+        item
+        for item_id, item in by_id.items()
+        if is_descendant_of(item_id, "england") and item_id not in children
+    ]
+    for item_id in ("scotland", "wales", "ireland-and-northern-ireland"):
+        item = by_id.get(item_id)
+        if item:
+            selected.append(item)
+
+    areas = []
+    for item in sorted(selected, key=lambda candidate: candidate.get("name", "")):
+        item_id = item["id"]
+        pbf_url = item["urls"]["pbf"]
+        slug = item_id.replace("/", "-")
+        areas.append(
+            ReferenceArea(
+                key=f"uk-{slug}",
+                area_code="UK",
+                source_key=f"osm_geofabrik_{slug.replace("-", "_")}",
+                display_name=f"OpenStreetMap {item.get('name', item_id)} extract via Geofabrik",
+                source_url=pbf_url,
+            )
+        )
+
+    if not areas:
+        raise RuntimeError("Geofabrik index did not provide UK regional extracts")
+    logger.info("UK reference build queued %s regional extracts", len(areas))
+    return areas
+
+
+def _requested_areas() -> list[ReferenceArea]:
     # Keeping the original flag avoids surprising the existing Kent deployment.
     configured = os.getenv("LOAD_PEDESTRIAN_REFERENCE_AREAS", "").strip()
     if configured:
-        return [key.strip().lower() for key in configured.split(",") if key.strip()]
-    if os.getenv("LOAD_KENT_PEDESTRIAN_REFERENCE", "").lower() in {"1", "true", "yes"}:
-        return ["kent"]
-    return []
+        keys = [key.strip().lower() for key in configured.split(",") if key.strip()]
+    elif os.getenv("LOAD_KENT_PEDESTRIAN_REFERENCE", "").lower() in {"1", "true", "yes"}:
+        keys = ["kent"]
+    else:
+        keys = []
+
+    areas = []
+    for key in keys:
+        if key == "uk":
+            areas.extend(_uk_regional_reference_areas())
+            continue
+        area = REFERENCE_AREAS.get(key)
+        if not area:
+            raise RuntimeError(f"Unknown pedestrian reference area: {key}")
+        areas.append(area)
+    return areas
 
 
 def _ensure_source(cursor, area: ReferenceArea) -> str:
@@ -221,15 +311,14 @@ def _load_area(cursor, area: ReferenceArea) -> None:
     logger.info("public pedestrian reference import complete: %s (%s ways)", area.key, collector.rows_loaded)
 
 
-def load_configured_pedestrian_references(cursor) -> None:
+def load_configured_pedestrian_references(cursor, on_area_complete=None) -> None:
     """Idempotently load explicitly configured public reference areas.
 
-    Unknown keys fail closed; a bad deployment variable cannot silently download
-    an unintended region. A source failure is handled by the caller so it never
-    changes existing user import behaviour.
+    Each region is committed independently by the administrative caller. A
+    later failure therefore resumes from the next incomplete region instead of
+    discarding already loaded public reference data.
     """
-    for key in _requested_area_keys():
-        area = REFERENCE_AREAS.get(key)
-        if not area:
-            raise RuntimeError(f"Unknown pedestrian reference area: {key}")
+    for area in _requested_areas():
         _load_area(cursor, area)
+        if on_area_complete:
+            on_area_complete()
