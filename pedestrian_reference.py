@@ -176,10 +176,26 @@ def _load_area(cursor, area: ReferenceArea) -> None:
     logger.info("starting public pedestrian reference import: %s", area.key)
     with tempfile.TemporaryDirectory(prefix=f"roadprints-{area.key}-") as directory:
         source_path = Path(directory) / f"{area.key}-latest.osm.pbf"
+        logger.info("downloading public pedestrian reference: %s", area.key)
         urllib.request.urlretrieve(area.source_url, source_path)
+        logger.info(
+            "download complete: %s (%.1f MB)",
+            area.key,
+            source_path.stat().st_size / (1024 * 1024),
+        )
         checksum = _file_checksum(source_path)
         collector = WayCollector(cursor, source_id, area)
-        collector.apply_file(str(source_path), locations=True)
+        # The national extract has too many OSM nodes for Osmium's default
+        # flex_mem cache on the deliberately small one-off job. Keep the
+        # transient node index on the job's local disk instead; only the
+        # public pedestrian segments are retained in Postgres.
+        node_index_path = Path(directory) / f"{area.key}-node-locations.index"
+        logger.info("importing pedestrian ways with disk-backed node cache: %s", area.key)
+        collector.apply_file(
+            str(source_path),
+            locations=True,
+            idx=f"sparse_file_array,{node_index_path}",
+        )
         collector._flush()
 
     if not collector.rows_loaded:
