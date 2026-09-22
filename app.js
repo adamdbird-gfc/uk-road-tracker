@@ -2844,9 +2844,14 @@ async function startNextFootBatch() {
 
   const processCandidate=async ({batch,activity})=>{
     footMatchingBatchId=batch.id;
+    // The public pedestrian router needs a deliberate gap.  The Kent reference
+    // cache is local shared reference data, so its successful responses can
+    // move straight on to the next locally persisted activity.
+    let nextRequestDelayMs=1250;
     try {
       const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
       const data=await response.json().catch(()=>({}));
+      if (data.matcher==='kent_public_path_reference') nextRequestDelayMs=50;
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
       activity.matchedGeoJson=data.geojson;
       activity.roadGeoJson=data.road_geojson || {type:'FeatureCollection',features:[]};
@@ -2884,6 +2889,7 @@ async function startNextFootBatch() {
         }
       } catch (err) { footMatchingError=`A route was processed, but the map could not update: ${err.message || err}`; }
     }
+    return nextRequestDelayMs;
   };
 
   const worker=async()=>{
@@ -2895,11 +2901,11 @@ async function startNextFootBatch() {
       }
       const candidate=candidates[cursor++];
       if (!candidate) return;
-      await processCandidate(candidate);
+      const nextRequestDelayMs=await processCandidate(candidate);
       if (footMatchingError) return;
-      // Public pedestrian routing is shared infrastructure. Keep it to one
-      // request at a time and leave space between activities.
-      await new Promise(resolve=>setTimeout(resolve,1250));
+      // Preserve a respectful gap for the public router.  A Kent reference
+      // cache hit is not a router request and can progress at browser speed.
+      await new Promise(resolve=>setTimeout(resolve,nextRequestDelayMs));
     }
   };
 
