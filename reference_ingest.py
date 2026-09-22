@@ -19,7 +19,7 @@ from database import database_state, initialise_database, reference_catalogue_st
 
 
 def main() -> int:
-    initialise_database()
+    initialise_database(strict_reference_load=True)
     if database_state["status"] != "ready":
         print(json.dumps({"status": database_state["status"], "detail": database_state["detail"]}))
         return 1
