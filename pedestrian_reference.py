@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 import urllib.request
 from dataclasses import dataclass
 from math import asin, cos, radians, sin, sqrt
@@ -52,12 +53,58 @@ REFERENCE_AREAS = {
 }
 
 GEOFABRIK_INDEX_URL = "https://download.geofabrik.de/index-v1-nogeom.json"
+MAX_PBF_BLOB_HEADER_SIZE = 64 * 1024
+DOWNLOAD_ATTEMPTS = 3
 
 WALKABLE_HIGHWAYS = {
     "bridleway", "corridor", "cycleway", "footway", "living_street", "path",
     "pedestrian", "primary", "residential", "road", "secondary", "service",
     "steps", "tertiary", "track", "unclassified",
 }
+
+
+
+def _download_pbf(area: ReferenceArea, destination: Path) -> None:
+    """Download and validate an OSM PBF before sending it to Osmium.
+
+    A CDN error page can otherwise be saved with a .pbf suffix and fail later
+    with an opaque parser error. Retrying here makes temporary responses
+    harmless and gives a precise error if the source remains unavailable.
+    """
+    last_error = None
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        destination.unlink(missing_ok=True)
+        try:
+            request = urllib.request.Request(
+                area.source_url,
+                headers={"User-Agent": "Roadprints-reference-loader/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=120) as response, destination.open("wb") as target:
+                while chunk := response.read(1024 * 1024):
+                    target.write(chunk)
+
+            size = destination.stat().st_size
+            with destination.open("rb") as source:
+                prefix = source.read(4)
+            if len(prefix) != 4:
+                raise RuntimeError("response was empty or too short to be an OSM PBF")
+            blob_header_size = int.from_bytes(prefix, byteorder="big")
+            if not 0 < blob_header_size <= MAX_PBF_BLOB_HEADER_SIZE:
+                raise RuntimeError("response was not a valid OSM PBF")
+            return
+        except (OSError, RuntimeError) as error:
+            last_error = error
+            destination.unlink(missing_ok=True)
+            logger.warning(
+                "public reference download failed for %s (attempt %s/%s): %s",
+                area.key, attempt, DOWNLOAD_ATTEMPTS, error,
+            )
+            if attempt < DOWNLOAD_ATTEMPTS:
+                time.sleep(attempt * 3)
+
+    raise RuntimeError(
+        f"{area.key} reference download failed after {DOWNLOAD_ATTEMPTS} attempts: {last_error}"
+    )
 
 
 def _file_checksum(path: Path) -> str:
@@ -267,7 +314,7 @@ def _load_area(cursor, area: ReferenceArea) -> None:
     with tempfile.TemporaryDirectory(prefix=f"roadprints-{area.key}-") as directory:
         source_path = Path(directory) / f"{area.key}-latest.osm.pbf"
         logger.info("downloading public pedestrian reference: %s", area.key)
-        urllib.request.urlretrieve(area.source_url, source_path)
+        _download_pbf(area, source_path)
         logger.info(
             "download complete: %s (%.1f MB)",
             area.key,
@@ -318,7 +365,21 @@ def load_configured_pedestrian_references(cursor, on_area_complete=None) -> None
     later failure therefore resumes from the next incomplete region instead of
     discarding already loaded public reference data.
     """
+    failures = []
     for area in _requested_areas():
-        _load_area(cursor, area)
-        if on_area_complete:
-            on_area_complete()
+        try:
+            _load_area(cursor, area)
+            if on_area_complete:
+                on_area_complete()
+        except Exception as error:
+            # Previous areas have already been committed by the caller. Roll
+            # back only this area and keep moving, so one temporary upstream
+            # response cannot strand the entire national build.
+            cursor.connection.rollback()
+            failures.append(f"{area.key}: {error}")
+            logger.exception("public pedestrian reference import failed for %s; continuing", area.key)
+
+    if failures:
+        raise RuntimeError(
+            "Some public pedestrian reference regions need retry: " + "; ".join(failures)
+        )
