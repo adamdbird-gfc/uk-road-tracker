@@ -15,6 +15,7 @@ from database import (
     database_state,
     find_settlements_for_geometry,
     initialise_database,
+    match_kent_pedestrian_reference,
     reference_catalogue_status,
     request_settlement_inventory,
     settlement_boundary_geojson,
@@ -406,6 +407,15 @@ async def match_journey(payload: MatchRequest):
 
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
+    # Kent uses the preloaded shared public reference first. The request is
+    # read-only and transient: no Timeline route data is retained by Postgres.
+    reference_match = match_kent_pedestrian_reference(
+        [{"lat": point.lat, "lng": point.lng} for point in payload.points]
+    )
+    if reference_match:
+        return reference_match
+    # Other areas retain the established pedestrian-router path until their
+    # equivalent public reference catalogue is loaded and verified.
     return await match_payload(
         payload,
         FOOT_OSRM_BASE_URL,
