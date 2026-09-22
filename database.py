@@ -263,6 +263,95 @@ def load_seed_settlement_boundaries(cursor) -> None:
 
 
 
+FULL_SETTLEMENT_BOUNDARY_DATASET_KEY = "settlement_boundaries_gb_bgg_v1"
+
+
+def load_all_settlement_boundaries(cursor) -> None:
+    """Load the complete public GB built-up-area boundary catalogue.
+
+    This is an explicit administrative load for the one-off reference job.
+    It never receives, reads or stores Roadprints Journey data. The source is
+    paged so the full national layer is streamed in bounded memory.
+    """
+    if os.getenv("LOAD_ALL_SETTLEMENT_BOUNDARIES", "").lower() not in {"1", "true", "yes"}:
+        return
+    cursor.execute(
+        "SELECT id FROM reference_sources WHERE source_key = %s",
+        ("ons_bua_2022_gb",),
+    )
+    source = cursor.fetchone()
+    if not source:
+        raise RuntimeError("Missing ONS settlement reference source")
+    source_id = source[0]
+    cursor.execute(
+        "SELECT row_count FROM reference_data_loads WHERE source_id = %s AND dataset_key = %s",
+        (source_id, FULL_SETTLEMENT_BOUNDARY_DATASET_KEY),
+    )
+    completed = cursor.fetchone()
+    if completed and completed[0] > 0:
+        return
+
+    page_size = 200
+    offset = 0
+    rows_loaded = 0
+    digest = hashlib.sha256()
+    while True:
+        query = urllib.parse.urlencode({
+            "where": "1=1",
+            "outFields": "BUA22CD,BUA22NM",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "orderByFields": "BUA22CD",
+            "resultOffset": offset,
+            "resultRecordCount": page_size,
+            "f": "geojson",
+        })
+        with urllib.request.urlopen(ONS_BUA_FEATURE_SERVICE + "?" + query, timeout=90) as response:
+            payload = json.load(response)
+        features = payload.get("features") or []
+        if not features:
+            break
+        for feature in features:
+            properties = feature.get("properties") or {}
+            code = properties.get("BUA22CD")
+            geometry = feature.get("geometry")
+            if not code or not isinstance(geometry, dict):
+                continue
+            geometry_json = json.dumps(geometry, separators=(",", ":"), sort_keys=True)
+            cursor.execute(
+                """
+                INSERT INTO settlement_boundaries (settlement_id, source_id, geometry)
+                SELECT s.id, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)
+                FROM settlements AS s
+                WHERE s.source_id = %s AND s.external_code = %s
+                ON CONFLICT (settlement_id) DO UPDATE
+                  SET source_id = EXCLUDED.source_id,
+                      geometry = EXCLUDED.geometry,
+                      updated_at = NOW()
+                """,
+                (source_id, geometry_json, source_id, code),
+            )
+            if cursor.rowcount:
+                rows_loaded += 1
+                digest.update((code + ":" + geometry_json).encode("utf-8"))
+        offset += len(features)
+        if not payload.get("properties", {}).get("exceededTransferLimit") and len(features) < page_size:
+            break
+
+    if not rows_loaded:
+        raise RuntimeError("Full settlement boundary import produced no usable boundaries")
+    cursor.execute(
+        """
+        INSERT INTO reference_data_loads (source_id, dataset_key, checksum, row_count)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (source_id, dataset_key) DO UPDATE
+        SET checksum = EXCLUDED.checksum, row_count = EXCLUDED.row_count, loaded_at = NOW()
+        """,
+        (source_id, FULL_SETTLEMENT_BOUNDARY_DATASET_KEY, digest.hexdigest(), rows_loaded),
+    )
+    logger.info("full GB settlement boundary import complete: %s boundaries", rows_loaded)
+
+
 # Initial public inventory requests are deliberately bounded to settlements
 # already encountered in Roadprints. They are shared reference work only.
 SETTLEMENT_INVENTORY_SEED_CODES = (
@@ -656,6 +745,7 @@ def initialise_database() -> None:
                     )
                 load_settlement_catalogue(cursor)
                 load_seed_settlement_boundaries(cursor)
+                load_all_settlement_boundaries(cursor)
                 load_seed_inventory_requests(cursor)
                 # This is an explicit deployment-time reference build. It is
                 # never part of a user import and a public-source outage must
