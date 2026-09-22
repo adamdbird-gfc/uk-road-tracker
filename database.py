@@ -335,7 +335,7 @@ def load_all_settlement_boundaries(cursor) -> None:
                 rows_loaded += 1
                 digest.update((code + ":" + geometry_json).encode("utf-8"))
         offset += len(features)
-        if not payload.get("properties", {}).get("exceededTransferLimit") and len(features) < page_size:
+        if not payload.get("exceededTransferLimit") and len(features) < page_size:
             break
 
     if not rows_loaded:
