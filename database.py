@@ -745,15 +745,24 @@ def initialise_database() -> None:
                     )
                 load_settlement_catalogue(cursor)
                 load_seed_settlement_boundaries(cursor)
-                load_all_settlement_boundaries(cursor)
                 load_seed_inventory_requests(cursor)
-                # This is an explicit deployment-time reference build. It is
-                # never part of a user import and a public-source outage must
-                # not take the API offline.
+                # This is the primary one-off reference build. It runs before
+                # the optional settlement-boundary catalogue so a transient
+                # public ArcGIS error cannot block nationwide route matching.
                 try:
                     load_configured_pedestrian_references(cursor)
                 except Exception as exc:
                     logger.warning("Pedestrian reference not loaded: %s", exc.__class__.__name__)
+                # Full settlement boundaries are useful shared reference data,
+                # but remain an optional, resumable enhancement while the ONS
+                # service is rate-limiting requests.
+                try:
+                    load_all_settlement_boundaries(cursor)
+                except Exception as exc:
+                    logger.warning(
+                        "Full settlement boundary catalogue deferred: %s",
+                        exc.__class__.__name__,
+                    )
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
