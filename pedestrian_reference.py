@@ -57,6 +57,15 @@ WALKABLE_HIGHWAYS = {
 }
 
 
+def _file_checksum(path: Path) -> str:
+    """Hash large public extracts without loading them into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _length_metres(coords: list[list[float]]) -> float:
     total = 0.0
     for (lon_a, lat_a), (lon_b, lat_b) in zip(coords, coords[1:]):
@@ -168,7 +177,7 @@ def _load_area(cursor, area: ReferenceArea) -> None:
     with tempfile.TemporaryDirectory(prefix=f"roadprints-{area.key}-") as directory:
         source_path = Path(directory) / f"{area.key}-latest.osm.pbf"
         urllib.request.urlretrieve(area.source_url, source_path)
-        checksum = hashlib.sha256(source_path.read_bytes()).hexdigest()
+        checksum = _file_checksum(source_path)
         collector = WayCollector(cursor, source_id, area)
         collector.apply_file(str(source_path), locations=True)
         collector._flush()
