@@ -8,7 +8,7 @@ from pathlib import Path
 
 import psycopg
 
-from pedestrian_reference import load_kent_pedestrian_reference
+from pedestrian_reference import load_configured_pedestrian_references
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -442,8 +442,8 @@ def find_settlements_for_geometry(geometry: dict) -> list[dict] | None:
         return None
 
 
-def match_kent_pedestrian_reference(points: list[dict]) -> dict | None:
-    """Match a Kent trace through the connected preloaded pedestrian network.
+def match_pedestrian_reference(points: list[dict]) -> dict | None:
+    """Match a trace through the connected preloaded pedestrian network.
 
     The database is the sole reference source. The transient points are used
     only for this request and are never written or logged as a Journey.
@@ -455,7 +455,7 @@ def match_kent_pedestrian_reference(points: list[dict]) -> dict | None:
     except (KeyError, TypeError, ValueError):
         return None
 
-    # Build a compact, route-local graph from the prepared Kent reference.
+    # Build a compact, route-local graph from the prepared public reference.
     # A generous margin allows a sensible detour around parks, one-way streets
     # or barriers without loading the whole county into application memory.
     west = min(point[0] for point in trace) - 0.008
@@ -470,10 +470,9 @@ def match_kent_pedestrian_reference(points: list[dict]) -> dict | None:
                     SELECT source_feature_id, segment_kind, tags,
                            ST_AsGeoJSON(geometry)
                     FROM pedestrian_reference_segments
-                    WHERE area_code = %s
-                      AND geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    WHERE geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
                     """,
-                    ("GB-KENT", west, south, east, north),
+                    (west, south, east, north),
                 )
                 rows = cursor.fetchall()
     except Exception:
@@ -598,15 +597,15 @@ def match_kent_pedestrian_reference(points: list[dict]) -> dict | None:
     route_feature = {
         "type": "Feature",
         "properties": {
-            "reference_area": "Kent",
-            "matcher": "kent_preloaded_network_v2",
+            "reference_area": "preloaded_public_network",
+            "matcher": "preloaded_pedestrian_network_v3",
             "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
     return {
         "status": "ok",
-        "matcher": "kent_preloaded_network_v2",
+        "matcher": "preloaded_pedestrian_network_v3",
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),
@@ -662,9 +661,9 @@ def initialise_database() -> None:
                 # never part of a user import and a public-source outage must
                 # not take the API offline.
                 try:
-                    load_kent_pedestrian_reference(cursor)
+                    load_configured_pedestrian_references(cursor)
                 except Exception as exc:
-                    logger.warning("Kent pedestrian reference not loaded: %s", exc.__class__.__name__)
+                    logger.warning("Pedestrian reference not loaded: %s", exc.__class__.__name__)
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
