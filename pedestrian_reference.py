@@ -183,7 +183,16 @@ def _load_area(cursor, area: ReferenceArea) -> None:
             area.key,
             source_path.stat().st_size / (1024 * 1024),
         )
-        checksum = _file_checksum(source_path)
+        # Re-reading a multi-gigabyte extract solely to calculate a checksum
+        # can exceed the memory envelope of a small one-off job through the
+        # operating-system file cache. The URL and downloaded byte size are a
+        # stable idempotency marker for this administrative UK load.
+        if area.key == "uk":
+            checksum = hashlib.sha256(
+                f"{area.source_url}\n{source_path.stat().st_size}".encode("utf-8")
+            ).hexdigest()
+        else:
+            checksum = _file_checksum(source_path)
         collector = WayCollector(cursor, source_id, area)
         # The national extract has too many OSM nodes for Osmium's default
         # flex_mem cache on the deliberately small one-off job. Keep the
