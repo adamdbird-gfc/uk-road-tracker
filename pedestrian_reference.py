@@ -1,8 +1,8 @@
-"""One-off public OSM reference loader for Roadprints.
+"""Preload public OSM pedestrian references for Roadprints.
 
-This is deliberately a deployment/admin process, never a request-time operation.
-It stores public Kent transport geometry only; it neither receives nor persists
-Timeline files, journeys, user identifiers, or corrections.
+This is a deployment/admin process, never a request-time operation. It stores
+public network geometry only: no Timeline files, journeys, user identifiers or
+corrections are received or persisted.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import logging
 import os
 import tempfile
 import urllib.request
+from dataclasses import dataclass
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 
@@ -20,35 +21,39 @@ import osmium
 
 logger = logging.getLogger("roadprints.pedestrian_reference")
 
-KENT_SOURCE_URL = (
-    "https://download.geofabrik.de/europe/united-kingdom/england/"
-    "kent-latest.osm.pbf"
-)
-KENT_SOURCE_KEY = "osm_geofabrik_kent"
-KENT_DATASET_KEY = "kent_walkable_network_v1"
-KENT_AREA_CODE = "GB-KENT"
 
-# These are public ways that can form a walking/running route.  Motorways and
-# trunks are intentionally excluded.  The selection retains normal streets,
-# because a footway-only network would strand a walker whenever OSM has not
-# mapped a separate pavement.
+@dataclass(frozen=True)
+class ReferenceArea:
+    key: str
+    area_code: str
+    source_key: str
+    display_name: str
+    source_url: str
+
+
+# The UK extract is the intended nationwide source. Kent stays as the proven
+# pilot and lets the service remain useful while a national load is prepared.
+REFERENCE_AREAS = {
+    "kent": ReferenceArea(
+        key="kent",
+        area_code="GB-KENT",
+        source_key="osm_geofabrik_kent",
+        display_name="OpenStreetMap Kent regional extract via Geofabrik",
+        source_url="https://download.geofabrik.de/europe/united-kingdom/england/kent-latest.osm.pbf",
+    ),
+    "uk": ReferenceArea(
+        key="uk",
+        area_code="UK",
+        source_key="osm_geofabrik_uk",
+        display_name="OpenStreetMap United Kingdom extract via Geofabrik",
+        source_url="https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf",
+    ),
+}
+
 WALKABLE_HIGHWAYS = {
-    "bridleway",
-    "corridor",
-    "cycleway",
-    "footway",
-    "living_street",
-    "path",
-    "pedestrian",
-    "primary",
-    "residential",
-    "road",
-    "secondary",
-    "service",
-    "steps",
-    "tertiary",
-    "track",
-    "unclassified",
+    "bridleway", "corridor", "cycleway", "footway", "living_street", "path",
+    "pedestrian", "primary", "residential", "road", "secondary", "service",
+    "steps", "tertiary", "track", "unclassified",
 }
 
 
@@ -62,11 +67,12 @@ def _length_metres(coords: list[list[float]]) -> float:
     return total
 
 
-class KentWayCollector(osmium.SimpleHandler):
-    def __init__(self, cursor, source_id):
+class WayCollector(osmium.SimpleHandler):
+    def __init__(self, cursor, source_id, area: ReferenceArea):
         super().__init__()
         self.cursor = cursor
         self.source_id = source_id
+        self.area = area
         self.rows = []
         self.rows_loaded = 0
 
@@ -111,75 +117,85 @@ class KentWayCollector(osmium.SimpleHandler):
             for key in ("highway", "name", "ref", "surface", "foot", "access")
             if key in way.tags
         }
-        geometry = json.dumps(
-            {"type": "LineString", "coordinates": compact}, separators=(",", ":")
-        )
-        self.rows.append(
-            (
-                self.source_id,
-                str(way.id),
-                KENT_AREA_CODE,
-                kind,
-                json.dumps(public_tags, separators=(",", ":")),
-                _length_metres(compact),
-                geometry,
-            )
-        )
+        geometry = json.dumps({"type": "LineString", "coordinates": compact}, separators=(",", ":"))
+        self.rows.append((
+            self.source_id, str(way.id), self.area.area_code, kind,
+            json.dumps(public_tags, separators=(",", ":")), _length_metres(compact), geometry,
+        ))
         if len(self.rows) >= 1000:
             self._flush()
 
 
-def load_kent_pedestrian_reference(cursor) -> None:
-    """Load Kent's public walkable network once when explicitly enabled.
+def _requested_area_keys() -> list[str]:
+    # Keeping the original flag avoids surprising the existing Kent deployment.
+    configured = os.getenv("LOAD_PEDESTRIAN_REFERENCE_AREAS", "").strip()
+    if configured:
+        return [key.strip().lower() for key in configured.split(",") if key.strip()]
+    if os.getenv("LOAD_KENT_PEDESTRIAN_REFERENCE", "").lower() in {"1", "true", "yes"}:
+        return ["kent"]
+    return []
 
-    A source failure is reported to the application log and leaves the reference
-    incomplete.  It never blocks or changes user import behaviour.
-    """
-    if os.getenv("LOAD_KENT_PEDESTRIAN_REFERENCE", "").lower() not in {"1", "true", "yes"}:
-        return
 
+def _ensure_source(cursor, area: ReferenceArea) -> str:
     cursor.execute(
-        "SELECT id FROM reference_sources WHERE source_key = %s",
-        (KENT_SOURCE_KEY,),
+        """
+        INSERT INTO reference_sources
+          (source_key, display_name, source_version, licence, retrieved_at, notes)
+        VALUES (%s, %s, 'latest', 'Open Data Commons Open Database Licence (ODbL) v1.0', NOW(), %s)
+        ON CONFLICT (source_key) DO UPDATE
+        SET display_name = EXCLUDED.display_name, source_version = EXCLUDED.source_version,
+            licence = EXCLUDED.licence, notes = EXCLUDED.notes, retrieved_at = NOW()
+        RETURNING id
+        """,
+        (area.source_key, area.display_name,
+         "Public pedestrian reference, loaded before imports. No personal journey data is stored."),
     )
-    source = cursor.fetchone()
-    if not source:
-        raise RuntimeError("Kent pedestrian reference source is not registered")
-    source_id = source[0]
+    return cursor.fetchone()[0]
 
+
+def _load_area(cursor, area: ReferenceArea) -> None:
+    source_id = _ensure_source(cursor, area)
+    dataset_key = f"{area.key}_walkable_network_v1"
     cursor.execute(
         "SELECT row_count FROM reference_data_loads WHERE source_id = %s AND dataset_key = %s",
-        (source_id, KENT_DATASET_KEY),
+        (source_id, dataset_key),
     )
     completed = cursor.fetchone()
     if completed and completed[0] > 0:
         return
 
-    logger.info("starting Kent public pedestrian reference import")
-    with tempfile.TemporaryDirectory(prefix="roadprints-kent-") as directory:
-        source_path = Path(directory) / "kent-latest.osm.pbf"
-        urllib.request.urlretrieve(KENT_SOURCE_URL, source_path)
+    logger.info("starting public pedestrian reference import: %s", area.key)
+    with tempfile.TemporaryDirectory(prefix=f"roadprints-{area.key}-") as directory:
+        source_path = Path(directory) / f"{area.key}-latest.osm.pbf"
+        urllib.request.urlretrieve(area.source_url, source_path)
         checksum = hashlib.sha256(source_path.read_bytes()).hexdigest()
-        collector = KentWayCollector(cursor, source_id)
+        collector = WayCollector(cursor, source_id, area)
         collector.apply_file(str(source_path), locations=True)
         collector._flush()
 
     if not collector.rows_loaded:
-        raise RuntimeError("Kent pedestrian reference import produced no usable ways")
-
+        raise RuntimeError(f"{area.key} pedestrian reference import produced no usable ways")
     cursor.execute(
         """
-        INSERT INTO reference_data_loads
-            (source_id, dataset_key, checksum, row_count)
+        INSERT INTO reference_data_loads (source_id, dataset_key, checksum, row_count)
         VALUES (%s, %s, %s, %s)
         ON CONFLICT (source_id, dataset_key) DO UPDATE
-        SET checksum = EXCLUDED.checksum,
-            row_count = EXCLUDED.row_count,
-            loaded_at = NOW()
+        SET checksum = EXCLUDED.checksum, row_count = EXCLUDED.row_count, loaded_at = NOW()
         """,
-        (source_id, KENT_DATASET_KEY, checksum, collector.rows_loaded),
+        (source_id, dataset_key, checksum, collector.rows_loaded),
     )
-    logger.info(
-        "Kent public pedestrian reference import complete: %s ways",
-        collector.rows_loaded,
-    )
+    logger.info("public pedestrian reference import complete: %s (%s ways)", area.key, collector.rows_loaded)
+
+
+def load_configured_pedestrian_references(cursor) -> None:
+    """Idempotently load explicitly configured public reference areas.
+
+    Unknown keys fail closed; a bad deployment variable cannot silently download
+    an unintended region. A source failure is handled by the caller so it never
+    changes existing user import behaviour.
+    """
+    for key in _requested_area_keys():
+        area = REFERENCE_AREAS.get(key)
+        if not area:
+            raise RuntimeError(f"Unknown pedestrian reference area: {key}")
+        _load_area(cursor, area)
