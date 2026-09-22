@@ -711,7 +711,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     }
 
 
-def initialise_database() -> None:
+def initialise_database(strict_reference_load: bool = False) -> None:
     if not DATABASE_URL:
         return
     try:
@@ -750,9 +750,14 @@ def initialise_database() -> None:
                 # the optional settlement-boundary catalogue so a transient
                 # public ArcGIS error cannot block nationwide route matching.
                 try:
-                    load_configured_pedestrian_references(cursor)
+                    load_configured_pedestrian_references(
+                        cursor,
+                        on_area_complete=connection.commit,
+                    )
                 except Exception as exc:
                     logger.warning("Pedestrian reference not loaded: %s", exc.__class__.__name__)
+                    if strict_reference_load:
+                        raise
                 # Full settlement boundaries are useful shared reference data,
                 # but remain an optional, resumable enhancement while the ONS
                 # service is rate-limiting requests.
@@ -766,4 +771,7 @@ def initialise_database() -> None:
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
+        logger.exception("Database initialisation failed: %s", exc.__class__.__name__)
         database_state.update(status="error", detail=exc.__class__.__name__)
+        if strict_reference_load:
+            raise
