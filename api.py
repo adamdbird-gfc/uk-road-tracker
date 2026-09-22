@@ -26,7 +26,12 @@ from pydantic import BaseModel, Field
 
 OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "https://router.project-osrm.org")
 FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreetmap.de/routed-foot")
-OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "8"))
+# Public OSRM Match accepts substantially more than a handful of coordinates.
+# Thirty-two points keeps the request URL comfortably small while avoiding the
+# four-to-six tiny upstream calls that an eight-point chunk created for an
+# ordinary Timeline journey.  The two-point overlap preserves continuity at
+# each boundary; it does not alter the local source route or saved geometry.
+OSRM_CHUNK_SIZE = int(os.getenv("OSRM_CHUNK_SIZE", "32"))
 OSRM_CHUNK_OVERLAP = int(os.getenv("OSRM_CHUNK_OVERLAP", "2"))
 RADIUS_ATTEMPTS = [20, 10, 5]
 FOOT_RADIUS_ATTEMPTS = [20, 10, 5]
