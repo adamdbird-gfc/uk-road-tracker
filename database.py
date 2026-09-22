@@ -3,15 +3,19 @@ import json
 import os
 import urllib.parse
 import urllib.request
+import logging
 from pathlib import Path
 
 import psycopg
+
+from pedestrian_reference import load_kent_pedestrian_reference
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
 SETTLEMENT_CATALOGUE_PATH = Path(__file__).with_name("settlement-catalogue-v1.json")
 CATALOGUE_DATASET_KEY = "settlement_catalogue_v1"
 database_state = {"configured": bool(DATABASE_URL), "status": "not_configured", "detail": None}
+logger = logging.getLogger("roadprints.database")
 
 
 def load_settlement_catalogue(cursor) -> None:
@@ -472,6 +476,13 @@ def initialise_database() -> None:
                 load_settlement_catalogue(cursor)
                 load_seed_settlement_boundaries(cursor)
                 load_seed_inventory_requests(cursor)
+                # This is an explicit deployment-time reference build. It is
+                # never part of a user import and a public-source outage must
+                # not take the API offline.
+                try:
+                    load_kent_pedestrian_reference(cursor)
+                except Exception as exc:
+                    logger.warning("Kent pedestrian reference not loaded: %s", exc.__class__.__name__)
             connection.commit()
         database_state.update(status="ready", detail=None)
     except Exception as exc:
