@@ -6449,6 +6449,8 @@ document.getElementById('mapBrandMenu')?.addEventListener('click',()=>{ document
 
 
 const roadDiscoveryLedger = new Map();
+// The settlement map must use precisely the same roads as the visible settlement card.
+const settlementRoadsByTown = new Map();
 const roadDiscoveryByJourneyId = new Map();
 let roadDiscoverySignature = '';
 
@@ -6793,11 +6795,11 @@ async function loadSettlementBoundary(inventory){
 }
 async function settlementDiscoveryFeatures(town){
   rebuildRoadDiscoveryLedger();
+  // Reuse the settlement card's completed grouping. Rechecking the cache here
+  // can lose roads after a refresh even though the card correctly lists them.
+  const roads=settlementRoadsByTown.get(town)||[];
   const features=[];
-  for(const road of roadDiscoveryLedger.values()){
-    if(road.category!=='Local roads')continue;
-    const result=settlementCheckResults.get(road.id);
-    if(!result?.names?.includes(town))continue;
+  for(const road of roads){
     for(const evidence of road.evidence||[]){
       if(evidence.geometry)features.push({type:'Feature',properties:{name:road.label},geometry:evidence.geometry});
     }
@@ -6807,8 +6809,9 @@ async function settlementDiscoveryFeatures(town){
 async function showSettlementBoundary(town,inventory){
   const boundary=await loadSettlementBoundary(inventory);
   settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');
-  setTimeout(()=>{initMap();if(!map||!window.L)return;for(const [name,zIndex] of [['settlementDrivenPane',450],['settlementOverlayPane',460]]){if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(zIndex);pane.style.pointerEvents='none';}}clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{pane:'settlementOverlayPane',style:{color:'#e45757',weight:4,fillColor:'#e45757',fillOpacity:.10,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{pane:'settlementDrivenPane',style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Black: roads you discovered · Red: settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)
+  setTimeout(()=>{initMap();if(!map||!window.L)return;for(const [name,zIndex] of [['settlementDrivenPane',450],['settlementOverlayPane',460]]){if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(zIndex);pane.style.pointerEvents='none';}}clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{pane:'settlementOverlayPane',style:{color:'#e45757',weight:4,fillColor:'#e45757',fillOpacity:.10,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{pane:'settlementDrivenPane',style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Black: roads you discovered · Red: settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};const bounds=boundaryLayer.getBounds();requestAnimationFrame(()=>requestAnimationFrame(()=>{map.invalidateSize(true);if(bounds.isValid())map.fitBounds(bounds,{paddingTopLeft:[24,126],paddingBottomRight:[24,108],maxZoom:14});}));refreshARoadBackgroundStatus?.()},100)
 }
+
 // Resolve local roads against the official ONS boundary service in the
 // background; the user-facing ledger changes only once a result is available.
 const SETTLEMENT_CHECK_CACHE_KEY='roadprints-settlement-check-v1';
@@ -6917,6 +6920,8 @@ function renderBoundarySettlementLedger(){
     for(const road of unresolved){const row=document.createElement('li');row.textContent=road.label;rows.append(row)}
     detail.append(summary,rows);group.append(detail);
   }
+  settlementRoadsByTown.clear();
+  for(const [town,entries] of townRows)settlementRoadsByTown.set(town,entries);
   legacy.replaceWith(group);restoreRoadDiscoveryDisclosureState(card,openDisclosures);
   for(const [town,entries] of townRows)setTown(town,entries);
 }
