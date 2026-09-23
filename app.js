@@ -2215,14 +2215,24 @@ function renderFootQueue() {
 async function retryUnableFootMatches(){
   const retries=footActivities.filter(activity=>!activity.matchedGeoJson&&activity.matchError);
   if(!retries.length)return;
-  await footArchiveOperation('readwrite',store=>{
-    for(const activity of retries){
-      delete activity.matchError;
-      const record=compactFootActivity(activity);
-      store.put(record);
-      persistedFootActivities.set(record.id,{...record,selected:true});
-    }
-  });
+  if (retryFootImport) {
+    retryFootImport.disabled=true;
+    retryFootImport.textContent='Preparing retry…';
+  }
+  try {
+    await footArchiveOperation('readwrite',store=>{
+      for(const activity of retries){
+        delete activity.matchError;
+        const record=compactFootActivity(activity);
+        store.put(record);
+        persistedFootActivities.set(record.id,{...record,selected:true});
+      }
+    });
+  } catch (error) {
+    footMatchingError=`Could not prepare the on-foot retry: ${error.message || error}`;
+    renderCollectiveImportProgress();
+    return;
+  }
   footActivities=[...persistedFootActivities.values()];
   footMatchingError=null;
   importFootStartedAt=Date.now();
@@ -3020,6 +3030,15 @@ function renderCollectiveImportProgress() {
   const retryableFoot=footRetryCount();
   const retryableRoad=roadRetryCount();
   const retryableTotal=retryableFoot+retryableRoad;
+  // The initial processing sheet is shown before the legacy on-foot queue
+  // card. Keep its retry action in sync here instead.
+  if (retryFootImport) {
+    retryFootImport.classList.toggle('hidden',footMatching || !retryableFoot);
+    retryFootImport.disabled=footMatching || !retryableFoot;
+    retryFootImport.textContent=footMatching
+      ? 'Retrying on-foot routes…'
+      : `Retry on-foot routes (${retryableFoot.toLocaleString()})`;
+  }
   easyProgressText.replaceChildren();
   const headline=document.createElement('strong');
   headline.textContent=retryableTotal
