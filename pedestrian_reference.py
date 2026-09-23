@@ -229,11 +229,31 @@ def _uk_regional_reference_areas() -> list[ReferenceArea]:
             current = by_id.get(parent)
         return False
 
+    # Greater London is available as one manageable regional extract. Prefer
+    # that complete, consistent dataset over the borough-level leaves; this
+    # avoids partial coverage if a single borough download is unavailable.
+    greater_london = next(
+        (
+            item
+            for item_id, item in by_id.items()
+            if item.get("name", "").strip().lower() == "greater london"
+            and (item.get("urls") or {}).get("pbf")
+        ),
+        None,
+    )
+    greater_london_id = greater_london.get("id") if greater_london else None
     selected = [
         item
         for item_id, item in by_id.items()
-        if is_descendant_of(item_id, "england") and item_id not in children
+        if is_descendant_of(item_id, "england")
+        and item_id not in children
+        and not (
+            greater_london_id
+            and (item_id == greater_london_id or is_descendant_of(item_id, greater_london_id))
+        )
     ]
+    if greater_london:
+        selected.append(greater_london)
     for item_id in ("scotland", "wales", "ireland-and-northern-ireland"):
         item = by_id.get(item_id)
         if item:
