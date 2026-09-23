@@ -1636,6 +1636,7 @@ main.app-ready.import-status-open #easyProgress { display:block !important; }
   color:#f3f6f7; text-align:center;
 }
 .saved-progress-loading img { width:96px; height:96px; animation:roadprints-loading-footsteps 1.15s ease-in-out infinite; }
+.saved-progress-loading.hidden { display:none; }
 .saved-progress-loading strong { font-size:1.2rem; }
 .saved-progress-loading span { color:#b9c5d8; }
 @keyframes roadprints-loading-footsteps {
