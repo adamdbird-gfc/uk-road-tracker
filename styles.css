@@ -1768,3 +1768,10 @@ main.app-ready[data-active-screen="progress"] .road-discovery-county > summary::
 .settlement-focus-bar button {
   min-width:52px;
 }
+
+/* Saved-data state must be able to hide the first-run Timeline action.
+   The choice-card rule is intentionally more specific than .hidden. */
+.start-experience #hasDataSource.hidden,
+.start-experience .local-progress-notice.hidden {
+  display:none !important;
+}
