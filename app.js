@@ -6489,7 +6489,7 @@ function rebuildRoadDiscoveryLedger() {
           // Keep the matched feature geometry as evidence.  The visible ledger
           // still de-duplicates by road identity, but settlement assignment
           // must later use the travelled geometry rather than a place label.
-          const evidence={geometry:variant.geometry,journeyId:journeyIdentity(item.record),mode:item.mode};
+          const evidence={geometry:variant.geometry,journeyGeometry:item.record.matchedGeoJson,journeyId:journeyIdentity(item.record),mode:item.mode};
           const existing=seen.get(road.id);
           if(existing) existing.evidence.push(evidence);
           else seen.set(road.id,{...road,evidence:[evidence]});
@@ -6798,13 +6798,22 @@ async function settlementDiscoveryFeatures(town){
   // Reuse the settlement card's completed grouping. Rechecking the cache here
   // can lose roads after a refresh even though the card correctly lists them.
   const roads=settlementRoadsByTown.get(town)||[];
-  const features=[];
+  const features=[],fallbackFeatures=[],seenFallbacks=new Set();
   for(const road of roads){
     for(const evidence of road.evidence||[]){
       if(evidence.geometry)features.push({type:'Feature',properties:{name:road.label},geometry:evidence.geometry});
+      else for(const [index,feature] of (evidence.journeyGeometry?.features||[]).entries()){
+        if(!feature?.geometry)continue;
+        const key=evidence.journeyId+':'+index;
+        if(seenFallbacks.has(key))continue;
+        seenFallbacks.add(key);fallbackFeatures.push({type:'Feature',properties:{name:road.label},geometry:feature.geometry});
+      }
     }
   }
-  return features;
+  // Older persisted route records can retain road names but not the small
+  // matched-road geometries. In that case show their matched journey line,
+  // rather than presenting an empty map for a road the card calls discovered.
+  return features.length?features:fallbackFeatures;
 }
 async function showSettlementBoundary(town,inventory){
   const boundary=await loadSettlementBoundary(inventory);
