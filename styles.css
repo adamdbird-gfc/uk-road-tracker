@@ -1617,7 +1617,6 @@ main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > .details-summ
 /* Splash is a distinct screen, never a dashboard with a logo above it. */
 main.onboarding-active > section:not(#onboardingCard):not(#dataSourceCard),
 main.onboarding-active > details,
-main.onboarding-active > .delete-data-action,
 main.onboarding-active #aRoadBackgroundStatus { display:none !important; }
 main.import-running #hasDataSource { display:none !important; }
 
