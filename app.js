@@ -6729,10 +6729,11 @@ function setTown(town,roads){
     action.className='road-discovery-town-actions';
     if(Number.isFinite(Number(inv?.count))){
       const discovered=roads.length,total=Number(inv.count);
-      metric.textContent=`${discovered} discovered`;
+      const percent=Math.round(discovered/total*100);
+      metric.textContent=`${discovered} discovered (${percent}%)`;
       const totalMetric=document.createElement('span');
       totalMetric.className='road-discovery-town-total';
-      totalMetric.textContent=`${total} roads · ${Math.round(discovered/total*100)}%`;
+      totalMetric.textContent=`${total} roads in ${town}`;
       const view=document.createElement('button');
       view.className='town-count-map-quick';
       view.type='button';
