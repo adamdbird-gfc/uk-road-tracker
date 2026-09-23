@@ -221,6 +221,7 @@ const gbProgressDistance = document.getElementById('gbProgressDistance');
 const niProgressPercent = document.getElementById('niProgressPercent');
 const niProgressDistance = document.getElementById('niProgressDistance');
 const onboardingCard = document.getElementById('onboardingCard');
+const savedProgressLoading = document.getElementById('savedProgressLoading');
 const dataSourceCard = document.getElementById('dataSourceCard');
 const mapTitle = document.getElementById('mapTitle');
 const mapIntro = document.getElementById('mapIntro');
@@ -1481,47 +1482,52 @@ function resetTrackingSession() {
 }
 
 async function showSavedProgress() {
-  await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
-  if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) return;
-
-  const roadImportStillRunning=easyImportRunning;
-  const footImportStillRunning=footMatching;
-  // Road and on-foot recovery are independent. On-foot may have resumed from
-  // its archive before the user opens saved data; that must not prevent the
-  // pending road queue from being restored and started.
-  if (!roadImportStillRunning) {
-    if (!footImportStillRunning) resetTrackingSession();
-    journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
-  }
+  // Change the visible screen before any archive or map work begins. On a
+  // mobile cold start IndexedDB and Leaflet can take a moment; silence during
+  // that moment feels exactly like a non-responsive button.
+  savedProgressLoading?.classList.remove('hidden');
   onboardingMode='saved';
-  document.querySelector('main')?.classList.remove('onboarding-active');
+  const shell=document.querySelector('main');
+  shell?.classList.remove('onboarding-active');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   closeSavedProgress.classList.remove('hidden');
-  mapTitle.textContent='Your saved Roadprints progress';
-  mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data.';
-  mapCard.classList.remove('hidden');
-  // Switch screens before waiting for Leaflet, so “View data” never exposes
-  // the previously active Progress panel during a mobile cold start.
   activateRoadprintsScreen('map');
-  // Saved maps must render on arrival. The old deferred-map experiment left
-  // this screen announcing a nonexistent “Load map” action.
-  mapRenderingRequested=true;
-  nextCard?.classList.add('hidden');
-  renderRoadQueue();
-  renderFootQueue();
-  renderCollectiveStats();
-  renderJourneyLog();
 
-  await ensureLeaflet();
-  initMap();
-  renderMap();
-  requestAnimationFrame(()=>map?.invalidateSize(true));
-  if (!roadImportStillRunning && pendingRoadImportCandidates().length) {
-    setTimeout(()=>void startEasyImport(),0);
+  try {
+    await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
+    if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) {
+      returnToOnboarding();
+      return;
+    }
+
+    const roadImportStillRunning=easyImportRunning;
+    const footImportStillRunning=footMatching;
+    if (!roadImportStillRunning) {
+      if (!footImportStillRunning) resetTrackingSession();
+      journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
+    }
+    mapTitle.textContent='Your saved Roadprints progress';
+    mapIntro.textContent='This is the road and on-foot progress saved on this device. Return to the start to import new Timeline data.';
+    mapCard.classList.remove('hidden');
+    mapRenderingRequested=true;
+    nextCard?.classList.add('hidden');
+    renderRoadQueue();
+    renderFootQueue();
+    renderCollectiveStats();
+    renderJourneyLog();
+
+    await ensureLeaflet();
+    initMap();
+    renderMap();
+    requestAnimationFrame(()=>map?.invalidateSize(true));
+    if (!roadImportStillRunning && pendingRoadImportCandidates().length) {
+      setTimeout(()=>void startEasyImport(),0);
+    }
+  } finally {
+    savedProgressLoading?.classList.add('hidden');
   }
 }
-
 async function showDataSourceChoice() {
   if (easyImportRunning || footMatching) {
     returnToOnboarding();
@@ -1545,7 +1551,10 @@ function returnToOnboarding() {
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
-  document.querySelector('main')?.classList.add('onboarding-active');
+  const shell=document.querySelector('main');
+  shell?.classList.add('onboarding-active');
+  document.getElementById('appNavigation')?.classList.add('hidden');
+  savedProgressLoading?.classList.add('hidden');
   // Keep matching alive, but never let its workspace leak into the splash.
   document.querySelector('main')?.classList.remove('processing-active');
   easyProgress.classList.add('hidden');
@@ -3135,7 +3144,10 @@ function syncImportSession() {
     // Growing is the global route back to the import sheet. It must be
     // available throughout any active import, including the first transition
     // from the status card to Map.
-    importStatusButton.classList.toggle('hidden',!importSession.active);
+    // The splash is deliberately a calm entry point. Matching can continue
+    // behind it, but its navigation and status controls belong to app screens.
+    const splashOpen=shell?.classList.contains('onboarding-active');
+    importStatusButton.classList.toggle('hidden',!importSession.active || splashOpen);
   }
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
