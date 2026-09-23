@@ -6836,14 +6836,12 @@ function renderSettlementCreditedRoutes(boundary){
   if(!creditedLayer||!window.L)return;
   creditedLayer.clearLayers();
   const segments=creditedSegmentsForMap(savedRoadRecords().filter(record=>record?.selected&&record?.matchedGeoJson));
-  const paths={high:[],review:[],low:[]};
+  const paths=[];
   for(const segment of segments){
     const midpoint=[(segment.a[0]+segment.b[0])/2,(segment.a[1]+segment.b[1])/2];
-    if(!settlementContainsPoint(boundary,midpoint))continue;
-    const quality=paths[segment.quality]?segment.quality:'review';
-    paths[quality].push([[segment.a[1],segment.a[0]],[segment.b[1],segment.b[0]]]);
+    if(settlementContainsPoint(boundary,midpoint))paths.push([[segment.a[1],segment.a[0]],[segment.b[1],segment.b[0]]]);
   }
-  for(const [quality,items] of Object.entries(paths))if(items.length)L.polyline(reducePathsForMap(items,mapOverviewSegmentLimit()),{weight:quality==='high'?5:4,opacity:quality==='low'?.45:.85,color:'#111111',pane:'drivenRoadPane',dashArray:quality==='low'?'4,6':null,interactive:false}).addTo(creditedLayer);
+  if(paths.length)L.polyline(reducePathsForMap(paths,mapOverviewSegmentLimit()),{weight:5,opacity:.9,color:'#111111',pane:'drivenRoadPane',interactive:false}).addTo(creditedLayer);
 }
 async function showSettlementBoundary(town,inventory){
   const boundary=await loadSettlementBoundary(inventory);
