@@ -2864,7 +2864,7 @@ async function startNextFootBatch() {
       }
     } catch (err) {
       activity.matchError=err.message || String(err);
-      if (/temporarily rate-limited|HTTP 429/i.test(activity.matchError)) {
+      if (/temporarily rate-limited|too many requests|HTTP 429/i.test(activity.matchError)) {
         activity.matchError='Walking route matching is temporarily limited by its shared provider. Retry the remaining routes a little later.';
         footMatchingError='Walking route matching is temporarily limited by its shared provider. Your completed routes are safe; retry the remaining routes a little later.';
       }
@@ -2901,12 +2901,10 @@ async function startNextFootBatch() {
       if (!candidate) return;
       await processCandidate(candidate);
       if (footMatchingError) return;
-      // Prepared references are local to our shared backend, so no courtesy
-      // delay is needed. The established delay remains for the temporary
-      // third-party fallback used outside loaded areas.
-      if (!candidate.activity.referenceMatched) {
-        await new Promise(resolve=>setTimeout(resolve,1250));
-      }
+      // Keep comfortably below the API's per-device 60 requests/minute guard.
+      // Database-backed matches remain much quicker than the old external
+      // router, but an even request cadence prevents avoidable retry states.
+      await new Promise(resolve=>setTimeout(resolve,1100));
     }
   };
 
