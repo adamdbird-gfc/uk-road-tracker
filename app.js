@@ -781,9 +781,9 @@ function hydratePendingRoadJourney(record) {
   return {...record, importId:record.id, selected:true, _pendingRoadQueue:true};
 }
 
-function pendingRoadImportCandidates() {
+function pendingRoadImportCandidates({includeFailed=false}={}) {
   return (pendingRoadImport?.items || [])
-    .filter(item=>['pending','failed'].includes(item?.state) && !persistedMapJourneys.has(item?.journey?.id))
+    .filter(item=>(item?.state==='pending' || (includeFailed && item?.state==='failed')) && !persistedMapJourneys.has(item?.journey?.id))
     .map(item=>hydratePendingRoadJourney(item.journey));
 }
 
@@ -1806,7 +1806,18 @@ startFootBatch.addEventListener('click',()=>{
   else void startNextFootBatch();
 });
 retryFootImport?.addEventListener('click',()=>void retryUnableFootMatches());
-retryRoadImport?.addEventListener('click',()=>void startEasyImport());
+async function retryPendingRoadMatches() {
+  if (easyImportRunning || !pendingRoadImport?.items?.length) return;
+  let changed=false;
+  for (const item of pendingRoadImport.items) {
+    if (item?.state==='failed') { item.state='pending'; item.error=null; changed=true; }
+  }
+  if (!changed) return;
+  await savePendingRoadImport();
+  journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
+  void startEasyImport();
+}
+retryRoadImport?.addEventListener('click',()=>void retryPendingRoadMatches());
 pauseFootMatching.addEventListener('click',()=>{
   if (!footMatching) return;
   footMatchingPaused=!footMatchingPaused;
@@ -3727,7 +3738,9 @@ function initMap() {
       // coverage, so small matching gaps cannot visually punch through green.
       aRoadUnconfirmedPane: 435,
       aRoadConfirmedPane: 437,
-      motorwayConfirmedPane: 440
+      motorwayConfirmedPane: 440,
+      settlementDrivenPane: 450,
+      settlementOverlayPane: 460
     };
     for (const [paneName,zIndex] of Object.entries(paneOrder)) {
       const pane=map.createPane(paneName);
@@ -6785,7 +6798,7 @@ async function settlementDiscoveryFeatures(town){
 async function showSettlementBoundary(town,inventory){
   const boundary=await loadSettlementBoundary(inventory);
   settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');
-  setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{style:{color:'#e45757',weight:3,fillColor:'#e45757',fillOpacity:.13,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Black: roads you discovered · Red: settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)
+  setTimeout(()=>{initMap();if(!map||!window.L)return;clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{pane:'settlementOverlayPane',style:{color:'#e45757',weight:4,fillColor:'#e45757',fillOpacity:.10,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{pane:'settlementDrivenPane',style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Black: roads you discovered · Red: settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};map.fitBounds(settlementBoundaryLayer.getBounds(),{padding:[32,32],maxZoom:13});refreshARoadBackgroundStatus?.()},100)
 }
 // Resolve local roads against the official ONS boundary service in the
 // background; the user-facing ledger changes only once a result is available.
