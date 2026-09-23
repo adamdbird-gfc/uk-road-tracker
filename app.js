@@ -6815,10 +6815,40 @@ async function settlementDiscoveryFeatures(town){
   // rather than presenting an empty map for a road the card calls discovered.
   return features.length?features:fallbackFeatures;
 }
+function pointIsInSettlementRing(point,ring){
+  let inside=false;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const [xi,yi]=ring[i],[xj,yj]=ring[j];
+    if(((yi>point[1])!==(yj>point[1]))&&point[0]<(xj-xi)*(point[1]-yi)/(yj-yi)+xi)inside=!inside;
+  }
+  return inside;
+}
+function settlementContainsPoint(boundary,point){
+  const shapes=boundary?.type==='FeatureCollection'?boundary.features:boundary?.type==='Feature'?[boundary]:[boundary];
+  for(const shape of shapes){
+    const geometry=shape?.geometry||shape;
+    const polygons=geometry?.type==='Polygon'?[geometry.coordinates]:geometry?.type==='MultiPolygon'?geometry.coordinates:[];
+    for(const polygon of polygons)if(pointIsInSettlementRing(point,polygon[0]||[])&&!polygon.slice(1).some(ring=>pointIsInSettlementRing(point,ring)))return true;
+  }
+  return false;
+}
+function renderSettlementCreditedRoutes(boundary){
+  if(!creditedLayer||!window.L)return;
+  creditedLayer.clearLayers();
+  const segments=creditedSegmentsForMap(savedRoadRecords().filter(record=>record?.selected&&record?.matchedGeoJson));
+  const paths={high:[],review:[],low:[]};
+  for(const segment of segments){
+    const midpoint=[(segment.a[0]+segment.b[0])/2,(segment.a[1]+segment.b[1])/2];
+    if(!settlementContainsPoint(boundary,midpoint))continue;
+    const quality=paths[segment.quality]?segment.quality:'review';
+    paths[quality].push([[segment.a[1],segment.a[0]],[segment.b[1],segment.b[0]]]);
+  }
+  for(const [quality,items] of Object.entries(paths))if(items.length)L.polyline(reducePathsForMap(items,mapOverviewSegmentLimit()),{weight:quality==='high'?5:4,opacity:quality==='low'?.45:.85,color:'#111111',pane:'drivenRoadPane',dashArray:quality==='low'?'4,6':null,interactive:false}).addTo(creditedLayer);
+}
 async function showSettlementBoundary(town,inventory){
   const boundary=await loadSettlementBoundary(inventory);
   settlementBoundaryMode=true;mapRenderingRequested=true;activateRoadprintsScreen('map');
-  setTimeout(()=>{initMap();if(!map||!window.L)return;for(const [name,zIndex] of [['settlementDrivenPane',450],['settlementOverlayPane',460]]){if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(zIndex);pane.style.pointerEvents='none';}}clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{pane:'settlementOverlayPane',style:{color:'#e45757',weight:4,fillColor:'#e45757',fillOpacity:.10,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{pane:'settlementDrivenPane',style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar';bar.innerHTML='<span>Black: roads you discovered · Red: settlement boundary</span><button type="button">Back to progress</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};const bounds=boundaryLayer.getBounds();requestAnimationFrame(()=>requestAnimationFrame(()=>{map.invalidateSize(true);if(bounds.isValid())map.fitBounds(bounds,{paddingTopLeft:[24,126],paddingBottomRight:[24,108],maxZoom:14});setTimeout(()=>renderMap({deferCalculations:true,preserveLive:true}),180);}));refreshARoadBackgroundStatus?.()},100)
+  setTimeout(()=>{initMap();if(!map||!window.L)return;for(const [name,zIndex] of [['settlementDrivenPane',450],['settlementOverlayPane',460]]){if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(zIndex);pane.style.pointerEvents='none';}}clearReferenceMapLayers();[traceLayer,matchedLayer,creditedLayer,footLayer,liveImportLayer,serviceStationLayer].forEach(layer=>layer?.clearLayers?.());settlementBoundaryLayer?.remove();const boundaryLayer=L.geoJSON(boundary,{pane:'settlementOverlayPane',style:{color:'#e45757',weight:4,fillColor:'#e45757',fillOpacity:.10,interactive:false}}),drivenLayer=L.geoJSON({type:'FeatureCollection',features:settlementDiscoveryFeatures(town)},{pane:'settlementDrivenPane',style:{color:'#111111',weight:5,opacity:.92,interactive:false}});settlementBoundaryLayer=L.layerGroup([boundaryLayer,drivenLayer]).addTo(map);const discovered=(settlementRoadsByTown.get(town)||[]).length,total=Number(inventory?.count),bar=document.createElement('div');bar.id='settlementBoundaryReturn';bar.className='journey-focus-bar settlement-focus-bar';bar.innerHTML='<span>'+town+' · '+discovered+' of '+(Number.isFinite(total)?total:'?')+'</span><button type="button">Back</button>';mapCard.append(bar);bar.querySelector('button').onclick=()=>{clearSettlementBoundary();activateRoadprintsScreen('progress')};const bounds=boundaryLayer.getBounds();requestAnimationFrame(()=>requestAnimationFrame(()=>{map.invalidateSize(true);if(bounds.isValid())map.fitBounds(bounds,{paddingTopLeft:[24,126],paddingBottomRight:[24,108],maxZoom:14});setTimeout(()=>renderSettlementCreditedRoutes(boundary),180);}));refreshARoadBackgroundStatus?.()},100)
 }
 
 // Resolve local roads against the official ONS boundary service in the
