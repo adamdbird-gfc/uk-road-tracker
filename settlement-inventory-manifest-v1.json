@@ -2,12 +2,55 @@
   "version": 1,
   "source": "Roadprints shared settlement inventory cache",
   "inventories": [
-    {"code":"E63003586","status":"available","count":4},
-    {"code":"E63003709","status":"available","count":364},
-    {"code":"E63004165","status":"available","count":199},
-    {"code":"E63005039","status":"available","count":295},
-    {"code":"E63005055","status":"available","count":16},
-    {"code":"E63005058","status":"available","count":488},
-    {"code":"E63005204","status":"available","count":900}
+    {
+      "code": "E63003586",
+      "status": "available",
+      "count": 4
+    },
+    {
+      "code": "E63003709",
+      "status": "available",
+      "count": 364
+    },
+    {
+      "code": "E63004165",
+      "status": "available",
+      "count": 199
+    },
+    {
+      "code": "E63004992",
+      "status": "available",
+      "count": 1682
+    },
+    {
+      "code": "E63005039",
+      "status": "available",
+      "count": 295
+    },
+    {
+      "code": "E63005055",
+      "status": "available",
+      "count": 16
+    },
+    {
+      "code": "E63005058",
+      "status": "available",
+      "count": 488
+    },
+    {
+      "code": "E63005086",
+      "status": "available",
+      "count": 35
+    },
+    {
+      "code": "E63005132",
+      "status": "available",
+      "count": 639
+    },
+    {
+      "code": "E63005204",
+      "status": "available",
+      "count": 900
+    }
   ]
 }
