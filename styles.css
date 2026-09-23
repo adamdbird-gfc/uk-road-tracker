@@ -1775,3 +1775,7 @@ main.app-ready[data-active-screen="progress"] .road-discovery-county > summary::
 .start-experience .local-progress-notice.hidden {
   display:none !important;
 }
+
+/* Saved-data flow uses an explicit screen state. */
+.screen-loading { display:none !important; }
+.screen-loading.active { display:grid !important; }
