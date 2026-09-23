@@ -161,6 +161,7 @@ const retryRoadImport = document.getElementById('retryRoadImport');
 const clearImportedData = document.getElementById('clearImportedData');
 const clearRoadData = document.getElementById('clearRoadData');
 const clearFootData = document.getElementById('clearFootData');
+const deleteDataAction = document.querySelector('.delete-data-action');
 const travelStatsCard = document.getElementById('travelStatsCard');
 const travelStats = {
   total:document.getElementById('totalDistanceTravelled'),
@@ -418,6 +419,13 @@ function localProgressJourneyCount() {
   return persistedMapJourneys.size;
 }
 
+function hasSavedLocalProgress() {
+  return localProgressRoadCount()>0 ||
+    localProgressJourneyCount()>0 ||
+    pendingRoadImportCandidates().length>0 ||
+    persistedFootActivities.size>0;
+}
+
 function shouldShowDataDashboard() {
   return onboardingMode==='data' || onboardingMode==='saved';
 }
@@ -438,9 +446,10 @@ function updateLocalProgressNotice() {
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
   const resumableRoads=pendingRoadImportCandidates().length;
-  const hasProgress=roadCount>0 || journeyCount>0 || resumableRoads>0 || persistedFootActivities.size>0;
+  const hasProgress=hasSavedLocalProgress();
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
+  deleteDataAction?.classList.toggle('hidden',!hasProgress);
   if (!hasProgress) return;
 
   const savedLabel=persistedSavedAt
@@ -456,6 +465,10 @@ function updateLocalProgressNotice() {
     `${journeyCount.toLocaleString()} saved matched road journey${journeyCount===1?'':'s'} · ` +
     `${persistedFootActivities.size.toLocaleString()} on-foot activit${persistedFootActivities.size===1?'y':'ies'} · ` +
     `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage${resumableRoads ? ` · ${resumableRoads.toLocaleString()} road journey${resumableRoads===1?'':'s'} ready to resume` : ''} · ${range} · saved ${savedLabel}.`;
+  // IndexedDB opens asynchronously. Re-evaluate the import state once its
+  // contents arrive so the splash and navigation never remain in first-run
+  // mode after a refresh.
+  syncImportSession();
 }
 
 function openMapArchiveDatabase() {
@@ -1520,7 +1533,7 @@ function returnToOnboarding() {
   document.querySelector('main')?.classList.remove('processing-active');
   easyProgress.classList.add('hidden');
   footQueueCard.classList.add('hidden');
-  document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching);
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching || hasSavedLocalProgress());
   updateImportStatusButton();
 }
 
@@ -3003,7 +3016,20 @@ function setEasyProgressStatus(primary, secondary) {
 }
 
 function roadRetryCount() {
-  return currentImportJourneys().filter(journey=>journey.easyImportError).length;
+  const retryIds=new Set(
+    currentImportJourneys()
+      .filter(journey=>journey.easyImportError)
+      .map(journeyIdentity)
+      .filter(Boolean)
+  );
+  for (const item of pendingRoadImport?.items || []) {
+    if (item?.state==='failed' && item?.journey?.id) retryIds.add(item.journey.id);
+  }
+  return retryIds.size;
+}
+
+function hasPendingRoadWork() {
+  return pendingRoadImportCandidates().length>0;
 }
 
 function footRetryCount() {
@@ -3073,7 +3099,7 @@ function beginImportReadiness(total) {
 }
 
 function syncImportSession() {
-  importSession.active=easyImportRunning || footMatching || hasFootRetryableWork() || roadRetryCount()>0;
+  importSession.active=easyImportRunning || footMatching || hasFootRetryableWork() || hasPendingRoadWork();
   importSession.mapReady=importMapReady;
   const shell=document.querySelector('main');
   shell?.classList.toggle('import-running',importSession.active);
@@ -3087,7 +3113,7 @@ function syncImportSession() {
   }
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
-  document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active);
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active || hasSavedLocalProgress());
 }
 
 function renderRoadRetryAction() {
@@ -3127,9 +3153,9 @@ function updateImportNavigationFromCoordinator() {
   // A page refresh clears the transient session but never the device-local
   // Journey archive. Saved data must therefore restore navigation directly.
   const hasSavedJourneys=persistedMapJourneys.size>0 || persistedFootActivities.size>0;
-  const hasSavedRoadProgress=hasSavedJourneys || persistedCoverageByRef.size>0 || persistedARoadCoverageByRef.size>0;
+  const hasSavedRoadProgress=hasSavedJourneys || persistedCoverageByRef.size>0 || persistedARoadCoverageByRef.size>0 || pendingRoadImportCandidates().length>0;
   const ready=[];
-  if (importSession.mapReady || hasSavedJourneys) ready.push('map','journeys');
+  if (importSession.mapReady || hasSavedRoadProgress) ready.push('map','journeys');
   if (importSession.roadComplete || hasSavedRoadProgress) ready.push('progress','achievements','collections');
   setImportNavigationAvailability(ready);
 }
