@@ -1697,3 +1697,16 @@ main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgre
   .road-discovery-town-actions { flex-direction:column; align-items:flex-end; gap:5px; }
   .road-discovery-town-total { font-size:.7rem; }
 }
+
+
+/* County titles need their own scan line; metrics live below, never beside them. */
+#roadDiscoveryCard > #roadDiscoveryList { margin-left:-18px; margin-right:-18px; }
+.road-discovery-county > summary {
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+}
+.road-discovery-county-name { grid-column:1; }
+.road-discovery-county-metrics {
+  grid-column:1; justify-content:flex-start; flex-wrap:wrap; margin-top:2px;
+}
+.road-discovery-county > summary::after { top:23px; }
