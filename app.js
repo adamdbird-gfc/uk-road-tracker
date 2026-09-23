@@ -1481,11 +1481,17 @@ function resetTrackingSession() {
   }
 }
 
+function setSavedFlowScreen(screen){
+  const loading=document.getElementById('savedProgressLoading');
+  const isLoading=screen==='loading';
+  loading?.classList.toggle('active',isLoading);
+  if(loading)loading.style.display=isLoading?'grid':'none';
+}
 async function showSavedProgress() {
   // Change the visible screen before any archive or map work begins. On a
   // mobile cold start IndexedDB and Leaflet can take a moment; silence during
   // that moment feels exactly like a non-responsive button.
-  if(savedProgressLoading){savedProgressLoading.classList.remove('hidden');savedProgressLoading.style.display='grid';}
+  setSavedFlowScreen('loading');
   const savedProgressLoadingStarted=performance.now();
   // Yield one paint so the loading screen is actually rendered before the
   // archive-ready path can complete on a warm device.
@@ -1541,7 +1547,8 @@ async function showSavedProgress() {
   } finally {
     const remaining=Math.max(0,1200-(performance.now()-savedProgressLoadingStarted));
     if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
-    if(savedProgressLoading){savedProgressLoading.classList.add('hidden');savedProgressLoading.style.display='none';}
+    setSavedFlowScreen('map');
+    savedProgressLoading?.classList.add('hidden');
   }
 }
 async function showDataSourceChoice() {
