@@ -1556,6 +1556,7 @@ function returnToOnboarding() {
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
+document.getElementById('changeDataSource')?.addEventListener('click', returnToOnboarding);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
 closeAchievementCelebration.addEventListener('click',hideAchievementCelebration);
 previousAchievementCelebration?.addEventListener('click',()=>{
