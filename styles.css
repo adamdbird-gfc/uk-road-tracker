@@ -1650,3 +1650,50 @@ main.onboarding-active #importStatusButton { display:none !important; }
 main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgressLoading):not(.delete-data-action) {
   display:none !important;
 }
+
+
+/* Settlement progress: scan county, then settlement, then the roads earned. */
+.road-discovery-county { border-top:1px solid rgba(131,174,223,.22); }
+.road-discovery-county > summary {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px;
+  align-items:center; padding:16px 42px 16px 16px; cursor:pointer; list-style:none;
+}
+.road-discovery-county > summary::-webkit-details-marker { display:none; }
+.road-discovery-county > summary::after { content:'⌄'; position:absolute; right:16px; color:var(--muted,#c4cedf); }
+.road-discovery-county[open] > summary::after { transform:rotate(180deg); }
+.road-discovery-county-name { display:block; color:#f3f6f7; font-size:1.05rem; }
+.road-discovery-county-metrics { display:flex; gap:7px; }
+.road-discovery-county-metrics span {
+  display:grid; gap:1px; min-width:52px; padding:6px 8px; border-radius:9px;
+  background:rgba(247,196,80,.13); color:#f7c450; text-align:center;
+}
+.road-discovery-county-metrics strong { font-size:.9rem; line-height:1.05; }
+.road-discovery-county-metrics small { font-size:.63rem; font-weight:750; text-transform:uppercase; letter-spacing:.04em; }
+
+.road-discovery-town { margin:0 10px; border:1px solid rgba(131,174,223,.22); border-radius:12px; overflow:hidden; }
+.road-discovery-county > .road-discovery-town + .road-discovery-town { margin-top:8px; }
+.road-discovery-town > summary { display:block; padding:14px 38px 13px 14px; cursor:pointer; list-style:none; position:relative; }
+.road-discovery-town > summary::-webkit-details-marker { display:none; }
+.road-discovery-town > summary::after { content:'⌄'; position:absolute; top:18px; right:14px; color:var(--muted,#c4cedf); }
+.road-discovery-town[open] > summary::after { transform:rotate(180deg); }
+.road-discovery-town-name { display:block; color:#f3f6f7; font-size:1rem; }
+.road-discovery-town-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; }
+.road-discovery-town-metric { display:inline-flex; margin:0; padding:5px 8px; background:rgba(247,196,80,.13); color:#f7c450; font-size:.76rem; }
+.road-discovery-town-metric.is-pending { background:rgba(194,205,224,.1); color:var(--muted,#c4cedf); }
+.road-discovery-town-actions { display:flex; align-items:center; gap:8px; }
+.road-discovery-town-total { color:var(--muted,#c4cedf); font-size:.74rem; font-weight:700; white-space:nowrap; }
+.town-count-map-quick { flex:0 0 auto; }
+.settlement-road-list { list-style:none; margin:0; padding:0; border-top:1px solid rgba(131,174,223,.18); }
+.settlement-road-list li { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; padding:10px 14px; border-top:1px solid rgba(131,174,223,.14); }
+.settlement-road-list li:first-child { border-top:0; }
+.settlement-road-list li::before { content:'✦'; color:#f7c450; }
+.settlement-road-list strong { color:#f3f6f7; font-size:.88rem; }
+.settlement-road-list span { color:#69ddcc; font-size:.73rem; font-weight:750; text-align:right; }
+@media (max-width:420px) {
+  .road-discovery-county > summary { padding-left:13px; padding-right:34px; }
+  .road-discovery-county-metrics span { min-width:46px; padding:5px 6px; }
+  .road-discovery-town { margin-left:7px; margin-right:7px; }
+  .road-discovery-town-bottom { align-items:flex-end; }
+  .road-discovery-town-actions { flex-direction:column; align-items:flex-end; gap:5px; }
+  .road-discovery-town-total { font-size:.7rem; }
+}
