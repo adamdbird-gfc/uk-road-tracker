@@ -1627,3 +1627,20 @@ main.app-ready.import-status-open .easy-progress .progress-status { width:100%; 
 
 /* Growing is a global overlay, independent of the currently selected tab. */
 main.app-ready.import-status-open #easyProgress { display:block !important; }
+
+
+/* Saved data opens immediately, even while the device warms its local archive. */
+.saved-progress-loading {
+  position:fixed; inset:0; z-index:10000; display:grid; place-content:center;
+  justify-items:center; gap:12px; padding:32px; background:#0b1c50;
+  color:#f3f6f7; text-align:center;
+}
+.saved-progress-loading img { width:96px; height:96px; animation:roadprints-loading-footsteps 1.15s ease-in-out infinite; }
+.saved-progress-loading strong { font-size:1.2rem; }
+.saved-progress-loading span { color:#b9c5d8; }
+@keyframes roadprints-loading-footsteps {
+  0%,100% { transform:translateX(-12px) scale(.9); opacity:.55; }
+  50% { transform:translateX(12px) scale(1); opacity:1; }
+}
+main.onboarding-active #appNavigation,
+main.onboarding-active #importStatusButton { display:none !important; }
