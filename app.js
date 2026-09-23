@@ -1486,6 +1486,7 @@ async function showSavedProgress() {
   // mobile cold start IndexedDB and Leaflet can take a moment; silence during
   // that moment feels exactly like a non-responsive button.
   savedProgressLoading?.classList.remove('hidden');
+  const savedProgressLoadingStarted=performance.now();
   onboardingMode='saved';
   const shell=document.querySelector('main');
   shell?.classList.remove('onboarding-active');
@@ -1535,6 +1536,8 @@ async function showSavedProgress() {
       setTimeout(()=>void startEasyImport(),0);
     }
   } finally {
+    const remaining=Math.max(0,500-(performance.now()-savedProgressLoadingStarted));
+    if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
     savedProgressLoading?.classList.add('hidden');
   }
 }
