@@ -1495,11 +1495,21 @@ async function showSavedProgress() {
   activateRoadprintsScreen('map');
 
   try {
-    await Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
-    if (!persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) {
+    const archivesReady=Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
+    let archivesSettled=false;
+    archivesReady.then(()=>{archivesSettled=true},()=>{archivesSettled=true});
+    // A slow IndexedDB open must never leave a person on the transition screen.
+    await Promise.race([archivesReady,new Promise(resolve=>setTimeout(resolve,2200))]);
+    if (archivesSettled && !persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) {
       returnToOnboarding();
       return;
     }
+    if (!archivesSettled) archivesReady.then(()=>{
+      if(onboardingMode!=='saved')return;
+      journeys=[...savedMapJourneysExcluding(),...pendingRoadImportCandidates()];
+      renderRoadQueue();renderFootQueue();renderCollectiveStats();renderJourneyLog();
+      initMap();renderMap();
+    }).catch(error=>console.warn('Saved journey archive finished with an error:',error));
 
     const roadImportStillRunning=easyImportRunning;
     const footImportStillRunning=footMatching;
