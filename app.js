@@ -5881,9 +5881,25 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
     'hidden',
     !shouldShowDataDashboard() || !hasCreditedRoutes || !mapCorrectionPanel.classList.contains('hidden')
   );
-  const allDrawable = journeys.filter(
-    j => j.selected && j.points.length > 1
-  );
+  // A live import has two sources of truth: the in-flight objects and the
+  // IndexedDB archive. Always merge them for drawing. A batch redraw must not
+  // make a route disappear just because its temporary import object was
+  // replaced while the durable archive write had already completed.
+  const drawableById = new Map();
+  for (const record of persistedMapJourneys.values()) {
+    const journey=hydrateMapJourney(record);
+    if (journey.selected && journey.points.length>1) {
+      drawableById.set(journeyIdentity(journey),journey);
+    }
+  }
+  for (const journey of journeys) {
+    if (!journey.selected || journey.points.length<=1) continue;
+    const id=journeyIdentity(journey);
+    const saved=drawableById.get(id);
+    // Do not replace a saved match with a pending copy of the same journey.
+    if (journey.matchedGeoJson || !saved?.matchedGeoJson) drawableById.set(id,journey);
+  }
+  const allDrawable=[...drawableById.values()];
   const drawable=focusedJourneyId && focusedJourneyType==='road'
     ? allDrawable.filter(journey=>journeyIdentity(journey)===focusedJourneyId)
     : focusedJourneyId ? [] : allDrawable;
