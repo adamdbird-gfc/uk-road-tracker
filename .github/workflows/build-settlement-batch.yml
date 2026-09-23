@@ -5,22 +5,93 @@ on:
       settlements:
         description: "Comma-separated official ONS settlement names"
         required: true
+
+permissions:
+  contents: write
+
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      settlements: ${{ steps.matrix.outputs.settlements }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: pip install shapely
-      - name: Build requested settlements
+      - id: matrix
+        name: Prepare settlement jobs
         env:
           SETTLEMENTS: ${{ inputs.settlements }}
         run: |
-          IFS=',' read -ra towns <<< "$SETTLEMENTS"
-          for town in "${towns[@]}"; do
-            town="$(echo "$town" | xargs)"
-            python scripts/build_settlement_inventory.py "$town"
-          done
-      - uses: actions/upload-artifact@v4
-        with: {name: settlement-inventory-batch, path: settlement-inventories-v1}
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          requested = [item.strip() for item in os.environ.get("SETTLEMENTS", "").split(",") if item.strip()]
+          print("settlements=" + json.dumps(requested))
+          PY
+
+  build:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.settlements != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        settlement: ${{ fromJSON(needs.prepare.outputs.settlements) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install boundary tools
+        run: python -m pip install shapely
+      - name: Build settlement inventory
+        run: python scripts/build_settlement_inventory.py "${{ matrix.settlement }}"
+      - name: Upload settlement inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: settlement-inventory-${{ matrix.settlement }}
+          path: |
+            settlement-inventories-v1/*.json
+            settlement-inventories-v1/*.geojson
+
+  publish:
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download generated inventories
+        uses: actions/download-artifact@v4
+        with:
+          pattern: settlement-inventory-*
+          merge-multiple: true
+          path: settlement-inventories-v1
+      - name: Refresh shared inventory manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest_path = Path("settlement-inventory-manifest-v1.json")
+          manifest = json.loads(manifest_path.read_text())
+          entries = {item["code"]: item for item in manifest.get("inventories", [])}
+          for path in Path("settlement-inventories-v1").glob("[EW][0-9]*.json"):
+              if path.name.endswith("-boundary.geojson"):
+                  continue
+              data = json.loads(path.read_text())
+              entries[data["code"]] = {
+                  "code": data["code"],
+                  "status": "available",
+                  "count": int(data.get("count", 0)),
+              }
+          manifest["inventories"] = sorted(entries.values(), key=lambda item: item["code"])
+          manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+          PY
+      - name: Publish shared inventories
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add settlement-inventories-v1 settlement-inventory-manifest-v1.json
+          git diff --cached --quiet || (
+            git commit -m "Publish settlement inventory batch" &&
+            git push
+          )
