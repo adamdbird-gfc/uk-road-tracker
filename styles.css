@@ -1647,6 +1647,6 @@ main.onboarding-active #importStatusButton { display:none !important; }
 
 
 /* Splash state is structural: live import updates cannot leak app chrome into it. */
-main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgressLoading) {
+main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgressLoading):not(.delete-data-action) {
   display:none !important;
 }
