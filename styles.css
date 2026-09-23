@@ -1710,3 +1710,44 @@ main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgre
   grid-column:1; justify-content:flex-start; flex-wrap:wrap; margin-top:2px;
 }
 .road-discovery-county > summary::after { top:23px; }
+
+
+/* Mobile county cards: title first, metrics below, chevron fixed at the edge. */
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard {
+  padding-left:0 !important;
+  padding-right:0 !important;
+}
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > :not(#roadDiscoveryList) {
+  margin-left:18px;
+  margin-right:18px;
+}
+main.app-ready[data-active-screen="progress"] #roadDiscoveryCard > #roadDiscoveryList {
+  width:100%;
+  margin:0;
+}
+main.app-ready[data-active-screen="progress"] .road-discovery-group {
+  border-left:0;
+  border-right:0;
+  border-radius:0;
+}
+main.app-ready[data-active-screen="progress"] .road-discovery-county > summary {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  position:relative;
+  padding:18px 46px 16px 22px !important;
+}
+main.app-ready[data-active-screen="progress"] .road-discovery-county-name {
+  display:block;
+  width:100%;
+}
+main.app-ready[data-active-screen="progress"] .road-discovery-county-metrics {
+  display:flex !important;
+  width:100%;
+  justify-content:flex-start;
+  margin-top:11px;
+}
+main.app-ready[data-active-screen="progress"] .road-discovery-county > summary::after {
+  top:24px !important;
+  right:20px !important;
+}
