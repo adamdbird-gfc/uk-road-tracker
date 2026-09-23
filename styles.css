@@ -1644,3 +1644,9 @@ main.app-ready.import-status-open #easyProgress { display:block !important; }
 }
 main.onboarding-active #appNavigation,
 main.onboarding-active #importStatusButton { display:none !important; }
+
+
+/* Splash state is structural: live import updates cannot leak app chrome into it. */
+main:has(#onboardingCard:not(.hidden)) > :not(#startExperience):not(#savedProgressLoading) {
+  display:none !important;
+}
