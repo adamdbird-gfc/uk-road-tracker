@@ -1485,7 +1485,7 @@ async function showSavedProgress() {
   // Change the visible screen before any archive or map work begins. On a
   // mobile cold start IndexedDB and Leaflet can take a moment; silence during
   // that moment feels exactly like a non-responsive button.
-  savedProgressLoading?.classList.remove('hidden');
+  if(savedProgressLoading){savedProgressLoading.classList.remove('hidden');savedProgressLoading.style.display='grid';}
   const savedProgressLoadingStarted=performance.now();
   // Yield one paint so the loading screen is actually rendered before the
   // archive-ready path can complete on a warm device.
@@ -1541,7 +1541,7 @@ async function showSavedProgress() {
   } finally {
     const remaining=Math.max(0,1200-(performance.now()-savedProgressLoadingStarted));
     if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
-    savedProgressLoading?.classList.add('hidden');
+    if(savedProgressLoading){savedProgressLoading.classList.add('hidden');savedProgressLoading.style.display='none';}
   }
 }
 async function showDataSourceChoice() {
