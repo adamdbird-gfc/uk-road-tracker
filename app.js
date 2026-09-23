@@ -426,6 +426,17 @@ function hasSavedLocalProgress() {
     persistedFootActivities.size>0;
 }
 
+function needsJourneyArchiveRecovery() {
+  const hasSavedSummary=
+    persistedCoverageByRef.size>0 ||
+    persistedARoadCoverageByRef.size>0 ||
+    persistedProcessedJourneyIds.size>0;
+  return hasSavedSummary &&
+    persistedMapJourneys.size===0 &&
+    persistedFootActivities.size===0 &&
+    !pendingRoadImportCandidates().length;
+}
+
 function shouldShowDataDashboard() {
   return onboardingMode==='data' || onboardingMode==='saved';
 }
@@ -450,6 +461,12 @@ function updateLocalProgressNotice() {
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   deleteDataAction?.classList.toggle('hidden',!hasProgress);
+  const recoveryNeeded=needsJourneyArchiveRecovery();
+  const dataAction=document.getElementById('hasDataSource');
+  if (dataAction) {
+    dataAction.textContent=recoveryNeeded ? 'Restore saved journeys from Timeline' : 'I have Timeline data';
+    dataAction.classList.toggle('hidden',!recoveryNeeded && hasProgress);
+  }
   if (!hasProgress) return;
 
   const savedLabel=persistedSavedAt
@@ -1533,7 +1550,7 @@ function returnToOnboarding() {
   document.querySelector('main')?.classList.remove('processing-active');
   easyProgress.classList.add('hidden');
   footQueueCard.classList.add('hidden');
-  document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching || hasSavedLocalProgress());
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching || (hasSavedLocalProgress() && !needsJourneyArchiveRecovery()));
   updateImportStatusButton();
 }
 
@@ -1608,6 +1625,12 @@ fileInput.addEventListener('change', async () => {
     status(`Read complete. Identifying this file…`);
     const sourceFileHash = await timelineFileHash(text);
     activeRoadImportSource={fileName:file.name,sourceFileHash};
+    const archiveRecovery=needsJourneyArchiveRecovery();
+    if (archiveRecovery && !window.confirm(
+      'Roadprints found saved coverage but not the local journey archive. ' +
+      'Restore journeys and walking/running activities from this Timeline file now? ' +
+      'Your existing coverage and mileage will be kept.'
+    )) return;
     const fileWasPreviouslySeen = persistedImportedFileHashes.has(sourceFileHash);
     const hadReliableFileHashHistory = persistedFileHashTrackingStarted;
     status(`File identified. Parsing JSON…`);
@@ -1625,7 +1648,7 @@ fileInput.addEventListener('change', async () => {
     await saveFootActivities(onFootJourneys);
     saveConfirmedTimelineVisits(result.confirmedVisits || []);
 
-    const needsMileageRebuild=
+    const needsMileageRebuild=!archiveRecovery &&
       persistedProcessedJourneyIds.size>0 &&
       !persistedMileageHistoryComplete;
     const rebuildMileage=needsMileageRebuild && window.confirm(
@@ -1636,10 +1659,11 @@ fileInput.addEventListener('change', async () => {
     const seenBeforeImport = new Set(persistedSeenJourneyIds);
     const hadReliableSeenJourneyHistory = persistedSeenJourneyTrackingStarted;
     const fileHistoryNeedsBaseline = !hadReliableFileHashHistory;
-    const candidateJourneys=rebuildMileage
+    if (archiveRecovery) await clearPendingRoadImport();
+    const candidateJourneys=(rebuildMileage || archiveRecovery)
       ? allJourneys
       : allJourneys.filter(j=>!journeyWasPreviouslyImported(j));
-    const genuinelyNewJourneys = rebuildMileage
+    const genuinelyNewJourneys = (rebuildMileage || archiveRecovery)
       ? []
       : candidateJourneys.filter(j =>
           hadReliableSeenJourneyHistory &&
@@ -1647,7 +1671,7 @@ fileInput.addEventListener('change', async () => {
           !fileWasPreviouslySeen &&
           !seenBeforeImport.has(journeyIdentity(j))
         );
-    const previouslySeenUnmatchedJourneys = rebuildMileage
+    const previouslySeenUnmatchedJourneys = (rebuildMileage || archiveRecovery)
       ? []
       : candidateJourneys.filter(j =>
           !hadReliableSeenJourneyHistory ||
@@ -1663,7 +1687,8 @@ fileInput.addEventListener('change', async () => {
     scheduleLocalProgressSave();
 
     diagnostics.mileageRebuild=rebuildMileage;
-    diagnostics.previouslyImportedJourneys=rebuildMileage ? 0 : allJourneys.length-candidateJourneys.length;
+    diagnostics.archiveRecovery=archiveRecovery;
+    diagnostics.previouslyImportedJourneys=(rebuildMileage || archiveRecovery) ? 0 : allJourneys.length-candidateJourneys.length;
     diagnostics.newPassengerVehicleJourneys=genuinelyNewJourneys.length;
     diagnostics.previouslySeenUnmatchedJourneys=previouslySeenUnmatchedJourneys.length;
     diagnostics.seenJourneyMigration=
@@ -3113,7 +3138,7 @@ function syncImportSession() {
   }
   // A second Timeline import would compete with the live one and make the
   // splash page imply that processing has stopped.
-  document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active || hasSavedLocalProgress());
+  document.getElementById('hasDataSource')?.classList.toggle('hidden',importSession.active || (hasSavedLocalProgress() && !needsJourneyArchiveRecovery()));
 }
 
 function renderRoadRetryAction() {
