@@ -1482,10 +1482,7 @@ function resetTrackingSession() {
 }
 
 function setSavedFlowScreen(screen){
-  const loading=document.getElementById('savedProgressLoading');
-  const isLoading=screen==='loading';
-  loading?.classList.toggle('active',isLoading);
-  if(loading)loading.style.display=isLoading?'grid':'none';
+  screenController.setLoading(screen==='loading');
 }
 async function showSavedProgress() {
   // Change the visible screen before any archive or map work begins. On a
@@ -1497,13 +1494,10 @@ async function showSavedProgress() {
   // archive-ready path can complete on a warm device.
   if(savedProgressLoading)await new Promise(resolve=>requestAnimationFrame(resolve));
   onboardingMode='saved';
-  const shell=document.querySelector('main');
-  shell?.classList.remove('onboarding-active');
+  screenController.transition('map');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   closeSavedProgress.classList.remove('hidden');
-  activateRoadprintsScreen('map');
-
   try {
     const archivesReady=Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]);
     let archivesSettled=false;
@@ -1548,7 +1542,7 @@ async function showSavedProgress() {
     const remaining=Math.max(0,1200-(performance.now()-savedProgressLoadingStarted));
     if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
     setSavedFlowScreen('map');
-    savedProgressLoading?.classList.add('hidden');
+    screenController.setLoading(false);
   }
 }
 async function showDataSourceChoice() {
@@ -1558,7 +1552,7 @@ async function showDataSourceChoice() {
   }
   resetTrackingSession();
   onboardingMode = 'data';
-  document.querySelector('main')?.classList.remove('onboarding-active');
+  screenController.showImport();
   closeSavedProgress.classList.add('hidden');
   onboardingCard.classList.add('hidden');
   dataSourceCard.classList.remove('hidden');
@@ -1574,10 +1568,8 @@ function returnToOnboarding() {
   closeSavedProgress.classList.add('hidden');
   dataSourceCard.classList.add('hidden');
   onboardingCard.classList.remove('hidden');
-  const shell=document.querySelector('main');
-  shell?.classList.add('onboarding-active');
-  document.getElementById('appNavigation')?.classList.add('hidden');
-  savedProgressLoading?.classList.add('hidden');
+  screenController.showOnboarding();
+  screenController.setLoading(false);
   // Keep matching alive, but never let its workspace leak into the splash.
   document.querySelector('main')?.classList.remove('processing-active');
   easyProgress.classList.add('hidden');
@@ -6417,25 +6409,72 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function activateRoadprintsScreen(screen) {
-  const shell=document.querySelector('main'),nav=document.getElementById('appNavigation');
-  if(!shell||!nav)return;
-  shell.classList.add('app-ready');
-  shell.dataset.activeScreen=screen;
-  nav.classList.remove('hidden');
-  nav.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===screen));
-  // This screen may have first rendered during splash setup, before app-ready
-  // existed. Refresh it at the point the user actually opens the tab.
-  if(screen==='achievements') renderAchievements();
-  // Screen navigation must not accidentally hide the global import status.
-  updateImportStatusButton();
-  if(screen==='map' && !settlementBoundaryMode) {
-    setTimeout(()=>{
-      map?.invalidateSize();
-      renderCanonicalARoadMapLayers();
-      void hydrateCanonicalARoadsForMap();
-    },80);
+const ROADPRINTS_SCREEN_NAMES=Object.freeze(['map','journeys','progress','achievements','collections']);
+
+const screenController={
+  current:null,
+  transition(screen){
+    const shell=document.querySelector('main'),nav=document.getElementById('appNavigation');
+    if(!shell||!nav||!ROADPRINTS_SCREEN_NAMES.includes(screen))return false;
+    shell.classList.add('app-ready');
+    shell.classList.remove('onboarding-active');
+    shell.dataset.activeScreen=screen;
+    this.current=screen;
+    nav.classList.remove('hidden');
+    nav.querySelectorAll('[data-screen]').forEach(button=>{
+      const active=button.dataset.screen===screen;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-current',active?'page':'false');
+    });
+    if(screen==='achievements')renderAchievements();
+    updateImportStatusButton();
+    if(screen==='map'&&!settlementBoundaryMode){
+      setTimeout(()=>{
+        if(this.current!=='map')return;
+        map?.invalidateSize();
+        renderCanonicalARoadMapLayers();
+        void hydrateCanonicalARoadsForMap();
+      },80);
+    }
+    return true;
+  },
+  showImport(){
+    const shell=document.querySelector('main'),nav=document.getElementById('appNavigation');
+    if(!shell||!nav)return;
+    this.current='import';
+    shell.classList.remove('app-ready','processing-active','import-status-open','onboarding-active');
+    delete shell.dataset.activeScreen;
+    nav.classList.add('hidden');
+    nav.querySelectorAll('[data-screen]').forEach(button=>{
+      button.classList.remove('active');
+      button.setAttribute('aria-current','false');
+    });
+    updateImportStatusButton();
+  },
+  showOnboarding(){
+    const shell=document.querySelector('main'),nav=document.getElementById('appNavigation');
+    if(!shell||!nav)return;
+    this.current='onboarding';
+    shell.classList.remove('app-ready','processing-active','import-status-open');
+    shell.classList.add('onboarding-active');
+    delete shell.dataset.activeScreen;
+    nav.classList.add('hidden');
+    nav.querySelectorAll('[data-screen]').forEach(button=>{
+      button.classList.remove('active');
+      button.setAttribute('aria-current','false');
+    });
+    updateImportStatusButton();
+  },
+  setLoading(active){
+    const loading=document.getElementById('savedProgressLoading');
+    loading?.classList.toggle('active',active);
+    if(loading)loading.style.display=active?'grid':'none';
+    if(active)this.current='loading';
   }
+};
+
+function activateRoadprintsScreen(screen){
+  return screenController.transition(screen);
 }
 document.getElementById('appNavigation')?.addEventListener('click',event=>{
   const button=event.target.closest('[data-screen]');
