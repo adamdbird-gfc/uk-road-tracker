@@ -18,6 +18,11 @@
       "count": 789
     },
     {
+      "code": "E63000601",
+      "status": "available",
+      "count": 1018
+    },
+    {
       "code": "E63000792",
       "status": "available",
       "count": 1991
@@ -43,6 +48,11 @@
       "count": 1292
     },
     {
+      "code": "E63001424",
+      "status": "available",
+      "count": 5252
+    },
+    {
       "code": "E63001616",
       "status": "available",
       "count": 1155
@@ -51,6 +61,11 @@
       "code": "E63001804",
       "status": "available",
       "count": 915
+    },
+    {
+      "code": "E63001992",
+      "status": "available",
+      "count": 3030
     },
     {
       "code": "E63002051",
