@@ -470,42 +470,33 @@ function updateLocalProgressNotice() {
   const journeyCount=localProgressJourneyCount();
   const resumableRoads=pendingRoadImportCandidates().length;
   const hasProgress=hasSavedLocalProgress();
-  if (!initialArchiveHydrationComplete) return;
   updateDataDeletionControls();
-  localProgressNotice.classList.toggle('hidden',!hasProgress);
+  localProgressNotice?.classList.toggle('hidden',!hasProgress);
   deleteDataAction?.classList.toggle('hidden',!hasProgress);
   const recoveryNeeded=needsJourneyArchiveRecovery();
   const dataAction=document.getElementById('hasDataSource');
   if (dataAction) {
     dataAction.textContent=recoveryNeeded ? 'Restore saved journeys from Timeline' : 'I have Timeline data';
     dataAction.classList.toggle('hidden',!recoveryNeeded && hasProgress);
+  }
+  if (!initialArchiveHydrationComplete) return;
   if (hasProgress) {
-    // Returning users keep the familiar saved-data splash rather than being
-    // sent through first-run questions again.
     [onboardingWelcome,onboardingLocation,onboardingDataChoice,onboardingBackground].forEach(step=>step?.classList.add('hidden'));
   } else if (!onboardingCard?.classList.contains('hidden') && !dataSourceCard?.classList.contains('hidden')) {
     const onboardingComplete=localStorage.getItem('roadprints:onboarding-complete-v1')==='true';
     showOnboardingStep(onboardingComplete ? onboardingBackground : onboardingWelcome);
   }
-  }
   if (!hasProgress) return;
-
   const savedLabel=persistedSavedAt
-    ? new Intl.DateTimeFormat('en-GB',{
-        day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
-      }).format(new Date(persistedSavedAt))
+    ? new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(persistedSavedAt))
     : 'previously';
-  const range=formatDataDateRange({
-    dataStartMs:persistedDataStartMs,
-    dataEndMs:persistedDataEndMs
-  });
-  localProgressSummary.textContent=
-    `${journeyCount.toLocaleString()} saved matched road journey${journeyCount===1?'':'s'} · ` +
-    `${persistedFootActivities.size.toLocaleString()} on-foot activit${persistedFootActivities.size===1?'y':'ies'} · ` +
-    `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage${resumableRoads ? ` · ${resumableRoads.toLocaleString()} road journey${resumableRoads===1?'':'s'} ready to resume` : ''} · ${range} · saved ${savedLabel}.`;
-  // IndexedDB opens asynchronously. Re-evaluate the import state once its
-  // contents arrive so the splash and navigation never remain in first-run
-  // mode after a refresh.
+  const range=formatDataDateRange({dataStartMs:persistedDataStartMs,dataEndMs:persistedDataEndMs});
+  if (localProgressSummary) {
+    localProgressSummary.textContent=
+      `${journeyCount.toLocaleString()} saved matched road journey${journeyCount===1?'':'s'} · ` +
+      `${persistedFootActivities.size.toLocaleString()} on-foot activit${persistedFootActivities.size===1?'y':'ies'} · ` +
+      `${roadCount} motorway${roadCount===1?'':'s'} with saved coverage${resumableRoads ? ` · ${resumableRoads.toLocaleString()} road journey${resumableRoads===1?'':'s'} ready to resume` : ''} · ${range} · saved ${savedLabel}.`;
+  }
   syncImportSession();
 }
 
@@ -1550,7 +1541,6 @@ async function openFreshRoadprint() {
   } catch (error) {
     console.warn('The empty Roadprint map could not be opened:',error);
   }
-}
 }
 async function showSavedProgress() {
   // Change the visible screen before any archive or map work begins. On a
