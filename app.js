@@ -221,6 +221,16 @@ const gbProgressDistance = document.getElementById('gbProgressDistance');
 const niProgressPercent = document.getElementById('niProgressPercent');
 const niProgressDistance = document.getElementById('niProgressDistance');
 const onboardingCard = document.getElementById('onboardingCard');
+const onboardingWelcome = document.getElementById('onboardingWelcome');
+const onboardingLocation = document.getElementById('onboardingLocation');
+const onboardingDataChoice = document.getElementById('onboardingDataChoice');
+const onboardingBackground = document.getElementById('onboardingBackground');
+const onboardingContinue = document.getElementById('onboardingContinue');
+const allowLocation = document.getElementById('allowLocation');
+const skipLocation = document.getElementById('skipLocation');
+const startFromToday = document.getElementById('startFromToday');
+const continueToWebMap = document.getElementById('continueToWebMap');
+const locationSetupStatus = document.getElementById('locationSetupStatus');
 const savedProgressLoading = document.getElementById('savedProgressLoading');
 const dataSourceCard = document.getElementById('dataSourceCard');
 const mapTitle = document.getElementById('mapTitle');
@@ -467,6 +477,14 @@ function updateLocalProgressNotice() {
   if (dataAction) {
     dataAction.textContent=recoveryNeeded ? 'Restore saved journeys from Timeline' : 'I have Timeline data';
     dataAction.classList.toggle('hidden',!recoveryNeeded && hasProgress);
+  if (hasProgress) {
+    // Returning users keep the familiar saved-data splash rather than being
+    // sent through first-run questions again.
+    [onboardingWelcome,onboardingLocation,onboardingDataChoice,onboardingBackground].forEach(step=>step?.classList.add('hidden'));
+  } else if (!onboardingCard?.classList.contains('hidden') && !dataSourceCard?.classList.contains('hidden')) {
+    const onboardingComplete=localStorage.getItem('roadprints:onboarding-complete-v1')==='true';
+    showOnboardingStep(onboardingComplete ? onboardingBackground : onboardingWelcome);
+  }
   }
   if (!hasProgress) return;
 
@@ -1483,6 +1501,53 @@ function resetTrackingSession() {
 
 function setSavedFlowScreen(screen){
   screenController.setLoading(screen==='loading');
+
+function showOnboardingStep(step) {
+  const steps=[onboardingWelcome,onboardingLocation,onboardingDataChoice,onboardingBackground];
+  steps.forEach(candidate=>candidate?.classList.toggle('hidden',candidate!==step));
+  onboardingCard?.classList.remove('hidden');
+  document.querySelector('main')?.classList.add('onboarding-active');
+}
+
+function continueToDataChoice() {
+  showOnboardingStep(onboardingDataChoice);
+}
+
+function requestWebLocation() {
+  if (!locationSetupStatus) return continueToDataChoice();
+  if (!navigator.geolocation) {
+    locationSetupStatus.textContent='Location is not available in this browser. You can continue and use the web preview.';
+    return setTimeout(continueToDataChoice,350);
+  }
+  locationSetupStatus.textContent='Requesting location access…';
+  navigator.geolocation.getCurrentPosition(
+    ()=>{ locationSetupStatus.textContent='Location access is available while Roadprints is open.'; setTimeout(continueToDataChoice,350); },
+    ()=>{ locationSetupStatus.textContent='Location was not enabled. You can continue and change this later in your device settings.'; setTimeout(continueToDataChoice,350); },
+    {enableHighAccuracy:false,maximumAge:300000,timeout:8000}
+  );
+}
+
+async function openFreshRoadprint() {
+  localStorage.setItem('roadprints:onboarding-complete-v1','true');
+  onboardingMode='fresh';
+  document.querySelector('main')?.classList.remove('onboarding-active');
+  onboardingCard?.classList.add('hidden');
+  dataSourceCard?.classList.add('hidden');
+  closeSavedProgress?.classList.add('hidden');
+  mapCard?.classList.remove('hidden');
+  mapTitle.textContent='Your Roadprint';
+  mapIntro.textContent='Roadprints will grow as you travel. This web preview saves your progress on this device.';
+  mapRenderingRequested=true;
+  activateRoadprintsScreen('map');
+  try {
+    await ensureLeaflet();
+    initMap();
+    renderMap();
+    requestAnimationFrame(()=>map?.invalidateSize(true));
+  } catch (error) {
+    console.warn('The empty Roadprint map could not be opened:',error);
+  }
+}
 }
 async function showSavedProgress() {
   // Change the visible screen before any archive or map work begins. On a
@@ -1577,6 +1642,16 @@ function returnToOnboarding() {
   document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching || (hasSavedLocalProgress() && !needsJourneyArchiveRecovery()));
   updateImportStatusButton();
 }
+document.querySelectorAll('[data-onboarding-choice]').forEach(choice=>choice.addEventListener('click',()=>{
+  document.querySelectorAll('[data-onboarding-choice]').forEach(candidate=>candidate.setAttribute('aria-pressed',String(candidate===choice)));
+  if (onboardingContinue) onboardingContinue.disabled=false;
+}));
+document.querySelectorAll('[data-onboarding-choice]').forEach(choice=>choice.setAttribute('aria-pressed','false'));
+onboardingContinue?.addEventListener('click',()=>showOnboardingStep(onboardingLocation));
+allowLocation?.addEventListener('click',requestWebLocation);
+skipLocation?.addEventListener('click',continueToDataChoice);
+startFromToday?.addEventListener('click',()=>showOnboardingStep(onboardingBackground));
+continueToWebMap?.addEventListener('click',openFreshRoadprint);
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
