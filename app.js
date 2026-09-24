@@ -1708,14 +1708,16 @@ pendingRoadImportReadyPromise=loadPendingRoadImport().finally(updateLocalProgres
 Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,roadDiscoveryArchiveReadyPromise])
   .then(()=>backfillRoadDiscoveryEvidence())
   .catch(error=>console.warn('Saved road-discovery evidence could not be refreshed:',error));
-Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise])
-  .finally(()=>{
-    initialArchiveHydrationComplete=true;
-    savedProgressLoading?.classList.remove('active');
-    if (savedProgressLoading) savedProgressLoading.style.display='none';
-    screenController.showOnboarding();
-    updateLocalProgressNotice();
-  });
+Promise.race([
+  Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]),
+  new Promise(resolve=>setTimeout(resolve,2200))
+]).finally(()=>{
+  initialArchiveHydrationComplete=true;
+  savedProgressLoading?.classList.remove('active');
+  if (savedProgressLoading) savedProgressLoading.style.display='none';
+  screenController.showOnboarding();
+  updateLocalProgressNotice();
+});
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
