@@ -435,7 +435,11 @@ function hasSavedLocalProgress() {
   return localProgressRoadCount()>0 ||
     localProgressJourneyCount()>0 ||
     pendingRoadImportCandidates().length>0 ||
-    persistedFootActivities.size>0;
+    persistedFootActivities.size>0 ||
+    persistedCoverageByRef.size>0 ||
+    persistedARoadCoverageByRef.size>0 ||
+    persistedProcessedJourneyIds.size>0 ||
+    Boolean(persistedSavedAt);
 }
 
 function needsJourneyArchiveRecovery() {
