@@ -1,10 +1,13 @@
 name: Build settlement inventory batch
 on:
+  schedule:
+    - cron: "17,47 * * * *"
   workflow_dispatch:
     inputs:
       settlements:
-        description: "Comma-separated official ONS settlement names"
-        required: true
+        description: "Optional comma-separated official ONS settlement names; blank uses the pending queue"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -16,15 +19,62 @@ jobs:
       settlements: ${{ steps.matrix.outputs.settlements }}
     steps:
       - uses: actions/checkout@v4
-      - id: matrix
-        name: Prepare settlement jobs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prepare or claim queued settlements
+        id: matrix
         env:
           SETTLEMENTS: ${{ inputs.settlements }}
+          DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json, os
+          import psycopg
+
           requested = [item.strip() for item in os.environ.get("SETTLEMENTS", "").split(",") if item.strip()]
-          print("settlements=" + json.dumps(requested))
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              with conn.cursor() as cur:
+                  if requested:
+                      cur.execute(
+                          """
+                          SELECT s.external_code, s.name
+                          FROM settlements s
+                          JOIN settlement_inventories i ON i.settlement_id = s.id
+                          WHERE s.is_active AND s.name = ANY(%s)
+                            AND i.status IN ('pending', 'failed')
+                          ORDER BY s.name
+                          LIMIT 3
+                          """,
+                          (requested,),
+                      )
+                  else:
+                      cur.execute(
+                          """
+                          SELECT s.external_code, s.name
+                          FROM settlements s
+                          JOIN settlement_inventories i ON i.settlement_id = s.id
+                          WHERE s.is_active
+                            AND (
+                              i.status = 'pending'
+                              OR (i.status = 'building' AND i.build_started_at < NOW() - INTERVAL '2 hours')
+                            )
+                          ORDER BY i.requested_at NULLS LAST, s.name
+                          LIMIT 3
+                          """,
+                      )
+                  rows = cur.fetchall()
+                  for code, _name in rows:
+                      cur.execute(
+                          """
+                          UPDATE settlement_inventories
+                          SET status = 'building', build_started_at = NOW(), updated_at = NOW()
+                          WHERE settlement_id = (SELECT id FROM settlements WHERE external_code = %s)
+                          """,
+                          (code,),
+                      )
+              conn.commit()
+          print("settlements=" + json.dumps([name for _code, name in rows]))
           PY
 
   build:
@@ -55,36 +105,66 @@ jobs:
             settlement-inventories-v1/*.geojson
 
   publish:
-    needs: build
+    needs: [prepare, build]
     if: ${{ needs.build.result == 'success' }}
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install database client
+        run: python -m pip install psycopg[binary]
       - name: Download generated inventories
         uses: actions/download-artifact@v4
         with:
           pattern: settlement-inventory-*
           merge-multiple: true
           path: settlement-inventories-v1
-      - name: Refresh shared inventory manifest
+      - name: Refresh shared inventory manifest and database status
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
+          import psycopg
+
           manifest_path = Path("settlement-inventory-manifest-v1.json")
           manifest = json.loads(manifest_path.read_text())
           entries = {item["code"]: item for item in manifest.get("inventories", [])}
+          generated = []
           for path in Path("settlement-inventories-v1").glob("[EW][0-9]*.json"):
               if path.name.endswith("-boundary.geojson"):
                   continue
               data = json.loads(path.read_text())
-              entries[data["code"]] = {
-                  "code": data["code"],
-                  "status": "available",
-                  "count": int(data.get("count", 0)),
-              }
+              generated.append(data)
+              entries[data["code"]] = {"code": data["code"], "status": "available", "count": int(data.get("count", 0))}
           manifest["inventories"] = sorted(entries.values(), key=lambda item: item["code"])
           manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              with conn.cursor() as cur:
+                  for data in generated:
+                      cur.execute(
+                          """
+                          UPDATE settlement_inventories i
+                          SET status = 'ready',
+                              road_count = %s,
+                              source_key = 'osm-named-roads',
+                              source_version = %s,
+                              inventory_version = 'v1',
+                              completed_at = NOW(),
+                              failure_code = NULL,
+                              updated_at = NOW()
+                          WHERE i.settlement_id = (
+                              SELECT id FROM settlements WHERE external_code = %s
+                          )
+                          """,
+                          (int(data.get("count", 0)), data.get("source", "OSM"), data["code"]),
+                      )
+              conn.commit()
           PY
       - name: Publish shared inventories
         run: |
@@ -92,6 +172,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add settlement-inventories-v1 settlement-inventory-manifest-v1.json
           git diff --cached --quiet || (
-            git commit -m "Publish settlement inventory batch" &&
+            git commit -m "Publish queued settlement inventories" &&
             git push
           )
