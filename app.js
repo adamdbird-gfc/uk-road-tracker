@@ -6824,12 +6824,19 @@ async function settlementDiscoveryFeatures(town){
   const features=[],fallbackFeatures=[],seenFallbacks=new Set();
   for(const road of roads){
     for(const evidence of road.evidence||[]){
-      if(evidence.geometry)features.push({type:'Feature',properties:{name:road.label},geometry:evidence.geometry});
-      else for(const [index,feature] of (evidence.journeyGeometry?.features||[]).entries()){
-        if(!feature?.geometry)continue;
+      const geometry=evidence.geometry;
+      const drawable=geometry && ['LineString','MultiLineString'].includes(geometry.type);
+      if(drawable){
+        features.push({type:'Feature',properties:{name:road.label},geometry});
+        continue;
+      }
+      for(const [index,feature] of (evidence.journeyGeometry?.features||[]).entries()){
+        const journeyGeometry=feature?.geometry;
+        if(!journeyGeometry || !['LineString','MultiLineString'].includes(journeyGeometry.type))continue;
         const key=evidence.journeyId+':'+index;
         if(seenFallbacks.has(key))continue;
-        seenFallbacks.add(key);fallbackFeatures.push({type:'Feature',properties:{name:road.label},geometry:feature.geometry});
+        seenFallbacks.add(key);
+        fallbackFeatures.push({type:'Feature',properties:{name:road.label},geometry:journeyGeometry});
       }
     }
   }
