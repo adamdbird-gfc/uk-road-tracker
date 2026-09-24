@@ -1812,3 +1812,47 @@ main.app-ready[data-active-screen="progress"] .road-discovery-county > summary::
     text-align:right;
   }
 }
+
+
+/* Keep the settlement road total on its own full-width line. */
+.road-discovery-town-bottom {
+  display:block;
+  min-width:0;
+}
+.road-discovery-town-total {
+  display:block;
+  width:100%;
+  margin:0 0 8px;
+  text-align:left;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.25;
+}
+.road-discovery-town-progress-row {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.road-discovery-town-progress-row > .road-discovery-town-metric {
+  flex:0 1 auto;
+}
+.road-discovery-town-progress-row > .road-discovery-town-actions {
+  flex:0 1 auto;
+  min-width:0;
+  align-items:flex-start;
+}
+.road-discovery-town-progress-row .town-count-map-quick {
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+@media (max-width:420px) {
+  .road-discovery-town-progress-row {
+    align-items:flex-start;
+  }
+  .road-discovery-town-progress-row > .road-discovery-town-actions {
+    flex:0 0 auto;
+    flex-direction:row;
+  }
+}
