@@ -6958,17 +6958,21 @@ function renderBoundarySettlementLedger(){
     const countyEntries=counties.get(county),countyDetails=document.createElement('details'),countyTitle=document.createElement('summary');
     countyDetails.className='road-discovery-county';
     countyTitle.dataset.county=county;
-    const countyRoadCount=countyEntries.reduce((total,[,entry])=>total+entry.roads.length,0);
+    const countyRoadCount=countyEntries.reduce((total,item)=>total+item[1].roads.length,0);
+    const countyInventoryTotal=countyEntries.reduce((total,item)=>{const inventory=localTownInventories.get(townKey(item[0],item[1].roads[0]&&item[1].roads[0].point));return total+(Number.isFinite(Number(inventory&&inventory.count))?Number(inventory.count):0)},0);
+    const countyInventoryPending=countyEntries.some(item=>{const inventory=localTownInventories.get(townKey(item[0],item[1].roads[0]&&item[1].roads[0].point));return !Number.isFinite(Number(inventory&&inventory.count))});
     const countyName=document.createElement('strong');
     countyName.className='road-discovery-county-name';
     countyName.textContent=county;
     const countyMetrics=document.createElement('div');
     countyMetrics.className='road-discovery-county-metrics';
-    for(const [value,label] of [[countyEntries.length,'settlements'],[countyRoadCount,'roads']]){
-      const metric=document.createElement('span');
-      metric.innerHTML='<strong>'+value.toLocaleString()+'</strong><small>'+label+'</small>';
-      countyMetrics.append(metric);
-    }
+    const settlementMetric=document.createElement('span');
+    settlementMetric.innerHTML='<strong>'+countyEntries.length.toLocaleString()+'</strong><small>settlements</small>';
+    countyMetrics.append(settlementMetric);
+    const roadMetric=document.createElement('span');
+    const roadTotal=countyInventoryPending?'—':countyInventoryTotal.toLocaleString();
+    roadMetric.innerHTML='<strong>'+countyRoadCount.toLocaleString()+' / '+roadTotal+'</strong><small>roads</small>';
+    countyMetrics.append(roadMetric);
     countyTitle.append(countyName,countyMetrics);
     countyDetails.append(countyTitle);restoreRoadDiscoveryDisclosureState(countyDetails,openDisclosures);
     for(const [town,entry] of countyEntries.sort(([a],[b])=>a.localeCompare(b,'en-GB'))){
