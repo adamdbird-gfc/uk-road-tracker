@@ -6758,7 +6758,7 @@ function setTown(town,roads){
       metric.textContent=`${discovered} discovered (${percent}%)`;
       const totalMetric=document.createElement('span');
       totalMetric.className='road-discovery-town-total';
-      totalMetric.textContent=`${total} roads in ${town}`;
+      totalMetric.textContent=`${total} roads`;
       const view=document.createElement('button');
       view.className='town-count-map-quick';
       view.type='button';
