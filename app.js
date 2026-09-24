@@ -48,6 +48,7 @@ let roadImportProgress = {completed:0,total:0};
 let footImportProgress = {completed:0,total:0};
 let distanceUnit = 'miles';
 let onboardingMode = null;
+let initialArchiveHydrationComplete = false;
 const refinedCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
 const persistedARoadCoverageByRef = new Map();
@@ -232,6 +233,9 @@ const startFromToday = document.getElementById('startFromToday');
 const continueToWebMap = document.getElementById('continueToWebMap');
 const locationSetupStatus = document.getElementById('locationSetupStatus');
 const savedProgressLoading = document.getElementById('savedProgressLoading');
+document.querySelector('main')?.classList.add('archive-hydrating');
+savedProgressLoading?.classList.add('active');
+if (savedProgressLoading) savedProgressLoading.style.display='grid';
 const dataSourceCard = document.getElementById('dataSourceCard');
 const mapTitle = document.getElementById('mapTitle');
 const mapIntro = document.getElementById('mapIntro');
@@ -469,6 +473,7 @@ function updateLocalProgressNotice() {
   const journeyCount=localProgressJourneyCount();
   const resumableRoads=pendingRoadImportCandidates().length;
   const hasProgress=hasSavedLocalProgress();
+  if (!initialArchiveHydrationComplete) return;
   updateDataDeletionControls();
   localProgressNotice.classList.toggle('hidden',!hasProgress);
   deleteDataAction?.classList.toggle('hidden',!hasProgress);
@@ -1703,6 +1708,14 @@ pendingRoadImportReadyPromise=loadPendingRoadImport().finally(updateLocalProgres
 Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,roadDiscoveryArchiveReadyPromise])
   .then(()=>backfillRoadDiscoveryEvidence())
   .catch(error=>console.warn('Saved road-discovery evidence could not be refreshed:',error));
+Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise])
+  .finally(()=>{
+    initialArchiveHydrationComplete=true;
+    savedProgressLoading?.classList.remove('active');
+    if (savedProgressLoading) savedProgressLoading.style.display='none';
+    screenController.showOnboarding();
+    updateLocalProgressNotice();
+  });
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
