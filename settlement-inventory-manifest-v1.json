@@ -3,6 +3,16 @@
   "source": "Roadprints shared settlement inventory cache",
   "inventories": [
     {
+      "code": "E63000474",
+      "status": "available",
+      "count": 220
+    },
+    {
+      "code": "E63000498",
+      "status": "available",
+      "count": 139
+    },
+    {
       "code": "E63000792",
       "status": "available",
       "count": 1991
@@ -16,6 +26,11 @@
       "code": "E63001077",
       "status": "available",
       "count": 166
+    },
+    {
+      "code": "E63001616",
+      "status": "available",
+      "count": 1155
     },
     {
       "code": "E63001804",
