@@ -24,10 +24,48 @@
       </header>
 
     <section id="onboardingCard" class="card onboarding-card">
-      <h2 class="sr-only">Choose how to start</h2>
-      <div class="choice-grid">
-        <button id="hasDataSource" class="choice-card" type="button">I have Timeline data</button>
-      </div>
+      <h2 class="sr-only">Set up Roadprints</h2>
+      <section id="onboardingWelcome" class="onboarding-step">
+        <p class="eyebrow">A quick question</p>
+        <h2>How much of a traveller are you?</h2>
+        <p class="onboarding-copy">Roadprints will use your answer to shape your starting experience.</p>
+        <div class="choice-grid onboarding-choice-grid" role="group" aria-label="How much of a traveller are you?">
+          <button class="choice-card onboarding-choice" type="button" data-onboarding-choice="local"><strong>Local explorer</strong><small>Mostly nearby roads and places.</small></button>
+          <button class="choice-card onboarding-choice" type="button" data-onboarding-choice="national"><strong>National traveller</strong><small>Regular journeys across the country.</small></button>
+          <button class="choice-card onboarding-choice" type="button" data-onboarding-choice="worldwide"><strong>Always on the move</strong><small>Journeys that take you further afield.</small></button>
+        </div>
+        <button id="onboardingContinue" class="onboarding-primary" type="button" disabled>Continue</button>
+      </section>
+
+      <section id="onboardingLocation" class="onboarding-step hidden">
+        <p class="eyebrow">Location setup</p>
+        <h2>Can Roadprints follow your journeys?</h2>
+        <p class="onboarding-copy">Location lets Roadprints recognise journeys while you travel. Your archive stays on this device unless you choose otherwise.</p>
+        <div id="locationSetupStatus" class="onboarding-status" role="status" aria-live="polite">You can change this later in your device settings.</div>
+        <div class="onboarding-actions">
+          <button id="allowLocation" class="onboarding-primary" type="button">Allow location</button>
+          <button id="skipLocation" class="onboarding-secondary" type="button">Not now</button>
+        </div>
+      </section>
+
+      <section id="onboardingDataChoice" class="onboarding-step hidden">
+        <p class="eyebrow">Your starting point</p>
+        <h2>Have you got travel history?</h2>
+        <p class="onboarding-copy">Choose how to begin your Roadprint. After this, Roadprints works quietly in the background.</p>
+        <div class="choice-grid onboarding-choice-grid">
+          <button id="hasDataSource" class="choice-card onboarding-choice data-choice-card" type="button"><strong>Yes — import Timeline data</strong><small>Discover roads from journeys you have already made.</small></button>
+          <button id="startFromToday" class="choice-card onboarding-choice data-choice-card" type="button"><strong>No — start from today</strong><small>Build your collection one journey at a time.</small></button>
+        </div>
+      </section>
+
+      <section id="onboardingBackground" class="onboarding-step hidden">
+        <p class="eyebrow">Web preview</p>
+        <h2>Roadprints will grow quietly</h2>
+        <p class="onboarding-copy">The web app can show your Roadprint and save it on this device. Reliable background tracking and notifications will arrive with the Android app.</p>
+        <div class="onboarding-status"><strong>Nothing to start or finish.</strong><br />Carry on travelling normally and revisit Roadprints when you want to see what you have discovered.</div>
+        <button id="continueToWebMap" class="onboarding-primary" type="button">View my Roadprint</button>
+      </section>
+
       <div id="localProgressNotice" class="local-progress-notice hidden">
         <span id="localProgressSummary" class="sr-only">Saved progress is available on this device.</span>
         <div class="local-progress-actions">
