@@ -233,9 +233,6 @@ const startFromToday = document.getElementById('startFromToday');
 const continueToWebMap = document.getElementById('continueToWebMap');
 const locationSetupStatus = document.getElementById('locationSetupStatus');
 const savedProgressLoading = document.getElementById('savedProgressLoading');
-document.querySelector('main')?.classList.add('archive-hydrating');
-savedProgressLoading?.classList.add('active');
-if (savedProgressLoading) savedProgressLoading.style.display='grid';
 const dataSourceCard = document.getElementById('dataSourceCard');
 const mapTitle = document.getElementById('mapTitle');
 const mapIntro = document.getElementById('mapIntro');
@@ -1506,6 +1503,7 @@ function resetTrackingSession() {
 
 function setSavedFlowScreen(screen){
   screenController.setLoading(screen==='loading');
+}
 
 function showOnboardingStep(step) {
   const steps=[onboardingWelcome,onboardingLocation,onboardingDataChoice,onboardingBackground];
@@ -1713,10 +1711,11 @@ Promise.race([
   new Promise(resolve=>setTimeout(resolve,2200))
 ]).finally(()=>{
   initialArchiveHydrationComplete=true;
-  savedProgressLoading?.classList.remove('active');
-  if (savedProgressLoading) savedProgressLoading.style.display='none';
-  screenController.showOnboarding();
-  updateLocalProgressNotice();
+  document.querySelector('main')?.classList.remove('archive-hydrating');
+  try { screenController.showOnboarding(); }
+  catch (error) { console.warn('Onboarding shell could not be shown:',error); onboardingCard?.classList.remove('hidden'); }
+  try { updateLocalProgressNotice(); }
+  catch (error) { console.warn('Saved progress notice could not be refreshed:',error); }
 });
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
