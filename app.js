@@ -6752,6 +6752,8 @@ function setTown(town,roads){
     metric.className='road-discovery-town-metric';
     const action=document.createElement('div');
     action.className='road-discovery-town-actions';
+    const bottom=document.createElement('div');
+    bottom.className='road-discovery-town-bottom';
     if(Number.isFinite(Number(inv?.count))){
       const discovered=roads.length,total=Number(inv.count);
       const percent=Math.round(discovered/total*100);
@@ -6764,14 +6766,16 @@ function setTown(town,roads){
       view.type='button';
       view.textContent='Show on map';
       view.onclick=event=>{event.preventDefault();event.stopPropagation();void showSettlementBoundary(town,inv)};
-      action.append(totalMetric,view);
+      action.append(view);
+      const progressRow=document.createElement('div');
+      progressRow.className='road-discovery-town-progress-row';
+      progressRow.append(metric,action);
+      bottom.append(totalMetric,progressRow);
     }else{
       metric.classList.add('is-pending');
       metric.textContent=state==='building'?'Building inventory':state==='failed'?'Inventory unavailable':state==='loading'?'Checking inventory':'Inventory pending';
+      bottom.append(metric);
     }
-    const bottom=document.createElement('div');
-    bottom.className='road-discovery-town-bottom';
-    bottom.append(metric,action);
     summary.replaceChildren(name,bottom);
   });
 }
