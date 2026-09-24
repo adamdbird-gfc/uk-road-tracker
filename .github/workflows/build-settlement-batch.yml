@@ -35,8 +35,22 @@ jobs:
           import psycopg
 
           requested = [item.strip() for item in os.environ.get("SETTLEMENTS", "").split(",") if item.strip()]
+          manifest_path = "settlement-inventory-manifest-v1.json"
+          manifest = json.loads(open(manifest_path).read()) if os.path.exists(manifest_path) else {"inventories": []}
+          available = {item["code"]: int(item.get("count", 0)) for item in manifest.get("inventories", []) if item.get("status") == "available"}
           with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
               with conn.cursor() as cur:
+                  # Reconcile inventories already published by the earlier artifact-only run.
+                  for code, count in available.items():
+                      cur.execute(
+                          """
+                          UPDATE settlement_inventories i
+                          SET status = 'ready', road_count = %s, completed_at = COALESCE(i.completed_at, NOW()), updated_at = NOW()
+                          WHERE i.settlement_id = (SELECT id FROM settlements WHERE external_code = %s)
+                            AND i.status IN ('pending', 'failed')
+                          """,
+                          (count, code),
+                      )
                   if requested:
                       cur.execute(
                           """
