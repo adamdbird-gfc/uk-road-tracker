@@ -6300,6 +6300,7 @@ function extractTimelineActivities(data) {
 
   const roadJourneys = [];
   const onFootJourneys = [];
+  const undeterminedJourneys = [];
 
   for (const seg of segments) {
     const activity = seg?.activity;
@@ -6308,10 +6309,9 @@ function extractTimelineActivities(data) {
     const mode = String(activity?.topCandidate?.type || '').trim().toUpperCase();
     const isRoad=mode === 'IN_PASSENGER_VEHICLE';
     const isOnFoot=mode === 'WALKING' || mode === 'RUNNING' || mode === 'IN_PEDESTRIAN';
-    if (!isRoad && !isOnFoot) continue;
-
     if (isRoad) diag.passengerVehicleActivities++;
     if (isOnFoot) diag.onFootActivities++;
+    if (!isRoad && !isOnFoot) diag.undeterminedActivities++;
 
     const startMs = Date.parse(seg.startTime || '');
     const endMs = Date.parse(seg.endTime || '');
@@ -6350,11 +6350,13 @@ function extractTimelineActivities(data) {
       googleDistanceKm: Number.isFinite(Number(activity?.distanceMeters))
         ? Number(activity.distanceMeters) / 1000
         : null,
-      travelMode:isRoad ? 'ROAD' : mode,
+      travelMode:isRoad ? 'ROAD' : isOnFoot ? mode : 'UNKNOWN',
+      reviewStatus:isRoad || isOnFoot ? 'ready' : 'needs_review',
       selected: true
     };
     if (isRoad) roadJourneys.push(journey);
-    else onFootJourneys.push(journey);
+    else if (isOnFoot) onFootJourneys.push(journey);
+    else undeterminedJourneys.push(journey);
   }
 
   for (const journey of [...roadJourneys,...onFootJourneys]) journey.importId=journeyFingerprint(journey);
@@ -6366,7 +6368,7 @@ function extractTimelineActivities(data) {
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { roadJourneys, onFootJourneys, confirmedVisits, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, undeterminedJourneys, confirmedVisits, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
