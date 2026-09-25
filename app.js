@@ -2457,7 +2457,13 @@ function savedRoadRecords() {
   for (const journey of journeys) {
     if (journey?.matchedGeoJson) records.set(journeyIdentity(journey),journey);
   }
-  return [...records.values()];
+  // A prior importer version could accidentally match rail/air journeys as
+  // roads. Once the Timeline is re-read, suppress those stale derived records
+  // without touching the original transport history. BUS remains road-compatible.
+  const nonRoadIds=new Set(classifiedJourneys
+    .filter(journey=>!['BUS'].includes(String(journey?.travelMode || '').toUpperCase()))
+    .map(journey=>journeyIdentity(journey)));
+  return [...records.values()].filter(record=>!nonRoadIds.has(journeyIdentity(record)));
 }
 
 function savedServiceStationRecords() {
