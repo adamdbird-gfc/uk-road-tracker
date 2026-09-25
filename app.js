@@ -6413,7 +6413,7 @@ function extractTimelineActivities(data) {
     else undeterminedJourneys.push(journey);
   }
 
-  for (const journey of [...roadJourneys,...onFootJourneys]) journey.importId=journeyFingerprint(journey);
+  for (const journey of [...roadJourneys,...onFootJourneys,...undeterminedJourneys]) journey.importId=journeyFingerprint(journey);
   diag.journeysConstructed = roadJourneys.length;
 
   for (const list of [roadJourneys,onFootJourneys]) list.sort((a, b) => {
