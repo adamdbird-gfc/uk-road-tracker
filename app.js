@@ -1617,6 +1617,9 @@ async function showDataSourceChoice() {
   screenController.showImport();
   closeSavedProgress.classList.add('hidden');
   onboardingCard.classList.add('hidden');
+  // Destructive data controls belong to the saved-data splash, not the import
+  // workflow. Keep them out of sight while a source file is being chosen.
+  deleteDataAction?.classList.add('hidden');
   dataSourceCard.classList.remove('hidden');
   mapTitle.textContent = '4. Preview';
   mapIntro.textContent = 'The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.';
@@ -1637,6 +1640,7 @@ function returnToOnboarding() {
   easyProgress.classList.add('hidden');
   footQueueCard.classList.add('hidden');
   document.getElementById('hasDataSource')?.classList.toggle('hidden',easyImportRunning || footMatching || (hasSavedLocalProgress() && !needsJourneyArchiveRecovery()));
+  updateLocalProgressNotice();
   updateImportStatusButton();
 }
 document.querySelectorAll('[data-onboarding-choice]').forEach(choice=>choice.addEventListener('click',()=>{
