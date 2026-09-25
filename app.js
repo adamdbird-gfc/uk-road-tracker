@@ -49,6 +49,7 @@ let footImportProgress = {completed:0,total:0};
 let distanceUnit = 'miles';
 let onboardingMode = null;
 let undeterminedJourneys = [];
+let classifiedJourneys = [];
 let initialArchiveHydrationComplete = false;
 const refinedCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
@@ -295,6 +296,7 @@ let canonicalARoadResumeAttempted = false;
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
 const UNDETERMINED_JOURNEYS_KEY = 'roadprints:undetermined-journeys-v1';
+const CLASSIFIED_JOURNEYS_KEY = 'roadprints:classified-journeys-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
 const MAP_ARCHIVE_DB_VERSION = 6;
@@ -969,12 +971,16 @@ function loadUndeterminedJourneys() {
   try {
     const saved=JSON.parse(localStorage.getItem(UNDETERMINED_JOURNEYS_KEY) || '[]');
     undeterminedJourneys=Array.isArray(saved) ? saved.filter(journey=>journey && journey.reviewStatus==='needs_review') : [];
-  } catch (_) { undeterminedJourneys=[]; }
+    const classified=JSON.parse(localStorage.getItem(CLASSIFIED_JOURNEYS_KEY) || '[]');
+    classifiedJourneys=Array.isArray(classified) ? classified : [];
+  } catch (_) { undeterminedJourneys=[]; classifiedJourneys=[]; }
 }
 
 function saveUndeterminedJourneys() {
-  try { localStorage.setItem(UNDETERMINED_JOURNEYS_KEY,JSON.stringify(undeterminedJourneys)); }
-  catch (error) { console.warn('Undetermined journeys could not be saved:',error); }
+  try {
+    localStorage.setItem(UNDETERMINED_JOURNEYS_KEY,JSON.stringify(undeterminedJourneys));
+    localStorage.setItem(CLASSIFIED_JOURNEYS_KEY,JSON.stringify(classifiedJourneys));
+  } catch (error) { console.warn('Unclassified journeys could not be saved:',error); }
 }
 
 function loadLocalProgress() {
@@ -2486,12 +2492,25 @@ function roadLabelsForJourney(record) {
   return [...labels.values()].sort((a,b)=>a.localeCompare(b,'en-GB',{numeric:true}));
 }
 
+function resolveUndeterminedJourney(id, mode) {
+  const index=undeterminedJourneys.findIndex(journey=>journey.id===id || journey.importId===id);
+  if(index<0 || !mode) return;
+  const journey={...undeterminedJourneys[index],travelMode:mode,reviewStatus:'classified',selected:true};
+  undeterminedJourneys.splice(index,1);
+  if(mode!=='ignore') classifiedJourneys.unshift(journey);
+  saveUndeterminedJourneys();
+  journeyLogSignature='';
+  renderJourneyLog();
+}
+
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
   const allRecords=[
     ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({...record,logType:'road'})),
     ...footActivities.filter(activity=>activity?.points?.length>1).map(activity=>({...activity,logType:'foot'})),
-    ...savedServiceStationRecords().map(record=>({...record,logType:'service'}))
+    ...savedServiceStationRecords().map(record=>({...record,logType:'service'})),
+    ...classifiedJourneys.map(record=>({...record,logType:'classified'})),
+    ...undeterminedJourneys.map(record=>({...record,logType:'review'}))
   ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
 
   const servicesUnlocked=savedServiceStationRecords().length>0 ||
@@ -2500,11 +2519,13 @@ function renderJourneyLog() {
   const filters=document.getElementById('journeyLogFilters');
   filters?.classList.toggle('hidden',!shouldShowDataDashboard() || !allRecords.length);
   filters?.querySelector('[data-journey-filter="service"]')?.classList.toggle('hidden',!servicesUnlocked);
+  filters?.querySelector('[data-journey-filter="review"]')?.classList.toggle('hidden',!undeterminedJourneys.length);
   filters?.querySelectorAll('[data-journey-filter]').forEach(button=>{
     button.classList.toggle('active',button.dataset.journeyFilter===journeyLogFilter);
     button.setAttribute('aria-pressed',String(button.dataset.journeyFilter===journeyLogFilter));
   });
   const records=journeyLogFilter==='all' ? allRecords : allRecords.filter(record=>
+    journeyLogFilter==='review' ? record.logType==='review' :
     journeyLogFilter==='driving' ? record.logType==='road' :
     journeyLogFilter==='foot' ? record.logType==='foot' : record.logType==='service'
   );
@@ -2539,16 +2560,31 @@ function renderJourneyLog() {
 
   const renderRecord=record=>{
     const item=document.createElement('article');
-    item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : record.logType==='service' ? ' journey-log-service' : '');
+    item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : record.logType==='service' ? ' journey-log-service' : record.logType==='review' ? ' journey-log-review' : record.logType==='classified' ? ' journey-log-classified' : '');
     const copy=document.createElement('div');
     const date=document.createElement('small');
-    const modeLabel=record.logType==='foot' ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
+    const modeLabel=record.logType==='review' ? '❔ NEEDS REVIEW' : record.logType==='classified' ? '🧭 CLASSIFIED' : record.logType==='foot' ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
     date.textContent=modeLabel+(record.logType==='service' && record.road ? ' · '+record.road : '')+(record.start ? ' · '+formatDate(record.start)+' · '+formatTime(record.start) : '')+(record.logType==='service' && record.isFirstVisit ? ' · FIRST VISIT' : '');
     const title=document.createElement('strong');
     title.textContent=record.logType==='service' ? record.serviceName : (record.title || 'Untitled journey');
     const meta=document.createElement('span');
     if (record.logType==='service') {
       meta.textContent=serviceStopDurationLabel(record)+' · confirmed Timeline stop';
+      copy.append(date,title,meta); item.append(copy); return item;
+    }
+    if (record.logType==='review') {
+      title.textContent='Journey needs a mode';
+      meta.textContent=(Number(record.googleDistanceKm)>0 ? displayDistance(record.googleDistanceKm) : 'Distance unavailable')+' · choose how you travelled';
+      const select=document.createElement('select');
+      select.className='journey-review-select';
+      [['driving','🚗 Driving'],['walking','👟 Walking'],['running','🏃 Running'],['cycling','🚲 Cycling'],['train','🚆 Train'],['transit','🚌 Transit'],['ferry','⛴️ Ferry'],['flight','✈️ Flight'],['other','Other'],['ignore','Ignore']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)});
+      const save=document.createElement('button'); save.type='button'; save.textContent='Save choice';
+      save.addEventListener('click',()=>resolveUndeterminedJourney(record.id,select.value));
+      copy.append(date,title,meta,select,save); item.append(copy); return item;
+    }
+    if (record.logType==='classified') {
+      title.textContent=record.title || 'Classified journey';
+      meta.textContent=(Number(record.googleDistanceKm)>0 ? displayDistance(record.googleDistanceKm) : 'Distance unavailable')+' · '+String(record.travelMode || 'other');
       copy.append(date,title,meta); item.append(copy); return item;
     }
     const distance=Number(record.googleDistanceKm || record.matchedDistanceKm || record.repeatDistanceKm || 0);
