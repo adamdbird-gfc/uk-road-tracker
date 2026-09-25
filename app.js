@@ -6832,7 +6832,11 @@ function rebuildRoadDiscoveryLedger() {
       && storedRoads.every((road,index)=>road.id===currentRoads[index].id&&road.label===currentRoads[index].label&&road.category===currentRoads[index].category);
     const ledgerRoads=evidenceMatches
       ? storedRoads.map(road=>({...road,evidence:seen.get(road.id)?.evidence || [],point:seen.get(road.id)?.point}))
-      : [...seen.values()];
+      // Foot matches from earlier imports can retain valid derived road names
+      // even when a later API response contains only route geometry.
+      : item.mode==='foot' && storedRoads.length
+        ? storedRoads.map(road=>({...road,evidence:seen.get(road.id)?.evidence || [],point:seen.get(road.id)?.point}))
+        : [...seen.values()];
     for (const road of ledgerRoads) {
       let entry=roadDiscoveryLedger.get(road.id);
       if (!entry) { entry={...road,driven:false,onFoot:false,evidence:[]}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
