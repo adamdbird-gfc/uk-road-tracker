@@ -464,9 +464,10 @@ function updateDataDeletionControls() {
     persistedCoverageByRef.size>0 ||
     persistedARoadCoverageByRef.size>0;
   const hasFootData=persistedFootActivities.size>0;
+  const hasStoredProgress=Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
   clearRoadData.disabled=!hasRoadData;
   clearFootData.disabled=!hasFootData;
-  clearImportedData.disabled=!hasRoadData && !hasFootData;
+  clearImportedData.disabled=!hasRoadData && !hasFootData && !hasStoredProgress;
 }
 
 function updateLocalProgressNotice() {
@@ -474,9 +475,11 @@ function updateLocalProgressNotice() {
   const journeyCount=localProgressJourneyCount();
   const resumableRoads=pendingRoadImportCandidates().length;
   const hasProgress=hasSavedLocalProgress();
+  const hasStoredProgress=Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
+  const hasSavedDataEvidence=hasProgress || hasStoredProgress;
   updateDataDeletionControls();
   localProgressNotice?.classList.toggle('hidden',!hasProgress);
-  deleteDataAction?.classList.toggle('hidden',!hasProgress);
+  deleteDataAction?.classList.toggle('hidden',!hasSavedDataEvidence);
   const recoveryNeeded=needsJourneyArchiveRecovery();
   const dataAction=document.getElementById('hasDataSource');
   if (dataAction) {
