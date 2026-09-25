@@ -6789,7 +6789,7 @@ function rebuildRoadDiscoveryLedger() {
       let entry=roadDiscoveryLedger.get(road.id);
       if (!entry) { entry={...road,driven:false,onFoot:false,evidence:[]}; roadDiscoveryLedger.set(road.id,entry); newRoads.push(road); }
       entry.evidence.push(...road.evidence);
-      if (item.mode==='driving') entry.driven=true; else entry.onFoot=true;
+      if (item.mode==='driving' || item.mode==='bus') entry.driven=true; else entry.onFoot=true;
     }
     roadDiscoveryByJourneyId.set(item.mode+':'+journeyIdentity(item.record),newRoads);
   }
