@@ -480,6 +480,7 @@ function updateLocalProgressNotice() {
   updateDataDeletionControls();
   localProgressNotice?.classList.toggle('hidden',!hasProgress);
   deleteDataAction?.classList.toggle('hidden',!hasSavedDataEvidence);
+  deleteDataAction?.style.setProperty('display',hasSavedDataEvidence ? 'flex' : 'none','important');
   const recoveryNeeded=needsJourneyArchiveRecovery();
   const dataAction=document.getElementById('hasDataSource');
   if (dataAction) {
@@ -6516,6 +6517,7 @@ const screenController={
       button.classList.toggle('active',active);
       button.setAttribute('aria-current',active?'page':'false');
     });
+    deleteDataAction?.style.setProperty('display','none','important');
     if(screen==='achievements')renderAchievements();
     updateImportStatusButton();
     if(screen==='map'&&!settlementBoundaryMode){
@@ -6539,6 +6541,7 @@ const screenController={
       button.classList.remove('active');
       button.setAttribute('aria-current','false');
     });
+    deleteDataAction?.style.setProperty('display','none','important');
     updateImportStatusButton();
   },
   showOnboarding(){
@@ -6553,6 +6556,8 @@ const screenController={
       button.classList.remove('active');
       button.setAttribute('aria-current','false');
     });
+    const hasSplashData=hasSavedLocalProgress() || Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
+    deleteDataAction?.style.setProperty('display',hasSplashData ? 'flex' : 'none','important');
     updateImportStatusButton();
   },
   setLoading(active){
