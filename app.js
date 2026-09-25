@@ -978,6 +978,21 @@ function loadUndeterminedJourneys() {
   } catch (_) { undeterminedJourneys=[]; classifiedJourneys=[]; }
 }
 
+async function migrateStoredBusJourneysToRoadQueue() {
+  const buses=classifiedJourneys.filter(journey=>
+    String(journey?.travelMode || '').toUpperCase()==='BUS' &&
+    Array.isArray(journey?.points) && journey.points.length>1 &&
+    !persistedMapJourneys.has(journeyIdentity(journey))
+  );
+  if(!buses.length)return false;
+  const busIds=new Set(buses.map(journeyIdentity));
+  classifiedJourneys=classifiedJourneys.filter(journey=>!busIds.has(journeyIdentity(journey)));
+  saveUndeterminedJourneys();
+  const candidates=[...pendingRoadImportCandidates(),...buses];
+  await preparePendingRoadImport(candidates);
+  return true;
+}
+
 function saveUndeterminedJourneys() {
   try {
     localStorage.setItem(UNDETERMINED_JOURNEYS_KEY,JSON.stringify(undeterminedJourneys));
@@ -1592,6 +1607,7 @@ async function showSavedProgress() {
     archivesReady.then(()=>{archivesSettled=true},()=>{archivesSettled=true});
     // A slow IndexedDB open must never leave a person on the transition screen.
     await Promise.race([archivesReady,new Promise(resolve=>setTimeout(resolve,2200))]);
+    if (archivesSettled) await migrateStoredBusJourneysToRoadQueue();
     if (archivesSettled && !persistedCoverageByRef.size && !persistedMapJourneys.size && !persistedFootActivities.size && !pendingRoadImportCandidates().length) {
       returnToOnboarding();
       return;
