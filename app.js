@@ -2569,7 +2569,8 @@ function renderJourneyLog() {
     item.className='journey-log-item'+(record.logType==='foot' ? ' journey-log-foot' : record.logType==='service' ? ' journey-log-service' : record.logType==='review' ? ' journey-log-review' : record.logType==='classified' ? ' journey-log-classified' : '');
     const copy=document.createElement('div');
     const date=document.createElement('small');
-    const modeLabel=record.logType==='review' ? '❔ NEEDS REVIEW' : record.logType==='classified' ? '🧭 CLASSIFIED' : record.logType==='foot' ? (record.travelMode==='RUNNING' ? '👟 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
+    const classifiedModeIcons={CYCLING:'🚲 CYCLING',BUS:'🚌 BUS',TRAIN:'🚆 TRAIN',FERRY:'⛴️ FERRY',FLIGHT:'✈️ FLIGHT',TRANSIT:'🚇 TRANSIT',other:'🧭 OTHER'};
+    const modeLabel=record.logType==='review' ? '❔ NEEDS REVIEW' : record.logType==='classified' ? (classifiedModeIcons[record.travelMode] || '🧭 CLASSIFIED') : record.logType==='foot' ? (record.travelMode==='RUNNING' ? '🏃 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
     date.textContent=modeLabel+(record.logType==='service' && record.road ? ' · '+record.road : '')+(record.start ? ' · '+formatDate(record.start)+' · '+formatTime(record.start) : '')+(record.logType==='service' && record.isFirstVisit ? ' · FIRST VISIT' : '');
     const title=document.createElement('strong');
     title.textContent=record.logType==='service' ? record.serviceName : (record.title || 'Untitled journey');
@@ -2589,7 +2590,7 @@ function renderJourneyLog() {
       copy.append(date,title,meta,select,save); item.append(copy); return item;
     }
     if (record.logType==='classified') {
-      title.textContent=record.title || 'Classified journey';
+      title.textContent=record.title || ((classifiedModeIcons[record.travelMode] || 'Classified').replace(/^[^ ]+ /,'').toLowerCase()+' journey');
       meta.textContent=(Number(record.googleDistanceKm)>0 ? displayDistance(record.googleDistanceKm) : 'Distance unavailable')+' · '+String(record.travelMode || 'other');
       copy.append(date,title,meta); item.append(copy); return item;
     }
