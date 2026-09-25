@@ -6376,7 +6376,10 @@ function extractTimelineActivities(data) {
       IN_TRAM:'TRAIN', IN_FERRY:'FERRY', FLYING:'FLIGHT', IN_AIRPLANE:'FLIGHT',
       IN_CABLECAR:'TRANSIT'
     }[mode] || null;
-    const isRoad=knownMode==='ROAD';
+    // Roadprints measures roads experienced, not only roads personally driven.
+    // Buses use the road network, so they share the road matcher while retaining
+    // BUS as their displayed transport mode. Rail and air modes stay transport-only.
+    const isRoad=knownMode==='ROAD' || knownMode==='BUS';
     const isOnFoot=knownMode==='WALKING' || knownMode==='RUNNING' || knownMode==='IN_PEDESTRIAN';
     const isKnownOther=Boolean(knownMode) && !isRoad && !isOnFoot;
     if (isRoad) diag.passengerVehicleActivities++;
@@ -6422,7 +6425,7 @@ function extractTimelineActivities(data) {
         ? Number(activity.distanceMeters) / 1000
         : null,
       sourceMode:mode || null,
-      travelMode:isRoad ? 'ROAD' : isOnFoot ? knownMode : isKnownOther ? knownMode : 'UNKNOWN',
+      travelMode:isRoad ? (knownMode==='BUS' ? 'BUS' : 'ROAD') : isOnFoot ? knownMode : isKnownOther ? knownMode : 'UNKNOWN',
       reviewStatus:isRoad || isOnFoot || isKnownOther ? 'ready' : 'needs_review',
       selected: true
     };
