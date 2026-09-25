@@ -1679,6 +1679,7 @@ startFromToday?.addEventListener('click',()=>showOnboardingStep(onboardingBackgr
 continueToWebMap?.addEventListener('click',openFreshRoadprint);
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
+document.getElementById('importMoreData')?.addEventListener('click', showDataSourceChoice);
 document.getElementById('viewSavedProgress').addEventListener('click', showSavedProgress);
 document.getElementById('changeDataSource')?.addEventListener('click', returnToOnboarding);
 closeSavedProgress.addEventListener('click', returnToOnboarding);
