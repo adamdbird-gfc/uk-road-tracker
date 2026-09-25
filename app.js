@@ -175,6 +175,7 @@ const travelStats = {
   ferry:document.getElementById('ferryDistanceTravelled'),
   flight:document.getElementById('flightDistanceTravelled'),
   transit:document.getElementById('transitDistanceTravelled'),
+  cycling:document.getElementById('cyclingDistanceTravelled'),
   uniqueTotal:document.getElementById('uniqueDistanceTravelled'),
   uniqueDriving:document.getElementById('uniqueDrivingDistance'),
   uniqueFoot:document.getElementById('uniqueFootDistance'),
@@ -2863,10 +2864,10 @@ function renderCollectiveStats() {
   if (!shouldShowDataDashboard()) { travelStatsCard.classList.add('hidden'); return; }
   const drivingKm=[...persistedJourneyMileageById.values()].reduce((total,value)=>total+(Number(value)||0),0);
   const footKm=footActivities.reduce((total,activity)=>total+(Number(activity.googleDistanceKm)||0),0);
-  const transportTotals={train:0,ferry:0,flight:0,transit:0};
+  const transportTotals={train:0,ferry:0,flight:0,transit:0,cycling:0};
   for (const journey of classifiedJourneys) {
     const mode=String(journey?.travelMode || '').toUpperCase();
-    const key=mode==='TRAIN' ? 'train' : mode==='FERRY' ? 'ferry' : mode==='FLIGHT' ? 'flight' : mode==='TRANSIT' ? 'transit' : null;
+    const key=mode==='TRAIN' ? 'train' : mode==='FERRY' ? 'ferry' : mode==='FLIGHT' ? 'flight' : mode==='TRANSIT' ? 'transit' : mode==='CYCLING' ? 'cycling' : null;
     if (key) transportTotals[key]+=Number(journey.googleDistanceKm)||0;
   }
   const transportKm=Object.values(transportTotals).reduce((total,value)=>total+value,0);
@@ -2886,6 +2887,7 @@ function renderCollectiveStats() {
   travelStats.ferry.textContent=displayDistance(transportTotals.ferry);
   travelStats.flight.textContent=displayDistance(transportTotals.flight);
   travelStats.transit.textContent=displayDistance(transportTotals.transit);
+  travelStats.cycling.textContent=displayDistance(transportTotals.cycling);
   travelStats.uniqueTotal.textContent=displayDistance(uniqueKm);
   travelStats.uniqueDriving.textContent=displayDistance(roadUniqueKm);
   travelStats.uniqueFoot.textContent=displayDistance(footUniqueKm);
