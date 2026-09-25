@@ -62,3 +62,21 @@ Each stop has:
 A nearby place is not automatically treated as a visit. Collection rules decide whether dwell time, geofence evidence, journey mode and user confirmation are sufficient. This prevents a motorway pass-by from incorrectly unlocking a service-station collection.
 
 Stop events are retained even when they do not match a current collection, allowing new collections to be added later without recollecting the journey.
+
+
+## Uncertain journeys and review
+
+Journeys with an unavailable or low-confidence mode are stored with `mode: unknown` and `processingStatus: needs_review`. They are not sent to road or foot matching until the user chooses a mode.
+
+The Journeys area provides a separate **Needs review** view. Each card shows the date, duration, distance, start/end clues and a route preview. The user can choose driving, walking, running, cycling, train, transit, ferry, flight, other or ignore.
+
+Saving a choice:
+
+1. Changes the journey from `unknown` to the selected mode.
+2. Moves it into the normal journey history.
+3. Queues it for the compatible matcher, if one exists.
+4. Updates road or foot progress only after matching succeeds.
+
+Choosing **other** keeps the journey in history without sending it to a road or foot matcher. Choosing **ignore** excludes it from the active journey list while retaining the source record for correction and audit.
+
+The review queue should show a count on the Journeys navigation item, and review choices must be persisted so a refresh never asks the same question again.
