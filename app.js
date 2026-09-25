@@ -171,6 +171,10 @@ const travelStats = {
   total:document.getElementById('totalDistanceTravelled'),
   driving:document.getElementById('drivingDistanceTravelled'),
   foot:document.getElementById('footDistanceTravelled'),
+  train:document.getElementById('trainDistanceTravelled'),
+  ferry:document.getElementById('ferryDistanceTravelled'),
+  flight:document.getElementById('flightDistanceTravelled'),
+  transit:document.getElementById('transitDistanceTravelled'),
   uniqueTotal:document.getElementById('uniqueDistanceTravelled'),
   uniqueDriving:document.getElementById('uniqueDrivingDistance'),
   uniqueFoot:document.getElementById('uniqueFootDistance'),
@@ -2859,23 +2863,34 @@ function renderCollectiveStats() {
   if (!shouldShowDataDashboard()) { travelStatsCard.classList.add('hidden'); return; }
   const drivingKm=[...persistedJourneyMileageById.values()].reduce((total,value)=>total+(Number(value)||0),0);
   const footKm=footActivities.reduce((total,activity)=>total+(Number(activity.googleDistanceKm)||0),0);
+  const transportTotals={train:0,ferry:0,flight:0,transit:0};
+  for (const journey of classifiedJourneys) {
+    const mode=String(journey?.travelMode || '').toUpperCase();
+    const key=mode==='TRAIN' ? 'train' : mode==='FERRY' ? 'ferry' : mode==='FLIGHT' ? 'flight' : mode==='TRANSIT' ? 'transit' : null;
+    if (key) transportTotals[key]+=Number(journey.googleDistanceKm)||0;
+  }
+  const transportKm=Object.values(transportTotals).reduce((total,value)=>total+value,0);
   const roadUniqueKm=segmentDistanceKm(buildCreditedSegments(savedRoadRecords()));
   const footRepresentatives=groupRepeatedJourneys(footActivities.filter(activity=>activity?.points?.length>=2));
   const footUniqueKm=segmentDistanceKm(buildCreditedSegments(footRepresentatives));
-  const totalKm=drivingKm+footKm;
+  const totalKm=drivingKm+footKm+transportKm;
   const uniqueKm=roadUniqueKm+footUniqueKm;
-  const hasData=totalKm>0 || uniqueKm>0 || footActivities.length || persistedMapJourneys.size;
+  const hasData=totalKm>0 || uniqueKm>0 || footActivities.length || persistedMapJourneys.size || classifiedJourneys.length;
   travelStatsCard.classList.toggle('hidden',!hasData);
   if (!hasData) return;
 
   travelStats.total.textContent=displayDistance(totalKm);
   travelStats.driving.textContent=displayDistance(drivingKm);
   travelStats.foot.textContent=displayDistance(footKm);
+  travelStats.train.textContent=displayDistance(transportTotals.train);
+  travelStats.ferry.textContent=displayDistance(transportTotals.ferry);
+  travelStats.flight.textContent=displayDistance(transportTotals.flight);
+  travelStats.transit.textContent=displayDistance(transportTotals.transit);
   travelStats.uniqueTotal.textContent=displayDistance(uniqueKm);
   travelStats.uniqueDriving.textContent=displayDistance(roadUniqueKm);
   travelStats.uniqueFoot.textContent=displayDistance(footUniqueKm);
   travelStats.uniqueDrivingPercent.textContent=drivingKm ? `${(roadUniqueKm/drivingKm*100).toFixed(1)}%` : '0.0%';
-  travelStats.activities.textContent=(persistedJourneyMileageById.size+footActivities.length).toLocaleString();
+  travelStats.activities.textContent=(persistedJourneyMileageById.size+footActivities.length+classifiedJourneys.length).toLocaleString();
 }
 
 function motorwayNetworkCompletionPercent() {
