@@ -30,6 +30,7 @@ let footLayer = null;
 let liveImportLayer = null;
 let mapLayerControl = null;
 let serviceStationLayer = null;
+let transportLayer = null;
 let mapGeometryRefreshTimer = null;
 let creditedMapSegmentCache = {signature:null,segments:[]};
 let ignoredJourneys = [];
@@ -2779,8 +2780,17 @@ async function deleteSavedJourney(id,type='road') {
   }
 }
 
+function transportLineForJourney(record) {
+  const points=(record?.points || []).filter(validPoint);
+  if(points.length<2)return null;
+  const start=points[0],end=points[points.length-1];
+  return [[start.lat,start.lng],[end.lat,end.lng]];
+}
+
 function openJourneyFocus(id,type='road') {
-  const record=(type==='foot' ? persistedFootActivities : persistedMapJourneys).get(id);
+  const record=type==='foot' ? persistedFootActivities.get(id)
+    : type==='transport' ? classifiedJourneys.find(journey=>journeyIdentity(journey)===id)
+    : persistedMapJourneys.get(id);
   if (!record) return;
   if (type==='road' && !journeys.some(journey=>journeyIdentity(journey)===id)) journeys.push(hydrateMapJourney(record));
   focusedJourneyId=id;
@@ -2791,6 +2801,7 @@ function openJourneyFocus(id,type='road') {
   renderMap();
   const journey=type==='foot'
     ? (footActivities.find(candidate=>journeyIdentity(candidate)===id) || record)
+    : type==='transport' ? record
     : (journeys.find(candidate=>journeyIdentity(candidate)===id) || hydrateMapJourney(record));
   const points=(journey.points || []).filter(validPoint);
   setTimeout(()=>{
@@ -4014,6 +4025,7 @@ function initMap() {
     canonicalARoadCoverageLayer = L.layerGroup().addTo(map);
     canonicalARoadUncoveredLayer = L.layerGroup().addTo(map);
     serviceStationLayer = L.layerGroup().addTo(map);
+    transportLayer = L.layerGroup().addTo(map);
 
     mapLayerControl = L.control.layers(
       {},
@@ -4024,7 +4036,8 @@ function initMap() {
         'A-road completed sections (green)': canonicalARoadCoverageLayer,
         'A-road incomplete sections (red)': canonicalARoadUncoveredLayer,
         'Motorway completed sections (blue)': canonicalCoverageLayer,
-        'Motorway incomplete sections (red)': canonicalUncoveredLayer
+        'Motorway incomplete sections (red)': canonicalUncoveredLayer,
+        'Flights and ferries (point-to-point)': transportLayer
       },
       {collapsed: true}
     ).addTo(map);
@@ -6179,6 +6192,7 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
 
   creditedLayer.clearLayers();
   footLayer?.clearLayers();
+  transportLayer?.clearLayers();
   if (!preserveLive) liveImportLayer?.clearLayers();
   const bounds=visibleMapBounds();
 
@@ -6186,6 +6200,14 @@ function renderMap({deferCalculations=false,preserveLive=false}={}) {
   const visibleFootActivities=focusedJourneyId
     ? (focusedJourneyType==='foot' ? footActivities.filter(activity=>journeyIdentity(activity)===focusedJourneyId) : [])
     : footActivities;
+  if (focusedJourneyId && focusedJourneyType==='transport' && transportLayer) {
+    const transport=classifiedJourneys.find(journey=>journeyIdentity(journey)===focusedJourneyId);
+    const line=transportLineForJourney(transport);
+    if(line) {
+      const mode=String(transport?.travelMode || '').toUpperCase();
+      L.polyline(line,{color:mode==='FLIGHT' ? '#8b5cf6' : '#2ca6d8',weight:4,opacity:.9,dashArray:'8,6',interactive:false}).addTo(transportLayer);
+    }
+  }
   for (const activity of visibleFootActivities) {
     if (!activity.matchedGeoJson || !footLayer) continue;
     const activityId=journeyIdentity(activity);
