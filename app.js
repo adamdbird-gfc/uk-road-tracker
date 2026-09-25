@@ -681,7 +681,7 @@ async function loadRoadDiscoveryArchive() {
 
 async function backfillRoadDiscoveryEvidence() {
   const candidates=[
-    ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({record,mode:'driving'})),
+    ...savedRoadRecords().filter(record=>record?.matchedGeoJson).map(record=>({record,mode:record.travelMode==='BUS' ? 'bus' : 'driving'})),
     ...footActivities.filter(record=>record?.matchedGeoJson).map(record=>({record,mode:'foot'}))
   ];
   for (const item of candidates) {
@@ -698,6 +698,8 @@ function compactMapJourney(journey) {
     id,
     start:journey.start || '',
     end:journey.end || '',
+    travelMode:journey.travelMode || 'ROAD',
+    sourceMode:journey.sourceMode || null,
     googleDistanceKm:Number.isFinite(Number(journey.googleDistanceKm)) ? Number(journey.googleDistanceKm) : null,
     repeatJourneyIds:Array.isArray(journey.repeatJourneyIds) ? journey.repeatJourneyIds : null,
     repeatCount:Number(journey.repeatCount || 1),
@@ -750,7 +752,7 @@ async function saveJourneyToMapArchive(journey) {
   if (!record) throw new Error('The matched journey did not contain saveable map geometry.');
   await mapArchiveOperation('readwrite',store=>store.put(record));
   persistedMapJourneys.set(record.id,record);
-  await recordRoadDiscoveryEvidence(record,'driving');
+  await recordRoadDiscoveryEvidence(record,record.travelMode==='BUS' ? 'bus' : 'driving');
   updateLocalProgressNotice();
   renderJourneyLog();
   window.dispatchEvent(new Event('roadprints:archivechange'));
