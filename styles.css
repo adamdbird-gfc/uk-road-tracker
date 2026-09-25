@@ -1878,3 +1878,11 @@ main.app-ready[data-active-screen="progress"] .road-discovery-county > summary::
     flex-direction:row;
   }
 }
+
+
+/* Uncertain journey review cards */
+.journey-log-review { border-color:rgba(247,196,80,.55); background:linear-gradient(135deg,rgba(247,196,80,.14),rgba(255,255,255,.07)); }
+.journey-log-review small { color:#f7c450; }
+.journey-log-review .journey-review-select { min-height:40px; margin-top:8px; padding:8px 10px; border:1px solid rgba(105,221,204,.45); border-radius:10px; background:#10275d; color:#fff; font:inherit; font-size:.82rem; }
+.journey-log-review > div:first-child > button { justify-self:start; min-height:40px; margin-top:4px; padding:8px 12px; border:0; border-radius:10px; background:#2cb9a6; color:#0b1c50; font-weight:800; }
+.journey-log-classified { border-color:rgba(105,221,204,.35); }
