@@ -21,6 +21,7 @@ ELIGIBLE_CLASSES = {"residential", "unclassified", "tertiary", "living_street"}
 SOURCE_KEY = "osm_gb_local_roads"
 SOURCE_NAME = "OpenStreetMap Great Britain local-road extract"
 SOURCE_LICENCE = "Open Database License (ODbL) 1.0"
+STALE_BUILD_MINUTES = 45
 
 
 def arguments() -> argparse.Namespace:
@@ -110,9 +111,33 @@ def mark_building(cursor, codes: list[str]) -> None:
     )
 
 
+def recover_stale_builds(cursor, stale_minutes: int = STALE_BUILD_MINUTES) -> int:
+    """Return abandoned builds to the queue without disturbing ready data.
+
+    A worker can be terminated after setting ``building`` but before it can
+    record ``ready`` or ``failed``.  Those rows must not remain permanently
+    invisible to the queue.  Recovery is deliberately conservative: only
+    building rows older than the timeout are changed, and their existing
+    inventory rows are retained for a later retry.
+    """
+    cursor.execute(
+        """
+        UPDATE settlement_inventories
+        SET status = 'pending', build_started_at = NULL,
+            failed_at = NULL, failure_code = NULL, updated_at = NOW()
+        WHERE status = 'building'
+          AND build_started_at < NOW() - (%s * INTERVAL '1 minute')
+        RETURNING settlement_id
+        """,
+        (stale_minutes,),
+    )
+    return cursor.rowcount
+
+
 def import_catalogues(connection, options: argparse.Namespace) -> dict[str, int]:
     codes = list(dict.fromkeys(options.settlement))
     with connection.cursor() as cursor:
+        recover_stale_builds(cursor)
         boundaries = load_boundaries(cursor, codes)
         mark_building(cursor, codes)
     connection.commit()
@@ -211,3 +236,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
