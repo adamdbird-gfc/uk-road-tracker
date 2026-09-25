@@ -2609,7 +2609,7 @@ function renderJourneyLog() {
     const copy=document.createElement('div');
     const date=document.createElement('small');
     const classifiedModeIcons={CYCLING:'🚲 CYCLING',BUS:'🚌 BUS',TRAIN:'🚆 TRAIN',FERRY:'⛴️ FERRY',FLIGHT:'✈️ FLIGHT',TRANSIT:'🚇 TRANSIT',other:'🧭 OTHER'};
-    const modeLabel=record.logType==='review' ? '❔ NEEDS REVIEW' : record.logType==='classified' ? (classifiedModeIcons[record.travelMode] || '🧭 CLASSIFIED') : record.logType==='foot' ? (record.travelMode==='RUNNING' ? '🏃 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : '🚗 DRIVING';
+    const modeLabel=record.logType==='review' ? '❔ NEEDS REVIEW' : record.logType==='classified' ? (classifiedModeIcons[record.travelMode] || '🧭 CLASSIFIED') : record.logType==='foot' ? (record.travelMode==='RUNNING' ? '🏃 RUNNING' : '👟 ON FOOT') : record.logType==='service' ? '⛽ SERVICE STATION' : String(record.travelMode || '').toUpperCase()==='BUS' ? '🚌 BUS' : '🚗 DRIVING';
     date.textContent=modeLabel+(record.logType==='service' && record.road ? ' · '+record.road : '')+(record.start ? ' · '+formatDate(record.start)+' · '+formatTime(record.start) : '')+(record.logType==='service' && record.isFirstVisit ? ' · FIRST VISIT' : '');
     const title=document.createElement('strong');
     title.textContent=record.logType==='service' ? record.serviceName : (record.title || 'Untitled journey');
