@@ -2517,6 +2517,22 @@ function resolveUndeterminedJourney(id, mode) {
   renderJourneyLog();
 }
 
+function journeyFilterMatches(record, filter) {
+  const mode=String(record?.travelMode || '').toUpperCase();
+  if (filter==='all') return true;
+  if (filter==='review') return record?.logType==='review';
+  if (filter==='service') return record?.logType==='service';
+  if (filter==='driving') return record?.logType==='road' && mode!=='BUS';
+  if (filter==='bus') return mode==='BUS';
+  if (filter==='foot') return record?.logType==='foot' || ['WALKING','RUNNING','IN_PEDESTRIAN'].includes(mode);
+  if (filter==='cycling') return mode==='CYCLING';
+  if (filter==='train') return mode==='TRAIN';
+  if (filter==='transit') return mode==='TRANSIT';
+  if (filter==='ferry') return mode==='FERRY';
+  if (filter==='flight') return mode==='FLIGHT';
+  return false;
+}
+
 function renderJourneyLog() {
   if (!journeyLogCard || !journeyLogList || !journeyLogCount) return;
   const allRecords=[
@@ -2533,16 +2549,15 @@ function renderJourneyLog() {
   const filters=document.getElementById('journeyLogFilters');
   filters?.classList.toggle('hidden',!shouldShowDataDashboard() || !allRecords.length);
   filters?.querySelector('[data-journey-filter="service"]')?.classList.toggle('hidden',!servicesUnlocked);
-  filters?.querySelector('[data-journey-filter="review"]')?.classList.toggle('hidden',!undeterminedJourneys.length);
   filters?.querySelectorAll('[data-journey-filter]').forEach(button=>{
-    button.classList.toggle('active',button.dataset.journeyFilter===journeyLogFilter);
-    button.setAttribute('aria-pressed',String(button.dataset.journeyFilter===journeyLogFilter));
+    const filter=button.dataset.journeyFilter;
+    const available=filter==='all' || (filter==='service' ? servicesUnlocked : allRecords.some(record=>journeyFilterMatches(record,filter)));
+    button.classList.toggle('hidden',!available);
+    button.classList.toggle('active',filter===journeyLogFilter);
+    button.setAttribute('aria-pressed',String(filter===journeyLogFilter));
   });
-  const records=journeyLogFilter==='all' ? allRecords : allRecords.filter(record=>
-    journeyLogFilter==='review' ? record.logType==='review' :
-    journeyLogFilter==='driving' ? record.logType==='road' :
-    journeyLogFilter==='foot' ? record.logType==='foot' : record.logType==='service'
-  );
+  if (!allRecords.some(record=>journeyFilterMatches(record,journeyLogFilter))) journeyLogFilter='all';
+  const records=allRecords.filter(record=>journeyFilterMatches(record,journeyLogFilter));
 
   const hasData=shouldShowDataDashboard() && allRecords.length>0;
   journeyLogCard.classList.toggle('hidden',!hasData);
@@ -6797,7 +6812,7 @@ renderJourneyLog=function() {
     ...savedRoadRecords().filter(record=>record && record.matchedGeoJson).map(record=>({...record,logType:'road'})),
     ...footActivities.filter(record=>record && record.points && record.points.length>1).map(record=>({...record,logType:'foot'}))
   ].sort((a,b)=>Date.parse(b.start || '')-Date.parse(a.start || ''));
-  const filtered=journeyLogFilter==='driving' ? records.filter(record=>record.logType==='road') : journeyLogFilter==='foot' ? records.filter(record=>record.logType==='foot') : journeyLogFilter==='service' ? [] : records;
+  const filtered=records.filter(record=>journeyFilterMatches(record,journeyLogFilter));
   for (let index=0;index<items.length && index<filtered.length;index++) {
     const record=filtered[index], roads=roadDiscoveryByJourneyId.get((record.logType==='foot' ? 'foot' : 'driving')+':'+journeyIdentity(record));
     if (!roads || !roads.length) continue;
