@@ -48,6 +48,7 @@ let roadImportProgress = {completed:0,total:0};
 let footImportProgress = {completed:0,total:0};
 let distanceUnit = 'miles';
 let onboardingMode = null;
+let undeterminedJourneys = [];
 let initialArchiveHydrationComplete = false;
 const refinedCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
@@ -293,6 +294,7 @@ let canonicalARoadLoadRequested = localStorage.getItem(CANONICAL_A_ROAD_LOAD_REQ
 let canonicalARoadResumeAttempted = false;
 const CANONICAL_A_ROAD_REQUEST_TIMEOUT_MS = 45000;
 const LOCAL_PROGRESS_KEY = 'uk-road-tracker-progress-v1';
+const UNDETERMINED_JOURNEYS_KEY = 'roadprints:undetermined-journeys-v1';
 const FOOT_PLACE_NAMES_KEY = 'roadprints-foot-place-names-v1';
 const MAP_ARCHIVE_DB_NAME = 'roadprints-map-archive';
 const MAP_ARCHIVE_DB_VERSION = 6;
@@ -961,6 +963,18 @@ function savedMapJourneysExcluding(excludedIds=new Set()) {
 
 function currentImportJourneys() {
   return journeys.filter(journey=>!journey._savedArchive);
+}
+
+function loadUndeterminedJourneys() {
+  try {
+    const saved=JSON.parse(localStorage.getItem(UNDETERMINED_JOURNEYS_KEY) || '[]');
+    undeterminedJourneys=Array.isArray(saved) ? saved.filter(journey=>journey && journey.reviewStatus==='needs_review') : [];
+  } catch (_) { undeterminedJourneys=[]; }
+}
+
+function saveUndeterminedJourneys() {
+  try { localStorage.setItem(UNDETERMINED_JOURNEYS_KEY,JSON.stringify(undeterminedJourneys)); }
+  catch (error) { console.warn('Undetermined journeys could not be saved:',error); }
 }
 
 function loadLocalProgress() {
@@ -1699,6 +1713,7 @@ mapCorrectionUndo.addEventListener('click',()=>{
   mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
   renderMap({deferCalculations:true});
 });
+loadUndeterminedJourneys();
 loadLocalProgress();
 loadFootPlaceNames();
 mapArchiveReadyPromise=loadMapArchive().finally(updateLocalProgressNotice);
@@ -1759,6 +1774,8 @@ fileInput.addEventListener('change', async () => {
     const result = extractTimelineActivities(json);
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
+    undeterminedJourneys = result.undeterminedJourneys || [];
+    saveUndeterminedJourneys();
     diagnostics = result.diagnostics;
     Object.assign(diagnostics, classifyImportSupport(allJourneys, onFootJourneys));
     await saveFootActivities(onFootJourneys);
@@ -1816,6 +1833,7 @@ fileInput.addEventListener('change', async () => {
     diagnostics.roadDistinctRoutes=groupedRoadJourneys.length;
     diagnostics.roadRepeatActivities=Math.max(0,candidateJourneys.length-groupedRoadJourneys.length);
     diagnostics.onFootActivities=onFootJourneys.length;
+    diagnostics.undeterminedActivities=undeterminedJourneys.length;
     diagnostics.onFootDistinctRoutes=groupedOnFootJourneys.length;
     diagnostics.onFootRepeatActivities=Math.max(0,onFootJourneys.length-groupedOnFootJourneys.length);
     diagnostics.journeysReadyForMatching=groupedRoadJourneys.length;
@@ -1835,7 +1853,7 @@ fileInput.addEventListener('change', async () => {
     showDiagnostics(file.name);
     renderIgnoredJourneys();
 
-    if (!diagnostics.passengerVehicleActivities && !diagnostics.onFootActivities) {
+    if (!diagnostics.passengerVehicleActivities && !diagnostics.onFootActivities && !undeterminedJourneys.length) {
       throw new Error(
         `Diagnostic result: ${diagnostics.semanticSegments.toLocaleString()} semantic segments were found, ` +
         `but no road or on-foot activities were detected.`
