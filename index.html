@@ -251,10 +251,16 @@
       <p class="muted">Choose a journey to inspect its route and correct any section that does not belong.</p>
       <div id="journeyLogFilters" class="journey-log-filters" aria-label="Filter journeys">
         <button type="button" class="active" data-journey-filter="all" aria-pressed="true">All</button>
-        <button type="button" class="hidden" data-journey-filter="review" aria-pressed="false">Needs review</button>
-        <button type="button" data-journey-filter="driving" aria-pressed="false">Driving</button>
-        <button type="button" data-journey-filter="foot" aria-pressed="false">On foot</button>
-        <button type="button" data-journey-filter="service" aria-pressed="false">⛽ Services</button>
+        <button type="button" class="hidden" data-journey-filter="review" aria-pressed="false">❔ Needs review</button>
+        <button type="button" data-journey-filter="driving" aria-pressed="false">🚗 Driving</button>
+        <button type="button" data-journey-filter="foot" aria-pressed="false">👟 On foot</button>
+        <button type="button" class="hidden" data-journey-filter="bus" aria-pressed="false">🚌 Bus</button>
+        <button type="button" class="hidden" data-journey-filter="train" aria-pressed="false">🚆 Train</button>
+        <button type="button" class="hidden" data-journey-filter="flight" aria-pressed="false">✈️ Flight</button>
+        <button type="button" class="hidden" data-journey-filter="cycling" aria-pressed="false">🚲 Cycling</button>
+        <button type="button" class="hidden" data-journey-filter="transit" aria-pressed="false">🚇 Transit</button>
+        <button type="button" class="hidden" data-journey-filter="ferry" aria-pressed="false">⛴️ Ferry</button>
+        <button type="button" class="hidden" data-journey-filter="service" aria-pressed="false">⛽ Services</button>
       </div>
       <div id="journeyLogList" class="journey-log-list"></div>
     </section>
