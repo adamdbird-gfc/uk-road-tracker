@@ -625,9 +625,12 @@ async function roadDiscoveryArchiveOperation(mode,operation) {
 
 function discoveryFeaturesForJourney(journey) {
   const roadFeatures=journey?.roadGeoJson?.features;
-  return Array.isArray(roadFeatures) && roadFeatures.length
-    ? roadFeatures
-    : [...(journey?.motorwayGeoJson?.features || []),...(journey?.aRoadGeoJson?.features || [])];
+  if (Array.isArray(roadFeatures) && roadFeatures.length) return roadFeatures;
+  const referenceFeatures=[...(journey?.motorwayGeoJson?.features || []),...(journey?.aRoadGeoJson?.features || [])];
+  if (referenceFeatures.length) return referenceFeatures;
+  // Some on-foot matcher responses provide named road properties only on the
+  // main matched geometry. Use that as the final fallback for discovery.
+  return Array.isArray(journey?.matchedGeoJson?.features) ? journey.matchedGeoJson.features : [];
 }
 
 function deriveRoadDiscoveryEvidence(journey,mode) {
@@ -6796,9 +6799,7 @@ function rebuildRoadDiscoveryLedger() {
   roadDiscoverySignature=signature; roadDiscoveryLedger.clear(); roadDiscoveryByJourneyId.clear();
   for (const item of records) {
     const seen=new Map(), newRoads=[];
-    const discoveryFeatures=(item.record.roadGeoJson && item.record.roadGeoJson.features && item.record.roadGeoJson.features.length)
-      ? item.record.roadGeoJson.features
-      : [...(item.record.motorwayGeoJson?.features || []),...(item.record.aRoadGeoJson?.features || [])];
+    const discoveryFeatures=discoveryFeaturesForJourney(item.record);
     for (const feature of discoveryFeatures) {
       const rawRef=String(feature?.properties?.road_ref || feature?.properties?.ref || '');
       const refs=rawRef.split(/[;,/]/).map(ref=>ref.trim()).filter(Boolean);
