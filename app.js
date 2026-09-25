@@ -2549,6 +2549,7 @@ function renderJourneyLog() {
   const filters=document.getElementById('journeyLogFilters');
   filters?.classList.toggle('hidden',!shouldShowDataDashboard() || !allRecords.length);
   filters?.querySelector('[data-journey-filter="service"]')?.classList.toggle('hidden',!servicesUnlocked);
+  if (!allRecords.some(record=>journeyFilterMatches(record,journeyLogFilter))) journeyLogFilter='all';
   filters?.querySelectorAll('[data-journey-filter]').forEach(button=>{
     const filter=button.dataset.journeyFilter;
     const available=filter==='all' || (filter==='service' ? servicesUnlocked : allRecords.some(record=>journeyFilterMatches(record,filter)));
@@ -2556,7 +2557,6 @@ function renderJourneyLog() {
     button.classList.toggle('active',filter===journeyLogFilter);
     button.setAttribute('aria-pressed',String(filter===journeyLogFilter));
   });
-  if (!allRecords.some(record=>journeyFilterMatches(record,journeyLogFilter))) journeyLogFilter='all';
   const records=allRecords.filter(record=>journeyFilterMatches(record,journeyLogFilter));
 
   const hasData=shouldShowDataDashboard() && allRecords.length>0;
