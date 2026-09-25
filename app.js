@@ -1781,7 +1781,11 @@ fileInput.addEventListener('change', async () => {
     const result = extractTimelineActivities(json);
     const allJourneys = result.roadJourneys;
     const onFootJourneys = result.onFootJourneys;
+    const otherJourneys = result.otherJourneys || [];
     undeterminedJourneys = result.undeterminedJourneys || [];
+    const classified = new Map(classifiedJourneys.map(journey=>[journey.importId || journeyFingerprint(journey),journey]));
+    for (const journey of otherJourneys) classified.set(journey.importId || journeyFingerprint(journey),journey);
+    classifiedJourneys = [...classified.values()];
     saveUndeterminedJourneys();
     diagnostics = result.diagnostics;
     Object.assign(diagnostics, classifyImportSupport(allJourneys, onFootJourneys));
@@ -1840,6 +1844,7 @@ fileInput.addEventListener('change', async () => {
     diagnostics.roadDistinctRoutes=groupedRoadJourneys.length;
     diagnostics.roadRepeatActivities=Math.max(0,candidateJourneys.length-groupedRoadJourneys.length);
     diagnostics.onFootActivities=onFootJourneys.length;
+    diagnostics.knownOtherActivities=otherJourneys.length;
     diagnostics.undeterminedActivities=undeterminedJourneys.length;
     diagnostics.onFootDistinctRoutes=groupedOnFootJourneys.length;
     diagnostics.onFootRepeatActivities=Math.max(0,onFootJourneys.length-groupedOnFootJourneys.length);
@@ -6355,6 +6360,7 @@ function extractTimelineActivities(data) {
 
   const roadJourneys = [];
   const onFootJourneys = [];
+  const otherJourneys = [];
   const undeterminedJourneys = [];
 
   for (const seg of segments) {
@@ -6362,11 +6368,20 @@ function extractTimelineActivities(data) {
     if (!activity) continue;
 
     const mode = String(activity?.topCandidate?.type || '').trim().toUpperCase();
-    const isRoad=mode === 'IN_PASSENGER_VEHICLE';
-    const isOnFoot=mode === 'WALKING' || mode === 'RUNNING' || mode === 'IN_PEDESTRIAN';
+    const knownMode = {
+      IN_PASSENGER_VEHICLE:'ROAD', IN_VEHICLE:'ROAD', DRIVING:'ROAD',
+      WALKING:'WALKING', RUNNING:'RUNNING', IN_PEDESTRIAN:'IN_PEDESTRIAN',
+      CYCLING:'CYCLING', IN_BUS:'BUS', IN_TRAIN:'TRAIN', IN_SUBWAY:'TRAIN',
+      IN_TRAM:'TRAIN', IN_FERRY:'FERRY', FLYING:'FLIGHT', IN_AIRPLANE:'FLIGHT',
+      IN_CABLECAR:'TRANSIT'
+    }[mode] || null;
+    const isRoad=knownMode==='ROAD';
+    const isOnFoot=knownMode==='WALKING' || knownMode==='RUNNING' || knownMode==='IN_PEDESTRIAN';
+    const isKnownOther=Boolean(knownMode) && !isRoad && !isOnFoot;
     if (isRoad) diag.passengerVehicleActivities++;
     if (isOnFoot) diag.onFootActivities++;
-    if (!isRoad && !isOnFoot) diag.undeterminedActivities++;
+    if (isKnownOther) diag.knownOtherActivities++;
+    if (!knownMode) diag.undeterminedActivities++;
 
     const startMs = Date.parse(seg.startTime || '');
     const endMs = Date.parse(seg.endTime || '');
@@ -6405,25 +6420,27 @@ function extractTimelineActivities(data) {
       googleDistanceKm: Number.isFinite(Number(activity?.distanceMeters))
         ? Number(activity.distanceMeters) / 1000
         : null,
-      travelMode:isRoad ? 'ROAD' : isOnFoot ? mode : 'UNKNOWN',
-      reviewStatus:isRoad || isOnFoot ? 'ready' : 'needs_review',
+      sourceMode:mode || null,
+      travelMode:isRoad ? 'ROAD' : isOnFoot ? knownMode : isKnownOther ? knownMode : 'UNKNOWN',
+      reviewStatus:isRoad || isOnFoot || isKnownOther ? 'ready' : 'needs_review',
       selected: true
     };
     if (isRoad) roadJourneys.push(journey);
     else if (isOnFoot) onFootJourneys.push(journey);
+    else if (isKnownOther) otherJourneys.push(journey);
     else undeterminedJourneys.push(journey);
   }
 
-  for (const journey of [...roadJourneys,...onFootJourneys,...undeterminedJourneys]) journey.importId=journeyFingerprint(journey);
+  for (const journey of [...roadJourneys,...onFootJourneys,...otherJourneys,...undeterminedJourneys]) journey.importId=journeyFingerprint(journey);
   diag.journeysConstructed = roadJourneys.length;
 
-  for (const list of [roadJourneys,onFootJourneys]) list.sort((a, b) => {
+  for (const list of [roadJourneys,onFootJourneys,otherJourneys,undeterminedJourneys]) list.sort((a, b) => {
     const aa = Date.parse(a.start || '');
     const bb = Date.parse(b.start || '');
     return (Number.isFinite(aa) ? aa : 0) - (Number.isFinite(bb) ? bb : 0);
   });
 
-  return { roadJourneys, onFootJourneys, undeterminedJourneys, confirmedVisits, diagnostics: diag };
+  return { roadJourneys, onFootJourneys, otherJourneys, undeterminedJourneys, confirmedVisits, diagnostics: diag };
 }
 
 function lowerBound(arr, target) {
