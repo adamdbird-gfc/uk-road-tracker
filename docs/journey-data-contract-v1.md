@@ -42,3 +42,23 @@ Every journey is retained in the archive. A journey only changes road or settlem
 ## Privacy boundary
 
 The web app keeps the local archive on the device. The future Android layer may provide background location, but it must pass through this same contract and explicit permission state. No personal journey geometry is sent to the shared settlement-inventory service.
+
+
+## Stop and visit events
+
+A journey may contain zero or more stop events. Stops are independent of transport mode, so collections can work for driving, walking, train and future Android journeys alike.
+
+Each stop has:
+
+- `id`: stable identifier
+- `journeyId`: the journey on which it occurred
+- `placeName`, `latitude`, `longitude`
+- `startedAt`, `endedAt`, and optional `dwellSeconds`
+- `source`: Timeline import, Android location or manual confirmation
+- `placeCategories`: service station, pub, restaurant, station, landmark, etc.
+- `confidence`: high, medium or low
+- `visitStatus`: `nearby`, `candidate`, `stopped`, or `confirmed`
+
+A nearby place is not automatically treated as a visit. Collection rules decide whether dwell time, geofence evidence, journey mode and user confirmation are sufficient. This prevents a motorway pass-by from incorrectly unlocking a service-station collection.
+
+Stop events are retained even when they do not match a current collection, allowing new collections to be added later without recollecting the journey.
