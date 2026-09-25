@@ -2632,7 +2632,15 @@ function renderJourneyLog() {
     if (record.logType==='classified') {
       title.textContent=record.title || ((classifiedModeIcons[record.travelMode] || 'Classified').replace(/^[^ ]+ /,'').toLowerCase()+' journey');
       meta.textContent=(Number(record.googleDistanceKm)>0 ? displayDistance(record.googleDistanceKm) : 'Distance unavailable')+' · '+String(record.travelMode || 'other');
-      copy.append(date,title,meta); item.append(copy); return item;
+      copy.append(date,title,meta);
+      const mode=String(record.travelMode || '').toUpperCase();
+      if ((mode==='FLIGHT' || mode==='FERRY') && transportLineForJourney(record)) {
+        const actions=document.createElement('div'); actions.className='journey-log-actions';
+        const view=document.createElement('button'); view.type='button'; view.textContent='View on map';
+        view.addEventListener('click',()=>openJourneyFocus(journeyIdentity(record),'transport'));
+        actions.append(view); item.append(copy,actions);
+      } else item.append(copy);
+      return item;
     }
     const distance=Number(record.googleDistanceKm || record.matchedDistanceKm || record.repeatDistanceKm || 0);
     const recordTrips=Math.max(1,Number(record.repeatCount || 1));
