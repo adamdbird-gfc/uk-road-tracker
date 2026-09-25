@@ -2579,7 +2579,7 @@ function renderJourneyLog() {
       select.className='journey-review-select';
       [['driving','🚗 Driving'],['walking','👟 Walking'],['running','🏃 Running'],['cycling','🚲 Cycling'],['train','🚆 Train'],['transit','🚌 Transit'],['ferry','⛴️ Ferry'],['flight','✈️ Flight'],['other','Other'],['ignore','Ignore']].forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)});
       const save=document.createElement('button'); save.type='button'; save.textContent='Save choice';
-      save.addEventListener('click',()=>resolveUndeterminedJourney(record.id,select.value));
+      save.addEventListener('click',()=>resolveUndeterminedJourney(record.id || record.importId,select.value));
       copy.append(date,title,meta,select,save); item.append(copy); return item;
     }
     if (record.logType==='classified') {
