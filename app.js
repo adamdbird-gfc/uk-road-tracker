@@ -837,6 +837,10 @@ function resumeSavedRoadImport() {
   if (!pending.length) return;
   const pendingIds=new Set(pending.map(journeyIdentity));
   journeys=[...savedMapJourneysExcluding(pendingIds),...pending];
+  // Upgrade queues created by earlier builds: their Timeline mileage is
+  // recoverable even when the corresponding route has not matched yet.
+  for (const journey of pending) recordJourneyMileage(journey);
+  saveLocalProgressNow();
   importSession.active=true;
   importSession.mapReady=true;
   updateImportNavigationFromCoordinator();
