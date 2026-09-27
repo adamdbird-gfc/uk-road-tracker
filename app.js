@@ -1219,12 +1219,30 @@ function journeyFingerprint(journey) {
 }
 
 function routeRepeatFingerprint(journey) {
+  const mode=journey?.travelMode || 'ROAD';
   const points=(journey?.points || []).filter(validPoint);
-  if (points.length<2) return [journey?.travelMode || 'ROAD', journeyIdentity(journey)].join('|');
+  const first=points[0], last=points[points.length-1];
+  const cell=point=>point
+    ? (Math.round(Number(point.lat)*500)/500).toFixed(3)+','+
+      (Math.round(Number(point.lng)*500)/500).toFixed(3)
+    : '';
+  const distance=Number(journey?.googleDistanceKm);
 
-  // Use a small, quantised shape fingerprint rather than only start/end points.
-  // This keeps two different walks to the same destination separate while
-  // allowing normal Timeline noise and different point densities to collapse.
+  // Keep the established road grouping stable. Shape-aware grouping is
+  // specifically for walking/running, where two routes can share endpoints
+  // but take different paths.
+  if (!['WALKING','RUNNING','IN_PEDESTRIAN'].includes(String(mode).toUpperCase())) {
+    const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*2)/2).toFixed(1) : '';
+    const [endpointA,endpointB]=[cell(first),cell(last)].sort();
+    return [mode,endpointA,endpointB,distanceBucket].join('|');
+  }
+
+  if (points.length<2) return [mode, journeyIdentity(journey)].join('|');
+
+  // Use a small, quantised shape fingerprint rather than only start/end
+  // points. This keeps two different walks to the same destination separate
+  // while allowing normal Timeline noise and different point densities to
+  // collapse.
   const samplePath=path=>Array.from({length:9},(_,index)=>{
     const point=path[Math.round(index*(path.length-1)/8)];
     return Math.round(Number(point.lat)*800)+','+Math.round(Number(point.lng)*800);
@@ -1232,9 +1250,8 @@ function routeRepeatFingerprint(journey) {
   const forward=samplePath(points);
   const reverse=samplePath([...points].reverse());
   const shape=[forward,reverse].sort()[0];
-  const distance=Number(journey?.googleDistanceKm);
   const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*4)/4).toFixed(2) : '';
-  return [journey?.travelMode || 'ROAD', distanceBucket, shape].join('|');
+  return [mode,distanceBucket,shape].join('|');
 }
 
 function groupRepeatedJourneys(source) {
