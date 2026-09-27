@@ -99,5 +99,27 @@
     };
   }
 
-  window.RoadprintsJourneyContract={fromLegacy,modeFor};
+  function archiveFields(record){
+    const journey=fromLegacy(record);
+    return {
+      journey_id:journey.journey_id,
+      revision:journey.revision,
+      source:journey.source,
+      started_at:journey.started_at,
+      ended_at:journey.ended_at,
+      timezone:journey.timezone,
+      mode:journey.mode,
+      route_geometry:journey.route_geometry,
+      start_location:journey.start_location,
+      end_location:journey.end_location,
+      distance_meters:journey.distance_meters,
+      stops:journey.stops,
+      scope:journey.scope,
+      processing:journey.processing,
+      corrections:journey.corrections,
+      updated_at:journey.updated_at
+    };
+  }
+
+  window.RoadprintsJourneyContract={fromLegacy,modeFor,archiveFields};
 })();
