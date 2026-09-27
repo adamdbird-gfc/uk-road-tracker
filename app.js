@@ -703,7 +703,11 @@ async function backfillRoadDiscoveryEvidence() {
 function compactMapJourney(journey) {
   const id=journeyIdentity(journey);
   if (!id || !journey?.matchedGeoJson) return null;
+  const contractFields=window.RoadprintsJourneyContract?.archiveFields
+    ? window.RoadprintsJourneyContract.archiveFields(journey)
+    : {};
   return {
+    ...contractFields,
     id,
     start:journey.start || '',
     end:journey.end || '',
@@ -797,7 +801,11 @@ async function pendingRoadImportOperation(mode,operation) {
 function compactPendingRoadJourney(journey) {
   const id=journeyIdentity(journey);
   if (!id) return null;
+  const contractFields=window.RoadprintsJourneyContract?.archiveFields
+    ? window.RoadprintsJourneyContract.archiveFields(journey)
+    : {};
   return {
+    ...contractFields,
     id,
     start:journey.start || '', end:journey.end || '',
     travelMode:journey.travelMode || 'ROAD',
@@ -916,7 +924,11 @@ async function clearMapArchive() {
 }
 
 function compactFootActivity(activity) {
+  const contractFields=window.RoadprintsJourneyContract?.archiveFields
+    ? window.RoadprintsJourneyContract.archiveFields(activity)
+    : {};
   return {
+    ...contractFields,
     id:journeyIdentity(activity), start:activity.start || '', end:activity.end || '',
     travelMode:activity.travelMode || 'WALKING', googleDistanceKm:Number(activity.googleDistanceKm || 0),
     pathPointCount:Number(activity.pathPointCount || 0), points:(activity.points || []).filter(validPoint),
