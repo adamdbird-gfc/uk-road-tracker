@@ -1219,17 +1219,22 @@ function journeyFingerprint(journey) {
 }
 
 function routeRepeatFingerprint(journey) {
-  const first=journey?.points?.[0];
-  const last=journey?.points?.[journey.points.length-1];
-  const cell=point=>point
-    ? `${(Math.round(Number(point.lat)*500)/500).toFixed(3)},${(Math.round(Number(point.lng)*500)/500).toFixed(3)}`
-    : '';
+  const points=(journey?.points || []).filter(validPoint);
+  if (points.length<2) return [journey?.travelMode || 'ROAD', journeyIdentity(journey)].join('|');
+
+  // Use a small, quantised shape fingerprint rather than only start/end points.
+  // This keeps two different walks to the same destination separate while
+  // allowing normal Timeline noise and different point densities to collapse.
+  const samplePath=path=>Array.from({length:9},(_,index)=>{
+    const point=path[Math.round(index*(path.length-1)/8)];
+    return Math.round(Number(point.lat)*800)+','+Math.round(Number(point.lng)*800);
+  }).join(';');
+  const forward=samplePath(points);
+  const reverse=samplePath([...points].reverse());
+  const shape=[forward,reverse].sort()[0];
   const distance=Number(journey?.googleDistanceKm);
-  const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*2)/2).toFixed(1) : '';
-  // A return journey covers the same route in the opposite direction.  Sort
-  // endpoints so A→B and B→A are recognised as one repeat pattern.
-  const [endpointA,endpointB]=[cell(first),cell(last)].sort();
-  return [journey?.travelMode || 'ROAD', endpointA, endpointB, distanceBucket].join('|');
+  const distanceBucket=Number.isFinite(distance) ? (Math.round(distance*4)/4).toFixed(2) : '';
+  return [journey?.travelMode || 'ROAD', distanceBucket, shape].join('|');
 }
 
 function groupRepeatedJourneys(source) {
@@ -1240,7 +1245,13 @@ function groupRepeatedJourneys(source) {
     groups.get(key).push(journey);
   }
   return [...groups.values()].map(group=>{
-    const ordered=[...group].sort((a,b)=>(b.pathPointCount || 0)-(a.pathPointCount || 0));
+    // Reuse an existing successful match whenever one is available. This
+    // prevents a refresh/re-import from sending a known route to the matcher
+    // again merely because another occurrence has more Timeline points.
+    const ordered=[...group].sort((a,b)=>
+      Number(Boolean(b.matchedGeoJson))-Number(Boolean(a.matchedGeoJson)) ||
+      (b.pathPointCount || 0)-(a.pathPointCount || 0)
+    );
     const representative=ordered[0];
     representative.repeatJourneyIds=group.map(journeyIdentity);
     representative.repeatJourneyMileage=Object.fromEntries(group.map(journey=>[journeyIdentity(journey),Number(journey.googleDistanceKm || 0)]));
