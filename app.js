@@ -3499,7 +3499,7 @@ function startDetailedImport() {
 // Public OSRM instances are shared infrastructure. Two concurrent journeys
 // substantially reduce an import's elapsed time while remaining conservative
 // enough to avoid turning a large Timeline import into a burst of traffic.
-const ROAD_IMPORT_CONCURRENCY=2;
+const ROAD_IMPORT_CONCURRENCY=4;
 const ROAD_MATCH_RETRY_DELAYS_MS=[750,2000];
 function roadImportProgressLabel(completed,total) {
   // Percentages belong to the overall Roadprint total. Individual queues use
