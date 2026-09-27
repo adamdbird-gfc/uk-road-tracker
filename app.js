@@ -831,6 +831,21 @@ async function loadPendingRoadImport() {
   }
 }
 
+function resumeSavedRoadImport() {
+  if (easyImportRunning) return;
+  const pending=pendingRoadImportCandidates({includeFailed:true});
+  if (!pending.length) return;
+  const pendingIds=new Set(pending.map(journeyIdentity));
+  journeys=[...savedMapJourneysExcluding(pendingIds),...pending];
+  importSession.active=true;
+  importSession.mapReady=true;
+  updateImportNavigationFromCoordinator();
+  updateLocalProgressNotice();
+  // The queue is already durable; restart matching without asking for the
+  // original Timeline file again.
+  setTimeout(()=>{ if (!easyImportRunning) void startEasyImport(); },0);
+}
+
 function savePendingRoadImport() {
   pendingRoadImportSaveChain=pendingRoadImportSaveChain.then(async()=>{
     if (!pendingRoadImport) return;
@@ -1807,6 +1822,9 @@ pendingRoadImportReadyPromise=loadPendingRoadImport().finally(updateLocalProgres
 Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,roadDiscoveryArchiveReadyPromise])
   .then(()=>backfillRoadDiscoveryEvidence())
   .catch(error=>console.warn('Saved road-discovery evidence could not be refreshed:',error));
+Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise])
+  .then(()=>resumeSavedRoadImport())
+  .catch(error=>console.warn('Saved road import could not be resumed:',error));
 Promise.race([
   Promise.all([mapArchiveReadyPromise,footArchiveReadyPromise,pendingRoadImportReadyPromise]),
   new Promise(resolve=>setTimeout(resolve,2200))
