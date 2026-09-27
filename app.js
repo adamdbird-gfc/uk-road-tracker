@@ -1253,6 +1253,19 @@ function groupRepeatedJourneys(source) {
       (b.pathPointCount || 0)-(a.pathPointCount || 0)
     );
     const representative=ordered[0];
+    const matched=group.find(journey=>journey.matchedGeoJson);
+    if (matched) {
+      // A newly imported occurrence can reuse a route already matched in an
+      // earlier import. Copy the derived result locally and persist the
+      // occurrence, while keeping its own journey and mileage record.
+      for (const repeat of group) {
+        if (repeat===matched || repeat.matchedGeoJson) continue;
+        repeat.matchedGeoJson=matched.matchedGeoJson;
+        repeat.roadGeoJson=matched.roadGeoJson || {type:'FeatureCollection',features:[]};
+        repeat.matchQuality=matched.matchQuality || null;
+        void saveFootActivityMatch(repeat);
+      }
+    }
     representative.repeatJourneyIds=group.map(journeyIdentity);
     representative.repeatJourneyMileage=Object.fromEntries(group.map(journey=>[journeyIdentity(journey),Number(journey.googleDistanceKm || 0)]));
     representative.repeatCount=group.length;
