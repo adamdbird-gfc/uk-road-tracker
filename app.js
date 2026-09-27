@@ -6610,7 +6610,12 @@ function extractTimelineActivities(data) {
     else undeterminedJourneys.push(journey);
   }
 
-  for (const journey of [...roadJourneys,...onFootJourneys,...otherJourneys,...undeterminedJourneys]) journey.importId=journeyFingerprint(journey);
+  for (const journey of [...roadJourneys,...onFootJourneys,...otherJourneys,...undeterminedJourneys]) {
+    journey.importId=journeyFingerprint(journey);
+    if (window.RoadprintsJourneyContract) {
+      Object.assign(journey,window.RoadprintsJourneyContract.fromLegacy(journey));
+    }
+  }
   diag.journeysConstructed = roadJourneys.length;
 
   for (const list of [roadJourneys,onFootJourneys,otherJourneys,undeterminedJourneys]) list.sort((a, b) => {
