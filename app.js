@@ -848,9 +848,9 @@ async function clearPendingRoadImport() {
   await pendingRoadImportSaveChain;
 }
 
-async function preparePendingRoadImport(candidates) {
+async async function preparePendingRoadImport(candidates) {
   const signature=candidates.map(journeyIdentity).filter(Boolean).sort().join('|');
-  if (pendingRoadImport?.signature===signature) return pendingRoadImportCandidates();
+  if (pendingRoadImport?.signature===signature) return pendingRoadImportCandidates({includeFailed:true});
   const items=candidates.map(compactPendingRoadJourney).filter(Boolean).map(journey=>({journey,state:'pending',attempts:0,error:null}));
   pendingRoadImport={
     id:'active',version:1,signature,
@@ -860,7 +860,7 @@ async function preparePendingRoadImport(candidates) {
   };
   await savePendingRoadImport();
   updateLocalProgressNotice();
-  return pendingRoadImportCandidates();
+  return pendingRoadImportCandidates({includeFailed:true});
 }
 
 async function checkpointPendingRoadJourney(journey,state,error=null) {
@@ -1338,6 +1338,17 @@ function motorwayContributionsForJourney(journey) {
   return contributions;
 }
 
+function recordJourneyMileage(journey) {
+  const ids=Array.isArray(journey?.repeatJourneyIds) && journey.repeatJourneyIds.length
+    ? journey.repeatJourneyIds
+    : [journeyIdentity(journey)];
+  for (const id of ids) {
+    if (!id) continue;
+    const mileage=Number(journey?.repeatJourneyMileage?.[id] ?? journey?.googleDistanceKm);
+    if (Number.isFinite(mileage) && mileage>=0) persistedJourneyMileageById.set(id,mileage);
+  }
+}
+
 function recordJourneyProcessed(journey) {
   canonicalCoverageDirty=true;
   canonicalARoadCoverageDirty=true;
@@ -1346,11 +1357,9 @@ function recordJourneyProcessed(journey) {
     ? journey.repeatJourneyIds
     : [journeyIdentity(journey)];
   for (const id of ids) {
-    if (!id) continue;
-    persistedProcessedJourneyIds.add(id);
-    const mileage=Number(journey?.repeatJourneyMileage?.[id] ?? journey?.googleDistanceKm);
-    if (Number.isFinite(mileage) && mileage>=0) persistedJourneyMileageById.set(id,mileage);
+    if (id) persistedProcessedJourneyIds.add(id);
   }
+  recordJourneyMileage(journey);
   const representativeId=journeyIdentity(journey);
   const contributions=motorwayContributionsForJourney(journey);
   if (representativeId && Object.keys(contributions).length) persistedMotorwayContributionsByJourney.set(representativeId,contributions);
@@ -1917,6 +1926,11 @@ fileInput.addEventListener('change', async () => {
     diagnostics.onFootDistinctRoutes=groupedOnFootJourneys.length;
     diagnostics.onFootRepeatActivities=Math.max(0,onFootJourneys.length-groupedOnFootJourneys.length);
     diagnostics.journeysReadyForMatching=groupedRoadJourneys.length;
+
+    // Commit Timeline mileage before any external matcher is called. Matching
+    // now derives coverage only; failures cannot remove accepted travel miles.
+    for (const journey of groupedRoadJourneys) recordJourneyMileage(journey);
+    scheduleLocalProgressSave();
 
     ignoredJourneys = groupedRoadJourneys.filter(j => j.pathPointCount < 2);
     const importJourneys = groupedRoadJourneys.filter(j => j.pathPointCount >= 2);
