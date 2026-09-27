@@ -1948,7 +1948,8 @@ fileInput.addEventListener('change', async () => {
     // Commit Timeline mileage before any external matcher is called. Matching
     // now derives coverage only; failures cannot remove accepted travel miles.
     for (const journey of groupedRoadJourneys) recordJourneyMileage(journey);
-    scheduleLocalProgressSave();
+    // Write the mileage checkpoint before the first matcher request.
+    saveLocalProgressNow();
 
     ignoredJourneys = groupedRoadJourneys.filter(j => j.pathPointCount < 2);
     const importJourneys = groupedRoadJourneys.filter(j => j.pathPointCount >= 2);
