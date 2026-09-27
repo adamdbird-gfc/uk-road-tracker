@@ -863,7 +863,7 @@ async function clearPendingRoadImport() {
   await pendingRoadImportSaveChain;
 }
 
-async async function preparePendingRoadImport(candidates) {
+async function preparePendingRoadImport(candidates) {
   const signature=candidates.map(journeyIdentity).filter(Boolean).sort().join('|');
   if (pendingRoadImport?.signature===signature) return pendingRoadImportCandidates({includeFailed:true});
   const items=candidates.map(compactPendingRoadJourney).filter(Boolean).map(journey=>({journey,state:'pending',attempts:0,error:null}));
