@@ -70,8 +70,10 @@
       timezone:record?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London',
       mode,
       route_geometry:record?.route_geometry || routeGeometry,
-      start:record?.startPoint || points[0] || null,
-      end:record?.endPoint || points[points.length-1] || null,
+      // Legacy web records use start/end for timestamps; keep those fields
+      // untouched and expose contract coordinates under explicit names.
+      start_location:record?.startPoint || points[0] || null,
+      end_location:record?.endPoint || points[points.length-1] || null,
       distance_meters:Number.isFinite(Number(record?.distance_meters))
         ? Number(record.distance_meters)
         : Number.isFinite(Number(record?.googleDistanceKm))
