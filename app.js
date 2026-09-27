@@ -749,7 +749,10 @@ async function loadMapArchive() {
     const records=await mapArchiveOperation('readonly',store=>store.getAll());
     persistedMapJourneys.clear();
     for (const record of records || []) {
-      if (record?.id && record?.matchedGeoJson) persistedMapJourneys.set(record.id,record);
+      const adapted=window.RoadprintsJourneyContract?.fromLegacy
+        ? window.RoadprintsJourneyContract.fromLegacy(record)
+        : record;
+      if (adapted?.id && adapted?.matchedGeoJson) persistedMapJourneys.set(adapted.id,adapted);
     }
     renderRoadQueue();
     renderCollectiveStats();
@@ -942,7 +945,12 @@ async function loadFootActivityArchive() {
   try {
     const records=await footArchiveOperation('readonly',store=>store.getAll());
     persistedFootActivities.clear();
-    for (const record of records || []) if (record?.id) persistedFootActivities.set(record.id,{...record,selected:true});
+    for (const record of records || []) {
+      const adapted=window.RoadprintsJourneyContract?.fromLegacy
+        ? window.RoadprintsJourneyContract.fromLegacy(record)
+        : record;
+      if (adapted?.id) persistedFootActivities.set(adapted.id,{...adapted,selected:true});
+    }
     footActivities=[...persistedFootActivities.values()];
     buildFootBatches();
     renderFootQueue();
