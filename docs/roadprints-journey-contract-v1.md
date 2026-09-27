@@ -128,6 +128,75 @@ The user-facing import experience should report:
 - Routes waiting to retry
 - Sparse or unsupported journeys retained but excluded from matching
 
+## Place and PlaceVisit records
+
+Journeys describe movement. Collections and achievements require separate place records and visit evidence.
+
+### Place
+
+A Place is a catalogue item that may be collected or used as achievement evidence. Shared catalogue data is separate from personal Journey data.
+
+```json
+{
+  "place_id": "service-station-norton-canes",
+  "catalogue": "service-stations",
+  "category": "service_station",
+  "name": "Norton Canes",
+  "location": {
+    "lat": 52.6500,
+    "lng": -1.9500
+  },
+  "aliases": [],
+  "source": "Roadprints reference catalogue",
+  "source_version": "v1",
+  "eligibility": {
+    "uk_only": true,
+    "collection_enabled": true
+  }
+}
+```
+
+Places may represent service stations, Wetherspoons, McDonald's, parkrun venues, landmarks, high streets or future collections. A Place must not be treated as visited merely because a Journey passed nearby.
+
+### PlaceVisit
+
+A PlaceVisit is personal evidence that a Journey or Timeline stop may represent a visit.
+
+```json
+{
+  "visit_id": "stable-visit-id",
+  "place_id": "service-station-norton-canes",
+  "journey_id": "journey-123",
+  "source": "timeline_stop",
+  "arrived_at": "2026-09-27T10:20:00Z",
+  "departed_at": "2026-09-27T10:42:00Z",
+  "dwell_seconds": 1320,
+  "observed_location": {
+    "lat": 52.6501,
+    "lng": -1.9501
+  },
+  "detection_radius_meters": 100,
+  "confidence": 0.94,
+  "state": "candidate",
+  "collection_eligible": true,
+  "user_confirmed": false,
+  "created_at": "2026-09-27T10:43:00Z",
+  "updated_at": "2026-09-27T10:43:00Z"
+}
+```
+
+Visit states distinguish:
+
+- `nearby` — the route passed close to a Place.
+- `candidate` — location and dwell evidence suggest a possible visit.
+- `confirmed` — the user or strong evidence confirms the visit.
+- `rejected` — the user says the Place was not visited.
+- `excluded` — the visit is outside the relevant collection scope.
+
+When multiple nearby Places are plausible, the UI should allow the user to choose between them rather than silently assigning a visit. A Journey may produce multiple visit candidates, but a collection achievement should use only confirmed or explicitly eligible evidence.
+
+Personal PlaceVisit records remain local alongside Journeys. Shared Place catalogue records may be updated independently without changing the user's history.
+
 ## Android requirements
 
 Native capture should create the same Journey record locally, with:
