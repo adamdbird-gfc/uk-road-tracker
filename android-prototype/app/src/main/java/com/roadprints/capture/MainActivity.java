@@ -171,7 +171,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private JSONArray coordinates() {
+    private JSONArray coordinates() throws org.json.JSONException {
         JSONArray coordinates = new JSONArray();
         for (Location point : points) {
             coordinates.put(new JSONArray().put(point.getLongitude()).put(point.getLatitude()));
