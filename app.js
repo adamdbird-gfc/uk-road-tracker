@@ -3307,10 +3307,13 @@ async function startNextFootBatch() {
     footMatchingError=err.message || String(err);
   } finally {
     if (footMatchingProgress) {
+      const footFailed=Number(footMatchingProgress.failed || 0);
       const footDetail=footMatchingError
         ? `Walking matching paused after ${footMatchingProgress.completed.toLocaleString()} of ${footMatchingProgress.total.toLocaleString()} routes`
-        : `${footMatchingProgress.succeeded.toLocaleString()} walking and running routes are ready`;
-      setImportReadiness('foot',footMatchingError ? 'working' : 'ready',footDetail);
+        : footFailed
+          ? `${footMatchingProgress.succeeded.toLocaleString()} matched · ${footFailed.toLocaleString()} waiting to retry`
+          : `${footMatchingProgress.succeeded.toLocaleString()} walking and running routes are ready`;
+      setImportReadiness('foot',footMatchingError || footFailed ? 'working' : 'ready',footDetail);
     }
     if (importFootStartedAt && footMatchingProgress) {
       const seconds=Math.max(1,Math.round((Date.now()-importFootStartedAt)/1000));
@@ -3437,12 +3440,12 @@ function renderCollectiveImportProgress() {
   easyProgressText.replaceChildren();
   const headline=document.createElement('strong');
   headline.textContent=retryableTotal
-    ? `Needs retry · ${completed.toLocaleString()} / ${total.toLocaleString()} processed`
-    : total ? `${percent}% · ${completed.toLocaleString()} / ${total.toLocaleString()}` : 'Preparing…';
+    ? `Timeline imported · ${completed.toLocaleString()} / ${total.toLocaleString()} routes processed`
+    : total ? `Timeline imported · ${percent}% matching complete` : 'Preparing…';
   const detail=document.createElement('span');
   detail.textContent=retryableTotal
-    ? `${retryableTotal.toLocaleString()} route${retryableTotal===1?' needs':'s need'} another attempt`
-    : total ? 'Your road and on-foot journeys are being processed' : 'Preparing your journeys';
+    ? `${retryableTotal.toLocaleString()} route${retryableTotal===1?' is':'s are'} waiting to retry; your mileage is safe`
+    : total ? 'Your saved journeys are continuing to build the map' : 'Saving your journeys and mileage';
   easyProgressText.append(headline,detail);
   easyProgressBar.max=total || 1;
   easyProgressBar.value=completed;
@@ -3455,16 +3458,17 @@ function setImportReadiness(stage, state, detail) {
   const copy=row.querySelector('small');
   const label=row.querySelector('em');
   if (detail && copy) copy.textContent=detail;
-  if (label) label.textContent=state==='ready' ? 'Ready' : state==='working' ? 'Discovering' : 'Waiting';
+  const retrying=/(waiting|needs|retry)/i.test(String(detail || ''));
+  if (label) label.textContent=state==='ready' ? 'Ready' : retrying ? 'Retry available' : state==='working' ? 'In progress' : 'Waiting';
 }
 
 function beginImportReadiness(total) {
   const pendingFoot=footActivities.filter(activity=>!activity.matchedGeoJson && !activity.matchError).length;
-  setImportReadiness('journeys','ready','Your journeys are ready to explore');
-  setImportReadiness('map','working','Preparing your first map');
-  setImportReadiness('foot',pendingFoot ? 'working' : 'ready',pendingFoot ? `0 / ${pendingFoot.toLocaleString()} walking and running journeys matched` : 'No walking or running journeys need matching');
-  setImportReadiness('progress','working',`Finding roads in ${total.toLocaleString()} journey${total===1?'':'s'}`);
-  setImportReadiness('achievements','working','Looking for moments worth celebrating');
+  setImportReadiness('journeys','ready','Your journeys and mileage are saved on this device');
+  setImportReadiness('map','working','Growing as routes are matched');
+  setImportReadiness('foot',pendingFoot ? 'working' : 'ready',pendingFoot ? `0 / ${pendingFoot.toLocaleString()} routes queued; mileage already recorded` : 'No walking or running routes need matching');
+  setImportReadiness('progress','working',`Matching ${total.toLocaleString()} road route${total===1?'':'s'}; imported mileage is already safe`);
+  setImportReadiness('achievements','working','Updating as new coverage is found');
 }
 
 function syncImportSession() {
@@ -3733,8 +3737,12 @@ async function startEasyImport() {
   const roadElapsed=roadSeconds>=60 ? `${Math.floor(roadSeconds/60)}m ${roadSeconds%60}s` : `${roadSeconds}s`;
   importRoadResult=`completed in ${roadElapsed}`;
   importSession.roadComplete=true;
-  setImportReadiness('progress','ready',`${succeeded.toLocaleString()} journey${succeeded===1?'':'s'} added to road discovery`);
-  setImportReadiness('achievements','ready','Your road achievements are ready; on-foot discoveries will continue updating');
+  setImportReadiness('progress',failed ? 'working' : 'ready',failed
+    ? `${succeeded.toLocaleString()} matched · ${failed.toLocaleString()} waiting to retry`
+    : `${succeeded.toLocaleString()} road routes matched`);
+  setImportReadiness('achievements','ready',failed
+    ? 'Available coverage is ready; achievements will update as routes are retried'
+    : 'Your road achievements are ready; on-foot discoveries will continue updating');
   updateImportStatusButton();
   if (footMatching) {
     setEasyProgressStatus('Road matching complete',`${succeeded} matched · ${failed} retryable · completed in ${roadElapsed}`);
