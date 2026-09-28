@@ -46,6 +46,7 @@ public class CaptureService extends Service {
 
     private static final String STATE_PREFS = "roadprints_capture_state";
     private static final String STATE_ACTIVE = "active";
+    private static final String STATE_MODE = "mode";
     private static final String STATE_ARMED = "armed";
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
