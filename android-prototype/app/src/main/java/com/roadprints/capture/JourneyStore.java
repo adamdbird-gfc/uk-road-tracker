@@ -33,6 +33,9 @@ public final class JourneyStore {
         try (FileOutputStream output = new FileOutputStream(temporary)) {
             output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
             output.flush();
+            if (target.exists() && !target.delete()) {
+                throw new IllegalStateException("Could not replace journey archive");
+            }
             if (!temporary.renameTo(target)) {
                 throw new IllegalStateException("Could not commit journey archive");
             }
