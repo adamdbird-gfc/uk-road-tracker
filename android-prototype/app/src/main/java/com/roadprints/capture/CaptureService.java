@@ -155,7 +155,16 @@ public class CaptureService extends Service {
     }
 
     private void handleActivity(int activityType, int confidence) {
-        if (!isArmed(this) || confidence < 50) return;
+        if (!isArmed(this)) return;
+
+        String activityLabel = activityLabel(activityType);
+        if (confidence < 50) {
+            broadcastUpdate("Android activity signal: " + activityLabel
+                    + " (" + confidence + "% confidence).");
+            return;
+        }
+        broadcastUpdate("Android detected " + activityLabel
+                + " (" + confidence + "% confidence).");
 
         if (activityType == DetectedActivity.STILL) {
             if (isActive(this)) {
@@ -175,6 +184,16 @@ public class CaptureService extends Service {
         if (detectedMode != null && !isActive(this)) {
             startCapture(detectedMode);
         }
+    }
+
+    private String activityLabel(int activityType) {
+        if (activityType == DetectedActivity.STILL) return "still";
+        if (activityType == DetectedActivity.IN_VEHICLE) return "in a vehicle";
+        if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
+        if (activityType == DetectedActivity.WALKING) return "walking";
+        if (activityType == DetectedActivity.ON_FOOT) return "on foot";
+        if (activityType == DetectedActivity.RUNNING) return "running";
+        return "unknown movement";
     }
 
     private String modeForActivity(int activityType) {
