@@ -6,6 +6,10 @@ android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.roadprints.capture"
         minSdk = 26
