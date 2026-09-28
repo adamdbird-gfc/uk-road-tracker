@@ -32,16 +32,21 @@ public class MainActivity extends Activity {
     private TextView distance;
     private TextView saved;
     private Button captureButton;
+    private Button trackingButton;
     private Spinner modeSpinner;
     private boolean capturing;
+    private boolean tracking;
 
     private final BroadcastReceiver captureReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!CaptureService.ACTION_UPDATE.equals(intent.getAction())) return;
             boolean active = intent.getBooleanExtra(CaptureService.EXTRA_ACTIVE, false);
+            boolean armed = intent.getBooleanExtra(CaptureService.EXTRA_ARMED, false);
             capturing = active;
+            tracking = armed;
             updateCaptureButton();
+            updateTrackingButton();
 
             String message = intent.getStringExtra(CaptureService.EXTRA_MESSAGE);
             if (message != null) status.setText(message);
@@ -64,7 +69,9 @@ public class MainActivity extends Activity {
         registerCaptureReceiver();
         buildScreen();
         capturing = CaptureService.isActive(this);
+        tracking = CaptureService.isArmed(this);
         updateCaptureButton();
+        updateTrackingButton();
         modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
     }
 
@@ -73,7 +80,9 @@ public class MainActivity extends Activity {
         super.onResume();
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
+            tracking = CaptureService.isArmed(this);
             updateCaptureButton();
+            updateTrackingButton();
         }
     }
 
@@ -105,7 +114,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER_HORIZONTAL);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android prototype v0.3.0 - foreground service testing");
+        subtitle.setText("Android prototype v0.4.0 - automatic tracking test");
         subtitle.setTextSize(15);
         subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
         subtitle.setPadding(0, 8, 0, 32);
@@ -114,11 +123,14 @@ public class MainActivity extends Activity {
         modeSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
 
+        trackingButton = new Button(this);
+        trackingButton.setOnClickListener(v -> toggleTracking());
+
         captureButton = new Button(this);
         captureButton.setOnClickListener(v -> toggleCapture());
 
         status = new TextView(this);
-        status.setText("Ready. Start a capture, then lock the screen to test background recording.");
+        status.setText("Ready. Enable automatic tracking to test movement detection.");
         status.setTextSize(16);
         status.setPadding(0, 32, 0, 12);
 
@@ -133,11 +145,61 @@ public class MainActivity extends Activity {
         root.addView(title);
         root.addView(subtitle);
         root.addView(modeSpinner);
+        root.addView(trackingButton);
         root.addView(captureButton);
         root.addView(status);
         root.addView(distance);
         root.addView(saved);
         setContentView(root);
+    }
+
+    private void toggleTracking() {
+        if (tracking || CaptureService.isArmed(this)) {
+            Intent stop = new Intent(this, CaptureService.class)
+                    .setAction(CaptureService.ACTION_DISARM);
+            startService(stop);
+            return;
+        }
+
+        boolean locationGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean activityGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                || checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION)
+                == PackageManager.PERMISSION_GRANTED;
+
+        if (!locationGranted || !activityGranted) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACTIVITY_RECOGNITION,
+                        Manifest.permission.POST_NOTIFICATIONS
+                }, LOCATION_REQUEST);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACTIVITY_RECOGNITION
+                }, LOCATION_REQUEST);
+            } else {
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                }, LOCATION_REQUEST);
+            }
+            return;
+        }
+
+        Intent start = new Intent(this, CaptureService.class)
+                .setAction(CaptureService.ACTION_ARM);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(start);
+        } else {
+            startService(start);
+        }
+        tracking = true;
+        updateTrackingButton();
+        status.setText("Starting automatic tracking...");
     }
 
     private void toggleCapture() {
@@ -187,6 +249,13 @@ public class MainActivity extends Activity {
     private void updateCaptureButton() {
         if (captureButton == null) return;
         captureButton.setText(capturing ? "Stop and save journey" : "Start capture");
+    }
+
+    private void updateTrackingButton() {
+        if (trackingButton == null) return;
+        trackingButton.setText(tracking
+                ? "Disable automatic tracking"
+                : "Enable automatic tracking");
     }
 
     private void reviewLatestJourney() {
