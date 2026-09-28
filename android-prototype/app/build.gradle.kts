@@ -10,9 +10,13 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.0"
+        versionCode = 6
+        versionName = "0.4.0"
     }
+}
+
+dependencies {
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }
 
 val stableKeystore = System.getenv("ROADPRINTS_DEBUG_KEYSTORE")
