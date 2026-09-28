@@ -103,6 +103,9 @@ public final class JourneyStore {
             if (!entry.getKey().startsWith("journey:") || !(entry.getValue() instanceof String)) continue;
             try {
                 JSONObject journey = new JSONObject((String) entry.getValue());
+                if (!journey.has("transport_confirmation")) {
+                    journey.put("transport_confirmation", "required");
+                }
                 save(context, journey);
             } catch (Exception ignored) {
                 // Keep migration best-effort; a malformed legacy item must not block new captures.
