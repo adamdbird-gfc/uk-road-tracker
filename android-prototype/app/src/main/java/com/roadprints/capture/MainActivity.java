@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER_HORIZONTAL);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android prototype v0.4.0 - automatic tracking test");
+        subtitle.setText("Android prototype v" + BuildConfig.VERSION_NAME + " - automatic tracking test");
         subtitle.setTextSize(15);
         subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
         subtitle.setPadding(0, 8, 0, 32);
