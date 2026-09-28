@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
 
     steps:
       - name: Check out repository
@@ -27,9 +29,7 @@ jobs:
           gradle-version: "8.10"
 
       - name: Prepare stable debug signing key
-        if: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 != '' }}
-        env:
-          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+        if: ${{ env.ROADPRINTS_DEBUG_KEYSTORE_B64 != '' }}
         run: |
           printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
 
