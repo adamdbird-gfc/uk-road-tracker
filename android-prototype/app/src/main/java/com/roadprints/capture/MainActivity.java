@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER_HORIZONTAL);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android prototype v" + BuildConfig.VERSION_NAME + " - manual controls for testing");
+        subtitle.setText("Android prototype v0.2.1 - manual controls for testing");
         subtitle.setTextSize(15);
         subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
         subtitle.setPadding(0, 8, 0, 32);
