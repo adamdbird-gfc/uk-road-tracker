@@ -3,10 +3,12 @@ package com.roadprints.capture;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.ArrayAdapter;
@@ -15,14 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 41;
@@ -33,27 +28,68 @@ public class MainActivity extends Activity {
             "driving", "walking", "bus", "train", "cycling", "plane", "ferry"
     };
 
-    private LocationManager locationManager;
-    private LocationListener locationListener;
-    private final List<Location> points = new ArrayList<>();
-    private String journeyId;
-    private String startedAt;
-    private String mode = "driving";
-    private double distanceMetres;
-    private Location lastPoint;
-
     private TextView status;
     private TextView distance;
     private TextView saved;
     private Button captureButton;
     private Spinner modeSpinner;
+    private boolean capturing;
+
+    private final BroadcastReceiver captureReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!CaptureService.ACTION_UPDATE.equals(intent.getAction())) return;
+            boolean active = intent.getBooleanExtra(CaptureService.EXTRA_ACTIVE, false);
+            capturing = active;
+            updateCaptureButton();
+
+            String message = intent.getStringExtra(CaptureService.EXTRA_MESSAGE);
+            if (message != null) status.setText(message);
+
+            double metres = intent.getDoubleExtra(CaptureService.EXTRA_DISTANCE, 0);
+            int points = intent.getIntExtra(CaptureService.EXTRA_POINTS, 0);
+            if (active) {
+                distance.setText(String.format(
+                        "Distance: %.0f m - %d points", metres, points));
+            } else {
+                saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                distance.setText("Distance: 0 m");
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        registerCaptureReceiver();
         buildScreen();
+        capturing = CaptureService.isActive(this);
+        updateCaptureButton();
         modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (captureButton != null) {
+            capturing = CaptureService.isActive(this);
+            updateCaptureButton();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(captureReceiver);
+        super.onDestroy();
+    }
+
+    private void registerCaptureReceiver() {
+        IntentFilter filter = new IntentFilter(CaptureService.ACTION_UPDATE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(captureReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(captureReceiver, filter);
+        }
     }
 
     private void buildScreen() {
@@ -69,7 +105,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER_HORIZONTAL);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android prototype v0.2.2 - manual controls for testing");
+        subtitle.setText("Android prototype v0.3.0 - foreground service testing");
         subtitle.setTextSize(15);
         subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
         subtitle.setPadding(0, 8, 0, 32);
@@ -79,11 +115,10 @@ public class MainActivity extends Activity {
                 this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
 
         captureButton = new Button(this);
-        captureButton.setText("Start capture");
         captureButton.setOnClickListener(v -> toggleCapture());
 
         status = new TextView(this);
-        status.setText("Ready. Journeys are archived on this device.");
+        status.setText("Ready. Start a capture, then lock the screen to test background recording.");
         status.setTextSize(16);
         status.setPadding(0, 32, 0, 12);
 
@@ -106,87 +141,56 @@ public class MainActivity extends Activity {
     }
 
     private void toggleCapture() {
-        if (journeyId == null) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST);
-                return;
-            }
-            beginCapture();
-        } else {
-            finishCapture();
+        if (capturing || CaptureService.isActive(this)) {
+            Intent stop = new Intent(this, CaptureService.class)
+                    .setAction(CaptureService.ACTION_STOP);
+            startService(stop);
+            return;
         }
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.POST_NOTIFICATIONS
+                }, LOCATION_REQUEST);
+            } else {
+                requestPermissions(new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                }, LOCATION_REQUEST);
+            }
+            return;
+        }
+        beginCapture();
     }
 
     private void beginCapture() {
-        journeyId = UUID.randomUUID().toString();
-        startedAt = Instant.now().toString();
-        mode = MODE_VALUES[modeSpinner.getSelectedItemPosition()];
-        points.clear();
-        distanceMetres = 0;
-        lastPoint = null;
-        captureButton.setText("Stop and save journey");
-        status.setText("Recording " + mode + " locally...");
+        String mode = MODE_VALUES[modeSpinner.getSelectedItemPosition()];
+        Intent start = new Intent(this, CaptureService.class)
+                .setAction(CaptureService.ACTION_START)
+                .putExtra(CaptureService.EXTRA_MODE, mode);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(start);
+        } else {
+            startService(start);
+        }
+        capturing = true;
+        updateCaptureButton();
+        status.setText("Starting background recording...");
         distance.setText("Distance: 0 m");
-
-        locationListener = new LocationListener() {
-            @Override public void onLocationChanged(Location location) {
-                if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
-                lastPoint = location;
-                points.add(location);
-                distance.setText(String.format(
-                        "Distance: %.0f m - %d points", distanceMetres, points.size()));
-            }
-            @Override public void onProviderEnabled(String provider) {}
-            @Override public void onProviderDisabled(String provider) {}
-        };
-
-        try {
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
-        } catch (SecurityException error) {
-            status.setText("Location permission is required to record.");
-            journeyId = null;
-        }
     }
 
-    private void finishCapture() {
-        if (locationListener != null) locationManager.removeUpdates(locationListener);
-        try {
-            JSONObject journey = new JSONObject();
-            journey.put("journey_id", journeyId);
-            journey.put("revision", 1);
-            journey.put("source", new JSONObject().put("type", "android_foreground_capture"));
-            journey.put("started_at", startedAt);
-            journey.put("ended_at", Instant.now().toString());
-            journey.put("timezone", ZoneId.systemDefault().toString());
-            journey.put("mode", mode);
-            journey.put("transport_confirmation", "required");
-            journey.put("distance_meters", distanceMetres);
-            journey.put("route_geometry", new JSONObject()
-                    .put("type", "LineString")
-                    .put("coordinates", coordinates()));
-            journey.put("processing", new JSONObject()
-                    .put("import", "complete")
-                    .put("road_matching", roadMode(mode) ? "pending" : "not_required")
-                    .put("foot_matching", mode.equals("walking") ? "pending" : "not_required"));
-            JourneyStore.save(this, journey);
-            status.setText("Journey saved locally. Review its transport type next time.");
-            saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-        } catch (Exception error) {
-            status.setText("Could not save journey: " + error.getMessage());
-        } finally {
-            journeyId = null;
-            locationListener = null;
-            points.clear();
-            captureButton.setText("Start capture");
-        }
-    }
-
-    private boolean roadMode(String journeyMode) {
-        return journeyMode.equals("driving") || journeyMode.equals("bus");
+    private void updateCaptureButton() {
+        if (captureButton == null) return;
+        captureButton.setText(capturing ? "Stop and save journey" : "Start capture");
     }
 
     private void reviewLatestJourney() {
+        if (capturing) return;
         JSONObject journey = JourneyStore.latest(this);
         if (journey == null
                 || !"required".equals(journey.optString("transport_confirmation"))) {
@@ -226,15 +230,5 @@ public class MainActivity extends Activity {
             if (MODE_VALUES[index].equals(value)) return index;
         }
         return 0;
-    }
-
-    private JSONArray coordinates() throws org.json.JSONException {
-        JSONArray coordinates = new JSONArray();
-        for (Location point : points) {
-            coordinates.put(new JSONArray()
-                    .put(point.getLongitude())
-                    .put(point.getLatitude()));
-        }
-        return coordinates;
     }
 }
