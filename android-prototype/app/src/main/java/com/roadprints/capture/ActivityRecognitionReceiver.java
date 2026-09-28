@@ -25,6 +25,10 @@ public class ActivityRecognitionReceiver extends BroadcastReceiver {
                 .setAction(CaptureService.ACTION_ACTIVITY)
                 .putExtra(CaptureService.EXTRA_ACTIVITY_TYPE, best.getType())
                 .putExtra(CaptureService.EXTRA_CONFIDENCE, best.getConfidence());
-        context.startService(update);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(update);
+        } else {
+            context.startService(update);
+        }
     }
 }
