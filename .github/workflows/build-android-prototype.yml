@@ -34,9 +34,11 @@ jobs:
           printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
 
       - name: Build debug APK
-        env:
-          ROADPRINTS_DEBUG_KEYSTORE: ${{ runner.temp }}/roadprints-debug.keystore
-        run: gradle --no-daemon -p android-prototype assembleDebug
+        run: |
+          if [ -f "$RUNNER_TEMP/roadprints-debug.keystore" ]; then
+            export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          fi
+          gradle --no-daemon -p android-prototype assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
