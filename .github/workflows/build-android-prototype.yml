@@ -26,7 +26,16 @@ jobs:
         with:
           gradle-version: "8.10"
 
+      - name: Prepare stable debug signing key
+        if: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 != '' }}
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+        run: |
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
+
       - name: Build debug APK
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE: ${{ runner.temp }}/roadprints-debug.keystore
         run: gradle --no-daemon -p android-prototype assembleDebug
 
       - name: Upload debug APK
