@@ -95,6 +95,7 @@ public final class JourneyStore {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getBoolean(MIGRATED, false)) return;
 
+        preferences.edit().putBoolean(MIGRATED, true).apply();
         for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
             if (!entry.getKey().startsWith("journey:") || !(entry.getValue() instanceof String)) continue;
             try {
