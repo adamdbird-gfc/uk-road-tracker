@@ -15,6 +15,10 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.IBinder;
 
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.DetectedActivity;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -27,26 +31,36 @@ import java.util.UUID;
 public class CaptureService extends Service {
     public static final String ACTION_START = "com.roadprints.capture.START";
     public static final String ACTION_STOP = "com.roadprints.capture.STOP";
+    public static final String ACTION_ARM = "com.roadprints.capture.ARM";
+    public static final String ACTION_DISARM = "com.roadprints.capture.DISARM";
+    public static final String ACTION_ACTIVITY = "com.roadprints.capture.ACTIVITY";
     public static final String ACTION_UPDATE = "com.roadprints.capture.UPDATE";
     public static final String EXTRA_MODE = "mode";
     public static final String EXTRA_ACTIVE = "active";
+    public static final String EXTRA_ARMED = "armed";
     public static final String EXTRA_DISTANCE = "distance_meters";
     public static final String EXTRA_POINTS = "points";
     public static final String EXTRA_MESSAGE = "message";
+    public static final String EXTRA_ACTIVITY_TYPE = "activity_type";
+    public static final String EXTRA_CONFIDENCE = "confidence";
 
     private static final String STATE_PREFS = "roadprints_capture_state";
     private static final String STATE_ACTIVE = "active";
-    private static final String STATE_MODE = "mode";
+    private static final String STATE_ARMED = "armed";
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
+    private static final long STILLNESS_END_THRESHOLD_MS = 60_000L;
 
     private LocationManager locationManager;
+    private ActivityRecognitionClient activityClient;
+    private PendingIntent activityPendingIntent;
     private final List<Location> points = new ArrayList<>();
     private Location lastPoint;
     private String journeyId;
     private String startedAt;
     private String mode;
     private double distanceMetres;
+    private long stationarySince;
 
     private final LocationListener locationListener = new LocationListener() {
         @Override
@@ -67,21 +81,110 @@ public class CaptureService extends Service {
                 .getBoolean(STATE_ACTIVE, false);
     }
 
+    public static boolean isArmed(Context context) {
+        return context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(STATE_ARMED, false);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+        if (intent == null) return START_NOT_STICKY;
+
+        String action = intent.getAction();
+        if (ACTION_STOP.equals(action)) {
             finishCapture();
-        } else if (intent != null && ACTION_START.equals(intent.getAction())) {
+        } else if (ACTION_START.equals(action)) {
             startCapture(intent.getStringExtra(EXTRA_MODE));
+        } else if (ACTION_ARM.equals(action)) {
+            armTracking();
+        } else if (ACTION_DISARM.equals(action)) {
+            disarmTracking();
+        } else if (ACTION_ACTIVITY.equals(action)) {
+            handleActivity(
+                    intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
+                    intent.getIntExtra(EXTRA_CONFIDENCE, 0));
         }
         return START_NOT_STICKY;
+    }
+
+    private void armTracking() {
+        if (isArmed(this)) return;
+
+        getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                .putBoolean(STATE_ARMED, true)
+                .apply();
+        startForegroundWithNotification();
+
+        try {
+            activityPendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    42,
+                    new Intent(this, ActivityRecognitionReceiver.class),
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            activityClient.requestActivityUpdates(5000L, activityPendingIntent);
+            broadcastUpdate("Automatic tracking is active. Waiting for movement...");
+        } catch (SecurityException error) {
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                    .putBoolean(STATE_ARMED, false).apply();
+            broadcastUpdate("Activity recognition permission is required.");
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+        }
+    }
+
+    private void disarmTracking() {
+        getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                .putBoolean(STATE_ARMED, false).apply();
+        removeActivityUpdates();
+        if (isActive(this)) {
+            finishCapture();
+        } else {
+            broadcastUpdate("Automatic tracking stopped.");
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+        }
+    }
+
+    private void handleActivity(int activityType, int confidence) {
+        if (!isArmed(this) || confidence < 50) return;
+
+        if (activityType == DetectedActivity.STILL) {
+            if (isActive(this)) {
+                if (stationarySince == 0) stationarySince = System.currentTimeMillis();
+                if (System.currentTimeMillis() - stationarySince
+                        >= STILLNESS_END_THRESHOLD_MS) {
+                    finishCapture();
+                } else {
+                    broadcastUpdate("Stationary for now; keeping the journey open...");
+                }
+            }
+            return;
+        }
+
+        stationarySince = 0;
+        String detectedMode = modeForActivity(activityType);
+        if (detectedMode != null && !isActive(this)) {
+            startCapture(detectedMode);
+        }
+    }
+
+    private String modeForActivity(int activityType) {
+        if (activityType == DetectedActivity.IN_VEHICLE) return "driving";
+        if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
+        if (activityType == DetectedActivity.WALKING
+                || activityType == DetectedActivity.ON_FOOT
+                || activityType == DetectedActivity.RUNNING) {
+            return "walking";
+        }
+        return null;
     }
 
     private void startCapture(String requestedMode) {
@@ -92,6 +195,7 @@ public class CaptureService extends Service {
         startedAt = Instant.now().toString();
         distanceMetres = 0;
         lastPoint = null;
+        stationarySince = 0;
         points.clear();
 
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
@@ -106,15 +210,18 @@ public class CaptureService extends Service {
             broadcastUpdate("Recording " + mode + " locally...");
         } catch (SecurityException error) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
-                    .clear().apply();
+                    .putBoolean(STATE_ACTIVE, false).apply();
             broadcastUpdate("Location permission is required to record.");
-            stopSelf();
+            if (!isArmed(this)) {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+                stopSelf();
+            }
         }
     }
 
     private void finishCapture() {
         if (!isActive(this)) {
-            stopSelf();
+            if (!isArmed(this)) stopSelf();
             return;
         }
 
@@ -123,7 +230,7 @@ public class CaptureService extends Service {
             JSONObject journey = new JSONObject();
             journey.put("journey_id", journeyId);
             journey.put("revision", 1);
-            journey.put("source", new JSONObject().put("type", "android_foreground_service"));
+            journey.put("source", new JSONObject().put("type", "android_activity_capture"));
             journey.put("started_at", startedAt);
             journey.put("ended_at", Instant.now().toString());
             journey.put("timezone", ZoneId.systemDefault().toString());
@@ -142,15 +249,23 @@ public class CaptureService extends Service {
         } catch (Exception error) {
             broadcastUpdate("Could not save journey: " + error.getMessage());
         } finally {
-            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit().clear().apply();
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                    .putBoolean(STATE_ACTIVE, false)
+                    .remove(STATE_MODE)
+                    .apply();
             points.clear();
             journeyId = null;
             startedAt = null;
             mode = null;
             distanceMetres = 0;
             lastPoint = null;
-            stopForeground(STOP_FOREGROUND_REMOVE);
-            stopSelf();
+            stationarySince = 0;
+            if (isArmed(this)) {
+                updateNotification();
+            } else {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+                stopSelf();
+            }
         }
     }
 
@@ -166,6 +281,13 @@ public class CaptureService extends Service {
                     .put(point.getLatitude()));
         }
         return coordinates;
+    }
+
+    private void removeActivityUpdates() {
+        if (activityPendingIntent != null) {
+            activityClient.removeActivityUpdates(activityPendingIntent);
+            activityPendingIntent = null;
+        }
     }
 
     private void startForegroundWithNotification() {
@@ -184,10 +306,12 @@ public class CaptureService extends Service {
                 this, 0, openApp,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        String text = isActive(this)
+                ? "Recording " + (mode == null ? "journey" : mode)
+                : "Automatic tracking active";
         return new Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("Roadprints recording")
-                .setContentText("Recording " + (mode == null ? "journey" : mode)
-                        + " - tap to return to the app")
+                .setContentTitle("Roadprints")
+                .setContentText(text + " - tap to return to the app")
                 .setSmallIcon(android.R.drawable.ic_menu_mylocation)
                 .setOngoing(true)
                 .setContentIntent(pendingIntent)
@@ -204,7 +328,7 @@ public class CaptureService extends Service {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID, "Roadprints recording", NotificationManager.IMPORTANCE_LOW);
-        channel.setDescription("Shows when Roadprints is recording a journey");
+        channel.setDescription("Shows when Roadprints is recording or watching for movement");
         NotificationManager manager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         manager.createNotificationChannel(channel);
@@ -214,6 +338,7 @@ public class CaptureService extends Service {
         Intent update = new Intent(ACTION_UPDATE);
         update.setPackage(getPackageName());
         update.putExtra(EXTRA_ACTIVE, isActive(this));
+        update.putExtra(EXTRA_ARMED, isArmed(this));
         update.putExtra(EXTRA_MODE, mode);
         update.putExtra(EXTRA_DISTANCE, distanceMetres);
         update.putExtra(EXTRA_POINTS, points.size());
@@ -223,6 +348,7 @@ public class CaptureService extends Service {
 
     @Override
     public void onDestroy() {
+        removeActivityUpdates();
         if (isActive(this)) {
             try {
                 locationManager.removeUpdates(locationListener);
