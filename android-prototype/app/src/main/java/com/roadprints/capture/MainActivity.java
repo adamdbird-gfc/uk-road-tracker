@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
                 distance.setText(String.format(
                         "Distance: %.0f m - %d points", metres, points));
             } else {
-                saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                saved.setText("Saved prototype journeys: " + JourneyStore.count(MainActivity.this));
                 distance.setText("Distance: 0 m");
             }
         }
