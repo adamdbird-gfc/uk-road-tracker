@@ -128,6 +128,22 @@ public final class JourneyStore {
         return deleted;
     }
 
+    public static synchronized void updateTitle(Context context, String journeyId, String title) {
+        migrateLegacy(context);
+        File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
+        JSONObject journey = read(file);
+        if (journey == null) return;
+        try {
+            String trimmed = title == null ? "" : title.trim();
+            if (trimmed.length() > 0) journey.put("title", trimmed);
+            else journey.remove("title");
+            journey.put("revision", journey.optInt("revision", 1) + 1);
+            save(context, journey);
+        } catch (Exception error) {
+            throw new IllegalStateException("Could not update journey title", error);
+        }
+    }
+
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
