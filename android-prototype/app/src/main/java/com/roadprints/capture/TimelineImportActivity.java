@@ -468,9 +468,10 @@ public class TimelineImportActivity extends Activity {
             }
             coordinates.put("coordinates", coordinateArray);
 
+            boolean eligibleForRoadMatching = roadMode(mode) && sourceRoutePoints >= 2;
             JSONObject processing = new JSONObject()
                     .put("import", "complete")
-                    .put("road_matching", roadMode(mode) ? "pending" : "not_required")
+                    .put("road_matching", eligibleForRoadMatching ? "pending" : "not_required")
                     .put("foot_matching", footMode(mode) ? "pending" : "not_required");
 
             return new JSONObject()
