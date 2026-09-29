@@ -145,7 +145,9 @@ public class CaptureService extends Service {
                     this,
                     42,
                     new Intent(this, ActivityRecognitionReceiver.class),
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                            | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            ? PendingIntent.FLAG_MUTABLE : 0));
             ActivityTransitionRequest request = new ActivityTransitionRequest(Arrays.asList(
                     transition(DetectedActivity.STILL),
                     transition(DetectedActivity.WALKING),
@@ -354,7 +356,9 @@ public class CaptureService extends Service {
                     this,
                     42,
                     new Intent(this, ActivityRecognitionReceiver.class),
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                            | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            ? PendingIntent.FLAG_MUTABLE : 0));
         }
         // Clear both APIs so upgrades from v0.4.3 cannot leave an old
         // sampling subscription delivering callbacks to this receiver.
@@ -377,7 +381,9 @@ public class CaptureService extends Service {
         Intent openApp = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 this, 0, openApp,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent.FLAG_UPDATE_CURRENT
+                            | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            ? PendingIntent.FLAG_MUTABLE : 0));
 
         String text = isActive(this)
                 ? "Recording " + (mode == null ? "journey" : mode)
