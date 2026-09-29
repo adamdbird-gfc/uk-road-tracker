@@ -117,7 +117,11 @@ public class CaptureService extends Service {
     }
 
     private void armTracking() {
-        if (isArmed(this)) return;
+        // Re-register even when the preference says armed; this also repairs a
+        // subscription after Android has recreated the service.
+        if (isArmed(this)) {
+            removeActivityUpdates();
+        }
 
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, true)
@@ -130,8 +134,17 @@ public class CaptureService extends Service {
                     42,
                     new Intent(this, ActivityRecognitionReceiver.class),
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            activityClient.requestActivityUpdates(5000L, activityPendingIntent);
-            broadcastUpdate("Automatic tracking is active. Waiting for movement...");
+            activityClient.requestActivityUpdates(5000L, activityPendingIntent)
+                    .addOnSuccessListener(unused ->
+                            broadcastUpdate("Activity recognition subscription confirmed. Waiting for movement..."))
+                    .addOnFailureListener(error -> {
+                        getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                                .putBoolean(STATE_ARMED, false).apply();
+                        broadcastUpdate("Activity recognition failed: "
+                                + (error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage()));
+                        stopForeground(STOP_FOREGROUND_REMOVE);
+                        stopSelf();
+                    });
         } catch (SecurityException error) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ARMED, false).apply();
