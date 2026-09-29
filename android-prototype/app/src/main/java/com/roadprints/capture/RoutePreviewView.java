@@ -430,7 +430,7 @@ public class RoutePreviewView extends View {
     }
 
     private float screenY(double latitude) {
-        double world = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
         return (float) (getHeight() / 2.0
                 + (latitudeToUnitY(clampLatitude(latitude))
                 - latitudeToUnitY(centerLatitude)) * world);
