@@ -336,6 +336,18 @@ public class MainActivity extends Activity {
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(0, 0, 0, 0);
+        TextView previewLabel = new TextView(this);
+        previewLabel.setText("Route preview");
+        previewLabel.setTextSize(15);
+        previewLabel.setTextColor(0xFF0A2B43);
+        previewLabel.setPadding(24, 8, 24, 8);
+
+        RoutePreviewView preview = new RoutePreviewView(this, coordinates);
+        preview.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 420));
+
+        container.addView(previewLabel);
+        container.addView(preview);
         container.addView(message);
         container.addView(reviewSpinner);
 
