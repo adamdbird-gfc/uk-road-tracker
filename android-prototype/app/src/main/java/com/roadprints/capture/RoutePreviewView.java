@@ -24,7 +24,9 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -40,10 +42,12 @@ public class RoutePreviewView extends View {
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
     private final JSONArray coordinates;
+    private final List<JSONArray> matchedSegments;
     private final boolean interactive;
     private final boolean showEmptyMessage;
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint rawRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -64,20 +68,32 @@ public class RoutePreviewView extends View {
     private boolean routeFitPending;
 
     public RoutePreviewView(Context context, JSONArray coordinates) {
-        this(context, coordinates, false, false);
+        this(context, coordinates, Collections.emptyList());
+    }
+
+    public RoutePreviewView(
+            Context context, JSONArray coordinates, List<JSONArray> matchedSegments) {
+        this(context, coordinates, matchedSegments, false, false);
     }
 
     public RoutePreviewView(Context context) {
-        this(context, null, true, true);
+        this(context, null, Collections.emptyList(), true, true);
     }
 
     private RoutePreviewView(
-            Context context, JSONArray coordinates, boolean interactive, boolean showEmptyMessage) {
+            Context context, JSONArray coordinates, List<JSONArray> matchedSegments,
+            boolean interactive, boolean showEmptyMessage) {
         super(context);
         this.coordinates = coordinates;
+        this.matchedSegments = new ArrayList<>();
+        if (matchedSegments != null) {
+            for (JSONArray segment : matchedSegments) {
+                if (hasRoutePoints(segment)) this.matchedSegments.add(segment);
+            }
+        }
         this.interactive = interactive;
         this.showEmptyMessage = showEmptyMessage;
-        this.coordinatesValid = coordinates != null && coordinates.length() >= 2;
+        this.coordinatesValid = hasRoutePoints(coordinates) || !this.matchedSegments.isEmpty();
         this.routeFitPending = coordinatesValid;
 
         routePaint.setColor(Color.rgb(0, 112, 174));
@@ -90,6 +106,13 @@ public class RoutePreviewView extends View {
         routeHaloPaint.setStrokeWidth(dp(8));
         routeHaloPaint.setStrokeCap(Paint.Cap.ROUND);
         routeHaloPaint.setStrokeJoin(Paint.Join.ROUND);
+        rawRoutePaint.setColor(Color.rgb(112, 131, 164));
+        rawRoutePaint.setStyle(Paint.Style.STROKE);
+        rawRoutePaint.setStrokeWidth(dp(2));
+        rawRoutePaint.setStrokeCap(Paint.Cap.ROUND);
+        rawRoutePaint.setStrokeJoin(Paint.Join.ROUND);
+        rawRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
+                new float[]{dp(5), dp(4)}, 0));
         markerTextPaint.setColor(Color.WHITE);
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
         markerTextPaint.setTextSize(dp(11));
@@ -143,9 +166,24 @@ public class RoutePreviewView extends View {
         boolean hasTiles = drawTiles(canvas);
 
         if (coordinatesValid) {
-            drawRoute(canvas);
-            drawEndpoint(canvas, 0, Color.rgb(35, 140, 75), "S");
-            drawEndpoint(canvas, coordinates.length() - 1, Color.rgb(190, 55, 55), "E");
+            boolean hasMatchedRoute = !matchedSegments.isEmpty();
+            JSONArray startEndRoute = hasRoutePoints(coordinates)
+                    ? coordinates : matchedSegments.get(0);
+            if (hasMatchedRoute && hasRoutePoints(coordinates)) {
+                drawRoute(canvas, coordinates, rawRoutePaint, null);
+            }
+            if (hasMatchedRoute) {
+                for (JSONArray segment : matchedSegments) {
+                    drawRoute(canvas, segment, routePaint, routeHaloPaint);
+                }
+            } else if (hasRoutePoints(coordinates)) {
+                drawRoute(canvas, coordinates, routePaint, routeHaloPaint);
+            }
+            JSONArray endRoute = hasRoutePoints(coordinates)
+                    ? coordinates : matchedSegments.get(matchedSegments.size() - 1);
+            drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
+            drawEndpoint(canvas, endRoute, endRoute.length() - 1,
+                    Color.rgb(190, 55, 55), "E");
         } else if (showEmptyMessage) {
             drawEmptyMessage(canvas);
         } else {
@@ -165,14 +203,18 @@ public class RoutePreviewView extends View {
         double minY = Double.MAX_VALUE;
         double maxY = -Double.MAX_VALUE;
         try {
-            for (int index = 0; index < coordinates.length(); index++) {
-                org.json.JSONArray point = coordinates.getJSONArray(index);
-                double lon = point.getDouble(0);
-                double lat = clampLatitude(point.getDouble(1));
-                minX = Math.min(minX, longitudeToUnitX(lon));
-                maxX = Math.max(maxX, longitudeToUnitX(lon));
-                minY = Math.min(minY, latitudeToUnitY(lat));
-                maxY = Math.max(maxY, latitudeToUnitY(lat));
+            List<JSONArray> fitRoutes = new ArrayList<>(matchedSegments);
+            if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
+            for (JSONArray routeCoordinates : fitRoutes) {
+                for (int index = 0; index < routeCoordinates.length(); index++) {
+                    org.json.JSONArray point = routeCoordinates.getJSONArray(index);
+                    double lon = point.getDouble(0);
+                    double lat = clampLatitude(point.getDouble(1));
+                    minX = Math.min(minX, longitudeToUnitX(lon));
+                    maxX = Math.max(maxX, longitudeToUnitX(lon));
+                    minY = Math.min(minY, latitudeToUnitY(lat));
+                    maxY = Math.max(maxY, latitudeToUnitY(lat));
+                }
             }
             double spanX = Math.max(0.000001, maxX - minX);
             double spanY = Math.max(0.000001, maxY - minY);
@@ -225,7 +267,7 @@ public class RoutePreviewView extends View {
         return drawn;
     }
 
-    private void drawRoute(Canvas canvas) {
+    private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {
         try {
             Path route = new Path();
             for (int index = 0; index < coordinates.length(); index++) {
@@ -235,14 +277,19 @@ public class RoutePreviewView extends View {
                 if (index == 0) route.moveTo(x, y);
                 else route.lineTo(x, y);
             }
-            canvas.drawPath(route, routeHaloPaint);
-            canvas.drawPath(route, routePaint);
+            if (haloPaint != null) canvas.drawPath(route, haloPaint);
+            canvas.drawPath(route, paint);
         } catch (Exception ignored) {
             drawMessage(canvas, "Route preview unavailable");
         }
     }
 
-    private void drawEndpoint(Canvas canvas, int index, int color, String label) {
+    private boolean hasRoutePoints(JSONArray points) {
+        return points != null && points.length() >= 2;
+    }
+
+    private void drawEndpoint(
+            Canvas canvas, JSONArray coordinates, int index, int color, String label) {
         try {
             org.json.JSONArray point = coordinates.getJSONArray(index);
             float x = screenX(point.getDouble(0));
