@@ -17,7 +17,10 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 41;
@@ -33,6 +36,7 @@ public class MainActivity extends Activity {
     private TextView saved;
     private Button captureButton;
     private Button trackingButton;
+    private Button historyButton;
     private Spinner modeSpinner;
     private boolean capturing;
     private boolean tracking;
@@ -143,6 +147,10 @@ public class MainActivity extends Activity {
         saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
         saved.setPadding(0, 24, 0, 0);
 
+        historyButton = new Button(this);
+        historyButton.setText("View saved journeys");
+        historyButton.setOnClickListener(v -> showJourneyHistory());
+
         root.addView(title);
         root.addView(subtitle);
         root.addView(modeSpinner);
@@ -151,6 +159,7 @@ public class MainActivity extends Activity {
         root.addView(status);
         root.addView(distance);
         root.addView(saved);
+        root.addView(historyButton);
         setContentView(root);
     }
 
@@ -267,6 +276,41 @@ public class MainActivity extends Activity {
         trackingButton.setText(tracking
                 ? "Disable automatic tracking"
                 : "Enable automatic tracking");
+    }
+
+    private void showJourneyHistory() {
+        List<JSONObject> journeys = JourneyStore.all(this);
+        if (journeys.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Saved journeys")
+                    .setMessage("No journeys have been saved on this device yet.")
+                    .setPositiveButton("Close", null)
+                    .show();
+            return;
+        }
+
+        String[] rows = new String[journeys.size()];
+        for (int index = 0; index < journeys.size(); index++) {
+            JSONObject journey = journeys.get(index);
+            double metres = journey.optDouble("distance_meters", 0);
+            String mode = journey.optString("mode", "unknown");
+            String started = journey.optString("started_at", "Unknown time")
+                    .replace("T", " ")
+                    .replace("Z", "");
+            JSONObject geometry = journey.optJSONObject("route_geometry");
+            JSONArray coordinates = geometry == null
+                    ? null : geometry.optJSONArray("coordinates");
+            int points = coordinates == null ? 0 : coordinates.length();
+            rows[index] = String.format(
+                    "%s\n%s • %.0f m • %d GPS points",
+                    started, mode, metres, points);
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Saved journeys")
+                .setItems(rows, null)
+                .setPositiveButton("Close", null)
+                .show();
     }
 
     private void reviewLatestJourney() {
