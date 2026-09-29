@@ -1,103 +1,513 @@
 package com.roadprints.capture;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import org.json.JSONArray;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class RoutePreviewView extends View {
+    private static final int TILE_SIZE = 256;
+    private static final int MAX_ZOOM = 18;
+    private static final long DEFAULT_TILE_TTL_MS = 7L * 24L * 60L * 60L * 1000L;
+    private static final ExecutorService TILE_EXECUTOR = Executors.newFixedThreadPool(3);
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+
     private final JSONArray coordinates;
-    private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final boolean interactive;
+    private final boolean showEmptyMessage;
+    private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint markerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint attributionBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final ConcurrentMap<String, Bitmap> tileBitmaps = new ConcurrentHashMap<>();
+    private final Set<String> loadingTiles =
+            Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final ScaleGestureDetector scaleDetector;
+    private final GestureDetector gestureDetector;
+
+    private double centerLongitude = -3.0;
+    private double centerLatitude = 54.5;
+    private double cameraZoom = 5.5;
+    private double lastTouchX;
+    private double lastTouchY;
+    private boolean coordinatesValid;
+    private boolean routeFitPending;
 
     public RoutePreviewView(Context context, JSONArray coordinates) {
+        this(context, coordinates, false, false);
+    }
+
+    public RoutePreviewView(Context context) {
+        this(context, null, true, true);
+    }
+
+    private RoutePreviewView(
+            Context context, JSONArray coordinates, boolean interactive, boolean showEmptyMessage) {
         super(context);
         this.coordinates = coordinates;
-        linePaint.setColor(Color.rgb(28, 105, 162));
-        linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(8f);
-        linePaint.setStrokeCap(Paint.Cap.ROUND);
-        linePaint.setStrokeJoin(Paint.Join.ROUND);
+        this.interactive = interactive;
+        this.showEmptyMessage = showEmptyMessage;
+        this.coordinatesValid = coordinates != null && coordinates.length() >= 2;
+        this.routeFitPending = coordinatesValid;
+
+        routePaint.setColor(Color.rgb(0, 112, 174));
+        routePaint.setStyle(Paint.Style.STROKE);
+        routePaint.setStrokeWidth(dp(4));
+        routePaint.setStrokeCap(Paint.Cap.ROUND);
+        routePaint.setStrokeJoin(Paint.Join.ROUND);
+        routeHaloPaint.setColor(Color.WHITE);
+        routeHaloPaint.setStyle(Paint.Style.STROKE);
+        routeHaloPaint.setStrokeWidth(dp(8));
+        routeHaloPaint.setStrokeCap(Paint.Cap.ROUND);
+        routeHaloPaint.setStrokeJoin(Paint.Join.ROUND);
+        markerTextPaint.setColor(Color.WHITE);
+        markerTextPaint.setTextAlign(Paint.Align.CENTER);
+        markerTextPaint.setTextSize(dp(11));
+        markerTextPaint.setTypeface(android.graphics.Typeface.create(
+                "sans-serif", android.graphics.Typeface.BOLD));
+        attributionPaint.setColor(Color.rgb(18, 37, 75));
+        attributionPaint.setTextSize(dp(10));
+        attributionPaint.setTypeface(android.graphics.Typeface.create(
+                "sans-serif-medium", android.graphics.Typeface.NORMAL));
+        attributionBackgroundPaint.setColor(0xEFFFFFFF);
+        messagePaint.setColor(Color.rgb(35, 55, 86));
+        messagePaint.setTextAlign(Paint.Align.CENTER);
+        messagePaint.setTextSize(dp(13));
         setBackgroundColor(Color.rgb(239, 246, 250));
-        setMinimumHeight(360);
+        setMinimumHeight(dp(180));
+
+        scaleDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                if (!RoutePreviewView.this.interactive) return false;
+                zoomAt(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY());
+                return true;
+            }
+        });
+        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent event) {
+                return true;
+            }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent event) {
+                if (!RoutePreviewView.this.interactive) return false;
+                zoomAt(1.6, event.getX(), event.getY());
+                return true;
+            }
+        });
+    }
+
+    @Override
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
+        fitRouteIfReady();
+        requestVisibleTiles();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (coordinates == null || coordinates.length() < 2) {
-            pointPaint.setColor(Color.DKGRAY);
-            pointPaint.setTextSize(34f);
-            canvas.drawText("Not enough GPS points for a route preview", 24, getHeight() / 2f, pointPaint);
-            return;
+        canvas.drawColor(Color.rgb(239, 246, 250));
+        boolean hasTiles = drawTiles(canvas);
+
+        if (coordinatesValid) {
+            drawRoute(canvas);
+            drawEndpoint(canvas, 0, Color.rgb(35, 140, 75), "S");
+            drawEndpoint(canvas, coordinates.length() - 1, Color.rgb(190, 55, 55), "E");
+        } else if (showEmptyMessage) {
+            drawEmptyMessage(canvas);
+        } else {
+            drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
+        drawAttribution(canvas);
+        if (!hasTiles) drawMessage(canvas, "Map tiles unavailable · showing route only");
+    }
+
+    private void fitRouteIfReady() {
+        if (!routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
+        double minX = Double.MAX_VALUE;
+        double maxX = -Double.MAX_VALUE;
+        double minY = Double.MAX_VALUE;
+        double maxY = -Double.MAX_VALUE;
         try {
-            double minLon = Double.MAX_VALUE;
-            double maxLon = -Double.MAX_VALUE;
-            double minLat = Double.MAX_VALUE;
-            double maxLat = -Double.MAX_VALUE;
             for (int index = 0; index < coordinates.length(); index++) {
-                JSONArray point = coordinates.getJSONArray(index);
+                org.json.JSONArray point = coordinates.getJSONArray(index);
                 double lon = point.getDouble(0);
-                double lat = point.getDouble(1);
-                minLon = Math.min(minLon, lon);
-                maxLon = Math.max(maxLon, lon);
-                minLat = Math.min(minLat, lat);
-                maxLat = Math.max(maxLat, lat);
+                double lat = clampLatitude(point.getDouble(1));
+                minX = Math.min(minX, longitudeToUnitX(lon));
+                maxX = Math.max(maxX, longitudeToUnitX(lon));
+                minY = Math.min(minY, latitudeToUnitY(lat));
+                maxY = Math.max(maxY, latitudeToUnitY(lat));
             }
-
-            float padding = 48f;
-            float width = Math.max(1f, getWidth() - padding * 2);
-            float height = Math.max(1f, getHeight() - padding * 2);
-            double lonSpan = Math.max(0.000001, maxLon - minLon);
-            double latSpan = Math.max(0.000001, maxLat - minLat);
-            float scale = (float) Math.min(width / lonSpan, height / latSpan);
-            float drawnWidth = (float) (lonSpan * scale);
-            float drawnHeight = (float) (latSpan * scale);
-            float left = (getWidth() - drawnWidth) / 2f;
-            float top = (getHeight() - drawnHeight) / 2f;
-
-            Path route = new Path();
-            for (int index = 0; index < coordinates.length(); index++) {
-                JSONArray point = coordinates.getJSONArray(index);
-                float x = left + (float) ((point.getDouble(0) - minLon) * scale);
-                float y = top + drawnHeight - (float) ((point.getDouble(1) - minLat) * scale);
-                if (index == 0) route.moveTo(x, y);
-                else route.lineTo(x, y);
-            }
-            canvas.drawPath(route, linePaint);
-
-            drawEndpoint(canvas, coordinates.getJSONArray(0), minLon, minLat, scale,
-                    left, top, drawnHeight, Color.rgb(35, 140, 75));
-            drawEndpoint(canvas, coordinates.getJSONArray(coordinates.length() - 1),
-                    minLon, minLat, scale, left, top, drawnHeight,
-                    Color.rgb(190, 55, 55));
+            double spanX = Math.max(0.000001, maxX - minX);
+            double spanY = Math.max(0.000001, maxY - minY);
+            double availableWidth = Math.max(1, getWidth() - dp(72));
+            double availableHeight = Math.max(1, getHeight() - dp(72));
+            double zoomX = log2(availableWidth / (spanX * TILE_SIZE));
+            double zoomY = log2(availableHeight / (spanY * TILE_SIZE));
+            cameraZoom = clampZoom(Math.min(MAX_ZOOM, Math.min(zoomX, zoomY)));
+            centerLongitude = ((minX + maxX) / 2.0) * 360.0 - 180.0;
+            centerLatitude = unitYToLatitude((minY + maxY) / 2.0);
+            routeFitPending = false;
         } catch (Exception ignored) {
-            pointPaint.setColor(Color.DKGRAY);
-            pointPaint.setTextSize(34f);
-            canvas.drawText("Route preview unavailable", 24, getHeight() / 2f, pointPaint);
+            coordinatesValid = false;
+            routeFitPending = false;
         }
     }
 
-    private void drawEndpoint(
-            Canvas canvas,
-            JSONArray point,
-            double minLon,
-            double minLat,
-            float scale,
-            float left,
-            float top,
-            float drawnHeight,
-            int color) throws Exception {
-        float x = left + (float) ((point.getDouble(0) - minLon) * scale);
-        float y = top + drawnHeight - (float) ((point.getDouble(1) - minLat) * scale);
-        pointPaint.setColor(color);
-        pointPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(x, y, 14f, pointPaint);
+    private boolean drawTiles(Canvas canvas) {
+        int tileZoom = tileZoom();
+        double scale = Math.pow(2.0, cameraZoom - tileZoom);
+        double tileScreenSize = TILE_SIZE * scale;
+        double worldSize = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        double centerX = longitudeToUnitX(centerLongitude) * worldSize;
+        double centerY = latitudeToUnitY(centerLatitude) * worldSize;
+        int tileCount = 1 << tileZoom;
+        int firstX = (int) Math.floor((centerX - getWidth() / 2.0) / tileScreenSize);
+        int lastX = (int) Math.floor((centerX + getWidth() / 2.0) / tileScreenSize);
+        int firstY = (int) Math.floor((centerY - getHeight() / 2.0) / tileScreenSize);
+        int lastY = (int) Math.floor((centerY + getHeight() / 2.0) / tileScreenSize);
+        boolean drawn = false;
+
+        for (int y = firstY; y <= lastY; y++) {
+            if (y < 0 || y >= tileCount) continue;
+            for (int x = firstX; x <= lastX; x++) {
+                int wrappedX = ((x % tileCount) + tileCount) % tileCount;
+                String key = tileZoom + "/" + wrappedX + "/" + y;
+                Bitmap bitmap = tileBitmaps.get(key);
+                if (bitmap == null || bitmap.isRecycled()) {
+                    requestTile(tileZoom, wrappedX, y, key);
+                    continue;
+                }
+                float left = (float) (getWidth() / 2.0 + x * tileScreenSize - centerX);
+                float top = (float) (getHeight() / 2.0 + y * tileScreenSize - centerY);
+                canvas.drawBitmap(bitmap, null, new RectF(left, top,
+                        left + (float) tileScreenSize, top + (float) tileScreenSize), null);
+                drawn = true;
+            }
+        }
+        return drawn;
+    }
+
+    private void drawRoute(Canvas canvas) {
+        try {
+            Path route = new Path();
+            for (int index = 0; index < coordinates.length(); index++) {
+                org.json.JSONArray point = coordinates.getJSONArray(index);
+                float x = screenX(point.getDouble(0));
+                float y = screenY(point.getDouble(1));
+                if (index == 0) route.moveTo(x, y);
+                else route.lineTo(x, y);
+            }
+            canvas.drawPath(route, routeHaloPaint);
+            canvas.drawPath(route, routePaint);
+        } catch (Exception ignored) {
+            drawMessage(canvas, "Route preview unavailable");
+        }
+    }
+
+    private void drawEndpoint(Canvas canvas, int index, int color, String label) {
+        try {
+            org.json.JSONArray point = coordinates.getJSONArray(index);
+            float x = screenX(point.getDouble(0));
+            float y = screenY(point.getDouble(1));
+            float radius = dp(12);
+            markerPaint.setColor(Color.WHITE);
+            canvas.drawCircle(x, y, radius + dp(2), markerPaint);
+            markerPaint.setColor(color);
+            canvas.drawCircle(x, y, radius, markerPaint);
+            canvas.drawText(label, x,
+                    y - (markerTextPaint.ascent() + markerTextPaint.descent()) / 2,
+                    markerTextPaint);
+        } catch (Exception ignored) {
+            // The route still renders if an endpoint is malformed.
+        }
+    }
+
+    private void drawEmptyMessage(Canvas canvas) {
+        String title = "Your map is ready to explore";
+        String subtitle = "Travelled roads will appear here as journeys are matched.";
+        float centerY = getHeight() * 0.76f;
+        Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background.setColor(0xEFFFFFFF);
+        RectF box = new RectF(dp(16), centerY - dp(40),
+                getWidth() - dp(16), centerY + dp(40));
+        canvas.drawRoundRect(box, dp(12), dp(12), background);
+        Paint titlePaint = new Paint(messagePaint);
+        titlePaint.setTypeface(android.graphics.Typeface.create(
+                "sans-serif", android.graphics.Typeface.BOLD));
+        titlePaint.setTextSize(dp(14));
+        canvas.drawText(title, getWidth() / 2f, centerY - dp(6), titlePaint);
+        messagePaint.setTextSize(dp(11));
+        canvas.drawText(subtitle, getWidth() / 2f, centerY + dp(15), messagePaint);
+        messagePaint.setTextSize(dp(13));
+    }
+
+    private void drawMessage(Canvas canvas, String message) {
+        Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background.setColor(0xEFFFFFFF);
+        float textWidth = messagePaint.measureText(message);
+        float horizontalPadding = dp(10);
+        float centerX = getWidth() / 2f;
+        float centerY = getHeight() / 2f;
+        canvas.drawRoundRect(new RectF(centerX - textWidth / 2f - horizontalPadding,
+                centerY - dp(18), centerX + textWidth / 2f + horizontalPadding,
+                centerY + dp(8)), dp(6), dp(6), background);
+        canvas.drawText(message, centerX, centerY, messagePaint);
+    }
+
+    private void drawAttribution(Canvas canvas) {
+        String text = "© OpenStreetMap contributors";
+        float paddingX = dp(5);
+        float paddingY = dp(3);
+        float width = attributionPaint.measureText(text);
+        float right = getWidth() - dp(6);
+        float bottom = getHeight() - dp(6);
+        RectF background = new RectF(right - width - paddingX * 2,
+                bottom - dp(17) - paddingY, right, bottom);
+        canvas.drawRoundRect(background, dp(3), dp(3), attributionBackgroundPaint);
+        canvas.drawText(text, background.left + paddingX,
+                background.bottom - paddingY - attributionPaint.descent(), attributionPaint);
+    }
+
+    private void requestVisibleTiles() {
+        if (getWidth() <= 0 || getHeight() <= 0) return;
+        drawTiles(new Canvas());
+    }
+
+    private void requestTile(int tileZoom, int tileX, int tileY, String key) {
+        if (!loadingTiles.add(key)) return;
+        TILE_EXECUTOR.execute(() -> {
+            try {
+                File tile = tileFile(key, ".png");
+                File expiryFile = tileFile(key, ".expiry");
+                Bitmap cached = tile.exists()
+                        ? BitmapFactory.decodeFile(tile.getAbsolutePath()) : null;
+                if (cached != null) {
+                    tileBitmaps.put(key, cached);
+                    MAIN_HANDLER.post(this::invalidate);
+                }
+                if (cached != null && readExpiry(expiryFile) > System.currentTimeMillis()) return;
+                fetchTile(tileZoom, tileX, tileY, tile, expiryFile);
+                Bitmap fresh = tile.exists()
+                        ? BitmapFactory.decodeFile(tile.getAbsolutePath()) : null;
+                if (fresh != null) tileBitmaps.put(key, fresh);
+            } finally {
+                loadingTiles.remove(key);
+                MAIN_HANDLER.post(this::invalidate);
+            }
+        });
+    }
+
+    private void fetchTile(
+            int tileZoom, int tileX, int tileY, File tile, File expiryFile) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://tile.openstreetmap.org/"
+                    + tileZoom + "/" + tileX + "/" + tileY + ".png");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(7000);
+            connection.setReadTimeout(7000);
+            connection.setRequestProperty("User-Agent",
+                    "Roadprints/" + BuildConfig.VERSION_NAME
+                            + " (https://github.com/adamdbird-gfc/uk-road-tracker)");
+            connection.setRequestProperty("Accept", "image/png");
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return;
+
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (InputStream input = connection.getInputStream()) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            }
+            File directory = tile.getParentFile();
+            if (directory != null && !directory.exists() && !directory.mkdirs()) return;
+            File temporary = new File(directory, tile.getName() + ".tmp");
+            try (FileOutputStream output = new FileOutputStream(temporary)) {
+                output.write(bytes.toByteArray());
+            }
+            if (tile.exists()) tile.delete();
+            if (!temporary.renameTo(tile)) temporary.delete();
+
+            long expiry = responseExpiry(connection);
+            try (FileOutputStream output = new FileOutputStream(expiryFile)) {
+                output.write(String.valueOf(expiry).getBytes("UTF-8"));
+            }
+        } catch (Exception ignored) {
+            // Cached tiles and the journey route remain available if the network is offline.
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private long responseExpiry(HttpURLConnection connection) {
+        long now = System.currentTimeMillis();
+        String cacheControl = connection.getHeaderField("Cache-Control");
+        if (cacheControl != null) {
+            Matcher matcher = Pattern.compile("max-age=(\\d+)", Pattern.CASE_INSENSITIVE)
+                    .matcher(cacheControl);
+            if (matcher.find()) {
+                try {
+                    return now + Long.parseLong(matcher.group(1)) * 1000L;
+                } catch (Exception ignored) {
+                    // Fall back to Expires or a modest local cache duration.
+                }
+            }
+        }
+        long expires = connection.getExpiration();
+        return expires > now ? expires : now + DEFAULT_TILE_TTL_MS;
+    }
+
+    private long readExpiry(File file) {
+        if (!file.exists()) return 0;
+        try (InputStream input = new java.io.FileInputStream(file)) {
+            byte[] data = new byte[(int) Math.min(file.length(), 32)];
+            int length = input.read(data);
+            if (length <= 0) return 0;
+            return Long.parseLong(new String(data, 0, length, "UTF-8"));
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private File tileFile(String key, String extension) {
+        File directory = new File(getContext().getCacheDir(), "roadprints_osm_tiles");
+        if (!directory.exists()) directory.mkdirs();
+        return new File(directory, key.replace('/', '_') + extension);
+    }
+
+    private void zoomAt(double factor, float focusX, float focusY) {
+        double oldZoom = cameraZoom;
+        double oldWorld = TILE_SIZE * Math.pow(2.0, oldZoom);
+        double focusUnitX = longitudeToUnitX(centerLongitude)
+                + (focusX - getWidth() / 2.0) / oldWorld;
+        double focusUnitY = latitudeToUnitY(centerLatitude)
+                + (focusY - getHeight() / 2.0) / oldWorld;
+        cameraZoom = clampZoom(cameraZoom + log2(factor));
+        double newWorld = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        centerLongitude = clampUnitX(focusUnitX
+                - (focusX - getWidth() / 2.0) / newWorld) * 360.0 - 180.0;
+        centerLatitude = unitYToLatitude(clampUnitY(focusUnitY
+                - (focusY - getHeight() / 2.0) / newWorld));
+        invalidate();
+    }
+
+    private float screenX(double longitude) {
+        double world = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        return (float) (getWidth() / 2.0
+                + (longitudeToUnitX(longitude) - longitudeToUnitX(centerLongitude)) * world);
+    }
+
+    private float screenY(double latitude) {
+        double world = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        return (float) (getHeight() / 2.0
+                + (latitudeToUnitY(clampLatitude(latitude))
+                - latitudeToUnitY(centerLatitude)) * world);
+    }
+
+    private double longitudeToUnitX(double longitude) {
+        return (longitude + 180.0) / 360.0;
+    }
+
+    private double latitudeToUnitY(double latitude) {
+        double radians = Math.toRadians(clampLatitude(latitude));
+        return (1.0 - Math.log(Math.tan(radians) + 1.0 / Math.cos(radians))
+                / Math.PI) / 2.0;
+    }
+
+    private double unitYToLatitude(double unitY) {
+        double y = clampUnitY(unitY);
+        return Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1.0 - 2.0 * y))));
+    }
+
+    private double clampLatitude(double latitude) {
+        return Math.max(-85.05112878, Math.min(85.05112878, latitude));
+    }
+
+    private double clampUnitX(double x) {
+        if (x < 0) return x + 1.0;
+        if (x > 1) return x - 1.0;
+        return x;
+    }
+
+    private double clampUnitY(double y) {
+        return Math.max(0.0, Math.min(1.0, y));
+    }
+
+    private int tileZoom() {
+        return Math.max(0, Math.min(MAX_ZOOM, (int) Math.floor(cameraZoom)));
+    }
+
+    private double clampZoom(double value) {
+        return Math.max(2.0, Math.min(MAX_ZOOM, value));
+    }
+
+    private double log2(double value) {
+        return Math.log(value) / Math.log(2.0);
+    }
+
+    private float dp(float value) {
+        return value * getResources().getDisplayMetrics().density;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!interactive) return false;
+        scaleDetector.onTouchEvent(event);
+        gestureDetector.onTouchEvent(event);
+
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            lastTouchX = event.getX();
+            lastTouchY = event.getY();
+            return true;
+        }
+        if (event.getActionMasked() == MotionEvent.ACTION_MOVE
+                && !scaleDetector.isInProgress()) {
+            double scale = Math.pow(2.0, cameraZoom);
+            double centerX = longitudeToUnitX(centerLongitude) * TILE_SIZE * scale;
+            double centerY = latitudeToUnitY(centerLatitude) * TILE_SIZE * scale;
+            centerX -= event.getX() - lastTouchX;
+            centerY -= event.getY() - lastTouchY;
+            centerLongitude = clampUnitX(centerX / (TILE_SIZE * scale)) * 360.0 - 180.0;
+            centerLatitude = unitYToLatitude(centerY / (TILE_SIZE * scale));
+            lastTouchX = event.getX();
+            lastTouchY = event.getY();
+            invalidate();
+            return true;
+        }
+        return true;
     }
 }
