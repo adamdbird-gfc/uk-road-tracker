@@ -347,7 +347,10 @@ public class CaptureService extends Service {
 
     private void removeActivityUpdates() {
         if (activityPendingIntent != null) {
+            // Clear both APIs so upgrades from v0.4.3 cannot leave an old
+            // sampling subscription delivering callbacks to this receiver.
             activityClient.removeActivityUpdates(activityPendingIntent);
+            activityClient.removeActivityTransitionUpdates(activityPendingIntent);
             activityPendingIntent = null;
         }
     }
