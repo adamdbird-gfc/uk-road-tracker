@@ -621,11 +621,17 @@ public class JourneyListActivity extends Activity {
         String mode = journey.optString("mode", "unknown");
         boolean footMode = isFootMode(mode);
         boolean processableMode = footMode || isRoadMode(mode);
+        boolean enoughEvidence = hasEnoughMatchingEvidence(journey);
         TextView status = new TextView(this);
         String statusText;
         int statusColor;
-        if (points < 2) {
-            statusText = "Not enough GPS evidence to match this journey";
+        if (!processableMode) {
+            statusText = "No route matching required for this transport type";
+            statusColor = 0xFFB9C5D8;
+        } else if (!enoughEvidence) {
+            statusText = isRoadMode(mode)
+                    ? "Insufficient Timeline points for reliable road matching"
+                    : "Not enough GPS evidence to match this journey";
             statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             statusText = "✓  Processed · matched route available";
@@ -636,9 +642,6 @@ public class JourneyListActivity extends Activity {
         } else if ("processing".equals(processingStatus)) {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
-        } else if (!processableMode) {
-            statusText = "No road matching needed for this transport type";
-            statusColor = 0xFFB9C5D8;
         } else if ("failed".equals(processingStatus)) {
             statusText = "Matching failed · you can retry below";
             statusColor = 0xFFF7C450;
@@ -680,7 +683,7 @@ public class JourneyListActivity extends Activity {
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
             refineMatched.setOnClickListener(v -> showMatchedRefinement(journey));
             actions.addView(refineMatched, secondaryParams);
-        } else if (processableMode && points >= 2) {
+        } else if (processableMode && enoughEvidence) {
             String buttonLabel = "complete".equals(processingStatus)
                     ? "RETRY MATCHING"
                     : "failed".equals(processingStatus)
@@ -803,6 +806,11 @@ public class JourneyListActivity extends Activity {
     private void processJourney(JSONObject journey, Button button, TextView status, AlertDialog[] dialogRef) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (!canMatchJourney(journey)) {
+            Toast.makeText(this, "This journey does not meet the route-matching evidence threshold",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
         if (coordinates == null || coordinates.length() < 2) {
             Toast.makeText(this, "At least two GPS points are required", Toast.LENGTH_SHORT).show();
             return;
@@ -946,27 +954,26 @@ public class JourneyListActivity extends Activity {
         int processed = 0;
         int failed = 0;
         for (JSONObject journey : journeys) {
-            int points = pointCount(journey);
             String status = journey.optString("processing_status", "pending");
             String mode = journey.optString("mode", "unknown");
-            if ("complete".equals(status)) {
+            if (!isFootMode(mode) && !isRoadMode(mode)) {
+                noMatch++;
+            } else if (!hasEnoughMatchingEvidence(journey)) {
+                insufficient++;
+            } else if ("complete".equals(status)) {
                 processed++;
             } else if ("failed".equals(status)) {
                 failed++;
-            } else if (points < 2) {
-                insufficient++;
             } else if (isFootMode(mode)) {
                 footReady++;
-            } else if (isRoadMode(mode)) {
-                roadReady++;
             } else {
-                noMatch++;
+                roadReady++;
             }
         }
         String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
                 + " • " + noMatch + " no matching";
         String secondLine = "Processed: " + processed + " • Failed: " + failed
-                + " • Needs GPS: " + insufficient;
+                + " • Needs route points: " + insufficient;
         readinessSummary.setText(firstLine + "\n" + secondLine);
     }
 
@@ -982,20 +989,42 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean isRoadMode(String mode) {
-        return "driving".equals(mode) || "bus".equals(mode)
-                || "cycling".equals(mode) || "unknown".equals(mode);
+        return "driving".equals(mode) || "bus".equals(mode);
+    }
+
+    private boolean hasEnoughMatchingEvidence(JSONObject journey) {
+        if (pointCount(journey) < 2) return false;
+        String mode = journey.optString("mode", "unknown");
+        if (isRoadMode(mode)) {
+            JSONObject source = journey.optJSONObject("source");
+            if (source != null && "timeline_import".equals(source.optString("type", ""))) {
+                JSONObject quality = journey.optJSONObject("capture_quality");
+                return quality != null && quality.optInt("source_route_points", 0) >= 2;
+            }
+        }
+        return isFootMode(mode) || isRoadMode(mode);
+    }
+
+    private boolean canMatchJourney(JSONObject journey) {
+        String mode = journey.optString("mode", "unknown");
+        return (isFootMode(mode) || isRoadMode(mode))
+                && hasEnoughMatchingEvidence(journey);
     }
 
     private String journeyStatusText(JSONObject journey, int points) {
         String status = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
+        if (!isFootMode(mode) && !isRoadMode(mode)) return "No route matching required";
+        if (!hasEnoughMatchingEvidence(journey)) {
+            return isRoadMode(mode)
+                    ? "Insufficient Timeline points for reliable road matching"
+                    : "Insufficient GPS evidence";
+        }
         if ("complete".equals(status)) return "Processed by Roadprints";
         if ("processing".equals(status)) return "Processing journey…";
         if ("failed".equals(status)) return "Processing failed — retry available";
-        if (points < 2) return "Insufficient GPS evidence";
         if (isFootMode(mode)) return "Ready for on-foot matching";
-        if (isRoadMode(mode)) return "Ready for road matching";
-        return "No route matching required";
+        return "Ready for road matching";
     }
 
     private void shareJourney(JSONObject journey) {
