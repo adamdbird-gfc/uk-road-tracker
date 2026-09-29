@@ -301,7 +301,16 @@ public class JourneyListActivity extends Activity {
         }
     }
 
-    private boolean shouldShowJourney(JSONObject journey) {\n        String mode = journey.optString("mode", "unknown");\n        JSONObject source = journey.optJSONObject("source");\n        if (!isRoadMode(mode) || source == null\n                || !"timeline_import".equals(source.optString("type", ""))) return true;\n        JSONObject quality = journey.optJSONObject("capture_quality");\n        return quality != null && quality.optInt("source_route_points", 0) >= 2;\n    }\n\n    private void sortJourneysNewestFirst() {
+    private boolean shouldShowJourney(JSONObject journey) {
+        String mode = journey.optString("mode", "unknown");
+        JSONObject source = journey.optJSONObject("source");
+        if (!isRoadMode(mode) || source == null
+                || !"timeline_import".equals(source.optString("type", ""))) return true;
+        JSONObject quality = journey.optJSONObject("capture_quality");
+        return quality != null && quality.optInt("source_route_points", 0) >= 2;
+    }
+
+    private void sortJourneysNewestFirst() {
         journeys.sort((left, right) -> Long.compare(
                 journeyStartMillis(right), journeyStartMillis(left)));
     }
