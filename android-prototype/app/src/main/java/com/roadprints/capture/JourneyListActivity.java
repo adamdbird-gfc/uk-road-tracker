@@ -181,9 +181,10 @@ public class JourneyListActivity extends Activity {
                 android.graphics.Insets bars =
                         insets.getInsets(WindowInsets.Type.systemBars());
                 content.setPadding(36, 26 + bars.top, 36, 12);
-                bottomNavigation.setPadding(8, 8, 8, 8);
+                bottomNavigation.setPadding(8, 4, 8, 8);
                 LinearLayout.LayoutParams navParams =
                         (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
+                navParams.height = 72;
                 navParams.bottomMargin = bars.bottom;
                 bottomNavigation.setLayoutParams(navParams);
             }
@@ -194,9 +195,9 @@ public class JourneyListActivity extends Activity {
 
     private View buildBottomNavigation() {
         LinearLayout nav = new LinearLayout(this);
-        nav.setGravity(Gravity.CENTER);
-        nav.setPadding(8, 10, 8, 24);
-        nav.setMinimumHeight(82);
+        nav.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        nav.setPadding(8, 4, 8, 8);
+        nav.setMinimumHeight(72);
         nav.setBackgroundColor(0xFF10275D);
 
         String[] labels = {"⌖\nMap", "▤\nJourneys", "▥\nProgress",
@@ -209,7 +210,7 @@ public class JourneyListActivity extends Activity {
             item.setTypeface(null, android.graphics.Typeface.BOLD);
             item.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
             nav.addView(item, new LinearLayout.LayoutParams(
-                    0, 58, 1));
+                    0, 60, 1));
         }
         return nav;
     }
