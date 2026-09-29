@@ -75,6 +75,15 @@ public class JourneyListActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (journeyList != null) {
+            journeys = JourneyStore.all(this);
+            render();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         processor.shutdownNow();
         super.onDestroy();
@@ -478,14 +487,50 @@ public class JourneyListActivity extends Activity {
         return segments;
     }
 
+    private List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
+        List<JSONArray> routes = matchedRouteSegments(
+                journey.optJSONObject("processing_result"));
+        JSONObject corrections = journey.optJSONObject("journey_corrections");
+        JSONArray removedValues = corrections == null
+                ? null : corrections.optJSONArray("removed_matched_segments");
+        java.util.Set<Integer> removed = new java.util.HashSet<>();
+        if (removedValues != null) {
+            for (int index = 0; index < removedValues.length(); index++) {
+                int edge = removedValues.optInt(index, -1);
+                if (edge >= 0) removed.add(edge);
+            }
+        }
+        if (removed.isEmpty()) return routes;
+
+        List<JSONArray> visible = new ArrayList<>();
+        int edgeIndex = 0;
+        for (JSONArray route : routes) {
+            JSONArray current = null;
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                if (removed.contains(edgeIndex)) {
+                    if (current != null && current.length() >= 2) visible.add(current);
+                    current = null;
+                    continue;
+                }
+                if (current == null) {
+                    current = new JSONArray();
+                    current.put(route.optJSONArray(index - 1));
+                }
+                current.put(route.optJSONArray(index));
+            }
+            if (current != null && current.length() >= 2) visible.add(current);
+        }
+        return visible;
+    }
+
     private void showDetails(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         double metres = journey.optDouble("distance_meters", 0);
         int points = coordinates == null ? 0 : coordinates.length();
-        List<JSONArray> matchedSegments = matchedRouteSegments(
-                journey.optJSONObject("processing_result"));
-        boolean hasMatchedGeometry = !matchedSegments.isEmpty();
+        List<JSONArray> matchedSegments = matchedRouteSegmentsForDisplay(journey);
+        boolean hasMatchedGeometry = !matchedRouteSegments(
+                journey.optJSONObject("processing_result")).isEmpty();
         int side = dp(24);
 
         LinearLayout container = new LinearLayout(this);
@@ -691,7 +736,7 @@ public class JourneyListActivity extends Activity {
         if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             Button refineMatched = styledModalButton(
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
-            refineMatched.setOnClickListener(v -> showMatchedRefinement(journey));
+            refineMatched.setOnClickListener(v -> showMatchedRefinement(journey, dialogRef));
             actions.addView(refineMatched, secondaryParams);
         } else if (processableMode && enoughEvidence) {
             String buttonLabel = "complete".equals(processingStatus)
@@ -788,15 +833,11 @@ public class JourneyListActivity extends Activity {
         return button;
     }
 
-    private void showMatchedRefinement(JSONObject journey) {
-        new AlertDialog.Builder(this)
-                .setTitle("Edit matched journey")
-                .setMessage("This journey has been matched and can now be refined. "
-                        + "The next correction controls will let you exclude or restore "
-                        + "matched evidence while keeping the original GPS journey unchanged.")
-                .setPositiveButton("Continue", (dialog, which) -> showDetails(journey))
-                .setNegativeButton("Close", null)
-                .show();
+    private void showMatchedRefinement(JSONObject journey, AlertDialog[] dialogRef) {
+        Intent editor = new Intent(this, JourneyMapEditorActivity.class);
+        editor.putExtra("journey_json", journey.toString());
+        startActivity(editor);
+        if (dialogRef[0] != null) dialogRef[0].dismiss();
     }
 
     private void confirmDelete(JSONObject journey) {
