@@ -13,6 +13,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
@@ -421,12 +422,13 @@ public class JourneyListActivity extends Activity {
                 displayMode(journey.optString("mode", "unknown")),
                 metres, points));
         message.setTextSize(16);
+        message.setTextColor(0xFFD3DCED);
         message.setPadding(24, 16, 24, 16);
 
         TextView transportLabel = new TextView(this);
         transportLabel.setText("Transport type");
         transportLabel.setTextSize(14);
-        transportLabel.setTextColor(0xFF506070);
+        transportLabel.setTextColor(0xFF67D5CC);
         transportLabel.setPadding(24, 12, 24, 0);
 
         String[] transportModes = {"driving", "walking", "cycling", "bus",
@@ -444,11 +446,13 @@ public class JourneyListActivity extends Activity {
                 break;
             }
         }
+        transport.setBackgroundColor(0xFF0B1C50);
         transport.setPadding(24, 0, 24, 0);
 
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(0, 0, 0, 8);
+        container.setBackground(roundRect(0xFF0B1C50, 0xFF46649E, 24));
 
         EditText titleInput = new EditText(this);
         titleInput.setHint("Name this journey");
@@ -457,12 +461,16 @@ public class JourneyListActivity extends Activity {
         titleInput.setSingleLine(true);
         titleInput.setInputType(InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        titleInput.setTextColor(Color.WHITE);
+        titleInput.setHintTextColor(0xFFB9C5D8);
+        titleInput.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(0xFFF7C450));
         titleInput.setPadding(24, 8, 24, 8);
 
         TextView titleLabel = new TextView(this);
         titleLabel.setText("Journey name");
         titleLabel.setTextSize(14);
-        titleLabel.setTextColor(0xFF506070);
+        titleLabel.setTextColor(0xFF67D5CC);
         titleLabel.setPadding(24, 12, 24, 0);
 
         container.addView(previewLabel);
@@ -531,11 +539,28 @@ public class JourneyListActivity extends Activity {
         delete.setOnClickListener(v -> confirmDelete(journey));
         container.addView(delete);
 
-        new AlertDialog.Builder(this)
-                .setTitle("View & refine journey")
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(container)
-                .setPositiveButton("Close", null)
-                .show();
+                .setPositiveButton("CLOSE", null)
+                .create();
+        dialog.setOnShowListener(ignored -> {
+            Window dialogWindow = dialog.getWindow();
+            if (dialogWindow != null) {
+                dialogWindow.setBackgroundDrawable(roundRect(0xFF0B1C50, 0xFF46649E, 24));
+                dialogWindow.setStatusBarColor(0xFF071337);
+                dialogWindow.setNavigationBarColor(0xFF071337);
+                dialogWindow.setLayout(
+                        (int) (getResources().getDisplayMetrics().widthPixels * 0.94f),
+                        WindowManager.LayoutParams.WRAP_CONTENT);
+            }
+            int closeId = AlertDialog.BUTTON_POSITIVE;
+            Button close = dialog.getButton(closeId);
+            close.setTextColor(0xFFF7C450);
+            close.setTextSize(14);
+            close.setTypeface(null, android.graphics.Typeface.BOLD);
+            close.setAllCaps(false);
+        });
+        dialog.show();
     }
 
     private Button styledModalButton(String text, int background, int foreground) {
