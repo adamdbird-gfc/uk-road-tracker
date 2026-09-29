@@ -85,6 +85,35 @@ public final class JourneyStore {
         }
     }
 
+    public static synchronized int deleteByModes(Context context, String... modes) {
+        int deleted = 0;
+        List<JSONObject> journeys = all(context);
+        for (JSONObject journey : journeys) {
+            String value = journey.optString("mode", "unknown");
+            boolean match = false;
+            for (String mode : modes) {
+                if (mode.equals(value)) {
+                    match = true;
+                    break;
+                }
+            }
+            if (match) {
+                delete(context, journey.optString("journey_id"));
+                deleted++;
+            }
+        }
+        return deleted;
+    }
+
+    public static synchronized int deleteAll(Context context) {
+        int deleted = 0;
+        for (JSONObject journey : all(context)) {
+            delete(context, journey.optString("journey_id"));
+            deleted++;
+        }
+        return deleted;
+    }
+
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
