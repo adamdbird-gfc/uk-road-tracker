@@ -69,6 +69,11 @@ public final class JourneyStore {
         return journeys;
     }
 
+    public static synchronized JSONObject get(Context context, String journeyId) {
+        migrateLegacy(context);
+        return read(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
+    }
+
     public static synchronized void delete(Context context, String journeyId) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
