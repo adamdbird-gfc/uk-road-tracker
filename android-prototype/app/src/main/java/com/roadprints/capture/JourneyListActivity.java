@@ -185,7 +185,7 @@ public class JourneyListActivity extends Activity {
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
-        journeyList.setPadding(0, 18, 0, 18);
+        journeyList.setPadding(dp(8), dp(18), dp(8), dp(18));
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(journeyList);
@@ -295,9 +295,9 @@ public class JourneyListActivity extends Activity {
     private View createCard(JSONObject journey) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(22, 20, 22, 20);
-        card.setBackground(roundRect(0xFF233B78, 0xFF46649E, 28));
-        card.setElevation(2);
+        card.setPadding(dp(24), dp(20), dp(24), dp(20));
+        card.setBackground(roundRect(0xFF233B78, 0xFF46649E, dp(18)));
+        card.setElevation(dp(2));
 
         String mode = journey.optString("mode", "unknown");
         double metres = journey.optDouble("distance_meters", 0);
@@ -305,6 +305,11 @@ public class JourneyListActivity extends Activity {
         JSONArray coordinates = geometry == null
                 ? null : geometry.optJSONArray("coordinates");
         int points = coordinates == null ? 0 : coordinates.length();
+
+        LinearLayout details = new LinearLayout(this);
+        details.setOrientation(LinearLayout.VERTICAL);
+        details.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
         TextView label = new TextView(this);
         label.setText(displayMode(mode).toUpperCase() + "  •  "
@@ -340,35 +345,51 @@ public class JourneyListActivity extends Activity {
                 || statusText.startsWith("Processing failed") ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
+        LinearLayout cardContent = new LinearLayout(this);
+        cardContent.setOrientation(LinearLayout.HORIZONTAL);
+        cardContent.setGravity(Gravity.TOP);
+        cardContent.addView(details);
+
+        TextView modeIcon = new TextView(this);
+        modeIcon.setText(transportIcon(mode));
+        modeIcon.setTextSize(22);
+        modeIcon.setGravity(Gravity.CENTER);
+        modeIcon.setContentDescription(displayMode(mode));
+        modeIcon.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(12)));
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(44), dp(44));
+        iconParams.setMargins(dp(12), dp(2), 0, 0);
+        cardContent.addView(modeIcon, iconParams);
+
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
-        TextView inspect = actionButton("View & refine", 0xFF102047, Color.WHITE);
+        TextView inspect = actionButton("VIEW & REFINE", 0xFF102047, Color.WHITE);
         inspect.setOnClickListener(v -> showDetails(journey));
-        actions.addView(inspect, new LinearLayout.LayoutParams(0, 52, 1));
+        actions.addView(inspect, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
 
-        card.addView(label);
-        card.addView(heading);
-        card.addView(summary);
-        card.addView(evidence);
-        card.addView(actions);
+        card.addView(cardContent);
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        actionParams.topMargin = dp(16);
+        card.addView(actions, actionParams);
         card.setOnClickListener(v -> showDetails(journey));
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 16);
+        params.setMargins(0, 0, 0, dp(16));
         card.setLayoutParams(params);
         return card;
     }
 
     private TextView actionButton(String text, int background, int foreground) {
         TextView button = new TextView(this);
-        button.setText(text);
-        button.setTextSize(14);
+        button.setText(text.toUpperCase());
+        button.setTextSize(13);
         button.setGravity(Gravity.CENTER);
         button.setTypeface(null, android.graphics.Typeface.BOLD);
         button.setTextColor(foreground);
-        button.setPadding(12, 0, 12, 0);
-        button.setBackground(roundRect(background, 0xFF46649E, 18));
+        button.setPadding(dp(16), 0, dp(16), 0);
+        button.setBackground(roundRect(background, 0xFF46649E, dp(12));
         return button;
     }
 
@@ -911,6 +932,20 @@ public class JourneyListActivity extends Activity {
         share.putExtra(Intent.EXTRA_SUBJECT, "Roadprints journey");
         share.putExtra(Intent.EXTRA_TEXT, journey.toString());
         startActivity(Intent.createChooser(share, "Share journey data"));
+    }
+
+    private String transportIcon(String mode) {
+        switch (mode) {
+            case "driving": return "🚗";
+            case "walking":
+            case "running": return "👟";
+            case "bus": return "🚌";
+            case "train": return "🚆";
+            case "cycling": return "🚲";
+            case "plane": return "✈️";
+            case "ferry": return "⛴";
+            default: return "📍";
+        }
     }
 
     private String displayMode(String value) {
