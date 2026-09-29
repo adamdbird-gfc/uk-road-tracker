@@ -13,10 +13,14 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.ActivityTransition;
+import com.google.android.gms.location.ActivityTransitionRequest;
 import com.google.android.gms.location.DetectedActivity;
 
 import org.json.JSONArray;
@@ -25,6 +29,7 @@ import org.json.JSONObject;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +48,7 @@ public class CaptureService extends Service {
     public static final String EXTRA_MESSAGE = "message";
     public static final String EXTRA_ACTIVITY_TYPE = "activity_type";
     public static final String EXTRA_CONFIDENCE = "confidence";
+    public static final String EXTRA_TRANSITION = "transition";
 
     private static final String STATE_PREFS = "roadprints_capture_state";
     private static final String STATE_ACTIVE = "active";
@@ -62,6 +68,12 @@ public class CaptureService extends Service {
     private String mode;
     private double distanceMetres;
     private long stationarySince;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable finishIfStill = () -> {
+        if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
+            finishCapture();
+        }
+    };
 
     private final LocationListener locationListener = new LocationListener() {
         @Override
@@ -109,9 +121,9 @@ public class CaptureService extends Service {
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
         } else if (ACTION_ACTIVITY.equals(action)) {
-            handleActivity(
+            handleTransition(
                     intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
-                    intent.getIntExtra(EXTRA_CONFIDENCE, 0));
+                    intent.getIntExtra(EXTRA_TRANSITION, -1));
         }
         return START_NOT_STICKY;
     }
@@ -134,13 +146,20 @@ public class CaptureService extends Service {
                     42,
                     new Intent(this, ActivityRecognitionReceiver.class),
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            activityClient.requestActivityUpdates(5000L, activityPendingIntent)
+            ActivityTransitionRequest request = new ActivityTransitionRequest(Arrays.asList(
+                    transition(DetectedActivity.STILL),
+                    transition(DetectedActivity.WALKING),
+                    transition(DetectedActivity.ON_FOOT),
+                    transition(DetectedActivity.RUNNING),
+                    transition(DetectedActivity.ON_BICYCLE),
+                    transition(DetectedActivity.IN_VEHICLE)));
+            activityClient.requestActivityTransitionUpdates(request, activityPendingIntent)
                     .addOnSuccessListener(unused ->
-                            broadcastUpdate("Activity recognition subscription confirmed. Waiting for movement..."))
+                            broadcastUpdate("Activity transition subscription confirmed. Waiting for movement..."))
                     .addOnFailureListener(error -> {
                         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                                 .putBoolean(STATE_ARMED, false).apply();
-                        broadcastUpdate("Activity recognition failed: "
+                        broadcastUpdate("Activity transition failed: "
                                 + (error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage()));
                         stopForeground(STOP_FOREGROUND_REMOVE);
                         stopSelf();
@@ -158,6 +177,7 @@ public class CaptureService extends Service {
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, false).apply();
         removeActivityUpdates();
+        handler.removeCallbacks(finishIfStill);
         if (isActive(this)) {
             finishCapture();
         } else {
@@ -167,32 +187,41 @@ public class CaptureService extends Service {
         }
     }
 
-    private void handleActivity(int activityType, int confidence) {
+    private ActivityTransition transition(int activityType) {
+        return new ActivityTransition.Builder()
+                .setActivityType(activityType)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build();
+    }
+
+    private void handleTransition(int activityType, int transitionType) {
         if (!isArmed(this)) return;
 
         String activityLabel = activityLabel(activityType);
-        if (confidence < 50) {
-            broadcastUpdate("Android activity signal: " + activityLabel
-                    + " (" + confidence + "% confidence).");
+        boolean entering = transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER;
+        broadcastUpdate("Android detected " + (entering ? "entered " : "left ")
+                + activityLabel + ".");
+
+        if (!entering) {
+            if (activityType == DetectedActivity.STILL) {
+                stationarySince = 0;
+                handler.removeCallbacks(finishIfStill);
+            }
             return;
         }
-        broadcastUpdate("Android detected " + activityLabel
-                + " (" + confidence + "% confidence).");
 
         if (activityType == DetectedActivity.STILL) {
             if (isActive(this)) {
-                if (stationarySince == 0) stationarySince = System.currentTimeMillis();
-                if (System.currentTimeMillis() - stationarySince
-                        >= STILLNESS_END_THRESHOLD_MS) {
-                    finishCapture();
-                } else {
-                    broadcastUpdate("Stationary for now; keeping the journey open...");
-                }
+                stationarySince = System.currentTimeMillis();
+                handler.removeCallbacks(finishIfStill);
+                handler.postDelayed(finishIfStill, STILLNESS_END_THRESHOLD_MS);
+                broadcastUpdate("Stationary detected; keeping the journey open for 60 seconds...");
             }
             return;
         }
 
         stationarySince = 0;
+        handler.removeCallbacks(finishIfStill);
         String detectedMode = modeForActivity(activityType);
         if (detectedMode != null && !isActive(this)) {
             startCapture(detectedMode);
