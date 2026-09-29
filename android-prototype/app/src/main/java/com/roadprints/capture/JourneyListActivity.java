@@ -17,7 +17,9 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -368,7 +370,7 @@ public class JourneyListActivity extends Activity {
         int points = coordinates == null ? 0 : coordinates.length();
         TextView message = new TextView(this);
         message.setText(String.format(
-                "Start: %s\nEnd: %s\nDuration: %s\n%s • %.0f m • %d GPS points",
+                "Start: %s\\nEnd: %s\\nDuration: %s\\n%s • %.0f m • %d GPS points",
                 displayTime(journey.optString("started_at")),
                 displayTime(journey.optString("ended_at")),
                 journeyDuration(journey),
@@ -377,20 +379,76 @@ public class JourneyListActivity extends Activity {
         message.setTextSize(16);
         message.setPadding(24, 16, 24, 16);
 
+        TextView transportLabel = new TextView(this);
+        transportLabel.setText("Transport type");
+        transportLabel.setTextSize(14);
+        transportLabel.setTextColor(0xFF506070);
+        transportLabel.setPadding(24, 12, 24, 0);
+
+        String[] transportModes = {"driving", "walking", "cycling", "bus",
+                "train", "plane", "ferry", "running", "unknown"};
+        String[] transportLabels = {"Driving", "On foot", "Cycling", "Bus",
+                "Train", "Plane", "Ferry", "Running", "Unknown"};
+        Spinner transport = new Spinner(this);
+        ArrayAdapter<String> transportAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, transportLabels);
+        transport.setAdapter(transportAdapter);
+        String currentMode = journey.optString("mode", "unknown");
+        for (int index = 0; index < transportModes.length; index++) {
+            if (transportModes[index].equals(currentMode)) {
+                transport.setSelection(index);
+                break;
+            }
+        }
+        transport.setPadding(24, 0, 24, 0);
+
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
         container.addView(preview);
         container.addView(message);
+        container.addView(transportLabel);
+        container.addView(transport);
+
+        Button saveTransport = new Button(this);
+        saveTransport.setText("SAVE TRANSPORT TYPE");
+        saveTransport.setOnClickListener(v -> {
+            String selectedMode = transportModes[transport.getSelectedItemPosition()];
+            JourneyStore.updateMode(this, journey.optString("journey_id"), selectedMode);
+            journeys = JourneyStore.all(this);
+            render();
+            Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
+        });
+        container.addView(saveTransport);
 
         Button share = new Button(this);
         share.setText("Share journey JSON");
         share.setOnClickListener(v -> shareJourney(journey));
         container.addView(share);
 
+        Button delete = new Button(this);
+        delete.setText("DELETE JOURNEY");
+        delete.setTextColor(0xFFB3261E);
+        delete.setOnClickListener(v -> confirmDelete(journey));
+        container.addView(delete);
+
         new AlertDialog.Builder(this)
-                .setTitle("Journey details")
+                .setTitle("View & refine journey")
                 .setView(container)
                 .setPositiveButton("Close", null)
+                .show();
+    }
+
+    private void confirmDelete(JSONObject journey) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete journey?")
+                .setMessage("This will permanently remove this journey from this device.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    JourneyStore.delete(this, journey.optString("journey_id"));
+                    journeys = JourneyStore.all(this);
+                    render();
+                    Toast.makeText(this, "Journey deleted", Toast.LENGTH_SHORT).show();
+                })
                 .show();
     }
 
