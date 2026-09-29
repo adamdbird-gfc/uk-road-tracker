@@ -10,12 +10,16 @@
 
     <application
         android:theme="@style/AppTheme"
-        android:label="Roadprints Capture Prototype"
+        android:label="Roadprints"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:allowBackup="false"
         android:supportsRtl="true">
         <activity android:name=".JourneyListActivity" android:exported="false" />
+        <activity android:name=".TimelineImportActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".OnboardingActivity"
             android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
