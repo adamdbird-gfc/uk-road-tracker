@@ -151,6 +151,11 @@ public class MainActivity extends Activity {
         saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
         saved.setPadding(0, 24, 0, 0);
 
+        Button mapButton = new Button(this);
+        mapButton.setText("Open map");
+        mapButton.setOnClickListener(v ->
+                startActivity(new Intent(this, MapActivity.class)));
+
         historyButton = new Button(this);
         historyButton.setText("Open journeys");
         historyButton.setOnClickListener(v ->
@@ -164,6 +169,7 @@ public class MainActivity extends Activity {
         root.addView(status);
         root.addView(distance);
         root.addView(saved);
+        root.addView(mapButton);
         root.addView(historyButton);
 
         android.widget.Space spacer = new android.widget.Space(this);
