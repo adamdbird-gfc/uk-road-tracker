@@ -20,6 +20,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -303,8 +304,9 @@ public class MainActivity extends Activity {
                     ? null : geometry.optJSONArray("coordinates");
             int points = coordinates == null ? 0 : coordinates.length();
             rows[index] = String.format(
-                    "%s\n%s • %.0f m • %d GPS points",
-                    started, mode, metres, points);
+                    "%s • %s\n%.0f m • %s • %d GPS points",
+                    started, mode, metres,
+                    journeyDuration(journey), points);
         }
 
         new AlertDialog.Builder(this)
@@ -328,8 +330,10 @@ public class MainActivity extends Activity {
 
         TextView message = new TextView(this);
         message.setText(String.format(
-                "%s\n%.0f m across %d GPS points",
-                displayTime(journey.optString("started_at")), metres, points));
+                "Start: %s\nEnd: %s\nDuration: %s\n%.0f m across %d GPS points",
+                displayTime(journey.optString("started_at")),
+                displayTime(journey.optString("ended_at")),
+                journeyDuration(journey), metres, points));
         message.setTextSize(16);
         message.setPadding(24, 0, 24, 16);
 
@@ -361,6 +365,22 @@ public class MainActivity extends Activity {
                     status.setText("Journey updated to " + selected + ".");
                 })
                 .show();
+    }
+
+    private String journeyDuration(JSONObject journey) {
+        try {
+            Instant start = Instant.parse(journey.optString("started_at"));
+            Instant end = Instant.parse(journey.optString("ended_at"));
+            long seconds = Math.max(0, Duration.between(start, end).getSeconds());
+            long hours = seconds / 3600;
+            long minutes = (seconds % 3600) / 60;
+            long remainingSeconds = seconds % 60;
+            if (hours > 0) return String.format("%dh %02dm", hours, minutes);
+            if (minutes > 0) return String.format("%dm %02ds", minutes, remainingSeconds);
+            return String.format("%ds", remainingSeconds);
+        } catch (Exception ignored) {
+            return "Unknown duration";
+        }
     }
 
     private String displayTime(String value) {
