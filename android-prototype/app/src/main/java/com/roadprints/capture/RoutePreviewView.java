@@ -400,7 +400,7 @@ public class RoutePreviewView extends View {
                 }
             }
         }
-        if (nearestIndex >= 0 && nearestDistance <= dp(30)
+        if (nearestIndex >= 0 && nearestDistance <= dp(54)
                 && routeEdgeTapListener != null) {
             routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
             invalidate();
