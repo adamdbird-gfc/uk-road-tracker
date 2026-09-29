@@ -57,6 +57,18 @@ public final class JourneyStore {
         return read(latest);
     }
 
+    public static synchronized List<JSONObject> all(Context context) {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        List<JSONObject> journeys = new ArrayList<>();
+        for (File file : files) {
+            JSONObject journey = read(file);
+            if (journey != null) journeys.add(journey);
+        }
+        return journeys;
+    }
+
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
