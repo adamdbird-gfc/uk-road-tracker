@@ -389,7 +389,7 @@ public class JourneyListActivity extends Activity {
         button.setTypeface(null, android.graphics.Typeface.BOLD);
         button.setTextColor(foreground);
         button.setPadding(dp(16), 0, dp(16), 0);
-        button.setBackground(roundRect(background, 0xFF46649E, dp(12));
+        button.setBackground(roundRect(background, 0xFF46649E, dp(12)));
         return button;
     }
 
