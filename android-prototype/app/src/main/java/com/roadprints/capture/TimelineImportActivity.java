@@ -425,9 +425,9 @@ public class TimelineImportActivity extends Activity {
                      i < timelinePathPoints.size(); i++) {
                     TimedPoint pathPoint = timelinePathPoints.get(i);
                     if (pathPoint.timeMs > endMs) break;
-                    if (pathPoint.timeMs >= startMs
-                            && appendUniquePoint(points, pathPoint.coordinates)) {
+                    if (pathPoint.timeMs >= startMs) {
                         sourceRoutePoints++;
+                        appendUniquePoint(points, pathPoint.coordinates);
                     }
                 }
             } else if (!semantic) {
