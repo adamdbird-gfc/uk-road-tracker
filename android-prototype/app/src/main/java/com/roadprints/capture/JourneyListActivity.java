@@ -345,6 +345,11 @@ public class JourneyListActivity extends Activity {
                 || statusText.startsWith("Processing failed") ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
+        details.addView(label);
+        details.addView(heading);
+        details.addView(summary);
+        details.addView(evidence);
+
         LinearLayout cardContent = new LinearLayout(this);
         cardContent.setOrientation(LinearLayout.HORIZONTAL);
         cardContent.setGravity(Gravity.TOP);
