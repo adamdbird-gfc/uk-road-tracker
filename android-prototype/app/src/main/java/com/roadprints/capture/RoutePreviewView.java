@@ -133,7 +133,7 @@ public class RoutePreviewView extends View {
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
         fitRouteIfReady();
-        requestVisibleTiles();
+        invalidate();
     }
 
     @Override
@@ -153,7 +153,9 @@ public class RoutePreviewView extends View {
         }
 
         drawAttribution(canvas);
-        if (!hasTiles) drawMessage(canvas, "Map tiles unavailable · showing route only");
+        if (!hasTiles) drawMessage(canvas, coordinatesValid
+                ? "Map tiles unavailable · showing route only"
+                : "Map tiles unavailable · check connection");
     }
 
     private void fitRouteIfReady() {
@@ -176,8 +178,8 @@ public class RoutePreviewView extends View {
             double spanY = Math.max(0.000001, maxY - minY);
             double availableWidth = Math.max(1, getWidth() - dp(72));
             double availableHeight = Math.max(1, getHeight() - dp(72));
-            double zoomX = log2(availableWidth / (spanX * TILE_SIZE));
-            double zoomY = log2(availableHeight / (spanY * TILE_SIZE));
+            double zoomX = log2(availableWidth / (spanX * mapTileSize()));
+            double zoomY = log2(availableHeight / (spanY * mapTileSize()));
             cameraZoom = clampZoom(Math.min(MAX_ZOOM, Math.min(zoomX, zoomY)));
             centerLongitude = ((minX + maxX) / 2.0) * 360.0 - 180.0;
             centerLatitude = unitYToLatitude((minY + maxY) / 2.0);
@@ -191,8 +193,9 @@ public class RoutePreviewView extends View {
     private boolean drawTiles(Canvas canvas) {
         int tileZoom = tileZoom();
         double scale = Math.pow(2.0, cameraZoom - tileZoom);
-        double tileScreenSize = TILE_SIZE * scale;
-        double worldSize = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        double tilePixels = mapTileSize();
+        double tileScreenSize = tilePixels * scale;
+        double worldSize = tilePixels * Math.pow(2.0, cameraZoom);
         double centerX = longitudeToUnitX(centerLongitude) * worldSize;
         double centerY = latitudeToUnitY(centerLatitude) * worldSize;
         int tileCount = 1 << tileZoom;
@@ -303,11 +306,6 @@ public class RoutePreviewView extends View {
                 background.bottom - paddingY - attributionPaint.descent(), attributionPaint);
     }
 
-    private void requestVisibleTiles() {
-        if (getWidth() <= 0 || getHeight() <= 0) return;
-        drawTiles(new Canvas());
-    }
-
     private void requestTile(int tileZoom, int tileX, int tileY, String key) {
         if (!loadingTiles.add(key)) return;
         TILE_EXECUTOR.execute(() -> {
@@ -411,13 +409,13 @@ public class RoutePreviewView extends View {
 
     private void zoomAt(double factor, float focusX, float focusY) {
         double oldZoom = cameraZoom;
-        double oldWorld = TILE_SIZE * Math.pow(2.0, oldZoom);
+        double oldWorld = mapTileSize() * Math.pow(2.0, oldZoom);
         double focusUnitX = longitudeToUnitX(centerLongitude)
                 + (focusX - getWidth() / 2.0) / oldWorld;
         double focusUnitY = latitudeToUnitY(centerLatitude)
                 + (focusY - getHeight() / 2.0) / oldWorld;
         cameraZoom = clampZoom(cameraZoom + log2(factor));
-        double newWorld = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        double newWorld = mapTileSize() * Math.pow(2.0, cameraZoom);
         centerLongitude = clampUnitX(focusUnitX
                 - (focusX - getWidth() / 2.0) / newWorld) * 360.0 - 180.0;
         centerLatitude = unitYToLatitude(clampUnitY(focusUnitY
@@ -426,7 +424,7 @@ public class RoutePreviewView extends View {
     }
 
     private float screenX(double longitude) {
-        double world = TILE_SIZE * Math.pow(2.0, cameraZoom);
+        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
         return (float) (getWidth() / 2.0
                 + (longitudeToUnitX(longitude) - longitudeToUnitX(centerLongitude)) * world);
     }
@@ -467,6 +465,8 @@ public class RoutePreviewView extends View {
         return Math.max(0.0, Math.min(1.0, y));
     }
 
+    private double mapTileSize() { return dp(TILE_SIZE); }
+
     private int tileZoom() {
         return Math.max(0, Math.min(MAX_ZOOM, (int) Math.floor(cameraZoom)));
     }
@@ -497,12 +497,13 @@ public class RoutePreviewView extends View {
         if (event.getActionMasked() == MotionEvent.ACTION_MOVE
                 && !scaleDetector.isInProgress()) {
             double scale = Math.pow(2.0, cameraZoom);
-            double centerX = longitudeToUnitX(centerLongitude) * TILE_SIZE * scale;
-            double centerY = latitudeToUnitY(centerLatitude) * TILE_SIZE * scale;
+            double tilePixels = mapTileSize();
+            double centerX = longitudeToUnitX(centerLongitude) * tilePixels * scale;
+            double centerY = latitudeToUnitY(centerLatitude) * tilePixels * scale;
             centerX -= event.getX() - lastTouchX;
             centerY -= event.getY() - lastTouchY;
-            centerLongitude = clampUnitX(centerX / (TILE_SIZE * scale)) * 360.0 - 180.0;
-            centerLatitude = unitYToLatitude(centerY / (TILE_SIZE * scale));
+            centerLongitude = clampUnitX(centerX / (tilePixels * scale)) * 360.0 - 180.0;
+            centerLatitude = unitYToLatitude(centerY / (tilePixels * scale));
             lastTouchX = event.getX();
             lastTouchY = event.getY();
             invalidate();
