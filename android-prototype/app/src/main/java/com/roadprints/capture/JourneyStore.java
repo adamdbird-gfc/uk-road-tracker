@@ -69,6 +69,14 @@ public final class JourneyStore {
         return journeys;
     }
 
+    public static synchronized void delete(Context context, String journeyId) {
+        migrateLegacy(context);
+        File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
+        if (file.exists() && !file.delete()) {
+            throw new IllegalStateException("Could not delete journey archive");
+        }
+    }
+
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
