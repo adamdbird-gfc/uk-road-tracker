@@ -443,6 +443,31 @@ public class JourneyListActivity extends Activity {
         return roundRect(fill, stroke, radius);
     }
 
+    private List<JSONArray> matchedRouteSegments(JSONObject result) {
+        List<JSONArray> segments = new ArrayList<>();
+        if (result == null) return segments;
+        JSONObject geojson = result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return segments;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && coordinates != null
+                    && coordinates.length() >= 2) {
+                segments.add(coordinates);
+            } else if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int segmentIndex = 0; segmentIndex < coordinates.length(); segmentIndex++) {
+                    JSONArray segment = coordinates.optJSONArray(segmentIndex);
+                    if (segment != null && segment.length() >= 2) segments.add(segment);
+                }
+            }
+        }
+        return segments;
+    }
+
     private void showDetails(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -488,9 +513,19 @@ public class JourneyListActivity extends Activity {
         body.addView(previewLabel);
 
         // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
-        RoutePreviewView preview = new RoutePreviewView(this, coordinates);
+        List<JSONArray> matchedSegments = matchedRouteSegments(
+                journey.optJSONObject("processing_result"));
+        RoutePreviewView preview = new RoutePreviewView(this, coordinates, matchedSegments);
         body.addView(preview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
+        if (!matchedSegments.isEmpty()) {
+            TextView routeLegend = new TextView(this);
+            routeLegend.setText("Blue: matched route  ·  Grey: original GPS trace");
+            routeLegend.setTextSize(11);
+            routeLegend.setTextColor(0xFFD3DCED);
+            routeLegend.setPadding(side, dp(6), side, dp(2));
+            body.addView(routeLegend);
+        }
 
         LinearLayout fields = new LinearLayout(this);
         fields.setOrientation(LinearLayout.VERTICAL);
