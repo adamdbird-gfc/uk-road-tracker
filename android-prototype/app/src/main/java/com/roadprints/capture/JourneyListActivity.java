@@ -136,10 +136,10 @@ public class JourneyListActivity extends Activity {
         count = new TextView(this);
         count.setTextSize(22);
         count.setTypeface(null, android.graphics.Typeface.BOLD);
-        count.setTextColor(0xFFF7C450);
+        count.setTextColor(0xFF0B1C50);
         count.setGravity(Gravity.CENTER);
         count.setPadding(22, 14, 22, 14);
-        count.setBackground(pill(0x332F4D91, 0x334D6CA6, 40));
+        count.setBackground(pill(0xFFF7C450, 0xFFF7C450, 40));
 
         headingRow.addView(heading);
         headingRow.addView(count);
@@ -158,6 +158,7 @@ public class JourneyListActivity extends Activity {
 
         HorizontalScrollView filterScroll = new HorizontalScrollView(this);
         filterScroll.setHorizontalScrollBarEnabled(false);
+        filterScroll.setPadding(0, dp(10), 0, dp(10));
         LinearLayout filters = new LinearLayout(this);
         filters.setOrientation(LinearLayout.HORIZONTAL);
         for (int index = 0; index < FILTER_LABELS.length; index++) {
@@ -281,7 +282,7 @@ public class JourneyListActivity extends Activity {
             journeyList.addView(createCard(journey));
             visible++;
         }
-        count.setText(String.valueOf(visible));
+        count.setText(String.format(java.util.Locale.UK, "%,d", visible));
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
