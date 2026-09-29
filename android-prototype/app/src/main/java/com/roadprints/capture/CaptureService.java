@@ -290,6 +290,7 @@ public class CaptureService extends Service {
         }
 
         locationManager.removeUpdates(locationListener);
+        boolean savedSuccessfully = false;
         try {
             JSONObject journey = new JSONObject();
             journey.put("journey_id", journeyId);
@@ -309,9 +310,9 @@ public class CaptureService extends Service {
                     .put("road_matching", roadMode(mode) ? "pending" : "not_required")
                     .put("foot_matching", mode.equals("walking") ? "pending" : "not_required"));
             JourneyStore.save(this, journey);
-            broadcastUpdate("Journey saved locally. Review its transport type next time.");
-        } catch (Exception error) {
-            broadcastUpdate("Could not save journey: " + error.getMessage());
+            savedSuccessfully = true;
+        } catch (Exception ignored) {
+            // The final UI update below reports the failed save after state cleanup.
         } finally {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
@@ -324,9 +325,17 @@ public class CaptureService extends Service {
             distanceMetres = 0;
             lastPoint = null;
             stationarySince = 0;
+
             if (isArmed(this)) {
                 updateNotification();
-            } else {
+            }
+
+            // Broadcast after clearing active state so the UI refreshes the saved
+            // journey count immediately instead of treating this as a live update.
+            broadcastUpdate(savedSuccessfully
+                    ? "Journey saved locally. Review its transport type next time."
+                    : "Could not save journey.");
+            if (!isArmed(this)) {
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
             }
