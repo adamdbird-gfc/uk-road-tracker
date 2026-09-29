@@ -456,11 +456,13 @@ public class TimelineImportActivity extends Activity {
                 || mode.contains("SUBWAY") || mode.contains("TRAM")) return "train";
         if (mode.contains("FERRY")) return "ferry";
         if (mode.contains("FLIGHT") || mode.contains("PLANE")) return "plane";
-        return "driving";
+        return "unknown";
     }
 
     private boolean roadMode(String mode) {
-        return "driving".equals(mode) || "bus".equals(mode) || "cycling".equals(mode);
+        // Match the web POC: buses use roads, while cycling and unknown modes
+        // remain visible in the journey list without entering road matching.
+        return "driving".equals(mode) || "bus".equals(mode);
     }
 
     private boolean footMode(String mode) {
