@@ -135,7 +135,7 @@ public class RoutePreviewView extends View {
         routeHaloPaint.setStrokeJoin(Paint.Join.ROUND);
         selectedRoutePaint.setColor(Color.rgb(218, 55, 55));
         selectedRoutePaint.setStyle(Paint.Style.STROKE);
-        selectedRoutePaint.setStrokeWidth(dp(8));
+        selectedRoutePaint.setStrokeWidth(dp(12));
         selectedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
         selectedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
         rawRoutePaint.setColor(Color.rgb(112, 131, 164));
@@ -344,6 +344,10 @@ public class RoutePreviewView extends View {
                         if (selected) {
                             canvas.drawPath(edge, routeHaloPaint);
                             canvas.drawPath(edge, selectedRoutePaint);
+                            float markerRadius = dp(5);
+                            markerPaint.setColor(Color.rgb(218, 55, 55));
+                            canvas.drawCircle((x1 + x2) / 2f, (y1 + y2) / 2f,
+                                    markerRadius, markerPaint);
                         } else if (restoreRouteMode) {
                             canvas.drawPath(edge, removedRoutePaint);
                         }
@@ -400,7 +404,7 @@ public class RoutePreviewView extends View {
                 }
             }
         }
-        if (nearestIndex >= 0 && nearestDistance <= dp(54)
+        if (nearestIndex >= 0 && nearestDistance <= dp(90)
                 && routeEdgeTapListener != null) {
             routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
             invalidate();
