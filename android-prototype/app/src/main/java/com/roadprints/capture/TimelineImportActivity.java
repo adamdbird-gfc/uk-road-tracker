@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -55,6 +56,13 @@ public class TimelineImportActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 48, 32, 36);
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int top = insets.getSystemWindowInsetTop();
+            int bottom = insets.getSystemWindowInsetBottom();
+            view.setPadding(32, 48 + top, 32, 36 + bottom);
+            return insets;
+        });
+        root.requestApplyInsets();
 
         TextView title = text("Timeline data", 30, Color.WHITE, true);
         root.addView(title);
@@ -117,7 +125,7 @@ public class TimelineImportActivity extends Activity {
 
         filename.setText("Selected: " + displayName(uri));
         setBusy(true);
-        status.setText("Validating Timeline data…");
+        status.setText("Reading Timeline file locally…");
 
         importer.submit(() -> {
             ImportResult result;
@@ -145,6 +153,7 @@ public class TimelineImportActivity extends Activity {
             while ((line = reader.readLine()) != null) raw.append(line);
         }
 
+        publishStatus("Timeline file read. Finding journeys…");
         JSONObject root = new JSONObject(raw.toString());
         List<JSONObject> segments = findSegments(root);
         if (segments.isEmpty()) {
@@ -152,11 +161,16 @@ public class TimelineImportActivity extends Activity {
                     "No supported Timeline journeys were found in this file.");
         }
 
+        publishStatus("Found " + segments.size() + " journey segments. Importing locally…");
         int added = 0;
         int skipped = 0;
         int invalid = 0;
-        for (JSONObject segment : segments) {
+        for (int index = 0; index < segments.size(); index++) {
+            JSONObject segment = segments.get(index);
             JSONObject journey = journeyFromSegment(segment, fingerprint(raw.toString()));
+            if (index == 0 || (index + 1) % 10 == 0 || index == segments.size() - 1) {
+                publishStatus("Saving journey " + (index + 1) + " of " + segments.size() + " locally…");
+            }
             if (journey == null) {
                 invalid++;
                 continue;
@@ -393,6 +407,12 @@ public class TimelineImportActivity extends Activity {
         } catch (Exception ignored) {
         }
         return result;
+    }
+
+    private void publishStatus(String message) {
+        runOnUiThread(() -> {
+            if (status != null) status.setText(message);
+        });
     }
 
     private void setBusy(boolean busy) {
