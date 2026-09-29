@@ -473,6 +473,9 @@ public class JourneyListActivity extends Activity {
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         double metres = journey.optDouble("distance_meters", 0);
         int points = coordinates == null ? 0 : coordinates.length();
+        List<JSONArray> matchedSegments = matchedRouteSegments(
+                journey.optJSONObject("processing_result"));
+        boolean hasMatchedGeometry = !matchedSegments.isEmpty();
         int side = dp(24);
 
         LinearLayout container = new LinearLayout(this);
@@ -513,8 +516,6 @@ public class JourneyListActivity extends Activity {
         body.addView(previewLabel);
 
         // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
-        List<JSONArray> matchedSegments = matchedRouteSegments(
-                journey.optJSONObject("processing_result"));
         RoutePreviewView preview = new RoutePreviewView(this, coordinates, matchedSegments);
         body.addView(preview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
@@ -626,9 +627,12 @@ public class JourneyListActivity extends Activity {
         if (points < 2) {
             statusText = "Not enough GPS evidence to match this journey";
             statusColor = 0xFFF7C450;
-        } else if ("complete".equals(processingStatus)) {
-            statusText = "✓  Processed";
+        } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
+            statusText = "✓  Processed · matched route available";
             statusColor = 0xFF8BE0B1;
+        } else if ("complete".equals(processingStatus)) {
+            statusText = "No matched route geometry saved · retry matching";
+            statusColor = 0xFFF7C450;
         } else if ("processing".equals(processingStatus)) {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
@@ -671,13 +675,15 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
         secondaryParams.topMargin = dp(8);
-        if ("complete".equals(processingStatus)) {
+        if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             Button refineMatched = styledModalButton(
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
             refineMatched.setOnClickListener(v -> showMatchedRefinement(journey));
             actions.addView(refineMatched, secondaryParams);
         } else if (processableMode && points >= 2) {
-            String buttonLabel = "failed".equals(processingStatus)
+            String buttonLabel = "complete".equals(processingStatus)
+                    ? "RETRY MATCHING"
+                    : "failed".equals(processingStatus)
                     ? (footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH")
                     : "processing".equals(processingStatus) ? "MATCHING…"
                     : (footMode ? "MATCH ON-FOOT JOURNEY" : "MATCH ROAD JOURNEY");
@@ -829,6 +835,7 @@ public class JourneyListActivity extends Activity {
             if (processingState == null) processingState = new JSONObject();
             processingState.put(stageKey, "processing");
             journey.put("processing", processingState);
+            journey.remove("processing_result");
             JourneyStore.save(this, journey);
             button.setEnabled(false);
             button.setText("MATCHING…");
@@ -837,6 +844,10 @@ public class JourneyListActivity extends Activity {
             processor.execute(() -> {
                 try {
                     JSONObject result = postJson(API_BASE_URL + endpoint, payload);
+                    if (matchedRouteSegments(result).isEmpty()) {
+                        throw new IllegalStateException(
+                                "Matcher returned no route geometry to display");
+                    }
                     JSONObject stored = JourneyStore.get(this, journeyId);
                     if (stored == null) throw new IllegalStateException("Journey is no longer available");
                     stored.put("processing_status", "complete");
