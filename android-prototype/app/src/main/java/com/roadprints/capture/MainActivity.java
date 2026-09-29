@@ -20,6 +20,9 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class MainActivity extends Activity {
@@ -294,9 +297,7 @@ public class MainActivity extends Activity {
             JSONObject journey = journeys.get(index);
             double metres = journey.optDouble("distance_meters", 0);
             String mode = journey.optString("mode", "unknown");
-            String started = journey.optString("started_at", "Unknown time")
-                    .replace("T", " ")
-                    .replace("Z", "");
+            String started = displayTime(journey.optString("started_at", "Unknown time"));
             JSONObject geometry = journey.optJSONObject("route_geometry");
             JSONArray coordinates = geometry == null
                     ? null : geometry.optJSONArray("coordinates");
@@ -308,9 +309,56 @@ public class MainActivity extends Activity {
 
         new AlertDialog.Builder(this)
                 .setTitle("Saved journeys")
-                .setItems(rows, null)
+                .setItems(rows, (dialog, which) -> editJourney(journeys.get(which)))
                 .setPositiveButton("Close", null)
                 .show();
+    }
+
+    private void editJourney(JSONObject journey) {
+        Spinner reviewSpinner = new Spinner(this);
+        reviewSpinner.setAdapter(new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+        reviewSpinner.setSelection(modeIndex(journey.optString("mode", "driving")));
+
+        double metres = journey.optDouble("distance_meters", 0);
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null
+                ? null : geometry.optJSONArray("coordinates");
+        int points = coordinates == null ? 0 : coordinates.length();
+
+        TextView message = new TextView(this);
+        message.setText(String.format(
+                "%s\n%.0f m across %d GPS points",
+                displayTime(journey.optString("started_at")), metres, points));
+        message.setTextSize(16);
+        message.setPadding(24, 0, 24, 16);
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(0, 0, 0, 0);
+        container.addView(message);
+        container.addView(reviewSpinner);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Journey details")
+                .setView(container)
+                .setNegativeButton("Close", null)
+                .setPositiveButton("Save transport", (dialog, which) -> {
+                    String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
+                    JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
+                    status.setText("Journey updated to " + selected + ".");
+                })
+                .show();
+    }
+
+    private String displayTime(String value) {
+        try {
+            return DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
+                    .withZone(ZoneId.systemDefault())
+                    .format(Instant.parse(value));
+        } catch (Exception ignored) {
+            return value.replace("T", " ").replace("Z", "");
+        }
     }
 
     private void reviewLatestJourney() {
