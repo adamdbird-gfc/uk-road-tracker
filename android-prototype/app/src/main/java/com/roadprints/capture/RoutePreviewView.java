@@ -104,7 +104,7 @@ public class RoutePreviewView extends View {
         messagePaint.setTextAlign(Paint.Align.CENTER);
         messagePaint.setTextSize(dp(13));
         setBackgroundColor(Color.rgb(239, 246, 250));
-        setMinimumHeight(dp(180));
+        setMinimumHeight(Math.round(dp(180)));
 
         scaleDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
