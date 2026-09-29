@@ -55,6 +55,7 @@ public class JourneyListActivity extends Activity {
 
     private LinearLayout journeyList;
     private TextView count;
+    private TextView readinessSummary;
     private List<JSONObject> journeys;
     private int activeFilter = 0;
     private final List<TextView> filterChips = new ArrayList<>();
@@ -144,7 +145,13 @@ public class JourneyListActivity extends Activity {
         intro.setText("Choose a journey to inspect its route and correct any section that does not belong.");
         intro.setTextSize(16);
         intro.setTextColor(0xFFD3DCED);
-        intro.setPadding(0, 8, 0, 20);
+        intro.setPadding(0, 8, 0, 12);
+
+        readinessSummary = new TextView(this);
+        readinessSummary.setTextSize(12);
+        readinessSummary.setTextColor(0xFFB9C5D8);
+        readinessSummary.setLineSpacing(0, 1.1f);
+        readinessSummary.setPadding(0, 0, 0, 16);
 
         HorizontalScrollView filterScroll = new HorizontalScrollView(this);
         filterScroll.setHorizontalScrollBarEnabled(false);
@@ -184,6 +191,7 @@ public class JourneyListActivity extends Activity {
         content.addView(brandRow);
         content.addView(headingRow);
         content.addView(intro);
+        content.addView(readinessSummary);
         content.addView(filterScroll);
         content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -261,6 +269,7 @@ public class JourneyListActivity extends Activity {
     private void render() {
         if (journeyList == null || journeys == null) return;
         journeyList.removeAllViews();
+        updateReadinessSummary();
         int visible = 0;
         for (JSONObject journey : journeys) {
             if (!"all".equals(FILTER_VALUES[activeFilter])
@@ -302,7 +311,10 @@ public class JourneyListActivity extends Activity {
         label.setTextColor(0xFF67D5CC);
 
         TextView heading = new TextView(this);
-        heading.setText("Captured journey");
+        JSONObject source = journey.optJSONObject("source");
+        boolean imported = source != null
+                && "timeline_import".equals(source.optString("type"));
+        heading.setText(imported ? "Imported journey" : "Captured journey");
         heading.setTextSize(23);
         heading.setTypeface(null, android.graphics.Typeface.BOLD);
         heading.setTextColor(Color.WHITE);
@@ -316,9 +328,11 @@ public class JourneyListActivity extends Activity {
         summary.setPadding(0, 4, 0, 0);
 
         TextView evidence = new TextView(this);
-        evidence.setText(points >= 2 ? "Route captured locally" : "Insufficient GPS evidence");
+        String statusText = journeyStatusText(journey, points);
+        evidence.setText(statusText);
         evidence.setTextSize(14);
-        evidence.setTextColor(points >= 2 ? 0xFF67D5CC : 0xFFF7C450);
+        evidence.setTextColor(statusText.startsWith("Insufficient")
+                || statusText.startsWith("Processing failed") ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
         LinearLayout actions = new LinearLayout(this);
@@ -389,7 +403,7 @@ public class JourneyListActivity extends Activity {
         int points = coordinates == null ? 0 : coordinates.length();
         TextView message = new TextView(this);
         message.setText(String.format(
-                "Start: %s\\nEnd: %s\\nDuration: %s\\n%s • %.0f m • %d GPS points",
+                "Start: %s\nEnd: %s\nDuration: %s\n%s • %.0f m • %d GPS points",
                 displayTime(journey.optString("started_at")),
                 displayTime(journey.optString("ended_at")),
                 journeyDuration(journey),
@@ -442,11 +456,21 @@ public class JourneyListActivity extends Activity {
         Button process = new Button(this);
         String processingStatus = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
-        boolean processableMode = "walking".equals(mode) || "running".equals(mode)
-                || "pedestrian".equals(mode) || "driving".equals(mode)
-                || "bus".equals(mode) || "cycling".equals(mode) || "unknown".equals(mode);
-        process.setText("complete".equals(processingStatus) ? "PROCESSED"
-                : processableMode ? "PROCESS JOURNEY" : "NO ROAD MATCH REQUIRED");
+        boolean footMode = isFootMode(mode);
+        boolean processableMode = footMode || isRoadMode(mode);
+        if (points < 2) {
+            process.setText("NOT ENOUGH GPS EVIDENCE");
+        } else if ("complete".equals(processingStatus)) {
+            process.setText("PROCESSED");
+        } else if ("processing".equals(processingStatus)) {
+            process.setText("PROCESSING…");
+        } else if (!processableMode) {
+            process.setText("NO MATCHING REQUIRED");
+        } else if ("failed".equals(processingStatus)) {
+            process.setText(footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH");
+        } else {
+            process.setText(footMode ? "PROCESS ON-FOOT JOURNEY" : "PROCESS ROAD JOURNEY");
+        }
         process.setEnabled(points >= 2 && processableMode && !"processing".equals(processingStatus)
                 && !"complete".equals(processingStatus));
         process.setOnClickListener(v -> processJourney(journey, process));
@@ -509,8 +533,16 @@ public class JourneyListActivity extends Activity {
             }
             JSONObject payload = new JSONObject().put("points", points);
             String journeyId = journey.optString("journey_id");
+            String stageKey = isFootMode(mode) ? "foot_matching" : "road_matching";
             journey.put("processing_status", "processing");
-            journey.put("stage_statuses", new JSONObject().put("match", "processing"));
+            JSONObject stages = journey.optJSONObject("stage_statuses");
+            if (stages == null) stages = new JSONObject();
+            stages.put(stageKey, "processing");
+            journey.put("stage_statuses", stages);
+            JSONObject processingState = journey.optJSONObject("processing");
+            if (processingState == null) processingState = new JSONObject();
+            processingState.put(stageKey, "processing");
+            journey.put("processing", processingState);
             JourneyStore.save(this, journey);
             button.setEnabled(false);
             button.setText("PROCESSING…");
@@ -520,8 +552,15 @@ public class JourneyListActivity extends Activity {
                     JSONObject stored = JourneyStore.get(this, journeyId);
                     if (stored == null) throw new IllegalStateException("Journey is no longer available");
                     stored.put("processing_status", "complete");
-                    stored.put("stage_statuses", new JSONObject().put("match", "complete"));
-                    stored.put("processing", result);
+                    JSONObject storedStages = stored.optJSONObject("stage_statuses");
+                    if (storedStages == null) storedStages = new JSONObject();
+                    storedStages.put(stageKey, "complete");
+                    stored.put("stage_statuses", storedStages);
+                    JSONObject storedProcessing = stored.optJSONObject("processing");
+                    if (storedProcessing == null) storedProcessing = new JSONObject();
+                    storedProcessing.put(stageKey, "complete");
+                    stored.put("processing", storedProcessing);
+                    stored.put("processing_result", result);
                     stored.put("processing_completed_at", Instant.now().toString());
                     JourneyStore.save(this, stored);
                     mainHandler.post(() -> {
@@ -537,7 +576,14 @@ public class JourneyListActivity extends Activity {
                         if (stored != null) {
                             stored.put("processing_status", "failed");
                             stored.put("error_summary", error.getMessage());
-                            stored.put("stage_statuses", new JSONObject().put("match", "failed"));
+                            JSONObject storedStages = stored.optJSONObject("stage_statuses");
+                            if (storedStages == null) storedStages = new JSONObject();
+                            storedStages.put(stageKey, "failed");
+                            stored.put("stage_statuses", storedStages);
+                            JSONObject storedProcessing = stored.optJSONObject("processing");
+                            if (storedProcessing == null) storedProcessing = new JSONObject();
+                            storedProcessing.put(stageKey, "failed");
+                            stored.put("processing", storedProcessing);
                             JourneyStore.save(this, stored);
                         }
                     } catch (Exception ignored) { }
@@ -583,6 +629,67 @@ public class JourneyListActivity extends Activity {
                     + error.optString("detail", "API request failed"));
         }
         return new JSONObject(body.toString());
+    }
+
+    private void updateReadinessSummary() {
+        if (readinessSummary == null) return;
+        int roadReady = 0;
+        int footReady = 0;
+        int noMatch = 0;
+        int insufficient = 0;
+        int processed = 0;
+        int failed = 0;
+        for (JSONObject journey : journeys) {
+            int points = pointCount(journey);
+            String status = journey.optString("processing_status", "pending");
+            String mode = journey.optString("mode", "unknown");
+            if ("complete".equals(status)) {
+                processed++;
+            } else if ("failed".equals(status)) {
+                failed++;
+            } else if (points < 2) {
+                insufficient++;
+            } else if (isFootMode(mode)) {
+                footReady++;
+            } else if (isRoadMode(mode)) {
+                roadReady++;
+            } else {
+                noMatch++;
+            }
+        }
+        String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
+                + " • " + noMatch + " no matching";
+        String secondLine = "Processed: " + processed + " • Failed: " + failed
+                + " • Needs GPS: " + insufficient;
+        readinessSummary.setText(firstLine + "\n" + secondLine);
+    }
+
+    private int pointCount(JSONObject journey) {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        return coordinates == null ? 0 : coordinates.length();
+    }
+
+    private boolean isFootMode(String mode) {
+        return "walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode);
+    }
+
+    private boolean isRoadMode(String mode) {
+        return "driving".equals(mode) || "bus".equals(mode)
+                || "cycling".equals(mode) || "unknown".equals(mode);
+    }
+
+    private String journeyStatusText(JSONObject journey, int points) {
+        String status = journey.optString("processing_status", "pending");
+        String mode = journey.optString("mode", "unknown");
+        if ("complete".equals(status)) return "Processed by Roadprints";
+        if ("processing".equals(status)) return "Processing journey…";
+        if ("failed".equals(status)) return "Processing failed — retry available";
+        if (points < 2) return "Insufficient GPS evidence";
+        if (isFootMode(mode)) return "Ready for on-foot matching";
+        if (isRoadMode(mode)) return "Ready for road matching";
+        return "No route matching required";
     }
 
     private void shareJourney(JSONObject journey) {
