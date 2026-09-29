@@ -5,13 +5,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public class OnboardingActivity extends Activity {
@@ -24,8 +23,7 @@ public class OnboardingActivity extends Activity {
         getWindow().setStatusBarColor(0xFF0B1C50);
         getWindow().setNavigationBarColor(0xFF0B1C50);
 
-        SharedPreferences preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
-        if (preferences.getBoolean(COMPLETE, false)) {
+        if (getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(COMPLETE, false)) {
             openCapture();
             return;
         }
@@ -33,69 +31,134 @@ public class OnboardingActivity extends Activity {
     }
 
     private void buildScreen() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setBackgroundColor(0xFF0B1C50);
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(36, 72, 36, 36);
-        root.setBackgroundColor(0xFF0B1C50);
+        root.setPadding(24, 28, 24, 36);
 
         ImageView mark = new ImageView(this);
         mark.setImageResource(R.drawable.roadprints_mark);
         mark.setContentDescription("Roadprints");
         mark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        root.addView(mark, new LinearLayout.LayoutParams(112, 112));
+        root.addView(mark, new LinearLayout.LayoutParams(-1, 210));
 
-        TextView brand = text("roadprints", 34, Color.WHITE, true);
+        TextView brand = text("roadprints", 42, Color.WHITE, true);
         brand.setGravity(Gravity.CENTER);
-        brand.setPadding(0, 12, 0, 4);
         root.addView(brand);
 
-        TextView tagline = text("Every journey tells a story.", 17, 0xFF67D5CC, false);
+        TextView tagline = text("Every road tells your story.", 18, 0xFF67D5CC, false);
         tagline.setGravity(Gravity.CENTER);
-        tagline.setPadding(0, 0, 0, 36);
+        tagline.setPadding(0, 8, 0, 38);
         root.addView(tagline);
 
-        TextView intro = text("How would you like to begin?", 22, Color.WHITE, true);
-        intro.setGravity(Gravity.CENTER);
-        intro.setPadding(0, 0, 0, 10);
-        root.addView(intro);
+        TextView eyebrow = text("A QUICK QUESTION", 14, Color.WHITE, true);
+        eyebrow.setLetterSpacing(0.18f);
+        eyebrow.setPadding(0, 0, 0, 12);
+        root.addView(eyebrow);
 
-        TextView explanation = text(
+        TextView question = text("How much of a traveller are you?", 28, Color.WHITE, true);
+        question.setGravity(Gravity.CENTER);
+        root.addView(question);
+
+        TextView copy = text(
+                "Roadprints will use your answer to shape your starting experience.",
+                17, 0xFFD3DCED, false);
+        copy.setGravity(Gravity.CENTER);
+        copy.setPadding(0, 10, 0, 22);
+        root.addView(copy);
+
+        root.addView(choice("Local explorer", "Mostly nearby roads and places."));
+        root.addView(choice("National traveller", "Regular journeys across the country."));
+        root.addView(choice("Always on the move", "Journeys that take you further afield."));
+
+        TextView routes = text("How would you like to begin?", 22, Color.WHITE, true);
+        routes.setGravity(Gravity.CENTER);
+        routes.setPadding(0, 34, 0, 10);
+        root.addView(routes);
+
+        TextView routeCopy = text(
                 "Bring in your Google Timeline journeys, or start building your Roadprints journey from today.",
                 16, 0xFFD3DCED, false);
-        explanation.setGravity(Gravity.CENTER);
-        explanation.setPadding(0, 0, 0, 28);
-        root.addView(explanation);
+        routeCopy.setGravity(Gravity.CENTER);
+        routeCopy.setPadding(0, 0, 0, 18);
+        root.addView(routeCopy);
 
-        Button timeline = routeButton("I HAVE TIMELINE DATA");
-        timeline.setOnClickListener(v -> {
+        root.addView(route("I HAVE TIMELINE DATA", v -> {
             markComplete();
             startActivity(new Intent(this, TimelineImportActivity.class));
-        });
-        root.addView(timeline, buttonParams());
-
-        Button fresh = routeButton("I'M STARTING FRESH");
-        fresh.setOnClickListener(v -> {
+        }));
+        root.addView(route("I'M STARTING FRESH", v -> {
             markComplete();
             openCapture();
-        });
-        root.addView(fresh, buttonParams());
+        }));
 
         if (JourneyStore.count(this) > 0) {
-            Button saved = routeButton("VIEW SAVED JOURNEYS");
-            saved.setOnClickListener(v ->
-                    startActivity(new Intent(this, JourneyListActivity.class)));
-            root.addView(saved, buttonParams());
+            root.addView(route("VIEW SAVED JOURNEYS", v ->
+                    startActivity(new Intent(this, JourneyListActivity.class))));
         }
 
         TextView privacy = text(
                 "Your journey history stays on this device.",
-                13, 0xFF9FB3D0, false);
+                14, 0xFF9FB3D0, false);
         privacy.setGravity(Gravity.CENTER);
-        privacy.setPadding(0, 28, 0, 0);
+        privacy.setPadding(0, 24, 0, 0);
         root.addView(privacy);
 
-        setContentView(root);
+        scroll.addView(root);
+        setContentView(scroll);
+    }
+
+    private TextView choice(String title, String subtitle) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(22, 14, 22, 14);
+        card.setBackgroundColor(0xFF2C4380);
+        card.setClickable(true);
+        card.setOnClickListener(v -> v.setBackgroundColor(0xFF3B579A));
+
+        TextView heading = text(title, 18, Color.WHITE, true);
+        TextView detail = text(subtitle, 14, 0xFFD3DCED, true);
+        card.addView(heading);
+        card.addView(detail);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 78);
+        params.setMargins(0, 0, 0, 12);
+        card.setLayoutParams(params);
+        return cardAsText(card);
+    }
+
+    private TextView cardAsText(LinearLayout card) {
+        TextView proxy = new TextView(this);
+        proxy.setText(((TextView) card.getChildAt(0)).getText() + "\\n" +
+                ((TextView) card.getChildAt(1)).getText());
+        proxy.setTextColor(Color.WHITE);
+        proxy.setTextSize(17);
+        proxy.setTypeface(null, Typeface.BOLD);
+        proxy.setGravity(Gravity.CENTER_VERTICAL);
+        proxy.setPadding(22, 0, 22, 0);
+        proxy.setBackgroundColor(0xFF2C4380);
+        proxy.setClickable(true);
+        proxy.setOnClickListener(v -> v.setBackgroundColor(0xFF3B579A));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 78);
+        params.setMargins(0, 0, 0, 12);
+        proxy.setLayoutParams(params);
+        return proxy;
+    }
+
+    private TextView route(String label, View.OnClickListener listener) {
+        TextView button = text(label, 15, 0xFF0B1C50, true);
+        button.setGravity(Gravity.CENTER);
+        button.setBackgroundColor(0xFFF7C450);
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setOnClickListener(listener);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 58);
+        params.setMargins(0, 0, 0, 14);
+        button.setLayoutParams(params);
+        return button;
     }
 
     private TextView text(String value, float size, int colour, boolean bold) {
@@ -105,24 +168,6 @@ public class OnboardingActivity extends Activity {
         view.setTextColor(colour);
         if (bold) view.setTypeface(null, Typeface.BOLD);
         return view;
-    }
-
-    private Button routeButton(String label) {
-        Button button = new Button(this);
-        button.setText(label);
-        button.setTextSize(14);
-        button.setTextColor(0xFF0B1C50);
-        button.setTypeface(null, Typeface.BOLD);
-        button.setAllCaps(false);
-        button.setBackgroundColor(0xFFF7C450);
-        return button;
-    }
-
-    private LinearLayout.LayoutParams buttonParams() {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 58);
-        params.setMargins(0, 0, 0, 14);
-        return params;
     }
 
     private void markComplete() {
