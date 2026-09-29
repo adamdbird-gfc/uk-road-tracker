@@ -278,6 +278,7 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
+        sortJourneysNewestFirst();
         journeyList.removeAllViews();
         updateReadinessSummary();
         int visible = 0;
@@ -296,6 +297,19 @@ public class JourneyListActivity extends Activity {
             empty.setTextColor(0xFFD3DCED);
             empty.setPadding(0, 28, 0, 28);
             journeyList.addView(empty);
+        }
+    }
+
+    private void sortJourneysNewestFirst() {
+        journeys.sort((left, right) -> Long.compare(
+                journeyStartMillis(right), journeyStartMillis(left)));
+    }
+
+    private long journeyStartMillis(JSONObject journey) {
+        try {
+            return Instant.parse(journey.optString("started_at")).toEpochMilli();
+        } catch (Exception ignored) {
+            return Long.MIN_VALUE;
         }
     }
 
