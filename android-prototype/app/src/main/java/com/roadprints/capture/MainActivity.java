@@ -178,19 +178,19 @@ public class MainActivity extends Activity {
         int footCount = JourneyStore.countByModes(this, "walking");
         int totalCount = JourneyStore.count(this);
 
-        Button deleteRoad = deleteButton("Delete road data", roadCount > 0);
+        TextView deleteRoad = deleteButton("Delete road data", roadCount > 0);
         deleteRoad.setOnClickListener(v -> confirmDeleteData(
                 "Delete road data?",
                 "This removes driving, bus and cycling journeys from this device.",
                 new String[]{"driving", "bus", "cycling"}));
 
-        Button deleteFoot = deleteButton("Delete on-foot data", footCount > 0);
+        TextView deleteFoot = deleteButton("Delete on-foot data", footCount > 0);
         deleteFoot.setOnClickListener(v -> confirmDeleteData(
                 "Delete on-foot data?",
                 "This removes walking journeys from this device.",
                 new String[]{"walking"}));
 
-        Button deleteAll = deleteButton("Delete all saved data", totalCount > 0);
+        TextView deleteAll = deleteButton("Delete all saved data", totalCount > 0);
         deleteAll.setOnClickListener(v -> confirmDeleteAll());
 
         deleteRow.addView(deleteRoad, deleteButtonParams());
@@ -201,23 +201,21 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
-    private Button deleteButton(String label, boolean enabled) {
-        Button button = new Button(this);
+    private TextView deleteButton(String label, boolean enabled) {
+        TextView button = new TextView(this);
         button.setText(label);
-        button.setTextSize(10);
-        button.setAllCaps(false);
+        button.setTextSize(12);
+        button.setGravity(Gravity.CENTER);
         button.setBackgroundColor(android.graphics.Color.TRANSPARENT);
-        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF61739A);
-        button.setEnabled(enabled);
-        button.setAlpha(enabled ? 1f : 0.65f);
-        button.setMinHeight(0);
-        button.setMinWidth(0);
-        button.setPadding(2, 0, 2, 0);
+        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF9FB3D0);
+        button.setClickable(enabled);
+        button.setFocusable(enabled);
+        button.setAlpha(enabled ? 1f : 0.75f);
         return button;
     }
 
     private LinearLayout.LayoutParams deleteButtonParams() {
-        return new LinearLayout.LayoutParams(0, 52, 1f);
+        return new LinearLayout.LayoutParams(0, 48, 1f);
     }
 
     private void confirmDeleteData(String title, String message, String[] modes) {
