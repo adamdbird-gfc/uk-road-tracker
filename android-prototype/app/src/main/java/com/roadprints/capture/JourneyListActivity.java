@@ -171,8 +171,8 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         View bottomNavigation = buildBottomNavigation();
         root.addView(bottomNavigation);
-        applySystemBarInsets(root, content, bottomNavigation);
         setContentView(root);
+        applySystemBarInsets(root, content, bottomNavigation);
     }
 
     private void applySystemBarInsets(View root, View content, View bottomNavigation) {
@@ -181,7 +181,11 @@ public class JourneyListActivity extends Activity {
                 android.graphics.Insets bars =
                         insets.getInsets(WindowInsets.Type.systemBars());
                 content.setPadding(36, 26 + bars.top, 36, 12);
-                bottomNavigation.setPadding(8, 10, 8, 24 + bars.bottom);
+                bottomNavigation.setPadding(8, 8, 8, 8);
+                LinearLayout.LayoutParams navParams =
+                        (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
+                navParams.bottomMargin = bars.bottom;
+                bottomNavigation.setLayoutParams(navParams);
             }
             return insets;
         });
