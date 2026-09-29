@@ -287,7 +287,17 @@ public class MainActivity extends Activity {
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(24, 0, 24, 0);
         TextView message = new TextView(this);
-        message.setText("Was your latest journey recorded using the right transport?");
+        double metres = journey.optDouble("distance_meters", 0);
+        int points = journey.optJSONObject("route_geometry") == null
+                ? 0
+                : journey.optJSONObject("route_geometry")
+                        .optJSONArray("coordinates") == null
+                ? 0
+                : journey.optJSONObject("route_geometry")
+                        .optJSONArray("coordinates").length();
+        message.setText(String.format(
+                "Latest journey: %.0f m across %d GPS points. Was it recorded using the right transport?",
+                metres, points));
         message.setTextSize(16);
         message.setPadding(0, 0, 0, 16);
         container.addView(message);
@@ -301,6 +311,7 @@ public class MainActivity extends Activity {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
                     JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
                     status.setText("Journey updated to " + selected + ".");
+                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
                 })
                 .show();
     }
