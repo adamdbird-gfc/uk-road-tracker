@@ -56,7 +56,7 @@ public final class JourneyStore {
         List<File> files = archiveFiles(context);
         if (files.isEmpty()) return null;
         File latest = Collections.max(files, Comparator.comparingLong(File::lastModified));
-        return read(latest);
+        return upgrade(context, read(latest));
     }
 
     public static synchronized List<JSONObject> all(Context context) {
@@ -65,7 +65,7 @@ public final class JourneyStore {
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
         for (File file : files) {
-            JSONObject journey = read(file);
+            JSONObject journey = upgrade(context, read(file));
             if (journey != null) journeys.add(journey);
         }
         return journeys;
@@ -73,7 +73,8 @@ public final class JourneyStore {
 
     public static synchronized JSONObject get(Context context, String journeyId) {
         migrateLegacy(context);
-        return read(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
+        return upgrade(context, read(
+                new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX)));
     }
 
     public static synchronized void delete(Context context, String journeyId) {
@@ -97,6 +98,18 @@ public final class JourneyStore {
         } catch (Exception error) {
             throw new IllegalStateException("Could not update journey mode", error);
         }
+    }
+
+    private static JSONObject upgrade(Context context, JSONObject journey) {
+        if (journey == null) return null;
+        try {
+            String before = journey.toString();
+            ensureSharedFields(journey);
+            if (!before.equals(journey.toString())) save(context, journey);
+        } catch (Exception ignored) {
+            // Preserve the readable journey even if a best-effort upgrade fails.
+        }
+        return journey;
     }
 
     private static void ensureSharedFields(JSONObject journey)
