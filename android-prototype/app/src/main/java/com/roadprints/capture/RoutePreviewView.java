@@ -45,6 +45,10 @@ public class RoutePreviewView extends View {
     private final List<JSONArray> matchedSegments;
     private final boolean interactive;
     private final boolean showEmptyMessage;
+    private boolean routeEditMode;
+    private Set<Integer> removedRouteEdges = Collections.emptySet();
+    private OnRouteEdgeTapListener routeEdgeTapListener;
+    private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rawRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -74,6 +78,26 @@ public class RoutePreviewView extends View {
     public RoutePreviewView(
             Context context, JSONArray coordinates, List<JSONArray> matchedSegments) {
         this(context, coordinates, matchedSegments, false, false);
+    }
+
+    public interface OnRouteEdgeTapListener {
+        void onRouteEdgeTap(int edgeIndex);
+    }
+
+    public RoutePreviewView(Context context, JSONArray coordinates,
+                            List<JSONArray> matchedSegments, Set<Integer> removedEdges,
+                            OnRouteEdgeTapListener listener) {
+        this(context, coordinates, matchedSegments, true, false);
+        this.routeEditMode = true;
+        this.removedRouteEdges = removedEdges == null ? Collections.emptySet() : removedEdges;
+        this.routeEdgeTapListener = listener;
+        removedRoutePaint.setColor(Color.rgb(190, 55, 55));
+        removedRoutePaint.setStyle(Paint.Style.STROKE);
+        removedRoutePaint.setStrokeWidth(dp(4));
+        removedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
+        removedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
+        removedRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
+                new float[]{dp(7), dp(5)}, 0));
     }
 
     public RoutePreviewView(Context context) {
@@ -144,6 +168,15 @@ public class RoutePreviewView extends View {
             }
 
             @Override
+            public boolean onSingleTapUp(MotionEvent event) {
+                if (RoutePreviewView.this.routeEditMode) {
+                    tapNearestRouteEdge(event.getX(), event.getY());
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
             public boolean onDoubleTap(MotionEvent event) {
                 if (!RoutePreviewView.this.interactive) return false;
                 zoomAt(1.6, event.getX(), event.getY());
@@ -173,7 +206,8 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, rawRoutePaint, null);
             }
             if (hasMatchedRoute) {
-                for (JSONArray segment : matchedSegments) {
+                if (routeEditMode) drawEditableRoutes(canvas);
+                else for (JSONArray segment : matchedSegments) {
                     drawRoute(canvas, segment, routePaint, routeHaloPaint);
                 }
             } else if (hasRoutePoints(coordinates)) {
@@ -265,6 +299,62 @@ public class RoutePreviewView extends View {
             }
         }
         return drawn;
+    }
+
+    private void drawEditableRoutes(Canvas canvas) {
+        int edgeIndex = 0;
+        for (JSONArray route : matchedSegments) {
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                try {
+                    JSONArray first = route.getJSONArray(index - 1);
+                    JSONArray second = route.getJSONArray(index);
+                    Path edge = new Path();
+                    edge.moveTo(screenX(first.getDouble(0)), screenY(first.getDouble(1)));
+                    edge.lineTo(screenX(second.getDouble(0)), screenY(second.getDouble(1)));
+                    canvas.drawPath(edge, routeHaloPaint);
+                    canvas.drawPath(edge, removedRouteEdges.contains(edgeIndex)
+                            ? removedRoutePaint : routePaint);
+                } catch (Exception ignored) {
+                    // Skip a malformed edge without interrupting the remaining route.
+                }
+            }
+        }
+    }
+
+    private void tapNearestRouteEdge(float tapX, float tapY) {
+        int nearestIndex = -1;
+        float nearestDistance = Float.MAX_VALUE;
+        int edgeIndex = 0;
+        for (JSONArray route : matchedSegments) {
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                try {
+                    JSONArray first = route.getJSONArray(index - 1);
+                    JSONArray second = route.getJSONArray(index);
+                    float x1 = screenX(first.getDouble(0));
+                    float y1 = screenY(first.getDouble(1));
+                    float x2 = screenX(second.getDouble(0));
+                    float y2 = screenY(second.getDouble(1));
+                    float dx = x2 - x1;
+                    float dy = y2 - y1;
+                    float lengthSquared = dx * dx + dy * dy;
+                    float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                            ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
+                    float distance = (float) Math.hypot(
+                            tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestIndex = edgeIndex;
+                    }
+                } catch (Exception ignored) {
+                    // Skip a malformed edge.
+                }
+            }
+        }
+        if (nearestIndex >= 0 && nearestDistance <= dp(30)
+                && routeEdgeTapListener != null) {
+            routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
+            invalidate();
+        }
     }
 
     private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {
