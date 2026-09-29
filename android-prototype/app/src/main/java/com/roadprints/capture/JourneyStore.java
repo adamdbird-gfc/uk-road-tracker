@@ -85,6 +85,20 @@ public final class JourneyStore {
         }
     }
 
+    public static synchronized int countByModes(Context context, String... modes) {
+        int count = 0;
+        for (JSONObject journey : all(context)) {
+            String value = journey.optString("mode", "unknown");
+            for (String mode : modes) {
+                if (mode.equals(value)) {
+                    count++;
+                    break;
+                }
+            }
+        }
+        return count;
+    }
+
     public static synchronized int deleteByModes(Context context, String... modes) {
         int deleted = 0;
         List<JSONObject> journeys = all(context);
