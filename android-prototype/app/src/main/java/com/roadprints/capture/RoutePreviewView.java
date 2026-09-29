@@ -10,6 +10,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.LruCache;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -26,7 +27,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -49,7 +49,7 @@ public class RoutePreviewView extends View {
     private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final ConcurrentMap<String, Bitmap> tileBitmaps = new ConcurrentHashMap<>();
+    private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
     private final ScaleGestureDetector scaleDetector;
