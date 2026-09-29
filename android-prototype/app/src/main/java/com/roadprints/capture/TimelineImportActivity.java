@@ -6,6 +6,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.util.JsonReader;
+import android.util.JsonToken;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -16,6 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -144,56 +147,70 @@ public class TimelineImportActivity extends Activity {
     }
 
     private ImportResult importFile(Uri uri) throws Exception {
-        StringBuilder raw = new StringBuilder();
-        try (InputStream input = getContentResolver().openInputStream(uri);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(
-                     input, StandardCharsets.UTF_8))) {
-            if (input == null) throw new IllegalStateException("The selected file could not be opened.");
-            char[] buffer = new char[32768];
-            int read;
-            long total = 0;
-            long nextReport = 1024 * 1024;
-            while ((read = reader.read(buffer)) != -1) {
-                raw.append(buffer, 0, read);
-                total += read;
-                if (total >= nextReport) {
-                    publishStatus("Reading Timeline file locally… " + formatBytes(total));
-                    nextReport += 1024 * 1024;
-                }
-            }
-        }
-
-        publishStatus("Timeline file read. Finding journeys…");
-        String fileContents = raw.toString();
-        String fileFingerprint = fingerprint(fileContents);
-        JSONObject root = new JSONObject(fileContents);
-        List<JSONObject> segments = findSegments(root);
-        if (segments.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "No supported Timeline journeys were found in this file.");
-        }
-
-        publishStatus("Found " + segments.size() + " journey segments. Importing locally…");
         int added = 0;
         int skipped = 0;
         int invalid = 0;
-        for (int index = 0; index < segments.size(); index++) {
-            JSONObject segment = segments.get(index);
-            JSONObject journey = journeyFromSegment(segment, fileFingerprint);
-            if (index == 0 || (index + 1) % 10 == 0 || index == segments.size() - 1) {
-                publishStatus("Saving journey " + (index + 1) + " of " + segments.size() + " locally…");
+        int found = 0;
+        String fileFingerprint = fingerprint(uri.toString());
+
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             InputStreamReader inputReader = new InputStreamReader(input, StandardCharsets.UTF_8);
+             JsonReader reader = new JsonReader(inputReader)) {
+            if (input == null) {
+                throw new IllegalStateException("The selected file could not be opened.");
             }
-            if (journey == null) {
-                invalid++;
-                continue;
+
+            if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+                throw new IllegalArgumentException("This Timeline file is not in a supported JSON format.");
             }
-            String id = journey.optString("journey_id");
-            if (JourneyStore.get(this, id) != null) {
-                skipped++;
-            } else {
-                JourneyStore.save(this, journey);
-                added++;
+
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                if ("semanticSegments".equals(name)) {
+                    if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+                        reader.skipValue();
+                        continue;
+                    }
+                    reader.beginArray();
+                    while (reader.hasNext()) {
+                        JSONObject segment = readJsonObject(reader);
+                        found++;
+                        ImportCounts counts = importSegment(segment, fileFingerprint);
+                        added += counts.added;
+                        skipped += counts.skipped;
+                        invalid += counts.invalid;
+                        publishImportProgress(found, added, skipped, invalid);
+                    }
+                    reader.endArray();
+                } else if ("timelineObjects".equals(name)) {
+                    if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+                        reader.skipValue();
+                        continue;
+                    }
+                    reader.beginArray();
+                    while (reader.hasNext()) {
+                        JSONObject wrapper = readJsonObject(reader);
+                        JSONObject segment = wrapper.optJSONObject("activitySegment");
+                        if (segment == null) continue;
+                        found++;
+                        ImportCounts counts = importSegment(segment, fileFingerprint);
+                        added += counts.added;
+                        skipped += counts.skipped;
+                        invalid += counts.invalid;
+                        publishImportProgress(found, added, skipped, invalid);
+                    }
+                    reader.endArray();
+                } else {
+                    reader.skipValue();
+                }
             }
+            reader.endObject();
+        }
+
+        if (found == 0) {
+            throw new IllegalArgumentException(
+                    "No supported Timeline journeys were found in this file.");
         }
 
         return new ImportResult(
@@ -201,6 +218,84 @@ public class TimelineImportActivity extends Activity {
                 String.format(Locale.UK,
                         "Import complete: %d added, %d already present, %d unsupported.",
                         added, skipped, invalid));
+    }
+
+    private ImportCounts importSegment(JSONObject segment, String fileFingerprint) {
+        JSONObject journey = journeyFromSegment(segment, fileFingerprint);
+        if (journey == null) return new ImportCounts(0, 0, 1);
+        String id = journey.optString("journey_id");
+        if (JourneyStore.get(this, id) != null) {
+            return new ImportCounts(0, 1, 0);
+        }
+        JourneyStore.save(this, journey);
+        return new ImportCounts(1, 0, 0);
+    }
+
+    private void publishImportProgress(int found, int added, int skipped, int invalid) {
+        if (found == 1 || found % 10 == 0) {
+            publishStatus(String.format(Locale.UK,
+                    "Imported %d journeys locally… %d new, %d already present.",
+                    found, added, skipped));
+        }
+    }
+
+    private JSONObject readJsonObject(JsonReader reader) throws Exception {
+        Object value = readJsonValue(reader);
+        if (!(value instanceof JSONObject)) {
+            throw new IllegalArgumentException("Timeline segment was not a JSON object.");
+        }
+        return (JSONObject) value;
+    }
+
+    private Object readJsonValue(JsonReader reader) throws Exception {
+        JsonToken token = reader.peek();
+        switch (token) {
+            case BEGIN_OBJECT:
+                JSONObject object = new JSONObject();
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    object.put(reader.nextName(), readJsonValue(reader));
+                }
+                reader.endObject();
+                return object;
+            case BEGIN_ARRAY:
+                JSONArray array = new JSONArray();
+                reader.beginArray();
+                while (reader.hasNext()) array.put(readJsonValue(reader));
+                reader.endArray();
+                return array;
+            case STRING:
+                return reader.nextString();
+            case NUMBER:
+                String number = reader.nextString();
+                try {
+                    return number.contains(".")
+                            ? Double.parseDouble(number)
+                            : Long.parseLong(number);
+                } catch (NumberFormatException ignored) {
+                    return number;
+                }
+            case BOOLEAN:
+                return reader.nextBoolean();
+            case NULL:
+                reader.nextNull();
+                return JSONObject.NULL;
+            default:
+                reader.skipValue();
+                return JSONObject.NULL;
+        }
+    }
+
+    private static final class ImportCounts {
+        final int added;
+        final int skipped;
+        final int invalid;
+
+        ImportCounts(int added, int skipped, int invalid) {
+            this.added = added;
+            this.skipped = skipped;
+            this.invalid = invalid;
+        }
     }
 
     private List<JSONObject> findSegments(JSONObject root) {
