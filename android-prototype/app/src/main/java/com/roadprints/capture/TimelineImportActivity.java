@@ -151,6 +151,9 @@ public class TimelineImportActivity extends Activity {
         int skipped = 0;
         int invalid = 0;
         int found = 0;
+        int journeyRecordsParsed = 0;
+        int journeysWithIntermediateTrace = 0;
+        int sourceRoutePointsFound = 0;
         String fileFingerprint = fingerprint(uri.toString());
 
         try (InputStream input = getContentResolver().openInputStream(uri);
@@ -180,6 +183,9 @@ public class TimelineImportActivity extends Activity {
                         added += counts.added;
                         skipped += counts.skipped;
                         invalid += counts.invalid;
+                        journeyRecordsParsed += counts.recordsParsed;
+                        journeysWithIntermediateTrace += counts.withIntermediateTrace;
+                        sourceRoutePointsFound += counts.sourceRoutePoints;
                         publishImportProgress(found, added, skipped, invalid);
                     }
                     reader.endArray();
@@ -198,6 +204,9 @@ public class TimelineImportActivity extends Activity {
                         added += counts.added;
                         skipped += counts.skipped;
                         invalid += counts.invalid;
+                        journeyRecordsParsed += counts.recordsParsed;
+                        journeysWithIntermediateTrace += counts.withIntermediateTrace;
+                        sourceRoutePointsFound += counts.sourceRoutePoints;
                         publishImportProgress(found, added, skipped, invalid);
                     }
                     reader.endArray();
@@ -214,21 +223,30 @@ public class TimelineImportActivity extends Activity {
         }
 
         return new ImportResult(
-                added, skipped, invalid,
+                added, skipped, invalid, journeyRecordsParsed,
+                journeysWithIntermediateTrace, sourceRoutePointsFound,
                 String.format(Locale.UK,
-                        "Import complete: %d added, %d already present, %d unsupported.",
-                        added, skipped, invalid));
+                        "Import complete: %d added, %d already present, %d unsupported. "
+                                + "Timeline paths: %d route points across %d journeys; "
+                                + "%d journeys contain intermediate points.",
+                        added, skipped, invalid, sourceRoutePointsFound,
+                        journeyRecordsParsed, journeysWithIntermediateTrace));
     }
 
     private ImportCounts importSegment(JSONObject segment, String fileFingerprint) {
         JSONObject journey = journeyFromSegment(segment, fileFingerprint);
-        if (journey == null) return new ImportCounts(0, 0, 1);
+        if (journey == null) return new ImportCounts(0, 0, 1, 0, 0, 0);
         String id = journey.optString("journey_id");
+        JSONObject quality = journey.optJSONObject("capture_quality");
+        int gpsPoints = quality == null ? 0 : quality.optInt("gps_points", 0);
+        int sourceRoutePoints = quality == null
+                ? 0 : quality.optInt("source_route_points", 0);
+        int withIntermediateTrace = gpsPoints > 2 ? 1 : 0;
         if (JourneyStore.get(this, id) != null) {
-            return new ImportCounts(0, 1, 0);
+            return new ImportCounts(0, 1, 0, 1, withIntermediateTrace, sourceRoutePoints);
         }
         JourneyStore.save(this, journey);
-        return new ImportCounts(1, 0, 0);
+        return new ImportCounts(1, 0, 0, 1, withIntermediateTrace, sourceRoutePoints);
     }
 
     private void publishImportProgress(int found, int added, int skipped, int invalid) {
@@ -290,11 +308,18 @@ public class TimelineImportActivity extends Activity {
         final int added;
         final int skipped;
         final int invalid;
+        final int recordsParsed;
+        final int withIntermediateTrace;
+        final int sourceRoutePoints;
 
-        ImportCounts(int added, int skipped, int invalid) {
+        ImportCounts(int added, int skipped, int invalid, int recordsParsed,
+                     int withIntermediateTrace, int sourceRoutePoints) {
             this.added = added;
             this.skipped = skipped;
             this.invalid = invalid;
+            this.recordsParsed = recordsParsed;
+            this.withIntermediateTrace = withIntermediateTrace;
+            this.sourceRoutePoints = sourceRoutePoints;
         }
     }
 
@@ -340,9 +365,11 @@ public class TimelineImportActivity extends Activity {
             if (started.isEmpty() || ended.isEmpty()) return null;
 
             List<double[]> points = new ArrayList<>();
+            int sourceRoutePoints = 0;
             if (semantic) {
                 JSONArray path = segment.optJSONArray("timelinePath");
                 if (path != null) {
+                    sourceRoutePoints = path.length();
                     for (int i = 0; i < path.length(); i++) {
                         JSONObject point = path.optJSONObject(i);
                         if (point != null) addPoint(points, point.optString("point", ""));
@@ -351,6 +378,7 @@ public class TimelineImportActivity extends Activity {
             } else {
                 JSONArray path = activity.optJSONArray("waypointPath");
                 if (path != null) {
+                    sourceRoutePoints = path.length();
                     for (int i = 0; i < path.length(); i++) {
                         addPoint(points, path.optString(i, ""));
                     }
@@ -401,6 +429,7 @@ public class TimelineImportActivity extends Activity {
                     .put("stops", new JSONArray())
                     .put("capture_quality", new JSONObject()
                             .put("gps_points", points.size())
+                            .put("source_route_points", sourceRoutePoints)
                             .put("distance_meters", distance)
                             .put("status", points.size() >= 2
                                     ? "usable" : "insufficient_gps_data"));
@@ -567,13 +596,24 @@ public class TimelineImportActivity extends Activity {
         final int added;
         final int skipped;
         final int invalid;
+        final int recordsParsed;
+        final int journeysWithIntermediateTrace;
+        final int sourceRoutePoints;
         final String message;
 
-        ImportResult(int added, int skipped, int invalid, String message) {
+        ImportResult(int added, int skipped, int invalid, int recordsParsed,
+                     int journeysWithIntermediateTrace, int sourceRoutePoints, String message) {
             this.added = added;
             this.skipped = skipped;
             this.invalid = invalid;
+            this.recordsParsed = recordsParsed;
+            this.journeysWithIntermediateTrace = journeysWithIntermediateTrace;
+            this.sourceRoutePoints = sourceRoutePoints;
             this.message = message;
+        }
+
+        ImportResult(int added, int skipped, int invalid, String message) {
+            this(added, skipped, invalid, 0, 0, 0, message);
         }
     }
 }
