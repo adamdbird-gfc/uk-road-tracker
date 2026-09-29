@@ -5,10 +5,12 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
@@ -167,8 +169,23 @@ public class JourneyListActivity extends Activity {
 
         root.addView(content, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        root.addView(buildBottomNavigation());
+        View bottomNavigation = buildBottomNavigation();
+        root.addView(bottomNavigation);
+        applySystemBarInsets(root, content, bottomNavigation);
         setContentView(root);
+    }
+
+    private void applySystemBarInsets(View root, View content, View bottomNavigation) {
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars =
+                        insets.getInsets(WindowInsets.Type.systemBars());
+                content.setPadding(36, 26 + bars.top, 36, 12);
+                bottomNavigation.setPadding(8, 10, 8, 24 + bars.bottom);
+            }
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     private View buildBottomNavigation() {
