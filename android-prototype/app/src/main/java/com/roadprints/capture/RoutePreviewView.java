@@ -343,7 +343,20 @@ public class RoutePreviewView extends View {
                     "Roadprints/" + BuildConfig.VERSION_NAME
                             + " (https://github.com/adamdbird-gfc/uk-road-tracker)");
             connection.setRequestProperty("Accept", "image/png");
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return;
+            File etagFile = tileFile(tile.getName(), ".etag");
+            File modifiedFile = tileFile(tile.getName(), ".modified");
+            String etag = readText(etagFile);
+            String lastModified = readText(modifiedFile);
+            if (etag.length() > 0) connection.setRequestProperty("If-None-Match", etag);
+            if (lastModified.length() > 0) {
+                connection.setRequestProperty("If-Modified-Since", lastModified);
+            }
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                writeExpiry(expiryFile, responseExpiry(connection));
+                return;
+            }
+            if (responseCode != HttpURLConnection.HTTP_OK) return;
 
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             try (InputStream input = connection.getInputStream()) {
@@ -360,10 +373,9 @@ public class RoutePreviewView extends View {
             if (tile.exists()) tile.delete();
             if (!temporary.renameTo(tile)) temporary.delete();
 
-            long expiry = responseExpiry(connection);
-            try (FileOutputStream output = new FileOutputStream(expiryFile)) {
-                output.write(String.valueOf(expiry).getBytes("UTF-8"));
-            }
+            writeExpiry(expiryFile, responseExpiry(connection));
+            writeText(etagFile, connection.getHeaderField("ETag"));
+            writeText(modifiedFile, connection.getHeaderField("Last-Modified"));
         } catch (Exception ignored) {
             // Cached tiles and the journey route remain available if the network is offline.
         } finally {
@@ -387,6 +399,29 @@ public class RoutePreviewView extends View {
         }
         long expires = connection.getExpiration();
         return expires > now ? expires : now + DEFAULT_TILE_TTL_MS;
+    }
+
+    private void writeExpiry(File file, long expiry) {
+        writeText(file, String.valueOf(expiry));
+    }
+
+    private void writeText(File file, String value) {
+        if (value == null || value.length() == 0) return;
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            output.write(value.getBytes("UTF-8"));
+        } catch (Exception ignored) { }
+    }
+
+    private String readText(File file) {
+        if (!file.exists()) return "";
+        try (InputStream input = new java.io.FileInputStream(file)) {
+            byte[] data = new byte[(int) Math.min(file.length(), 2048)];
+            int length = input.read(data);
+            if (length <= 0) return "";
+            return new String(data, 0, length, "UTF-8");
+        } catch (Exception ignored) {
+            return "";
+        }
     }
 
     private long readExpiry(File file) {
