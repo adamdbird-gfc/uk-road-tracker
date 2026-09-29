@@ -266,6 +266,12 @@ public class JourneyListActivity extends Activity {
 
             LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, 68, 1);
             nav.addView(item, itemParams);
+            if (index == 0) {
+                item.setClickable(true);
+                item.setFocusable(true);
+                item.setOnClickListener(v ->
+                        startActivity(new Intent(this, MapActivity.class)));
+            }
         }
         return nav;
     }
