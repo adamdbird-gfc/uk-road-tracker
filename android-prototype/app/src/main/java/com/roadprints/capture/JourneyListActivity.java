@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -26,12 +28,23 @@ import org.json.JSONObject;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class JourneyListActivity extends Activity {
+    private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
+    private final ExecutorService processor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
             "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
             "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry"
@@ -55,6 +68,12 @@ public class JourneyListActivity extends Activity {
         buildScreen();
         journeys = JourneyStore.all(this);
         render();
+    }
+
+    @Override
+    protected void onDestroy() {
+        processor.shutdownNow();
+        super.onDestroy();
     }
 
     private void buildScreen() {
@@ -420,6 +439,19 @@ public class JourneyListActivity extends Activity {
         });
         container.addView(saveTransport);
 
+        Button process = new Button(this);
+        String processingStatus = journey.optString("processing_status", "pending");
+        String mode = journey.optString("mode", "unknown");
+        boolean processableMode = "walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode) || "driving".equals(mode)
+                || "bus".equals(mode) || "cycling".equals(mode) || "unknown".equals(mode);
+        process.setText("complete".equals(processingStatus) ? "PROCESSED"
+                : processableMode ? "PROCESS JOURNEY" : "NO ROAD MATCH REQUIRED");
+        process.setEnabled(points >= 2 && processableMode && !"processing".equals(processingStatus)
+                && !"complete".equals(processingStatus));
+        process.setOnClickListener(v -> processJourney(journey, process));
+        container.addView(process);
+
         Button share = new Button(this);
         share.setText("Share journey JSON");
         share.setOnClickListener(v -> shareJourney(journey));
@@ -450,6 +482,107 @@ public class JourneyListActivity extends Activity {
                     Toast.makeText(this, "Journey deleted", Toast.LENGTH_SHORT).show();
                 })
                 .show();
+    }
+
+    private void processJourney(JSONObject journey, Button button) {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (coordinates == null || coordinates.length() < 2) {
+            Toast.makeText(this, "At least two GPS points are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String mode = journey.optString("mode", "unknown");
+        String endpoint = ("walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode)) ? "/match-walking" : "/match";
+        try {
+            JSONArray points = new JSONArray();
+            for (int index = 0; index < coordinates.length(); index++) {
+                JSONArray coordinate = coordinates.optJSONArray(index);
+                if (coordinate != null && coordinate.length() >= 2
+                        && !coordinate.isNull(0) && !coordinate.isNull(1)) {
+                    points.put(new JSONObject().put("lat", coordinate.optDouble(1))
+                            .put("lng", coordinate.optDouble(0)));
+                }
+            }
+            if (points.length() < 2) {
+                throw new IllegalStateException("At least two valid GPS points are required");
+            }
+            JSONObject payload = new JSONObject().put("points", points);
+            String journeyId = journey.optString("journey_id");
+            journey.put("processing_status", "processing");
+            journey.put("stage_statuses", new JSONObject().put("match", "processing"));
+            JourneyStore.save(this, journey);
+            button.setEnabled(false);
+            button.setText("PROCESSING…");
+            processor.execute(() -> {
+                try {
+                    JSONObject result = postJson(API_BASE_URL + endpoint, payload);
+                    JSONObject stored = JourneyStore.get(this, journeyId);
+                    if (stored == null) throw new IllegalStateException("Journey is no longer available");
+                    stored.put("processing_status", "complete");
+                    stored.put("stage_statuses", new JSONObject().put("match", "complete"));
+                    stored.put("processing", result);
+                    stored.put("processing_completed_at", Instant.now().toString());
+                    JourneyStore.save(this, stored);
+                    mainHandler.post(() -> {
+                        button.setEnabled(true);
+                        button.setText("PROCESSED");
+                        journeys = JourneyStore.all(this);
+                        render();
+                        Toast.makeText(this, "Journey processed by Roadprints", Toast.LENGTH_SHORT).show();
+                    });
+                } catch (Exception error) {
+                    try {
+                        JSONObject stored = JourneyStore.get(this, journeyId);
+                        if (stored != null) {
+                            stored.put("processing_status", "failed");
+                            stored.put("error_summary", error.getMessage());
+                            stored.put("stage_statuses", new JSONObject().put("match", "failed"));
+                            JourneyStore.save(this, stored);
+                        }
+                    } catch (Exception ignored) { }
+                    mainHandler.post(() -> {
+                        button.setEnabled(true);
+                        button.setText("RETRY PROCESSING");
+                        Toast.makeText(this, "Processing failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
+        } catch (Exception error) {
+            button.setEnabled(true);
+            button.setText("PROCESS JOURNEY");
+            Toast.makeText(this, "Could not prepare journey: " + error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private JSONObject postJson(String urlValue, JSONObject payload) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(urlValue).openConnection();
+        connection.setRequestMethod("POST");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(90000);
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        try (OutputStream output = connection.getOutputStream()) {
+            output.write(payload.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        int status = connection.getResponseCode();
+        java.io.InputStream stream = status >= 200 && status < 300
+                ? connection.getInputStream() : connection.getErrorStream();
+        StringBuilder body = new StringBuilder();
+        if (stream != null) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) body.append(line);
+            }
+        }
+        if (status < 200 || status >= 300) {
+            JSONObject error = new JSONObject(body.length() == 0 ? "{}" : body.toString());
+            throw new IllegalStateException("HTTP " + status + ": "
+                    + error.optString("detail", "API request failed"));
+        }
+        return new JSONObject(body.toString());
     }
 
     private void shareJourney(JSONObject journey) {
