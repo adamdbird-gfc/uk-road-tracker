@@ -155,6 +155,8 @@ public class TimelineImportActivity extends Activity {
         int journeysWithIntermediateTrace = 0;
         int sourceRoutePointsFound = 0;
         String fileFingerprint = fingerprint(uri.toString());
+        List<JSONObject> semanticSegments = new ArrayList<>();
+        List<TimedPoint> semanticPathPoints = new ArrayList<>();
 
         try (InputStream input = getContentResolver().openInputStream(uri);
              InputStreamReader inputReader = new InputStreamReader(input, StandardCharsets.UTF_8);
@@ -179,14 +181,12 @@ public class TimelineImportActivity extends Activity {
                     while (reader.hasNext()) {
                         JSONObject segment = readJsonObject(reader);
                         found++;
-                        ImportCounts counts = importSegment(segment, fileFingerprint);
-                        added += counts.added;
-                        skipped += counts.skipped;
-                        invalid += counts.invalid;
-                        journeyRecordsParsed += counts.recordsParsed;
-                        journeysWithIntermediateTrace += counts.withIntermediateTrace;
-                        sourceRoutePointsFound += counts.sourceRoutePoints;
-                        publishImportProgress(found, added, skipped, invalid);
+                        collectTimelinePathPoints(segment, semanticPathPoints);
+                        if (segment.optJSONObject("activity") != null) {
+                            semanticSegments.add(segment);
+                        } else {
+                            invalid++;
+                        }
                     }
                     reader.endArray();
                 } else if ("timelineObjects".equals(name)) {
@@ -200,7 +200,7 @@ public class TimelineImportActivity extends Activity {
                         JSONObject segment = wrapper.optJSONObject("activitySegment");
                         if (segment == null) continue;
                         found++;
-                        ImportCounts counts = importSegment(segment, fileFingerprint);
+                        ImportCounts counts = importSegment(segment, fileFingerprint, null);
                         added += counts.added;
                         skipped += counts.skipped;
                         invalid += counts.invalid;
@@ -215,6 +215,18 @@ public class TimelineImportActivity extends Activity {
                 }
             }
             reader.endObject();
+        }
+
+        semanticPathPoints.sort((left, right) -> Long.compare(left.timeMs, right.timeMs));
+        for (JSONObject segment : semanticSegments) {
+            ImportCounts counts = importSegment(segment, fileFingerprint, semanticPathPoints);
+            added += counts.added;
+            skipped += counts.skipped;
+            invalid += counts.invalid;
+            journeyRecordsParsed += counts.recordsParsed;
+            journeysWithIntermediateTrace += counts.withIntermediateTrace;
+            sourceRoutePointsFound += counts.sourceRoutePoints;
+            publishImportProgress(++found, added, skipped, invalid);
         }
 
         if (found == 0) {
@@ -233,8 +245,9 @@ public class TimelineImportActivity extends Activity {
                         journeyRecordsParsed, journeysWithIntermediateTrace));
     }
 
-    private ImportCounts importSegment(JSONObject segment, String fileFingerprint) {
-        JSONObject journey = journeyFromSegment(segment, fileFingerprint);
+    private ImportCounts importSegment(
+            JSONObject segment, String fileFingerprint, List<TimedPoint> pathPoints) {
+        JSONObject journey = journeyFromSegment(segment, fileFingerprint, pathPoints);
         if (journey == null) return new ImportCounts(0, 0, 1, 0, 0, 0);
         String id = journey.optString("journey_id");
         JSONObject quality = journey.optJSONObject("capture_quality");
@@ -349,7 +362,8 @@ public class TimelineImportActivity extends Activity {
         return result;
     }
 
-    private JSONObject journeyFromSegment(JSONObject segment, String fileFingerprint) {
+    private JSONObject journeyFromSegment(
+            JSONObject segment, String fileFingerprint, List<TimedPoint> timelinePathPoints) {
         try {
             boolean semantic = segment.has("activity");
             JSONObject activity = semantic
@@ -365,38 +379,48 @@ public class TimelineImportActivity extends Activity {
             if (started.isEmpty() || ended.isEmpty()) return null;
 
             List<double[]> points = new ArrayList<>();
+            addLocationPoint(points, semantic
+                    ? activity.optJSONObject("start")
+                    : activity.optJSONObject("startLocation"));
+
             int sourceRoutePoints = 0;
-            if (semantic) {
-                JSONArray path = segment.optJSONArray("timelinePath");
-                if (path != null) {
-                    sourceRoutePoints = path.length();
-                    for (int i = 0; i < path.length(); i++) {
-                        JSONObject point = path.optJSONObject(i);
-                        if (point != null) addPoint(points, point.optString("point", ""));
+            if (semantic && timelinePathPoints != null) {
+                long startMs = parseTimelineTime(started);
+                long endMs = parseTimelineTime(ended);
+                for (int i = lowerBound(timelinePathPoints, startMs);
+                     i < timelinePathPoints.size(); i++) {
+                    TimedPoint pathPoint = timelinePathPoints.get(i);
+                    if (pathPoint.timeMs > endMs) break;
+                    if (pathPoint.timeMs >= startMs
+                            && appendUniquePoint(points, pathPoint.coordinates)) {
+                        sourceRoutePoints++;
                     }
                 }
-            } else {
+            } else if (!semantic) {
                 JSONArray path = activity.optJSONArray("waypointPath");
                 if (path != null) {
-                    sourceRoutePoints = path.length();
                     for (int i = 0; i < path.length(); i++) {
-                        addPoint(points, path.optString(i, ""));
+                        List<double[]> parsed = new ArrayList<>(1);
+                        addPoint(parsed, path.optString(i, ""));
+                        if (!parsed.isEmpty()
+                                && appendUniquePoint(points, parsed.get(0))) {
+                            sourceRoutePoints++;
+                        }
                     }
                 }
             }
 
-            addPoint(points, pointValue(semantic
-                    ? activity.optJSONObject("start")
-                    : activity.optJSONObject("startLocation")));
-            addPoint(points, pointValue(semantic
+            addLocationPoint(points, semantic
                     ? activity.optJSONObject("end")
-                    : activity.optJSONObject("endLocation")));
+                    : activity.optJSONObject("endLocation"));
 
             if (points.isEmpty()) return null;
 
             String mode = modeFor(activity, semantic);
             double distance = distanceFor(activity, points);
-            String id = "timeline-" + fingerprint(started + "|" + ended + "|" + mode + "|" + coordinateKey(points));
+            String idMode = "unknown".equals(mode) ? "driving" : mode;
+            String id = "timeline-" + fingerprint(
+                    started + "|" + ended + "|" + idMode + "|" + coordinateKey(points));
 
             JSONObject coordinates = new JSONObject();
             coordinates.put("type", "LineString");
@@ -435,6 +459,120 @@ public class TimelineImportActivity extends Activity {
                                     ? "usable" : "insufficient_gps_data"));
         } catch (Exception error) {
             return null;
+        }
+    }
+
+    private void collectTimelinePathPoints(
+            JSONObject segment, List<TimedPoint> destination) {
+        JSONArray path = segment.optJSONArray("timelinePath");
+        if (path == null) return;
+        for (int i = 0; i < path.length(); i++) {
+            JSONObject item = path.optJSONObject(i);
+            if (item == null) continue;
+            long timeMs = parseTimelineTime(item.optString("time", ""));
+            double[] coordinates = parseCoordinates(item.opt("point"));
+            if (timeMs >= 0 && coordinates != null) {
+                destination.add(new TimedPoint(timeMs, coordinates));
+            }
+        }
+    }
+
+    private long parseTimelineTime(String value) {
+        try {
+            return Instant.parse(value).toEpochMilli();
+        } catch (Exception ignored) {
+            return -1L;
+        }
+    }
+
+    private int lowerBound(List<TimedPoint> points, long timeMs) {
+        int low = 0;
+        int high = points.size();
+        while (low < high) {
+            int mid = (low + high) >>> 1;
+            if (points.get(mid).timeMs < timeMs) low = mid + 1;
+            else high = mid;
+        }
+        return low;
+    }
+
+    private double[] parseCoordinates(Object value) {
+        if (value == null || value == JSONObject.NULL) return null;
+        if (value instanceof String) {
+            List<double[]> parsed = new ArrayList<>(1);
+            addPoint(parsed, (String) value);
+            return parsed.isEmpty() ? null : parsed.get(0);
+        }
+        if (value instanceof JSONObject) {
+            JSONObject object = (JSONObject) value;
+            Object nested = object.opt("point");
+            if (nested == null) nested = object.opt("geo");
+            if (nested == null) nested = object.opt("latLng");
+            if (nested == null) nested = object.opt("location");
+
+            Double lat = numberValue(object.opt("latitude"));
+            if (lat == null) lat = numberValue(object.opt("lat"));
+            if (lat == null) {
+                Double e7 = numberValue(object.opt("latitudeE7"));
+                if (e7 != null) lat = e7 / 10000000.0;
+            }
+            Double lng = numberValue(object.opt("longitude"));
+            if (lng == null) lng = numberValue(object.opt("lng"));
+            if (lng == null) lng = numberValue(object.opt("lon"));
+            if (lng == null) {
+                Double e7 = numberValue(object.opt("longitudeE7"));
+                if (e7 != null) lng = e7 / 10000000.0;
+            }
+            if (lat != null && lng != null
+                    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                return new double[]{lat, lng};
+            }
+            if (nested != null && nested != value) return parseCoordinates(nested);
+        }
+        return null;
+    }
+
+    private Double numberValue(Object value) {
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private void addLocationPoint(List<double[]> points, JSONObject location) {
+        if (location == null) return;
+        double[] coordinates = parseCoordinates(location.opt("latLng"));
+        if (coordinates == null) {
+            coordinates = parseCoordinates(location);
+        }
+        if (coordinates != null) appendUniquePoint(points, coordinates);
+    }
+
+    private boolean appendUniquePoint(List<double[]> points, double[] point) {
+        if (point == null) return false;
+        if (!points.isEmpty()) {
+            double[] last = points.get(points.size() - 1);
+            if (Math.abs(last[0] - point[0]) < 0.0000001
+                    && Math.abs(last[1] - point[1]) < 0.0000001) {
+                return false;
+            }
+        }
+        points.add(point);
+        return true;
+    }
+
+    private static final class TimedPoint {
+        final long timeMs;
+        final double[] coordinates;
+
+        TimedPoint(long timeMs, double[] coordinates) {
+            this.timeMs = timeMs;
+            this.coordinates = coordinates;
         }
     }
 
