@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.view.Gravity;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -31,8 +30,8 @@ public class TimelineImportActivity extends Activity {
     private static final int PICK_TIMELINE = 81;
     private TextView status;
     private TextView filename;
-    private Button choose;
-    private Button capture;
+    private TextView choose;
+    private TextView capture;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
 
     @Override
@@ -66,10 +65,7 @@ public class TimelineImportActivity extends Activity {
         intro.setPadding(0, 12, 0, 26);
         root.addView(intro);
 
-        choose = new Button(this);
-        choose.setText("CHOOSE TIMELINE JSON");
-        choose.setTextColor(0xFF0B1C50);
-        choose.setTextSize(14);
+        choose = action("CHOOSE TIMELINE JSON");
         choose.setOnClickListener(v -> chooseFile());
         root.addView(choose, new LinearLayout.LayoutParams(-1, 58));
 
@@ -83,8 +79,7 @@ public class TimelineImportActivity extends Activity {
         status.setPadding(0, 16, 0, 0);
         root.addView(status);
 
-        capture = new Button(this);
-        capture.setText("CONTINUE TO CAPTURE");
+        capture = action("CONTINUE TO CAPTURE");
         capture.setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -407,6 +402,15 @@ public class TimelineImportActivity extends Activity {
 
     private String safeMessage(Exception error) {
         return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+    }
+
+    private TextView action(String label) {
+        TextView button = text(label, 15, 0xFF0B1C50, true);
+        button.setGravity(Gravity.CENTER);
+        button.setBackgroundColor(0xFFF7C450);
+        button.setClickable(true);
+        button.setFocusable(true);
+        return button;
     }
 
     private TextView text(String value, float size, int colour, boolean bold) {
