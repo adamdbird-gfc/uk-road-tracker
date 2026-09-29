@@ -591,7 +591,7 @@ public class JourneyListActivity extends Activity {
         close.setOnClickListener(v -> {
             if (dialogRef[0] != null) dialogRef[0].dismiss();
         });
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(container, 0, 0, 0, 0).create();
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
         dialog.setOnShowListener(ignored -> {
             Window dialogWindow = dialog.getWindow();
