@@ -252,7 +252,7 @@ public class TimelineImportActivity extends Activity {
 
             String mode = modeFor(activity, semantic);
             double distance = distanceFor(activity, points);
-            String id = "timeline-" + fingerprint(fileFingerprint + "|" + started + "|" + ended + "|" + mode);
+            String id = "timeline-" + fingerprint(started + "|" + ended + "|" + mode + "|" + coordinateKey(points));
 
             JSONObject coordinates = new JSONObject();
             coordinates.put("type", "LineString");
@@ -294,9 +294,15 @@ public class TimelineImportActivity extends Activity {
     }
 
     private String modeFor(JSONObject activity, boolean semantic) {
-        String value = semantic
-                ? activity.optString("topCandidate", "")
-                : activity.optString("activityType", "");
+        String value;
+        if (semantic) {
+            JSONObject candidate = activity.optJSONObject("topCandidate");
+            value = candidate == null
+                    ? activity.optString("topCandidate", "")
+                    : candidate.optString("type", "");
+        } else {
+            value = activity.optString("activityType", "");
+        }
         String mode = value.toUpperCase(Locale.UK);
         if (mode.contains("WALK") || mode.contains("PEDESTRIAN")) return "walking";
         if (mode.contains("CYCL")) return "cycling";
@@ -314,6 +320,12 @@ public class TimelineImportActivity extends Activity {
 
     private boolean footMode(String mode) {
         return "walking".equals(mode);
+    }
+
+    private String coordinateKey(List<double[]> points) {
+        StringBuilder key = new StringBuilder();
+        for (double[] point : points) key.append(point[0]).append(",").append(point[1]).append(";");
+        return key.toString();
     }
 
     private String timestamp(JSONObject duration, String key) {
