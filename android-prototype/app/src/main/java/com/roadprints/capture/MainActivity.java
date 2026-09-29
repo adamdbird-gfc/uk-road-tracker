@@ -152,8 +152,9 @@ public class MainActivity extends Activity {
         saved.setPadding(0, 24, 0, 0);
 
         historyButton = new Button(this);
-        historyButton.setText("View saved journeys");
-        historyButton.setOnClickListener(v -> showJourneyHistory());
+        historyButton.setText("Open journeys");
+        historyButton.setOnClickListener(v ->
+                startActivity(new Intent(this, JourneyListActivity.class)));
 
         root.addView(title);
         root.addView(subtitle);
