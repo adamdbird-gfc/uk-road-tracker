@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -53,8 +55,33 @@ public class MapActivity extends Activity {
         root.addView(map, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
-        root.addView(buildBottomNavigation());
+        View bottomNavigation = buildBottomNavigation();
+        root.addView(bottomNavigation);
         setContentView(root);
+        applySystemBarInsets(root, heading, bottomNavigation);
+    }
+
+    private void applySystemBarInsets(View root, View heading, View bottomNavigation) {
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int top;
+            int bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
+                top = bars.top;
+                bottom = bars.bottom;
+            } else {
+                top = insets.getSystemWindowInsetTop();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            heading.setPadding(dp(22), dp(18) + top, dp(22), dp(14));
+            LinearLayout.LayoutParams navParams =
+                    (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
+            navParams.height = dp(68) + bottom;
+            bottomNavigation.setPadding(dp(8), 0, dp(8), bottom);
+            bottomNavigation.setLayoutParams(navParams);
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     private View buildBottomNavigation() {
