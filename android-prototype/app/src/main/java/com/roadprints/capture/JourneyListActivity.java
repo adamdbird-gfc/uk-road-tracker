@@ -543,6 +543,7 @@ public class JourneyListActivity extends Activity {
         container.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
+        final AlertDialog[] dialogRef = new AlertDialog[1];
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.VERTICAL);
         actions.setPadding(side, dp(12), side, dp(8));
@@ -572,7 +573,7 @@ public class JourneyListActivity extends Activity {
                     : (footMode ? "MATCH ON-FOOT JOURNEY" : "MATCH ROAD JOURNEY");
             Button processButton = styledModalButton(buttonLabel, 0xFF233B78, Color.WHITE);
             processButton.setEnabled(!"processing".equals(processingStatus));
-            processButton.setOnClickListener(v -> processJourney(journey, processButton));
+            processButton.setOnClickListener(v -> processJourney(journey, processButton, status, dialogRef));
             actions.addView(processButton, secondaryParams);
         }
 
@@ -587,7 +588,6 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         container.addView(actions);
 
-        final AlertDialog[] dialogRef = new AlertDialog[1];
         close.setOnClickListener(v -> {
             if (dialogRef[0] != null) dialogRef[0].dismiss();
         });
@@ -684,7 +684,7 @@ public class JourneyListActivity extends Activity {
                 .show();
     }
 
-    private void processJourney(JSONObject journey, Button button) {
+    private void processJourney(JSONObject journey, Button button, TextView status, AlertDialog[] dialogRef) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         if (coordinates == null || coordinates.length() < 2) {
@@ -721,7 +721,9 @@ public class JourneyListActivity extends Activity {
             journey.put("processing", processingState);
             JourneyStore.save(this, journey);
             button.setEnabled(false);
-            button.setText("PROCESSING…");
+            button.setText("MATCHING…");
+            status.setText("Matching in progress…");
+            status.setTextColor(0xFFF7C450);
             processor.execute(() -> {
                 try {
                     JSONObject result = postJson(API_BASE_URL + endpoint, payload);
@@ -740,10 +742,13 @@ public class JourneyListActivity extends Activity {
                     stored.put("processing_completed_at", Instant.now().toString());
                     JourneyStore.save(this, stored);
                     mainHandler.post(() -> {
-                        button.setEnabled(true);
-                        button.setText("PROCESSED");
+                        button.setEnabled(false);
+                        button.setVisibility(View.GONE);
+                        if (dialogRef[0] != null) dialogRef[0].dismiss();
                         journeys = JourneyStore.all(this);
                         render();
+                        JSONObject refreshed = JourneyStore.get(this, journeyId);
+                        if (refreshed != null) showDetails(refreshed);
                         Toast.makeText(this, "Journey processed by Roadprints", Toast.LENGTH_SHORT).show();
                     });
                 } catch (Exception error) {
@@ -766,6 +771,8 @@ public class JourneyListActivity extends Activity {
                     mainHandler.post(() -> {
                         button.setEnabled(true);
                         button.setText("RETRY PROCESSING");
+                        status.setText("Matching failed · you can retry below");
+                        status.setTextColor(0xFFF7C450);
                         Toast.makeText(this, "Processing failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
                     });
                 }
@@ -773,6 +780,8 @@ public class JourneyListActivity extends Activity {
         } catch (Exception error) {
             button.setEnabled(true);
             button.setText("PROCESS JOURNEY");
+            status.setText("Could not prepare journey for matching");
+            status.setTextColor(0xFFF7C450);
             Toast.makeText(this, "Could not prepare journey: " + error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
