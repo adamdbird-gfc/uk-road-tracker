@@ -7,12 +7,12 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
-    <activity android:name=".JourneyListActivity" android:exported="false" />
     <application
         android:theme="@style/AppTheme"
         android:label="Roadprints Capture Prototype"
         android:allowBackup="false"
         android:supportsRtl="true">
+        <activity android:name=".JourneyListActivity" android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
