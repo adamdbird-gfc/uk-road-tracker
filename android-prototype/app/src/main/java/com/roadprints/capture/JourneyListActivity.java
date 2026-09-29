@@ -400,6 +400,13 @@ public class JourneyListActivity extends Activity {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null
                 ? null : geometry.optJSONArray("coordinates");
+        TextView modalTitle = new TextView(this);
+        modalTitle.setText("View & refine journey");
+        modalTitle.setTextSize(24);
+        modalTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        modalTitle.setTextColor(Color.WHITE);
+        modalTitle.setPadding(24, 20, 24, 12);
+
         TextView previewLabel = new TextView(this);
         previewLabel.setText("ROUTE PREVIEW");
         previewLabel.setTextSize(12);
@@ -473,6 +480,7 @@ public class JourneyListActivity extends Activity {
         titleLabel.setTextColor(0xFF67D5CC);
         titleLabel.setPadding(24, 12, 24, 0);
 
+        container.addView(modalTitle);
         container.addView(previewLabel);
         container.addView(preview);
         container.addView(message);
