@@ -346,13 +346,21 @@ public class CaptureService extends Service {
     }
 
     private void removeActivityUpdates() {
-        if (activityPendingIntent != null) {
-            // Clear both APIs so upgrades from v0.4.3 cannot leave an old
-            // sampling subscription delivering callbacks to this receiver.
-            activityClient.removeActivityUpdates(activityPendingIntent);
-            activityClient.removeActivityTransitionUpdates(activityPendingIntent);
-            activityPendingIntent = null;
+        // Recreate the same immutable PendingIntent when Android has already
+        // recreated the service, so legacy subscriptions can still be removed.
+        PendingIntent pendingIntent = activityPendingIntent;
+        if (pendingIntent == null) {
+            pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    42,
+                    new Intent(this, ActivityRecognitionReceiver.class),
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
+        // Clear both APIs so upgrades from v0.4.3 cannot leave an old
+        // sampling subscription delivering callbacks to this receiver.
+        activityClient.removeActivityUpdates(pendingIntent);
+        activityClient.removeActivityTransitionUpdates(pendingIntent);
+        activityPendingIntent = null;
     }
 
     private void startForegroundWithNotification() {
