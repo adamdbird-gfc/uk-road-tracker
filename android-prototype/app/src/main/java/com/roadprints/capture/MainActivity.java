@@ -156,14 +156,6 @@ public class MainActivity extends Activity {
         historyButton.setOnClickListener(v ->
                 startActivity(new Intent(this, JourneyListActivity.class)));
 
-        Button onboardingButton = new Button(this);
-        onboardingButton.setText("Review onboarding (test)");
-        onboardingButton.setOnClickListener(v -> {
-            getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
-                    .edit().remove("complete").apply();
-            startActivity(new Intent(this, OnboardingActivity.class));
-        });
-
         root.addView(title);
         root.addView(subtitle);
         root.addView(modeSpinner);
@@ -173,8 +165,80 @@ public class MainActivity extends Activity {
         root.addView(distance);
         root.addView(saved);
         root.addView(historyButton);
-        root.addView(onboardingButton);
+
+        android.widget.Space spacer = new android.widget.Space(this);
+        root.addView(spacer, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        LinearLayout deleteRow = new LinearLayout(this);
+        deleteRow.setOrientation(LinearLayout.HORIZONTAL);
+        deleteRow.setPadding(0, 18, 0, 0);
+
+        Button deleteRoad = deleteButton("Delete road data");
+        deleteRoad.setOnClickListener(v -> confirmDeleteData(
+                "Delete road data?",
+                "This removes driving, bus and cycling journeys from this device.",
+                new String[]{"driving", "bus", "cycling"}));
+
+        Button deleteFoot = deleteButton("Delete on-foot data");
+        deleteFoot.setOnClickListener(v -> confirmDeleteData(
+                "Delete on-foot data?",
+                "This removes walking journeys from this device.",
+                new String[]{"walking"}));
+
+        Button deleteAll = deleteButton("Delete all saved data");
+        deleteAll.setOnClickListener(v -> confirmDeleteAll());
+
+        deleteRow.addView(deleteRoad, deleteButtonParams());
+        deleteRow.addView(deleteFoot, deleteButtonParams());
+        deleteRow.addView(deleteAll, deleteButtonParams());
+        root.addView(deleteRow);
+
         setContentView(root);
+    }
+
+    private Button deleteButton(String label) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setTextSize(10);
+        button.setAllCaps(false);
+        button.setMinHeight(0);
+        button.setMinWidth(0);
+        button.setPadding(2, 0, 2, 0);
+        return button;
+    }
+
+    private LinearLayout.LayoutParams deleteButtonParams() {
+        return new LinearLayout.LayoutParams(0, 52, 1f);
+    }
+
+    private void confirmDeleteData(String title, String message, String[] modes) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    int deleted = JourneyStore.deleteByModes(this, modes);
+                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                    status.setText(deleted + " journey"
+                            + (deleted == 1 ? "" : "s") + " deleted from this device.");
+                })
+                .show();
+    }
+
+    private void confirmDeleteAll() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete all saved data?")
+                .setMessage("This removes every saved journey and returns you to the Roadprints welcome screen.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete all", (dialog, which) -> {
+                    JourneyStore.deleteAll(this);
+                    getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
+                            .edit().remove("complete").apply();
+                    startActivity(new Intent(this, OnboardingActivity.class));
+                    finish();
+                })
+                .show();
     }
 
     private void repairTrackingSubscription() {
