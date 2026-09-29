@@ -185,7 +185,7 @@ public class JourneyListActivity extends Activity {
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
-        journeyList.setPadding(dp(8), dp(18), dp(8), dp(18));
+        journeyList.setPadding(dp(10), dp(18), dp(10), dp(18));
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(journeyList);
