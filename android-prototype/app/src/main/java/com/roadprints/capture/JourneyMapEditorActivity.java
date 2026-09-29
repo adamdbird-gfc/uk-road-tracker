@@ -33,6 +33,7 @@ public class JourneyMapEditorActivity extends Activity {
     private TextView removeButton;
     private TextView restoreButton;
     private boolean removeMode = true;
+    private int selectedEdge = -1;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -92,7 +93,7 @@ public class JourneyMapEditorActivity extends Activity {
         header.addView(titleRow);
 
         TextView instructions = text(
-                "Tap a blue route section to remove it. Use Restore to bring it back.",
+                "Tap a route section to select it, then choose Remove or Restore.",
                 14, 0xFFD3DCED, false);
         instructions.setPadding(0, dp(6), 0, dp(4));
         header.addView(instructions);
@@ -118,6 +119,8 @@ public class JourneyMapEditorActivity extends Activity {
         controls.setGravity(Gravity.CENTER_VERTICAL);
         removeButton = controlButton("REMOVE", true);
         restoreButton = controlButton("RESTORE", false);
+        removeButton.setOnClickListener(v -> applySelectedChange(true));
+        restoreButton.setOnClickListener(v -> applySelectedChange(false));
         TextView undo = controlButton("UNDO", false);
         undo.setOnClickListener(v -> undo());
         LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams(
@@ -155,10 +158,7 @@ public class JourneyMapEditorActivity extends Activity {
         button.setGravity(Gravity.CENTER);
         button.setBackground(roundRect(selected ? 0xFFF7C450 : 0xFF233B78,
                 selected ? 0xFFF7C450 : 0xFF46649E, dp(10)));
-        button.setOnClickListener(v -> {
-            removeMode = "REMOVE".equals(label);
-            updateModeStyles();
-        });
+
         return button;
     }
 
@@ -169,24 +169,36 @@ public class JourneyMapEditorActivity extends Activity {
         restoreButton.setBackground(roundRect(removeMode ? 0xFF233B78 : 0xFFF7C450,
                 removeMode ? 0xFF46649E : 0xFFF7C450, dp(10)));
         restoreButton.setTextColor(removeMode ? Color.WHITE : 0xFF0B1C50);
-        status.setText(removeMode
-                ? "Remove mode · tap the section that does not belong."
-                : "Restore mode · tap a removed section to put it back.");
+        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+        updateStatus();
     }
 
     private void onRouteEdgeTap(int edgeIndex) {
-        boolean wasRemoved = removedEdges.contains(edgeIndex);
-        if (removeMode == wasRemoved) {
-            status.setText(removeMode
-                    ? "That section is already removed."
-                    : "That section is still part of the route.");
+        selectedEdge = edgeIndex;
+        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+        updateStatus();
+    }
+
+    private void applySelectedChange(boolean remove) {
+        removeMode = remove;
+        updateModeStyles();
+        if (selectedEdge < 0) {
+            status.setText("Tap a route section to select it first.");
+            return;
+        }
+        boolean alreadyRemoved = removedEdges.contains(selectedEdge);
+        if (remove == alreadyRemoved) {
+            status.setText(remove
+                    ? "That section is already removed. Select another section."
+                    : "That section is still part of the route. Select a removed section.");
             return;
         }
         undoStack.push(new HashSet<>(removedEdges));
         if (undoStack.size() > 30) undoStack.removeLast();
-        if (removeMode) removedEdges.add(edgeIndex);
-        else removedEdges.remove(edgeIndex);
-        routeView.invalidate();
+        if (remove) removedEdges.add(selectedEdge);
+        else removedEdges.remove(selectedEdge);
+        selectedEdge = -1;
+        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
     }
 
@@ -197,14 +209,20 @@ public class JourneyMapEditorActivity extends Activity {
         }
         removedEdges.clear();
         removedEdges.addAll(undoStack.pop());
-        routeView.invalidate();
+        selectedEdge = -1;
+        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
     }
 
     private void updateStatus() {
-        String mode = removeMode ? "Remove" : "Restore";
-        status.setText(mode + " mode · " + removedEdges.size()
-                + " route section" + (removedEdges.size() == 1 ? "" : "s") + " removed.");
+        if (selectedEdge >= 0) {
+            status.setText("Route section selected in red · press "
+                    + (removeMode ? "REMOVE" : "RESTORE") + " to apply.");
+            return;
+        }
+        status.setText(removedEdges.size() + " route section"
+                + (removedEdges.size() == 1 ? "" : "s")
+                + " removed · tap a section to select it.");
     }
 
     private void saveChanges() {
