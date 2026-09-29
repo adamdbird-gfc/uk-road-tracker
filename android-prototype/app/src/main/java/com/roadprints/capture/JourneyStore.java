@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -31,6 +32,7 @@ public final class JourneyStore {
         File target = new File(context.getFilesDir(), PREFIX + id + SUFFIX);
         File temporary = new File(context.getFilesDir(), PREFIX + id + ".tmp");
         try (FileOutputStream output = new FileOutputStream(temporary)) {
+            ensureSharedFields(journey);
             output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
             output.flush();
             if (target.exists() && !target.delete()) {
@@ -94,6 +96,23 @@ public final class JourneyStore {
             save(context, journey);
         } catch (Exception error) {
             throw new IllegalStateException("Could not update journey mode", error);
+        }
+    }
+
+    private static void ensureSharedFields(JSONObject journey)
+            throws org.json.JSONException {
+        if (!journey.has("places")) journey.put("places", new JSONArray());
+        if (!journey.has("stops")) journey.put("stops", new JSONArray());
+        if (!journey.has("capture_quality")) {
+            JSONObject geometry = journey.optJSONObject("route_geometry");
+            JSONArray coordinates = geometry == null
+                    ? null : geometry.optJSONArray("coordinates");
+            int points = coordinates == null ? 0 : coordinates.length();
+            double distance = journey.optDouble("distance_meters", 0);
+            journey.put("capture_quality", new JSONObject()
+                    .put("gps_points", points)
+                    .put("distance_meters", distance)
+                    .put("status", points >= 2 ? "usable" : "insufficient_gps_data"));
         }
     }
 
