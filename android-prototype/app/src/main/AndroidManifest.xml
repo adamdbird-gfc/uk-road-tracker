@@ -15,6 +15,7 @@
         android:roundIcon="@drawable/ic_launcher"
         android:allowBackup="false"
         android:supportsRtl="true">
+        <activity android:name=".MapActivity" android:exported="false" />
         <activity android:name=".JourneyListActivity" android:exported="false" />
         <activity android:name=".TimelineImportActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
