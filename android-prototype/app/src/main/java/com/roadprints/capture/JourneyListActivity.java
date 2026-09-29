@@ -3,15 +3,17 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -25,7 +27,8 @@ import java.util.List;
 
 public class JourneyListActivity extends Activity {
     private static final String[] FILTER_LABELS = {
-            "All journeys", "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry"
+            "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
+            "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry"
     };
     private static final String[] FILTER_VALUES = {
             "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry"
@@ -34,84 +37,158 @@ public class JourneyListActivity extends Activity {
     private LinearLayout journeyList;
     private TextView count;
     private List<JSONObject> journeys;
+    private int activeFilter = 0;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        Window window = getWindow();
+        window.setStatusBarColor(0xFF0B1C50);
+        window.setNavigationBarColor(0xFF10275D);
         buildScreen();
         journeys = JourneyStore.all(this);
-        render("all");
+        render();
     }
 
     private void buildScreen() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(28, 42, 28, 24);
-        root.setBackgroundColor(0xFFF6F9FC);
+        root.setBackgroundColor(0xFF0B1C50);
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(36, 26, 36, 12);
+
+        TextView logo = new TextView(this);
+        logo.setText("roadprints");
+        logo.setTextSize(22);
+        logo.setTypeface(null, android.graphics.Typeface.BOLD);
+        logo.setTextColor(Color.WHITE);
+        logo.setPadding(0, 0, 0, 32);
+
+        LinearLayout headingRow = new LinearLayout(this);
+        headingRow.setGravity(Gravity.CENTER_VERTICAL);
+        headingRow.setPadding(0, 0, 0, 8);
+
+        LinearLayout heading = new LinearLayout(this);
+        heading.setOrientation(LinearLayout.VERTICAL);
+        heading.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView eyebrow = new TextView(this);
+        eyebrow.setText("YOUR TRAVEL RECORD");
+        eyebrow.setTextSize(13);
+        eyebrow.setTypeface(null, android.graphics.Typeface.BOLD);
+        eyebrow.setTextColor(0xFF67D5CC);
 
         TextView title = new TextView(this);
         title.setText("Journeys");
-        title.setTextSize(30);
-        title.setTextColor(0xFF0A2B43);
+        title.setTextSize(36);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setTextColor(Color.WHITE);
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Your travel record");
-        subtitle.setTextSize(16);
-        subtitle.setTextColor(0xFF52677D);
-        subtitle.setPadding(0, 4, 0, 18);
+        heading.addView(eyebrow);
+        heading.addView(title);
 
         count = new TextView(this);
-        count.setTextSize(16);
-        count.setTextColor(0xFF52677D);
+        count.setTextSize(22);
+        count.setTypeface(null, android.graphics.Typeface.BOLD);
+        count.setTextColor(0xFFF7C450);
+        count.setGravity(Gravity.CENTER);
+        count.setPadding(22, 14, 22, 14);
+        count.setBackground(pill(0x332F4D91, 0x334D6CA6, 40));
 
-        Spinner filter = new Spinner(this);
-        filter.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, FILTER_LABELS));
-        filter.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(
-                    android.widget.AdapterView<?> parent, View view, int position, long id) {
-                render(FILTER_VALUES[position]);
-            }
-            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
-        });
+        headingRow.addView(heading);
+        headingRow.addView(count);
+
+        TextView intro = new TextView(this);
+        intro.setText("Choose a journey to inspect its route and correct any section that does not belong.");
+        intro.setTextSize(16);
+        intro.setTextColor(0xFFD3DCED);
+        intro.setPadding(0, 8, 0, 20);
+
+        HorizontalScrollView filterScroll = new HorizontalScrollView(this);
+        filterScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout filters = new LinearLayout(this);
+        filters.setOrientation(LinearLayout.HORIZONTAL);
+        for (int index = 0; index < FILTER_LABELS.length; index++) {
+            final int selected = index;
+            Button filter = new Button(this);
+            filter.setText(FILTER_LABELS[index]);
+            filter.setTextSize(13);
+            filter.setAllCaps(false);
+            filter.setTextColor(Color.WHITE);
+            filter.setPadding(18, 0, 18, 0);
+            filter.setMinHeight(48);
+            filter.setMinWidth(0);
+            filter.setOnClickListener(v -> {
+                activeFilter = selected;
+                render();
+            });
+            filters.addView(filter, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 52));
+        }
+        filterScroll.addView(filters);
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
-        journeyList.setPadding(0, 16, 0, 0);
+        journeyList.setPadding(0, 18, 0, 18);
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(journeyList);
+        scroll.setFillViewport(true);
 
-        Button close = new Button(this);
-        close.setText("Back to capture");
-        close.setOnClickListener(v -> finish());
-
-        root.addView(title);
-        root.addView(subtitle);
-        root.addView(count);
-        root.addView(filter);
-        root.addView(scroll, new LinearLayout.LayoutParams(
+        content.addView(logo);
+        content.addView(headingRow);
+        content.addView(intro);
+        content.addView(filterScroll);
+        content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        root.addView(close);
+
+        root.addView(content, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(buildBottomNavigation());
         setContentView(root);
     }
 
-    private void render(String filter) {
+    private View buildBottomNavigation() {
+        LinearLayout nav = new LinearLayout(this);
+        nav.setGravity(Gravity.CENTER);
+        nav.setPadding(8, 10, 8, 12);
+        nav.setBackgroundColor(0xFF10275D);
+
+        String[] labels = {"⌖\nMap", "▤\nJourneys", "▥\nProgress",
+                "★\nAchievements", "●\nCollections"};
+        for (int index = 0; index < labels.length; index++) {
+            TextView item = new TextView(this);
+            item.setText(labels[index]);
+            item.setGravity(Gravity.CENTER);
+            item.setTextSize(11);
+            item.setTypeface(null, android.graphics.Typeface.BOLD);
+            item.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
+            nav.addView(item, new LinearLayout.LayoutParams(
+                    0, 58, 1));
+        }
+        return nav;
+    }
+
+    private void render() {
         if (journeyList == null || journeys == null) return;
         journeyList.removeAllViews();
         int visible = 0;
         for (JSONObject journey : journeys) {
-            if (!"all".equals(filter)
-                    && !filter.equals(journey.optString("mode", "unknown"))) continue;
+            if (!"all".equals(FILTER_VALUES[activeFilter])
+                    && !FILTER_VALUES[activeFilter].equals(
+                    journey.optString("mode", "unknown"))) continue;
             journeyList.addView(createCard(journey));
             visible++;
         }
-        count.setText(visible + " saved " + (visible == 1 ? "journey" : "journeys"));
+        count.setText(String.valueOf(visible));
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
             empty.setTextSize(16);
-            empty.setTextColor(0xFF52677D);
+            empty.setTextColor(0xFFD3DCED);
             empty.setPadding(0, 28, 0, 28);
             journeyList.addView(empty);
         }
@@ -120,13 +197,9 @@ public class JourneyListActivity extends Activity {
     private View createCard(JSONObject journey) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(20, 18, 20, 18);
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(0xFFFFFFFF);
-        background.setCornerRadius(22);
-        background.setStroke(1, 0xFFD9E2EA);
-        card.setBackground(background);
-        card.setElevation(3);
+        card.setPadding(22, 20, 22, 20);
+        card.setBackground(roundRect(0xFF233B78, 0xFF46649E, 28));
+        card.setElevation(2);
 
         String mode = journey.optString("mode", "unknown");
         double metres = journey.optDouble("distance_meters", 0);
@@ -135,34 +208,74 @@ public class JourneyListActivity extends Activity {
                 ? null : geometry.optJSONArray("coordinates");
         int points = coordinates == null ? 0 : coordinates.length();
 
+        TextView label = new TextView(this);
+        label.setText(displayMode(mode).toUpperCase() + "  •  "
+                + displayTime(journey.optString("started_at")).toUpperCase());
+        label.setTextSize(12);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        label.setTextColor(0xFF67D5CC);
+
         TextView heading = new TextView(this);
-        heading.setText(displayMode(mode) + "  •  " + displayTime(journey.optString("started_at")));
-        heading.setTextSize(18);
-        heading.setTextColor(0xFF0A2B43);
+        heading.setText("Captured journey");
+        heading.setTextSize(23);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setTextColor(Color.WHITE);
+        heading.setPadding(0, 8, 0, 0);
 
         TextView summary = new TextView(this);
-        summary.setText(String.format(
-                "%.0f m  •  %s  •  %d GPS points",
-                metres, journeyDuration(journey), points));
-        summary.setTextSize(15);
-        summary.setTextColor(0xFF52677D);
-        summary.setPadding(0, 8, 0, 0);
+        summary.setText(String.format("%.1f mi  •  %s  •  %d GPS points",
+                metres / 1609.344, journeyDuration(journey), points));
+        summary.setTextSize(16);
+        summary.setTextColor(0xFFD3DCED);
+        summary.setPadding(0, 4, 0, 0);
 
-        TextView hint = new TextView(this);
-        hint.setText("Tap to inspect route");
-        hint.setTextSize(13);
-        hint.setTextColor(0xFF1C69A2);
-        hint.setPadding(0, 12, 0, 0);
+        TextView evidence = new TextView(this);
+        evidence.setText(points >= 2 ? "Route captured locally" : "Insufficient GPS evidence");
+        evidence.setTextSize(14);
+        evidence.setTextColor(points >= 2 ? 0xFF67D5CC : 0xFFF7C450);
+        evidence.setPadding(0, 16, 0, 16);
 
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        Button inspect = actionButton("View & refine", 0xFF102047, Color.WHITE);
+        inspect.setOnClickListener(v -> showDetails(journey));
+        actions.addView(inspect, new LinearLayout.LayoutParams(0, 52, 1));
+
+        card.addView(label);
         card.addView(heading);
         card.addView(summary);
-        card.addView(hint);
+        card.addView(evidence);
+        card.addView(actions);
         card.setOnClickListener(v -> showDetails(journey));
+
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 14);
+        params.setMargins(0, 0, 0, 16);
         card.setLayoutParams(params);
         return card;
+    }
+
+    private Button actionButton(String text, int background, int foreground) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(14);
+        button.setAllCaps(false);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setTextColor(foreground);
+        button.setBackground(roundRect(background, background, 18));
+        return button;
+    }
+
+    private GradientDrawable roundRect(int fill, int stroke, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(fill);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(1, stroke);
+        return drawable;
+    }
+
+    private GradientDrawable pill(int fill, int stroke, int radius) {
+        return roundRect(fill, stroke, radius);
     }
 
     private void showDetails(JSONObject journey) {
@@ -213,7 +326,7 @@ public class JourneyListActivity extends Activity {
 
     private String displayMode(String value) {
         if ("driving".equals(value)) return "Driving";
-        if ("walking".equals(value)) return "Walking";
+        if ("walking".equals(value)) return "On foot";
         if ("cycling".equals(value)) return "Cycling";
         if ("bus".equals(value)) return "Bus";
         if ("train".equals(value)) return "Train";
