@@ -283,6 +283,7 @@ public class JourneyListActivity extends Activity {
         updateReadinessSummary();
         int visible = 0;
         for (JSONObject journey : journeys) {
+            if (!shouldShowJourney(journey)) continue;
             if (!"all".equals(FILTER_VALUES[activeFilter])
                     && !FILTER_VALUES[activeFilter].equals(
                     journey.optString("mode", "unknown"))) continue;
@@ -300,7 +301,7 @@ public class JourneyListActivity extends Activity {
         }
     }
 
-    private void sortJourneysNewestFirst() {
+    private boolean shouldShowJourney(JSONObject journey) {\n        String mode = journey.optString("mode", "unknown");\n        JSONObject source = journey.optJSONObject("source");\n        if (!isRoadMode(mode) || source == null\n                || !"timeline_import".equals(source.optString("type", ""))) return true;\n        JSONObject quality = journey.optJSONObject("capture_quality");\n        return quality != null && quality.optInt("source_route_points", 0) >= 2;\n    }\n\n    private void sortJourneysNewestFirst() {
         journeys.sort((left, right) -> Long.compare(
                 journeyStartMillis(right), journeyStartMillis(left)));
     }
