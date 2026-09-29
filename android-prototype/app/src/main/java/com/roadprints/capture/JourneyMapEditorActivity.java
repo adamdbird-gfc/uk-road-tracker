@@ -75,11 +75,20 @@ public class JourneyMapEditorActivity extends Activity {
         TextView title = text("Edit journey route", 21, Color.WHITE, true);
         titleRow.addView(title, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        TextView cancel = text("CANCEL", 13, 0xFFF7C450, true);
+        TextView cancel = text("CANCEL", 13, 0xFFD3DCED, true);
         cancel.setGravity(Gravity.CENTER);
-        cancel.setPadding(dp(10), dp(10), 0, dp(10));
+        cancel.setPadding(dp(10), dp(10), dp(10), dp(10));
         cancel.setOnClickListener(v -> finish());
         titleRow.addView(cancel);
+        TextView save = text("SAVE", 13, 0xFF0B1C50, true);
+        save.setGravity(Gravity.CENTER);
+        save.setPadding(dp(16), dp(10), dp(16), dp(10));
+        save.setBackground(roundRect(0xFFF7C450, 0xFFF7C450, dp(10)));
+        save.setOnClickListener(v -> saveChanges());
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, dp(40));
+        saveParams.setMargins(dp(8), 0, 0, 0);
+        titleRow.addView(save, saveParams);
         header.addView(titleRow);
 
         TextView instructions = text(
@@ -250,10 +259,6 @@ public class JourneyMapEditorActivity extends Activity {
             }
         }
         return segments;
-    }
-
-    private void saveClicked(View ignored) {
-        saveChanges();
     }
 
     private TextView text(String value, float size, int colour, boolean bold) {
