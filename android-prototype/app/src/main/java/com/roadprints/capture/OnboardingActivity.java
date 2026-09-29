@@ -115,14 +115,21 @@ public class OnboardingActivity extends Activity {
         setContentView(scroll);
     }
 
-    private TextView choice(String title, String subtitle) {
-        TextView card = text(title + "\n" + subtitle, 16, Color.WHITE, true);
+    private LinearLayout choice(String title, String subtitle) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(22, 0, 22, 0);
+        card.setPadding(22, 10, 22, 10);
         card.setBackgroundColor(0xFF2C4380);
         card.setClickable(true);
         card.setOnClickListener(v -> v.setBackgroundColor(0xFF3B579A));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 88);
+
+        TextView heading = text(title, 17, Color.WHITE, true);
+        TextView detail = text(subtitle, 14, 0xFFD3DCED, false);
+        card.addView(heading);
+        card.addView(detail);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 78);
         params.setMargins(0, 0, 0, 12);
         card.setLayoutParams(params);
         return card;
@@ -138,19 +145,19 @@ public class OnboardingActivity extends Activity {
         int footCount = JourneyStore.countByModes(this, "walking");
         int totalCount = JourneyStore.count(this);
 
-        Button road = deleteButton("Delete road data", roadCount > 0);
+        TextView road = deleteButton("Delete road data", roadCount > 0);
         road.setOnClickListener(v -> confirmDelete(
                 "Delete road data?",
                 "This removes driving, bus and cycling journeys from this device.",
                 new String[]{"driving", "bus", "cycling"}));
 
-        Button foot = deleteButton("Delete on-foot data", footCount > 0);
+        TextView foot = deleteButton("Delete on-foot data", footCount > 0);
         foot.setOnClickListener(v -> confirmDelete(
                 "Delete on-foot data?",
                 "This removes walking journeys from this device.",
                 new String[]{"walking"}));
 
-        Button all = deleteButton("Delete all saved data", totalCount > 0);
+        TextView all = deleteButton("Delete all saved data", totalCount > 0);
         all.setOnClickListener(v -> confirmDeleteAll());
 
         row.addView(road, deleteParams());
@@ -159,23 +166,19 @@ public class OnboardingActivity extends Activity {
         root.addView(row);
     }
 
-    private Button deleteButton(String label, boolean enabled) {
-        Button button = new Button(this);
-        button.setText(label);
-        button.setTextSize(10);
-        button.setAllCaps(false);
+    private TextView deleteButton(String label, boolean enabled) {
+        TextView button = text(label, 12,
+                enabled ? 0xFFFFB7B7 : 0xFF9FB3D0, false);
+        button.setGravity(Gravity.CENTER);
         button.setBackgroundColor(Color.TRANSPARENT);
-        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF61739A);
-        button.setEnabled(enabled);
-        button.setAlpha(enabled ? 1f : 0.65f);
-        button.setMinHeight(0);
-        button.setMinWidth(0);
-        button.setPadding(2, 0, 2, 0);
+        button.setClickable(enabled);
+        button.setFocusable(enabled);
+        button.setAlpha(enabled ? 1f : 0.75f);
         return button;
     }
 
     private LinearLayout.LayoutParams deleteParams() {
-        return new LinearLayout.LayoutParams(0, 52, 1f);
+        return new LinearLayout.LayoutParams(0, 48, 1f);
     }
 
     private void confirmDelete(String title, String message, String[] modes) {
