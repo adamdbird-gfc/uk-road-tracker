@@ -181,10 +181,10 @@ public class JourneyListActivity extends Activity {
                 android.graphics.Insets bars =
                         insets.getInsets(WindowInsets.Type.systemBars());
                 content.setPadding(36, 26 + bars.top, 36, 12);
-                bottomNavigation.setPadding(8, 4, 8, 8);
+                bottomNavigation.setPadding(8, 0, 8, 0);
                 LinearLayout.LayoutParams navParams =
                         (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
-                navParams.height = 72;
+                navParams.height = 76;
                 navParams.bottomMargin = bars.bottom;
                 bottomNavigation.setLayoutParams(navParams);
             }
@@ -195,22 +195,41 @@ public class JourneyListActivity extends Activity {
 
     private View buildBottomNavigation() {
         LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        nav.setPadding(8, 4, 8, 8);
-        nav.setMinimumHeight(72);
+        nav.setPadding(8, 0, 8, 0);
         nav.setBackgroundColor(0xFF10275D);
 
-        String[] labels = {"⌖\nMap", "▤\nJourneys", "▥\nProgress",
-                "★\nAchievements", "●\nCollections"};
+        String[] icons = {"⌖", "▤", "▥", "★", "●"};
+        String[] labels = {"Map", "Journeys", "Progress", "Achievements", "Collections"};
         for (int index = 0; index < labels.length; index++) {
-            TextView item = new TextView(this);
-            item.setText(labels[index]);
-            item.setGravity(Gravity.CENTER);
-            item.setTextSize(11);
-            item.setTypeface(null, android.graphics.Typeface.BOLD);
-            item.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
-            nav.addView(item, new LinearLayout.LayoutParams(
-                    0, 60, 1));
+            LinearLayout item = new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+            item.setPadding(0, 4, 0, 0);
+            item.setClipChildren(false);
+
+            TextView icon = new TextView(this);
+            icon.setText(icons[index]);
+            icon.setTextSize(19);
+            icon.setGravity(Gravity.CENTER);
+            icon.setIncludeFontPadding(false);
+            icon.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
+            item.addView(icon, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 30));
+
+            TextView label = new TextView(this);
+            label.setText(labels[index]);
+            label.setTextSize(10);
+            label.setGravity(Gravity.CENTER);
+            label.setIncludeFontPadding(false);
+            label.setMaxLines(1);
+            label.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
+            item.addView(label, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 24));
+
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, 68, 1);
+            nav.addView(item, itemParams);
         }
         return nav;
     }
