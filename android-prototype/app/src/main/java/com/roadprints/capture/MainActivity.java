@@ -72,6 +72,7 @@ public class MainActivity extends Activity {
         tracking = CaptureService.isArmed(this);
         updateCaptureButton();
         updateTrackingButton();
+        if (tracking) repairTrackingSubscription();
         modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
     }
 
@@ -151,6 +152,16 @@ public class MainActivity extends Activity {
         root.addView(distance);
         root.addView(saved);
         setContentView(root);
+    }
+
+    private void repairTrackingSubscription() {
+        Intent repair = new Intent(this, CaptureService.class)
+                .setAction(CaptureService.ACTION_ARM);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(repair);
+        } else {
+            startService(repair);
+        }
     }
 
     private void toggleTracking() {
