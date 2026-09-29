@@ -350,6 +350,11 @@ public class MainActivity extends Activity {
         preview.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 420));
 
+        Button shareButton = new Button(this);
+        shareButton.setText("Share journey JSON");
+        shareButton.setOnClickListener(v -> shareJourney(journey));
+
+        container.addView(shareButton);
         container.addView(previewLabel);
         container.addView(preview);
         container.addView(message);
@@ -367,6 +372,18 @@ public class MainActivity extends Activity {
                     saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
                 })
                 .show();
+    }
+
+    private void shareJourney(JSONObject journey) {
+        try {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/json");
+            share.putExtra(Intent.EXTRA_SUBJECT, "Roadprints journey");
+            share.putExtra(Intent.EXTRA_TEXT, journey.toString(2));
+            startActivity(Intent.createChooser(share, "Share journey data"));
+        } catch (Exception error) {
+            status.setText("Could not share journey data.");
+        }
     }
 
     private void confirmDeleteJourney(JSONObject journey) {
