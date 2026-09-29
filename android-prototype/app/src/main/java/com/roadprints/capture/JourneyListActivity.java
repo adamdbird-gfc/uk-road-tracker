@@ -200,7 +200,10 @@ public class JourneyListActivity extends Activity {
         nav.setPadding(8, 0, 8, 0);
         nav.setBackgroundColor(0xFF10275D);
 
-        String[] icons = {"⌖", "▤", "▥", "★", "●"};
+        int[] iconResources = {
+                R.drawable.ic_nav_map, R.drawable.ic_nav_journeys, R.drawable.ic_nav_progress,
+                R.drawable.ic_nav_achievements, R.drawable.ic_nav_collections
+        };
         String[] labels = {"Map", "Journeys", "Progress", "Achievements", "Collections"};
         for (int index = 0; index < labels.length; index++) {
             LinearLayout item = new LinearLayout(this);
@@ -209,14 +212,14 @@ public class JourneyListActivity extends Activity {
             item.setPadding(0, 4, 0, 0);
             item.setClipChildren(false);
 
-            TextView icon = new TextView(this);
-            icon.setText(icons[index]);
-            icon.setTextSize(19);
-            icon.setGravity(Gravity.CENTER);
-            icon.setIncludeFontPadding(false);
-            icon.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
+            ImageView icon = new ImageView(this);
+            icon.setImageResource(iconResources[index]);
+            icon.setContentDescription(labels[index]);
+            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            icon.setColorFilter(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8,
+                    android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 30));
+                    LinearLayout.LayoutParams.MATCH_PARENT, 32));
 
             TextView label = new TextView(this);
             label.setText(labels[index]);
