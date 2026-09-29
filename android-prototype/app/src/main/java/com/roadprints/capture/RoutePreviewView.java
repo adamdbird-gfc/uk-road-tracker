@@ -47,6 +47,9 @@ public class RoutePreviewView extends View {
     private final boolean showEmptyMessage;
     private boolean routeEditMode;
     private Set<Integer> removedRouteEdges = Collections.emptySet();
+    private int selectedRouteEdge = -1;
+    private boolean restoreRouteMode;
+    private final Paint selectedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private OnRouteEdgeTapListener routeEdgeTapListener;
     private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -120,16 +123,21 @@ public class RoutePreviewView extends View {
         this.coordinatesValid = hasRoutePoints(coordinates) || !this.matchedSegments.isEmpty();
         this.routeFitPending = coordinatesValid;
 
-        routePaint.setColor(Color.rgb(0, 112, 174));
+        routePaint.setColor(Color.BLACK);
         routePaint.setStyle(Paint.Style.STROKE);
-        routePaint.setStrokeWidth(dp(4));
+        routePaint.setStrokeWidth(dp(7));
         routePaint.setStrokeCap(Paint.Cap.ROUND);
         routePaint.setStrokeJoin(Paint.Join.ROUND);
         routeHaloPaint.setColor(Color.WHITE);
         routeHaloPaint.setStyle(Paint.Style.STROKE);
-        routeHaloPaint.setStrokeWidth(dp(8));
+        routeHaloPaint.setStrokeWidth(dp(10));
         routeHaloPaint.setStrokeCap(Paint.Cap.ROUND);
         routeHaloPaint.setStrokeJoin(Paint.Join.ROUND);
+        selectedRoutePaint.setColor(Color.rgb(218, 55, 55));
+        selectedRoutePaint.setStyle(Paint.Style.STROKE);
+        selectedRoutePaint.setStrokeWidth(dp(8));
+        selectedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
+        selectedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
         rawRoutePaint.setColor(Color.rgb(112, 131, 164));
         rawRoutePaint.setStyle(Paint.Style.STROKE);
         rawRoutePaint.setStrokeWidth(dp(2));
@@ -202,7 +210,7 @@ public class RoutePreviewView extends View {
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
             JSONArray startEndRoute = hasRoutePoints(coordinates)
                     ? coordinates : matchedSegments.get(0);
-            if (hasMatchedRoute && hasRoutePoints(coordinates)) {
+            if (hasMatchedRoute && hasRoutePoints(coordinates) && !routeEditMode) {
                 drawRoute(canvas, coordinates, rawRoutePaint, null);
             }
             if (hasMatchedRoute) {
@@ -301,22 +309,63 @@ public class RoutePreviewView extends View {
         return drawn;
     }
 
+    public void setRouteEditState(Set<Integer> removedEdges, int selectedEdge, boolean restoreMode) {
+        this.removedRouteEdges = removedEdges == null ? Collections.emptySet() : removedEdges;
+        this.selectedRouteEdge = selectedEdge;
+        this.restoreRouteMode = restoreMode;
+        invalidate();
+    }
+
     private void drawEditableRoutes(Canvas canvas) {
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
+            Path activePath = new Path();
+            boolean hasActivePath = false;
             for (int index = 1; index < route.length(); index++, edgeIndex++) {
                 try {
                     JSONArray first = route.getJSONArray(index - 1);
                     JSONArray second = route.getJSONArray(index);
-                    Path edge = new Path();
-                    edge.moveTo(screenX(first.getDouble(0)), screenY(first.getDouble(1)));
-                    edge.lineTo(screenX(second.getDouble(0)), screenY(second.getDouble(1)));
-                    canvas.drawPath(edge, routeHaloPaint);
-                    canvas.drawPath(edge, removedRouteEdges.contains(edgeIndex)
-                            ? removedRoutePaint : routePaint);
+                    float x1 = screenX(first.getDouble(0));
+                    float y1 = screenY(first.getDouble(1));
+                    float x2 = screenX(second.getDouble(0));
+                    float y2 = screenY(second.getDouble(1));
+                    boolean removed = removedRouteEdges.contains(edgeIndex);
+                    boolean selected = selectedRouteEdge == edgeIndex;
+                    if (removed || selected) {
+                        if (hasActivePath) {
+                            canvas.drawPath(activePath, routeHaloPaint);
+                            canvas.drawPath(activePath, routePaint);
+                            activePath = new Path();
+                            hasActivePath = false;
+                        }
+                        Path edge = new Path();
+                        edge.moveTo(x1, y1);
+                        edge.lineTo(x2, y2);
+                        if (selected) {
+                            canvas.drawPath(edge, routeHaloPaint);
+                            canvas.drawPath(edge, selectedRoutePaint);
+                        } else if (restoreRouteMode) {
+                            canvas.drawPath(edge, removedRoutePaint);
+                        }
+                    } else {
+                        if (!hasActivePath) {
+                            activePath.moveTo(x1, y1);
+                            hasActivePath = true;
+                        }
+                        activePath.lineTo(x2, y2);
+                    }
                 } catch (Exception ignored) {
-                    // Skip a malformed edge without interrupting the remaining route.
+                    if (hasActivePath) {
+                        canvas.drawPath(activePath, routeHaloPaint);
+                        canvas.drawPath(activePath, routePaint);
+                        activePath = new Path();
+                        hasActivePath = false;
+                    }
                 }
+            }
+            if (hasActivePath) {
+                canvas.drawPath(activePath, routeHaloPaint);
+                canvas.drawPath(activePath, routePaint);
             }
         }
     }
@@ -341,6 +390,7 @@ public class RoutePreviewView extends View {
                             ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
                     float distance = (float) Math.hypot(
                             tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
+                    if (removedRouteEdges.contains(edgeIndex) != restoreRouteMode) continue;
                     if (distance < nearestDistance) {
                         nearestDistance = distance;
                         nearestIndex = edgeIndex;
