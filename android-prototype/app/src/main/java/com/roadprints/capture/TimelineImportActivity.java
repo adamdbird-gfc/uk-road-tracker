@@ -626,7 +626,8 @@ public class TimelineImportActivity extends Activity {
             value = activity.optString("activityType", "");
         }
         String mode = value.toUpperCase(Locale.UK);
-        if (mode.contains("WALK") || mode.contains("PEDESTRIAN")) return "walking";
+        if (mode.contains("WALK") || mode.contains("RUN") || mode.contains("PEDESTRIAN")) return "walking";
+        if (mode.contains("IN_PASSENGER_VEHICLE") || mode.contains("IN_VEHICLE") || mode.equals("DRIVING")) return "driving";
         if (mode.contains("CYCL")) return "cycling";
         if (mode.contains("BUS")) return "bus";
         if (mode.contains("RAIL") || mode.contains("TRAIN")
