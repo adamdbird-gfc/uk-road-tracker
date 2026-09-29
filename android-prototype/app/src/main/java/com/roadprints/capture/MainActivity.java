@@ -359,10 +359,29 @@ public class MainActivity extends Activity {
                 .setTitle("Journey details")
                 .setView(container)
                 .setNegativeButton("Close", null)
+                .setNeutralButton("Delete", (dialog, which) -> confirmDeleteJourney(journey))
                 .setPositiveButton("Save transport", (dialog, which) -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
                     JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
                     status.setText("Journey updated to " + selected + ".");
+                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                })
+                .show();
+    }
+
+    private void confirmDeleteJourney(JSONObject journey) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete journey?")
+                .setMessage("This removes the saved journey and its GPS route from this device.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    try {
+                        JourneyStore.delete(this, journey.optString("journey_id"));
+                        saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                        status.setText("Journey deleted from this device.");
+                    } catch (Exception error) {
+                        status.setText("Could not delete journey.");
+                    }
                 })
                 .show();
     }
