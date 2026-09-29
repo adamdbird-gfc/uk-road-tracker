@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class JourneyListActivity extends Activity {
@@ -38,6 +39,7 @@ public class JourneyListActivity extends Activity {
     private TextView count;
     private List<JSONObject> journeys;
     private int activeFilter = 0;
+    private final List<TextView> filterChips = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -59,12 +61,25 @@ public class JourneyListActivity extends Activity {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(36, 26, 36, 12);
 
+        LinearLayout brandRow = new LinearLayout(this);
+        brandRow.setGravity(Gravity.CENTER_VERTICAL);
+        brandRow.setPadding(0, 0, 0, 28);
+
+        TextView logoMark = new TextView(this);
+        logoMark.setText("✦");
+        logoMark.setTextSize(28);
+        logoMark.setTypeface(null, android.graphics.Typeface.BOLD);
+        logoMark.setTextColor(0xFFF7C450);
+        logoMark.setPadding(0, 0, 10, 0);
+
         TextView logo = new TextView(this);
         logo.setText("roadprints");
         logo.setTextSize(22);
         logo.setTypeface(null, android.graphics.Typeface.BOLD);
         logo.setTextColor(Color.WHITE);
-        logo.setPadding(0, 0, 0, 32);
+        logo.setPadding(0, 0, 0, 0);
+        brandRow.addView(logoMark);
+        brandRow.addView(logo);
 
         LinearLayout headingRow = new LinearLayout(this);
         headingRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -113,22 +128,26 @@ public class JourneyListActivity extends Activity {
         filters.setOrientation(LinearLayout.HORIZONTAL);
         for (int index = 0; index < FILTER_LABELS.length; index++) {
             final int selected = index;
-            Button filter = new Button(this);
+            TextView filter = new TextView(this);
             filter.setText(FILTER_LABELS[index]);
             filter.setTextSize(13);
-            filter.setAllCaps(false);
-            filter.setTextColor(Color.WHITE);
+            filter.setGravity(Gravity.CENTER);
+            filter.setTypeface(null, android.graphics.Typeface.BOLD);
             filter.setPadding(18, 0, 18, 0);
             filter.setMinHeight(48);
-            filter.setMinWidth(0);
+            filterChips.add(filter);
             filter.setOnClickListener(v -> {
                 activeFilter = selected;
+                updateFilterStyles();
                 render();
             });
-            filters.addView(filter, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 52));
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 48);
+            chipParams.setMargins(0, 0, 10, 0);
+            filters.addView(filter, chipParams);
         }
         filterScroll.addView(filters);
+        updateFilterStyles();
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
@@ -138,7 +157,7 @@ public class JourneyListActivity extends Activity {
         scroll.addView(journeyList);
         scroll.setFillViewport(true);
 
-        content.addView(logo);
+        content.addView(brandRow);
         content.addView(headingRow);
         content.addView(intro);
         content.addView(filterScroll);
@@ -154,7 +173,8 @@ public class JourneyListActivity extends Activity {
     private View buildBottomNavigation() {
         LinearLayout nav = new LinearLayout(this);
         nav.setGravity(Gravity.CENTER);
-        nav.setPadding(8, 10, 8, 12);
+        nav.setPadding(8, 10, 8, 24);
+        nav.setMinimumHeight(82);
         nav.setBackgroundColor(0xFF10275D);
 
         String[] labels = {"⌖\nMap", "▤\nJourneys", "▥\nProgress",
@@ -237,7 +257,7 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
-        Button inspect = actionButton("View & refine", 0xFF102047, Color.WHITE);
+        TextView inspect = actionButton("View & refine", 0xFF102047, Color.WHITE);
         inspect.setOnClickListener(v -> showDetails(journey));
         actions.addView(inspect, new LinearLayout.LayoutParams(0, 52, 1));
 
@@ -255,15 +275,28 @@ public class JourneyListActivity extends Activity {
         return card;
     }
 
-    private Button actionButton(String text, int background, int foreground) {
-        Button button = new Button(this);
+    private TextView actionButton(String text, int background, int foreground) {
+        TextView button = new TextView(this);
         button.setText(text);
         button.setTextSize(14);
-        button.setAllCaps(false);
+        button.setGravity(Gravity.CENTER);
         button.setTypeface(null, android.graphics.Typeface.BOLD);
         button.setTextColor(foreground);
-        button.setBackground(roundRect(background, background, 18));
+        button.setPadding(12, 0, 12, 0);
+        button.setBackground(roundRect(background, 0xFF46649E, 18));
         return button;
+    }
+
+    private void updateFilterStyles() {
+        for (int index = 0; index < filterChips.size(); index++) {
+            boolean selected = index == activeFilter;
+            TextView chip = filterChips.get(index);
+            chip.setTextColor(selected ? 0xFF0B1C50 : Color.WHITE);
+            chip.setBackground(roundRect(
+                    selected ? 0xFFF7C450 : 0x1AFFFFFF,
+                    selected ? 0xFFF7C450 : 0xFF46649E,
+                    28));
+        }
     }
 
     private GradientDrawable roundRect(int fill, int stroke, int radius) {
