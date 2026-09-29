@@ -156,6 +156,14 @@ public class MainActivity extends Activity {
         historyButton.setOnClickListener(v ->
                 startActivity(new Intent(this, JourneyListActivity.class)));
 
+        Button onboardingButton = new Button(this);
+        onboardingButton.setText("Review onboarding (test)");
+        onboardingButton.setOnClickListener(v -> {
+            getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
+                    .edit().remove("complete").apply();
+            startActivity(new Intent(this, OnboardingActivity.class));
+        });
+
         root.addView(title);
         root.addView(subtitle);
         root.addView(modeSpinner);
@@ -165,6 +173,7 @@ public class MainActivity extends Activity {
         root.addView(distance);
         root.addView(saved);
         root.addView(historyButton);
+        root.addView(onboardingButton);
         setContentView(root);
     }
 
