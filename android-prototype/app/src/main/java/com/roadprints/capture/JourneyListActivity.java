@@ -488,8 +488,34 @@ public class JourneyListActivity extends Activity {
         String[] transportLabels = {"Driving", "On foot", "Cycling", "Bus",
                 "Train", "Plane", "Ferry", "Running", "Unknown"};
         Spinner transport = new Spinner(this);
-        ArrayAdapter<String> transportAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, transportLabels);
+        ArrayAdapter<String> transportAdapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, transportLabels) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                return styleTransportText(super.getView(position, convertView, parent), false);
+            }
+
+            @Override
+            public View getDropDownView(
+                    int position, View convertView, android.view.ViewGroup parent) {
+                return styleTransportText(
+                        super.getDropDownView(position, convertView, parent), true);
+            }
+
+            private View styleTransportText(View view, boolean dropdown) {
+                TextView text = (TextView) view;
+                text.setTextColor(Color.WHITE);
+                text.setTextSize(16);
+                if (dropdown) {
+                    text.setBackgroundColor(0xFF142957);
+                    text.setPadding(dp(16), dp(12), dp(16), dp(12));
+                } else {
+                    text.setGravity(Gravity.CENTER_VERTICAL);
+                    text.setPadding(dp(10), 0, dp(10), 0);
+                }
+                return text;
+            }
+        };
         transport.setAdapter(transportAdapter);
         String currentMode = journey.optString("mode", "unknown");
         for (int index = 0; index < transportModes.length; index++) {
@@ -499,6 +525,8 @@ public class JourneyListActivity extends Activity {
             }
         }
         transport.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
+        transport.setPopupBackgroundDrawable(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
+        transport.setDropDownVerticalOffset(dp(4));
         transport.setPadding(dp(10), 0, dp(10), 0);
         transport.setMinimumHeight(dp(52));
         LinearLayout.LayoutParams transportParams = new LinearLayout.LayoutParams(
