@@ -219,17 +219,24 @@ public class JourneyListActivity extends Activity {
 
     private void applySystemBarInsets(View root, View content, View bottomNavigation) {
         root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int top;
+            int bottom;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 android.graphics.Insets bars =
                         insets.getInsets(WindowInsets.Type.systemBars());
-                content.setPadding(36, 26 + bars.top, 36, 12);
-                bottomNavigation.setPadding(8, 0, 8, 0);
-                LinearLayout.LayoutParams navParams =
-                        (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
-                navParams.height = 76;
-                navParams.bottomMargin = bars.bottom;
-                bottomNavigation.setLayoutParams(navParams);
+                top = bars.top;
+                bottom = bars.bottom;
+            } else {
+                top = insets.getSystemWindowInsetTop();
+                bottom = insets.getSystemWindowInsetBottom();
             }
+            content.setPadding(dp(36), dp(26) + top, dp(36), dp(12));
+            bottomNavigation.setPadding(dp(8), 0, dp(8), bottom);
+            LinearLayout.LayoutParams navParams =
+                    (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
+            navParams.height = dp(68) + bottom;
+            navParams.bottomMargin = 0;
+            bottomNavigation.setLayoutParams(navParams);
             return insets;
         });
         root.requestApplyInsets();
@@ -239,7 +246,7 @@ public class JourneyListActivity extends Activity {
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        nav.setPadding(8, 0, 8, 0);
+        nav.setPadding(dp(8), 0, dp(8), 0);
         nav.setBackgroundColor(0xFF10275D);
 
         int[] iconResources = {
@@ -251,7 +258,7 @@ public class JourneyListActivity extends Activity {
             LinearLayout item = new LinearLayout(this);
             item.setOrientation(LinearLayout.VERTICAL);
             item.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-            item.setPadding(0, 4, 0, 0);
+            item.setPadding(0, dp(4), 0, 0);
             item.setClipChildren(false);
 
             ImageView icon = new ImageView(this);
@@ -261,7 +268,7 @@ public class JourneyListActivity extends Activity {
             icon.setColorFilter(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8,
                     android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 32));
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(32)));
 
             TextView label = new TextView(this);
             label.setText(labels[index]);
@@ -271,9 +278,9 @@ public class JourneyListActivity extends Activity {
             label.setMaxLines(1);
             label.setTextColor(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8);
             item.addView(label, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 24));
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
 
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, 68, 1);
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, dp(68), 1);
             nav.addView(item, itemParams);
             if (index == 0) {
                 item.setClickable(true);
