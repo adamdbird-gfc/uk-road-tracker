@@ -12,13 +12,22 @@ import java.util.List;
 public class ActivityRecognitionReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (!ActivityRecognitionResult.hasResult(intent)) return;
+        if (!ActivityRecognitionResult.hasResult(intent)) {
+            sendDiagnostic(context, "Activity callback received without a recognition result.");
+            return;
+        }
 
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-        if (result == null) return;
+        if (result == null) {
+            sendDiagnostic(context, "Activity callback could not be decoded.");
+            return;
+        }
 
         List<DetectedActivity> activities = result.getProbableActivities();
-        if (activities == null || activities.isEmpty()) return;
+        if (activities == null || activities.isEmpty()) {
+            sendDiagnostic(context, "Activity callback contained no probable activities.");
+            return;
+        }
 
         DetectedActivity best = activities.get(0);
         Intent update = new Intent(context, CaptureService.class)
@@ -30,5 +39,13 @@ public class ActivityRecognitionReceiver extends BroadcastReceiver {
         } else {
             context.startService(update);
         }
+    }
+
+    private void sendDiagnostic(Context context, String message) {
+        Intent update = new Intent(CaptureService.ACTION_UPDATE);
+        update.setPackage(context.getPackageName());
+        update.putExtra(CaptureService.EXTRA_ARMED, true);
+        update.putExtra(CaptureService.EXTRA_MESSAGE, message);
+        context.sendBroadcast(update);
     }
 }
