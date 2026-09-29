@@ -149,12 +149,24 @@ public class TimelineImportActivity extends Activity {
              BufferedReader reader = new BufferedReader(new InputStreamReader(
                      input, StandardCharsets.UTF_8))) {
             if (input == null) throw new IllegalStateException("The selected file could not be opened.");
-            String line;
-            while ((line = reader.readLine()) != null) raw.append(line);
+            char[] buffer = new char[32768];
+            int read;
+            long total = 0;
+            long nextReport = 1024 * 1024;
+            while ((read = reader.read(buffer)) != -1) {
+                raw.append(buffer, 0, read);
+                total += read;
+                if (total >= nextReport) {
+                    publishStatus("Reading Timeline file locally… " + formatBytes(total));
+                    nextReport += 1024 * 1024;
+                }
+            }
         }
 
         publishStatus("Timeline file read. Finding journeys…");
-        JSONObject root = new JSONObject(raw.toString());
+        String fileContents = raw.toString();
+        String fileFingerprint = fingerprint(fileContents);
+        JSONObject root = new JSONObject(fileContents);
         List<JSONObject> segments = findSegments(root);
         if (segments.isEmpty()) {
             throw new IllegalArgumentException(
@@ -167,7 +179,7 @@ public class TimelineImportActivity extends Activity {
         int invalid = 0;
         for (int index = 0; index < segments.size(); index++) {
             JSONObject segment = segments.get(index);
-            JSONObject journey = journeyFromSegment(segment, fingerprint(raw.toString()));
+            JSONObject journey = journeyFromSegment(segment, fileFingerprint);
             if (index == 0 || (index + 1) % 10 == 0 || index == segments.size() - 1) {
                 publishStatus("Saving journey " + (index + 1) + " of " + segments.size() + " locally…");
             }
@@ -416,8 +428,22 @@ public class TimelineImportActivity extends Activity {
     }
 
     private void setBusy(boolean busy) {
-        choose.setEnabled(!busy);
-        capture.setEnabled(!busy);
+        setActionState(choose, busy);
+        setActionState(capture, busy);
+    }
+
+    private void setActionState(TextView button, boolean busy) {
+        button.setEnabled(!busy);
+        button.setAlpha(busy ? 0.72f : 1f);
+        button.setTextColor(busy ? 0xFF5D5D5D : 0xFF0B1C50);
+        button.setBackgroundColor(busy ? 0xFF9E9E9E : 0xFFF7C450);
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024 * 1024) {
+            return (bytes / 1024) + " KB";
+        }
+        return String.format(Locale.UK, "%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
     private String safeMessage(Exception error) {
