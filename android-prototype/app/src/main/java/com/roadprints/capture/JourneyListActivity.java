@@ -12,6 +12,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -65,12 +66,13 @@ public class JourneyListActivity extends Activity {
         brandRow.setGravity(Gravity.CENTER_VERTICAL);
         brandRow.setPadding(0, 0, 0, 28);
 
-        TextView logoMark = new TextView(this);
-        logoMark.setText("✦");
-        logoMark.setTextSize(28);
-        logoMark.setTypeface(null, android.graphics.Typeface.BOLD);
-        logoMark.setTextColor(0xFFF7C450);
-        logoMark.setPadding(0, 0, 10, 0);
+        ImageView logoMark = new ImageView(this);
+        logoMark.setImageResource(R.drawable.roadprints_mark);
+        logoMark.setContentDescription("Roadprints");
+        logoMark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(42, 42);
+        markParams.setMargins(0, 0, 10, 0);
+        brandRow.addView(logoMark, markParams);
 
         TextView logo = new TextView(this);
         logo.setText("roadprints");
@@ -78,7 +80,6 @@ public class JourneyListActivity extends Activity {
         logo.setTypeface(null, android.graphics.Typeface.BOLD);
         logo.setTextColor(Color.WHITE);
         logo.setPadding(0, 0, 0, 0);
-        brandRow.addView(logoMark);
         brandRow.addView(logo);
 
         LinearLayout headingRow = new LinearLayout(this);
