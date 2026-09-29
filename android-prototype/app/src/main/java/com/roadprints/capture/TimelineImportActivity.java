@@ -218,6 +218,7 @@ public class TimelineImportActivity extends Activity {
         }
 
         semanticPathPoints.sort((left, right) -> Long.compare(left.timeMs, right.timeMs));
+        int semanticActivitiesProcessed = 0;
         for (JSONObject segment : semanticSegments) {
             ImportCounts counts = importSegment(segment, fileFingerprint, semanticPathPoints);
             added += counts.added;
@@ -226,7 +227,7 @@ public class TimelineImportActivity extends Activity {
             journeyRecordsParsed += counts.recordsParsed;
             journeysWithIntermediateTrace += counts.withIntermediateTrace;
             sourceRoutePointsFound += counts.sourceRoutePoints;
-            publishImportProgress(++found, added, skipped, invalid);
+            publishImportProgress(++semanticActivitiesProcessed, added, skipped, invalid);
         }
 
         if (found == 0) {
@@ -255,11 +256,44 @@ public class TimelineImportActivity extends Activity {
         int sourceRoutePoints = quality == null
                 ? 0 : quality.optInt("source_route_points", 0);
         int withIntermediateTrace = gpsPoints > 2 ? 1 : 0;
-        if (JourneyStore.get(this, id) != null) {
+        JSONObject existing = JourneyStore.get(this, id);
+        if (existing != null) {
+            if (shouldRefreshImportedJourney(existing, journey)) {
+                try {
+                    journey.put("revision", existing.optInt("revision", 1) + 1);
+                    if (existing.has("title")) journey.put("title", existing.opt("title"));
+                    JourneyStore.save(this, journey);
+                } catch (Exception ignored) {
+                    // Keep the existing archive if a refresh cannot be committed.
+                }
+            }
             return new ImportCounts(0, 1, 0, 1, withIntermediateTrace, sourceRoutePoints);
         }
         JourneyStore.save(this, journey);
         return new ImportCounts(1, 0, 0, 1, withIntermediateTrace, sourceRoutePoints);
+    }
+
+    private boolean shouldRefreshImportedJourney(
+            JSONObject existing, JSONObject incoming) {
+        JSONObject source = existing.optJSONObject("source");
+        if (source == null
+                || !"timeline_import".equals(source.optString("type", ""))) return false;
+        if (!existing.optString("mode", "unknown")
+                .equals(incoming.optString("mode", "unknown"))) return true;
+
+        JSONObject oldQuality = existing.optJSONObject("capture_quality");
+        JSONObject newQuality = incoming.optJSONObject("capture_quality");
+        int oldPoints = oldQuality == null ? 0 : oldQuality.optInt("gps_points", 0);
+        int newPoints = newQuality == null ? 0 : newQuality.optInt("gps_points", 0);
+        if (newPoints > oldPoints) return true;
+
+        JSONObject oldProcessing = existing.optJSONObject("processing");
+        JSONObject newProcessing = incoming.optJSONObject("processing");
+        if (oldProcessing == null || newProcessing == null) return false;
+        return !oldProcessing.optString("road_matching", "")
+                        .equals(newProcessing.optString("road_matching", ""))
+                || !oldProcessing.optString("foot_matching", "")
+                        .equals(newProcessing.optString("foot_matching", ""));
     }
 
     private void publishImportProgress(int found, int added, int skipped, int invalid) {
@@ -419,8 +453,12 @@ public class TimelineImportActivity extends Activity {
             String mode = modeFor(activity, semantic);
             double distance = distanceFor(activity, points);
             String idMode = "unknown".equals(mode) ? "driving" : mode;
+            double[] firstPoint = points.get(0);
+            double[] lastPoint = points.get(points.size() - 1);
+            String stableEndpoints = firstPoint[0] + "," + firstPoint[1]
+                    + ";" + lastPoint[0] + "," + lastPoint[1];
             String id = "timeline-" + fingerprint(
-                    started + "|" + ended + "|" + idMode + "|" + coordinateKey(points));
+                    started + "|" + ended + "|" + idMode + "|" + stableEndpoints);
 
             JSONObject coordinates = new JSONObject();
             coordinates.put("type", "LineString");
