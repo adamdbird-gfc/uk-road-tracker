@@ -109,22 +109,20 @@ public class OnboardingActivity extends Activity {
         privacy.setPadding(0, 24, 0, 0);
         root.addView(privacy);
 
-        if (JourneyStore.count(this) > 0) {
-            addDeleteControls(root);
-        }
+        addDeleteControls(root);
 
         scroll.addView(root);
         setContentView(scroll);
     }
 
     private TextView choice(String title, String subtitle) {
-        TextView card = text(title + "\n" + subtitle, 17, Color.WHITE, true);
+        TextView card = text(title + "\n" + subtitle, 16, Color.WHITE, true);
         card.setGravity(Gravity.CENTER_VERTICAL);
         card.setPadding(22, 0, 22, 0);
         card.setBackgroundColor(0xFF2C4380);
         card.setClickable(true);
         card.setOnClickListener(v -> v.setBackgroundColor(0xFF3B579A));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 78);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, 88);
         params.setMargins(0, 0, 0, 12);
         card.setLayoutParams(params);
         return card;
@@ -136,19 +134,23 @@ public class OnboardingActivity extends Activity {
         row.setGravity(Gravity.CENTER);
         row.setPadding(0, 22, 0, 0);
 
-        Button road = deleteButton("Delete road data");
+        int roadCount = JourneyStore.countByModes(this, "driving", "bus", "cycling");
+        int footCount = JourneyStore.countByModes(this, "walking");
+        int totalCount = JourneyStore.count(this);
+
+        Button road = deleteButton("Delete road data", roadCount > 0);
         road.setOnClickListener(v -> confirmDelete(
                 "Delete road data?",
                 "This removes driving, bus and cycling journeys from this device.",
                 new String[]{"driving", "bus", "cycling"}));
 
-        Button foot = deleteButton("Delete on-foot data");
+        Button foot = deleteButton("Delete on-foot data", footCount > 0);
         foot.setOnClickListener(v -> confirmDelete(
                 "Delete on-foot data?",
                 "This removes walking journeys from this device.",
                 new String[]{"walking"}));
 
-        Button all = deleteButton("Delete all saved data");
+        Button all = deleteButton("Delete all saved data", totalCount > 0);
         all.setOnClickListener(v -> confirmDeleteAll());
 
         row.addView(road, deleteParams());
@@ -157,12 +159,15 @@ public class OnboardingActivity extends Activity {
         root.addView(row);
     }
 
-    private Button deleteButton(String label) {
+    private Button deleteButton(String label, boolean enabled) {
         Button button = new Button(this);
         button.setText(label);
         button.setTextSize(10);
         button.setAllCaps(false);
-        button.setTextColor(0xFFFFB7B7);
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF61739A);
+        button.setEnabled(enabled);
+        button.setAlpha(enabled ? 1f : 0.65f);
         button.setMinHeight(0);
         button.setMinWidth(0);
         button.setPadding(2, 0, 2, 0);
