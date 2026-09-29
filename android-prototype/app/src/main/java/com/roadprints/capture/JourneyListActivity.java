@@ -358,10 +358,10 @@ public class JourneyListActivity extends Activity {
 
         TextView modeIcon = new TextView(this);
         modeIcon.setText(transportIcon(mode));
-        modeIcon.setTextSize(22);
+        modeIcon.setTextSize(26);
         modeIcon.setGravity(Gravity.CENTER);
         modeIcon.setContentDescription(displayMode(mode));
-        modeIcon.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(12)));
+        modeIcon.setBackground(roundRect(0xFF304B88, 0xFF8EA7D4, dp(12)));
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(44), dp(44));
         iconParams.setMargins(dp(12), dp(2), 0, 0);
         cardContent.addView(modeIcon, iconParams);
