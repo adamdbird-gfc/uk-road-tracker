@@ -398,45 +398,90 @@ public class JourneyListActivity extends Activity {
 
     private void showDetails(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
-        JSONArray coordinates = geometry == null
-                ? null : geometry.optJSONArray("coordinates");
-        TextView modalTitle = new TextView(this);
-        modalTitle.setText("View & refine journey");
-        modalTitle.setTextSize(24);
-        modalTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        modalTitle.setTextColor(Color.WHITE);
-        modalTitle.setPadding(24, 20, 24, 12);
-
-        TextView previewLabel = new TextView(this);
-        previewLabel.setText("ROUTE PREVIEW");
-        previewLabel.setTextSize(12);
-        previewLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-        previewLabel.setTextColor(0xFF506070);
-        previewLabel.setPadding(24, 16, 24, 8);
-
-        RoutePreviewView preview = new RoutePreviewView(this, coordinates);
-        preview.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 360));
-
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         double metres = journey.optDouble("distance_meters", 0);
         int points = coordinates == null ? 0 : coordinates.length();
-        TextView message = new TextView(this);
-        message.setText(String.format(
-                "Start: %s\nEnd: %s\nDuration: %s\n%s • %.0f m • %d GPS points",
-                displayTime(journey.optString("started_at")),
-                displayTime(journey.optString("ended_at")),
-                journeyDuration(journey),
-                displayMode(journey.optString("mode", "unknown")),
-                metres, points));
-        message.setTextSize(16);
-        message.setTextColor(0xFFD3DCED);
-        message.setPadding(24, 16, 24, 16);
+        int side = dp(24);
 
-        TextView transportLabel = new TextView(this);
-        transportLabel.setText("Transport type");
-        transportLabel.setTextSize(14);
-        transportLabel.setTextColor(0xFF67D5CC);
-        transportLabel.setPadding(24, 12, 24, 0);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setBackground(roundRect(0xFF0B1C50, 0xFF46649E, dp(20)));
+        container.setClipToOutline(true);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(side, dp(18), side, dp(12));
+        TextView modalTitle = new TextView(this);
+        modalTitle.setText("View & refine journey");
+        modalTitle.setTextSize(23);
+        modalTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        modalTitle.setTextColor(Color.WHITE);
+        header.addView(modalTitle, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        TextView close = new TextView(this);
+        close.setText("CLOSE");
+        close.setTextSize(13);
+        close.setTypeface(null, android.graphics.Typeface.BOLD);
+        close.setTextColor(0xFFF7C450);
+        close.setGravity(Gravity.CENTER);
+        close.setPadding(dp(12), dp(12), 0, dp(12));
+        header.addView(close);
+        container.addView(header);
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        TextView previewLabel = new TextView(this);
+        previewLabel.setText("ROUTE PREVIEW");
+        previewLabel.setTextSize(13);
+        previewLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+        previewLabel.setLetterSpacing(0.06f);
+        previewLabel.setTextColor(0xFFD3DCED);
+        previewLabel.setPadding(side, dp(8), side, dp(10));
+        body.addView(previewLabel);
+
+        // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
+        RoutePreviewView preview = new RoutePreviewView(this, coordinates);
+        body.addView(preview, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
+
+        LinearLayout fields = new LinearLayout(this);
+        fields.setOrientation(LinearLayout.VERTICAL);
+        fields.setPadding(side, dp(18), side, dp(12));
+        fields.addView(detailRow("Start", displayTime(journey.optString("started_at"))));
+        fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
+        fields.addView(detailRow("Duration", journeyDuration(journey)));
+
+        TextView routeFacts = new TextView(this);
+        routeFacts.setText(String.format("%s  ·  %.0f m  ·  %d GPS points",
+                displayMode(journey.optString("mode", "unknown")), metres, points));
+        routeFacts.setTextSize(14);
+        routeFacts.setTextColor(0xFFD3DCED);
+        routeFacts.setPadding(0, dp(8), 0, dp(18));
+        fields.addView(routeFacts);
+
+        fields.addView(fieldLabel("Journey name"));
+        EditText titleInput = new EditText(this);
+        titleInput.setHint("Name this journey");
+        titleInput.setText(journey.optString("title", ""));
+        titleInput.setTextSize(16);
+        titleInput.setSingleLine(true);
+        titleInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        titleInput.setTextColor(Color.WHITE);
+        titleInput.setHintTextColor(0xFFB9C5D8);
+        titleInput.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
+        titleInput.setPadding(dp(14), dp(8), dp(14), dp(8));
+        titleInput.setMinHeight(dp(52));
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        inputParams.topMargin = dp(8);
+        fields.addView(titleInput, inputParams);
+
+        TextView transportLabel = fieldLabel("Transport type");
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = dp(16);
+        fields.addView(transportLabel, labelParams);
 
         String[] transportModes = {"driving", "walking", "cycling", "bus",
                 "train", "plane", "ferry", "running", "unknown"};
@@ -453,122 +498,152 @@ public class JourneyListActivity extends Activity {
                 break;
             }
         }
-        transport.setBackgroundColor(0xFF0B1C50);
-        transport.setPadding(24, 0, 24, 0);
+        transport.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
+        transport.setPadding(dp(10), 0, dp(10), 0);
+        transport.setMinimumHeight(dp(52));
+        LinearLayout.LayoutParams transportParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+        transportParams.topMargin = dp(8);
+        fields.addView(transport, transportParams);
 
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(0, 0, 0, 8);
-        container.setBackground(roundRect(0xFF0B1C50, 0xFF46649E, 24));
-
-        EditText titleInput = new EditText(this);
-        titleInput.setHint("Name this journey");
-        titleInput.setText(journey.optString("title", ""));
-        titleInput.setTextSize(18);
-        titleInput.setSingleLine(true);
-        titleInput.setInputType(InputType.TYPE_CLASS_TEXT
-                | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        titleInput.setTextColor(Color.WHITE);
-        titleInput.setHintTextColor(0xFFB9C5D8);
-        titleInput.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFFF7C450));
-        titleInput.setPadding(24, 8, 24, 8);
-
-        TextView titleLabel = new TextView(this);
-        titleLabel.setText("Journey name");
-        titleLabel.setTextSize(14);
-        titleLabel.setTextColor(0xFF67D5CC);
-        titleLabel.setPadding(24, 12, 24, 0);
-
-        container.addView(modalTitle);
-        container.addView(previewLabel);
-        container.addView(preview);
-        container.addView(message);
-        container.addView(titleLabel);
-        container.addView(titleInput);
-        container.addView(transportLabel);
-        container.addView(transport);
-
-        Button saveTitle = styledModalButton("SAVE JOURNEY NAME", 0xFF102047, Color.WHITE);
-        saveTitle.setOnClickListener(v -> {
-            JourneyStore.updateTitle(this, journey.optString("journey_id"),
-                    titleInput.getText().toString());
-            journeys = JourneyStore.all(this);
-            render();
-            Toast.makeText(this, "Journey name saved", Toast.LENGTH_SHORT).show();
-        });
-        container.addView(saveTitle);
-
-        Button saveTransport = styledModalButton("SAVE TRANSPORT TYPE", 0xFFF7C450, 0xFF0B1C50);
-        saveTransport.setOnClickListener(v -> {
-            String selectedMode = transportModes[transport.getSelectedItemPosition()];
-            JourneyStore.updateMode(this, journey.optString("journey_id"), selectedMode);
-            journeys = JourneyStore.all(this);
-            render();
-            Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
-        });
-        container.addView(saveTransport);
-
-        Button process = styledModalButton("", 0xFFE2E8F0, 0xFF0B1C50);
         String processingStatus = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
         boolean footMode = isFootMode(mode);
         boolean processableMode = footMode || isRoadMode(mode);
+        TextView status = new TextView(this);
+        String statusText;
+        int statusColor;
         if (points < 2) {
-            process.setText("NOT ENOUGH GPS EVIDENCE");
+            statusText = "Not enough GPS evidence to match this journey";
+            statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus)) {
-            process.setText("PROCESSED");
+            statusText = "✓  Processed";
+            statusColor = 0xFF8BE0B1;
         } else if ("processing".equals(processingStatus)) {
-            process.setText("PROCESSING…");
+            statusText = "Matching in progress…";
+            statusColor = 0xFFF7C450;
         } else if (!processableMode) {
-            process.setText("NO MATCHING REQUIRED");
+            statusText = "No road matching needed for this transport type";
+            statusColor = 0xFFB9C5D8;
         } else if ("failed".equals(processingStatus)) {
-            process.setText(footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH");
+            statusText = "Matching failed · you can retry below";
+            statusColor = 0xFFF7C450;
         } else {
-            process.setText(footMode ? "PROCESS ON-FOOT JOURNEY" : "PROCESS ROAD JOURNEY");
+            statusText = "Not yet matched to roads";
+            statusColor = 0xFFB9C5D8;
         }
-        process.setEnabled(points >= 2 && processableMode && !"processing".equals(processingStatus)
-                && !"complete".equals(processingStatus));
-        process.setOnClickListener(v -> processJourney(journey, process));
-        container.addView(process);
+        status.setText(statusText);
+        status.setTextSize(14);
+        status.setTypeface(null, android.graphics.Typeface.BOLD);
+        status.setTextColor(statusColor);
+        status.setPadding(0, dp(18), 0, dp(8));
+        fields.addView(status);
+        body.addView(fields);
+        scroll.addView(body);
+        container.addView(scroll, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.VERTICAL);
+        actions.setPadding(side, dp(12), side, dp(8));
+        Button saveChanges = styledModalButton("SAVE CHANGES", 0xFFF7C450, 0xFF0B1C50);
+        saveChanges.setOnClickListener(v -> {
+            JourneyStore.updateTitle(this, journey.optString("journey_id"),
+                    titleInput.getText().toString());
+            JourneyStore.updateMode(this, journey.optString("journey_id"),
+                    transportModes[transport.getSelectedItemPosition()]);
+            journeys = JourneyStore.all(this);
+            render();
+            Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
+        });
+        actions.addView(saveChanges, actionLayoutParams());
+
+        LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
+        secondaryParams.topMargin = dp(8);
         if ("complete".equals(processingStatus)) {
             Button refineMatched = styledModalButton(
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
             refineMatched.setOnClickListener(v -> showMatchedRefinement(journey));
-            container.addView(refineMatched);
+            actions.addView(refineMatched, secondaryParams);
+        } else if (processableMode && points >= 2) {
+            String buttonLabel = "failed".equals(processingStatus)
+                    ? (footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH")
+                    : "processing".equals(processingStatus) ? "MATCHING…"
+                    : (footMode ? "MATCH ON-FOOT JOURNEY" : "MATCH ROAD JOURNEY");
+            Button processButton = styledModalButton(buttonLabel, 0xFF233B78, Color.WHITE);
+            processButton.setEnabled(!"processing".equals(processingStatus));
+            processButton.setOnClickListener(v -> processJourney(journey, processButton));
+            actions.addView(processButton, secondaryParams);
         }
 
-        Button share = styledModalButton("SHARE JOURNEY JSON", 0xFFE2E8F0, 0xFF0B1C50);
-        share.setOnClickListener(v -> shareJourney(journey));
-        container.addView(share);
-
-        Button delete = styledModalButton("DELETE JOURNEY", 0xFFFFE1E1, 0xFFB3261E);
+        TextView delete = new TextView(this);
+        delete.setText("Delete journey");
+        delete.setTextSize(14);
+        delete.setTextColor(0xFFFF8A8A);
+        delete.setGravity(Gravity.CENTER);
+        delete.setPadding(dp(12), dp(14), dp(12), dp(8));
         delete.setOnClickListener(v -> confirmDelete(journey));
-        container.addView(delete);
+        actions.addView(delete, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        container.addView(actions);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(container)
-                .setPositiveButton("CLOSE", null)
-                .create();
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+        close.setOnClickListener(v -> {
+            if (dialogRef[0] != null) dialogRef[0].dismiss();
+        });
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(container, 0, 0, 0, 0).create();
+        dialogRef[0] = dialog;
         dialog.setOnShowListener(ignored -> {
             Window dialogWindow = dialog.getWindow();
             if (dialogWindow != null) {
-                dialogWindow.setBackgroundDrawable(roundRect(0xFF0B1C50, 0xFF46649E, 24));
+                dialogWindow.setBackgroundDrawableResource(android.R.color.transparent);
                 dialogWindow.setStatusBarColor(0xFF071337);
                 dialogWindow.setNavigationBarColor(0xFF071337);
+                dialogWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
                 dialogWindow.setLayout(
                         (int) (getResources().getDisplayMetrics().widthPixels * 0.94f),
-                        WindowManager.LayoutParams.WRAP_CONTENT);
+                        (int) (getResources().getDisplayMetrics().heightPixels * 0.84f));
             }
-            int closeId = AlertDialog.BUTTON_POSITIVE;
-            Button close = dialog.getButton(closeId);
-            close.setTextColor(0xFFF7C450);
-            close.setTextSize(14);
-            close.setTypeface(null, android.graphics.Typeface.BOLD);
-            close.setAllCaps(false);
         });
         dialog.show();
+    }
+
+    private int dp(float value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private LinearLayout.LayoutParams actionLayoutParams() {
+        return new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+    }
+
+    private TextView fieldLabel(String text) {
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextSize(14);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        label.setTextColor(0xFF67D5CC);
+        return label;
+    }
+
+    private View detailRow(String labelText, String valueText) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(4), 0, dp(4));
+        TextView label = new TextView(this);
+        label.setText(labelText);
+        label.setTextSize(14);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        label.setTextColor(0xFF67D5CC);
+        row.addView(label, new LinearLayout.LayoutParams(dp(92),
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        TextView value = new TextView(this);
+        value.setText(valueText);
+        value.setTextSize(15);
+        value.setTextColor(0xFFE7ECF5);
+        row.addView(value, new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        return row;
     }
 
     private Button styledModalButton(String text, int background, int foreground) {
@@ -578,9 +653,9 @@ public class JourneyListActivity extends Activity {
         button.setTypeface(null, android.graphics.Typeface.BOLD);
         button.setTextColor(foreground);
         button.setAllCaps(false);
-        button.setMinHeight(52);
-        button.setPadding(16, 0, 16, 0);
-        button.setBackground(roundRect(background, 0xFFB8C4D5, 16));
+        button.setMinHeight(dp(52));
+        button.setPadding(dp(16), 0, dp(16), 0);
+        button.setBackground(roundRect(background, background, dp(12)));
         return button;
     }
 
@@ -838,3 +913,4 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
+
