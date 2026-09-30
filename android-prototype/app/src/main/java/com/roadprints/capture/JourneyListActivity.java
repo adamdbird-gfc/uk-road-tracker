@@ -308,12 +308,10 @@ public class JourneyListActivity extends Activity {
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
         updateReadinessSummary();
+        updateAvailableFilters();
         int visible = 0;
         for (JSONObject journey : journeys) {
-            if (!shouldShowJourney(journey)) continue;
-            if (!"all".equals(FILTER_VALUES[activeFilter])
-                    && !FILTER_VALUES[activeFilter].equals(
-                    journey.optString("mode", "unknown"))) continue;
+            if (!shouldShowJourney(journey) || !matchesActiveFilter(journey)) continue;
             journeyList.addView(createCard(journey));
             visible++;
         }
@@ -329,12 +327,49 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean shouldShowJourney(JSONObject journey) {
-        String mode = journey.optString("mode", "unknown");
-        JSONObject source = journey.optJSONObject("source");
-        if (!isRoadMode(mode) || source == null
-                || !"timeline_import".equals(source.optString("type", ""))) return true;
-        JSONObject quality = journey.optJSONObject("capture_quality");
-        return quality != null && quality.optInt("source_route_points", 0) >= 2;
+        String mode = journey.optString("mode", "unknown").trim().toLowerCase();
+        // Journeys that cannot be matched because they lack route points add no
+        // review value. Keep them in the archive, but omit them from this list.
+        if (isRoadMode(mode) || isFootMode(mode)) {
+            return hasEnoughMatchingEvidence(journey);
+        }
+        return true;
+    }
+
+    private boolean matchesActiveFilter(JSONObject journey) {
+        if (activeFilter == 0) return true;
+        String mode = journey.optString("mode", "unknown").trim().toLowerCase();
+        if (activeFilter == FILTER_VALUES.length - 1) return isUnknownMode(mode);
+        return FILTER_VALUES[activeFilter].equals(mode);
+    }
+
+    private boolean isUnknownMode(String mode) {
+        return mode.isEmpty() || "unknown".equals(mode) || "other".equals(mode)
+                || "unclassified".equals(mode) || "transit".equals(mode)
+                || "other_travel".equals(mode);
+    }
+
+    private void updateAvailableFilters() {
+        for (int filterIndex = 0; filterIndex < filterChips.size(); filterIndex++) {
+            boolean available = filterIndex == 0;
+            for (JSONObject journey : journeys) {
+                if (shouldShowJourney(journey)
+                        && matchesFilter(journey, filterIndex)) {
+                    available = true;
+                    break;
+                }
+            }
+            filterChips.get(filterIndex).setVisibility(available ? View.VISIBLE : View.GONE);
+            if (filterIndex == activeFilter && !available) activeFilter = 0;
+        }
+        updateFilterStyles();
+    }
+
+    private boolean matchesFilter(JSONObject journey, int filterIndex) {
+        String mode = journey.optString("mode", "unknown").trim().toLowerCase();
+        if (filterIndex == 0) return true;
+        if (filterIndex == FILTER_VALUES.length - 1) return isUnknownMode(mode);
+        return FILTER_VALUES[filterIndex].equals(mode);
     }
 
     private void sortJourneysNewestFirst() {
@@ -674,11 +709,16 @@ public class JourneyListActivity extends Activity {
         };
         transport.setAdapter(transportAdapter);
         String currentMode = journey.optString("mode", "unknown");
+        boolean matchedTransport = false;
         for (int index = 0; index < transportModes.length; index++) {
             if (transportModes[index].equals(currentMode)) {
                 transport.setSelection(index);
+                matchedTransport = true;
                 break;
             }
+        }
+        if (!matchedTransport && isUnknownMode(currentMode)) {
+            transport.setSelection(transportModes.length - 1);
         }
         final String[] savedTitle = {titleInput.getText().toString().trim()};
         final String[] savedMode = {transportModes[transport.getSelectedItemPosition()]};
