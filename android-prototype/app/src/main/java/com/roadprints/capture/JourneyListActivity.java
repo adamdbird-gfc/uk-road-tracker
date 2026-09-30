@@ -10,11 +10,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.EditText;
@@ -25,6 +27,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.text.InputType;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -669,6 +673,8 @@ public class JourneyListActivity extends Activity {
                 break;
             }
         }
+        final String[] savedTitle = {titleInput.getText().toString().trim()};
+        final String[] savedMode = {transportModes[transport.getSelectedItemPosition()]};
         transport.setBackground(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
         transport.setPopupBackgroundDrawable(roundRect(0xFF142957, 0xFF7188B8, dp(10)));
         transport.setDropDownVerticalOffset(dp(4));
@@ -727,15 +733,46 @@ public class JourneyListActivity extends Activity {
         actions.setOrientation(LinearLayout.VERTICAL);
         actions.setPadding(side, dp(12), side, dp(8));
         Button saveChanges = styledModalButton("SAVE CHANGES", 0xFFF7C450, 0xFF0B1C50);
-        saveChanges.setOnClickListener(v -> {
-            JourneyStore.updateTitle(this, journey.optString("journey_id"),
-                    titleInput.getText().toString());
-            JourneyStore.updateMode(this, journey.optString("journey_id"),
-                    transportModes[transport.getSelectedItemPosition()]);
+        Runnable updateSaveState = () -> {
+            boolean changed = !titleInput.getText().toString().trim().equals(savedTitle[0])
+                    || !transportModes[transport.getSelectedItemPosition()].equals(savedMode[0]);
+            saveChanges.setEnabled(changed);
+            saveChanges.setAlpha(changed ? 1f : 0.48f);
+        };
+        Runnable saveEdits = () -> {
+            String updatedTitle = titleInput.getText().toString().trim();
+            String updatedMode = transportModes[transport.getSelectedItemPosition()];
+            JourneyStore.updateTitle(this, journey.optString("journey_id"), updatedTitle);
+            JourneyStore.updateMode(this, journey.optString("journey_id"), updatedMode);
+            try {
+                journey.put("title", updatedTitle);
+                journey.put("mode", updatedMode);
+            } catch (Exception ignored) { }
+            savedTitle[0] = updatedTitle;
+            savedMode[0] = updatedMode;
             journeys = JourneyStore.all(this);
             render();
+            updateSaveState.run();
             Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
+        };
+        titleInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                updateSaveState.run();
+            }
+            @Override public void afterTextChanged(Editable text) { }
         });
+        transport.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(
+                    AdapterView<?> parent, View view, int position, long id) {
+                updateSaveState.run();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {
+                updateSaveState.run();
+            }
+        });
+        updateSaveState.run();
+        saveChanges.setOnClickListener(v -> saveEdits.run());
         actions.addView(saveChanges, actionLayoutParams());
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
@@ -743,7 +780,10 @@ public class JourneyListActivity extends Activity {
         if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             Button refineMatched = styledModalButton(
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
-            refineMatched.setOnClickListener(v -> showMatchedRefinement(journey, dialogRef));
+            refineMatched.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                    dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                            transportModes, savedTitle[0], savedMode[0]),
+                    saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
             actions.addView(refineMatched, secondaryParams);
         } else if (processableMode && enoughEvidence) {
             String buttonLabel = "complete".equals(processingStatus)
@@ -769,11 +809,28 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         container.addView(actions);
 
-        close.setOnClickListener(v -> {
-            if (dialogRef[0] != null) dialogRef[0].dismiss();
-        });
+        close.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                        transportModes, savedTitle[0], savedMode[0]),
+                saveEdits, () -> {
+                    if (dialogRef[0] != null) dialogRef[0].dismiss();
+                }));
         AlertDialog dialog = new AlertDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                if (event.getAction() == KeyEvent.ACTION_UP) {
+                    requestCloseWithUnsavedChanges(
+                            dialog,
+                            hasUnsavedChanges(titleInput, transport, transportModes,
+                                    savedTitle[0], savedMode[0]),
+                            saveEdits, dialog::dismiss);
+                }
+                return true;
+            }
+            return false;
+        });
         dialog.setOnShowListener(ignored -> {
             Window dialogWindow = dialog.getWindow();
             if (dialogWindow != null) {
@@ -787,6 +844,32 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
+    }
+
+    private boolean hasUnsavedChanges(
+            EditText title, Spinner transport, String[] modes,
+            String savedTitle, String savedMode) {
+        return !title.getText().toString().trim().equals(savedTitle)
+                || !modes[transport.getSelectedItemPosition()].equals(savedMode);
+    }
+
+    private void requestCloseWithUnsavedChanges(
+            AlertDialog dialog, boolean dirty, Runnable saveAction, Runnable continueAction) {
+        if (!dirty) {
+            continueAction.run();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Unsaved changes")
+                .setMessage("Save your journey changes before closing?")
+                .setPositiveButton("Save changes", (prompt, which) -> {
+                    saveAction.run();
+                    continueAction.run();
+                })
+                .setNegativeButton("Continue without saving",
+                        (prompt, which) -> continueAction.run())
+                .setNeutralButton("Keep editing", null)
+                .show();
     }
 
     private int dp(float value) {
