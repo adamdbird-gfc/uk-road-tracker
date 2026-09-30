@@ -9,6 +9,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
+from pedestrian_matching import select_smoothed_pedestrian_snaps
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -614,23 +615,50 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     if not vertices:
         return None
 
-    def nearest_vertex(point):
-        # The route-local graph keeps this direct scan small and avoids adding
-        # a second personal-location index to shared storage.
-        nearest = None
-        nearest_distance = float("inf")
-        for key, candidate in vertices.items():
-            distance = length_metres(point, candidate)
-            if distance < nearest_distance:
-                nearest, nearest_distance = key, distance
-        return nearest, nearest_distance
+    # Reduce dense GPS sampling while preserving sharp changes of direction.
+    # Connecting every individual fix to its nearest vertex can make the line
+    # oscillate between adjacent streets when GPS accuracy wanders at a junction.
+    sampled_trace = [trace[0]]
+    accumulated = 0.0
+    for index in range(1, len(trace) - 1):
+        before, point, after = trace[index - 1], trace[index], trace[index + 1]
+        accumulated += length_metres(before, point)
+        latitude_scale = cos(radians(point[1]))
+        incoming = ((point[0] - before[0]) * latitude_scale, point[1] - before[1])
+        outgoing = ((after[0] - point[0]) * latitude_scale, after[1] - point[1])
+        incoming_norm = (incoming[0] ** 2 + incoming[1] ** 2) ** 0.5
+        outgoing_norm = (outgoing[0] ** 2 + outgoing[1] ** 2) ** 0.5
+        turn = 0.0
+        if incoming_norm > 0 and outgoing_norm > 0:
+            dot = (incoming[0] * outgoing[0] + incoming[1] * outgoing[1]) / (incoming_norm * outgoing_norm)
+            turn = 1.0 - max(-1.0, min(1.0, dot))
+        if accumulated >= 25.0 or (
+            accumulated >= 8.0
+            and incoming_norm > 0.00002
+            and outgoing_norm > 0.00002
+            and turn > 0.35
+        ):
+            sampled_trace.append(point)
+            accumulated = 0.0
+    sampled_trace.append(trace[-1])
 
-    snapped_vertices = []
-    for point in trace:
-        key, distance = nearest_vertex(point)
-        if key is None or distance > 120:
+    from heapq import nsmallest
+
+    candidate_layers = []
+    for point in sampled_trace:
+        nearest = nsmallest(
+            6,
+            ((length_metres(point, candidate), key) for key, candidate in vertices.items()),
+        )
+        candidates = [(key, distance) for distance, key in nearest if distance <= 120.0]
+        if not candidates:
             return None
-        snapped_vertices.append(key)
+        candidate_layers.append(candidates)
+    snapped_vertices = select_smoothed_pedestrian_snaps(
+        sampled_trace, candidate_layers, vertices, length_metres
+    )
+    if not snapped_vertices:
+        return None
 
     def shortest_path(start_key, end_key):
         if start_key == end_key:
