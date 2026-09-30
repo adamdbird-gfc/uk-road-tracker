@@ -322,21 +322,12 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean shouldShowJourney(JSONObject journey) {
-        if (isTwoPointTimelineFootJourney(journey)) return false;
         String mode = journey.optString("mode", "unknown");
         JSONObject source = journey.optJSONObject("source");
         if (!isRoadMode(mode) || source == null
                 || !"timeline_import".equals(source.optString("type", ""))) return true;
         JSONObject quality = journey.optJSONObject("capture_quality");
         return quality != null && quality.optInt("source_route_points", 0) >= 2;
-    }
-
-    private boolean isTwoPointTimelineFootJourney(JSONObject journey) {
-        String mode = journey.optString("mode", "unknown");
-        JSONObject source = journey.optJSONObject("source");
-        return isFootMode(mode) && source != null
-                && "timeline_import".equals(source.optString("type", ""))
-                && pointCount(journey) == 2;
     }
 
     private void sortJourneysNewestFirst() {
@@ -1104,7 +1095,6 @@ public class JourneyListActivity extends Activity {
         int processed = 0;
         int failed = 0;
         for (JSONObject journey : journeys) {
-            if (isTwoPointTimelineFootJourney(journey)) continue;
             String status = journey.optString("processing_status", "pending");
             String mode = journey.optString("mode", "unknown");
             if (!isFootMode(mode) && !isRoadMode(mode)) {
