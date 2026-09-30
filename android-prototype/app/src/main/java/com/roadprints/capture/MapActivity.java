@@ -20,12 +20,16 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MapActivity extends Activity {
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
+    private TextView mapSubtitle;
+    private FrameLayout mapFrame;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -53,21 +57,40 @@ public class MapActivity extends Activity {
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(Color.WHITE);
 
-        MapRoutes mapRoutes = readMapRoutes();
-        TextView subtitle = new TextView(this);
-        subtitle.setText(mapRoutes.sections.isEmpty()
-                ? "Successfully matched journeys will appear here."
-                : mapRoutes.matchedJourneys + " successfully matched journeys.");
-        subtitle.setTextSize(14);
-        subtitle.setTextColor(0xFFD3DCED);
-        subtitle.setPadding(0, dp(4), 0, 0);
+        mapSubtitle = new TextView(this);
+        mapSubtitle.setTextSize(14);
+        mapSubtitle.setTextColor(0xFFD3DCED);
+        mapSubtitle.setPadding(0, dp(4), 0, 0);
 
         heading.addView(eyebrow);
         heading.addView(title);
-        heading.addView(subtitle);
+        heading.addView(mapSubtitle);
         root.addView(heading);
 
-        FrameLayout mapFrame = new FrameLayout(this);
+        mapFrame = new FrameLayout(this);
+        root.addView(mapFrame, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        refreshMap();
+
+        View bottomNavigation = buildBottomNavigation();
+        root.addView(bottomNavigation);
+        setContentView(root);
+        applySystemBarInsets(root, heading, bottomNavigation);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mapFrame != null && mapSubtitle != null) refreshMap();
+    }
+
+    private void refreshMap() {
+        MapRoutes mapRoutes = readMapRoutes();
+        mapSubtitle.setText(mapRoutes.sections.isEmpty()
+                ? "Successfully matched journeys will appear here."
+                : mapRoutes.matchedJourneys + " successfully matched journeys.");
+
+        mapFrame.removeAllViews();
         RoutePreviewView map = mapRoutes.sections.isEmpty()
                 ? new RoutePreviewView(this)
                 : new RoutePreviewView(this, mapRoutes.sections, true);
@@ -75,13 +98,6 @@ public class MapActivity extends Activity {
         mapFrame.addView(map, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         addZoomControls(mapFrame, map);
-        root.addView(mapFrame, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-
-        View bottomNavigation = buildBottomNavigation();
-        root.addView(bottomNavigation);
-        setContentView(root);
-        applySystemBarInsets(root, heading, bottomNavigation);
     }
 
     private MapRoutes readMapRoutes() {
@@ -117,7 +133,37 @@ public class MapActivity extends Activity {
                 }
             }
         }
-        return routes;
+        JSONObject corrections = journey.optJSONObject("journey_corrections");
+        JSONArray removedValues = corrections == null
+                ? null : corrections.optJSONArray("removed_matched_segments");
+        Set<Integer> removedEdges = new HashSet<>();
+        if (removedValues != null) {
+            for (int index = 0; index < removedValues.length(); index++) {
+                int edge = removedValues.optInt(index, -1);
+                if (edge >= 0) removedEdges.add(edge);
+            }
+        }
+        if (removedEdges.isEmpty()) return routes;
+
+        List<JSONArray> visible = new ArrayList<>();
+        int edgeIndex = 0;
+        for (JSONArray route : routes) {
+            JSONArray current = null;
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                if (removedEdges.contains(edgeIndex)) {
+                    if (current != null && current.length() >= 2) visible.add(current);
+                    current = null;
+                    continue;
+                }
+                if (current == null) {
+                    current = new JSONArray();
+                    current.put(route.optJSONArray(index - 1));
+                }
+                current.put(route.optJSONArray(index));
+            }
+            if (current != null && current.length() >= 2) visible.add(current);
+        }
+        return visible;
     }
 
     private boolean hasLinePoints(JSONArray points) {
