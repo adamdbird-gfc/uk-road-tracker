@@ -69,6 +69,7 @@ public class JourneyListActivity extends Activity {
     private View journeyRoot;
     private TextView count;
     private TextView readinessSummary;
+    private TextView captureStatus;
     private Button batchMatchButton;
     private volatile boolean batchCancelRequested;
     private boolean batchRunning;
@@ -90,6 +91,7 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateCaptureStatus();
         refreshJourneysAsync();
     }
 
@@ -221,6 +223,24 @@ public class JourneyListActivity extends Activity {
         content.addView(brandRow);
         content.addView(headingRow);
         content.addView(intro);
+        LinearLayout capturePanel = new LinearLayout(this);
+        capturePanel.setOrientation(LinearLayout.VERTICAL);
+        capturePanel.setPadding(dp(14), dp(10), dp(14), dp(10));
+        capturePanel.setBackground(pill(0xFF172F68, 0xFF29457F, dp(16)));
+        captureStatus = new TextView(this);
+        captureStatus.setTextSize(12);
+        captureStatus.setTextColor(0xFFD3DCED);
+        captureStatus.setPadding(0, 0, 0, dp(8));
+        capturePanel.addView(captureStatus);
+        Button captureButton = styledModalButton("CAPTURE A JOURNEY", 0xFF233B78, Color.WHITE);
+        captureButton.setOnClickListener(v -> startActivity(
+                new Intent(this, MainActivity.class)));
+        capturePanel.addView(captureButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(46)));
+        LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        captureParams.bottomMargin = dp(12);
+        content.addView(capturePanel, captureParams);
         content.addView(readinessSummary);
         batchMatchButton = styledModalButton("MATCH READY JOURNEYS", 0xFFF7C450, 0xFF0B1C50);
         batchMatchButton.setEnabled(false);
@@ -240,6 +260,17 @@ public class JourneyListActivity extends Activity {
         journeyRoot = root;
         setContentView(root);
         applySystemBarInsets(root, content, bottomNavigation);
+    }
+
+    private void updateCaptureStatus() {
+        if (captureStatus == null) return;
+        if (CaptureService.isActive(this)) {
+            captureStatus.setText("A journey is being recorded. Open capture to check its progress.");
+        } else if (CaptureService.isArmed(this)) {
+            captureStatus.setText("Automatic tracking is on and ready to record journeys.");
+        } else {
+            captureStatus.setText("Automatic tracking is off. Start a manual capture or enable it.");
+        }
     }
 
     private void applySystemBarInsets(View root, View content, View bottomNavigation) {
