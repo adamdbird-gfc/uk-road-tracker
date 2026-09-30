@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from pedestrian_matching import select_trajectory_paths
+from pedestrian_matching import select_trajectory_paths, shortest_trace_aligned_paths
 
 
 def distance_metres(a, b):
@@ -29,7 +29,7 @@ class PedestrianPathTests(unittest.TestCase):
             [(finish, 5.6)],
         ]
 
-        def paths_to_targets(source, targets, _limit):
+        def paths_to_targets(source, targets, _limit, _trace_start, _trace_end):
             if source == nearer_snap:
                 route = [nearer_snap, "side_turn", "line_mid", finish]
             else:
@@ -56,7 +56,7 @@ class PedestrianPathTests(unittest.TestCase):
             (turn, end): [turn, end],
         }
 
-        def paths_to_targets(source, targets, _limit):
+        def paths_to_targets(source, targets, _limit, _trace_start, _trace_end):
             route = graph.get((source, targets[0]))
             if not route:
                 return {}
@@ -73,7 +73,7 @@ class PedestrianPathTests(unittest.TestCase):
         trace = [vertices[start], vertices[farthest], vertices[start]]
         candidates = [[(start, 0.0)], [(farthest, 0.0)], [(start, 0.0)]]
 
-        def paths_to_targets(source, targets, _limit):
+        def paths_to_targets(source, targets, _limit, _trace_start, _trace_end):
             target = targets[0]
             route = [source, target]
             return {target: (route, [], distance_metres(vertices[source], vertices[target]))}
@@ -81,6 +81,48 @@ class PedestrianPathTests(unittest.TestCase):
         result = select_trajectory_paths(trace, candidates, vertices, distance_metres, paths_to_targets)
 
         self.assertEqual([start, farthest, start], result[0])
+
+    def test_trace_aligned_search_avoids_short_unsupported_spur(self):
+        start, end = "start", "end"
+        vertices = {start: [0.0, 0.0], end: [0.0008, 0.0]}
+        main_path = [start]
+        for index in range(1, 10):
+            key = f"main-{index}"
+            vertices[key] = [index * 0.00008, 0.00004 if index % 2 else -0.00004]
+            main_path.append(key)
+        main_path.append(end)
+        spur_path = [start, "spur-a", "spur-b", end]
+        vertices["spur-a"] = [0.00008, 0.00015]
+        vertices["spur-b"] = [0.00072, 0.00015]
+
+        def edge(a, b, feature_id):
+            return (b, distance_metres(vertices[a], vertices[b]), feature_id)
+
+        adjacency = {}
+        main_length = 0.0
+        for index, (a, b) in enumerate(zip(main_path, main_path[1:])):
+            adjacency.setdefault(a, []).append(edge(a, b, f"main-{index}"))
+            adjacency.setdefault(b, []).append(edge(b, a, f"main-{index}"))
+            main_length += distance_metres(vertices[a], vertices[b])
+        spur_length = 0.0
+        for index, (a, b) in enumerate(zip(spur_path, spur_path[1:])):
+            adjacency.setdefault(a, []).append(edge(a, b, f"spur-{index}"))
+            adjacency.setdefault(b, []).append(edge(b, a, f"spur-{index}"))
+            spur_length += distance_metres(vertices[a], vertices[b])
+        self.assertLess(spur_length, main_length)  # Ordinary shortest path picks the spur.
+
+        result = shortest_trace_aligned_paths(
+            start,
+            [end],
+            200.0,
+            vertices[start],
+            vertices[end],
+            vertices,
+            adjacency,
+            distance_metres,
+        )
+
+        self.assertEqual(main_path, result[end][0])
 
 
 if __name__ == "__main__":
