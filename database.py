@@ -9,7 +9,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import select_trajectory_paths
+from pedestrian_matching import select_trajectory_paths, shortest_trace_aligned_paths
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -654,48 +654,20 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         if not candidates:
             return None
         candidate_layers.append(candidates)
-    def shortest_paths_to_targets(start_key, target_keys, max_distance):
-        """Find connected paths to nearby candidate snaps in one graph walk."""
-        remaining = set(target_keys)
-        distances = {start_key: 0.0}
-        previous = {}
-        queue = [(0.0, start_key)]
-        visited = 0
-        while queue and remaining and visited < 150_000:
-            current_distance, current = heappop(queue)
-            if current_distance != distances.get(current):
-                continue
-            if current_distance > max_distance:
-                break
-            remaining.discard(current)
-            visited += 1
-            for neighbour, cost, feature_id in adjacency.get(current, []):
-                candidate = current_distance + cost
-                if candidate <= max_distance and candidate < distances.get(neighbour, float("inf")):
-                    distances[neighbour] = candidate
-                    previous[neighbour] = (current, feature_id)
-                    heappush(queue, (candidate, neighbour))
-
-        paths = {}
-        for target in set(target_keys) - remaining:
-            if target == start_key:
-                paths[target] = ([start_key], [], 0.0)
-                continue
-            path = [target]
-            feature_ids = []
-            current = target
-            while current != start_key:
-                prior, feature_id = previous[current]
-                path.append(prior)
-                feature_ids.append(feature_id)
-                current = prior
-            path.reverse()
-            feature_ids.reverse()
-            paths[target] = (path, feature_ids, distances[target])
-        return paths
+    def trace_aligned_paths(start_key, target_keys, max_distance, trace_start, trace_end):
+        return shortest_trace_aligned_paths(
+            start_key,
+            target_keys,
+            max_distance,
+            trace_start,
+            trace_end,
+            vertices,
+            adjacency,
+            length_metres,
+        )
 
     route_result = select_trajectory_paths(
-        sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets
+        sampled_trace, candidate_layers, vertices, length_metres, trace_aligned_paths
     )
     if not route_result:
         return None
