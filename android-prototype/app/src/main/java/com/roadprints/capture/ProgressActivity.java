@@ -184,6 +184,30 @@ public class ProgressActivity extends Activity {
         return radius * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     }
 
+    private List<JSONArray> matchedSegments(JSONObject journey) {
+        List<JSONArray> routes = new ArrayList<>();
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return routes;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) {
+                routes.add(coordinates);
+            } else if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int line = 0; line < coordinates.length(); line++) {
+                    JSONArray segment = coordinates.optJSONArray(line);
+                    if (segment != null && segment.length() >= 2) routes.add(segment);
+                }
+            }
+        }
+        return routes;
+    }
+
     private void addStatistics(LinearLayout parent, DistanceStats stats) {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
