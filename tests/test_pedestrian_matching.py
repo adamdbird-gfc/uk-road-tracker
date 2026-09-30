@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from pedestrian_matching import select_smoothed_pedestrian_snaps
+from pedestrian_matching import select_trajectory_paths
 
 
 def distance_metres(a, b):
@@ -12,43 +12,75 @@ def distance_metres(a, b):
     return 6371008.8 * 2 * math.asin(min(1.0, math.sqrt(term)))
 
 
-class PedestrianSnapTests(unittest.TestCase):
-    def test_trace_direction_can_outweigh_a_nearer_crossing_snap(self):
-        start = (0, 0)
-        end = (2, 0)
-        crossing = (1, 1)
-        on_route = (1, 0)
+class PedestrianPathTests(unittest.TestCase):
+    def test_two_point_trace_rejects_unobserved_side_road_detour(self):
+        start, end = (0.0, 0.0), (0.0008, 0.0)
+        nearer_snap, straight_snap, finish = "nearer", "straight", "finish"
         vertices = {
-            start: [0.0005, -0.0001],
-            end: [0.0015, -0.0001],
-            crossing: [0.001, 0.0],
-            on_route: [0.001, -0.0001],
+            nearer_snap: [0.00005, 0.00002],
+            straight_snap: [0.00008, 0.0],
+            finish: [0.00075, 0.0],
+            "side_turn": [0.0004, 0.0003],
+            "line_mid": [0.0004, 0.0],
         }
-        trace = [[0.0005, 0.0], [0.001, 0.0], [0.0015, 0.0]]
+        trace = [start, end]
         candidates = [
-            [(start, 0.0)],
-            [(crossing, 0.0), (on_route, distance_metres(vertices[crossing], vertices[on_route]))],
-            [(end, 0.0)],
+            [(nearer_snap, 2.5), (straight_snap, 8.9)],
+            [(finish, 5.6)],
         ]
 
-        selected = select_smoothed_pedestrian_snaps(trace, candidates, vertices, distance_metres)
+        def paths_to_targets(source, targets, _limit):
+            if source == nearer_snap:
+                route = [nearer_snap, "side_turn", "line_mid", finish]
+            else:
+                route = [straight_snap, "line_mid", finish]
+            distance = sum(
+                distance_metres(vertices[a], vertices[b])
+                for a, b in zip(route, route[1:])
+            )
+            return {finish: (route, [], distance)}
 
-        self.assertEqual([start, on_route, end], selected)
+        result = select_trajectory_paths(trace, candidates, vertices, distance_metres, paths_to_targets)
 
-    def test_ordered_trace_preserves_a_genuine_out_and_back(self):
-        route = [(0, 0), (1, 0), (2, 0), (1, 1), (1, 0), (0, 0)]
-        vertices = {
-            (0, 0): [0.000, 0.000],
-            (1, 0): [0.001, 0.000],
-            (2, 0): [0.002, 0.000],
-            (1, 1): [0.001, 0.001],
+        self.assertIsNotNone(result)
+        route_keys, _ = result
+        self.assertEqual([straight_snap, "line_mid", finish], route_keys)
+
+    def test_observed_turn_is_kept(self):
+        start, turn, end = "start", "turn", "end"
+        vertices = {start: [0.0, 0.0], turn: [0.0004, 0.0], end: [0.0004, 0.0004]}
+        trace = [vertices[start], vertices[turn], vertices[end]]
+        candidates = [[(start, 0.0)], [(turn, 0.0)], [(end, 0.0)]]
+        graph = {
+            (start, turn): [start, turn],
+            (turn, end): [turn, end],
         }
-        trace = [vertices[key] for key in route]
-        candidates = [[(key, 0.0)] for key in route]
 
-        selected = select_smoothed_pedestrian_snaps(trace, candidates, vertices, distance_metres)
+        def paths_to_targets(source, targets, _limit):
+            route = graph.get((source, targets[0]))
+            if not route:
+                return {}
+            distance = sum(distance_metres(vertices[a], vertices[b]) for a, b in zip(route, route[1:]))
+            return {targets[0]: (route, [], distance)}
 
-        self.assertEqual(route, selected)
+        result = select_trajectory_paths(trace, candidates, vertices, distance_metres, paths_to_targets)
+
+        self.assertEqual([start, turn, end], result[0])
+
+    def test_genuine_out_and_back_is_preserved(self):
+        start, farthest = "start", "farthest"
+        vertices = {start: [0.0, 0.0], farthest: [0.001, 0.0]}
+        trace = [vertices[start], vertices[farthest], vertices[start]]
+        candidates = [[(start, 0.0)], [(farthest, 0.0)], [(start, 0.0)]]
+
+        def paths_to_targets(source, targets, _limit):
+            target = targets[0]
+            route = [source, target]
+            return {target: (route, [], distance_metres(vertices[source], vertices[target]))}
+
+        result = select_trajectory_paths(trace, candidates, vertices, distance_metres, paths_to_targets)
+
+        self.assertEqual([start, farthest, start], result[0])
 
 
 if __name__ == "__main__":
