@@ -1138,16 +1138,17 @@ public class JourneyListActivity extends Activity {
         int roadReady = 0;
         int footReady = 0;
         int noMatch = 0;
-        int insufficient = 0;
         int processed = 0;
         int failed = 0;
         for (JSONObject journey : journeys) {
             String status = journey.optString("processing_status", "pending");
             String mode = journey.optString("mode", "unknown");
+            if ((isFootMode(mode) || isRoadMode(mode))
+                    && !hasEnoughMatchingEvidence(journey)) {
+                continue;
+            }
             if (!isFootMode(mode) && !isRoadMode(mode)) {
                 noMatch++;
-            } else if (!hasEnoughMatchingEvidence(journey)) {
-                insufficient++;
             } else if ("complete".equals(status)) {
                 processed++;
             } else if ("failed".equals(status)) {
@@ -1160,8 +1161,7 @@ public class JourneyListActivity extends Activity {
         }
         String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
                 + " • " + noMatch + " no matching";
-        String secondLine = "Processed: " + processed + " • Failed: " + failed
-                + " • Needs route points: " + insufficient;
+        String secondLine = "Processed: " + processed + " • Failed: " + failed;
         readinessSummary.setText(firstLine + "\n" + secondLine);
     }
 
