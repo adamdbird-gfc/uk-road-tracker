@@ -78,9 +78,6 @@ public class ProgressActivity extends Activity {
         addCard(content, "MATCHING FAILED", counts.failed,
                 "Open a journey to retry its match.",
                 0xFFF28C9B);
-        addCard(content, "NEEDS MORE GPS", counts.insufficient,
-                "These journeys do not have enough route points to match reliably.",
-                MUTED);
         addCard(content, "OTHER TRAVEL", counts.other,
                 "Train, flight, cycling and other modes are kept in your journey history.",
                 MUTED);
@@ -123,7 +120,6 @@ public class ProgressActivity extends Activity {
                 continue;
             }
             if (!hasEnoughEvidence(journey, road)) {
-                counts.insufficient++;
                 continue;
             }
             boolean hasGeometry = !matchedSegments(journey).isEmpty();
