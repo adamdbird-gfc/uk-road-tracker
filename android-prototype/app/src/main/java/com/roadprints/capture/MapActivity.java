@@ -56,9 +56,8 @@ public class MapActivity extends Activity {
         MapRoutes mapRoutes = readMapRoutes();
         TextView subtitle = new TextView(this);
         subtitle.setText(mapRoutes.sections.isEmpty()
-                ? "Journeys will appear here as routes are added."
-                : mapRoutes.matchedJourneys + " matched journeys · "
-                        + mapRoutes.directJourneys + " other routes shown.");
+                ? "Successfully matched journeys will appear here."
+                : mapRoutes.matchedJourneys + " successfully matched journeys.");
         subtitle.setTextSize(14);
         subtitle.setTextColor(0xFFD3DCED);
         subtitle.setPadding(0, dp(4), 0, 0);
@@ -88,35 +87,13 @@ public class MapActivity extends Activity {
     private MapRoutes readMapRoutes() {
         MapRoutes output = new MapRoutes();
         for (JSONObject journey : JourneyStore.all(this)) {
-            String mode = journey.optString("mode", "unknown");
-            if ("complete".equals(journey.optString("processing_status", ""))) {
-                List<JSONArray> matched = matchedSegments(journey);
-                if (!matched.isEmpty()) {
-                    output.sections.addAll(matched);
-                    output.matchedJourneys++;
-                    continue;
-                }
-            }
-
-            // Modes without a road/path matcher are drawn from their Timeline geometry.
-            // Pending or failed road and walking journeys stay off the coverage map.
-            if (!requiresMatching(mode)) {
-                JSONObject geometry = journey.optJSONObject("route_geometry");
-                JSONArray coordinates = geometry == null ? null
-                        : geometry.optJSONArray("coordinates");
-                if (coordinates != null && coordinates.length() >= 2) {
-                    output.sections.add(coordinates);
-                    output.directJourneys++;
-                }
-            }
+            if (!"complete".equals(journey.optString("processing_status", ""))) continue;
+            List<JSONArray> matched = matchedSegments(journey);
+            if (matched.isEmpty()) continue;
+            output.sections.addAll(matched);
+            output.matchedJourneys++;
         }
         return output;
-    }
-
-    private boolean requiresMatching(String mode) {
-        return "driving".equals(mode) || "bus".equals(mode)
-                || "walking".equals(mode) || "running".equals(mode)
-                || "pedestrian".equals(mode);
     }
 
     private List<JSONArray> matchedSegments(JSONObject journey) {
@@ -274,6 +251,5 @@ public class MapActivity extends Activity {
     private static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
         int matchedJourneys;
-        int directJourneys;
     }
 }
