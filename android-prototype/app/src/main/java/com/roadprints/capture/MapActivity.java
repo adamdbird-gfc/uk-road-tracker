@@ -3,11 +3,14 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Bundle;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,20 +44,21 @@ public class MapActivity extends Activity {
         TextView eyebrow = new TextView(this);
         eyebrow.setText("YOUR TRAVEL RECORD");
         eyebrow.setTextSize(12);
-        eyebrow.setTypeface(null, android.graphics.Typeface.BOLD);
+        eyebrow.setTypeface(null, Typeface.BOLD);
         eyebrow.setTextColor(0xFF67D5CC);
 
         TextView title = new TextView(this);
         title.setText("Map");
         title.setTextSize(28);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(Color.WHITE);
 
-        List<JSONArray> routes = matchedRoutes();
+        MapRoutes mapRoutes = readMapRoutes();
         TextView subtitle = new TextView(this);
-        subtitle.setText(routes.isEmpty()
+        subtitle.setText(mapRoutes.sections.isEmpty()
                 ? "Matched journeys will appear here."
-                : routes.size() + " matched route sections · black lines show your travel.");
+                : mapRoutes.matchedJourneys + " matched journeys · "
+                        + mapRoutes.directJourneys + " other routes shown.");
         subtitle.setTextSize(14);
         subtitle.setTextColor(0xFFD3DCED);
         subtitle.setPadding(0, dp(4), 0, 0);
@@ -64,14 +68,15 @@ public class MapActivity extends Activity {
         heading.addView(subtitle);
         root.addView(heading);
 
-        RoutePreviewView map = routes.isEmpty()
+        FrameLayout mapFrame = new FrameLayout(this);
+        RoutePreviewView map = mapRoutes.sections.isEmpty()
                 ? new RoutePreviewView(this)
-                : new RoutePreviewView(this, new JSONArray(), routes);
-        map.setContentDescription(routes.isEmpty()
-                ? "Map. Matched routes will appear here."
-                : "Interactive OpenStreetMap showing " + routes.size()
-                        + " successfully matched route sections.");
-        root.addView(map, new LinearLayout.LayoutParams(
+                : new RoutePreviewView(this, mapRoutes.sections, true);
+        map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
+        mapFrame.addView(map, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        if (!mapRoutes.sections.isEmpty()) addZoomControls(mapFrame, map);
+        root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
         View bottomNavigation = buildBottomNavigation();
@@ -80,27 +85,58 @@ public class MapActivity extends Activity {
         applySystemBarInsets(root, heading, bottomNavigation);
     }
 
-    private List<JSONArray> matchedRoutes() {
-        List<JSONArray> routes = new ArrayList<>();
+    private MapRoutes readMapRoutes() {
+        MapRoutes output = new MapRoutes();
         for (JSONObject journey : JourneyStore.all(this)) {
-            if (!"complete".equals(journey.optString("processing_status", ""))) continue;
-            JSONObject result = journey.optJSONObject("processing_result");
-            JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
-            JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
-            if (features == null) continue;
-            for (int index = 0; index < features.length(); index++) {
-                JSONObject feature = features.optJSONObject(index);
-                JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
-                if (geometry == null) continue;
-                String type = geometry.optString("type", "");
-                JSONArray coordinates = geometry.optJSONArray("coordinates");
-                if ("LineString".equals(type) && hasLinePoints(coordinates)) {
-                    routes.add(coordinates);
-                } else if ("MultiLineString".equals(type) && coordinates != null) {
-                    for (int line = 0; line < coordinates.length(); line++) {
-                        JSONArray segment = coordinates.optJSONArray(line);
-                        if (hasLinePoints(segment)) routes.add(segment);
-                    }
+            String mode = journey.optString("mode", "unknown");
+            if ("complete".equals(journey.optString("processing_status", ""))) {
+                List<JSONArray> matched = matchedSegments(journey);
+                if (!matched.isEmpty()) {
+                    output.sections.addAll(matched);
+                    output.matchedJourneys++;
+                    continue;
+                }
+            }
+
+            // Modes without a road/path matcher are drawn from their Timeline geometry.
+            // Pending or failed road and walking journeys stay off the coverage map.
+            if (!requiresMatching(mode)) {
+                JSONObject geometry = journey.optJSONObject("route_geometry");
+                JSONArray coordinates = geometry == null ? null
+                        : geometry.optJSONArray("coordinates");
+                if (coordinates != null && coordinates.length() >= 2) {
+                    output.sections.add(coordinates);
+                    output.directJourneys++;
+                }
+            }
+        }
+        return output;
+    }
+
+    private boolean requiresMatching(String mode) {
+        return "driving".equals(mode) || "bus".equals(mode)
+                || "walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode);
+    }
+
+    private List<JSONArray> matchedSegments(JSONObject journey) {
+        List<JSONArray> routes = new ArrayList<>();
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return routes;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && hasLinePoints(coordinates)) {
+                routes.add(coordinates);
+            } else if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int line = 0; line < coordinates.length(); line++) {
+                    JSONArray segment = coordinates.optJSONArray(line);
+                    if (hasLinePoints(segment)) routes.add(segment);
                 }
             }
         }
@@ -109,6 +145,46 @@ public class MapActivity extends Activity {
 
     private boolean hasLinePoints(JSONArray points) {
         return points != null && points.length() >= 2;
+    }
+
+    private void addZoomControls(FrameLayout mapFrame, RoutePreviewView map) {
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.VERTICAL);
+        controls.setGravity(Gravity.CENTER);
+        controls.addView(zoomButton("+", "Zoom in", map::zoomIn));
+        View gap = new View(this);
+        controls.addView(gap, new LinearLayout.LayoutParams(1, dp(8)));
+        controls.addView(zoomButton("−", "Zoom out", map::zoomOut));
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                dp(48), LinearLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.END | Gravity.CENTER_VERTICAL);
+        params.setMargins(0, 0, dp(12), 0);
+        mapFrame.addView(controls, params);
+    }
+
+    private TextView zoomButton(String label, String description, Runnable action) {
+        TextView button = new TextView(this);
+        button.setText(label);
+        button.setTextSize(27);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setTextColor(0xFF10275D);
+        button.setGravity(Gravity.CENTER);
+        button.setContentDescription(description);
+        button.setBackground(roundRect(Color.WHITE, dp(8)));
+        button.setElevation(dp(4));
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setOnClickListener(v -> action.run());
+        button.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+        return button;
+    }
+
+    private GradientDrawable roundRect(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius);
+        return drawable;
     }
 
     private void applySystemBarInsets(View root, View heading, View bottomNavigation) {
@@ -141,10 +217,9 @@ public class MapActivity extends Activity {
         nav.setPadding(dp(8), 0, dp(8), 0);
         nav.setBackgroundColor(NAV_BAR);
 
-        int[] iconResources = {
-                R.drawable.ic_nav_map, R.drawable.ic_nav_journeys, R.drawable.ic_nav_progress,
-                R.drawable.ic_nav_achievements, R.drawable.ic_nav_collections
-        };
+        int[] icons = {R.drawable.ic_nav_map, R.drawable.ic_nav_journeys,
+                R.drawable.ic_nav_progress, R.drawable.ic_nav_achievements,
+                R.drawable.ic_nav_collections};
         String[] labels = {"Map", "Journeys", "Progress", "Achievements", "Collections"};
         for (int index = 0; index < labels.length; index++) {
             final int selected = index;
@@ -154,7 +229,7 @@ public class MapActivity extends Activity {
             item.setPadding(0, dp(4), 0, 0);
 
             ImageView icon = new ImageView(this);
-            icon.setImageResource(iconResources[index]);
+            icon.setImageResource(icons[index]);
             icon.setContentDescription(labels[index]);
             icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             icon.setColorFilter(index == 0 ? GOLD : MUTED,
@@ -194,5 +269,11 @@ public class MapActivity extends Activity {
 
     private int dp(float value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private static final class MapRoutes {
+        final List<JSONArray> sections = new ArrayList<>();
+        int matchedJourneys;
+        int directJourneys;
     }
 }
