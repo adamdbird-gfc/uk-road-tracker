@@ -22,6 +22,7 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -45,6 +46,12 @@ jobs:
         with:
           gradle-version: "8.7"
 
+      - name: Prepare stable debug signing key
+        run: |
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
+          echo "ROADPRINTS_DEBUG_KEYSTORE=$RUNNER_TEMP/roadprints-debug.keystore" >> "$GITHUB_ENV"
+
       - name: Build debug APK and prepare signing utility
         working-directory: .
         run: |
@@ -57,7 +64,7 @@ jobs:
       - name: Upload APK and signing utility
         uses: actions/upload-artifact@v4
         with:
-          name: roadprints-android-0.25.36-${{ github.sha }}
+          name: roadprints-android-0.25.37-${{ github.sha }}
           path: roadprints-output/
           if-no-files-found: error
           retention-days: 7
