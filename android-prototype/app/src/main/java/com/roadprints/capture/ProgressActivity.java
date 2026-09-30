@@ -53,7 +53,7 @@ public class ProgressActivity extends Activity {
         eyebrow.setTextColor(TEAL);
 
         TextView title = new TextView(this);
-        title.setText("Collective statistics");
+        title.setText("Progress");
         title.setTextSize(28);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setTextColor(Color.WHITE);
