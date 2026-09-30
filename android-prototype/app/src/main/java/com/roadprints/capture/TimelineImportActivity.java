@@ -239,7 +239,7 @@ public class TimelineImportActivity extends Activity {
                 added, skipped, invalid, journeyRecordsParsed,
                 journeysWithIntermediateTrace, sourceRoutePointsFound,
                 String.format(Locale.UK,
-                        "Import complete: %d added, %d already present, %d unsupported. "
+                        "Import complete: %d added, %d already present, %d unsupported or insufficient. "
                                 + "Timeline paths: %d route points across %d journeys; "
                                 + "%d journeys contain intermediate points.",
                         added, skipped, invalid, sourceRoutePointsFound,
@@ -451,6 +451,12 @@ public class TimelineImportActivity extends Activity {
             if (points.isEmpty()) return null;
 
             String mode = modeFor(activity, semantic);
+            if ((roadMode(mode) && sourceRoutePoints < 2)
+                    || (footMode(mode) && points.size() < 2)) {
+                // Insufficient-evidence road and walking trips cannot be matched
+                // or usefully reviewed, so do not add them to the local archive.
+                return null;
+            }
             double distance = distanceFor(activity, points);
             // Preserve the legacy ID used when Timeline FLYING labels were misclassified as unknown.
             String idMode = ("unknown".equals(mode) || "plane".equals(mode))
