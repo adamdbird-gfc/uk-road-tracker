@@ -45,6 +45,7 @@ public class RoutePreviewView extends View {
     private final List<JSONArray> matchedSegments;
     private final boolean interactive;
     private final boolean showEmptyMessage;
+    private final boolean showEndpointMarkers;
     private boolean routeEditMode;
     private Set<Integer> removedRouteEdges = Collections.emptySet();
     private int selectedRouteEdge = -1;
@@ -80,7 +81,12 @@ public class RoutePreviewView extends View {
 
     public RoutePreviewView(
             Context context, JSONArray coordinates, List<JSONArray> matchedSegments) {
-        this(context, coordinates, matchedSegments, false, false);
+        this(context, coordinates, matchedSegments, false, false, true);
+    }
+
+    public RoutePreviewView(
+            Context context, List<JSONArray> routeSections, boolean interactive) {
+        this(context, null, routeSections, interactive, false, false);
     }
 
     public interface OnRouteEdgeTapListener {
@@ -90,7 +96,7 @@ public class RoutePreviewView extends View {
     public RoutePreviewView(Context context, JSONArray coordinates,
                             List<JSONArray> matchedSegments, Set<Integer> removedEdges,
                             OnRouteEdgeTapListener listener) {
-        this(context, coordinates, matchedSegments, true, false);
+        this(context, coordinates, matchedSegments, true, false, true);
         this.routeEditMode = true;
         this.removedRouteEdges = removedEdges == null ? Collections.emptySet() : removedEdges;
         this.routeEdgeTapListener = listener;
@@ -104,12 +110,12 @@ public class RoutePreviewView extends View {
     }
 
     public RoutePreviewView(Context context) {
-        this(context, null, Collections.emptyList(), true, true);
+        this(context, null, Collections.emptyList(), true, true, true);
     }
 
     private RoutePreviewView(
             Context context, JSONArray coordinates, List<JSONArray> matchedSegments,
-            boolean interactive, boolean showEmptyMessage) {
+            boolean interactive, boolean showEmptyMessage, boolean showEndpointMarkers) {
         super(context);
         this.coordinates = coordinates;
         this.matchedSegments = new ArrayList<>();
@@ -120,6 +126,7 @@ public class RoutePreviewView extends View {
         }
         this.interactive = interactive;
         this.showEmptyMessage = showEmptyMessage;
+        this.showEndpointMarkers = showEndpointMarkers;
         this.coordinatesValid = hasRoutePoints(coordinates) || !this.matchedSegments.isEmpty();
         this.routeFitPending = coordinatesValid;
 
@@ -221,11 +228,13 @@ public class RoutePreviewView extends View {
             } else if (hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint, routeHaloPaint);
             }
-            JSONArray endRoute = hasRoutePoints(coordinates)
-                    ? coordinates : matchedSegments.get(matchedSegments.size() - 1);
-            drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
-            drawEndpoint(canvas, endRoute, endRoute.length() - 1,
-                    Color.rgb(190, 55, 55), "E");
+            if (showEndpointMarkers) {
+                JSONArray endRoute = hasRoutePoints(coordinates)
+                        ? coordinates : matchedSegments.get(matchedSegments.size() - 1);
+                drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
+                drawEndpoint(canvas, endRoute, endRoute.length() - 1,
+                        Color.rgb(190, 55, 55), "E");
+            }
         } else if (showEmptyMessage) {
             drawEmptyMessage(canvas);
         } else {
@@ -631,6 +640,14 @@ public class RoutePreviewView extends View {
         File directory = new File(getContext().getCacheDir(), "roadprints_osm_tiles");
         if (!directory.exists()) directory.mkdirs();
         return new File(directory, key.replace('/', '_') + extension);
+    }
+
+    public void zoomIn() {
+        zoomAt(1.5, getWidth() / 2f, getHeight() / 2f);
+    }
+
+    public void zoomOut() {
+        zoomAt(1.0 / 1.5, getWidth() / 2f, getHeight() / 2f);
     }
 
     private void zoomAt(double factor, float focusX, float focusY) {
