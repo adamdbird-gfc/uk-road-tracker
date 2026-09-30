@@ -99,6 +99,26 @@ public class ProgressActivity extends Activity {
         }
     }
 
+    private boolean isShownInJourneysList(JSONObject journey, String mode) {
+        boolean road = "driving".equals(mode) || "bus".equals(mode);
+        boolean foot = "walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode);
+        if (!road && !foot) return true;
+
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (coordinates == null || coordinates.length() < 2) return false;
+
+        if (road) {
+            JSONObject source = journey.optJSONObject("source");
+            if (source != null && "timeline_import".equals(source.optString("type", ""))) {
+                JSONObject quality = journey.optJSONObject("capture_quality");
+                return quality != null && quality.optInt("source_route_points", 0) >= 2;
+            }
+        }
+        return true;
+    }
+
     private DistanceStats summarize(List<JSONObject> journeys) {
         DistanceStats stats = new DistanceStats();
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
@@ -107,7 +127,7 @@ public class ProgressActivity extends Activity {
         for (JSONObject journey : journeys) {
             String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
             double metres = Math.max(0, journey.optDouble("distance_meters", 0));
-            stats.activities++;
+            if (isShownInJourneysList(journey, mode)) stats.activities++;
 
             if ("driving".equals(mode) || "bus".equals(mode)) {
                 stats.drivingMetres += metres;
