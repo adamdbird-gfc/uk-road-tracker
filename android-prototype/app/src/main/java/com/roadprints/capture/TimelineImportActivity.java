@@ -452,7 +452,9 @@ public class TimelineImportActivity extends Activity {
 
             String mode = modeFor(activity, semantic);
             double distance = distanceFor(activity, points);
-            String idMode = "unknown".equals(mode) ? "driving" : mode;
+            // Preserve the legacy ID used when Timeline FLYING labels were misclassified as unknown.
+            String idMode = ("unknown".equals(mode) || "plane".equals(mode))
+                    ? "driving" : mode;
             double[] firstPoint = points.get(0);
             double[] lastPoint = points.get(points.size() - 1);
             String stableEndpoints = firstPoint[0] + "," + firstPoint[1]
@@ -633,7 +635,8 @@ public class TimelineImportActivity extends Activity {
         if (mode.contains("RAIL") || mode.contains("TRAIN")
                 || mode.contains("SUBWAY") || mode.contains("TRAM")) return "train";
         if (mode.contains("FERRY")) return "ferry";
-        if (mode.contains("FLIGHT") || mode.contains("PLANE")) return "plane";
+        if (mode.contains("FLY") || mode.contains("AIRPLANE")
+                || mode.contains("FLIGHT") || mode.contains("PLANE")) return "plane";
         return "unknown";
     }
 
