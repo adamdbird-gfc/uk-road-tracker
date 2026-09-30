@@ -56,7 +56,7 @@ public class MapActivity extends Activity {
         MapRoutes mapRoutes = readMapRoutes();
         TextView subtitle = new TextView(this);
         subtitle.setText(mapRoutes.sections.isEmpty()
-                ? "Matched journeys will appear here."
+                ? "Journeys will appear here as routes are added."
                 : mapRoutes.matchedJourneys + " matched journeys · "
                         + mapRoutes.directJourneys + " other routes shown.");
         subtitle.setTextSize(14);
@@ -75,7 +75,7 @@ public class MapActivity extends Activity {
         map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
         mapFrame.addView(map, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        if (!mapRoutes.sections.isEmpty()) addZoomControls(mapFrame, map);
+        addZoomControls(mapFrame, map);
         root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
