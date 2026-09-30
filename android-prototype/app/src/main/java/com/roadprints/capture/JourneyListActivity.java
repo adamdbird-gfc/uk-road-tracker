@@ -54,10 +54,10 @@ public class JourneyListActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
             "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
-            "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry"
+            "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry", "Unknowns"
     };
     private static final String[] FILTER_VALUES = {
-            "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry"
+            "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
     };
 
     private LinearLayout journeyList;
