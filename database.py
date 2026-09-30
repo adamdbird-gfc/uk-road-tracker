@@ -9,7 +9,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import select_smoothed_pedestrian_snaps
+from pedestrian_matching import select_trajectory_paths
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -654,55 +654,52 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         if not candidates:
             return None
         candidate_layers.append(candidates)
-    snapped_vertices = select_smoothed_pedestrian_snaps(
-        sampled_trace, candidate_layers, vertices, length_metres
-    )
-    if not snapped_vertices:
-        return None
-
-    def shortest_path(start_key, end_key):
-        if start_key == end_key:
-            return [start_key], []
+    def shortest_paths_to_targets(start_key, target_keys, max_distance):
+        """Find connected paths to nearby candidate snaps in one graph walk."""
+        remaining = set(target_keys)
         distances = {start_key: 0.0}
         previous = {}
         queue = [(0.0, start_key)]
         visited = 0
-        while queue and visited < 150_000:
+        while queue and remaining and visited < 150_000:
             current_distance, current = heappop(queue)
             if current_distance != distances.get(current):
                 continue
-            if current == end_key:
+            if current_distance > max_distance:
                 break
+            remaining.discard(current)
             visited += 1
             for neighbour, cost, feature_id in adjacency.get(current, []):
                 candidate = current_distance + cost
-                if candidate < distances.get(neighbour, float("inf")):
+                if candidate <= max_distance and candidate < distances.get(neighbour, float("inf")):
                     distances[neighbour] = candidate
                     previous[neighbour] = (current, feature_id)
                     heappush(queue, (candidate, neighbour))
-        if end_key not in previous:
-            return None
-        path = [end_key]
-        feature_ids = []
-        current = end_key
-        while current != start_key:
-            prior, feature_id = previous[current]
-            path.append(prior)
-            feature_ids.append(feature_id)
-            current = prior
-        path.reverse()
-        feature_ids.reverse()
-        return path, feature_ids
 
-    route_keys = [snapped_vertices[0]]
-    used_feature_ids = []
-    for start_key, end_key in zip(snapped_vertices, snapped_vertices[1:]):
-        result = shortest_path(start_key, end_key)
-        if result is None:
-            return None
-        path, feature_ids = result
-        route_keys.extend(path[1:])
-        used_feature_ids.extend(feature_ids)
+        paths = {}
+        for target in set(target_keys) - remaining:
+            if target == start_key:
+                paths[target] = ([start_key], [], 0.0)
+                continue
+            path = [target]
+            feature_ids = []
+            current = target
+            while current != start_key:
+                prior, feature_id = previous[current]
+                path.append(prior)
+                feature_ids.append(feature_id)
+                current = prior
+            path.reverse()
+            feature_ids.reverse()
+            paths[target] = (path, feature_ids, distances[target])
+        return paths
+
+    route_result = select_trajectory_paths(
+        sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets
+    )
+    if not route_result:
+        return None
+    route_keys, used_feature_ids = route_result
 
     coordinates = [vertices[key] for key in route_keys]
     if len(coordinates) < 2:
