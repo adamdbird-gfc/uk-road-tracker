@@ -56,7 +56,8 @@ public class CaptureService extends Service {
     private static final String STATE_ARMED = "armed";
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
-    private static final long STILLNESS_END_THRESHOLD_MS = 60_000L;
+    private static final long STILLNESS_END_THRESHOLD_MS = 180_000L;
+    private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
 
     private LocationManager locationManager;
     private ActivityRecognitionClient activityClient;
@@ -68,6 +69,7 @@ public class CaptureService extends Service {
     private String mode;
     private double distanceMetres;
     private long stationarySince;
+    private Location stationaryAnchor;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
@@ -81,6 +83,7 @@ public class CaptureService extends Service {
             if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
             lastPoint = location;
             points.add(location);
+            clearStillnessIfMovementContinues(location);
             updateNotification();
             broadcastUpdate("Recording " + mode + " locally...");
         }
@@ -207,6 +210,7 @@ public class CaptureService extends Service {
         if (!entering) {
             if (activityType == DetectedActivity.STILL) {
                 stationarySince = 0;
+                stationaryAnchor = null;
                 handler.removeCallbacks(finishIfStill);
             }
             return;
@@ -215,19 +219,42 @@ public class CaptureService extends Service {
         if (activityType == DetectedActivity.STILL) {
             if (isActive(this)) {
                 stationarySince = System.currentTimeMillis();
+                stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
                 handler.removeCallbacks(finishIfStill);
                 handler.postDelayed(finishIfStill, STILLNESS_END_THRESHOLD_MS);
-                broadcastUpdate("Stationary detected; keeping the journey open for 60 seconds...");
+                broadcastUpdate("Stationary detected; checking GPS movement for 3 minutes...");
             }
             return;
         }
 
         stationarySince = 0;
+        stationaryAnchor = null;
         handler.removeCallbacks(finishIfStill);
         String detectedMode = modeForActivity(activityType);
         if (detectedMode != null && !isActive(this)) {
             startCapture(detectedMode);
         }
+    }
+
+    private void clearStillnessIfMovementContinues(Location location) {
+        if (stationarySince == 0 || stationaryAnchor == null
+                || location == null || !location.hasAccuracy()
+                || location.getAccuracy() > 50f) {
+            return;
+        }
+        float accuracyAllowance = location.getAccuracy();
+        if (stationaryAnchor.hasAccuracy()) {
+            accuracyAllowance += stationaryAnchor.getAccuracy();
+        } else {
+            accuracyAllowance += 15f;
+        }
+        float threshold = Math.max(STILLNESS_MOVEMENT_THRESHOLD_METRES, accuracyAllowance);
+        if (stationaryAnchor.distanceTo(location) < threshold) return;
+
+        stationarySince = 0;
+        stationaryAnchor = null;
+        handler.removeCallbacks(finishIfStill);
+        broadcastUpdate("GPS shows movement continuing; keeping the journey open.");
     }
 
     private String activityLabel(int activityType) {
@@ -260,6 +287,7 @@ public class CaptureService extends Service {
         distanceMetres = 0;
         lastPoint = null;
         stationarySince = 0;
+        stationaryAnchor = null;
         points.clear();
 
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
@@ -325,6 +353,7 @@ public class CaptureService extends Service {
             distanceMetres = 0;
             lastPoint = null;
             stationarySince = 0;
+            stationaryAnchor = null;
 
             if (isArmed(this)) {
                 updateNotification();
