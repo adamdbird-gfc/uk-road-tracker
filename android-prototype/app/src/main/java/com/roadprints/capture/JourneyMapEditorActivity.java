@@ -1,6 +1,7 @@
 package com.roadprints.capture;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,12 +27,14 @@ import java.util.Set;
 public class JourneyMapEditorActivity extends Activity {
     private static final String EXTRA_JOURNEY = "journey_json";
     private final Set<Integer> removedEdges = new HashSet<>();
+    private final Set<Integer> originalRemovedEdges = new HashSet<>();
     private final Deque<Set<Integer>> undoStack = new ArrayDeque<>();
     private JSONObject journey;
     private RoutePreviewView routeView;
     private TextView status;
     private TextView removeButton;
     private TextView restoreButton;
+    private TextView saveButton;
     private boolean removeMode = true;
     private int selectedEdge = -1;
 
@@ -58,6 +61,7 @@ public class JourneyMapEditorActivity extends Activity {
             return;
         }
         readSavedCorrections();
+        originalRemovedEdges.addAll(removedEdges);
         buildScreen(routes);
     }
 
@@ -79,17 +83,16 @@ public class JourneyMapEditorActivity extends Activity {
         TextView cancel = text("CANCEL", 13, 0xFFD3DCED, true);
         cancel.setGravity(Gravity.CENTER);
         cancel.setPadding(dp(10), dp(10), dp(10), dp(10));
-        cancel.setOnClickListener(v -> finish());
+        cancel.setOnClickListener(v -> requestCancel());
         titleRow.addView(cancel);
-        TextView save = text("SAVE", 13, 0xFF0B1C50, true);
-        save.setGravity(Gravity.CENTER);
-        save.setPadding(dp(16), dp(10), dp(16), dp(10));
-        save.setBackground(roundRect(0xFFF7C450, 0xFFF7C450, dp(10)));
-        save.setOnClickListener(v -> saveChanges());
+        saveButton = text("SAVE", 13, 0xFF0B1C50, true);
+        saveButton.setGravity(Gravity.CENTER);
+        saveButton.setPadding(dp(16), dp(10), dp(16), dp(10));
+        saveButton.setOnClickListener(v -> saveChanges());
         LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, dp(40));
         saveParams.setMargins(dp(8), 0, 0, 0);
-        titleRow.addView(save, saveParams);
+        titleRow.addView(saveButton, saveParams);
         header.addView(titleRow);
 
         TextView instructions = text(
@@ -151,6 +154,7 @@ public class JourneyMapEditorActivity extends Activity {
         setContentView(root);
         root.requestApplyInsets();
         updateStatus();
+        updateActionButtons();
     }
 
     private TextView controlButton(String label, boolean selected) {
@@ -163,20 +167,58 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void updateModeStyles() {
-        removeButton.setBackground(roundRect(removeMode ? 0xFFF7C450 : 0xFF233B78,
-                removeMode ? 0xFFF7C450 : 0xFF46649E, dp(10)));
-        removeButton.setTextColor(removeMode ? 0xFF0B1C50 : Color.WHITE);
-        restoreButton.setBackground(roundRect(removeMode ? 0xFF233B78 : 0xFFF7C450,
-                removeMode ? 0xFF46649E : 0xFFF7C450, dp(10)));
-        restoreButton.setTextColor(removeMode ? Color.WHITE : 0xFF0B1C50);
         routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
+        updateActionButtons();
+    }
+
+    private void updateActionButtons() {
+        boolean canRemove = selectedEdge >= 0 && !removedEdges.contains(selectedEdge);
+        boolean canRestore = selectedEdge >= 0 && removedEdges.contains(selectedEdge);
+        boolean dirty = !removedEdges.equals(originalRemovedEdges);
+
+        styleActionButton(removeButton, canRemove, removeMode);
+        styleActionButton(restoreButton, canRestore, !removeMode);
+        saveButton.setEnabled(dirty);
+        saveButton.setBackground(roundRect(dirty ? 0xFFF7C450 : 0xFF655C48,
+                dirty ? 0xFFF7C450 : 0xFF655C48, dp(10)));
+        saveButton.setTextColor(dirty ? 0xFF0B1C50 : 0xFFAEBBD0);
+        saveButton.setAlpha(dirty ? 1f : 0.68f);
+    }
+
+    private void styleActionButton(TextView button, boolean enabled, boolean highlighted) {
+        int fill = !enabled ? 0xFF17294F : highlighted ? 0xFFF7C450 : 0xFF233B78;
+        int stroke = !enabled ? 0xFF293E6A : highlighted ? 0xFFF7C450 : 0xFF46649E;
+        button.setEnabled(enabled);
+        button.setAlpha(enabled ? 1f : 0.58f);
+        button.setBackground(roundRect(fill, stroke, dp(10)));
+        button.setTextColor(!enabled ? 0xFF8795AE
+                : highlighted ? 0xFF0B1C50 : Color.WHITE);
+    }
+
+    private void requestCancel() {
+        if (!removedEdges.equals(originalRemovedEdges)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Discard route changes?")
+                    .setMessage("You have unsaved route edits. Discard them and leave?")
+                    .setNegativeButton("Keep editing", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Discard", (dialog, which) -> finish())
+                    .show();
+        } else {
+            finish();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        requestCancel();
     }
 
     private void onRouteEdgeTap(int edgeIndex) {
         selectedEdge = edgeIndex;
         routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
+        updateActionButtons();
     }
 
     private void applySelectedChange(boolean remove) {
@@ -200,6 +242,7 @@ public class JourneyMapEditorActivity extends Activity {
         selectedEdge = -1;
         routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
+        updateActionButtons();
     }
 
     private void undo() {
@@ -212,12 +255,15 @@ public class JourneyMapEditorActivity extends Activity {
         selectedEdge = -1;
         routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
         updateStatus();
+        updateActionButtons();
     }
 
     private void updateStatus() {
         if (selectedEdge >= 0) {
-            status.setText("Route section selected in red · press "
-                    + (removeMode ? "REMOVE" : "RESTORE") + " to apply.");
+            boolean removed = removedEdges.contains(selectedEdge);
+            status.setText(removed
+                    ? "Removed section selected · press RESTORE to bring it back."
+                    : "Route section selected in red · press REMOVE to apply.");
             return;
         }
         status.setText(removedEdges.size() + " route section"
@@ -226,6 +272,7 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void saveChanges() {
+        if (removedEdges.equals(originalRemovedEdges)) return;
         try {
             JSONObject corrections = journey.optJSONObject("journey_corrections");
             if (corrections == null) corrections = new JSONObject();
