@@ -53,6 +53,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class JourneyListActivity extends Activity {
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
+    private static final int INITIAL_JOURNEY_CARDS = 40;
+    private static final int ADDITIONAL_JOURNEY_CARDS = 40;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
@@ -71,6 +73,8 @@ public class JourneyListActivity extends Activity {
     private volatile boolean batchCancelRequested;
     private boolean batchRunning;
     private List<JSONObject> journeys;
+    private int journeyCardLimit = INITIAL_JOURNEY_CARDS;
+    private int refreshGeneration;
     private int activeFilter = 0;
     private final List<TextView> filterChips = new ArrayList<>();
 
@@ -81,18 +85,12 @@ public class JourneyListActivity extends Activity {
         window.setStatusBarColor(0xFF0B1C50);
         window.setNavigationBarColor(0xFF10275D);
         buildScreen();
-        journeys = JourneyStore.all(this);
-        recoverInterruptedMatches();
-        render();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (journeyList != null) {
-            journeys = JourneyStore.all(this);
-            render();
-        }
+        refreshJourneysAsync();
     }
 
     @Override
@@ -194,6 +192,7 @@ public class JourneyListActivity extends Activity {
             filterChips.add(filter);
             filter.setOnClickListener(v -> {
                 activeFilter = selected;
+                journeyCardLimit = INITIAL_JOURNEY_CARDS;
                 updateFilterStyles();
                 render();
             });
@@ -208,6 +207,12 @@ public class JourneyListActivity extends Activity {
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
         journeyList.setPadding(dp(10), dp(18), dp(10), dp(18));
+        TextView loading = new TextView(this);
+        loading.setText("Loading journeys…");
+        loading.setTextSize(16);
+        loading.setTextColor(0xFFD3DCED);
+        loading.setPadding(0, dp(28), 0, dp(28));
+        journeyList.addView(loading);
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(journeyList);
@@ -218,6 +223,7 @@ public class JourneyListActivity extends Activity {
         content.addView(intro);
         content.addView(readinessSummary);
         batchMatchButton = styledModalButton("MATCH READY JOURNEYS", 0xFFF7C450, 0xFF0B1C50);
+        batchMatchButton.setEnabled(false);
         batchMatchButton.setOnClickListener(v -> startBatchMatch());
         LinearLayout.LayoutParams batchParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
@@ -325,10 +331,14 @@ public class JourneyListActivity extends Activity {
         updateReadinessSummary();
         updateAvailableFilters();
         int visible = 0;
+        int rendered = 0;
         for (JSONObject journey : journeys) {
             if (!shouldShowJourney(journey) || !matchesActiveFilter(journey)) continue;
-            journeyList.addView(createCard(journey));
             visible++;
+            if (rendered < journeyCardLimit) {
+                journeyList.addView(createCard(journey));
+                rendered++;
+            }
         }
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
         if (visible == 0) {
@@ -338,7 +348,44 @@ public class JourneyListActivity extends Activity {
             empty.setTextColor(0xFFD3DCED);
             empty.setPadding(0, 28, 0, 28);
             journeyList.addView(empty);
+        } else if (visible > rendered) {
+            Button more = styledModalButton("SHOW MORE JOURNEYS · " + (visible - rendered)
+                    + " REMAINING", 0xFF233B78, Color.WHITE);
+            more.setOnClickListener(v -> {
+                journeyCardLimit += ADDITIONAL_JOURNEY_CARDS;
+                render();
+            });
+            journeyList.addView(more);
         }
+    }
+
+    private void refreshJourneysAsync() {
+        if (journeyList == null || batchRunning) return;
+        final int generation = ++refreshGeneration;
+        processor.execute(() -> {
+            List<JSONObject> loaded;
+            try {
+                loaded = JourneyStore.all(this);
+                journeys = loaded;
+                recoverInterruptedMatches();
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != refreshGeneration) return;
+                    journeyList.removeAllViews();
+                    TextView failure = new TextView(this);
+                    failure.setText("Journeys could not be loaded. Return and try again.");
+                    failure.setTextColor(0xFFD3DCED);
+                    failure.setTextSize(16);
+                    journeyList.addView(failure);
+                });
+                return;
+            }
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != refreshGeneration) return;
+                journeys = loaded;
+                render();
+            });
+        });
     }
 
     private boolean shouldShowJourney(JSONObject journey) {
@@ -999,9 +1046,8 @@ public class JourneyListActivity extends Activity {
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
                     JourneyStore.delete(this, journey.optString("journey_id"));
-                    journeys = JourneyStore.all(this);
-                    render();
                     Toast.makeText(this, "Journey deleted", Toast.LENGTH_SHORT).show();
+                    refreshJourneysAsync();
                 })
                 .show();
     }
@@ -1155,8 +1201,7 @@ public class JourneyListActivity extends Activity {
                             stop.setEnabled(true);
                             stop.setOnClickListener(v -> {
                                 setContentView(journeyRoot);
-                                journeys = JourneyStore.all(this);
-                                render();
+                                refreshJourneysAsync();
                             });
                             stop.setVisibility(View.VISIBLE);
                         });

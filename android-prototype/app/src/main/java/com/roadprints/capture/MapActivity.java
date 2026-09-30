@@ -7,6 +7,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MapActivity extends Activity {
     private static final int NAVY = 0xFF0B1C50;
@@ -30,6 +34,9 @@ public class MapActivity extends Activity {
     private static final int GOLD = 0xFFF7C450;
     private TextView mapSubtitle;
     private FrameLayout mapFrame;
+    private final ExecutorService mapLoader = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private int mapLoadGeneration;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -68,9 +75,15 @@ public class MapActivity extends Activity {
         root.addView(heading);
 
         mapFrame = new FrameLayout(this);
+        mapFrame.setBackgroundColor(NAVY);
         root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        refreshMap();
+        TextView loading = new TextView(this);
+        loading.setText("Loading matched journeys…");
+        loading.setTextColor(Color.WHITE);
+        loading.setGravity(Gravity.CENTER);
+        mapFrame.addView(loading, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         View bottomNavigation = buildBottomNavigation();
         root.addView(bottomNavigation);
@@ -84,20 +97,50 @@ public class MapActivity extends Activity {
         if (mapFrame != null && mapSubtitle != null) refreshMap();
     }
 
-    private void refreshMap() {
-        MapRoutes mapRoutes = readMapRoutes();
-        mapSubtitle.setText(mapRoutes.sections.isEmpty()
-                ? "Successfully matched journeys will appear here."
-                : mapRoutes.matchedJourneys + " successfully matched journeys.");
+    @Override
+    protected void onDestroy() {
+        mapLoadGeneration++;
+        mapLoader.shutdownNow();
+        super.onDestroy();
+    }
 
-        mapFrame.removeAllViews();
-        RoutePreviewView map = mapRoutes.sections.isEmpty()
-                ? new RoutePreviewView(this)
-                : new RoutePreviewView(this, mapRoutes.sections, true);
-        map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
-        mapFrame.addView(map, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        addZoomControls(mapFrame, map);
+    private void refreshMap() {
+        final int generation = ++mapLoadGeneration;
+        mapSubtitle.setText("Loading matched journeys…");
+        mapLoader.execute(() -> {
+            MapRoutes mapRoutes;
+            try {
+                mapRoutes = readMapRoutes();
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != mapLoadGeneration) return;
+                    mapSubtitle.setText("Map data could not be loaded. Reopen the map to retry.");
+                    mapFrame.removeAllViews();
+                    TextView failure = new TextView(this);
+                    failure.setText("Map data could not be loaded.");
+                    failure.setTextColor(Color.WHITE);
+                    failure.setGravity(Gravity.CENTER);
+                    mapFrame.addView(failure, new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT));
+                });
+                return;
+            }
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != mapLoadGeneration) return;
+                mapSubtitle.setText(mapRoutes.sections.isEmpty()
+                        ? "Successfully matched journeys will appear here."
+                        : mapRoutes.matchedJourneys + " successfully matched journeys.");
+                mapFrame.removeAllViews();
+                RoutePreviewView map = mapRoutes.sections.isEmpty()
+                        ? new RoutePreviewView(this)
+                        : new RoutePreviewView(this, mapRoutes.sections, true);
+                map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
+                mapFrame.addView(map, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                addZoomControls(mapFrame, map);
+            });
+        });
     }
 
     private MapRoutes readMapRoutes() {
