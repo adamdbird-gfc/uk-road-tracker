@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -25,6 +27,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 41;
@@ -44,6 +48,12 @@ public class MainActivity extends Activity {
     private Spinner modeSpinner;
     private boolean capturing;
     private boolean tracking;
+    private final ExecutorService archiveIo = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private TextView deleteRoadAction;
+    private TextView deleteFootAction;
+    private TextView deleteAllAction;
+    private int archiveSummaryGeneration;
 
     private final BroadcastReceiver captureReceiver = new BroadcastReceiver() {
         @Override
@@ -65,7 +75,7 @@ public class MainActivity extends Activity {
                 distance.setText(String.format(
                         "Distance: %.0f m - %d points", metres, points));
             } else {
-                saved.setText("Saved prototype journeys: " + JourneyStore.count(MainActivity.this));
+                refreshSavedCount();
                 distance.setText("Distance: 0 m");
             }
         }
@@ -98,6 +108,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         unregisterReceiver(captureReceiver);
+        archiveIo.shutdownNow();
         super.onDestroy();
     }
 
@@ -148,7 +159,7 @@ public class MainActivity extends Activity {
         distance.setTextSize(18);
 
         saved = new TextView(this);
-        saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+        saved.setText("Saved prototype journeys: Loading…");
         saved.setPadding(0, 24, 0, 0);
 
         Button mapButton = new Button(this);
@@ -180,31 +191,83 @@ public class MainActivity extends Activity {
         deleteRow.setOrientation(LinearLayout.HORIZONTAL);
         deleteRow.setPadding(0, 18, 0, 0);
 
-        int roadCount = JourneyStore.countByModes(this, "driving", "bus", "cycling");
-        int footCount = JourneyStore.countByModes(this, "walking");
-        int totalCount = JourneyStore.count(this);
-
-        TextView deleteRoad = deleteButton("Delete road data", roadCount > 0);
+        TextView deleteRoad = deleteButton("Delete road data", false);
         deleteRoad.setOnClickListener(v -> confirmDeleteData(
                 "Delete road data?",
                 "This removes driving, bus and cycling journeys from this device.",
                 new String[]{"driving", "bus", "cycling"}));
 
-        TextView deleteFoot = deleteButton("Delete on-foot data", footCount > 0);
+        TextView deleteFoot = deleteButton("Delete on-foot data", false);
         deleteFoot.setOnClickListener(v -> confirmDeleteData(
                 "Delete on-foot data?",
                 "This removes walking journeys from this device.",
                 new String[]{"walking"}));
 
-        TextView deleteAll = deleteButton("Delete all saved data", totalCount > 0);
+        TextView deleteAll = deleteButton("Delete all saved data", false);
         deleteAll.setOnClickListener(v -> confirmDeleteAll());
 
+        deleteRoadAction = deleteRoad;
+        deleteFootAction = deleteFoot;
+        deleteAllAction = deleteAll;
         deleteRow.addView(deleteRoad, deleteButtonParams());
         deleteRow.addView(deleteFoot, deleteButtonParams());
         deleteRow.addView(deleteAll, deleteButtonParams());
         root.addView(deleteRow);
 
         setContentView(root);
+        refreshArchiveSummary();
+    }
+
+    private void refreshArchiveSummary() {
+        final int generation = ++archiveSummaryGeneration;
+        archiveIo.execute(() -> {
+            List<JSONObject> journeys;
+            try {
+                journeys = JourneyStore.all(getApplicationContext());
+            } catch (Exception error) {
+                return;
+            }
+            int roadCount = 0;
+            int footCount = 0;
+            for (JSONObject journey : journeys) {
+                String mode = journey.optString("mode", "unknown");
+                if ("driving".equals(mode) || "bus".equals(mode) || "cycling".equals(mode)) roadCount++;
+                if ("walking".equals(mode)) footCount++;
+            }
+            final int savedCount = journeys.size();
+            final int roads = roadCount;
+            final int foot = footCount;
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != archiveSummaryGeneration) return;
+                saved.setText("Saved prototype journeys: " + savedCount);
+                setDeleteActionEnabled(deleteRoadAction, roads > 0);
+                setDeleteActionEnabled(deleteFootAction, foot > 0);
+                setDeleteActionEnabled(deleteAllAction, savedCount > 0);
+            });
+        });
+    }
+
+    private void refreshSavedCount() {
+        archiveIo.execute(() -> {
+            int savedCount;
+            try {
+                savedCount = JourneyStore.count(getApplicationContext());
+            } catch (Exception error) {
+                return;
+            }
+            final int count = savedCount;
+            mainHandler.post(() -> {
+                if (!isFinishing()) saved.setText("Saved prototype journeys: " + count);
+            });
+        });
+    }
+
+    private void setDeleteActionEnabled(TextView button, boolean enabled) {
+        if (button == null) return;
+        button.setClickable(enabled);
+        button.setFocusable(enabled);
+        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF9FB3D0);
+        button.setAlpha(enabled ? 1f : 0.75f);
     }
 
     private TextView deleteButton(String label, boolean enabled) {
@@ -230,10 +293,24 @@ public class MainActivity extends Activity {
                 .setMessage(message)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    int deleted = JourneyStore.deleteByModes(this, modes);
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-                    status.setText(deleted + " journey"
-                            + (deleted == 1 ? "" : "s") + " deleted from this device.");
+                    status.setText("Deleting journeys…");
+                    archiveIo.execute(() -> {
+                        final int deleted;
+                        try {
+                            deleted = JourneyStore.deleteByModes(getApplicationContext(), modes);
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete journeys.");
+                            });
+                            return;
+                        }
+                        mainHandler.post(() -> {
+                            if (isFinishing()) return;
+                            status.setText(deleted + " journey"
+                                    + (deleted == 1 ? "" : "s") + " deleted from this device.");
+                            refreshArchiveSummary();
+                        });
+                    });
                 })
                 .show();
     }
@@ -244,11 +321,24 @@ public class MainActivity extends Activity {
                 .setMessage("This removes every saved journey and returns you to the Roadprints welcome screen.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete all", (dialog, which) -> {
-                    JourneyStore.deleteAll(this);
-                    getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
-                            .edit().remove("complete").apply();
-                    startActivity(new Intent(this, OnboardingActivity.class));
-                    finish();
+                    status.setText("Deleting saved journeys…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.deleteAll(getApplicationContext());
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete saved journeys.");
+                            });
+                            return;
+                        }
+                        mainHandler.post(() -> {
+                            if (isFinishing()) return;
+                            getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
+                                    .edit().remove("complete").apply();
+                            startActivity(new Intent(this, OnboardingActivity.class));
+                            finish();
+                        });
+                    });
                 })
                 .show();
     }
@@ -369,7 +459,22 @@ public class MainActivity extends Activity {
     }
 
     private void showJourneyHistory() {
-        List<JSONObject> journeys = JourneyStore.all(this);
+        archiveIo.execute(() -> {
+            final List<JSONObject> journeys;
+            try {
+                journeys = JourneyStore.all(getApplicationContext());
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (!isFinishing()) status.setText("Could not load saved journeys.");
+                });
+                return;
+            }
+            mainHandler.post(() -> showJourneyHistory(journeys));
+        });
+    }
+
+    private void showJourneyHistory(List<JSONObject> journeys) {
+        if (isFinishing()) return;
         if (journeys.isEmpty()) {
             new AlertDialog.Builder(this)
                     .setTitle("Saved journeys")
@@ -453,9 +558,22 @@ public class MainActivity extends Activity {
                 .setNeutralButton("Delete", (dialog, which) -> confirmDeleteJourney(journey))
                 .setPositiveButton("Save transport", (dialog, which) -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
-                    JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
-                    status.setText("Journey updated to " + selected + ".");
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                    status.setText("Saving journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.updateMode(getApplicationContext(),
+                                    journey.optString("journey_id"), selected);
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                status.setText("Journey updated to " + selected + ".");
+                                refreshSavedCount();
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not update journey.");
+                            });
+                        }
+                    });
                 })
                 .show();
     }
@@ -478,13 +596,22 @@ public class MainActivity extends Activity {
                 .setMessage("This removes the saved journey and its GPS route from this device.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    try {
-                        JourneyStore.delete(this, journey.optString("journey_id"));
-                        saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-                        status.setText("Journey deleted from this device.");
-                    } catch (Exception error) {
-                        status.setText("Could not delete journey.");
-                    }
+                    status.setText("Deleting journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.delete(getApplicationContext(),
+                                    journey.optString("journey_id"));
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                refreshSavedCount();
+                                status.setText("Journey deleted from this device.");
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete journey.");
+                            });
+                        }
+                    });
                 })
                 .show();
     }
@@ -517,8 +644,14 @@ public class MainActivity extends Activity {
 
     private void reviewLatestJourney() {
         if (capturing) return;
-        JSONObject journey = JourneyStore.latest(this);
-        if (journey == null
+        archiveIo.execute(() -> {
+            JSONObject journey = JourneyStore.latest(getApplicationContext());
+            mainHandler.post(() -> showLatestJourneyReview(journey));
+        });
+    }
+
+    private void showLatestJourneyReview(JSONObject journey) {
+        if (isFinishing() || capturing || journey == null
                 || !"required".equals(journey.optString("transport_confirmation"))) {
             return;
         }
@@ -555,9 +688,22 @@ public class MainActivity extends Activity {
                 .setNegativeButton("Later", null)
                 .setPositiveButton("Save transport", (dialog, which) -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
-                    JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
-                    status.setText("Journey updated to " + selected + ".");
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                    status.setText("Saving journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.updateMode(getApplicationContext(),
+                                    journey.optString("journey_id"), selected);
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                status.setText("Journey updated to " + selected + ".");
+                                refreshSavedCount();
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not update journey.");
+                            });
+                        }
+                    });
                 })
                 .show();
     }

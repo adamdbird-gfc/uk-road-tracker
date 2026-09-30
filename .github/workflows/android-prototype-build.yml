@@ -57,7 +57,7 @@ jobs:
       - name: Upload APK and signing utility
         uses: actions/upload-artifact@v4
         with:
-          name: roadprints-android-0.25.35-${{ github.sha }}
+          name: roadprints-android-0.25.36-${{ github.sha }}
           path: roadprints-output/
           if-no-files-found: error
           retention-days: 7
