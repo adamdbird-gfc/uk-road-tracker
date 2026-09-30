@@ -21,6 +21,7 @@ import java.util.Map;
 public final class JourneyStore {
     private static final String PREFS = "roadprints_journeys_v1";
     private static final String MIGRATED = "journeys_migrated_to_archive";
+    private static final String LOW_QUALITY_PRUNED = "insufficient_timeline_journeys_pruned";
     private static final String PREFIX = "journey_";
     private static final String SUFFIX = ".json";
 
@@ -48,11 +49,13 @@ public final class JourneyStore {
 
     public static synchronized int count(Context context) {
         migrateLegacy(context);
+        pruneInsufficientTimelineJourneys(context);
         return archiveFiles(context).size();
     }
 
     public static synchronized JSONObject latest(Context context) {
         migrateLegacy(context);
+        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         if (files.isEmpty()) return null;
         File latest = Collections.max(files, Comparator.comparingLong(File::lastModified));
@@ -61,6 +64,7 @@ public final class JourneyStore {
 
     public static synchronized List<JSONObject> all(Context context) {
         migrateLegacy(context);
+        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
@@ -157,6 +161,38 @@ public final class JourneyStore {
         } catch (Exception error) {
             throw new IllegalStateException("Could not update journey mode", error);
         }
+    }
+
+    private static void pruneInsufficientTimelineJourneys(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (preferences.getBoolean(LOW_QUALITY_PRUNED, false)) return;
+
+        boolean complete = true;
+        for (File file : archiveFiles(context)) {
+            JSONObject journey = read(file);
+            if (!isInsufficientTimelineJourney(journey)) continue;
+            if (!file.delete()) complete = false;
+        }
+        if (complete) {
+            preferences.edit().putBoolean(LOW_QUALITY_PRUNED, true).apply();
+        }
+    }
+
+    private static boolean isInsufficientTimelineJourney(JSONObject journey) {
+        if (journey == null) return false;
+        JSONObject source = journey.optJSONObject("source");
+        if (source == null || !"timeline_import".equals(source.optString("type", ""))) {
+            return false;
+        }
+        String mode = journey.optString("mode", "unknown");
+        JSONObject quality = journey.optJSONObject("capture_quality");
+        if ("driving".equals(mode) || "bus".equals(mode)) {
+            return quality == null || quality.optInt("source_route_points", 0) < 2;
+        }
+        if ("walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode)) {
+            return quality == null || quality.optInt("gps_points", 0) < 2;
+        }
+        return false;
     }
 
     private static JSONObject upgrade(Context context, JSONObject journey) {
