@@ -35,6 +35,7 @@ public class JourneyMapEditorActivity extends Activity {
     private TextView removeButton;
     private TextView restoreButton;
     private TextView saveButton;
+    private TextView undoButton;
     private boolean removeMode = true;
     private int selectedEdge = -1;
 
@@ -124,15 +125,15 @@ public class JourneyMapEditorActivity extends Activity {
         restoreButton = controlButton("RESTORE", false);
         removeButton.setOnClickListener(v -> applySelectedChange(true));
         restoreButton.setOnClickListener(v -> applySelectedChange(false));
-        TextView undo = controlButton("UNDO", false);
-        undo.setOnClickListener(v -> undo());
+        undoButton = controlButton("UNDO", false);
+        undoButton.setOnClickListener(v -> undo());
         LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams(
                 0, dp(48), 1);
         controlParams.setMargins(0, 0, dp(8), 0);
         controls.addView(removeButton, controlParams);
         controls.addView(restoreButton, controlParams);
         LinearLayout.LayoutParams undoParams = new LinearLayout.LayoutParams(0, dp(48), 1);
-        controls.addView(undo, undoParams);
+        controls.addView(undoButton, undoParams);
         footer.addView(controls);
         root.addView(footer);
 
@@ -176,9 +177,11 @@ public class JourneyMapEditorActivity extends Activity {
         boolean canRemove = selectedEdge >= 0 && !removedEdges.contains(selectedEdge);
         boolean canRestore = !removedEdges.isEmpty();
         boolean dirty = !removedEdges.equals(originalRemovedEdges);
+        boolean canUndo = !undoStack.isEmpty();
 
         styleActionButton(removeButton, canRemove, removeMode);
         styleActionButton(restoreButton, canRestore, canRestore);
+        styleActionButton(undoButton, canUndo, false);
         saveButton.setEnabled(dirty);
         saveButton.setBackground(roundRect(dirty ? 0xFFF7C450 : 0xFF655C48,
                 dirty ? 0xFFF7C450 : 0xFF655C48, dp(10)));
