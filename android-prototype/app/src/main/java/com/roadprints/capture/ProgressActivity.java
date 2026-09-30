@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ProgressActivity extends Activity {
+    private LinearLayout statisticsContent;
+    private boolean hasResumed;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -75,6 +77,7 @@ public class ProgressActivity extends Activity {
         content.setPadding(dp(22), dp(8), dp(22), dp(22));
         scroll.addView(content);
 
+        statisticsContent = content;
         addStatistics(content, summarize(JourneyStore.all(this)));
 
         root.addView(scroll, new LinearLayout.LayoutParams(
@@ -83,6 +86,17 @@ public class ProgressActivity extends Activity {
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (hasResumed) {
+            statisticsContent.removeAllViews();
+            addStatistics(statisticsContent, summarize(JourneyStore.all(this)));
+        } else {
+            hasResumed = true;
+        }
     }
 
     private DistanceStats summarize(List<JSONObject> journeys) {
