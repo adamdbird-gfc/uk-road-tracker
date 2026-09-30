@@ -22,6 +22,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -47,10 +48,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class JourneyListActivity extends Activity {
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
-    private final ExecutorService processor = Executors.newSingleThreadExecutor();
+    private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
             "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
@@ -61,8 +64,12 @@ public class JourneyListActivity extends Activity {
     };
 
     private LinearLayout journeyList;
+    private View journeyRoot;
     private TextView count;
     private TextView readinessSummary;
+    private Button batchMatchButton;
+    private volatile boolean batchCancelRequested;
+    private boolean batchRunning;
     private List<JSONObject> journeys;
     private int activeFilter = 0;
     private final List<TextView> filterChips = new ArrayList<>();
@@ -75,6 +82,7 @@ public class JourneyListActivity extends Activity {
         window.setNavigationBarColor(0xFF10275D);
         buildScreen();
         journeys = JourneyStore.all(this);
+        recoverInterruptedMatches();
         render();
     }
 
@@ -209,6 +217,12 @@ public class JourneyListActivity extends Activity {
         content.addView(headingRow);
         content.addView(intro);
         content.addView(readinessSummary);
+        batchMatchButton = styledModalButton("MATCH READY JOURNEYS", 0xFFF7C450, 0xFF0B1C50);
+        batchMatchButton.setOnClickListener(v -> startBatchMatch());
+        LinearLayout.LayoutParams batchParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
+        batchParams.bottomMargin = dp(8);
+        content.addView(batchMatchButton, batchParams);
         content.addView(filterScroll);
         content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -217,6 +231,7 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         View bottomNavigation = buildBottomNavigation();
         root.addView(bottomNavigation);
+        journeyRoot = root;
         setContentView(root);
         applySystemBarInsets(root, content, bottomNavigation);
     }
@@ -991,7 +1006,268 @@ public class JourneyListActivity extends Activity {
                 .show();
     }
 
+    private void recoverInterruptedMatches() {
+        for (JSONObject journey : journeys) {
+            if (!"processing".equals(journey.optString("processing_status"))) continue;
+            try {
+                journey.put("processing_status", "pending");
+                JSONObject stages = journey.optJSONObject("stage_statuses");
+                if (stages != null) {
+                    String stage = isFootMode(journey.optString("mode", "unknown"))
+                            ? "foot_matching" : "road_matching";
+                    if ("processing".equals(stages.optString(stage))) stages.put(stage, "pending");
+                }
+                JSONObject processing = journey.optJSONObject("processing");
+                if (processing != null) {
+                    String stage = isFootMode(journey.optString("mode", "unknown"))
+                            ? "foot_matching" : "road_matching";
+                    if ("processing".equals(processing.optString(stage))) processing.put(stage, "pending");
+                }
+                JourneyStore.save(this, journey);
+            } catch (Exception ignored) { }
+        }
+    }
+
+    private void startBatchMatch() {
+        if (batchRunning) return;
+        List<JSONObject> queue = new ArrayList<>();
+        // The list is already loaded while this screen is visible. Re-reading every
+        // archive file here adds a large synchronous disk scan just as matching starts.
+        for (JSONObject journey : journeys) {
+            if (!canMatchJourney(journey)) continue;
+            String status = journey.optString("processing_status", "pending");
+            if ("processing".equals(status)) continue;
+            if (!"complete".equals(status) || !hasStoredMatch(journey)) queue.add(journey);
+        }
+        if (queue.isEmpty()) {
+            Toast.makeText(this, "There are no journeys ready to match", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        batchRunning = true;
+        batchCancelRequested = false;
+        updateReadinessSummary();
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(28), dp(44), dp(28), dp(28));
+        panel.setGravity(Gravity.CENTER_VERTICAL);
+        panel.setBackgroundColor(0xFF0B1C50);
+        TextView heading = new TextView(this);
+        heading.setText("Growing your map");
+        heading.setTextSize(22);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setTextColor(Color.WHITE);
+        TextView details = new TextView(this);
+        details.setText("Preparing " + queue.size() + " journeys to match…");
+        details.setTextSize(15);
+        details.setTextColor(0xFFD3DCED);
+        details.setPadding(0, dp(10), 0, dp(14));
+        ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(queue.size());
+        progress.setProgress(0);
+        Button stop = styledModalButton("STOP AFTER IN-FLIGHT MATCHES", 0xFF233B78, Color.WHITE);
+        LinearLayout.LayoutParams stopParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
+        stopParams.topMargin = dp(18);
+        panel.addView(heading);
+        panel.addView(details);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(8));
+        progressParams.topMargin = dp(10);
+        panel.addView(progress, progressParams);
+        panel.addView(stop, stopParams);
+        setContentView(panel);
+        panel.setOnApplyWindowInsetsListener((view, insets) -> {
+            int top = 0;
+            int bottom = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
+                top = bars.top;
+                bottom = bars.bottom;
+            } else {
+                top = insets.getSystemWindowInsetTop();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            view.setPadding(dp(28), dp(44) + top, dp(28), dp(28) + bottom);
+            return insets;
+        });
+        panel.requestApplyInsets();
+        stop.setOnClickListener(v -> {
+            batchCancelRequested = true;
+            stop.setEnabled(false);
+            stop.setText("FINISHING IN-FLIGHT MATCHES…");
+            details.setText("In-flight matches will be saved before the queue stops.");
+        });
+
+        java.util.concurrent.ConcurrentLinkedQueue<JSONObject> roadWork =
+                new java.util.concurrent.ConcurrentLinkedQueue<>();
+        java.util.concurrent.ConcurrentLinkedQueue<JSONObject> footWork =
+                new java.util.concurrent.ConcurrentLinkedQueue<>();
+        for (JSONObject item : queue) {
+            (isFootMode(item.optString("mode", "unknown")) ? footWork : roadWork).add(item);
+        }
+        AtomicInteger finished = new AtomicInteger();
+        AtomicInteger completed = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
+        CountDownLatch workers = new CountDownLatch(3);
+        for (int worker = 0; worker < 3; worker++) {
+            final java.util.concurrent.ConcurrentLinkedQueue<JSONObject> lane =
+                    worker == 2 ? footWork : roadWork;
+            processor.execute(() -> {
+                try {
+                    JSONObject item;
+                    while (!batchCancelRequested && (item = lane.poll()) != null) {
+                        try {
+                            markJourneyProcessing(item);
+                            matchJourneyForBatch(item);
+                            completed.incrementAndGet();
+                        } catch (Exception error) {
+                            failed.incrementAndGet();
+                            markJourneyFailed(item, error);
+                            if (Thread.currentThread().isInterrupted()) batchCancelRequested = true;
+                        }
+                        int done = finished.incrementAndGet();
+                        int succeeded = completed.get();
+                        int errors = failed.get();
+                        mainHandler.post(() -> {
+                            progress.setProgress(done);
+                            details.setText(done + " of " + queue.size() + " journeys checked · "
+                                    + succeeded + " matched · " + errors + " need retry");
+                            // Keep the progress screen lightweight. Re-reading and
+                            // rebuilding every journey card after each result caused
+                            // repeated main-thread disk I/O and UI stalls on large imports.
+                        });
+                    }
+                } finally {
+                    workers.countDown();
+                    if (workers.getCount() == 0) {
+                        final int checked = finished.get();
+                        final int succeeded = completed.get();
+                        final int errors = failed.get();
+                        final boolean stopped = batchCancelRequested;
+                        mainHandler.post(() -> {
+                            batchRunning = false;
+                            heading.setText(stopped ? "Matching paused" : "Map growth complete");
+                            details.setText(checked + " of " + queue.size() + " checked · "
+                                    + succeeded + " matched · " + errors + " failed"
+                                    + (stopped ? " · remaining journeys are ready to resume" : ""));
+                            stop.setText("RETURN TO JOURNEYS");
+                            stop.setEnabled(true);
+                            stop.setOnClickListener(v -> {
+                                setContentView(journeyRoot);
+                                journeys = JourneyStore.all(this);
+                                render();
+                            });
+                            stop.setVisibility(View.VISIBLE);
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    private boolean hasStoredMatch(JSONObject journey) {
+        JSONObject result = journey.optJSONObject("processing_result");
+        return result != null && !matchedRouteSegments(result).isEmpty();
+    }
+
+    private void markJourneyProcessing(JSONObject journey) throws Exception {
+        String stageKey = isFootMode(journey.optString("mode", "unknown"))
+                ? "foot_matching" : "road_matching";
+        journey.put("processing_status", "processing");
+        JSONObject stages = journey.optJSONObject("stage_statuses");
+        if (stages == null) stages = new JSONObject();
+        stages.put(stageKey, "processing");
+        journey.put("stage_statuses", stages);
+        JSONObject processing = journey.optJSONObject("processing");
+        if (processing == null) processing = new JSONObject();
+        processing.put(stageKey, "processing");
+        journey.put("processing", processing);
+        journey.remove("processing_result");
+        JourneyStore.save(this, journey);
+    }
+
+    private void matchJourneyForBatch(JSONObject journey) throws Exception {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        JSONArray points = new JSONArray();
+        if (coordinates != null) {
+            for (int index = 0; index < coordinates.length(); index++) {
+                JSONArray coordinate = coordinates.optJSONArray(index);
+                if (coordinate != null && coordinate.length() >= 2
+                        && !coordinate.isNull(0) && !coordinate.isNull(1)) {
+                    points.put(new JSONObject().put("lat", coordinate.optDouble(1))
+                            .put("lng", coordinate.optDouble(0)));
+                }
+            }
+        }
+        if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
+        String mode = journey.optString("mode", "unknown");
+        String endpoint = isFootMode(mode) ? "/match-walking" : "/match";
+        JSONObject result = postJsonWithRetry(API_BASE_URL + endpoint, new JSONObject().put("points", points));
+        if (matchedRouteSegments(result).isEmpty()) {
+            throw new IllegalStateException("Matcher returned no route geometry");
+        }
+        JSONObject stored = JourneyStore.get(this, journey.optString("journey_id"));
+        if (stored == null) throw new IllegalStateException("Journey is no longer available");
+        String stageKey = isFootMode(mode) ? "foot_matching" : "road_matching";
+        stored.put("processing_status", "complete");
+        JSONObject stages = stored.optJSONObject("stage_statuses");
+        if (stages == null) stages = new JSONObject();
+        stages.put(stageKey, "complete");
+        stored.put("stage_statuses", stages);
+        JSONObject processing = stored.optJSONObject("processing");
+        if (processing == null) processing = new JSONObject();
+        processing.put(stageKey, "complete");
+        stored.put("processing", processing);
+        stored.put("processing_result", result);
+        stored.put("processing_completed_at", Instant.now().toString());
+        stored.remove("error_summary");
+        JourneyStore.save(this, stored);
+    }
+
+    private JSONObject postJsonWithRetry(String endpoint, JSONObject payload) throws Exception {
+        long[] delays = {750L, 2000L};
+        for (int attempt = 0; ; attempt++) {
+            try {
+                return postJson(endpoint, payload);
+            } catch (Exception error) {
+                String message = error.getMessage() == null ? "" : error.getMessage().toLowerCase();
+                boolean transientFailure = message.contains("http 429")
+                        || message.matches("(?s).*http 5[0-9][0-9].*")
+                        || message.contains("timeout") || message.contains("failed to connect")
+                        || message.contains("connection reset");
+                if (!transientFailure || attempt >= delays.length) throw error;
+                Thread.sleep(delays[attempt]);
+            }
+        }
+    }
+
+    private void markJourneyFailed(JSONObject journey, Exception error) {
+        try {
+            JSONObject stored = JourneyStore.get(this, journey.optString("journey_id"));
+            if (stored == null) return;
+            String stageKey = isFootMode(stored.optString("mode", "unknown"))
+                    ? "foot_matching" : "road_matching";
+            stored.put("processing_status", "failed");
+            stored.put("error_summary", error.getMessage());
+            JSONObject stages = stored.optJSONObject("stage_statuses");
+            if (stages == null) stages = new JSONObject();
+            stages.put(stageKey, "failed");
+            stored.put("stage_statuses", stages);
+            JSONObject processing = stored.optJSONObject("processing");
+            if (processing == null) processing = new JSONObject();
+            processing.put(stageKey, "failed");
+            stored.put("processing", processing);
+            JourneyStore.save(this, stored);
+        } catch (Exception ignored) { }
+    }
+
     private void processJourney(JSONObject journey, Button button, TextView status, AlertDialog[] dialogRef) {
+        if (batchRunning) {
+            Toast.makeText(this, "Journey matching is already running", Toast.LENGTH_SHORT).show();
+            return;
+        }
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         if (!canMatchJourney(journey)) {
@@ -1140,6 +1416,7 @@ public class JourneyListActivity extends Activity {
         int noMatch = 0;
         int processed = 0;
         int failed = 0;
+        int matching = 0;
         for (JSONObject journey : journeys) {
             String status = journey.optString("processing_status", "pending");
             String mode = journey.optString("mode", "unknown");
@@ -1149,10 +1426,13 @@ public class JourneyListActivity extends Activity {
             }
             if (!isFootMode(mode) && !isRoadMode(mode)) {
                 noMatch++;
-            } else if ("complete".equals(status)) {
+            } else if ("complete".equals(status) && hasStoredMatch(journey)) {
                 processed++;
-            } else if ("failed".equals(status)) {
+            } else if ("failed".equals(status)
+                    || ("complete".equals(status) && !hasStoredMatch(journey))) {
                 failed++;
+            } else if ("processing".equals(status)) {
+                matching++;
             } else if (isFootMode(mode)) {
                 footReady++;
             } else {
@@ -1161,8 +1441,17 @@ public class JourneyListActivity extends Activity {
         }
         String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
                 + " • " + noMatch + " no matching";
-        String secondLine = "Processed: " + processed + " • Failed: " + failed;
+        String secondLine = "Processed: " + processed + " • Failed: " + failed
+                + (matching > 0 ? " • Matching: " + matching : "");
         readinessSummary.setText(firstLine + "\n" + secondLine);
+        if (batchMatchButton != null) {
+            int ready = roadReady + footReady + failed;
+            batchMatchButton.setVisibility(ready > 0 ? View.VISIBLE : View.GONE);
+            batchMatchButton.setText(batchRunning ? "MATCHING JOURNEYS…" :
+                    "MATCH READY JOURNEYS · " + ready);
+            batchMatchButton.setEnabled(!batchRunning && ready > 0);
+            batchMatchButton.setAlpha(batchRunning || ready == 0 ? 0.55f : 1f);
+        }
     }
 
     private int pointCount(JSONObject journey) {
@@ -1274,4 +1563,3 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
-
