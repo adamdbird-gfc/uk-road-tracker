@@ -13,8 +13,8 @@ import org.robolectric.annotation.Config;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28, manifest = "src/main/AndroidManifest.xml",
-        assetDir = "src/main/assets")
+@Config(sdk = 28, manifest = "android-prototype/app/src/main/AndroidManifest.xml",
+        assetDir = "android-prototype/app/src/main/assets")
 public class MotorwayProgressCalculatorTest {
     @Test public void repeatedJourneysAddMileageButCountCanonicalCoverageOnce() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
