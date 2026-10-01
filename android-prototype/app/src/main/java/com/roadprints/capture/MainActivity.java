@@ -299,11 +299,18 @@ public class MainActivity extends Activity {
 
     private void refreshArchiveSummary() {
         final int generation = ++archiveSummaryGeneration;
+        saved.setText("Loading saved journeys…");
+        saved.setOnClickListener(null);
         archiveIo.execute(() -> {
             List<JSONObject> journeys;
             try {
                 journeys = JourneyStore.all(getApplicationContext());
             } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != archiveSummaryGeneration) return;
+                    saved.setText("Saved journeys could not be loaded. Tap here to retry.");
+                    saved.setOnClickListener(view -> refreshArchiveSummary());
+                });
                 return;
             }
             int roadCount = 0;
@@ -320,6 +327,7 @@ public class MainActivity extends Activity {
             mainHandler.post(() -> {
                 if (isFinishing() || generation != archiveSummaryGeneration) return;
                 saved.setText("Saved journeys: " + savedCount);
+                saved.setOnClickListener(null);
                 setDeleteActionEnabled(deleteRoadAction, roads > 0);
                 setDeleteActionEnabled(deleteFootAction, foot > 0);
                 setDeleteActionEnabled(deleteAllAction, savedCount > 0);
@@ -333,11 +341,18 @@ public class MainActivity extends Activity {
             try {
                 savedCount = JourneyStore.count(getApplicationContext());
             } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing()) return;
+                    saved.setText("Saved journeys could not be refreshed. Tap here to retry.");
+                    saved.setOnClickListener(view -> refreshArchiveSummary());
+                });
                 return;
             }
             final int count = savedCount;
             mainHandler.post(() -> {
-                if (!isFinishing()) saved.setText("Saved journeys: " + count);
+                if (isFinishing()) return;
+                saved.setText("Saved journeys: " + count);
+                saved.setOnClickListener(null);
             });
         });
     }
