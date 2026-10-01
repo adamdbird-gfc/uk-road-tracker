@@ -1721,7 +1721,10 @@ function requestWebLocation() {
 }
 
 async function openFreshRoadprint() {
-  if (localDataResetActive) return;
+  if (localDataResetActive) {
+    showOnboardingDataNotice('Your saved-data reset is still finishing. Retry “Delete all saved data” before continuing.');
+    return;
+  }
   localStorage.setItem('roadprints:onboarding-complete-v1','true');
   onboardingMode='fresh';
   document.querySelector('main')?.classList.remove('onboarding-active');
@@ -1732,14 +1735,36 @@ async function openFreshRoadprint() {
   mapTitle.textContent='Your Roadprint';
   mapIntro.textContent='Roadprints will grow as you travel. This web preview saves your progress on this device.';
   mapRenderingRequested=true;
-  activateRoadprintsScreen('map');
   try {
-    await ensureLeaflet();
+    activateRoadprintsScreen('map');
+  } catch (error) {
+    console.warn('Roadprint screen navigation could not be completed:',error);
+  }
+  // Keep the map shell and its navigation usable even if an optional status
+  // widget throws while the screen changes.
+  const shell=document.querySelector('main');
+  const nav=document.getElementById('appNavigation');
+  shell?.classList.remove('onboarding-active');
+  shell?.classList.add('app-ready');
+  if (shell) shell.dataset.activeScreen='map';
+  nav?.classList.remove('hidden');
+  screenController.current='map';
+  mapStatus.className='muted map-status';
+  mapStatus.textContent='Loading your map…';
+  try {
+    const leafletReady=await ensureLeaflet();
+    if (!leafletReady) {
+      mapStatus.className='error map-status';
+      mapStatus.textContent='The map could not load on this connection. Use the bottom tabs to move around, or tap the Roadprints logo to return to the start.';
+      return;
+    }
     initMap();
     renderMap();
     requestAnimationFrame(()=>map?.invalidateSize(true));
   } catch (error) {
     console.warn('The empty Roadprint map could not be opened:',error);
+    mapStatus.className='error map-status';
+    mapStatus.textContent='The map could not be opened. Use the bottom tabs to move around, or tap the Roadprints logo to return to the start.';
   }
 }
 async function showSavedProgress() {
@@ -1805,22 +1830,49 @@ async function showSavedProgress() {
   }
 }
 async function showDataSourceChoice() {
-  if (localDataResetActive) return;
-  if (easyImportRunning || footMatching) {
-    returnToOnboarding();
+  const notice=document.getElementById('onboardingDataNotice');
+  if (notice) {
+    notice.textContent='';
+    notice.classList.add('hidden');
+  }
+  if (localDataResetActive) {
+    showOnboardingDataNotice('Your saved-data reset is still finishing. Retry “Delete all saved data” before importing.');
     return;
   }
-  resetTrackingSession();
+  if (easyImportRunning || footMatching) {
+    showOnboardingDataNotice('A Timeline match is already running. Let it finish before starting another import.');
+    return;
+  }
   onboardingMode = 'data';
-  screenController.showImport();
-  closeSavedProgress.classList.add('hidden');
+  // Reveal the file chooser before resetting transient import UI, so a
+  // recoverable cleanup error cannot leave this button appearing inert.
+  document.querySelector('main')?.classList.remove('app-ready','processing-active','onboarding-active');
+  document.getElementById('appNavigation')?.classList.add('hidden');
   onboardingCard.classList.add('hidden');
-  // Destructive data controls belong to the saved-data splash, not the import
-  // workflow. Keep them out of sight while a source file is being chosen.
+  closeSavedProgress.classList.add('hidden');
   deleteDataAction?.classList.add('hidden');
   dataSourceCard.classList.remove('hidden');
   mapTitle.textContent = '4. Preview';
   mapIntro.textContent = 'The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.';
+  try {
+    resetTrackingSession();
+    screenController.showImport();
+    dataSourceCard.classList.remove('hidden');
+  } catch (error) {
+    console.warn('Timeline import screen cleanup failed:',error);
+    fileStatus.className='error import-file-status';
+    fileStatus.textContent='The import screen opened, but some previous preview data could not be cleared. You can still choose your Timeline JSON file.';
+  }
+}
+
+function showOnboardingDataNotice(message) {
+  const notice=document.getElementById('onboardingDataNotice');
+  if (!notice) {
+    window.alert(message);
+    return;
+  }
+  notice.textContent=message;
+  notice.classList.remove('hidden');
 }
 
 function returnToOnboarding() {
