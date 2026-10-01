@@ -53,6 +53,12 @@ public class JourneyListActivity extends Activity {
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
     private static final int INITIAL_JOURNEY_CARDS = 40;
     private static final int ADDITIONAL_JOURNEY_CARDS = 40;
+    private static final Object SUMMARY_CACHE_LOCK = new Object();
+    private static List<JSONObject> processJourneySummaries;
+    private static long processJourneyRevision = Long.MIN_VALUE;
+    private static int savedJourneyScrollY;
+    private static int savedJourneyCardLimit = INITIAL_JOURNEY_CARDS;
+    private static int savedJourneyFilter;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private GrowingStatusControl growingStatus;
@@ -65,6 +71,7 @@ public class JourneyListActivity extends Activity {
     };
 
     private LinearLayout journeyList;
+    private ScrollView journeyScroll;
     private View journeyRoot;
     private TextView count;
     private TextView readinessSummary;
@@ -78,6 +85,8 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
+        activeFilter = savedJourneyFilter;
         Window window = getWindow();
         launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
@@ -94,6 +103,9 @@ public class JourneyListActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
+        savedJourneyCardLimit = journeyCardLimit;
+        savedJourneyFilter = activeFilter;
         if (growingStatus != null) growingStatus.stop();
         super.onPause();
     }
@@ -223,6 +235,7 @@ public class JourneyListActivity extends Activity {
         journeyList.addView(loading);
 
         ScrollView scroll = new ScrollView(this);
+        journeyScroll = scroll;
         scroll.addView(journeyList);
         scroll.setFillViewport(true);
 
@@ -363,10 +376,29 @@ public class JourneyListActivity extends Activity {
     private void refreshJourneysAsync() {
         if (journeyList == null) return;
         final int generation = ++refreshGeneration;
+        final android.content.Context appContext = getApplicationContext();
+        final long initialRevision = JourneyStore.dataRevision(appContext);
+        List<JSONObject> cached = null;
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processJourneySummaries != null && processJourneyRevision == initialRevision) {
+                cached = new ArrayList<>(processJourneySummaries);
+            }
+        }
+        if (cached != null) {
+            journeys = cached;
+            if (launchGrowingAfterLoad) {
+                launchGrowingAfterLoad = false;
+                startBatchMatch();
+            } else {
+                render();
+                restoreJourneyScroll();
+            }
+            return;
+        }
         processor.execute(() -> {
             List<JSONObject> loaded;
             try {
-                loaded = JourneyStore.allSummaries(getApplicationContext());
+                loaded = JourneyStore.allSummaries(appContext);
                 journeys = loaded;
             } catch (Exception error) {
                 mainHandler.post(() -> {
@@ -380,6 +412,13 @@ public class JourneyListActivity extends Activity {
                 });
                 return;
             }
+            final long resultRevision = JourneyStore.dataRevision(appContext);
+            if (resultRevision == initialRevision) {
+                synchronized (SUMMARY_CACHE_LOCK) {
+                    processJourneySummaries = new ArrayList<>(loaded);
+                    processJourneyRevision = resultRevision;
+                }
+            }
             mainHandler.post(() -> {
                 if (isFinishing() || generation != refreshGeneration) return;
                 journeys = loaded;
@@ -388,9 +427,16 @@ public class JourneyListActivity extends Activity {
                     startBatchMatch();
                 } else {
                     render();
+                    restoreJourneyScroll();
                 }
             });
         });
+    }
+
+    private void restoreJourneyScroll() {
+        if (journeyScroll != null && savedJourneyScrollY > 0) {
+            journeyScroll.post(() -> journeyScroll.scrollTo(0, savedJourneyScrollY));
+        }
     }
 
     private boolean shouldShowJourney(JSONObject journey) {

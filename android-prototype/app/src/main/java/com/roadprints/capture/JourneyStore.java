@@ -22,6 +22,7 @@ public final class JourneyStore {
     private static final String PREFS = "roadprints_journeys_v1";
     private static final String MIGRATED = "journeys_migrated_to_archive";
     private static final String LOW_QUALITY_PRUNED = "insufficient_timeline_journeys_pruned";
+    private static final String DATA_REVISION = "journey_archive_revision";
     private static final String PREFIX = "journey_";
     private static final String SUFFIX = ".json";
 
@@ -46,6 +47,7 @@ public final class JourneyStore {
             if (!temporary.renameTo(target)) {
                 throw new IllegalStateException("Could not commit journey archive");
             }
+            bumpDataRevision(context);
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey locally", error);
         }
@@ -54,6 +56,12 @@ public final class JourneyStore {
     public static synchronized int count(Context context) {
         migrateLegacy(context);
         return archiveFiles(context).size();
+    }
+
+    /** Cheap token for invalidating screen summaries when saved journey data changes. */
+    public static synchronized long dataRevision(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(DATA_REVISION, 0L);
     }
 
     public static synchronized JSONObject latest(Context context) {
@@ -151,8 +159,9 @@ public final class JourneyStore {
     public static synchronized void delete(Context context, String journeyId) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
-        if (file.exists() && !file.delete()) {
-            throw new IllegalStateException("Could not delete journey archive");
+        if (file.exists()) {
+            if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
+            bumpDataRevision(context);
         }
     }
 
@@ -239,6 +248,7 @@ public final class JourneyStore {
             JSONObject journey = read(file);
             if (!isInsufficientTimelineJourney(journey)) continue;
             if (!file.delete()) complete = false;
+            else bumpDataRevision(context);
         }
         if (complete) {
             preferences.edit().putBoolean(LOW_QUALITY_PRUNED, true).apply();
@@ -298,6 +308,12 @@ public final class JourneyStore {
         List<File> result = new ArrayList<>();
         if (files != null) Collections.addAll(result, files);
         return result;
+    }
+
+    private static void bumpDataRevision(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        preferences.edit().putLong(DATA_REVISION,
+                preferences.getLong(DATA_REVISION, 0L) + 1L).apply();
     }
 
     private static JSONObject read(File file) {

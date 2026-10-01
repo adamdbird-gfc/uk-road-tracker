@@ -29,7 +29,13 @@ import java.util.LinkedHashMap;
 import java.util.Comparator;
 
 public class ProgressActivity extends Activity {
+    private static final Object STATS_CACHE_LOCK = new Object();
+    private static DistanceStats processCachedStats;
+    private static long processCachedRevision = Long.MIN_VALUE;
+    private static final Set<String> expandedRoadCategories = new HashSet<>();
+    private static int savedScrollY;
     private LinearLayout statisticsContent;
+    private ScrollView statisticsScroll;
     private boolean hasResumed;
     private GrowingStatusControl growingStatus;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -88,6 +94,7 @@ public class ProgressActivity extends Activity {
         root.addView(heading);
 
         ScrollView scroll = new ScrollView(this);
+        statisticsScroll = scroll;
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(22), dp(8), dp(22), dp(22));
@@ -121,6 +128,7 @@ public class ProgressActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (statisticsScroll != null) savedScrollY = statisticsScroll.getScrollY();
         if (growingStatus != null) growingStatus.stop();
         super.onPause();
     }
@@ -147,6 +155,22 @@ public class ProgressActivity extends Activity {
 
     private void loadStatistics() {
         final int generation = ++statsLoadGeneration;
+        final android.content.Context appContext = getApplicationContext();
+        long currentRevision = JourneyStore.dataRevision(appContext);
+        final long loadRevision = currentRevision;
+        DistanceStats cached = null;
+        synchronized (STATS_CACHE_LOCK) {
+            if (processCachedStats != null && processCachedRevision == currentRevision) {
+                cached = processCachedStats;
+            }
+        }
+        if (cached != null) {
+            loadedStats = cached;
+            statisticsContent.removeAllViews();
+            renderStatistics(statisticsContent, cached);
+            restoreProgressScroll();
+            return;
+        }
         if (statisticsContent != null) {
             statisticsContent.removeAllViews();
             TextView loading = new TextView(this);
@@ -154,7 +178,6 @@ public class ProgressActivity extends Activity {
             loading.setTextColor(MUTED);
             statisticsContent.addView(loading);
         }
-        final android.content.Context appContext = getApplicationContext();
         new Thread(() -> {
             DistanceStats stats = null;
             Exception failure = null;
@@ -165,12 +188,21 @@ public class ProgressActivity extends Activity {
             }
             final DistanceStats result = stats;
             final Exception loadError = failure;
+            final long resultRevision = loadError == null
+                    ? JourneyStore.dataRevision(appContext) : Long.MIN_VALUE;
+            if (loadError == null && resultRevision == loadRevision) {
+                synchronized (STATS_CACHE_LOCK) {
+                    processCachedStats = result;
+                    processCachedRevision = resultRevision;
+                }
+            }
             mainHandler.post(() -> {
                 if (generation != statsLoadGeneration || isFinishing() || isDestroyed()) return;
                 statisticsContent.removeAllViews();
                 if (loadError == null) {
                     loadedStats = result;
                     renderStatistics(statisticsContent, result);
+                    restoreProgressScroll();
                 } else {
                     TextView error = new TextView(this);
                     error.setText("Couldn't load progress. Your saved journeys are still on this device.");
@@ -179,6 +211,12 @@ public class ProgressActivity extends Activity {
                 }
             });
         }, "roadprints-progress-load").start();
+    }
+
+    private void restoreProgressScroll() {
+        if (statisticsScroll != null && savedScrollY > 0) {
+            statisticsScroll.post(() -> statisticsScroll.scrollTo(0, savedScrollY));
+        }
     }
 
     private DistanceStats summarizeSavedJourneys(android.content.Context context, int generation) {
@@ -392,10 +430,10 @@ public class ProgressActivity extends Activity {
 
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
+        addCollectiveStatistics(parent, stats);
         addRoadDiscoveryPanel(parent, stats);
         addMotorwayAggregatePanel(parent, stats);
         addMotorwayCoveragePanel(parent, stats);
-        addCollectiveStatistics(parent, stats);
     }
 
     private LinearLayout statisticsPanel(String titleText) {
@@ -463,21 +501,40 @@ public class ProgressActivity extends Activity {
             LinearLayout rows = new LinearLayout(this);
             rows.setOrientation(LinearLayout.VERTICAL);
             rows.setVisibility(View.GONE);
-            for (RoadDiscoveryItem road : roads) {
+            group.addView(rows);
+            boolean expanded = expandedRoadCategories.contains(category);
+            if (expanded) {
+                addRoadDiscoveryRows(rows, roads);
+                rows.setTag(Boolean.TRUE);
+                rows.setVisibility(View.VISIBLE);
+            }
+            label.setOnClickListener(v -> {
+                boolean open = rows.getVisibility() != View.VISIBLE;
+                if (open && !Boolean.TRUE.equals(rows.getTag())) {
+                    addRoadDiscoveryRows(rows, roads);
+                    rows.setTag(Boolean.TRUE);
+                }
+                rows.setVisibility(open ? View.VISIBLE : View.GONE);
+                if (open) expandedRoadCategories.add(category);
+                else expandedRoadCategories.remove(category);
+            });
+        }
+        parent.addView(panel);
+    }
+
+    private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads) {
+        for (RoadDiscoveryItem road : roads) {
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setPadding(dp(12), dp(8), dp(12), dp(8));
+                row.setBackgroundColor(rows.getChildCount() % 2 == 0
+                        ? 0x142F558F : Color.TRANSPARENT);
                 TextView roadName = new TextView(this);
                 roadName.setText(road.label);
                 roadName.setTextSize(14);
                 roadName.setTypeface(null, android.graphics.Typeface.BOLD);
                 roadName.setTextColor(Color.WHITE);
-                if ("Motorways".equals(category)) {
-                    roadName.setGravity(Gravity.CENTER);
-                    roadName.setPadding(dp(10), dp(6), dp(10), dp(6));
-                    roadName.setBackground(signBadge());
-                }
                 row.addView(roadName, new LinearLayout.LayoutParams(0,
                         LinearLayout.LayoutParams.WRAP_CONTENT, 1));
                 TextView status = new TextView(this);
@@ -491,12 +548,7 @@ public class ProgressActivity extends Activity {
                 View divider = new View(this);
                 divider.setBackgroundColor(0x334C6798);
                 rows.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
-            }
-            group.addView(rows);
-            label.setOnClickListener(v -> rows.setVisibility(
-                    rows.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
         }
-        parent.addView(panel);
     }
 
     private void addMotorwayAggregatePanel(LinearLayout parent, DistanceStats stats) {
@@ -582,12 +634,13 @@ public class ProgressActivity extends Activity {
             panel.addView(warning);
         }
         for (MotorwayProgressCalculator.Road road : summary.roads) {
+            double percent = road.percent();
+            if (!Double.isFinite(percent) || percent < 1.0) continue;
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0, dp(8), 0, dp(2));
             row.addView(motorwayBadge(road), new LinearLayout.LayoutParams(dp(78), dp(32)));
-            double percent = road.percent();
             View bar = motorwayBar(Double.isFinite(percent) ? percent / 100.0 : 0);
             LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(0, dp(12), 1);
             barParams.setMargins(dp(9), 0, dp(9), 0);
@@ -714,7 +767,7 @@ public class ProgressActivity extends Activity {
     }
 
     private void addCollectiveStatistics(LinearLayout parent, DistanceStats stats) {
-        LinearLayout panel = statisticsPanel("Collective statistics");
+        LinearLayout panel = statisticsPanel("Statistics summary");
 
         double total = stats.drivingMetres + stats.footMetres + stats.trainMetres
                 + stats.ferryMetres + stats.flightMetres + stats.transitMetres
