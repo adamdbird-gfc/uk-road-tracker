@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260924-onboarding-v1" />
+  <link rel="stylesheet" href="styles.css?v=20261001-onboarding-v2" />
 </head>
 <body>
   <main>
@@ -64,7 +64,11 @@
         <h2>Roadprints will grow quietly</h2>
         <p class="onboarding-copy">The web app can show your Roadprint and save it on this device. Reliable background tracking and notifications will arrive with the Android app.</p>
         <div class="onboarding-status"><strong>Nothing to start or finish.</strong><br />Carry on travelling normally and revisit Roadprints when you want to see what you have discovered.</div>
-        <button id="continueToWebMap" class="onboarding-primary" type="button">View my Roadprint</button>
+        <div id="backgroundDataNotice" class="onboarding-status hidden" role="status" aria-live="polite"></div>
+        <div class="onboarding-actions">
+          <button id="importTimelineFromStart" class="onboarding-secondary" type="button">Add Timeline data</button>
+          <button id="continueToWebMap" class="onboarding-primary" type="button">View my Roadprint</button>
+        </div>
       </section>
 
       <div id="localProgressNotice" class="local-progress-notice hidden">
@@ -555,7 +559,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="journey-contract.js?v=20260927-contract-v1"></script>
   <script src="local-data-reset.js?v=20261001-delete-all-v1"></script>
-  <script src="app.js?v=20261001-poc-flow-v4"></script>
+  <script src="app.js?v=20261001-poc-flow-v5"></script>
   <script src="service-station-map-layer.js?v=20260919-entitlement-v2"></script>
   <script src="service-station-progress.js?v=20260919-entitlement-v2"></script>
   <script src="experimental-data-reset.js?v=20260831-reset-experimental-coverage"></script>
