@@ -79,31 +79,6 @@ public class ProgressActivity extends Activity {
         growingStatus = new GrowingStatusControl(this, titleRow);
         heading.addView(titleRow);
         heading.addView(intro);
-        TextView grow = new TextView(this);
-        grow.setText("GROW YOUR MAP");
-        grow.setTextSize(15);
-        grow.setTypeface(null, android.graphics.Typeface.BOLD);
-        grow.setTextColor(NAVY);
-        grow.setGravity(Gravity.CENTER);
-        grow.setBackground(roundRect(GOLD, dp(14)));
-        grow.setMinHeight(dp(52));
-        grow.setClickable(true);
-        grow.setFocusable(true);
-        grow.setOnClickListener(v -> {
-            Intent intent = new Intent(this, GrowingActivity.class);
-            intent.putExtra("start_matching", true);
-            startActivity(intent);
-        });
-        LinearLayout.LayoutParams growParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
-        growParams.topMargin = dp(14);
-        heading.addView(grow, growParams);
-        TextView growHint = new TextView(this);
-        growHint.setText("Match ready journeys to build your road and walking map.");
-        growHint.setTextSize(12);
-        growHint.setTextColor(MUTED);
-        growHint.setPadding(0, dp(6), 0, 0);
-        heading.addView(growHint);
         root.addView(heading);
 
         ScrollView scroll = new ScrollView(this);
@@ -213,6 +188,7 @@ public class ProgressActivity extends Activity {
                 stats.drivingMetres += metres;
                 if ("complete".equals(journey.optString("processing_status", ""))) {
                     collectUniqueMatchedEdges(journey, uniqueRoadEdges);
+                    collectMotorwayMatches(journey, stats.motorwayMetresByRef);
                 }
             } else if ("walking".equals(mode) || "running".equals(mode)
                     || "pedestrian".equals(mode)) {
@@ -271,6 +247,39 @@ public class ProgressActivity extends Activity {
                 String key = first.compareTo(second) <= 0
                         ? first + "|" + second : second + "|" + first;
                 edges.putIfAbsent(key, haversineMetres(aLng, aLat, bLng, bLat));
+            }
+        }
+    }
+
+    private void collectMotorwayMatches(JSONObject journey, Map<String, Double> totals) {
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject geojson = result == null ? null : result.optJSONObject("motorway_geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject properties = feature == null ? null : feature.optJSONObject("properties");
+            if (properties == null) continue;
+            String ref = properties.optString("road_ref", "").toUpperCase(Locale.ROOT)
+                    .replaceAll("\\s+", "");
+            if ("M6T".equals(ref) || "M6TOLL".equals(ref)) ref = "M6 Toll";
+            if (!ref.matches("M[0-9]+[A-Z]?|M6 Toll")) continue;
+            JSONObject geometry = feature.optJSONObject("geometry");
+            JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+            JSONArray point = coordinates == null ? null : coordinates.optJSONArray(0);
+            if ("MultiLineString".equals(geometry == null ? "" : geometry.optString("type"))) {
+                JSONArray firstLine = coordinates == null ? null : coordinates.optJSONArray(0);
+                point = firstLine == null ? null : firstLine.optJSONArray(0);
+            }
+            boolean northernIreland = point != null && point.length() >= 2
+                    && point.optDouble(0) < -5.3 && point.optDouble(1) > 53.9
+                    && point.optDouble(1) < 55.6;
+            String key = northernIreland ? "NI:" + ref : ref;
+            double metres = properties.optDouble("distance_m", 0);
+            if (Double.isFinite(metres) && metres > 0) {
+                totals.put(key, totals.getOrDefault(key, 0.0) + metres);
+            } else {
+                totals.putIfAbsent(key, 0.0);
             }
         }
     }
@@ -383,6 +392,60 @@ public class ProgressActivity extends Activity {
         note.setPadding(0, dp(5), 0, 0);
         panel.addView(note);
         parent.addView(panel);
+        addMotorwaySummary(parent, stats);
+    }
+
+    private void addMotorwaySummary(LinearLayout parent, DistanceStats stats) {
+        if (stats.motorwayMetresByRef.isEmpty()) return;
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(18), dp(16), dp(18), dp(14));
+        panel.setBackground(roundRect(0xFF182F62, dp(20)));
+        LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        panelParams.topMargin = dp(12);
+
+        TextView heading = new TextView(this);
+        heading.setText("Motorways travelled");
+        heading.setTextSize(20);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setTextColor(Color.WHITE);
+        panel.addView(heading);
+
+        double totalMetres = 0;
+        for (double metres : stats.motorwayMetresByRef.values()) totalMetres += metres;
+        TextView summary = new TextView(this);
+        summary.setText(String.format(Locale.UK, "%d motorways · %s matched travel, including repeat journeys",
+                stats.motorwayMetresByRef.size(), formatMiles(totalMetres)));
+        summary.setTextSize(13);
+        summary.setTextColor(MUTED);
+        summary.setPadding(0, dp(4), 0, dp(10));
+        panel.addView(summary);
+
+        List<String> refs = new ArrayList<>(stats.motorwayMetresByRef.keySet());
+        refs.sort((left, right) -> {
+            String leftRef = left.replace("NI:", "");
+            String rightRef = right.replace("NI:", "");
+            int numeric = Integer.compare(motorwayNumber(leftRef), motorwayNumber(rightRef));
+            return numeric != 0 ? numeric : left.compareTo(right);
+        });
+        for (String ref : refs) {
+            String label = ref.startsWith("NI:") ? ref.substring(3) + " · Northern Ireland" : ref;
+            TextView row = new TextView(this);
+            row.setText(String.format(Locale.UK, "%s    %s", label,
+                    formatMiles(stats.motorwayMetresByRef.get(ref))));
+            row.setTextSize(14);
+            row.setTextColor(Color.WHITE);
+            row.setPadding(0, dp(5), 0, dp(5));
+            panel.addView(row);
+        }
+        parent.addView(panel, panelParams);
+    }
+
+    private int motorwayNumber(String ref) {
+        String digits = ref.replaceAll("[^0-9]", "");
+        try { return Integer.parseInt(digits); }
+        catch (NumberFormatException ignored) { return Integer.MAX_VALUE; }
     }
 
     private LinearLayout.LayoutParams weightedCardParams(boolean first) {
@@ -459,6 +522,7 @@ public class ProgressActivity extends Activity {
         double uniqueDrivingMetres;
         double uniqueFootMetres;
         int activities;
+        final Map<String, Double> motorwayMetresByRef = new HashMap<>();
     }
 
     private android.graphics.drawable.GradientDrawable roundRect(int color, int radius) {
