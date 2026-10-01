@@ -1666,7 +1666,8 @@ main.onboarding-active #appNavigation,
 main.onboarding-active #importStatusButton { display:none !important; }
 main.archive-hydrating #startExperience,
 main.archive-hydrating > .delete-data-action { display:none !important; }
-main.onboarding-active > .delete-data-action { display:none !important; }
+main.onboarding-active > .delete-data-action { position:fixed; z-index:2000; right:0; bottom:0; left:0; display:flex !important; justify-content:space-around; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:rgba(11,28,80,.97); border-top:1px solid rgba(255,255,255,.12); }
+main.onboarding-active > .start-experience { padding-bottom:84px; }
 
 
 /* Splash state is structural: live import updates cannot leak app chrome into it. */
