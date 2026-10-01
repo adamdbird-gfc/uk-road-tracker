@@ -265,9 +265,10 @@ public final class JourneyStore {
     private static JSONObject upgrade(Context context, JSONObject journey) {
         if (journey == null) return null;
         try {
-            String before = journey.toString();
+            boolean needsUpgrade = !journey.has("places") || !journey.has("stops")
+                    || !journey.has("capture_quality");
             ensureSharedFields(journey);
-            if (!before.equals(journey.toString())) save(context, journey);
+            if (needsUpgrade) save(context, journey);
         } catch (Exception ignored) {
             // Preserve the readable journey even if a best-effort upgrade fails.
         }

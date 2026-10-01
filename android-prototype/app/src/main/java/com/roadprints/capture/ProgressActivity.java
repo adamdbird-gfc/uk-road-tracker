@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -28,6 +30,8 @@ public class ProgressActivity extends Activity {
     private LinearLayout statisticsContent;
     private boolean hasResumed;
     private GrowingStatusControl growingStatus;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private int statsLoadGeneration;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -109,7 +113,10 @@ public class ProgressActivity extends Activity {
         scroll.addView(content);
 
         statisticsContent = content;
-        addStatistics(content, summarize(JourneyStore.all(this)));
+        TextView loading = new TextView(this);
+        loading.setText("Loading your progress…");
+        loading.setTextColor(MUTED);
+        content.addView(loading);
 
         root.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -117,6 +124,7 @@ public class ProgressActivity extends Activity {
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
+        loadStatistics();
     }
 
     @Override
@@ -124,8 +132,7 @@ public class ProgressActivity extends Activity {
         super.onResume();
         if (growingStatus != null) growingStatus.start();
         if (hasResumed) {
-            statisticsContent.removeAllViews();
-            addStatistics(statisticsContent, summarize(JourneyStore.all(this)));
+            loadStatistics();
         } else {
             hasResumed = true;
         }
@@ -157,12 +164,47 @@ public class ProgressActivity extends Activity {
         return true;
     }
 
-    private DistanceStats summarize(List<JSONObject> journeys) {
+    private void loadStatistics() {
+        final int generation = ++statsLoadGeneration;
+        if (statisticsContent != null) {
+            statisticsContent.removeAllViews();
+            TextView loading = new TextView(this);
+            loading.setText("Loading your progress…");
+            loading.setTextColor(MUTED);
+            statisticsContent.addView(loading);
+        }
+        final android.content.Context appContext = getApplicationContext();
+        new Thread(() -> {
+            DistanceStats stats = null;
+            Exception failure = null;
+            try {
+                stats = summarizeSavedJourneys(appContext);
+            } catch (Exception error) {
+                failure = error;
+            }
+            final DistanceStats result = stats;
+            final Exception loadError = failure;
+            mainHandler.post(() -> {
+                if (generation != statsLoadGeneration || isFinishing() || isDestroyed()) return;
+                statisticsContent.removeAllViews();
+                if (loadError == null) {
+                    addStatistics(statisticsContent, result);
+                } else {
+                    TextView error = new TextView(this);
+                    error.setText("Couldn't load progress. Your saved journeys are still on this device.");
+                    error.setTextColor(MUTED);
+                    statisticsContent.addView(error);
+                }
+            });
+        }, "roadprints-progress-load").start();
+    }
+
+    private DistanceStats summarizeSavedJourneys(android.content.Context context) {
         DistanceStats stats = new DistanceStats();
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
         Map<String, Double> uniqueFootEdges = new HashMap<>();
 
-        for (JSONObject journey : journeys) {
+        JourneyStore.forEach(context, journey -> {
             String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
             double metres = Math.max(0, journey.optDouble("distance_meters", 0));
             if (isShownInJourneysList(journey, mode)) stats.activities++;
@@ -191,7 +233,7 @@ public class ProgressActivity extends Activity {
             } else {
                 stats.unknownMetres += metres;
             }
-        }
+        });
 
         stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
