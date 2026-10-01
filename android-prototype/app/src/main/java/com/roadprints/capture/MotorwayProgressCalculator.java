@@ -292,9 +292,9 @@ final class MotorwayProgressCalculator {
             if (!"v1".equals(cache.optString("version"))) return;
             JSONObject cacheRoads = cache.optJSONObject("roads");
             if (cacheRoads == null) return;
-            String[] names = JSONObject.getNames(cacheRoads);
-            if (names == null) return;
-            for (String key : names) {
+            java.util.Iterator<String> names = cacheRoads.keys();
+            while (names.hasNext()) {
+                String key = names.next();
                 if (key != null && isMotorway(normalizeRef(key))) {
                     assetRoads.put(normalizeRef(key), cacheRoads.optJSONObject(key));
                 }

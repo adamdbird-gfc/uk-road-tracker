@@ -544,9 +544,9 @@ public class ProgressActivity extends Activity {
         MotorwayProgressCalculator.Summary summary = stats.motorwayProgress;
         if (summary == null || summary.roads.isEmpty()) return;
         LinearLayout panel = statisticsPanel("Motorway coverage");
-        addCoverageMetric(panel, "Great Britain", summary.gbPercent(), summary.gbUniqueKm(),
+        addCoverageMetric(panel, "Great Britain", summary.gbPercent(), summary.gbUniqueKm,
                 2300.0, false);
-        addCoverageMetric(panel, "Northern Ireland", summary.niPercent(), summary.niUniqueKm(),
+        addCoverageMetric(panel, "Northern Ireland", summary.niPercent(), summary.niUniqueKm,
                 65.0, summary.missingReferences && summary.roads.stream()
                         .anyMatch(road -> "NI".equals(road.region) && !road.referenceAvailable));
         addCoverageMetric(panel, "UK network", summary.ukPercent(), summary.ukUniqueKm(),
