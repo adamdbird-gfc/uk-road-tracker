@@ -165,7 +165,7 @@ final class ARoadProgressCalculator {
             if(current==null||covered==null||covered!=next){addSection(road,current,covered);current=new JSONArray();current.put(coord(prev));covered=next;}current.put(coord(a));prev=a;
         }addSection(road,current,covered);
     }
-    private JSONArray coord(Anchor a){JSONArray p=new JSONArray();p.put(a.lng);p.put(a.lat);return p;}
+    private JSONArray coord(Anchor a){JSONArray p=new JSONArray();try{p.put(a.lng);p.put(a.lat);}catch(org.json.JSONException ignored){}return p;}
     private void addSection(Road r,JSONArray pts,Boolean isCovered){if(pts==null||pts.length()<2)return;(isCovered?r.coveredMapSections:r.incompleteMapSections).add(pts);}
     private static boolean isNi(JSONObject feature){JSONObject g=feature.optJSONObject("geometry");JSONArray c=g==null?null:g.optJSONArray("coordinates");if(c==null||c.length()==0)return false;JSONArray p=c.optJSONArray(0);if("MultiLineString".equals(g.optString("type"))){JSONArray line=c.optJSONArray(0);p=line==null?null:line.optJSONArray(0);}return p!=null&&p.length()>1&&p.optDouble(0)<-5.3&&p.optDouble(1)>53.9&&p.optDouble(1)<55.6;}
     private static String normalize(String s){return s==null?"":s.toUpperCase(Locale.ROOT).replaceAll("\\s+","");}
