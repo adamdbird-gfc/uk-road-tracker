@@ -32,9 +32,9 @@ public class MapActivity extends Activity {
     private static final int NAV_BAR = 0xFF10275D;
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
-    private static final int MAX_MAP_POINTS = 100_000;
-    private static final int MAX_POINTS_PER_ROUTE = 256;
-    private static final int MAX_MAP_ROUTES = 3_000;
+    private static final int MAX_MAP_POINTS = 350_000;
+    private static final int MAX_POINTS_PER_ROUTE = 1_400;
+    private static final int MAX_MAP_ROUTES = 5_000;
     private TextView mapSubtitle;
     private GrowingStatusControl growingStatus;
     private FrameLayout mapFrame;
@@ -188,13 +188,79 @@ public class MapActivity extends Activity {
 
     private JSONArray projectMapRoute(JSONArray route, int maxPoints) {
         if (route == null || route.length() < 2 || maxPoints < 2) return null;
-        int retained = Math.min(route.length(), maxPoints);
+        int pointCount = route.length();
+        boolean[] keep = new boolean[pointCount];
+        keep[0] = true;
+        keep[pointCount - 1] = true;
+        int[] starts = new int[pointCount];
+        int[] ends = new int[pointCount];
+        int stackSize = 1;
+        starts[0] = 0;
+        ends[0] = pointCount - 1;
+        double midLatitude = 0;
+        JSONArray firstPoint = route.optJSONArray(0);
+        JSONArray lastPoint = route.optJSONArray(pointCount - 1);
+        if (firstPoint != null && lastPoint != null) {
+            midLatitude = (firstPoint.optDouble(1) + lastPoint.optDouble(1)) / 2.0;
+        }
+        double longitudeScale = Math.cos(Math.toRadians(midLatitude));
+        double toleranceSquared = 0.00008 * 0.00008;
+        int retained = 2;
+        while (stackSize > 0) {
+            int start = starts[--stackSize];
+            int end = ends[stackSize];
+            JSONArray a = route.optJSONArray(start);
+            JSONArray b = route.optJSONArray(end);
+            if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+            double ax = a.optDouble(0) * longitudeScale;
+            double ay = a.optDouble(1);
+            double bx = b.optDouble(0) * longitudeScale;
+            double by = b.optDouble(1);
+            double dx = bx - ax;
+            double dy = by - ay;
+            double lengthSquared = dx * dx + dy * dy;
+            double greatestDistance = -1;
+            int greatestIndex = -1;
+            for (int index = start + 1; index < end; index++) {
+                JSONArray point = route.optJSONArray(index);
+                if (point == null || point.length() < 2) continue;
+                double px = point.optDouble(0) * longitudeScale;
+                double py = point.optDouble(1);
+                double amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                        ((px - ax) * dx + (py - ay) * dy) / lengthSquared));
+                double offsetX = px - (ax + amount * dx);
+                double offsetY = py - (ay + amount * dy);
+                double distanceSquared = offsetX * offsetX + offsetY * offsetY;
+                if (distanceSquared > greatestDistance) {
+                    greatestDistance = distanceSquared;
+                    greatestIndex = index;
+                }
+            }
+            if (greatestIndex >= 0 && greatestDistance > toleranceSquared) {
+                keep[greatestIndex] = true;
+                retained++;
+                starts[stackSize] = start;
+                ends[stackSize++] = greatestIndex;
+                starts[stackSize] = greatestIndex;
+                ends[stackSize++] = end;
+            }
+        }
         JSONArray projected = new JSONArray();
-        for (int index = 0; index < retained; index++) {
-            int sourceIndex = retained == 1 ? 0
-                    : (int) Math.round(index * (route.length() - 1.0) / (retained - 1.0));
-            JSONArray point = route.optJSONArray(sourceIndex);
-            if (point != null && point.length() >= 2) projected.put(point);
+        if (retained <= maxPoints) {
+            for (int index = 0; index < pointCount; index++) {
+                if (keep[index]) projected.put(route.optJSONArray(index));
+            }
+        } else {
+            int emitted = 0;
+            int skipped = 0;
+            for (int index = 0; index < pointCount; index++) {
+                if (!keep[index]) continue;
+                int target = (int) Math.round(emitted * (retained - 1.0) / (maxPoints - 1.0));
+                if (skipped++ == target) {
+                    projected.put(route.optJSONArray(index));
+                    emitted++;
+                }
+            }
         }
         return projected.length() >= 2 ? projected : null;
     }
