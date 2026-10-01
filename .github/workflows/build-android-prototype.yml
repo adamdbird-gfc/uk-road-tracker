@@ -46,6 +46,24 @@ jobs:
           export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
           gradle --no-daemon -p android-prototype testDebugUnitTest lintDebug assembleDebug
 
+      - name: Publish verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-verification-reports
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+            android-prototype/app/build/intermediates/lint_intermediate_text_report/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Print lint errors
+        if: failure()
+        run: |
+          report=android-prototype/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          if [ -f "$report" ]; then cat "$report"; fi
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

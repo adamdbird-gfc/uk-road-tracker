@@ -400,8 +400,14 @@ public class CaptureService extends Service {
         }
         // Clear both APIs so upgrades from v0.4.3 cannot leave an old
         // sampling subscription delivering callbacks to this receiver.
-        activityClient.removeActivityUpdates(pendingIntent);
-        activityClient.removeActivityTransitionUpdates(pendingIntent);
+        try {
+            activityClient.removeActivityUpdates(pendingIntent);
+            activityClient.removeActivityTransitionUpdates(pendingIntent);
+        } catch (SecurityException error) {
+            // Permission can be revoked while tracking is armed. Cleanup must
+            // still finish instead of crashing when the service is stopped.
+            android.util.Log.w("Roadprints", "Activity permission revoked during cleanup", error);
+        }
         activityPendingIntent = null;
     }
 
