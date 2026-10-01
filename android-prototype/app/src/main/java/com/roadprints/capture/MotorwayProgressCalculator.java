@@ -320,10 +320,10 @@ final class MotorwayProgressCalculator {
                     || road.coveredSections.contains(end.id);
             if (current == null || currentCovered == null || currentCovered != covered) {
                 addMapSection(road, current, currentCovered);
-                current = new JSONArray().put(new JSONArray().put(start.lng).put(start.lat));
+                current = new JSONArray().put(mapCoordinate(start.lng, start.lat));
                 currentCovered = covered;
             }
-            current.put(new JSONArray().put(end.lng).put(end.lat));
+            current.put(mapCoordinate(end.lng, end.lat));
         }
         addMapSection(road, current, currentCovered);
     }
@@ -331,6 +331,15 @@ final class MotorwayProgressCalculator {
     private void addMapSection(Road road, JSONArray points, Boolean covered) {
         if (points == null || points.length() < 2 || covered == null) return;
         (covered ? road.coveredMapSections : road.incompleteMapSections).add(points);
+    }
+
+    private JSONArray mapCoordinate(double lng, double lat) {
+        JSONArray coordinate = new JSONArray();
+        try {
+            coordinate.put(lng);
+            coordinate.put(lat);
+        } catch (org.json.JSONException ignored) { }
+        return coordinate;
     }
 
     private void loadBundledReferences() {
