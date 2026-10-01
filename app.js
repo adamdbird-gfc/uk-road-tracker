@@ -243,6 +243,8 @@ const allowLocation = document.getElementById('allowLocation');
 const skipLocation = document.getElementById('skipLocation');
 const startFromToday = document.getElementById('startFromToday');
 const continueToWebMap = document.getElementById('continueToWebMap');
+const importTimelineFromStart = document.getElementById('importTimelineFromStart');
+const backgroundDataNotice = document.getElementById('backgroundDataNotice');
 const locationSetupStatus = document.getElementById('locationSetupStatus');
 const savedProgressLoading = document.getElementById('savedProgressLoading');
 const dataSourceCard = document.getElementById('dataSourceCard');
@@ -499,11 +501,8 @@ function updateLocalProgressNotice() {
   const resumableRoads=pendingRoadImportCandidates().length;
   const hasProgress=hasSavedLocalProgress();
   const hasStoredProgress=Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
-  const hasSavedDataEvidence=hasDeletableLocalData();
   updateDataDeletionControls();
   localProgressNotice?.classList.toggle('hidden',!hasProgress);
-  deleteDataAction?.classList.toggle('hidden',!hasSavedDataEvidence);
-  deleteDataAction?.style.setProperty('display',hasSavedDataEvidence ? 'flex' : 'none','important');
   const recoveryNeeded=needsJourneyArchiveRecovery();
   const dataAction=document.getElementById('hasDataSource');
   if (dataAction) {
@@ -1832,10 +1831,11 @@ async function showSavedProgress() {
 }
 async function showDataSourceChoice() {
   const notice=document.getElementById('onboardingDataNotice');
-  if (notice) {
-    notice.textContent='';
-    notice.classList.add('hidden');
-  }
+  [notice,backgroundDataNotice].forEach(target=>{
+    if (!target) return;
+    target.textContent='';
+    target.classList.add('hidden');
+  });
   if (localDataResetActive) {
     showOnboardingDataNotice('Your saved-data reset is still finishing. Retry “Delete all saved data” before importing.');
     return;
@@ -1852,6 +1852,7 @@ async function showDataSourceChoice() {
   onboardingCard.classList.add('hidden');
   closeSavedProgress.classList.add('hidden');
   deleteDataAction?.classList.add('hidden');
+  deleteDataAction?.style.setProperty('display','none','important');
   dataSourceCard.classList.remove('hidden');
   mapTitle.textContent = '4. Preview';
   mapIntro.textContent = 'The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.';
@@ -1867,11 +1868,10 @@ async function showDataSourceChoice() {
 }
 
 function showOnboardingDataNotice(message) {
-  const notice=document.getElementById('onboardingDataNotice');
-  if (!notice) {
-    window.alert(message);
-    return;
-  }
+  const notice=onboardingBackground && !onboardingBackground.classList.contains('hidden')
+    ? backgroundDataNotice
+    : document.getElementById('onboardingDataNotice');
+  if (!notice) { window.alert(message); return; }
   notice.textContent=message;
   notice.classList.remove('hidden');
 }
@@ -1904,6 +1904,7 @@ allowLocation?.addEventListener('click',requestWebLocation);
 skipLocation?.addEventListener('click',continueToDataChoice);
 startFromToday?.addEventListener('click',()=>showOnboardingStep(onboardingBackground));
 continueToWebMap?.addEventListener('click',openFreshRoadprint);
+importTimelineFromStart?.addEventListener('click',showDataSourceChoice);
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
 document.getElementById('importMoreData')?.addEventListener('click', showDataSourceChoice);
@@ -6960,8 +6961,8 @@ const screenController={
       button.classList.remove('active');
       button.setAttribute('aria-current','false');
     });
-    const hasSplashData=hasDeletableLocalData();
-    deleteDataAction?.style.setProperty('display',hasSplashData ? 'flex' : 'none','important');
+    deleteDataAction?.classList.remove('hidden');
+    deleteDataAction?.style.setProperty('display','flex','important');
     updateImportStatusButton();
   },
   setLoading(active){
