@@ -32,6 +32,9 @@ public class MapActivity extends Activity {
     private static final int NAV_BAR = 0xFF10275D;
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
+    private static final int MAX_MAP_POINTS = 100_000;
+    private static final int MAX_POINTS_PER_ROUTE = 256;
+    private static final int MAX_MAP_ROUTES = 3_000;
     private TextView mapSubtitle;
     private GrowingStatusControl growingStatus;
     private FrameLayout mapFrame;
@@ -143,7 +146,8 @@ public class MapActivity extends Activity {
                 if (isFinishing() || generation != mapLoadGeneration) return;
                 mapSubtitle.setText(mapRoutes.sections.isEmpty()
                         ? "Successfully matched journeys will appear here."
-                        : mapRoutes.matchedJourneys + " successfully matched journeys.");
+                        : mapRoutes.matchedJourneys + " successfully matched journeys"
+                                + (mapRoutes.simplified ? " · map simplified for performance." : "."));
                 mapFrame.removeAllViews();
                 RoutePreviewView map = mapRoutes.sections.isEmpty()
                         ? new RoutePreviewView(this)
@@ -158,14 +162,41 @@ public class MapActivity extends Activity {
 
     private MapRoutes readMapRoutes() {
         MapRoutes output = new MapRoutes();
-        for (JSONObject journey : JourneyStore.all(this)) {
-            if (!"complete".equals(journey.optString("processing_status", ""))) continue;
+        JourneyStore.forEach(getApplicationContext(), journey -> {
+            if (!"complete".equals(journey.optString("processing_status", ""))) return;
             List<JSONArray> matched = matchedSegments(journey);
-            if (matched.isEmpty()) continue;
-            output.sections.addAll(matched);
+            if (matched.isEmpty()) return;
+            for (JSONArray route : matched) {
+                if (output.retainedPoints >= MAX_MAP_POINTS
+                        || output.sections.size() >= MAX_MAP_ROUTES) {
+                    output.simplified = true;
+                    break;
+                }
+                int allowed = Math.min(MAX_POINTS_PER_ROUTE,
+                        MAX_MAP_POINTS - output.retainedPoints);
+                JSONArray projected = projectMapRoute(route, allowed);
+                if (projected != null) {
+                    output.sections.add(projected);
+                    output.retainedPoints += projected.length();
+                    if (projected.length() < route.length()) output.simplified = true;
+                }
+            }
             output.matchedJourneys++;
-        }
+        });
         return output;
+    }
+
+    private JSONArray projectMapRoute(JSONArray route, int maxPoints) {
+        if (route == null || route.length() < 2 || maxPoints < 2) return null;
+        int retained = Math.min(route.length(), maxPoints);
+        JSONArray projected = new JSONArray();
+        for (int index = 0; index < retained; index++) {
+            int sourceIndex = retained == 1 ? 0
+                    : (int) Math.round(index * (route.length() - 1.0) / (retained - 1.0));
+            JSONArray point = route.optJSONArray(sourceIndex);
+            if (point != null && point.length() >= 2) projected.put(point);
+        }
+        return projected.length() >= 2 ? projected : null;
     }
 
     private List<JSONArray> matchedSegments(JSONObject journey) {
@@ -353,5 +384,7 @@ public class MapActivity extends Activity {
     private static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
         int matchedJourneys;
+        int retainedPoints;
+        boolean simplified;
     }
 }
