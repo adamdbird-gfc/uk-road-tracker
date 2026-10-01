@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
-      ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
-      ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
-      ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+      ROADPRINTS_DEBUG_STORE_PASSWORD: android
+      ROADPRINTS_DEBUG_KEY_ALIAS: androiddebugkey
+      ROADPRINTS_DEBUG_KEY_PASSWORD: android
 
     steps:
       - name: Check out repository
