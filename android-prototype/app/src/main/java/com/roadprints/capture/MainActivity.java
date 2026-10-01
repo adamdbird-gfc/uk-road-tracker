@@ -127,11 +127,8 @@ public class MainActivity extends Activity {
 
     private void registerCaptureReceiver() {
         IntentFilter filter = new IntentFilter(CaptureService.ACTION_UPDATE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(captureReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(captureReceiver, filter);
-        }
+        androidx.core.content.ContextCompat.registerReceiver(this, captureReceiver, filter,
+                androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     private void buildScreen() {
