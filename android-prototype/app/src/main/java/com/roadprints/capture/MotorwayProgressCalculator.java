@@ -207,8 +207,6 @@ final class MotorwayProgressCalculator {
                 Reference reference = referenceFor(id, road);
                 if (reference != null) {
                     markCovered(reference, road, feature.optJSONObject("geometry"));
-                } else {
-                    collectSegments(id, feature.optJSONObject("geometry"));
                 }
             }
         }
@@ -220,14 +218,8 @@ final class MotorwayProgressCalculator {
             Reference reference = references.get(road.id);
             if (reference == null) {
                 reference = loadCachedReference(road.id);
-                if (reference == null) reference = fetchReference(road);
                 if (reference != null) {
                     references.put(road.id, reference);
-                    for (double[] segment : pendingSegments.getOrDefault(road.id,
-                            Collections.emptyList())) {
-                        markCovered(reference, road, segment);
-                    }
-                    pendingSegments.remove(road.id);
                 }
             }
             if (reference == null || reference.anchors.isEmpty()) {
@@ -264,6 +256,11 @@ final class MotorwayProgressCalculator {
     private Reference referenceFor(String id, Road road) {
         Reference existing = references.get(id);
         if (existing != null) return existing;
+        Reference saved = loadCachedReference(id);
+        if (saved != null) {
+            references.put(id, saved);
+            return saved;
+        }
         if ("NI".equals(road.region)) return null;
         JSONObject cached = assetRoads.get(road.ref);
         if (cached == null) return null;

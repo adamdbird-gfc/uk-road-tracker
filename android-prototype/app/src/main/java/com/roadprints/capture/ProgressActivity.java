@@ -150,7 +150,7 @@ public class ProgressActivity extends Activity {
         if (statisticsContent != null) {
             statisticsContent.removeAllViews();
             TextView loading = new TextView(this);
-            loading.setText("Loading your progress…");
+            loading.setText("Loading your progress…\nChecking saved journeys…");
             loading.setTextColor(MUTED);
             statisticsContent.addView(loading);
         }
@@ -159,7 +159,7 @@ public class ProgressActivity extends Activity {
             DistanceStats stats = null;
             Exception failure = null;
             try {
-                stats = summarizeSavedJourneys(appContext);
+                stats = summarizeSavedJourneys(appContext, generation);
             } catch (Exception error) {
                 failure = error;
             }
@@ -181,13 +181,19 @@ public class ProgressActivity extends Activity {
         }, "roadprints-progress-load").start();
     }
 
-    private DistanceStats summarizeSavedJourneys(android.content.Context context) {
+    private DistanceStats summarizeSavedJourneys(android.content.Context context, int generation) {
         DistanceStats stats = new DistanceStats();
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
         Map<String, Double> uniqueFootEdges = new HashMap<>();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(context);
+        int[] checkedJourneys = {0};
 
         JourneyStore.forEach(context, journey -> {
+            int checked = ++checkedJourneys[0];
+            if (checked % 50 == 0) {
+                updateLoadingMessage(generation,
+                        "Checking saved journeys… " + checked + " checked");
+            }
             String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
             double metres = Math.max(0, journey.optDouble("distance_meters", 0));
             if (isShownInJourneysList(journey, mode)) stats.activities++;
@@ -224,8 +230,18 @@ public class ProgressActivity extends Activity {
 
         stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
+        updateLoadingMessage(generation, "Calculating motorway coverage…");
         stats.motorwayProgress = motorwayCalculator.finish();
         return stats;
+    }
+
+    private void updateLoadingMessage(int generation, String message) {
+        mainHandler.post(() -> {
+            if (generation != statsLoadGeneration || statisticsContent == null
+                    || statisticsContent.getChildCount() == 0) return;
+            View first = statisticsContent.getChildAt(0);
+            if (first instanceof TextView) ((TextView) first).setText(message);
+        });
     }
 
     private void collectUniqueMatchedEdges(JSONObject journey, Map<String, Double> edges) {
