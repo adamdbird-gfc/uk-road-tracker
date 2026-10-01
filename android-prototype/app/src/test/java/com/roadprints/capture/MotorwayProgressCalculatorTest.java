@@ -18,7 +18,9 @@ public class MotorwayProgressCalculatorTest {
     @Test public void repeatedJourneysAddMileageButCountCanonicalCoverageOnce() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         JSONArray anchors = new JSONArray().put(new JSONArray().put(-0.2305338).put(51.6869996))
-                .put(new JSONArray().put(-0.2313622).put(51.6874356));
+                .put(new JSONArray().put(-0.2313622).put(51.6874356))
+                .put(new JSONArray().put(-0.2450000).put(51.7000000))
+                .put(new JSONArray().put(-0.2460000).put(51.7010000));
         JSONObject cache = new JSONObject().put("roads", new JSONObject().put("M25",
                 new JSONObject().put("total_km", 234.8).put("anchors", anchors)));
         JSONArray route = new JSONArray().put(anchors.getJSONArray(0))
@@ -48,6 +50,8 @@ public class MotorwayProgressCalculatorTest {
         assertTrue(motorway.referenceAvailable);
         assertTrue(motorway.percent() > 0);
         assertTrue(motorway.percent() <= 100);
+        assertFalse(motorway.coveredMapSections.isEmpty());
+        assertFalse(motorway.incompleteMapSections.isEmpty());
         assertTrue(summary.gbPercent() > 0);
     }
 

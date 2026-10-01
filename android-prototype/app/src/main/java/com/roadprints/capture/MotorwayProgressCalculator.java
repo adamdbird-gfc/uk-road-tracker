@@ -62,6 +62,8 @@ final class MotorwayProgressCalculator {
         final String region;
         final Set<String> journeyIds = new HashSet<>();
         final Set<Integer> coveredSections = new HashSet<>();
+        final List<JSONArray> coveredMapSections = new ArrayList<>();
+        final List<JSONArray> incompleteMapSections = new ArrayList<>();
         double matchedMetres;
         double referenceKm;
         int referenceSections;
@@ -90,13 +92,15 @@ final class MotorwayProgressCalculator {
         final double gbUniqueKm;
         final double niUniqueKm;
         final boolean missingReferences;
+        final List<String> missingReferenceRoads;
 
         Summary(List<Road> roads, double gbUniqueKm, double niUniqueKm,
-                boolean missingReferences) {
+                boolean missingReferences, List<String> missingReferenceRoads) {
             this.roads = roads;
             this.gbUniqueKm = Math.min(GB_NETWORK_MILES / 0.6213711922, gbUniqueKm);
             this.niUniqueKm = Math.min(NI_NETWORK_MILES / 0.6213711922, niUniqueKm);
             this.missingReferences = missingReferences;
+            this.missingReferenceRoads = missingReferenceRoads;
         }
 
         double gbPercent() { return gbUniqueKm / (GB_NETWORK_MILES / 0.6213711922) * 100.0; }
@@ -169,13 +173,21 @@ final class MotorwayProgressCalculator {
     private final Map<String, Reference> references = new HashMap<>();
     private final Map<String, List<double[]>> pendingSegments = new HashMap<>();
     private final Map<String, JSONObject> assetRoads = new HashMap<>();
+    private final Set<String> referenceFetchAttempts = new HashSet<>();
+    private final boolean allowReferenceFetch;
 
     MotorwayProgressCalculator(Context context) {
-        this(context, null);
+        this(context, null, false);
     }
 
     MotorwayProgressCalculator(Context context, JSONObject canonicalCache) {
+        this(context, canonicalCache, false);
+    }
+
+    MotorwayProgressCalculator(Context context, JSONObject canonicalCache,
+                               boolean allowReferenceFetch) {
         this.context = context.getApplicationContext();
+        this.allowReferenceFetch = allowReferenceFetch;
         if (canonicalCache == null) loadBundledReferences();
         else cacheBundledReferences(canonicalCache);
     }
@@ -214,6 +226,7 @@ final class MotorwayProgressCalculator {
 
     Summary finish() {
         boolean missingReferences = false;
+        List<String> missingReferenceRoads = new ArrayList<>();
         for (Road road : roads.values()) {
             Reference reference = references.get(road.id);
             if (reference == null) {
@@ -224,12 +237,14 @@ final class MotorwayProgressCalculator {
             }
             if (reference == null || reference.anchors.isEmpty()) {
                 missingReferences = true;
+                missingReferenceRoads.add(road.id);
                 continue;
             }
             road.referenceAvailable = true;
             road.referenceSections = reference.anchors.size();
             road.referenceKm = reference.totalKm > 0 ? reference.totalKm
                     : reference.anchors.size() * REFERENCE_SAMPLE_M / 1000.0;
+            buildMapSections(road, reference);
         }
 
         double gbKm = 0, niKm = 0;
@@ -250,7 +265,7 @@ final class MotorwayProgressCalculator {
             if (byRegion != 0) return byRegion;
             return String.CASE_INSENSITIVE_ORDER.compare(left.ref, right.ref);
         });
-        return new Summary(sorted, gbKm, niKm, missingReferences);
+        return new Summary(sorted, gbKm, niKm, missingReferences, missingReferenceRoads);
     }
 
     private Reference referenceFor(String id, Road road) {
@@ -262,7 +277,7 @@ final class MotorwayProgressCalculator {
             return saved;
         }
         JSONObject cached = assetRoads.get(road.ref);
-        if (cached == null) return null;
+        if (cached == null) return fetchMissingReference(road);
         Reference reference = new Reference();
         JSONArray anchors = cached.optJSONArray("anchors");
         if (anchors == null) return null;
@@ -277,9 +292,45 @@ final class MotorwayProgressCalculator {
         }
         reference.totalKm = ("NI".equals(road.region) ? NI_LENGTH_KM : GB_LENGTH_KM).getOrDefault(road.ref,
                 cached.optDouble("total_km", 0));
-        if (reference.anchors.isEmpty()) return null;
+        if (reference.anchors.isEmpty()) return fetchMissingReference(road);
         references.put(id, reference);
         return reference;
+    }
+
+    private Reference fetchMissingReference(Road road) {
+        if (!allowReferenceFetch || !referenceFetchAttempts.add(road.id)) return null;
+        Reference fetched = fetchReference(road);
+        if (fetched != null) references.put(road.id, fetched);
+        return fetched;
+    }
+
+    private void buildMapSections(Road road, Reference reference) {
+        JSONArray current = null;
+        Boolean currentCovered = null;
+        for (int index = 0; index + 1 < reference.anchors.size(); index++) {
+            Anchor start = reference.anchors.get(index);
+            Anchor end = reference.anchors.get(index + 1);
+            if (haversine(start.lng, start.lat, end.lng, end.lat) > 250.0) {
+                addMapSection(road, current, currentCovered);
+                current = null;
+                currentCovered = null;
+                continue;
+            }
+            boolean covered = road.coveredSections.contains(start.id)
+                    || road.coveredSections.contains(end.id);
+            if (current == null || currentCovered == null || currentCovered != covered) {
+                addMapSection(road, current, currentCovered);
+                current = new JSONArray().put(new JSONArray().put(start.lng).put(start.lat));
+                currentCovered = covered;
+            }
+            current.put(new JSONArray().put(end.lng).put(end.lat));
+        }
+        addMapSection(road, current, currentCovered);
+    }
+
+    private void addMapSection(Road road, JSONArray points, Boolean covered) {
+        if (points == null || points.length() < 2 || covered == null) return;
+        (covered ? road.coveredMapSections : road.incompleteMapSections).add(points);
     }
 
     private void loadBundledReferences() {
@@ -344,8 +395,8 @@ final class MotorwayProgressCalculator {
             String url = "https://overpass-api.de/api/interpreter?data="
                     + URLEncoder.encode(query, "UTF-8");
             connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setConnectTimeout(20000);
-            connection.setReadTimeout(90000);
+            connection.setConnectTimeout(3000);
+            connection.setReadTimeout(8000);
             connection.setRequestProperty("User-Agent", "Roadprints-Android/0.25");
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
             StringBuilder response = new StringBuilder();

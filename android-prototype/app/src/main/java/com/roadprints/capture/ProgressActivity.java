@@ -223,7 +223,8 @@ public class ProgressActivity extends Activity {
         DistanceStats stats = new DistanceStats();
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
         Map<String, Double> uniqueFootEdges = new HashMap<>();
-        MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(context);
+        MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
+                context, null, true);
         int[] checkedJourneys = {0};
 
         JourneyStore.forEach(context, journey -> {

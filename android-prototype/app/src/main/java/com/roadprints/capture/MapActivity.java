@@ -146,6 +146,8 @@ public class MapActivity extends Activity {
             mainHandler.post(() -> {
                 if (isFinishing() || generation != mapLoadGeneration) return;
                 mapSubtitle.setText(mapRoutes.sections.isEmpty()
+                        && mapRoutes.motorwaySections.isEmpty()
+                        && mapRoutes.incompleteMotorwaySections.isEmpty()
                         ? "Successfully matched journeys will appear here."
                         : mapRoutes.matchedJourneys + " successfully matched journeys"
                                 + (mapRoutes.simplified ? " · map simplified for performance." : "."));
@@ -153,7 +155,10 @@ public class MapActivity extends Activity {
                 RoutePreviewView map = mapRoutes.sections.isEmpty()
                         ? new RoutePreviewView(this)
                         : new RoutePreviewView(this, mapRoutes.sections, true);
+                map.setFlatRoadMapStyle(true);
                 map.setMotorwaySegments(mapRoutes.motorwaySections);
+                map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
+                        mapRoutes.coveredMotorwaySections);
                 map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
                 mapFrame.addView(map, new FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -164,8 +169,11 @@ public class MapActivity extends Activity {
 
     private MapRoutes readMapRoutes() {
         MapRoutes output = new MapRoutes();
+        MotorwayProgressCalculator motorwayCalculator =
+                new MotorwayProgressCalculator(getApplicationContext());
         JourneyStore.forEach(getApplicationContext(), journey -> {
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
+            motorwayCalculator.addJourney(journey);
             List<JSONArray> matched = matchedSegments(journey);
             List<JSONArray> motorways = motorwaySegments(journey);
             if (matched.isEmpty() && motorways.isEmpty()) return;
@@ -201,7 +209,34 @@ public class MapActivity extends Activity {
             }
             output.matchedJourneys++;
         });
+        MotorwayProgressCalculator.Summary summary = motorwayCalculator.finish();
+        for (MotorwayProgressCalculator.Road road : summary.roads) {
+            if (!road.referenceAvailable) continue;
+            appendCanonicalSections(output, road.incompleteMapSections, false);
+            appendCanonicalSections(output, road.coveredMapSections, true);
+        }
         return output;
+    }
+
+    private void appendCanonicalSections(MapRoutes output, List<JSONArray> routes,
+                                         boolean covered) {
+        List<JSONArray> target = covered ? output.coveredMotorwaySections
+                : output.incompleteMotorwaySections;
+        int used = covered ? output.coveredMotorwayPoints : output.incompleteMotorwayPoints;
+        for (JSONArray route : routes) {
+            if (used >= MAX_MOTORWAY_POINTS || target.size() >= MAX_MAP_ROUTES) {
+                output.simplified = true;
+                break;
+            }
+            int allowed = Math.min(MAX_POINTS_PER_ROUTE, MAX_MOTORWAY_POINTS - used);
+            JSONArray projected = projectMapRoute(route, allowed);
+            if (projected == null) continue;
+            target.add(projected);
+            used += projected.length();
+            if (projected.length() < route.length()) output.simplified = true;
+        }
+        if (covered) output.coveredMotorwayPoints = used;
+        else output.incompleteMotorwayPoints = used;
     }
 
     private JSONArray projectMapRoute(JSONArray route, int maxPoints) {
@@ -494,9 +529,13 @@ public class MapActivity extends Activity {
     private static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
         final List<JSONArray> motorwaySections = new ArrayList<>();
+        final List<JSONArray> incompleteMotorwaySections = new ArrayList<>();
+        final List<JSONArray> coveredMotorwaySections = new ArrayList<>();
         int matchedJourneys;
         int retainedPoints;
         int motorwayRetainedPoints;
+        int incompleteMotorwayPoints;
+        int coveredMotorwayPoints;
         boolean simplified;
     }
 }
