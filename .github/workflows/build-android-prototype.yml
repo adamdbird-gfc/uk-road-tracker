@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
-      ROADPRINTS_DEBUG_STORE_PASSWORD: android
-      ROADPRINTS_DEBUG_KEY_ALIAS: androiddebugkey
-      ROADPRINTS_DEBUG_KEY_PASSWORD: android
+      ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+      ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+      ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
 
     steps:
       - name: Check out repository
@@ -39,9 +39,10 @@ jobs:
       - name: Build debug APK
         run: |
           test -f "$RUNNER_TEMP/roadprints-debug.keystore"
-          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
-          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
-          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          if [ -z "$ROADPRINTS_DEBUG_STORE_PASSWORD" ] || [ -z "$ROADPRINTS_DEBUG_KEY_ALIAS" ] || [ -z "$ROADPRINTS_DEBUG_KEY_PASSWORD" ]; then
+            echo "::error::Configure ROADPRINTS_DEBUG_STORE_PASSWORD, ROADPRINTS_DEBUG_KEY_ALIAS and ROADPRINTS_DEBUG_KEY_PASSWORD in repository Actions secrets."
+            exit 1
+          fi
           export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
           gradle --no-daemon -p android-prototype assembleDebug
 
