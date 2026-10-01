@@ -43,6 +43,7 @@ public class RoutePreviewView extends View {
 
     private final JSONArray coordinates;
     private final List<JSONArray> matchedSegments;
+    private final List<JSONArray> motorwaySegments = new ArrayList<>();
     private final boolean interactive;
     private final boolean showEmptyMessage;
     private final boolean showEndpointMarkers;
@@ -54,6 +55,7 @@ public class RoutePreviewView extends View {
     private OnRouteEdgeTapListener routeEdgeTapListener;
     private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint motorwayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rawRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -135,6 +137,11 @@ public class RoutePreviewView extends View {
         routePaint.setStrokeWidth(dp(7));
         routePaint.setStrokeCap(Paint.Cap.ROUND);
         routePaint.setStrokeJoin(Paint.Join.ROUND);
+        motorwayPaint.setColor(Color.rgb(0, 94, 184));
+        motorwayPaint.setStyle(Paint.Style.STROKE);
+        motorwayPaint.setStrokeWidth(dp(4));
+        motorwayPaint.setStrokeCap(Paint.Cap.ROUND);
+        motorwayPaint.setStrokeJoin(Paint.Join.ROUND);
         routeHaloPaint.setColor(Color.WHITE);
         routeHaloPaint.setStyle(Paint.Style.STROKE);
         routeHaloPaint.setStrokeWidth(dp(10));
@@ -200,6 +207,22 @@ public class RoutePreviewView extends View {
         });
     }
 
+    /** Adds the POC-style blue motorway evidence over the normal journey map. */
+    public void setMotorwaySegments(List<JSONArray> segments) {
+        motorwaySegments.clear();
+        if (segments != null) {
+            for (JSONArray segment : segments) {
+                if (hasRoutePoints(segment)) motorwaySegments.add(segment);
+            }
+        }
+        if (!motorwaySegments.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
@@ -216,7 +239,8 @@ public class RoutePreviewView extends View {
         if (coordinatesValid) {
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
             JSONArray startEndRoute = hasRoutePoints(coordinates)
-                    ? coordinates : matchedSegments.get(0);
+                    ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
+                    : motorwaySegments.get(0);
             if (hasMatchedRoute && hasRoutePoints(coordinates) && !routeEditMode) {
                 drawRoute(canvas, coordinates, rawRoutePaint, null);
             }
@@ -228,9 +252,14 @@ public class RoutePreviewView extends View {
             } else if (hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint, routeHaloPaint);
             }
+            for (JSONArray segment : motorwaySegments) {
+                drawRoute(canvas, segment, motorwayPaint, null);
+            }
             if (showEndpointMarkers) {
                 JSONArray endRoute = hasRoutePoints(coordinates)
-                        ? coordinates : matchedSegments.get(matchedSegments.size() - 1);
+                        ? coordinates : hasMatchedRoute
+                                ? matchedSegments.get(matchedSegments.size() - 1)
+                                : motorwaySegments.get(motorwaySegments.size() - 1);
                 drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
                 drawEndpoint(canvas, endRoute, endRoute.length() - 1,
                         Color.rgb(190, 55, 55), "E");

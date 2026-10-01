@@ -51,4 +51,37 @@ public class MotorwayProgressCalculatorTest {
         assertTrue(summary.gbPercent() > 0);
     }
 
+    @Test public void bundledSharedRefIsSeparatedIntoGreatBritainAndNorthernIreland() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JSONArray anchors = new JSONArray()
+                .put(new JSONArray().put(-0.2305338).put(51.6869996))
+                .put(new JSONArray().put(-0.2313622).put(51.6874356))
+                .put(new JSONArray().put(-6.0100).put(54.6000))
+                .put(new JSONArray().put(-6.0110).put(54.6010));
+        JSONObject cache = new JSONObject().put("roads", new JSONObject().put("M1",
+                new JSONObject().put("anchors", anchors)));
+        JSONArray route = new JSONArray()
+                .put(new JSONArray().put(-6.0100).put(54.6000))
+                .put(new JSONArray().put(-6.0110).put(54.6010));
+        JSONObject feature = new JSONObject().put("type", "Feature")
+                .put("properties", new JSONObject().put("road_ref", "M1")
+                        .put("distance_m", 1500))
+                .put("geometry", new JSONObject().put("type", "LineString")
+                        .put("coordinates", route));
+        JSONObject journey = new JSONObject().put("journey_id", "ni-journey")
+                .put("mode", "driving").put("processing_status", "complete")
+                .put("processing_result", new JSONObject().put("motorway_geojson",
+                        new JSONObject().put("type", "FeatureCollection")
+                                .put("features", new JSONArray().put(feature))));
+
+        MotorwayProgressCalculator calculator = new MotorwayProgressCalculator(app, cache);
+        calculator.addJourney(journey);
+        MotorwayProgressCalculator.Summary summary = calculator.finish();
+
+        assertEquals(1, summary.roads.size());
+        assertEquals("NI", summary.roads.get(0).region);
+        assertTrue(summary.roads.get(0).referenceAvailable);
+        assertFalse(summary.missingReferences);
+    }
+
 }

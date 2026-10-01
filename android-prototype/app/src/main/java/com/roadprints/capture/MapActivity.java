@@ -33,6 +33,7 @@ public class MapActivity extends Activity {
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
     private static final int MAX_MAP_POINTS = 350_000;
+    private static final int MAX_MOTORWAY_POINTS = 120_000;
     private static final int MAX_POINTS_PER_ROUTE = 1_400;
     private static final int MAX_MAP_ROUTES = 5_000;
     private TextView mapSubtitle;
@@ -152,6 +153,7 @@ public class MapActivity extends Activity {
                 RoutePreviewView map = mapRoutes.sections.isEmpty()
                         ? new RoutePreviewView(this)
                         : new RoutePreviewView(this, mapRoutes.sections, true);
+                map.setMotorwaySegments(mapRoutes.motorwaySections);
                 map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
                 mapFrame.addView(map, new FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -165,7 +167,8 @@ public class MapActivity extends Activity {
         JourneyStore.forEach(getApplicationContext(), journey -> {
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
             List<JSONArray> matched = matchedSegments(journey);
-            if (matched.isEmpty()) return;
+            List<JSONArray> motorways = motorwaySegments(journey);
+            if (matched.isEmpty() && motorways.isEmpty()) return;
             for (JSONArray route : matched) {
                 if (output.retainedPoints >= MAX_MAP_POINTS
                         || output.sections.size() >= MAX_MAP_ROUTES) {
@@ -178,6 +181,21 @@ public class MapActivity extends Activity {
                 if (projected != null) {
                     output.sections.add(projected);
                     output.retainedPoints += projected.length();
+                    if (projected.length() < route.length()) output.simplified = true;
+                }
+            }
+            for (JSONArray route : motorways) {
+                if (output.motorwayRetainedPoints >= MAX_MOTORWAY_POINTS
+                        || output.motorwaySections.size() >= MAX_MAP_ROUTES) {
+                    output.simplified = true;
+                    break;
+                }
+                int allowed = Math.min(MAX_POINTS_PER_ROUTE,
+                        MAX_MOTORWAY_POINTS - output.motorwayRetainedPoints);
+                JSONArray projected = projectMapRoute(route, allowed);
+                if (projected != null) {
+                    output.motorwaySections.add(projected);
+                    output.motorwayRetainedPoints += projected.length();
                     if (projected.length() < route.length()) output.simplified = true;
                 }
             }
@@ -319,6 +337,32 @@ public class MapActivity extends Activity {
         return visible;
     }
 
+    private List<JSONArray> motorwaySegments(JSONObject journey) {
+        List<JSONArray> routes = new ArrayList<>();
+        String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
+        if (!("driving".equals(mode) || "bus".equals(mode))) return routes;
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject geojson = result == null ? null : result.optJSONObject("motorway_geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return routes;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && hasLinePoints(coordinates)) {
+                routes.add(coordinates);
+            } else if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int line = 0; line < coordinates.length(); line++) {
+                    JSONArray segment = coordinates.optJSONArray(line);
+                    if (hasLinePoints(segment)) routes.add(segment);
+                }
+            }
+        }
+        return routes;
+    }
+
     private boolean hasLinePoints(JSONArray points) {
         return points != null && points.length() >= 2;
     }
@@ -449,8 +493,10 @@ public class MapActivity extends Activity {
 
     private static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
+        final List<JSONArray> motorwaySections = new ArrayList<>();
         int matchedJourneys;
         int retainedPoints;
+        int motorwayRetainedPoints;
         boolean simplified;
     }
 }

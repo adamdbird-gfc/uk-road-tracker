@@ -529,7 +529,7 @@ public class ProgressActivity extends Activity {
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setPadding(dp(12), dp(8), dp(12), dp(8));
                 row.setBackgroundColor(rows.getChildCount() % 2 == 0
-                        ? 0x142F558F : Color.TRANSPARENT);
+                        ? 0xFF263F75 : 0xFF1B3267);
                 TextView roadName = new TextView(this);
                 roadName.setText(road.label);
                 roadName.setTextSize(14);
@@ -820,7 +820,7 @@ public class ProgressActivity extends Activity {
 
     private LinearLayout.LayoutParams weightedCardParams(boolean first) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                0, dp(96), 1);
         if (first) params.rightMargin = dp(7);
         else params.leftMargin = dp(7);
         return params;

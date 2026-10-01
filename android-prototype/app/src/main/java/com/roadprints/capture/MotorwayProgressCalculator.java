@@ -261,7 +261,6 @@ final class MotorwayProgressCalculator {
             references.put(id, saved);
             return saved;
         }
-        if ("NI".equals(road.region)) return null;
         JSONObject cached = assetRoads.get(road.ref);
         if (cached == null) return null;
         Reference reference = new Reference();
@@ -271,11 +270,12 @@ final class MotorwayProgressCalculator {
             JSONArray point = anchors.optJSONArray(index);
             if (point == null || point.length() < 2) continue;
             double lng = point.optDouble(0, Double.NaN), lat = point.optDouble(1, Double.NaN);
-            if (Double.isFinite(lng) && Double.isFinite(lat)) {
+            if (Double.isFinite(lng) && Double.isFinite(lat)
+                    && isCoordinateInRegion(road.region, lng, lat)) {
                 reference.add(new Anchor(reference.anchors.size(), lng, lat));
             }
         }
-        reference.totalKm = GB_LENGTH_KM.getOrDefault(road.ref,
+        reference.totalKm = ("NI".equals(road.region) ? NI_LENGTH_KM : GB_LENGTH_KM).getOrDefault(road.ref,
                 cached.optDouble("total_km", 0));
         if (reference.anchors.isEmpty()) return null;
         references.put(id, reference);
