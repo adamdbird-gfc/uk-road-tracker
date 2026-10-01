@@ -52,6 +52,7 @@ let onboardingMode = null;
 let undeterminedJourneys = [];
 let classifiedJourneys = [];
 let initialArchiveHydrationComplete = false;
+const IMPORT_COORDINATOR_SESSION_KEY = 'roadprints-import-coordinator-session-v1';
 const refinedCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
 const persistedARoadCoverageByRef = new Map();
@@ -2301,7 +2302,6 @@ async function timelineFileHash(text) {
   return `fallback-${text.length}-${(hash >>> 0).toString(16)}`;
 }
 
-const IMPORT_COORDINATOR_SESSION_KEY = 'roadprints-import-coordinator-session-v1';
 let importCoordinatorStatus = 'Import summary saved on this device. Your Timeline file and journeys are not uploaded.';
 
 function saveImportCoordinatorSession(fileName, sourceFileHash, summary) {
