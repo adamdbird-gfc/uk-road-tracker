@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -25,15 +23,10 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ProgressActivity extends Activity {
     private LinearLayout statisticsContent;
     private boolean hasResumed;
-    private final ExecutorService statisticsLoader = Executors.newSingleThreadExecutor();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private int statisticsGeneration;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -76,6 +69,31 @@ public class ProgressActivity extends Activity {
         heading.addView(eyebrow);
         heading.addView(title);
         heading.addView(intro);
+        TextView grow = new TextView(this);
+        grow.setText("GROW YOUR MAP");
+        grow.setTextSize(15);
+        grow.setTypeface(null, android.graphics.Typeface.BOLD);
+        grow.setTextColor(NAVY);
+        grow.setGravity(Gravity.CENTER);
+        grow.setBackground(roundRect(GOLD, dp(14)));
+        grow.setMinHeight(dp(52));
+        grow.setClickable(true);
+        grow.setFocusable(true);
+        grow.setOnClickListener(v -> {
+            Intent intent = new Intent(this, JourneyListActivity.class);
+            intent.putExtra("open_growing", true);
+            startActivity(intent);
+        });
+        LinearLayout.LayoutParams growParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+        growParams.topMargin = dp(14);
+        heading.addView(grow, growParams);
+        TextView growHint = new TextView(this);
+        growHint.setText("Match ready journeys to build your road and walking map.");
+        growHint.setTextSize(12);
+        growHint.setTextColor(MUTED);
+        growHint.setPadding(0, dp(6), 0, 0);
+        heading.addView(growHint);
         root.addView(heading);
 
         ScrollView scroll = new ScrollView(this);
@@ -85,12 +103,7 @@ public class ProgressActivity extends Activity {
         scroll.addView(content);
 
         statisticsContent = content;
-        TextView loading = new TextView(this);
-        loading.setText("Loading your travel totals…");
-        loading.setTextColor(MUTED);
-        loading.setTextSize(16);
-        loading.setPadding(0, dp(24), 0, dp(24));
-        content.addView(loading);
+        addStatistics(content, summarize(JourneyStore.all(this)));
 
         root.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -98,57 +111,17 @@ public class ProgressActivity extends Activity {
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
-        loadStatisticsAsync();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (hasResumed) {
-            loadStatisticsAsync();
+            statisticsContent.removeAllViews();
+            addStatistics(statisticsContent, summarize(JourneyStore.all(this)));
         } else {
             hasResumed = true;
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        statisticsGeneration++;
-        statisticsLoader.shutdownNow();
-        super.onDestroy();
-    }
-
-    private void loadStatisticsAsync() {
-        final int generation = ++statisticsGeneration;
-        statisticsContent.removeAllViews();
-        TextView loading = new TextView(this);
-        loading.setText("Loading your travel totals…");
-        loading.setTextColor(MUTED);
-        loading.setTextSize(16);
-        loading.setPadding(0, dp(24), 0, dp(24));
-        statisticsContent.addView(loading);
-        statisticsLoader.execute(() -> {
-            final DistanceStats stats;
-            try {
-                stats = summarize(JourneyStore.all(getApplicationContext()));
-            } catch (Exception error) {
-                mainHandler.post(() -> {
-                    if (isFinishing() || generation != statisticsGeneration) return;
-                    statisticsContent.removeAllViews();
-                    TextView failure = new TextView(this);
-                    failure.setText("Travel totals could not be loaded. Reopen Progress to retry.");
-                    failure.setTextColor(MUTED);
-                    failure.setTextSize(16);
-                    statisticsContent.addView(failure);
-                });
-                return;
-            }
-            mainHandler.post(() -> {
-                if (isFinishing() || generation != statisticsGeneration) return;
-                statisticsContent.removeAllViews();
-                addStatistics(statisticsContent, stats);
-            });
-        });
     }
 
     private boolean isShownInJourneysList(JSONObject journey, String mode) {

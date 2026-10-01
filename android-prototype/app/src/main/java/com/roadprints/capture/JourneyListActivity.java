@@ -69,8 +69,7 @@ public class JourneyListActivity extends Activity {
     private View journeyRoot;
     private TextView count;
     private TextView readinessSummary;
-    private TextView captureStatus;
-    private Button batchMatchButton;
+    private boolean launchGrowingAfterLoad;
     private volatile boolean batchCancelRequested;
     private boolean batchRunning;
     private List<JSONObject> journeys;
@@ -83,6 +82,7 @@ public class JourneyListActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Window window = getWindow();
+        launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
         window.setNavigationBarColor(0xFF10275D);
         buildScreen();
@@ -91,7 +91,6 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateCaptureStatus();
         refreshJourneysAsync();
     }
 
@@ -223,32 +222,7 @@ public class JourneyListActivity extends Activity {
         content.addView(brandRow);
         content.addView(headingRow);
         content.addView(intro);
-        LinearLayout capturePanel = new LinearLayout(this);
-        capturePanel.setOrientation(LinearLayout.VERTICAL);
-        capturePanel.setPadding(dp(14), dp(10), dp(14), dp(10));
-        capturePanel.setBackground(pill(0xFF172F68, 0xFF29457F, dp(16)));
-        captureStatus = new TextView(this);
-        captureStatus.setTextSize(12);
-        captureStatus.setTextColor(0xFFD3DCED);
-        captureStatus.setPadding(0, 0, 0, dp(8));
-        capturePanel.addView(captureStatus);
-        Button captureButton = styledModalButton("CAPTURE A JOURNEY", 0xFF233B78, Color.WHITE);
-        captureButton.setOnClickListener(v -> startActivity(
-                new Intent(this, MainActivity.class)));
-        capturePanel.addView(captureButton, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(46)));
-        LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        captureParams.bottomMargin = dp(12);
-        content.addView(capturePanel, captureParams);
         content.addView(readinessSummary);
-        batchMatchButton = styledModalButton("MATCH READY JOURNEYS", 0xFFF7C450, 0xFF0B1C50);
-        batchMatchButton.setEnabled(false);
-        batchMatchButton.setOnClickListener(v -> startBatchMatch());
-        LinearLayout.LayoutParams batchParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
-        batchParams.bottomMargin = dp(8);
-        content.addView(batchMatchButton, batchParams);
         content.addView(filterScroll);
         content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -260,17 +234,6 @@ public class JourneyListActivity extends Activity {
         journeyRoot = root;
         setContentView(root);
         applySystemBarInsets(root, content, bottomNavigation);
-    }
-
-    private void updateCaptureStatus() {
-        if (captureStatus == null) return;
-        if (CaptureService.isActive(this)) {
-            captureStatus.setText("A journey is being recorded. Open capture to check its progress.");
-        } else if (CaptureService.isArmed(this)) {
-            captureStatus.setText("Automatic tracking is on and ready to record journeys.");
-        } else {
-            captureStatus.setText("Automatic tracking is off. Start a manual capture or enable it.");
-        }
     }
 
     private void applySystemBarInsets(View root, View content, View bottomNavigation) {
@@ -414,7 +377,12 @@ public class JourneyListActivity extends Activity {
             mainHandler.post(() -> {
                 if (isFinishing() || generation != refreshGeneration) return;
                 journeys = loaded;
-                render();
+                if (launchGrowingAfterLoad) {
+                    launchGrowingAfterLoad = false;
+                    startBatchMatch();
+                } else {
+                    render();
+                }
             });
         });
     }
@@ -845,16 +813,16 @@ public class JourneyListActivity extends Activity {
             statusText = "✓  Processed · matched route available";
             statusColor = 0xFF8BE0B1;
         } else if ("complete".equals(processingStatus)) {
-            statusText = "No matched route geometry saved · retry matching";
+            statusText = "No matched route is available · run matching from Progress";
             statusColor = 0xFFF7C450;
         } else if ("processing".equals(processingStatus)) {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
         } else if ("failed".equals(processingStatus)) {
-            statusText = "Matching failed · you can retry below";
+            statusText = "Matching failed · retry from Progress";
             statusColor = 0xFFF7C450;
         } else {
-            statusText = "Not yet matched to roads";
+            statusText = "Ready to match from Progress";
             statusColor = 0xFFB9C5D8;
         }
         status.setText(statusText);
@@ -925,17 +893,6 @@ public class JourneyListActivity extends Activity {
                             transportModes, savedTitle[0], savedMode[0]),
                     saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
             actions.addView(refineMatched, secondaryParams);
-        } else if (processableMode && enoughEvidence) {
-            String buttonLabel = "complete".equals(processingStatus)
-                    ? "RETRY MATCHING"
-                    : "failed".equals(processingStatus)
-                    ? (footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH")
-                    : "processing".equals(processingStatus) ? "MATCHING…"
-                    : (footMode ? "MATCH ON-FOOT JOURNEY" : "MATCH ROAD JOURNEY");
-            Button processButton = styledModalButton(buttonLabel, 0xFF233B78, Color.WHITE);
-            processButton.setEnabled(!"processing".equals(processingStatus));
-            processButton.setOnClickListener(v -> processJourney(journey, processButton, status, dialogRef));
-            actions.addView(processButton, secondaryParams);
         }
 
         TextView delete = new TextView(this);
@@ -1118,6 +1075,7 @@ public class JourneyListActivity extends Activity {
         }
         if (queue.isEmpty()) {
             Toast.makeText(this, "There are no journeys ready to match", Toast.LENGTH_SHORT).show();
+            render();
             return;
         }
 
@@ -1142,7 +1100,7 @@ public class JourneyListActivity extends Activity {
         ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(queue.size());
         progress.setProgress(0);
-        Button stop = styledModalButton("STOP AFTER IN-FLIGHT MATCHES", 0xFF233B78, Color.WHITE);
+        Button stop = styledModalButton("PAUSE GROWING", 0xFF233B78, Color.WHITE);
         LinearLayout.LayoutParams stopParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
         stopParams.topMargin = dp(18);
@@ -1172,7 +1130,7 @@ public class JourneyListActivity extends Activity {
         stop.setOnClickListener(v -> {
             batchCancelRequested = true;
             stop.setEnabled(false);
-            stop.setText("FINISHING IN-FLIGHT MATCHES…");
+            stop.setText("PAUSING AFTER CURRENT JOURNEYS…");
             details.setText("In-flight matches will be saved before the queue stops.");
         });
 
@@ -1520,14 +1478,7 @@ public class JourneyListActivity extends Activity {
         String secondLine = "Processed: " + processed + " • Failed: " + failed
                 + (matching > 0 ? " • Matching: " + matching : "");
         readinessSummary.setText(firstLine + "\n" + secondLine);
-        if (batchMatchButton != null) {
-            int ready = roadReady + footReady + failed;
-            batchMatchButton.setVisibility(ready > 0 ? View.VISIBLE : View.GONE);
-            batchMatchButton.setText(batchRunning ? "MATCHING JOURNEYS…" :
-                    "MATCH READY JOURNEYS · " + ready);
-            batchMatchButton.setEnabled(!batchRunning && ready > 0);
-            batchMatchButton.setAlpha(batchRunning || ready == 0 ? 0.55f : 1f);
-        }
+
     }
 
     private int pointCount(JSONObject journey) {
