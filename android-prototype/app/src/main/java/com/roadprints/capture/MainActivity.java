@@ -4,11 +4,14 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -23,6 +26,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -59,6 +63,7 @@ public class MainActivity extends Activity {
     private TextView deleteRoadAction;
     private TextView deleteFootAction;
     private TextView deleteAllAction;
+    private TextView debugLink;
     private int archiveSummaryGeneration;
 
     private final BroadcastReceiver captureReceiver = new BroadcastReceiver() {
@@ -103,6 +108,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateDebugLink();
         if (growingStatus != null) growingStatus.start();
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
@@ -253,10 +259,56 @@ public class MainActivity extends Activity {
         deleteRow.addView(deleteAll, deleteButtonParams());
         content.addView(deleteRow);
 
+        debugLink = text(CrashReporter.hasReports(this) ? "debug · report ready" : "debug",
+                13, 0xFF67D5CC, true);
+        debugLink.setPaintFlags(debugLink.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        debugLink.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        debugLink.setPadding(0, dp(8), 0, dp(4));
+        debugLink.setContentDescription("Open crash report diagnostics");
+        debugLink.setOnClickListener(v -> showDebugReport());
+        content.addView(debugLink, new LinearLayout.LayoutParams(-1, dp(40)));
+
         scroll.addView(content);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
         refreshArchiveSummary();
+    }
+
+    private void showDebugReport() {
+        String report = CrashReporter.getReports(this);
+        boolean available = !report.isEmpty();
+        TextView details = text(available
+                        ? "Review this report before copying. It stays on this device until you choose to copy it.\\n\\n" + report
+                        : "No crash report has been saved on this device yet. If Roadprints crashes, reopen the app and tap debug here. Reports are stored locally and are not sent automatically.",
+                13, 0xFFD3DCED, false);
+        details.setTextIsSelectable(true);
+        details.setPadding(dp(4), dp(8), dp(4), dp(8));
+        ScrollView reportScroll = new ScrollView(this);
+        reportScroll.addView(details);
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+                .setTitle(available ? "Crash reports" : "Debug")
+                .setView(reportScroll)
+                .setNegativeButton(available ? "Close" : "OK", null);
+        if (available) {
+            dialog.setPositiveButton("Copy report", (which, button) -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("Roadprints crash reports", report));
+                Toast.makeText(this, "Crash report copied", Toast.LENGTH_SHORT).show();
+            });
+            dialog.setNeutralButton("Clear reports", (which, button) -> {
+                CrashReporter.clear(this);
+                updateDebugLink();
+                Toast.makeText(this, "Crash reports cleared", Toast.LENGTH_SHORT).show();
+            });
+        }
+        dialog.show();
+    }
+
+    private void updateDebugLink() {
+        if (debugLink != null) {
+            debugLink.setText(CrashReporter.hasReports(this) ? "debug · report ready" : "debug");
+        }
     }
 
     private LinearLayout card() {
