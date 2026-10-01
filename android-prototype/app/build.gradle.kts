@@ -6,6 +6,8 @@ android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
 
+    sourceSets.getByName("main").assets.srcDir("../../canonical-a-roads-v5")
+
     testOptions { unitTests.isIncludeAndroidResources = true }
 
     buildFeatures {
@@ -16,8 +18,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 96
-        versionName = "0.25.50"
+        versionCode = 97
+        versionName = "0.25.51"
     }
 }
 

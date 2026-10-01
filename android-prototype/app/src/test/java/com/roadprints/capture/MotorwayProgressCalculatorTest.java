@@ -58,8 +58,6 @@ public class MotorwayProgressCalculatorTest {
     @Test public void bundledSharedRefIsSeparatedIntoGreatBritainAndNorthernIreland() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         JSONArray anchors = new JSONArray()
-                .put(new JSONArray().put(-0.2305338).put(51.6869996))
-                .put(new JSONArray().put(-0.2313622).put(51.6874356))
                 .put(new JSONArray().put(-6.0100).put(54.6000))
                 .put(new JSONArray().put(-6.0110).put(54.6010));
         JSONObject cache = new JSONObject().put("roads", new JSONObject().put("M1",

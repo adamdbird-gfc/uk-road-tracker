@@ -225,6 +225,7 @@ public class ProgressActivity extends Activity {
         Map<String, Double> uniqueFootEdges = new HashMap<>();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
                 context, null, true);
+        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context);
         int[] checkedJourneys = {0};
 
         JourneyStore.forEach(context, journey -> {
@@ -264,6 +265,7 @@ public class ProgressActivity extends Activity {
             if ("complete".equals(journey.optString("processing_status", ""))) {
                 collectRoadDiscovery(journey, stats, mode);
                 motorwayCalculator.addJourney(journey);
+                aRoadCalculator.addJourney(journey);
             }
         });
 
@@ -271,6 +273,7 @@ public class ProgressActivity extends Activity {
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
         updateLoadingMessage(generation, "Calculating motorway coverage…");
         stats.motorwayProgress = motorwayCalculator.finish();
+        stats.aRoadProgress = aRoadCalculator.finish();
         return stats;
     }
 
@@ -435,6 +438,8 @@ public class ProgressActivity extends Activity {
         addRoadDiscoveryPanel(parent, stats);
         addMotorwayAggregatePanel(parent, stats);
         addMotorwayCoveragePanel(parent, stats);
+        addARoadAggregatePanel(parent, stats);
+        addARoadCoveragePanel(parent, stats);
     }
 
     private LinearLayout statisticsPanel(String titleText) {
@@ -524,12 +529,13 @@ public class ProgressActivity extends Activity {
     }
 
     private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads) {
+        int rowIndex = 0;
         for (RoadDiscoveryItem road : roads) {
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setPadding(dp(12), dp(8), dp(12), dp(8));
-                row.setBackgroundColor(rows.getChildCount() % 2 == 0
+                row.setBackgroundColor(rowIndex++ % 2 == 0
                         ? 0xFF263F75 : 0xFF1B3267);
                 TextView roadName = new TextView(this);
                 roadName.setText(road.label);
@@ -628,7 +634,8 @@ public class ProgressActivity extends Activity {
         panel.addView(note);
         if (summary.missingReferences) {
             TextView warning = new TextView(this);
-            warning.setText("One or more motorway references could not be loaded. Their coverage is not included in the totals.");
+            warning.setText("Reference unavailable for: " + String.join(", ", summary.missingReferenceRoads)
+                    + ". Coverage is excluded from the totals.");
             warning.setTextSize(12);
             warning.setTextColor(0xFFFFD166);
             warning.setPadding(0, 0, 0, dp(8));
@@ -667,6 +674,54 @@ public class ProgressActivity extends Activity {
             panel.addView(meta);
         }
         parent.addView(panel);
+    }
+
+    private TextView aRoadBadge(String ref) {
+        TextView badge = new TextView(this);
+        badge.setText(ref);
+        badge.setTextColor(Color.WHITE);
+        badge.setTextSize(14);
+        badge.setTypeface(null, android.graphics.Typeface.BOLD);
+        badge.setGravity(Gravity.CENTER);
+        badge.setBackground(roundRect(0xFF25834A, dp(6)));
+        return badge;
+    }
+
+    private void addARoadAggregatePanel(LinearLayout parent, DistanceStats stats) {
+        ARoadProgressCalculator.Summary summary=stats.aRoadProgress;
+        if(summary==null||summary.roads.isEmpty())return;
+        LinearLayout panel=statisticsPanel("A-road aggregate");
+        addDistanceUnitToggle(panel);
+        LinearLayout cards=new LinearLayout(this);
+        cards.setOrientation(LinearLayout.HORIZONTAL);
+        cards.addView(statCard(new StatItem("Matched A-road distance",summary.matchedMetres,true)),weightedCardParams(true));
+        cards.addView(statCard(new StatItem("A roads discovered",summary.roads.size(),false,false,true)),weightedCardParams(false));
+        panel.addView(cards);
+        List<ARoadProgressCalculator.Road> roads=summary.roads;
+        double maximum=1;for(ARoadProgressCalculator.Road road:roads)maximum=Math.max(maximum,road.matchedMetres);
+        TextView note=new TextView(this);note.setText("Matched mileage adds each recorded journey. Repeated trips are included.");note.setTextSize(12);note.setTextColor(MUTED);note.setPadding(0,dp(10),0,dp(8));panel.addView(note);
+        for(ARoadProgressCalculator.Road road:roads){
+            LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(6),0,dp(2));
+            row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
+            View bar=motorwayBar(road.matchedMetres/maximum);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
+            TextView value=new TextView(this);value.setText(formatMiles(road.matchedMetres));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(84),-2));panel.addView(row);
+            TextView meta=new TextView(this);meta.setText(road.journeyIds.size()+" matched journey"+(road.journeyIds.size()==1?"":"s")+" contributed");meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(5));panel.addView(meta);
+        }
+        parent.addView(panel);
+    }
+
+    private void addARoadCoveragePanel(LinearLayout parent,DistanceStats stats){
+        ARoadProgressCalculator.Summary summary=stats.aRoadProgress;if(summary==null||summary.roads.isEmpty())return;
+        LinearLayout panel=statisticsPanel("A-road coverage");
+        addCoverageMetric(panel,"UK A-road network",summary.percent(),summary.totalKm(),summary.referenceKm()*0.6213711922,false);
+        TextView note=new TextView(this);note.setText("Canonical A-road sections count once across journeys. Individual percentages use the saved POC road references.");note.setTextSize(12);note.setTextColor(MUTED);note.setPadding(0,dp(8),0,dp(10));panel.addView(note);
+        if(!summary.missing.isEmpty()){TextView warning=new TextView(this);warning.setText("Reference unavailable for: "+String.join(", ",summary.missing)+". Coverage is excluded from the totals.");warning.setTextColor(0xFFFFD166);warning.setTextSize(12);warning.setPadding(0,0,0,dp(8));panel.addView(warning);}
+        for(ARoadProgressCalculator.Road road:summary.roads){double pct=road.percent();if(!Double.isFinite(pct)||pct<1)continue;
+            LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(2));row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
+            View bar=motorwayBar(pct/100);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
+            TextView value=new TextView(this);value.setText(String.format(Locale.UK,"%.1f%%",pct));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(55),-2));panel.addView(row);
+            TextView meta=new TextView(this);meta.setText(String.format(Locale.UK,"%s estimated unique · %s reference",formatMiles(road.uniqueKm()*1000),formatMiles(road.totalKm*1000)));meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(4));panel.addView(meta);
+        }parent.addView(panel);
     }
 
     private void addCoverageMetric(LinearLayout panel, String title, double percent,
@@ -897,6 +952,7 @@ public class ProgressActivity extends Activity {
         int activities;
         final Map<String, RoadDiscoveryItem> discoveredRoads = new LinkedHashMap<>();
         MotorwayProgressCalculator.Summary motorwayProgress;
+        ARoadProgressCalculator.Summary aRoadProgress;
     }
 
     private static final class RoadDiscoveryItem {

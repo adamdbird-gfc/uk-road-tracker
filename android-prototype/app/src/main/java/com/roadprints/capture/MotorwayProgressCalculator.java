@@ -398,9 +398,12 @@ final class MotorwayProgressCalculator {
         HttpURLConnection connection = null;
         try {
             String ref = road.ref.replace("\"", "\\\"");
-            String query = "[out:json][timeout:90];area[\"ISO3166-1\"=\"GB\"][admin_level=2]->.gb;"
-                    + "way(area.gb)[\"highway\"=\"motorway\"][\"ref\"=\"" + ref
-                    + "\"];out tags geom;";
+            String query = "NI".equals(road.region)
+                    ? "[out:json][timeout:25];way[\"highway\"=\"motorway\"][\"ref\"=\""
+                            + ref + "\"](53.9,-8.5,55.6,-5.3);out tags geom;"
+                    : "[out:json][timeout:25];area[\"ISO3166-1\"=\"GB\"][admin_level=2]->.region;"
+                            + "way(area.region)[\"highway\"=\"motorway\"][\"ref\"=\""
+                            + ref + "\"];out tags geom;";
             String url = "https://overpass-api.de/api/interpreter?data="
                     + URLEncoder.encode(query, "UTF-8");
             connection = (HttpURLConnection) new URL(url).openConnection();

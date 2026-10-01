@@ -46,6 +46,10 @@ public class RoutePreviewView extends View {
     private final List<JSONArray> motorwaySegments = new ArrayList<>();
     private final List<JSONArray> incompleteMotorwaySegments = new ArrayList<>();
     private final List<JSONArray> coveredMotorwaySegments = new ArrayList<>();
+    private final List<JSONArray> incompleteARoadSegments = new ArrayList<>();
+    private final List<JSONArray> coveredARoadSegments = new ArrayList<>();
+    private final Paint aRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint aRoadIncompletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final boolean interactive;
     private final boolean showEmptyMessage;
     private final boolean showEndpointMarkers;
@@ -151,6 +155,16 @@ public class RoutePreviewView extends View {
         motorwayIncompletePaint.setStrokeWidth(dp(4));
         motorwayIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
         motorwayIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
+        aRoadPaint.setColor(Color.rgb(50, 201, 107));
+        aRoadPaint.setStyle(Paint.Style.STROKE);
+        aRoadPaint.setStrokeWidth(dp(4));
+        aRoadPaint.setStrokeCap(Paint.Cap.ROUND);
+        aRoadPaint.setStrokeJoin(Paint.Join.ROUND);
+        aRoadIncompletePaint.setColor(Color.rgb(217, 58, 58));
+        aRoadIncompletePaint.setStyle(Paint.Style.STROKE);
+        aRoadIncompletePaint.setStrokeWidth(dp(4));
+        aRoadIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
+        aRoadIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
         routeHaloPaint.setColor(Color.WHITE);
         routeHaloPaint.setStyle(Paint.Style.STROKE);
         routeHaloPaint.setStrokeWidth(dp(10));
@@ -243,6 +257,17 @@ public class RoutePreviewView extends View {
         invalidate();
     }
 
+    public void setARoadCoverageSegments(List<JSONArray> incomplete, List<JSONArray> covered) {
+        replaceSegments(incompleteARoadSegments, incomplete);
+        replaceSegments(coveredARoadSegments, covered);
+        if (!incompleteARoadSegments.isEmpty() || !coveredARoadSegments.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
     private void replaceSegments(List<JSONArray> target, List<JSONArray> source) {
         target.clear();
         if (source == null) return;
@@ -291,6 +316,12 @@ public class RoutePreviewView extends View {
             for (JSONArray segment : incompleteMotorwaySegments) {
                 drawRoute(canvas, segment, motorwayIncompletePaint, null);
             }
+            for (JSONArray segment : incompleteARoadSegments) {
+                drawRoute(canvas, segment, aRoadIncompletePaint, null);
+            }
+            for (JSONArray segment : coveredARoadSegments) {
+                drawRoute(canvas, segment, aRoadPaint, null);
+            }
             for (JSONArray segment : coveredMotorwaySegments) {
                 drawRoute(canvas, segment, motorwayPaint, null);
             }
@@ -330,6 +361,8 @@ public class RoutePreviewView extends View {
             fitRoutes.addAll(motorwaySegments);
             fitRoutes.addAll(incompleteMotorwaySegments);
             fitRoutes.addAll(coveredMotorwaySegments);
+            fitRoutes.addAll(incompleteARoadSegments);
+            fitRoutes.addAll(coveredARoadSegments);
             for (JSONArray routeCoordinates : fitRoutes) {
                 for (int index = 0; index < routeCoordinates.length(); index++) {
                     org.json.JSONArray point = routeCoordinates.getJSONArray(index);
@@ -360,7 +393,9 @@ public class RoutePreviewView extends View {
     private JSONArray firstMotorwayRoute() {
         if (!motorwaySegments.isEmpty()) return motorwaySegments.get(0);
         if (!coveredMotorwaySegments.isEmpty()) return coveredMotorwaySegments.get(0);
-        return incompleteMotorwaySegments.get(0);
+        if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(0);
+        if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(0);
+        return incompleteARoadSegments.get(0);
     }
 
     private JSONArray lastMotorwayRoute() {
@@ -368,7 +403,9 @@ public class RoutePreviewView extends View {
         if (!coveredMotorwaySegments.isEmpty()) {
             return coveredMotorwaySegments.get(coveredMotorwaySegments.size() - 1);
         }
-        return incompleteMotorwaySegments.get(incompleteMotorwaySegments.size() - 1);
+        if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(incompleteMotorwaySegments.size() - 1);
+        if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(coveredARoadSegments.size() - 1);
+        return incompleteARoadSegments.get(incompleteARoadSegments.size() - 1);
     }
 
     private boolean drawTiles(Canvas canvas) {
