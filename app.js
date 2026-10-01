@@ -3682,6 +3682,7 @@ function updateImportNavigationFromCoordinator() {
   const hasSavedJourneys=persistedMapJourneys.size>0 || persistedFootActivities.size>0;
   const hasSavedRoadProgress=hasSavedJourneys || persistedCoverageByRef.size>0 || persistedARoadCoverageByRef.size>0 || pendingRoadImportCandidates().length>0;
   const ready=[];
+  if (!importSession.active && !hasSavedRoadProgress) ready.push('map','journeys','progress','achievements','collections');
   if (importSession.mapReady || hasSavedRoadProgress) ready.push('map','journeys');
   if (importSession.roadComplete || hasSavedRoadProgress) ready.push('progress','achievements','collections');
   setImportNavigationAvailability(ready);
