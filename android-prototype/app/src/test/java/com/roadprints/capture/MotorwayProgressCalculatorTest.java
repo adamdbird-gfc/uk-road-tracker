@@ -13,14 +13,14 @@ import org.robolectric.annotation.Config;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 28, manifest = "android-prototype/app/src/main/AndroidManifest.xml",
-        assetDir = "android-prototype/app/src/main/assets")
+@Config(sdk = 28)
 public class MotorwayProgressCalculatorTest {
     @Test public void repeatedJourneysAddMileageButCountCanonicalCoverageOnce() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
-        JSONObject cache = new JSONObject(readAsset(app));
-        JSONArray anchors = cache.getJSONObject("roads").getJSONObject("M25")
-                .getJSONArray("anchors");
+        JSONArray anchors = new JSONArray().put(new JSONArray().put(-0.2305338).put(51.6869996))
+                .put(new JSONArray().put(-0.2313622).put(51.6874356));
+        JSONObject cache = new JSONObject().put("roads", new JSONObject().put("M25",
+                new JSONObject().put("total_km", 234.8).put("anchors", anchors)));
         JSONArray route = new JSONArray().put(anchors.getJSONArray(0))
                 .put(anchors.getJSONArray(1));
         JSONObject geometry = new JSONObject().put("type", "LineString")
@@ -35,7 +35,7 @@ public class MotorwayProgressCalculatorTest {
                         new JSONObject().put("type", "FeatureCollection")
                                 .put("features", new JSONArray().put(feature))));
 
-        MotorwayProgressCalculator calculator = new MotorwayProgressCalculator(app);
+        MotorwayProgressCalculator calculator = new MotorwayProgressCalculator(app, cache);
         calculator.addJourney(journey);
         calculator.addJourney(new JSONObject(journey.toString()).put("journey_id", "journey-2"));
         MotorwayProgressCalculator.Summary summary = calculator.finish();
@@ -51,14 +51,4 @@ public class MotorwayProgressCalculatorTest {
         assertTrue(summary.gbPercent() > 0);
     }
 
-    private String readAsset(Context context) throws Exception {
-        try (java.util.zip.GZIPInputStream input = new java.util.zip.GZIPInputStream(
-                     context.getAssets().open("canonical-motorways-v1.json.gz"));
-             java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer)) >= 0) output.write(buffer, 0, read);
-            return output.toString("UTF-8");
-        }
-    }
 }

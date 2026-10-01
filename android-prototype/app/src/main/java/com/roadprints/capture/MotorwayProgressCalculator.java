@@ -171,8 +171,13 @@ final class MotorwayProgressCalculator {
     private final Map<String, JSONObject> assetRoads = new HashMap<>();
 
     MotorwayProgressCalculator(Context context) {
+        this(context, null);
+    }
+
+    MotorwayProgressCalculator(Context context, JSONObject canonicalCache) {
         this.context = context.getApplicationContext();
-        loadBundledReferences();
+        if (canonicalCache == null) loadBundledReferences();
+        else cacheBundledReferences(canonicalCache);
     }
 
     void addJourney(JSONObject journey) {
@@ -290,17 +295,21 @@ final class MotorwayProgressCalculator {
             while ((line = reader.readLine()) != null) text.append(line);
             JSONObject cache = new JSONObject(text.toString());
             if (!"v1".equals(cache.optString("version"))) return;
-            JSONObject cacheRoads = cache.optJSONObject("roads");
-            if (cacheRoads == null) return;
-            java.util.Iterator<String> names = cacheRoads.keys();
-            while (names.hasNext()) {
-                String key = names.next();
-                if (key != null && isMotorway(normalizeRef(key))) {
-                    assetRoads.put(normalizeRef(key), cacheRoads.optJSONObject(key));
-                }
-            }
+            cacheBundledReferences(cache);
         } catch (Exception error) {
             assetRoads.clear();
+        }
+    }
+
+    private void cacheBundledReferences(JSONObject cache) {
+        JSONObject cacheRoads = cache.optJSONObject("roads");
+        if (cacheRoads == null) return;
+        java.util.Iterator<String> names = cacheRoads.keys();
+        while (names.hasNext()) {
+            String key = names.next();
+            if (key != null && isMotorway(normalizeRef(key))) {
+                assetRoads.put(normalizeRef(key), cacheRoads.optJSONObject(key));
+            }
         }
     }
 
