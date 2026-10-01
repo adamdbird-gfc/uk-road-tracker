@@ -366,7 +366,7 @@ public class JourneyListActivity extends Activity {
         processor.execute(() -> {
             List<JSONObject> loaded;
             try {
-                loaded = JourneyStore.all(this);
+                loaded = JourneyStore.allSummaries(getApplicationContext());
                 journeys = loaded;
             } catch (Exception error) {
                 mainHandler.post(() -> {
@@ -461,10 +461,7 @@ public class JourneyListActivity extends Activity {
 
         String mode = journey.optString("mode", "unknown");
         double metres = journey.optDouble("distance_meters", 0);
-        JSONObject geometry = journey.optJSONObject("route_geometry");
-        JSONArray coordinates = geometry == null
-                ? null : geometry.optJSONArray("coordinates");
-        int points = coordinates == null ? 0 : coordinates.length();
+        int points = pointCount(journey);
 
         LinearLayout details = new LinearLayout(this);
         details.setOrientation(LinearLayout.VERTICAL);
@@ -528,7 +525,7 @@ public class JourneyListActivity extends Activity {
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
         TextView inspect = actionButton("VIEW & REFINE", 0xFF102047, Color.WHITE);
-        inspect.setOnClickListener(v -> showDetails(journey));
+        inspect.setOnClickListener(v -> loadAndShowDetails(journey));
         actions.addView(inspect, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
 
@@ -537,13 +534,37 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         actionParams.topMargin = dp(16);
         card.addView(actions, actionParams);
-        card.setOnClickListener(v -> showDetails(journey));
+        card.setOnClickListener(v -> loadAndShowDetails(journey));
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, dp(16));
         card.setLayoutParams(params);
         return card;
+    }
+
+    private void loadAndShowDetails(JSONObject summary) {
+        final String journeyId = summary.optString("journey_id", "");
+        if (journeyId.isEmpty()) return;
+        processor.execute(() -> {
+            JSONObject loaded;
+            try {
+                loaded = JourneyStore.get(getApplicationContext(), journeyId);
+            } catch (Exception error) {
+                loaded = null;
+            }
+            JSONObject journey = loaded;
+            mainHandler.post(() -> {
+                if (isFinishing()) return;
+                if (journey == null) {
+                    Toast.makeText(this,
+                            "This journey could not be loaded. Your saved data is unchanged.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showDetails(journey);
+            });
+        });
     }
 
     private TextView actionButton(String text, int background, int foreground) {
@@ -864,8 +885,7 @@ public class JourneyListActivity extends Activity {
             } catch (Exception ignored) { }
             savedTitle[0] = updatedTitle;
             savedMode[0] = updatedMode;
-            journeys = JourneyStore.all(this);
-            render();
+            refreshJourneysAsync();
             updateSaveState.run();
             Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
         };
@@ -1052,6 +1072,9 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean hasStoredMatch(JSONObject journey) {
+        if (journey.has("_has_stored_match")) {
+            return journey.optBoolean("_has_stored_match", false);
+        }
         JSONObject result = journey.optJSONObject("processing_result");
         return result != null && !matchedRouteSegments(result).isEmpty();
     }
@@ -1136,6 +1159,9 @@ public class JourneyListActivity extends Activity {
     }
 
     private int pointCount(JSONObject journey) {
+        if (journey.has("_route_point_count")) {
+            return journey.optInt("_route_point_count", 0);
+        }
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         return coordinates == null ? 0 : coordinates.length();
