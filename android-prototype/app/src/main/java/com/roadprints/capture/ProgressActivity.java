@@ -713,8 +713,8 @@ public class ProgressActivity extends Activity {
     private void addARoadCoveragePanel(LinearLayout parent,DistanceStats stats){
         ARoadProgressCalculator.Summary summary=stats.aRoadProgress;if(summary==null||summary.roads.isEmpty())return;
         LinearLayout panel=statisticsPanel("A-road coverage");
-        addCoverageMetric(panel,"UK A-road network",summary.percent(),summary.totalKm(),summary.referenceKm()*0.6213711922,false);
-        TextView note=new TextView(this);note.setText("Canonical A-road sections count once across journeys. Individual percentages use the saved POC road references.");note.setTextSize(12);note.setTextColor(MUTED);note.setPadding(0,dp(8),0,dp(10));panel.addView(note);
+        addCoverageMetric(panel,"Discovered A-road references",summary.percent(),summary.totalKm(),summary.referenceKm()*0.6213711922,false);
+        TextView note=new TextView(this);note.setText("Canonical A-road sections count once across journeys. This total covers roads with matched journeys; individual percentages use the saved road references.");note.setTextSize(12);note.setTextColor(MUTED);note.setPadding(0,dp(8),0,dp(10));panel.addView(note);
         if(!summary.missing.isEmpty()){TextView warning=new TextView(this);warning.setText("Reference unavailable for: "+String.join(", ",summary.missing)+". Coverage is excluded from the totals.");warning.setTextColor(0xFFFFD166);warning.setTextSize(12);warning.setPadding(0,0,0,dp(8));panel.addView(warning);}
         for(ARoadProgressCalculator.Road road:summary.roads){double pct=road.percent();if(!Double.isFinite(pct)||pct<1)continue;
             LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(2));row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));

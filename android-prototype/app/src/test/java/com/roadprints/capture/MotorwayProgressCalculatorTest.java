@@ -86,4 +86,37 @@ public class MotorwayProgressCalculatorTest {
         assertFalse(summary.missingReferences);
     }
 
+    @Test public void bundledReferencesLoadForAllCurrentlySupportedMotorwayLabels() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JSONObject root;
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(
+                app.getAssets().open("canonical-motorways-v1.json"),
+                java.nio.charset.StandardCharsets.UTF_8))) {
+            StringBuilder text = new StringBuilder(); String line;
+            while ((line = reader.readLine()) != null) text.append(line);
+            root = new JSONObject(text.toString());
+        }
+        JSONObject refs = root.getJSONObject("roads");
+        JSONArray features = new JSONArray();
+        java.util.Iterator<String> names = refs.keys();
+        while (names.hasNext()) {
+            String ref = names.next();
+            JSONArray anchors = refs.getJSONObject(ref).getJSONArray("anchors");
+            if (anchors.length() < 2) continue;
+            JSONArray route = new JSONArray().put(anchors.getJSONArray(0)).put(anchors.getJSONArray(1));
+            features.put(new JSONObject().put("type", "Feature")
+                    .put("properties", new JSONObject().put("road_ref", ref).put("distance_m", 100))
+                    .put("geometry", new JSONObject().put("type", "LineString").put("coordinates", route)));
+        }
+        JSONObject journey = new JSONObject().put("journey_id", "all-motorways")
+                .put("mode", "driving").put("processing_status", "complete")
+                .put("processing_result", new JSONObject().put("motorway_geojson",
+                        new JSONObject().put("type", "FeatureCollection").put("features", features)));
+        MotorwayProgressCalculator calculator = new MotorwayProgressCalculator(app);
+        calculator.addJourney(journey);
+        MotorwayProgressCalculator.Summary summary = calculator.finish();
+        assertTrue("Unexpected missing refs: " + summary.missingReferenceRoads,
+                summary.missingReferenceRoads.isEmpty());
+    }
+
 }
