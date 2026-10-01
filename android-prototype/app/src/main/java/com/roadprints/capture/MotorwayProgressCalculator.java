@@ -343,18 +343,35 @@ final class MotorwayProgressCalculator {
     }
 
     private void loadBundledReferences() {
-        try (InputStream input = new GZIPInputStream(
-                     context.getAssets().open("canonical-motorways-v1.json.gz"));
-             BufferedReader reader = new BufferedReader(new InputStreamReader(input,
-                     StandardCharsets.UTF_8))) {
-            StringBuilder text = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) text.append(line);
-            JSONObject cache = new JSONObject(text.toString());
-            if (!"v1".equals(cache.optString("version"))) return;
-            cacheBundledReferences(cache);
+        try (InputStream input = openBundledReferenceAsset()) {
+            if (input == null) {
+                assetRoads.clear();
+                return;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input,
+                    StandardCharsets.UTF_8))) {
+                StringBuilder text = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) text.append(line);
+                JSONObject cache = new JSONObject(text.toString());
+                if (!"v1".equals(cache.optString("version"))) return;
+                cacheBundledReferences(cache);
+            }
         } catch (Exception error) {
             assetRoads.clear();
+        }
+    }
+
+    private InputStream openBundledReferenceAsset() {
+        try {
+            return new GZIPInputStream(
+                    context.getAssets().open("canonical-motorways-v1.json.gz"));
+        } catch (Exception missingCompressedAsset) {
+            try {
+                return context.getAssets().open("canonical-motorways-v1.json");
+            } catch (Exception missingPlainAsset) {
+                return null;
+            }
         }
     }
 
