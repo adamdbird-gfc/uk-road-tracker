@@ -304,7 +304,7 @@ public class MainActivity extends Activity {
         archiveIo.execute(() -> {
             List<JSONObject> journeys;
             try {
-                journeys = JourneyStore.all(getApplicationContext());
+                journeys = JourneyStore.allSummaries(getApplicationContext());
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != archiveSummaryGeneration) return;
@@ -557,7 +557,7 @@ public class MainActivity extends Activity {
         archiveIo.execute(() -> {
             final List<JSONObject> journeys;
             try {
-                journeys = JourneyStore.all(getApplicationContext());
+                journeys = JourneyStore.allSummaries(getApplicationContext());
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (!isFinishing()) status.setText("Could not load saved journeys.");
@@ -588,7 +588,7 @@ public class MainActivity extends Activity {
             JSONObject geometry = journey.optJSONObject("route_geometry");
             JSONArray coordinates = geometry == null
                     ? null : geometry.optJSONArray("coordinates");
-            int points = coordinates == null ? 0 : coordinates.length();
+            int points = journey.optInt("_route_point_count", coordinates == null ? 0 : coordinates.length());
             rows[index] = String.format(
                     "%s • %s\n%.0f m • %s • %d GPS points",
                     started, mode, metres,
@@ -597,7 +597,15 @@ public class MainActivity extends Activity {
 
         new AlertDialog.Builder(this)
                 .setTitle("Saved journeys")
-                .setItems(rows, (dialog, which) -> editJourney(journeys.get(which)))
+                .setItems(rows, (dialog, which) -> {
+                    String journeyId = journeys.get(which).optString("journey_id");
+                    archiveIo.execute(() -> {
+                        JSONObject fullJourney = JourneyStore.get(getApplicationContext(), journeyId);
+                        mainHandler.post(() -> {
+                            if (!isFinishing() && fullJourney != null) editJourney(fullJourney);
+                        });
+                    });
+                })
                 .setPositiveButton("Close", null)
                 .show();
     }
