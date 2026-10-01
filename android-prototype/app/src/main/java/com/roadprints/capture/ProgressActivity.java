@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 
 public class ProgressActivity extends Activity {
     private LinearLayout statisticsContent;
@@ -32,6 +34,8 @@ public class ProgressActivity extends Activity {
     private GrowingStatusControl growingStatus;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
+    private DistanceStats loadedStats;
+    private boolean useKilometres;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -42,6 +46,8 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        useKilometres = getSharedPreferences("roadprints_display", MODE_PRIVATE)
+                .getBoolean("distance_kilometres", false);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAV_BAR);
 
@@ -163,7 +169,8 @@ public class ProgressActivity extends Activity {
                 if (generation != statsLoadGeneration || isFinishing() || isDestroyed()) return;
                 statisticsContent.removeAllViews();
                 if (loadError == null) {
-                    addStatistics(statisticsContent, result);
+                    loadedStats = result;
+                    renderStatistics(statisticsContent, result);
                 } else {
                     TextView error = new TextView(this);
                     error.setText("Couldn't load progress. Your saved journeys are still on this device.");
@@ -178,6 +185,7 @@ public class ProgressActivity extends Activity {
         DistanceStats stats = new DistanceStats();
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
         Map<String, Double> uniqueFootEdges = new HashMap<>();
+        MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(context);
 
         JourneyStore.forEach(context, journey -> {
             String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
@@ -188,7 +196,6 @@ public class ProgressActivity extends Activity {
                 stats.drivingMetres += metres;
                 if ("complete".equals(journey.optString("processing_status", ""))) {
                     collectUniqueMatchedEdges(journey, uniqueRoadEdges);
-                    collectMotorwayMatches(journey, stats.motorwayMetresByRef);
                 }
             } else if ("walking".equals(mode) || "running".equals(mode)
                     || "pedestrian".equals(mode)) {
@@ -209,10 +216,15 @@ public class ProgressActivity extends Activity {
             } else {
                 stats.unknownMetres += metres;
             }
+            if ("complete".equals(journey.optString("processing_status", ""))) {
+                collectRoadDiscovery(journey, stats, mode);
+                motorwayCalculator.addJourney(journey);
+            }
         });
 
         stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
+        stats.motorwayProgress = motorwayCalculator.finish();
         return stats;
     }
 
@@ -251,37 +263,68 @@ public class ProgressActivity extends Activity {
         }
     }
 
-    private void collectMotorwayMatches(JSONObject journey, Map<String, Double> totals) {
+    private void collectRoadDiscovery(JSONObject journey, DistanceStats stats, String mode) {
+        boolean driven = "driving".equals(mode) || "bus".equals(mode);
+        boolean foot = "walking".equals(mode) || "running".equals(mode)
+                || "pedestrian".equals(mode);
+        if (!driven && !foot) return;
         JSONObject result = journey.optJSONObject("processing_result");
-        JSONObject geojson = result == null ? null : result.optJSONObject("motorway_geojson");
+        JSONObject geojson = result == null ? null : result.optJSONObject("road_geojson");
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
-        if (features == null) return;
+        if (features == null || features.length() == 0) {
+            features = new JSONArray();
+            appendFeatures(features, result == null ? null : result.optJSONObject("motorway_geojson"));
+            appendFeatures(features, result == null ? null : result.optJSONObject("a_road_geojson"));
+        }
+        String journeyId = journey.optString("journey_id", "");
         for (int index = 0; index < features.length(); index++) {
             JSONObject feature = features.optJSONObject(index);
             JSONObject properties = feature == null ? null : feature.optJSONObject("properties");
             if (properties == null) continue;
-            String ref = properties.optString("road_ref", "").toUpperCase(Locale.ROOT)
-                    .replaceAll("\\s+", "");
-            if ("M6T".equals(ref) || "M6TOLL".equals(ref)) ref = "M6 Toll";
-            if (!ref.matches("M[0-9]+[A-Z]?|M6 Toll")) continue;
-            JSONObject geometry = feature.optJSONObject("geometry");
-            JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
-            JSONArray point = coordinates == null ? null : coordinates.optJSONArray(0);
-            if ("MultiLineString".equals(geometry == null ? "" : geometry.optString("type"))) {
-                JSONArray firstLine = coordinates == null ? null : coordinates.optJSONArray(0);
-                point = firstLine == null ? null : firstLine.optJSONArray(0);
-            }
-            boolean northernIreland = point != null && point.length() >= 2
-                    && point.optDouble(0) < -5.3 && point.optDouble(1) > 53.9
-                    && point.optDouble(1) < 55.6;
-            String key = northernIreland ? "NI:" + ref : ref;
-            double metres = properties.optDouble("distance_m", 0);
-            if (Double.isFinite(metres) && metres > 0) {
-                totals.put(key, totals.getOrDefault(key, 0.0) + metres);
-            } else {
-                totals.putIfAbsent(key, 0.0);
+            String rawRef = properties.optString("road_ref", properties.optString("ref", ""));
+            String name = properties.optString("name", properties.optString("road_name", ""));
+            String kind = properties.optString("highway", "").toLowerCase(Locale.ROOT);
+            if (kind.endsWith("_link") || "service".equals(kind) || "footway".equals(kind)
+                    || "path".equals(kind) || "steps".equals(kind) || "cycleway".equals(kind)) continue;
+            for (String item : rawRef.split("[;,/]")) {
+                String ref = item.trim().toUpperCase(Locale.ROOT);
+                String label = roadLabel(ref, name);
+                if (label == null) continue;
+                String category = roadCategory(label);
+                String id = category.equals("Local roads") && !label.matches(".*[0-9].*")
+                        ? "name:" + label.toLowerCase(Locale.ROOT) : "ref:" + label;
+                RoadDiscoveryItem road = stats.discoveredRoads.computeIfAbsent(id,
+                        ignored -> new RoadDiscoveryItem(id, label, category));
+                if (foot) road.onFoot = true;
+                else road.driven = true;
+                if (!journeyId.isEmpty()) road.journeyIds.add(journeyId);
             }
         }
+    }
+
+    private void appendFeatures(JSONArray target, JSONObject geojson) {
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return;
+        for (int index = 0; index < features.length(); index++) target.put(features.opt(index));
+    }
+
+    private String roadLabel(String ref, String name) {
+        String cleaned = ref.replaceAll("\\s+", "");
+        if (cleaned.matches("\\d+(?:[.,]\\d+)?")) cleaned = "";
+        if (!cleaned.isEmpty()) {
+            if (cleaned.matches("M6T|M6TOLL")) return "M6 Toll";
+            return cleaned;
+        }
+        String trimmedName = name == null ? "" : name.trim();
+        return trimmedName.isEmpty() || trimmedName.matches("\\d+(?:[.,]\\d+)?")
+                ? null : trimmedName;
+    }
+
+    private String roadCategory(String label) {
+        if (label.matches("M[0-9]+[A-Z]?|M6 Toll|A[0-9]+\\(M\\)")) return "Motorways";
+        if (label.matches("A[0-9]+[A-Z]?")) return "A roads";
+        if (label.matches("B[0-9]+[A-Z]?")) return "B roads";
+        return "Local roads";
     }
 
     private double sumEdges(Map<String, Double> edges) {
@@ -331,19 +374,331 @@ public class ProgressActivity extends Activity {
         return routes;
     }
 
-    private void addStatistics(LinearLayout parent, DistanceStats stats) {
+    private void renderStatistics(LinearLayout parent, DistanceStats stats) {
+        parent.removeAllViews();
+        addRoadDiscoveryPanel(parent, stats);
+        addMotorwayAggregatePanel(parent, stats);
+        addMotorwayCoveragePanel(parent, stats);
+        addCollectiveStatistics(parent, stats);
+    }
+
+    private LinearLayout statisticsPanel(String titleText) {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(18), dp(18), dp(18), dp(16));
         panel.setBackground(roundRect(0xFF182F62, dp(20)));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = dp(12);
+        panel.setLayoutParams(params);
 
         TextView heading = new TextView(this);
-        heading.setText("Collective statistics");
-        heading.setTextSize(23);
+        heading.setText(titleText);
+        heading.setTextSize(22);
         heading.setTypeface(null, android.graphics.Typeface.BOLD);
         heading.setTextColor(Color.WHITE);
         heading.setPadding(0, 0, 0, dp(14));
         panel.addView(heading);
+        return panel;
+    }
+
+    private void addRoadDiscoveryPanel(LinearLayout parent, DistanceStats stats) {
+        if (stats.discoveredRoads.isEmpty()) return;
+        LinearLayout panel = statisticsPanel("Road discovery");
+        TextView summary = new TextView(this);
+        int driven = 0, foot = 0, both = 0;
+        for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
+            if (road.driven) driven++;
+            if (road.onFoot) foot++;
+            if (road.driven && road.onFoot) both++;
+        }
+        summary.setText(String.format(Locale.UK, "%d roads discovered\n%d driven · %d on foot%s",
+                stats.discoveredRoads.size(), driven, foot,
+                both > 0 ? " · " + both + " in both" : ""));
+        summary.setTextSize(14);
+        summary.setTextColor(MUTED);
+        summary.setPadding(0, 0, 0, dp(10));
+        panel.addView(summary);
+
+        String[] categories = {"Motorways", "A roads", "B roads", "Local roads"};
+        for (String category : categories) {
+            List<RoadDiscoveryItem> roads = new ArrayList<>();
+            for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
+                if (category.equals(road.category)) roads.add(road);
+            }
+            if (roads.isEmpty()) continue;
+            roads.sort(Comparator.comparing(item -> item.label, String.CASE_INSENSITIVE_ORDER));
+            LinearLayout group = new LinearLayout(this);
+            group.setOrientation(LinearLayout.VERTICAL);
+            group.setBackground(roundRect(0xFF1C356A, dp(12)));
+            LinearLayout.LayoutParams groupParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            groupParams.topMargin = dp(7);
+            panel.addView(group, groupParams);
+            TextView label = new TextView(this);
+            label.setText(category + " · " + roads.size());
+            label.setTextSize(15);
+            label.setTextColor(Color.WHITE);
+            label.setPadding(dp(13), dp(12), dp(13), dp(12));
+            label.setCompoundDrawablePadding(dp(8));
+            label.setCompoundDrawablesWithIntrinsicBounds(0, 0,
+                    android.R.drawable.arrow_down_float, 0);
+            group.addView(label);
+            LinearLayout rows = new LinearLayout(this);
+            rows.setOrientation(LinearLayout.VERTICAL);
+            rows.setVisibility(View.GONE);
+            for (RoadDiscoveryItem road : roads) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(dp(12), dp(8), dp(12), dp(8));
+                TextView roadName = new TextView(this);
+                roadName.setText(road.label);
+                roadName.setTextSize(14);
+                roadName.setTypeface(null, android.graphics.Typeface.BOLD);
+                roadName.setTextColor(Color.WHITE);
+                if ("Motorways".equals(category)) {
+                    roadName.setGravity(Gravity.CENTER);
+                    roadName.setPadding(dp(10), dp(6), dp(10), dp(6));
+                    roadName.setBackground(signBadge());
+                }
+                row.addView(roadName, new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+                TextView status = new TextView(this);
+                status.setText(road.driven && road.onFoot ? "Driven + on foot"
+                        : road.driven ? "Driven" : "On foot");
+                status.setTextSize(12);
+                status.setTextColor(MUTED);
+                status.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+                row.addView(status);
+                rows.addView(row);
+                View divider = new View(this);
+                divider.setBackgroundColor(0x334C6798);
+                rows.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
+            }
+            group.addView(rows);
+            label.setOnClickListener(v -> rows.setVisibility(
+                    rows.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
+        }
+        parent.addView(panel);
+    }
+
+    private void addMotorwayAggregatePanel(LinearLayout parent, DistanceStats stats) {
+        MotorwayProgressCalculator.Summary summary = stats.motorwayProgress;
+        if (summary == null || summary.roads.isEmpty()) return;
+        LinearLayout panel = statisticsPanel("Motorway aggregate");
+        addDistanceUnitToggle(panel);
+        double totalMetres = 0;
+        for (MotorwayProgressCalculator.Road road : summary.roads) {
+            totalMetres += road.matchedMetres;
+        }
+        LinearLayout summaryRow = new LinearLayout(this);
+        summaryRow.setOrientation(LinearLayout.HORIZONTAL);
+        summaryRow.addView(statCard(new StatItem("Matched motorway distance",
+                totalMetres, true)), weightedCardParams(true));
+        summaryRow.addView(statCard(new StatItem("Motorways discovered",
+                summary.roads.size(), false, false, true)), weightedCardParams(false));
+        panel.addView(summaryRow);
+        TextView note = new TextView(this);
+        note.setText("Matched mileage adds each recorded journey. Repeated trips are included.");
+        note.setTextSize(12);
+        note.setTextColor(MUTED);
+        note.setPadding(0, dp(10), 0, dp(8));
+        panel.addView(note);
+
+        List<MotorwayProgressCalculator.Road> roads = new ArrayList<>(summary.roads);
+        roads.sort((left, right) -> Double.compare(right.matchedMetres, left.matchedMetres));
+        double maximum = 1;
+        for (MotorwayProgressCalculator.Road road : roads) maximum = Math.max(maximum, road.matchedMetres);
+        for (MotorwayProgressCalculator.Road road : roads) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(6), 0, dp(2));
+            TextView ref = motorwayBadge(road);
+            row.addView(ref, new LinearLayout.LayoutParams(dp(78), dp(32)));
+            View bar = motorwayBar(maximum > 0 ? road.matchedMetres / maximum : 0);
+            LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(0, dp(12), 1);
+            barParams.setMargins(dp(9), 0, dp(9), 0);
+            row.addView(bar, barParams);
+            TextView value = new TextView(this);
+            value.setText(formatMiles(road.matchedMetres));
+            value.setTextColor(Color.WHITE);
+            value.setTextSize(14);
+            value.setTypeface(null, android.graphics.Typeface.BOLD);
+            value.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+            row.addView(value, new LinearLayout.LayoutParams(dp(84), -2));
+            panel.addView(row);
+            TextView meta = new TextView(this);
+            meta.setText(road.journeyIds.size() + " matched journey"
+                    + (road.journeyIds.size() == 1 ? "" : "s") + " contributed");
+            meta.setTextColor(MUTED);
+            meta.setTextSize(11);
+            meta.setPadding(dp(88), 0, 0, dp(5));
+            panel.addView(meta);
+        }
+        parent.addView(panel);
+    }
+
+    private void addMotorwayCoveragePanel(LinearLayout parent, DistanceStats stats) {
+        MotorwayProgressCalculator.Summary summary = stats.motorwayProgress;
+        if (summary == null || summary.roads.isEmpty()) return;
+        LinearLayout panel = statisticsPanel("Motorway coverage");
+        addCoverageMetric(panel, "Great Britain", summary.gbPercent(), summary.gbUniqueKm(),
+                2300.0, false);
+        addCoverageMetric(panel, "Northern Ireland", summary.niPercent(), summary.niUniqueKm(),
+                65.0, summary.missingReferences && summary.roads.stream()
+                        .anyMatch(road -> "NI".equals(road.region) && !road.referenceAvailable));
+        addCoverageMetric(panel, "UK network", summary.ukPercent(), summary.ukUniqueKm(),
+                2365.0, summary.missingReferences);
+        TextView note = new TextView(this);
+        note.setText("Each canonical motorway section counts once across journeys and carriageways. Individual motorway percentages use the saved reference sections.");
+        note.setTextSize(12);
+        note.setTextColor(MUTED);
+        note.setPadding(0, dp(8), 0, dp(12));
+        panel.addView(note);
+        if (summary.missingReferences) {
+            TextView warning = new TextView(this);
+            warning.setText("One or more motorway references could not be loaded. Their coverage is not included in the totals.");
+            warning.setTextSize(12);
+            warning.setTextColor(0xFFFFD166);
+            warning.setPadding(0, 0, 0, dp(8));
+            panel.addView(warning);
+        }
+        for (MotorwayProgressCalculator.Road road : summary.roads) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(8), 0, dp(2));
+            row.addView(motorwayBadge(road), new LinearLayout.LayoutParams(dp(78), dp(32)));
+            double percent = road.percent();
+            View bar = motorwayBar(Double.isFinite(percent) ? percent / 100.0 : 0);
+            LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(0, dp(12), 1);
+            barParams.setMargins(dp(9), 0, dp(9), 0);
+            row.addView(bar, barParams);
+            TextView value = new TextView(this);
+            value.setText(Double.isFinite(percent) ? String.format(Locale.UK, "%.1f%%", percent) : "—");
+            value.setTextColor(Color.WHITE);
+            value.setTextSize(14);
+            value.setTypeface(null, android.graphics.Typeface.BOLD);
+            value.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+            row.addView(value, new LinearLayout.LayoutParams(dp(55), -2));
+            panel.addView(row);
+            TextView meta = new TextView(this);
+            String label = Double.isFinite(percent)
+                    ? String.format(Locale.UK, "%s estimated unique · %s reference",
+                            formatMiles(road.estimatedUniqueKm() * 1000),
+                            formatMiles(road.referenceKm * 1000))
+                    : "Canonical reference unavailable";
+            meta.setText(label);
+            meta.setTextColor(MUTED);
+            meta.setTextSize(11);
+            meta.setPadding(dp(88), 0, 0, dp(4));
+            panel.addView(meta);
+        }
+        parent.addView(panel);
+    }
+
+    private void addCoverageMetric(LinearLayout panel, String title, double percent,
+                                   double distanceKm, double totalMiles, boolean unavailable) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(13), dp(12), dp(13), dp(12));
+        card.setBackground(roundRect(0xFF233B78, dp(14)));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(7);
+        TextView heading = new TextView(this);
+        heading.setText(title);
+        heading.setTextSize(12);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setTextColor(MUTED);
+        TextView value = new TextView(this);
+        value.setText(unavailable ? "Reference unavailable"
+                : String.format(Locale.UK, "%.1f%%", percent));
+        value.setTextSize(21);
+        value.setTypeface(null, android.graphics.Typeface.BOLD);
+        value.setTextColor(Color.WHITE);
+        TextView distance = new TextView(this);
+        distance.setText(unavailable ? "Coverage total is incomplete"
+                : formatMiles(distanceKm * 1000) + " of approximately "
+                        + (useKilometres ? String.format(Locale.UK, "%.0f km", totalMiles / 0.6213711922)
+                        : String.format(Locale.UK, "%.0f mi", totalMiles)));
+        distance.setTextSize(11);
+        distance.setTextColor(MUTED);
+        card.addView(heading);
+        card.addView(value);
+        card.addView(distance);
+        panel.addView(card, params);
+    }
+
+    private void addDistanceUnitToggle(LinearLayout panel) {
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setPadding(0, 0, 0, dp(10));
+        TextView miles = unitButton("Miles", !useKilometres);
+        TextView kilometres = unitButton("km", useKilometres);
+        controls.addView(miles);
+        controls.addView(kilometres);
+        miles.setOnClickListener(v -> setDistanceUnit(false));
+        kilometres.setOnClickListener(v -> setDistanceUnit(true));
+        panel.addView(controls);
+    }
+
+    private TextView unitButton(String label, boolean selected) {
+        TextView button = new TextView(this);
+        button.setText(label);
+        button.setTextSize(13);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setTextColor(selected ? NAVY : MUTED);
+        button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(12), dp(8), dp(12), dp(8));
+        button.setBackground(roundRect(selected ? GOLD : 0xFF233B78, dp(10)));
+        return button;
+    }
+
+    private void setDistanceUnit(boolean kilometres) {
+        if (useKilometres == kilometres) return;
+        useKilometres = kilometres;
+        getSharedPreferences("roadprints_display", MODE_PRIVATE).edit()
+                .putBoolean("distance_kilometres", kilometres).apply();
+        if (loadedStats != null) renderStatistics(statisticsContent, loadedStats);
+    }
+
+    private TextView motorwayBadge(MotorwayProgressCalculator.Road road) {
+        TextView badge = new TextView(this);
+        badge.setText("NI".equals(road.region) ? road.ref + " · NI" : road.ref);
+        badge.setTextColor(Color.WHITE);
+        badge.setTextSize(12);
+        badge.setTypeface(null, android.graphics.Typeface.BOLD);
+        badge.setGravity(Gravity.CENTER);
+        badge.setPadding(dp(5), dp(4), dp(5), dp(4));
+        badge.setBackground(signBadge());
+        return badge;
+    }
+
+    private android.graphics.drawable.GradientDrawable signBadge() {
+        android.graphics.drawable.GradientDrawable drawable =
+                new android.graphics.drawable.GradientDrawable();
+        drawable.setColor(0xFF005EB8);
+        drawable.setCornerRadius(dp(5));
+        drawable.setStroke(dp(1), 0xFF003F78);
+        return drawable;
+    }
+
+    private View motorwayBar(double fraction) {
+        LinearLayout track = new LinearLayout(this);
+        track.setBackground(roundRect(0xFF122554, dp(20)));
+        View fill = new View(this);
+        fill.setBackground(roundRect(TEAL, dp(20)));
+        int width = Math.max(0, Math.min(100, (int) Math.round(fraction * 100)));
+        track.addView(fill, new LinearLayout.LayoutParams(0, -1, width));
+        if (width < 100) track.addView(new View(this),
+                new LinearLayout.LayoutParams(0, -1, Math.max(1, 100 - width)));
+        return track;
+    }
+
+    private void addCollectiveStatistics(LinearLayout parent, DistanceStats stats) {
+        LinearLayout panel = statisticsPanel("Collective statistics");
 
         double total = stats.drivingMetres + stats.footMetres + stats.trainMetres
                 + stats.ferryMetres + stats.flightMetres + stats.transitMetres
@@ -392,60 +747,6 @@ public class ProgressActivity extends Activity {
         note.setPadding(0, dp(5), 0, 0);
         panel.addView(note);
         parent.addView(panel);
-        addMotorwaySummary(parent, stats);
-    }
-
-    private void addMotorwaySummary(LinearLayout parent, DistanceStats stats) {
-        if (stats.motorwayMetresByRef.isEmpty()) return;
-        LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(18), dp(16), dp(18), dp(14));
-        panel.setBackground(roundRect(0xFF182F62, dp(20)));
-        LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        panelParams.topMargin = dp(12);
-
-        TextView heading = new TextView(this);
-        heading.setText("Motorways travelled");
-        heading.setTextSize(20);
-        heading.setTypeface(null, android.graphics.Typeface.BOLD);
-        heading.setTextColor(Color.WHITE);
-        panel.addView(heading);
-
-        double totalMetres = 0;
-        for (double metres : stats.motorwayMetresByRef.values()) totalMetres += metres;
-        TextView summary = new TextView(this);
-        summary.setText(String.format(Locale.UK, "%d motorways · %s matched travel, including repeat journeys",
-                stats.motorwayMetresByRef.size(), formatMiles(totalMetres)));
-        summary.setTextSize(13);
-        summary.setTextColor(MUTED);
-        summary.setPadding(0, dp(4), 0, dp(10));
-        panel.addView(summary);
-
-        List<String> refs = new ArrayList<>(stats.motorwayMetresByRef.keySet());
-        refs.sort((left, right) -> {
-            String leftRef = left.replace("NI:", "");
-            String rightRef = right.replace("NI:", "");
-            int numeric = Integer.compare(motorwayNumber(leftRef), motorwayNumber(rightRef));
-            return numeric != 0 ? numeric : left.compareTo(right);
-        });
-        for (String ref : refs) {
-            String label = ref.startsWith("NI:") ? ref.substring(3) + " · Northern Ireland" : ref;
-            TextView row = new TextView(this);
-            row.setText(String.format(Locale.UK, "%s    %s", label,
-                    formatMiles(stats.motorwayMetresByRef.get(ref))));
-            row.setTextSize(14);
-            row.setTextColor(Color.WHITE);
-            row.setPadding(0, dp(5), 0, dp(5));
-            panel.addView(row);
-        }
-        parent.addView(panel, panelParams);
-    }
-
-    private int motorwayNumber(String ref) {
-        String digits = ref.replaceAll("[^0-9]", "");
-        try { return Integer.parseInt(digits); }
-        catch (NumberFormatException ignored) { return Integer.MAX_VALUE; }
     }
 
     private LinearLayout.LayoutParams weightedCardParams(boolean first) {
@@ -486,7 +787,9 @@ public class ProgressActivity extends Activity {
     }
 
     private String formatMiles(double metres) {
-        return String.format(Locale.UK, "%,.1f mi", metres / 1609.344);
+        return useKilometres
+                ? String.format(Locale.UK, "%,.1f km", metres / 1000.0)
+                : String.format(Locale.UK, "%,.1f mi", metres / 1609.344);
     }
 
     private static final class StatItem {
@@ -522,7 +825,22 @@ public class ProgressActivity extends Activity {
         double uniqueDrivingMetres;
         double uniqueFootMetres;
         int activities;
-        final Map<String, Double> motorwayMetresByRef = new HashMap<>();
+        final Map<String, RoadDiscoveryItem> discoveredRoads = new LinkedHashMap<>();
+        MotorwayProgressCalculator.Summary motorwayProgress;
+    }
+
+    private static final class RoadDiscoveryItem {
+        final String id;
+        final String label;
+        final String category;
+        final Set<String> journeyIds = new HashSet<>();
+        boolean driven;
+        boolean onFoot;
+        RoadDiscoveryItem(String id, String label, String category) {
+            this.id = id;
+            this.label = label;
+            this.category = category;
+        }
     }
 
     private android.graphics.drawable.GradientDrawable roundRect(int color, int radius) {
