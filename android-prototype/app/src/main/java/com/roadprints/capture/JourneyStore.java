@@ -25,6 +25,10 @@ public final class JourneyStore {
     private static final String PREFIX = "journey_";
     private static final String SUFFIX = ".json";
 
+    public interface JourneyVisitor {
+        void visit(JSONObject journey);
+    }
+
     private JourneyStore() {}
 
     public static synchronized void save(Context context, JSONObject journey) {
@@ -49,13 +53,11 @@ public final class JourneyStore {
 
     public static synchronized int count(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         return archiveFiles(context).size();
     }
 
     public static synchronized JSONObject latest(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         if (files.isEmpty()) return null;
         File latest = Collections.max(files, Comparator.comparingLong(File::lastModified));
@@ -64,7 +66,6 @@ public final class JourneyStore {
 
     public static synchronized List<JSONObject> all(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
@@ -73,6 +74,72 @@ public final class JourneyStore {
             if (journey != null) journeys.add(journey);
         }
         return journeys;
+    }
+
+    /**
+     * Loads only the compact fields needed to show the journey list. Matcher
+     * GeoJSON can be large, so the list screen must not retain every result in
+     * memory just to display titles, dates and processing states.
+     */
+    public static synchronized List<JSONObject> allSummaries(Context context) {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        List<JSONObject> summaries = new ArrayList<>();
+        for (File file : files) {
+            JSONObject journey = upgrade(context, read(file));
+            if (journey == null) continue;
+            JSONObject summary = new JSONObject();
+            try {
+                String[] fields = {"journey_id", "started_at", "ended_at", "distance_meters",
+                        "mode", "title", "source", "capture_quality", "processing_status",
+                        "error_summary", "stage_statuses", "processing"};
+                for (String field : fields) {
+                    if (journey.has(field)) summary.put(field, journey.opt(field));
+                }
+                JSONObject geometry = journey.optJSONObject("route_geometry");
+                JSONArray coordinates = geometry == null
+                        ? null : geometry.optJSONArray("coordinates");
+                summary.put("_route_point_count", coordinates == null ? 0 : coordinates.length());
+                summary.put("_has_stored_match", hasStoredRoute(journey.optJSONObject("processing_result")));
+                summaries.add(summary);
+            } catch (org.json.JSONException error) {
+                // A compact summary is best-effort; skip only this malformed record.
+            }
+        }
+        return summaries;
+    }
+
+    /** Visit one full journey at a time, so consumers can project large result files and release them. */
+    public static synchronized void forEach(Context context, JourneyVisitor visitor) {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        for (File file : files) {
+            JSONObject journey = upgrade(context, read(file));
+            if (journey != null) visitor.visit(journey);
+        }
+    }
+
+    private static boolean hasStoredRoute(JSONObject result) {
+        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return false;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) return true;
+            if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int line = 0; line < coordinates.length(); line++) {
+                    JSONArray segment = coordinates.optJSONArray(line);
+                    if (segment != null && segment.length() >= 2) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static synchronized JSONObject get(Context context, String journeyId) {
