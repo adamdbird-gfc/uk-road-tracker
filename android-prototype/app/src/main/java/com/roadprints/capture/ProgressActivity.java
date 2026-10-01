@@ -27,6 +27,7 @@ import java.util.Set;
 public class ProgressActivity extends Activity {
     private LinearLayout statisticsContent;
     private boolean hasResumed;
+    private GrowingStatusControl growingStatus;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -67,7 +68,12 @@ public class ProgressActivity extends Activity {
         intro.setPadding(0, dp(4), 0, 0);
 
         heading.addView(eyebrow);
-        heading.addView(title);
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+        titleRow.addView(title);
+        growingStatus = new GrowingStatusControl(this, titleRow);
+        heading.addView(titleRow);
         heading.addView(intro);
         TextView grow = new TextView(this);
         grow.setText("GROW YOUR MAP");
@@ -80,8 +86,8 @@ public class ProgressActivity extends Activity {
         grow.setClickable(true);
         grow.setFocusable(true);
         grow.setOnClickListener(v -> {
-            Intent intent = new Intent(this, JourneyListActivity.class);
-            intent.putExtra("open_growing", true);
+            Intent intent = new Intent(this, GrowingActivity.class);
+            intent.putExtra("start_matching", true);
             startActivity(intent);
         });
         LinearLayout.LayoutParams growParams = new LinearLayout.LayoutParams(
@@ -116,12 +122,19 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (growingStatus != null) growingStatus.start();
         if (hasResumed) {
             statisticsContent.removeAllViews();
             addStatistics(statisticsContent, summarize(JourneyStore.all(this)));
         } else {
             hasResumed = true;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (growingStatus != null) growingStatus.stop();
+        super.onPause();
     }
 
     private boolean isShownInJourneysList(JSONObject journey, String mode) {

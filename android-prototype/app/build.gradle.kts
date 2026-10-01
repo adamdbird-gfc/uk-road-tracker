@@ -6,6 +6,8 @@ android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
 
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     buildFeatures {
         buildConfig = true
     }
@@ -14,12 +16,14 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 84
-        versionName = "0.25.38"
+        versionCode = 85
+        versionName = "0.25.39"
     }
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 }
 

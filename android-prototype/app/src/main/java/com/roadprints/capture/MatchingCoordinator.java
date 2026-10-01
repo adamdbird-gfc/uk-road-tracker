@@ -1,0 +1,347 @@
+package com.roadprints.capture;
+
+import android.content.Context;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/** Process-wide owner for background matching. It deliberately holds no Activity or View. */
+public final class MatchingCoordinator {
+    private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
+    private static volatile MatchingCoordinator instance;
+
+    public enum State { IDLE, PREPARING, RUNNING, PAUSING, PAUSED, COMPLETE, ERROR }
+
+    public static final class Snapshot {
+        public final State state;
+        public final int total, checked, matched, failed;
+        public final int roadTotal, roadChecked, roadMatched;
+        public final int footTotal, footChecked, footMatched;
+        public final String message;
+
+        Snapshot(State state, int total, int checked, int matched, int failed,
+                 int roadTotal, int roadChecked, int roadMatched,
+                 int footTotal, int footChecked, int footMatched, String message) {
+            this.state = state;
+            this.total = total;
+            this.checked = checked;
+            this.matched = matched;
+            this.failed = failed;
+            this.roadTotal = roadTotal;
+            this.roadChecked = roadChecked;
+            this.roadMatched = roadMatched;
+            this.footTotal = footTotal;
+            this.footChecked = footChecked;
+            this.footMatched = footMatched;
+            this.message = message;
+        }
+
+        public boolean isGrowing() {
+            return state == State.PREPARING || state == State.RUNNING
+                    || state == State.PAUSING || state == State.PAUSED;
+        }
+    }
+
+    private final Context app;
+    // One coordinator thread prepares the queue while three match workers run.
+    private final ExecutorService workers = Executors.newFixedThreadPool(4);
+    private volatile boolean pauseRequested;
+    private volatile State state = State.IDLE;
+    private volatile String message = "Ready to grow your map";
+    private final AtomicInteger checked = new AtomicInteger();
+    private final AtomicInteger matched = new AtomicInteger();
+    private final AtomicInteger failed = new AtomicInteger();
+    private final AtomicInteger roadChecked = new AtomicInteger();
+    private final AtomicInteger roadMatched = new AtomicInteger();
+    private final AtomicInteger footChecked = new AtomicInteger();
+    private final AtomicInteger footMatched = new AtomicInteger();
+    private volatile int total, roadTotal, footTotal;
+
+    interface Matcher { JSONObject match(boolean foot, JSONObject payload) throws Exception; }
+    private final Matcher matcher;
+
+    private MatchingCoordinator(Context context) { this(context, null); }
+    MatchingCoordinator(Context context, Matcher matcher) {
+        app = context.getApplicationContext();
+        this.matcher = matcher;
+    }
+    void shutdownForTest() { workers.shutdownNow(); }
+
+
+    public static MatchingCoordinator get(Context context) {
+        MatchingCoordinator current = instance;
+        if (current == null) {
+            synchronized (MatchingCoordinator.class) {
+                current = instance;
+                if (current == null) instance = current = new MatchingCoordinator(context);
+            }
+        }
+        return current;
+    }
+
+    public void start() { start(null); }
+
+    public synchronized void start(String journeyId) {
+        if (state == State.PREPARING || state == State.RUNNING || state == State.PAUSING) return;
+        pauseRequested = false;
+        state = State.PREPARING;
+        message = "Preparing journeys for matching…";
+        workers.execute(() -> prepareAndRun(journeyId));
+    }
+
+    public synchronized void pause() {
+        if (state == State.RUNNING) {
+            pauseRequested = true;
+            state = State.PAUSING;
+            message = "Pausing after current journeys…";
+        }
+    }
+
+    public Snapshot snapshot() {
+        return new Snapshot(state, total, checked.get(), matched.get(), failed.get(),
+                roadTotal, roadChecked.get(), roadMatched.get(),
+                footTotal, footChecked.get(), footMatched.get(), message);
+    }
+
+    private void prepareAndRun(String journeyId) {
+        try {
+            List<JSONObject> road = new ArrayList<>();
+            List<JSONObject> foot = new ArrayList<>();
+            for (JSONObject journey : JourneyStore.all(app)) {
+                if (journeyId != null && !journeyId.equals(journey.optString("journey_id"))) continue;
+                recoverIfInterrupted(journey);
+                if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) continue;
+                if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) continue;
+                (isFoot(journey.optString("mode", "unknown")) ? foot : road).add(journey);
+            }
+            roadTotal = road.size();
+            footTotal = foot.size();
+            total = roadTotal + footTotal;
+            checked.set(0); matched.set(0); failed.set(0);
+            roadChecked.set(0); roadMatched.set(0); footChecked.set(0); footMatched.set(0);
+            if (total == 0) {
+                state = State.COMPLETE;
+                message = "All eligible journeys are matched";
+                return;
+            }
+            state = State.RUNNING;
+            message = "Matching journeys";
+            ConcurrentLinkedQueue<JSONObject> roadWork = new ConcurrentLinkedQueue<>(road);
+            ConcurrentLinkedQueue<JSONObject> footWork = new ConcurrentLinkedQueue<>(foot);
+            CountDownLatch done = new CountDownLatch(3);
+            for (int i = 0; i < 3; i++) {
+                final boolean footLane = i == 2;
+                workers.execute(() -> {
+                    try {
+                        ConcurrentLinkedQueue<JSONObject> lane = footLane ? footWork : roadWork;
+                        JSONObject journey;
+                        while (!pauseRequested && (journey = lane.poll()) != null) {
+                            try {
+                                journey = markProcessing(journey);
+                                matchJourney(journey);
+                                matched.incrementAndGet();
+                                if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
+                            } catch (Exception error) {
+                                failed.incrementAndGet();
+                                markFailed(journey, error);
+                            } finally {
+                                checked.incrementAndGet();
+                                if (footLane) footChecked.incrementAndGet(); else roadChecked.incrementAndGet();
+                            }
+                        }
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            done.await();
+            if (pauseRequested) {
+                state = State.PAUSED;
+                message = "Remaining journeys are ready to resume";
+            } else {
+                state = State.COMPLETE;
+                message = failed.get() == 0 ? "Map growth complete" : "Matching finished · some journeys need retry";
+            }
+        } catch (Exception error) {
+            state = State.ERROR;
+            message = "Matching stopped: " + safeMessage(error);
+        }
+    }
+
+    private void recoverIfInterrupted(JSONObject queued) {
+        synchronized (JourneyStore.class) {
+            JSONObject journey = JourneyStore.get(app, queued.optString("journey_id"));
+            if (journey == null || !"processing".equals(journey.optString("processing_status"))) return;
+            try {
+                journey.put("processing_status", "pending");
+                String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+                JSONObject stages = journey.optJSONObject("stage_statuses");
+                if (stages != null) stages.put(stage, "pending");
+                JSONObject processing = journey.optJSONObject("processing");
+                if (processing != null) processing.put(stage, "pending");
+                JourneyStore.save(app, journey);
+                queued.put("processing_status", "pending");
+            } catch (Exception error) { throw new IllegalStateException("Could not recover interrupted journey", error); }
+        }
+    }
+
+    private JSONObject markProcessing(JSONObject queued) throws Exception {
+        synchronized (JourneyStore.class) {
+        JSONObject journey = JourneyStore.get(app, queued.optString("journey_id"));
+        if (journey == null) throw new IllegalStateException("Journey was deleted before matching");
+        if (!queued.optString("mode").equals(journey.optString("mode")))
+            throw new IllegalStateException("Journey mode changed before matching · retry");
+        if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
+        String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+        journey.put("processing_status", "processing");
+        JSONObject stages = journey.optJSONObject("stage_statuses");
+        if (stages == null) stages = new JSONObject();
+        stages.put(stage, "processing"); journey.put("stage_statuses", stages);
+        JSONObject processing = journey.optJSONObject("processing");
+        if (processing == null) processing = new JSONObject();
+        processing.put(stage, "processing"); journey.put("processing", processing);
+        journey.remove("processing_result");
+        JourneyStore.save(app, journey);
+        return journey;
+        }
+    }
+
+    private void matchJourney(JSONObject journey) throws Exception {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        JSONArray points = new JSONArray();
+        if (coordinates != null) for (int i = 0; i < coordinates.length(); i++) {
+            JSONArray coordinate = coordinates.optJSONArray(i);
+            if (coordinate != null && coordinate.length() >= 2 && !coordinate.isNull(0) && !coordinate.isNull(1)) {
+                points.put(new JSONObject().put("lat", coordinate.optDouble(1)).put("lng", coordinate.optDouble(0)));
+            }
+        }
+        if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
+        boolean foot = isFoot(journey.optString("mode", "unknown"));
+        JSONObject payload = new JSONObject().put("points", points);
+        JSONObject result = matcher != null ? matcher.match(foot, payload)
+                : postWithRetry(API_BASE_URL + (foot ? "/match-walking" : "/match"), payload);
+        if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
+        synchronized (JourneyStore.class) {
+        JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+        if (stored == null) throw new IllegalStateException("Journey is no longer available");
+        if (!journey.optString("mode").equals(stored.optString("mode"))
+                || !geometry.toString().equals(String.valueOf(stored.optJSONObject("route_geometry")))) {
+            throw new IllegalStateException("Journey changed during matching · retry with its current route and mode");
+        }
+        String stage = foot ? "foot_matching" : "road_matching";
+        stored.put("processing_status", "complete");
+        JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
+        stages.put(stage, "complete"); stored.put("stage_statuses", stages);
+        JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
+        processing.put(stage, "complete"); stored.put("processing", processing);
+        stored.put("processing_result", result);
+        stored.put("processing_completed_at", Instant.now().toString());
+        stored.remove("error_summary");
+        JourneyStore.save(app, stored);
+        }
+    }
+
+    private void markFailed(JSONObject journey, Exception error) {
+        try {
+            synchronized (JourneyStore.class) {
+            JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+            if (stored == null) return;
+            String stage = isFoot(stored.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+            stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
+            JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
+            stages.put(stage, "failed"); stored.put("stage_statuses", stages);
+            JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
+            processing.put(stage, "failed"); stored.put("processing", processing);
+            JourneyStore.save(app, stored);
+            }
+        } catch (Exception ignored) { }
+    }
+
+    private JSONObject postWithRetry(String endpoint, JSONObject payload) throws Exception {
+        long[] delays = {750L, 2000L};
+        for (int attempt = 0; ; attempt++) try {
+            return post(endpoint, payload);
+        } catch (Exception error) {
+            String text = safeMessage(error).toLowerCase();
+            boolean transientFailure = text.contains("http 429") || text.matches("(?s).*http 5[0-9][0-9].*")
+                    || text.contains("timeout") || text.contains("failed to connect") || text.contains("connection reset");
+            if (!transientFailure || attempt >= delays.length) throw error;
+            Thread.sleep(delays[attempt]);
+        }
+    }
+
+    private JSONObject post(String endpoint, JSONObject payload) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
+        try {
+        connection.setRequestMethod("POST"); connection.setConnectTimeout(15000); connection.setReadTimeout(90000);
+        connection.setDoOutput(true); connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        try (OutputStream output = connection.getOutputStream()) { output.write(payload.toString().getBytes(StandardCharsets.UTF_8)); }
+        int status = connection.getResponseCode();
+        java.io.InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+        StringBuilder body = new StringBuilder();
+        if (stream != null) try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            String line; while ((line = reader.readLine()) != null) body.append(line);
+        }
+        if (status < 200 || status >= 300) {
+            JSONObject error = new JSONObject(body.length() == 0 ? "{}" : body.toString());
+            throw new IllegalStateException("HTTP " + status + ": " + error.optString("detail", "API request failed"));
+        }
+        return new JSONObject(body.toString());
+        } finally { connection.disconnect(); }
+    }
+
+    private boolean canMatch(JSONObject j) {
+        String mode = j.optString("mode", "unknown");
+        if (!isFoot(mode) && !isRoad(mode)) return false;
+        JSONObject geometry = j.optJSONObject("route_geometry");
+        JSONArray points = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (points == null || points.length() < 2) return false;
+        if (isRoad(mode)) {
+            JSONObject source = j.optJSONObject("source");
+            if (source != null && "timeline_import".equals(source.optString("type", ""))) {
+                JSONObject quality = j.optJSONObject("capture_quality");
+                return quality != null && quality.optInt("source_route_points", 0) >= 2;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasStoredMatch(JSONObject j) { return hasRoute(j.optJSONObject("processing_result")); }
+    private boolean hasRoute(JSONObject result) {
+        JSONObject geo = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geo == null ? null : geo.optJSONArray("features");
+        if (features == null) return false;
+        for (int i = 0; i < features.length(); i++) {
+            JSONObject feature = features.optJSONObject(i);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) return true;
+            if ("MultiLineString".equals(type) && coordinates != null) for (int j = 0; j < coordinates.length(); j++) {
+                JSONArray line = coordinates.optJSONArray(j); if (line != null && line.length() >= 2) return true;
+            }
+        }
+        return false;
+    }
+    private boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
+    private boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
+    private String safeMessage(Exception error) { return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(); }
+}

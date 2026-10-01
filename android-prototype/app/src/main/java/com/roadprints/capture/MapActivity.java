@@ -33,6 +33,7 @@ public class MapActivity extends Activity {
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
     private TextView mapSubtitle;
+    private GrowingStatusControl growingStatus;
     private FrameLayout mapFrame;
     private final ExecutorService mapLoader = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -70,7 +71,12 @@ public class MapActivity extends Activity {
         mapSubtitle.setPadding(0, dp(4), 0, 0);
 
         heading.addView(eyebrow);
-        heading.addView(title);
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+        titleRow.addView(title);
+        growingStatus = new GrowingStatusControl(this, titleRow);
+        heading.addView(titleRow);
         heading.addView(mapSubtitle);
         root.addView(heading);
 
@@ -94,7 +100,14 @@ public class MapActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (growingStatus != null) growingStatus.start();
         if (mapFrame != null && mapSubtitle != null) refreshMap();
+    }
+
+    @Override
+    protected void onPause() {
+        if (growingStatus != null) growingStatus.stop();
+        super.onPause();
     }
 
     @Override

@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
+    private GrowingStatusControl growingStatus;
     private static final int LOCATION_REQUEST = 41;
     private static final String[] MODE_LABELS = {
             "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry"
@@ -102,12 +103,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (growingStatus != null) growingStatus.start();
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
             tracking = CaptureService.isArmed(this);
             updateCaptureButton();
             updateTrackingButton();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (growingStatus != null) growingStatus.stop();
+        super.onPause();
     }
 
     @Override
@@ -146,7 +154,8 @@ public class MainActivity extends Activity {
         brand.addView(mark, new LinearLayout.LayoutParams(dp(40), dp(40)));
         TextView wordmark = text("roadprints", 22, Color.WHITE, true);
         wordmark.setPadding(dp(10), 0, 0, 0);
-        brand.addView(wordmark);
+        brand.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
+        growingStatus = new GrowingStatusControl(this, brand);
         content.addView(brand);
 
         TextView eyebrow = text("YOUR TRAVEL RECORD", 13, 0xFF67D5CC, true);

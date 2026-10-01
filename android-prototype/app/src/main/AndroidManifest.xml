@@ -16,6 +16,7 @@
         android:allowBackup="false"
         android:supportsRtl="true">
         <activity android:name=".ProgressActivity" android:exported="false" />
+        <activity android:name=".GrowingActivity" android:exported="false" />
         <activity android:name=".MapActivity" android:exported="false" />
         <activity android:name=".JourneyMapEditorActivity" android:exported="false" />
         <activity android:name=".JourneyListActivity" android:exported="false" />

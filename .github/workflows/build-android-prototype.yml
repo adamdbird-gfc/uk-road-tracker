@@ -44,7 +44,7 @@ jobs:
             exit 1
           fi
           export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
-          gradle --no-daemon -p android-prototype assembleDebug
+          gradle --no-daemon -p android-prototype testDebugUnitTest lintDebug assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
