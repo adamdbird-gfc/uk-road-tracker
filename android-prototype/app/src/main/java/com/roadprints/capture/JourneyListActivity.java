@@ -1213,11 +1213,11 @@ public class JourneyListActivity extends Activity {
 
     }
 
-    private boolean isPointToPointMode(String mode) {
+    static boolean isPointToPointMode(String mode) {
         return "train".equals(mode) || "plane".equals(mode);
     }
 
-    private JSONArray endpointCoordinates(JSONArray coordinates) {
+    static JSONArray endpointCoordinates(JSONArray coordinates) {
         if (coordinates == null || coordinates.length() < 2) return coordinates;
         JSONArray endpoints = new JSONArray();
         endpoints.put(coordinates.optJSONArray(0));
