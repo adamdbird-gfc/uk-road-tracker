@@ -2,6 +2,8 @@ package com.roadprints.capture;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,6 +14,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Local entitlement, visit ledger and bundled UK motorway services catalogue. */
 final class ServiceStationStore {
@@ -19,6 +22,8 @@ final class ServiceStationStore {
     private static final String MANUAL = "service_station_manual";
     private static final String AUTOMATIC = "service_station_automatic";
     private static final String REVISION = "revision";
+    private static final String HISTORICAL_BACKFILL_COMPLETE = "historical_backfill_v1_complete";
+    private static final AtomicBoolean BACKFILL_RUNNING = new AtomicBoolean(false);
     private static volatile JSONArray catalogue;
     private ServiceStationStore() {}
 
@@ -30,6 +35,9 @@ final class ServiceStationStore {
                 .putLong(REVISION, revision(context)+1).apply();
     }
     static long revision(Context context) { return prefs(context).getLong(REVISION, 0); }
+    static boolean historicalBackfillComplete(Context context) {
+        return prefs(context).getBoolean(HISTORICAL_BACKFILL_COMPLETE, false);
+    }
     static Set<String> manual(Context context) { return set(context, MANUAL); }
     static Set<String> automatic(Context context) { return set(context, AUTOMATIC); }
     static Set<String> completed(Context context) {
@@ -55,37 +63,82 @@ final class ServiceStationStore {
         }
     }
     static int recordJourney(Context context, JSONObject journey) {
-        if (!unlocked(context) || journey==null
-                || !"complete".equals(journey.optString("processing_status", ""))) return 0;
+        if (!unlocked(context)) return 0;
+        Set<String> discovered = journeyVisits(context, journey);
+        if (discovered.isEmpty()) return 0;
+        SharedPreferences p=prefs(context);
+        Set<String> visits=set(context, AUTOMATIC);
+        int before=visits.size();
+        visits.addAll(discovered);
+        if(visits.size()!=before) {
+            p.edit().putStringSet(AUTOMATIC,visits).putLong(REVISION,revision(context)+1).apply();
+        }
+        return visits.size()-before;
+    }
+
+    /** Backfill imported journeys once when the service-station collection is unlocked. */
+    static void ensureHistoricalVisits(Context context, Runnable onComplete) {
+        Context app=context.getApplicationContext();
+        if (historicalBackfillComplete(app)) {
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+        if (!unlocked(app) || !BACKFILL_RUNNING.compareAndSet(false, true)) return;
+        ScreenDataLoader.execute(() -> {
+            boolean succeeded=false;
+            try {
+                Set<String> visits=automatic(app);
+                JSONArray stations=stations(app);
+                final Set<String> allIds=new HashSet<>();
+                for(int i=0;i<stations.length();i++) {
+                    JSONObject station=stations.optJSONObject(i);
+                    if(station!=null) allIds.add(station.optString("id", ""));
+                }
+                JourneyStore.forEach(app, journey -> {
+                    if(visits.size()<allIds.size()) visits.addAll(journeyVisits(app, journey));
+                });
+                SharedPreferences p=prefs(app);
+                p.edit().putStringSet(AUTOMATIC,visits)
+                        .putBoolean(HISTORICAL_BACKFILL_COMPLETE,true)
+                        .putLong(REVISION,revision(app)+1).apply();
+                succeeded=true;
+            } catch(Exception error) {
+                android.util.Log.w("Roadprints", "Historical service-station scan will retry", error);
+            } finally {
+                BACKFILL_RUNNING.set(false);
+            }
+            if(succeeded && onComplete!=null)
+                new Handler(Looper.getMainLooper()).post(onComplete);
+        });
+    }
+
+    private static Set<String> journeyVisits(Context context, JSONObject journey) {
+        Set<String> found=new HashSet<>();
+        if(journey==null || !"complete".equals(journey.optString("processing_status", ""))) return found;
         String mode=journey.optString("mode", "");
-        if (!"driving".equals(mode) && !"bus".equals(mode)) return 0;
+        if (!"driving".equals(mode) && !"bus".equals(mode)) return found;
         JSONObject route=journey.optJSONObject("route_geometry");
         JSONArray points=route==null?null:route.optJSONArray("coordinates");
-        if(points==null || points.length()<2) return 0;
-        Set<String> visits=automatic(context);
-        int before=visits.size();
+        if(points==null || points.length()<2) return found;
         try {
             JSONArray stations=stations(context);
             for(int i=0;i<stations.length();i++) {
                 JSONObject station=stations.optJSONObject(i);
                 if(station==null) continue;
                 String id=station.optString("id", "");
-                if(id.isEmpty() || visits.contains(id)) continue;
+                if(id.isEmpty()) continue;
                 double lng=station.optDouble("lng", Double.NaN), lat=station.optDouble("lat", Double.NaN);
-                for(int p=1;p<points.length();p++) {
-                    JSONArray a=points.optJSONArray(p-1), b=points.optJSONArray(p);
+                for(int point=1;point<points.length();point++) {
+                    JSONArray a=points.optJSONArray(point-1), b=points.optJSONArray(point);
                     if(a==null||b==null||a.length()<2||b.length()<2) continue;
                     if(pointSegmentDistance(lng,lat,a.optDouble(0),a.optDouble(1),
-                            b.optDouble(0),b.optDouble(1))<=350) { visits.add(id); break; }
+                            b.optDouble(0),b.optDouble(1))<=350) { found.add(id); break; }
                 }
             }
-        } catch(Exception ignored) { return 0; }
-        if(visits.size()!=before) {
-            SharedPreferences p=prefs(context);
-            p.edit().putStringSet(AUTOMATIC,visits).putLong(REVISION,revision(context)+1).apply();
-        }
-        return visits.size()-before;
+        } catch(Exception ignored) { return found; }
+        return found;
     }
+
     static Map<String, Double> achievementValues(Context context) {
         Set<String> complete=completed(context);
         boolean unlocked=unlocked(context);

@@ -299,7 +299,7 @@ public final class JourneyStore {
     }
 
     /** Visit one full journey at a time, so consumers can project large result files and release them. */
-    public static synchronized void forEach(Context context, JourneyVisitor visitor) {
+    public static void forEach(Context context, JourneyVisitor visitor) {
         migrateLegacy(context);
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));

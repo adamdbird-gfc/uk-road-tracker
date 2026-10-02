@@ -816,62 +816,20 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     }
 
     private void openSettlementMap(LocalTownProgress town) {
-        JSONArray routes=new JSONArray(); final int maxRoutes=2_000,maxPoints=20_000;
-        int retained=0; boolean full=false;
-        for(RoadDiscoveryItem road:town.roads.values()){
-            int before=routes.length();
-            for(JSONObject geometry:road.geometryEvidence){
-                String type=geometry.optString("type");JSONArray coordinates=geometry.optJSONArray("coordinates");
-                if(coordinates==null)continue;
-                if("LineString".equals(type)&&coordinates.length()>=2){
-                    if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
-                    JSONArray route=limitRoutePoints(coordinates,Math.min(1_200,maxPoints-retained));
-                    if(route.length()>=2){routes.put(route);retained+=route.length();}
-                }else if("MultiLineString".equals(type)){
-                    for(int i=0;i<coordinates.length();i++){
-                        JSONArray line=coordinates.optJSONArray(i);if(line==null||line.length()<2)continue;
-                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
-                        JSONArray route=limitRoutePoints(line,Math.min(1_200,maxPoints-retained));
-                        if(route.length()>=2){routes.put(route);retained+=route.length();}
-                    }
-                }if(full)break;
-            }
-            // Legacy saved road evidence may lack standalone road geometry.
-            if(routes.length()==before&&!full)for(String journeyId:road.journeyIds){
-                JSONObject journey=JourneyStore.get(this,journeyId);
-                JSONObject result=journey==null?null:journey.optJSONObject("processing_result");
-                JSONObject matched=result==null?null:result.optJSONObject("geojson");
-                JSONArray features=matched==null?null:matched.optJSONArray("features");if(features==null)continue;
-                for(int j=0;j<features.length();j++){
-                    JSONObject feature=features.optJSONObject(j),geometry=feature==null?null:feature.optJSONObject("geometry");
-                    JSONArray coordinates=geometry==null?null:geometry.optJSONArray("coordinates");
-                    String type=geometry==null?"":geometry.optString("type");
-                    if("LineString".equals(type)&&coordinates!=null&&coordinates.length()>=2){
-                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
-                        JSONArray route=limitRoutePoints(coordinates,Math.min(1_200,maxPoints-retained));routes.put(route);retained+=route.length();
-                    }else if("MultiLineString".equals(type)&&coordinates!=null)for(int k=0;k<coordinates.length();k++){
-                        JSONArray line=coordinates.optJSONArray(k);if(line==null||line.length()<2)continue;
-                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
-                        JSONArray route=limitRoutePoints(line,Math.min(1_200,maxPoints-retained));routes.put(route);retained+=route.length();
-                    }if(full)break;
-                }if(full)break;
-            }
-            if(full)break;
-        }
-        Intent intent=new Intent(this,MapActivity.class);
-        intent.putExtra("settlement_code",town.settlement.code);
-        intent.putExtra("settlement_name",town.settlement.name);
-        intent.putExtra("settlement_routes",routes.toString());startActivity(intent);
-    }
-
-    private JSONArray limitRoutePoints(JSONArray route, int maximum) {
-        if (route.length() <= maximum) return route;
-        JSONArray limited = new JSONArray();
-        for (int index = 0; index < maximum; index++) {
-            int source = Math.round(index * (route.length() - 1f) / (maximum - 1f));
-            limited.put(route.opt(source));
-        }
-        return limited;
+        // Pass archive IDs only. The map screen streams matched geometry and
+        // clips it to this settlement, keeping both Binder payload and heap use bounded.
+        Set<String> contributingJourneyIds = new HashSet<>();
+        for (RoadDiscoveryItem road : town.roads.values())
+            contributingJourneyIds.addAll(road.journeyIds);
+        List<String> orderedJourneyIds = new ArrayList<>(contributingJourneyIds);
+        orderedJourneyIds.sort(String::compareTo);
+        JSONArray journeyIds = new JSONArray();
+        for (String journeyId : orderedJourneyIds) journeyIds.put(journeyId);
+        Intent intent = new Intent(this, MapActivity.class);
+        intent.putExtra("settlement_code", town.settlement.code);
+        intent.putExtra("settlement_name", town.settlement.name);
+        intent.putExtra("settlement_journey_ids", journeyIds.toString());
+        startActivity(intent);
     }
 
     private void enrichLocalRoadTowns(DistanceStats stats, int generation) {

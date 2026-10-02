@@ -35,8 +35,8 @@ public class MapActivity extends Activity {
     private static final int MAX_MAP_POINTS = 350_000;
     private static final int MAX_MOTORWAY_POINTS = 120_000;
     private static final int MAX_POINTS_PER_ROUTE = 1_400;
-    private static final int MAX_SETTLEMENT_POINTS_PER_ROUTE = 6_000;
-    private static final int MAX_SETTLEMENT_POINTS = 350_000;
+    private static final int MAX_SETTLEMENT_POINTS_PER_ROUTE = 1_200;
+    private static final int MAX_SETTLEMENT_POINTS = 45_000;
     private static final int MAX_MAP_ROUTES = 5_000;
     private static final Object MAP_CACHE_LOCK = new Object();
     private static MapRoutes processMapCache;
@@ -145,7 +145,7 @@ public class MapActivity extends Activity {
         if (settlementCode != null && !settlementCode.isEmpty()) {
             refreshSettlementMap(generation, settlementCode,
                     getIntent().getStringExtra("settlement_name"),
-                    getIntent().getStringExtra("settlement_routes"));
+                    getIntent().getStringExtra("settlement_journey_ids"));
             return;
         }
         final long revision = JourneyStore.dataRevision(getApplicationContext());
@@ -228,7 +228,7 @@ public class MapActivity extends Activity {
         });
     }
     private void refreshSettlementMap(int generation, String code, String name,
-                                      String routeJson) {
+                                      String journeyIdJson) {
         mapSubtitle.setText("Loading " + name + " and your visited roads…");
         ScreenDataLoader.execute(() -> {
             JSONObject boundary = null;
@@ -237,18 +237,38 @@ public class MapActivity extends Activity {
             String failure = null;
             try {
                 boundary = LocalRoadSettlementMatcher.boundary(code);
-                JSONArray routeArray = new JSONArray(routeJson == null ? "[]" : routeJson);
-                for (int index = 0; index < routeArray.length() && roads.size() < MAX_MAP_ROUTES; index++) {
-                    JSONArray route = routeArray.optJSONArray(index);
-                    // Keep full matched road geometries. Midpoint clipping discards
-                    // most short urban streets; the POC draws these over the red boundary.
-                    int remaining = MAX_SETTLEMENT_POINTS - retainedSettlementPoints;
-                    if (remaining < 2) break;
-                    int allowed = Math.min(MAX_SETTLEMENT_POINTS_PER_ROUTE, remaining);
-                    JSONArray projected = projectMapRoute(route, allowed);
-                    if (projected != null) {
-                        roads.add(projected);
-                        retainedSettlementPoints += projected.length();
+                JSONArray journeyIds = new JSONArray(journeyIdJson == null ? "[]" : journeyIdJson);
+                for (int index = 0; index < journeyIds.length()
+                        && roads.size() < MAX_MAP_ROUTES
+                        && retainedSettlementPoints < MAX_SETTLEMENT_POINTS; index++) {
+                    String journeyId = journeyIds.optString(index, "");
+                    if (journeyId.isEmpty()) continue;
+                    JSONObject journey = JourneyStore.get(getApplicationContext(), journeyId);
+                    JSONObject result = journey == null ? null : journey.optJSONObject("processing_result");
+                    JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+                    JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+                    if (features == null) continue;
+                    for (int featureIndex = 0; featureIndex < features.length()
+                            && roads.size() < MAX_MAP_ROUTES
+                            && retainedSettlementPoints < MAX_SETTLEMENT_POINTS; featureIndex++) {
+                        JSONObject feature = features.optJSONObject(featureIndex);
+                        JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+                        if (geometry == null) continue;
+                        String type = geometry.optString("type", "");
+                        JSONArray coordinates = geometry.optJSONArray("coordinates");
+                        if (coordinates == null) continue;
+                        if ("LineString".equals(type)) {
+                            retainedSettlementPoints += appendClippedRoute(coordinates, boundary, roads,
+                                    MAX_SETTLEMENT_POINTS - retainedSettlementPoints);
+                        } else if ("MultiLineString".equals(type)) {
+                            for (int lineIndex = 0; lineIndex < coordinates.length()
+                                    && retainedSettlementPoints < MAX_SETTLEMENT_POINTS
+                                    && roads.size() < MAX_MAP_ROUTES; lineIndex++) {
+                                JSONArray line = coordinates.optJSONArray(lineIndex);
+                                retainedSettlementPoints += appendClippedRoute(line, boundary, roads,
+                                        MAX_SETTLEMENT_POINTS - retainedSettlementPoints);
+                            }
+                        }
                     }
                 }
                 if (boundary == null) failure = "The settlement boundary is not available yet.";
@@ -276,32 +296,52 @@ public class MapActivity extends Activity {
         });
     }
 
-    private List<JSONArray> clipRouteToSettlement(JSONArray route, JSONObject boundary) {
-        List<JSONArray> clipped = new ArrayList<>();
-        if (route == null || boundary == null) return clipped;
+    private int appendClippedRoute(JSONArray route, JSONObject boundary,
+                                   List<JSONArray> output, int pointBudget) {
+        if (route == null || route.length() < 2 || pointBudget < 2) return 0;
         JSONArray current = null;
-        for (int index = 1; index < route.length(); index++) {
+        int retained = 0;
+        int stride = Math.max(1, (route.length() + MAX_SETTLEMENT_POINTS_PER_ROUTE - 1)
+                / MAX_SETTLEMENT_POINTS_PER_ROUTE);
+        for (int index = 1; index < route.length() && retained < pointBudget
+                && output.size() < MAX_MAP_ROUTES; index++) {
             JSONArray a = route.optJSONArray(index - 1);
             JSONArray b = route.optJSONArray(index);
             if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
             double longitude = (a.optDouble(0) + b.optDouble(0)) / 2d;
             double latitude = (a.optDouble(1) + b.optDouble(1)) / 2d;
-            boolean crossesSettlement = settlementContains(boundary, longitude, latitude)
-                    || settlementContains(boundary, a.optDouble(0), a.optDouble(1))
-                    || settlementContains(boundary, b.optDouble(0), b.optDouble(1));
-            if (crossesSettlement) {
+            if (settlementContains(boundary, longitude, latitude)) {
                 if (current == null) {
                     current = new JSONArray();
-                    current.put(a);
+                    current.put(copyCoordinate(a));
+                    retained++;
                 }
-                current.put(b);
+                if (index % stride == 0 || index == route.length() - 1) {
+                    current.put(copyCoordinate(b));
+                    retained++;
+                    if (current.length() >= MAX_SETTLEMENT_POINTS_PER_ROUTE) {
+                        if (current.length() >= 2) output.add(current);
+                        current = new JSONArray();
+                        current.put(copyCoordinate(b));
+                        retained++;
+                    }
+                }
             } else if (current != null) {
-                if (current.length() >= 2) clipped.add(current);
+                if (current.length() >= 2) output.add(current);
                 current = null;
             }
         }
-        if (current != null && current.length() >= 2) clipped.add(current);
-        return clipped;
+        if (current != null && current.length() >= 2 && output.size() < MAX_MAP_ROUTES)
+            output.add(current);
+        return retained;
+    }
+
+    private JSONArray copyCoordinate(JSONArray coordinate) {
+        JSONArray copy = new JSONArray();
+        copy.put(coordinate.optDouble(0));
+        copy.put(coordinate.optDouble(1));
+        if (coordinate.length() > 2) copy.put(coordinate.optDouble(2));
+        return copy;
     }
 
     private boolean settlementContains(JSONObject value, double longitude, double latitude) {

@@ -73,6 +73,8 @@ public class CollectionsActivity extends Activity {
             return;
         }
         body.addView(card);
+        if(!ServiceStationStore.historicalBackfillComplete(this))
+            ServiceStationStore.ensureHistoricalVisits(this,()->{if(!isFinishing())render();});
         try {
             JSONArray stations=ServiceStationStore.stations(this);
             Set<String> completed=ServiceStationStore.completed(this), automatic=ServiceStationStore.automatic(this);
