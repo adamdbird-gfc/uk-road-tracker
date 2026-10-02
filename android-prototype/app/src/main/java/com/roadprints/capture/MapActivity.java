@@ -36,6 +36,7 @@ public class MapActivity extends Activity {
     private static final int MAX_MOTORWAY_POINTS = 120_000;
     private static final int MAX_POINTS_PER_ROUTE = 1_400;
     private static final int MAX_SETTLEMENT_POINTS_PER_ROUTE = 6_000;
+    private static final int MAX_SETTLEMENT_POINTS = 350_000;
     private static final int MAX_MAP_ROUTES = 5_000;
     private TextView mapSubtitle;
     private GrowingStatusControl growingStatus;
@@ -201,6 +202,7 @@ public class MapActivity extends Activity {
         mapLoader.execute(() -> {
             JSONObject boundary = null;
             List<JSONArray> roads = new ArrayList<>();
+            int retainedSettlementPoints = 0;
             String failure = null;
             try {
                 boundary = LocalRoadSettlementMatcher.boundary(code);
@@ -208,8 +210,14 @@ public class MapActivity extends Activity {
                 for (int index = 0; index < routeArray.length() && roads.size() < MAX_MAP_ROUTES; index++) {
                     JSONArray route = routeArray.optJSONArray(index);
                     for (JSONArray clipped : clipRouteToSettlement(route, boundary)) {
-                        JSONArray projected = projectMapRoute(clipped, MAX_SETTLEMENT_POINTS_PER_ROUTE);
-                        if (projected != null) roads.add(projected);
+                        int remaining = MAX_SETTLEMENT_POINTS - retainedSettlementPoints;
+                        if (remaining < 2) break;
+                        int allowed = Math.min(MAX_SETTLEMENT_POINTS_PER_ROUTE, remaining);
+                        JSONArray projected = projectMapRoute(clipped, allowed);
+                        if (projected != null) {
+                            roads.add(projected);
+                            retainedSettlementPoints += projected.length();
+                        }
                     }
                 }
                 if (boundary == null) failure = "The settlement boundary is not available yet.";
