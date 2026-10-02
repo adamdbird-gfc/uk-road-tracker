@@ -120,14 +120,16 @@ public final class MatchingCoordinator {
 
     private void prepareAndRun(String journeyId) {
         try {
-            List<JSONObject> road = new ArrayList<>();
-            List<JSONObject> foot = new ArrayList<>();
-            for (JSONObject journey : JourneyStore.all(app)) {
-                if (journeyId != null && !journeyId.equals(journey.optString("journey_id"))) continue;
-                recoverIfInterrupted(journey);
-                if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) continue;
-                if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) continue;
-                (isFoot(journey.optString("mode", "unknown")) ? foot : road).add(journey);
+            List<String> road = new ArrayList<>();
+            List<String> foot = new ArrayList<>();
+            if (journeyId != null) {
+                // A per-journey request must not parse every large archived journey.
+                JSONObject journey = JourneyStore.get(app, journeyId);
+                if (journey != null) enqueueIfMatchable(journey, road, foot);
+            } else {
+                // Keep only IDs in the work queue; full GeoJSON stays on disk until a
+                // worker needs that journey, avoiding a heap-sized archive snapshot.
+                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot));
             }
             roadTotal = road.size();
             footTotal = foot.size();
@@ -141,24 +143,24 @@ public final class MatchingCoordinator {
             }
             state = State.RUNNING;
             message = "Matching journeys";
-            ConcurrentLinkedQueue<JSONObject> roadWork = new ConcurrentLinkedQueue<>(road);
-            ConcurrentLinkedQueue<JSONObject> footWork = new ConcurrentLinkedQueue<>(foot);
+            ConcurrentLinkedQueue<String> roadWork = new ConcurrentLinkedQueue<>(road);
+            ConcurrentLinkedQueue<String> footWork = new ConcurrentLinkedQueue<>(foot);
             CountDownLatch done = new CountDownLatch(3);
             for (int i = 0; i < 3; i++) {
                 final boolean footLane = i == 2;
                 workers.execute(() -> {
                     try {
-                        ConcurrentLinkedQueue<JSONObject> lane = footLane ? footWork : roadWork;
-                        JSONObject journey;
-                        while (!pauseRequested && (journey = lane.poll()) != null) {
+                        ConcurrentLinkedQueue<String> lane = footLane ? footWork : roadWork;
+                        String nextJourneyId;
+                        while (!pauseRequested && (nextJourneyId = lane.poll()) != null) {
                             try {
-                                journey = markProcessing(journey);
+                                JSONObject journey = markProcessing(nextJourneyId);
                                 matchJourney(journey);
                                 matched.incrementAndGet();
                                 if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
                             } catch (Exception error) {
                                 failed.incrementAndGet();
-                                markFailed(journey, error);
+                                markFailed(nextJourneyId, error);
                             } finally {
                                 checked.incrementAndGet();
                                 if (footLane) footChecked.incrementAndGet(); else roadChecked.incrementAndGet();
@@ -183,10 +185,19 @@ public final class MatchingCoordinator {
         }
     }
 
-    private void recoverIfInterrupted(JSONObject queued) {
+    private void enqueueIfMatchable(
+            JSONObject journey, List<String> road, List<String> foot) {
+        recoverIfInterrupted(journey);
+        if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
+        if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) return;
+        String journeyId = journey.optString("journey_id", "");
+        if (journeyId.isEmpty()) return;
+        (isFoot(journey.optString("mode", "unknown")) ? foot : road).add(journeyId);
+    }
+
+    private void recoverIfInterrupted(JSONObject journey) {
+        if (journey == null || !"processing".equals(journey.optString("processing_status"))) return;
         synchronized (JourneyStore.class) {
-            JSONObject journey = JourneyStore.get(app, queued.optString("journey_id"));
-            if (journey == null || !"processing".equals(journey.optString("processing_status"))) return;
             try {
                 journey.put("processing_status", "pending");
                 String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
@@ -195,29 +206,30 @@ public final class MatchingCoordinator {
                 JSONObject processing = journey.optJSONObject("processing");
                 if (processing != null) processing.put(stage, "pending");
                 JourneyStore.save(app, journey);
-                queued.put("processing_status", "pending");
             } catch (Exception error) { throw new IllegalStateException("Could not recover interrupted journey", error); }
         }
     }
 
-    private JSONObject markProcessing(JSONObject queued) throws Exception {
+    private JSONObject markProcessing(String journeyId) throws Exception {
         synchronized (JourneyStore.class) {
-        JSONObject journey = JourneyStore.get(app, queued.optString("journey_id"));
-        if (journey == null) throw new IllegalStateException("Journey was deleted before matching");
-        if (!queued.optString("mode").equals(journey.optString("mode")))
-            throw new IllegalStateException("Journey mode changed before matching · retry");
-        if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
-        String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
-        journey.put("processing_status", "processing");
-        JSONObject stages = journey.optJSONObject("stage_statuses");
-        if (stages == null) stages = new JSONObject();
-        stages.put(stage, "processing"); journey.put("stage_statuses", stages);
-        JSONObject processing = journey.optJSONObject("processing");
-        if (processing == null) processing = new JSONObject();
-        processing.put(stage, "processing"); journey.put("processing", processing);
-        journey.remove("processing_result");
-        JourneyStore.save(app, journey);
-        return journey;
+            JSONObject journey = JourneyStore.get(app, journeyId);
+            if (journey == null) throw new IllegalStateException("Journey was deleted before matching");
+            if ("processing".equals(journey.optString("processing_status")))
+                throw new IllegalStateException("Journey is already being matched · retry");
+            if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
+            if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey))
+                throw new IllegalStateException("Journey already has a matched route");
+            String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+            journey.put("processing_status", "processing");
+            JSONObject stages = journey.optJSONObject("stage_statuses");
+            if (stages == null) stages = new JSONObject();
+            stages.put(stage, "processing"); journey.put("stage_statuses", stages);
+            JSONObject processing = journey.optJSONObject("processing");
+            if (processing == null) processing = new JSONObject();
+            processing.put(stage, "processing"); journey.put("processing", processing);
+            journey.remove("processing_result");
+            JourneyStore.save(app, journey);
+            return journey;
         }
     }
 
@@ -257,10 +269,10 @@ public final class MatchingCoordinator {
         }
     }
 
-    private void markFailed(JSONObject journey, Exception error) {
+    private void markFailed(String journeyId, Exception error) {
         try {
             synchronized (JourneyStore.class) {
-            JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+            JSONObject stored = JourneyStore.get(app, journeyId);
             if (stored == null) return;
             String stage = isFoot(stored.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
             stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
