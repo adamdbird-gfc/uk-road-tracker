@@ -13,6 +13,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.util.AtomicFile;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -26,6 +27,11 @@ import com.google.android.gms.location.DetectedActivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -59,6 +65,7 @@ public class CaptureService extends Service {
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
     private static final long STILLNESS_END_THRESHOLD_MS = 180_000L;
+    private static final long CHECKPOINT_INTERVAL_MS = 15_000L;
     private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
 
     private LocationManager locationManager;
@@ -75,6 +82,9 @@ public class CaptureService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
     private boolean captureFinishing;
+    private boolean checkpointPending;
+    private final AtomicFile checkpointFile = new AtomicFile(
+            new File(getFilesDir(), "roadprints_active_capture.json"));
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
             finishCapture();
@@ -112,6 +122,7 @@ public class CaptureService extends Service {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
+        if (isActive(this)) restoreActiveCapture();
     }
 
     @Override
@@ -303,6 +314,7 @@ public class CaptureService extends Service {
         try {
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+            scheduleCaptureCheckpoint();
             broadcastUpdate("Recording " + mode + " locally...");
         } catch (SecurityException error) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
@@ -323,6 +335,7 @@ public class CaptureService extends Service {
         if (captureFinishing) return;
 
         captureFinishing = true;
+        handler.removeCallbacks(checkpointCapture);
         locationManager.removeUpdates(locationListener);
 
         // Snapshot the small live-capture state quickly on the service thread.
@@ -359,6 +372,7 @@ public class CaptureService extends Service {
                         .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
                         .put("foot_matching", "walking".equals(savedMode) ? "pending" : "not_required"));
                 JourneyStore.save(getApplicationContext(), journey);
+                checkpointFile.delete();
                 savedSuccessfully = true;
             } catch (Exception ignored) {
                 // Report the failure on the service thread after the disk operation.
@@ -399,6 +413,106 @@ public class CaptureService extends Service {
 
     private boolean roadMode(String journeyMode) {
         return "driving".equals(journeyMode) || "bus".equals(journeyMode);
+    }
+
+    private void scheduleCaptureCheckpoint() {
+        handler.removeCallbacks(checkpointCapture);
+        handler.postDelayed(checkpointCapture, CHECKPOINT_INTERVAL_MS);
+    }
+
+    private final Runnable checkpointCapture = new Runnable() {
+        @Override public void run() {
+            if (!isActive(CaptureService.this) || captureFinishing) return;
+            if (!checkpointPending) {
+                checkpointPending = true;
+                JSONObject snapshot = null;
+                try {
+                    snapshot = checkpointSnapshot();
+                } catch (Exception ignored) { }
+                if (snapshot != null) {
+                    JSONObject savedSnapshot = snapshot;
+                    captureIo.execute(() -> {
+                        try {
+                            checkpointFile.write(out ->
+                                    out.write(savedSnapshot.toString().getBytes(StandardCharsets.UTF_8)));
+                        } catch (Exception ignored) {
+                            // Keep the prior atomic checkpoint if this write fails.
+                        } finally {
+                            handler.post(() -> checkpointPending = false);
+                        }
+                    });
+                } else {
+                    checkpointPending = false;
+                }
+            }
+            handler.postDelayed(this, CHECKPOINT_INTERVAL_MS);
+        }
+    };
+
+    private JSONObject checkpointSnapshot() throws org.json.JSONException {
+        JSONObject snapshot = new JSONObject();
+        snapshot.put("journey_id", journeyId);
+        snapshot.put("started_at", startedAt);
+        snapshot.put("mode", mode);
+        snapshot.put("distance_meters", distanceMetres);
+        snapshot.put("stationary_since", stationarySince);
+        snapshot.put("points", coordinates(points));
+        return snapshot;
+    }
+
+    private void restoreActiveCapture() {
+        try (InputStream input = checkpointFile.openRead();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(input,
+                     StandardCharsets.UTF_8))) {
+            StringBuilder json = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) json.append(line);
+            JSONObject snapshot = new JSONObject(json.toString());
+            JSONArray savedPoints = snapshot.optJSONArray("points");
+            if (savedPoints == null || savedPoints.length() == 0
+                    || snapshot.optString("journey_id", "").isEmpty()) {
+                throw new IllegalStateException("Incomplete capture checkpoint");
+            }
+
+            journeyId = snapshot.optString("journey_id");
+            startedAt = snapshot.optString("started_at");
+            mode = snapshot.optString("mode", "walking");
+            distanceMetres = snapshot.optDouble("distance_meters", 0);
+            stationarySince = snapshot.optLong("stationary_since", 0);
+            points.clear();
+            for (int index = 0; index < savedPoints.length(); index++) {
+                JSONArray coordinate = savedPoints.optJSONArray(index);
+                if (coordinate == null || coordinate.length() < 2) continue;
+                Location point = new Location("checkpoint");
+                point.setLongitude(coordinate.optDouble(0));
+                point.setLatitude(coordinate.optDouble(1));
+                if (coordinate.length() > 2 && coordinate.optDouble(2) > 0) {
+                    point.setAccuracy((float) coordinate.optDouble(2));
+                }
+                if (coordinate.length() > 3) point.setTime(coordinate.optLong(3));
+                points.add(point);
+            }
+            if (points.isEmpty()) throw new IllegalStateException("No saved GPS points");
+            lastPoint = new Location(points.get(points.size() - 1));
+
+            startForegroundWithNotification();
+            locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+            scheduleCaptureCheckpoint();
+            if (stationarySince > 0) {
+                long remaining = Math.max(1L, STILLNESS_END_THRESHOLD_MS
+                        - (System.currentTimeMillis() - stationarySince));
+                handler.postDelayed(finishIfStill, remaining);
+            }
+            broadcastUpdate("Recovered the active journey from its local checkpoint.");
+        } catch (Exception error) {
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                    .putBoolean(STATE_ACTIVE, false)
+                    .remove(STATE_MODE)
+                    .apply();
+            checkpointFile.delete();
+            broadcastUpdate("The previous recording could not be recovered.");
+        }
     }
 
     private JSONArray coordinates(List<Location> routePoints) throws org.json.JSONException {
@@ -498,6 +612,7 @@ public class CaptureService extends Service {
     @Override
     public void onDestroy() {
         removeActivityUpdates();
+        handler.removeCallbacks(checkpointCapture);
         if (isActive(this)) {
             try {
                 locationManager.removeUpdates(locationListener);
