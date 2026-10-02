@@ -48,8 +48,10 @@ public class RoutePreviewView extends View {
     private final List<JSONArray> coveredMotorwaySegments = new ArrayList<>();
     private final List<JSONArray> incompleteARoadSegments = new ArrayList<>();
     private final List<JSONArray> coveredARoadSegments = new ArrayList<>();
+    private final List<JSONArray> settlementBoundaryRings = new ArrayList<>();
     private final Paint aRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint aRoadIncompletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint settlementBoundaryPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final boolean interactive;
     private final boolean showEmptyMessage;
     private final boolean showEndpointMarkers;
@@ -165,6 +167,11 @@ public class RoutePreviewView extends View {
         aRoadIncompletePaint.setStrokeWidth(dp(4));
         aRoadIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
         aRoadIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
+        settlementBoundaryPaint.setColor(Color.rgb(228, 87, 87));
+        settlementBoundaryPaint.setStyle(Paint.Style.STROKE);
+        settlementBoundaryPaint.setStrokeWidth(dp(3));
+        settlementBoundaryPaint.setStrokeCap(Paint.Cap.ROUND);
+        settlementBoundaryPaint.setStrokeJoin(Paint.Join.ROUND);
         routeHaloPaint.setColor(Color.WHITE);
         routeHaloPaint.setStyle(Paint.Style.STROKE);
         routeHaloPaint.setStrokeWidth(dp(10));
@@ -268,6 +275,44 @@ public class RoutePreviewView extends View {
         invalidate();
     }
 
+    public void setSettlementBoundary(org.json.JSONObject boundary) {
+        settlementBoundaryRings.clear();
+        collectSettlementRings(boundary);
+        if (!settlementBoundaryRings.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    private void collectSettlementRings(org.json.JSONObject value) {
+        if (value == null) return;
+        String type = value.optString("type", "");
+        if ("FeatureCollection".equals(type)) {
+            org.json.JSONArray features = value.optJSONArray("features");
+            if (features != null) for (int index = 0; index < features.length(); index++)
+                collectSettlementRings(features.optJSONObject(index));
+            return;
+        }
+        if ("Feature".equals(type)) {
+            collectSettlementRings(value.optJSONObject("geometry"));
+            return;
+        }
+        org.json.JSONArray coordinates = value.optJSONArray("coordinates");
+        if ("Polygon".equals(type) && coordinates != null) {
+            addBoundaryRing(coordinates.optJSONArray(0));
+        } else if ("MultiPolygon".equals(type) && coordinates != null) {
+            for (int index = 0; index < coordinates.length(); index++)
+                addBoundaryRing(coordinates.optJSONArray(index) == null ? null
+                        : coordinates.optJSONArray(index).optJSONArray(0));
+        }
+    }
+
+    private void addBoundaryRing(JSONArray ring) {
+        if (ring != null && ring.length() >= 4) settlementBoundaryRings.add(ring);
+    }
+
     private void replaceSegments(List<JSONArray> target, List<JSONArray> source) {
         target.clear();
         if (source == null) return;
@@ -296,6 +341,8 @@ public class RoutePreviewView extends View {
         boolean hasTiles = drawTiles(canvas);
 
         if (coordinatesValid) {
+            for (JSONArray ring : settlementBoundaryRings)
+                drawRoute(canvas, ring, settlementBoundaryPaint, null);
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
             JSONArray startEndRoute = hasRoutePoints(coordinates)
                     ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
@@ -363,6 +410,7 @@ public class RoutePreviewView extends View {
             fitRoutes.addAll(coveredMotorwaySegments);
             fitRoutes.addAll(incompleteARoadSegments);
             fitRoutes.addAll(coveredARoadSegments);
+            fitRoutes.addAll(settlementBoundaryRings);
             for (JSONArray routeCoordinates : fitRoutes) {
                 for (int index = 0; index < routeCoordinates.length(); index++) {
                     org.json.JSONArray point = routeCoordinates.getJSONArray(index);

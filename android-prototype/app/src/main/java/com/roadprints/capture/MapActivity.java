@@ -123,6 +123,13 @@ public class MapActivity extends Activity {
 
     private void refreshMap() {
         final int generation = ++mapLoadGeneration;
+        String settlementCode = getIntent().getStringExtra("settlement_code");
+        if (settlementCode != null && !settlementCode.isEmpty()) {
+            refreshSettlementMap(generation, settlementCode,
+                    getIntent().getStringExtra("settlement_name"),
+                    getIntent().getStringExtra("settlement_routes"));
+            return;
+        }
         mapSubtitle.setText("Loading matched journeys…");
         mapLoader.execute(() -> {
             MapRoutes mapRoutes;
@@ -167,6 +174,116 @@ public class MapActivity extends Activity {
                 addZoomControls(mapFrame, map);
             });
         });
+    }
+
+    private void refreshSettlementMap(int generation, String code, String name,
+                                      String routeJson) {
+        mapSubtitle.setText("Loading " + name + " and your visited roads…");
+        mapLoader.execute(() -> {
+            JSONObject boundary = null;
+            List<JSONArray> roads = new ArrayList<>();
+            String failure = null;
+            try {
+                boundary = LocalRoadSettlementMatcher.boundary(code);
+                JSONArray routeArray = new JSONArray(routeJson == null ? "[]" : routeJson);
+                for (int index = 0; index < routeArray.length() && roads.size() < MAX_MAP_ROUTES; index++) {
+                    JSONArray route = routeArray.optJSONArray(index);
+                    for (JSONArray clipped : clipRouteToSettlement(route, boundary)) {
+                        JSONArray projected = projectMapRoute(clipped, MAX_POINTS_PER_ROUTE);
+                        if (projected != null) roads.add(projected);
+                    }
+                }
+                if (boundary == null) failure = "The settlement boundary is not available yet.";
+            } catch (Exception error) {
+                failure = "The settlement map could not be loaded. Reopen it to retry.";
+            }
+            final JSONObject resultBoundary = boundary;
+            final List<JSONArray> resultRoads = roads;
+            final String resultFailure = failure;
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != mapLoadGeneration) return;
+                mapFrame.removeAllViews();
+                mapSubtitle.setText((name == null ? "Settlement" : name)
+                        + " · visited roads inside the red boundary");
+                RoutePreviewView map = new RoutePreviewView(this, resultRoads, true);
+                map.setFlatRoadMapStyle(true);
+                map.setSettlementBoundary(resultBoundary);
+                map.setContentDescription("Visited roads in " + name
+                        + " inside the red settlement boundary. Pinch to zoom and drag to move.");
+                mapFrame.addView(map, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                addZoomControls(mapFrame, map);
+                if (resultFailure != null) mapSubtitle.setText(resultFailure);
+            });
+        });
+    }
+
+    private List<JSONArray> clipRouteToSettlement(JSONArray route, JSONObject boundary) {
+        List<JSONArray> clipped = new ArrayList<>();
+        if (route == null || boundary == null) return clipped;
+        JSONArray current = null;
+        for (int index = 1; index < route.length(); index++) {
+            JSONArray a = route.optJSONArray(index - 1);
+            JSONArray b = route.optJSONArray(index);
+            if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+            double longitude = (a.optDouble(0) + b.optDouble(0)) / 2d;
+            double latitude = (a.optDouble(1) + b.optDouble(1)) / 2d;
+            if (settlementContains(boundary, longitude, latitude)) {
+                if (current == null) {
+                    current = new JSONArray();
+                    current.put(a);
+                }
+                current.put(b);
+            } else if (current != null) {
+                if (current.length() >= 2) clipped.add(current);
+                current = null;
+            }
+        }
+        if (current != null && current.length() >= 2) clipped.add(current);
+        return clipped;
+    }
+
+    private boolean settlementContains(JSONObject value, double longitude, double latitude) {
+        if (value == null) return false;
+        String type = value.optString("type", "");
+        if ("FeatureCollection".equals(type)) {
+            JSONArray features = value.optJSONArray("features");
+            if (features != null) for (int i = 0; i < features.length(); i++) {
+                if (settlementContains(features.optJSONObject(i), longitude, latitude)) return true;
+            }
+            return false;
+        }
+        if ("Feature".equals(type))
+            return settlementContains(value.optJSONObject("geometry"), longitude, latitude);
+        JSONArray coordinates = value.optJSONArray("coordinates");
+        if ("Polygon".equals(type)) return polygonContains(coordinates, longitude, latitude);
+        if ("MultiPolygon".equals(type) && coordinates != null) {
+            for (int i = 0; i < coordinates.length(); i++)
+                if (polygonContains(coordinates.optJSONArray(i), longitude, latitude)) return true;
+        }
+        return false;
+    }
+
+    private boolean polygonContains(JSONArray rings, double longitude, double latitude) {
+        if (rings == null || rings.length() == 0
+                || !ringContains(rings.optJSONArray(0), longitude, latitude)) return false;
+        for (int i = 1; i < rings.length(); i++)
+            if (ringContains(rings.optJSONArray(i), longitude, latitude)) return false;
+        return true;
+    }
+
+    private boolean ringContains(JSONArray ring, double longitude, double latitude) {
+        if (ring == null || ring.length() < 4) return false;
+        boolean inside = false;
+        for (int i = 0, j = ring.length() - 1; i < ring.length(); j = i++) {
+            JSONArray left = ring.optJSONArray(i), right = ring.optJSONArray(j);
+            if (left == null || right == null || left.length() < 2 || right.length() < 2) continue;
+            double x1 = left.optDouble(0), y1 = left.optDouble(1);
+            double x2 = right.optDouble(0), y2 = right.optDouble(1);
+            if ((y1 > latitude) != (y2 > latitude)
+                    && longitude < (x2 - x1) * (latitude - y1) / (y2 - y1) + x1) inside = !inside;
+        }
+        return inside;
     }
 
     private MapRoutes readMapRoutes() {

@@ -45,7 +45,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,6 +62,8 @@ public class JourneyListActivity extends Activity {
     private static final Object SUMMARY_CACHE_LOCK = new Object();
     private static List<JSONObject> processJourneySummaries;
     private static long processJourneyRevision = Long.MIN_VALUE;
+    private static long processDiscoveryRevision = Long.MIN_VALUE;
+    private static Map<String, List<String>> processNewRoadHighlights = Collections.emptyMap();
     private static int savedJourneyScrollY;
     private static int savedJourneyCardLimit = INITIAL_JOURNEY_CARDS;
     private static int savedJourneyFilter;
@@ -81,6 +89,7 @@ public class JourneyListActivity extends Activity {
     private int refreshGeneration;
     private int activeFilter = 0;
     private final List<TextView> filterChips = new ArrayList<>();
+    private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -391,6 +400,7 @@ public class JourneyListActivity extends Activity {
                 startBatchMatch();
             } else {
                 render();
+                loadNewRoadHighlights(initialRevision, generation);
                 restoreJourneyScroll();
             }
             return;
@@ -427,6 +437,7 @@ public class JourneyListActivity extends Activity {
                     startBatchMatch();
                 } else {
                     render();
+                    loadNewRoadHighlights(resultRevision, generation);
                     restoreJourneyScroll();
                 }
             });
@@ -498,6 +509,100 @@ public class JourneyListActivity extends Activity {
         }
     }
 
+    private void loadNewRoadHighlights(long revision, int generation) {
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processDiscoveryRevision == revision) {
+                newRoadHighlights = processNewRoadHighlights;
+                render();
+                return;
+            }
+        }
+        processor.execute(() -> {
+            Map<String, List<String>> highlights = new LinkedHashMap<>();
+            try {
+                List<JourneyDiscoveryRecord> records = new ArrayList<>();
+                JourneyStore.forEach(getApplicationContext(), journey -> {
+                    if (!"complete".equals(journey.optString("processing_status"))) return;
+                    String mode = journey.optString("mode", "unknown").toLowerCase();
+                    if (!(isRoadMode(mode) || isFootMode(mode))) return;
+                    Map<String, String> roads = new LinkedHashMap<>();
+                    for (JSONObject feature : discoveryFeatures(journey)) {
+                        JSONObject properties = feature.optJSONObject("properties");
+                        if (properties == null) continue;
+                        String rawRef = properties.optString("road_ref", properties.optString("ref", ""));
+                        String name = properties.optString("name", properties.optString("road_name", "")).trim();
+                        String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
+                                : rawRef.trim().split("[;,/]");
+                        for (String value : refs) {
+                            String ref = value.trim().toUpperCase();
+                            boolean usableRef = !ref.isEmpty() && !ref.matches("\\d+(?:[.,]\\d+)?");
+                            String label = usableRef ? ref : name;
+                            if (label.isEmpty() || label.matches("\\d+(?:[.,]\\d+)?")) continue;
+                            roads.putIfAbsent(usableRef ? "ref:" + ref : "name:" + label.toLowerCase(), label);
+                        }
+                    }
+                    if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
+                            journey.optString("journey_id", ""), journeyStartMillis(journey), roads));
+                });
+                records.sort(Comparator.comparingLong(record -> record.startedAt));
+                Set<String> seen = new HashSet<>();
+                for (JourneyDiscoveryRecord record : records) {
+                    List<String> fresh = new ArrayList<>();
+                    for (Map.Entry<String, String> road : record.roads.entrySet())
+                        if (!seen.contains(road.getKey())) fresh.add(road.getValue());
+                    if (!fresh.isEmpty()) highlights.put(record.journeyId, fresh);
+                    seen.addAll(record.roads.keySet());
+                }
+            } catch (Exception error) {
+                android.util.Log.w("Roadprints", "Journey road highlights could not be calculated", error);
+            }
+            final Map<String, List<String>> result = highlights;
+            synchronized (SUMMARY_CACHE_LOCK) {
+                processDiscoveryRevision = revision;
+                processNewRoadHighlights = result;
+            }
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != refreshGeneration) return;
+                newRoadHighlights = result;
+                render();
+            });
+        });
+    }
+
+    private List<JSONObject> discoveryFeatures(JSONObject journey) {
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject roadGeoJson = result == null ? null : result.optJSONObject("road_geojson");
+        JSONArray features = roadGeoJson == null ? null : roadGeoJson.optJSONArray("features");
+        if (features == null || features.length() == 0) {
+            features = new JSONArray();
+            appendDiscoveryFeatures(features, result == null ? null : result.optJSONObject("motorway_geojson"));
+            appendDiscoveryFeatures(features, result == null ? null : result.optJSONObject("a_road_geojson"));
+        }
+        List<JSONObject> output = new ArrayList<>();
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            if (feature != null) output.add(feature);
+        }
+        return output;
+    }
+
+    private void appendDiscoveryFeatures(JSONArray target, JSONObject geojson) {
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return;
+        for (int index = 0; index < features.length(); index++) target.put(features.opt(index));
+    }
+
+    private static final class JourneyDiscoveryRecord {
+        final String journeyId;
+        final long startedAt;
+        final Map<String, String> roads;
+        JourneyDiscoveryRecord(String journeyId, long startedAt, Map<String, String> roads) {
+            this.journeyId = journeyId;
+            this.startedAt = startedAt;
+            this.roads = roads;
+        }
+    }
+
     private View createCard(JSONObject journey) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -552,6 +657,25 @@ public class JourneyListActivity extends Activity {
         details.addView(heading);
         details.addView(summary);
         details.addView(evidence);
+        List<String> newRoads = newRoadHighlights.get(journey.optString("journey_id", ""));
+        if (newRoads != null && !newRoads.isEmpty()) {
+            TextView discoveries = new TextView(this);
+            StringBuilder text = new StringBuilder("NEW ROADS · ").append(newRoads.size());
+            int shown = Math.min(5, newRoads.size());
+            for (int index = 0; index < shown; index++) {
+                text.append(index == 0 ? "\n" : "  ·  ").append(newRoads.get(index));
+            }
+            if (newRoads.size() > shown) text.append("  ·  +").append(newRoads.size() - shown).append(" more");
+            discoveries.setText(text.toString());
+            discoveries.setTextSize(12);
+            discoveries.setTypeface(null, android.graphics.Typeface.BOLD);
+            discoveries.setTextColor(0xFFFFD36A);
+            discoveries.setPadding(dp(11), dp(9), dp(11), dp(9));
+            discoveries.setBackground(roundRect(0x332E5C9B, 0x887CB5EA, dp(10)));
+            LinearLayout.LayoutParams discoveryParams = new LinearLayout.LayoutParams(-1, -2);
+            discoveryParams.bottomMargin = dp(8);
+            details.addView(discoveries, discoveryParams);
+        }
 
         LinearLayout cardContent = new LinearLayout(this);
         cardContent.setOrientation(LinearLayout.HORIZONTAL);
