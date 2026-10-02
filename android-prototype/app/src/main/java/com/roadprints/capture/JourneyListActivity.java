@@ -757,8 +757,17 @@ public class JourneyListActivity extends Activity {
         previewLabel.setPadding(side, dp(8), side, dp(10));
         body.addView(previewLabel);
 
+        // Flights and trains are shown as a simple endpoint-to-endpoint connection,
+        // matching the POC. Their detailed Timeline trace remains saved in the journey.
+        String journeyMode = journey.optString("mode", "unknown").trim().toLowerCase();
+        boolean pointToPoint = isPointToPointMode(journeyMode);
+        JSONArray previewCoordinates = pointToPoint
+                ? endpointCoordinates(coordinates) : coordinates;
+        List<JSONArray> previewMatches = pointToPoint
+                ? java.util.Collections.emptyList() : matchedSegments;
+
         // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
-        RoutePreviewView preview = new RoutePreviewView(this, coordinates, matchedSegments);
+        RoutePreviewView preview = new RoutePreviewView(this, previewCoordinates, previewMatches);
         body.addView(preview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
         if (!matchedSegments.isEmpty()) {
@@ -1202,6 +1211,18 @@ public class JourneyListActivity extends Activity {
                 + (matching > 0 ? " • Matching: " + matching : "");
         readinessSummary.setText(firstLine + "\n" + secondLine);
 
+    }
+
+    private boolean isPointToPointMode(String mode) {
+        return "train".equals(mode) || "plane".equals(mode);
+    }
+
+    private JSONArray endpointCoordinates(JSONArray coordinates) {
+        if (coordinates == null || coordinates.length() < 2) return coordinates;
+        JSONArray endpoints = new JSONArray();
+        endpoints.put(coordinates.optJSONArray(0));
+        endpoints.put(coordinates.optJSONArray(coordinates.length() - 1));
+        return endpoints;
     }
 
     private int pointCount(JSONObject journey) {
