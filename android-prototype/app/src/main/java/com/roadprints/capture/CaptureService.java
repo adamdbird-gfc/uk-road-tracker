@@ -511,15 +511,19 @@ public class CaptureService extends Service {
             lastPoint = new Location(points.get(points.size() - 1));
 
             startForegroundWithNotification();
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
             scheduleCaptureCheckpoint();
             if (stationarySince > 0) {
                 long remaining = Math.max(1L, STILLNESS_END_THRESHOLD_MS
                         - (System.currentTimeMillis() - stationarySince));
                 handler.postDelayed(finishIfStill, remaining);
             }
-            broadcastUpdate("Recovered the active journey from its local checkpoint.");
+            try {
+                locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+                broadcastUpdate("Recovered the active journey from its local checkpoint.");
+            } catch (SecurityException error) {
+                broadcastUpdate("Journey recovered; location permission is needed to resume tracking.");
+            }
         } catch (Exception error) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
