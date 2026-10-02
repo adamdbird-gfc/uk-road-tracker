@@ -338,9 +338,13 @@ public class MapActivity extends Activity {
 
     private JSONArray copyCoordinate(JSONArray coordinate) {
         JSONArray copy = new JSONArray();
-        copy.put(coordinate.optDouble(0));
-        copy.put(coordinate.optDouble(1));
-        if (coordinate.length() > 2) copy.put(coordinate.optDouble(2));
+        try {
+            copy.put(coordinate.optDouble(0));
+            copy.put(coordinate.optDouble(1));
+            if (coordinate.length() > 2) copy.put(coordinate.optDouble(2));
+        } catch (org.json.JSONException ignored) {
+            // Coordinates are numeric and the fresh array cannot otherwise fail.
+        }
         return copy;
     }
 
