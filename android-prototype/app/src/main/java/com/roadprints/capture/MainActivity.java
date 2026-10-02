@@ -102,6 +102,7 @@ public class MainActivity extends Activity {
         updateCaptureButton();
         updateTrackingButton();
         if (tracking) repairTrackingSubscription();
+        else if (capturing) resumeActiveCapture();
         modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
     }
 
@@ -497,6 +498,16 @@ public class MainActivity extends Activity {
             startForegroundService(repair);
         } else {
             startService(repair);
+        }
+    }
+
+    private void resumeActiveCapture() {
+        Intent resume = new Intent(this, CaptureService.class)
+                .setAction(CaptureService.ACTION_RESUME);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(resume);
+        } else {
+            startService(resume);
         }
     }
 
