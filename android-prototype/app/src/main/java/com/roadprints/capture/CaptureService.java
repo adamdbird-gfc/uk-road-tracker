@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CaptureService extends Service {
     public static final String ACTION_START = "com.roadprints.capture.START";
@@ -71,6 +73,8 @@ public class CaptureService extends Service {
     private long stationarySince;
     private Location stationaryAnchor;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
+    private boolean captureFinishing;
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
             finishCapture();
@@ -316,32 +320,58 @@ public class CaptureService extends Service {
             if (!isArmed(this)) stopSelf();
             return;
         }
+        if (captureFinishing) return;
 
+        captureFinishing = true;
         locationManager.removeUpdates(locationListener);
-        boolean savedSuccessfully = false;
-        try {
-            JSONObject journey = new JSONObject();
-            journey.put("journey_id", journeyId);
-            journey.put("revision", 1);
-            journey.put("source", new JSONObject().put("type", "android_activity_capture"));
-            journey.put("started_at", startedAt);
-            journey.put("ended_at", Instant.now().toString());
-            journey.put("timezone", ZoneId.systemDefault().toString());
-            journey.put("mode", mode);
-            journey.put("transport_confirmation", "required");
-            journey.put("distance_meters", distanceMetres);
-            journey.put("route_geometry", new JSONObject()
-                    .put("type", "LineString")
-                    .put("coordinates", coordinates()));
-            journey.put("processing", new JSONObject()
-                    .put("import", "complete")
-                    .put("road_matching", roadMode(mode) ? "pending" : "not_required")
-                    .put("foot_matching", mode.equals("walking") ? "pending" : "not_required"));
-            JourneyStore.save(this, journey);
-            savedSuccessfully = true;
-        } catch (Exception ignored) {
-            // The final UI update below reports the failed save after state cleanup.
-        } finally {
+
+        // Snapshot the small live-capture state quickly on the service thread.
+        // JourneyStore.save is synchronized with archive reads, so serializing and
+        // saving here could block Android's main thread while another screen scans
+        // a large journey archive.
+        final List<Location> savedPoints = new ArrayList<>(points);
+        final String savedJourneyId = journeyId;
+        final String savedStartedAt = startedAt;
+        final String savedMode = mode;
+        final double savedDistanceMetres = distanceMetres;
+        final String savedEndedAt = Instant.now().toString();
+        final String savedTimezone = ZoneId.systemDefault().toString();
+        broadcastUpdate("Saving journey locally...");
+
+        captureIo.execute(() -> {
+            boolean savedSuccessfully = false;
+            try {
+                JSONObject journey = new JSONObject();
+                journey.put("journey_id", savedJourneyId);
+                journey.put("revision", 1);
+                journey.put("source", new JSONObject().put("type", "android_activity_capture"));
+                journey.put("started_at", savedStartedAt);
+                journey.put("ended_at", savedEndedAt);
+                journey.put("timezone", savedTimezone);
+                journey.put("mode", savedMode);
+                journey.put("transport_confirmation", "required");
+                journey.put("distance_meters", savedDistanceMetres);
+                journey.put("route_geometry", new JSONObject()
+                        .put("type", "LineString")
+                        .put("coordinates", coordinates(savedPoints)));
+                journey.put("processing", new JSONObject()
+                        .put("import", "complete")
+                        .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
+                        .put("foot_matching", "walking".equals(savedMode) ? "pending" : "not_required"));
+                JourneyStore.save(getApplicationContext(), journey);
+                savedSuccessfully = true;
+            } catch (Exception ignored) {
+                // Report the failure on the service thread after the disk operation.
+            }
+
+            final boolean completed = savedSuccessfully;
+            handler.post(() -> completeCaptureSave(completed));
+        });
+    }
+
+    private void completeCaptureSave(boolean savedSuccessfully) {
+        captureFinishing = false;
+        if (savedSuccessfully) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
                     .remove(STATE_MODE)
@@ -354,20 +384,16 @@ public class CaptureService extends Service {
             lastPoint = null;
             stationarySince = 0;
             stationaryAnchor = null;
-
-            if (isArmed(this)) {
-                updateNotification();
-            }
-
-            // Broadcast after clearing active state so the UI refreshes the saved
-            // journey count immediately instead of treating this as a live update.
-            broadcastUpdate(savedSuccessfully
-                    ? "Journey saved locally. Review its transport type next time."
-                    : "Could not save journey.");
+            handler.removeCallbacks(finishIfStill);
+            if (isArmed(this)) updateNotification();
+            broadcastUpdate("Journey saved locally. Review its transport type next time.");
             if (!isArmed(this)) {
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
             }
+        } else {
+            broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
+            // Retain the points and recording state so a later Stop can retry.
         }
     }
 
@@ -375,9 +401,9 @@ public class CaptureService extends Service {
         return "driving".equals(journeyMode) || "bus".equals(journeyMode);
     }
 
-    private JSONArray coordinates() throws org.json.JSONException {
+    private JSONArray coordinates(List<Location> routePoints) throws org.json.JSONException {
         JSONArray coordinates = new JSONArray();
-        for (Location point : points) {
+        for (Location point : routePoints) {
             coordinates.put(new JSONArray()
                     .put(point.getLongitude())
                     .put(point.getLatitude()));
