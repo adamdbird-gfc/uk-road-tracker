@@ -43,10 +43,10 @@ public class MainActivity extends Activity {
     private GrowingStatusControl growingStatus;
     private static final int LOCATION_REQUEST = 41;
     private static final String[] MODE_LABELS = {
-            "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry"
+            "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry", "Unknown"
     };
     private static final String[] MODE_VALUES = {
-            "driving", "walking", "bus", "train", "cycling", "plane", "ferry"
+            "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
     };
 
     private TextView status;

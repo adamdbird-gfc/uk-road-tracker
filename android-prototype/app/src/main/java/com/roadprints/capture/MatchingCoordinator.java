@@ -308,6 +308,10 @@ public final class MatchingCoordinator {
     }
 
     private boolean canMatch(JSONObject j) {
+        // Captured legs require a transport review. This is essential for
+        // automatically split vehicle legs, since Android reports both road
+        // vehicles and trains as IN_VEHICLE.
+        if ("required".equals(j.optString("transport_confirmation"))) return false;
         String mode = j.optString("mode", "unknown");
         if (!isFoot(mode) && !isRoad(mode)) return false;
         JSONObject geometry = j.optJSONObject("route_geometry");

@@ -85,6 +85,7 @@ public class CaptureService extends Service {
     private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
     private boolean captureFinishing;
     private boolean checkpointPending;
+    private String nextCaptureMode;
     private AtomicFile checkpointFile;
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
@@ -133,6 +134,7 @@ public class CaptureService extends Service {
 
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
+            nextCaptureMode = null;
             finishCapture();
         } else if (ACTION_START.equals(action)) {
             startCapture(intent.getStringExtra(EXTRA_MODE));
@@ -198,6 +200,7 @@ public class CaptureService extends Service {
     }
 
     private void disarmTracking() {
+        nextCaptureMode = null;
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, false).apply();
         removeActivityUpdates();
@@ -250,8 +253,23 @@ public class CaptureService extends Service {
         stationaryAnchor = null;
         handler.removeCallbacks(finishIfStill);
         String detectedMode = modeForActivity(activityType);
-        if (detectedMode != null && !isActive(this)) {
-            startCapture(detectedMode);
+        if (detectedMode != null) {
+            if (!isActive(this)) {
+                startCapture(detectedMode);
+            } else if (!detectedMode.equals(mode)) {
+                // Keep each detected movement type as its own reviewable journey.
+                // IN_VEHICLE cannot distinguish trains from road vehicles, so the
+                // saved leg remains subject to transport review before matching.
+                if (points.size() >= 2) {
+                    nextCaptureMode = detectedMode;
+                    if (!captureFinishing) finishCapture();
+                    broadcastUpdate("Movement changed to " + detectedMode
+                            + "; saving this journey and starting a new leg...");
+                } else {
+                    broadcastUpdate("Movement changed to " + detectedMode
+                            + "; keeping the short segment with the current journey.");
+                }
+            }
         }
     }
 
@@ -287,7 +305,9 @@ public class CaptureService extends Service {
     }
 
     private String modeForActivity(int activityType) {
-        if (activityType == DetectedActivity.IN_VEHICLE) return "driving";
+        // Android's activity API reports both trains and road vehicles as
+        // IN_VEHICLE. Keep this unclassified until the user confirms transport.
+        if (activityType == DetectedActivity.IN_VEHICLE) return "unknown";
         if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
         if (activityType == DetectedActivity.WALKING
                 || activityType == DetectedActivity.ON_FOOT
@@ -390,6 +410,8 @@ public class CaptureService extends Service {
     private void completeCaptureSave(boolean savedSuccessfully) {
         captureFinishing = false;
         if (savedSuccessfully) {
+            String continueMode = nextCaptureMode;
+            nextCaptureMode = null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
                     .remove(STATE_MODE)
@@ -403,15 +425,28 @@ public class CaptureService extends Service {
             stationarySince = 0;
             stationaryAnchor = null;
             handler.removeCallbacks(finishIfStill);
-            if (isArmed(this)) updateNotification();
+            if (isArmed(this) && continueMode != null) {
+                startCapture(continueMode);
+                broadcastUpdate("Started a new " + continueMode + " journey leg.");
+            } else if (isArmed(this)) {
+                updateNotification();
+            }
             broadcastUpdate("Journey saved locally. Review its transport type next time.");
             if (!isArmed(this)) {
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
             }
         } else {
+            nextCaptureMode = null;
             broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
             // Retain the points and recording state so a later Stop can retry.
+            try {
+                locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+                scheduleCaptureCheckpoint();
+            } catch (SecurityException ignored) {
+                broadcastUpdate("Could not resume location updates after the save failed.");
+            }
         }
     }
 

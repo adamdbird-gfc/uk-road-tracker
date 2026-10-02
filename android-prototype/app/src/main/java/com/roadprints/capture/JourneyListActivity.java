@@ -883,7 +883,10 @@ public class JourneyListActivity extends Activity {
         TextView status = new TextView(this);
         String statusText;
         int statusColor;
-        if (!processableMode) {
+        if ("required".equals(journey.optString("transport_confirmation"))) {
+            statusText = "Confirm the transport type before matching this journey";
+            statusColor = 0xFFF7C450;
+        } else if (!processableMode) {
             statusText = "No route matching required for this transport type";
             statusColor = 0xFFB9C5D8;
         } else if (!enoughEvidence) {

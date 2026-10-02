@@ -56,6 +56,22 @@ public class MatchingCoordinatorTest {
         coordinator.start(); await(MatchingCoordinator.State.COMPLETE);
         assertEquals(1, road.get()); assertEquals(1, foot.get());
     }
+    @Test public void transportReviewBlocksCapturedLegFromRoadMatching() throws Exception {
+        JSONObject unreviewed = new JSONObject().put("journey_id", "unreviewed")
+                .put("mode", "driving").put("processing_status", "pending")
+                .put("transport_confirmation", "required")
+                .put("source", new JSONObject().put("type", "android_activity_capture"))
+                .put("route_geometry", new JSONObject().put("type", "LineString")
+                        .put("coordinates", new JSONArray("[[0.3,51.4],[0.31,51.41]]")));
+        JourneyStore.save(app, unreviewed);
+        AtomicInteger calls = new AtomicInteger();
+        coordinator = new MatchingCoordinator(app, (isFoot, payload) -> {
+            calls.incrementAndGet(); return route();
+        });
+        coordinator.start(); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(0, calls.get());
+        assertEquals("pending", JourneyStore.get(app, "unreviewed").optString("processing_status"));
+    }
     @Test public void pauseSavesInFlightAndResumeDoesNotDuplicateWork() throws Exception {
         for (int i = 0; i < 5; i++) save("foot" + i, "walking", "pending");
         CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
