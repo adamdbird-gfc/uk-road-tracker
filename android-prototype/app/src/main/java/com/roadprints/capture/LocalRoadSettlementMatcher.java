@@ -33,11 +33,8 @@ final class LocalRoadSettlementMatcher {
 
     static List<Settlement> resolve(Context context, String roadId, List<JSONObject> geometries)
             throws Exception {
-        String cacheKey = roadId + ":" + Integer.toHexString(geometries.toString().hashCode());
-        JSONObject cached = context.getSharedPreferences(CACHE, Context.MODE_PRIVATE)
-                .getString(cacheKey, null) == null ? null : new JSONObject(context
-                .getSharedPreferences(CACHE, Context.MODE_PRIVATE).getString(cacheKey, "{}"));
-        if (cached != null) return decode(cached.optJSONArray("settlements"));
+        List<Settlement> cached = cached(context, roadId, geometries);
+        if (cached != null) return cached;
         // The boundary endpoint accepts MultiLineString. Combine every matched
         // segment for this named road so a frequently travelled road only needs
         // one HTTP/PostGIS lookup, even when it appears in many journeys.
@@ -74,6 +71,15 @@ final class LocalRoadSettlementMatcher {
         context.getSharedPreferences(CACHE, Context.MODE_PRIVATE).edit()
                 .putString(cacheKey, record.toString()).apply();
         return new ArrayList<>(result.values());
+    }
+
+    static List<Settlement> cached(
+            Context context, String roadId, List<JSONObject> geometries) throws Exception {
+        String cacheKey = roadId + ":" + Integer.toHexString(geometries.toString().hashCode());
+        String saved = context.getSharedPreferences(CACHE, Context.MODE_PRIVATE)
+                .getString(cacheKey, null);
+        if (saved == null) return null;
+        return decode(new JSONObject(saved).optJSONArray("settlements"));
     }
 
     static int inventoryCount(Context context, String code) throws Exception {

@@ -694,25 +694,8 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
-        String processingStatus = journey.optString("processing_status", "pending");
-        boolean matched = "complete".equals(processingStatus) && hasStoredMatch(journey);
-        boolean processable = canMatchJourney(journey);
-        String cardActionLabel = matched ? "VIEW & REFINE"
-                : processable && "processing".equals(processingStatus) ? "MATCHING…"
-                : processable && ("failed".equals(processingStatus)
-                    || "complete".equals(processingStatus)) ? "RETRY MATCHING"
-                : processable ? "PROCESS JOURNEY" : "VIEW JOURNEY";
-        TextView inspect = actionButton(cardActionLabel, 0xFF102047, Color.WHITE);
-        boolean currentlyMatching = processable && "processing".equals(processingStatus);
-        inspect.setEnabled(!currentlyMatching);
-        inspect.setAlpha(currentlyMatching ? 0.62f : 1f);
-        inspect.setOnClickListener(v -> {
-            if (processable && !matched && !currentlyMatching) {
-                processJourney(journey, null, null, new AlertDialog[]{null});
-            } else {
-                loadAndShowDetails(journey);
-            }
-        });
+        TextView inspect = actionButton("VIEW JOURNEY", 0xFF102047, Color.WHITE);
+        inspect.setOnClickListener(v -> loadAndShowDetails(journey));
         actions.addView(inspect, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
 
@@ -1111,31 +1094,33 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
         secondaryParams.topMargin = dp(8);
-        if (processableMode && enoughEvidence
-                && !("complete".equals(processingStatus) && hasMatchedGeometry)) {
-            Button matchJourney = styledModalButton(
-                    "processing".equals(processingStatus) ? "MATCHING IN PROGRESS…"
-                            : "failed".equals(processingStatus)
-                                || "complete".equals(processingStatus)
-                                ? "RETRY MATCHING" : "PROCESS JOURNEY",
-                    0xFFF7C450, 0xFF0B1C50);
+        Button matchJourney = null;
+        if (processableMode && enoughEvidence) {
+            boolean matched = "complete".equals(processingStatus) && hasMatchedGeometry;
             boolean matching = "processing".equals(processingStatus);
+            String actionText = matched ? "VIEW & EDIT ON MAP"
+                    : matching ? "MATCHING…"
+                    : "failed".equals(processingStatus) || "complete".equals(processingStatus)
+                        ? "RETRY MATCHING" : "MATCH JOURNEY";
+            matchJourney = styledModalButton(actionText,
+                    matched ? 0xFF233B78 : 0xFFF7C450,
+                    matched ? Color.WHITE : 0xFF0B1C50);
             matchJourney.setEnabled(!matching);
             matchJourney.setAlpha(matching ? 0.62f : 1f);
-            matchJourney.setOnClickListener(v -> requestCloseWithUnsavedChanges(
-                    dialogRef[0], hasUnsavedChanges(titleInput, transport,
-                            transportModes, savedTitle[0], savedMode[0]),
-                    saveEdits, () -> processJourney(
-                            journey, matchJourney, status, dialogRef)));
-            actions.addView(matchJourney, secondaryParams);
-        } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
-            Button refineMatched = styledModalButton(
-                    "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
-            refineMatched.setOnClickListener(v -> requestCloseWithUnsavedChanges(
-                    dialogRef[0], hasUnsavedChanges(titleInput, transport,
-                            transportModes, savedTitle[0], savedMode[0]),
-                    saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
-            actions.addView(refineMatched, secondaryParams);
+            Button journeyAction = matchJourney;
+            if (matched) {
+                journeyAction.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
+            } else if (!matching) {
+                journeyAction.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> startSingleJourneyMatch(
+                                journey, journeyAction, status, dialogRef)));
+            }
+            actions.addView(journeyAction, secondaryParams);
         }
 
         TextView delete = new TextView(this);
@@ -1184,6 +1169,10 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
+        if (matchJourney != null
+                && "processing".equals(journey.optString("processing_status"))) {
+            watchSingleJourneyMatch(journey, matchJourney, status, dialogRef);
+        }
     }
 
     private boolean hasUnsavedChanges(
@@ -1296,15 +1285,92 @@ public class JourneyListActivity extends Activity {
         return result != null && !matchedRouteSegments(result).isEmpty();
     }
 
-    private void processJourney(JSONObject journey, Button button, TextView status, AlertDialog[] dialogRef) {
+    private void startSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef) {
         if (!canMatchJourney(journey)) {
-            Toast.makeText(this, "This journey does not meet the route-matching evidence threshold",
-                    Toast.LENGTH_LONG).show();
+            status.setText("This journey does not have enough route points to match.");
             return;
         }
-        MatchingCoordinator.get(this).start(journey.optString("journey_id"));
-        if (dialogRef[0] != null) dialogRef[0].dismiss();
-        startActivity(new Intent(this, GrowingActivity.class));
+        boolean accepted = MatchingCoordinator.get(this)
+                .start(journey.optString("journey_id"));
+        if (!accepted) {
+            status.setText("Another matching run is active. Try this journey again when it finishes.");
+            action.setText("MATCH JOURNEY");
+            action.setEnabled(true);
+            action.setAlpha(1f);
+            return;
+        }
+        action.setText("MATCHING…");
+        action.setEnabled(false);
+        action.setAlpha(0.62f);
+        status.setText("Matching this journey…");
+        status.setTextColor(0xFFF7C450);
+        watchSingleJourneyMatch(journey, action, status, dialogRef);
+    }
+
+    private void watchSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef) {
+        AlertDialog dialog = dialogRef[0];
+        if (dialog == null || !dialog.isShowing()) return;
+        MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(this).snapshot();
+        if (snapshot.state == MatchingCoordinator.State.PREPARING
+                || snapshot.state == MatchingCoordinator.State.RUNNING
+                || snapshot.state == MatchingCoordinator.State.PAUSING) {
+            mainHandler.postDelayed(
+                    () -> watchSingleJourneyMatch(journey, action, status, dialogRef), 1000L);
+            return;
+        }
+        String journeyId = journey.optString("journey_id", "");
+        processor.execute(() -> {
+            JSONObject latest;
+            try {
+                latest = JourneyStore.get(getApplicationContext(), journeyId);
+            } catch (Exception error) {
+                latest = null;
+            }
+            JSONObject saved = latest;
+            mainHandler.post(() -> {
+                if (dialogRef[0] == null || !dialogRef[0].isShowing()) return;
+                if (saved == null) {
+                    status.setText("Journey status could not be refreshed. Retry matching.");
+                    action.setText("RETRY MATCHING");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    return;
+                }
+                try {
+                    journey.put("processing_status", saved.optString("processing_status", "pending"));
+                    if (saved.has("processing_result")) {
+                        journey.put("processing_result", saved.optJSONObject("processing_result"));
+                    } else {
+                        journey.remove("processing_result");
+                    }
+                } catch (Exception ignored) { }
+                boolean matched = "complete".equals(saved.optString("processing_status"))
+                        && !matchedRouteSegments(saved.optJSONObject("processing_result")).isEmpty();
+                if (matched) {
+                    status.setText("✓  Processed · matched route available");
+                    status.setTextColor(0xFF8BE0B1);
+                    action.setText("VIEW & EDIT ON MAP");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    action.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                            dialogRef[0], false, () -> { },
+                            () -> showMatchedRefinement(journey, dialogRef)));
+                } else if ("processing".equals(saved.optString("processing_status"))) {
+                    mainHandler.postDelayed(
+                            () -> watchSingleJourneyMatch(journey, action, status, dialogRef), 1000L);
+                } else {
+                    status.setText("Matching failed or returned no route. You can retry here.");
+                    status.setTextColor(0xFFF7C450);
+                    action.setText("RETRY MATCHING");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    action.setOnClickListener(v -> startSingleJourneyMatch(
+                            journey, action, status, dialogRef));
+                }
+            });
+        });
     }
 
     private JSONObject postJson(String urlValue, JSONObject payload) throws Exception {

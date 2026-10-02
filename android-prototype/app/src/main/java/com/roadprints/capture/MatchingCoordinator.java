@@ -98,12 +98,13 @@ public final class MatchingCoordinator {
 
     public void start() { start(null); }
 
-    public synchronized void start(String journeyId) {
-        if (state == State.PREPARING || state == State.RUNNING || state == State.PAUSING) return;
+    public synchronized boolean start(String journeyId) {
+        if (state == State.PREPARING || state == State.RUNNING || state == State.PAUSING) return false;
         pauseRequested = false;
         state = State.PREPARING;
         message = "Preparing journeys for matching…";
         workers.execute(() -> prepareAndRun(journeyId));
+        return true;
     }
 
     public synchronized void pause() {

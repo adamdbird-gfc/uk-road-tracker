@@ -102,8 +102,7 @@ public class ProgressActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
         titleRow.addView(title);
-        titleRow.addView(buildDistanceUnitToggle());
-        growingStatus = new GrowingStatusControl(this, titleRow);
+remove header toggle        growingStatus = new GrowingStatusControl(this, titleRow);
         heading.addView(titleRow);
         heading.addView(intro);
         root.addView(heading);
@@ -500,7 +499,22 @@ public class ProgressActivity extends Activity {
         heading.setTypeface(null, android.graphics.Typeface.BOLD);
         heading.setTextColor(Color.WHITE);
         heading.setPadding(0, 0, 0, dp(14));
-        panel.addView(heading);
+        if ("Statistics summary".equals(titleText)) {
+            LinearLayout header = new LinearLayout(this);
+            header.setGravity(Gravity.CENTER_VERTICAL);
+            heading.setPadding(0, 0, dp(8), dp(14));
+            header.addView(heading, new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+            View unitToggle = buildDistanceUnitToggle();
+            LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            toggleParams.bottomMargin = dp(10);
+            header.addView(unitToggle, toggleParams);
+            panel.addView(header);
+        } else {
+            panel.addView(heading);
+        }
         return panel;
     }
 
@@ -854,6 +868,14 @@ public class ProgressActivity extends Activity {
             stats.localRoadLookupTotal = 0;
             for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
                 if (!"Local roads".equals(road.category) || road.geometryEvidence.isEmpty()) continue;
+                try {
+                    List<LocalRoadSettlementMatcher.Settlement> cached =
+                            LocalRoadSettlementMatcher.cached(getApplicationContext(),
+                                    road.id, road.geometryEvidence);
+                    if (cached != null) stats.settlementMatches.put(road.id, cached);
+                } catch (Exception error) {
+                    android.util.Log.w("Roadprints", "Cached local settlement lookup could not be read", error);
+                }
                 stats.localRoadLookupTotal++;
                 if (stats.settlementMatches.containsKey(road.id)) stats.localRoadLookupDone++;
             }

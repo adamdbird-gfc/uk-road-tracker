@@ -424,6 +424,9 @@ public class CaptureService extends Service {
                         .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
                         .put("foot_matching", "walking".equals(savedMode) ? "pending" : "not_required"));
                 JourneyStore.save(getApplicationContext(), journey);
+                if (roadMode(savedMode) || "walking".equals(savedMode)) {
+                    MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
+                }
                 checkpointFile.delete();
                 savedSuccessfully = true;
             } catch (Exception ignored) {
