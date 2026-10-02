@@ -13,7 +13,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -122,14 +124,15 @@ public final class MatchingCoordinator {
         try {
             List<String> road = new ArrayList<>();
             List<String> foot = new ArrayList<>();
+            Map<String, String> queuedModes = new HashMap<>();
             if (journeyId != null) {
                 // A per-journey request must not parse every large archived journey.
                 JSONObject journey = JourneyStore.get(app, journeyId);
-                if (journey != null) enqueueIfMatchable(journey, road, foot);
+                if (journey != null) enqueueIfMatchable(journey, road, foot, queuedModes);
             } else {
                 // Keep only IDs in the work queue; full GeoJSON stays on disk until a
                 // worker needs that journey, avoiding a heap-sized archive snapshot.
-                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot));
+                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot, queuedModes));
             }
             roadTotal = road.size();
             footTotal = foot.size();
@@ -154,7 +157,7 @@ public final class MatchingCoordinator {
                         String nextJourneyId;
                         while (!pauseRequested && (nextJourneyId = lane.poll()) != null) {
                             try {
-                                JSONObject journey = markProcessing(nextJourneyId);
+                                JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId));
                                 matchJourney(journey);
                                 matched.incrementAndGet();
                                 if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
@@ -186,13 +189,16 @@ public final class MatchingCoordinator {
     }
 
     private void enqueueIfMatchable(
-            JSONObject journey, List<String> road, List<String> foot) {
+            JSONObject journey, List<String> road, List<String> foot,
+            Map<String, String> queuedModes) {
         recoverIfInterrupted(journey);
         if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
         if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) return;
         String journeyId = journey.optString("journey_id", "");
         if (journeyId.isEmpty()) return;
-        (isFoot(journey.optString("mode", "unknown")) ? foot : road).add(journeyId);
+        String mode = journey.optString("mode", "unknown");
+        queuedModes.put(journeyId, mode);
+        (isFoot(mode) ? foot : road).add(journeyId);
     }
 
     private void recoverIfInterrupted(JSONObject journey) {
@@ -210,10 +216,12 @@ public final class MatchingCoordinator {
         }
     }
 
-    private JSONObject markProcessing(String journeyId) throws Exception {
+    private JSONObject markProcessing(String journeyId, String queuedMode) throws Exception {
         synchronized (JourneyStore.class) {
             JSONObject journey = JourneyStore.get(app, journeyId);
             if (journey == null) throw new IllegalStateException("Journey was deleted before matching");
+            if (queuedMode != null && !queuedMode.equals(journey.optString("mode")))
+                throw new IllegalStateException("Journey mode changed before matching · retry");
             if ("processing".equals(journey.optString("processing_status")))
                 throw new IllegalStateException("Journey is already being matched · retry");
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
