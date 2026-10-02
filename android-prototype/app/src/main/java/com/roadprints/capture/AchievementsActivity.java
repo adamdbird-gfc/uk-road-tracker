@@ -238,26 +238,45 @@ public class AchievementsActivity extends Activity {
 
     private void render(AchievementStore.Snapshot snapshot) {
         content.removeAllViews();
-        summary.setText(snapshot.unlockedCount()+" of "+snapshot.achievements.size()+" unlocked");
+        boolean showServices=ServiceStationStore.unlocked(this);
+        List<AchievementStore.Progress> visible=new ArrayList<>();
+        int unlockedCount=0;
+        for(AchievementStore.Progress item:snapshot.achievements) {
+            boolean service="service-station".equals(item.definition.type);
+            if(service&&!showServices) continue;
+            visible.add(item);
+            if(item.unlocked) unlockedCount++;
+        }
+        summary.setText(unlockedCount+" of "+visible.size()+" unlocked");
         LinearLayout overview=panel();
         TextView overviewTitle=text("Your milestones",18,Color.WHITE,true);
-        TextView overviewCopy=text("Earned as your journeys reveal more of the road network.",13,MUTED,false);
+        TextView overviewCopy=text("Road achievements and, when unlocked, service station achievements.",13,MUTED,false);
         overview.addView(overviewTitle);
         overviewCopy.setPadding(0,dp(5),0,dp(12));
         overview.addView(overviewCopy);
         ProgressBar overall=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
-        overall.setMax(Math.max(1,snapshot.achievements.size()));
-        overall.setProgress(snapshot.unlockedCount());
+        overall.setMax(Math.max(1,visible.size()));
+        overall.setProgress(unlockedCount);
         overall.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));
         overall.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF43598A));
         overview.addView(overall,new LinearLayout.LayoutParams(-1,dp(7)));
         content.addView(overview);
-
-        for (AchievementStore.Progress progress : snapshot.achievements) {
-            content.addView(achievementCard(progress));
+        content.addView(sectionHeading("Road achievements"));
+        for(AchievementStore.Progress item:visible)
+            if(!"service-station".equals(item.definition.type)) content.addView(achievementCard(item));
+        if(showServices) {
+            content.addView(sectionHeading("Service station achievements"));
+            for(AchievementStore.Progress item:visible)
+                if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
         }
         content.addView(text("Achievements are calculated from saved UK driving and bus coverage, plus local-road settlement results.",
                 12,MUTED,false));
+    }
+
+    private TextView sectionHeading(String label) {
+        TextView heading=text(label,18,TEAL,true);
+        heading.setPadding(dp(3),dp(14),dp(3),dp(8));
+        return heading;
     }
 
     private View achievementCard(AchievementStore.Progress progress) {

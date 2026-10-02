@@ -2,8 +2,6 @@ package com.roadprints.capture;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,7 +12,6 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Local entitlement, visit ledger and bundled UK motorway services catalogue. */
 final class ServiceStationStore {
@@ -23,9 +20,7 @@ final class ServiceStationStore {
     private static final String AUTOMATIC = "service_station_automatic";
     private static final String REVISION = "revision";
     private static final String HISTORICAL_BACKFILL_COMPLETE = "historical_backfill_v1_complete";
-    private static final AtomicBoolean BACKFILL_RUNNING = new AtomicBoolean(false);
-    private static final java.util.concurrent.CopyOnWriteArrayList<Runnable> BACKFILL_CALLBACKS =
-            new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final String CONFIRMED_ONLY_MIGRATION = "confirmed_timeline_only_v1";
     private static volatile JSONArray catalogue;
     private ServiceStationStore() {}
 
@@ -38,10 +33,14 @@ final class ServiceStationStore {
     }
     static long revision(Context context) { return prefs(context).getLong(REVISION, 0); }
     static boolean historicalBackfillComplete(Context context) {
+        ensureConfirmedOnlyMigration(context);
         return prefs(context).getBoolean(HISTORICAL_BACKFILL_COMPLETE, false);
     }
     static Set<String> manual(Context context) { return set(context, MANUAL); }
-    static Set<String> automatic(Context context) { return set(context, AUTOMATIC); }
+    static Set<String> automatic(Context context) {
+        ensureConfirmedOnlyMigration(context);
+        return set(context, AUTOMATIC);
+    }
     static Set<String> completed(Context context) {
         Set<String> result=manual(context); result.addAll(automatic(context)); return result;
     }
@@ -65,92 +64,66 @@ final class ServiceStationStore {
         }
     }
     static int recordJourney(Context context, JSONObject journey) {
-        if (!unlocked(context)) return 0;
-        Set<String> discovered = journeyVisits(context, journey);
-        if (discovered.isEmpty()) return 0;
+        // Passing close to a station does not prove that a user stopped there.
+        return 0;
+    }
+
+    private static void ensureConfirmedOnlyMigration(Context context) {
         SharedPreferences p=prefs(context);
-        Set<String> visits=set(context, AUTOMATIC);
-        int before=visits.size();
-        visits.addAll(discovered);
-        if(visits.size()!=before) {
-            p.edit().putStringSet(AUTOMATIC,visits).putLong(REVISION,revision(context)+1).apply();
-        }
-        return visits.size()-before;
+        if(p.getBoolean(CONFIRMED_ONLY_MIGRATION,false)) return;
+        p.edit().remove(AUTOMATIC).putBoolean(CONFIRMED_ONLY_MIGRATION,true)
+                .putBoolean(HISTORICAL_BACKFILL_COMPLETE,true)
+                .putLong(REVISION,revision(context)+1).apply();
     }
 
-    /** Backfill imported journeys once when the service-station collection is unlocked. */
-    static void ensureHistoricalVisits(Context context, Runnable onComplete) {
-        Context app=context.getApplicationContext();
-        if (onComplete != null) BACKFILL_CALLBACKS.add(onComplete);
-        if (historicalBackfillComplete(app)) {
-            if (onComplete != null && BACKFILL_CALLBACKS.remove(onComplete)) onComplete.run();
-            return;
-        }
-        if (!unlocked(app)) {
-            if (onComplete != null) BACKFILL_CALLBACKS.remove(onComplete);
-            return;
-        }
-        if (!BACKFILL_RUNNING.compareAndSet(false, true)) return;
-        ScreenDataLoader.execute(() -> {
-            boolean succeeded=false;
-            try {
-                Set<String> visits=automatic(app);
-                JSONArray stations=stations(app);
-                final Set<String> allIds=new HashSet<>();
-                for(int i=0;i<stations.length();i++) {
-                    JSONObject station=stations.optJSONObject(i);
-                    if(station!=null) allIds.add(station.optString("id", ""));
-                }
-                JourneyStore.forEach(app, journey -> {
-                    if(visits.size()<allIds.size()) visits.addAll(journeyVisits(app, journey));
-                });
-                SharedPreferences p=prefs(app);
-                p.edit().putStringSet(AUTOMATIC,visits)
-                        .putBoolean(HISTORICAL_BACKFILL_COMPLETE,true)
-                        .putLong(REVISION,revision(app)+1).apply();
-                succeeded=true;
-            } catch(Exception error) {
-                android.util.Log.w("Roadprints", "Historical service-station scan will retry", error);
-            } finally {
-                BACKFILL_RUNNING.set(false);
-            }
-            if(succeeded) {
-                java.util.List<Runnable> callbacks = new java.util.ArrayList<>(BACKFILL_CALLBACKS);
-                BACKFILL_CALLBACKS.clear();
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    for (Runnable callback : callbacks) callback.run();
-                });
-            } else {
-                BACKFILL_CALLBACKS.clear();
-            }
-        });
-    }
-
-    private static Set<String> journeyVisits(Context context, JSONObject journey) {
-        Set<String> found=new HashSet<>();
-        if(journey==null || !"complete".equals(journey.optString("processing_status", ""))) return found;
-        String mode=journey.optString("mode", "");
-        if (!"driving".equals(mode) && !"bus".equals(mode)) return found;
-        JSONObject route=journey.optJSONObject("route_geometry");
-        JSONArray points=route==null?null:route.optJSONArray("coordinates");
-        if(points==null || points.length()<2) return found;
+    /** Match explicit Timeline placeVisit records with the POC's nearest-site rule. */
+    static int recordConfirmedTimelineVisits(Context context, JSONArray visits) {
+        ensureConfirmedOnlyMigration(context);
+        if(visits==null || visits.length()==0) return 0;
+        Set<String> credited=automatic(context);
+        int before=credited.size();
         try {
-            JSONArray stations=stations(context);
-            for(int i=0;i<stations.length();i++) {
-                JSONObject station=stations.optJSONObject(i);
-                if(station==null) continue;
-                String id=station.optString("id", "");
-                if(id.isEmpty()) continue;
-                double lng=station.optDouble("lng", Double.NaN), lat=station.optDouble("lat", Double.NaN);
-                for(int point=1;point<points.length();point++) {
-                    JSONArray a=points.optJSONArray(point-1), b=points.optJSONArray(point);
-                    if(a==null||b==null||a.length()<2||b.length()<2) continue;
-                    if(pointSegmentDistance(lng,lat,a.optDouble(0),a.optDouble(1),
-                            b.optDouble(0),b.optDouble(1))<=350) { found.add(id); break; }
+            JSONArray services=stations(context);
+            for(int i=0;i<visits.length();i++) {
+                JSONObject visit=visits.optJSONObject(i);
+                if(visit==null) continue;
+                double lat=visit.optDouble("lat",Double.NaN),lng=visit.optDouble("lng",Double.NaN);
+                if(!Double.isFinite(lat)||!Double.isFinite(lng)) continue;
+                JSONObject nearest=null;
+                double nearestMetres=Double.MAX_VALUE;
+                for(int j=0;j<services.length();j++) {
+                    JSONObject service=services.optJSONObject(j);
+                    if(service==null) continue;
+                    double distance=haversineMetres(lat,lng,service.optDouble("lat",Double.NaN),
+                            service.optDouble("lng",Double.NaN));
+                    if(distance<nearestMetres){nearestMetres=distance;nearest=service;}
+                }
+                if(nearest!=null && nearestMetres<=350) {
+                    String id=nearest.optString("id","");
+                    if(!id.isEmpty()) credited.add(id);
                 }
             }
-        } catch(Exception ignored) { return found; }
-        return found;
+        } catch(Exception error) {
+            android.util.Log.w("Roadprints","Confirmed service visit matching failed",error);
+            return 0;
+        }
+        if(credited.size()!=before) prefs(context).edit().putStringSet(AUTOMATIC,credited)
+                .putLong(REVISION,revision(context)+1).apply();
+        return credited.size()-before;
+    }
+
+    private static double haversineMetres(double lat1,double lng1,double lat2,double lng2) {
+        if(!Double.isFinite(lat2)||!Double.isFinite(lng2)) return Double.MAX_VALUE;
+        double radians=Math.PI/180d,dLat=(lat2-lat1)*radians,dLng=(lng2-lng1)*radians;
+        double a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*radians)*Math.cos(lat2*radians)
+                *Math.sin(dLng/2)*Math.sin(dLng/2);
+        return 6_371_000d*2d*Math.atan2(Math.sqrt(a),Math.sqrt(1d-a));
+    }
+
+    /** Route paths cannot reconstruct the confirmed Timeline place visits. */
+    static void ensureHistoricalVisits(Context context, Runnable onComplete) {
+        ensureConfirmedOnlyMigration(context);
+        if(onComplete!=null) onComplete.run();
     }
 
     static Map<String, Double> achievementValues(Context context) {
@@ -165,7 +138,9 @@ final class ServiceStationStore {
     }
     static void clearOnDeleteAll(Context context) {
         prefs(context).edit().remove("service_stations_unlocked").remove(MANUAL)
-                .remove(AUTOMATIC).putLong(REVISION,revision(context)+1).apply();
+                .remove(AUTOMATIC).remove(CONFIRMED_ONLY_MIGRATION)
+                .remove(HISTORICAL_BACKFILL_COMPLETE)
+                .putLong(REVISION,revision(context)+1).apply();
     }
     private static Set<String> set(Context context,String key) {
         return new HashSet<>(prefs(context).getStringSet(key, java.util.Collections.emptySet()));

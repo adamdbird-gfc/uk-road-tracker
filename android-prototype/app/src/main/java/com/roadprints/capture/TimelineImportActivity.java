@@ -182,6 +182,7 @@ public class TimelineImportActivity extends Activity {
         int sourceRoutePointsFound = 0;
         String fileFingerprint = fingerprint(uri.toString());
         List<JSONObject> semanticSegments = new ArrayList<>();
+        JSONArray confirmedTimelineVisits = new JSONArray();
         List<TimedPoint> semanticPathPoints = new ArrayList<>();
 
         try (InputStream input = getContentResolver().openInputStream(uri);
@@ -208,6 +209,9 @@ public class TimelineImportActivity extends Activity {
                         JSONObject segment = readJsonObject(reader);
                         found++;
                         collectTimelinePathPoints(segment, semanticPathPoints);
+                        JSONObject visit = segment.optJSONObject("visit");
+                        if (visit == null) visit = segment.optJSONObject("placeVisit");
+                        if (visit != null) collectConfirmedVisit(segment, visit, confirmedTimelineVisits);
                         if (segment.optJSONObject("activity") != null) {
                             semanticSegments.add(segment);
                         } else {
@@ -223,6 +227,8 @@ public class TimelineImportActivity extends Activity {
                     reader.beginArray();
                     while (reader.hasNext()) {
                         JSONObject wrapper = readJsonObject(reader);
+                        JSONObject placeVisit = wrapper.optJSONObject("placeVisit");
+                        if (placeVisit != null) collectConfirmedVisit(placeVisit, placeVisit, confirmedTimelineVisits);
                         JSONObject segment = wrapper.optJSONObject("activitySegment");
                         if (segment == null) continue;
                         found++;
@@ -243,6 +249,7 @@ public class TimelineImportActivity extends Activity {
             reader.endObject();
         }
 
+        ServiceStationStore.recordConfirmedTimelineVisits(this, confirmedTimelineVisits);
         semanticPathPoints.sort((left, right) -> Long.compare(left.timeMs, right.timeMs));
         int semanticActivitiesProcessed = 0;
         for (JSONObject segment : semanticSegments) {
@@ -270,6 +277,32 @@ public class TimelineImportActivity extends Activity {
                                 + "%d journeys contain intermediate points.",
                         added, skipped, invalid, sourceRoutePointsFound,
                         journeyRecordsParsed, journeysWithIntermediateTrace));
+    }
+
+    private void collectConfirmedVisit(JSONObject segment, JSONObject visit, JSONArray output) {
+        if (segment == null || visit == null) return;
+        JSONObject candidate=visit.optJSONObject("topCandidate");
+        JSONObject place=candidate==null?null:candidate.optJSONObject("placeLocation");
+        if(place==null) place=visit.optJSONObject("location");
+        double[] point=place==null?null:parseCoordinates(place.opt("latLng"));
+        if(point==null&&place!=null) point=parseCoordinates(place);
+        if(point==null) point=parseCoordinates(visit.opt("latLng"));
+        if(point==null) return;
+        String start=segment.optString("startTime","");
+        String end=segment.optString("endTime","");
+        JSONObject duration=visit.optJSONObject("duration");
+        if(start.isEmpty()&&duration!=null) start=timestamp(duration,"startTimestamp");
+        if(end.isEmpty()&&duration!=null) end=timestamp(duration,"endTimestamp");
+        JSONObject confirmed=new JSONObject();
+        try {
+            confirmed.put("lat",point[0]);
+            confirmed.put("lng",point[1]);
+            confirmed.put("start",start);
+            confirmed.put("end",end);
+            output.put(confirmed);
+        } catch(org.json.JSONException ignored) {
+            // Ignore only the malformed place visit.
+        }
     }
 
     private ImportCounts importSegment(

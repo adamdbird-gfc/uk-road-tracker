@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.widget.ImageView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -477,12 +479,115 @@ growingStatus = new GrowingStatusControl(this, titleRow);
 
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
+        parent.addView(buildProgressJumpMenu());
         addCollectiveStatistics(parent, stats);
         addRoadDiscoveryPanel(parent, stats);
         addMotorwayAggregatePanel(parent, stats);
         addMotorwayCoveragePanel(parent, stats);
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
+        if (ServiceStationStore.unlocked(this)) addServiceStationPanel(parent);
+    }
+
+    private HorizontalScrollView buildProgressJumpMenu() {
+        HorizontalScrollView scroll=new HorizontalScrollView(this);
+        scroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout row=new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0,dp(2),0,dp(10));
+        addProgressJump(row,"Statistics","statistics");
+        addProgressJump(row,"Motorways","motorways");
+        addProgressJump(row,"A Roads","a_roads");
+        if(ServiceStationStore.unlocked(this)) addProgressJump(row,"Service stations","services");
+        scroll.addView(row);
+        return scroll;
+    }
+
+    private void addProgressJump(LinearLayout row,String label,String section) {
+        TextView chip=new TextView(this);
+        chip.setText(label);
+        chip.setTextSize(12);
+        chip.setTypeface(null,android.graphics.Typeface.BOLD);
+        chip.setTextColor(Color.WHITE);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(dp(13),dp(9),dp(13),dp(9));
+        chip.setBackground(roundRect(0xFF233B78,dp(18)));
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-2,-2);
+        params.rightMargin=dp(7);
+        row.addView(chip,params);
+        chip.setOnClickListener(v->{
+            View target=null;
+            for(int i=0;i<statisticsContent.getChildCount();i++) {
+                View child=statisticsContent.getChildAt(i);
+                if(("progress:"+section).equals(child.getTag())) {target=child;break;}
+            }
+            if(target!=null&&statisticsScroll!=null) statisticsScroll.smoothScrollTo(0,target.getTop());
+        });
+    }
+
+    private void addServiceStationPanel(LinearLayout parent) {
+        LinearLayout panel=statisticsPanel("Service stations");
+        try {
+            JSONArray stations=ServiceStationStore.stations(this);
+            Set<String> completed=ServiceStationStore.completed(this);
+            Set<String> automatic=ServiceStationStore.automatic(this);
+            int visited=0;
+            for(int i=0;i<stations.length();i++) {
+                JSONObject station=stations.optJSONObject(i);
+                if(station!=null&&completed.contains(station.optString("id",""))) visited++;
+            }
+            TextView count=new TextView(this);
+            count.setText(visited+" of "+stations.length()+" service stations collected");
+            count.setTextColor(Color.WHITE);count.setTextSize(16);
+            count.setTypeface(null,android.graphics.Typeface.BOLD);panel.addView(count);
+            TextView note=new TextView(this);
+            note.setText("Automatic matches use confirmed Timeline place visits within 350 m. Re-import Timeline to refresh confirmed stops.");
+            note.setTextColor(MUTED);note.setTextSize(12);note.setPadding(0,dp(5),0,dp(9));panel.addView(note);
+            addServiceStationRegion(panel,stations,"GB",completed,automatic);
+            addServiceStationRegion(panel,stations,"NI",completed,automatic);
+        } catch(Exception error) {
+            TextView message=new TextView(this);message.setText("Service station data could not be loaded.");
+            message.setTextColor(MUTED);panel.addView(message);
+        }
+        parent.addView(panel);
+    }
+
+    private void addServiceStationRegion(LinearLayout panel,JSONArray stations,String region,
+                                         Set<String> completed,Set<String> automatic) {
+        List<JSONObject> values=new ArrayList<>();
+        for(int i=0;i<stations.length();i++) {
+            JSONObject station=stations.optJSONObject(i);
+            if(station!=null&&region.equals(station.optString("region","GB"))) values.add(station);
+        }
+        values.sort(Comparator.comparing((JSONObject item)->item.optString("road",""),String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(item->item.optString("name",""),String.CASE_INSENSITIVE_ORDER));
+        TextView regionTitle=new TextView(this);
+        regionTitle.setText(region.equals("NI")?"NORTHERN IRELAND":"GREAT BRITAIN");
+        regionTitle.setTextColor(GOLD);regionTitle.setTextSize(11);
+        regionTitle.setTypeface(null,android.graphics.Typeface.BOLD);regionTitle.setPadding(0,dp(12),0,dp(4));
+        panel.addView(regionTitle);
+        String previousRoad="";
+        for(JSONObject station:values) {
+            String road=station.optString("road","Other motorway");
+            if(!road.equals(previousRoad)) {
+                TextView roadTitle=new TextView(this);roadTitle.setText(road);roadTitle.setTextColor(TEAL);
+                roadTitle.setTextSize(14);roadTitle.setTypeface(null,android.graphics.Typeface.BOLD);
+                roadTitle.setPadding(dp(4),dp(7),0,dp(2));panel.addView(roadTitle);previousRoad=road;
+            }
+            String id=station.optString("id","");
+            CheckBox item=new CheckBox(this);
+            item.setText(station.optString("name","Service area")
+                    +(automatic.contains(id)?" · Timeline confirmed":""));
+            item.setTextColor(Color.WHITE);item.setTextSize(13);
+            item.setButtonTintList(android.content.res.ColorStateList.valueOf(completed.contains(id)?GOLD:MUTED));
+            item.setChecked(completed.contains(id));item.setEnabled(!automatic.contains(id));panel.addView(item);
+            item.setOnCheckedChangeListener((button,checked)->{
+                int y=statisticsScroll==null?0:statisticsScroll.getScrollY();
+                ServiceStationStore.setManual(this,id,checked);
+                if(loadedStats!=null) renderStatistics(statisticsContent,loadedStats);
+                if(statisticsScroll!=null) statisticsScroll.post(()->statisticsScroll.scrollTo(0,y));
+            });
+        }
     }
 
     private LinearLayout statisticsPanel(String titleText) {
@@ -494,6 +599,12 @@ growingStatus = new GrowingStatusControl(this, titleRow);
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.bottomMargin = dp(12);
         panel.setLayoutParams(params);
+        if ("Statistics summary".equals(titleText)) panel.setTag("progress:statistics");
+        else if ("Motorway aggregate".equals(titleText) || "Motorway coverage".equals(titleText))
+            panel.setTag("progress:motorways");
+        else if ("A-road aggregate".equals(titleText) || "A-road coverage".equals(titleText))
+            panel.setTag("progress:a_roads");
+        else if ("Service stations".equals(titleText)) panel.setTag("progress:services");
 
         TextView heading = new TextView(this);
         heading.setText(titleText);

@@ -73,27 +73,16 @@ public class CollectionsActivity extends Activity {
             return;
         }
         body.addView(card);
-        if(!ServiceStationStore.historicalBackfillComplete(this))
-            ServiceStationStore.ensureHistoricalVisits(this,()->{if(!isFinishing())render();});
-        try {
-            JSONArray stations=ServiceStationStore.stations(this);
-            Set<String> completed=ServiceStationStore.completed(this), automatic=ServiceStationStore.automatic(this);
-            int visited=0;
-            for(int i=0;i<stations.length();i++) {
-                JSONObject station=stations.optJSONObject(i);
-                if(station!=null && completed.contains(station.optString("id"))) visited++;
-            }
-            summary.setText(visited+" of "+stations.length()+" service stations collected");
-            addGroupLabel("GREAT BRITAIN");
-            addRegion(stations,"GB",completed,automatic);
-            addGroupLabel("NORTHERN IRELAND");
-            addRegion(stations,"NI",completed,automatic);
-            TextView achievements=text("Service station achievements are tracked on the Achievements screen.",13,TEAL,false);
-            achievements.setPadding(dp(5),dp(12),dp(5),dp(12)); body.addView(achievements);
-        } catch(Exception error) {
-            TextView failure=text("The service-station list could not be loaded. Reopen Collections to try again.",14,MUTED,false);
-            body.addView(failure);
-        }
+        ServiceStationStore.historicalBackfillComplete(this); // Clears legacy route-proximity guesses once.
+        summary.setText("Your service station collection is available from Progress.");
+        TextView message=text("View the full motorway-by-motorway list, confirmed visits and collection progress on the Progress screen.",14,MUTED,false);
+        message.setPadding(dp(4),dp(8),dp(4),dp(12));body.addView(message);
+        TextView openProgress=text("View service stations in Progress  →",15,NAVY,true);
+        openProgress.setGravity(Gravity.CENTER);
+        openProgress.setPadding(dp(12),dp(13),dp(12),dp(13));
+        openProgress.setBackground(roundRect(GOLD,dp(12)));
+        openProgress.setOnClickListener(v->{startActivity(new Intent(this,ProgressActivity.class));finish();});
+        body.addView(openProgress);
     }
 
     private void addRegion(JSONArray all,String region,Set<String> complete,Set<String> automatic) {
