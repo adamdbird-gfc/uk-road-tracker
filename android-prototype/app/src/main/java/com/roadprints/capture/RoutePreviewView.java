@@ -155,7 +155,7 @@ public class RoutePreviewView extends View {
         motorwayIncompletePaint.setStrokeWidth(dp(4));
         motorwayIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
         motorwayIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
-        aRoadPaint.setColor(Color.rgb(50, 201, 107));
+        aRoadPaint.setColor(0xFF25834A);
         aRoadPaint.setStyle(Paint.Style.STROKE);
         aRoadPaint.setStrokeWidth(dp(4));
         aRoadPaint.setStrokeCap(Paint.Cap.ROUND);
