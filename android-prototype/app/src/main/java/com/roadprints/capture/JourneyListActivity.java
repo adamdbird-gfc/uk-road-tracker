@@ -694,8 +694,25 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
-        TextView inspect = actionButton("VIEW & REFINE", 0xFF102047, Color.WHITE);
-        inspect.setOnClickListener(v -> loadAndShowDetails(journey));
+        String processingStatus = journey.optString("processing_status", "pending");
+        boolean matched = "complete".equals(processingStatus) && hasStoredMatch(journey);
+        boolean processable = canMatchJourney(journey);
+        String cardActionLabel = matched ? "VIEW & REFINE"
+                : processable && "processing".equals(processingStatus) ? "MATCHING…"
+                : processable && ("failed".equals(processingStatus)
+                    || "complete".equals(processingStatus)) ? "RETRY MATCHING"
+                : processable ? "PROCESS JOURNEY" : "VIEW JOURNEY";
+        TextView inspect = actionButton(cardActionLabel, 0xFF102047, Color.WHITE);
+        boolean currentlyMatching = processable && "processing".equals(processingStatus);
+        inspect.setEnabled(!currentlyMatching);
+        inspect.setAlpha(currentlyMatching ? 0.62f : 1f);
+        inspect.setOnClickListener(v -> {
+            if (processable && !matched && !currentlyMatching) {
+                processJourney(journey, null, null, new AlertDialog[]{null});
+            } else {
+                loadAndShowDetails(journey);
+            }
+        });
         actions.addView(inspect, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
 
@@ -1023,16 +1040,16 @@ public class JourneyListActivity extends Activity {
             statusText = "✓  Processed · matched route available";
             statusColor = 0xFF8BE0B1;
         } else if ("complete".equals(processingStatus)) {
-            statusText = "No matched route is available · run matching from Progress";
+            statusText = "No matched route is available · retry matching from this journey";
             statusColor = 0xFFF7C450;
         } else if ("processing".equals(processingStatus)) {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
         } else if ("failed".equals(processingStatus)) {
-            statusText = "Matching failed · retry from Progress";
+            statusText = "Matching failed · retry from this journey";
             statusColor = 0xFFF7C450;
         } else {
-            statusText = "Ready to match from Progress";
+            statusText = "Ready to match from this journey";
             statusColor = 0xFFB9C5D8;
         }
         status.setText(statusText);
@@ -1094,7 +1111,24 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
         secondaryParams.topMargin = dp(8);
-        if ("complete".equals(processingStatus) && hasMatchedGeometry) {
+        if (processableMode && enoughEvidence
+                && !("complete".equals(processingStatus) && hasMatchedGeometry)) {
+            Button matchJourney = styledModalButton(
+                    "processing".equals(processingStatus) ? "MATCHING IN PROGRESS…"
+                            : "failed".equals(processingStatus)
+                                || "complete".equals(processingStatus)
+                                ? "RETRY MATCHING" : "PROCESS JOURNEY",
+                    0xFFF7C450, 0xFF0B1C50);
+            boolean matching = "processing".equals(processingStatus);
+            matchJourney.setEnabled(!matching);
+            matchJourney.setAlpha(matching ? 0.62f : 1f);
+            matchJourney.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                    dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                            transportModes, savedTitle[0], savedMode[0]),
+                    saveEdits, () -> processJourney(
+                            journey, matchJourney, status, dialogRef)));
+            actions.addView(matchJourney, secondaryParams);
+        } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             Button refineMatched = styledModalButton(
                     "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
             refineMatched.setOnClickListener(v -> requestCloseWithUnsavedChanges(
