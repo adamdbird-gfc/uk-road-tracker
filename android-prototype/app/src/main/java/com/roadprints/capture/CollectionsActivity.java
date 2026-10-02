@@ -75,7 +75,7 @@ public class CollectionsActivity extends Activity {
         body.addView(card);
         try {
             JSONArray stations=ServiceStationStore.stations(this);
-            Set<String> completed=ServiceStationStore.completed(this), automatic=ServiceStationStore.automatic();
+            Set<String> completed=ServiceStationStore.completed(this), automatic=ServiceStationStore.automatic(this);
             int visited=0;
             for(int i=0;i<stations.length();i++) {
                 JSONObject station=stations.optJSONObject(i);
