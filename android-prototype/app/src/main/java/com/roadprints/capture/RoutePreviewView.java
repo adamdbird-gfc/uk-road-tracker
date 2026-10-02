@@ -403,14 +403,21 @@ public class RoutePreviewView extends View {
         double minY = Double.MAX_VALUE;
         double maxY = -Double.MAX_VALUE;
         try {
-            List<JSONArray> fitRoutes = new ArrayList<>(matchedSegments);
-            if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
-            fitRoutes.addAll(motorwaySegments);
-            fitRoutes.addAll(incompleteMotorwaySegments);
-            fitRoutes.addAll(coveredMotorwaySegments);
-            fitRoutes.addAll(incompleteARoadSegments);
-            fitRoutes.addAll(coveredARoadSegments);
-            fitRoutes.addAll(settlementBoundaryRings);
+            // Local settlement views are framed by their boundary. Matched
+            // roads may continue far beyond town limits and must not zoom out
+            // the map just to include those off-screen ends.
+            List<JSONArray> fitRoutes = new ArrayList<>();
+            if (!settlementBoundaryRings.isEmpty()) {
+                fitRoutes.addAll(settlementBoundaryRings);
+            } else {
+                fitRoutes.addAll(matchedSegments);
+                if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
+                fitRoutes.addAll(motorwaySegments);
+                fitRoutes.addAll(incompleteMotorwaySegments);
+                fitRoutes.addAll(coveredMotorwaySegments);
+                fitRoutes.addAll(incompleteARoadSegments);
+                fitRoutes.addAll(coveredARoadSegments);
+            }
             for (JSONArray routeCoordinates : fitRoutes) {
                 for (int index = 0; index < routeCoordinates.length(); index++) {
                     org.json.JSONArray point = routeCoordinates.getJSONArray(index);
