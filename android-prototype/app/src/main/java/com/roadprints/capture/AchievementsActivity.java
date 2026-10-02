@@ -56,6 +56,7 @@ public class AchievementsActivity extends Activity {
     private int shownHighStreetEvidenceRevision=Integer.MIN_VALUE;
     private long shownServiceStationRevision=Long.MIN_VALUE;
     private int generation;
+    private boolean stationBackfillRequested;
     private int celebrationIndex;
     private Dialog celebrationDialog;
     private TextView celebrationIcon;
@@ -128,6 +129,13 @@ public class AchievementsActivity extends Activity {
     }
 
     private void loadAchievements() {
+        if (!stationBackfillRequested && ServiceStationStore.unlocked(this)
+                && !ServiceStationStore.historicalBackfillComplete(this)) {
+            stationBackfillRequested=true;
+            ServiceStationStore.ensureHistoricalVisits(this,()->{
+                if(!isFinishing()) loadAchievements();
+            });
+        }
         int request=++generation;
         long revision=JourneyStore.dataRevision(this);
         int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);

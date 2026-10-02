@@ -24,6 +24,8 @@ final class ServiceStationStore {
     private static final String REVISION = "revision";
     private static final String HISTORICAL_BACKFILL_COMPLETE = "historical_backfill_v1_complete";
     private static final AtomicBoolean BACKFILL_RUNNING = new AtomicBoolean(false);
+    private static final java.util.concurrent.CopyOnWriteArrayList<Runnable> BACKFILL_CALLBACKS =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
     private static volatile JSONArray catalogue;
     private ServiceStationStore() {}
 
@@ -79,11 +81,16 @@ final class ServiceStationStore {
     /** Backfill imported journeys once when the service-station collection is unlocked. */
     static void ensureHistoricalVisits(Context context, Runnable onComplete) {
         Context app=context.getApplicationContext();
+        if (onComplete != null) BACKFILL_CALLBACKS.add(onComplete);
         if (historicalBackfillComplete(app)) {
-            if (onComplete != null) onComplete.run();
+            if (onComplete != null && BACKFILL_CALLBACKS.remove(onComplete)) onComplete.run();
             return;
         }
-        if (!unlocked(app) || !BACKFILL_RUNNING.compareAndSet(false, true)) return;
+        if (!unlocked(app)) {
+            if (onComplete != null) BACKFILL_CALLBACKS.remove(onComplete);
+            return;
+        }
+        if (!BACKFILL_RUNNING.compareAndSet(false, true)) return;
         ScreenDataLoader.execute(() -> {
             boolean succeeded=false;
             try {
@@ -107,8 +114,15 @@ final class ServiceStationStore {
             } finally {
                 BACKFILL_RUNNING.set(false);
             }
-            if(succeeded && onComplete!=null)
-                new Handler(Looper.getMainLooper()).post(onComplete);
+            if(succeeded) {
+                java.util.List<Runnable> callbacks = new java.util.ArrayList<>(BACKFILL_CALLBACKS);
+                BACKFILL_CALLBACKS.clear();
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    for (Runnable callback : callbacks) callback.run();
+                });
+            } else {
+                BACKFILL_CALLBACKS.clear();
+            }
         });
     }
 
