@@ -8,4 +8,9 @@ public class RoadprintsApplication extends Application {
         super.onCreate();
         CrashReporter.install(this);
     }
+
+    @Override public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_RUNNING_LOW) MapActivity.clearProcessMapCache();
+    }
 }

@@ -220,12 +220,8 @@ public class JourneyListActivity extends Activity {
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
         journeyList.setPadding(0, dp(18), 0, dp(18));
-        TextView loading = new TextView(this);
-        loading.setText("Loading journeys…");
-        loading.setTextSize(16);
-        loading.setTextColor(0xFFD3DCED);
-        loading.setPadding(0, dp(28), 0, dp(28));
-        journeyList.addView(loading);
+        journeyList.addView(ScreenLoadingView.create(this, "Preparing your journeys",
+                "Reading compact journey details without loading route files into memory."));
 
         ScrollView scroll = new ScrollView(this);
         journeyScroll = scroll;
@@ -391,7 +387,7 @@ public class JourneyListActivity extends Activity {
             }
             return;
         }
-        processor.execute(() -> {
+        ScreenDataLoader.execute(() -> {
             List<JSONObject> loaded;
             try {
                 loaded = JourneyStore.allSummaries(appContext);

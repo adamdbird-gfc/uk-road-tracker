@@ -119,10 +119,8 @@ growingStatus = new GrowingStatusControl(this, titleRow);
         scroll.addView(content);
 
         statisticsContent = content;
-        TextView loading = new TextView(this);
-        loading.setText("Loading your progress…");
-        loading.setTextColor(MUTED);
-        content.addView(loading);
+        content.addView(ScreenLoadingView.create(this, "Preparing your progress",
+                "Reading saved journeys once and reusing the result."));
 
         root.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -198,7 +196,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
             loading.setTextColor(MUTED);
             statisticsContent.addView(loading);
         }
-        new Thread(() -> {
+        ScreenDataLoader.execute(() -> {
             DistanceStats stats = null;
             Exception failure = null;
             try {
@@ -231,7 +229,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
                     statisticsContent.addView(error);
                 }
             });
-        }, "roadprints-progress-load").start();
+        });
     }
 
     private void restoreProgressScroll() {
@@ -818,29 +816,36 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     }
 
     private void openSettlementMap(LocalTownProgress town) {
+        // A local road may have multiple matched fragments, and a MultiLineString
+        // may contain several pieces. Keep all evidence instead of only the first.
         JSONArray routes = new JSONArray();
-        final int maxRoutes = 320;
+        final int maxRoutes = 2_000;
+        final int maxPoints = 20_000; // Bounds memory and keeps the Intent below Binder limits.
+        int retainedPoints = 0;
+        boolean full = false;
         for (RoadDiscoveryItem road : town.roads.values()) {
-            if (routes.length() >= maxRoutes) break;
             for (JSONObject geometry : road.geometryEvidence) {
                 String type = geometry.optString("type");
                 JSONArray coordinates = geometry.optJSONArray("coordinates");
                 if (coordinates == null) continue;
                 if ("LineString".equals(type) && coordinates.length() >= 2) {
-                    routes.put(limitRoutePoints(coordinates, 72));
-                    break;
-                }
-                else if ("MultiLineString".equals(type)) {
+                    if (routes.length() >= maxRoutes || maxPoints - retainedPoints < 2) { full = true; break; }
+                    int allowed = Math.min(1_200, maxPoints - retainedPoints);
+                    JSONArray route = limitRoutePoints(coordinates, allowed);
+                    if (route.length() >= 2) { routes.put(route); retainedPoints += route.length(); }
+                } else if ("MultiLineString".equals(type)) {
                     for (int i = 0; i < coordinates.length(); i++) {
                         JSONArray line = coordinates.optJSONArray(i);
-                        if (line != null && line.length() >= 2) {
-                            routes.put(limitRoutePoints(line, 72));
-                            break;
-                        }
+                        if (line == null || line.length() < 2) continue;
+                        if (routes.length() >= maxRoutes || maxPoints - retainedPoints < 2) { full = true; break; }
+                        int allowed = Math.min(1_200, maxPoints - retainedPoints);
+                        JSONArray route = limitRoutePoints(line, allowed);
+                        if (route.length() >= 2) { routes.put(route); retainedPoints += route.length(); }
                     }
-                    break;
                 }
+                if (full) break;
             }
+            if (full) break;
         }
         Intent intent = new Intent(this, MapActivity.class);
         intent.putExtra("settlement_code", town.settlement.code);

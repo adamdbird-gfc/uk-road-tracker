@@ -38,10 +38,12 @@ public class MapActivity extends Activity {
     private static final int MAX_SETTLEMENT_POINTS_PER_ROUTE = 6_000;
     private static final int MAX_SETTLEMENT_POINTS = 350_000;
     private static final int MAX_MAP_ROUTES = 5_000;
+    private static final Object MAP_CACHE_LOCK = new Object();
+    private static MapRoutes processMapCache;
+    private static long processMapCacheRevision = Long.MIN_VALUE;
     private TextView mapSubtitle;
     private GrowingStatusControl growingStatus;
     private FrameLayout mapFrame;
-    private final ExecutorService mapLoader = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int mapLoadGeneration;
 
@@ -108,11 +110,8 @@ public class MapActivity extends Activity {
         mapFrame.setBackgroundColor(NAVY);
         root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        TextView loading = new TextView(this);
-        loading.setText("Loading matched journeys…");
-        loading.setTextColor(Color.WHITE);
-        loading.setGravity(Gravity.CENTER);
-        mapFrame.addView(loading, new FrameLayout.LayoutParams(
+        mapFrame.addView(ScreenLoadingView.create(this, "Preparing your map",
+                "Reading saved journeys within the memory limit."), new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         View bottomNavigation = buildBottomNavigation();
@@ -137,7 +136,6 @@ public class MapActivity extends Activity {
     @Override
     protected void onDestroy() {
         mapLoadGeneration++;
-        mapLoader.shutdownNow();
         super.onDestroy();
     }
 
@@ -150,8 +148,21 @@ public class MapActivity extends Activity {
                     getIntent().getStringExtra("settlement_routes"));
             return;
         }
+        final long revision = JourneyStore.dataRevision(getApplicationContext());
+        MapRoutes cached = null;
+        synchronized (MAP_CACHE_LOCK) {
+            if (processMapCacheRevision == revision) cached = processMapCache;
+            else {
+                processMapCache = null;
+                processMapCacheRevision = revision;
+            }
+        }
+        if (cached != null) {
+            displayMapRoutes(cached, generation);
+            return;
+        }
         mapSubtitle.setText("Loading matched journeys…");
-        mapLoader.execute(() -> {
+        ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
             try {
                 mapRoutes = readMapRoutes();
@@ -170,36 +181,56 @@ public class MapActivity extends Activity {
                 });
                 return;
             }
-            mainHandler.post(() -> {
-                if (isFinishing() || generation != mapLoadGeneration) return;
-                mapSubtitle.setText(mapRoutes.sections.isEmpty()
-                        && mapRoutes.motorwaySections.isEmpty()
-                        && mapRoutes.incompleteMotorwaySections.isEmpty()
-                        ? "Successfully matched journeys will appear here."
-                        : mapRoutes.matchedJourneys + " successfully matched journeys"
-                                + (mapRoutes.simplified ? " · map simplified for performance." : "."));
-                mapFrame.removeAllViews();
-                RoutePreviewView map = mapRoutes.sections.isEmpty()
-                        ? new RoutePreviewView(this)
-                        : new RoutePreviewView(this, mapRoutes.sections, true);
-                map.setFlatRoadMapStyle(true);
-                map.setMotorwaySegments(mapRoutes.motorwaySections);
-                map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
-                        mapRoutes.coveredMotorwaySections);
-                map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
-                        mapRoutes.coveredARoadSections);
-                map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
-                mapFrame.addView(map, new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-                addZoomControls(mapFrame, map);
-            });
+            long currentRevision = JourneyStore.dataRevision(getApplicationContext());
+            Runtime runtime = Runtime.getRuntime();
+            long freeHeadroom = runtime.maxMemory()
+                    - (runtime.totalMemory() - runtime.freeMemory());
+            if (currentRevision == revision && freeHeadroom >= 64L * 1024L * 1024L) {
+                synchronized (MAP_CACHE_LOCK) {
+                    processMapCache = mapRoutes;
+                    processMapCacheRevision = revision;
+                }
+            }
+            displayMapRoutes(mapRoutes, generation);
         });
     }
 
+    static void clearProcessMapCache() {
+        synchronized (MAP_CACHE_LOCK) {
+            processMapCache = null;
+            processMapCacheRevision = Long.MIN_VALUE;
+        }
+    }
+
+    private void displayMapRoutes(MapRoutes mapRoutes, int generation) {
+        mainHandler.post(() -> {
+            if (isFinishing() || generation != mapLoadGeneration) return;
+            mapSubtitle.setText(mapRoutes.sections.isEmpty()
+                    && mapRoutes.motorwaySections.isEmpty()
+                    && mapRoutes.incompleteMotorwaySections.isEmpty()
+                    ? "Successfully matched journeys will appear here."
+                    : mapRoutes.matchedJourneys + " successfully matched journeys"
+                            + (mapRoutes.simplified ? " · map simplified for performance." : "."));
+            mapFrame.removeAllViews();
+            RoutePreviewView map = mapRoutes.sections.isEmpty()
+                    ? new RoutePreviewView(this)
+                    : new RoutePreviewView(this, mapRoutes.sections, true);
+            map.setFlatRoadMapStyle(true);
+            map.setMotorwaySegments(mapRoutes.motorwaySections);
+            map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
+                    mapRoutes.coveredMotorwaySections);
+            map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
+                    mapRoutes.coveredARoadSections);
+            map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
+            mapFrame.addView(map, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            addZoomControls(mapFrame, map);
+        });
+    }
     private void refreshSettlementMap(int generation, String code, String name,
                                       String routeJson) {
         mapSubtitle.setText("Loading " + name + " and your visited roads…");
-        mapLoader.execute(() -> {
+        ScreenDataLoader.execute(() -> {
             JSONObject boundary = null;
             List<JSONArray> roads = new ArrayList<>();
             int retainedSettlementPoints = 0;
@@ -255,7 +286,10 @@ public class MapActivity extends Activity {
             if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
             double longitude = (a.optDouble(0) + b.optDouble(0)) / 2d;
             double latitude = (a.optDouble(1) + b.optDouble(1)) / 2d;
-            if (settlementContains(boundary, longitude, latitude)) {
+            boolean crossesSettlement = settlementContains(boundary, longitude, latitude)
+                    || settlementContains(boundary, a.optDouble(0), a.optDouble(1))
+                    || settlementContains(boundary, b.optDouble(0), b.optDouble(1));
+            if (crossesSettlement) {
                 if (current == null) {
                     current = new JSONArray();
                     current.put(a);

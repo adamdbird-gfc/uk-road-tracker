@@ -39,6 +39,10 @@ public class AchievementsActivity extends Activity {
     private static final int GOLD=0xFFF7C450;
     private static final int TEAL=0xFF67D5CC;
     private static final int GREEN=0xFF77D6A3;
+    private static final Object SNAPSHOT_CACHE_LOCK=new Object();
+    private static AchievementStore.Snapshot processSnapshot;
+    private static long processSnapshotRevision=Long.MIN_VALUE;
+    private static int processHighStreetRevision=Integer.MIN_VALUE;
 
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final Handler mainHandler=new Handler(Looper.getMainLooper());
@@ -83,7 +87,6 @@ public class AchievementsActivity extends Activity {
         }
         super.onDestroy();
         generation++;
-        worker.shutdownNow();
     }
 
     private void buildScreen() {
@@ -122,8 +125,21 @@ public class AchievementsActivity extends Activity {
 
     private void loadAchievements() {
         int request=++generation;
+        long revision=JourneyStore.dataRevision(this);
+        int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
+        AchievementStore.Snapshot cached=null;
+        synchronized (SNAPSHOT_CACHE_LOCK) {
+            if (processSnapshot!=null && processSnapshotRevision==revision
+                    && processHighStreetRevision==highStreetRevision) cached=processSnapshot;
+        }
+        if (cached!=null) {
+            shownRevision=revision;
+            shownHighStreetEvidenceRevision=highStreetRevision;
+            render(cached);
+            return;
+        }
         renderMessage("Checking saved journeys and coverage…",false);
-        worker.execute(() -> {
+        ScreenDataLoader.execute(() -> {
             AchievementStore.Snapshot result;
             try { result=AchievementStore.calculate(getApplicationContext()); }
             catch (Exception error) {
@@ -133,6 +149,12 @@ public class AchievementsActivity extends Activity {
                         renderMessage("Achievements could not be loaded. Your saved journeys are unchanged.",true);
                 });
                 return;
+            }
+            synchronized (SNAPSHOT_CACHE_LOCK) {
+                processSnapshot=new AchievementStore.Snapshot(result.achievements,
+                        java.util.Collections.emptyList(),result.dataRevision);
+                processSnapshotRevision=result.dataRevision;
+                processHighStreetRevision=AchievementStore.highStreetEvidenceRevision(appContext);
             }
             mainHandler.post(() -> {
                 if (request != generation || isFinishing()) return;
@@ -408,9 +430,13 @@ public class AchievementsActivity extends Activity {
 
     private void renderMessage(String message, boolean error) {
         content.removeAllViews();
-        LinearLayout panel=panel();
-        panel.addView(text(message,14,error?0xFFFFC1B8:MUTED,false));
-        content.addView(panel);
+        if (!error) {
+            content.addView(ScreenLoadingView.create(this, "Preparing achievements", message));
+        } else {
+            LinearLayout panel=panel();
+            panel.addView(text(message,14,0xFFFFC1B8,false));
+            content.addView(panel);
+        }
     }
 
     private LinearLayout panel() {
