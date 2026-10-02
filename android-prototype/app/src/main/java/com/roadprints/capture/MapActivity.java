@@ -79,6 +79,20 @@ public class MapActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
         titleRow.addView(title);
+        String settlementCode = getIntent().getStringExtra("settlement_code");
+        if (settlementCode != null && !settlementCode.isEmpty()) {
+            TextView close = new TextView(this);
+            close.setText("× Close");
+            close.setTextSize(13);
+            close.setTypeface(null, Typeface.BOLD);
+            close.setTextColor(0xFFD3DCED);
+            close.setGravity(Gravity.CENTER);
+            close.setPadding(dp(12), dp(8), dp(12), dp(8));
+            close.setBackground(roundRect(0xFF182F62, dp(10)));
+            close.setContentDescription("Close town map and return to Progress");
+            close.setOnClickListener(v -> finish());
+            titleRow.addView(close);
+        }
         growingStatus = new GrowingStatusControl(this, titleRow);
         heading.addView(titleRow);
         heading.addView(mapSubtitle);

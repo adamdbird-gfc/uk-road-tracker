@@ -708,11 +708,22 @@ public class ProgressActivity extends Activity {
             String elapsed = "Elapsed " + formatDuration(elapsedSeconds);
             String estimate = "Estimating time left…";
             int freshlyChecked = done - initiallyDone;
-            if (freshlyChecked > 0 && total > done && stats.localRoadLookupStartedAt > 0) {
-                long elapsedMillis = System.currentTimeMillis() - stats.localRoadLookupStartedAt;
+            int roadsToCheckAtStart = total - initiallyDone;
+            int sampleThreshold = Math.min(10, Math.max(3, roadsToCheckAtStart));
+            if (freshlyChecked >= sampleThreshold && total > done
+                    && stats.localRoadLookupStartedAt > 0
+                    && stats.localRoadLookupLastCompletedAt > stats.localRoadLookupStartedAt) {
+                // Measure only completed lookups. Including the currently-running road made
+                // the estimate grow every second while the completion count stayed unchanged.
+                long elapsedMillis = stats.localRoadLookupLastCompletedAt
+                        - stats.localRoadLookupStartedAt;
                 long remainingMillis = (elapsedMillis / freshlyChecked) * (total - done);
                 estimate = "About " + formatDuration((remainingMillis + 999L) / 1000L)
-                        + " left · estimate varies with connection";
+                        + " left · rough estimate";
+            } else if (freshlyChecked > 0 && total > done) {
+                estimate = "Building estimate · " + freshlyChecked + " roads checked";
+            } else if (freshlyChecked == 0 && total > done) {
+                estimate = "Checking the first roads before estimating time";
             } else if (total > 0 && done >= total) {
                 estimate = "Roads checked; loading town road totals…";
             }
@@ -810,6 +821,7 @@ public class ProgressActivity extends Activity {
             stats.localRoadEnrichmentRunning = true;
             stats.settlementInventoryPendingCodes.clear();
             stats.localRoadLookupStartedAt = System.currentTimeMillis();
+            stats.localRoadLookupLastCompletedAt = stats.localRoadLookupStartedAt;
             stats.localRoadLookupStage = "matching";
             stats.localRoadLookupDone = 0;
             stats.localRoadLookupInitialDone = 0;
@@ -834,7 +846,10 @@ public class ProgressActivity extends Activity {
                     List<LocalRoadSettlementMatcher.Settlement> matches =
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
                     synchronized (stats) { stats.settlementMatches.put(road.id, matches); }
-                    synchronized (stats) { stats.localRoadLookupDone++; }
+                    synchronized (stats) {
+                        stats.localRoadLookupDone++;
+                        stats.localRoadLookupLastCompletedAt = System.currentTimeMillis();
+                    }
                     changed++;
                     if (changed % 6 == 0) {
                         synchronized (stats) { stats.localRoadLookupStage = "inventories"; }
@@ -844,7 +859,10 @@ public class ProgressActivity extends Activity {
                     }
                 } catch (Exception error) {
                     failures++;
-                    synchronized (stats) { stats.localRoadLookupDone++; }
+                    synchronized (stats) {
+                        stats.localRoadLookupDone++;
+                        stats.localRoadLookupLastCompletedAt = System.currentTimeMillis();
+                    }
                     android.util.Log.w("Roadprints", "Local road town lookup failed", error);
                     try { Thread.sleep(1050L); }
                     catch (InterruptedException interrupted) {
@@ -1363,6 +1381,7 @@ public class ProgressActivity extends Activity {
         int localRoadLookupTotal;
         int localRoadLookupInitialDone;
         long localRoadLookupStartedAt;
+        long localRoadLookupLastCompletedAt;
         String localRoadLookupStage = "matching";
         String localRoadCurrentLabel = "";
         MotorwayProgressCalculator.Summary motorwayProgress;
