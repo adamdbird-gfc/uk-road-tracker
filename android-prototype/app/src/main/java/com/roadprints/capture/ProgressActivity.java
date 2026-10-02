@@ -102,7 +102,7 @@ public class ProgressActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
         titleRow.addView(title);
-remove header toggle        growingStatus = new GrowingStatusControl(this, titleRow);
+growingStatus = new GrowingStatusControl(this, titleRow);
         heading.addView(titleRow);
         heading.addView(intro);
         root.addView(heading);

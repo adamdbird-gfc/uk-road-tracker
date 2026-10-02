@@ -1118,7 +1118,8 @@ public class JourneyListActivity extends Activity {
                         dialogRef[0], hasUnsavedChanges(titleInput, transport,
                                 transportModes, savedTitle[0], savedMode[0]),
                         saveEdits, () -> startSingleJourneyMatch(
-                                journey, journeyAction, status, dialogRef)));
+                                journey, journeyAction, status, dialogRef,
+                                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits)));
             }
             actions.addView(journeyAction, secondaryParams);
         }
@@ -1171,7 +1172,8 @@ public class JourneyListActivity extends Activity {
         dialog.show();
         if (matchJourney != null
                 && "processing".equals(journey.optString("processing_status"))) {
-            watchSingleJourneyMatch(journey, matchJourney, status, dialogRef);
+            watchSingleJourneyMatch(journey, matchJourney, status, dialogRef,
+                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits);
         }
     }
 
@@ -1286,7 +1288,9 @@ public class JourneyListActivity extends Activity {
     }
 
     private void startSingleJourneyMatch(
-            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef) {
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits) {
         if (!canMatchJourney(journey)) {
             status.setText("This journey does not have enough route points to match.");
             return;
@@ -1305,11 +1309,14 @@ public class JourneyListActivity extends Activity {
         action.setAlpha(0.62f);
         status.setText("Matching this journey…");
         status.setTextColor(0xFFF7C450);
-        watchSingleJourneyMatch(journey, action, status, dialogRef);
+        watchSingleJourneyMatch(journey, action, status, dialogRef,
+                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits);
     }
 
     private void watchSingleJourneyMatch(
-            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef) {
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits) {
         AlertDialog dialog = dialogRef[0];
         if (dialog == null || !dialog.isShowing()) return;
         MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(this).snapshot();
@@ -1317,7 +1324,8 @@ public class JourneyListActivity extends Activity {
                 || snapshot.state == MatchingCoordinator.State.RUNNING
                 || snapshot.state == MatchingCoordinator.State.PAUSING) {
             mainHandler.postDelayed(
-                    () -> watchSingleJourneyMatch(journey, action, status, dialogRef), 1000L);
+                    () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
+                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits), 1000L);
             return;
         }
         String journeyId = journey.optString("journey_id", "");
@@ -1355,11 +1363,14 @@ public class JourneyListActivity extends Activity {
                     action.setEnabled(true);
                     action.setAlpha(1f);
                     action.setOnClickListener(v -> requestCloseWithUnsavedChanges(
-                            dialogRef[0], false, () -> { },
+                            dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                    transportModes, savedTitle[0], savedMode[0]),
+                            saveEdits,
                             () -> showMatchedRefinement(journey, dialogRef)));
                 } else if ("processing".equals(saved.optString("processing_status"))) {
                     mainHandler.postDelayed(
-                            () -> watchSingleJourneyMatch(journey, action, status, dialogRef), 1000L);
+                            () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
+                                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits), 1000L);
                 } else {
                     status.setText("Matching failed or returned no route. You can retry here.");
                     status.setTextColor(0xFFF7C450);
@@ -1367,7 +1378,8 @@ public class JourneyListActivity extends Activity {
                     action.setEnabled(true);
                     action.setAlpha(1f);
                     action.setOnClickListener(v -> startSingleJourneyMatch(
-                            journey, action, status, dialogRef));
+                            journey, action, status, dialogRef,
+                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits));
                 }
             });
         });
