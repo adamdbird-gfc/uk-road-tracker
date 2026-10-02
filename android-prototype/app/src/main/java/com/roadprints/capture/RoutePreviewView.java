@@ -323,7 +323,7 @@ public class RoutePreviewView extends View {
 
     public void setFlatRoadMapStyle(boolean flat) {
         flatRoadMapStyle = flat;
-        if (flat) routePaint.setStrokeWidth(dp(4));
+        if (flat) routePaint.setStrokeWidth(dp(5));
         invalidate();
     }
 
