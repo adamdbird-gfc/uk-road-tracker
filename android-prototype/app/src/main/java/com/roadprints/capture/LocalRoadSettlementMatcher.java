@@ -35,6 +35,7 @@ final class LocalRoadSettlementMatcher {
             throws Exception {
         List<Settlement> cached = cached(context, roadId, geometries);
         if (cached != null) return cached;
+        String cacheKey = roadId + ":" + Integer.toHexString(geometries.toString().hashCode());
         // The boundary endpoint accepts MultiLineString. Combine every matched
         // segment for this named road so a frequently travelled road only needs
         // one HTTP/PostGIS lookup, even when it appears in many journeys.
