@@ -38,17 +38,34 @@ final class LocalRoadSettlementMatcher {
                 .getString(cacheKey, null) == null ? null : new JSONObject(context
                 .getSharedPreferences(CACHE, Context.MODE_PRIVATE).getString(cacheKey, "{}"));
         if (cached != null) return decode(cached.optJSONArray("settlements"));
-        Map<String, Settlement> result = new LinkedHashMap<>();
+        // The boundary endpoint accepts MultiLineString. Combine every matched
+        // segment for this named road so a frequently travelled road only needs
+        // one HTTP/PostGIS lookup, even when it appears in many journeys.
+        JSONArray lines = new JSONArray();
         for (JSONObject geometry : geometries) {
             if (geometry == null) continue;
-            JSONObject payload = new JSONObject().put("geometry", geometry);
-            JSONObject response = request("POST", API + "/settlements-for-geometry", payload);
-            JSONArray settlements = response.optJSONArray("settlements");
-            for (Settlement settlement : decode(settlements)) {
-                result.put(settlement.code.isEmpty() ? settlement.name : settlement.code, settlement);
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if (coordinates == null) continue;
+            if ("LineString".equals(type)) {
+                if (coordinates.length() >= 2) lines.put(coordinates);
+            } else if ("MultiLineString".equals(type)) {
+                for (int index = 0; index < coordinates.length(); index++) {
+                    JSONArray line = coordinates.optJSONArray(index);
+                    if (line != null && line.length() >= 2) lines.put(line);
+                }
             }
-            Thread.sleep(1050L);
         }
+        if (lines.length() == 0) return new ArrayList<>();
+        JSONObject combined = new JSONObject().put("type", "MultiLineString")
+                .put("coordinates", lines);
+        JSONObject response = request("POST", API + "/settlements-for-geometry",
+                new JSONObject().put("geometry", combined));
+        Map<String, Settlement> result = new LinkedHashMap<>();
+        for (Settlement settlement : decode(response.optJSONArray("settlements"))) {
+            result.put(settlement.code.isEmpty() ? settlement.name : settlement.code, settlement);
+        }
+        Thread.sleep(1050L);
         JSONArray values = new JSONArray();
         for (Settlement settlement : result.values()) {
             values.put(new JSONObject().put("code", settlement.code).put("name", settlement.name));

@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.Comparator;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -367,7 +370,10 @@ public class ProgressActivity extends Activity {
                         ignored -> new RoadDiscoveryItem(id, label, category));
                 JSONObject geometry = feature.optJSONObject("geometry");
                 if (geometry != null && "Local roads".equals(category)) {
-                    road.geometryEvidence.add(geometry);
+                    String geometryKey = geometryEvidenceKey(geometry);
+                    if (road.geometryEvidenceKeys.add(geometryKey)) {
+                        road.geometryEvidence.add(geometry);
+                    }
                 }
                 if (foot) road.onFoot = true;
                 else road.driven = true;
@@ -380,6 +386,23 @@ public class ProgressActivity extends Activity {
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
         if (features == null) return;
         for (int index = 0; index < features.length(); index++) target.put(features.opt(index));
+    }
+
+    private String geometryEvidenceKey(JSONObject geometry) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(
+                    geometry.toString().getBytes(StandardCharsets.UTF_8));
+            char[] hex = "0123456789abcdef".toCharArray();
+            char[] key = new char[digest.length * 2];
+            for (int index = 0; index < digest.length; index++) {
+                int value = digest[index] & 0xff;
+                key[index * 2] = hex[value >>> 4];
+                key[index * 2 + 1] = hex[value & 0x0f];
+            }
+            return new String(key);
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 is not available", impossible);
+        }
     }
 
     private String roadLabel(String ref, String name) {
@@ -1394,6 +1417,7 @@ public class ProgressActivity extends Activity {
         final String category;
         final Set<String> journeyIds = new HashSet<>();
         final List<JSONObject> geometryEvidence = new ArrayList<>();
+        final Set<String> geometryEvidenceKeys = new HashSet<>();
         boolean driven;
         boolean onFoot;
         RoadDiscoveryItem(String id, String label, String category) {
