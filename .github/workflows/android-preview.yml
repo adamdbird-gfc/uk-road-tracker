@@ -31,12 +31,6 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android platform
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
       - name: Run Android tests and build preview APK
         working-directory: android-prototype
         run: gradle :app:testPreviewDebugUnitTest :app:assemblePreviewDebug --no-daemon
