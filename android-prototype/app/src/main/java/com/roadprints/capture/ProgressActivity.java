@@ -13,6 +13,7 @@ import android.view.WindowInsets;
 import android.widget.ImageView;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -45,6 +46,10 @@ public class ProgressActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
     private DistanceStats loadedStats;
+    private TextView localRoadProgressMessage;
+    private TextView localRoadProgressDetail;
+    private ProgressBar localRoadProgressBar;
+    private Runnable localRoadProgressTicker;
     private boolean useKilometres;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
@@ -134,6 +139,7 @@ public class ProgressActivity extends Activity {
     protected void onPause() {
         if (statisticsScroll != null) savedScrollY = statisticsScroll.getScrollY();
         if (growingStatus != null) growingStatus.stop();
+        stopLocalRoadProgressTicker();
         super.onPause();
     }
 
@@ -546,6 +552,7 @@ public class ProgressActivity extends Activity {
                                     DistanceStats stats) {
         Map<String, LocalTownProgress> towns = localTownProgress(stats);
         if (towns.isEmpty()) {
+            addLocalRoadProgressPanel(parent, stats);
             TextView state = new TextView(this);
             state.setText(stats.localRoadEnrichmentComplete
                     ? "No local roads were assigned to an official settlement."
@@ -640,6 +647,119 @@ public class ProgressActivity extends Activity {
             pending.setPadding(dp(13), dp(6), dp(13), dp(10));
             parent.addView(pending);
         }
+        addLocalRoadProgressPanel(parent, stats);
+    }
+
+    private void addLocalRoadProgressPanel(LinearLayout parent, DistanceStats stats) {
+        if (stats.localRoadEnrichmentComplete) return;
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(13), dp(11), dp(13), dp(12));
+        panel.setBackground(roundRect(0xFF1A315F, dp(10)));
+
+        localRoadProgressMessage = new TextView(this);
+        localRoadProgressMessage.setTextSize(13);
+        localRoadProgressMessage.setTypeface(null, android.graphics.Typeface.BOLD);
+        localRoadProgressMessage.setTextColor(Color.WHITE);
+        panel.addView(localRoadProgressMessage);
+
+        localRoadProgressBar = new ProgressBar(this, null,
+                android.R.attr.progressBarStyleHorizontal);
+        localRoadProgressBar.setMax(100);
+        localRoadProgressBar.setIndeterminate(false);
+        LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(-1, dp(6));
+        barParams.topMargin = dp(8);
+        panel.addView(localRoadProgressBar, barParams);
+
+        localRoadProgressDetail = new TextView(this);
+        localRoadProgressDetail.setTextSize(11);
+        localRoadProgressDetail.setTextColor(MUTED);
+        localRoadProgressDetail.setPadding(0, dp(6), 0, 0);
+        panel.addView(localRoadProgressDetail);
+        LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(-1, -2);
+        panelParams.setMargins(dp(8), dp(7), dp(8), dp(4));
+        parent.addView(panel, panelParams);
+        refreshLocalRoadProgress(stats);
+        startLocalRoadProgressTicker(stats);
+    }
+
+    private void refreshLocalRoadProgress(DistanceStats stats) {
+        if (localRoadProgressMessage == null || localRoadProgressDetail == null
+                || localRoadProgressBar == null) return;
+        int total = stats.localRoadLookupTotal;
+        int done = stats.localRoadLookupDone;
+        int initiallyDone = stats.localRoadLookupInitialDone;
+        int percent = total <= 0 ? 0 : Math.min(100, Math.round(100f * done / total));
+        localRoadProgressBar.setProgress(percent);
+        if (stats.localRoadEnrichmentComplete) {
+            localRoadProgressMessage.setText("Town matching complete");
+            localRoadProgressDetail.setText("Local roads are grouped by town.");
+            return;
+        }
+        if (stats.localRoadEnrichmentRunning) {
+            if ("inventories".equals(stats.localRoadLookupStage)) {
+                localRoadProgressMessage.setText("Loading town road totals…");
+            } else {
+                localRoadProgressMessage.setText("Finding towns · " + done + " of " + total
+                        + " local roads (" + percent + "%)");
+            }
+            long elapsedSeconds = Math.max(0L,
+                    (System.currentTimeMillis() - stats.localRoadLookupStartedAt) / 1000L);
+            String elapsed = "Elapsed " + formatDuration(elapsedSeconds);
+            String estimate = "Estimating time left…";
+            int freshlyChecked = done - initiallyDone;
+            if (freshlyChecked > 0 && total > done && stats.localRoadLookupStartedAt > 0) {
+                long elapsedMillis = System.currentTimeMillis() - stats.localRoadLookupStartedAt;
+                long remainingMillis = (elapsedMillis / freshlyChecked) * (total - done);
+                estimate = "About " + formatDuration((remainingMillis + 999L) / 1000L)
+                        + " left · estimate varies with connection";
+            } else if (total > 0 && done >= total) {
+                estimate = "Roads checked; loading town road totals…";
+            }
+            String current = stats.localRoadCurrentLabel == null
+                    || stats.localRoadCurrentLabel.isEmpty() ? "" : " · Checking "
+                    + stats.localRoadCurrentLabel;
+            localRoadProgressDetail.setText(elapsed + " · " + estimate + current);
+        } else if (stats.settlementLookupFailures > 0) {
+            localRoadProgressMessage.setText("Town matching paused after a lookup error");
+            localRoadProgressDetail.setText("Reopen Progress to retry the remaining local roads.");
+        } else {
+            localRoadProgressMessage.setText("Finding towns for your local roads…");
+            localRoadProgressDetail.setText("Preparing " + total + " road lookups…");
+        }
+    }
+
+    private String formatDuration(long seconds) {
+        if (seconds < 60) return seconds + " sec";
+        long minutes = (seconds + 59) / 60;
+        if (minutes < 60) return minutes + " min";
+        long hours = minutes / 60;
+        long remainingMinutes = minutes % 60;
+        return remainingMinutes == 0 ? hours + " hr" : hours + " hr " + remainingMinutes + " min";
+    }
+
+    private void startLocalRoadProgressTicker(DistanceStats stats) {
+        stopLocalRoadProgressTicker();
+        localRoadProgressTicker = new Runnable() {
+            @Override public void run() {
+                if (loadedStats != stats || localRoadProgressMessage == null || isFinishing()) return;
+                refreshLocalRoadProgress(stats);
+                if (stats.localRoadEnrichmentRunning) {
+                    mainHandler.postDelayed(this, 1000L);
+                }
+            }
+        };
+        mainHandler.post(localRoadProgressTicker);
+    }
+
+    private void stopLocalRoadProgressTicker() {
+        if (localRoadProgressTicker != null) {
+            mainHandler.removeCallbacks(localRoadProgressTicker);
+            localRoadProgressTicker = null;
+        }
+        localRoadProgressMessage = null;
+        localRoadProgressDetail = null;
+        localRoadProgressBar = null;
     }
 
     private void openSettlementMap(LocalTownProgress town) {
@@ -689,25 +809,42 @@ public class ProgressActivity extends Activity {
             if (stats.localRoadEnrichmentRunning || stats.localRoadEnrichmentComplete) return;
             stats.localRoadEnrichmentRunning = true;
             stats.settlementInventoryPendingCodes.clear();
+            stats.localRoadLookupStartedAt = System.currentTimeMillis();
+            stats.localRoadLookupStage = "matching";
+            stats.localRoadLookupDone = 0;
+            stats.localRoadLookupInitialDone = 0;
+            stats.localRoadLookupTotal = 0;
+            for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
+                if (!"Local roads".equals(road.category) || road.geometryEvidence.isEmpty()) continue;
+                stats.localRoadLookupTotal++;
+                if (stats.settlementMatches.containsKey(road.id)) stats.localRoadLookupDone++;
+            }
+            stats.localRoadLookupInitialDone = stats.localRoadLookupDone;
         }
         SETTLEMENT_WORKER.execute(() -> {
             int changed = 0;
             int failures = 0;
+            long lastUiUpdate = 0;
             for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
                 if (!"Local roads".equals(road.category) || road.geometryEvidence.isEmpty()
                         || stats.settlementMatches.containsKey(road.id)) continue;
+                synchronized (stats) { stats.localRoadCurrentLabel = road.label; }
                 try {
                     List<JSONObject> evidence = new ArrayList<>(road.geometryEvidence);
                     List<LocalRoadSettlementMatcher.Settlement> matches =
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
                     synchronized (stats) { stats.settlementMatches.put(road.id, matches); }
+                    synchronized (stats) { stats.localRoadLookupDone++; }
                     changed++;
                     if (changed % 6 == 0) {
-                        resolveLocalTownInventories(stats);
+                        synchronized (stats) { stats.localRoadLookupStage = "inventories"; }
                         postSettlementProgress(stats, generation);
+                        resolveLocalTownInventories(stats);
+                        synchronized (stats) { stats.localRoadLookupStage = "matching"; }
                     }
                 } catch (Exception error) {
                     failures++;
+                    synchronized (stats) { stats.localRoadLookupDone++; }
                     android.util.Log.w("Roadprints", "Local road town lookup failed", error);
                     try { Thread.sleep(1050L); }
                     catch (InterruptedException interrupted) {
@@ -715,8 +852,15 @@ public class ProgressActivity extends Activity {
                         break;
                     }
                 }
+                long now = System.currentTimeMillis();
+                if (now - lastUiUpdate >= 10000L) {
+                    lastUiUpdate = now;
+                    postSettlementProgress(stats, generation);
+                }
             }
             Map<String, LocalTownProgress> towns = localTownProgress(stats);
+            synchronized (stats) { stats.localRoadLookupStage = "inventories"; }
+            postSettlementProgress(stats, generation);
             resolveLocalTownInventories(stats);
             synchronized (stats) {
                 stats.localRoadEnrichmentRunning = false;
@@ -781,6 +925,7 @@ public class ProgressActivity extends Activity {
             int scrollY = statisticsScroll == null ? 0 : statisticsScroll.getScrollY();
             statisticsContent.removeAllViews();
             renderStatistics(statisticsContent, stats);
+            refreshLocalRoadProgress(stats);
             if (statisticsScroll != null) statisticsScroll.post(() -> statisticsScroll.scrollTo(0, scrollY));
         });
     }
@@ -1214,6 +1359,12 @@ public class ProgressActivity extends Activity {
         boolean localRoadEnrichmentRunning;
         boolean localRoadEnrichmentComplete;
         int settlementLookupFailures;
+        int localRoadLookupDone;
+        int localRoadLookupTotal;
+        int localRoadLookupInitialDone;
+        long localRoadLookupStartedAt;
+        String localRoadLookupStage = "matching";
+        String localRoadCurrentLabel = "";
         MotorwayProgressCalculator.Summary motorwayProgress;
         ARoadProgressCalculator.Summary aRoadProgress;
     }
