@@ -53,7 +53,7 @@ final class ARoadProgressCalculator {
         double referenceKm() { double total=0; for(Road r:roads) if(r.referenceAvailable) total+=r.totalKm; return total; }
         double percent() { return referenceKm()>0?Math.min(100,totalKm()*100/referenceKm()):0; }
     }
-    private static final class Anchor {
+    static final class Anchor {
         final int id; final double lng,lat,x,y; final int component;
         Anchor(int id,double lng,double lat,int component) { this.id=id;this.lng=lng;this.lat=lat;this.component=component;double[] xy=mercator(lng,lat);x=xy[0];y=xy[1]; }
     }

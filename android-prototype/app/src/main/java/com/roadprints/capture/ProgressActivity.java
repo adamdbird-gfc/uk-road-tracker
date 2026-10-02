@@ -893,6 +893,8 @@ growingStatus = new GrowingStatusControl(this, titleRow);
                     List<JSONObject> evidence = new ArrayList<>(road.geometryEvidence);
                     List<LocalRoadSettlementMatcher.Settlement> matches =
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
+                    AchievementStore.recordHighStreetSettlements(
+                            getApplicationContext(), road.id, matches);
                     synchronized (stats) { stats.settlementMatches.put(road.id, matches); }
                     synchronized (stats) {
                         stats.localRoadLookupDone++;
@@ -1545,7 +1547,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
             label.setTextColor(index == 2 ? GOLD : MUTED);
             item.addView(label, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
-            if (index <= 2) {
+            if (index <= 3) {
                 item.setClickable(true);
                 item.setFocusable(true);
                 item.setOnClickListener(v -> {
@@ -1554,6 +1556,9 @@ growingStatus = new GrowingStatusControl(this, titleRow);
                         finish();
                     } else if (selected == 1) {
                         startActivity(new Intent(this, JourneyListActivity.class));
+                        finish();
+                    } else if (selected == 3) {
+                        startActivity(new Intent(this, AchievementsActivity.class));
                         finish();
                     }
                 });

@@ -655,7 +655,7 @@ public class MapActivity extends Activity {
             item.addView(label, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
 
-            if (index <= 2) {
+            if (index <= 3) {
                 item.setClickable(true);
                 item.setFocusable(true);
                 item.setOnClickListener(v -> {
@@ -664,6 +664,9 @@ public class MapActivity extends Activity {
                         finish();
                     } else if (selected == 2) {
                         startActivity(new Intent(this, ProgressActivity.class));
+                        finish();
+                    } else if (selected == 3) {
+                        startActivity(new Intent(this, AchievementsActivity.class));
                         finish();
                     }
                 });
