@@ -240,15 +240,15 @@ public class MapActivity extends Activity {
                 JSONArray routeArray = new JSONArray(routeJson == null ? "[]" : routeJson);
                 for (int index = 0; index < routeArray.length() && roads.size() < MAX_MAP_ROUTES; index++) {
                     JSONArray route = routeArray.optJSONArray(index);
-                    for (JSONArray clipped : clipRouteToSettlement(route, boundary)) {
-                        int remaining = MAX_SETTLEMENT_POINTS - retainedSettlementPoints;
-                        if (remaining < 2) break;
-                        int allowed = Math.min(MAX_SETTLEMENT_POINTS_PER_ROUTE, remaining);
-                        JSONArray projected = projectMapRoute(clipped, allowed);
-                        if (projected != null) {
-                            roads.add(projected);
-                            retainedSettlementPoints += projected.length();
-                        }
+                    // Keep full matched road geometries. Midpoint clipping discards
+                    // most short urban streets; the POC draws these over the red boundary.
+                    int remaining = MAX_SETTLEMENT_POINTS - retainedSettlementPoints;
+                    if (remaining < 2) break;
+                    int allowed = Math.min(MAX_SETTLEMENT_POINTS_PER_ROUTE, remaining);
+                    JSONArray projected = projectMapRoute(route, allowed);
+                    if (projected != null) {
+                        roads.add(projected);
+                        retainedSettlementPoints += projected.length();
                     }
                 }
                 if (boundary == null) failure = "The settlement boundary is not available yet.";
@@ -702,7 +702,7 @@ public class MapActivity extends Activity {
             item.addView(label, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
 
-            if (index <= 3) {
+            if (index <= 4) {
                 item.setClickable(true);
                 item.setFocusable(true);
                 item.setOnClickListener(v -> {
@@ -714,6 +714,9 @@ public class MapActivity extends Activity {
                         finish();
                     } else if (selected == 3) {
                         startActivity(new Intent(this, AchievementsActivity.class));
+                        finish();
+                    } else if (selected == 4) {
+                        startActivity(new Intent(this, CollectionsActivity.class));
                         finish();
                     }
                 });

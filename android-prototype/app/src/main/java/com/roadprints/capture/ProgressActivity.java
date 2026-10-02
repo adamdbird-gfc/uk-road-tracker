@@ -816,42 +816,52 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     }
 
     private void openSettlementMap(LocalTownProgress town) {
-        // A local road may have multiple matched fragments, and a MultiLineString
-        // may contain several pieces. Keep all evidence instead of only the first.
-        JSONArray routes = new JSONArray();
-        final int maxRoutes = 2_000;
-        final int maxPoints = 20_000; // Bounds memory and keeps the Intent below Binder limits.
-        int retainedPoints = 0;
-        boolean full = false;
-        for (RoadDiscoveryItem road : town.roads.values()) {
-            for (JSONObject geometry : road.geometryEvidence) {
-                String type = geometry.optString("type");
-                JSONArray coordinates = geometry.optJSONArray("coordinates");
-                if (coordinates == null) continue;
-                if ("LineString".equals(type) && coordinates.length() >= 2) {
-                    if (routes.length() >= maxRoutes || maxPoints - retainedPoints < 2) { full = true; break; }
-                    int allowed = Math.min(1_200, maxPoints - retainedPoints);
-                    JSONArray route = limitRoutePoints(coordinates, allowed);
-                    if (route.length() >= 2) { routes.put(route); retainedPoints += route.length(); }
-                } else if ("MultiLineString".equals(type)) {
-                    for (int i = 0; i < coordinates.length(); i++) {
-                        JSONArray line = coordinates.optJSONArray(i);
-                        if (line == null || line.length() < 2) continue;
-                        if (routes.length() >= maxRoutes || maxPoints - retainedPoints < 2) { full = true; break; }
-                        int allowed = Math.min(1_200, maxPoints - retainedPoints);
-                        JSONArray route = limitRoutePoints(line, allowed);
-                        if (route.length() >= 2) { routes.put(route); retainedPoints += route.length(); }
+        JSONArray routes=new JSONArray(); final int maxRoutes=2_000,maxPoints=20_000;
+        int retained=0; boolean full=false;
+        for(RoadDiscoveryItem road:town.roads.values()){
+            int before=routes.length();
+            for(JSONObject geometry:road.geometryEvidence){
+                String type=geometry.optString("type");JSONArray coordinates=geometry.optJSONArray("coordinates");
+                if(coordinates==null)continue;
+                if("LineString".equals(type)&&coordinates.length()>=2){
+                    if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
+                    JSONArray route=limitRoutePoints(coordinates,Math.min(1_200,maxPoints-retained));
+                    if(route.length()>=2){routes.put(route);retained+=route.length();}
+                }else if("MultiLineString".equals(type)){
+                    for(int i=0;i<coordinates.length();i++){
+                        JSONArray line=coordinates.optJSONArray(i);if(line==null||line.length()<2)continue;
+                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
+                        JSONArray route=limitRoutePoints(line,Math.min(1_200,maxPoints-retained));
+                        if(route.length()>=2){routes.put(route);retained+=route.length();}
                     }
-                }
-                if (full) break;
+                }if(full)break;
             }
-            if (full) break;
+            // Legacy saved road evidence may lack standalone road geometry.
+            if(routes.length()==before&&!full)for(String journeyId:road.journeyIds){
+                JSONObject journey=JourneyStore.get(this,journeyId);
+                JSONObject result=journey==null?null:journey.optJSONObject("processing_result");
+                JSONObject matched=result==null?null:result.optJSONObject("geojson");
+                JSONArray features=matched==null?null:matched.optJSONArray("features");if(features==null)continue;
+                for(int j=0;j<features.length();j++){
+                    JSONObject feature=features.optJSONObject(j),geometry=feature==null?null:feature.optJSONObject("geometry");
+                    JSONArray coordinates=geometry==null?null:geometry.optJSONArray("coordinates");
+                    String type=geometry==null?"":geometry.optString("type");
+                    if("LineString".equals(type)&&coordinates!=null&&coordinates.length()>=2){
+                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
+                        JSONArray route=limitRoutePoints(coordinates,Math.min(1_200,maxPoints-retained));routes.put(route);retained+=route.length();
+                    }else if("MultiLineString".equals(type)&&coordinates!=null)for(int k=0;k<coordinates.length();k++){
+                        JSONArray line=coordinates.optJSONArray(k);if(line==null||line.length()<2)continue;
+                        if(routes.length()>=maxRoutes||maxPoints-retained<2){full=true;break;}
+                        JSONArray route=limitRoutePoints(line,Math.min(1_200,maxPoints-retained));routes.put(route);retained+=route.length();
+                    }if(full)break;
+                }if(full)break;
+            }
+            if(full)break;
         }
-        Intent intent = new Intent(this, MapActivity.class);
-        intent.putExtra("settlement_code", town.settlement.code);
-        intent.putExtra("settlement_name", town.settlement.name);
-        intent.putExtra("settlement_routes", routes.toString());
-        startActivity(intent);
+        Intent intent=new Intent(this,MapActivity.class);
+        intent.putExtra("settlement_code",town.settlement.code);
+        intent.putExtra("settlement_name",town.settlement.name);
+        intent.putExtra("settlement_routes",routes.toString());startActivity(intent);
     }
 
     private JSONArray limitRoutePoints(JSONArray route, int maximum) {
@@ -1556,7 +1566,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
             label.setTextColor(index == 2 ? GOLD : MUTED);
             item.addView(label, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
-            if (index <= 3) {
+            if (index <= 4) {
                 item.setClickable(true);
                 item.setFocusable(true);
                 item.setOnClickListener(v -> {
@@ -1568,6 +1578,9 @@ growingStatus = new GrowingStatusControl(this, titleRow);
                         finish();
                     } else if (selected == 3) {
                         startActivity(new Intent(this, AchievementsActivity.class));
+                        finish();
+                    } else if (selected == 4) {
+                        startActivity(new Intent(this, CollectionsActivity.class));
                         finish();
                     }
                 });

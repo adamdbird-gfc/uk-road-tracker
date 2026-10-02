@@ -51,6 +51,8 @@ public final class JourneyStore {
                 throw new IllegalStateException("Could not commit journey archive");
             }
             bumpDataRevision(context);
+            try { ServiceStationStore.recordJourney(context,journey); }
+            catch(Exception stationError){android.util.Log.w("Roadprints","Service-station visit check skipped",stationError);}
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey locally", error);
         }
@@ -383,6 +385,7 @@ public final class JourneyStore {
             delete(context, journey.optString("journey_id"));
             deleted++;
         }
+        ServiceStationStore.clearOnDeleteAll(context);
         return deleted;
     }
 

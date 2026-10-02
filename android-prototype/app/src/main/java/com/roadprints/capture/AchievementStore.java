@@ -138,6 +138,7 @@ final class AchievementStore {
         int completeCrossings=0;
         for (boolean crossing : crossings) if (crossing) completeCrossings++;
         values.put("spanning-the-nation", (double)completeCrossings);
+        values.putAll(ServiceStationStore.achievementValues(app));
 
         SharedPreferences preferences=app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         JSONObject unlocked=readUnlocked(preferences);
@@ -339,6 +340,18 @@ final class AchievementStore {
         output.add(new Definition("spanning-the-nation", "🌉", "Spanning the Nation",
                 "Complete the UK’s great road crossings.",
                 "Seven great road crossings completed", "crossing-set", 7,null,0,0,0));
+        output.add(new Definition("service-first-stop", "⛽", "First Stop",
+                "Visit your first motorway service area.",
+                "Your first motorway service area is on the board.", "service-station", 1,null,0,0,0));
+        output.add(new Definition("service-ten-stops", "🔟", "Ten Stops",
+                "Visit ten different motorway service areas.",
+                "Ten different motorway service areas collected.", "service-station", 1,null,0,0,0));
+        output.add(new Definition("service-moneybags", "💰", "Moneybags",
+                "Stop at Norton Canes on the M6 Toll.",
+                "M6 Toll · Norton Canes Services", "service-station", 1,null,0,0,0));
+        output.add(new Definition("service-being-posh", "🎩", "Being Posh",
+                "Stop at Peterborough Services on the A1(M).",
+                "A1(M) · Peterborough Services", "service-station", 1,null,0,0,0));
         return Collections.unmodifiableList(output);
     }
 

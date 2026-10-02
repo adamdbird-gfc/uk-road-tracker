@@ -310,7 +310,7 @@ public class JourneyListActivity extends Activity {
 
             LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, dp(68), 1);
             nav.addView(item, itemParams);
-            if (index == 0 || index == 2 || index == 3) {
+            if (index == 0 || index == 2 || index == 3 || index == 4) {
                 final int selected = index;
                 item.setClickable(true);
                 item.setFocusable(true);
@@ -319,6 +319,8 @@ public class JourneyListActivity extends Activity {
                         startActivity(new Intent(this, MapActivity.class));
                     } else if (selected == 2) {
                         startActivity(new Intent(this, ProgressActivity.class));
+                    } else if (selected == 4) {
+                        startActivity(new Intent(this, CollectionsActivity.class));
                     } else {
                         startActivity(new Intent(this, AchievementsActivity.class));
                     }
@@ -390,8 +392,17 @@ public class JourneyListActivity extends Activity {
         ScreenDataLoader.execute(() -> {
             List<JSONObject> loaded;
             try {
-                loaded = JourneyStore.allSummaries(appContext);
-                journeys = loaded;
+                JSONObject saved=PersistentScreenCache.read(appContext,"journey-summaries",initialRevision);
+                JSONArray rows=saved==null?null:saved.optJSONArray("rows");
+                if(rows!=null){
+                    loaded=new ArrayList<>(rows.length());
+                    for(int i=0;i<rows.length();i++){JSONObject row=rows.optJSONObject(i);if(row!=null)loaded.add(row);}
+                }else{
+                    loaded=JourneyStore.allSummaries(appContext);
+                    JSONArray compact=new JSONArray();for(JSONObject row:loaded)compact.put(row);
+                    PersistentScreenCache.write(appContext,"journey-summaries",initialRevision,
+                            new JSONObject().put("rows",compact));
+                }
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != refreshGeneration) return;
