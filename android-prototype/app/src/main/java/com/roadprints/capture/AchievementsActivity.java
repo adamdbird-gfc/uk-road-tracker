@@ -139,6 +139,7 @@ public class AchievementsActivity extends Activity {
             return;
         }
         renderMessage("Checking saved journeys and coverage…",false);
+        final android.content.Context appContext=getApplicationContext();
         ScreenDataLoader.execute(() -> {
             AchievementStore.Snapshot result;
             try { result=AchievementStore.calculate(getApplicationContext()); }
