@@ -22,14 +22,6 @@ android {
         versionName = "0.25.68"
     }
 
-    flavorDimensions += "distribution"
-    productFlavors {
-        create("preview") {
-            dimension = "distribution"
-            applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
-        }
-    }
 }
 
 dependencies {
