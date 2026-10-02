@@ -2,6 +2,8 @@ package com.roadprints.capture;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.JsonReader;
+import android.util.JsonToken;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,27 +98,202 @@ public final class JourneyStore {
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> summaries = new ArrayList<>();
         for (File file : files) {
-            JSONObject journey = upgrade(context, read(file));
-            if (journey == null) continue;
-            JSONObject summary = new JSONObject();
             try {
-                String[] fields = {"journey_id", "started_at", "ended_at", "distance_meters",
-                        "mode", "title", "source", "capture_quality", "processing_status",
-                        "error_summary", "stage_statuses", "processing"};
-                for (String field : fields) {
-                    if (journey.has(field)) summary.put(field, journey.opt(field));
-                }
-                JSONObject geometry = journey.optJSONObject("route_geometry");
-                JSONArray coordinates = geometry == null
-                        ? null : geometry.optJSONArray("coordinates");
-                summary.put("_route_point_count", coordinates == null ? 0 : coordinates.length());
-                summary.put("_has_stored_match", hasStoredRoute(journey.optJSONObject("processing_result")));
-                summaries.add(summary);
-            } catch (org.json.JSONException error) {
+                JSONObject summary = readSummary(file);
+                if (summary != null) summaries.add(summary);
+            } catch (Exception ignored) {
                 // A compact summary is best-effort; skip only this malformed record.
             }
         }
         return summaries;
+    }
+
+    /**
+     * Reads only list-screen fields. Journey files can contain thousands of GPS
+     * points and large matched GeoJSON arrays, so materializing the whole file
+     * as a String and JSONObject can exhaust the app heap just to draw a list.
+     */
+    private static JSONObject readSummary(File file) throws IOException, org.json.JSONException {
+        if (file == null || !file.exists()) return null;
+        JSONObject summary = new JSONObject();
+        int routePointCount = 0;
+        boolean hasStoredMatch = false;
+        try (JsonReader reader = new JsonReader(new InputStreamReader(
+                new FileInputStream(file), StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                switch (name) {
+                    case "journey_id": case "started_at": case "ended_at":
+                    case "distance_meters": case "mode": case "title":
+                    case "processing_status": case "error_summary":
+                        summary.put(name, readScalar(reader));
+                        break;
+                    case "source": case "capture_quality":
+                    case "stage_statuses": case "processing":
+                        summary.put(name, readFlatObject(reader));
+                        break;
+                    case "route_geometry":
+                        routePointCount = readRouteGeometry(reader);
+                        break;
+                    case "processing_result":
+                        hasStoredMatch = readProcessingResult(reader);
+                        break;
+                    default:
+                        reader.skipValue();
+                        break;
+                }
+            }
+            reader.endObject();
+        }
+
+        summary.put("_route_point_count", routePointCount);
+        summary.put("_has_stored_match", hasStoredMatch);
+        if (!summary.has("capture_quality")) {
+            summary.put("capture_quality", new JSONObject()
+                    .put("gps_points", routePointCount)
+                    .put("distance_meters", summary.optDouble("distance_meters", 0))
+                    .put("status", routePointCount >= 2 ? "usable" : "insufficient_gps_data"));
+        } else {
+            JSONObject quality = summary.optJSONObject("capture_quality");
+            if (quality != null && !quality.has("gps_points")) {
+                quality.put("gps_points", routePointCount);
+            }
+        }
+        return summary;
+    }
+
+    private static Object readScalar(JsonReader reader) throws IOException {
+        JsonToken token = reader.peek();
+        if (token == JsonToken.STRING || token == JsonToken.NUMBER) return reader.nextString();
+        if (token == JsonToken.BOOLEAN) return reader.nextBoolean();
+        if (token == JsonToken.NULL) { reader.nextNull(); return JSONObject.NULL; }
+        reader.skipValue();
+        return JSONObject.NULL;
+    }
+
+    /** Keeps metadata objects small and flat, ignoring unexpected nested payloads. */
+    private static JSONObject readFlatObject(JsonReader reader)
+            throws IOException, org.json.JSONException {
+        JSONObject value = new JSONObject();
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return value; }
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            JsonToken token = reader.peek();
+            if (token == JsonToken.STRING || token == JsonToken.NUMBER
+                    || token == JsonToken.BOOLEAN || token == JsonToken.NULL) {
+                value.put(name, readScalar(reader));
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        return value;
+    }
+
+    private static int readRouteGeometry(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return 0; }
+        int points = 0;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("coordinates".equals(name)) points = countArrayItems(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return points;
+    }
+
+    private static int countArrayItems(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return 0; }
+        int count = 0;
+        reader.beginArray();
+        while (reader.hasNext()) { reader.skipValue(); count++; }
+        reader.endArray();
+        return count;
+    }
+
+    private static boolean readProcessingResult(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("geojson".equals(name)) found = readGeoJson(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readGeoJson(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("features".equals(name)) found = readFeatures(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readFeatures(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginArray();
+        while (reader.hasNext()) found = readFeature(reader) || found;
+        reader.endArray();
+        return found;
+    }
+
+    private static boolean readFeature(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("geometry".equals(name)) found = readMatchedGeometry(reader) || found;
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readMatchedGeometry(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        String type = "";
+        boolean line = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("type".equals(name) && reader.peek() == JsonToken.STRING) {
+                type = reader.nextString();
+            } else if ("coordinates".equals(name)) {
+                if ("LineString".equals(type)) {
+                    line = countArrayItems(reader) >= 2;
+                } else if ("MultiLineString".equals(type)) {
+                    line = hasMultiLine(reader);
+                } else {
+                    reader.skipValue();
+                }
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        return line;
+    }
+
+    private static boolean hasMultiLine(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginArray();
+        while (reader.hasNext()) found = countArrayItems(reader) >= 2 || found;
+        reader.endArray();
+        return found;
     }
 
     /** Visit one full journey at a time, so consumers can project large result files and release them. */
