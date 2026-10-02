@@ -21,7 +21,7 @@ final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
-    private static final List<Definition> DEFINITIONS = definitions();
+    private static final List<Definition> DEFINITIONS = buildDefinitions();
 
     static final class Definition {
         final String id, icon, title, description, detail, type, roadId;
@@ -307,7 +307,7 @@ final class AchievementStore {
             new Crossing("Queensferry Crossing", "M90 · Forth", 650,
                     new double[][]{{-3.415,56.001}})));
 
-    private static List<Definition> definitions() {
+    private static List<Definition> buildDefinitions() {
         List<Definition> output=new ArrayList<>();
         output.add(new Definition("motorway-quarter", "¼", "Quarter Marker",
                 "Complete one quarter of the UK motorway network.",
