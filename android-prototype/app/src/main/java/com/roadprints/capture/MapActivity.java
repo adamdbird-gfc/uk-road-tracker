@@ -55,7 +55,11 @@ public class MapActivity extends Activity {
 
         LinearLayout heading = new LinearLayout(this);
         heading.setOrientation(LinearLayout.VERTICAL);
-        heading.setPadding(dp(22), dp(18), dp(22), dp(14));
+        heading.setPadding(dp(18), dp(18), dp(18), dp(14));
+
+        LinearLayout brand = RoadprintsHeader.create(this);
+        brand.setPadding(0, 0, 0, dp(24));
+        heading.addView(brand);
 
         TextView eyebrow = new TextView(this);
         eyebrow.setText("YOUR TRAVEL RECORD");
@@ -607,7 +611,7 @@ public class MapActivity extends Activity {
                 top = insets.getSystemWindowInsetTop();
                 bottom = insets.getSystemWindowInsetBottom();
             }
-            heading.setPadding(dp(22), dp(18) + top, dp(22), dp(14));
+            heading.setPadding(dp(18), dp(18) + top, dp(18), dp(14));
             LinearLayout.LayoutParams navParams =
                     (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
             navParams.height = dp(68) + bottom;

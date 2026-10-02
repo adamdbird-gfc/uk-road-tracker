@@ -132,29 +132,13 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(36, 26, 36, 12);
+        content.setPadding(dp(18), dp(26), dp(18), dp(12));
 
         LinearLayout brandRow = new LinearLayout(this);
         brandRow.setGravity(Gravity.CENTER_VERTICAL);
-        brandRow.setPadding(0, 0, 0, 28);
-
-        ImageView logoMark = new ImageView(this);
-        logoMark.setImageResource(R.drawable.roadprints_mark);
-        logoMark.setContentDescription("Roadprints");
-        logoMark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(42, 42);
-        markParams.setMargins(0, 0, 10, 0);
-        brandRow.addView(logoMark, markParams);
-
-        TextView logo = new TextView(this);
-        logo.setText("roadprints");
-        logo.setTextSize(22);
-        logo.setTypeface(null, android.graphics.Typeface.BOLD);
-        logo.setTextColor(Color.WHITE);
-        logo.setPadding(0, 0, 0, 0);
-        logo.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        brandRow.addView(logo);
+        brandRow.setPadding(0, 0, 0, dp(28));
+        brandRow.addView(RoadprintsHeader.create(this),
+                new LinearLayout.LayoutParams(0, dp(44), 1));
         growingStatus = new GrowingStatusControl(this, brandRow);
 
         LinearLayout headingRow = new LinearLayout(this);
@@ -235,7 +219,7 @@ public class JourneyListActivity extends Activity {
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
-        journeyList.setPadding(dp(10), dp(18), dp(10), dp(18));
+        journeyList.setPadding(0, dp(18), 0, dp(18));
         TextView loading = new TextView(this);
         loading.setText("Loading journeys…");
         loading.setTextSize(16);
@@ -278,7 +262,7 @@ public class JourneyListActivity extends Activity {
                 top = insets.getSystemWindowInsetTop();
                 bottom = insets.getSystemWindowInsetBottom();
             }
-            content.setPadding(dp(36), dp(26) + top, dp(36), dp(12));
+            content.setPadding(dp(18), dp(26) + top, dp(18), dp(12));
             bottomNavigation.setPadding(dp(8), 0, dp(8), bottom);
             LinearLayout.LayoutParams navParams =
                     (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();

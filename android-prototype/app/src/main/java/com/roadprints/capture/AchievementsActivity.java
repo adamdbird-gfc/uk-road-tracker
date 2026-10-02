@@ -1,16 +1,23 @@
 package com.roadprints.capture;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -43,6 +50,15 @@ public class AchievementsActivity extends Activity {
     private int shownHighStreetEvidenceRevision=Integer.MIN_VALUE;
     private int generation;
     private int celebrationIndex;
+    private Dialog celebrationDialog;
+    private TextView celebrationIcon;
+    private TextView celebrationTitle;
+    private TextView celebrationDescription;
+    private TextView celebrationDetail;
+    private TextView celebrationPosition;
+    private Button celebrationPrevious;
+    private Button celebrationNext;
+    private Button celebrationClaim;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -62,6 +78,9 @@ public class AchievementsActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (celebrationDialog != null && celebrationDialog.isShowing()) {
+            celebrationDialog.dismiss();
+        }
         super.onDestroy();
         generation++;
         worker.shutdownNow();
@@ -74,7 +93,10 @@ public class AchievementsActivity extends Activity {
 
         LinearLayout header=new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
-        header.setPadding(dp(22),dp(17),dp(22),dp(13));
+        header.setPadding(dp(18),dp(17),dp(18),dp(13));
+        LinearLayout brand=RoadprintsHeader.create(this);
+        brand.setPadding(0,0,0,dp(22));
+        header.addView(brand);
         TextView eyebrow=text("YOUR TRAVEL RECORD",12,TEAL,true);
         TextView title=text("Achievements",28,Color.WHITE,true);
         summary=text("Checking your saved journeys…",14,MUTED,false);
@@ -91,8 +113,10 @@ public class AchievementsActivity extends Activity {
         content.setPadding(dp(18),dp(2),dp(18),dp(18));
         scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        root.addView(buildBottomNavigation());
+        View bottomNavigation=buildBottomNavigation();
+        root.addView(bottomNavigation);
         setContentView(root);
+        applySystemBarInsets(root,header,bottomNavigation);
         renderMessage("Checking saved journeys and coverage…",false);
     }
 
@@ -213,25 +237,173 @@ public class AchievementsActivity extends Activity {
     }
 
     private void showCelebrations(List<AchievementStore.Definition> definitions) {
+        if (definitions == null || definitions.isEmpty() || isFinishing()) return;
         celebrationQueue.clear();
         celebrationQueue.addAll(definitions);
         celebrationIndex=0;
-        showNextCelebration();
+        buildCelebrationDialog();
+        renderCelebration();
+        celebrationDialog.show();
+        Window window=celebrationDialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams params=window.getAttributes();
+            params.dimAmount=0.65f;
+            window.setAttributes(params);
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT);
+        }
     }
 
-    private void showNextCelebration() {
-        if (celebrationIndex>=celebrationQueue.size() || isFinishing()) return;
+    private void buildCelebrationDialog() {
+        if (celebrationDialog != null) return;
+        FrameLayout overlay=new FrameLayout(this);
+        overlay.setBackgroundColor(0xB8071122);
+        overlay.setOnClickListener(view -> closeCelebrations());
+
+        LinearLayout card=new LinearLayout(this) {
+            private float downX,downY;
+            @Override public boolean onInterceptTouchEvent(MotionEvent event) {
+                if (event.getActionMasked()==MotionEvent.ACTION_DOWN) {
+                    downX=event.getX(); downY=event.getY();
+                } else if (event.getActionMasked()==MotionEvent.ACTION_MOVE) {
+                    float dx=event.getX()-downX,dy=event.getY()-downY;
+                    if (Math.abs(dx)>dp(48) && Math.abs(dx)>Math.abs(dy)) return true;
+                }
+                return super.onInterceptTouchEvent(event);
+            }
+            @Override public boolean onTouchEvent(MotionEvent event) {
+                if (event.getActionMasked()==MotionEvent.ACTION_UP) {
+                    float dx=event.getX()-downX,dy=event.getY()-downY;
+                    if (Math.abs(dx)>dp(48) && Math.abs(dx)>Math.abs(dy)) {
+                        moveCelebration(dx<0?1:-1);
+                        return true;
+                    }
+                }
+                return super.onTouchEvent(event);
+            }
+        };
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+        card.setPadding(dp(24),dp(26),dp(24),dp(22));
+        card.setBackground(roundRect(0xFFFFFDF8,0xFFC9A24A,dp(22)));
+        card.setElevation(dp(16));
+        card.setClickable(true);
+        card.setOnClickListener(view -> { });
+
+        celebrationIcon=text("★",32,0xFF735300,true);
+        celebrationIcon.setGravity(Gravity.CENTER);
+        celebrationIcon.setBackground(roundRect(0xFFF2B544,0xFFF2B544,dp(40)));
+        card.addView(celebrationIcon,new LinearLayout.LayoutParams(dp(68),dp(68)));
+
+        TextView eyebrow=text("ACHIEVEMENT UNLOCKED",12,0xFF735300,true);
+        eyebrow.setPadding(0,dp(17),0,dp(4));
+        card.addView(eyebrow);
+
+        celebrationTitle=text("Achievement",24,0xFF172033,true);
+        celebrationTitle.setGravity(Gravity.CENTER);
+        card.addView(celebrationTitle);
+
+        celebrationDescription=text("",16,0xFF25324A,false);
+        celebrationDescription.setGravity(Gravity.CENTER);
+        celebrationDescription.setPadding(0,dp(9),0,0);
+        card.addView(celebrationDescription);
+
+        celebrationDetail=text("",14,0xFF657083,false);
+        celebrationDetail.setGravity(Gravity.CENTER);
+        celebrationDetail.setPadding(0,dp(6),0,0);
+        card.addView(celebrationDetail);
+
+        LinearLayout carousel=new LinearLayout(this);
+        carousel.setGravity(Gravity.CENTER);
+        carousel.setPadding(0,dp(12),0,0);
+        celebrationPrevious=celebrationArrow("←","Previous achievement");
+        celebrationPosition=text("",13,0xFF536078,true);
+        celebrationPosition.setGravity(Gravity.CENTER);
+        celebrationPosition.setMinWidth(dp(60));
+        celebrationNext=celebrationArrow("→","Next achievement");
+        carousel.addView(celebrationPrevious);
+        carousel.addView(celebrationPosition,new LinearLayout.LayoutParams(dp(72),dp(42)));
+        carousel.addView(celebrationNext);
+        card.addView(carousel);
+
+        celebrationClaim=new Button(this);
+        celebrationClaim.setTextColor(Color.WHITE);
+        celebrationClaim.setTextSize(15);
+        celebrationClaim.setTypeface(null,Typeface.BOLD);
+        celebrationClaim.setAllCaps(false);
+        celebrationClaim.setMinHeight(dp(52));
+        celebrationClaim.setBackground(roundRect(NAVY,NAVY,dp(12)));
+        LinearLayout.LayoutParams claimParams=new LinearLayout.LayoutParams(-1,dp(52));
+        claimParams.topMargin=dp(14);
+        card.addView(celebrationClaim,claimParams);
+
+        FrameLayout.LayoutParams cardParams=new FrameLayout.LayoutParams(
+                Math.min(dp(390),getResources().getDisplayMetrics().widthPixels-dp(36)),
+                FrameLayout.LayoutParams.WRAP_CONTENT,Gravity.CENTER);
+        overlay.addView(card,cardParams);
+        celebrationDialog=new Dialog(this);
+        celebrationDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        celebrationDialog.setContentView(overlay);
+        celebrationDialog.setCancelable(true);
+        celebrationDialog.setCanceledOnTouchOutside(false);
+        celebrationDialog.setOnCancelListener(dialog -> clearCelebrationQueue());
+        celebrationDialog.setOnDismissListener(dialog -> clearCelebrationQueue());
+        celebrationPrevious.setOnClickListener(view -> moveCelebration(-1));
+        celebrationNext.setOnClickListener(view -> moveCelebration(1));
+        celebrationClaim.setOnClickListener(view -> closeCelebrations());
+    }
+
+    private Button celebrationArrow(String label,String description) {
+        Button button=new Button(this);
+        button.setText(label);
+        button.setTextSize(20);
+        button.setTextColor(NAVY);
+        button.setContentDescription(description);
+        button.setMinWidth(dp(48));
+        button.setMinimumWidth(dp(48));
+        button.setMinHeight(dp(42));
+        button.setBackground(roundRect(0xFFEFF3F9,0xFFCBD4E4,dp(9)));
+        return button;
+    }
+
+    private void renderCelebration() {
+        if (celebrationQueue.isEmpty()) return;
         AchievementStore.Definition definition=celebrationQueue.get(celebrationIndex);
-        AlertDialog dialog=new AlertDialog.Builder(this)
-                .setTitle("Achievement unlocked · "+definition.icon)
-                .setMessage(definition.title+"\n\n"+definition.detail)
-                .setPositiveButton(celebrationIndex<celebrationQueue.size()-1
-                        ? "Claim all achievements" : "Claim achievement",(d,which)->{
-                    celebrationIndex++;
-                    showNextCelebration();
-                })
-                .create();
-        dialog.show();
+        celebrationIcon.setText(definition.icon==null||definition.icon.isEmpty()?"★":definition.icon);
+        celebrationTitle.setText(definition.title);
+        celebrationDescription.setText(definition.description==null?"":definition.description);
+        celebrationDetail.setText(definition.detail==null?"":definition.detail);
+        boolean multiple=celebrationQueue.size()>1;
+        int visibility=multiple?View.VISIBLE:View.GONE;
+        celebrationPrevious.setVisibility(visibility);
+        celebrationNext.setVisibility(visibility);
+        celebrationPosition.setVisibility(visibility);
+        celebrationPrevious.setEnabled(celebrationIndex>0);
+        celebrationNext.setEnabled(celebrationIndex<celebrationQueue.size()-1);
+        celebrationPrevious.setAlpha(celebrationIndex>0?1f:0.45f);
+        celebrationNext.setAlpha(celebrationIndex<celebrationQueue.size()-1?1f:0.45f);
+        celebrationPosition.setText(multiple
+                ?(celebrationIndex+1)+" of "+celebrationQueue.size():"");
+        celebrationClaim.setText(multiple&&celebrationIndex<celebrationQueue.size()-1
+                ?"Claim all achievements":"Claim achievement");
+    }
+
+    private void moveCelebration(int offset) {
+        if (celebrationQueue.isEmpty()) return;
+        celebrationIndex=Math.max(0,Math.min(celebrationQueue.size()-1,celebrationIndex+offset));
+        renderCelebration();
+    }
+
+    private void closeCelebrations() {
+        if (celebrationDialog!=null && celebrationDialog.isShowing()) celebrationDialog.dismiss();
+        clearCelebrationQueue();
+    }
+
+    private void clearCelebrationQueue() {
+        celebrationQueue.clear();
+        celebrationIndex=0;
     }
 
     private void renderMessage(String message, boolean error) {
@@ -285,6 +457,29 @@ public class AchievementsActivity extends Activity {
             nav.addView(item,new LinearLayout.LayoutParams(0,dp(68),1));
         }
         return nav;
+    }
+
+    private void applySystemBarInsets(View root,View header,View bottomNavigation) {
+        root.setOnApplyWindowInsetsListener((view,insets)->{
+            int top;
+            int bottom;
+            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.R) {
+                android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());
+                top=bars.top;
+                bottom=bars.bottom;
+            } else {
+                top=insets.getSystemWindowInsetTop();
+                bottom=insets.getSystemWindowInsetBottom();
+            }
+            header.setPadding(dp(18),dp(17)+top,dp(18),dp(13));
+            LinearLayout.LayoutParams navParams=(LinearLayout.LayoutParams)
+                    bottomNavigation.getLayoutParams();
+            navParams.height=dp(68)+bottom;
+            bottomNavigation.setPadding(dp(8),0,dp(8),bottom);
+            bottomNavigation.setLayoutParams(navParams);
+            return insets;
+        });
+        root.requestApplyInsets();
     }
 
     private void navigate(int index) {
