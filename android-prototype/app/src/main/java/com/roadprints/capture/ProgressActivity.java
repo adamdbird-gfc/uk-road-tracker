@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
 import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -360,7 +361,7 @@ public class ProgressActivity extends Activity {
                         ignored -> new RoadDiscoveryItem(id, label, category));
                 JSONObject geometry = feature.optJSONObject("geometry");
                 if (geometry != null && "Local roads".equals(category)) {
-                    road.geometryEvidence.put(geometry);
+                    road.geometryEvidence.add(geometry);
                 }
                 if (foot) road.onFoot = true;
                 else road.driven = true;
