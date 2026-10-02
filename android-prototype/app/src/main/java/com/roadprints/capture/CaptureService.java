@@ -503,6 +503,7 @@ public class CaptureService extends Service {
                 locationManager.removeUpdates(locationListener);
             } catch (Exception ignored) {}
         }
+        captureIo.shutdown();
         super.onDestroy();
     }
 
