@@ -429,42 +429,43 @@ public class CaptureService extends Service {
             if (!isActive(CaptureService.this) || captureFinishing) return;
             if (!checkpointPending) {
                 checkpointPending = true;
-                JSONObject snapshot = null;
-                try {
-                    snapshot = checkpointSnapshot();
-                } catch (Exception ignored) { }
-                if (snapshot != null) {
-                    JSONObject savedSnapshot = snapshot;
-                    captureIo.execute(() -> {
-                        FileOutputStream output = null;
-                        try {
-                            output = checkpointFile.startWrite();
-                            output.write(savedSnapshot.toString().getBytes(StandardCharsets.UTF_8));
-                            checkpointFile.finishWrite(output);
-                        } catch (Exception ignored) {
-                            if (output != null) checkpointFile.failWrite(output);
-                            // Keep the prior atomic checkpoint if this write fails.
-                        } finally {
-                            handler.post(() -> checkpointPending = false);
-                        }
-                    });
-                } else {
-                    checkpointPending = false;
-                }
+                final List<Location> savedPoints = new ArrayList<>(points);
+                final String savedJourneyId = journeyId;
+                final String savedStartedAt = startedAt;
+                final String savedMode = mode;
+                final double savedDistanceMetres = distanceMetres;
+                final long savedStationarySince = stationarySince;
+                captureIo.execute(() -> {
+                    FileOutputStream output = null;
+                    try {
+                        JSONObject snapshot = checkpointSnapshot(savedJourneyId, savedStartedAt,
+                                savedMode, savedDistanceMetres, savedStationarySince, savedPoints);
+                        output = checkpointFile.startWrite();
+                        output.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));
+                        checkpointFile.finishWrite(output);
+                    } catch (Exception ignored) {
+                        if (output != null) checkpointFile.failWrite(output);
+                        // Keep the prior atomic checkpoint if this write fails.
+                    } finally {
+                        handler.post(() -> checkpointPending = false);
+                    }
+                });
             }
             handler.postDelayed(this, CHECKPOINT_INTERVAL_MS);
         }
     };
 
-    private JSONObject checkpointSnapshot() throws org.json.JSONException {
+    private JSONObject checkpointSnapshot(String savedJourneyId, String savedStartedAt,
+            String savedMode, double savedDistanceMetres, long savedStationarySince,
+            List<Location> savedRoutePoints) throws org.json.JSONException {
         JSONObject snapshot = new JSONObject();
-        snapshot.put("journey_id", journeyId);
-        snapshot.put("started_at", startedAt);
-        snapshot.put("mode", mode);
-        snapshot.put("distance_meters", distanceMetres);
-        snapshot.put("stationary_since", stationarySince);
+        snapshot.put("journey_id", savedJourneyId);
+        snapshot.put("started_at", savedStartedAt);
+        snapshot.put("mode", savedMode);
+        snapshot.put("distance_meters", savedDistanceMetres);
+        snapshot.put("stationary_since", savedStationarySince);
         JSONArray savedPoints = new JSONArray();
-        for (Location point : points) {
+        for (Location point : savedRoutePoints) {
             savedPoints.put(new JSONArray()
                     .put(point.getLongitude())
                     .put(point.getLatitude())
