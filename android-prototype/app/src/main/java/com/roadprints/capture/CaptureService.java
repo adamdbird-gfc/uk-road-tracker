@@ -67,6 +67,7 @@ public class CaptureService extends Service {
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
     private static final long STILLNESS_END_THRESHOLD_MS = 180_000L;
+    private static final long MODE_CHANGE_CONFIRMATION_MS = 15_000L;
     private static final long CHECKPOINT_INTERVAL_MS = 15_000L;
     private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
 
@@ -86,6 +87,8 @@ public class CaptureService extends Service {
     private boolean captureFinishing;
     private boolean checkpointPending;
     private String nextCaptureMode;
+    private String pendingActivityMode;
+    private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
     private AtomicFile checkpointFile;
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
@@ -135,6 +138,7 @@ public class CaptureService extends Service {
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
             nextCaptureMode = null;
+            clearPendingActivityMode();
             finishCapture();
         } else if (ACTION_START.equals(action)) {
             startCapture(intent.getStringExtra(EXTRA_MODE));
@@ -201,6 +205,7 @@ public class CaptureService extends Service {
 
     private void disarmTracking() {
         nextCaptureMode = null;
+        clearPendingActivityMode();
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, false).apply();
         removeActivityUpdates();
@@ -239,6 +244,7 @@ public class CaptureService extends Service {
         }
 
         if (activityType == DetectedActivity.STILL) {
+            clearPendingActivityMode();
             if (isActive(this)) {
                 stationarySince = System.currentTimeMillis();
                 stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
@@ -256,21 +262,43 @@ public class CaptureService extends Service {
         if (detectedMode != null) {
             if (!isActive(this)) {
                 startCapture(detectedMode);
-            } else if (!detectedMode.equals(mode)) {
-                // Keep each detected movement type as its own reviewable journey.
-                // IN_VEHICLE cannot distinguish trains from road vehicles, so the
-                // saved leg remains subject to transport review before matching.
-                if (points.size() >= 2) {
-                    nextCaptureMode = detectedMode;
-                    if (!captureFinishing) finishCapture();
-                    broadcastUpdate("Movement changed to " + detectedMode
-                            + "; saving this journey and starting a new leg...");
-                } else {
-                    broadcastUpdate("Movement changed to " + detectedMode
-                            + "; keeping the short segment with the current journey.");
-                }
+            } else if (detectedMode.equals(mode)) {
+                clearPendingActivityMode();
+            } else {
+                pendingActivityMode = detectedMode;
+                handler.removeCallbacks(confirmActivityModeChange);
+                handler.postDelayed(confirmActivityModeChange, MODE_CHANGE_CONFIRMATION_MS);
+                broadcastUpdate("Checking the change to " + detectedMode
+                        + " before starting a new journey leg...");
             }
         }
+    }
+
+    private void clearPendingActivityMode() {
+        pendingActivityMode = null;
+        handler.removeCallbacks(confirmActivityModeChange);
+    }
+
+    private void commitPendingActivityMode() {
+        String confirmedMode = pendingActivityMode;
+        if (confirmedMode == null || !isActive(this) || confirmedMode.equals(mode)) {
+            clearPendingActivityMode();
+            return;
+        }
+        if (captureFinishing) {
+            handler.postDelayed(confirmActivityModeChange, 1_000L);
+            return;
+        }
+        clearPendingActivityMode();
+        if (points.size() < 2) {
+            broadcastUpdate("Activity changed, but this segment is too short to split safely.");
+            return;
+        }
+        // IN_VEHICLE cannot distinguish trains from road vehicles. Save that leg
+        // as Unknown so it can be classified in Journeys without road matching.
+        nextCaptureMode = confirmedMode;
+        finishCapture();
+        broadcastUpdate("Activity change confirmed; saving this journey leg...");
     }
 
     private void clearStillnessIfMovementContinues(Location location) {
@@ -668,6 +696,7 @@ public class CaptureService extends Service {
     public void onDestroy() {
         removeActivityUpdates();
         handler.removeCallbacks(checkpointCapture);
+        clearPendingActivityMode();
         if (isActive(this)) {
             try {
                 locationManager.removeUpdates(locationListener);
