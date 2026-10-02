@@ -56,9 +56,9 @@ public class MatchingCoordinatorTest {
         coordinator.start(); await(MatchingCoordinator.State.COMPLETE);
         assertEquals(1, road.get()); assertEquals(1, foot.get());
     }
-    @Test public void transportReviewBlocksCapturedLegFromRoadMatching() throws Exception {
+    @Test public void unclassifiedVehicleLegIsNotSentToRoadMatching() throws Exception {
         JSONObject unreviewed = new JSONObject().put("journey_id", "unreviewed")
-                .put("mode", "driving").put("processing_status", "pending")
+                .put("mode", "unknown").put("processing_status", "pending")
                 .put("transport_confirmation", "required")
                 .put("source", new JSONObject().put("type", "android_activity_capture"))
                 .put("route_geometry", new JSONObject().put("type", "LineString")
