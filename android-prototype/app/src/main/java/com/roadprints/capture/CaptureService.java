@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 
 public class CaptureService extends Service {
     public static final String ACTION_START = "com.roadprints.capture.START";
+    public static final String ACTION_RESUME = "com.roadprints.capture.RESUME";
     public static final String ACTION_STOP = "com.roadprints.capture.STOP";
     public static final String ACTION_ARM = "com.roadprints.capture.ARM";
     public static final String ACTION_DISARM = "com.roadprints.capture.DISARM";
@@ -143,6 +144,8 @@ public class CaptureService extends Service {
             handleTransition(
                     intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
                     intent.getIntExtra(EXTRA_TRANSITION, -1));
+        } else if (ACTION_RESUME.equals(action) && !isActive(this)) {
+            broadcastUpdate("No recoverable active journey was found.");
         }
         return START_NOT_STICKY;
     }
