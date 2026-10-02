@@ -29,6 +29,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -83,8 +84,7 @@ public class CaptureService extends Service {
     private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
     private boolean captureFinishing;
     private boolean checkpointPending;
-    private final AtomicFile checkpointFile = new AtomicFile(
-            new File(getFilesDir(), "roadprints_active_capture.json"));
+    private AtomicFile checkpointFile;
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
             finishCapture();
@@ -119,6 +119,7 @@ public class CaptureService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        checkpointFile = new AtomicFile(new File(getFilesDir(), "roadprints_active_capture.json"));
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
@@ -432,10 +433,13 @@ public class CaptureService extends Service {
                 if (snapshot != null) {
                     JSONObject savedSnapshot = snapshot;
                     captureIo.execute(() -> {
+                        FileOutputStream output = null;
                         try {
-                            checkpointFile.write(out ->
-                                    out.write(savedSnapshot.toString().getBytes(StandardCharsets.UTF_8)));
+                            output = checkpointFile.startWrite();
+                            output.write(savedSnapshot.toString().getBytes(StandardCharsets.UTF_8));
+                            checkpointFile.finishWrite(output);
                         } catch (Exception ignored) {
+                            if (output != null) checkpointFile.failWrite(output);
                             // Keep the prior atomic checkpoint if this write fails.
                         } finally {
                             handler.post(() -> checkpointPending = false);
@@ -456,7 +460,15 @@ public class CaptureService extends Service {
         snapshot.put("mode", mode);
         snapshot.put("distance_meters", distanceMetres);
         snapshot.put("stationary_since", stationarySince);
-        snapshot.put("points", coordinates(points));
+        JSONArray savedPoints = new JSONArray();
+        for (Location point : points) {
+            savedPoints.put(new JSONArray()
+                    .put(point.getLongitude())
+                    .put(point.getLatitude())
+                    .put(point.hasAccuracy() ? point.getAccuracy() : 0)
+                    .put(point.getTime()));
+        }
+        snapshot.put("points", savedPoints);
         return snapshot;
     }
 
