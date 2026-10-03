@@ -28,7 +28,7 @@ public class DataManagementActivity extends Activity {
         TextView intro=text("Import Timeline data again or manage journeys saved on this device.",15,MUTED,false);intro.setPadding(0,dp(8),0,dp(20));root.addView(intro);
         addAction(root,"LOAD TIMELINE DATA","Import journeys from a Timeline export",()->startActivity(new Intent(this,TimelineImportActivity.class)));
         addAction(root,"ADD SERVICE STATION VISITS","Import Timeline data for service-station visits",()->{Intent i=new Intent(this,TimelineImportActivity.class);i.putExtra("service_only",true);startActivity(i);});
-        root.addView(text("Delete saved journeys",19,Color.WHITE,true)).setPadding(0,dp(16),0,dp(8));
+        TextView deleteHeading=text("Delete saved journeys",19,Color.WHITE,true);deleteHeading.setPadding(0,dp(16),0,dp(8));root.addView(deleteHeading);
         addAction(root,"DELETE ROAD DATA","Driving, bus and cycling journeys",()->confirmDelete("Delete road data?","This removes driving, bus and cycling journeys from this device.",new String[]{"driving","bus","cycling"}));
         addAction(root,"DELETE ON-FOOT DATA","Walking journeys",()->confirmDelete("Delete on-foot data?","This removes walking journeys from this device.",new String[]{"walking"}));
         addAction(root,"DELETE ALL SAVED DATA","Remove every saved journey",this::confirmDeleteAll);
