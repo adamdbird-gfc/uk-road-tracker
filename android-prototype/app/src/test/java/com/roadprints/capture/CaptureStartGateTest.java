@@ -26,6 +26,11 @@ public class CaptureStartGateTest {
         assertTrue(CaptureStartGate.shouldConfirmStart("walking", 60_000, 80, true, 75));
     }
 
+    @Test public void briefTrafficPauseDoesNotCancelMovementCandidate() {
+        assertFalse(CaptureStartGate.shouldEndAfterStillness(4 * 60_000L));
+        assertTrue(CaptureStartGate.shouldEndAfterStillness(CaptureStartGate.CANDIDATE_STILL_CANCEL_MS));
+    }
+
     @Test public void confirmedArrivalRequiresFiveMinutesOfStillness() {
         assertFalse(CaptureStartGate.shouldEndAfterStillness(299_999));
         assertTrue(CaptureStartGate.shouldEndAfterStillness(300_000));
