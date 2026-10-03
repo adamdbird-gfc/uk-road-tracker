@@ -67,7 +67,7 @@ public class CaptureService extends Service {
     private static final String STATE_ARMED = "armed";
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
-    private static final long STILLNESS_END_THRESHOLD_MS = 180_000L;
+    private static final long STILLNESS_END_THRESHOLD_MS = CaptureStartGate.STILLNESS_END_THRESHOLD_MS;
     private static final long MODE_CHANGE_CONFIRMATION_MS = 15_000L;
     private static final long CHECKPOINT_INTERVAL_MS = 15_000L;
     private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
@@ -80,6 +80,12 @@ public class CaptureService extends Service {
     private ActivityRecognitionClient activityClient;
     private PendingIntent activityPendingIntent;
     private final List<Location> points = new ArrayList<>();
+    private final List<Location> candidatePoints = new ArrayList<>();
+    private Location candidateOrigin;
+    private Location departureAnchor;
+    private long candidateStartedAtMs;
+    private String candidateStartedAt;
+    private String candidateMode;
     private Location lastPoint;
     private String journeyId;
     private String startedAt;
@@ -96,14 +102,20 @@ public class CaptureService extends Service {
     private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
     private AtomicFile checkpointFile;
     private final Runnable finishIfStill = () -> {
-        if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
-            finishCapture();
-        }
+        if (isActive(this) && stationarySince != 0
+                && CaptureStartGate.shouldEndAfterStillness(System.currentTimeMillis() - stationarySince)) finishCapture();
+    };
+    private final Runnable candidateTimeout = () -> {
+        if (candidateMode != null) cancelStartCandidate("Movement was too short to save as a journey.");
     };
 
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            if (!isActive(CaptureService.this)) {
+                if (candidateMode != null) collectCandidateLocation(location);
+                return;
+            }
             if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
             lastPoint = location;
             points.add(location);
@@ -133,6 +145,7 @@ public class CaptureService extends Service {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
+        restoreDepartureAnchor();
         if (isActive(this)) restoreActiveCapture();
     }
 
@@ -142,6 +155,7 @@ public class CaptureService extends Service {
 
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
+            cancelStartCandidate(null);
             nextCaptureMode = null;
             clearPendingActivityMode();
             finishCapture();
@@ -209,6 +223,7 @@ public class CaptureService extends Service {
     }
 
     private void disarmTracking() {
+        cancelStartCandidate(null);
         nextCaptureMode = null;
         clearPendingActivityMode();
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
@@ -250,12 +265,13 @@ public class CaptureService extends Service {
 
         if (activityType == DetectedActivity.STILL) {
             clearPendingActivityMode();
+            if (!isActive(this) && candidateMode != null) cancelStartCandidate("Movement stopped before a journey was confirmed.");
             if (isActive(this)) {
                 stationarySince = System.currentTimeMillis();
                 stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
                 handler.removeCallbacks(finishIfStill);
                 handler.postDelayed(finishIfStill, STILLNESS_END_THRESHOLD_MS);
-                broadcastUpdate("Stationary detected; checking GPS movement for 3 minutes...");
+                broadcastUpdate("Stationary detected; checking for a genuine stop for 5 minutes...");
             }
             return;
         }
@@ -266,7 +282,7 @@ public class CaptureService extends Service {
         String detectedMode = modeForActivity(activityType);
         if (detectedMode != null) {
             if (!isActive(this)) {
-                startCapture(detectedMode);
+                beginStartCandidate(detectedMode);
             } else if (detectedMode.equals(mode)) {
                 clearPendingActivityMode();
             } else {
@@ -352,36 +368,137 @@ public class CaptureService extends Service {
 
     private void startCapture(String requestedMode) {
         if (isActive(this)) return;
+        cancelStartCandidate(null);
+        clearDepartureAnchor();
+        activateCapture(requestedMode, Instant.now().toString(), null);
+    }
 
+    private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
+        if (isActive(this)) return;
         mode = requestedMode == null ? "driving" : requestedMode;
         journeyId = UUID.randomUUID().toString();
-        startedAt = Instant.now().toString();
+        startedAt = captureStartedAt == null ? Instant.now().toString() : captureStartedAt;
         distanceMetres = 0;
         lastPoint = null;
         stationarySince = 0;
         stationaryAnchor = null;
         points.clear();
-
+        if (initialPoints != null) {
+            for (Location point : initialPoints) {
+                Location copy = new Location(point);
+                if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
+                points.add(copy);
+                lastPoint = copy;
+            }
+        }
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
-                .putBoolean(STATE_ACTIVE, true)
-                .putString(STATE_MODE, mode)
-                .apply();
-
+                .putBoolean(STATE_ACTIVE, true).putString(STATE_MODE, mode).apply();
         startForegroundWithNotification();
         try {
             requestCaptureLocationUpdates();
             scheduleCaptureCheckpoint();
-            broadcastUpdate("Recording " + mode + " locally...");
+            broadcastUpdate("Confirmed " + mode + " journey; recording locally...");
         } catch (SecurityException error) {
-            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
-                    .putBoolean(STATE_ACTIVE, false).apply();
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit().putBoolean(STATE_ACTIVE, false).apply();
             broadcastUpdate("Location permission is required to record.");
-            if (!isArmed(this)) {
-                stopForeground(STOP_FOREGROUND_REMOVE);
-                stopSelf();
-            }
+            if (!isArmed(this)) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
         }
     }
+
+    private void beginStartCandidate(String requestedMode) {
+        if (isActive(this) || captureFinishing || requestedMode == null) return;
+        if (requestedMode.equals(candidateMode)) return;
+        cancelStartCandidate(null);
+        candidateMode = requestedMode;
+        candidateStartedAtMs = System.currentTimeMillis();
+        candidateStartedAt = Instant.now().toString();
+        candidatePoints.clear();
+        candidateOrigin = recentLastKnownLocation();
+        if (candidateOrigin == null && departureAnchor != null) {
+            candidateOrigin = new Location(departureAnchor);
+            candidatePoints.add(new Location(departureAnchor));
+        } else if (candidateOrigin != null) candidatePoints.add(new Location(candidateOrigin));
+        try {
+            requestLocationUpdatesForMode(candidateMode, true);
+            handler.removeCallbacks(candidateTimeout);
+            handler.postDelayed(candidateTimeout, CaptureStartGate.START_CANDIDATE_TIMEOUT_MS);
+            broadcastUpdate("Checking movement before saving a journey...");
+        } catch (SecurityException error) {
+            cancelStartCandidate("Location permission is required to confirm movement.");
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private Location recentLastKnownLocation() {
+        try {
+            Location gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location network = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Location best = gps;
+            if (network != null && (best == null || network.getTime() > best.getTime())) best = network;
+            if (best == null || !best.hasAccuracy() || best.getAccuracy() > 50f
+                    || System.currentTimeMillis() - best.getTime() > 60_000L) return null;
+            return new Location(best);
+        } catch (SecurityException ignored) { return null; }
+    }
+
+    private void collectCandidateLocation(Location location) {
+        if (candidateMode == null || location == null || !location.hasAccuracy()
+                || location.getAccuracy() > 50f) return;
+        if (candidateOrigin == null) candidateOrigin = new Location(location);
+        if (candidatePoints.isEmpty()
+                || candidatePoints.get(candidatePoints.size() - 1).distanceTo(location) >= 5f) {
+            candidatePoints.add(new Location(location));
+            if (candidatePoints.size() > 48) candidatePoints.remove(0);
+        }
+        float fromOrigin = candidateOrigin.distanceTo(location);
+        float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
+        if (!CaptureStartGate.shouldConfirmStart(candidateMode,
+                System.currentTimeMillis() - candidateStartedAtMs,
+                fromOrigin, departureAnchor != null, fromStop)) return;
+        String confirmedMode = candidateMode;
+        String confirmedStart = candidateStartedAt;
+        List<Location> seedPoints = new ArrayList<>(candidatePoints);
+        cancelStartCandidate(null);
+        clearDepartureAnchor();
+        activateCapture(confirmedMode, confirmedStart, seedPoints);
+    }
+
+    private void cancelStartCandidate(String message) {
+        handler.removeCallbacks(candidateTimeout);
+        if (candidateMode == null) return;
+        candidateMode = null;
+        candidateStartedAt = null;
+        candidateStartedAtMs = 0;
+        candidateOrigin = null;
+        candidatePoints.clear();
+        if (!isActive(this)) locationManager.removeUpdates(locationListener);
+        if (message != null && isArmed(this)) broadcastUpdate(message);
+    }
+
+    private void restoreDepartureAnchor() {
+        SharedPreferences preferences = getSharedPreferences(STATE_PREFS, MODE_PRIVATE);
+        if (!preferences.contains("departure_lat_e7") || !preferences.contains("departure_lng_e7")) return;
+        Location anchor = new Location("roadprints_stop");
+        anchor.setLatitude(preferences.getLong("departure_lat_e7", 0L) / 10_000_000.0);
+        anchor.setLongitude(preferences.getLong("departure_lng_e7", 0L) / 10_000_000.0);
+        anchor.setAccuracy(preferences.getFloat("departure_accuracy", 25f));
+        departureAnchor = anchor;
+    }
+
+    private void storeDepartureAnchor(Location anchor) {
+        departureAnchor = anchor == null ? null : new Location(anchor);
+        SharedPreferences.Editor editor = getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit();
+        if (anchor == null) {
+            editor.remove("departure_lat_e7").remove("departure_lng_e7").remove("departure_accuracy");
+        } else {
+            editor.putLong("departure_lat_e7", Math.round(anchor.getLatitude() * 10_000_000.0))
+                    .putLong("departure_lng_e7", Math.round(anchor.getLongitude() * 10_000_000.0))
+                    .putFloat("departure_accuracy", anchor.hasAccuracy() ? anchor.getAccuracy() : 25f);
+        }
+        editor.apply();
+    }
+
+    private void clearDepartureAnchor() { storeDepartureAnchor(null); }
 
     private void finishCapture() {
         if (!isActive(this)) {
