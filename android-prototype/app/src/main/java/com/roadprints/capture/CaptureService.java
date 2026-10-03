@@ -1,5 +1,6 @@
 package com.roadprints.capture;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -487,6 +488,7 @@ public class CaptureService extends Service {
         return "driving".equals(journeyMode) || "bus".equals(journeyMode);
     }
 
+    @SuppressLint("MissingPermission")
     private void requestCaptureLocationUpdates() {
         boolean road = roadMode(mode);
         locationManager.requestLocationUpdates(
