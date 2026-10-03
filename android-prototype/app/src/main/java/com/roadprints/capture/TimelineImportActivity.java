@@ -211,7 +211,7 @@ public class TimelineImportActivity extends Activity {
                         collectTimelinePathPoints(segment, semanticPathPoints);
                         JSONObject visit = segment.optJSONObject("visit");
                         if (visit == null) visit = segment.optJSONObject("placeVisit");
-                        if (visit != null) collectConfirmedVisit(segment, visit, confirmedTimelineVisits);
+                        if (visit != null) collectConfirmedVisit(segment, visit, confirmedTimelineVisits, fileFingerprint);
                         if (segment.optJSONObject("activity") != null) {
                             semanticSegments.add(segment);
                         } else {
@@ -228,7 +228,7 @@ public class TimelineImportActivity extends Activity {
                     while (reader.hasNext()) {
                         JSONObject wrapper = readJsonObject(reader);
                         JSONObject placeVisit = wrapper.optJSONObject("placeVisit");
-                        if (placeVisit != null) collectConfirmedVisit(placeVisit, placeVisit, confirmedTimelineVisits);
+                        if (placeVisit != null) collectConfirmedVisit(placeVisit, placeVisit, confirmedTimelineVisits, fileFingerprint);
                         JSONObject segment = wrapper.optJSONObject("activitySegment");
                         if (segment == null) continue;
                         found++;
@@ -279,7 +279,8 @@ public class TimelineImportActivity extends Activity {
                         journeyRecordsParsed, journeysWithIntermediateTrace));
     }
 
-    private void collectConfirmedVisit(JSONObject segment, JSONObject visit, JSONArray output) {
+    private void collectConfirmedVisit(
+            JSONObject segment, JSONObject visit, JSONArray output, String fileFingerprint) {
         if (segment == null || visit == null) return;
         JSONObject candidate=visit.optJSONObject("topCandidate");
         JSONObject place=candidate==null?null:candidate.optJSONObject("placeLocation");
@@ -295,10 +296,29 @@ public class TimelineImportActivity extends Activity {
         if(end.isEmpty()&&duration!=null) end=timestamp(duration,"endTimestamp");
         JSONObject confirmed=new JSONObject();
         try {
+            confirmed.put("id", start + "|" + end + "|"
+                    + String.format(Locale.US, "%.5f", point[0]) + "|"
+                    + String.format(Locale.US, "%.5f", point[1]));
+            confirmed.put("source", "google_timeline_placeVisit");
+            confirmed.put("source_file_fingerprint", fileFingerprint);
+            confirmed.put("schema", segment.has("startTime")
+                    ? "semanticSegments" : "timelineObjects");
             confirmed.put("lat",point[0]);
             confirmed.put("lng",point[1]);
             confirmed.put("start",start);
             confirmed.put("end",end);
+            if (candidate != null) {
+                if(candidate.has("placeId")) confirmed.put("place_id",candidate.opt("placeId"));
+                if(candidate.has("placeName")) confirmed.put("place_name",candidate.opt("placeName"));
+                if(candidate.has("placeType")) confirmed.put("place_type",candidate.opt("placeType"));
+                if(candidate.has("semanticType")) confirmed.put("semantic_type",candidate.opt("semanticType"));
+                confirmed.put("source_candidate",candidate);
+            }
+            if (place != null) {
+                if(place.has("name")) confirmed.put("place_name",place.opt("name"));
+                if(place.has("address")) confirmed.put("place_address",place.opt("address"));
+            }
+            confirmed.put("source_visit", visit);
             output.put(confirmed);
         } catch(org.json.JSONException ignored) {
             // Ignore only the malformed place visit.

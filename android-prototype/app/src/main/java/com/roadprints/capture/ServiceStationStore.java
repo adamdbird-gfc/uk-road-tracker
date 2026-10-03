@@ -76,40 +76,56 @@ final class ServiceStationStore {
                 .putLong(REVISION,revision(context)+1).apply();
     }
 
-    /** Match explicit Timeline placeVisit records with the POC's nearest-site rule. */
+    /**
+     * Retain explicit Timeline place visits as source evidence, then rebuild station matches.
+     * The raw visit ledger is authoritative; automatic station IDs are a derived cache.
+     */
     static int recordConfirmedTimelineVisits(Context context, JSONArray visits) {
         ensureConfirmedOnlyMigration(context);
-        if(visits==null || visits.length()==0) return 0;
-        Set<String> credited=automatic(context);
-        int before=credited.size();
+        int before = automatic(context).size();
         try {
-            JSONArray services=stations(context);
-            for(int i=0;i<visits.length();i++) {
-                JSONObject visit=visits.optJSONObject(i);
-                if(visit==null) continue;
-                double lat=visit.optDouble("lat",Double.NaN),lng=visit.optDouble("lng",Double.NaN);
-                if(!Double.isFinite(lat)||!Double.isFinite(lng)) continue;
-                JSONObject nearest=null;
-                double nearestMetres=Double.MAX_VALUE;
-                for(int j=0;j<services.length();j++) {
-                    JSONObject service=services.optJSONObject(j);
-                    if(service==null) continue;
-                    double distance=haversineMetres(lat,lng,service.optDouble("lat",Double.NaN),
-                            service.optDouble("lng",Double.NaN));
-                    if(distance<nearestMetres){nearestMetres=distance;nearest=service;}
-                }
-                if(nearest!=null && nearestMetres<=350) {
-                    String id=nearest.optString("id","");
-                    if(!id.isEmpty()) credited.add(id);
-                }
-            }
-        } catch(Exception error) {
-            android.util.Log.w("Roadprints","Confirmed service visit matching failed",error);
+            TimelineVisitStore.merge(context, visits);
+            rebuildConfirmedTimelineMatches(context);
+        } catch (Exception error) {
+            android.util.Log.w("Roadprints", "Could not persist Timeline place visits", error);
             return 0;
         }
-        if(credited.size()!=before) prefs(context).edit().putStringSet(AUTOMATIC,credited)
-                .putLong(REVISION,revision(context)+1).apply();
-        return credited.size()-before;
+        return Math.max(0, automatic(context).size() - before);
+    }
+
+    private static void rebuildConfirmedTimelineMatches(Context context) throws Exception {
+        JSONArray evidence = TimelineVisitStore.all(context);
+        JSONArray services = stations(context);
+        Set<String> credited = new HashSet<>();
+        for (int i = 0; i < evidence.length(); i++) {
+            JSONObject visit = evidence.optJSONObject(i);
+            if (visit == null) continue;
+            double lat = visit.optDouble("lat", Double.NaN);
+            double lng = visit.optDouble("lng", Double.NaN);
+            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
+            JSONObject nearest = null;
+            double nearestMetres = Double.MAX_VALUE;
+            for (int j = 0; j < services.length(); j++) {
+                JSONObject service = services.optJSONObject(j);
+                if (service == null) continue;
+                double distance = haversineMetres(lat, lng,
+                        service.optDouble("lat", Double.NaN),
+                        service.optDouble("lng", Double.NaN));
+                if (distance < nearestMetres) {
+                    nearestMetres = distance;
+                    nearest = service;
+                }
+            }
+            if (nearest != null && nearestMetres <= 350) {
+                String id = nearest.optString("id", "");
+                if (!id.isEmpty()) credited.add(id);
+            }
+        }
+        Set<String> existing = set(context, AUTOMATIC);
+        if (!existing.equals(credited)) {
+            prefs(context).edit().putStringSet(AUTOMATIC, credited)
+                    .putLong(REVISION, revision(context) + 1).apply();
+        }
     }
 
     private static double haversineMetres(double lat1,double lng1,double lat2,double lng2) {
@@ -137,6 +153,7 @@ final class ServiceStationStore {
         return values;
     }
     static void clearOnDeleteAll(Context context) {
+        TimelineVisitStore.clear(context);
         prefs(context).edit().remove("service_stations_unlocked").remove(MANUAL)
                 .remove(AUTOMATIC).remove(CONFIRMED_ONLY_MIGRATION)
                 .remove(HISTORICAL_BACKFILL_COMPLETE)
