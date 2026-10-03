@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 public class JourneyMapEditorActivity extends Activity {
-    private static final String EXTRA_JOURNEY = "journey_json";
+    private static final String EXTRA_JOURNEY_ID = "journey_id";
     private final Set<Integer> removedEdges = new LinkedHashSet<>();
     private final Set<Integer> originalRemovedEdges = new LinkedHashSet<>();
     private final Deque<Set<Integer>> undoStack = new ArrayDeque<>();
@@ -46,9 +46,10 @@ public class JourneyMapEditorActivity extends Activity {
         window.setStatusBarColor(0xFF0B1C50);
         window.setNavigationBarColor(0xFF10275D);
 
-        try {
-            journey = new JSONObject(getIntent().getStringExtra(EXTRA_JOURNEY));
-        } catch (Exception error) {
+        String journeyId = getIntent().getStringExtra(EXTRA_JOURNEY_ID);
+        journey = journeyId == null || journeyId.isEmpty()
+                ? null : JourneyStore.get(this, journeyId);
+        if (journey == null) {
             Toast.makeText(this, "Journey could not be opened", Toast.LENGTH_LONG).show();
             finish();
             return;

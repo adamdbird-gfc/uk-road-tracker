@@ -1248,8 +1248,13 @@ public class JourneyListActivity extends Activity {
     }
 
     private void showMatchedRefinement(JSONObject journey, AlertDialog[] dialogRef) {
+        String journeyId = journey == null ? "" : journey.optString("journey_id", "");
+        if (journeyId.isEmpty()) {
+            Toast.makeText(this, "Journey could not be opened", Toast.LENGTH_LONG).show();
+            return;
+        }
         Intent editor = new Intent(this, JourneyMapEditorActivity.class);
-        editor.putExtra("journey_json", journey.toString());
+        editor.putExtra("journey_id", journeyId);
         startActivity(editor);
         if (dialogRef[0] != null) dialogRef[0].dismiss();
     }
