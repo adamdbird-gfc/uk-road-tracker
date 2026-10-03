@@ -20,73 +20,74 @@ public class UtilitiesActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(0xFF10275D);
-
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(NAVY);
-        root.setPadding(dp(24), dp(24), dp(24), dp(24));
-
+        root.setPadding(dp(24), dp(24), dp(24), dp(28));
         LinearLayout header = RoadprintsHeader.create(this);
-        header.setPadding(0, 0, 0, dp(30));
+        header.setPadding(0, 0, 0, dp(26));
         root.addView(header);
         TextView eyebrow = text("ROADPRINTS", 13, TEAL, true);
-        eyebrow.setPadding(0, 0, 0, dp(5));
         root.addView(eyebrow);
         root.addView(text("Utilities", 32, Color.WHITE, true));
-        TextView copy = text("Manage app preferences and tools.", 16, MUTED, false);
-        copy.setPadding(0, dp(8), 0, dp(24));
+        TextView copy = text("Manage tracking, permissions and your saved data.", 16, MUTED, false);
+        copy.setPadding(0, dp(8), 0, dp(20));
         root.addView(copy);
 
-        TextView settings = menuItem("Settings", "Distance units and display preferences");
-        settings.setOnClickListener(view -> startActivity(
-                new Intent(this, SettingsActivity.class)));
-        root.addView(settings, new LinearLayout.LayoutParams(-1, dp(88)));
-
+        add(root, "Permissions", "Manage location access and notifications",
+                PermissionsActivity.class);
+        add(root, "Data management", "Load Timeline data and manage saved journeys",
+                DataManagementActivity.class);
+        add(root, "Tracking settings", "Journey type, automatic tracking and manual capture",
+                TrackingSettingsActivity.class);
+        add(root, "Settings", "Distance units and display preferences", SettingsActivity.class);
+        TextView debug = menuItem("Debug", "View or copy diagnostic reports");
+        debug.setOnClickListener(v -> startActivity(new Intent(this, DebugActivity.class)));
+        root.addView(debug, params());
         TextView back = text("BACK TO ROADPRINTS", 14, TEAL, true);
         back.setGravity(Gravity.CENTER);
         back.setClickable(true);
         back.setFocusable(true);
-        back.setPadding(0, dp(20), 0, dp(12));
-        back.setOnClickListener(view -> finish());
-        root.addView(back, new LinearLayout.LayoutParams(-1, dp(56)));
-
+        back.setPadding(0, dp(16), 0, dp(4));
+        back.setOnClickListener(v -> finish());
+        root.addView(back, new LinearLayout.LayoutParams(-1, dp(52)));
         ScrollView scroll = new ScrollView(this);
         scroll.addView(root);
         setContentView(scroll);
     }
-
+    private void add(LinearLayout root, String title, String detail, Class<?> target) {
+        TextView item = menuItem(title, detail);
+        item.setOnClickListener(v -> startActivity(new Intent(this, target)));
+        root.addView(item, params());
+    }
+    private LinearLayout.LayoutParams params() {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(78));
+        p.bottomMargin = dp(10);
+        return p;
+    }
     private TextView menuItem(String title, String detail) {
         TextView item = new TextView(this);
         item.setText(title + "\n" + detail);
-        item.setTextSize(17);
+        item.setTextSize(16);
         item.setTextColor(Color.WHITE);
-        item.setLineSpacing(dp(3), 1f);
-        item.setPadding(dp(18), dp(15), dp(18), dp(15));
+        item.setLineSpacing(dp(2), 1f);
+        item.setPadding(dp(18), dp(12), dp(18), dp(12));
         item.setGravity(Gravity.CENTER_VERTICAL);
         item.setBackground(rounded(CARD));
         item.setClickable(true);
         item.setFocusable(true);
         return item;
     }
-
     private android.graphics.drawable.GradientDrawable rounded(int color) {
         android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
-        shape.setColor(color);
-        shape.setCornerRadius(dp(16));
-        shape.setStroke(dp(1), 0xFF46649E);
+        shape.setColor(color); shape.setCornerRadius(dp(16)); shape.setStroke(dp(1), 0xFF46649E);
         return shape;
     }
-
     private TextView text(String value, float size, int color, boolean bold) {
         TextView view = new TextView(this);
-        view.setText(value);
-        view.setTextSize(size);
-        view.setTextColor(color);
+        view.setText(value); view.setTextSize(size); view.setTextColor(color);
         if (bold) view.setTypeface(null, android.graphics.Typeface.BOLD);
         return view;
     }
-
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
-    }
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 }

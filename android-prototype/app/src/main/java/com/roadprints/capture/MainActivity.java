@@ -78,16 +78,16 @@ public class MainActivity extends Activity {
             updateTrackingButton();
 
             String message = intent.getStringExtra(CaptureService.EXTRA_MESSAGE);
-            if (message != null) status.setText(message);
+            if (message != null && status != null) status.setText(message);
 
             double metres = intent.getDoubleExtra(CaptureService.EXTRA_DISTANCE, 0);
             int points = intent.getIntExtra(CaptureService.EXTRA_POINTS, 0);
-            if (active) {
+            if (active && distance != null) {
                 distance.setText(String.format(
                         "Distance: %.0f m - %d points", metres, points));
             } else {
-                refreshSavedCount();
-                distance.setText("Distance: 0 m");
+                if (saved != null) refreshSavedCount();
+                if (distance != null) distance.setText("Distance: 0 m");
             }
         }
     };
@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
         updateTrackingButton();
         if (tracking) repairTrackingSubscription();
         else if (capturing) resumeActiveCapture();
-        modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
+        if (modeSpinner != null) modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
     }
 
     @Override
@@ -138,17 +138,17 @@ public class MainActivity extends Activity {
                 androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
+    private boolean isTrackingSettingsScreen() { return getIntent().getBooleanExtra("tracking_settings_screen", false); }
+
     private void buildScreen() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF0B1C50);
-
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(24), dp(26), dp(24), dp(28));
-
         LinearLayout brand = new LinearLayout(this);
         brand.setGravity(Gravity.CENTER_VERTICAL);
         ImageView mark = new ImageView(this);
@@ -161,142 +161,94 @@ public class MainActivity extends Activity {
         brand.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
         growingStatus = new GrowingStatusControl(this, brand);
         content.addView(brand);
-
         TextView eyebrow = text("YOUR TRAVEL RECORD", 13, 0xFF67D5CC, true);
         eyebrow.setPadding(0, dp(30), 0, dp(4));
         content.addView(eyebrow);
 
-        TextView title = text("Capture", 34, Color.WHITE, true);
-        content.addView(title);
-
-        TextView subtitle = text(
-                "Record a journey or keep automatic tracking ready in the background.",
-                16, 0xFFD3DCED, false);
-        subtitle.setPadding(0, dp(8), 0, dp(16));
-        content.addView(subtitle);
-
-        Button stationImport = new Button(this);
-        stationImport.setText("ADD SERVICE STATION VISITS");
-        styleAction(stationImport, 0xFF35558F, Color.WHITE);
-        stationImport.setContentDescription("Import another Timeline JSON file for service station visits without changing saved journeys");
-        stationImport.setOnClickListener(v -> {
-            Intent importIntent = new Intent(this, TimelineImportActivity.class);
-            importIntent.putExtra("service_only", true);
-            startActivity(importIntent);
-        });
-        LinearLayout.LayoutParams stationImportParams =
-                new LinearLayout.LayoutParams(-1, dp(50));
-        stationImportParams.bottomMargin = dp(16);
-        content.addView(stationImport, stationImportParams);
-
-        Button utilitiesButton = new Button(this);
-        utilitiesButton.setText("UTILITIES & SETTINGS");
-        styleAction(utilitiesButton, 0xFF263F7C, Color.WHITE);
-        utilitiesButton.setOnClickListener(v -> startActivity(
-                new Intent(this, UtilitiesActivity.class)));
-        LinearLayout.LayoutParams utilitiesParams =
-                new LinearLayout.LayoutParams(-1, dp(50));
-        utilitiesParams.bottomMargin = dp(16);
-        content.addView(utilitiesButton, utilitiesParams);
-
-        modeSpinner = new Spinner(this);
-        modeSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
-        modeSpinner.setBackground(roundedBackground(0xFF182F66, 0xFF496096, dp(12)));
-        modeSpinner.setPadding(dp(14), 0, dp(14), 0);
-        LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(-1, dp(54));
-        modeParams.bottomMargin = dp(12);
-        content.addView(modeSpinner, modeParams);
-
-        trackingButton = new Button(this);
-        trackingButton.setOnClickListener(v -> toggleTracking());
-        styleAction(trackingButton, 0xFFF7C450, 0xFF0B1C50);
-        LinearLayout.LayoutParams trackingParams = new LinearLayout.LayoutParams(-1, dp(54));
-        trackingParams.bottomMargin = dp(12);
-        content.addView(trackingButton, trackingParams);
-
-        captureButton = new Button(this);
-        captureButton.setOnClickListener(v -> toggleCapture());
-        styleAction(captureButton, 0xFF263F7C, Color.WHITE);
-        LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, dp(54));
-        captureParams.bottomMargin = dp(20);
-        content.addView(captureButton, captureParams);
-
-        LinearLayout liveCard = card();
-        status = text("Ready to capture.", 15, 0xFF67D5CC, false);
-        distance = text("Distance: 0 m", 20, Color.WHITE, true);
-        distance.setPadding(0, dp(12), 0, 0);
-        liveCard.addView(status);
-        liveCard.addView(distance);
-        LinearLayout.LayoutParams liveParams = new LinearLayout.LayoutParams(-1, -2);
-        liveParams.bottomMargin = dp(22);
-        content.addView(liveCard, liveParams);
-
-        TextView journeysLabel = text("Your journeys", 21, Color.WHITE, true);
-        content.addView(journeysLabel);
-        saved = text("Loading saved journeys…", 15, 0xFFD3DCED, false);
-        saved.setPadding(0, dp(5), 0, dp(12));
-        content.addView(saved);
-
-        LinearLayout navigation = new LinearLayout(this);
-        navigation.setOrientation(LinearLayout.HORIZONTAL);
-        Button mapButton = new Button(this);
-        mapButton.setText("OPEN MAP");
-        styleAction(mapButton, 0xFF263F7C, Color.WHITE);
-        mapButton.setOnClickListener(v -> startActivity(new Intent(this, MapActivity.class)));
-
-        historyButton = new Button(this);
-        historyButton.setText("OPEN JOURNEYS");
-        styleAction(historyButton, 0xFF263F7C, Color.WHITE);
-        historyButton.setOnClickListener(v -> startActivity(
-                new Intent(this, JourneyListActivity.class)));
-        navigation.addView(mapButton, new LinearLayout.LayoutParams(0, dp(50), 1));
-        LinearLayout.LayoutParams historyParams = new LinearLayout.LayoutParams(0, dp(50), 1);
-        historyParams.leftMargin = dp(10);
-        navigation.addView(historyButton, historyParams);
-        content.addView(navigation);
-
-        LinearLayout deleteRow = new LinearLayout(this);
-        deleteRow.setOrientation(LinearLayout.HORIZONTAL);
-        deleteRow.setPadding(0, dp(20), 0, 0);
-
-        TextView deleteRoad = deleteButton("Delete road data", false);
-        deleteRoad.setOnClickListener(v -> confirmDeleteData(
-                "Delete road data?",
-                "This removes driving, bus and cycling journeys from this device.",
-                new String[]{"driving", "bus", "cycling"}));
-
-        TextView deleteFoot = deleteButton("Delete on-foot data", false);
-        deleteFoot.setOnClickListener(v -> confirmDeleteData(
-                "Delete on-foot data?",
-                "This removes walking journeys from this device.",
-                new String[]{"walking"}));
-
-        TextView deleteAll = deleteButton("Delete all saved data", false);
-        deleteAll.setOnClickListener(v -> confirmDeleteAll());
-
-        deleteRoadAction = deleteRoad;
-        deleteFootAction = deleteFoot;
-        deleteAllAction = deleteAll;
-
-        deleteRow.addView(deleteRoad, deleteButtonParams());
-        deleteRow.addView(deleteFoot, deleteButtonParams());
-        deleteRow.addView(deleteAll, deleteButtonParams());
-        content.addView(deleteRow);
-
-        debugLink = text(CrashReporter.hasReports(this) ? "debug · report ready" : "debug",
-                13, 0xFF67D5CC, true);
-        debugLink.setPaintFlags(debugLink.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-        debugLink.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-        debugLink.setPadding(0, dp(8), 0, dp(4));
-        debugLink.setContentDescription("Open debug reports");
-        debugLink.setOnClickListener(v -> showDebugReport());
-        content.addView(debugLink, new LinearLayout.LayoutParams(-1, dp(40)));
-
+        if (isTrackingSettingsScreen()) {
+            content.addView(text("Tracking settings", 32, Color.WHITE, true));
+            TextView subtitle = text("Choose a journey type and control automatic or manual recording.",
+                    16, 0xFFD3DCED, false);
+            subtitle.setPadding(0, dp(8), 0, dp(16));
+            content.addView(subtitle);
+            TextView back = text("BACK TO UTILITIES", 14, 0xFF67D5CC, true);
+            back.setGravity(Gravity.CENTER);
+            back.setOnClickListener(v -> finish());
+            content.addView(back, new LinearLayout.LayoutParams(-1, dp(48)));
+            content.addView(text("Journey type", 16, 0xFF67D5CC, true));
+            modeSpinner = new Spinner(this);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                    this, android.R.layout.simple_spinner_item, MODE_LABELS) {
+                private TextView whiteText(android.view.View row) {
+                    TextView label = (TextView) row;
+                    label.setTextColor(Color.WHITE);
+                    label.setBackgroundColor(0xFF182F66);
+                    return label;
+                }
+                @Override public android.view.View getView(int p, android.view.View c, android.view.ViewGroup parent) {
+                    return whiteText(super.getView(p, c, parent));
+                }
+                @Override public android.view.View getDropDownView(int p, android.view.View c, android.view.ViewGroup parent) {
+                    return whiteText(super.getDropDownView(p, c, parent));
+                }
+            };
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            modeSpinner.setAdapter(adapter);
+            modeSpinner.setBackground(roundedBackground(0xFF182F66, 0xFF496096, dp(12)));
+            modeSpinner.setPadding(dp(14), 0, dp(14), 0);
+            LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(-1, dp(54));
+            modeParams.bottomMargin = dp(14);
+            content.addView(modeSpinner, modeParams);
+            trackingButton = new Button(this);
+            trackingButton.setOnClickListener(v -> toggleTracking());
+            styleAction(trackingButton, 0xFFF7C450, 0xFF0B1C50);
+            LinearLayout.LayoutParams trackingParams = new LinearLayout.LayoutParams(-1, dp(54));
+            trackingParams.bottomMargin = dp(12);
+            content.addView(trackingButton, trackingParams);
+            captureButton = new Button(this);
+            captureButton.setOnClickListener(v -> toggleCapture());
+            styleAction(captureButton, 0xFF263F7C, Color.WHITE);
+            LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, dp(54));
+            captureParams.bottomMargin = dp(18);
+            content.addView(captureButton, captureParams);
+            LinearLayout live = card();
+            status = text("Ready to capture.", 15, 0xFF67D5CC, false);
+            distance = text("Distance: 0 m", 20, Color.WHITE, true);
+            distance.setPadding(0, dp(12), 0, 0);
+            live.addView(status); live.addView(distance);
+            content.addView(live);
+        } else {
+            content.addView(text("Capture", 34, Color.WHITE, true));
+            TextView subtitle = text("Record a journey or keep automatic tracking ready in the background.",
+                    16, 0xFFD3DCED, false);
+            subtitle.setPadding(0, dp(8), 0, dp(18));
+            content.addView(subtitle);
+            Button utilities = new Button(this);
+            utilities.setText("UTILITIES");
+            styleAction(utilities, 0xFF263F7C, Color.WHITE);
+            utilities.setOnClickListener(v -> startActivity(new Intent(this, UtilitiesActivity.class)));
+            LinearLayout.LayoutParams utilityParams = new LinearLayout.LayoutParams(-1, dp(52));
+            utilityParams.bottomMargin = dp(28);
+            content.addView(utilities, utilityParams);
+            content.addView(text("Your journeys", 21, Color.WHITE, true));
+            saved = text("Loading saved journeys…", 15, 0xFFD3DCED, false);
+            saved.setPadding(0, dp(5), 0, dp(12));
+            content.addView(saved);
+            LinearLayout nav = new LinearLayout(this);
+            Button map = new Button(this); map.setText("OPEN MAP");
+            styleAction(map, 0xFF263F7C, Color.WHITE);
+            map.setOnClickListener(v -> startActivity(new Intent(this, MapActivity.class)));
+            historyButton = new Button(this); historyButton.setText("OPEN JOURNEYS");
+            styleAction(historyButton, 0xFF263F7C, Color.WHITE);
+            historyButton.setOnClickListener(v -> startActivity(new Intent(this, JourneyListActivity.class)));
+            nav.addView(map, new LinearLayout.LayoutParams(0, dp(50), 1));
+            LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(0, dp(50), 1);
+            hp.leftMargin = dp(10); nav.addView(historyButton, hp); content.addView(nav);
+        }
         scroll.addView(content);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
-        refreshArchiveSummary();
+        if (!isTrackingSettingsScreen()) refreshArchiveSummary();
     }
 
     private void showDebugReport() {
@@ -375,6 +327,7 @@ public class MainActivity extends Activity {
     }
 
     private void refreshArchiveSummary() {
+        if (saved == null) return;
         final int generation = ++archiveSummaryGeneration;
         saved.setText("Loading saved journeys…");
         saved.setOnClickListener(null);
@@ -413,6 +366,7 @@ public class MainActivity extends Activity {
     }
 
     private void refreshSavedCount() {
+        if (saved == null) return;
         archiveIo.execute(() -> {
             int savedCount;
             try {
@@ -833,7 +787,7 @@ public class MainActivity extends Activity {
     }
 
     private void reviewLatestJourney() {
-        if (capturing) return;
+        if (capturing || !isTrackingSettingsScreen()) return;
         archiveIo.execute(() -> {
             JSONObject journey = JourneyStore.latest(getApplicationContext());
             mainHandler.post(() -> showLatestJourneyReview(journey));

@@ -18,6 +18,10 @@
         android:supportsRtl="true">
         <activity android:name=".ProgressActivity" android:exported="false" />
         <activity android:name=".UtilitiesActivity" android:exported="false" />
+        <activity android:name=".PermissionsActivity" android:exported="false" />
+        <activity android:name=".DataManagementActivity" android:exported="false" />
+        <activity android:name=".TrackingSettingsActivity" android:exported="false" />
+        <activity android:name=".DebugActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".AchievementsActivity" android:exported="false" />
         <activity android:name=".CollectionsActivity" android:exported="false" />
