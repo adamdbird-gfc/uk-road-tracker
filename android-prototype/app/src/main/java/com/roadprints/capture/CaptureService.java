@@ -84,6 +84,8 @@ public class CaptureService extends Service {
     private Location candidateOrigin;
     private Location departureAnchor;
     private long candidateStartedAtMs;
+    private long candidateStationarySince;
+    private Location candidateStationaryAnchor;
     private String candidateStartedAt;
     private String candidateMode;
     private Location lastPoint;
@@ -107,6 +109,12 @@ public class CaptureService extends Service {
     };
     private final Runnable candidateTimeout = () -> {
         if (candidateMode != null) cancelStartCandidate("Movement was too short to save as a journey.");
+    };
+    private final Runnable candidateStillTimeout = () -> {
+        if (candidateMode != null && candidateStationarySince != 0
+                && CaptureStartGate.shouldEndAfterStillness(System.currentTimeMillis() - candidateStationarySince)) {
+            cancelStartCandidate("The stop lasted too long to count as the start of a journey.");
+        }
     };
 
     private final LocationListener locationListener = new LocationListener() {
@@ -265,7 +273,15 @@ public class CaptureService extends Service {
 
         if (activityType == DetectedActivity.STILL) {
             clearPendingActivityMode();
-            if (!isActive(this) && candidateMode != null) cancelStartCandidate("Movement stopped before a journey was confirmed.");
+            if (!isActive(this) && candidateMode != null) {
+                candidateStationarySince = System.currentTimeMillis();
+                candidateStationaryAnchor = candidatePoints.isEmpty()
+                        ? (candidateOrigin == null ? null : new Location(candidateOrigin))
+                        : new Location(candidatePoints.get(candidatePoints.size() - 1));
+                handler.removeCallbacks(candidateStillTimeout);
+                handler.postDelayed(candidateStillTimeout, CaptureStartGate.CANDIDATE_STILL_CANCEL_MS);
+                broadcastUpdate("Brief stop detected; keeping the movement check open...");
+            }
             if (isActive(this)) {
                 stationarySince = System.currentTimeMillis();
                 stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
@@ -279,6 +295,7 @@ public class CaptureService extends Service {
         stationarySince = 0;
         stationaryAnchor = null;
         handler.removeCallbacks(finishIfStill);
+        clearCandidateStillness();
         String detectedMode = modeForActivity(activityType);
         if (detectedMode != null) {
             if (!isActive(this)) {
@@ -411,6 +428,8 @@ public class CaptureService extends Service {
         cancelStartCandidate(null);
         candidateMode = requestedMode;
         candidateStartedAtMs = System.currentTimeMillis();
+        candidateStationarySince = 0;
+        candidateStationaryAnchor = null;
         candidateStartedAt = Instant.now().toString();
         candidatePoints.clear();
         candidateOrigin = recentLastKnownLocation();
@@ -444,6 +463,13 @@ public class CaptureService extends Service {
     private void collectCandidateLocation(Location location) {
         if (candidateMode == null || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f) return;
+        if (candidateStationarySince != 0 && candidateStationaryAnchor != null) {
+            float allowance = location.getAccuracy()
+                    + (candidateStationaryAnchor.hasAccuracy() ? candidateStationaryAnchor.getAccuracy() : 15f);
+            if (candidateStationaryAnchor.distanceTo(location) >= Math.max(STILLNESS_MOVEMENT_THRESHOLD_METRES, allowance)) {
+                clearCandidateStillness();
+            }
+        }
         if (candidateOrigin == null) candidateOrigin = new Location(location);
         if (candidatePoints.isEmpty()
                 || candidatePoints.get(candidatePoints.size() - 1).distanceTo(location) >= 5f) {
@@ -463,8 +489,16 @@ public class CaptureService extends Service {
         activateCapture(confirmedMode, confirmedStart, seedPoints);
     }
 
+    private void clearCandidateStillness() {
+        candidateStationarySince = 0;
+        candidateStationaryAnchor = null;
+        handler.removeCallbacks(candidateStillTimeout);
+    }
+
     private void cancelStartCandidate(String message) {
         handler.removeCallbacks(candidateTimeout);
+        handler.removeCallbacks(candidateStillTimeout);
+        clearCandidateStillness();
         if (candidateMode == null) return;
         candidateMode = null;
         candidateStartedAt = null;
