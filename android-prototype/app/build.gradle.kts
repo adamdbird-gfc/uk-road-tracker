@@ -14,8 +14,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 78
-        versionName = "0.25.32"
+        versionCode = 84
+        versionName = "0.25.38"
     }
 }
 
@@ -24,12 +24,16 @@ dependencies {
 }
 
 val stableKeystore = System.getenv("ROADPRINTS_DEBUG_KEYSTORE")
-if (stableKeystore != null) {
+val stableStorePassword = System.getenv("ROADPRINTS_DEBUG_STORE_PASSWORD")
+val stableKeyAlias = System.getenv("ROADPRINTS_DEBUG_KEY_ALIAS")
+val stableKeyPassword = System.getenv("ROADPRINTS_DEBUG_KEY_PASSWORD")
+if (stableKeystore != null && stableStorePassword != null
+    && stableKeyAlias != null && stableKeyPassword != null) {
     android.signingConfigs.create("stableDebug") {
         storeFile = file(stableKeystore)
-        storePassword = "roadprints-debug-password"
-        keyAlias = "roadprints-debug"
-        keyPassword = "roadprints-debug-password"
+        storePassword = stableStorePassword
+        keyAlias = stableKeyAlias
+        keyPassword = stableKeyPassword
     }
     android.buildTypes.getByName("debug") {
         signingConfig = android.signingConfigs.getByName("stableDebug")

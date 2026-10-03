@@ -36,6 +36,7 @@ public class TimelineImportActivity extends Activity {
     private TextView filename;
     private TextView choose;
     private TextView capture;
+    private TextView helpBody;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
 
     @Override
@@ -90,9 +91,30 @@ public class TimelineImportActivity extends Activity {
         status.setPadding(0, 16, 0, 0);
         root.addView(status);
 
-        capture = action("CONTINUE TO CAPTURE");
+        TextView help = text("▸ Where do I find my Timeline file?", 16, 0xFF67D5CC, true);
+        help.setPadding(0, 24, 0, 12);
+        help.setClickable(true);
+        help.setFocusable(true);
+        root.addView(help);
+        helpBody = text("In Google Maps, open your profile and choose Your Timeline. "
+                + "Open the Timeline menu, choose Settings and privacy, then Export Timeline data. "
+                + "Select the JSON file here. Roadprints reads and saves it on this device.",
+                14, 0xFFD3DCED, false);
+        helpBody.setVisibility(View.GONE);
+        helpBody.setPadding(0, 0, 0, 12);
+        root.addView(helpBody);
+        help.setOnClickListener(v -> {
+            boolean show = helpBody.getVisibility() != View.VISIBLE;
+            helpBody.setVisibility(show ? View.VISIBLE : View.GONE);
+            help.setText((show ? "▾ " : "▸ ") + "Where do I find my Timeline file?");
+        });
+
+        capture = action("CONTINUE TO GROWING");
+        capture.setVisibility(View.GONE);
         capture.setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
+            Intent growing = new Intent(this, JourneyListActivity.class);
+            growing.putExtra("open_growing", true);
+            startActivity(growing);
             finish();
         });
         LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, 58);
@@ -142,6 +164,10 @@ public class TimelineImportActivity extends Activity {
             runOnUiThread(() -> {
                 setBusy(false);
                 status.setText(finalResult.message);
+                if (finalResult.message.startsWith("Import complete:")) {
+                    capture.setVisibility(View.VISIBLE);
+                    capture.setEnabled(true);
+                }
             });
         });
     }
