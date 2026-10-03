@@ -3,7 +3,8 @@ package com.roadprints.capture;
 /** Pure thresholds for deciding whether an activity transition represents a real trip. */
 final class CaptureStartGate {
     static final long START_CONFIRMATION_MS = 20_000L;
-    static final long START_CANDIDATE_TIMEOUT_MS = 180_000L;
+    static final long START_CANDIDATE_TIMEOUT_MS = 480_000L;
+    static final long CANDIDATE_STILL_CANCEL_MS = 300_000L;
     static final long STILLNESS_END_THRESHOLD_MS = 300_000L;
 
     private CaptureStartGate() {}
