@@ -1175,7 +1175,7 @@ public class JourneyListActivity extends Activity {
         if (matchJourney != null
                 && "processing".equals(journey.optString("processing_status"))) {
             watchSingleJourneyMatch(journey, matchJourney, status, dialogRef,
-                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits);
+                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, false);
         }
     }
 
