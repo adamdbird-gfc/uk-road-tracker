@@ -880,16 +880,17 @@ public class JourneyListActivity extends Activity {
         boolean pointToPoint = isPointToPointMode(journeyMode);
         JSONArray previewCoordinates = pointToPoint
                 ? endpointCoordinates(coordinates) : coordinates;
-        List<JSONArray> previewMatches = pointToPoint
-                ? java.util.Collections.emptyList() : matchedSegments;
+        // The overview uses the complete saved trace as one continuous line.
+        // Matched geometry stays available in the map editor for corrections.
+        List<JSONArray> previewMatches = java.util.Collections.emptyList();
 
         // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
         RoutePreviewView preview = new RoutePreviewView(this, previewCoordinates, previewMatches);
         body.addView(preview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
-        if (!matchedSegments.isEmpty()) {
+        if (previewCoordinates != null && previewCoordinates.length() >= 2) {
             TextView routeLegend = new TextView(this);
-            routeLegend.setText("Matched route");
+            routeLegend.setText("Recorded route");
             routeLegend.setTextSize(11);
             routeLegend.setTextColor(0xFFD3DCED);
             routeLegend.setPadding(side, dp(6), side, dp(2));
@@ -902,15 +903,9 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("Start", displayTime(journey.optString("started_at"))));
         fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
         fields.addView(detailRow("Duration", journeyDuration(journey)));
-
-        TextView routeFacts = new TextView(this);
-        routeFacts.setText(String.format("%s  ·  %s  ·  %d GPS points",
-                displayMode(journey.optString("mode", "unknown")),
-                DistanceUnits.format(this, metres), points));
-        routeFacts.setTextSize(14);
-        routeFacts.setTextColor(0xFFD3DCED);
-        routeFacts.setPadding(0, dp(8), 0, dp(18));
-        fields.addView(routeFacts);
+        fields.addView(detailRow("Distance", DistanceUnits.format(this, metres)));
+        fields.addView(detailRow("GPS points", DistanceUnits.formatPointCount(points)));
+        fields.addView(detailRow("Transport", displayMode(journey.optString("mode", "unknown"))));
 
         fields.addView(fieldLabel("Journey name"));
         EditText titleInput = new EditText(this);

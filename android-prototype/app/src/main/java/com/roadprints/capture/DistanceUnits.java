@@ -32,4 +32,8 @@ final class DistanceUnits {
     static String format(Context context, double metres) {
         return format(metres, usesKilometres(context));
     }
+
+    static String formatPointCount(int points) {
+        return String.format(Locale.UK, "%,d", Math.max(0, points));
+    }
 }
