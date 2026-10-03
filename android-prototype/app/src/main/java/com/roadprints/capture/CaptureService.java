@@ -405,6 +405,8 @@ public class CaptureService extends Service {
         final double savedDistanceMetres = distanceMetres;
         final String savedEndedAt = Instant.now().toString();
         final String savedTimezone = ZoneId.systemDefault().toString();
+        final Location savedStopAnchor = stationaryAnchor != null
+                ? new Location(stationaryAnchor) : (lastPoint == null ? null : new Location(lastPoint));
         broadcastUpdate("Saving journey locally...");
 
         captureIo.execute(() -> {
@@ -438,11 +440,11 @@ public class CaptureService extends Service {
             }
 
             final boolean completed = savedSuccessfully;
-            handler.post(() -> completeCaptureSave(completed));
+            handler.post(() -> completeCaptureSave(completed, savedStopAnchor));
         });
     }
 
-    private void completeCaptureSave(boolean savedSuccessfully) {
+    private void completeCaptureSave(boolean savedSuccessfully, Location savedStopAnchor) {
         captureFinishing = false;
         if (savedSuccessfully) {
             String continueMode = nextCaptureMode;
@@ -460,11 +462,13 @@ public class CaptureService extends Service {
             stationarySince = 0;
             stationaryAnchor = null;
             handler.removeCallbacks(finishIfStill);
-            if (isArmed(this) && continueMode != null) {
+            if (continueMode != null) {
+                clearDepartureAnchor();
                 startCapture(continueMode);
                 broadcastUpdate("Started a new " + continueMode + " journey leg.");
-            } else if (isArmed(this)) {
-                updateNotification();
+            } else {
+                storeDepartureAnchor(savedStopAnchor);
+                if (isArmed(this)) updateNotification();
             }
             broadcastUpdate("Journey saved locally. Review its transport type next time.");
             if (!isArmed(this)) {
@@ -490,12 +494,16 @@ public class CaptureService extends Service {
 
     @SuppressLint("MissingPermission")
     private void requestCaptureLocationUpdates() {
-        boolean road = roadMode(mode);
-        locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS,
-                road ? ROAD_CAPTURE_MIN_DISTANCE_METRES : WALK_CAPTURE_MIN_DISTANCE_METRES,
-                locationListener);
+        requestLocationUpdatesForMode(mode, false);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestLocationUpdatesForMode(String requestedMode, boolean candidate) {
+        boolean road = roadMode(requestedMode);
+        long interval = candidate ? 5_000L : (road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS);
+        float minDistance = candidate ? 5f : (road ? ROAD_CAPTURE_MIN_DISTANCE_METRES : WALK_CAPTURE_MIN_DISTANCE_METRES);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                interval, minDistance, locationListener);
     }
 
     private void scheduleCaptureCheckpoint() {
