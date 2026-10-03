@@ -99,12 +99,16 @@ public final class MatchingCoordinator {
 
     public void start() { start(null); }
 
-    public synchronized boolean start(String journeyId) {
+    public synchronized boolean start(String journeyId) { return start(journeyId, false); }
+
+    public synchronized boolean rematch(String journeyId) { return start(journeyId, true); }
+
+    private synchronized boolean start(String journeyId, boolean forceRematch) {
         if (state == State.PREPARING || state == State.RUNNING || state == State.PAUSING) return false;
         pauseRequested = false;
         state = State.PREPARING;
-        message = "Preparing journeys for matching…";
-        workers.execute(() -> prepareAndRun(journeyId));
+        message = forceRematch ? "Preparing journey to rematch…" : "Preparing journeys for matching…";
+        workers.execute(() -> prepareAndRun(journeyId, forceRematch));
         return true;
     }
 
@@ -122,7 +126,7 @@ public final class MatchingCoordinator {
                 footTotal, footChecked.get(), footMatched.get(), message);
     }
 
-    private void prepareAndRun(String journeyId) {
+    private void prepareAndRun(String journeyId, boolean forceRematch) {
         try {
             List<String> road = new ArrayList<>();
             List<String> foot = new ArrayList<>();
@@ -130,11 +134,11 @@ public final class MatchingCoordinator {
             if (journeyId != null) {
                 // A per-journey request must not parse every large archived journey.
                 JSONObject journey = JourneyStore.get(app, journeyId);
-                if (journey != null) enqueueIfMatchable(journey, road, foot, queuedModes);
+                if (journey != null) enqueueIfMatchable(journey, road, foot, queuedModes, forceRematch);
             } else {
                 // Keep only IDs in the work queue; full GeoJSON stays on disk until a
                 // worker needs that journey, avoiding a heap-sized archive snapshot.
-                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot, queuedModes));
+                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot, queuedModes, false));
             }
             roadTotal = road.size();
             footTotal = foot.size();
@@ -159,7 +163,7 @@ public final class MatchingCoordinator {
                         String nextJourneyId;
                         while (!pauseRequested && (nextJourneyId = lane.poll()) != null) {
                             try {
-                                JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId));
+                                JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId), forceRematch);
                                 matchJourney(journey);
                                 matched.incrementAndGet();
                                 if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
@@ -192,10 +196,10 @@ public final class MatchingCoordinator {
 
     private void enqueueIfMatchable(
             JSONObject journey, List<String> road, List<String> foot,
-            Map<String, String> queuedModes) {
+            Map<String, String> queuedModes, boolean forceRematch) {
         recoverIfInterrupted(journey);
         if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
-        if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) return;
+        if (!forceRematch && "complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) return;
         String journeyId = journey.optString("journey_id", "");
         if (journeyId.isEmpty()) return;
         String mode = journey.optString("mode", "unknown");
@@ -218,7 +222,7 @@ public final class MatchingCoordinator {
         }
     }
 
-    private JSONObject markProcessing(String journeyId, String queuedMode) throws Exception {
+    private JSONObject markProcessing(String journeyId, String queuedMode, boolean forceRematch) throws Exception {
         synchronized (JourneyStore.class) {
             JSONObject journey = JourneyStore.get(app, journeyId);
             if (journey == null) throw new IllegalStateException("Journey was deleted before matching");
@@ -227,7 +231,7 @@ public final class MatchingCoordinator {
             if ("processing".equals(journey.optString("processing_status")))
                 throw new IllegalStateException("Journey is already being matched · retry");
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
-            if ("complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey))
+            if (!forceRematch && "complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey))
                 throw new IllegalStateException("Journey already has a matched route");
             String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
             journey.put("processing_status", "processing");
@@ -237,7 +241,6 @@ public final class MatchingCoordinator {
             JSONObject processing = journey.optJSONObject("processing");
             if (processing == null) processing = new JSONObject();
             processing.put(stage, "processing"); journey.put("processing", processing);
-            journey.remove("processing_result");
             JourneyStore.save(app, journey);
             return journey;
         }
@@ -276,7 +279,22 @@ public final class MatchingCoordinator {
                 : postWithRetry(API_BASE_URL + endpointPath, payload);
         attempt.put("finished_at_utc", Instant.now().toString());
         if (result.has("input_points")) attempt.put("server_input_points", result.optInt("input_points"));
+        if (result.has("matched_tracepoints")) attempt.put("server_matched_tracepoints", result.optInt("matched_tracepoints"));
+        JSONArray failedSections = result.optJSONArray("failed_sections");
+        int failedCount = failedSections == null ? 0 : failedSections.length();
+        if (failedCount > 0) attempt.put("server_failed_sections", failedCount);
         if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
+        int serverInput = result.optInt("input_points", points.length());
+        int serverMatched = result.optInt("matched_tracepoints", serverInput);
+        if (failedCount > 0 || serverMatched < serverInput) {
+            attempt.put("partial_match", true);
+            synchronized (JourneyStore.class) {
+                JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+                if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
+            }
+            throw new IllegalStateException("Partial route match: " + serverMatched + " of " + serverInput
+                    + " GPS points matched across " + failedCount + " unmatched section(s). Rematch to try again.");
+        }
         synchronized (JourneyStore.class) {
         JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
         if (stored == null) throw new IllegalStateException("Journey is no longer available");
