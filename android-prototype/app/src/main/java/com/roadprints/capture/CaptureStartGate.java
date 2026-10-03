@@ -1,0 +1,38 @@
+package com.roadprints.capture;
+
+/** Pure thresholds for deciding whether an activity transition represents a real trip. */
+final class CaptureStartGate {
+    static final long START_CONFIRMATION_MS = 20_000L;
+    static final long START_CANDIDATE_TIMEOUT_MS = 180_000L;
+    static final long STILLNESS_END_THRESHOLD_MS = 300_000L;
+
+    private CaptureStartGate() {}
+
+    static float minimumMovementMetres(String mode) {
+        if ("walking".equals(mode) || "running".equals(mode)) return 50f;
+        if ("cycling".equals(mode)) return 70f;
+        return 120f;
+    }
+
+    static float departureRadiusMetres(String mode) {
+        if ("walking".equals(mode) || "running".equals(mode)) return 75f;
+        if ("cycling".equals(mode)) return 100f;
+        return 150f;
+    }
+
+    static boolean shouldConfirmStart(String mode, long elapsedMs, float fromCandidateOriginMetres,
+                                     boolean hasRecentStopAnchor, float fromStopAnchorMetres) {
+        if (elapsedMs < START_CONFIRMATION_MS
+                || fromCandidateOriginMetres < minimumMovementMetres(mode)) return false;
+        return !hasRecentStopAnchor
+                || fromStopAnchorMetres >= departureRadiusMetres(mode);
+    }
+
+    static boolean shouldEndAfterStillness(long stillDurationMs) {
+        return stillDurationMs >= STILLNESS_END_THRESHOLD_MS;
+    }
+
+    static boolean hasLeftStopArea(String mode, float distanceFromStopMetres) {
+        return distanceFromStopMetres >= departureRadiusMetres(mode);
+    }
+}
