@@ -189,6 +189,16 @@ public class MainActivity extends Activity {
         stationImportParams.bottomMargin = dp(16);
         content.addView(stationImport, stationImportParams);
 
+        Button utilitiesButton = new Button(this);
+        utilitiesButton.setText("UTILITIES & SETTINGS");
+        styleAction(utilitiesButton, 0xFF263F7C, Color.WHITE);
+        utilitiesButton.setOnClickListener(v -> startActivity(
+                new Intent(this, UtilitiesActivity.class)));
+        LinearLayout.LayoutParams utilitiesParams =
+                new LinearLayout.LayoutParams(-1, dp(50));
+        utilitiesParams.bottomMargin = dp(16);
+        content.addView(utilitiesButton, utilitiesParams);
+
         modeSpinner = new Spinner(this);
         modeSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
@@ -667,8 +677,8 @@ public class MainActivity extends Activity {
                     ? null : geometry.optJSONArray("coordinates");
             int points = journey.optInt("_route_point_count", coordinates == null ? 0 : coordinates.length());
             rows[index] = String.format(
-                    "%s • %s\n%.0f m • %s • %d GPS points",
-                    started, mode, metres,
+                    "%s • %s\n%s • %s • %d GPS points",
+                    started, mode, DistanceUnits.format(this, metres),
                     journeyDuration(journey), points);
         }
 
@@ -701,10 +711,10 @@ public class MainActivity extends Activity {
 
         TextView message = new TextView(this);
         message.setText(String.format(
-                "Start: %s\nEnd: %s\nDuration: %s\n%.0f m across %d GPS points",
+                "Start: %s\nEnd: %s\nDuration: %s\n%s across %d GPS points",
                 displayTime(journey.optString("started_at")),
                 displayTime(journey.optString("ended_at")),
-                journeyDuration(journey), metres, points));
+                journeyDuration(journey), DistanceUnits.format(this, metres), points));
         message.setTextSize(16);
         message.setPadding(24, 0, 24, 16);
 
@@ -855,8 +865,8 @@ public class MainActivity extends Activity {
                 : journey.optJSONObject("route_geometry")
                         .optJSONArray("coordinates").length();
         message.setText(String.format(
-                "Latest journey: %.0f m across %d GPS points. Was it recorded using the right transport?",
-                metres, points));
+                "Latest journey: %s across %d GPS points. Was it recorded using the right transport?",
+                DistanceUnits.format(this, metres), points));
         message.setTextSize(16);
         message.setPadding(0, 0, 0, 16);
         container.addView(message);

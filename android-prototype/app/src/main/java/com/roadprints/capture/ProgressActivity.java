@@ -68,8 +68,7 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        useKilometres = getSharedPreferences("roadprints_display", MODE_PRIVATE)
-                .getBoolean("distance_kilometres", false);
+        useKilometres = DistanceUnits.usesKilometres(this);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAV_BAR);
 
@@ -1344,8 +1343,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     private void setDistanceUnit(boolean kilometres) {
         if (useKilometres == kilometres) return;
         useKilometres = kilometres;
-        getSharedPreferences("roadprints_display", MODE_PRIVATE).edit()
-                .putBoolean("distance_kilometres", kilometres).apply();
+        DistanceUnits.setKilometres(this, kilometres);
         updateHeaderDistanceUnit();
         if (loadedStats != null) {
             int scrollY = statisticsScroll == null ? 0 : statisticsScroll.getScrollY();

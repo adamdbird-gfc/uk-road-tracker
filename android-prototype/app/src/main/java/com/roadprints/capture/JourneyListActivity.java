@@ -632,8 +632,8 @@ public class JourneyListActivity extends Activity {
         heading.setPadding(0, 8, 0, 0);
 
         TextView summary = new TextView(this);
-        summary.setText(String.format("%.1f mi  •  %s  •  %d GPS points",
-                metres / 1609.344, journeyDuration(journey), points));
+        summary.setText(String.format("%s  •  %s  •  %d GPS points",
+                DistanceUnits.format(this, metres), journeyDuration(journey), points));
         summary.setTextSize(16);
         summary.setTextColor(0xFFD3DCED);
         summary.setPadding(0, 4, 0, 0);
@@ -904,8 +904,9 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("Duration", journeyDuration(journey)));
 
         TextView routeFacts = new TextView(this);
-        routeFacts.setText(String.format("%s  ·  %.0f m  ·  %d GPS points",
-                displayMode(journey.optString("mode", "unknown")), metres, points));
+        routeFacts.setText(String.format("%s  ·  %s  ·  %d GPS points",
+                displayMode(journey.optString("mode", "unknown")),
+                DistanceUnits.format(this, metres), points));
         routeFacts.setTextSize(14);
         routeFacts.setTextColor(0xFFD3DCED);
         routeFacts.setPadding(0, dp(8), 0, dp(18));
