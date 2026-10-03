@@ -45,6 +45,7 @@ public class RoutePreviewView extends View {
 
     private final JSONArray coordinates;
     private final List<JSONArray> matchedSegments;
+    private final List<JSONArray> routeExtensions = new ArrayList<>();
     private final List<JSONArray> motorwaySegments = new ArrayList<>();
     private final List<JSONArray> incompleteMotorwaySegments = new ArrayList<>();
     private final List<JSONArray> coveredMotorwaySegments = new ArrayList<>();
@@ -362,8 +363,13 @@ public class RoutePreviewView extends View {
                     ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
                     : firstMotorwayRoute();
             if (hasMatchedRoute) {
-                if (routeEditMode) drawEditableRoutes(canvas);
-                else for (JSONArray segment : matchedSegments) {
+                if (routeEditMode) {
+                    drawEditableRoutes(canvas);
+                    for (JSONArray extension : routeExtensions) {
+                        drawRoute(canvas, extension, routePaint,
+                                flatRoadMapStyle ? null : routeHaloPaint);
+                    }
+                } else for (JSONArray segment : matchedSegments) {
                     drawRoute(canvas, segment, routePaint,
                             flatRoadMapStyle ? null : routeHaloPaint);
                 }
@@ -423,6 +429,7 @@ public class RoutePreviewView extends View {
                 fitRoutes.addAll(settlementBoundaryRings);
             } else {
                 fitRoutes.addAll(matchedSegments);
+                fitRoutes.addAll(routeExtensions);
                 if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
                 fitRoutes.addAll(motorwaySegments);
                 fitRoutes.addAll(incompleteMotorwaySegments);
@@ -521,6 +528,16 @@ public class RoutePreviewView extends View {
             }
         }
         return drawn;
+    }
+
+    public void setRouteExtensions(List<JSONArray> extensions) {
+        routeExtensions.clear();
+        if (extensions != null) {
+            for (JSONArray route : extensions) if (hasRoutePoints(route)) routeExtensions.add(route);
+        }
+        routeFitPending = true;
+        fitRouteIfReady();
+        invalidate();
     }
 
     public void setRouteEditState(Set<Integer> removedEdges, int selectedEdge, boolean restoreMode) {

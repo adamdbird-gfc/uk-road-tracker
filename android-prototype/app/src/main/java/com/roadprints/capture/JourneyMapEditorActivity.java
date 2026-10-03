@@ -108,6 +108,7 @@ public class JourneyMapEditorActivity extends Activity {
         JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
         routeView = new RoutePreviewView(this, original, routes, removedEdges,
                 this::onRouteEdgeTap);
+        routeView.setRouteExtensions(unmatchedEndpointTrace(original, routes));
         root.addView(routeView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
@@ -303,6 +304,66 @@ public class JourneyMapEditorActivity extends Activity {
         } catch (Exception error) {
             Toast.makeText(this, "Changes could not be saved", Toast.LENGTH_LONG).show();
         }
+    }
+
+    static List<JSONArray> unmatchedEndpointTrace(JSONArray original, List<JSONArray> routes) {
+        List<JSONArray> extensions = new ArrayList<>();
+        if (original == null || original.length() < 2 || routes == null || routes.isEmpty())
+            return extensions;
+        try {
+            JSONArray firstRoute = routes.get(0);
+            JSONArray lastRoute = routes.get(routes.size() - 1);
+            if (firstRoute.length() < 2 || lastRoute.length() < 2) return extensions;
+            JSONArray firstMatched = firstRoute.getJSONArray(0);
+            JSONArray lastMatched = lastRoute.getJSONArray(lastRoute.length() - 1);
+            int firstIndex = nearestTracePoint(original, firstMatched);
+            int lastIndex = nearestTracePoint(original, lastMatched);
+            if (firstIndex < 0 || lastIndex < 0) return extensions;
+            boolean forward = firstIndex <= lastIndex;
+            int low = Math.min(firstIndex, lastIndex);
+            int high = Math.max(firstIndex, lastIndex);
+            JSONArray lowEndpoint = forward ? firstMatched : lastMatched;
+            JSONArray highEndpoint = forward ? lastMatched : firstMatched;
+            if (tracePointDistanceMetres(original.getJSONArray(low), lowEndpoint) > 250
+                    || tracePointDistanceMetres(original.getJSONArray(high), highEndpoint) > 250)
+                return extensions;
+            if (low > 0) {
+                JSONArray prefix = new JSONArray();
+                for (int index = 0; index <= low; index++) prefix.put(original.getJSONArray(index));
+                prefix.put(lowEndpoint);
+                if (prefix.length() >= 2) extensions.add(prefix);
+            }
+            if (high < original.length() - 1) {
+                JSONArray suffix = new JSONArray().put(highEndpoint);
+                for (int index = high + 1; index < original.length(); index++)
+                    suffix.put(original.getJSONArray(index));
+                if (suffix.length() >= 2) extensions.add(suffix);
+            }
+        } catch (Exception ignored) {
+            return new ArrayList<>();
+        }
+        return extensions;
+    }
+
+    private static int nearestTracePoint(JSONArray trace, JSONArray point) {
+        if (point == null || point.length() < 2) return -1;
+        int nearest = -1;
+        double nearestDistance = Double.MAX_VALUE;
+        for (int index = 0; index < trace.length(); index++) {
+            JSONArray candidate = trace.optJSONArray(index);
+            double distance = tracePointDistanceMetres(candidate, point);
+            if (distance < nearestDistance) { nearestDistance = distance; nearest = index; }
+        }
+        return nearest;
+    }
+
+    private static double tracePointDistanceMetres(JSONArray a, JSONArray b) {
+        if (a == null || b == null || a.length() < 2 || b.length() < 2)
+            return Double.MAX_VALUE;
+        double latitude = Math.toRadians((a.optDouble(1) + b.optDouble(1)) / 2.0);
+        double dx = (a.optDouble(0) - b.optDouble(0)) * 111320.0 * Math.cos(latitude);
+        double dy = (a.optDouble(1) - b.optDouble(1)) * 110540.0;
+        return Math.hypot(dx, dy);
     }
 
     private void readSavedCorrections() {

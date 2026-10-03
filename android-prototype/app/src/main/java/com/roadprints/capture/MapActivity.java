@@ -209,9 +209,9 @@ public class MapActivity extends Activity {
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
                     ? (mapRoutes.serviceStations.length() > 0
-                        ? "Service stations are shown on the map. Matched journeys will appear here."
-                        : "Successfully matched journeys will appear here.")
-                    : mapRoutes.matchedJourneys + " successfully matched journeys"
+                        ? "Service stations are shown on the map. Recorded journeys will appear here."
+                        : "Recorded journeys will appear here.")
+                    : mapRoutes.matchedJourneys + " recorded journeys shown"
                             + (mapRoutes.simplified ? " · map simplified for performance." : "."));
             mapFrame.removeAllViews();
             RoutePreviewView map = mapRoutes.sections.isEmpty()
@@ -411,7 +411,10 @@ public class MapActivity extends Activity {
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
             motorwayCalculator.addJourney(journey);
             aRoadCalculator.addJourney(journey);
-            List<JSONArray> matched = matchedSegments(journey);
+            // Use the saved GPS trace for display so the map shows each complete journey,
+            // including sections the road matcher could not return.
+            List<JSONArray> matched = recordedSegments(journey);
+            if (matched.isEmpty()) matched = matchedSegments(journey);
             List<JSONArray> motorways = motorwaySegments(journey);
             if (matched.isEmpty() && motorways.isEmpty()) return;
             for (JSONArray route : matched) {
@@ -571,6 +574,23 @@ public class MapActivity extends Activity {
             }
         }
         return projected.length() >= 2 ? projected : null;
+    }
+
+    private List<JSONArray> recordedSegments(JSONObject journey) {
+        List<JSONArray> routes = new ArrayList<>();
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (coordinates == null) return routes;
+        String type = geometry.optString("type", "LineString");
+        if ("LineString".equals(type) && hasLinePoints(coordinates)) {
+            routes.add(coordinates);
+        } else if ("MultiLineString".equals(type)) {
+            for (int index = 0; index < coordinates.length(); index++) {
+                JSONArray segment = coordinates.optJSONArray(index);
+                if (hasLinePoints(segment)) routes.add(segment);
+            }
+        }
+        return routes;
     }
 
     private List<JSONArray> matchedSegments(JSONObject journey) {
