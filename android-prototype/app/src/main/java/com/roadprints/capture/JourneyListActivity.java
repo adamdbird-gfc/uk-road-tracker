@@ -1111,6 +1111,19 @@ public class JourneyListActivity extends Activity {
                                 titleInput, transport, transportModes, savedTitle, savedMode, saveEdits)));
             }
             actions.addView(journeyAction, secondaryParams);
+            if (matched) {
+                Button rematch = styledModalButton("REMATCH JOURNEY", 0xFFF7C450, 0xFF0B1C50);
+                LinearLayout.LayoutParams rematchParams = actionLayoutParams();
+                rematchParams.topMargin = dp(8);
+                rematch.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> startSingleJourneyMatch(
+                                journey, rematch, status, dialogRef,
+                                titleInput, transport, transportModes, savedTitle, savedMode,
+                                saveEdits, true)));
+                actions.addView(rematch, rematchParams);
+            }
         }
 
         TextView delete = new TextView(this);
@@ -1285,12 +1298,22 @@ public class JourneyListActivity extends Activity {
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
             String[] savedTitle, String[] savedMode, Runnable saveEdits) {
+        startSingleJourneyMatch(journey, action, status, dialogRef, titleInput, transport,
+                transportModes, savedTitle, savedMode, saveEdits, false);
+    }
+
+    private void startSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
         if (!canMatchJourney(journey)) {
             status.setText("This journey does not have enough route points to match.");
             return;
         }
-        boolean accepted = MatchingCoordinator.get(this)
-                .start(journey.optString("journey_id"));
+        MatchingCoordinator coordinator = MatchingCoordinator.get(this);
+        boolean accepted = forceRematch
+                ? coordinator.rematch(journey.optString("journey_id"))
+                : coordinator.start(journey.optString("journey_id"));
         if (!accepted) {
             status.setText("Another matching run is active. Try this journey again when it finishes.");
             action.setText("MATCH JOURNEY");
@@ -1304,13 +1327,13 @@ public class JourneyListActivity extends Activity {
         status.setText("Matching this journey…");
         status.setTextColor(0xFFF7C450);
         watchSingleJourneyMatch(journey, action, status, dialogRef,
-                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits);
+                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch);
     }
 
     private void watchSingleJourneyMatch(
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
-            String[] savedTitle, String[] savedMode, Runnable saveEdits) {
+            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
         AlertDialog dialog = dialogRef[0];
         if (dialog == null || !dialog.isShowing()) return;
         MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(this).snapshot();
@@ -1319,7 +1342,7 @@ public class JourneyListActivity extends Activity {
                 || snapshot.state == MatchingCoordinator.State.PAUSING) {
             mainHandler.postDelayed(
                     () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
-                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits), 1000L);
+                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch), 1000L);
             return;
         }
         String journeyId = journey.optString("journey_id", "");
@@ -1353,10 +1376,10 @@ public class JourneyListActivity extends Activity {
                 if (matched) {
                     status.setText("✓  Processed · matched route available");
                     status.setTextColor(0xFF8BE0B1);
-                    action.setText("VIEW & EDIT ON MAP");
+                    action.setText(forceRematch ? "REMATCH JOURNEY" : "VIEW & EDIT ON MAP");
                     action.setEnabled(true);
                     action.setAlpha(1f);
-                    action.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                    if (!forceRematch) action.setOnClickListener(v -> requestCloseWithUnsavedChanges(
                             dialogRef[0], hasUnsavedChanges(titleInput, transport,
                                     transportModes, savedTitle[0], savedMode[0]),
                             saveEdits,
@@ -1364,7 +1387,7 @@ public class JourneyListActivity extends Activity {
                 } else if ("processing".equals(saved.optString("processing_status"))) {
                     mainHandler.postDelayed(
                             () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
-                                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits), 1000L);
+                                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch), 1000L);
                 } else {
                     status.setText("Matching failed or returned no route. You can retry here.");
                     status.setTextColor(0xFFF7C450);
