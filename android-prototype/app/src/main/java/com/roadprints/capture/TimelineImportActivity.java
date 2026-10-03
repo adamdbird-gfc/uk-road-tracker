@@ -37,6 +37,7 @@ public class TimelineImportActivity extends Activity {
     private TextView choose;
     private TextView capture;
     private TextView helpBody;
+    private boolean serviceOnly;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
 
     @Override
@@ -44,6 +45,7 @@ public class TimelineImportActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(0xFF0B1C50);
         getWindow().setNavigationBarColor(0xFF0B1C50);
+        serviceOnly = getIntent().getBooleanExtra("service_only", false);
         buildScreen();
     }
 
@@ -68,16 +70,19 @@ public class TimelineImportActivity extends Activity {
         });
         root.requestApplyInsets();
 
-        TextView title = text("Timeline data", 30, Color.WHITE, true);
+        TextView title = text(serviceOnly ? "Service station visits" : "Timeline data",
+                30, Color.WHITE, true);
         root.addView(title);
 
-        TextView intro = text(
-                "Choose your Google Timeline JSON file. It will be validated and imported into your local Roadprints archive.",
+        TextView intro = text(serviceOnly
+                ? "Add another Google Timeline JSON file to update service station visits. "
+                    + "Saved journeys and route matching will be left untouched."
+                : "Choose your Google Timeline JSON file. It will be validated and imported into your local Roadprints archive.",
                 17, 0xFFD3DCED, false);
         intro.setPadding(0, 12, 0, 26);
         root.addView(intro);
 
-        choose = action("CHOOSE TIMELINE JSON");
+        choose = action(serviceOnly ? "ADD TIMELINE FILE" : "CHOOSE TIMELINE JSON");
         choose.setOnClickListener(v -> chooseFile());
         root.addView(choose, new LinearLayout.LayoutParams(-1, 58));
 
@@ -109,12 +114,16 @@ public class TimelineImportActivity extends Activity {
             help.setText((show ? "▾ " : "▸ ") + "Where do I find my Timeline file?");
         });
 
-        capture = action("CONTINUE TO GROWING");
+        capture = action(serviceOnly ? "RETURN TO MAP" : "CONTINUE TO GROWING");
         capture.setVisibility(View.GONE);
         capture.setOnClickListener(v -> {
-            Intent growing = new Intent(this, JourneyListActivity.class);
-            growing.putExtra("open_growing", true);
-            startActivity(growing);
+            if (serviceOnly) {
+                startActivity(new Intent(this, MapActivity.class));
+            } else {
+                Intent growing = new Intent(this, JourneyListActivity.class);
+                growing.putExtra("open_growing", true);
+                startActivity(growing);
+            }
             finish();
         });
         LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, 58);
@@ -155,7 +164,7 @@ public class TimelineImportActivity extends Activity {
         importer.submit(() -> {
             ImportResult result;
             try {
-                result = importFile(uri);
+                result = importFile(uri, serviceOnly);
             } catch (Exception error) {
                 result = new ImportResult(0, 0, 1,
                         "Import failed: " + safeMessage(error));
@@ -164,7 +173,8 @@ public class TimelineImportActivity extends Activity {
             runOnUiThread(() -> {
                 setBusy(false);
                 status.setText(finalResult.message);
-                if (finalResult.message.startsWith("Import complete:")) {
+                if (finalResult.message.startsWith("Import complete:")
+                        || finalResult.message.startsWith("Service import complete:")) {
                     capture.setVisibility(View.VISIBLE);
                     capture.setEnabled(true);
                 }
@@ -172,7 +182,7 @@ public class TimelineImportActivity extends Activity {
         });
     }
 
-    private ImportResult importFile(Uri uri) throws Exception {
+    private ImportResult importFile(Uri uri, boolean serviceOnly) throws Exception {
         int added = 0;
         int skipped = 0;
         int invalid = 0;
@@ -206,12 +216,17 @@ public class TimelineImportActivity extends Activity {
                     }
                     reader.beginArray();
                     while (reader.hasNext()) {
+                        if (serviceOnly) {
+                            collectServiceOnlySemanticVisit(reader, confirmedTimelineVisits, fileFingerprint);
+                            continue;
+                        }
                         JSONObject segment = readJsonObject(reader);
                         found++;
                         collectTimelinePathPoints(segment, semanticPathPoints);
                         JSONObject visit = segment.optJSONObject("visit");
                         if (visit == null) visit = segment.optJSONObject("placeVisit");
-                        if (visit != null) collectConfirmedVisit(segment, visit, confirmedTimelineVisits, fileFingerprint);
+                        if (visit != null) collectConfirmedVisit(
+                                segment, visit, confirmedTimelineVisits, fileFingerprint);
                         if (segment.optJSONObject("activity") != null) {
                             semanticSegments.add(segment);
                         } else {
@@ -226,9 +241,14 @@ public class TimelineImportActivity extends Activity {
                     }
                     reader.beginArray();
                     while (reader.hasNext()) {
+                        if (serviceOnly) {
+                            collectServiceOnlyLegacyVisit(reader, confirmedTimelineVisits, fileFingerprint);
+                            continue;
+                        }
                         JSONObject wrapper = readJsonObject(reader);
                         JSONObject placeVisit = wrapper.optJSONObject("placeVisit");
-                        if (placeVisit != null) collectConfirmedVisit(placeVisit, placeVisit, confirmedTimelineVisits, fileFingerprint);
+                        if (placeVisit != null) collectConfirmedVisit(
+                                placeVisit, placeVisit, confirmedTimelineVisits, fileFingerprint);
                         JSONObject segment = wrapper.optJSONObject("activitySegment");
                         if (segment == null) continue;
                         found++;
@@ -249,7 +269,18 @@ public class TimelineImportActivity extends Activity {
             reader.endObject();
         }
 
-        ServiceStationStore.recordConfirmedTimelineVisits(this, confirmedTimelineVisits);
+        if (serviceOnly && confirmedTimelineVisits.length() == 0) {
+            throw new IllegalArgumentException(
+                    "No Timeline place visits with coordinates were found. Saved journeys were not changed.");
+        }
+        int matchedServiceStations =
+                ServiceStationStore.recordConfirmedTimelineVisits(this, confirmedTimelineVisits);
+        if (serviceOnly) {
+            return new ImportResult(0, 0, 0,
+                    "Service import complete: " + confirmedTimelineVisits.length()
+                            + " Timeline place visits saved; " + matchedServiceStations
+                            + " service stations matched. Saved journeys were not changed.");
+        }
         semanticPathPoints.sort((left, right) -> Long.compare(left.timeMs, right.timeMs));
         int semanticActivitiesProcessed = 0;
         for (JSONObject segment : semanticSegments) {
@@ -277,6 +308,45 @@ public class TimelineImportActivity extends Activity {
                                 + "%d journeys contain intermediate points.",
                         added, skipped, invalid, sourceRoutePointsFound,
                         journeyRecordsParsed, journeysWithIntermediateTrace));
+    }
+
+    /** Reads only visit fields and skips route/activity payloads for service-only imports. */
+    private void collectServiceOnlySemanticVisit(
+            JsonReader reader, JSONArray output, String fileFingerprint) throws Exception {
+        JSONObject segment = new JSONObject();
+        JSONObject visit = null;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("startTime".equals(name) || "endTime".equals(name)) {
+                if (reader.peek() == JsonToken.STRING) segment.put(name, reader.nextString());
+                else reader.skipValue();
+            } else if ("visit".equals(name) || "placeVisit".equals(name)) {
+                if (reader.peek() == JsonToken.BEGIN_OBJECT) visit = readJsonObject(reader);
+                else reader.skipValue();
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        if (visit != null) collectConfirmedVisit(segment, visit, output, fileFingerprint);
+    }
+
+    /** Old Timeline exports wrap place visits beside large activity route records. */
+    private void collectServiceOnlyLegacyVisit(
+            JsonReader reader, JSONArray output, String fileFingerprint) throws Exception {
+        JSONObject visit = null;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("placeVisit".equals(name) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                visit = readJsonObject(reader);
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        if (visit != null) collectConfirmedVisit(visit, visit, output, fileFingerprint);
     }
 
     private void collectConfirmedVisit(

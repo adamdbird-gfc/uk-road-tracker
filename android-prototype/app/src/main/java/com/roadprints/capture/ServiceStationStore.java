@@ -82,7 +82,7 @@ final class ServiceStationStore {
      */
     static int recordConfirmedTimelineVisits(Context context, JSONArray visits) {
         ensureConfirmedOnlyMigration(context);
-        int before = automatic(context).size();
+        automatic(context);
         try {
             TimelineVisitStore.merge(context, visits);
             rebuildConfirmedTimelineMatches(context);
@@ -90,7 +90,7 @@ final class ServiceStationStore {
             android.util.Log.w("Roadprints", "Could not persist Timeline place visits", error);
             return 0;
         }
-        return Math.max(0, automatic(context).size() - before);
+        return automatic(context).size();
     }
 
     private static void rebuildConfirmedTimelineMatches(Context context) throws Exception {

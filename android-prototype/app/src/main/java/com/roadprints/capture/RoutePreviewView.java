@@ -71,6 +71,10 @@ public class RoutePreviewView extends View {
     private final Paint markerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint serviceStationPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint serviceStationOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private JSONArray serviceStations = new JSONArray();
+    private Set<String> visitedServiceStationIds = Collections.emptySet();
     private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =
@@ -194,6 +198,9 @@ public class RoutePreviewView extends View {
         markerTextPaint.setTextSize(dp(11));
         markerTextPaint.setTypeface(android.graphics.Typeface.create(
                 "sans-serif", android.graphics.Typeface.BOLD));
+        serviceStationPaint.setStyle(Paint.Style.FILL);
+        serviceStationOutlinePaint.setStyle(Paint.Style.FILL);
+        serviceStationOutlinePaint.setColor(Color.WHITE);
         attributionPaint.setColor(Color.rgb(18, 37, 75));
         attributionPaint.setTextSize(dp(10));
         attributionPaint.setTypeface(android.graphics.Typeface.create(
@@ -235,6 +242,19 @@ public class RoutePreviewView extends View {
                 return true;
             }
         });
+    }
+
+    /** Adds the local service-station catalogue as map pins. */
+    public void setServiceStations(JSONArray stations, Set<String> visitedIds) {
+        serviceStations = stations == null ? new JSONArray() : stations;
+        visitedServiceStationIds = visitedIds == null
+                ? Collections.emptySet() : new java.util.HashSet<>(visitedIds);
+        if (serviceStations.length() > 0) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
     }
 
     /** Adds the POC-style blue motorway evidence over the normal journey map. */
@@ -390,6 +410,7 @@ public class RoutePreviewView extends View {
             drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
+        drawServiceStations(canvas);
         drawAttribution(canvas);
         if (!hasTiles) drawMessage(canvas, coordinatesValid
                 ? "Map tiles unavailable · showing route only"
@@ -423,6 +444,19 @@ public class RoutePreviewView extends View {
                     org.json.JSONArray point = routeCoordinates.getJSONArray(index);
                     double lon = point.getDouble(0);
                     double lat = clampLatitude(point.getDouble(1));
+                    minX = Math.min(minX, longitudeToUnitX(lon));
+                    maxX = Math.max(maxX, longitudeToUnitX(lon));
+                    minY = Math.min(minY, latitudeToUnitY(lat));
+                    maxY = Math.max(maxY, latitudeToUnitY(lat));
+                }
+            }
+            if (settlementBoundaryRings.isEmpty()) {
+                for (int i = 0; i < serviceStations.length(); i++) {
+                    org.json.JSONObject station = serviceStations.optJSONObject(i);
+                    if (station == null) continue;
+                    double lon = station.optDouble("lng", Double.NaN);
+                    double lat = station.optDouble("lat", Double.NaN);
+                    if (!Double.isFinite(lon) || !Double.isFinite(lat)) continue;
                     minX = Math.min(minX, longitudeToUnitX(lon));
                     maxX = Math.max(maxX, longitudeToUnitX(lon));
                     minY = Math.min(minY, latitudeToUnitY(lat));
@@ -597,6 +631,28 @@ public class RoutePreviewView extends View {
                 && routeEdgeTapListener != null) {
             routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
             invalidate();
+        }
+    }
+
+    private void drawServiceStations(Canvas canvas) {
+        float radius = dp(6);
+        for (int i = 0; i < serviceStations.length(); i++) {
+            org.json.JSONObject station = serviceStations.optJSONObject(i);
+            if (station == null) continue;
+            double lat = station.optDouble("lat", Double.NaN);
+            double lng = station.optDouble("lng", Double.NaN);
+            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
+            float x = screenX(lng);
+            float y = screenY(lat);
+            if (x < -radius * 2 || x > getWidth() + radius * 2
+                    || y < -radius * 2 || y > getHeight() + radius * 2) continue;
+            String id = station.optString("id", "");
+            serviceStationPaint.setColor(visitedServiceStationIds.contains(id)
+                    ? 0xFFF7C450 : 0xFF74829A);
+            canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
+            canvas.drawCircle(x, y, radius, serviceStationPaint);
+            markerPaint.setColor(Color.WHITE);
+            canvas.drawCircle(x, y, dp(1.7f), markerPaint);
         }
     }
 

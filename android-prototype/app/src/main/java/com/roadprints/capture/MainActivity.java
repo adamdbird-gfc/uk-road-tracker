@@ -172,8 +172,22 @@ public class MainActivity extends Activity {
         TextView subtitle = text(
                 "Record a journey or keep automatic tracking ready in the background.",
                 16, 0xFFD3DCED, false);
-        subtitle.setPadding(0, dp(8), 0, dp(22));
+        subtitle.setPadding(0, dp(8), 0, dp(16));
         content.addView(subtitle);
+
+        Button stationImport = new Button(this);
+        stationImport.setText("ADD SERVICE STATION VISITS");
+        styleAction(stationImport, 0xFF35558F, Color.WHITE);
+        stationImport.setContentDescription("Import another Timeline JSON file for service station visits without changing saved journeys");
+        stationImport.setOnClickListener(v -> {
+            Intent importIntent = new Intent(this, TimelineImportActivity.class);
+            importIntent.putExtra("service_only", true);
+            startActivity(importIntent);
+        });
+        LinearLayout.LayoutParams stationImportParams =
+                new LinearLayout.LayoutParams(-1, dp(50));
+        stationImportParams.bottomMargin = dp(16);
+        content.addView(stationImport, stationImportParams);
 
         modeSpinner = new Spinner(this);
         modeSpinner.setAdapter(new ArrayAdapter<>(

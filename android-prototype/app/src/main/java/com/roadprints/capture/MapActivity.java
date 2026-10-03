@@ -148,7 +148,7 @@ public class MapActivity extends Activity {
                     getIntent().getStringExtra("settlement_journey_ids"));
             return;
         }
-        final long revision = JourneyStore.dataRevision(getApplicationContext());
+        final long revision = mapDataRevision();
         MapRoutes cached = null;
         synchronized (MAP_CACHE_LOCK) {
             if (processMapCacheRevision == revision) cached = processMapCache;
@@ -181,7 +181,7 @@ public class MapActivity extends Activity {
                 });
                 return;
             }
-            long currentRevision = JourneyStore.dataRevision(getApplicationContext());
+            long currentRevision = mapDataRevision();
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
                     - (runtime.totalMemory() - runtime.freeMemory());
@@ -208,7 +208,9 @@ public class MapActivity extends Activity {
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
-                    ? "Successfully matched journeys will appear here."
+                    ? (mapRoutes.serviceStations.length() > 0
+                        ? "Service stations are shown on the map. Matched journeys will appear here."
+                        : "Successfully matched journeys will appear here.")
                     : mapRoutes.matchedJourneys + " successfully matched journeys"
                             + (mapRoutes.simplified ? " · map simplified for performance." : "."));
             mapFrame.removeAllViews();
@@ -221,6 +223,8 @@ public class MapActivity extends Activity {
                     mapRoutes.coveredMotorwaySections);
             map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
                     mapRoutes.coveredARoadSections);
+            map.setServiceStations(mapRoutes.serviceStations,
+                    mapRoutes.visitedServiceStationIds);
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
             mapFrame.addView(map, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -391,8 +395,15 @@ public class MapActivity extends Activity {
         return inside;
     }
 
-    private MapRoutes readMapRoutes() {
+    private long mapDataRevision() {
+        return 31L * JourneyStore.dataRevision(getApplicationContext())
+                + ServiceStationStore.revision(getApplicationContext());
+    }
+
+    private MapRoutes readMapRoutes() throws Exception {
         MapRoutes output = new MapRoutes();
+        output.serviceStations = ServiceStationStore.stations(getApplicationContext());
+        output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
@@ -783,6 +794,8 @@ public class MapActivity extends Activity {
         final List<JSONArray> coveredMotorwaySections = new ArrayList<>();
         final List<JSONArray> incompleteARoadSections = new ArrayList<>();
         final List<JSONArray> coveredARoadSections = new ArrayList<>();
+        JSONArray serviceStations = new JSONArray();
+        Set<String> visitedServiceStationIds = new HashSet<>();
         int matchedJourneys;
         int retainedPoints;
         int motorwayRetainedPoints;
