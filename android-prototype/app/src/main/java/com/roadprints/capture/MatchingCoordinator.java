@@ -255,7 +255,7 @@ public final class MatchingCoordinator {
         }
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
         boolean foot = isFoot(journey.optString("mode", "unknown"));
-        JSONArray requestPoints = foot ? points : sampleRoadPoints(points, MAX_MATCH_REQUEST_POINTS);
+        JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
         String endpointPath = foot ? "/match-walking" : "/match";
         JSONObject attempt = new JSONObject()
                 .put("started_at_utc", Instant.now().toString())
@@ -321,7 +321,7 @@ public final class MatchingCoordinator {
         } catch (Exception ignored) { }
     }
 
-    static JSONArray sampleRoadPoints(JSONArray points, int maxPoints) throws Exception {
+    static JSONArray sampleMatchPoints(JSONArray points, int maxPoints) throws Exception {
         if (points == null || points.length() <= maxPoints || maxPoints < 2) return points;
         JSONArray sampled = new JSONArray();
         int sourceCount = points.length();
@@ -359,18 +359,8 @@ public final class MatchingCoordinator {
             String line; while ((line = reader.readLine()) != null) body.append(line);
         }
         if (status < 200 || status >= 300) {
-            String detail = body.length() == 0 ? "API request failed" : body.toString();
-            try {
-                JSONObject error = new JSONObject(body.toString());
-                Object value = error.opt("detail");
-                if (value != null && value != JSONObject.NULL) {
-                    detail = value instanceof String ? (String) value : value.toString();
-                }
-            } catch (Exception ignored) {
-                // Keep a short non-JSON gateway response in the local diagnostic report.
-            }
-            if (detail.length() > 800) detail = detail.substring(0, 800) + "…";
-            throw new IllegalStateException("HTTP " + status + ": " + detail);
+            throw new IllegalStateException(CrashReporter.summarizeMatcherError(
+                    status, body.toString()));
         }
         return new JSONObject(body.toString());
         } finally { connection.disconnect(); }

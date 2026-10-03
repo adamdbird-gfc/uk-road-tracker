@@ -82,7 +82,7 @@ public final class CrashReporter {
                 JSONArray updated = new JSONArray().put(report);
                 for (int index = 0; index < oldReports.length()
                         && updated.length() < MAX_MATCH_REPORTS; index++) {
-                    String previous = oldReports.optString(index, "");
+                    String previous = sanitizeSavedMatchReport(oldReports.optString(index, ""));
                     if (!previous.isEmpty() && !previous.equals(report)) updated.put(previous);
                 }
                 preferences.edit().putString(MATCH_REPORTS, updated.toString()).apply();
@@ -94,8 +94,8 @@ public final class CrashReporter {
 
     public static String getMatchFailureReports(Context context) {
         synchronized (LOCK) {
-            String encoded = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .getString(MATCH_REPORTS, "[]");
+            SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            String encoded = preferences.getString(MATCH_REPORTS, "[]");
             JSONArray reports;
             try {
                 reports = new JSONArray(encoded);
@@ -103,12 +103,133 @@ public final class CrashReporter {
                 return "";
             }
             StringBuilder output = new StringBuilder();
+            JSONArray sanitized = new JSONArray();
+            boolean changed = false;
             for (int index = 0; index < reports.length(); index++) {
+                String original = reports.optString(index, "");
+                String report = sanitizeSavedMatchReport(original);
+                sanitized.put(report);
+                if (!report.equals(original)) changed = true;
                 if (index > 0) output.append("\n\n========== Previous journey match failure ==========" + "\n\n");
-                output.append(reports.optString(index, ""));
+                output.append(report);
             }
+            if (changed) preferences.edit().putString(MATCH_REPORTS, sanitized.toString()).apply();
             return output.toString();
         }
+    }
+
+    /** Summarizes matcher errors without retaining or displaying echoed route coordinates. */
+    public static String summarizeMatcherError(int status, String body) {
+        String prefix = "HTTP " + status + ": ";
+        if (body == null || body.trim().isEmpty()) return prefix + "API request failed";
+        String trimmed = body.trim();
+        try {
+            if (trimmed.startsWith("[")) {
+                return prefix + summarizeValidationErrors(new JSONArray(trimmed));
+            }
+            JSONObject response = new JSONObject(trimmed);
+            Object detail = response.opt("detail");
+            if (detail instanceof JSONArray) {
+                return prefix + summarizeValidationErrors((JSONArray) detail);
+            }
+            if (detail instanceof JSONObject) {
+                JSONArray errors = ((JSONObject) detail).optJSONArray("errors");
+                if (errors != null) return prefix + summarizeValidationErrors(errors);
+                return prefix + "Matcher returned a structured error response";
+            }
+            if (detail instanceof String) {
+                String message = ((String) detail).trim();
+                if (message.startsWith("[") || message.startsWith("{")) {
+                    return summarizeMatcherError(status, message);
+                }
+                if (containsCoordinateFields(message)) {
+                    return prefix + "Matcher error detail omitted because it contained submitted point data";
+                }
+                return prefix + limit(message, 500);
+            }
+            return prefix + "Matcher returned an error response";
+        } catch (Exception ignored) {
+            // Raw server bodies can echo GPS points, so never save a body we cannot parse safely.
+            return prefix + "Non-JSON error response (" + body.length() + " characters)";
+        }
+    }
+
+    private static String summarizeValidationErrors(JSONArray errors) {
+        StringBuilder summary = new StringBuilder();
+        int included = 0;
+        for (int index = 0; index < errors.length() && included < 3; index++) {
+            JSONObject error = errors.optJSONObject(index);
+            if (error == null) continue;
+            String location = formatErrorLocation(error.optJSONArray("loc"));
+            String type = error.optString("type", "");
+            String message = error.optString("msg", "Request validation failed");
+            if (summary.length() > 0) summary.append("; ");
+            if (!location.isEmpty()) summary.append(location).append(": ");
+            if (!type.isEmpty()) summary.append(type).append(" — ");
+            summary.append(limit(message, 240));
+            included++;
+        }
+        return summary.length() == 0
+                ? "Matcher rejected the request (validation details omitted)" : summary.toString();
+    }
+
+    private static String formatErrorLocation(JSONArray location) {
+        if (location == null || location.length() == 0) return "";
+        StringBuilder path = new StringBuilder();
+        for (int index = 0; index < location.length(); index++) {
+            String part = String.valueOf(location.opt(index));
+            if (path.length() > 0) path.append('.');
+            path.append(part);
+        }
+        return path.toString();
+    }
+
+    private static String sanitizeDiagnosticError(String value) {
+        if (value == null || value.isEmpty()) return "";
+        int http = value.indexOf("HTTP ");
+        if (http >= 0 && value.length() >= http + 8) {
+            try {
+                int status = Integer.parseInt(value.substring(http + 5, http + 8));
+                int colon = value.indexOf(':', http + 8);
+                if (colon >= 0) {
+                    String body = value.substring(colon + 1).trim();
+                    if (body.startsWith("[") || body.startsWith("{")) {
+                        return value.substring(0, http) + summarizeMatcherError(status, body);
+                    }
+                }
+            } catch (NumberFormatException ignored) { }
+        }
+        if (containsCoordinateFields(value)) {
+            return "Error detail omitted because it contained submitted point data";
+        }
+        return limit(value, MAX_MATCH_REPORT_CHARS / 2);
+    }
+
+    private static boolean containsCoordinateFields(String value) {
+        String lower = value.toLowerCase();
+        return lower.contains("\"lat\"") || lower.contains("\"lng\"")
+                || lower.contains("\"latitude\"") || lower.contains("\"longitude\"");
+    }
+
+    private static String sanitizeSavedMatchReport(String report) {
+        if (report == null || report.isEmpty()) return "";
+        String[] lines = report.split("\\n", -1);
+        StringBuilder sanitized = new StringBuilder();
+        for (String line : lines) {
+            if (line.startsWith("Stored error: ")) {
+                line = "Stored error: " + sanitizeDiagnosticError(
+                        line.substring("Stored error: ".length()));
+            } else if (line.startsWith("Detail: ")) {
+                line = "Detail: " + sanitizeDiagnosticError(line.substring("Detail: ".length()));
+            } else if (line.startsWith("Cause: ")) {
+                line = "Cause: " + sanitizeDiagnosticError(line.substring("Cause: ".length()));
+            } else if (containsCoordinateFields(line)) {
+                line = "[Error detail omitted because it contained submitted point data.]";
+            }
+            if (sanitized.length() > 0) sanitized.append('\n');
+            sanitized.append(line);
+        }
+        return sanitized.toString();
     }
 
     public static String getDiagnosticReports(Context context) {
@@ -137,7 +258,7 @@ public final class CrashReporter {
             if (!title.isEmpty()) output.append("Journey title: ").append(title).append('\n');
             output.append("Mode: ").append(journey.optString("mode", "unknown")).append('\n');
             if (source != null) output.append("Source: ").append(source.optString("type", "unknown")).append('\n');
-            String summary = journey.optString("error_summary", "");
+            String summary = sanitizeDiagnosticError(journey.optString("error_summary", ""));
             if (!summary.isEmpty()) output.append("Stored error: ").append(limit(summary, MAX_MATCH_REPORT_CHARS / 2)).append('\n');
         }
         if (attempt != null) {
@@ -148,11 +269,11 @@ public final class CrashReporter {
         }
         if (error != null) {
             output.append("Exception: ").append(error.getClass().getSimpleName()).append('\n');
-            String message = error.getMessage();
+            String message = sanitizeDiagnosticError(error.getMessage());
             if (message != null && !message.isEmpty()) output.append("Detail: ").append(limit(message, MAX_MATCH_REPORT_CHARS / 2)).append('\n');
             Throwable cause = error.getCause();
             if (cause != null) output.append("Cause: ").append(cause.getClass().getSimpleName())
-                    .append(": ").append(limit(String.valueOf(cause.getMessage()), 300)).append('\n');
+                    .append(": ").append(sanitizeDiagnosticError(String.valueOf(cause.getMessage()))).append('\n');
         }
         String report = output.toString();
         return report.length() <= MAX_MATCH_REPORT_CHARS ? report

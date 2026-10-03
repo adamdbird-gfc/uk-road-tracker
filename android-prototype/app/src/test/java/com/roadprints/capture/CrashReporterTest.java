@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
@@ -70,6 +71,31 @@ public class CrashReporterTest {
         CrashReporter.clear(app);
         assertFalse(CrashReporter.hasReports(app));
         assertEquals("", CrashReporter.getDiagnosticReports(app));
+    }
+
+    @Test public void sanitizesPreviouslySavedMatcherErrorsBeforeShowingOrKeepingThem() throws Exception {
+        JSONObject error = new JSONObject()
+                .put("type", "too_long")
+                .put("loc", new JSONArray().put("body").put("points"))
+                .put("msg", "List should have at most 500 items after validation, not 844")
+                .put("input", new JSONArray().put(new JSONObject().put("lat", 52.2081).put("lng", 0.1543)));
+        String rawError = "HTTP 422: " + new JSONArray().put(error);
+        String legacyReport = "Roadprints journey match failure\nStored error: " + rawError
+                + "\nDetail: " + rawError;
+        app.getSharedPreferences("roadprints_debug_reports", Context.MODE_PRIVATE).edit()
+                .putString("match_failure_reports", new JSONArray().put(legacyReport).toString())
+                .commit();
+
+        String reports = CrashReporter.getMatchFailureReports(app);
+        assertTrue(reports.contains("too_long"));
+        assertTrue(reports.contains("not 844"));
+        assertFalse(reports.contains("\"lat\""));
+        assertFalse(reports.contains("\"lng\""));
+        assertFalse(reports.contains("52.2081"));
+        String stored = app.getSharedPreferences("roadprints_debug_reports", Context.MODE_PRIVATE)
+                .getString("match_failure_reports", "[]");
+        assertFalse(stored.contains("\"lat\""));
+        assertFalse(stored.contains("52.2081"));
     }
 
 }

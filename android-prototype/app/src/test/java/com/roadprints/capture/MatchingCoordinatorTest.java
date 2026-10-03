@@ -150,6 +150,50 @@ public class MatchingCoordinatorTest {
         assertTrue(attempt.optBoolean("points_reduced"));
     }
 
+    @Test public void longWalkingTraceIsSampledToMatcherLimitAndKeepsBothEndpoints() throws Exception {
+        JSONArray coordinates = new JSONArray();
+        for (int i = 0; i < 844; i++) {
+            coordinates.put(new JSONArray().put(0.15 + i * 0.00001).put(52.2 + i * 0.00001));
+        }
+        JourneyStore.save(app, new JSONObject().put("journey_id", "long-walk")
+                .put("title", "Coldhams Common parkrun")
+                .put("mode", "walking").put("processing_status", "pending")
+                .put("source", new JSONObject().put("type", "android_activity_capture"))
+                .put("route_geometry", new JSONObject().put("type", "LineString").put("coordinates", coordinates)));
+        AtomicInteger sentCount = new AtomicInteger();
+        coordinator = new MatchingCoordinator(app, (foot, payload) -> {
+            assertTrue(foot);
+            JSONArray sent = payload.optJSONArray("points");
+            sentCount.set(sent.length());
+            assertEquals(0.15, sent.getJSONObject(0).optDouble("lng"), 0.000001);
+            assertEquals(0.15843, sent.getJSONObject(sent.length() - 1).optDouble("lng"), 0.000001);
+            return route();
+        });
+        coordinator.start("long-walk"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(MatchingCoordinator.MAX_MATCH_REQUEST_POINTS, sentCount.get());
+        JSONObject attempt = JourneyStore.get(app, "long-walk").optJSONObject("last_match_attempt");
+        assertEquals("/match-walking", attempt.optString("endpoint"));
+        assertEquals(844, attempt.optInt("source_points"));
+        assertEquals(500, attempt.optInt("submitted_points"));
+        assertTrue(attempt.optBoolean("points_reduced"));
+    }
+
+    @Test public void matcherValidationErrorSummaryDoesNotIncludeEchoedCoordinates() throws Exception {
+        JSONObject error = new JSONObject()
+                .put("type", "too_long")
+                .put("loc", new JSONArray().put("body").put("points"))
+                .put("msg", "List should have at most 500 items after validation, not 844")
+                .put("input", new JSONArray().put(new JSONObject().put("lat", 52.2081).put("lng", 0.1543)));
+        String summary = CrashReporter.summarizeMatcherError(422, new JSONArray().put(error).toString());
+        assertTrue(summary.contains("HTTP 422"));
+        assertTrue(summary.contains("body.points"));
+        assertTrue(summary.contains("too_long"));
+        assertTrue(summary.contains("not 844"));
+        assertFalse(summary.contains("input"));
+        assertFalse(summary.contains("52.2081"));
+        assertFalse(summary.contains("0.1543"));
+    }
+
     @Test public void shorterRoadFailureKeepsItsExactRequestSizeAndAddsUsefulDebugReport() throws Exception {
         JSONArray coordinates = new JSONArray();
         for (int i = 0; i < 114; i++) {
