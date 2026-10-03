@@ -23,6 +23,7 @@ public class MatchingCoordinatorTest {
     @Before public void setUp() {
         app = RuntimeEnvironment.getApplication();
         JourneyStore.deleteAll(app);
+        CrashReporter.clear(app);
     }
     @After public void tearDown() {
         if (coordinator != null) coordinator.shutdownForTest();
@@ -121,4 +122,59 @@ public class MatchingCoordinatorTest {
         assertEquals(1, coordinator.snapshot().matched); assertEquals(0, coordinator.snapshot().failed);
         coordinator.start(); await(MatchingCoordinator.State.COMPLETE); assertEquals(2, calls.get());
     }
+    @Test public void longRoadTraceIsSampledToMatcherLimitAndKeepsBothEndpoints() throws Exception {
+        JSONArray coordinates = new JSONArray();
+        for (int i = 0; i < 1794; i++) {
+            coordinates.put(new JSONArray().put(0.3 + i * 0.00001).put(51.4 + i * 0.00001));
+        }
+        JourneyStore.save(app, new JSONObject().put("journey_id", "long-road")
+                .put("mode", "driving").put("processing_status", "pending")
+                .put("source", new JSONObject().put("type", "timeline_import"))
+                .put("capture_quality", new JSONObject().put("source_route_points", 1794))
+                .put("route_geometry", new JSONObject().put("type", "LineString").put("coordinates", coordinates)));
+        AtomicInteger sentCount = new AtomicInteger();
+        coordinator = new MatchingCoordinator(app, (foot, payload) -> {
+            assertFalse(foot);
+            JSONArray sent = payload.optJSONArray("points");
+            sentCount.set(sent.length());
+            assertEquals(0.3, sent.getJSONObject(0).optDouble("lng"), 0.000001);
+            assertEquals(0.31793, sent.getJSONObject(sent.length() - 1).optDouble("lng"), 0.000001);
+            return route();
+        });
+        coordinator.start("long-road"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(MatchingCoordinator.MAX_MATCH_REQUEST_POINTS, sentCount.get());
+        JSONObject stored = JourneyStore.get(app, "long-road");
+        JSONObject attempt = stored.optJSONObject("last_match_attempt");
+        assertEquals(1794, attempt.optInt("source_points"));
+        assertEquals(500, attempt.optInt("submitted_points"));
+        assertTrue(attempt.optBoolean("points_reduced"));
+    }
+
+    @Test public void shorterRoadFailureKeepsItsExactRequestSizeAndAddsUsefulDebugReport() throws Exception {
+        JSONArray coordinates = new JSONArray();
+        for (int i = 0; i < 114; i++) {
+            coordinates.put(new JSONArray().put(0.3 + i * 0.00001).put(51.4 + i * 0.00001));
+        }
+        JourneyStore.save(app, new JSONObject().put("journey_id", "road-114")
+                .put("title", "Gravesend Station - Home")
+                .put("mode", "driving").put("processing_status", "pending")
+                .put("source", new JSONObject().put("type", "timeline_import"))
+                .put("capture_quality", new JSONObject().put("source_route_points", 114))
+                .put("route_geometry", new JSONObject().put("type", "LineString").put("coordinates", coordinates)));
+        AtomicInteger sentCount = new AtomicInteger();
+        coordinator = new MatchingCoordinator(app, (foot, payload) -> {
+            sentCount.set(payload.optJSONArray("points").length());
+            throw new IllegalStateException("HTTP 422: test matcher detail");
+        });
+        coordinator.start("road-114"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(114, sentCount.get());
+        JSONObject stored = JourneyStore.get(app, "road-114");
+        assertEquals("failed", stored.optString("processing_status"));
+        String report = CrashReporter.getDiagnosticReports(app);
+        assertTrue(report.contains("Journey title: Gravesend Station - Home"));
+        assertTrue(report.contains("GPS points: 114"));
+        assertTrue(report.contains("Points submitted: 114"));
+        assertTrue(report.contains("HTTP 422: test matcher detail"));
+    }
+
 }

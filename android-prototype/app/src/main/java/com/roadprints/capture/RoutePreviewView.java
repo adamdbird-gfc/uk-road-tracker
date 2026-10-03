@@ -27,6 +27,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -634,8 +636,27 @@ public class RoutePreviewView extends View {
         }
     }
 
+    private static final class ServiceStationCluster {
+        float xTotal;
+        float yTotal;
+        int count;
+        int visitedCount;
+
+        void add(float x, float y, boolean visited) {
+            xTotal += x;
+            yTotal += y;
+            count++;
+            if (visited) visitedCount++;
+        }
+
+        float centerX() { return xTotal / count; }
+        float centerY() { return yTotal / count; }
+    }
+
     private void drawServiceStations(Canvas canvas) {
-        float radius = dp(6);
+        float singleRadius = dp(6);
+        float cellSize = dp(44);
+        Map<Long, ServiceStationCluster> clusters = new LinkedHashMap<>();
         for (int i = 0; i < serviceStations.length(); i++) {
             org.json.JSONObject station = serviceStations.optJSONObject(i);
             if (station == null) continue;
@@ -644,16 +665,47 @@ public class RoutePreviewView extends View {
             if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
             float x = screenX(lng);
             float y = screenY(lat);
-            if (x < -radius * 2 || x > getWidth() + radius * 2
-                    || y < -radius * 2 || y > getHeight() + radius * 2) continue;
+            if (x < -cellSize || x > getWidth() + cellSize
+                    || y < -cellSize || y > getHeight() + cellSize) continue;
+            int column = (int) Math.floor(x / cellSize);
+            int row = (int) Math.floor(y / cellSize);
+            long key = (((long) column) << 32) ^ (row & 0xffffffffL);
+            ServiceStationCluster cluster = clusters.get(key);
+            if (cluster == null) {
+                cluster = new ServiceStationCluster();
+                clusters.put(key, cluster);
+            }
             String id = station.optString("id", "");
-            serviceStationPaint.setColor(visitedServiceStationIds.contains(id)
-                    ? 0xFFF7C450 : 0xFF74829A);
-            canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
-            canvas.drawCircle(x, y, radius, serviceStationPaint);
-            markerPaint.setColor(Color.WHITE);
-            canvas.drawCircle(x, y, dp(1.7f), markerPaint);
+            cluster.add(x, y, visitedServiceStationIds.contains(id));
         }
+
+        float originalTextSize = markerTextPaint.getTextSize();
+        int originalTextColor = markerTextPaint.getColor();
+        markerTextPaint.setTextSize(dp(10));
+        markerTextPaint.setTextAlign(Paint.Align.CENTER);
+        for (ServiceStationCluster cluster : clusters.values()) {
+            float x = cluster.centerX();
+            float y = cluster.centerY();
+            boolean visited = cluster.visitedCount > 0;
+            serviceStationPaint.setColor(visited ? 0xFFF7C450 : 0xFF74829A);
+            if (cluster.count > 1) {
+                float radius = dp(12);
+                canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
+                canvas.drawCircle(x, y, radius, serviceStationPaint);
+                markerTextPaint.setColor(Color.WHITE);
+                String label = cluster.count > 99 ? "99+" : String.valueOf(cluster.count);
+                canvas.drawText(label, x,
+                        y - (markerTextPaint.ascent() + markerTextPaint.descent()) / 2,
+                        markerTextPaint);
+            } else {
+                canvas.drawCircle(x, y, singleRadius + dp(1.5f), serviceStationOutlinePaint);
+                canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
+                markerPaint.setColor(Color.WHITE);
+                canvas.drawCircle(x, y, dp(1.7f), markerPaint);
+            }
+        }
+        markerTextPaint.setTextSize(originalTextSize);
+        markerTextPaint.setColor(originalTextColor);
     }
 
     private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {

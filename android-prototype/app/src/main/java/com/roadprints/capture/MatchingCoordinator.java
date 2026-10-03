@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /** Process-wide owner for background matching. It deliberately holds no Activity or View. */
 public final class MatchingCoordinator {
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
+    static final int MAX_MATCH_REQUEST_POINTS = 500;
     private static volatile MatchingCoordinator instance;
 
     public enum State { IDLE, PREPARING, RUNNING, PAUSING, PAUSED, COMPLETE, ERROR }
@@ -254,9 +255,27 @@ public final class MatchingCoordinator {
         }
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
         boolean foot = isFoot(journey.optString("mode", "unknown"));
-        JSONObject payload = new JSONObject().put("points", points);
+        JSONArray requestPoints = foot ? points : sampleRoadPoints(points, MAX_MATCH_REQUEST_POINTS);
+        String endpointPath = foot ? "/match-walking" : "/match";
+        JSONObject attempt = new JSONObject()
+                .put("started_at_utc", Instant.now().toString())
+                .put("mode", journey.optString("mode", "unknown"))
+                .put("endpoint", endpointPath)
+                .put("source_points", points.length())
+                .put("submitted_points", requestPoints.length())
+                .put("points_reduced", requestPoints.length() < points.length());
+        synchronized (JourneyStore.class) {
+            JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+            if (stored != null) {
+                stored.put("last_match_attempt", attempt);
+                JourneyStore.save(app, stored);
+            }
+        }
+        JSONObject payload = new JSONObject().put("points", requestPoints);
         JSONObject result = matcher != null ? matcher.match(foot, payload)
-                : postWithRetry(API_BASE_URL + (foot ? "/match-walking" : "/match"), payload);
+                : postWithRetry(API_BASE_URL + endpointPath, payload);
+        attempt.put("finished_at_utc", Instant.now().toString());
+        if (result.has("input_points")) attempt.put("server_input_points", result.optInt("input_points"));
         if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
         synchronized (JourneyStore.class) {
         JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
@@ -272,6 +291,7 @@ public final class MatchingCoordinator {
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
         stored.put("processing_result", result);
+        stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");
         JourneyStore.save(app, stored);
@@ -285,13 +305,31 @@ public final class MatchingCoordinator {
             if (stored == null) return;
             String stage = isFoot(stored.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
             stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
+            JSONObject attempt = stored.optJSONObject("last_match_attempt");
+            if (attempt != null) {
+                attempt.put("finished_at_utc", Instant.now().toString());
+                attempt.put("error", safeMessage(error));
+                stored.put("last_match_attempt", attempt);
+            }
             JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
             stages.put(stage, "failed"); stored.put("stage_statuses", stages);
             JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
             processing.put(stage, "failed"); stored.put("processing", processing);
             JourneyStore.save(app, stored);
+            CrashReporter.recordMatchFailure(app, stored, error);
             }
         } catch (Exception ignored) { }
+    }
+
+    static JSONArray sampleRoadPoints(JSONArray points, int maxPoints) throws Exception {
+        if (points == null || points.length() <= maxPoints || maxPoints < 2) return points;
+        JSONArray sampled = new JSONArray();
+        int sourceCount = points.length();
+        for (int index = 0; index < maxPoints; index++) {
+            int sourceIndex = (int) Math.round(index * (sourceCount - 1.0) / (maxPoints - 1.0));
+            sampled.put(points.get(sourceIndex));
+        }
+        return sampled;
     }
 
     private JSONObject postWithRetry(String endpoint, JSONObject payload) throws Exception {
@@ -321,8 +359,18 @@ public final class MatchingCoordinator {
             String line; while ((line = reader.readLine()) != null) body.append(line);
         }
         if (status < 200 || status >= 300) {
-            JSONObject error = new JSONObject(body.length() == 0 ? "{}" : body.toString());
-            throw new IllegalStateException("HTTP " + status + ": " + error.optString("detail", "API request failed"));
+            String detail = body.length() == 0 ? "API request failed" : body.toString();
+            try {
+                JSONObject error = new JSONObject(body.toString());
+                Object value = error.opt("detail");
+                if (value != null && value != JSONObject.NULL) {
+                    detail = value instanceof String ? (String) value : value.toString();
+                }
+            } catch (Exception ignored) {
+                // Keep a short non-JSON gateway response in the local diagnostic report.
+            }
+            if (detail.length() > 800) detail = detail.substring(0, 800) + "…";
+            throw new IllegalStateException("HTTP " + status + ": " + detail);
         }
         return new JSONObject(body.toString());
         } finally { connection.disconnect(); }

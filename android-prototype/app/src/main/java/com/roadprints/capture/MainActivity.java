@@ -279,7 +279,7 @@ public class MainActivity extends Activity {
         debugLink.setPaintFlags(debugLink.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         debugLink.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         debugLink.setPadding(0, dp(8), 0, dp(4));
-        debugLink.setContentDescription("Open crash report diagnostics");
+        debugLink.setContentDescription("Open debug reports");
         debugLink.setOnClickListener(v -> showDebugReport());
         content.addView(debugLink, new LinearLayout.LayoutParams(-1, dp(40)));
 
@@ -290,11 +290,11 @@ public class MainActivity extends Activity {
     }
 
     private void showDebugReport() {
-        String report = CrashReporter.getReports(this);
+        String report = CrashReporter.getDiagnosticReports(this);
         boolean available = !report.isEmpty();
         TextView details = text(available
                         ? "Review this report before copying. It stays on this device until you choose to copy it.\\n\\n" + report
-                        : "No crash report has been saved on this device yet. If Roadprints crashes, reopen the app and tap debug here. Reports are stored locally and are not sent automatically.",
+                        : "No reports have been saved on this device yet. If a journey match fails or Roadprints crashes, tap debug here. Reports stay on this device and are not sent automatically.",
                 13, 0xFFD3DCED, false);
         details.setTextIsSelectable(true);
         details.setPadding(dp(4), dp(8), dp(4), dp(8));
@@ -302,19 +302,19 @@ public class MainActivity extends Activity {
         reportScroll.addView(details);
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this)
-                .setTitle(available ? "Crash reports" : "Debug")
+                .setTitle(available ? "Debug reports" : "Debug")
                 .setView(reportScroll)
                 .setNegativeButton(available ? "Close" : "OK", null);
         if (available) {
             dialog.setPositiveButton("Copy report", (which, button) -> {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                clipboard.setPrimaryClip(ClipData.newPlainText("Roadprints crash reports", report));
-                Toast.makeText(this, "Crash report copied", Toast.LENGTH_SHORT).show();
+                clipboard.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports", report));
+                Toast.makeText(this, "Debug report copied", Toast.LENGTH_SHORT).show();
             });
             dialog.setNeutralButton("Clear reports", (which, button) -> {
                 CrashReporter.clear(this);
                 updateDebugLink();
-                Toast.makeText(this, "Crash reports cleared", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Debug reports cleared", Toast.LENGTH_SHORT).show();
             });
         }
         dialog.show();
