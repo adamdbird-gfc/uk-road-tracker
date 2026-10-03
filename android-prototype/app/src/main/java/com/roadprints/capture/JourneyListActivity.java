@@ -643,7 +643,8 @@ public class JourneyListActivity extends Activity {
         evidence.setText(statusText);
         evidence.setTextSize(14);
         evidence.setTextColor(statusText.startsWith("Insufficient")
-                || statusText.startsWith("Processing failed") ? 0xFFF7C450 : 0xFF67D5CC);
+                || statusText.startsWith("Processing failed")
+                || statusText.startsWith("Partially matched") ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
         details.addView(label);
@@ -1009,8 +1010,10 @@ public class JourneyListActivity extends Activity {
                     : "Not enough GPS evidence to match this journey";
             statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
-            statusText = "✓  Processed · matched route available";
-            statusColor = 0xFF8BE0B1;
+            boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"));
+            statusText = partial ? "Partial match · some route sections were not matched"
+                    : "✓  Processed · matched route available";
+            statusColor = partial ? 0xFFF7C450 : 0xFF8BE0B1;
         } else if ("complete".equals(processingStatus)) {
             statusText = "No matched route is available · retry matching from this journey";
             statusColor = 0xFFF7C450;
@@ -1528,11 +1531,23 @@ public class JourneyListActivity extends Activity {
                     ? "Insufficient Timeline points for reliable road matching"
                     : "Insufficient GPS evidence";
         }
-        if ("complete".equals(status)) return "Processed by Roadprints";
+        if ("complete".equals(status)) {
+            return isPartialMatchResult(journey.optJSONObject("processing_result"))
+                    ? "Partially matched · rematch available" : "Processed by Roadprints";
+        }
         if ("processing".equals(status)) return "Processing journey…";
         if ("failed".equals(status)) return "Processing failed — retry available";
         if (isFootMode(mode)) return "Ready for on-foot matching";
         return "Ready for road matching";
+    }
+
+    private boolean isPartialMatchResult(JSONObject result) {
+        if (result == null) return false;
+        JSONArray failed = result.optJSONArray("failed_sections");
+        if (failed != null && failed.length() > 0) return true;
+        int input = result.optInt("input_points", -1);
+        int matched = result.optInt("matched_tracepoints", -1);
+        return input >= 0 && matched >= 0 && matched < input;
     }
 
     private void shareJourney(JSONObject journey) {
