@@ -68,7 +68,6 @@ public class RoutePreviewView extends View {
     private final Paint motorwayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint motorwayIncompletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint rawRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -188,13 +187,6 @@ public class RoutePreviewView extends View {
         selectedRoutePaint.setStrokeWidth(dp(12));
         selectedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
         selectedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
-        rawRoutePaint.setColor(Color.rgb(112, 131, 164));
-        rawRoutePaint.setStyle(Paint.Style.STROKE);
-        rawRoutePaint.setStrokeWidth(dp(2));
-        rawRoutePaint.setStrokeCap(Paint.Cap.ROUND);
-        rawRoutePaint.setStrokeJoin(Paint.Join.ROUND);
-        rawRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
-                new float[]{dp(5), dp(4)}, 0));
         markerTextPaint.setColor(Color.WHITE);
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
         markerTextPaint.setTextSize(dp(11));
@@ -369,9 +361,6 @@ public class RoutePreviewView extends View {
             JSONArray startEndRoute = hasRoutePoints(coordinates)
                     ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
                     : firstMotorwayRoute();
-            if (hasMatchedRoute && hasRoutePoints(coordinates) && !routeEditMode) {
-                drawRoute(canvas, coordinates, rawRoutePaint, null);
-            }
             if (hasMatchedRoute) {
                 if (routeEditMode) drawEditableRoutes(canvas);
                 else for (JSONArray segment : matchedSegments) {

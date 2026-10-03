@@ -70,6 +70,10 @@ public class CaptureService extends Service {
     private static final long MODE_CHANGE_CONFIRMATION_MS = 15_000L;
     private static final long CHECKPOINT_INTERVAL_MS = 15_000L;
     private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
+    static final long ROAD_CAPTURE_INTERVAL_MS = 8_000L;
+    static final long WALK_CAPTURE_INTERVAL_MS = 10_000L;
+    static final float ROAD_CAPTURE_MIN_DISTANCE_METRES = 20f;
+    static final float WALK_CAPTURE_MIN_DISTANCE_METRES = 10f;
 
     private LocationManager locationManager;
     private ActivityRecognitionClient activityClient;
@@ -364,8 +368,7 @@ public class CaptureService extends Service {
 
         startForegroundWithNotification();
         try {
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+            requestCaptureLocationUpdates();
             scheduleCaptureCheckpoint();
             broadcastUpdate("Recording " + mode + " locally...");
         } catch (SecurityException error) {
@@ -472,8 +475,7 @@ public class CaptureService extends Service {
             broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
             // Retain the points and recording state so a later Stop can retry.
             try {
-                locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+                requestCaptureLocationUpdates();
                 scheduleCaptureCheckpoint();
             } catch (SecurityException ignored) {
                 broadcastUpdate("Could not resume location updates after the save failed.");
@@ -483,6 +485,15 @@ public class CaptureService extends Service {
 
     private boolean roadMode(String journeyMode) {
         return "driving".equals(journeyMode) || "bus".equals(journeyMode);
+    }
+
+    private void requestCaptureLocationUpdates() {
+        boolean road = roadMode(mode);
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS,
+                road ? ROAD_CAPTURE_MIN_DISTANCE_METRES : WALK_CAPTURE_MIN_DISTANCE_METRES,
+                locationListener);
     }
 
     private void scheduleCaptureCheckpoint() {
@@ -585,8 +596,7 @@ public class CaptureService extends Service {
                 handler.postDelayed(finishIfStill, remaining);
             }
             try {
-                locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
+                requestCaptureLocationUpdates();
                 broadcastUpdate("Recovered the active journey from its local checkpoint.");
             } catch (SecurityException error) {
                 broadcastUpdate("Journey recovered; location permission is needed to resume tracking.");

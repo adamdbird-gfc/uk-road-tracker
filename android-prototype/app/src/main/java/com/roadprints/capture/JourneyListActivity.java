@@ -889,7 +889,7 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
         if (!matchedSegments.isEmpty()) {
             TextView routeLegend = new TextView(this);
-            routeLegend.setText("Blue: matched route  ·  Grey: original GPS trace");
+            routeLegend.setText("Matched route");
             routeLegend.setTextSize(11);
             routeLegend.setTextColor(0xFFD3DCED);
             routeLegend.setPadding(side, dp(6), side, dp(2));
