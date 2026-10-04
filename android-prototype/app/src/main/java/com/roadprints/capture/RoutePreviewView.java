@@ -60,7 +60,7 @@ public class RoutePreviewView extends View {
     private final boolean showEndpointMarkers;
     private boolean routeEditMode;
     private Set<Integer> removedRouteEdges = Collections.emptySet();
-    private int selectedRouteEdge = -1;
+    private Set<Integer> selectedRouteEdges = Collections.emptySet();
     private boolean restoreRouteMode;
     private final Paint selectedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private OnRouteEdgeTapListener routeEdgeTapListener;
@@ -108,7 +108,7 @@ public class RoutePreviewView extends View {
     }
 
     public interface OnRouteEdgeTapListener {
-        void onRouteEdgeTap(int edgeIndex);
+        void onRouteEdgesTap(Set<Integer> edgeIndices);
     }
 
     public RoutePreviewView(Context context, JSONArray coordinates,
@@ -540,9 +540,10 @@ public class RoutePreviewView extends View {
         invalidate();
     }
 
-    public void setRouteEditState(Set<Integer> removedEdges, int selectedEdge, boolean restoreMode) {
+    public void setRouteEditState(Set<Integer> removedEdges, Set<Integer> selectedEdges,
+                                   boolean restoreMode) {
         this.removedRouteEdges = removedEdges == null ? Collections.emptySet() : removedEdges;
-        this.selectedRouteEdge = selectedEdge;
+        this.selectedRouteEdges = selectedEdges == null ? Collections.emptySet() : selectedEdges;
         this.restoreRouteMode = restoreMode;
         invalidate();
     }
@@ -561,7 +562,7 @@ public class RoutePreviewView extends View {
                     float x2 = screenX(second.getDouble(0));
                     float y2 = screenY(second.getDouble(1));
                     boolean removed = removedRouteEdges.contains(edgeIndex);
-                    boolean selected = selectedRouteEdge == edgeIndex;
+                    boolean selected = selectedRouteEdges.contains(edgeIndex);
                     if (removed || selected) {
                         if (hasActivePath) {
                             canvas.drawPath(activePath, routeHaloPaint);
@@ -611,34 +612,55 @@ public class RoutePreviewView extends View {
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             for (int index = 1; index < route.length(); index++, edgeIndex++) {
-                try {
-                    JSONArray first = route.getJSONArray(index - 1);
-                    JSONArray second = route.getJSONArray(index);
-                    float x1 = screenX(first.getDouble(0));
-                    float y1 = screenY(first.getDouble(1));
-                    float x2 = screenX(second.getDouble(0));
-                    float y2 = screenY(second.getDouble(1));
-                    float dx = x2 - x1;
-                    float dy = y2 - y1;
-                    float lengthSquared = dx * dx + dy * dy;
-                    float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
-                            ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
-                    float distance = (float) Math.hypot(
-                            tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
-                    if (removedRouteEdges.contains(edgeIndex) != restoreRouteMode) continue;
-                    if (distance < nearestDistance) {
-                        nearestDistance = distance;
-                        nearestIndex = edgeIndex;
-                    }
-                } catch (Exception ignored) {
-                    // Skip a malformed edge.
+                float distance = editableEdgeDistance(route, index, tapX, tapY);
+                if (Float.isFinite(distance)
+                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
+                        && distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestIndex = edgeIndex;
                 }
             }
         }
-        if (nearestIndex >= 0 && nearestDistance <= dp(90)
-                && routeEdgeTapListener != null) {
-            routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
+        if (nearestIndex < 0 || nearestDistance > dp(90) || routeEdgeTapListener == null) return;
+
+        // One tap selects the full visible stack. A small screen-space tolerance
+        // catches coincident/near-coincident route lines without merging distant edges.
+        float stackTolerance = dp(8);
+        float stackLimit = nearestDistance + stackTolerance;
+        Set<Integer> selected = new java.util.LinkedHashSet<>();
+        edgeIndex = 0;
+        for (JSONArray route : matchedSegments) {
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                float distance = editableEdgeDistance(route, index, tapX, tapY);
+                if (Float.isFinite(distance)
+                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
+                        && distance <= stackLimit) {
+                    selected.add(edgeIndex);
+                }
+            }
+        }
+        if (!selected.isEmpty()) {
+            routeEdgeTapListener.onRouteEdgesTap(selected);
             invalidate();
+        }
+    }
+
+    private float editableEdgeDistance(JSONArray route, int index, float tapX, float tapY) {
+        try {
+            JSONArray first = route.getJSONArray(index - 1);
+            JSONArray second = route.getJSONArray(index);
+            float x1 = screenX(first.getDouble(0));
+            float y1 = screenY(first.getDouble(1));
+            float x2 = screenX(second.getDouble(0));
+            float y2 = screenY(second.getDouble(1));
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float lengthSquared = dx * dx + dy * dy;
+            float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                    ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
+            return (float) Math.hypot(tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
+        } catch (Exception ignored) {
+            return Float.NaN;
         }
     }
 
