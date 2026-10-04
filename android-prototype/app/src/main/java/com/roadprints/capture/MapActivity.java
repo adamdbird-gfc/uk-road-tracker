@@ -405,12 +405,16 @@ public class MapActivity extends Activity {
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
         JourneyStore.forEach(getApplicationContext(), journey -> {
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
+            String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
+            boolean roadJourney = "driving".equals(mode) || "bus".equals(mode);
+            boolean footJourney = "walking".equals(mode) || "running".equals(mode)
+                    || "pedestrian".equals(mode);
+            if (!roadJourney && !footJourney) return;
             motorwayCalculator.addJourney(journey);
             aRoadCalculator.addJourney(journey);
-            // Use the saved GPS trace for display so the map shows each complete journey,
-            // including sections the road matcher could not return.
-            List<JSONArray> matched = recordedSegments(journey);
-            if (matched.isEmpty()) matched = matchedSegments(journey);
+            // The main map represents matched travel along the road network. Raw GPS
+            // traces can be sparse and make misleading point-to-point straight lines.
+            List<JSONArray> matched = matchedSegments(journey);
             List<JSONArray> motorways = motorwaySegments(journey);
             if (matched.isEmpty() && motorways.isEmpty()) return;
             for (JSONArray route : matched) {
