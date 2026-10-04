@@ -47,10 +47,10 @@ public class ProgressActivity extends Activity {
     private LinearLayout statisticsContent;
     private ScrollView statisticsScroll;
     private boolean hasResumed;
-    private GrowingStatusControl growingStatus;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
     private DistanceStats loadedStats;
+    private TextView loadingDetail;
     private TextView localRoadProgressMessage;
     private TextView localRoadProgressDetail;
     private ProgressBar localRoadProgressBar;
@@ -107,7 +107,6 @@ public class ProgressActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
         titleRow.addView(title);
-growingStatus = new GrowingStatusControl(this, titleRow);
         heading.addView(titleRow);
         heading.addView(intro);
         root.addView(heading);
@@ -135,7 +134,6 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     @Override
     protected void onResume() {
         super.onResume();
-        if (growingStatus != null) growingStatus.start();
         if (hasResumed) {
             loadStatistics();
         } else {
@@ -146,7 +144,6 @@ growingStatus = new GrowingStatusControl(this, titleRow);
     @Override
     protected void onPause() {
         if (statisticsScroll != null) savedScrollY = statisticsScroll.getScrollY();
-        if (growingStatus != null) growingStatus.stop();
         stopLocalRoadProgressTicker();
         super.onPause();
     }
@@ -184,6 +181,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
         }
         if (cached != null) {
             loadedStats = cached;
+            loadingDetail = null;
             statisticsContent.removeAllViews();
             renderStatistics(statisticsContent, cached);
             enrichLocalRoadTowns(cached, generation);
@@ -192,9 +190,9 @@ growingStatus = new GrowingStatusControl(this, titleRow);
         }
         if (statisticsContent != null) {
             statisticsContent.removeAllViews();
-            TextView loading = new TextView(this);
-            loading.setText("Loading your progress…\nChecking saved journeys…");
-            loading.setTextColor(MUTED);
+            LinearLayout loading = ScreenLoadingView.create(this, "Preparing your progress",
+                    "Checking saved journeys…");
+            loadingDetail = ScreenLoadingView.detailText(loading);
             statisticsContent.addView(loading);
         }
         ScreenDataLoader.execute(() -> {
@@ -217,6 +215,7 @@ growingStatus = new GrowingStatusControl(this, titleRow);
             }
             mainHandler.post(() -> {
                 if (generation != statsLoadGeneration || isFinishing() || isDestroyed()) return;
+                loadingDetail = null;
                 statisticsContent.removeAllViews();
                 if (loadError == null) {
                     loadedStats = result;
@@ -299,10 +298,8 @@ growingStatus = new GrowingStatusControl(this, titleRow);
 
     private void updateLoadingMessage(int generation, String message) {
         mainHandler.post(() -> {
-            if (generation != statsLoadGeneration || statisticsContent == null
-                    || statisticsContent.getChildCount() == 0) return;
-            View first = statisticsContent.getChildAt(0);
-            if (first instanceof TextView) ((TextView) first).setText(message);
+            if (generation != statsLoadGeneration || loadingDetail == null) return;
+            loadingDetail.setText(message);
         });
     }
 
