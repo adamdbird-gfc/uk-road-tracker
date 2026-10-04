@@ -36,6 +36,9 @@ public class JourneyMapEditorActivity extends Activity {
     private TextView restoreButton;
     private TextView saveButton;
     private TextView undoButton;
+    private TextView correctionButton;
+    private JSONArray correctionTrace;
+    private List<JSONArray> routeSegments;
     private boolean removeMode = true;
     private final Set<Integer> selectedEdges = new LinkedHashSet<>();
 
@@ -64,6 +67,7 @@ public class JourneyMapEditorActivity extends Activity {
         }
         readSavedCorrections();
         originalRemovedEdges.addAll(removedEdges);
+        routeSegments = routes;
         buildScreen(routes);
     }
 
@@ -109,6 +113,7 @@ public class JourneyMapEditorActivity extends Activity {
         routeView = new RoutePreviewView(this, original, routes, removedEdges,
                 this::onRouteEdgesTap);
         routeView.setRouteExtensions(unmatchedEndpointTrace(original, routes));
+        routeView.setCorrectionTraceListener(this::onCorrectionTrace);
         root.addView(routeView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
@@ -120,6 +125,13 @@ public class JourneyMapEditorActivity extends Activity {
         status = text("", 13, 0xFF67D5CC, false);
         status.setPadding(0, 0, 0, dp(10));
         footer.addView(status);
+
+        correctionButton = controlButton("DRAW CORRECTION", false);
+        correctionButton.setOnClickListener(v -> beginCorrectionTrace());
+        LinearLayout.LayoutParams correctionParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(44));
+        correctionParams.setMargins(0, 0, 0, dp(8));
+        footer.addView(correctionButton, correctionParams);
 
         LinearLayout controls = new LinearLayout(this);
         controls.setGravity(Gravity.CENTER_VERTICAL);
@@ -184,13 +196,15 @@ public class JourneyMapEditorActivity extends Activity {
         }
         boolean canRemove = activeCount > 0;
         boolean canRestore = removedCount > 0 || !removedEdges.isEmpty();
-        boolean dirty = !removedEdges.equals(originalRemovedEdges);
+        boolean dirty = !removedEdges.equals(originalRemovedEdges) || correctionTrace != null;
         boolean canUndo = !undoStack.isEmpty();
         removeButton.setText(activeCount > 1 ? "REMOVE " + activeCount + " SECTIONS" : "REMOVE");
         restoreButton.setText(removedCount > 1 ? "RESTORE " + removedCount + " SECTIONS" : "RESTORE");
         styleActionButton(removeButton, canRemove, removeMode);
         styleActionButton(restoreButton, canRestore, canRestore);
         styleActionButton(undoButton, canUndo, false);
+        styleActionButton(correctionButton, !selectedEdges.isEmpty(), correctionTrace == null);
+        correctionButton.setText(correctionTrace == null ? "DRAW CORRECTION" : "REDRAW CORRECTION");
         saveButton.setEnabled(dirty);
         saveButton.setBackground(roundRect(dirty ? 0xFFF7C450 : 0xFF655C48,
                 dirty ? 0xFFF7C450 : 0xFF655C48, dp(10)));
@@ -231,6 +245,27 @@ public class JourneyMapEditorActivity extends Activity {
         if (edgeIndices != null) selectedEdges.addAll(edgeIndices);
         routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
         updateStatus();
+        updateActionButtons();
+    }
+
+    private void beginCorrectionTrace() {
+        if (selectedEdges.isEmpty()) {
+            status.setText("Tap the inaccurate route section first, then draw its corrected path.");
+            return;
+        }
+        routeView.setCorrectionDrawMode(true);
+        status.setText("Trace the route you actually travelled on the map.");
+        correctionButton.setText("TRACE ON THE MAP");
+    }
+
+    private void onCorrectionTrace(JSONArray trace) {
+        if (trace == null || trace.length() < 2) {
+            status.setText("Draw a longer route section to save a correction.");
+            return;
+        }
+        correctionTrace = trace;
+        routeView.setCorrectionTrace(trace);
+        status.setText("Corrected path ready · SAVE will update the journey and rematch it.");
         updateActionButtons();
     }
 
@@ -307,10 +342,19 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void saveChanges() {
-        if (removedEdges.equals(originalRemovedEdges)) return;
+        if (removedEdges.equals(originalRemovedEdges) && correctionTrace == null) return;
         List<JSONArray> routes = matchedRouteSegments(journey.optJSONObject("processing_result"));
         List<JSONObject> roadRecords = JourneyCorrectionUtils.removedRoadRecords(
                 journey, routes, removedEdges);
+        if (correctionTrace != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Save corrected route?")
+                    .setMessage("This will replace the selected section of the GPS trace, then rematch the journey so its route and road records are recalculated.")
+                    .setNegativeButton("KEEP EDITING", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("SAVE & REMATCH", (dialog, which) -> persistChanges(roadRecords))
+                    .show();
+            return;
+        }
         if (JourneyCorrectionUtils.hasNewRemovals(removedEdges, originalRemovedEdges)) {
             StringBuilder message = new StringBuilder();
             if (roadRecords.isEmpty()) {
@@ -353,15 +397,99 @@ public class JourneyMapEditorActivity extends Activity {
                 removedRoadLabels.put(record.optString("label", "Road"));
             }
             corrections.put("removed_matched_segments", saved);
+            if (correctionTrace != null) {
+                JSONArray corrected = spliceGpsTrace(journey, routeSegments, selectedEdges, correctionTrace);
+                if (corrected == null || corrected.length() < 2) {
+                    Toast.makeText(this, "The selected section could not be matched to GPS points", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                JSONObject geometry = journey.optJSONObject("route_geometry");
+                if (geometry == null) geometry = new JSONObject();
+                geometry.put("coordinates", corrected);
+                geometry.put("type", "LineString");
+                journey.put("route_geometry", geometry);
+                journey.remove("processing_result");
+                journey.put("processing_status", "pending");
+                journey.remove("error_summary");
+            }
             corrections.put("removed_road_ids", removedRoadIds);
             corrections.put("removed_road_labels", removedRoadLabels);
             journey.put("journey_corrections", corrections);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             JourneyStore.save(this, journey);
+            if (correctionTrace != null) {
+                boolean queued = MatchingCoordinator.get(this).rematch(journey.optString("journey_id"));
+                if (!queued) Toast.makeText(this,
+                        "Route saved. Matching is busy; rematch this journey when it is ready.",
+                        Toast.LENGTH_LONG).show();
+            }
             setResult(RESULT_OK);
             finish();
         } catch (Exception error) {
             Toast.makeText(this, "Changes could not be saved", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static JSONArray spliceGpsTrace(JSONObject journey, List<JSONArray> routes,
+                                             Set<Integer> selected, JSONArray replacement) {
+        if (journey == null || routes == null || selected == null || selected.isEmpty()
+                || replacement == null || replacement.length() < 2) return null;
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
+        if (original == null || original.length() < 2) return null;
+
+        JSONArray start = null, end = null;
+        int edge = 0;
+        int firstSelected = Integer.MAX_VALUE, lastSelected = -1;
+        for (JSONArray route : routes) {
+            for (int i = 1; i < route.length(); i++, edge++) {
+                if (selected.contains(edge)) {
+                    if (edge < firstSelected) {
+                        firstSelected = edge;
+                        start = route.optJSONArray(i - 1);
+                    }
+                    if (edge > lastSelected) {
+                        lastSelected = edge;
+                        end = route.optJSONArray(i);
+                    }
+                }
+            }
+        }
+        if (start == null || end == null) return null;
+        int startIndex = nearestTracePoint(original, start);
+        int endIndex = nearestTracePoint(original, end);
+        if (startIndex < 0 || endIndex < 0) return null;
+        JSONArray trace = new JSONArray();
+        if (startIndex <= endIndex) {
+            for (int i = 0; i <= startIndex; i++) trace.put(original.optJSONArray(i));
+            appendDistinct(trace, replacement, false);
+            for (int i = endIndex; i < original.length(); i++) trace.put(original.optJSONArray(i));
+        } else {
+            for (int i = 0; i <= endIndex; i++) trace.put(original.optJSONArray(i));
+            appendDistinct(trace, replacement, true);
+            for (int i = startIndex; i < original.length(); i++) trace.put(original.optJSONArray(i));
+        }
+        return trace;
+    }
+
+    private static void appendDistinct(JSONArray target, JSONArray source, boolean reverse) {
+        int last = target.length() == 0 ? -1 : target.length() - 1;
+        if (!reverse) {
+            for (int i = 0; i < source.length(); i++) {
+                JSONArray point = source.optJSONArray(i);
+                if (point == null || point.length() < 2) continue;
+                if (last >= 0 && tracePointDistanceMetres(target.optJSONArray(last), point) < 5) continue;
+                target.put(point);
+                last = target.length() - 1;
+            }
+        } else {
+            for (int i = source.length() - 1; i >= 0; i--) {
+                JSONArray point = source.optJSONArray(i);
+                if (point == null || point.length() < 2) continue;
+                if (last >= 0 && tracePointDistanceMetres(target.optJSONArray(last), point) < 5) continue;
+                target.put(point);
+                last = target.length() - 1;
+            }
         }
     }
 
