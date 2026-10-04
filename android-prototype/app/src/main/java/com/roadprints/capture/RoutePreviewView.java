@@ -421,7 +421,6 @@ public class RoutePreviewView extends View {
                     drawRoute(canvas, segment, routePaint,
                             flatRoadMapStyle ? null : routeHaloPaint);
                 }
-                drawCorrectionTraces(canvas);
             } else if (hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
@@ -461,7 +460,29 @@ public class RoutePreviewView extends View {
         if (!hasTiles) drawMessage(canvas, coordinatesValid
                 ? "Map tiles unavailable · showing route only"
                 : "Map tiles unavailable · check connection");
-        if (routeEditMode) drawZoomControls(canvas);
+        if (routeEditMode) {
+            drawCorrectionTraces(canvas);
+            if (correctionDrawMode) drawCorrectionModeHint(canvas);
+            drawZoomControls(canvas);
+        }
+    }
+
+    private void drawCorrectionModeHint(Canvas canvas) {
+        Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background.setColor(0xE610285D);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextSize(dp(13));
+        text.setTypeface(android.graphics.Typeface.create(
+                "sans-serif-medium", android.graphics.Typeface.NORMAL));
+        text.setTextAlign(Paint.Align.LEFT);
+        String label = "TRACE MODE · drag to draw";
+        float left = dp(12), top = dp(12);
+        float width = text.measureText(label) + dp(22), height = dp(38);
+        canvas.drawRoundRect(new RectF(left, top, left + width, top + height),
+                dp(9), dp(9), background);
+        canvas.drawText(label, left + dp(11),
+                top + height / 2f - (text.ascent() + text.descent()) / 2f, text);
     }
 
     private void drawCorrectionTraces(Canvas canvas) {
