@@ -705,13 +705,28 @@ public class MapActivity extends Activity {
             List<JSONObject> related = new ArrayList<>();
             try {
                 JSONArray visits = TimelineVisitStore.all(getApplicationContext());
+                JSONArray catalogue = ServiceStationStore.stations(getApplicationContext());
                 for (int i = 0; i < visits.length(); i++) {
                     JSONObject visit = visits.optJSONObject(i);
                     if (visit == null || !Double.isFinite(latitude) || !Double.isFinite(longitude))
                         continue;
-                    if (distanceMetres(latitude, longitude,
-                            visit.optDouble("lat", Double.NaN),
-                            visit.optDouble("lng", Double.NaN)) > 350.0) continue;
+                    double visitLat = visit.optDouble("lat", Double.NaN);
+                    double visitLng = visit.optDouble("lng", Double.NaN);
+                    JSONObject nearestStation = null;
+                    double nearestDistance = Double.MAX_VALUE;
+                    for (int j = 0; j < catalogue.length(); j++) {
+                        JSONObject candidate = catalogue.optJSONObject(j);
+                        if (candidate == null) continue;
+                        double distance = distanceMetres(visitLat, visitLng,
+                                candidate.optDouble("lat", Double.NaN),
+                                candidate.optDouble("lng", Double.NaN));
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestStation = candidate;
+                        }
+                    }
+                    if (nearestStation == null || nearestDistance > 350.0
+                            || !stationId.equals(nearestStation.optString("id", ""))) continue;
                     long visitStart = parseTimelineTime(visit.optString("start", ""));
                     long visitEnd = parseTimelineTime(visit.optString("end", ""));
                     String fingerprint = visit.optString("source_file_fingerprint", "");
