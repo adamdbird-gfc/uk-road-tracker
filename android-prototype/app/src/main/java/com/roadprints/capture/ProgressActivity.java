@@ -925,7 +925,6 @@ public class ProgressActivity extends Activity {
     }
 
     private void addLocalRoadProgressPanel(LinearLayout parent, DistanceStats stats) {
-        if (stats.localRoadEnrichmentComplete) return;
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(13), dp(11), dp(13), dp(12));
@@ -958,20 +957,24 @@ public class ProgressActivity extends Activity {
     }
 
     private void refreshLocalRoadProgress(DistanceStats stats) {
-        if (localRoadProgressMessage == null || localRoadProgressDetail == null
-                || localRoadProgressBar == null) return;
+        if (localRoadProgressMessage == null || localRoadProgressDetail == null) return;
         int total = stats.localRoadLookupTotal;
         int done = stats.localRoadLookupDone;
         int initiallyDone = stats.localRoadLookupInitialDone;
         int percent = total <= 0 ? 0 : Math.min(100, Math.round(100f * done / total));
+        if (localRoadProgressBar != null)
+            localRoadProgressBar.setVisibility(stats.localRoadEnrichmentRunning ? View.VISIBLE : View.GONE);
         if (stats.localRoadEnrichmentComplete) {
             localRoadProgressMessage.setText("Town matching complete");
-            localRoadProgressDetail.setText("Local roads are grouped by town.");
+            localRoadProgressDetail.setText("County and town groups are ready.");
             return;
         }
         if (stats.localRoadEnrichmentRunning) {
-            if ("inventories".equals(stats.localRoadLookupStage)) {
-                localRoadProgressMessage.setText("Loading town road totals…");
+            if ("cache".equals(stats.localRoadLookupStage)) {
+                localRoadProgressMessage.setText("Checking saved town matches · "
+                        + stats.localRoadCacheScanned + " of " + total + " roads");
+            } else if ("metadata".equals(stats.localRoadLookupStage)) {
+                localRoadProgressMessage.setText("Loading county information…");
             } else {
                 localRoadProgressMessage.setText("Finding towns · " + done + " of " + total
                         + " local roads (" + percent + "%)");
@@ -980,6 +983,11 @@ public class ProgressActivity extends Activity {
                     (System.currentTimeMillis() - stats.localRoadLookupStartedAt) / 1000L);
             String elapsed = "Elapsed " + formatDuration(elapsedSeconds);
             String estimate = "Estimating time left…";
+            if ("cache".equals(stats.localRoadLookupStage)) {
+                estimate = "Reading saved road matches";
+            } else if ("metadata".equals(stats.localRoadLookupStage)) {
+                estimate = "Applying county details to saved matches";
+            }
             int freshlyChecked = done - initiallyDone;
             int roadsToCheckAtStart = total - initiallyDone;
             int sampleThreshold = Math.min(10, Math.max(3, roadsToCheckAtStart));
@@ -1005,11 +1013,12 @@ public class ProgressActivity extends Activity {
                     + stats.localRoadCurrentLabel;
             localRoadProgressDetail.setText(elapsed + " · " + estimate + current);
         } else if (stats.settlementLookupFailures > 0) {
-            localRoadProgressMessage.setText("Town matching paused after a lookup error");
-            localRoadProgressDetail.setText("Reopen Progress to retry the remaining local roads.");
+            localRoadProgressMessage.setText("Town matching finished with lookup errors");
+            localRoadProgressDetail.setText(formatCount(stats.settlementLookupFailures)
+                    + " road lookups need retry. Reopen Progress to try again.");
         } else {
-            localRoadProgressMessage.setText("Finding towns for your local roads…");
-            localRoadProgressDetail.setText("Preparing " + total + " road lookups…");
+            localRoadProgressMessage.setText("Town matching is ready to start");
+            localRoadProgressDetail.setText(formatCount(total) + " local roads with matched geometry.");
         }
     }
 
@@ -1064,38 +1073,114 @@ public class ProgressActivity extends Activity {
     }
 
     private void enrichLocalRoadTowns(DistanceStats stats, int generation) {
+        List<RoadDiscoveryItem> localRoads = new ArrayList<>();
         synchronized (stats) {
             if (stats.localRoadEnrichmentRunning || stats.localRoadEnrichmentComplete) return;
             stats.localRoadEnrichmentRunning = true;
-            stats.settlementInventoryPendingCodes.clear();
             stats.localRoadLookupStartedAt = System.currentTimeMillis();
             stats.localRoadLookupLastCompletedAt = stats.localRoadLookupStartedAt;
-            stats.localRoadLookupStage = "matching";
+            stats.localRoadLookupStage = "cache";
             stats.localRoadLookupDone = 0;
             stats.localRoadLookupInitialDone = 0;
+            stats.localRoadCacheScanned = 0;
             stats.localRoadLookupTotal = 0;
+            stats.localRoadCurrentLabel = "";
             for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
                 if (!"Local roads".equals(road.category) || road.geometryEvidence.isEmpty()) continue;
+                localRoads.add(road);
+                stats.localRoadLookupTotal++;
+            }
+        }
+        postSettlementProgress(stats, generation);
+        SETTLEMENT_WORKER.execute(() -> {
+            Map<String, List<LocalRoadSettlementMatcher.Settlement>> cachedByRoad =
+                    new LinkedHashMap<>();
+            Map<String, LocalRoadSettlementMatcher.Settlement> metadataByName =
+                    new LinkedHashMap<>();
+            long lastUiUpdate = 0;
+            for (RoadDiscoveryItem road : localRoads) {
+                synchronized (stats) {
+                    stats.localRoadCurrentLabel = road.label;
+                    stats.localRoadCacheScanned++;
+                }
                 try {
                     List<LocalRoadSettlementMatcher.Settlement> cached =
                             LocalRoadSettlementMatcher.cached(getApplicationContext(),
                                     road.id, road.geometryEvidence);
-                    if (cached != null) stats.settlementMatches.put(road.id, cached);
+                    if (cached != null) {
+                        cachedByRoad.put(road.id, cached);
+                        for (LocalRoadSettlementMatcher.Settlement settlement : cached) {
+                            if (settlement.county.isEmpty() && settlement.region.isEmpty()
+                                    && settlement.nation.isEmpty()) {
+                                metadataByName.putIfAbsent(
+                                        settlement.name.toLowerCase(Locale.ROOT), settlement);
+                            }
+                        }
+                    }
                 } catch (Exception error) {
                     android.util.Log.w("Roadprints", "Cached local settlement lookup could not be read", error);
                 }
-                stats.localRoadLookupTotal++;
-                if (stats.settlementMatches.containsKey(road.id)) stats.localRoadLookupDone++;
+                long now = System.currentTimeMillis();
+                if (now - lastUiUpdate >= 10000L) {
+                    lastUiUpdate = now;
+                    postSettlementProgress(stats, generation);
+                }
             }
-            stats.localRoadLookupInitialDone = stats.localRoadLookupDone;
-        }
-        SETTLEMENT_WORKER.execute(() -> {
+
+            if (!metadataByName.isEmpty()) {
+                synchronized (stats) {
+                    stats.localRoadLookupStage = "metadata";
+                    stats.localRoadCurrentLabel = "";
+                }
+                postSettlementProgress(stats, generation);
+                LocalRoadSettlementMatcher.hydrateMetadata(
+                        new ArrayList<>(metadataByName.values()));
+                for (RoadDiscoveryItem road : localRoads) {
+                    List<LocalRoadSettlementMatcher.Settlement> cached = cachedByRoad.get(road.id);
+                    if (cached == null) continue;
+                    for (LocalRoadSettlementMatcher.Settlement settlement : cached) {
+                        LocalRoadSettlementMatcher.Settlement metadata = metadataByName.get(
+                                settlement.name.toLowerCase(Locale.ROOT));
+                        if (metadata == null) continue;
+                        settlement.county = metadata.county;
+                        settlement.region = metadata.region;
+                        settlement.nation = metadata.nation;
+                    }
+                    try {
+                        LocalRoadSettlementMatcher.saveCached(getApplicationContext(), road.id,
+                                road.geometryEvidence, cached);
+                    } catch (Exception error) {
+                        android.util.Log.w("Roadprints", "Hydrated settlement cache could not be saved", error);
+                    }
+                }
+            }
+
+            List<RoadDiscoveryItem> roadsToResolve = new ArrayList<>();
+            for (RoadDiscoveryItem road : localRoads) {
+                List<LocalRoadSettlementMatcher.Settlement> cached = cachedByRoad.get(road.id);
+                if (cached == null) {
+                    roadsToResolve.add(road);
+                    continue;
+                }
+                synchronized (stats) {
+                    stats.settlementMatches.put(road.id, cached);
+                    stats.localRoadLookupDone++;
+                    stats.localRoadLookupLastCompletedAt = System.currentTimeMillis();
+                }
+            }
+            synchronized (stats) {
+                stats.localRoadLookupInitialDone = stats.localRoadLookupDone;
+                stats.localRoadLookupStage = "matching";
+                stats.localRoadLookupStartedAt = System.currentTimeMillis();
+                stats.localRoadLookupLastCompletedAt = stats.localRoadLookupStartedAt;
+                stats.localRoadCurrentLabel = "";
+            }
+            postSettlementProgress(stats, generation);
+
             int changed = 0;
             int failures = 0;
-            long lastUiUpdate = 0;
-            for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
-                if (!"Local roads".equals(road.category) || road.geometryEvidence.isEmpty()
-                        || stats.settlementMatches.containsKey(road.id)) continue;
+            lastUiUpdate = 0;
+            for (RoadDiscoveryItem road : roadsToResolve) {
                 synchronized (stats) { stats.localRoadCurrentLabel = road.label; }
                 try {
                     List<JSONObject> evidence = new ArrayList<>(road.geometryEvidence);
@@ -1103,18 +1188,12 @@ public class ProgressActivity extends Activity {
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
                     AchievementStore.recordHighStreetSettlements(
                             getApplicationContext(), road.id, matches);
-                    synchronized (stats) { stats.settlementMatches.put(road.id, matches); }
                     synchronized (stats) {
+                        stats.settlementMatches.put(road.id, matches);
                         stats.localRoadLookupDone++;
                         stats.localRoadLookupLastCompletedAt = System.currentTimeMillis();
                     }
                     changed++;
-                    if (changed % 6 == 0) {
-                        synchronized (stats) { stats.localRoadLookupStage = "inventories"; }
-                        postSettlementProgress(stats, generation);
-                        resolveLocalTownInventories(stats);
-                        synchronized (stats) { stats.localRoadLookupStage = "matching"; }
-                    }
                 } catch (Exception error) {
                     failures++;
                     synchronized (stats) {
@@ -1134,21 +1213,13 @@ public class ProgressActivity extends Activity {
                     postSettlementProgress(stats, generation);
                 }
             }
-            Map<String, LocalTownProgress> towns = localTownProgress(stats);
-            synchronized (stats) { stats.localRoadLookupStage = "inventories"; }
-            postSettlementProgress(stats, generation);
-            resolveLocalTownInventories(stats);
+
             synchronized (stats) {
                 stats.localRoadEnrichmentRunning = false;
                 stats.settlementLookupFailures = failures;
-                boolean inventoriesReady = true;
-                for (LocalTownProgress town : towns.values()) {
-                    if (stats.settlementInventoryCounts.getOrDefault(town.settlement.code, -1) < 0) {
-                        inventoriesReady = false;
-                        break;
-                    }
-                }
-                stats.localRoadEnrichmentComplete = failures == 0 && inventoriesReady;
+                stats.localRoadLookupStage = "complete";
+                stats.localRoadCurrentLabel = "";
+                stats.localRoadEnrichmentComplete = failures == 0;
             }
             postSettlementProgress(stats, generation);
         });
@@ -1689,6 +1760,7 @@ public class ProgressActivity extends Activity {
         int settlementLookupFailures;
         int localRoadLookupDone;
         int localRoadLookupTotal;
+        int localRoadCacheScanned;
         int localRoadLookupInitialDone;
         long localRoadLookupStartedAt;
         long localRoadLookupLastCompletedAt;
