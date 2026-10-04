@@ -191,6 +191,7 @@ public class ProgressActivity extends Activity {
             statisticsContent.removeAllViews();
             renderStatistics(statisticsContent, cached);
             enrichLocalRoadTowns(cached, generation);
+            loadLocalTownInventoriesAsync(cached, generation);
             restoreProgressScroll();
             return;
         }
@@ -227,6 +228,7 @@ public class ProgressActivity extends Activity {
                     loadedStats = result;
                     renderStatistics(statisticsContent, result);
                     enrichLocalRoadTowns(result, generation);
+                    loadLocalTownInventoriesAsync(result, generation);
                     restoreProgressScroll();
                 } else {
                     TextView error = new TextView(this);
@@ -865,13 +867,44 @@ public class ProgressActivity extends Activity {
     }
 
     private String localCountyName(LocalRoadSettlementMatcher.Settlement settlement) {
-        if (settlement.county != null && !settlement.county.trim().isEmpty())
-            return settlement.county.trim();
-        if (settlement.region != null && !settlement.region.trim().isEmpty())
-            return settlement.region.trim();
+        String county = settlement.county == null ? "" : settlement.county.trim();
+        String region = settlement.region == null ? "" : settlement.region.trim();
+        String name = settlement.name == null ? "" : settlement.name.trim();
+        if ("blackpool".equals(county.toLowerCase(Locale.ROOT))
+                || "blackpool".equals(name.toLowerCase(Locale.ROOT))) return "Lancashire";
+        if ("bracknell forest".equals(county.toLowerCase(Locale.ROOT))
+                || "bracknell forest".equals(name.toLowerCase(Locale.ROOT))) return "Berkshire";
+        if ("brighton".equals(county.toLowerCase(Locale.ROOT))
+                || "brighton and hove".equals(county.toLowerCase(Locale.ROOT))
+                || "brighton".equals(name.toLowerCase(Locale.ROOT))
+                || "brighton and hove".equals(name.toLowerCase(Locale.ROOT))) return "West Sussex";
+        if (isLondonBorough(county) || isLondonBorough(name)
+                || "london".equals(county.toLowerCase(Locale.ROOT))
+                || "greater london".equals(region.toLowerCase(Locale.ROOT))) return "London";
+        if (!county.isEmpty()) return county;
+        if (!region.isEmpty()) return region;
         if (settlement.nation != null && !settlement.nation.trim().isEmpty())
             return settlement.nation.trim();
         return "Other UK areas";
+    }
+
+    private boolean isLondonBorough(String value) {
+        if (value == null) return false;
+        String borough = value.trim().toLowerCase(Locale.ROOT);
+        borough = borough.replaceFirst("^london borough of\\s+", "");
+        switch (borough) {
+            case "barking and dagenham": case "barnet": case "bexley": case "brent":
+            case "bromley": case "camden": case "city of london": case "croydon":
+            case "ealing": case "enfield": case "greenwich": case "hackney":
+            case "hammersmith and fulham": case "haringey": case "harrow":
+            case "havering": case "hillingdon": case "hounslow": case "islington":
+            case "kensington and chelsea": case "kingston upon thames": case "lambeth":
+            case "lewisham": case "merton": case "newham": case "redbridge":
+            case "richmond upon thames": case "southwark": case "sutton":
+            case "tower hamlets": case "waltham forest": case "wandsworth":
+            case "westminster": return true;
+            default: return false;
+        }
     }
 
     private void addLocalTownCard(LinearLayout parent, LocalTownProgress town) {
@@ -885,12 +918,29 @@ public class ProgressActivity extends Activity {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(12), dp(10), dp(10), dp(10));
+        LinearLayout heading = new LinearLayout(this);
+        heading.setOrientation(LinearLayout.VERTICAL);
         TextView townName = new TextView(this);
         townName.setText(town.settlement.name);
         townName.setTextSize(15);
         townName.setTypeface(null, android.graphics.Typeface.BOLD);
         townName.setTextColor(Color.WHITE);
-        header.addView(townName, new LinearLayout.LayoutParams(0, -2, 1));
+        heading.addView(townName);
+        TextView townCoverage = new TextView(this);
+        if (town.inventoryCount >= 0) {
+            int percentage = town.inventoryCount == 0 ? 0
+                    : Math.min(100, Math.round(100f * town.roads.size() / town.inventoryCount));
+            townCoverage.setText(formatCount(town.roads.size()) + " of "
+                    + formatCount(town.inventoryCount) + " roads · " + percentage + "%");
+        } else {
+            townCoverage.setText(formatCount(town.roads.size())
+                    + " roads discovered · Loading total and percentage…");
+        }
+        townCoverage.setTextSize(11);
+        townCoverage.setTextColor(MUTED);
+        townCoverage.setPadding(0, dp(2), 0, 0);
+        heading.addView(townCoverage);
+        header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
         Button viewMap = new Button(this);
         viewMap.setText("View on map");
         viewMap.setAllCaps(false);
@@ -1247,23 +1297,42 @@ public class ProgressActivity extends Activity {
         return towns;
     }
 
+    private void loadLocalTownInventoriesAsync(DistanceStats stats, int generation) {
+        synchronized (stats) {
+            if (stats.localTownInventoryLoadRunning) return;
+            stats.localTownInventoryLoadRunning = true;
+        }
+        SETTLEMENT_WORKER.execute(() -> {
+            resolveLocalTownInventories(stats);
+            synchronized (stats) { stats.localTownInventoryLoadRunning = false; }
+            postSettlementProgress(stats, generation);
+        });
+    }
+
     private void resolveLocalTownInventories(DistanceStats stats) {
         for (LocalTownProgress town : localTownProgress(stats).values()) {
             synchronized (stats) {
                 if (stats.settlementInventoryCounts.containsKey(town.settlement.code)
-                        || stats.settlementInventoryPendingCodes.contains(town.settlement.code)) continue;
+                        || !stats.settlementInventoryLoadingCodes.add(town.settlement.code)) continue;
                 stats.settlementInventoryPendingCodes.add(town.settlement.code);
             }
             try {
                 int inventory = LocalRoadSettlementMatcher.inventoryCount(
                         getApplicationContext(), town.settlement.code);
                 synchronized (stats) {
-                    stats.settlementInventoryPendingCodes.remove(town.settlement.code);
-                    if (inventory >= 0) stats.settlementInventoryCounts.put(town.settlement.code, inventory);
-                    else stats.settlementInventoryPendingCodes.add(town.settlement.code);
+                    stats.settlementInventoryLoadingCodes.remove(town.settlement.code);
+                    if (inventory >= 0) {
+                        stats.settlementInventoryCounts.put(town.settlement.code, inventory);
+                        stats.settlementInventoryPendingCodes.remove(town.settlement.code);
+                    } else {
+                        stats.settlementInventoryPendingCodes.add(town.settlement.code);
+                    }
                 }
             } catch (Exception error) {
-                synchronized (stats) { stats.settlementInventoryPendingCodes.remove(town.settlement.code); }
+                synchronized (stats) {
+                    stats.settlementInventoryLoadingCodes.remove(town.settlement.code);
+                    stats.settlementInventoryPendingCodes.add(town.settlement.code);
+                }
                 android.util.Log.w("Roadprints", "Town inventory unavailable", error);
             }
         }
@@ -1758,7 +1827,9 @@ public class ProgressActivity extends Activity {
         final Map<String, List<LocalRoadSettlementMatcher.Settlement>> settlementMatches = new LinkedHashMap<>();
         final Map<String, Integer> settlementInventoryCounts = new LinkedHashMap<>();
         final Set<String> settlementInventoryPendingCodes = new HashSet<>();
+        final Set<String> settlementInventoryLoadingCodes = new HashSet<>();
         boolean localRoadEnrichmentRunning;
+        boolean localTownInventoryLoadRunning;
         boolean localRoadEnrichmentComplete;
         int settlementLookupFailures;
         int localRoadLookupDone;
