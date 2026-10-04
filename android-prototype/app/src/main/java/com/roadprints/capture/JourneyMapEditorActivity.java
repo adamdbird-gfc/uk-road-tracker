@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -225,12 +226,9 @@ public class JourneyMapEditorActivity extends Activity {
 
     private void requestCancel() {
         if (!removedEdges.equals(originalRemovedEdges)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Discard route changes?")
-                    .setMessage("You have unsaved route edits. Discard them and leave?")
-                    .setNegativeButton("Keep editing", (dialog, which) -> dialog.dismiss())
-                    .setPositiveButton("Discard", (dialog, which) -> finish())
-                    .show();
+            showStyledConfirmation("UNSAVED CHANGES", "Discard route changes?",
+                    "You have unsaved route edits. Discard them and leave?",
+                    "KEEP EDITING", "DISCARD", this::finish);
         } else {
             finish();
         }
@@ -356,12 +354,9 @@ public class JourneyMapEditorActivity extends Activity {
         List<JSONObject> roadRecords = JourneyCorrectionUtils.removedRoadRecords(
                 journey, routes, removedEdges);
         if (correctionTrace != null) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Save corrected route?")
-                    .setMessage("This will replace the selected section of the GPS trace, then rematch the journey so its route and road records are recalculated.")
-                    .setNegativeButton("KEEP EDITING", (dialog, which) -> dialog.dismiss())
-                    .setPositiveButton("SAVE & REMATCH", (dialog, which) -> persistChanges(roadRecords))
-                    .show();
+            showStyledConfirmation("ROUTE CORRECTION", "Save corrected route?",
+                    "This will replace the selected section of the GPS trace, then rematch the journey so its route and road records are recalculated.",
+                    "KEEP EDITING", "SAVE & REMATCH", () -> persistChanges(roadRecords));
             return;
         }
         if (JourneyCorrectionUtils.hasNewRemovals(removedEdges, originalRemovedEdges)) {
@@ -376,16 +371,69 @@ public class JourneyMapEditorActivity extends Activity {
                     message.append("\n\n• ").append(record.optString("label", "Road"));
                 }
             }
-            new AlertDialog.Builder(this)
-                    .setTitle("Confirm road record removal")
-                    .setMessage(message.toString())
-                    .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss())
-                    .setPositiveButton("REMOVE RECORDS", (dialog, which) ->
-                            persistChanges(roadRecords))
-                    .show();
+            showStyledConfirmation("ROAD RECORDS", "Confirm road record removal",
+                    message.toString(), "CANCEL", "REMOVE RECORDS",
+                    () -> persistChanges(roadRecords));
             return;
         }
         persistChanges(roadRecords);
+    }
+
+    private void showStyledConfirmation(String eyebrow, String title, String message,
+                                        String cancelLabel, String confirmLabel,
+                                        Runnable confirmAction) {
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(22), dp(20), dp(22), dp(14));
+        panel.setBackground(roundRect(0xFF10275D, 0xFF46649E, dp(18)));
+
+        TextView section = text(eyebrow, 12, 0xFF67D5CC, true);
+        panel.addView(section);
+        TextView heading = text(title, 20, Color.WHITE, true);
+        heading.setPadding(0, dp(5), 0, dp(8));
+        panel.addView(heading);
+
+        String[] parts = message.split("\\n\\n• ");
+        TextView explanation = text(parts[0], 15, 0xFFD3DCED, false);
+        explanation.setLineSpacing(dp(2), 1f);
+        panel.addView(explanation);
+        for (int i = 1; i < parts.length; i++) {
+            TextView road = text(parts[i].trim(), 15, Color.WHITE, true);
+            road.setPadding(dp(13), dp(10), dp(13), dp(10));
+            road.setBackground(roundRect(0xFF1B356E, 0xFF304B88, dp(10)));
+            LinearLayout.LayoutParams roadParams = new LinearLayout.LayoutParams(-1, -2);
+            roadParams.topMargin = dp(8);
+            panel.addView(road, roadParams);
+        }
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        TextView cancel = text(cancelLabel, 12, 0xFF67D5CC, true);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setPadding(dp(12), dp(12), dp(12), dp(12));
+        TextView confirm = text(confirmLabel, 12, 0xFF0B1C50, true);
+        confirm.setGravity(Gravity.CENTER);
+        confirm.setPadding(dp(14), dp(12), dp(14), dp(12));
+        confirm.setBackground(roundRect(0xFFF7C450, 0xFFF7C450, dp(10)));
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(-1, -2);
+        actionsParams.topMargin = dp(14);
+        actions.addView(cancel);
+        actions.addView(confirm);
+        panel.addView(actions, actionsParams);
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(panel).create();
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        confirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmAction.run();
+        });
+        dialog.setOnShowListener(ignored -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                dialog.getWindow().setDimAmount(0.62f);
+            }
+        });
+        dialog.show();
     }
 
     private void persistChanges(List<JSONObject> roadRecords) {
