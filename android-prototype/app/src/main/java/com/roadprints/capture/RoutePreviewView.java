@@ -1105,6 +1105,7 @@ public class RoutePreviewView extends View {
         if (!interactive) return false;
         if (routeEditMode && correctionDrawMode) {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
                 activeCorrectionTrace = new JSONArray();
                 addCorrectionPoint(event.getX(), event.getY());
                 invalidate();
@@ -1121,8 +1122,15 @@ public class RoutePreviewView extends View {
                 JSONArray completed = activeCorrectionTrace;
                 activeCorrectionTrace = null;
                 correctionDrawMode = false;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
                 if (completed != null && correctionTraceListener != null)
                     correctionTraceListener.onCorrectionTrace(completed);
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                activeCorrectionTrace = null;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
                 invalidate();
                 return true;
             }
