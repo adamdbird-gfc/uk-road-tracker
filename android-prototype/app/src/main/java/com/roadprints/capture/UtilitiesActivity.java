@@ -37,13 +37,13 @@ public class UtilitiesActivity extends Activity {
         add(root, "Tracking settings", "Journey type, automatic tracking and manual capture",
                 TrackingSettingsActivity.class);
         add(root, "Settings", "Distance units and display preferences", SettingsActivity.class);
-        TextView debug = menuItem("Debug", "View or copy diagnostic reports");
+        LinearLayout debug = menuItem("Debug", "View or copy diagnostic reports");
         debug.setOnClickListener(v -> startActivity(new Intent(this, DebugActivity.class)));
         root.addView(debug, params());
         RoadprintsHeader.installUtilityPage(this, root, "BACK TO ROADPRINTS", this::finish);
     }
     private void add(LinearLayout root, String title, String detail, Class<?> target) {
-        TextView item = menuItem(title, detail);
+        LinearLayout item = menuItem(title, detail);
         item.setOnClickListener(v -> startActivity(new Intent(this, target)));
         root.addView(item, params());
     }
