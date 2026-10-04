@@ -308,6 +308,34 @@ public class JourneyMapEditorActivity extends Activity {
 
     private void saveChanges() {
         if (removedEdges.equals(originalRemovedEdges)) return;
+        List<JSONArray> routes = matchedRouteSegments(journey.optJSONObject("processing_result"));
+        List<JSONObject> roadRecords = JourneyCorrectionUtils.removedRoadRecords(
+                journey, routes, removedEdges);
+        if (JourneyCorrectionUtils.hasNewRemovals(removedEdges, originalRemovedEdges)) {
+            StringBuilder message = new StringBuilder();
+            if (roadRecords.isEmpty()) {
+                message.append(removedEdges.size()).append(" matched route section")
+                        .append(removedEdges.size() == 1 ? "" : "s")
+                        .append(" will be removed. No named road records could be associated with them.");
+            } else {
+                message.append("Road records for these roads will be removed from this journey and its map, journey summaries, progress and achievements:");
+                for (JSONObject record : roadRecords) {
+                    message.append("\\n\\n• ").append(record.optString("label", "Road"));
+                }
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle("Confirm road record removal")
+                    .setMessage(message.toString())
+                    .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("REMOVE RECORDS", (dialog, which) ->
+                            persistChanges(roadRecords))
+                    .show();
+            return;
+        }
+        persistChanges(roadRecords);
+    }
+
+    private void persistChanges(List<JSONObject> roadRecords) {
         try {
             JSONObject corrections = journey.optJSONObject("journey_corrections");
             if (corrections == null) corrections = new JSONObject();
@@ -315,7 +343,18 @@ public class JourneyMapEditorActivity extends Activity {
             Collections.sort(ordered);
             JSONArray saved = new JSONArray();
             for (Integer edge : ordered) saved.put(edge);
+            JSONArray removedRoadIds = new JSONArray();
+            JSONArray removedRoadLabels = new JSONArray();
+            Set<String> seenRoadIds = new LinkedHashSet<>();
+            for (JSONObject record : roadRecords) {
+                String id = record.optString("id", "");
+                if (id.isEmpty() || !seenRoadIds.add(id)) continue;
+                removedRoadIds.put(id);
+                removedRoadLabels.put(record.optString("label", "Road"));
+            }
             corrections.put("removed_matched_segments", saved);
+            corrections.put("removed_road_ids", removedRoadIds);
+            corrections.put("removed_road_labels", removedRoadLabels);
             journey.put("journey_corrections", corrections);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             JourneyStore.save(this, journey);
