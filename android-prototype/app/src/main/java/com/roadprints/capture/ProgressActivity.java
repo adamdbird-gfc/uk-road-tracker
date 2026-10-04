@@ -849,10 +849,13 @@ public class ProgressActivity extends Activity {
         int unresolved = roads.size() - assigned.size();
         if (unresolved > 0) {
             TextView pending = new TextView(this);
-            pending.setText(formatCount(unresolved) + " local road" + (unresolved == 1 ? "" : "s")
-                    + (stats.settlementLookupFailures > 0
-                        ? " still need a town lookup · reopen Progress to retry."
-                        : " still being assigned to a town."));
+            String pendingMessage = stats.settlementLookupFailures > 0
+                    ? " still need a town lookup · reopen Progress to retry."
+                    : stats.localRoadEnrichmentComplete
+                        ? " could not be assigned to a named settlement."
+                        : " still being matched to a town.";
+            pending.setText(formatCount(unresolved) + " local road"
+                    + (unresolved == 1 ? "" : "s") + pendingMessage);
             pending.setTextSize(12);
             pending.setTextColor(MUTED);
             pending.setPadding(dp(13), dp(6), dp(13), dp(10));
