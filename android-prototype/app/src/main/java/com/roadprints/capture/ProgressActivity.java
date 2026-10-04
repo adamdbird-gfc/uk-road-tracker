@@ -904,6 +904,25 @@ public class ProgressActivity extends Activity {
             case "blackpool":
             case "blackburn with darwen":
                 return "Lancashire";
+            case "derby":
+            case "city of derby":
+                return "Derbyshire";
+            case "medway":
+                return "Kent";
+            case "rochdale":
+            case "salford":
+            case "trafford":
+                return "Greater Manchester";
+            case "sandwell":
+            case "walsall":
+                return "West Midlands";
+            case "sefton":
+                return "Merseyside";
+            case "southend-on-sea":
+            case "thurrock":
+                return "Essex";
+            case "swindon":
+                return "Wiltshire";
             case "bracknell forest":
             case "reading":
             case "slough":
@@ -947,8 +966,6 @@ public class ProgressActivity extends Activity {
             case "bedford":
             case "central bedfordshire":
                 return "Bedfordshire";
-            case "medway":
-                return "Medway";
             default:
                 return null;
         }
@@ -1084,8 +1101,13 @@ public class ProgressActivity extends Activity {
         if (localRoadProgressBar != null)
             localRoadProgressBar.setVisibility(stats.localRoadEnrichmentRunning ? View.VISIBLE : View.GONE);
         if (stats.localRoadEnrichmentComplete) {
-            localRoadProgressMessage.setText("Town matching complete");
-            localRoadProgressDetail.setText("County and town groups are ready.");
+            View progressPanel = (View) localRoadProgressMessage.getParent();
+            if (progressPanel.getParent() instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) progressPanel.getParent()).removeView(progressPanel);
+            }
+            localRoadProgressMessage = null;
+            localRoadProgressDetail = null;
+            localRoadProgressBar = null;
             return;
         }
         if (stats.localRoadEnrichmentRunning) {
