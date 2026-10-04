@@ -12,7 +12,6 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /** Explains and opens Android's controls for location and notifications. */
@@ -21,10 +20,10 @@ public class PermissionsActivity extends Activity {
     private TextView locationState, notificationState;
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(NAVY); getWindow().setNavigationBarColor(0xFF10275D);
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24),dp(24),dp(24),dp(28)); root.setBackgroundColor(NAVY);
-        root.addView(RoadprintsHeader.create(this));
+        root.setPadding(dp(24),dp(24),dp(24),dp(24)); root.setBackgroundColor(NAVY);
+        LinearLayout brand=RoadprintsHeader.create(this);brand.setPadding(0,0,0,dp(22));root.addView(brand);
+        root.addView(text("UTILITIES",13,TEAL,true));
         root.addView(text("Permissions",32,Color.WHITE,true));
         TextView intro=text("Roadprints needs location access to record journeys. Notifications show the active tracking service.",15,MUTED,false);
         intro.setPadding(0,dp(8),0,dp(20)); root.addView(intro);
@@ -49,8 +48,7 @@ public class PermissionsActivity extends Activity {
         notifications.addView(notificationAction); root.addView(notifications,params());
         TextView note=text("Android controls when an app can grant or revoke permissions. Use the buttons above to open its system permission controls.",14,MUTED,false);
         note.setPadding(0,dp(8),0,dp(18)); root.addView(note);
-        Button back=button("BACK TO UTILITIES"); back.setOnClickListener(v -> finish()); root.addView(back);
-        ScrollView scroll=new ScrollView(this); scroll.addView(root); setContentView(scroll);
+        RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
         refreshStates();
     }
     @Override protected void onResume(){super.onResume(); if(locationState!=null)refreshStates();}
