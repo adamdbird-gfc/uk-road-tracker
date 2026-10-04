@@ -46,6 +46,7 @@ public class ProgressActivity extends Activity {
     private static int savedScrollY;
     private LinearLayout statisticsContent;
     private ScrollView statisticsScroll;
+    private final Map<String, TextView> progressJumpChips = new LinkedHashMap<>();
     private boolean hasResumed;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
@@ -107,6 +108,10 @@ public class ProgressActivity extends Activity {
         titleRow.addView(title);
         heading.addView(titleRow);
         heading.addView(intro);
+        HorizontalScrollView progressJumpMenu = buildProgressJumpMenu();
+        LinearLayout.LayoutParams jumpParams = new LinearLayout.LayoutParams(-1, -2);
+        jumpParams.topMargin = dp(14);
+        heading.addView(progressJumpMenu, jumpParams);
         root.addView(heading);
 
         ScrollView scroll = new ScrollView(this);
@@ -117,6 +122,8 @@ public class ProgressActivity extends Activity {
         scroll.addView(content);
 
         statisticsContent = content;
+        scroll.setOnScrollChangeListener((View view, int x, int y, int oldX, int oldY) ->
+                updateActiveProgressJump());
         content.addView(ScreenLoadingView.create(this, "Preparing your progress",
                 "Reading saved journeys once and reusing the result."));
 
@@ -232,8 +239,13 @@ public class ProgressActivity extends Activity {
     }
 
     private void restoreProgressScroll() {
-        if (statisticsScroll != null && savedScrollY > 0) {
-            statisticsScroll.post(() -> statisticsScroll.scrollTo(0, savedScrollY));
+        if (statisticsScroll != null) {
+            statisticsScroll.post(() -> {
+                if (savedScrollY > 0) statisticsScroll.scrollTo(0, savedScrollY);
+                updateActiveProgressJump();
+            });
+        } else {
+            updateActiveProgressJump();
         }
     }
 
@@ -474,7 +486,6 @@ public class ProgressActivity extends Activity {
 
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
-        parent.addView(buildProgressJumpMenu());
         addCollectiveStatistics(parent, stats);
         addRoadDiscoveryPanel(parent, stats);
         addMotorwayAggregatePanel(parent, stats);
@@ -482,42 +493,74 @@ public class ProgressActivity extends Activity {
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
         if (ServiceStationStore.unlocked(this)) addServiceStationPanel(parent);
+        if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
 
     private HorizontalScrollView buildProgressJumpMenu() {
-        HorizontalScrollView scroll=new HorizontalScrollView(this);
+        HorizontalScrollView scroll = new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout row=new LinearLayout(this);
+        LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0,dp(2),0,dp(10));
-        addProgressJump(row,"Statistics","statistics");
-        addProgressJump(row,"Motorways","motorways");
-        addProgressJump(row,"A Roads","a_roads");
-        if(ServiceStationStore.unlocked(this)) addProgressJump(row,"Service stations","services");
+        row.setPadding(0, dp(2), 0, dp(4));
+        progressJumpChips.clear();
+        addProgressJump(row, "Statistics", "statistics");
+        addProgressJump(row, "Motorways", "motorways");
+        addProgressJump(row, "A Roads", "a_roads");
+        if (ServiceStationStore.unlocked(this)) addProgressJump(row, "Service stations", "services");
         scroll.addView(row);
+        setActiveProgressJump("statistics");
         return scroll;
     }
 
-    private void addProgressJump(LinearLayout row,String label,String section) {
-        TextView chip=new TextView(this);
+    private void addProgressJump(LinearLayout row, String label, String section) {
+        TextView chip = new TextView(this);
         chip.setText(label);
         chip.setTextSize(12);
-        chip.setTypeface(null,android.graphics.Typeface.BOLD);
-        chip.setTextColor(Color.WHITE);
+        chip.setTypeface(null, android.graphics.Typeface.BOLD);
         chip.setGravity(Gravity.CENTER);
-        chip.setPadding(dp(13),dp(9),dp(13),dp(9));
-        chip.setBackground(roundRect(0xFF233B78,dp(18)));
-        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-2,-2);
-        params.rightMargin=dp(7);
-        row.addView(chip,params);
-        chip.setOnClickListener(v->{
-            View target=null;
-            for(int i=0;i<statisticsContent.getChildCount();i++) {
-                View child=statisticsContent.getChildAt(i);
-                if(("progress:"+section).equals(child.getTag())) {target=child;break;}
+        chip.setPadding(dp(13), dp(9), dp(13), dp(9));
+        progressJumpChips.put(section, chip);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-2, -2);
+        params.rightMargin = dp(7);
+        row.addView(chip, params);
+        chip.setOnClickListener(v -> {
+            View target = findProgressSection(section);
+            if (target != null && statisticsScroll != null) {
+                statisticsScroll.smoothScrollTo(0, Math.max(0, target.getTop() - dp(8)));
             }
-            if(target!=null&&statisticsScroll!=null) statisticsScroll.smoothScrollTo(0,target.getTop());
         });
+    }
+
+    private View findProgressSection(String section) {
+        if (statisticsContent == null) return null;
+        String tag = "progress:" + section;
+        for (int index = 0; index < statisticsContent.getChildCount(); index++) {
+            View child = statisticsContent.getChildAt(index);
+            if (tag.equals(child.getTag())) return child;
+        }
+        return null;
+    }
+
+    private void updateActiveProgressJump() {
+        String active = "statistics";
+        if (statisticsScroll != null && statisticsContent != null) {
+            int threshold = statisticsScroll.getScrollY() + dp(28);
+            for (String section : new String[] {"statistics", "motorways", "a_roads", "services"}) {
+                View target = findProgressSection(section);
+                if (target != null && target.getTop() <= threshold) active = section;
+            }
+        }
+        setActiveProgressJump(active);
+    }
+
+    private void setActiveProgressJump(String active) {
+        for (Map.Entry<String, TextView> entry : progressJumpChips.entrySet()) {
+            boolean selected = entry.getKey().equals(active);
+            TextView chip = entry.getValue();
+            chip.setTextColor(selected ? NAVY : Color.WHITE);
+            chip.setBackground(roundRect(selected ? GOLD : CARD, dp(18)));
+            chip.setSelected(selected);
+        }
     }
 
     private void addServiceStationPanel(LinearLayout parent) {
