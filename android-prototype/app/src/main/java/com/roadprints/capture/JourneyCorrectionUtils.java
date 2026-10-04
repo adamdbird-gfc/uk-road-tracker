@@ -28,6 +28,42 @@ final class JourneyCorrectionUtils {
                 if (!id.isEmpty()) output.add(id);
             }
         }
+        if (!output.isEmpty() || journey == null || corrections == null) return output;
+
+        // Older saved edits contain only route-edge indices. Derive the associated
+        // road names on read so those corrections update the other screens too.
+        JSONArray removedValues = corrections.optJSONArray("removed_matched_segments");
+        if (removedValues == null || removedValues.length() == 0) return output;
+        Set<Integer> removedEdges = new LinkedHashSet<>();
+        for (int index = 0; index < removedValues.length(); index++) {
+            int edge = removedValues.optInt(index, -1);
+            if (edge >= 0) removedEdges.add(edge);
+        }
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        List<JSONArray> routes = new ArrayList<>();
+        if (features != null) {
+            for (int index = 0; index < features.length(); index++) {
+                JSONObject feature = features.optJSONObject(index);
+                JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+                if (geometry == null) continue;
+                String type = geometry.optString("type", "");
+                JSONArray coordinates = geometry.optJSONArray("coordinates");
+                if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) {
+                    routes.add(coordinates);
+                } else if ("MultiLineString".equals(type) && coordinates != null) {
+                    for (int line = 0; line < coordinates.length(); line++) {
+                        JSONArray segment = coordinates.optJSONArray(line);
+                        if (segment != null && segment.length() >= 2) routes.add(segment);
+                    }
+                }
+            }
+        }
+        for (JSONObject record : removedRoadRecords(journey, routes, removedEdges)) {
+            String id = record.optString("id", "");
+            if (!id.isEmpty()) output.add(id);
+        }
         return output;
     }
 
