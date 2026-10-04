@@ -68,7 +68,7 @@ public class CaptureStartGateTest {
         Location anchor = location(0.0007, 51.5);
         List<Location> points = new ArrayList<>();
         points.add(location(0.0, 51.5));
-        points.add(location(0.0005, 51.5));
+        points.add(location(0.0003, 51.5));
         points.add(location(0.00069, 51.5));
         points.add(location(0.00071, 51.5));
 
