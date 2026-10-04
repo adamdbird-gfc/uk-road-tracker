@@ -696,30 +696,91 @@ public class MapActivity extends Activity {
     }
 
     private void loadRelatedServiceStationJourneys(JSONObject station) {
+        String stationId = station.optString("id", "");
         String stationName = station.optString("name", "Service station");
         double latitude = station.optDouble("lat", Double.NaN);
         double longitude = station.optDouble("lng", Double.NaN);
         ScreenDataLoader.execute(() -> {
+            List<VisitTimeWindow> confirmedVisits = new ArrayList<>();
             List<JSONObject> related = new ArrayList<>();
             try {
-                JourneyStore.forEach(getApplicationContext(), journey -> {
-                    if (!"complete".equals(journey.optString("processing_status", ""))) return;
-                    String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
-                    if (!("driving".equals(mode) || "bus".equals(mode)
-                            || "walking".equals(mode) || "running".equals(mode)
-                            || "pedestrian".equals(mode))) return;
-                    for (JSONArray route : matchedSegments(journey)) {
-                        if (routeNearStation(route, latitude, longitude, 300.0)) {
-                            related.add(journey);
-                            break;
+                JSONArray visits = TimelineVisitStore.all(getApplicationContext());
+                for (int i = 0; i < visits.length(); i++) {
+                    JSONObject visit = visits.optJSONObject(i);
+                    if (visit == null || !Double.isFinite(latitude) || !Double.isFinite(longitude))
+                        continue;
+                    if (distanceMetres(latitude, longitude,
+                            visit.optDouble("lat", Double.NaN),
+                            visit.optDouble("lng", Double.NaN)) > 350.0) continue;
+                    long visitStart = parseTimelineTime(visit.optString("start", ""));
+                    long visitEnd = parseTimelineTime(visit.optString("end", ""));
+                    String fingerprint = visit.optString("source_file_fingerprint", "");
+                    if (fingerprint.isEmpty() || visitStart < 0 || visitEnd < 0) continue;
+                    confirmedVisits.add(new VisitTimeWindow(fingerprint,
+                            Math.min(visitStart, visitEnd), Math.max(visitStart, visitEnd)));
+                }
+                if (!confirmedVisits.isEmpty()) {
+                    JourneyStore.forEach(getApplicationContext(), journey -> {
+                        if (!"complete".equals(journey.optString("processing_status", ""))) return;
+                        JSONObject source = journey.optJSONObject("source");
+                        String fingerprint = source == null ? ""
+                                : source.optString("source_file_fingerprint", "");
+                        if (fingerprint.isEmpty()) return;
+                        long journeyStart = parseTimelineTime(journey.optString("started_at", ""));
+                        long journeyEnd = parseTimelineTime(journey.optString("ended_at", ""));
+                        if (journeyStart < 0 || journeyEnd < 0
+                                || !hasMatchingTimelineVisit(confirmedVisits, fingerprint,
+                                        journeyStart, journeyEnd)) return;
+                        String mode = journey.optString("mode", "")
+                                .toLowerCase(java.util.Locale.ROOT);
+                        if (!("driving".equals(mode) || "bus".equals(mode)
+                                || "walking".equals(mode) || "running".equals(mode)
+                                || "pedestrian".equals(mode))) return;
+                        for (JSONArray route : matchedSegments(journey)) {
+                            if (routeNearStation(route, latitude, longitude, 600.0)) {
+                                related.add(journey);
+                                break;
+                            }
                         }
-                    }
-                });
+                    });
+                }
             } catch (Exception error) {
                 android.util.Log.w("Roadprints", "Could not load service station journeys", error);
             }
             mainHandler.post(() -> showRelatedServiceStationJourneys(stationName, related));
         });
+    }
+
+    private static final class VisitTimeWindow {
+        final String fingerprint;
+        final long start;
+        final long end;
+
+        VisitTimeWindow(String fingerprint, long start, long end) {
+            this.fingerprint = fingerprint;
+            this.start = start;
+            this.end = end;
+        }
+    }
+
+    private boolean hasMatchingTimelineVisit(List<VisitTimeWindow> visits, String fingerprint,
+                                             long journeyStart, long journeyEnd) {
+        long allowance = 30L * 60L * 1000L;
+        for (VisitTimeWindow visit : visits) {
+            if (fingerprint.equals(visit.fingerprint)
+                    && visit.start <= journeyEnd + allowance
+                    && visit.end + allowance >= journeyStart) return true;
+        }
+        return false;
+    }
+
+    private long parseTimelineTime(String value) {
+        if (value == null || value.isEmpty()) return -1;
+        try {
+            return java.time.Instant.parse(value).toEpochMilli();
+        } catch (Exception ignored) {
+            return -1;
+        }
     }
 
     private boolean routeNearStation(JSONArray route, double latitude, double longitude,
