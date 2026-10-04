@@ -656,23 +656,47 @@ public class ProgressActivity extends Activity {
         return panel;
     }
 
+    private void addRoadSummaryRow(LinearLayout parent, String labelText, int value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView label = new TextView(this);
+        label.setText(labelText);
+        label.setTextSize(13);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        label.setTextColor(TEAL);
+        row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView count = new TextView(this);
+        count.setText(formatCount(value));
+        count.setTextSize(14);
+        count.setTypeface(null, android.graphics.Typeface.BOLD);
+        count.setTextColor(Color.WHITE);
+        count.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        row.addView(count);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(5);
+        parent.addView(row, params);
+    }
+
     private void addRoadDiscoveryPanel(LinearLayout parent, DistanceStats stats) {
         if (stats.discoveredRoads.isEmpty()) return;
         LinearLayout panel = statisticsPanel("Road discovery");
-        TextView summary = new TextView(this);
         int driven = 0, foot = 0, both = 0;
         for (RoadDiscoveryItem road : stats.discoveredRoads.values()) {
             if (road.driven) driven++;
             if (road.onFoot) foot++;
             if (road.driven && road.onFoot) both++;
         }
-        summary.setText(String.format(Locale.UK, "%s roads discovered\n%s driven · %s on foot%s",
-                formatCount(stats.discoveredRoads.size()), formatCount(driven), formatCount(foot),
-                both > 0 ? " · " + formatCount(both) + " in both" : ""));
-        summary.setTextSize(14);
-        summary.setTextColor(MUTED);
-        summary.setPadding(0, 0, 0, dp(10));
-        panel.addView(summary);
+        LinearLayout summary = new LinearLayout(this);
+        summary.setOrientation(LinearLayout.VERTICAL);
+        summary.setPadding(dp(13), dp(11), dp(13), dp(11));
+        summary.setBackground(roundRect(0xFF1C356A, dp(12)));
+        addRoadSummaryRow(summary, "Roads discovered", stats.discoveredRoads.size());
+        addRoadSummaryRow(summary, "Driven", driven);
+        addRoadSummaryRow(summary, "On foot", foot);
+        if (both > 0) addRoadSummaryRow(summary, "In both modes", both);
+        LinearLayout.LayoutParams summaryParams = new LinearLayout.LayoutParams(-1, -2);
+        summaryParams.bottomMargin = dp(3);
+        panel.addView(summary, summaryParams);
 
         String[] categories = {"Motorways", "A roads", "B roads", "Local roads"};
         for (String category : categories) {
@@ -692,7 +716,7 @@ public class ProgressActivity extends Activity {
             LinearLayout header = new LinearLayout(this);
             header.setGravity(Gravity.CENTER_VERTICAL);
             header.setPadding(dp(13), dp(10), dp(13), dp(10));
-            LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(76), -2);
+            LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(64), -2);
             badgeParams.rightMargin = dp(10);
             header.addView(countBadge(formatCount(roads.size())), badgeParams);
             TextView label = new TextView(this);
@@ -759,60 +783,67 @@ public class ProgressActivity extends Activity {
             parent.addView(state);
             return;
         }
+
+        Map<String, List<LocalTownProgress>> townsByCounty = new HashMap<>();
+        for (LocalTownProgress town : towns.values()) {
+            String county = localCountyName(town.settlement);
+            townsByCounty.computeIfAbsent(county, ignored -> new ArrayList<>()).add(town);
+        }
+        List<String> counties = new ArrayList<>(townsByCounty.keySet());
+        counties.sort(String.CASE_INSENSITIVE_ORDER);
         List<LocalTownProgress> ordered = new ArrayList<>(towns.values());
         ordered.sort(Comparator.comparing(item -> item.settlement.name,
                 String.CASE_INSENSITIVE_ORDER));
-        for (LocalTownProgress town : ordered) {
-            LinearLayout townCard = new LinearLayout(this);
-            townCard.setOrientation(LinearLayout.VERTICAL);
-            townCard.setBackground(roundRect(0xFF203A73, dp(12)));
-            LinearLayout.LayoutParams townParams = new LinearLayout.LayoutParams(-1, -2);
-            townParams.setMargins(dp(8), dp(5), dp(8), dp(5));
-            parent.addView(townCard, townParams);
-            LinearLayout header = new LinearLayout(this);
-            header.setGravity(Gravity.CENTER_VERTICAL);
-            header.setPadding(dp(12), dp(10), dp(10), dp(10));
-            LinearLayout heading = new LinearLayout(this);
-            heading.setOrientation(LinearLayout.VERTICAL);
-            TextView townName = new TextView(this);
-            townName.setText(town.settlement.name);
-            townName.setTextSize(15);
-            townName.setTypeface(null, android.graphics.Typeface.BOLD);
-            townName.setTextColor(Color.WHITE);
-            heading.addView(townName);
-            header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-            Button viewMap = new Button(this);
-            viewMap.setText("View on map");
-            viewMap.setAllCaps(false);
-            viewMap.setTextSize(11);
-            viewMap.setTextColor(TEAL);
-            viewMap.setMinHeight(dp(38));
-            viewMap.setPadding(dp(8), 0, dp(8), 0);
-            viewMap.setBackground(roundRect(0xFF1A315F, dp(8)));
-            viewMap.setOnClickListener(v -> openSettlementMap(town));
-            header.addView(viewMap);
-            townCard.addView(header);
-            LinearLayout roadRows = new LinearLayout(this);
-            roadRows.setOrientation(LinearLayout.VERTICAL);
-            roadRows.setVisibility(View.GONE);
-            townCard.addView(roadRows);
-            List<RoadDiscoveryItem> townRoads = new ArrayList<>(town.roads.values());
-            townRoads.sort(Comparator.comparing(item -> item.label,
+
+        for (String county : counties) {
+            List<LocalTownProgress> countyTowns = townsByCounty.get(county);
+            countyTowns.sort(Comparator.comparing(item -> item.settlement.name,
                     String.CASE_INSENSITIVE_ORDER));
-            if (expandedRoadCategories.contains("town:" + town.settlement.code)) {
-                addRoadDiscoveryRows(roadRows, townRoads);
-                roadRows.setVisibility(View.VISIBLE);
+
+            LinearLayout countyCard = new LinearLayout(this);
+            countyCard.setOrientation(LinearLayout.VERTICAL);
+            countyCard.setBackground(roundRect(0xFF203A73, dp(12)));
+            LinearLayout.LayoutParams countyParams = new LinearLayout.LayoutParams(-1, -2);
+            countyParams.setMargins(dp(8), dp(5), dp(8), dp(5));
+            parent.addView(countyCard, countyParams);
+
+            LinearLayout countyHeader = new LinearLayout(this);
+            countyHeader.setGravity(Gravity.CENTER_VERTICAL);
+            countyHeader.setPadding(dp(13), dp(10), dp(10), dp(10));
+            TextView countyName = new TextView(this);
+            countyName.setText(county);
+            countyName.setTextSize(15);
+            countyName.setTypeface(null, android.graphics.Typeface.BOLD);
+            countyName.setTextColor(Color.WHITE);
+            countyHeader.addView(countyName, new LinearLayout.LayoutParams(0, -2, 1));
+            TextView countyExpand = new TextView(this);
+            countyExpand.setText("⌄");
+            countyExpand.setTextSize(22);
+            countyExpand.setTextColor(MUTED);
+            countyExpand.setGravity(Gravity.CENTER);
+            countyHeader.addView(countyExpand, new LinearLayout.LayoutParams(dp(36), dp(36)));
+            countyCard.addView(countyHeader);
+            LinearLayout countyContent = new LinearLayout(this);
+            countyContent.setOrientation(LinearLayout.VERTICAL);
+            countyContent.setVisibility(View.GONE);
+            countyCard.addView(countyContent);
+
+            for (LocalTownProgress town : countyTowns) {
+                addLocalTownCard(countyContent, town);
             }
-            header.setOnClickListener(v -> {
-                if (v == viewMap) return;
-                boolean open = roadRows.getVisibility() != View.VISIBLE;
-                if (open && roadRows.getChildCount() == 0) addRoadDiscoveryRows(roadRows, townRoads);
-                roadRows.setVisibility(open ? View.VISIBLE : View.GONE);
-                if (open) expandedRoadCategories.add("town:" + town.settlement.code);
-                else expandedRoadCategories.remove("town:" + town.settlement.code);
+            String countyKey = "county:" + county;
+            boolean expanded = expandedRoadCategories.contains(countyKey);
+            if (expanded) countyContent.setVisibility(View.VISIBLE);
+            countyHeader.setClickable(true);
+            countyHeader.setFocusable(true);
+            countyHeader.setOnClickListener(v -> {
+                boolean open = countyContent.getVisibility() != View.VISIBLE;
+                countyContent.setVisibility(open ? View.VISIBLE : View.GONE);
+                if (open) expandedRoadCategories.add(countyKey);
+                else expandedRoadCategories.remove(countyKey);
             });
-            viewMap.bringToFront();
         }
+
         Set<String> assigned = new HashSet<>();
         for (LocalTownProgress town : ordered) assigned.addAll(town.roads.keySet());
         int unresolved = roads.size() - assigned.size();
@@ -828,6 +859,69 @@ public class ProgressActivity extends Activity {
             parent.addView(pending);
         }
         addLocalRoadProgressPanel(parent, stats);
+    }
+
+    private String localCountyName(LocalRoadSettlementMatcher.Settlement settlement) {
+        if (settlement.county != null && !settlement.county.trim().isEmpty())
+            return settlement.county.trim();
+        if (settlement.region != null && !settlement.region.trim().isEmpty())
+            return settlement.region.trim();
+        if (settlement.nation != null && !settlement.nation.trim().isEmpty())
+            return settlement.nation.trim();
+        return "Other UK areas";
+    }
+
+    private void addLocalTownCard(LinearLayout parent, LocalTownProgress town) {
+        LinearLayout townCard = new LinearLayout(this);
+        townCard.setOrientation(LinearLayout.VERTICAL);
+        townCard.setBackground(roundRect(0xFF263F75, dp(12)));
+        LinearLayout.LayoutParams townParams = new LinearLayout.LayoutParams(-1, -2);
+        townParams.setMargins(dp(8), dp(4), dp(8), dp(4));
+        parent.addView(townCard, townParams);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(12), dp(10), dp(10), dp(10));
+        TextView townName = new TextView(this);
+        townName.setText(town.settlement.name);
+        townName.setTextSize(15);
+        townName.setTypeface(null, android.graphics.Typeface.BOLD);
+        townName.setTextColor(Color.WHITE);
+        header.addView(townName, new LinearLayout.LayoutParams(0, -2, 1));
+        Button viewMap = new Button(this);
+        viewMap.setText("View on map");
+        viewMap.setAllCaps(false);
+        viewMap.setTextSize(11);
+        viewMap.setTextColor(TEAL);
+        viewMap.setMinHeight(dp(38));
+        viewMap.setPadding(dp(8), 0, dp(8), 0);
+        viewMap.setBackground(roundRect(0xFF1A315F, dp(8)));
+        viewMap.setOnClickListener(v -> openSettlementMap(town));
+        header.addView(viewMap);
+        townCard.addView(header);
+
+        LinearLayout roadRows = new LinearLayout(this);
+        roadRows.setOrientation(LinearLayout.VERTICAL);
+        roadRows.setVisibility(View.GONE);
+        townCard.addView(roadRows);
+        List<RoadDiscoveryItem> townRoads = new ArrayList<>(town.roads.values());
+        townRoads.sort(Comparator.comparing(item -> item.label,
+                String.CASE_INSENSITIVE_ORDER));
+        String townKey = "town:" + town.settlement.code;
+        if (expandedRoadCategories.contains(townKey)) {
+            addRoadDiscoveryRows(roadRows, townRoads);
+            roadRows.setVisibility(View.VISIBLE);
+        }
+        header.setClickable(true);
+        header.setOnClickListener(v -> {
+            if (v == viewMap) return;
+            boolean open = roadRows.getVisibility() != View.VISIBLE;
+            if (open && roadRows.getChildCount() == 0) addRoadDiscoveryRows(roadRows, townRoads);
+            roadRows.setVisibility(open ? View.VISIBLE : View.GONE);
+            if (open) expandedRoadCategories.add(townKey);
+            else expandedRoadCategories.remove(townKey);
+        });
+        viewMap.bringToFront();
     }
 
     private void addLocalRoadProgressPanel(LinearLayout parent, DistanceStats stats) {
