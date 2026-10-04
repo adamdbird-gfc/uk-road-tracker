@@ -26,7 +26,17 @@ final class LocalRoadSettlementMatcher {
     static final class Settlement {
         final String code;
         final String name;
-        Settlement(String code, String name) { this.code = code; this.name = name; }
+        String county;
+        String region;
+        String nation;
+        Settlement(String code, String name) { this(code, name, "", "", ""); }
+        Settlement(String code, String name, String county, String region, String nation) {
+            this.code = code;
+            this.name = name;
+            this.county = county == null ? "" : county;
+            this.region = region == null ? "" : region;
+            this.nation = nation == null ? "" : nation;
+        }
     }
 
     private LocalRoadSettlementMatcher() {}
@@ -63,15 +73,11 @@ final class LocalRoadSettlementMatcher {
         for (Settlement settlement : decode(response.optJSONArray("settlements"))) {
             result.put(settlement.code.isEmpty() ? settlement.name : settlement.code, settlement);
         }
+        List<Settlement> resolved = new ArrayList<>(result.values());
+        if (needsMetadata(resolved)) hydrateMetadata(resolved);
         Thread.sleep(1050L);
-        JSONArray values = new JSONArray();
-        for (Settlement settlement : result.values()) {
-            values.put(new JSONObject().put("code", settlement.code).put("name", settlement.name));
-        }
-        JSONObject record = new JSONObject().put("settlements", values);
-        context.getSharedPreferences(CACHE, Context.MODE_PRIVATE).edit()
-                .putString(cacheKey, record.toString()).apply();
-        return new ArrayList<>(result.values());
+        save(context, cacheKey, resolved);
+        return resolved;
     }
 
     static List<Settlement> cached(
@@ -80,7 +86,12 @@ final class LocalRoadSettlementMatcher {
         String saved = context.getSharedPreferences(CACHE, Context.MODE_PRIVATE)
                 .getString(cacheKey, null);
         if (saved == null) return null;
-        return decode(new JSONObject(saved).optJSONArray("settlements"));
+        List<Settlement> settlements = decode(new JSONObject(saved).optJSONArray("settlements"));
+        if (needsMetadata(settlements)) {
+            hydrateMetadata(settlements);
+            save(context, cacheKey, settlements);
+        }
+        return settlements;
     }
 
     static int inventoryCount(Context context, String code) throws Exception {
@@ -121,13 +132,58 @@ final class LocalRoadSettlementMatcher {
                 + "settlement-inventories-v1/" + code + "-boundary.geojson", null);
     }
 
+    private static boolean needsMetadata(List<Settlement> settlements) {
+        for (Settlement settlement : settlements) {
+            if (settlement.county.isEmpty() && settlement.region.isEmpty()
+                    && settlement.nation.isEmpty()) return true;
+        }
+        return false;
+    }
+
+    private static void hydrateMetadata(List<Settlement> settlements) {
+        if (settlements.isEmpty()) return;
+        try {
+            JSONArray names = new JSONArray();
+            for (Settlement settlement : settlements) names.put(settlement.name);
+            JSONObject response = request("POST", API + "/settlement-metadata",
+                    new JSONObject().put("names", names));
+            Map<String, Settlement> byName = new LinkedHashMap<>();
+            for (Settlement metadata : decode(response.optJSONArray("settlements"))) {
+                byName.put(metadata.name.toLowerCase(java.util.Locale.ROOT), metadata);
+            }
+            for (Settlement settlement : settlements) {
+                Settlement metadata = byName.get(settlement.name.toLowerCase(java.util.Locale.ROOT));
+                if (metadata == null) continue;
+                settlement.county = metadata.county;
+                settlement.region = metadata.region;
+                settlement.nation = metadata.nation;
+            }
+        } catch (Exception ignored) {
+            // Fall back to region or nation when catalogue metadata is unavailable.
+        }
+    }
+
+    private static void save(Context context, String cacheKey, List<Settlement> settlements)
+            throws Exception {
+        JSONArray values = new JSONArray();
+        for (Settlement settlement : settlements) {
+            values.put(new JSONObject().put("code", settlement.code)
+                    .put("name", settlement.name).put("county", settlement.county)
+                    .put("region", settlement.region).put("nation", settlement.nation));
+        }
+        context.getSharedPreferences(CACHE, Context.MODE_PRIVATE).edit()
+                .putString(cacheKey, new JSONObject().put("settlements", values).toString()).apply();
+    }
+
     private static List<Settlement> decode(JSONArray array) {
         List<Settlement> output = new ArrayList<>();
         if (array == null) return output;
         for (int index = 0; index < array.length(); index++) {
             JSONObject row = array.optJSONObject(index);
             if (row == null || row.optString("name").isEmpty()) continue;
-            output.add(new Settlement(row.optString("code", ""), row.optString("name")));
+            output.add(new Settlement(row.optString("code", ""), row.optString("name"),
+                    row.optString("county", ""), row.optString("region", ""),
+                    row.optString("nation", "")));
         }
         return output;
     }
