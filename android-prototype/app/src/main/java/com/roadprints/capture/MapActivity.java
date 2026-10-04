@@ -601,6 +601,7 @@ public class MapActivity extends Activity {
         if (features == null) return routes;
         for (int index = 0; index < features.length(); index++) {
             JSONObject feature = features.optJSONObject(index);
+            if (JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
             JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
             if (geometry == null) continue;
             String type = geometry.optString("type", "");
