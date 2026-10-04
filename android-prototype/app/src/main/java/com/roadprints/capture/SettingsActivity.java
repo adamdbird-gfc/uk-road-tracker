@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /** User preferences shared by summaries and progress screens. */
@@ -20,9 +19,6 @@ public class SettingsActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(NAVY);
-        getWindow().setNavigationBarColor(0xFF10275D);
-
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(24), dp(24), dp(24), dp(28));
@@ -55,9 +51,7 @@ public class SettingsActivity extends Activity {
         root.addView(progressNote);
         choose(DistanceUnits.usesKilometres(this));
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(root);
-        setContentView(scroll);
+        RoadprintsHeader.installUtilityPage(this, root, "BACK TO UTILITIES", this::finish);
     }
 
     private TextView option(String title, String abbreviation) {
