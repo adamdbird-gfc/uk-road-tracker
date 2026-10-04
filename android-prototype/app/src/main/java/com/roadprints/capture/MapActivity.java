@@ -710,8 +710,7 @@ public class MapActivity extends Activity {
                 for (String journeyId : ServiceStationVisitStore.journeyIdsForStation(
                         getApplicationContext(), stationId)) {
                     JSONObject linked = JourneyStore.get(getApplicationContext(), journeyId);
-                    if (linked != null && "complete".equals(
-                            linked.optString("processing_status", ""))) {
+                    if (linked != null) {
                         related.add(linked);
                         relatedJourneyIds.add(journeyId);
                     }
