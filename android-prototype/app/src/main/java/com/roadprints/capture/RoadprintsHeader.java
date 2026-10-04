@@ -13,7 +13,7 @@ final class RoadprintsHeader {
     private RoadprintsHeader() {}
 
     static LinearLayout create(Activity activity) {
-        LinearLayout brand = new LinearLayout(activity);
+        StatusHeader brand = new StatusHeader(activity);
         brand.setOrientation(LinearLayout.HORIZONTAL);
         brand.setGravity(Gravity.CENTER_VERTICAL);
         brand.setClickable(true);
@@ -39,7 +39,32 @@ final class RoadprintsHeader {
         wordmark.setTypeface(null, android.graphics.Typeface.BOLD);
         wordmark.setTextColor(Color.WHITE);
         brand.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
+        brand.setStatusControl(new GrowingStatusControl(activity, brand));
         return brand;
+    }
+
+    private static final class StatusHeader extends LinearLayout {
+        private GrowingStatusControl statusControl;
+
+        StatusHeader(Activity activity) {
+            super(activity);
+        }
+
+        void setStatusControl(GrowingStatusControl control) {
+            statusControl = control;
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            if (statusControl != null) statusControl.start();
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            if (statusControl != null) statusControl.stop();
+            super.onDetachedFromWindow();
+        }
     }
 
     private static int dp(Activity activity, int value) {
