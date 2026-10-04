@@ -69,7 +69,6 @@ public class JourneyListActivity extends Activity {
     private static int savedJourneyFilter;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private GrowingStatusControl growingStatus;
     private static final String[] FILTER_LABELS = {
             "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
             "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry", "Unknowns"
@@ -106,7 +105,6 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (growingStatus != null) growingStatus.start();
         refreshJourneysAsync();
     }
 
@@ -115,7 +113,6 @@ public class JourneyListActivity extends Activity {
         if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
         savedJourneyCardLimit = journeyCardLimit;
         savedJourneyFilter = activeFilter;
-        if (growingStatus != null) growingStatus.stop();
         super.onPause();
     }
 
@@ -139,7 +136,6 @@ public class JourneyListActivity extends Activity {
         brandRow.setPadding(0, 0, 0, dp(28));
         brandRow.addView(RoadprintsHeader.create(this),
                 new LinearLayout.LayoutParams(0, dp(44), 1));
-        growingStatus = new GrowingStatusControl(this, brandRow);
 
         LinearLayout headingRow = new LinearLayout(this);
         headingRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -172,6 +168,7 @@ public class JourneyListActivity extends Activity {
         count.setGravity(Gravity.CENTER);
         count.setPadding(22, 14, 22, 14);
         count.setBackground(pill(0xFFF7C450, 0xFFF7C450, 40));
+        count.setVisibility(View.GONE);
 
         headingRow.addView(heading);
         headingRow.addView(count);
@@ -348,6 +345,7 @@ public class JourneyListActivity extends Activity {
             }
         }
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
+        count.setVisibility(View.VISIBLE);
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
