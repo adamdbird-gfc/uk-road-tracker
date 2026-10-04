@@ -807,7 +807,7 @@ public class RoutePreviewView extends View {
 
     private boolean tapServiceStation(float x, float y) {
         if (serviceStationTapListener == null || serviceStations.length() == 0) return false;
-        float hitRadius = dp(26);
+        float hitRadius = dp(38);
         double nearestDistance = hitRadius * hitRadius;
         org.json.JSONObject nearest = null;
         for (int i = 0; i < serviceStations.length(); i++) {
