@@ -62,7 +62,12 @@ public class RoutePreviewView extends View {
     private Set<Integer> removedRouteEdges = Collections.emptySet();
     private Set<Integer> selectedRouteEdges = Collections.emptySet();
     private boolean restoreRouteMode;
+    private boolean correctionDrawMode;
+    private final List<JSONArray> correctionTrace = new ArrayList<>();
+    private JSONArray activeCorrectionTrace;
+    private OnCorrectionTraceListener correctionTraceListener;
     private final Paint selectedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint correctionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private OnRouteEdgeTapListener routeEdgeTapListener;
     private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -109,6 +114,26 @@ public class RoutePreviewView extends View {
 
     public interface OnRouteEdgeTapListener {
         void onRouteEdgesTap(Set<Integer> edgeIndices);
+    }
+
+    public interface OnCorrectionTraceListener {
+        void onCorrectionTrace(JSONArray coordinates);
+    }
+
+    public void setCorrectionTraceListener(OnCorrectionTraceListener listener) {
+        correctionTraceListener = listener;
+    }
+
+    public void setCorrectionDrawMode(boolean enabled) {
+        correctionDrawMode = enabled;
+        if (!enabled) activeCorrectionTrace = null;
+        invalidate();
+    }
+
+    public void setCorrectionTrace(JSONArray coordinates) {
+        correctionTrace.clear();
+        if (hasRoutePoints(coordinates)) correctionTrace.add(coordinates);
+        invalidate();
     }
 
     public RoutePreviewView(Context context, JSONArray coordinates,
@@ -188,6 +213,11 @@ public class RoutePreviewView extends View {
         selectedRoutePaint.setStrokeWidth(dp(12));
         selectedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
         selectedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
+        correctionPaint.setColor(Color.rgb(20, 160, 145));
+        correctionPaint.setStyle(Paint.Style.STROKE);
+        correctionPaint.setStrokeWidth(dp(8));
+        correctionPaint.setStrokeCap(Paint.Cap.ROUND);
+        correctionPaint.setStrokeJoin(Paint.Join.ROUND);
         markerTextPaint.setColor(Color.WHITE);
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
         markerTextPaint.setTextSize(dp(11));
@@ -224,7 +254,8 @@ public class RoutePreviewView extends View {
             @Override
             public boolean onSingleTapUp(MotionEvent event) {
                 if (RoutePreviewView.this.routeEditMode) {
-                    tapNearestRouteEdge(event.getX(), event.getY());
+                    if (!RoutePreviewView.this.correctionDrawMode)
+                        tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
                 return false;
@@ -363,6 +394,10 @@ public class RoutePreviewView extends View {
                     ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
                     : firstMotorwayRoute();
             if (hasMatchedRoute) {
+                for (JSONArray correction : correctionTrace)
+                    drawRoute(canvas, correction, correctionPaint, null);
+                if (activeCorrectionTrace != null)
+                    drawRoute(canvas, activeCorrectionTrace, correctionPaint, null);
                 if (routeEditMode) {
                     drawEditableRoutes(canvas);
                     for (JSONArray extension : routeExtensions) {
@@ -985,6 +1020,22 @@ public class RoutePreviewView extends View {
         invalidate();
     }
 
+    private void addCorrectionPoint(float x, float y) {
+        if (activeCorrectionTrace == null) return;
+        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+        double unitX = longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world;
+        double unitY = latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world;
+        double longitude = unitX * 360.0 - 180.0;
+        double latitude = unitYToLatitude(unitY);
+        if (activeCorrectionTrace.length() == 0) {
+            activeCorrectionTrace.put(new JSONArray().put(longitude).put(latitude));
+            return;
+        }
+        JSONArray previous = activeCorrectionTrace.optJSONArray(activeCorrectionTrace.length() - 1);
+        if (previous == null || Math.hypot(screenX(longitude) - x, screenY(latitude) - y) >= dp(6))
+            activeCorrectionTrace.put(new JSONArray().put(longitude).put(latitude));
+    }
+
     private float screenX(double longitude) {
         double world = mapTileSize() * Math.pow(2.0, cameraZoom);
         return (float) (getWidth() / 2.0
@@ -1048,6 +1099,32 @@ public class RoutePreviewView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!interactive) return false;
+        if (routeEditMode && correctionDrawMode) {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                activeCorrectionTrace = new JSONArray();
+                addCorrectionPoint(event.getX(), event.getY());
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
+                addCorrectionPoint(event.getX(), event.getY());
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                addCorrectionPoint(event.getX(), event.getY());
+                JSONArray completed = activeCorrectionTrace;
+                activeCorrectionTrace = null;
+                correctionDrawMode = false;
+                if (completed != null && completed.length() >= 2
+                        && correctionTraceListener != null)
+                    correctionTraceListener.onCorrectionTrace(completed);
+                invalidate();
+                return true;
+            }
+            return true;
+        }
         scaleDetector.onTouchEvent(event);
         gestureDetector.onTouchEvent(event);
 
