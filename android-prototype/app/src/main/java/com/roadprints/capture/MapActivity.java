@@ -1,6 +1,7 @@
 package com.roadprints.capture;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -221,6 +222,8 @@ public class MapActivity extends Activity {
                     mapRoutes.coveredARoadSections);
             map.setServiceStations(mapRoutes.serviceStations,
                     mapRoutes.visitedServiceStationIds);
+            map.setServiceStationTapListener(station -> showServiceStationCard(
+                    station, mapRoutes.visitedServiceStationIds.contains(station.optString("id", ""))));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
             mapFrame.addView(map, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -676,6 +679,116 @@ public class MapActivity extends Activity {
 
     private boolean hasLinePoints(JSONArray points) {
         return points != null && points.length() >= 2;
+    }
+
+    private void showServiceStationCard(JSONObject station, boolean visited) {
+        if (station == null || isFinishing()) return;
+        String name = station.optString("name", "Service station");
+        AlertDialog.Builder card = new AlertDialog.Builder(this)
+                .setTitle(name)
+                .setMessage(visited ? "Visited" : "Not visited")
+                .setNegativeButton("Close", null);
+        if (visited) {
+            card.setPositiveButton("View related journeys",
+                    (dialog, which) -> loadRelatedServiceStationJourneys(station));
+        }
+        card.show();
+    }
+
+    private void loadRelatedServiceStationJourneys(JSONObject station) {
+        String stationName = station.optString("name", "Service station");
+        double latitude = station.optDouble("lat", Double.NaN);
+        double longitude = station.optDouble("lng", Double.NaN);
+        ScreenDataLoader.execute(() -> {
+            List<JSONObject> related = new ArrayList<>();
+            try {
+                JourneyStore.forEach(getApplicationContext(), journey -> {
+                    if (!"complete".equals(journey.optString("processing_status", ""))) return;
+                    String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
+                    if (!("driving".equals(mode) || "bus".equals(mode)
+                            || "walking".equals(mode) || "running".equals(mode)
+                            || "pedestrian".equals(mode))) return;
+                    for (JSONArray route : matchedSegments(journey)) {
+                        if (routeNearStation(route, latitude, longitude, 300.0)) {
+                            related.add(journey);
+                            break;
+                        }
+                    }
+                });
+            } catch (Exception error) {
+                android.util.Log.w("Roadprints", "Could not load service station journeys", error);
+            }
+            mainHandler.post(() -> showRelatedServiceStationJourneys(stationName, related));
+        });
+    }
+
+    private boolean routeNearStation(JSONArray route, double latitude, double longitude,
+                                     double thresholdMetres) {
+        if (route == null || route.length() == 0) return false;
+        for (int i = 0; i < route.length(); i++) {
+            JSONArray point = route.optJSONArray(i);
+            if (point == null || point.length() < 2) continue;
+            double lng = point.optDouble(0, Double.NaN);
+            double lat = point.optDouble(1, Double.NaN);
+            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
+            if (distanceMetres(latitude, longitude, lat, lng) <= thresholdMetres) return true;
+            if (i == 0) continue;
+            JSONArray previous = route.optJSONArray(i - 1);
+            if (previous == null || previous.length() < 2) continue;
+            double prevLng = previous.optDouble(0, Double.NaN);
+            double prevLat = previous.optDouble(1, Double.NaN);
+            if (Double.isFinite(prevLat) && Double.isFinite(prevLng)
+                    && pointSegmentDistanceMetres(longitude, latitude, prevLng, prevLat,
+                            lng, lat) <= thresholdMetres) return true;
+        }
+        return false;
+    }
+
+    private double distanceMetres(double lat1, double lng1, double lat2, double lng2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    private double pointSegmentDistanceMetres(double lng, double lat,
+            double ax, double ay, double bx, double by) {
+        double metresX = 111320.0 * Math.cos(Math.toRadians(lat));
+        double px = (lng - ax) * metresX, py = (lat - ay) * 111320.0;
+        double dx = (bx - ax) * metresX, dy = (by - ay) * 111320.0;
+        double lengthSquared = dx * dx + dy * dy;
+        double t = lengthSquared <= 0 ? 0
+                : Math.max(0, Math.min(1, (px * dx + py * dy) / lengthSquared));
+        return Math.hypot(px - t * dx, py - t * dy);
+    }
+
+    private void showRelatedServiceStationJourneys(String stationName, List<JSONObject> journeys) {
+        if (isFinishing()) return;
+        if (journeys.isEmpty()) {
+            new AlertDialog.Builder(this).setTitle(stationName)
+                    .setMessage("No matched journeys were found close to this service station.")
+                    .setPositiveButton("Close", null).show();
+            return;
+        }
+        String[] labels = new String[journeys.size()];
+        for (int i = 0; i < journeys.size(); i++) {
+            JSONObject journey = journeys.get(i);
+            String title = journey.optString("title",
+                    journey.optString("name", "Journey"));
+            String when = journey.optString("started_at", "");
+            labels[i] = when.isEmpty() ? title : title + " · " + when;
+        }
+        new AlertDialog.Builder(this).setTitle("Journeys at " + stationName)
+                .setItems(labels, (dialog, index) -> {
+                    String journeyId = journeys.get(index).optString("journey_id", "");
+                    if (!journeyId.isEmpty()) {
+                        Intent editor = new Intent(this, JourneyMapEditorActivity.class);
+                        editor.putExtra("journey_id", journeyId);
+                        startActivity(editor);
+                    }
+                }).setNegativeButton("Close", null).show();
     }
 
     private void addZoomControls(FrameLayout mapFrame, RoutePreviewView map) {
