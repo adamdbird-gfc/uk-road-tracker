@@ -17,6 +17,7 @@ import android.view.WindowInsets;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ScrollView;
 
@@ -1064,6 +1065,8 @@ public class MapActivity extends Activity {
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
+        final int requestId = ++roadSummaryRequestId;
+        showRoadSummaryLoadingCard();
         ScreenDataLoader.execute(() -> {
             List<RoadFeatureMatch> candidates = new ArrayList<>();
             try {
@@ -1131,7 +1134,7 @@ public class MapActivity extends Activity {
             final double percent = roadKey == null ? Double.NaN
                     : roadPercentages.getOrDefault(roadKey, Double.NaN);
             mainHandler.post(() -> {
-                if (isFinishing()) return;
+                if (isFinishing() || requestId != roadSummaryRequestId) return;
                 if (roadName == null) {
                     showRoadSummaryCard("Road not identified",
                             0, 0, Double.NaN, new ArrayList<>(),
@@ -1269,8 +1272,45 @@ public class MapActivity extends Activity {
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.END);
         TextView close = cardAction("CLOSE", false);
-        close.setOnClickListener(v -> roadDialog.dismiss());
+        close.setOnClickListener(v -> {
+            roadSummaryRequestId++;
+            roadDialog.dismiss();
+        });
         actions.addView(close); content.addView(actions);
+        presentRoadSummaryContent(content);
+    }
+
+    private AlertDialog roadDialog;
+    private int roadSummaryRequestId;
+
+    private void showRoadSummaryLoadingCard() {
+        LinearLayout content = cardContainer();
+        addCardLabel(content, "ROAD SUMMARY");
+        addCardTitle(content, "Finding road details…");
+        LinearLayout loading = new LinearLayout(this);
+        loading.setGravity(Gravity.CENTER_VERTICAL);
+        ProgressBar spinner = new ProgressBar(this);
+        spinner.setIndeterminate(true);
+        spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(0xFF67D5CC));
+        loading.addView(spinner, new LinearLayout.LayoutParams(dp(24), dp(24)));
+        TextView text = new TextView(this);
+        text.setText("Loading distance, coverage and journeys");
+        text.setTextColor(0xFFD3DCED);
+        text.setTextSize(14);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(-2, -2);
+        textParams.leftMargin = dp(12);
+        loading.addView(text, textParams);
+        LinearLayout.LayoutParams loadingParams = new LinearLayout.LayoutParams(-1, -2);
+        loadingParams.topMargin = dp(12);
+        content.addView(loading, loadingParams);
+        presentRoadSummaryContent(content);
+    }
+
+    private void presentRoadSummaryContent(LinearLayout content) {
+        if (roadDialog != null && roadDialog.isShowing()) {
+            roadDialog.setView(content);
+            return;
+        }
         roadDialog = new AlertDialog.Builder(this).setView(content).create();
         roadDialog.setOnShowListener(dialog -> {
             if (roadDialog.getWindow() != null)
@@ -1278,8 +1318,6 @@ public class MapActivity extends Activity {
         });
         roadDialog.show();
     }
-
-    private AlertDialog roadDialog;
 
     private void addRoadMetric(LinearLayout parent, String heading, String value) {
         TextView label = new TextView(this);
@@ -1446,6 +1484,4 @@ public class MapActivity extends Activity {
         final Map<String, Double> roadPercentages = new HashMap<>();
     }
 }
-
-
 
