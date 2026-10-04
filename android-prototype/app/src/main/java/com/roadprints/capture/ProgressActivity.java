@@ -56,8 +56,6 @@ public class ProgressActivity extends Activity {
     private ProgressBar localRoadProgressBar;
     private Runnable localRoadProgressTicker;
     private boolean useKilometres;
-    private TextView headerMilesUnit;
-    private TextView headerKilometresUnit;
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int CARD = 0xFF233B78;
@@ -134,6 +132,7 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        useKilometres = DistanceUnits.usesKilometres(this);
         if (hasResumed) {
             loadStatistics();
         } else {
@@ -608,22 +607,7 @@ public class ProgressActivity extends Activity {
         heading.setTypeface(null, android.graphics.Typeface.BOLD);
         heading.setTextColor(Color.WHITE);
         heading.setPadding(0, 0, 0, dp(14));
-        if ("Statistics summary".equals(titleText)) {
-            LinearLayout header = new LinearLayout(this);
-            header.setGravity(Gravity.CENTER_VERTICAL);
-            heading.setPadding(0, 0, dp(8), dp(14));
-            header.addView(heading, new LinearLayout.LayoutParams(
-                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-            View unitToggle = buildDistanceUnitToggle();
-            LinearLayout.LayoutParams toggleParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            toggleParams.bottomMargin = dp(10);
-            header.addView(unitToggle, toggleParams);
-            panel.addView(header);
-        } else {
-            panel.addView(heading);
-        }
+        panel.addView(heading);
         return panel;
     }
 
@@ -1306,60 +1290,6 @@ public class ProgressActivity extends Activity {
         card.addView(value);
         card.addView(distance);
         panel.addView(card, params);
-    }
-
-    private LinearLayout buildDistanceUnitToggle() {
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.HORIZONTAL);
-        controls.setGravity(Gravity.CENTER_VERTICAL);
-        controls.setPadding(dp(3), dp(3), dp(3), dp(3));
-        controls.setBackground(roundRect(0xFF182F62, dp(12)));
-        headerMilesUnit = unitButton("mi", !useKilometres);
-        headerKilometresUnit = unitButton("km", useKilometres);
-        headerMilesUnit.setContentDescription("Show distances in miles");
-        headerKilometresUnit.setContentDescription("Show distances in kilometres");
-        controls.addView(headerMilesUnit);
-        controls.addView(headerKilometresUnit);
-        headerMilesUnit.setOnClickListener(v -> setDistanceUnit(false));
-        headerKilometresUnit.setOnClickListener(v -> setDistanceUnit(true));
-        return controls;
-    }
-
-    private TextView unitButton(String label, boolean selected) {
-        TextView button = new TextView(this);
-        button.setText(label);
-        button.setTextSize(13);
-        button.setTypeface(null, android.graphics.Typeface.BOLD);
-        button.setTextColor(selected ? NAVY : MUTED);
-        button.setGravity(Gravity.CENTER);
-        button.setPadding(dp(12), dp(8), dp(12), dp(8));
-        button.setBackground(roundRect(selected ? GOLD : 0xFF233B78, dp(10)));
-        return button;
-    }
-
-    private void setDistanceUnit(boolean kilometres) {
-        if (useKilometres == kilometres) return;
-        useKilometres = kilometres;
-        DistanceUnits.setKilometres(this, kilometres);
-        updateHeaderDistanceUnit();
-        if (loadedStats != null) {
-            int scrollY = statisticsScroll == null ? 0 : statisticsScroll.getScrollY();
-            renderStatistics(statisticsContent, loadedStats);
-            if (statisticsScroll != null) {
-                statisticsScroll.post(() -> statisticsScroll.scrollTo(0, scrollY));
-            }
-        }
-    }
-
-    private void updateHeaderDistanceUnit() {
-        if (headerMilesUnit != null) {
-            headerMilesUnit.setTextColor(useKilometres ? MUTED : NAVY);
-            headerMilesUnit.setBackground(roundRect(useKilometres ? 0xFF233B78 : GOLD, dp(9)));
-        }
-        if (headerKilometresUnit != null) {
-            headerKilometresUnit.setTextColor(useKilometres ? NAVY : MUTED);
-            headerKilometresUnit.setBackground(roundRect(useKilometres ? GOLD : 0xFF233B78, dp(9)));
-        }
     }
 
     private TextView motorwayBadge(MotorwayProgressCalculator.Road road) {
