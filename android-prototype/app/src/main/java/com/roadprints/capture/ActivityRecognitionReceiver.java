@@ -25,6 +25,9 @@ public class ActivityRecognitionReceiver extends BroadcastReceiver {
             return;
         }
 
+        // Ignore late callbacks after tracking was disabled; do not start an idle service.
+        if (!CaptureService.isArmed(context) && !CaptureService.isActive(context)) return;
+
         for (ActivityTransitionEvent event : result.getTransitionEvents()) {
             Intent update = new Intent(context, CaptureService.class)
                     .setAction(CaptureService.ACTION_ACTIVITY)
