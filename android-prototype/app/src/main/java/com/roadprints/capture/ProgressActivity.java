@@ -692,15 +692,15 @@ public class ProgressActivity extends Activity {
             LinearLayout header = new LinearLayout(this);
             header.setGravity(Gravity.CENTER_VERTICAL);
             header.setPadding(dp(13), dp(10), dp(13), dp(10));
+            LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(76), -2);
+            badgeParams.rightMargin = dp(10);
+            header.addView(countBadge(formatCount(roads.size())), badgeParams);
             TextView label = new TextView(this);
             label.setText(category);
             label.setTextSize(15);
             label.setTypeface(null, android.graphics.Typeface.BOLD);
             label.setTextColor(Color.WHITE);
-            header.addView(label);
-            LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(76), -2);
-            badgeParams.leftMargin = dp(9);
-            header.addView(countBadge(formatCount(roads.size())), badgeParams);
+            header.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
             TextView expand = new TextView(this);
             expand.setText("⌄");
             expand.setTextSize(22);
@@ -709,7 +709,9 @@ public class ProgressActivity extends Activity {
             header.addView(expand, new LinearLayout.LayoutParams(dp(36), dp(36)));
             header.setClickable(true);
             header.setFocusable(true);
-            group.addView(header);
+            group.addView(header, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
             LinearLayout rows = new LinearLayout(this);
             rows.setOrientation(LinearLayout.VERTICAL);
             rows.setVisibility(View.GONE);
