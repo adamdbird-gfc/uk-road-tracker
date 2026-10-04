@@ -1505,7 +1505,7 @@ public class JourneyListActivity extends Activity {
         appendStatusLink(resultLine, "Failed: " + failed, "failed");
         if (matching > 0) appendStatusLink(resultLine, "Matching: " + matching, "matching");
         SpannableStringBuilder summary = new SpannableStringBuilder();
-        summary.append(readyLine).append("\\n").append(resultLine);
+        summary.append(readyLine).append("\n").append(resultLine);
         readinessSummary.setText(summary);
     }
 
