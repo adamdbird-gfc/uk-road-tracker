@@ -52,6 +52,7 @@ public class MapActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int mapLoadGeneration;
     private Map<String, Double> roadPercentages = new HashMap<>();
+    private List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
     private RoutePreviewView mapView;
     private long displayedMapRevision = Long.MIN_VALUE;
     private double savedCameraLongitude, savedCameraLatitude, savedCameraZoom;
@@ -267,6 +268,7 @@ public class MapActivity extends Activity {
             map.setServiceStationTapListener(station -> showServiceStationCard(
                     station, mapRoutes.visitedServiceStationIds.contains(station.optString("id", ""))));
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
+            incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
             map.setMapRoadTapListener((latitude, longitude) ->
                     loadRoadSummaryAt(latitude, longitude));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
@@ -511,6 +513,8 @@ public class MapActivity extends Activity {
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
             appendCanonicalSections(output, road.incompleteMapSections, false);
             appendCanonicalSections(output, road.coveredMapSections, true);
+            addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
+                    road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
         ARoadProgressCalculator.Summary aSummary = aRoadCalculator.finish();
         for (ARoadProgressCalculator.Road road : aSummary.roads) {
@@ -518,8 +522,19 @@ public class MapActivity extends Activity {
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
             appendARoadSections(output, road.incompleteMapSections, false);
             appendARoadSections(output, road.coveredMapSections, true);
+            addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
+                    road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
         return output;
+    }
+
+    private void addIncompleteRoadSegments(MapRoutes output, String ref, String region,
+                                           double percent, double travelledMetres,
+                                           int journeyCount, List<JSONArray> sections) {
+        String label = "NI".equalsIgnoreCase(region) ? ref + " · Northern Ireland" : ref;
+        for (JSONArray section : sections)
+            output.incompleteRoadSegments.add(new RoadCoverageSegment(label, section,
+                    percent, travelledMetres, journeyCount));
     }
 
     private void appendCanonicalSections(MapRoutes output, List<JSONArray> routes,
@@ -1068,6 +1083,14 @@ public class MapActivity extends Activity {
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();
         ScreenDataLoader.execute(() -> {
+            RoadCoverageSegment incomplete = nearestIncompleteRoad(latitude, longitude);
+            if (incomplete != null && incomplete.distanceMetres <= 85.0) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || requestId != roadSummaryRequestId) return;
+                    showIncompleteRoadSummaryCard(incomplete);
+                });
+                return;
+            }
             List<RoadFeatureMatch> candidates = new ArrayList<>();
             try {
                 JourneyStore.forEach(getApplicationContext(), journey -> {
@@ -1144,6 +1167,41 @@ public class MapActivity extends Activity {
                 showRoadSummaryCard(roadName, travelled, times, percent, related, null);
             });
         });
+    }
+
+    private RoadCoverageSegment nearestIncompleteRoad(double latitude, double longitude) {
+        RoadCoverageSegment nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (RoadCoverageSegment segment : incompleteRoadSegments) {
+            double distance = lineDistanceMetres(segment.coordinates, latitude, longitude);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = segment;
+            }
+        }
+        if (nearest == null) return null;
+        nearest.distanceMetres = nearestDistance;
+        return nearest;
+    }
+
+    private void showIncompleteRoadSummaryCard(RoadCoverageSegment road) {
+        double remaining = Math.max(0, 100.0 - road.completedPercent);
+        LinearLayout content = cardContainer();
+        addCardLabel(content, "ROAD DISCOVERY");
+        addCardTitle(content, road.label);
+        addRoadMetric(content, "Distance travelled", DistanceUnits.format(this, road.travelledMetres));
+        addRoadMetric(content, "Times travelled", Integer.toString(road.journeyCount));
+        addRoadMetric(content, "Road completed",
+                String.format(java.util.Locale.UK, "%.1f%%", road.completedPercent));
+        addRoadMetric(content, "Remaining to complete",
+                String.format(java.util.Locale.UK, "%.1f%%", remaining));
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END);
+        TextView close = cardAction("CLOSE", false);
+        close.setOnClickListener(v -> roadDialog.dismiss());
+        actions.addView(close);
+        content.addView(actions);
+        presentRoadSummaryContent(content);
     }
 
     private JSONArray roadFeaturesForTap(JSONObject result) {
@@ -1282,6 +1340,7 @@ public class MapActivity extends Activity {
 
     private AlertDialog roadDialog;
     private int roadSummaryRequestId;
+    private LinearLayout roadDialogContent;
 
     private void showRoadSummaryLoadingCard() {
         LinearLayout content = cardContainer();
@@ -1308,13 +1367,26 @@ public class MapActivity extends Activity {
 
     private void presentRoadSummaryContent(LinearLayout content) {
         if (roadDialog != null && roadDialog.isShowing()) {
-            roadDialog.setView(content);
+            // AlertDialog.setView() only takes effect before show() on several Android
+            // versions. Move the fetched card rows into the already visible root instead.
+            roadDialogContent.removeAllViews();
+            while (content.getChildCount() > 0) {
+                View child = content.getChildAt(0);
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) child.getLayoutParams();
+                content.removeViewAt(0);
+                roadDialogContent.addView(child, params);
+            }
             return;
         }
+        roadDialogContent = content;
         roadDialog = new AlertDialog.Builder(this).setView(content).create();
         roadDialog.setOnShowListener(dialog -> {
             if (roadDialog.getWindow() != null)
                 roadDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        });
+        roadDialog.setOnDismissListener(dialog -> {
+            roadSummaryRequestId++;
+            roadDialogContent = null;
         });
         roadDialog.show();
     }
@@ -1482,6 +1554,24 @@ public class MapActivity extends Activity {
         int coveredARoadPoints;
         boolean simplified;
         final Map<String, Double> roadPercentages = new HashMap<>();
+        final List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
+    }
+
+    private static final class RoadCoverageSegment {
+        final String label;
+        final JSONArray coordinates;
+        final double completedPercent;
+        final double travelledMetres;
+        final int journeyCount;
+        double distanceMetres = Double.MAX_VALUE;
+
+        RoadCoverageSegment(String label, JSONArray coordinates, double completedPercent,
+                            double travelledMetres, int journeyCount) {
+            this.label = label;
+            this.coordinates = coordinates;
+            this.completedPercent = completedPercent;
+            this.travelledMetres = travelledMetres;
+            this.journeyCount = journeyCount;
+        }
     }
 }
-
