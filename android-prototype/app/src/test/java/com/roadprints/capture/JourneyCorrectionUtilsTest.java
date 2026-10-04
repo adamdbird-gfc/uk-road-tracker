@@ -3,8 +3,10 @@ package com.roadprints.capture;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 28)
 public class JourneyCorrectionUtilsTest {
     @Test
     public void associatesRemovedMatchedEdgeWithRoadAndExcludesItsEvidence() throws Exception {
