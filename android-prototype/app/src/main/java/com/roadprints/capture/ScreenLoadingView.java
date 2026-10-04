@@ -43,5 +43,11 @@ final class ScreenLoadingView {
         return view;
     }
 
+    static TextView detailText(LinearLayout loadingView) {
+        if (loadingView == null || loadingView.getChildCount() < 3) return null;
+        android.view.View detail = loadingView.getChildAt(2);
+        return detail instanceof TextView ? (TextView) detail : null;
+    }
+
     private static int dp(float density,int value) { return Math.round(density*value); }
 }
