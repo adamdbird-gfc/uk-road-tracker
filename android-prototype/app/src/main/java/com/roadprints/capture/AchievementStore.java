@@ -113,9 +113,9 @@ final class AchievementStore {
             aRoads.addJourney(journey);
             JSONObject result=journey.optJSONObject("processing_result");
             if (result == null) return;
-            crossingTracker.add(result.optJSONObject("road_geojson"));
-            crossingTracker.add(result.optJSONObject("motorway_geojson"));
-            crossingTracker.add(result.optJSONObject("a_road_geojson"));
+            crossingTracker.add(result.optJSONObject("road_geojson"), journey);
+            crossingTracker.add(result.optJSONObject("motorway_geojson"), journey);
+            crossingTracker.add(result.optJSONObject("a_road_geojson"), journey);
         });
         MotorwayProgressCalculator.Summary motorwaySummary=motorways.finish();
         ARoadProgressCalculator.Summary aRoadSummary=aRoads.finish();
@@ -234,11 +234,12 @@ final class AchievementStore {
     private static final class CrossingTracker {
         private final boolean[] completed=new boolean[CROSSINGS.size()];
 
-        void add(JSONObject collection) {
+        void add(JSONObject collection, JSONObject journey) {
             JSONArray features=collection == null ? null : collection.optJSONArray("features");
             if (features == null) return;
             for (int index=0; index<features.length(); index++) {
                 JSONObject feature=features.optJSONObject(index);
+                if (JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
                 JSONObject geometry=feature == null ? null : feature.optJSONObject("geometry");
                 if (geometry == null) continue;
                 String type=geometry.optString("type", "");
