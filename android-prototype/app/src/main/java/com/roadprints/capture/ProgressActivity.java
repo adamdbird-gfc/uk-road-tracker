@@ -866,26 +866,94 @@ public class ProgressActivity extends Activity {
         addLocalRoadProgressPanel(parent, stats);
     }
 
+    /**
+     * Converts source county/unitary-area labels into stable display groups.
+     * This is keyed by the geographic area, not by individual settlements, so
+     * newly added settlements inherit the same grouping automatically.
+     */
     private String localCountyName(LocalRoadSettlementMatcher.Settlement settlement) {
         String county = settlement.county == null ? "" : settlement.county.trim();
         String region = settlement.region == null ? "" : settlement.region.trim();
         String name = settlement.name == null ? "" : settlement.name.trim();
-        if ("blackpool".equals(county.toLowerCase(Locale.ROOT))
-                || "blackpool".equals(name.toLowerCase(Locale.ROOT))) return "Lancashire";
-        if ("bracknell forest".equals(county.toLowerCase(Locale.ROOT))
-                || "bracknell forest".equals(name.toLowerCase(Locale.ROOT))) return "Berkshire";
-        if ("brighton".equals(county.toLowerCase(Locale.ROOT))
-                || "brighton and hove".equals(county.toLowerCase(Locale.ROOT))
-                || "brighton".equals(name.toLowerCase(Locale.ROOT))
-                || "brighton and hove".equals(name.toLowerCase(Locale.ROOT))) return "West Sussex";
+        String countyKey = county.toLowerCase(Locale.ROOT);
+        String nameKey = name.toLowerCase(Locale.ROOT);
+
         if (isLondonBorough(county) || isLondonBorough(name)
-                || "london".equals(county.toLowerCase(Locale.ROOT))
+                || "london".equals(countyKey)
                 || "greater london".equals(region.toLowerCase(Locale.ROOT))) return "London";
+
+        String group = countyGroupForSourceArea(countyKey);
+        if (group != null) return group;
+        // Some older settlement records have no area metadata. Keep the
+        // explicit settlement aliases as a compatibility fallback only.
+        if ("blackpool".equals(nameKey)) return "Lancashire";
+        if ("bracknell forest".equals(nameKey)) return "Berkshire";
+        if ("brighton".equals(nameKey) || "brighton and hove".equals(nameKey))
+            return "West Sussex";
         if (!county.isEmpty()) return county;
         if (!region.isEmpty()) return region;
         if (settlement.nation != null && !settlement.nation.trim().isEmpty())
             return settlement.nation.trim();
         return "Other UK areas";
+    }
+
+    private String countyGroupForSourceArea(String areaKey) {
+        // Display groups for source unitary authorities that sit within a
+        // broader county identity. Unlisted county labels pass through intact.
+        switch (areaKey) {
+            case "blackpool":
+            case "blackburn with darwen":
+                return "Lancashire";
+            case "bracknell forest":
+            case "reading":
+            case "slough":
+            case "west berkshire":
+            case "windsor and maidenhead":
+            case "wokingham":
+                return "Berkshire";
+            case "brighton":
+            case "brighton and hove":
+                return "West Sussex";
+            case "halton":
+            case "warrington":
+            case "cheshire east":
+            case "cheshire west and chester":
+                return "Cheshire";
+            case "stoke-on-trent":
+            case "staffordshire moorlands":
+                return "Staffordshire";
+            case "bath and north east somerset":
+            case "north somerset":
+                return "Somerset";
+            case "south gloucestershire":
+                return "Gloucestershire";
+            case "bournemouth, christchurch and poole":
+            case "dorset":
+                return "Dorset";
+            case "brighton and hove":
+                return "West Sussex";
+            case "east riding of yorkshire":
+            case "kingston upon hull":
+            case "north east lincolnshire":
+            case "north lincolnshire":
+                return "Yorkshire";
+            case "herefordshire":
+                return "Herefordshire";
+            case "telford and wrekin":
+            case "shropshire":
+                return "Shropshire";
+            case "milton keynes":
+            case "buckinghamshire":
+                return "Buckinghamshire";
+            case "luton":
+            case "bedford":
+            case "central bedfordshire":
+                return "Bedfordshire";
+            case "medway":
+                return "Medway";
+            default:
+                return null;
+        }
     }
 
     private boolean isLondonBorough(String value) {
