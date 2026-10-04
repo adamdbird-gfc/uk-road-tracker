@@ -401,8 +401,10 @@ public class MapActivity extends Activity {
 
     private MapRoutes readMapRoutes() throws Exception {
         MapRoutes output = new MapRoutes();
-        output.serviceStations = ServiceStationStore.stations(getApplicationContext());
-        output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
+        if (ServiceStationStore.unlocked(getApplicationContext())) {
+            output.serviceStations = ServiceStationStore.stations(getApplicationContext());
+            output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
+        }
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
@@ -703,7 +705,17 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(() -> {
             List<VisitTimeWindow> confirmedVisits = new ArrayList<>();
             List<JSONObject> related = new ArrayList<>();
+            Set<String> relatedJourneyIds = new HashSet<>();
             try {
+                for (String journeyId : ServiceStationVisitStore.journeyIdsForStation(
+                        getApplicationContext(), stationId)) {
+                    JSONObject linked = JourneyStore.get(getApplicationContext(), journeyId);
+                    if (linked != null && "complete".equals(
+                            linked.optString("processing_status", ""))) {
+                        related.add(linked);
+                        relatedJourneyIds.add(journeyId);
+                    }
+                }
                 JSONArray visits = TimelineVisitStore.all(getApplicationContext());
                 JSONArray catalogue = ServiceStationStore.stations(getApplicationContext());
                 for (int i = 0; i < visits.length(); i++) {
@@ -736,7 +748,8 @@ public class MapActivity extends Activity {
                 }
                 if (!confirmedVisits.isEmpty()) {
                     JourneyStore.forEach(getApplicationContext(), journey -> {
-                        if (!"complete".equals(journey.optString("processing_status", ""))) return;
+                        if (!"complete".equals(journey.optString("processing_status", ""))
+                                || relatedJourneyIds.contains(journey.optString("journey_id", ""))) return;
                         JSONObject source = journey.optJSONObject("source");
                         String fingerprint = source == null ? ""
                                 : source.optString("source_file_fingerprint", "");
