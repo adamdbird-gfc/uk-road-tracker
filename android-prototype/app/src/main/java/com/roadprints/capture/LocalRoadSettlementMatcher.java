@@ -86,12 +86,7 @@ final class LocalRoadSettlementMatcher {
         String saved = context.getSharedPreferences(CACHE, Context.MODE_PRIVATE)
                 .getString(cacheKey, null);
         if (saved == null) return null;
-        List<Settlement> settlements = decode(new JSONObject(saved).optJSONArray("settlements"));
-        if (needsMetadata(settlements)) {
-            hydrateMetadata(settlements);
-            save(context, cacheKey, settlements);
-        }
-        return settlements;
+        return decode(new JSONObject(saved).optJSONArray("settlements"));
     }
 
     static int inventoryCount(Context context, String code) throws Exception {
@@ -140,27 +135,41 @@ final class LocalRoadSettlementMatcher {
         return false;
     }
 
-    private static void hydrateMetadata(List<Settlement> settlements) {
+    static void hydrateMetadata(List<Settlement> settlements) {
         if (settlements.isEmpty()) return;
-        try {
+        Map<String, Settlement> byName = new LinkedHashMap<>();
+        for (Settlement settlement : settlements)
+            byName.put(settlement.name.toLowerCase(java.util.Locale.ROOT), settlement);
+        List<Settlement> unique = new ArrayList<>(byName.values());
+        Map<String, Settlement> metadataByName = new LinkedHashMap<>();
+        // Keep requests comfortably small while reducing thousands of per-road
+        // metadata calls to a handful of catalogue lookups.
+        for (int start = 0; start < unique.size(); start += 100) {
             JSONArray names = new JSONArray();
-            for (Settlement settlement : settlements) names.put(settlement.name);
-            JSONObject response = request("POST", API + "/settlement-metadata",
-                    new JSONObject().put("names", names));
-            Map<String, Settlement> byName = new LinkedHashMap<>();
-            for (Settlement metadata : decode(response.optJSONArray("settlements"))) {
-                byName.put(metadata.name.toLowerCase(java.util.Locale.ROOT), metadata);
+            for (int index = start; index < Math.min(start + 100, unique.size()); index++)
+                names.put(unique.get(index).name);
+            try {
+                JSONObject response = request("POST", API + "/settlement-metadata",
+                        new JSONObject().put("names", names));
+                for (Settlement metadata : decode(response.optJSONArray("settlements")))
+                    metadataByName.put(metadata.name.toLowerCase(java.util.Locale.ROOT), metadata);
+            } catch (Exception ignored) {
+                // Fall back to region or nation when catalogue metadata is unavailable.
             }
-            for (Settlement settlement : settlements) {
-                Settlement metadata = byName.get(settlement.name.toLowerCase(java.util.Locale.ROOT));
-                if (metadata == null) continue;
-                settlement.county = metadata.county;
-                settlement.region = metadata.region;
-                settlement.nation = metadata.nation;
-            }
-        } catch (Exception ignored) {
-            // Fall back to region or nation when catalogue metadata is unavailable.
         }
+        for (Settlement settlement : settlements) {
+            Settlement metadata = metadataByName.get(settlement.name.toLowerCase(java.util.Locale.ROOT));
+            if (metadata == null) continue;
+            settlement.county = metadata.county;
+            settlement.region = metadata.region;
+            settlement.nation = metadata.nation;
+        }
+    }
+
+    static void saveCached(Context context, String roadId, List<JSONObject> geometries,
+                           List<Settlement> settlements) throws Exception {
+        String cacheKey = roadId + ":" + Integer.toHexString(geometries.toString().hashCode());
+        save(context, cacheKey, settlements);
     }
 
     private static void save(Context context, String cacheKey, List<Settlement> settlements)
