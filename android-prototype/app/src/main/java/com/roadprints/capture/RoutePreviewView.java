@@ -819,6 +819,8 @@ public class RoutePreviewView extends View {
     private boolean tapMapRoad(float x, float y) {
         if (mapRoadTapListener == null) return false;
         float nearest = Float.MAX_VALUE;
+        double selectedLongitude = Double.NaN;
+        double selectedLatitude = Double.NaN;
         List<List<JSONArray>> groups = new ArrayList<>();
         groups.add(matchedSegments);
         groups.add(routeExtensions);
@@ -830,18 +832,33 @@ public class RoutePreviewView extends View {
         for (List<JSONArray> group : groups) {
             for (JSONArray route : group) {
                 for (int i = 1; i < route.length(); i++) {
-                    float distance = editableEdgeDistance(route, i, x, y);
-                    if (Float.isFinite(distance)) nearest = Math.min(nearest, distance);
+                    JSONArray a = route.optJSONArray(i - 1);
+                    JSONArray b = route.optJSONArray(i);
+                    if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+                    float x1 = screenX(a.optDouble(0)), y1 = screenY(a.optDouble(1));
+                    float x2 = screenX(b.optDouble(0)), y2 = screenY(b.optDouble(1));
+                    float dx = x2 - x1, dy = y2 - y1;
+                    float lengthSquared = dx * dx + dy * dy;
+                    float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                            ((x - x1) * dx + (y - y1) * dy) / lengthSquared));
+                    float projectedX = x1 + amount * dx, projectedY = y1 + amount * dy;
+                    float distance = (float) Math.hypot(x - projectedX, y - projectedY);
+                    if (distance >= nearest) continue;
+                    nearest = distance;
+                    double ax = longitudeToUnitX(a.optDouble(0));
+                    double bx = longitudeToUnitX(b.optDouble(0));
+                    double ay = latitudeToUnitY(clampLatitude(a.optDouble(1)));
+                    double by = latitudeToUnitY(clampLatitude(b.optDouble(1)));
+                    selectedLongitude = (ax + amount * (bx - ax)) * 360.0 - 180.0;
+                    selectedLatitude = unitYToLatitude(ay + amount * (by - ay));
                 }
             }
         }
-        if (nearest > dp(30)) return false;
-        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
-        double unitX = longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world;
-        double unitY = latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world;
-        double longitude = unitX * 360.0 - 180.0;
-        double latitude = unitYToLatitude(unitY);
-        mapRoadTapListener.onMapRoadTap(latitude, longitude);
+        // Resolve from the closest point on the rendered road line, not the finger
+        // coordinate. This compensates for thick strokes and low zoom levels.
+        if (nearest > dp(42) || !Double.isFinite(selectedLatitude)
+                || !Double.isFinite(selectedLongitude)) return false;
+        mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
         return true;
     }
 
@@ -1344,4 +1361,5 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
 
