@@ -11,14 +11,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 /** Shared handling for user-removed route and road evidence. */
 final class JourneyCorrectionUtils {
     private static final double ROAD_ASSOCIATION_METRES = 35.0;
+    private static final Map<JSONObject, Set<String>> REMOVED_ROAD_CACHE = new WeakHashMap<>();
 
     private JourneyCorrectionUtils() {}
 
     static Set<String> removedRoadIds(JSONObject journey) {
+        if (journey == null) return Collections.emptySet();
+        synchronized (REMOVED_ROAD_CACHE) {
+            Set<String> cached = REMOVED_ROAD_CACHE.get(journey);
+            if (cached != null) return cached;
+        }
         Set<String> output = new LinkedHashSet<>();
         JSONObject corrections = journey == null ? null : journey.optJSONObject("journey_corrections");
         JSONArray values = corrections == null ? null : corrections.optJSONArray("removed_road_ids");
@@ -64,7 +71,11 @@ final class JourneyCorrectionUtils {
             String id = record.optString("id", "");
             if (!id.isEmpty()) output.add(id);
         }
-        return output;
+        Set<String> result = Collections.unmodifiableSet(output);
+        synchronized (REMOVED_ROAD_CACHE) {
+            REMOVED_ROAD_CACHE.put(journey, result);
+        }
+        return result;
     }
 
     static boolean excludesRoadFeature(JSONObject journey, JSONObject feature) {
