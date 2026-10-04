@@ -265,42 +265,10 @@ public class JourneyMapEditorActivity extends Activity {
         correctionButton.setText("CANCEL TRACE");
     }
 
-    private boolean selectNearestRouteEdges(JSONArray trace) {
-        JSONArray first = trace.optJSONArray(0);
-        JSONArray last = trace.optJSONArray(trace.length() - 1);
-        if (first == null || last == null) return false;
-        int firstEdge = -1, lastEdge = -1, edgeIndex = 0;
-        double firstDistance = Double.MAX_VALUE, lastDistance = Double.MAX_VALUE;
-        for (JSONArray route : routeSegments) {
-            for (int i = 1; i < route.length(); i++, edgeIndex++) {
-                JSONArray a = route.optJSONArray(i - 1);
-                JSONArray b = route.optJSONArray(i);
-                double da = tracePointDistanceMetres(first, a);
-                double db = tracePointDistanceMetres(last, b);
-                if (da < firstDistance) { firstDistance = da; firstEdge = edgeIndex; }
-                if (db < lastDistance) { lastDistance = db; lastEdge = edgeIndex; }
-                da = tracePointDistanceMetres(first, b);
-                db = tracePointDistanceMetres(last, a);
-                if (da < firstDistance) { firstDistance = da; firstEdge = edgeIndex; }
-                if (db < lastDistance) { lastDistance = db; lastEdge = edgeIndex; }
-            }
-        }
-        if (firstEdge < 0 || lastEdge < 0 || firstDistance > 250 || lastDistance > 250) return false;
-        int low = Math.min(firstEdge, lastEdge), high = Math.max(firstEdge, lastEdge);
-        for (int edge = low; edge <= high; edge++) selectedEdges.add(edge);
-        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
-        return true;
-    }
-
     private void onCorrectionTrace(JSONArray trace) {
         drawingCorrection = false;
         if (trace == null || trace.length() < 2) {
             status.setText("Draw a longer route section to save a correction.");
-            updateActionButtons();
-            return;
-        }
-        if (selectedEdges.isEmpty() && !selectNearestRouteEdges(trace)) {
-            status.setText("Trace endpoints need to be within 250 m of the route. Select the section and try again.");
             updateActionButtons();
             return;
         }
@@ -439,7 +407,7 @@ public class JourneyMapEditorActivity extends Activity {
             }
             corrections.put("removed_matched_segments", correctionTrace == null ? saved : new JSONArray());
             if (correctionTrace != null) {
-                JSONArray corrected = spliceGpsTrace(journey, routeSegments, selectedEdges, correctionTrace);
+                JSONArray corrected = spliceGpsTrace(journey, correctionTrace);
                 if (corrected == null || corrected.length() < 2) {
                     Toast.makeText(this, "The selected section could not be matched to GPS points", Toast.LENGTH_LONG).show();
                     return;
@@ -471,49 +439,31 @@ public class JourneyMapEditorActivity extends Activity {
         }
     }
 
-    private static JSONArray spliceGpsTrace(JSONObject journey, List<JSONArray> routes,
-                                             Set<Integer> selected, JSONArray replacement) {
-        if (journey == null || routes == null || selected == null || selected.isEmpty()
-                || replacement == null || replacement.length() < 2) return null;
+    private static JSONArray spliceGpsTrace(JSONObject journey, JSONArray replacement) {
+        if (journey == null || replacement == null || replacement.length() < 2) return null;
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
         if (original == null || original.length() < 2) return null;
 
-        JSONArray start = null, end = null;
-        int edge = 0;
-        int firstSelected = Integer.MAX_VALUE, lastSelected = -1;
-        for (JSONArray route : routes) {
-            for (int i = 1; i < route.length(); i++, edge++) {
-                if (selected.contains(edge)) {
-                    if (edge < firstSelected) {
-                        firstSelected = edge;
-                        start = route.optJSONArray(i - 1);
-                    }
-                    if (edge > lastSelected) {
-                        lastSelected = edge;
-                        end = route.optJSONArray(i);
-                    }
-                }
-            }
-        }
-        if (start == null || end == null) return null;
-        int startIndex = nearestTracePoint(original, start);
-        int endIndex = nearestTracePoint(original, end);
-        if (startIndex < 0 || endIndex < 0
-                || tracePointDistanceMetres(original.optJSONArray(startIndex), start) > 250
-                || tracePointDistanceMetres(original.optJSONArray(endIndex), end) > 250)
+        JSONArray replacementStart = replacement.optJSONArray(0);
+        JSONArray replacementEnd = replacement.optJSONArray(replacement.length() - 1);
+        int firstIndex = nearestTracePoint(original, replacementStart);
+        int lastIndex = nearestTracePoint(original, replacementEnd);
+        if (firstIndex < 0 || lastIndex < 0 || firstIndex == lastIndex
+                || tracePointDistanceMetres(original.optJSONArray(firstIndex), replacementStart) > 250
+                || tracePointDistanceMetres(original.optJSONArray(lastIndex), replacementEnd) > 250)
             return null;
-        JSONArray trace = new JSONArray();
-        if (startIndex <= endIndex) {
-            for (int i = 0; i <= startIndex; i++) trace.put(original.optJSONArray(i));
-            appendDistinct(trace, replacement, false);
-            for (int i = endIndex; i < original.length(); i++) trace.put(original.optJSONArray(i));
-        } else {
-            for (int i = 0; i <= endIndex; i++) trace.put(original.optJSONArray(i));
-            appendDistinct(trace, replacement, true);
-            for (int i = startIndex; i < original.length(); i++) trace.put(original.optJSONArray(i));
-        }
-        return trace;
+
+        int low = Math.min(firstIndex, lastIndex);
+        int high = Math.max(firstIndex, lastIndex);
+        boolean reverseReplacement = tracePointDistanceMetres(
+                replacementStart, original.optJSONArray(low))
+                > tracePointDistanceMetres(replacementStart, original.optJSONArray(high));
+        JSONArray result = new JSONArray();
+        for (int i = 0; i < low; i++) result.put(original.optJSONArray(i));
+        appendDistinct(result, replacement, reverseReplacement);
+        for (int i = high + 1; i < original.length(); i++) result.put(original.optJSONArray(i));
+        return result.length() >= 2 ? result : null;
     }
 
     private static void appendDistinct(JSONArray target, JSONArray source, boolean reverse) {
