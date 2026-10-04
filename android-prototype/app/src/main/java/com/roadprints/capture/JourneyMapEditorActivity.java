@@ -396,7 +396,7 @@ public class JourneyMapEditorActivity extends Activity {
                 removedRoadIds.put(id);
                 removedRoadLabels.put(record.optString("label", "Road"));
             }
-            corrections.put("removed_matched_segments", saved);
+            corrections.put("removed_matched_segments", correctionTrace == null ? saved : new JSONArray());
             if (correctionTrace != null) {
                 JSONArray corrected = spliceGpsTrace(journey, routeSegments, selectedEdges, correctionTrace);
                 if (corrected == null || corrected.length() < 2) {
@@ -458,7 +458,10 @@ public class JourneyMapEditorActivity extends Activity {
         if (start == null || end == null) return null;
         int startIndex = nearestTracePoint(original, start);
         int endIndex = nearestTracePoint(original, end);
-        if (startIndex < 0 || endIndex < 0) return null;
+        if (startIndex < 0 || endIndex < 0
+                || tracePointDistanceMetres(original.optJSONArray(startIndex), start) > 250
+                || tracePointDistanceMetres(original.optJSONArray(endIndex), end) > 250)
+            return null;
         JSONArray trace = new JSONArray();
         if (startIndex <= endIndex) {
             for (int i = 0; i <= startIndex; i++) trace.put(original.optJSONArray(i));
