@@ -210,6 +210,7 @@ final class ServiceStationStore {
     }
     static void clearOnDeleteAll(Context context) {
         TimelineVisitStore.clear(context);
+        ServiceStationVisitStore.clear(context);
         prefs(context).edit().remove("service_stations_unlocked").remove(MANUAL)
                 .remove(AUTOMATIC).remove(CONFIRMED_ONLY_MIGRATION)
                 .remove(HISTORICAL_BACKFILL_COMPLETE)
