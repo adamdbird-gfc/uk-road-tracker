@@ -1121,8 +1121,7 @@ public class RoutePreviewView extends View {
                 JSONArray completed = activeCorrectionTrace;
                 activeCorrectionTrace = null;
                 correctionDrawMode = false;
-                if (completed != null && completed.length() >= 2
-                        && correctionTraceListener != null)
+                if (completed != null && correctionTraceListener != null)
                     correctionTraceListener.onCorrectionTrace(completed);
                 invalidate();
                 return true;
