@@ -1410,6 +1410,9 @@ public class ProgressActivity extends Activity {
         items.add(new StatItem("Activities recorded", stats.activities, false, false, true));
 
         for (int index = 0; index < items.size(); index += 2) {
+            if (index == 0) addStatSectionLabel(panel, "BY JOURNEY TYPE");
+            if (index == 8) addStatSectionLabel(panel, "UNIQUE DISTANCE");
+            if (index == 12) addStatSectionLabel(panel, "ACTIVITY");
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             StatItem first = items.get(index);
@@ -1431,6 +1434,17 @@ public class ProgressActivity extends Activity {
         note.setPadding(0, dp(5), 0, 0);
         panel.addView(note);
         parent.addView(panel);
+    }
+
+    private void addStatSectionLabel(LinearLayout panel, String title) {
+        TextView heading = new TextView(this);
+        heading.setText(title);
+        heading.setTextSize(11);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setTextColor(TEAL);
+        heading.setLetterSpacing(0.08f);
+        heading.setPadding(dp(2), dp(4), 0, dp(8));
+        panel.addView(heading);
     }
 
     private void addDistanceHero(LinearLayout panel, double metres) {
@@ -1494,7 +1508,9 @@ public class ProgressActivity extends Activity {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(13), dp(13), dp(10), dp(13));
         card.setMinimumHeight(dp(76));
-        int fill = item.primary ? 0xFFEAF0FF : 0xFFF4F6FA;
+        boolean empty = item.value <= 0;
+        int fill = empty ? 0xFFE3E8F1
+                : item.primary ? 0xFFEAF0FF : 0xFFF4F6FA;
         card.setBackground(roundRect(fill, dp(14)));
 
         LinearLayout labelRow = new LinearLayout(this);
@@ -1508,7 +1524,7 @@ public class ProgressActivity extends Activity {
         label.setText(item.label);
         label.setTextSize(12);
         label.setTypeface(null, android.graphics.Typeface.BOLD);
-        label.setTextColor(0xFF5A6880);
+        label.setTextColor(empty ? 0xFF8A95A8 : 0xFF5A6880);
         labelRow.addView(label);
         card.addView(labelRow);
 
@@ -1520,7 +1536,7 @@ public class ProgressActivity extends Activity {
                         : formatMiles(item.value));
         value.setTextSize(19);
         value.setTypeface(null, android.graphics.Typeface.BOLD);
-        value.setTextColor(0xFF10275D);
+        value.setTextColor(empty ? 0xFF8390A5 : 0xFF10275D);
         value.setPadding(0, dp(4), 0, 0);
         card.addView(value);
         return card;
