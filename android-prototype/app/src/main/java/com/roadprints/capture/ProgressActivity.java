@@ -930,8 +930,6 @@ public class ProgressActivity extends Activity {
             case "bournemouth, christchurch and poole":
             case "dorset":
                 return "Dorset";
-            case "brighton and hove":
-                return "West Sussex";
             case "east riding of yorkshire":
             case "kingston upon hull":
             case "north east lincolnshire":
