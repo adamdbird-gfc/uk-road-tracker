@@ -621,11 +621,14 @@ public class RoutePreviewView extends View {
                 }
             }
         }
-        if (nearestIndex < 0 || nearestDistance > dp(90) || routeEdgeTapListener == null) return;
+        // Keep selection precise: unmatched endpoint traces and nearby roads may be
+        // visible, but they are not editable matched sections. Ignore taps that are
+        // too far from a matched edge instead of snapping to another line.
+        if (nearestIndex < 0 || nearestDistance > dp(32) || routeEdgeTapListener == null) return;
 
-        // One tap selects the full visible stack. A small screen-space tolerance
-        // catches coincident/near-coincident route lines without merging distant edges.
-        float stackTolerance = dp(8);
+        // Select only truly coincident strokes. A narrow tolerance preserves the
+        // one-tap stacked-line removal without catching a neighbouring road below.
+        float stackTolerance = dp(4);
         float stackLimit = nearestDistance + stackTolerance;
         Set<Integer> selected = new java.util.LinkedHashSet<>();
         edgeIndex = 0;
