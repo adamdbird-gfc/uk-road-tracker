@@ -504,6 +504,7 @@ public class ProgressActivity extends Activity {
         row.setPadding(0, dp(2), 0, dp(4));
         progressJumpChips.clear();
         addProgressJump(row, "Statistics", "statistics");
+        addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
         if (ServiceStationStore.unlocked(this)) addProgressJump(row, "Service stations", "services");
@@ -545,7 +546,7 @@ public class ProgressActivity extends Activity {
         String active = "statistics";
         if (statisticsScroll != null && statisticsContent != null) {
             int threshold = statisticsScroll.getScrollY() + dp(28);
-            for (String section : new String[] {"statistics", "motorways", "a_roads", "services"}) {
+            for (String section : new String[] {"statistics", "road_discovery", "motorways", "a_roads", "services"}) {
                 View target = findProgressSection(section);
                 if (target != null && target.getTop() <= threshold) active = section;
             }
@@ -638,6 +639,7 @@ public class ProgressActivity extends Activity {
         params.bottomMargin = dp(12);
         panel.setLayoutParams(params);
         if ("Statistics summary".equals(titleText)) panel.setTag("progress:statistics");
+        else if ("Road discovery".equals(titleText)) panel.setTag("progress:road_discovery");
         else if ("Motorway aggregate".equals(titleText) || "Motorway coverage".equals(titleText))
             panel.setTag("progress:motorways");
         else if ("A-road aggregate".equals(titleText) || "A-road coverage".equals(titleText))
@@ -664,9 +666,9 @@ public class ProgressActivity extends Activity {
             if (road.onFoot) foot++;
             if (road.driven && road.onFoot) both++;
         }
-        summary.setText(String.format(Locale.UK, "%d roads discovered\n%d driven · %d on foot%s",
-                stats.discoveredRoads.size(), driven, foot,
-                both > 0 ? " · " + both + " in both" : ""));
+        summary.setText(String.format(Locale.UK, "%s roads discovered\n%s driven · %s on foot%s",
+                formatCount(stats.discoveredRoads.size()), formatCount(driven), formatCount(foot),
+                both > 0 ? " · " + formatCount(both) + " in both" : ""));
         summary.setTextSize(14);
         summary.setTextColor(MUTED);
         summary.setPadding(0, 0, 0, dp(10));
@@ -687,33 +689,36 @@ public class ProgressActivity extends Activity {
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             groupParams.topMargin = dp(7);
             panel.addView(group, groupParams);
+            LinearLayout header = new LinearLayout(this);
+            header.setGravity(Gravity.CENTER_VERTICAL);
+            header.setPadding(dp(13), dp(10), dp(13), dp(10));
             TextView label = new TextView(this);
-            label.setText(category + " · " + roads.size());
+            label.setText(category);
             label.setTextSize(15);
+            label.setTypeface(null, android.graphics.Typeface.BOLD);
             label.setTextColor(Color.WHITE);
-            label.setPadding(dp(13), dp(12), dp(13), dp(12));
             label.setCompoundDrawablePadding(dp(8));
             label.setCompoundDrawablesWithIntrinsicBounds(0, 0,
                     android.R.drawable.arrow_down_float, 0);
-            group.addView(label);
-            if ("Local roads".equals(category)) {
-                addLocalTownGroups(group, roads, stats);
-                continue;
-            }
+            header.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
+            header.addView(countBadge(formatCount(roads.size())));
+            header.setClickable(true);
+            header.setFocusable(true);
+            group.addView(header);
             LinearLayout rows = new LinearLayout(this);
             rows.setOrientation(LinearLayout.VERTICAL);
             rows.setVisibility(View.GONE);
             group.addView(rows);
             boolean expanded = expandedRoadCategories.contains(category);
             if (expanded) {
-                addRoadDiscoveryRows(rows, roads);
+                addRoadCategoryContents(rows, category, roads, stats);
                 rows.setTag(Boolean.TRUE);
                 rows.setVisibility(View.VISIBLE);
             }
-            label.setOnClickListener(v -> {
+            header.setOnClickListener(v -> {
                 boolean open = rows.getVisibility() != View.VISIBLE;
                 if (open && !Boolean.TRUE.equals(rows.getTag())) {
-                    addRoadDiscoveryRows(rows, roads);
+                    addRoadCategoryContents(rows, category, roads, stats);
                     rows.setTag(Boolean.TRUE);
                 }
                 rows.setVisibility(open ? View.VISIBLE : View.GONE);
@@ -722,6 +727,12 @@ public class ProgressActivity extends Activity {
             });
         }
         parent.addView(panel);
+    }
+
+    private void addRoadCategoryContents(LinearLayout parent, String category,
+                                         List<RoadDiscoveryItem> roads, DistanceStats stats) {
+        if ("Local roads".equals(category)) addLocalTownGroups(parent, roads, stats);
+        else addRoadDiscoveryRows(parent, roads);
     }
 
     private void addLocalTownGroups(LinearLayout parent, List<RoadDiscoveryItem> roads,
@@ -770,13 +781,15 @@ public class ProgressActivity extends Activity {
             if (town.inventoryCount >= 0) {
                 int percent = town.inventoryCount == 0 ? 100
                         : Math.min(100, Math.round(100f * count / town.inventoryCount));
-                metric.setText(count + " of " + town.inventoryCount + " roads · " + percent + "%");
+                metric.setText(formatCount(count) + " of " + formatCount(town.inventoryCount)
+                        + " roads · " + percent + "%");
             } else {
-                metric.setText(count + " discovered · inventory pending");
+                metric.setText(formatCount(count) + " discovered · inventory pending");
             }
             heading.addView(townName);
             heading.addView(metric);
             header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+            header.addView(countBadge(formatCount(count)));
             Button viewMap = new Button(this);
             viewMap.setText("View on map");
             viewMap.setAllCaps(false);
@@ -814,7 +827,7 @@ public class ProgressActivity extends Activity {
         int unresolved = roads.size() - assigned.size();
         if (unresolved > 0) {
             TextView pending = new TextView(this);
-            pending.setText(unresolved + " local road" + (unresolved == 1 ? "" : "s")
+            pending.setText(formatCount(unresolved) + " local road" + (unresolved == 1 ? "" : "s")
                     + (stats.settlementLookupFailures > 0
                         ? " still need a town lookup · reopen Progress to retry."
                         : " still being assigned to a town."));
@@ -1378,8 +1391,8 @@ public class ProgressActivity extends Activity {
         double uniqueFoot = stats.uniqueFootMetres;
         double uniqueTotal = uniqueDriving + uniqueFoot;
 
+        addDistanceHero(panel, total);
         List<StatItem> items = new ArrayList<>();
-        items.add(new StatItem("Total distance", total, true));
         items.add(new StatItem("By driving / bus", stats.drivingMetres, false));
         items.add(new StatItem("On foot", stats.footMetres, false));
         items.add(new StatItem("By train", stats.trainMetres, false));
@@ -1420,6 +1433,54 @@ public class ProgressActivity extends Activity {
         parent.addView(panel);
     }
 
+    private void addDistanceHero(LinearLayout panel, double metres) {
+        LinearLayout hero = new LinearLayout(this);
+        hero.setGravity(Gravity.CENTER_VERTICAL);
+        hero.setPadding(dp(17), dp(15), dp(17), dp(15));
+        hero.setBackground(roundRect(0xFF263F7C, dp(16)));
+        TextView icon = new TextView(this);
+        icon.setText("🛣️");
+        icon.setTextSize(28);
+        icon.setGravity(Gravity.CENTER);
+        hero.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        LinearLayout copy = new LinearLayout(this);
+        copy.setOrientation(LinearLayout.VERTICAL);
+        copy.setPadding(dp(12), 0, 0, 0);
+        TextView label = new TextView(this);
+        label.setText("TOTAL DISTANCE");
+        label.setTextSize(11);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        label.setTextColor(0xFFB9C5D8);
+        TextView value = new TextView(this);
+        value.setText(formatMiles(metres));
+        value.setTextSize(27);
+        value.setTypeface(null, android.graphics.Typeface.BOLD);
+        value.setTextColor(GOLD);
+        value.setPadding(0, dp(2), 0, 0);
+        copy.addView(label);
+        copy.addView(value);
+        hero.addView(copy, new LinearLayout.LayoutParams(0, -2, 1));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(12);
+        panel.addView(hero, params);
+    }
+
+    private TextView countBadge(String count) {
+        TextView badge = new TextView(this);
+        badge.setText("✦ " + count);
+        badge.setTextSize(12);
+        badge.setTypeface(null, android.graphics.Typeface.BOLD);
+        badge.setTextColor(NAVY);
+        badge.setGravity(Gravity.CENTER);
+        badge.setPadding(dp(10), dp(5), dp(10), dp(5));
+        badge.setBackground(roundRect(GOLD, dp(14)));
+        return badge;
+    }
+
+    private String formatCount(int count) {
+        return String.format(Locale.UK, "%,d", count);
+    }
+
     private LinearLayout.LayoutParams weightedCardParams(boolean first) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 0, dp(96), 1);
@@ -1436,11 +1497,20 @@ public class ProgressActivity extends Activity {
         int fill = item.primary ? 0xFFEAF0FF : 0xFFF4F6FA;
         card.setBackground(roundRect(fill, dp(14)));
 
+        LinearLayout labelRow = new LinearLayout(this);
+        labelRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView icon = new TextView(this);
+        icon.setText(statIcon(item.label));
+        icon.setTextSize(15);
+        icon.setGravity(Gravity.CENTER);
+        labelRow.addView(icon, new LinearLayout.LayoutParams(dp(23), dp(22)));
         TextView label = new TextView(this);
         label.setText(item.label);
         label.setTextSize(12);
         label.setTypeface(null, android.graphics.Typeface.BOLD);
         label.setTextColor(0xFF5A6880);
+        labelRow.addView(label);
+        card.addView(labelRow);
 
         TextView value = new TextView(this);
         value.setText(item.count
@@ -1452,9 +1522,23 @@ public class ProgressActivity extends Activity {
         value.setTypeface(null, android.graphics.Typeface.BOLD);
         value.setTextColor(0xFF10275D);
         value.setPadding(0, dp(4), 0, 0);
-        card.addView(label);
         card.addView(value);
         return card;
+    }
+
+    private String statIcon(String label) {
+        if (label.startsWith("By driving")) return "🚗";
+        if (label.equals("On foot") || label.equals("Unique on foot")) return "🚶";
+        if (label.contains("train")) return "🚆";
+        if (label.contains("ferry")) return "⛴️";
+        if (label.contains("plane")) return "✈️";
+        if (label.contains("cycling")) return "🚲";
+        if (label.contains("transit")) return "🚌";
+        if (label.equals("Unknown")) return "❔";
+        if (label.equals("Unique distance")) return "✨";
+        if (label.equals("Activities recorded")) return "📍";
+        if (label.startsWith("Driving that")) return "🛣️";
+        return "•";
     }
 
     private String formatMiles(double metres) {
