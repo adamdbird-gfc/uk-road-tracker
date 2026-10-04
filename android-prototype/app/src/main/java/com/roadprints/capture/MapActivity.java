@@ -248,8 +248,9 @@ public class MapActivity extends Activity {
                     ? (mapRoutes.serviceStations.length() > 0
                         ? "Service stations are shown on the map. Recorded journeys will appear here."
                         : "Recorded journeys will appear here.")
-                    : mapRoutes.matchedJourneys + " recorded journeys shown"
-                            + (mapRoutes.simplified ? " · map simplified for performance." : "."));
+                    : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
+                            mapRoutes.matchedJourneys,
+                            mapRoutes.simplified ? " · map simplified for performance." : "."));
             mapFrame.removeAllViews();
             RoutePreviewView map = mapRoutes.sections.isEmpty()
                     ? new RoutePreviewView(this)
@@ -1043,106 +1044,113 @@ public class MapActivity extends Activity {
         }
     }
 
+    private static final class RoadFeatureMatch {
+        final JSONObject journey;
+        final String journeyId;
+        final String key;
+        final String label;
+        final double distanceFromTap;
+        final double travelledMetres;
+
+        RoadFeatureMatch(JSONObject journey, String key, String label,
+                         double distanceFromTap, double travelledMetres) {
+            this.journey = journey;
+            this.journeyId = journey.optString("journey_id", "");
+            this.key = key;
+            this.label = label;
+            this.distanceFromTap = distanceFromTap;
+            this.travelledMetres = travelledMetres;
+        }
+    }
+
     private void loadRoadSummaryAt(double latitude, double longitude) {
         ScreenDataLoader.execute(() -> {
-            String bestKey = null, bestName = null;
-            double bestDistance = 85.0;
-            Map<String, List<JSONObject>> matchesByRoad = new HashMap<>();
-            Map<String, Double> metresByRoadJourney = new HashMap<>();
+            List<RoadFeatureMatch> candidates = new ArrayList<>();
             try {
-                final String[] selectedKey = {null};
-                final String[] selectedName = {null};
-                final double[] selectedDistance = {85.0};
                 JourneyStore.forEach(getApplicationContext(), journey -> {
                     if (!"complete".equals(journey.optString("processing_status", ""))) return;
                     String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
                     if (!(mode.equals("driving") || mode.equals("bus") || mode.equals("walking")
                             || mode.equals("running") || mode.equals("pedestrian"))) return;
                     JSONObject result = journey.optJSONObject("processing_result");
-                    JSONObject geo = result == null ? null : result.optJSONObject("road_geojson");
-                    JSONArray features = geo == null ? null : geo.optJSONArray("features");
-                    if (features == null || features.length() == 0) {
-                        if (result != null) {
-                            features = new JSONArray();
-                            appendFeatureArray(features, result.optJSONObject("motorway_geojson"));
-                            appendFeatureArray(features, result.optJSONObject("a_road_geojson"));
-                        }
-                    }
+                    JSONArray features = roadFeaturesForTap(result);
                     if (features == null) return;
                     for (int i = 0; i < features.length(); i++) {
                         JSONObject feature = features.optJSONObject(i);
                         if (feature == null || JourneyCorrectionUtils.excludesRoadFeature(journey, feature))
                             continue;
-                        JSONObject props = feature.optJSONObject("properties");
-                        if (props == null) continue;
-                        String rawRef = props.optString("road_ref", props.optString("ref", "")).trim();
-                        String name = props.optString("name", props.optString("road_name", "")).trim();
+                        JSONObject properties = feature.optJSONObject("properties");
+                        if (properties == null) continue;
+                        String rawRef = properties.optString("road_ref",
+                                properties.optString("ref", "")).trim();
+                        String name = properties.optString("name",
+                                properties.optString("road_name", "")).trim();
                         String label = !rawRef.isEmpty() ? rawRef : name;
                         if (label.isEmpty()) continue;
-                        String key = label.toUpperCase(java.util.Locale.ROOT);
                         double distance = featureDistanceMetres(feature, latitude, longitude);
-                        if (distance < selectedDistance[0]) {
-                            selectedDistance[0] = distance;
-                            selectedKey[0] = key;
-                            selectedName[0] = label;
-                        }
+                        // Keep the hit radius tight so adjacent streets are not attributed
+                        // to the road beneath the user's finger.
+                        if (distance > 38.0) continue;
+                        String key = label.toUpperCase(java.util.Locale.ROOT);
+                        double travelled = properties.optDouble("distance_m", 0);
+                        if (travelled <= 0) travelled = featureLengthMetres(feature);
+                        candidates.add(new RoadFeatureMatch(
+                                journey, key, label, distance, travelled));
                     }
                 });
-                bestKey = selectedKey[0];
-                bestName = selectedName[0];
-                bestDistance = selectedDistance[0];
-                if (bestKey != null && bestDistance <= 85.0) {
-                    final String chosen = bestKey;
-                    JourneyStore.forEach(getApplicationContext(), journey -> {
-                        if (!"complete".equals(journey.optString("processing_status", ""))) return;
-                        JSONObject result = journey.optJSONObject("processing_result");
-                        JSONObject geo = result == null ? null : result.optJSONObject("road_geojson");
-                        JSONArray features = geo == null ? null : geo.optJSONArray("features");
-                        if (features == null || features.length() == 0) return;
-                        boolean included = false;
-                        double travelled = 0;
-                        for (int i = 0; i < features.length(); i++) {
-                            JSONObject feature = features.optJSONObject(i);
-                            JSONObject props = feature == null ? null : feature.optJSONObject("properties");
-                            if (feature == null || props == null
-                                    || JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
-                            String label = props.optString("road_ref", props.optString("ref",
-                                    props.optString("name", props.optString("road_name", "")))).trim();
-                            if (!chosen.equals(label.toUpperCase(java.util.Locale.ROOT))) continue;
-                            if (featureDistanceMetres(feature, latitude, longitude) > 85.0) continue;
-                            included = true;
-                            travelled += Math.max(0, props.optDouble("distance_m", 0));
-                        }
-                        if (included) {
-                            String id = journey.optString("journey_id", "");
-                            if (!id.isEmpty()) {
-                                matchesByRoad.computeIfAbsent(chosen, k -> new ArrayList<>()).add(journey);
-                                metresByRoadJourney.put(id, travelled);
-                            }
-                        }
-                    });
-                }
             } catch (Exception error) {
                 android.util.Log.w("Roadprints", "Could not calculate the tapped road summary", error);
             }
-            final String key = bestKey, label = bestName;
-            final List<JSONObject> matches = key == null
-                    ? new ArrayList<>() : matchesByRoad.getOrDefault(key, new ArrayList<>());
-            final double distance = bestDistance;
+
+            RoadFeatureMatch nearest = null;
+            for (RoadFeatureMatch candidate : candidates) {
+                if (nearest == null || candidate.distanceFromTap < nearest.distanceFromTap)
+                    nearest = candidate;
+            }
+            final String roadName = nearest == null ? null : nearest.label;
+            final String roadKey = nearest == null ? null : nearest.key;
+            final List<JSONObject> related = new ArrayList<>();
             double totalMetres = 0;
-            for (JSONObject journey : matches)
-                totalMetres += metresByRoadJourney.getOrDefault(journey.optString("journey_id", ""), 0d);
+            if (nearest != null) {
+                Map<String, JSONObject> journeysById = new java.util.LinkedHashMap<>();
+                Map<String, Double> distancesById = new HashMap<>();
+                for (RoadFeatureMatch candidate : candidates) {
+                    if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 38.0
+                            || candidate.journeyId.isEmpty()) continue;
+                    journeysById.putIfAbsent(candidate.journeyId, candidate.journey);
+                    distancesById.put(candidate.journeyId,
+                            distancesById.getOrDefault(candidate.journeyId, 0d)
+                                    + candidate.travelledMetres);
+                }
+                related.addAll(journeysById.values());
+                for (double distance : distancesById.values()) totalMetres += distance;
+            }
             final double travelled = totalMetres;
+            final int times = related.size();
+            final double percent = roadKey == null ? Double.NaN
+                    : roadPercentages.getOrDefault(roadKey, Double.NaN);
             mainHandler.post(() -> {
                 if (isFinishing()) return;
-                if (label == null || distance > 85.0) {
-                    showRoadSummaryCard("Road", 0, 0, Double.NaN, new ArrayList<>());
+                if (roadName == null) {
+                    showRoadSummaryCard("Road not identified",
+                            0, 0, Double.NaN, new ArrayList<>(),
+                            "Try zooming in and tapping the centre of the road.");
                     return;
                 }
-                double percent = roadPercentages.getOrDefault(key, Double.NaN);
-                showRoadSummaryCard(label, travelled, matches.size(), percent, matches);
+                showRoadSummaryCard(roadName, travelled, times, percent, related, null);
             });
         });
+    }
+
+    private JSONArray roadFeaturesForTap(JSONObject result) {
+        if (result == null) return null;
+        JSONObject roadGeoJson = result.optJSONObject("road_geojson");
+        JSONArray features = roadGeoJson == null ? null : roadGeoJson.optJSONArray("features");
+        if (features != null && features.length() > 0) return features;
+        JSONArray combined = new JSONArray();
+        appendFeatureArray(combined, result.optJSONObject("motorway_geojson"));
+        appendFeatureArray(combined, result.optJSONObject("a_road_geojson"));
+        return combined.length() == 0 ? null : combined;
     }
 
     private void appendFeatureArray(JSONArray target, JSONObject collection) {
@@ -1177,16 +1185,45 @@ public class MapActivity extends Activity {
         return nearest;
     }
 
+    private double featureLengthMetres(JSONObject feature) {
+        JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+        if (geometry == null) return 0;
+        String type = geometry.optString("type", "");
+        JSONArray coordinates = geometry.optJSONArray("coordinates");
+        double length = 0;
+        if ("LineString".equals(type)) return lineLengthMetres(coordinates);
+        if ("MultiLineString".equals(type) && coordinates != null)
+            for (int i = 0; i < coordinates.length(); i++)
+                length += lineLengthMetres(coordinates.optJSONArray(i));
+        return length;
+    }
+
+    private double lineLengthMetres(JSONArray line) {
+        double length = 0;
+        if (line == null) return length;
+        for (int i = 1; i < line.length(); i++) {
+            JSONArray a = line.optJSONArray(i - 1), b = line.optJSONArray(i);
+            if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+            length += distanceMetres(a.optDouble(1), a.optDouble(0),
+                    b.optDouble(1), b.optDouble(0));
+        }
+        return length;
+    }
+
     private void showRoadSummaryCard(String road, double metres, int times,
-                                    double percent, List<JSONObject> journeys) {
+                                    double percent, List<JSONObject> journeys, String note) {
         LinearLayout content = cardContainer();
         addCardLabel(content, "ROAD SUMMARY");
         addCardTitle(content, road);
-        addRoadMetric(content, "Distance travelled", DistanceUnits.format(this, metres));
-        addRoadMetric(content, "Times travelled", Integer.toString(times));
-        addRoadMetric(content, "Road completed",
-                Double.isFinite(percent) ? String.format(java.util.Locale.UK, "%.1f%%", percent)
-                        : "Percentage unavailable");
+        if (note != null) {
+            addCardBody(content, note);
+        } else {
+            addRoadMetric(content, "Distance travelled", DistanceUnits.format(this, metres));
+            addRoadMetric(content, "Times travelled", Integer.toString(times));
+            addRoadMetric(content, "Road completed",
+                    Double.isFinite(percent) ? String.format(java.util.Locale.UK, "%.1f%%", percent)
+                            : "Percentage unavailable");
+        }
         if (!journeys.isEmpty()) {
             TextView subheading = new TextView(this);
             subheading.setText("MATCHED JOURNEYS");
