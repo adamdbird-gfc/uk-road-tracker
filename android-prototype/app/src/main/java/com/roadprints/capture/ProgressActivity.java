@@ -697,11 +697,16 @@ public class ProgressActivity extends Activity {
             label.setTextSize(15);
             label.setTypeface(null, android.graphics.Typeface.BOLD);
             label.setTextColor(Color.WHITE);
-            label.setCompoundDrawablePadding(dp(8));
-            label.setCompoundDrawablesWithIntrinsicBounds(0, 0,
-                    android.R.drawable.arrow_down_float, 0);
-            header.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
-            header.addView(countBadge(formatCount(roads.size())));
+            header.addView(label);
+            LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(dp(76), -2);
+            badgeParams.leftMargin = dp(9);
+            header.addView(countBadge(formatCount(roads.size())), badgeParams);
+            TextView expand = new TextView(this);
+            expand.setText("⌄");
+            expand.setTextSize(22);
+            expand.setTextColor(MUTED);
+            expand.setGravity(Gravity.CENTER);
+            header.addView(expand, new LinearLayout.LayoutParams(dp(36), dp(36)));
             header.setClickable(true);
             header.setFocusable(true);
             group.addView(header);
@@ -772,24 +777,8 @@ public class ProgressActivity extends Activity {
             townName.setTextSize(15);
             townName.setTypeface(null, android.graphics.Typeface.BOLD);
             townName.setTextColor(Color.WHITE);
-            TextView metric = new TextView(this);
-            metric.setTextSize(12);
-            metric.setTextColor(MUTED);
-            int count = town.roads.size();
-            town.inventoryCount = stats.settlementInventoryCounts.getOrDefault(
-                    town.settlement.code, -1);
-            if (town.inventoryCount >= 0) {
-                int percent = town.inventoryCount == 0 ? 100
-                        : Math.min(100, Math.round(100f * count / town.inventoryCount));
-                metric.setText(formatCount(count) + " of " + formatCount(town.inventoryCount)
-                        + " roads · " + percent + "%");
-            } else {
-                metric.setText(formatCount(count) + " discovered · inventory pending");
-            }
             heading.addView(townName);
-            heading.addView(metric);
             header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
-            header.addView(countBadge(formatCount(count)));
             Button viewMap = new Button(this);
             viewMap.setText("View on map");
             viewMap.setAllCaps(false);
@@ -1481,12 +1470,12 @@ public class ProgressActivity extends Activity {
 
     private TextView countBadge(String count) {
         TextView badge = new TextView(this);
-        badge.setText("✦ " + count);
+        badge.setText(count);
         badge.setTextSize(12);
         badge.setTypeface(null, android.graphics.Typeface.BOLD);
         badge.setTextColor(NAVY);
         badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(10), dp(5), dp(10), dp(5));
+        badge.setPadding(0, dp(5), 0, dp(5));
         badge.setBackground(roundRect(GOLD, dp(14)));
         return badge;
     }
