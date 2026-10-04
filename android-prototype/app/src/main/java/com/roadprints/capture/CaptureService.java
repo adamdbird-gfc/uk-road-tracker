@@ -159,7 +159,10 @@ public class CaptureService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) return START_NOT_STICKY;
+        if (intent == null) {
+            stopSelf(startId);
+            return START_NOT_STICKY;
+        }
 
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
@@ -174,6 +177,15 @@ public class CaptureService extends Service {
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
         } else if (ACTION_ACTIVITY.equals(action)) {
+            if (!isArmed(this) && !isActive(this)) {
+                // A transition can race with disarming or arrive after an old subscription fires.
+                // Since this request came from startForegroundService(), stop promptly when idle.
+                stopSelf(startId);
+                return START_NOT_STICKY;
+            }
+            // Promote before processing the event. Candidate detection may wait for GPS points
+            // and previously left this startForegroundService() request unpromoted.
+            startForegroundWithNotification();
             handleTransition(
                     intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
                     intent.getIntExtra(EXTRA_TRANSITION, -1));
