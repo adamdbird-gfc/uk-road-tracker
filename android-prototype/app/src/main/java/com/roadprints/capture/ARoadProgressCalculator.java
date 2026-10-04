@@ -73,7 +73,8 @@ final class ARoadProgressCalculator {
         if (features==null) return;
         String jid=journey.optString("journey_id","");
         for(int i=0;i<features.length();i++) {
-            JSONObject feature=features.optJSONObject(i); if(feature==null) continue;
+            JSONObject feature=features.optJSONObject(i);
+            if(feature==null || JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
             JSONObject props=feature.optJSONObject("properties"); if(props==null) continue;
             String ref=normalize(props.optString("road_ref",""));
             if(!ref.matches("A[0-9]+[A-Z]?")) continue;
