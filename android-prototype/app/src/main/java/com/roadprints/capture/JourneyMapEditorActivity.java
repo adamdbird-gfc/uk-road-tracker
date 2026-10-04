@@ -487,7 +487,7 @@ public class JourneyMapEditorActivity extends Activity {
         }
     }
 
-    private static JSONArray spliceGpsTrace(JSONObject journey, JSONArray replacement) {
+    private static JSONArray spliceGpsTrace(JSONObject journey, JSONArray replacement) throws Exception {
         if (journey == null || replacement == null || replacement.length() < 2) return null;
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -538,7 +538,7 @@ public class JourneyMapEditorActivity extends Activity {
         }
     }
 
-    private static RouteProjection nearestRouteProjection(JSONArray route, JSONArray target) {
+    private static RouteProjection nearestRouteProjection(JSONArray route, JSONArray target) throws Exception {
         if (target == null || target.length() < 2) return null;
         double targetLon = target.optDouble(0, Double.NaN);
         double targetLat = target.optDouble(1, Double.NaN);
