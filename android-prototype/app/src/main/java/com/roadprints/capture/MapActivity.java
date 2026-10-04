@@ -1088,9 +1088,10 @@ public class MapActivity extends Activity {
                         String label = !rawRef.isEmpty() ? rawRef : name;
                         if (label.isEmpty()) continue;
                         double distance = featureDistanceMetres(feature, latitude, longitude);
-                        // Keep the hit radius tight so adjacent streets are not attributed
-                        // to the road beneath the user's finger.
-                        if (distance > 38.0) continue;
+                        // The map callback supplies the nearest rendered line point,
+                        // which lets us allow for small offsets between matched traces
+                        // and the road catalogue without relying on the finger position.
+                        if (distance > 120.0) continue;
                         String key = label.toUpperCase(java.util.Locale.ROOT);
                         double travelled = properties.optDouble("distance_m", 0);
                         if (travelled <= 0) travelled = featureLengthMetres(feature);
@@ -1115,7 +1116,7 @@ public class MapActivity extends Activity {
                 Map<String, JSONObject> journeysById = new java.util.LinkedHashMap<>();
                 Map<String, Double> distancesById = new HashMap<>();
                 for (RoadFeatureMatch candidate : candidates) {
-                    if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 38.0
+                    if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 120.0
                             || candidate.journeyId.isEmpty()) continue;
                     journeysById.putIfAbsent(candidate.journeyId, candidate.journey);
                     distancesById.put(candidate.journeyId,
@@ -1445,5 +1446,6 @@ public class MapActivity extends Activity {
         final Map<String, Double> roadPercentages = new HashMap<>();
     }
 }
+
 
 
