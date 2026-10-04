@@ -1106,7 +1106,7 @@ public class RoutePreviewView extends View {
         if (routeEditMode && correctionDrawMode) {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
-                activeCorrectionTrace = new JSONArray();
+                if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
                 addCorrectionPoint(event.getX(), event.getY());
                 invalidate();
                 return true;
@@ -1119,12 +1119,16 @@ public class RoutePreviewView extends View {
             }
             if (event.getActionMasked() == MotionEvent.ACTION_UP) {
                 addCorrectionPoint(event.getX(), event.getY());
-                JSONArray completed = activeCorrectionTrace;
-                activeCorrectionTrace = null;
-                correctionDrawMode = false;
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
-                if (completed != null && correctionTraceListener != null)
-                    correctionTraceListener.onCorrectionTrace(completed);
+                // A tap should not finish drawing mode. Keep the map armed so the
+                // user's next drag is captured as the replacement path, not a pan.
+                if (activeCorrectionTrace != null && activeCorrectionTrace.length() >= 2) {
+                    JSONArray completed = activeCorrectionTrace;
+                    activeCorrectionTrace = null;
+                    correctionDrawMode = false;
+                    if (correctionTraceListener != null)
+                        correctionTraceListener.onCorrectionTrace(completed);
+                }
                 invalidate();
                 return true;
             }
