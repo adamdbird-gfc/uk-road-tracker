@@ -68,6 +68,10 @@ public class RoutePreviewView extends View {
     private OnCorrectionTraceListener correctionTraceListener;
     private final Paint selectedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint correctionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint correctionHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint zoomControlBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint zoomControlTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private int pressedZoomControl;
     private OnRouteEdgeTapListener routeEdgeTapListener;
     private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -218,6 +222,17 @@ public class RoutePreviewView extends View {
         correctionPaint.setStrokeWidth(dp(8));
         correctionPaint.setStrokeCap(Paint.Cap.ROUND);
         correctionPaint.setStrokeJoin(Paint.Join.ROUND);
+        correctionHaloPaint.setColor(Color.WHITE);
+        correctionHaloPaint.setStyle(Paint.Style.STROKE);
+        correctionHaloPaint.setStrokeWidth(dp(14));
+        correctionHaloPaint.setStrokeCap(Paint.Cap.ROUND);
+        correctionHaloPaint.setStrokeJoin(Paint.Join.ROUND);
+        zoomControlBackgroundPaint.setColor(Color.WHITE);
+        zoomControlTextPaint.setColor(Color.rgb(18, 37, 75));
+        zoomControlTextPaint.setTextAlign(Paint.Align.CENTER);
+        zoomControlTextPaint.setTextSize(dp(28));
+        zoomControlTextPaint.setTypeface(android.graphics.Typeface.create(
+                "sans-serif-medium", android.graphics.Typeface.NORMAL));
         markerTextPaint.setColor(Color.WHITE);
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
         markerTextPaint.setTextSize(dp(11));
@@ -254,7 +269,9 @@ public class RoutePreviewView extends View {
             @Override
             public boolean onSingleTapUp(MotionEvent event) {
                 if (RoutePreviewView.this.routeEditMode) {
-                    if (!RoutePreviewView.this.correctionDrawMode)
+                    int zoomControl = zoomControlAt(event.getX(), event.getY());
+                    if (zoomControl != 0) applyZoomControl(zoomControl, event.getX(), event.getY());
+                    else if (!RoutePreviewView.this.correctionDrawMode)
                         tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
@@ -394,10 +411,6 @@ public class RoutePreviewView extends View {
                     ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
                     : firstMotorwayRoute();
             if (hasMatchedRoute) {
-                for (JSONArray correction : correctionTrace)
-                    drawRoute(canvas, correction, correctionPaint, null);
-                if (activeCorrectionTrace != null)
-                    drawRoute(canvas, activeCorrectionTrace, correctionPaint, null);
                 if (routeEditMode) {
                     drawEditableRoutes(canvas);
                     for (JSONArray extension : routeExtensions) {
@@ -408,6 +421,7 @@ public class RoutePreviewView extends View {
                     drawRoute(canvas, segment, routePaint,
                             flatRoadMapStyle ? null : routeHaloPaint);
                 }
+                drawCorrectionTraces(canvas);
             } else if (hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
@@ -447,6 +461,47 @@ public class RoutePreviewView extends View {
         if (!hasTiles) drawMessage(canvas, coordinatesValid
                 ? "Map tiles unavailable · showing route only"
                 : "Map tiles unavailable · check connection");
+        if (routeEditMode) drawZoomControls(canvas);
+    }
+
+    private void drawCorrectionTraces(Canvas canvas) {
+        for (JSONArray correction : correctionTrace) {
+            drawRoute(canvas, correction, correctionHaloPaint, null);
+            drawRoute(canvas, correction, correctionPaint, null);
+        }
+        if (activeCorrectionTrace != null) {
+            drawRoute(canvas, activeCorrectionTrace, correctionHaloPaint, null);
+            drawRoute(canvas, activeCorrectionTrace, correctionPaint, null);
+        }
+    }
+
+    private RectF zoomControlRect(int index) {
+        float size = dp(44);
+        float right = getWidth() - dp(14);
+        float top = dp(14) + index * dp(52);
+        return new RectF(right - size, top, right, top + size);
+    }
+
+    private int zoomControlAt(float x, float y) {
+        if (!routeEditMode) return 0;
+        if (zoomControlRect(0).contains(x, y)) return 1;
+        if (zoomControlRect(1).contains(x, y)) return -1;
+        return 0;
+    }
+
+    private void drawZoomControls(Canvas canvas) {
+        for (int control : new int[]{1, -1}) {
+            RectF rect = zoomControlRect(control == 1 ? 0 : 1);
+            canvas.drawRoundRect(rect, dp(9), dp(9), zoomControlBackgroundPaint);
+            canvas.drawText(control == 1 ? "+" : "−", rect.centerX(),
+                    rect.centerY() - (zoomControlTextPaint.ascent()
+                            + zoomControlTextPaint.descent()) / 2,
+                    zoomControlTextPaint);
+        }
+    }
+
+    private void applyZoomControl(int control, float x, float y) {
+        zoomAt(control > 0 ? 1.5 : 1.0 / 1.5, x, y);
     }
 
     private void fitRouteIfReady() {
@@ -1105,6 +1160,8 @@ public class RoutePreviewView extends View {
         if (!interactive) return false;
         if (routeEditMode && correctionDrawMode) {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                pressedZoomControl = zoomControlAt(event.getX(), event.getY());
+                if (pressedZoomControl != 0) return true;
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
                 if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
                 addCorrectionPoint(event.getX(), event.getY());
@@ -1112,12 +1169,20 @@ public class RoutePreviewView extends View {
                 return true;
             }
             if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                if (pressedZoomControl != 0) return true;
                 if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
                 addCorrectionPoint(event.getX(), event.getY());
                 invalidate();
                 return true;
             }
             if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                if (pressedZoomControl != 0) {
+                    int control = pressedZoomControl;
+                    pressedZoomControl = 0;
+                    if (zoomControlAt(event.getX(), event.getY()) == control)
+                        applyZoomControl(control, event.getX(), event.getY());
+                    return true;
+                }
                 addCorrectionPoint(event.getX(), event.getY());
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
                 // A tap should not finish drawing mode. Keep the map armed so the
@@ -1133,6 +1198,7 @@ public class RoutePreviewView extends View {
                 return true;
             }
             if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                pressedZoomControl = 0;
                 activeCorrectionTrace = null;
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
                 invalidate();
