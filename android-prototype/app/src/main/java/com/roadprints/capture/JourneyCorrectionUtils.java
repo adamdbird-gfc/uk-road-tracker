@@ -71,11 +71,11 @@ final class JourneyCorrectionUtils {
             String id = record.optString("id", "");
             if (!id.isEmpty()) output.add(id);
         }
-        Set<String> result = Collections.unmodifiableSet(output);
+        Set<String> immutableResult = Collections.unmodifiableSet(output);
         synchronized (REMOVED_ROAD_CACHE) {
-            REMOVED_ROAD_CACHE.put(journey, result);
+            REMOVED_ROAD_CACHE.put(journey, immutableResult);
         }
-        return result;
+        return immutableResult;
     }
 
     static boolean excludesRoadFeature(JSONObject journey, JSONObject feature) {
