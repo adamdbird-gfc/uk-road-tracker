@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /** Entry point for app utilities that do not belong on the main capture screen. */
@@ -18,8 +16,6 @@ public class UtilitiesActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(NAVY);
-        getWindow().setNavigationBarColor(0xFF10275D);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(NAVY);
@@ -44,16 +40,7 @@ public class UtilitiesActivity extends Activity {
         TextView debug = menuItem("Debug", "View or copy diagnostic reports");
         debug.setOnClickListener(v -> startActivity(new Intent(this, DebugActivity.class)));
         root.addView(debug, params());
-        TextView back = text("BACK TO ROADPRINTS", 14, TEAL, true);
-        back.setGravity(Gravity.CENTER);
-        back.setClickable(true);
-        back.setFocusable(true);
-        back.setPadding(0, dp(16), 0, dp(4));
-        back.setOnClickListener(v -> finish());
-        root.addView(back, new LinearLayout.LayoutParams(-1, dp(52)));
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(root);
-        setContentView(scroll);
+        RoadprintsHeader.installUtilityPage(this, root, "BACK TO ROADPRINTS", this::finish);
     }
     private void add(LinearLayout root, String title, String detail, Class<?> target) {
         TextView item = menuItem(title, detail);
@@ -61,21 +48,24 @@ public class UtilitiesActivity extends Activity {
         root.addView(item, params());
     }
     private LinearLayout.LayoutParams params() {
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(78));
-        p.bottomMargin = dp(10);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
+        p.bottomMargin = dp(12);
         return p;
     }
-    private TextView menuItem(String title, String detail) {
-        TextView item = new TextView(this);
-        item.setText(title + "\n" + detail);
-        item.setTextSize(16);
-        item.setTextColor(Color.WHITE);
-        item.setLineSpacing(dp(2), 1f);
-        item.setPadding(dp(18), dp(12), dp(18), dp(12));
-        item.setGravity(Gravity.CENTER_VERTICAL);
+    private LinearLayout menuItem(String title, String detail) {
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setPadding(dp(18), dp(15), dp(18), dp(15));
+        item.setMinimumHeight(dp(82));
         item.setBackground(rounded(CARD));
         item.setClickable(true);
         item.setFocusable(true);
+        TextView heading = text(title, 17, Color.WHITE, true);
+        TextView description = text(detail, 14, MUTED, false);
+        description.setPadding(0, dp(4), 0, 0);
+        item.addView(heading);
+        item.addView(description);
+        item.setContentDescription(title + ". " + detail);
         return item;
     }
     private android.graphics.drawable.GradientDrawable rounded(int color) {
