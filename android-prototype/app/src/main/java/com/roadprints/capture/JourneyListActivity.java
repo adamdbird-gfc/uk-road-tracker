@@ -766,8 +766,9 @@ public class JourneyListActivity extends Activity {
     }
 
     private void addServiceStationConfirmation(LinearLayout details, JSONObject journey) {
+        String processingStatus = journey.optString("processing_status", "");
         if (!ServiceStationStore.unlocked(this)
-                || !"complete".equals(journey.optString("processing_status", ""))) return;
+                || !("complete".equals(processingStatus) || "failed".equals(processingStatus))) return;
         JSONArray candidates = journey.optJSONArray("service_station_candidates");
         if (candidates == null || candidates.length() == 0) return;
 
