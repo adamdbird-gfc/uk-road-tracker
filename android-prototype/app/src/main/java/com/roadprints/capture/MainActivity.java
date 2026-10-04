@@ -156,9 +156,16 @@ public class MainActivity extends Activity {
         mark.setContentDescription("Roadprints");
         mark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         brand.addView(mark, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        LinearLayout brandIdentity = new LinearLayout(this);
+        brandIdentity.setOrientation(LinearLayout.VERTICAL);
         TextView wordmark = text("roadprints", 22, Color.WHITE, true);
         wordmark.setPadding(dp(10), 0, 0, 0);
-        brand.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
+        brandIdentity.addView(wordmark);
+        TextView version = text("Version " + BuildConfig.VERSION_NAME
+                + " (" + BuildConfig.VERSION_CODE + ")", 10, 0xFFB9C5D8, false);
+        version.setPadding(dp(10), 0, 0, 0);
+        brandIdentity.addView(version);
+        brand.addView(brandIdentity, new LinearLayout.LayoutParams(0, -2, 1));
         growingStatus = new GrowingStatusControl(this, brand);
         content.addView(brand);
         TextView eyebrow = text("YOUR TRAVEL RECORD", 13, 0xFF67D5CC, true);
