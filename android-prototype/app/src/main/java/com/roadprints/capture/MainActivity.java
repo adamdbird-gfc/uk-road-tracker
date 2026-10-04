@@ -252,11 +252,37 @@ public class MainActivity extends Activity {
         }
         scroll.addView(content);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        TextView utilityBack = null;
         if (isTrackingSettingsScreen()) {
-            root.addView(RoadprintsHeader.backLink(this, "BACK TO UTILITIES", this::finish),
-                    new LinearLayout.LayoutParams(-1, dp(58)));
+            utilityBack = RoadprintsHeader.backLink(this, "BACK TO UTILITIES", this::finish);
+            root.addView(utilityBack, new LinearLayout.LayoutParams(-1, dp(58)));
         }
+        final TextView bottomBack = utilityBack;
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int systemTop;
+            int systemBottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(
+                        android.view.WindowInsets.Type.systemBars());
+                systemTop = bars.top;
+                systemBottom = bars.bottom;
+            } else {
+                systemTop = insets.getSystemWindowInsetTop();
+                systemBottom = insets.getSystemWindowInsetBottom();
+            }
+            content.setPadding(dp(24), dp(26) + systemTop, dp(24),
+                    dp(28) + (bottomBack == null ? systemBottom : 0));
+            if (bottomBack != null) {
+                bottomBack.setPadding(dp(24), 0, dp(24), systemBottom);
+                LinearLayout.LayoutParams backParams =
+                        (LinearLayout.LayoutParams) bottomBack.getLayoutParams();
+                backParams.height = dp(58) + systemBottom;
+                bottomBack.setLayoutParams(backParams);
+            }
+            return insets;
+        });
         setContentView(root);
+        root.requestApplyInsets();
         if (!isTrackingSettingsScreen()) refreshArchiveSummary();
     }
 
