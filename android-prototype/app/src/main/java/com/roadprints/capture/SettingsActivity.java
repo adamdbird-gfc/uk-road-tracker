@@ -49,8 +49,8 @@ public class SettingsActivity extends Activity {
         milesOption.setOnClickListener(view -> choose(false));
         kilometresOption.setOnClickListener(view -> choose(true));
 
-        TextView progressNote = text("The Progress screen also has a quick unit switch. "
-                + "It uses and updates this same preference.", 14, MUTED, false);
+        TextView progressNote = text("This preference controls distance values across Roadprints.",
+                14, MUTED, false);
         progressNote.setPadding(0, dp(18), 0, 0);
         root.addView(progressNote);
         choose(DistanceUnits.usesKilometres(this));
