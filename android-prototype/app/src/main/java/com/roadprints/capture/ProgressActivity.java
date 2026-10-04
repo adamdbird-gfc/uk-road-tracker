@@ -367,6 +367,7 @@ public class ProgressActivity extends Activity {
         String journeyId = journey.optString("journey_id", "");
         for (int index = 0; index < features.length(); index++) {
             JSONObject feature = features.optJSONObject(index);
+            if (JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
             JSONObject properties = feature == null ? null : feature.optJSONObject("properties");
             if (properties == null) continue;
             String rawRef = properties.optString("road_ref", properties.optString("ref", ""));
