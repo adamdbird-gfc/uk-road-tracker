@@ -937,13 +937,13 @@ public class ProgressActivity extends Activity {
         localRoadProgressMessage.setTextColor(Color.WHITE);
         panel.addView(localRoadProgressMessage);
 
-        localRoadProgressBar = new ProgressBar(this, null,
-                android.R.attr.progressBarStyleHorizontal);
-        localRoadProgressBar.setMax(100);
-        localRoadProgressBar.setIndeterminate(false);
-        LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(-1, dp(6));
-        barParams.topMargin = dp(8);
-        panel.addView(localRoadProgressBar, barParams);
+        localRoadProgressBar = new ProgressBar(this);
+        localRoadProgressBar.setIndeterminate(true);
+        localRoadProgressBar.setIndeterminateTintList(
+                android.content.res.ColorStateList.valueOf(TEAL));
+        LinearLayout.LayoutParams throbberParams = new LinearLayout.LayoutParams(dp(32), dp(32));
+        throbberParams.topMargin = dp(8);
+        panel.addView(localRoadProgressBar, throbberParams);
 
         localRoadProgressDetail = new TextView(this);
         localRoadProgressDetail.setTextSize(11);
@@ -964,7 +964,6 @@ public class ProgressActivity extends Activity {
         int done = stats.localRoadLookupDone;
         int initiallyDone = stats.localRoadLookupInitialDone;
         int percent = total <= 0 ? 0 : Math.min(100, Math.round(100f * done / total));
-        localRoadProgressBar.setProgress(percent);
         if (stats.localRoadEnrichmentComplete) {
             localRoadProgressMessage.setText("Town matching complete");
             localRoadProgressDetail.setText("Local roads are grouped by town.");
@@ -1270,7 +1269,7 @@ public class ProgressActivity extends Activity {
             row.setPadding(0, dp(6), 0, dp(2));
             TextView ref = motorwayBadge(road);
             row.addView(ref, new LinearLayout.LayoutParams(dp(78), dp(32)));
-            View bar = motorwayBar(maximum > 0 ? road.matchedMetres / maximum : 0);
+            View bar = motorwayBar(maximum > 0 ? road.matchedMetres / maximum : 0, 0xFF005EB8);
             LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(0, dp(12), 1);
             barParams.setMargins(dp(9), 0, dp(9), 0);
             row.addView(bar, barParams);
@@ -1327,7 +1326,7 @@ public class ProgressActivity extends Activity {
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0, dp(8), 0, dp(2));
             row.addView(motorwayBadge(road), new LinearLayout.LayoutParams(dp(78), dp(32)));
-            View bar = motorwayBar(Double.isFinite(percent) ? percent / 100.0 : 0);
+            View bar = motorwayBar(Double.isFinite(percent) ? percent / 100.0 : 0, 0xFF005EB8);
             LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(0, dp(12), 1);
             barParams.setMargins(dp(9), 0, dp(9), 0);
             row.addView(bar, barParams);
@@ -1380,7 +1379,7 @@ public class ProgressActivity extends Activity {
         for(ARoadProgressCalculator.Road road:roads){
             LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(6),0,dp(2));
             row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
-            View bar=motorwayBar(road.matchedMetres/maximum);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
+            View bar=motorwayBar(road.matchedMetres/maximum, 0xFF25834A);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
             TextView value=new TextView(this);value.setText(formatMiles(road.matchedMetres));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(84),-2));panel.addView(row);
             TextView meta=new TextView(this);meta.setText(road.journeyIds.size()+" matched journey"+(road.journeyIds.size()==1?"":"s")+" contributed");meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(5));panel.addView(meta);
         }
@@ -1395,7 +1394,7 @@ public class ProgressActivity extends Activity {
         if(!summary.missing.isEmpty()){TextView warning=new TextView(this);warning.setText("Reference unavailable for: "+String.join(", ",summary.missing)+". Coverage is excluded from the totals.");warning.setTextColor(0xFFFFD166);warning.setTextSize(12);warning.setPadding(0,0,0,dp(8));panel.addView(warning);}
         for(ARoadProgressCalculator.Road road:summary.roads){double pct=road.percent();if(!Double.isFinite(pct)||pct<1)continue;
             LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(2));row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
-            View bar=motorwayBar(pct/100);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
+            View bar=motorwayBar(pct/100, 0xFF25834A);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
             TextView value=new TextView(this);value.setText(String.format(Locale.UK,"%.1f%%",pct));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(55),-2));panel.addView(row);
             TextView meta=new TextView(this);meta.setText(String.format(Locale.UK,"%s estimated unique · %s reference",formatMiles(road.uniqueKm()*1000),formatMiles(road.totalKm*1000)));meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(4));panel.addView(meta);
         }parent.addView(panel);
@@ -1454,11 +1453,11 @@ public class ProgressActivity extends Activity {
         return drawable;
     }
 
-    private View motorwayBar(double fraction) {
+    private View motorwayBar(double fraction, int fillColor) {
         LinearLayout track = new LinearLayout(this);
         track.setBackground(roundRect(0xFF122554, dp(20)));
         View fill = new View(this);
-        fill.setBackground(roundRect(TEAL, dp(20)));
+        fill.setBackground(roundRect(fillColor, dp(20)));
         int width = Math.max(0, Math.min(100, (int) Math.round(fraction * 100)));
         track.addView(fill, new LinearLayout.LayoutParams(0, -1, width));
         if (width < 100) track.addView(new View(this),
