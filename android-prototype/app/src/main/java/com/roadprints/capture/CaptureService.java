@@ -566,10 +566,14 @@ public class CaptureService extends Service {
         final String savedStartedAt = startedAt;
         final String savedMode = mode;
         final double savedDistanceMetres = distanceMetres;
+        final int savedGpsPointCount = savedPoints.size();
+        final boolean confirmedStationaryStop = stationarySince != 0
+                && System.currentTimeMillis() - stationarySince
+                >= CaptureStartGate.STILLNESS_END_THRESHOLD_MS;
         final String savedEndedAt = Instant.now().toString();
         final String savedTimezone = ZoneId.systemDefault().toString();
-        final Location savedStopAnchor = stationaryAnchor != null
-                ? new Location(stationaryAnchor) : (lastPoint == null ? null : new Location(lastPoint));
+        final Location savedStopAnchor = stationaryAnchor == null
+                ? null : new Location(stationaryAnchor);
         broadcastUpdate("Saving journey locally...");
 
         captureIo.execute(() -> {
@@ -584,10 +588,15 @@ public class CaptureService extends Service {
                 journey.put("timezone", savedTimezone);
                 journey.put("mode", savedMode);
                 journey.put("transport_confirmation", "required");
-                journey.put("distance_meters", savedDistanceMetres);
+                List<Location> routePoints = confirmedStationaryStop
+                        ? collapseStationaryEndpoint(savedPoints, savedStopAnchor) : savedPoints;
+                double routeDistance = routePoints.size() < savedPoints.size()
+                        ? routeDistanceMetres(routePoints) : savedDistanceMetres;
+                journey.put("distance_meters", routeDistance);
+                journey.put("gps_point_count", savedGpsPointCount);
                 journey.put("route_geometry", new JSONObject()
                         .put("type", "LineString")
-                        .put("coordinates", coordinates(savedPoints)));
+                        .put("coordinates", coordinates(routePoints)));
                 journey.put("processing", new JSONObject()
                         .put("import", "complete")
                         .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
@@ -792,6 +801,40 @@ public class CaptureService extends Service {
                     .put(point.getLatitude()));
         }
         return coordinates;
+    }
+
+    static List<Location> collapseStationaryEndpoint(List<Location> routePoints, Location stopAnchor) {
+        List<Location> result = new ArrayList<>();
+        if (routePoints == null) return result;
+        if (stopAnchor == null || routePoints.size() < 4) {
+            result.addAll(routePoints);
+            return result;
+        }
+        float radius = stopAnchor.hasAccuracy()
+                ? Math.max(20f, Math.min(35f, stopAnchor.getAccuracy()))
+                : 25f;
+        int suffixStart = routePoints.size();
+        for (int index = routePoints.size() - 1; index >= 0; index--) {
+            Location point = routePoints.get(index);
+            if (point == null || point.distanceTo(stopAnchor) > radius) break;
+            suffixStart = index;
+        }
+        int clusteredPoints = routePoints.size() - suffixStart;
+        if (suffixStart == 0 || clusteredPoints < 3) {
+            result.addAll(routePoints);
+            return result;
+        }
+        for (int index = 0; index < suffixStart; index++) result.add(routePoints.get(index));
+        result.add(new Location(stopAnchor));
+        return result;
+    }
+
+    private static double routeDistanceMetres(List<Location> routePoints) {
+        double distance = 0;
+        for (int index = 1; index < routePoints.size(); index++) {
+            distance += routePoints.get(index - 1).distanceTo(routePoints.get(index));
+        }
+        return distance;
     }
 
     private void removeActivityUpdates() {
