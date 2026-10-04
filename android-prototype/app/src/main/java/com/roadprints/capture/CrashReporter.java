@@ -1,7 +1,14 @@
 package com.roadprints.capture;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 
 import org.json.JSONArray;
@@ -16,6 +23,9 @@ public final class CrashReporter {
     private static final String PREFS = "roadprints_debug_reports";
     private static final String REPORTS = "reports";
     private static final String MATCH_REPORTS = "match_failure_reports";
+    private static final String NOTIFICATION_ACTIVE = "debug_notification_active";
+    private static final String DEBUG_CHANNEL = "roadprints_debug_reports";
+    private static final int DEBUG_NOTIFICATION_ID = 44;
     private static final int MAX_REPORTS = 5;
     private static final int MAX_REPORT_CHARS = 12_000;
     private static final int MAX_MATCH_REPORTS = 30;
@@ -44,6 +54,7 @@ public final class CrashReporter {
                     System.exit(10);
                 }
             });
+            notifyIfDiagnosticReportsAvailable(app);
         }
     }
 
@@ -65,6 +76,7 @@ public final class CrashReporter {
             // commit() is intentional: this runs immediately before Android terminates the process.
             preferences.edit().putString(REPORTS, updated.toString()).commit();
         }
+        notifyIfDiagnosticReportsAvailable(context);
     }
 
     /** Records a failed route match without retaining or exporting any route coordinates. */
@@ -87,6 +99,7 @@ public final class CrashReporter {
                 }
                 preferences.edit().putString(MATCH_REPORTS, updated.toString()).apply();
             }
+            notifyIfDiagnosticReportsAvailable(context);
         } catch (Exception ignored) {
             // Diagnostic recording must never interrupt journey matching or recovery.
         }
@@ -310,7 +323,56 @@ public final class CrashReporter {
 
     public static void clear(Context context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                .remove(REPORTS).remove(MATCH_REPORTS).commit();
+                .remove(REPORTS).remove(MATCH_REPORTS).putBoolean(NOTIFICATION_ACTIVE, false).commit();
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.cancel(DEBUG_NOTIFICATION_ID);
+    }
+
+    public static void markDiagnosticReportsViewed(Context context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(NOTIFICATION_ACTIVE, false).apply();
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.cancel(DEBUG_NOTIFICATION_ID);
+    }
+
+    private static void notifyIfDiagnosticReportsAvailable(Context context) {
+        try {
+            Context app = context.getApplicationContext();
+            if (!hasReports(app)) return;
+            SharedPreferences preferences = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (preferences.getBoolean(NOTIFICATION_ACTIVE, false)) return;
+            NotificationManager manager = (NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (manager == null || !manager.areNotificationsEnabled()) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    && app.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) return;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(DEBUG_CHANNEL,
+                        "Roadprints debug reports", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Alerts you when a new on-device Roadprints diagnostic report is ready");
+                manager.createNotificationChannel(channel);
+            }
+
+            Intent openDebug = new Intent(app, DebugActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(app, DEBUG_NOTIFICATION_ID,
+                    openDebug, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    ? new Notification.Builder(app, DEBUG_CHANNEL)
+                    : new Notification.Builder(app).setPriority(Notification.PRIORITY_DEFAULT);
+            Notification notification = builder
+                    .setSmallIcon(android.R.drawable.stat_notify_error)
+                    .setContentTitle("Roadprints debug report ready")
+                    .setContentText("Tap to review the new report. It stays on this device.")
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build();
+            manager.notify(DEBUG_NOTIFICATION_ID, notification);
+            preferences.edit().putBoolean(NOTIFICATION_ACTIVE, true).commit();
+        } catch (Throwable ignored) {
+            // A notification must never interrupt crash recording or journey matching.
+        }
     }
 
     private static String format(Thread thread, Throwable error) {
