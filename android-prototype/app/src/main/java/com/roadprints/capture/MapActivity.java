@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +18,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,12 +48,22 @@ public class MapActivity extends Activity {
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int mapLoadGeneration;
+    private RoutePreviewView mapView;
+    private long displayedMapRevision = Long.MIN_VALUE;
+    private double savedCameraLongitude, savedCameraLatitude, savedCameraZoom;
+    private boolean hasSavedCamera;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAV_BAR);
+        if (state != null && state.containsKey("map_camera_longitude")) {
+            savedCameraLongitude = state.getDouble("map_camera_longitude");
+            savedCameraLatitude = state.getDouble("map_camera_latitude");
+            savedCameraZoom = state.getDouble("map_camera_zoom");
+            hasSavedCamera = true;
+        }
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -127,7 +139,29 @@ public class MapActivity extends Activity {
 
     @Override
     protected void onPause() {
+        saveMapCamera();
         super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle state) {
+        saveMapCamera();
+        if (hasSavedCamera) {
+            state.putDouble("map_camera_longitude", savedCameraLongitude);
+            state.putDouble("map_camera_latitude", savedCameraLatitude);
+            state.putDouble("map_camera_zoom", savedCameraZoom);
+        }
+        super.onSaveInstanceState(state);
+    }
+
+    private void saveMapCamera() {
+        if (mapView == null || getIntent().hasExtra("settlement_code")) return;
+        double[] camera = mapView.cameraState();
+        if (camera == null || camera.length < 3) return;
+        savedCameraLongitude = camera[0];
+        savedCameraLatitude = camera[1];
+        savedCameraZoom = camera[2];
+        hasSavedCamera = true;
     }
 
     @Override
@@ -137,8 +171,11 @@ public class MapActivity extends Activity {
     }
 
     private void refreshMap() {
-        final int generation = ++mapLoadGeneration;
         String settlementCode = getIntent().getStringExtra("settlement_code");
+        if ((settlementCode == null || settlementCode.isEmpty())
+                && mapView != null && displayedMapRevision == mapDataRevision()) return;
+        saveMapCamera();
+        final int generation = ++mapLoadGeneration;
         if (settlementCode != null && !settlementCode.isEmpty()) {
             refreshSettlementMap(generation, settlementCode,
                     getIntent().getStringExtra("settlement_name"),
@@ -227,6 +264,12 @@ public class MapActivity extends Activity {
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
             mapFrame.addView(map, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            if (hasSavedCamera) {
+                map.restoreCameraState(savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
+                hasSavedCamera = false;
+            }
+            mapView = map;
+            displayedMapRevision = mapDataRevision();
             addZoomControls(mapFrame, map);
         });
     }
@@ -686,15 +729,82 @@ public class MapActivity extends Activity {
     private void showServiceStationCard(JSONObject station, boolean visited) {
         if (station == null || isFinishing()) return;
         String name = station.optString("name", "Service station");
-        AlertDialog.Builder card = new AlertDialog.Builder(this)
-                .setTitle(name)
-                .setMessage(visited ? "Visited" : "Not visited")
-                .setNegativeButton("Close", null);
+        LinearLayout content = cardContainer();
+        addCardLabel(content, "SERVICE STATION");
+        addCardTitle(content, name);
+        addCardBody(content, visited ? "Visited" : "Not visited");
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        TextView close = cardAction("CLOSE", false);
+        close.setOnClickListener(v -> stationDialog.dismiss());
         if (visited) {
-            card.setPositiveButton("View related journeys",
-                    (dialog, which) -> loadRelatedServiceStationJourneys(station));
+            TextView related = cardAction("VIEW RELATED JOURNEYS", true);
+            related.setOnClickListener(v -> {
+                stationDialog.dismiss();
+                loadRelatedServiceStationJourneys(station);
+            });
+            actions.addView(related);
         }
-        card.show();
+        actions.addView(close);
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, -2);
+        actionParams.topMargin = dp(14);
+        content.addView(actions, actionParams);
+        stationDialog = new AlertDialog.Builder(this).setView(content).create();
+        stationDialog.setOnShowListener(dialog -> {
+            if (stationDialog.getWindow() != null)
+                stationDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        });
+        stationDialog.show();
+    }
+
+    private AlertDialog stationDialog;
+
+    private LinearLayout cardContainer() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(22), dp(20), dp(22), dp(14));
+        card.setBackground(roundRect(0xFF10275D, dp(20)));
+        return card;
+    }
+
+    private void addCardLabel(LinearLayout parent, String value) {
+        TextView label = new TextView(this);
+        label.setText(value);
+        label.setTextColor(0xFF67D5CC);
+        label.setTextSize(12);
+        label.setTypeface(null, Typeface.BOLD);
+        parent.addView(label);
+    }
+
+    private void addCardTitle(LinearLayout parent, String value) {
+        TextView title = new TextView(this);
+        title.setText(value);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(21);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setPadding(0, dp(5), 0, dp(4));
+        parent.addView(title);
+    }
+
+    private void addCardBody(LinearLayout parent, String value) {
+        TextView body = new TextView(this);
+        body.setText(value);
+        body.setTextColor(0xFFD3DCED);
+        body.setTextSize(16);
+        parent.addView(body);
+    }
+
+    private TextView cardAction(String value, boolean primary) {
+        TextView button = new TextView(this);
+        button.setText(value);
+        button.setTextColor(primary ? GOLD : 0xFF67D5CC);
+        button.setTextSize(13);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(12), dp(12), dp(12), dp(12));
+        button.setClickable(true);
+        button.setFocusable(true);
+        return button;
     }
 
     private void loadRelatedServiceStationJourneys(JSONObject station) {
@@ -854,29 +964,75 @@ public class MapActivity extends Activity {
 
     private void showRelatedServiceStationJourneys(String stationName, List<JSONObject> journeys) {
         if (isFinishing()) return;
+        LinearLayout content = cardContainer();
+        addCardLabel(content, "RELATED JOURNEYS");
+        addCardTitle(content, stationName);
         if (journeys.isEmpty()) {
-            new AlertDialog.Builder(this).setTitle(stationName)
-                    .setMessage("No matched journeys were found close to this service station.")
-                    .setPositiveButton("Close", null).show();
-            return;
+            addCardBody(content, "No matched journeys were found close to this service station.");
+        } else {
+            ScrollView scroll = new ScrollView(this);
+            LinearLayout rows = new LinearLayout(this);
+            rows.setOrientation(LinearLayout.VERTICAL);
+            for (int i = 0; i < journeys.size(); i++) {
+                JSONObject journey = journeys.get(i);
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.VERTICAL);
+                row.setPadding(dp(14), dp(12), dp(14), dp(12));
+                row.setBackground(roundRect(i % 2 == 0 ? 0xFF1B356E : 0xFF203E78, dp(12)));
+                TextView title = new TextView(this);
+                title.setText(journey.optString("title", journey.optString("name", "Journey")));
+                title.setTextColor(Color.WHITE);
+                title.setTextSize(15);
+                title.setTypeface(null, Typeface.BOLD);
+                TextView date = new TextView(this);
+                date.setText(formatJourneyDate(journey.optString("started_at", "")));
+                date.setTextColor(0xFF67D5CC);
+                date.setTextSize(13);
+                date.setPadding(0, dp(4), 0, 0);
+                row.addView(title);
+                row.addView(date);
+                row.setClickable(true);
+                row.setFocusable(true);
+                row.setOnClickListener(v -> {
+                    String journeyId = journey.optString("journey_id", "");
+                    if (journeyId.isEmpty()) return;
+                    journeyListDialog.dismiss();
+                    Intent editor = new Intent(this, JourneyMapEditorActivity.class);
+                    editor.putExtra("journey_id", journeyId);
+                    startActivity(editor);
+                });
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2);
+                rowParams.bottomMargin = dp(8);
+                rows.addView(row, rowParams);
+            }
+            scroll.addView(rows);
+            content.addView(scroll, new LinearLayout.LayoutParams(-1, dp(330)));
         }
-        String[] labels = new String[journeys.size()];
-        for (int i = 0; i < journeys.size(); i++) {
-            JSONObject journey = journeys.get(i);
-            String title = journey.optString("title",
-                    journey.optString("name", "Journey"));
-            String when = journey.optString("started_at", "");
-            labels[i] = when.isEmpty() ? title : title + " · " + when;
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END);
+        TextView close = cardAction("CLOSE", false);
+        close.setOnClickListener(v -> journeyListDialog.dismiss());
+        actions.addView(close);
+        content.addView(actions);
+        journeyListDialog = new AlertDialog.Builder(this).setView(content).create();
+        journeyListDialog.setOnShowListener(dialog -> {
+            if (journeyListDialog.getWindow() != null)
+                journeyListDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        });
+        journeyListDialog.show();
+    }
+
+    private AlertDialog journeyListDialog;
+
+    private String formatJourneyDate(String value) {
+        if (value == null || value.isEmpty()) return "Date unavailable";
+        try {
+            java.time.Instant instant = java.time.Instant.parse(value);
+            return java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm",
+                    java.util.Locale.UK).withZone(java.time.ZoneId.systemDefault()).format(instant);
+        } catch (Exception ignored) {
+            return "Date unavailable";
         }
-        new AlertDialog.Builder(this).setTitle("Journeys at " + stationName)
-                .setItems(labels, (dialog, index) -> {
-                    String journeyId = journeys.get(index).optString("journey_id", "");
-                    if (!journeyId.isEmpty()) {
-                        Intent editor = new Intent(this, JourneyMapEditorActivity.class);
-                        editor.putExtra("journey_id", journeyId);
-                        startActivity(editor);
-                    }
-                }).setNegativeButton("Close", null).show();
     }
 
     private void addZoomControls(FrameLayout mapFrame, RoutePreviewView map) {
@@ -1028,3 +1184,4 @@ public class MapActivity extends Activity {
         boolean simplified;
     }
 }
+
