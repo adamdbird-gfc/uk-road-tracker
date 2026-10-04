@@ -204,7 +204,7 @@ public class JourneyMapEditorActivity extends Activity {
         styleActionButton(removeButton, canRemove, removeMode);
         styleActionButton(restoreButton, canRestore, canRestore);
         styleActionButton(undoButton, canUndo, false);
-        styleActionButton(correctionButton, !selectedEdges.isEmpty(), correctionTrace == null);
+        styleActionButton(correctionButton, true, drawingCorrection || correctionTrace == null);
         correctionButton.setText(correctionTrace == null ? "DRAW CORRECTION" : "REDRAW CORRECTION");
         saveButton.setEnabled(dirty);
         saveButton.setBackground(roundRect(dirty ? 0xFFF7C450 : 0xFF655C48,
@@ -257,20 +257,50 @@ public class JourneyMapEditorActivity extends Activity {
             updateActionButtons();
             return;
         }
-        if (selectedEdges.isEmpty()) {
-            status.setText("Tap the inaccurate route section first, then draw its corrected path.");
-            return;
-        }
         drawingCorrection = true;
         routeView.setCorrectionDrawMode(true);
-        status.setText("Trace the route you actually travelled on the map. Tap DRAW CORRECTION to cancel.");
+        status.setText(selectedEdges.isEmpty()
+                ? "Trace the corrected path over the map; the nearest route section will be selected."
+                : "Trace the route you actually travelled on the map. Tap DRAW CORRECTION to cancel.");
         correctionButton.setText("CANCEL TRACE");
+    }
+
+    private boolean selectNearestRouteEdges(JSONArray trace) {
+        JSONArray first = trace.optJSONArray(0);
+        JSONArray last = trace.optJSONArray(trace.length() - 1);
+        if (first == null || last == null) return false;
+        int firstEdge = -1, lastEdge = -1, edgeIndex = 0;
+        double firstDistance = Double.MAX_VALUE, lastDistance = Double.MAX_VALUE;
+        for (JSONArray route : routeSegments) {
+            for (int i = 1; i < route.length(); i++, edgeIndex++) {
+                JSONArray a = route.optJSONArray(i - 1);
+                JSONArray b = route.optJSONArray(i);
+                double da = tracePointDistanceMetres(first, a);
+                double db = tracePointDistanceMetres(last, b);
+                if (da < firstDistance) { firstDistance = da; firstEdge = edgeIndex; }
+                if (db < lastDistance) { lastDistance = db; lastEdge = edgeIndex; }
+                da = tracePointDistanceMetres(first, b);
+                db = tracePointDistanceMetres(last, a);
+                if (da < firstDistance) { firstDistance = da; firstEdge = edgeIndex; }
+                if (db < lastDistance) { lastDistance = db; lastEdge = edgeIndex; }
+            }
+        }
+        if (firstEdge < 0 || lastEdge < 0 || firstDistance > 250 || lastDistance > 250) return false;
+        int low = Math.min(firstEdge, lastEdge), high = Math.max(firstEdge, lastEdge);
+        for (int edge = low; edge <= high; edge++) selectedEdges.add(edge);
+        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
+        return true;
     }
 
     private void onCorrectionTrace(JSONArray trace) {
         drawingCorrection = false;
         if (trace == null || trace.length() < 2) {
             status.setText("Draw a longer route section to save a correction.");
+            updateActionButtons();
+            return;
+        }
+        if (selectedEdges.isEmpty() && !selectNearestRouteEdges(trace)) {
+            status.setText("Trace endpoints need to be within 250 m of the route. Select the section and try again.");
             updateActionButtons();
             return;
         }
