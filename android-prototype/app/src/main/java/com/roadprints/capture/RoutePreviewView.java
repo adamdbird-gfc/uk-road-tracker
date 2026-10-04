@@ -124,6 +124,16 @@ public class RoutePreviewView extends View {
         void onServiceStationTap(org.json.JSONObject station);
     }
 
+    public interface OnMapRoadTapListener {
+        void onMapRoadTap(double latitude, double longitude);
+    }
+
+    private OnMapRoadTapListener mapRoadTapListener;
+
+    public void setMapRoadTapListener(OnMapRoadTapListener listener) {
+        mapRoadTapListener = listener;
+    }
+
     private OnServiceStationTapListener serviceStationTapListener;
 
     public void setServiceStationTapListener(OnServiceStationTapListener listener) {
@@ -285,7 +295,8 @@ public class RoutePreviewView extends View {
                         tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
-                return tapServiceStation(event.getX(), event.getY());
+                if (tapServiceStation(event.getX(), event.getY())) return true;
+                return tapMapRoad(event.getX(), event.getY());
             }
 
             @Override
@@ -805,6 +816,35 @@ public class RoutePreviewView extends View {
         float centerY() { return yTotal / count; }
     }
 
+    private boolean tapMapRoad(float x, float y) {
+        if (mapRoadTapListener == null) return false;
+        float nearest = Float.MAX_VALUE;
+        List<List<JSONArray>> groups = new ArrayList<>();
+        groups.add(matchedSegments);
+        groups.add(routeExtensions);
+        groups.add(motorwaySegments);
+        groups.add(incompleteMotorwaySegments);
+        groups.add(coveredMotorwaySegments);
+        groups.add(incompleteARoadSegments);
+        groups.add(coveredARoadSegments);
+        for (List<JSONArray> group : groups) {
+            for (JSONArray route : group) {
+                for (int i = 1; i < route.length(); i++) {
+                    float distance = editableEdgeDistance(route, i, x, y);
+                    if (Float.isFinite(distance)) nearest = Math.min(nearest, distance);
+                }
+            }
+        }
+        if (nearest > dp(30)) return false;
+        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+        double unitX = longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world;
+        double unitY = latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world;
+        double longitude = unitX * 360.0 - 180.0;
+        double latitude = unitYToLatitude(unitY);
+        mapRoadTapListener.onMapRoadTap(latitude, longitude);
+        return true;
+    }
+
     private boolean tapServiceStation(float x, float y) {
         if (serviceStationTapListener == null || serviceStations.length() == 0) return false;
         float hitRadius = dp(38);
@@ -1304,3 +1344,4 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
