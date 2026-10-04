@@ -144,6 +144,7 @@ final class AchievementStore {
         JSONObject unlocked=readUnlocked(preferences);
         List<Definition> newlyUnlocked=new ArrayList<>();
         List<Progress> output=new ArrayList<>();
+        boolean unlockedChanged=false;
         for (Definition definition : DEFINITIONS) {
             double value=values.getOrDefault(definition.id, 0.0);
             boolean earned=value >= definition.target;
@@ -151,9 +152,15 @@ final class AchievementStore {
             if (earned && !already) {
                 try {
                     unlocked.put(definition.id, new JSONObject().put("unlocked_at", System.currentTimeMillis()));
+                    unlockedChanged=true;
                 } catch (org.json.JSONException ignored) { }
                 newlyUnlocked.add(definition);
                 already=true;
+            } else if (!earned && already) {
+                // A saved route correction can invalidate previously credited evidence.
+                unlocked.remove(definition.id);
+                unlockedChanged=true;
+                already=false;
             }
             int total=definition.id.equals("spanning-the-nation") ? CROSSINGS.size()
                     : definition.id.equals("mary-high-streets") ? 10 : (int)definition.target;
@@ -164,7 +171,7 @@ final class AchievementStore {
                     progressText(definition, value, complete, total, already),
                     "spanning-the-nation".equals(definition.id) ? crossings : null));
         }
-        if (!newlyUnlocked.isEmpty()) preferences.edit().putString("unlocked", unlocked.toString()).apply();
+        if (unlockedChanged) preferences.edit().putString("unlocked", unlocked.toString()).apply();
         return new Snapshot(output, newlyUnlocked, revision);
     }
 
