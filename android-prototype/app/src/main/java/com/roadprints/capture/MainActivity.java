@@ -141,6 +141,8 @@ public class MainActivity extends Activity {
     private boolean isTrackingSettingsScreen() { return getIntent().getBooleanExtra("tracking_settings_screen", false); }
 
     private void buildScreen() {
+        getWindow().setStatusBarColor(0xFF0B1C50);
+        getWindow().setNavigationBarColor(0xFF10275D);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF0B1C50);
@@ -178,10 +180,6 @@ public class MainActivity extends Activity {
                     16, 0xFFD3DCED, false);
             subtitle.setPadding(0, dp(8), 0, dp(16));
             content.addView(subtitle);
-            TextView back = text("BACK TO UTILITIES", 14, 0xFF67D5CC, true);
-            back.setGravity(Gravity.CENTER);
-            back.setOnClickListener(v -> finish());
-            content.addView(back, new LinearLayout.LayoutParams(-1, dp(48)));
             content.addView(text("Journey type", 16, 0xFF67D5CC, true));
             modeSpinner = new Spinner(this);
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(
@@ -254,6 +252,10 @@ public class MainActivity extends Activity {
         }
         scroll.addView(content);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        if (isTrackingSettingsScreen()) {
+            root.addView(RoadprintsHeader.backLink(this, "BACK TO UTILITIES", this::finish),
+                    new LinearLayout.LayoutParams(-1, dp(58)));
+        }
         setContentView(root);
         if (!isTrackingSettingsScreen()) refreshArchiveSummary();
     }
