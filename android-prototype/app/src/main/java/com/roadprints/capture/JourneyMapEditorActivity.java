@@ -320,7 +320,7 @@ public class JourneyMapEditorActivity extends Activity {
             } else {
                 message.append("Road records for these roads will be removed from this journey and its map, journey summaries, progress and achievements:");
                 for (JSONObject record : roadRecords) {
-                    message.append("\\n\\n• ").append(record.optString("label", "Road"));
+                    message.append("\n\n• ").append(record.optString("label", "Road"));
                 }
             }
             new AlertDialog.Builder(this)
