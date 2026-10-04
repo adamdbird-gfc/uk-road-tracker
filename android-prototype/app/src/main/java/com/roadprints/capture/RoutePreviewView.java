@@ -1105,6 +1105,22 @@ public class RoutePreviewView extends View {
         return new File(directory, key.replace('/', '_') + extension);
     }
 
+    /** Returns the current map centre and zoom for restoring the user's view. */
+    public double[] cameraState() {
+        return new double[]{centerLongitude, centerLatitude, cameraZoom};
+    }
+
+    /** Restores a saved view and prevents the initial route fit from replacing it. */
+    public void restoreCameraState(double longitude, double latitude, double zoom) {
+        if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
+                || !Double.isFinite(zoom)) return;
+        centerLongitude = clampUnitX((longitude + 180.0) / 360.0) * 360.0 - 180.0;
+        centerLatitude = Math.max(-85.05112878, Math.min(85.05112878, latitude));
+        cameraZoom = clampZoom(zoom);
+        routeFitPending = false;
+        invalidate();
+    }
+
     public void zoomIn() {
         zoomAt(1.5, getWidth() / 2f, getHeight() / 2f);
     }
