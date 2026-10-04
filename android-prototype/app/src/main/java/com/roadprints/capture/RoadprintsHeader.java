@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.Gravity;
+import android.view.View;
+import android.os.Build;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.LinearLayout;
@@ -58,10 +60,35 @@ final class RoadprintsHeader {
                 ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
         page.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-        page.addView(backLink(activity, backLabel, onBack),
-                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                        dp(activity, 58)));
+        TextView footer = backLink(activity, backLabel, onBack);
+        page.addView(footer, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(activity, 58)));
+        int left = content.getPaddingLeft();
+        int top = content.getPaddingTop();
+        int right = content.getPaddingRight();
+        int bottom = content.getPaddingBottom();
+        page.setOnApplyWindowInsetsListener((view, insets) -> {
+            int systemTop;
+            int systemBottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(
+                        android.view.WindowInsets.Type.systemBars());
+                systemTop = bars.top;
+                systemBottom = bars.bottom;
+            } else {
+                systemTop = insets.getSystemWindowInsetTop();
+                systemBottom = insets.getSystemWindowInsetBottom();
+            }
+            content.setPadding(left, top + systemTop, right, bottom);
+            footer.setPadding(dp(activity, 24), 0, dp(activity, 24), systemBottom);
+            LinearLayout.LayoutParams footerParams =
+                    (LinearLayout.LayoutParams) footer.getLayoutParams();
+            footerParams.height = dp(activity, 58) + systemBottom;
+            footer.setLayoutParams(footerParams);
+            return insets;
+        });
         activity.setContentView(page);
+        page.requestApplyInsets();
     }
 
     static TextView backLink(Activity activity, String label, Runnable onBack) {
