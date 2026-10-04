@@ -1455,7 +1455,7 @@ public class ProgressActivity extends Activity {
 
     private View motorwayBar(double fraction, int fillColor) {
         LinearLayout track = new LinearLayout(this);
-        track.setBackground(roundRect(0xFF122554, dp(20)));
+        track.setBackground(roundRect(Color.WHITE, dp(20)));
         View fill = new View(this);
         fill.setBackground(roundRect(fillColor, dp(20)));
         int width = Math.max(0, Math.min(100, (int) Math.round(fraction * 100)));
