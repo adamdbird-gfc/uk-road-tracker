@@ -604,7 +604,8 @@ public class JourneyListActivity extends Activity {
         List<JSONObject> output = new ArrayList<>();
         for (int index = 0; index < features.length(); index++) {
             JSONObject feature = features.optJSONObject(index);
-            if (feature != null) output.add(feature);
+            if (feature != null && !JourneyCorrectionUtils.excludesRoadFeature(journey, feature))
+                output.add(feature);
         }
         return output;
     }
