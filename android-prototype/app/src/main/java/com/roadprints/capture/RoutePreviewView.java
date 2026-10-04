@@ -120,6 +120,16 @@ public class RoutePreviewView extends View {
         void onRouteEdgesTap(Set<Integer> edgeIndices);
     }
 
+    public interface OnServiceStationTapListener {
+        void onServiceStationTap(org.json.JSONObject station);
+    }
+
+    private OnServiceStationTapListener serviceStationTapListener;
+
+    public void setServiceStationTapListener(OnServiceStationTapListener listener) {
+        serviceStationTapListener = listener;
+    }
+
     public interface OnCorrectionTraceListener {
         void onCorrectionTrace(JSONArray coordinates);
     }
@@ -275,7 +285,7 @@ public class RoutePreviewView extends View {
                         tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
-                return false;
+                return tapServiceStation(event.getX(), event.getY());
             }
 
             @Override
@@ -795,9 +805,32 @@ public class RoutePreviewView extends View {
         float centerY() { return yTotal / count; }
     }
 
+    private boolean tapServiceStation(float x, float y) {
+        if (serviceStationTapListener == null || serviceStations.length() == 0) return false;
+        float hitRadius = dp(26);
+        double nearestDistance = hitRadius * hitRadius;
+        org.json.JSONObject nearest = null;
+        for (int i = 0; i < serviceStations.length(); i++) {
+            org.json.JSONObject station = serviceStations.optJSONObject(i);
+            if (station == null) continue;
+            double lat = station.optDouble("lat", Double.NaN);
+            double lng = station.optDouble("lng", Double.NaN);
+            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
+            float sx = screenX(lng), sy = screenY(lat);
+            double dx = sx - x, dy = sy - y, distance = dx * dx + dy * dy;
+            if (distance <= nearestDistance) {
+                nearestDistance = distance;
+                nearest = station;
+            }
+        }
+        if (nearest == null) return false;
+        serviceStationTapListener.onServiceStationTap(nearest);
+        return true;
+    }
+
     private void drawServiceStations(Canvas canvas) {
-        float singleRadius = dp(6);
-        float cellSize = dp(44);
+        float singleRadius = dp(10);
+        float cellSize = dp(54);
         Map<Long, ServiceStationCluster> clusters = new LinkedHashMap<>();
         for (int i = 0; i < serviceStations.length(); i++) {
             org.json.JSONObject station = serviceStations.optJSONObject(i);
@@ -831,7 +864,7 @@ public class RoutePreviewView extends View {
             boolean visited = cluster.visitedCount > 0;
             serviceStationPaint.setColor(visited ? 0xFFF7C450 : 0xFF74829A);
             if (cluster.count > 1) {
-                float radius = dp(12);
+                float radius = dp(14);
                 canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, radius, serviceStationPaint);
                 markerTextPaint.setColor(Color.WHITE);
@@ -840,10 +873,10 @@ public class RoutePreviewView extends View {
                         y - (markerTextPaint.ascent() + markerTextPaint.descent()) / 2,
                         markerTextPaint);
             } else {
-                canvas.drawCircle(x, y, singleRadius + dp(1.5f), serviceStationOutlinePaint);
+                canvas.drawCircle(x, y, singleRadius + dp(2), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
                 markerPaint.setColor(Color.WHITE);
-                canvas.drawCircle(x, y, dp(1.7f), markerPaint);
+                canvas.drawCircle(x, y, dp(2.5f), markerPaint);
             }
         }
         markerTextPaint.setTextSize(originalTextSize);
