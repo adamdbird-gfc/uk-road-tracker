@@ -1,6 +1,7 @@
 package com.roadprints.capture;
 
 import android.content.Context;
+import android.location.Location;
 import android.content.SharedPreferences;
 
 import org.json.JSONArray;
@@ -42,7 +43,62 @@ final class ServiceStationStore {
         return set(context, AUTOMATIC);
     }
     static Set<String> completed(Context context) {
-        Set<String> result=manual(context); result.addAll(automatic(context)); return result;
+        Set<String> result=manual(context);
+        result.addAll(automatic(context));
+        result.addAll(ServiceStationVisitStore.stationIds(context));
+        return result;
+    }
+
+    /** Candidate stops are suggestions only and are never credited without user confirmation. */
+    static JSONArray trackedCandidates(Context context, java.util.List<Location> points)
+            throws Exception {
+        JSONArray candidates = new JSONArray();
+        if (!unlocked(context) || points == null || points.isEmpty()) return candidates;
+        JSONArray services = stations(context);
+        final long maximumSampleGapMs = 2L * 60L * 1000L;
+        final long minimumDwellMs = 3L * 60L * 1000L;
+        final int minimumPoints = 4;
+        for (int serviceIndex = 0; serviceIndex < services.length(); serviceIndex++) {
+            JSONObject service = services.optJSONObject(serviceIndex);
+            if (service == null) continue;
+            double serviceLat = service.optDouble("lat", Double.NaN);
+            double serviceLng = service.optDouble("lng", Double.NaN);
+            if (!Double.isFinite(serviceLat) || !Double.isFinite(serviceLng)) continue;
+            long firstInside = -1;
+            long lastInside = -1;
+            int samples = 0;
+            boolean sustainedStop = false;
+            for (Location point : points) {
+                if (point == null) continue;
+                long time = point.getTime();
+                if (haversineMetres(point.getLatitude(), point.getLongitude(),
+                        serviceLat, serviceLng) > 300.0) {
+                    firstInside = -1;
+                    lastInside = -1;
+                    samples = 0;
+                    continue;
+                }
+                if (firstInside < 0 || time - lastInside > maximumSampleGapMs
+                        || time < lastInside) {
+                    firstInside = time;
+                    samples = 1;
+                } else {
+                    samples++;
+                }
+                lastInside = time;
+                if (samples >= minimumPoints && lastInside - firstInside >= minimumDwellMs) {
+                    sustainedStop = true;
+                    break;
+                }
+            }
+            if (sustainedStop) {
+                JSONObject candidate = new JSONObject();
+                candidate.put("id", service.optString("id", ""));
+                candidate.put("name", service.optString("name", "Service station"));
+                candidates.put(candidate);
+            }
+        }
+        return candidates;
     }
     static void setManual(Context context, String id, boolean visited) {
         SharedPreferences p=prefs(context);
