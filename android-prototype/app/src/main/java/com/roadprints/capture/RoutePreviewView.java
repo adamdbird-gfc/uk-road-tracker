@@ -1109,7 +1109,9 @@ public class RoutePreviewView extends View {
                 return;
             }
             JSONArray previous = activeCorrectionTrace.optJSONArray(activeCorrectionTrace.length() - 1);
-            if (previous == null || Math.hypot(screenX(longitude) - x, screenY(latitude) - y) >= dp(6))
+            double previousX = previous == null ? Double.NaN : screenX(previous.optDouble(0));
+            double previousY = previous == null ? Double.NaN : screenY(previous.optDouble(1));
+            if (previous == null || Math.hypot(previousX - x, previousY - y) >= dp(6))
                 activeCorrectionTrace.put(new JSONArray().put(longitude).put(latitude));
         } catch (org.json.JSONException ignored) {
             // A missing sample is safer than interrupting map interaction.
