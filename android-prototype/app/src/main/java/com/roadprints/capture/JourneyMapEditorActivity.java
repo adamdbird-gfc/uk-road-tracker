@@ -38,6 +38,7 @@ public class JourneyMapEditorActivity extends Activity {
     private TextView undoButton;
     private TextView correctionButton;
     private JSONArray correctionTrace;
+    private boolean drawingCorrection;
     private List<JSONArray> routeSegments;
     private boolean removeMode = true;
     private final Set<Integer> selectedEdges = new LinkedHashSet<>();
@@ -249,18 +250,28 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void beginCorrectionTrace() {
+        if (drawingCorrection) {
+            drawingCorrection = false;
+            routeView.setCorrectionDrawMode(false);
+            status.setText("Route tracing cancelled.");
+            updateActionButtons();
+            return;
+        }
         if (selectedEdges.isEmpty()) {
             status.setText("Tap the inaccurate route section first, then draw its corrected path.");
             return;
         }
+        drawingCorrection = true;
         routeView.setCorrectionDrawMode(true);
-        status.setText("Trace the route you actually travelled on the map.");
-        correctionButton.setText("TRACE ON THE MAP");
+        status.setText("Trace the route you actually travelled on the map. Tap DRAW CORRECTION to cancel.");
+        correctionButton.setText("CANCEL TRACE");
     }
 
     private void onCorrectionTrace(JSONArray trace) {
+        drawingCorrection = false;
         if (trace == null || trace.length() < 2) {
             status.setText("Draw a longer route section to save a correction.");
+            updateActionButtons();
             return;
         }
         correctionTrace = trace;
