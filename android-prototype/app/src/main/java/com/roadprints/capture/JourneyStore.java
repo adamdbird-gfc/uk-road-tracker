@@ -266,21 +266,14 @@ public final class JourneyStore {
 
     private static boolean readMatchedGeometry(JsonReader reader) throws IOException {
         if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
-        String type = "";
         boolean line = false;
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
-            if ("type".equals(name) && reader.peek() == JsonToken.STRING) {
-                type = reader.nextString();
-            } else if ("coordinates".equals(name)) {
-                if ("LineString".equals(type)) {
-                    line = countArrayItems(reader) >= 2;
-                } else if ("MultiLineString".equals(type)) {
-                    line = hasMultiLine(reader);
-                } else {
-                    reader.skipValue();
-                }
+            if ("coordinates".equals(name)) {
+                // Count coordinate pairs without relying on GeoJSON property order.
+                // Some saved files serialize coordinates before the geometry type.
+                line = countCoordinatePairs(reader) >= 2;
             } else {
                 reader.skipValue();
             }
@@ -289,13 +282,26 @@ public final class JourneyStore {
         return line;
     }
 
-    private static boolean hasMultiLine(JsonReader reader) throws IOException {
-        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return false; }
-        boolean found = false;
+    private static int countCoordinatePairs(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return 0; }
+        int numberCount = 0;
+        int nestedCoordinateCount = 0;
         reader.beginArray();
-        while (reader.hasNext()) found = countArrayItems(reader) >= 2 || found;
+        while (reader.hasNext()) {
+            JsonToken token = reader.peek();
+            if (token == JsonToken.NUMBER) {
+                reader.nextString();
+                numberCount++;
+            } else if (token == JsonToken.BEGIN_ARRAY) {
+                nestedCoordinateCount += countCoordinatePairs(reader);
+            } else {
+                reader.skipValue();
+            }
+        }
         reader.endArray();
-        return found;
+        // A coordinate tuple has at least longitude and latitude. A route is
+        // any nesting of at least two such tuples (LineString or MultiLineString).
+        return numberCount >= 2 ? 1 : nestedCoordinateCount;
     }
 
     /** Visit one full journey at a time, so consumers can project large result files and release them. */
