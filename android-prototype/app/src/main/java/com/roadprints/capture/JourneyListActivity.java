@@ -30,6 +30,11 @@ import android.widget.Toast;
 import android.text.InputType;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.SpannableStringBuilder;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.Spanned;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -54,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 public class JourneyListActivity extends Activity {
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
@@ -67,6 +73,7 @@ public class JourneyListActivity extends Activity {
     private static int savedJourneyScrollY;
     private static int savedJourneyCardLimit = INITIAL_JOURNEY_CARDS;
     private static int savedJourneyFilter;
+    private static String savedJourneyStatusFilter = "all";
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
@@ -87,6 +94,7 @@ public class JourneyListActivity extends Activity {
     private int journeyCardLimit = INITIAL_JOURNEY_CARDS;
     private int refreshGeneration;
     private int activeFilter = 0;
+    private String activeJourneyStatusFilter = "all";
     private final List<TextView> filterChips = new ArrayList<>();
     private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
@@ -95,6 +103,7 @@ public class JourneyListActivity extends Activity {
         super.onCreate(state);
         journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
         activeFilter = savedJourneyFilter;
+        activeJourneyStatusFilter = savedJourneyStatusFilter;
         Window window = getWindow();
         launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
@@ -113,11 +122,13 @@ public class JourneyListActivity extends Activity {
         if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
         savedJourneyCardLimit = journeyCardLimit;
         savedJourneyFilter = activeFilter;
+        savedJourneyStatusFilter = activeJourneyStatusFilter;
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
+        refreshGeneration++;
         processor.shutdownNow();
         super.onDestroy();
     }
@@ -183,6 +194,8 @@ public class JourneyListActivity extends Activity {
         readinessSummary.setTextSize(12);
         readinessSummary.setTextColor(0xFFB9C5D8);
         readinessSummary.setLineSpacing(0, 1.1f);
+        readinessSummary.setMovementMethod(LinkMovementMethod.getInstance());
+        readinessSummary.setHighlightColor(Color.TRANSPARENT);
         readinessSummary.setPadding(0, 0, 0, 16);
 
         HorizontalScrollView filterScroll = new HorizontalScrollView(this);
@@ -452,10 +465,24 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean matchesActiveFilter(JSONObject journey) {
-        if (activeFilter == 0) return true;
+        if (!matchesJourneyStatusFilter(journey)) return false;
+        return matchesFilter(journey, activeFilter);
+    }
+
+    private boolean matchesJourneyStatusFilter(JSONObject journey) {
+        String filter = activeJourneyStatusFilter;
+        if ("all".equals(filter)) return true;
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
-        if (activeFilter == FILTER_VALUES.length - 1) return isUnknownMode(mode);
-        return FILTER_VALUES[activeFilter].equals(mode);
+        String status = journey.optString("processing_status", "pending");
+        if ("no_match".equals(filter)) return !isRoadMode(mode) && !isFootMode(mode);
+        if ("matched".equals(filter)) return "complete".equals(status) && hasStoredMatch(journey);
+        if ("failed".equals(filter)) return "failed".equals(status)
+                || ("complete".equals(status) && !hasStoredMatch(journey));
+        if ("matching".equals(filter)) return "processing".equals(status);
+        if ("ready".equals(filter)) return canMatchJourney(journey)
+                && !"complete".equals(status) && !"failed".equals(status)
+                && !"processing".equals(status);
+        return true;
     }
 
     private boolean isUnknownMode(String mode) {
@@ -468,7 +495,7 @@ public class JourneyListActivity extends Activity {
         for (int filterIndex = 0; filterIndex < filterChips.size(); filterIndex++) {
             boolean available = filterIndex == 0;
             for (JSONObject journey : journeys) {
-                if (shouldShowJourney(journey)
+                if (shouldShowJourney(journey) && matchesJourneyStatusFilter(journey)
                         && matchesFilter(journey, filterIndex)) {
                     available = true;
                     break;
@@ -501,6 +528,7 @@ public class JourneyListActivity extends Activity {
     }
 
     private void loadNewRoadHighlights(long revision, int generation) {
+        if (processor.isShutdown()) return;
         synchronized (SUMMARY_CACHE_LOCK) {
             if (processDiscoveryRevision == revision) {
                 newRoadHighlights = processNewRoadHighlights;
@@ -508,7 +536,8 @@ public class JourneyListActivity extends Activity {
                 return;
             }
         }
-        processor.execute(() -> {
+        try {
+            processor.execute(() -> {
             Map<String, List<String>> highlights = new LinkedHashMap<>();
             try {
                 List<JourneyDiscoveryRecord> records = new ArrayList<>();
@@ -557,7 +586,10 @@ public class JourneyListActivity extends Activity {
                 newRoadHighlights = result;
                 render();
             });
-        });
+            });
+        } catch (RejectedExecutionException ignored) {
+            // The activity may be closing while its background queue is shutting down.
+        }
     }
 
     private List<JSONObject> discoveryFeatures(JSONObject journey) {
@@ -1438,7 +1470,7 @@ public class JourneyListActivity extends Activity {
         int roadReady = 0;
         int footReady = 0;
         int noMatch = 0;
-        int processed = 0;
+        int matched = 0;
         int failed = 0;
         int matching = 0;
         for (JSONObject journey : journeys) {
@@ -1451,7 +1483,7 @@ public class JourneyListActivity extends Activity {
             if (!isFootMode(mode) && !isRoadMode(mode)) {
                 noMatch++;
             } else if ("complete".equals(status) && hasStoredMatch(journey)) {
-                processed++;
+                matched++;
             } else if ("failed".equals(status)
                     || ("complete".equals(status) && !hasStoredMatch(journey))) {
                 failed++;
@@ -1463,12 +1495,41 @@ public class JourneyListActivity extends Activity {
                 roadReady++;
             }
         }
-        String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
-                + " • " + noMatch + " no matching";
-        String secondLine = "Processed: " + processed + " • Failed: " + failed
-                + (matching > 0 ? " • Matching: " + matching : "");
-        readinessSummary.setText(firstLine + "\n" + secondLine);
 
+        SpannableStringBuilder readyLine = new SpannableStringBuilder();
+        appendStatusLink(readyLine, "Ready: " + roadReady + " road", "ready");
+        appendStatusLink(readyLine, footReady + " on foot", "ready");
+        appendStatusLink(readyLine, noMatch + " no matching", "no_match");
+        SpannableStringBuilder resultLine = new SpannableStringBuilder();
+        appendStatusLink(resultLine, "Matched: " + matched, "matched");
+        appendStatusLink(resultLine, "Failed: " + failed, "failed");
+        if (matching > 0) appendStatusLink(resultLine, "Matching: " + matching, "matching");
+        SpannableStringBuilder summary = new SpannableStringBuilder();
+        summary.append(readyLine).append("\\n").append(resultLine);
+        readinessSummary.setText(summary);
+    }
+
+    private void appendStatusLink(SpannableStringBuilder line, String label, String filter) {
+        if (line.length() > 0) line.append(" • ");
+        int start = line.length();
+        line.append(label);
+        line.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                activeJourneyStatusFilter = activeJourneyStatusFilter.equals(filter) ? "all" : filter;
+                savedJourneyStatusFilter = activeJourneyStatusFilter;
+                journeyCardLimit = INITIAL_JOURNEY_CARDS;
+                render();
+                if (journeyScroll != null) journeyScroll.post(() -> journeyScroll.scrollTo(0, 0));
+            }
+
+            @Override
+            public void updateDrawState(TextPaint drawState) {
+                drawState.setColor(activeJourneyStatusFilter.equals(filter) ? 0xFFF7C450 : 0xFF67D5CC);
+                drawState.setUnderlineText(true);
+                drawState.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            }
+        }, start, line.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     static boolean isPointToPointMode(String mode) {
