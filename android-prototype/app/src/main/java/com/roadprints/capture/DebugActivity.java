@@ -17,7 +17,7 @@ public class DebugActivity extends Activity {
     private static final int NAVY=0xFF0B1C50,MUTED=0xFFD3DCED;
     @Override protected void onCreate(Bundle state){
         super.onCreate(state);getWindow().setStatusBarColor(NAVY);getWindow().setNavigationBarColor(0xFF10275D);
-        String report=CrashReporter.getDiagnosticReports(this);boolean available=!report.isEmpty();
+        String report=CrashReporter.getDiagnosticReports(this);CrashReporter.markDiagnosticReportsViewed(this);boolean available=!report.isEmpty();
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(24),dp(24),dp(24),dp(28));root.setBackgroundColor(NAVY);
         root.addView(RoadprintsHeader.create(this));root.addView(text("Debug",32,Color.WHITE,true));
         TextView info=text(available?"Review the report before copying. It stays on this device until you choose to copy it.":"No reports have been saved on this device yet. Reports stay on this device and are not sent automatically.",15,MUTED,false);info.setPadding(0,dp(12),0,dp(12));root.addView(info);
