@@ -42,7 +42,6 @@ public class MapActivity extends Activity {
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
     private TextView mapSubtitle;
-    private GrowingStatusControl growingStatus;
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int mapLoadGeneration;
@@ -101,8 +100,7 @@ public class MapActivity extends Activity {
             close.setOnClickListener(v -> finish());
             titleRow.addView(close);
         }
-        growingStatus = new GrowingStatusControl(this, titleRow);
-        heading.addView(titleRow);
+                heading.addView(titleRow);
         heading.addView(mapSubtitle);
         root.addView(heading);
 
@@ -123,13 +121,11 @@ public class MapActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (growingStatus != null) growingStatus.start();
         if (mapFrame != null && mapSubtitle != null) refreshMap();
     }
 
     @Override
     protected void onPause() {
-        if (growingStatus != null) growingStatus.stop();
         super.onPause();
     }
 
