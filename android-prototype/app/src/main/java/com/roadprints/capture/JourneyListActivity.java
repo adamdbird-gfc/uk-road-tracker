@@ -674,7 +674,9 @@ public class JourneyListActivity extends Activity {
         evidence.setTextSize(14);
         evidence.setTextColor(statusText.startsWith("Insufficient")
                 || statusText.startsWith("Processing failed")
-                || statusText.startsWith("Partially matched") ? 0xFFF7C450 : 0xFF67D5CC);
+                || statusText.startsWith("Partially matched")
+                || statusText.startsWith("Processed, but no matched route")
+                ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
         details.addView(label);
@@ -1502,7 +1504,7 @@ public class JourneyListActivity extends Activity {
         appendStatusLink(readyLine, noMatch + " no matching", "no_match");
         SpannableStringBuilder resultLine = new SpannableStringBuilder();
         appendStatusLink(resultLine, "Matched: " + matched, "matched");
-        appendStatusLink(resultLine, "Failed: " + failed, "failed");
+        appendStatusLink(resultLine, "Unmatched / failed: " + failed, "failed");
         if (matching > 0) appendStatusLink(resultLine, "Matching: " + matching, "matching");
         SpannableStringBuilder summary = new SpannableStringBuilder();
         summary.append(readyLine).append("\n").append(resultLine);
@@ -1591,6 +1593,7 @@ public class JourneyListActivity extends Activity {
                     : "Insufficient GPS evidence";
         }
         if ("complete".equals(status)) {
+            if (!hasStoredMatch(journey)) return "Processed, but no matched route was saved";
             return isPartialMatchResult(journey.optJSONObject("processing_result"))
                     ? "Partially matched · rematch available" : "Processed by Roadprints";
         }
