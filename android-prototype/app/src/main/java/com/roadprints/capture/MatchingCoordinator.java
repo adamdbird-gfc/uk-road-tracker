@@ -286,8 +286,8 @@ public final class MatchingCoordinator {
         if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
         int serverInput = result.optInt("input_points", points.length());
         int serverMatched = result.optInt("matched_tracepoints", serverInput);
-        if (failedCount > 0 || serverMatched < serverInput) {
-            attempt.put("partial_match", true);
+        if (serverMatched < serverInput) attempt.put("partial_match", true);
+        if (shouldRejectMatchResult(serverMatched, serverInput, failedCount)) {
             synchronized (JourneyStore.class) {
                 JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
                 if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
@@ -314,6 +314,10 @@ public final class MatchingCoordinator {
         stored.remove("error_summary");
         JourneyStore.save(app, stored);
         }
+    }
+
+    static boolean shouldRejectMatchResult(int matchedPoints, int inputPoints, int failedSections) {
+        return failedSections > 0 || matchedPoints <= 0 || matchedPoints > inputPoints;
     }
 
     private void markFailed(String journeyId, Exception error) {
