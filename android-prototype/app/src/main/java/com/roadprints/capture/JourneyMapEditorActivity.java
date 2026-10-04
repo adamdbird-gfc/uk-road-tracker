@@ -495,36 +495,75 @@ public class JourneyMapEditorActivity extends Activity {
 
         JSONArray replacementStart = replacement.optJSONArray(0);
         JSONArray replacementEnd = replacement.optJSONArray(replacement.length() - 1);
-        int firstIndex = -1, lastIndex = -1;
-        double bestPairDistance = Double.MAX_VALUE;
-        for (int i = 0; i < original.length(); i++) {
-            JSONArray gpsStart = original.optJSONArray(i);
-            double startDistance = tracePointDistanceMetres(gpsStart, replacementStart);
-            if (startDistance > 250) continue;
-            for (int j = 0; j < original.length(); j++) {
-                if (i == j) continue;
-                JSONArray gpsEnd = original.optJSONArray(j);
-                double endDistance = tracePointDistanceMetres(gpsEnd, replacementEnd);
-                double pairDistance = startDistance + endDistance;
-                if (endDistance <= 250 && pairDistance < bestPairDistance) {
-                    bestPairDistance = pairDistance;
-                    firstIndex = i;
-                    lastIndex = j;
-                }
-            }
-        }
-        if (firstIndex < 0 || lastIndex < 0) return null;
-
-        int low = Math.min(firstIndex, lastIndex);
-        int high = Math.max(firstIndex, lastIndex);
-        boolean reverseReplacement = tracePointDistanceMetres(
-                replacementStart, original.optJSONArray(low))
-                > tracePointDistanceMetres(replacementStart, original.optJSONArray(high));
+        RouteProjection start = nearestRouteProjection(original, replacementStart);
+        RouteProjection end = nearestRouteProjection(original, replacementEnd);
+        // GPS samples are often sparse. Compare the drawn endpoints to every route
+        // segment, not just its vertices, then splice at the interpolated positions.
+        if (start == null || end == null || start.distanceMetres > 250
+                || end.distanceMetres > 250
+                || Math.abs(start.position - end.position) < 0.01) return null;
+        boolean reverseReplacement = start.position > end.position;
+        RouteProjection from = reverseReplacement ? end : start;
+        RouteProjection to = reverseReplacement ? start : end;
         JSONArray result = new JSONArray();
-        for (int i = 0; i < low; i++) result.put(original.optJSONArray(i));
-        appendDistinct(result, replacement, reverseReplacement);
-        for (int i = high + 1; i < original.length(); i++) result.put(original.optJSONArray(i));
+        for (int i = 0; i <= from.segmentIndex; i++)
+            result.put(original.optJSONArray(i));
+        appendDistinct(result, new JSONArray().put(from.point), false);
+        for (int i = reverseReplacement ? replacement.length() - 2 : 1;
+             reverseReplacement ? i > 0 : i < replacement.length() - 1;
+             i += reverseReplacement ? -1 : 1) {
+            JSONArray point = replacement.optJSONArray(i);
+            if (point != null) appendDistinct(result, new JSONArray().put(point), false);
+        }
+        appendDistinct(result, new JSONArray().put(to.point), false);
+        for (int i = to.segmentIndex + 1; i < original.length(); i++)
+            appendDistinct(result, new JSONArray().put(original.optJSONArray(i)), false);
         return result.length() >= 2 ? result : null;
+    }
+
+    private static final class RouteProjection {
+        final int segmentIndex;
+        final double fraction;
+        final double position;
+        final double distanceMetres;
+        final JSONArray point;
+
+        RouteProjection(int segmentIndex, double fraction, double distanceMetres,
+                        JSONArray point) {
+            this.segmentIndex = segmentIndex;
+            this.fraction = fraction;
+            this.position = segmentIndex + fraction;
+            this.distanceMetres = distanceMetres;
+            this.point = point;
+        }
+    }
+
+    private static RouteProjection nearestRouteProjection(JSONArray route, JSONArray target) {
+        if (target == null || target.length() < 2) return null;
+        double targetLon = target.optDouble(0, Double.NaN);
+        double targetLat = target.optDouble(1, Double.NaN);
+        if (!Double.isFinite(targetLon) || !Double.isFinite(targetLat)) return null;
+        double cosLatitude = Math.cos(Math.toRadians(targetLat));
+        RouteProjection nearest = null;
+        for (int i = 0; i < route.length() - 1; i++) {
+            JSONArray a = route.optJSONArray(i), b = route.optJSONArray(i + 1);
+            if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+            double ax = (a.optDouble(0) - targetLon) * 111320.0 * cosLatitude;
+            double ay = (a.optDouble(1) - targetLat) * 111320.0;
+            double bx = (b.optDouble(0) - targetLon) * 111320.0 * cosLatitude;
+            double by = (b.optDouble(1) - targetLat) * 111320.0;
+            double dx = bx - ax, dy = by - ay;
+            double lengthSquared = dx * dx + dy * dy;
+            double fraction = lengthSquared == 0 ? 0
+                    : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSquared));
+            JSONArray projected = new JSONArray()
+                    .put(a.optDouble(0) + (b.optDouble(0) - a.optDouble(0)) * fraction)
+                    .put(a.optDouble(1) + (b.optDouble(1) - a.optDouble(1)) * fraction);
+            double distance = tracePointDistanceMetres(target, projected);
+            if (nearest == null || distance < nearest.distanceMetres)
+                nearest = new RouteProjection(i, fraction, distance, projected);
+        }
+        return nearest;
     }
 
     private static void appendDistinct(JSONArray target, JSONArray source, boolean reverse) {
