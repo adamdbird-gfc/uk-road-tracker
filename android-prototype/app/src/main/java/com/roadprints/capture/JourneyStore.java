@@ -127,7 +127,7 @@ public final class JourneyStore {
                 String name = reader.nextName();
                 switch (name) {
                     case "journey_id": case "started_at": case "ended_at":
-                    case "distance_meters": case "mode": case "title":
+                    case "distance_meters": case "gps_point_count": case "mode": case "title":
                     case "processing_status": case "error_summary":
                         summary.put(name, readScalar(reader));
                         break;
