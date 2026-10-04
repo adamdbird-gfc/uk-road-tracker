@@ -447,12 +447,25 @@ public class JourneyMapEditorActivity extends Activity {
 
         JSONArray replacementStart = replacement.optJSONArray(0);
         JSONArray replacementEnd = replacement.optJSONArray(replacement.length() - 1);
-        int firstIndex = nearestTracePoint(original, replacementStart);
-        int lastIndex = nearestTracePoint(original, replacementEnd);
-        if (firstIndex < 0 || lastIndex < 0 || firstIndex == lastIndex
-                || tracePointDistanceMetres(original.optJSONArray(firstIndex), replacementStart) > 250
-                || tracePointDistanceMetres(original.optJSONArray(lastIndex), replacementEnd) > 250)
-            return null;
+        int firstIndex = -1, lastIndex = -1;
+        double bestPairDistance = Double.MAX_VALUE;
+        for (int i = 0; i < original.length(); i++) {
+            JSONArray gpsStart = original.optJSONArray(i);
+            double startDistance = tracePointDistanceMetres(gpsStart, replacementStart);
+            if (startDistance > 250) continue;
+            for (int j = 0; j < original.length(); j++) {
+                if (i == j) continue;
+                JSONArray gpsEnd = original.optJSONArray(j);
+                double endDistance = tracePointDistanceMetres(gpsEnd, replacementEnd);
+                double pairDistance = startDistance + endDistance;
+                if (endDistance <= 250 && pairDistance < bestPairDistance) {
+                    bestPairDistance = pairDistance;
+                    firstIndex = i;
+                    lastIndex = j;
+                }
+            }
+        }
+        if (firstIndex < 0 || lastIndex < 0) return null;
 
         int low = Math.min(firstIndex, lastIndex);
         int high = Math.max(firstIndex, lastIndex);
