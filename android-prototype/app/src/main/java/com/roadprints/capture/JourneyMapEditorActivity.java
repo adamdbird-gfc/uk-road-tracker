@@ -37,7 +37,7 @@ public class JourneyMapEditorActivity extends Activity {
     private TextView saveButton;
     private TextView undoButton;
     private boolean removeMode = true;
-    private int selectedEdge = -1;
+    private final Set<Integer> selectedEdges = new LinkedHashSet<>();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -98,7 +98,7 @@ public class JourneyMapEditorActivity extends Activity {
         header.addView(titleRow);
 
         TextView instructions = text(
-                "Tap a route section to select it. Restore can also bring back the latest removal.",
+                "Tap a route section to select its overlapping lines together. Restore also brings back the latest removal.",
                 14, 0xFFD3DCED, false);
         instructions.setPadding(0, dp(6), 0, dp(4));
         header.addView(instructions);
@@ -107,7 +107,7 @@ public class JourneyMapEditorActivity extends Activity {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
         routeView = new RoutePreviewView(this, original, routes, removedEdges,
-                this::onRouteEdgeTap);
+                this::onRouteEdgesTap);
         routeView.setRouteExtensions(unmatchedEndpointTrace(original, routes));
         root.addView(routeView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -170,17 +170,24 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void updateModeStyles() {
-        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
         updateStatus();
         updateActionButtons();
     }
 
     private void updateActionButtons() {
-        boolean canRemove = selectedEdge >= 0 && !removedEdges.contains(selectedEdge);
-        boolean canRestore = !removedEdges.isEmpty();
+        int activeCount = 0;
+        int removedCount = 0;
+        for (Integer edge : selectedEdges) {
+            if (removedEdges.contains(edge)) removedCount++;
+            else activeCount++;
+        }
+        boolean canRemove = activeCount > 0;
+        boolean canRestore = removedCount > 0 || !removedEdges.isEmpty();
         boolean dirty = !removedEdges.equals(originalRemovedEdges);
         boolean canUndo = !undoStack.isEmpty();
-
+        removeButton.setText(activeCount > 1 ? "REMOVE " + activeCount + " SECTIONS" : "REMOVE");
+        restoreButton.setText(removedCount > 1 ? "RESTORE " + removedCount + " SECTIONS" : "RESTORE");
         styleActionButton(removeButton, canRemove, removeMode);
         styleActionButton(restoreButton, canRestore, canRestore);
         styleActionButton(undoButton, canUndo, false);
@@ -219,37 +226,39 @@ public class JourneyMapEditorActivity extends Activity {
         requestCancel();
     }
 
-    private void onRouteEdgeTap(int edgeIndex) {
-        selectedEdge = edgeIndex;
-        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+    private void onRouteEdgesTap(Set<Integer> edgeIndices) {
+        selectedEdges.clear();
+        if (edgeIndices != null) selectedEdges.addAll(edgeIndices);
+        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
         updateStatus();
         updateActionButtons();
     }
 
     private void applySelectedChange(boolean remove) {
         removeMode = remove;
-        updateModeStyles();
-        if (selectedEdge < 0 && !remove && !removedEdges.isEmpty()) {
-            selectedEdge = latestRemovedEdge();
+        if (selectedEdges.isEmpty() && !remove && !removedEdges.isEmpty()) {
+            selectedEdges.add(latestRemovedEdge());
         }
-        if (selectedEdge < 0) {
-            status.setText("Tap a route section to select it first.");
-            updateActionButtons();
-            return;
+        int eligibleCount = 0;
+        for (Integer edge : selectedEdges) {
+            if (removedEdges.contains(edge) != remove) eligibleCount++;
         }
-        boolean alreadyRemoved = removedEdges.contains(selectedEdge);
-        if (remove == alreadyRemoved) {
-            status.setText(remove
-                    ? "That section is already removed. Select another section."
-                    : "That section is still part of the route. Select a removed section.");
+        if (eligibleCount == 0) {
+            updateModeStyles();
+            status.setText(selectedEdges.isEmpty()
+                    ? "Tap a route section to select it first."
+                    : remove ? "Those sections are already removed."
+                    : "Select a removed section to restore it.");
             return;
         }
         undoStack.push(new LinkedHashSet<>(removedEdges));
         if (undoStack.size() > 30) undoStack.removeLast();
-        if (remove) removedEdges.add(selectedEdge);
-        else removedEdges.remove(selectedEdge);
-        selectedEdge = -1;
-        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+        for (Integer edge : selectedEdges) {
+            if (remove) removedEdges.add(edge);
+            else removedEdges.remove(edge);
+        }
+        selectedEdges.clear();
+        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
         updateStatus();
         updateActionButtons();
     }
@@ -261,8 +270,8 @@ public class JourneyMapEditorActivity extends Activity {
         }
         removedEdges.clear();
         removedEdges.addAll(undoStack.pop());
-        selectedEdge = -1;
-        routeView.setRouteEditState(removedEdges, selectedEdge, !removeMode);
+        selectedEdges.clear();
+        routeView.setRouteEditState(removedEdges, selectedEdges, !removeMode);
         updateStatus();
         updateActionButtons();
     }
@@ -274,11 +283,22 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     private void updateStatus() {
-        if (selectedEdge >= 0) {
-            boolean removed = removedEdges.contains(selectedEdge);
-            status.setText(removed
-                    ? "Removed section selected · press RESTORE to bring it back."
-                    : "Route section selected in red · press REMOVE to apply.");
+        if (!selectedEdges.isEmpty()) {
+            int active = 0;
+            int removed = 0;
+            for (Integer edge : selectedEdges) {
+                if (removedEdges.contains(edge)) removed++;
+                else active++;
+            }
+            if (active > 0) {
+                status.setText(active == 1
+                        ? "Route section selected in red · press REMOVE."
+                        : active + " overlapping route sections selected in red · press REMOVE to remove them together.");
+            } else {
+                status.setText(removed == 1
+                        ? "Removed section selected · press RESTORE."
+                        : removed + " removed sections selected · press RESTORE to bring them back together.");
+            }
             return;
         }
         status.setText(removedEdges.size() + " route section"
