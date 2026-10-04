@@ -1547,6 +1547,9 @@ public class JourneyListActivity extends Activity {
     }
 
     private int pointCount(JSONObject journey) {
+        if (journey.has("gps_point_count")) {
+            return journey.optInt("gps_point_count", 0);
+        }
         if (journey.has("_route_point_count")) {
             return journey.optInt("_route_point_count", 0);
         }
