@@ -836,11 +836,11 @@ public class JourneyListActivity extends Activity {
                         }
                     }
                     latest.put("service_station_candidates", remaining);
+                    JourneyStore.save(getApplicationContext(), latest);
                     if (confirmedVisit) {
                         ServiceStationVisitStore.confirm(
                                 getApplicationContext(), stationId, journeyId);
                     }
-                    JourneyStore.save(getApplicationContext(), latest);
                     mainHandler.post(this::refreshJourneysAsync);
                 } catch (Exception error) {
                     android.util.Log.w("Roadprints", "Could not save service station confirmation", error);
