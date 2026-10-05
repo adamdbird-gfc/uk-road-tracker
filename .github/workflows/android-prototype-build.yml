@@ -1,0 +1,70 @@
+name: Android prototype build
+
+on:
+  push:
+    branches:
+      - codex/matching-coordinator
+    paths:
+      - "android-prototype/**"
+      - ".github/workflows/android-prototype-build.yml"
+  pull_request:
+    paths:
+      - "android-prototype/**"
+      - ".github/workflows/android-prototype-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify preinstalled Android SDK
+        run: |
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -d "$ANDROID_HOME/platforms/android-35"
+          test -d "$ANDROID_HOME/build-tools/35.0.0"
+          test -f "$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Prepare stable debug signing key
+        run: |
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
+          echo "ROADPRINTS_DEBUG_KEYSTORE=$RUNNER_TEMP/roadprints-debug.keystore" >> "$GITHUB_ENV"
+
+      - name: Build debug APK and prepare signing utility
+        working-directory: .
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype :app:assembleDebug
+          mkdir -p roadprints-output/signing-tools
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk roadprints-output/app-debug.apk
+          cp "$ANDROID_HOME/build-tools/35.0.0/apksigner" roadprints-output/signing-tools/apksigner
+          cp -R "$ANDROID_HOME/build-tools/35.0.0/lib" roadprints-output/signing-tools/
+
+      - name: Upload APK and signing utility
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-android-0.25.37-${{ github.sha }}
+          path: roadprints-output/
+          if-no-files-found: error
+          retention-days: 7
