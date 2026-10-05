@@ -85,6 +85,16 @@ public class StationJourneyModelTest {
         fix(m,"driving",1,71000,300,10);
         assertNull(fix(m,"driving",2,111000,850,20));
     }
+    @Test public void boundaryUsesStationStopAndInitialAccelerationRatherThanRadiusEntry() {
+        StationJourneyModel m=model(); m.activity("walking",1000,0);
+        fix(m,"walking",0,1000,-500,1); fix(m,"walking",1,11000,-200,1);
+        fix(m,"walking",2,21000,-50,1); m.activity("still",22000,2);
+        fix(m,"walking",3,180000,100,4); // train begins accelerating
+        fix(m,"walking",4,210000,300,12); fix(m,"walking",5,250000,850,20);
+        m.activity("vehicle",270000,5);
+        StationJourneyModel.Decision d=fix(m,"walking",6,290000,1200,20);
+        assertNotNull(d); assertEquals(2,d.endIndex); assertEquals(3,d.startIndex);
+    }
     @Test public void delayedVehicleSignalRetainsOriginalStationAndDepartureBoundary() {
         StationJourneyModel m=model(); m.activity("walking",1000,0);
         fix(m,"walking",0,1000,-500,1); fix(m,"walking",1,11000,-100,1);

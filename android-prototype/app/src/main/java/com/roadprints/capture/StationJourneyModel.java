@@ -24,7 +24,12 @@ final class StationJourneyModel {
     void activity(String value, long time, int pointIndex) {
         // Repeated subscription callbacks must not restart a stop or walking timer.
         if (!value.equals(activity)) { activity=value; activitySince=time; }
-        if (station!=null && ("still".equals(value) || "vehicle".equals(value))) stopEvidence=true;
+        if (station!=null && ("still".equals(value) || "vehicle".equals(value))) {
+            if (!stopEvidence && "still".equals(value)) {
+                arrivalIndex=Math.max(arrivalIndex,pointIndex); arrivalTime=time;
+            }
+            stopEvidence=true;
+        }
         if (station!=null && "walking".equals(value) && walkIndex<0) {
             walkIndex=Math.max(arrivalIndex,pointIndex); walkMetres=0; walkingSamples=0;
         }
@@ -53,13 +58,14 @@ final class StationJourneyModel {
             return new Decision(Math.max(1,walkIndex),Math.max(1,walkIndex),"walking",station.code,"station_alighting_or_transfer");
         }
         double fromStation=RailStationCatalog.metres(lat,lon,station.latitude,station.longitude);
+        if (stopEvidence && speed>=3.5 && !departureConfirmed && departureIndex<0) departureIndex=index;
         if (speed>=6) {
-            if (fastSince==0 || gap>120000) { fastSince=time; if (!departureConfirmed) departureIndex=index; }
+            if (fastSince==0 || gap>120000) { fastSince=time; if (!departureConfirmed && departureIndex<0) departureIndex=index; }
             if (stopEvidence && fromStation>station.radius+100) departedFromStation=true;
             if (departedFromStation && time-fastSince>=30000) departureConfirmed=true;
         } else {
             fastSince=0;
-            if (!departureConfirmed) { departureIndex=-1; departedFromStation=false; }
+            if (!departureConfirmed && speed<3.5) { departureIndex=-1; departedFromStation=false; }
         }
         if (departureConfirmed && fromStation>station.radius+400
                 && stopEvidence && "vehicle".equals(activity) && time-activitySince>=15000
