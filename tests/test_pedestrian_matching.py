@@ -4,7 +4,7 @@ import time
 import unittest
 from heapq import nsmallest
 
-from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths, match_reference_trajectory
+from pedestrian_matching import PedestrianVertexIndex, PedestrianGraphPaths, compress_pedestrian_graph, select_trajectory_paths, match_reference_trajectory
 
 
 def distance_metres(a, b):
@@ -206,3 +206,61 @@ class PedestrianPathTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PedestrianGraphSearchTests(unittest.TestCase):
+    def chain(self, count):
+        graph = {key: [] for key in range(count)}
+        for key in range(count-1):
+            graph[key].append((key+1, 1.0, 'road'+str(key)))
+            graph[key+1].append((key, 1.0, 'road'+str(key)))
+        return graph
+
+    def test_contracted_chain_restores_geometry_and_feature_order_both_directions(self):
+        graph = self.chain(101)
+        compact = compress_pedestrian_graph(graph, {0,50,100}, time.monotonic()+10)
+        self.assertEqual(3, len(compact))
+        search = PedestrianGraphPaths(compact, time.monotonic()+10)
+        forward = search(0,[100],100)[100]
+        reverse = search(100,[0],100)[0]
+        self.assertEqual(list(range(101)),forward[0])
+        self.assertEqual(['road'+str(i) for i in range(100)],forward[1])
+        self.assertEqual(forward[0][::-1],reverse[0])
+        self.assertEqual(forward[1][::-1],reverse[1])
+        self.assertLessEqual(search.settled_nodes,6)
+
+    def test_cached_frontier_extends_and_still_obeys_each_layer_distance_bound(self):
+        graph = self.chain(21)
+        compact = compress_pedestrian_graph(graph, {0,10,20}, time.monotonic()+10)
+        search = PedestrianGraphPaths(compact,time.monotonic()+10)
+        self.assertEqual({},search(0,[20],5))
+        self.assertEqual(20.0,search(0,[20],25)[20][2])
+        self.assertEqual({},search(0,[20],5))
+        self.assertEqual(1,search.searches)
+        self.assertEqual(2,search.cache_hits)
+
+    def test_disconnected_targets_do_not_force_search_of_entire_component(self):
+        graph = self.chain(1000)
+        graph[2000]=[(2001,1.0,'isolated')]
+        graph[2001]=[(2000,1.0,'isolated')]
+        search = PedestrianGraphPaths(graph,time.monotonic()+10)
+        paths = search(0,[2,2000],900)
+        self.assertEqual({2},set(paths))
+        self.assertEqual(3,search.settled_nodes)
+
+    def test_cache_is_bounded_and_expired_deadline_never_searches(self):
+        graph = self.chain(20)
+        search = PedestrianGraphPaths(graph,time.monotonic()+10,max_cache_nodes=5)
+        self.assertIn(19,search(0,[19],30))
+        self.assertLessEqual(sum(len(s['distances']) for s in search.cache.values()),5)
+        expired = PedestrianGraphPaths(graph,time.monotonic()-1)
+        self.assertEqual({},expired(0,[19],30))
+        self.assertEqual(0,expired.settled_nodes)
+
+    def test_cycles_parallel_edges_and_candidate_vertices_are_retained(self):
+        graph={0:[(1,1,'short'),(1,2,'long'),(2,3,'direct')],
+               1:[(0,1,'short'),(0,2,'long'),(2,1,'onward')],
+               2:[(0,3,'direct'),(1,1,'onward')]}
+        compact=compress_pedestrian_graph(graph,{0,2},time.monotonic()+10)
+        search=PedestrianGraphPaths(compact,time.monotonic()+10)
+        self.assertEqual(([0,1,2],['short','onward'],2),search(0,[2],10)[2])
