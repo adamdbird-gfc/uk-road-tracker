@@ -21,11 +21,21 @@ final class CaptureStartGate {
         return 150f;
     }
 
-    static boolean shouldConfirmStart(String mode, long elapsedMs, float fromCandidateOriginMetres,
+    static float reliableMovementIncrement(float stepMetres, float previousAccuracyMetres,
+                                           float currentAccuracyMetres) {
+        float uncertaintyAllowance = (Math.max(0f, previousAccuracyMetres)
+                + Math.max(0f, currentAccuracyMetres)) * 0.25f;
+        return Math.max(0f, stepMetres - Math.min(8f, uncertaintyAllowance));
+    }
+
+    static boolean shouldConfirmStart(String mode, long elapsedMs, float movementSinceCandidateMetres,
                                      boolean hasRecentStopAnchor, float fromStopAnchorMetres) {
         if (elapsedMs < START_CONFIRMATION_MS
-                || fromCandidateOriginMetres < minimumMovementMetres(mode)) return false;
-        return !hasRecentStopAnchor
+                || movementSinceCandidateMetres < minimumMovementMetres(mode)) return false;
+        // A real walking route may begin and end close to the same place, such as
+        // an office lunch walk. Do not require a straight-line departure radius.
+        return "walking".equals(mode) || "running".equals(mode)
+                || !hasRecentStopAnchor
                 || fromStopAnchorMetres >= departureRadiusMetres(mode);
     }
 
