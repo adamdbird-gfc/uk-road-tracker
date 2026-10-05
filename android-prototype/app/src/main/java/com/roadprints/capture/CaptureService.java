@@ -539,6 +539,14 @@ public class CaptureService extends Service {
         float fromOrigin = candidateOrigin.distanceTo(location);
         float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
         boolean walking = "walking".equals(candidateMode);
+        MovementDiagnostics.recordEvent(this, "journey_candidate_sample",
+                "mode=" + candidateMode
+                        + "; elapsed_ms=" + (System.currentTimeMillis() - candidateStartedAtMs)
+                        + "; path_m=" + Math.round(candidateMovementMetres)
+                        + "; straight_line_m=" + Math.round(fromOrigin)
+                        + "; accuracy_m=" + Math.round(location.getAccuracy())
+                        + "; previous_stop_distance_m=" + Math.round(fromStop)
+                        + "; required_path_m=" + Math.round(CaptureStartGate.minimumMovementMetres(candidateMode)));
         float confirmedMovement = walking ? candidateMovementMetres : fromOrigin;
         boolean requireDepartureRadius = !walking && departureAnchor != null;
         if (!CaptureStartGate.shouldConfirmStart(candidateMode,
