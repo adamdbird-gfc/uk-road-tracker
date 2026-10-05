@@ -355,7 +355,8 @@ public final class MatchingCoordinator {
     }
 
     private JSONObject postWithRetry(String endpoint, JSONObject payload) throws Exception {
-        // Allow time for the free API instance to wake after an idle period.\n        long[] delays = {3_000L, 8_000L, 20_000L};
+        // Allow time for the free API instance to wake after an idle period.
+        long[] delays = {3_000L, 8_000L, 20_000L};
         for (int attempt = 0; ; attempt++) try {
             return post(endpoint, payload);
         } catch (Exception error) {
