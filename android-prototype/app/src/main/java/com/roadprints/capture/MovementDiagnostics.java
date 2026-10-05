@@ -70,7 +70,7 @@ final class MovementDiagnostics {
             long until = prefs.getLong(UNTIL, 0L);
             if (System.currentTimeMillis() < until) return true;
             prefs.edit().putBoolean(ENABLED, false)
-                    .putLong(RETAIN_UNTIL, System.currentTimeMillis() + RETENTION_AFTER_WINDOW_MS)
+                    .putLong(RETAIN_UNTIL, until + RETENTION_AFTER_WINDOW_MS)
                     .apply();
             appendRaw(app, event("diagnostics_stopped", "The 24-hour collection window ended."));
             return false;
