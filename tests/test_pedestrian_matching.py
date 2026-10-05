@@ -1,7 +1,9 @@
 import math
+import random
 import unittest
+from heapq import nsmallest
 
-from pedestrian_matching import select_trajectory_paths
+from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths
 
 
 def distance_metres(a, b):
@@ -10,6 +12,58 @@ def distance_metres(a, b):
     delta_lng = math.radians(b[0] - a[0])
     term = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lng / 2) ** 2
     return 6371008.8 * 2 * math.asin(min(1.0, math.sqrt(term)))
+
+
+class PedestrianVertexIndexTests(unittest.TestCase):
+    def test_candidates_equal_full_scan_across_uk_and_cell_boundaries(self):
+        rng = random.Random(178)
+        for longitude, latitude in [(-0.106, 51.514), (0.370, 51.440),
+                                    (-6.0, 54.6), (-3.0, 60.8)]:
+            vertices = {
+                (i, 0): [longitude + rng.uniform(-0.01, 0.01),
+                         latitude + rng.uniform(-0.01, 0.01)]
+                for i in range(2500)
+            }
+            index = PedestrianVertexIndex(vertices)
+            for point in [(longitude, latitude),
+                          (longitude - 1e-10, latitude - 1e-10),
+                          (longitude + 1e-10, latitude + 1e-10)]:
+                expected = [(key, gap) for gap, key in nsmallest(
+                    6, ((distance_metres(point, coord), key)
+                        for key, coord in vertices.items())) if gap <= 120.0]
+                self.assertEqual(expected, index.nearest(point, distance_metres))
+
+    def test_radius_cutoff_and_missing_nearby_network(self):
+        point = (-0.1, 51.5)
+        delta = math.degrees(1.0 / 6371008.8)
+        vertices = {(0, 0): [point[0], point[1] + 119.999 * delta],
+                    (1, 0): [point[0], point[1] + 120.001 * delta]}
+        index = PedestrianVertexIndex(vertices)
+        self.assertEqual([(0, 0)], [key for key, _ in index.nearest(point, distance_metres)])
+        self.assertEqual([], index.nearest((0.37, 51.44), distance_metres))
+        self.assertEqual([], PedestrianVertexIndex({}).nearest(point, distance_metres))
+
+    def test_ties_keep_original_key_order(self):
+        vertices = {(i, 0): [-0.1, 51.5] for i in reversed(range(10))}
+        result = PedestrianVertexIndex(vertices).nearest((-0.1, 51.5), distance_metres)
+        self.assertEqual([(i, 0) for i in range(6)], [key for key, _ in result])
+
+    def test_dense_graph_avoids_repeated_full_scan(self):
+        vertices = {(i, j): [-0.15 + i * 0.0002, 51.49 + j * 0.0002]
+                    for i in range(250) for j in range(200)}
+        index = PedestrianVertexIndex(vertices)
+        calls = 0
+
+        def counted_distance(a, b):
+            nonlocal calls
+            calls += 1
+            return distance_metres(a, b)
+
+        for i in range(121):
+            point = (-0.12 + i * 0.00005, 51.51)
+            self.assertEqual(6, len(index.nearest(point, counted_distance)))
+        # Work should depend on the nearby cells, not 50,000 vertices per fix.
+        self.assertLess(calls, len(vertices) * 121 // 50)
 
 
 class PedestrianPathTests(unittest.TestCase):
