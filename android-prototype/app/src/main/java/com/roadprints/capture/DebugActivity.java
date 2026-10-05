@@ -45,7 +45,7 @@ public class DebugActivity extends Activity {
                         .setPositiveButton("OK",null).show();
             }else{
                 new AlertDialog.Builder(this).setTitle("Record movement diagnostics?")
-                        .setMessage("For up to 24 hours, Roadprints will save Android activity changes and precise GPS samples about every 30 seconds while it waits for movement, plus samples while confirming or recording a journey. This log stays on this phone, is never uploaded automatically, and is removed after 7 days. You can stop it at any time and copy it from this screen.")
+                        .setMessage("For up to 24 hours, Roadprints will save Android activity changes and precise GPS samples about every 30 seconds while it waits for movement, plus samples while confirming or recording a journey. This log stays on this phone, is never uploaded automatically, and is removed after 7 days. Starting a new log replaces any previous movement log. You can stop it at any time and copy it from this screen.")
                         .setNegativeButton("Cancel",null)
                         .setPositiveButton("Start log",(dialog,which)->{
                             MovementDiagnostics.start(this);
