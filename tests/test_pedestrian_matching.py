@@ -204,10 +204,6 @@ class PedestrianPathTests(unittest.TestCase):
         self.assertEqual([start, farthest, start], result[0])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class PedestrianGraphSearchTests(unittest.TestCase):
     def chain(self, count):
         graph = {key: [] for key in range(count)}
@@ -264,3 +260,7 @@ class PedestrianGraphSearchTests(unittest.TestCase):
         compact=compress_pedestrian_graph(graph,{0,2},time.monotonic()+10)
         search=PedestrianGraphPaths(compact,time.monotonic()+10)
         self.assertEqual(([0,1,2],['short','onward'],2),search(0,[2],10)[2])
+
+
+if __name__ == "__main__":
+    unittest.main()

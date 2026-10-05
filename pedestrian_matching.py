@@ -26,7 +26,7 @@ class PedestrianVertexIndex:
         return tuple(math.floor(value / self.CELL_DEGREES) for value in coordinate)
 
     def nearest(self, point, length_metres, radius=120.0, count=6):
-        cache_key = (tuple(point), radius, id(length_metres))
+        cache_key = (tuple(point), radius, length_metres)
         cached = self.nearest_cache.get(cache_key)
         if cached is not None and count <= cached[0]:
             self.nearest_cache.move_to_end(cache_key)
@@ -57,8 +57,6 @@ class PedestrianVertexIndex:
         while len(self.nearest_cache) > 256:
             self.nearest_cache.popitem(last=False)
         return result[:count]
-
-
 
 
 def compress_pedestrian_graph(adjacency, retained_vertices, deadline):

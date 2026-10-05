@@ -670,6 +670,10 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
         deadline, diagnostics,
     )
+    diagnostics.update(searches=shortest_paths_to_targets.searches,
+                       cache_hits=shortest_paths_to_targets.cache_hits,
+                       settled_nodes=shortest_paths_to_targets.settled_nodes,
+                       search_vertices=len(search_graph))
     if not route_result:
         logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
                        len(sampled_trace), len(rows), time.monotonic() >= deadline)
