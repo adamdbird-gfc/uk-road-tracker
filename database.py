@@ -10,7 +10,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import PedestrianVertexIndex, match_reference_trajectory
+from pedestrian_matching import PedestrianVertexIndex, PedestrianGraphPaths, compress_pedestrian_graph, match_reference_trajectory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -579,7 +579,6 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     if not rows:
         return None
 
-    from heapq import heappop, heappush
     from math import asin, cos, radians, sin, sqrt
 
     def vertex_key(coord: list[float] | tuple[float, float]) -> tuple[int, int]:
@@ -658,53 +657,23 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     # GPS sample. Exact distances, six candidates and the 120 m limit are kept.
     vertex_index = PedestrianVertexIndex(vertices)
 
-    def shortest_paths_to_targets(start_key, target_keys, max_distance):
-        """Find connected paths to nearby candidate snaps in one graph walk."""
-        remaining = set(target_keys)
-        distances = {start_key: 0.0}
-        previous = {}
-        queue = [(0.0, start_key)]
-        visited = 0
-        while queue and remaining and visited < 150_000:
-            if time.monotonic() >= deadline:
-                return {}
-            current_distance, current = heappop(queue)
-            if current_distance != distances.get(current):
-                continue
-            if current_distance > max_distance:
-                break
-            remaining.discard(current)
-            visited += 1
-            for neighbour, cost, feature_id in adjacency.get(current, []):
-                candidate = current_distance + cost
-                if candidate <= max_distance and candidate < distances.get(neighbour, float("inf")):
-                    distances[neighbour] = candidate
-                    previous[neighbour] = (current, feature_id)
-                    heappush(queue, (candidate, neighbour))
-
-        paths = {}
-        for target in set(target_keys) - remaining:
-            if target == start_key:
-                paths[target] = ([start_key], [], 0.0)
-                continue
-            path = [target]
-            feature_ids = []
-            current = target
-            while current != start_key:
-                prior, feature_id = previous[current]
-                path.append(prior)
-                feature_ids.append(feature_id)
-                current = prior
-            path.reverse()
-            feature_ids.reverse()
-            paths[target] = (path, feature_ids, distances[target])
-        return paths
+    retained_vertices = set()
+    for point in sampled_trace:
+        if time.monotonic() >= deadline:
+            return None
+        retained_vertices.update(key for key, _ in vertex_index.nearest(point, length_metres, count=24))
+    search_graph = compress_pedestrian_graph(adjacency, retained_vertices, deadline)
+    shortest_paths_to_targets = PedestrianGraphPaths(search_graph, deadline)
 
     diagnostics = {}
     route_result = match_reference_trajectory(
         sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
         deadline, diagnostics,
     )
+    diagnostics.update(searches=shortest_paths_to_targets.searches,
+                       cache_hits=shortest_paths_to_targets.cache_hits,
+                       settled_nodes=shortest_paths_to_targets.settled_nodes,
+                       search_vertices=len(search_graph))
     if not route_result:
         logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
                        len(sampled_trace), len(rows), time.monotonic() >= deadline)
@@ -713,6 +682,9 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     route_keys, used_feature_ids = route_result
     logger.info("pedestrian reference matched: samples=%s segments=%s candidate_count=%s",
                 len(sampled_trace), len(rows), diagnostics.get('candidate_count'))
+    logger.info("pedestrian reference search work: searches=%s cache_hits=%s settled_nodes=%s",
+                shortest_paths_to_targets.searches, shortest_paths_to_targets.cache_hits,
+                shortest_paths_to_targets.settled_nodes)
 
     coordinates = [vertices[key] for key in route_keys]
     if len(coordinates) < 2:
