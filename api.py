@@ -50,6 +50,10 @@ RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
 RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 RATE_LIMITED_PATHS = {"/match", "/match-walking", "/settlements-for-geometry", "/import-coordinator"}
 request_windows = defaultdict(deque)
+FOOT_REQUEST_LOCK = asyncio.Lock()
+REFERENCE_MATCH_LOCK = asyncio.Lock()
+foot_next_request_at = 0.0
+foot_cooldown_until = 0.0
 
 app = FastAPI(title="UK Road Tracker API", version="0.11.0")
 PLACE_NAME_CACHE = {}
@@ -141,6 +145,34 @@ def a_road_region(geometry):
         return "GB"
     return "NI" if -8.5 <= lng <= -5.0 and 53.8 <= lat <= 55.5 else "GB"
 
+async def router_get(client, url, params, base_url):
+    """Pace the shared foot router across all journeys and respect a 429."""
+    global foot_next_request_at, foot_cooldown_until
+    if base_url != FOOT_OSRM_BASE_URL:
+        return await client.get(url, params=params)
+    async with FOOT_REQUEST_LOCK:
+        now = time.monotonic()
+        if now < foot_cooldown_until:
+            remaining = max(1, int(foot_cooldown_until - now + 1))
+            raise HTTPException(
+                status_code=503,
+                detail="The pedestrian router is rate-limiting requests. Retry this journey later.",
+                headers={"Retry-After": str(remaining)},
+            )
+        await asyncio.sleep(max(0.0, foot_next_request_at - now))
+        try:
+            response = await client.get(url, params=params)
+        finally:
+            foot_next_request_at = time.monotonic() + 1.05
+        if response.status_code == 429:
+            try:
+                cooldown = max(1, min(3600, int(response.headers.get("Retry-After", "120"))))
+            except (ValueError, TypeError):
+                cooldown = 120
+            foot_cooldown_until = time.monotonic() + cooldown
+        return response
+
+
 async def request_match(client, points, radius, base_url):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
     radiuses = ";".join(str(radius) for _ in points)
@@ -161,7 +193,7 @@ async def request_match(client, points, radius, base_url):
     last_error = None
     for attempt in range(3):
         try:
-            response = await client.get(url, params=params)
+            response = await router_get(client, url, params, base_url)
             try:
                 data = response.json()
             except ValueError:
@@ -224,6 +256,10 @@ async def match_chunk_resiliently(
             client, points, chunk_index, base_url, polite_delay_seconds,
             radius_attempts, retry_no_match,
         )
+        data["matched_point_indices"] = [
+            index for index, point in enumerate(data.get("tracepoints") or [])
+            if point is not None and index < len(points)
+        ]
         return data, radius, []
     except HTTPException as exc:
         if exc.status_code != 422:
@@ -248,6 +284,8 @@ async def match_chunk_resiliently(
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),
             "tracepoints": (left_data.get("tracepoints") or []) + (right_data.get("tracepoints") or []),
+            "matched_point_indices": sorted(set(left_data.get("matched_point_indices") or [])
+                | {midpoint + index for index in right_data.get("matched_point_indices") or []}),
         }, left_radius or right_radius, left_failures + right_failures
 
 @app.middleware("http")
@@ -464,21 +502,38 @@ async def match_journey(payload: MatchRequest):
 async def match_walking_activity(payload: MatchRequest):
     # The preloaded shared public reference is used first. The request is
     # read-only and transient: no Timeline route data is retained by Postgres.
-    reference_match = match_pedestrian_reference(
-        [{"lat": point.lat, "lng": point.lng} for point in payload.points]
-    )
+    try:
+        await asyncio.wait_for(REFERENCE_MATCH_LOCK.acquire(), timeout=5.0)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(
+            status_code=503, detail="Walking matcher is busy. Retry this journey shortly.",
+            headers={"Retry-After": "30"},
+        ) from exc
+    try:
+        reference_match = await asyncio.to_thread(
+            match_pedestrian_reference,
+            [{"lat": point.lat, "lng": point.lng} for point in payload.points],
+        )
+    finally:
+        REFERENCE_MATCH_LOCK.release()
     if reference_match:
         return reference_match
     # Other areas retain the established pedestrian-router path until their
     # equivalent public reference catalogue is loaded and verified.
-    return await match_payload(
-        payload,
-        FOOT_OSRM_BASE_URL,
-        include_motorways=False,
-        polite_delay_seconds=1.05,
-        radius_attempts=FOOT_RADIUS_ATTEMPTS,
-        retry_no_match=True,
-    )
+    try:
+        return await asyncio.wait_for(match_payload(
+            payload,
+            FOOT_OSRM_BASE_URL,
+            include_motorways=False,
+            polite_delay_seconds=1.05,
+            radius_attempts=FOOT_RADIUS_ATTEMPTS,
+            retry_no_match=True,
+        ), timeout=55.0)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="Walking matching exceeded its time limit. Your saved GPS route can be retried later.",
+        ) from exc
 
 async def match_payload(
     payload: MatchRequest,
@@ -498,7 +553,7 @@ async def match_payload(
     road_features = []
     other_road_distance_m = 0.0
     matched_distance_m = 0.0
-    matched_tracepoints = 0
+    matched_input_indices = set()
     tracepoints_seen = 0
     failed_sections = []
 
@@ -591,7 +646,11 @@ async def match_payload(
                                 other_road_distance_m += float(step.get("distance") or 0.0)
 
                 tracepoints = data.get("tracepoints") or []
-                matched_tracepoints += sum(tp is not None for tp in tracepoints)
+                chunk_start = chunk_index * max(1, OSRM_CHUNK_SIZE - OSRM_CHUNK_OVERLAP)
+                matched_input_indices.update(
+                    chunk_start + index for index in data.get("matched_point_indices") or []
+                    if chunk_start + index < len(payload.points)
+                )
                 tracepoints_seen += len(tracepoints) + sum(failure["points"] for failure in chunk_failures)
 
     except httpx.HTTPError as exc:
@@ -605,7 +664,7 @@ async def match_payload(
         "input_points": len(payload.points),
         "chunks_used": len(chunks),
         "points_sent_to_matcher": tracepoints_seen,
-        "matched_tracepoints": matched_tracepoints,
+        "matched_tracepoints": len(matched_input_indices),
         "failed_sections": failed_sections,
         "matched_distance_m": round(matched_distance_m, 1),
         "geojson": {"type": "FeatureCollection", "features": features},

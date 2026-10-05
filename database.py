@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import time
 import urllib.parse
 import urllib.request
 import logging
@@ -545,6 +546,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     except (KeyError, TypeError, ValueError):
         return None
 
+    deadline = time.monotonic() + 20.0
+
     # Build a compact, route-local graph from the prepared public reference.
     # A generous margin allows a sensible detour around parks, one-way streets
     # or barriers without loading the whole county into application memory.
@@ -553,19 +556,25 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     south = min(point[1] for point in trace) - 0.006
     north = max(point[1] for point in trace) + 0.006
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
+        with psycopg.connect(DATABASE_URL, connect_timeout=5) as connection:
             with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL statement_timeout = 5000")
                 cursor.execute(
                     """
                     SELECT source_feature_id, segment_kind, tags,
                            ST_AsGeoJSON(geometry)
                     FROM pedestrian_reference_segments
                     WHERE geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    LIMIT 50001
                     """,
                     (west, south, east, north),
                 )
                 rows = cursor.fetchall()
-    except Exception:
+    except Exception as exc:
+        logger.warning("pedestrian reference query unavailable: %s", exc.__class__.__name__)
+        return None
+    if len(rows) > 50000:
+        logger.warning("pedestrian reference graph exceeds 50000-segment limit")
         return None
     if not rows:
         return None
@@ -588,6 +597,9 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     adjacency: dict[tuple[int, int], list[tuple[tuple[int, int], float, str]]] = {}
     features: dict[str, dict] = {}
     for feature_id, kind, tags, geometry_json in rows:
+        if time.monotonic() >= deadline:
+            logger.warning("pedestrian reference graph preparation exceeded 20 seconds")
+            return None
         geometry = json.loads(geometry_json)
         coords = geometry.get("coordinates") or []
         if len(coords) < 2:
@@ -646,6 +658,9 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
 
     candidate_layers = []
     for point in sampled_trace:
+        if time.monotonic() >= deadline:
+            logger.warning("pedestrian reference candidate lookup exceeded 20 seconds")
+            return None
         nearest = nsmallest(
             6,
             ((length_metres(point, candidate), key) for key, candidate in vertices.items()),
@@ -662,6 +677,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         queue = [(0.0, start_key)]
         visited = 0
         while queue and remaining and visited < 150_000:
+            if time.monotonic() >= deadline:
+                return {}
             current_distance, current = heappop(queue)
             if current_distance != distances.get(current):
                 continue
@@ -698,6 +715,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets
     )
     if not route_result:
+        logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
+                       len(sampled_trace), len(rows), time.monotonic() >= deadline)
         return None
     route_keys, used_feature_ids = route_result
 
