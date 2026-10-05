@@ -4,7 +4,7 @@ import time
 import unittest
 from heapq import nsmallest
 
-from pedestrian_matching import PedestrianVertexIndex, PedestrianGraphPaths, compress_pedestrian_graph, select_trajectory_paths, match_reference_trajectory
+from pedestrian_matching import unsupported_reversal_penalty, PedestrianEdgeCandidates, PedestrianVertexIndex, PedestrianGraphPaths, compress_pedestrian_graph, select_trajectory_paths, match_reference_trajectory
 
 
 def distance_metres(a, b):
@@ -260,6 +260,79 @@ class PedestrianGraphSearchTests(unittest.TestCase):
         compact=compress_pedestrian_graph(graph,{0,2},time.monotonic()+10)
         search=PedestrianGraphPaths(compact,time.monotonic()+10)
         self.assertEqual(([0,1,2],['short','onward'],2),search(0,[2],10)[2])
+
+
+class PedestrianEdgeCandidateTests(unittest.TestCase):
+    def match(self, trace, coordinates, edges):
+        vertices = dict(enumerate(coordinates))
+        graph = {key: [] for key in vertices}
+        for i, (a, b) in enumerate(edges):
+            gap = distance_metres(vertices[a], vertices[b])
+            graph[a].append((b, gap, str(i)))
+            graph[b].append((a, gap, str(i)))
+        deadline = time.monotonic()+10
+        index = PedestrianEdgeCandidates(trace, vertices, graph, distance_metres, deadline)
+        retained = {key for layer in index.layers.values() for key, _ in layer}
+        compact = compress_pedestrian_graph(graph, retained, deadline)
+        search = PedestrianGraphPaths(compact, deadline)
+        result = match_reference_trajectory(trace, index, vertices, distance_metres,
+                                            search, deadline, {})
+        return result, vertices, graph, index
+
+    def test_straight_walk_does_not_visit_side_road_vertices(self):
+        # Sparse main-road vertices, with nearer side-road nodes at each fix.
+        coords = [(0,51), (.001,51), (.002,51), (.003,51),
+                  (.001,51.00008), (.002,51.00008)]
+        trace = [(.0002,51), (.0009,51.00002), (.0017,51.00002), (.0028,51)]
+        result, vertices, _, _ = self.match(trace, coords, [(0,1),(1,2),(2,3),(1,4),(2,5)])
+        self.assertIsNotNone(result)
+        self.assertTrue(all(vertices[key][1] == 51 for key in result[0]))
+        self.assertAlmostEqual(.0002,vertices[result[0][0]][0])
+        self.assertAlmostEqual(.0028,vertices[result[0][-1]][0])
+
+    def test_real_turn_and_out_and_back_are_preserved(self):
+        coords = [(0,51), (.001,51), (.001,51.0008)]
+        trace = [(0,51),(.001,51),(.001,51.0007),(.001,51),(0,51)]
+        result, vertices, _, _ = self.match(trace, coords, [(0,1),(1,2)])
+        self.assertIsNotNone(result)
+        self.assertGreater(max(vertices[key][1] for key in result[0]),51.0006)
+        self.assertEqual(vertices[result[0][0]],vertices[result[0][-1]])
+
+    def test_crossing_paths_do_not_gain_a_junction(self):
+        coords = [(-.001,51),(.001,51),(0,50.999),(0,51.001)]
+        trace = [(-.0008,51),(0,51),(0,51.0008)]
+        _, vertices, graph, index = self.match(trace, coords, [(0,1),(2,3)])
+        crossing = [key for key in vertices if vertices[key] == [0.0,51.0]]
+        self.assertEqual(2,len(crossing))
+        search = PedestrianGraphPaths(graph,time.monotonic()+10)
+        self.assertEqual({},search(crossing[0],[crossing[1]],1000))
+
+    def test_long_edge_midpoint_is_available_even_when_endpoints_are_outside_radius(self):
+        coords = [(-.01,51),(.01,51)]
+        result, vertices, _, index = self.match([(-.0001,51),(.0001,51)],coords,[(0,1)])
+        self.assertIsNotNone(result)
+        self.assertAlmostEqual(0.0,index.layers[(-.0001,51)][0][1])
+        self.assertAlmostEqual(-.0001,vertices[result[0][0]][0])
+
+    def test_expired_projection_deadline_is_enforced(self):
+        with self.assertRaises(TimeoutError):
+            PedestrianEdgeCandidates([(0,51)],{0:(0,51),1:(.001,51)},
+                {0:[(1,1,'road')],1:[(0,1,'road')]},distance_metres,time.monotonic()-1)
+
+    def test_reversal_cost_distinguishes_forward_gps_from_a_real_return(self):
+        vertices={0:(0,51),1:(.0001,51)}
+        forward=unsupported_reversal_penalty((-.0002,51),(0,51),(.0002,51),
+                     [1,0],[0,1],vertices,distance_metres)
+        genuine=unsupported_reversal_penalty((-.0002,51),(0,51),(-.0002,51),
+                     [1,0],[0,1],vertices,distance_metres)
+        self.assertGreater(forward,0)
+        self.assertEqual(0,genuine)
+
+    def test_equal_cost_search_accepts_original_and_projection_keys(self):
+        graph = {0:[(1,1,'a'),(('projection',0,.5),1,'b')],
+                 1:[], ('projection',0,.5):[]}
+        search = PedestrianGraphPaths(graph,time.monotonic()+10)
+        self.assertEqual(2,len(search(0,[1,('projection',0,.5)],2)))
 
 
 if __name__ == "__main__":

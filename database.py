@@ -10,7 +10,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import PedestrianVertexIndex, PedestrianGraphPaths, compress_pedestrian_graph, match_reference_trajectory
+from pedestrian_matching import PedestrianEdgeCandidates, PedestrianGraphPaths, compress_pedestrian_graph, match_reference_trajectory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -653,9 +653,14 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
             accumulated = 0.0
     sampled_trace.append(trace[-1])
 
-    # Build once per transient graph instead of scanning every vertex for each
-    # GPS sample. Exact distances, six candidates and the 120 m limit are kept.
-    vertex_index = PedestrianVertexIndex(vertices)
+    # Snap along edges rather than pulling dense fixes to side-road vertices.
+    # Splits preserve the reference graph's actual connectivity.
+    try:
+        vertex_index = PedestrianEdgeCandidates(sampled_trace, vertices, adjacency,
+                                                length_metres, deadline)
+    except TimeoutError:
+        logger.warning("pedestrian reference projection exceeded 20 seconds")
+        return None
 
     retained_vertices = set()
     for point in sampled_trace:
@@ -697,14 +702,14 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "type": "Feature",
         "properties": {
             "reference_area": "preloaded_public_network",
-            "matcher": "preloaded_pedestrian_network_v3",
+            "matcher": "preloaded_pedestrian_network_v4",
             "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
     return {
         "status": "ok",
-        "matcher": "preloaded_pedestrian_network_v3",
+        "matcher": "preloaded_pedestrian_network_v4",
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),
