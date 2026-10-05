@@ -223,11 +223,6 @@ public class MainActivity extends Activity {
             live.addView(status); live.addView(distance);
             content.addView(live);
         } else {
-            content.addView(text("Capture", 34, Color.WHITE, true));
-            TextView subtitle = text("Record a journey or keep automatic tracking ready in the background.",
-                    16, 0xFFD3DCED, false);
-            subtitle.setPadding(0, dp(8), 0, dp(18));
-            content.addView(subtitle);
             Button utilities = new Button(this);
             utilities.setText("UTILITIES");
             styleAction(utilities, 0xFF263F7C, Color.WHITE);

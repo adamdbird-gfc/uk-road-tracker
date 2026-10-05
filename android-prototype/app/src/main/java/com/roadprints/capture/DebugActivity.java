@@ -7,14 +7,22 @@ import android.content.ClipboardManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.content.Intent;
+import android.content.Context;
+import android.net.Uri;
 import android.view.Gravity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 /** Local-only diagnostic report review and copy screen. */
 public class DebugActivity extends Activity {
+    private static final int SAVE_MOVEMENT_LOG = 4101;
     private static final int NAVY=0xFF0B1C50,MUTED=0xFFD3DCED;
     @Override protected void onCreate(Bundle state){
         super.onCreate(state);
@@ -58,6 +66,15 @@ public class DebugActivity extends Activity {
         }));
         String movementReport=MovementDiagnostics.getReport(this);
         if(!movementReport.isEmpty()){
+            root.addView(action("DOWNLOAD MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
+                Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                save.addCategory(Intent.CATEGORY_OPENABLE);
+                save.setType("text/plain");
+                String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+                        .withZone(ZoneOffset.UTC).format(Instant.now());
+                save.putExtra(Intent.EXTRA_TITLE,"roadprints-movement-" + stamp + ".txt");
+                startActivityForResult(save,SAVE_MOVEMENT_LOG);
+            }));
             root.addView(action("COPY MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
                 String latestReport=MovementDiagnostics.getReport(this);
                 ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
@@ -78,8 +95,38 @@ public class DebugActivity extends Activity {
                     })
                     .show()));
         }
+        root.addView(action("RAIL STATION DATA",0xFF172D5B,MUTED,()->{
+            android.widget.ScrollView scroll=new android.widget.ScrollView(this);
+            TextView attribution=text("Rail station data: davwheat / UK Railway Stations, derived from Trainline EU. Sources include OpenStreetMap, SNCF OpenData, GeoNames, Digitraffic.fi, OpenTransportData.swiss and admin.ch. Distributed under the Open Database License (ODbL). Station lookup runs locally; transport suggestions still require confirmation. This reference covers Great Britain National Rail stations; underground journeys are outside this first release.\n\nhttps://github.com/davwheat/uk-railway-stations\nhttps://github.com/trainline-eu/stations\nhttps://opendatacommons.org/licenses/odbl/1-0/",14,Color.BLACK,false);
+            attribution.setPadding(dp(16),dp(12),dp(16),dp(12));
+            android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
+            scroll.addView(attribution);
+            new AlertDialog.Builder(this).setTitle("Rail station data").setView(scroll)
+                    .setPositiveButton("Close",null).show();
+        }));
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
         if(available)new AlertDialog.Builder(this).setTitle("Debug report ready").setMessage("The report is stored on this device. Copy it only when you want to share it.").setNegativeButton("Close",null).setPositiveButton("Copy report",(d,w)->{ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);cb.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports",report));Toast.makeText(this,"Debug report copied",Toast.LENGTH_SHORT).show();}).setNeutralButton("Clear reports",(d,w)->{CrashReporter.clear(this);finish();}).show();
+    }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode!=SAVE_MOVEMENT_LOG || resultCode!=RESULT_OK || data==null)return;
+        Uri uri=data.getData();
+        if(uri==null)return;
+        Context app=getApplicationContext();
+        Toast.makeText(app,"Saving movement log…",Toast.LENGTH_SHORT).show();
+        new Thread(()->{
+            String message;
+            try(OutputStream output=app.getContentResolver().openOutputStream(uri,"wt")){
+                if(output==null)throw new IOException("Could not open the selected file.");
+                MovementDiagnostics.writeReport(app,output);
+                message="Complete movement log saved.";
+            }catch(Exception error){
+                message="Movement log could not be saved. Please try again.";
+            }
+            final String result=message;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(()->
+                    Toast.makeText(app,result,Toast.LENGTH_LONG).show());
+        },"movement-log-export").start();
     }
     private TextView action(String label,int background,int foreground,Runnable onClick){
         TextView view=text(label,15,foreground,true);

@@ -204,7 +204,21 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
             try {
-                mapRoutes = readMapRoutes();
+                JSONObject saved = PersistentScreenCache.read(getApplicationContext(),
+                        "map-routes", revision);
+                mapRoutes = saved == null ? null : mapRoutesFromCache(saved);
+                if (mapRoutes == null) {
+                    mapRoutes = readMapRoutes();
+                    Runtime cacheRuntime = Runtime.getRuntime();
+                    long cacheHeadroom = cacheRuntime.maxMemory()
+                            - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
+                    if (mapRoutes.retainedPoints <= 180000
+                            && cacheHeadroom >= 96L * 1024L * 1024L
+                            && mapDataRevision() == revision) {
+                        PersistentScreenCache.write(getApplicationContext(), "map-routes",
+                                revision, mapRoutesToCache(mapRoutes));
+                    }
+                }
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != mapLoadGeneration) return;
@@ -1534,6 +1548,106 @@ public class MapActivity extends Activity {
 
     private int dp(float value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private JSONObject mapRoutesToCache(MapRoutes routes) throws Exception {
+        JSONObject root = new JSONObject();
+        putRouteArrays(root, "sections", routes.sections);
+        putRouteArrays(root, "motorways", routes.motorwaySections);
+        putRouteArrays(root, "incompleteMotorways", routes.incompleteMotorwaySections);
+        putRouteArrays(root, "coveredMotorways", routes.coveredMotorwaySections);
+        putRouteArrays(root, "incompleteARoads", routes.incompleteARoadSections);
+        putRouteArrays(root, "coveredARoads", routes.coveredARoadSections);
+        root.put("stations", routes.serviceStations);
+        JSONArray visited = new JSONArray();
+        for (String id : routes.visitedServiceStationIds) visited.put(id);
+        root.put("visited", visited);
+        root.put("matchedJourneys", routes.matchedJourneys);
+        root.put("retainedPoints", routes.retainedPoints);
+        root.put("motorwayRetainedPoints", routes.motorwayRetainedPoints);
+        root.put("incompleteMotorwayPoints", routes.incompleteMotorwayPoints);
+        root.put("coveredMotorwayPoints", routes.coveredMotorwayPoints);
+        root.put("incompleteARoadPoints", routes.incompleteARoadPoints);
+        root.put("coveredARoadPoints", routes.coveredARoadPoints);
+        root.put("simplified", routes.simplified);
+        JSONObject percentages = new JSONObject();
+        for (Map.Entry<String, Double> entry : routes.roadPercentages.entrySet())
+            percentages.put(entry.getKey(), entry.getValue());
+        root.put("percentages", percentages);
+        JSONArray incomplete = new JSONArray();
+        for (RoadCoverageSegment segment : routes.incompleteRoadSegments) {
+            incomplete.put(new JSONObject().put("label", segment.label)
+                    .put("coordinates", segment.coordinates)
+                    .put("completedPercent", segment.completedPercent)
+                    .put("travelledMetres", segment.travelledMetres)
+                    .put("journeyCount", segment.journeyCount)
+                    .put("distanceMetres", segment.distanceMetres));
+        }
+        root.put("incompleteRoadSegments", incomplete);
+        return root;
+    }
+
+    private MapRoutes mapRoutesFromCache(JSONObject root) {
+        MapRoutes routes = new MapRoutes();
+        if (!root.has("sections") || !root.has("stations")) return null;
+        getRouteArrays(root, "sections", routes.sections);
+        getRouteArrays(root, "motorways", routes.motorwaySections);
+        getRouteArrays(root, "incompleteMotorways", routes.incompleteMotorwaySections);
+        getRouteArrays(root, "coveredMotorways", routes.coveredMotorwaySections);
+        getRouteArrays(root, "incompleteARoads", routes.incompleteARoadSections);
+        getRouteArrays(root, "coveredARoads", routes.coveredARoadSections);
+        routes.serviceStations = root.optJSONArray("stations");
+        if (routes.serviceStations == null) routes.serviceStations = new JSONArray();
+        JSONArray visited = root.optJSONArray("visited");
+        if (visited != null)
+            for (int i = 0; i < visited.length(); i++)
+                routes.visitedServiceStationIds.add(visited.optString(i));
+        routes.matchedJourneys = root.optInt("matchedJourneys");
+        routes.retainedPoints = root.optInt("retainedPoints");
+        routes.motorwayRetainedPoints = root.optInt("motorwayRetainedPoints");
+        routes.incompleteMotorwayPoints = root.optInt("incompleteMotorwayPoints");
+        routes.coveredMotorwayPoints = root.optInt("coveredMotorwayPoints");
+        routes.incompleteARoadPoints = root.optInt("incompleteARoadPoints");
+        routes.coveredARoadPoints = root.optInt("coveredARoadPoints");
+        routes.simplified = root.optBoolean("simplified");
+        JSONObject percentages = root.optJSONObject("percentages");
+        if (percentages != null) {
+            java.util.Iterator<String> keys = percentages.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                routes.roadPercentages.put(key, percentages.optDouble(key));
+            }
+        }
+        JSONArray incomplete = root.optJSONArray("incompleteRoadSegments");
+        if (incomplete != null) {
+            for (int i = 0; i < incomplete.length(); i++) {
+                JSONObject item = incomplete.optJSONObject(i);
+                JSONArray coordinates = item == null ? null : item.optJSONArray("coordinates");
+                if (item == null || coordinates == null) continue;
+                RoadCoverageSegment segment = new RoadCoverageSegment(item.optString("label"),
+                        coordinates, item.optDouble("completedPercent"),
+                        item.optDouble("travelledMetres"), item.optInt("journeyCount"));
+                segment.distanceMetres = item.optDouble("distanceMetres", Double.MAX_VALUE);
+                routes.incompleteRoadSegments.add(segment);
+            }
+        }
+        return routes;
+    }
+
+    private void putRouteArrays(JSONObject root, String name, List<JSONArray> values)
+            throws Exception {
+        JSONArray array = new JSONArray();
+        for (JSONArray value : values) array.put(value);
+        root.put(name, array);
+    }
+
+    private void getRouteArrays(JSONObject root, String name, List<JSONArray> target) {
+        JSONArray array = root.optJSONArray(name);
+        if (array == null) return;
+        for (int i = 0; i < array.length(); i++) {
+            JSONArray route = array.optJSONArray(i);
+            if (route != null) target.add(route);
+        }
     }
 
     private static final class MapRoutes {

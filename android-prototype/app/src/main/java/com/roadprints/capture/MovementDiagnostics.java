@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -158,6 +160,53 @@ final class MovementDiagnostics {
                 .putBoolean(TRUNCATED, false).apply();
         File file = logFile(app);
         if (file.exists()) file.delete();
+    }
+
+    /** Stream a complete snapshot without clipboard limits or a large String. */
+    static void writeReport(Context context, OutputStream output) throws IOException {
+        Context app = context.getApplicationContext();
+        File snapshot = File.createTempFile("movement-export-", ".jsonl", app.getCacheDir());
+        boolean truncated;
+        try {
+          synchronized (LOCK) {
+            SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (!isRunning(app)) {
+                long retainUntil = prefs.getLong(RETAIN_UNTIL, 0L);
+                if (retainUntil > 0 && System.currentTimeMillis() >= retainUntil) clear(app);
+            }
+            File file = logFile(app);
+            if (!file.exists()) throw new IOException("No movement log is available.");
+            truncated = prefs.getBoolean(TRUNCATED, false);
+            try (FileInputStream input = new FileInputStream(file);
+                 FileOutputStream copy = new FileOutputStream(snapshot)) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = input.read(buffer)) != -1) copy.write(buffer, 0, count);
+            }
+          }
+            // A document provider can write to remote storage. Release the log
+            // lock before writing there so capture can continue uninterrupted.
+            output.write(("Roadprints movement diagnostics (precise location; stored locally only)\n")
+                    .getBytes(StandardCharsets.UTF_8));
+            long copiedBytes = 0;
+            try (FileInputStream input = new FileInputStream(snapshot)) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, count);
+                    copiedBytes += count;
+                }
+            }
+            if (truncated) {
+                output.write("\nLog reached its 4 MiB safety limit; later samples were omitted.\n"
+                        .getBytes(StandardCharsets.UTF_8));
+            }
+            output.write(("\nEnd of movement diagnostics export. Log bytes: " + copiedBytes
+                    + ". Exported at: " + Instant.now() + "\n").getBytes(StandardCharsets.UTF_8));
+            output.flush();
+        } finally {
+            snapshot.delete();
+        }
     }
 
     private static void appendIfRunning(Context context, JSONObject item) {

@@ -538,57 +538,105 @@ public class JourneyListActivity extends Activity {
         }
         try {
             processor.execute(() -> {
-            Map<String, List<String>> highlights = new LinkedHashMap<>();
-            try {
-                List<JourneyDiscoveryRecord> records = new ArrayList<>();
-                JourneyStore.forEach(getApplicationContext(), journey -> {
-                    if (!"complete".equals(journey.optString("processing_status"))) return;
-                    String mode = journey.optString("mode", "unknown").toLowerCase();
-                    if (!(isRoadMode(mode) || isFootMode(mode))) return;
-                    Map<String, String> roads = new LinkedHashMap<>();
-                    for (JSONObject feature : discoveryFeatures(journey)) {
-                        JSONObject properties = feature.optJSONObject("properties");
-                        if (properties == null) continue;
-                        String rawRef = properties.optString("road_ref", properties.optString("ref", ""));
-                        String name = properties.optString("name", properties.optString("road_name", "")).trim();
-                        String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
-                                : rawRef.trim().split("[;,/]");
-                        for (String value : refs) {
-                            String ref = value.trim().toUpperCase();
-                            boolean usableRef = !ref.isEmpty() && !ref.matches("\\d+(?:[.,]\\d+)?");
-                            String label = usableRef ? ref : name;
-                            if (label.isEmpty() || label.matches("\\d+(?:[.,]\\d+)?")) continue;
-                            roads.putIfAbsent(usableRef ? "ref:" + ref : "name:" + label.toLowerCase(), label);
+                Map<String, List<String>> highlights = readDiscoveryCache(revision);
+                boolean calculated = highlights != null;
+                if (highlights == null) {
+                    highlights = new LinkedHashMap<>();
+                    try {
+                        List<JourneyDiscoveryRecord> records = new ArrayList<>();
+                        JourneyStore.forEach(getApplicationContext(), journey -> {
+                            if (!"complete".equals(journey.optString("processing_status"))) return;
+                            String mode = journey.optString("mode", "unknown").toLowerCase();
+                            if (!(isRoadMode(mode) || isFootMode(mode))) return;
+                            Map<String, String> roads = new LinkedHashMap<>();
+                            for (JSONObject feature : discoveryFeatures(journey)) {
+                                JSONObject properties = feature.optJSONObject("properties");
+                                if (properties == null) continue;
+                                String rawRef = properties.optString("road_ref",
+                                        properties.optString("ref", ""));
+                                String name = properties.optString("name",
+                                        properties.optString("road_name", "")).trim();
+                                String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
+                                        : rawRef.trim().split("[;,/]");
+                                for (String value : refs) {
+                                    String ref = value.trim().toUpperCase();
+                                    boolean usableRef = !ref.isEmpty()
+                                            && !ref.matches("\\d+(?:[.,]\\d+)?");
+                                    String label = usableRef ? ref : name;
+                                    if (label.isEmpty()
+                                            || label.matches("\\d+(?:[.,]\\d+)?")) continue;
+                                    roads.putIfAbsent(usableRef ? "ref:" + ref
+                                            : "name:" + label.toLowerCase(), label);
+                                }
+                            }
+                            if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
+                                    journey.optString("journey_id", ""),
+                                    journeyStartMillis(journey), roads));
+                        });
+                        records.sort(Comparator.comparingLong(record -> record.startedAt));
+                        Set<String> seen = new HashSet<>();
+                        for (JourneyDiscoveryRecord record : records) {
+                            List<String> fresh = new ArrayList<>();
+                            for (Map.Entry<String, String> road : record.roads.entrySet())
+                                if (!seen.contains(road.getKey())) fresh.add(road.getValue());
+                            if (!fresh.isEmpty()) highlights.put(record.journeyId, fresh);
+                            seen.addAll(record.roads.keySet());
                         }
+                        calculated = true;
+                    } catch (Exception error) {
+                        android.util.Log.w("Roadprints",
+                                "Journey road highlights could not be calculated", error);
                     }
-                    if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
-                            journey.optString("journey_id", ""), journeyStartMillis(journey), roads));
-                });
-                records.sort(Comparator.comparingLong(record -> record.startedAt));
-                Set<String> seen = new HashSet<>();
-                for (JourneyDiscoveryRecord record : records) {
-                    List<String> fresh = new ArrayList<>();
-                    for (Map.Entry<String, String> road : record.roads.entrySet())
-                        if (!seen.contains(road.getKey())) fresh.add(road.getValue());
-                    if (!fresh.isEmpty()) highlights.put(record.journeyId, fresh);
-                    seen.addAll(record.roads.keySet());
                 }
-            } catch (Exception error) {
-                android.util.Log.w("Roadprints", "Journey road highlights could not be calculated", error);
-            }
-            final Map<String, List<String>> result = highlights;
-            synchronized (SUMMARY_CACHE_LOCK) {
-                processDiscoveryRevision = revision;
-                processNewRoadHighlights = result;
-            }
-            mainHandler.post(() -> {
-                if (isFinishing() || generation != refreshGeneration) return;
-                newRoadHighlights = result;
-                render();
-            });
+                final Map<String, List<String>> result = highlights;
+                if (calculated && JourneyStore.dataRevision(getApplicationContext()) == revision) {
+                    synchronized (SUMMARY_CACHE_LOCK) {
+                        processDiscoveryRevision = revision;
+                        processNewRoadHighlights = result;
+                    }
+                    writeDiscoveryCache(revision, result);
+                }
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != refreshGeneration) return;
+                    newRoadHighlights = result;
+                    render();
+                });
             });
         } catch (RejectedExecutionException ignored) {
             // The activity may be closing while its background queue is shutting down.
+        }
+    }
+
+    private Map<String, List<String>> readDiscoveryCache(long revision) {
+        JSONObject saved = PersistentScreenCache.read(getApplicationContext(),
+                "journey-discovery-highlights", revision);
+        JSONObject rows = saved == null ? null : saved.optJSONObject("rows");
+        if (rows == null) return null;
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        java.util.Iterator<String> keys = rows.keys();
+        while (keys.hasNext()) {
+            String journeyId = keys.next();
+            JSONArray labels = rows.optJSONArray(journeyId);
+            if (labels == null) continue;
+            List<String> values = new ArrayList<>();
+            for (int i = 0; i < labels.length(); i++) values.add(labels.optString(i));
+            result.put(journeyId, values);
+        }
+        return result;
+    }
+
+    private void writeDiscoveryCache(long revision, Map<String, List<String>> highlights) {
+        try {
+            JSONObject rows = new JSONObject();
+            for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
+                JSONArray labels = new JSONArray();
+                for (String label : entry.getValue()) labels.put(label);
+                rows.put(entry.getKey(), labels);
+            }
+            PersistentScreenCache.write(getApplicationContext(), "journey-discovery-highlights",
+                    revision, new JSONObject().put("rows", rows));
+        } catch (Exception error) {
+            android.util.Log.w("Roadprints", "Journey highlight cache could not be saved", error);
         }
     }
 
