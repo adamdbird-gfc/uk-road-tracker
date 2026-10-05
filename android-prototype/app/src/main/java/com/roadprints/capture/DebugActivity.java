@@ -95,6 +95,15 @@ public class DebugActivity extends Activity {
                     })
                     .show()));
         }
+        root.addView(action("RAIL STATION DATA",0xFF172D5B,MUTED,()->{
+            android.widget.ScrollView scroll=new android.widget.ScrollView(this);
+            TextView attribution=text("Rail station data: davwheat / UK Railway Stations, derived from Trainline EU. Sources include OpenStreetMap, SNCF OpenData, GeoNames, Digitraffic.fi, OpenTransportData.swiss and admin.ch. Distributed under the Open Database License (ODbL). Station lookup runs locally; transport suggestions still require confirmation. This reference covers Great Britain National Rail stations; underground journeys are outside this first release.\n\nhttps://github.com/davwheat/uk-railway-stations\nhttps://github.com/trainline-eu/stations\nhttps://opendatacommons.org/licenses/odbl/1-0/",14,Color.BLACK,false);
+            attribution.setPadding(dp(16),dp(12),dp(16),dp(12));
+            android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
+            scroll.addView(attribution);
+            new AlertDialog.Builder(this).setTitle("Rail station data").setView(scroll)
+                    .setPositiveButton("Close",null).show();
+        }));
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
         if(available)new AlertDialog.Builder(this).setTitle("Debug report ready").setMessage("The report is stored on this device. Copy it only when you want to share it.").setNegativeButton("Close",null).setPositiveButton("Copy report",(d,w)->{ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);cb.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports",report));Toast.makeText(this,"Debug report copied",Toast.LENGTH_SHORT).show();}).setNeutralButton("Clear reports",(d,w)->{CrashReporter.clear(this);finish();}).show();
     }
