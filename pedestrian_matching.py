@@ -6,6 +6,106 @@ from heapq import nsmallest, heappop, heappush
 from collections import OrderedDict
 
 
+class PedestrianEdgeCandidates:
+    """Project fixes onto real edges, splitting only those edges in place.
+
+    Synthetic vertices belong to a particular edge, so nearby, unconnected
+    paths never acquire a fabricated junction. Original endpoints retain their
+    identity. All candidate layers are prepared before graph contraction.
+    """
+
+    def __init__(self, trace, vertices, adjacency, length_metres, deadline):
+        cells, edges, broad_edges = {}, [], []
+        cell_size = PedestrianVertexIndex.CELL_DEGREES
+        seen = set()
+        for a, links in adjacency.items():
+            for b, distance, feature in links:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Pedestrian edge preparation exceeded deadline")
+                identity = (frozenset((a, b)), feature)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                edge_id = len(edges)
+                edges.append((a, b, distance, feature))
+                start, end = vertices[a], vertices[b]
+                west, east = sorted((math.floor(start[0]/cell_size), math.floor(end[0]/cell_size)))
+                south, north = sorted((math.floor(start[1]/cell_size), math.floor(end[1]/cell_size)))
+                if (east-west+1)*(north-south+1) > 4096:
+                    broad_edges.append(edge_id)
+                    continue
+                for x in range(west, east + 1):
+                    for y in range(south, north + 1):
+                        cells.setdefault((x, y), []).append(edge_id)
+
+        self.layers = {}
+        splits = {}
+        for point in trace:
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Pedestrian projection exceeded deadline")
+            if tuple(point) in self.layers:
+                continue
+            longitude, latitude = point
+            scale = math.cos(math.radians(latitude))
+            lat_radius = math.degrees(120.0/6371008.8) + 1e-10
+            lng_radius = math.degrees(math.asin(math.sin(120.0/6371008.8)/scale)) + 1e-10
+            nearby = set(broad_edges)
+            for x in range(math.floor((longitude-lng_radius)/cell_size),
+                           math.floor((longitude+lng_radius)/cell_size)+1):
+                for y in range(math.floor((latitude-lat_radius)/cell_size),
+                               math.floor((latitude+lat_radius)/cell_size)+1):
+                    nearby.update(cells.get((x, y), ()))
+            candidates = []
+            for edge_id in nearby:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Pedestrian projection exceeded deadline")
+                a, b, _, _ = edges[edge_id]
+                start, end = vertices[a], vertices[b]
+                dx, dy = (end[0]-start[0])*scale, end[1]-start[1]
+                norm = dx*dx + dy*dy
+                if not norm:
+                    continue
+                fraction = max(0.0, min(1.0, ((longitude-start[0])*scale*dx
+                                            + (latitude-start[1])*dy)/norm))
+                projected = [start[0]+fraction*(end[0]-start[0]),
+                             start[1]+fraction*(end[1]-start[1])]
+                gap = length_metres(point, projected)
+                if gap <= 120.0:
+                    candidates.append((gap, edge_id, fraction, projected))
+            layer, used = [], set()
+            for gap, edge_id, fraction, projected in sorted(candidates):
+                a, b, _, _ = edges[edge_id]
+                # Edge-specific keys prevent joining paths that merely cross.
+                key = a if fraction <= 1e-9 else b if fraction >= 1-1e-9 else (
+                    "projection", edge_id, round(fraction, 12))
+                if key in used:
+                    continue
+                used.add(key)
+                layer.append((key, gap))
+                if key != a and key != b:
+                    vertices[key] = projected
+                    splits.setdefault(edge_id, {})[key] = fraction
+                if len(layer) >= 24:
+                    break
+            self.layers[tuple(point)] = layer
+
+        for edge_id, projections in splits.items():
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Pedestrian edge splitting exceeded deadline")
+            a, b, _, feature = edges[edge_id]
+            adjacency[a] = [link for link in adjacency[a] if not (link[0] == b and link[2] == feature)]
+            adjacency[b] = [link for link in adjacency[b] if not (link[0] == a and link[2] == feature)]
+            ordered = [a] + sorted(projections, key=projections.get) + [b]
+            for start, end in zip(ordered, ordered[1:]):
+                distance = length_metres(vertices[start], vertices[end])
+                adjacency.setdefault(start, []).append((end, distance, feature))
+                adjacency.setdefault(end, []).append((start, distance, feature))
+
+    def nearest(self, point, length_metres, radius=120.0, count=6):
+        return [(key, gap) for key, gap in self.layers.get(tuple(point), ())
+                if gap <= radius][:count]
+
+
 class PedestrianVertexIndex:
     """Route-local grid for exact nearest-vertex queries on the UK network.
 
@@ -133,7 +233,8 @@ class PedestrianGraphPaths:
         state = self.cache.pop(start, None)
         if state is None:
             self.searches += 1
-            state = {'distances': {start: 0.0}, 'previous': {}, 'settled': set(), 'queue': [(0.0, start)]}
+            state = {'distances': {start: 0.0}, 'previous': {}, 'settled': set(),
+                     'queue': [(0.0, 0, start)], 'serial': 0}
         else:
             self.cache_hits += 1
         distances, previous = state['distances'], state['previous']
@@ -145,7 +246,7 @@ class PedestrianGraphPaths:
             # Preserve the frontier when this layer's bound is reached.
             if queue[0][0] > max_distance:
                 break
-            current_distance, current = heappop(queue)
+            current_distance, _, current = heappop(queue)
             if current in settled or current_distance != distances.get(current):
                 continue
             settled.add(current)
@@ -158,7 +259,8 @@ class PedestrianGraphPaths:
                     previous[neighbour] = (current, feature_id)
                     # Include the next frontier beyond the current bound so
                     # future calls can extend this same exact shortest search.
-                    heappush(queue, (candidate, neighbour))
+                    state['serial'] += 1
+                    heappush(queue, (candidate, state['serial'], neighbour))
         self.cache[start] = state
         cached_nodes = sum(len(item['distances']) for item in self.cache.values())
         while self.cache and (cached_nodes > self.max_cache_nodes or len(self.cache) > 96):
@@ -278,6 +380,13 @@ def select_trajectory_paths(
                 total = previous_cost + score_pedestrian_path(
                     trace_start, trace_end, route, path_distance, length_metres
                 ) + (current_gap / 15.0) ** 2
+                if layer_index > 1 and len(path) > 1:
+                    prior_state = back_pointers[-1].get(previous_index, -1)
+                    prior_result = transition_paths[-1].get((prior_state, previous_index))
+                    if prior_result:
+                        total += unsupported_reversal_penalty(
+                            trace[layer_index-2], trace_start, trace_end,
+                            prior_result[0], path, vertices, length_metres)
                 if total < best_cost:
                     best_cost, best_previous = total, previous_index
             current_costs[current_index] = best_cost
@@ -323,6 +432,28 @@ def select_trajectory_paths(
         route_keys.extend(path[1:])
         used_feature_ids.extend(feature_ids)
     return route_keys, used_feature_ids
+
+
+def unsupported_reversal_penalty(before, point, after, incoming, outgoing,
+                                 vertices, length_metres):
+    """Discourage immediately retracing an edge without GPS turn evidence.
+
+    This is a selection cost, never a geometry deletion: a genuine return is
+    allowed, and clear observed reversals carry no additional cost.
+    """
+    if len(incoming) < 2 or len(outgoing) < 2:
+        return 0.0
+    if incoming[-2] != outgoing[1]:
+        return 0.0
+    scale = math.cos(math.radians(point[1]))
+    dx, dy = (point[0]-before[0])*scale, point[1]-before[1]
+    ex, ey = (after[0]-point[0])*scale, after[1]-point[1]
+    norm = math.hypot(dx, dy)*math.hypot(ex, ey)
+    if (norm and (dx*ex+dy*ey)/norm < -0.5
+            and min(length_metres(before, point),length_metres(point, after)) >= 8.0):
+        return 0.0
+    retraced = length_metres(vertices[outgoing[0]], vertices[outgoing[1]])
+    return 8.0 + min(8.0, retraced/10.0)
 
 
 def score_pedestrian_path(
