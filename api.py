@@ -159,7 +159,7 @@ async def request_match(client, points, radius, base_url):
         "radiuses": radiuses,
     }
     last_error = None
-    for attempt in range(3):
+    for attempt in range(2):
         try:
             response = await client.get(url, params=params)
             try:
@@ -169,9 +169,11 @@ async def request_match(client, points, radius, base_url):
             return response, data
         except httpx.TransportError as exc:
             last_error = exc
-            if attempt == 2:
+            if attempt == 1:
                 raise
-            await asyncio.sleep(1.5 * (attempt + 1))
+            # Keep one short retry for transient socket failures. Long retries
+            # can outlive the Android request timeout and create duplicate matches.
+            await asyncio.sleep(1.5)
     raise last_error
 
 async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_seconds=0.0, radius_attempts=RADIUS_ATTEMPTS, retry_no_match=False):
@@ -182,6 +184,23 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         response, data = await request_match(client, points, radius, base_url)
         if response.status_code == 200 and data.get("code") == "Ok":
             return data, radius
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After", "30")
+            logger.warning("External routing provider rate-limited a match request")
+            raise HTTPException(
+                status_code=503,
+                detail="The routing provider is temporarily rate limited. Please retry shortly.",
+                headers={"Retry-After": retry_after},
+            )
+        if response.status_code >= 500:
+            logger.warning(
+                "External routing provider returned HTTP %s for a match request",
+                response.status_code,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The routing provider is temporarily unavailable. Please retry shortly.",
+            )
         code = data.get("code", f"HTTP {response.status_code}")
         message = data.get("message", response.text[:300] or "No details returned.")
         last_error = f"{code}: {message}"
@@ -218,7 +237,12 @@ async def match_chunk_resiliently(
         )
         return data, radius, []
     except HTTPException as exc:
-        if exc.status_code != 422 or len(points) <= 2:
+        # Only a genuine no-match may be split into smaller traces. Propagate
+        # rate limits and upstream failures immediately; splitting those errors
+        # multiplies requests while the provider is already unavailable.
+        if exc.status_code != 422:
+            raise
+        if len(points) <= 2:
             return {"matchings": [], "tracepoints": []}, None, [{"points": len(points), "detail": str(exc.detail)}]
 
         # Use a one-point overlap so splitting a trace never leaves a lone
@@ -530,7 +554,7 @@ async def match_payload(
 
     try:
         async with httpx.AsyncClient(
-            timeout=45.0,
+            timeout=httpx.Timeout(connect=8.0, read=30.0, write=10.0, pool=8.0),
             headers={"User-Agent": "Roadprints-POC/0.7 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"},
         ) as client:
             for chunk_index, chunk in enumerate(chunks):
@@ -621,6 +645,7 @@ async def match_payload(
                 tracepoints_seen += len(tracepoints) + sum(failure["points"] for failure in chunk_failures)
 
     except httpx.HTTPError as exc:
+        logger.warning("External routing connection failed (%s)", type(exc).__name__)
         raise HTTPException(status_code=502, detail=f"Road matcher could not be reached: {exc}") from exc
 
     if not features:
