@@ -103,6 +103,10 @@ public class CaptureService extends Service {
     private boolean captureFinishing;
     private boolean checkpointPending;
     private boolean diagnosticUpdatesRegistered;
+    private final Runnable diagnosticWindowExpiry = () -> {
+        MovementDiagnostics.isRunning(this);
+        refreshDiagnosticLocationUpdates();
+    };
     private String nextCaptureMode;
     private String pendingActivityMode;
     private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
@@ -191,6 +195,7 @@ public class CaptureService extends Service {
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
         } else if (ACTION_DIAGNOSTICS_CHANGED.equals(action)) {
+            if (isArmed(this)) startForegroundWithNotification();
             refreshDiagnosticLocationUpdates();
         } else if (ACTION_ACTIVITY.equals(action)) {
             if (!isArmed(this) && !isActive(this)) {
@@ -753,9 +758,10 @@ public class CaptureService extends Service {
         if (diagnosticWindowOpen && isArmed(this)
                 && !isActive(this) && candidateMode == null) {
             requestDiagnosticLocationUpdates();
-        } else if ((!diagnosticWindowOpen || !isArmed(this))
-                && !isActive(this) && candidateMode == null) {
-            if (diagnosticUpdatesRegistered) {
+        } else {
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            if ((!diagnosticWindowOpen || !isArmed(this))
+                    && !isActive(this) && candidateMode == null && diagnosticUpdatesRegistered) {
                 locationManager.removeUpdates(locationListener);
                 diagnosticUpdatesRegistered = false;
             }
@@ -770,6 +776,9 @@ public class CaptureService extends Service {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                     30_000L, 10f, locationListener);
             diagnosticUpdatesRegistered = true;
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            handler.postDelayed(diagnosticWindowExpiry,
+                    Math.max(1_000L, MovementDiagnostics.until(this) - System.currentTimeMillis()));
             MovementDiagnostics.recordEvent(this, "movement_sampling_started",
                     "GPS samples requested at most every 30 seconds while waiting for movement.");
         } catch (SecurityException error) {
@@ -1025,6 +1034,7 @@ public class CaptureService extends Service {
     public void onDestroy() {
         removeActivityUpdates();
         handler.removeCallbacks(checkpointCapture);
+        handler.removeCallbacks(diagnosticWindowExpiry);
         clearPendingActivityMode();
         if (isActive(this)) {
             try {
