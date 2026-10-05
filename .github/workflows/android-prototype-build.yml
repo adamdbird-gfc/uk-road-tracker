@@ -51,11 +51,15 @@ jobs:
           test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }
           printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
           echo "ROADPRINTS_DEBUG_KEYSTORE=$RUNNER_TEMP/roadprints-debug.keystore" >> "$GITHUB_ENV"
+          # This keystore uses Android's standard debug-key credentials.
+          echo "ROADPRINTS_DEBUG_STORE_PASSWORD=android" >> "$GITHUB_ENV"
+          echo "ROADPRINTS_DEBUG_KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
+          echo "ROADPRINTS_DEBUG_KEY_PASSWORD=android" >> "$GITHUB_ENV"
 
-      - name: Build debug APK and prepare signing utility
-        working-directory: .
+      - name: Build, test and verify signed APK
         run: |
           gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:assembleDebug
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose android-prototype/app/build/outputs/apk/debug/app-debug.apk
           mkdir -p roadprints-output
           cp android-prototype/app/build/outputs/apk/debug/app-debug.apk roadprints-output/app-debug.apk
 
