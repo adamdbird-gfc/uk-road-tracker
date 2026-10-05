@@ -68,7 +68,14 @@ public class DebugActivity extends Activity {
                     .setTitle("Clear movement log?")
                     .setMessage("The local movement log, including its GPS coordinates, will be deleted.")
                     .setNegativeButton("Cancel",null)
-                    .setPositiveButton("Clear",(dialog,which)->{MovementDiagnostics.clear(this);recreate();})
+                    .setPositiveButton("Clear",(dialog,which)->{
+                        MovementDiagnostics.stop(this,"Cleared by user.");
+                        Intent changed=new Intent(this,CaptureService.class);
+                        changed.setAction(CaptureService.ACTION_DIAGNOSTICS_CHANGED);
+                        startService(changed);
+                        MovementDiagnostics.clear(this);
+                        recreate();
+                    })
                     .show()));
         }
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
