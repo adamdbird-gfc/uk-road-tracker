@@ -522,13 +522,12 @@ public class CaptureService extends Service {
         }
         if (candidateMovementLast != null) {
             float stepMetres = candidateMovementLast.distanceTo(location);
-            float accuracyAllowance = (candidateMovementLast.hasAccuracy()
-                    ? candidateMovementLast.getAccuracy() : 15f)
-                    + location.getAccuracy();
+            float previousAccuracy = candidateMovementLast.hasAccuracy()
+                    ? candidateMovementLast.getAccuracy() : 15f;
             // Credit only movement beyond GPS uncertainty so small location jitter
             // does not accumulate into a false journey start.
-            candidateMovementMetres += Math.max(0f,
-                    stepMetres - Math.min(8f, accuracyAllowance * 0.25f));
+            candidateMovementMetres += CaptureStartGate.reliableMovementIncrement(
+                    stepMetres, previousAccuracy, location.getAccuracy());
         }
         candidateMovementLast = new Location(location);
         if (candidatePoints.isEmpty()
@@ -545,7 +544,8 @@ public class CaptureService extends Service {
                         + "; path_m=" + Math.round(candidateMovementMetres)
                         + "; straight_line_m=" + Math.round(fromOrigin)
                         + "; accuracy_m=" + Math.round(location.getAccuracy())
-                        + "; previous_stop_distance_m=" + Math.round(fromStop)
+                        + "; previous_stop_distance_m=" + (departureAnchor == null ? "none" : Math.round(fromStop))
+                        + "; previous_stop_radius_enforced=" + (!walking && departureAnchor != null)
                         + "; required_path_m=" + Math.round(CaptureStartGate.minimumMovementMetres(candidateMode)));
         float confirmedMovement = walking ? candidateMovementMetres : fromOrigin;
         boolean requireDepartureRadius = !walking && departureAnchor != null;
