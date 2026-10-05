@@ -127,7 +127,9 @@ final class RoadprintsBackup {
                     if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
                         throw new IllegalStateException("Could not prepare backup data.");
                     }
-                    long copied = copy(zip, new FileOutputStream(target), MAX_ARCHIVE_BYTES - total[0], total);
+                    try (FileOutputStream output = new FileOutputStream(target)) {
+                        copy(zip, output, MAX_ARCHIVE_BYTES - total[0], total);
+                    }
                     if (relative.startsWith("journey_") && relative.endsWith(".json")) journeyCount++;
                 } else if (name.startsWith("preferences/") && name.endsWith(".json")) {
                     String preferenceName = name.substring("preferences/".length(),
@@ -354,15 +356,6 @@ final class RoadprintsBackup {
         return value != null && value.matches("[A-Za-z0-9_.-]{1,120}");
     }
 
-    private static void copy(InputStream input, OutputStream output, long maximum, Object ignored)
-            throws Exception {
-        copy(input, output, maximum, (long[]) null);
-    }
-
-    private static void copyTree(File root, File source, File destinationRoot, boolean ignored)
-            throws Exception {
-        copyTree(root, source, destinationRoot);
-    }
 
     private static void deleteRecursively(File file) {
         if (file == null || !file.exists()) return;
