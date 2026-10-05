@@ -52,6 +52,7 @@ def select_trajectory_paths(
     vertices: dict,
     length_metres,
     paths_to_targets,
+    diagnostics: dict | None = None,
 ) -> tuple[list, list[str]] | None:
     """Select a connected network route that best follows ordered GPS fixes.
 
@@ -109,6 +110,20 @@ def select_trajectory_paths(
                 layer_paths[(best_previous, current_index)] = paths_by_previous[best_previous][current_key]
 
         if not current_costs or min(current_costs.values()) == float("inf"):
+            if diagnostics is not None:
+                reachable_sources = [index for index, cost in previous_costs.items()
+                                     if math.isfinite(cost)]
+                connected = [result
+                             for index in reachable_sources
+                             for result in paths_by_previous[index].values()]
+                diagnostics.update(
+                    failure_layer=layer_index,
+                    observed_distance_m=round(observed_distance, 1),
+                    source_candidates=len(reachable_sources),
+                    target_candidates=len(target_keys),
+                    connected_transitions=len(connected),
+                    stationary_transitions=sum(len(result[0]) == 1 for result in connected),
+                )
             return None
         previous_costs = current_costs
         back_pointers.append(current_back)
@@ -148,7 +163,10 @@ def score_pedestrian_path(
     that case, especially for two-point traces where there are no intermediate
     fixes to steer a point-only matcher.
     """
-    if len(route) < 2:
+    # Dense fixes and short pauses can legitimately share a snapped vertex.
+    # Score the zero-length network transition against the observed movement
+    # and deviation below; rejecting it forces a detour or breaks the trace.
+    if not route:
         return float("inf")
 
     observed_distance = length_metres(trace_start, trace_end)
