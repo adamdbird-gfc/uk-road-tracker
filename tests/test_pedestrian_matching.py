@@ -1,9 +1,10 @@
 import math
 import random
+import time
 import unittest
 from heapq import nsmallest
 
-from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths
+from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths, match_reference_trajectory
 
 
 def distance_metres(a, b):
@@ -67,6 +68,46 @@ class PedestrianVertexIndexTests(unittest.TestCase):
 
 
 class PedestrianPathTests(unittest.TestCase):
+    def test_crowded_disconnected_candidates_recover_connected_street(self):
+        vertices = {'start': [0.0, 51.5], 'street': [0.001, 51.5]}
+        trace = [vertices['start'], vertices['street']]
+        calls = []
+        class Index:
+            def nearest(self, point, length, count):
+                calls.append(count)
+                if point == trace[0]: return [('start', 0.0)]
+                close = [('isolated'+str(i), float(i)) for i in range(6)]
+                return close if count == 6 else close + [('street', 10.0)]
+        vertices.update({'isolated'+str(i): [0.001,51.5001] for i in range(6)})
+        def paths(start, targets, limit):
+            if start == 'start' and 'street' in targets:
+                return {'street': (['start','street'], ['connected-road'],
+                                   distance_metres(vertices['start'],vertices['street']))}
+            return {}
+        diagnostics = {}
+        result = match_reference_trajectory(trace, Index(), vertices, distance_metres,
+                                            paths, time.monotonic()+10, diagnostics)
+        self.assertEqual((['start','street'], ['connected-road']), result)
+        self.assertEqual(24, diagnostics['candidate_count'])
+        self.assertEqual([6,6,24,24], calls)
+
+    def test_recovery_keeps_deadline_and_rejects_real_disconnection(self):
+        vertices = {'start': [0.0,51.5], 'end': [0.001,51.5]}
+        trace = list(vertices.values())
+        class Index:
+            def nearest(self, point, length, count):
+                return [('start' if point == trace[0] else 'end', 0.0)]
+        diagnostics = {}
+        result = match_reference_trajectory(trace,Index(),vertices,distance_metres,
+                                            lambda *_:{},time.monotonic()+10,diagnostics)
+        self.assertIsNone(result)
+        self.assertEqual(24,diagnostics['candidate_count'])
+        diagnostics = {}
+        result = match_reference_trajectory(trace,Index(),vertices,distance_metres,
+                                            lambda *_:{},time.monotonic()-1,diagnostics)
+        self.assertIsNone(result)
+        self.assertTrue(diagnostics['elapsed_limit'])
+
     def test_dense_fixes_can_share_a_node_before_continuing(self):
         vertices = {'start': [-0.1, 51.5], 'end': [-0.099, 51.5]}
         trace = [vertices['start'], [-0.09998, 51.5], vertices['end']]

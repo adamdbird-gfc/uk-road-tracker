@@ -1,6 +1,7 @@
 """Pure helpers for choosing pedestrian-network paths that follow a trace."""
 
 import math
+import time
 from heapq import nsmallest
 
 
@@ -46,6 +47,37 @@ class PedestrianVertexIndex:
         return [(key, distance) for distance, key in nsmallest(count, nearby)]
 
 
+def match_reference_trajectory(trace, vertex_index, vertices, length_metres,
+                               paths_to_targets, deadline, diagnostics):
+    """Try a small candidate set, then recover crowded network junctions.
+
+    More candidates retain connected street alternatives when nearer steps
+    or service ways crowd them out. Both passes share the original deadline,
+    search radius and network graph; no disconnected edges are invented.
+    """
+    for count in (6, 24):
+        layers = []
+        for point in trace:
+            if time.monotonic() >= deadline:
+                diagnostics.update(candidate_count=count, elapsed_limit=True)
+                return None
+            candidates = vertex_index.nearest(point, length_metres, count=count)
+            if not candidates:
+                diagnostics.update(candidate_count=count, missing_candidates=True)
+                return None
+            layers.append(candidates)
+        diagnostics.clear()
+        diagnostics['candidate_count'] = count
+        result = select_trajectory_paths(trace, layers, vertices, length_metres,
+                                         paths_to_targets, diagnostics=diagnostics)
+        if result:
+            return result
+        if time.monotonic() >= deadline:
+            diagnostics['elapsed_limit'] = True
+            return None
+    return None
+
+
 def select_trajectory_paths(
     trace: list[tuple[float, float]],
     candidate_layers: list[list[tuple[tuple[int, int], float]]],
@@ -84,7 +116,8 @@ def select_trajectory_paths(
                 target_keys,
                 max_path_distance,
             )
-            for previous_index in previous_costs
+            for previous_index, previous_cost in previous_costs.items()
+            if math.isfinite(previous_cost)
         }
 
         current_costs = {}
@@ -94,6 +127,8 @@ def select_trajectory_paths(
             best_cost = float("inf")
             best_previous = -1
             for previous_index, previous_cost in previous_costs.items():
+                if not math.isfinite(previous_cost):
+                    continue
                 result = paths_by_previous[previous_index].get(current_key)
                 if not result:
                     continue

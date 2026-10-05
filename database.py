@@ -10,7 +10,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths
+from pedestrian_matching import PedestrianVertexIndex, match_reference_trajectory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -658,15 +658,6 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     # GPS sample. Exact distances, six candidates and the 120 m limit are kept.
     vertex_index = PedestrianVertexIndex(vertices)
 
-    candidate_layers = []
-    for point in sampled_trace:
-        if time.monotonic() >= deadline:
-            logger.warning("pedestrian reference candidate lookup exceeded 20 seconds")
-            return None
-        candidates = vertex_index.nearest(point, length_metres)
-        if not candidates:
-            return None
-        candidate_layers.append(candidates)
     def shortest_paths_to_targets(start_key, target_keys, max_distance):
         """Find connected paths to nearby candidate snaps in one graph walk."""
         remaining = set(target_keys)
@@ -710,9 +701,9 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         return paths
 
     diagnostics = {}
-    route_result = select_trajectory_paths(
-        sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets,
-        diagnostics=diagnostics,
+    route_result = match_reference_trajectory(
+        sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
+        deadline, diagnostics,
     )
     if not route_result:
         logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
@@ -720,6 +711,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         logger.warning("pedestrian reference transition failure: %s", diagnostics)
         return None
     route_keys, used_feature_ids = route_result
+    logger.info("pedestrian reference matched: samples=%s segments=%s candidate_count=%s",
+                len(sampled_trace), len(rows), diagnostics.get('candidate_count'))
 
     coordinates = [vertices[key] for key in route_keys]
     if len(coordinates) < 2:
