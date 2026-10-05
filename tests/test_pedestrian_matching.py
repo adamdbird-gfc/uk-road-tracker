@@ -67,6 +67,32 @@ class PedestrianVertexIndexTests(unittest.TestCase):
 
 
 class PedestrianPathTests(unittest.TestCase):
+    def test_dense_fixes_can_share_a_node_before_continuing(self):
+        vertices = {'start': [-0.1, 51.5], 'end': [-0.099, 51.5]}
+        trace = [vertices['start'], [-0.09998, 51.5], vertices['end']]
+        candidates = [[('start', 0.0)], [('start', 1.4)], [('end', 0.0)]]
+
+        def paths(source, targets, _limit):
+            target = targets[0]
+            if source == target:
+                return {target: ([source], [], 0.0)}
+            return {target: ([source, target], ['road'],
+                             distance_metres(vertices[source], vertices[target]))}
+
+        result = select_trajectory_paths(trace, candidates, vertices, distance_metres, paths)
+        self.assertEqual((['start', 'end'], ['road']), result)
+
+    def test_disconnected_network_is_rejected_and_diagnosed(self):
+        vertices = {'start': [-0.1, 51.5], 'end': [-0.099, 51.5]}
+        diagnostics = {}
+        result = select_trajectory_paths(
+            list(vertices.values()), [[('start', 0.0)], [('end', 0.0)]],
+            vertices, distance_metres, lambda *_: {}, diagnostics=diagnostics)
+        self.assertIsNone(result)
+        self.assertEqual(1, diagnostics['failure_layer'])
+        self.assertEqual(0, diagnostics['connected_transitions'])
+        self.assertNotIn('trace', diagnostics)
+
     def test_two_point_trace_rejects_unobserved_side_road_detour(self):
         start, end = (0.0, 0.0), (0.0008, 0.0)
         nearer_snap, straight_snap, finish = "nearer", "straight", "finish"

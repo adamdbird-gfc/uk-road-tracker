@@ -709,12 +709,15 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
             paths[target] = (path, feature_ids, distances[target])
         return paths
 
+    diagnostics = {}
     route_result = select_trajectory_paths(
-        sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets
+        sampled_trace, candidate_layers, vertices, length_metres, shortest_paths_to_targets,
+        diagnostics=diagnostics,
     )
     if not route_result:
         logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
                        len(sampled_trace), len(rows), time.monotonic() >= deadline)
+        logger.warning("pedestrian reference transition failure: %s", diagnostics)
         return None
     route_keys, used_feature_ids = route_result
 
