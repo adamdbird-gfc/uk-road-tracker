@@ -37,7 +37,7 @@ public class DataManagementActivity extends Activity {
         addAction(root,"ADD SERVICE STATION VISITS","Import Timeline data for service-station visits",false,()->{Intent i=new Intent(this,TimelineImportActivity.class);i.putExtra("service_only",true);startActivity(i);});
 
         TextView backupHeading=text("Backup and restore",19,Color.WHITE,true);backupHeading.setPadding(0,dp(16),0,dp(8));root.addView(backupHeading);
-        addAction(root,"EXPORT ROADPRINTS DATA","Save journeys, visits and preferences as a private backup. Movement diagnostics are excluded.",false,this::chooseExport);
+        addAction(root,"EXPORT ROADPRINTS DATA","Save journeys, visits and preferences. This backup is not encrypted; store it securely. Movement diagnostics are excluded.",false,this::chooseExport);
         addAction(root,"RESTORE ROADPRINTS DATA","Replace this device’s saved Roadprints data from a backup",false,this::chooseRestore);
 
         TextView deleteHeading=text("Delete saved journeys",19,Color.WHITE,true);deleteHeading.setPadding(0,dp(16),0,dp(8));root.addView(deleteHeading);
