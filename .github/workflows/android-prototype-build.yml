@@ -23,6 +23,9 @@ jobs:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+      ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+      ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+      ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -41,20 +44,14 @@ jobs:
           test -f "$ANDROID_HOME/build-tools/35.0.0/apksigner"
           test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.7"
-
       - name: Prepare stable debug signing key
         run: |
           test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD" || { echo "Stable signing store password is not configured." >&2; exit 1; }
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS" || { echo "Stable signing key alias is not configured." >&2; exit 1; }
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD" || { echo "Stable signing key password is not configured." >&2; exit 1; }
           printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
           echo "ROADPRINTS_DEBUG_KEYSTORE=$RUNNER_TEMP/roadprints-debug.keystore" >> "$GITHUB_ENV"
-          # This keystore uses Android's standard debug-key credentials.
-          echo "ROADPRINTS_DEBUG_STORE_PASSWORD=android" >> "$GITHUB_ENV"
-          echo "ROADPRINTS_DEBUG_KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
-          echo "ROADPRINTS_DEBUG_KEY_PASSWORD=android" >> "$GITHUB_ENV"
 
       - name: Build, test and verify signed APK
         run: |
