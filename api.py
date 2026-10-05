@@ -180,6 +180,14 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         if attempt_index and polite_delay_seconds:
             await asyncio.sleep(polite_delay_seconds)
         response, data = await request_match(client, points, radius, base_url)
+        if response.status_code == 429:
+            # This is a service-wide limit, not a bad GPS section. Splitting the
+            # section would amplify the limit and make the next retry less likely.
+            raise HTTPException(
+                status_code=503,
+                detail="The pedestrian router is rate-limiting requests. Retry this journey later.",
+                headers={"Retry-After": response.headers.get("Retry-After", "120")},
+            )
         if response.status_code == 200 and data.get("code") == "Ok":
             return data, radius
         code = data.get("code", f"HTTP {response.status_code}")
@@ -218,7 +226,9 @@ async def match_chunk_resiliently(
         )
         return data, radius, []
     except HTTPException as exc:
-        if exc.status_code != 422 or len(points) <= 2:
+        if exc.status_code != 422:
+            raise
+        if len(points) <= 2:
             return {"matchings": [], "tracepoints": []}, None, [{"points": len(points), "detail": str(exc.detail)}]
 
         # Use a one-point overlap so splitting a trace never leaves a lone
@@ -469,42 +479,6 @@ async def match_walking_activity(payload: MatchRequest):
         radius_attempts=FOOT_RADIUS_ATTEMPTS,
         retry_no_match=True,
     )
-
-@app.get("/diagnostics/foot-router")
-async def foot_router_diagnostic():
-    """Temporary connectivity check for the third-party pedestrian router."""
-    url = f"{FOOT_OSRM_BASE_URL.rstrip('/')}/nearest/v1/driving/0.3700,51.4400"
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(url, params={"number": 1})
-        return {"reachable": True, "status": response.status_code}
-    except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Foot-router connection failed: {exc.__class__.__name__}: {exc}",
-        ) from exc
-
-@app.get("/diagnostics/foot-router-match")
-async def foot_router_match_diagnostic():
-    """Temporary end-to-end test of the same OSRM Match endpoint used by walks."""
-    points = [
-        Point(lat=51.4400, lng=0.3700),
-        Point(lat=51.4405, lng=0.3710),
-    ]
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            response, data = await request_match(client, points, 45, FOOT_OSRM_BASE_URL)
-        return {
-            "reachable": True,
-            "status": response.status_code,
-            "matcher_code": data.get("code"),
-            "matcher_message": data.get("message"),
-        }
-    except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Foot-router match failed: {exc.__class__.__name__}: {exc}",
-        ) from exc
 
 async def match_payload(
     payload: MatchRequest,
