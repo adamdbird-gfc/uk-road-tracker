@@ -1,6 +1,49 @@
 """Pure helpers for choosing pedestrian-network paths that follow a trace."""
 
 import math
+from heapq import nsmallest
+
+
+class PedestrianVertexIndex:
+    """Route-local grid for exact nearest-vertex queries on the UK network.
+
+    The grid only narrows the search. Ranking and the 120 m acceptance limit
+    still use the caller's original great-circle distance calculation.
+    """
+
+    CELL_DEGREES = 0.002
+
+    def __init__(self, vertices):
+        self.cells = {}
+        for key, coordinate in vertices.items():
+            cell = self._cell(coordinate)
+            self.cells.setdefault(cell, []).append((key, coordinate))
+
+    def _cell(self, coordinate):
+        return tuple(math.floor(value / self.CELL_DEGREES) for value in coordinate)
+
+    def nearest(self, point, length_metres, radius=120.0, count=6):
+        longitude, latitude = point
+        angular_radius = radius / 6371008.8
+        latitude_radius = math.degrees(angular_radius)
+        # Spherical-cap longitude bound; UK references are away from the poles
+        # and date line. A tiny margin also includes floating-point boundaries.
+        longitude_radius = math.degrees(math.asin(
+            min(1.0, math.sin(angular_radius) / math.cos(math.radians(latitude)))
+        ))
+        margin = 1e-10
+        west, south = self._cell((longitude - longitude_radius - margin,
+                                  latitude - latitude_radius - margin))
+        east, north = self._cell((longitude + longitude_radius + margin,
+                                  latitude + latitude_radius + margin))
+        nearby = []
+        for x in range(west, east + 1):
+            for y in range(south, north + 1):
+                for key, coordinate in self.cells.get((x, y), ()):
+                    distance = length_metres(point, coordinate)
+                    if distance <= radius:
+                        nearby.append((distance, key))
+        return [(key, distance) for distance, key in nsmallest(count, nearby)]
 
 
 def select_trajectory_paths(
