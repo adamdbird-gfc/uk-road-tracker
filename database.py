@@ -10,7 +10,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
-from pedestrian_matching import select_trajectory_paths
+from pedestrian_matching import PedestrianVertexIndex, select_trajectory_paths
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -654,18 +654,16 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
             accumulated = 0.0
     sampled_trace.append(trace[-1])
 
-    from heapq import nsmallest
+    # Build once per transient graph instead of scanning every vertex for each
+    # GPS sample. Exact distances, six candidates and the 120 m limit are kept.
+    vertex_index = PedestrianVertexIndex(vertices)
 
     candidate_layers = []
     for point in sampled_trace:
         if time.monotonic() >= deadline:
             logger.warning("pedestrian reference candidate lookup exceeded 20 seconds")
             return None
-        nearest = nsmallest(
-            6,
-            ((length_metres(point, candidate), key) for key, candidate in vertices.items()),
-        )
-        candidates = [(key, distance) for distance, key in nearest if distance <= 120.0]
+        candidates = vertex_index.nearest(point, length_metres)
         if not candidates:
             return None
         candidate_layers.append(candidates)
