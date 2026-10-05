@@ -85,6 +85,18 @@ public class StationJourneyModelTest {
         fix(m,"driving",1,71000,300,10);
         assertNull(fix(m,"driving",2,111000,850,20));
     }
+    @Test public void delayedVehicleSignalRetainsOriginalStationAndDepartureBoundary() {
+        StationJourneyModel m=model(); m.activity("walking",1000,0);
+        fix(m,"walking",0,1000,-500,1); fix(m,"walking",1,11000,-100,1);
+        m.activity("still",20000,1);
+        assertNull(fix(m,"walking",2,180000,300,12));
+        assertNull(fix(m,"walking",3,220000,850,20));
+        assertNull(fix(m,"walking",4,260000,2000,0)); // intermediate stop before activity signal
+        StationJourneyModel recovered=model(); recovered.restore(m.checkpoint(),5);
+        recovered.activity("vehicle",720000,4);
+        StationJourneyModel.Decision d=fix(recovered,"walking",5,750000,2500,15);
+        assertNotNull(d); assertEquals(1,d.endIndex); assertEquals(2,d.startIndex);
+    }
     @Test public void checkpointRetainsPendingTransferAndStopEvidence() {
         StationJourneyModel first=model(); fix(first,"train",0,1000,0,0);
         fix(first,"train",1,11000,0,0); first.activity("walking",12000,1);
