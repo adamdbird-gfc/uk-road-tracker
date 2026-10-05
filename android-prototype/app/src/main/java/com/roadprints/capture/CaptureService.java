@@ -82,6 +82,8 @@ public class CaptureService extends Service {
     private final List<Location> points = new ArrayList<>();
     private final List<Location> candidatePoints = new ArrayList<>();
     private Location candidateOrigin;
+    private Location candidateMovementLast;
+    private float candidateMovementMetres;
     private Location departureAnchor;
     private long candidateStartedAtMs;
     private long candidateStationarySince;
@@ -445,6 +447,8 @@ public class CaptureService extends Service {
         candidateStartedAt = Instant.now().toString();
         candidatePoints.clear();
         candidateOrigin = recentLastKnownLocation();
+        candidateMovementMetres = 0f;
+        candidateMovementLast = candidateOrigin == null ? null : new Location(candidateOrigin);
         if (candidateOrigin == null && departureAnchor != null) {
             candidateOrigin = new Location(departureAnchor);
             candidatePoints.add(new Location(departureAnchor));
@@ -482,7 +486,21 @@ public class CaptureService extends Service {
                 clearCandidateStillness();
             }
         }
-        if (candidateOrigin == null) candidateOrigin = new Location(location);
+        if (candidateOrigin == null) {
+            candidateOrigin = new Location(location);
+            candidateMovementLast = new Location(location);
+        }
+        if (candidateMovementLast != null) {
+            float stepMetres = candidateMovementLast.distanceTo(location);
+            float accuracyAllowance = (candidateMovementLast.hasAccuracy()
+                    ? candidateMovementLast.getAccuracy() : 15f)
+                    + location.getAccuracy();
+            // Credit only movement beyond GPS uncertainty so small location jitter
+            // does not accumulate into a false journey start.
+            candidateMovementMetres += Math.max(0f,
+                    stepMetres - Math.min(8f, accuracyAllowance * 0.25f));
+        }
+        candidateMovementLast = new Location(location);
         if (candidatePoints.isEmpty()
                 || candidatePoints.get(candidatePoints.size() - 1).distanceTo(location) >= 5f) {
             candidatePoints.add(new Location(location));
@@ -490,9 +508,12 @@ public class CaptureService extends Service {
         }
         float fromOrigin = candidateOrigin.distanceTo(location);
         float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
+        boolean walking = "walking".equals(candidateMode);
+        float confirmedMovement = walking ? candidateMovementMetres : fromOrigin;
+        boolean requireDepartureRadius = !walking && departureAnchor != null;
         if (!CaptureStartGate.shouldConfirmStart(candidateMode,
                 System.currentTimeMillis() - candidateStartedAtMs,
-                fromOrigin, departureAnchor != null, fromStop)) return;
+                confirmedMovement, requireDepartureRadius, fromStop)) return;
         String confirmedMode = candidateMode;
         String confirmedStart = candidateStartedAt;
         List<Location> seedPoints = new ArrayList<>(candidatePoints);
@@ -516,6 +537,8 @@ public class CaptureService extends Service {
         candidateStartedAt = null;
         candidateStartedAtMs = 0;
         candidateOrigin = null;
+        candidateMovementLast = null;
+        candidateMovementMetres = 0f;
         candidatePoints.clear();
         if (!isActive(this)) locationManager.removeUpdates(locationListener);
         if (message != null && isArmed(this)) broadcastUpdate(message);
