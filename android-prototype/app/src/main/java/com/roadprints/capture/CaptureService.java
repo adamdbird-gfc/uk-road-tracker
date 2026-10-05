@@ -115,6 +115,7 @@ public class CaptureService extends Service {
     private String stationEvidenceReason, stationEvidenceCode;
     private List<Location> nextCapturePoints;
     private String nextCaptureStartedAt;
+    private String nextCaptureJourneyId;
     private int stationEndIndex = -1;
     private boolean automaticCapture;
 
@@ -148,6 +149,10 @@ public class CaptureService extends Service {
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            if (captureFinishing) {
+                if (nextCapturePoints != null) nextCapturePoints.add(new Location(location));
+                return;
+            }
             if (!isActive(CaptureService.this)) {
                 if (candidateMode != null) {
                     MovementDiagnostics.recordLocation(CaptureService.this, location, "walk_candidate");
@@ -222,7 +227,7 @@ public class CaptureService extends Service {
             cancelStartCandidate(null);
             nextCaptureMode = null;
             nextCapturePoints = null;
-            nextCaptureStartedAt = null;
+            nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1;
             clearPendingActivityMode();
             finishCapture();
@@ -723,6 +728,7 @@ public class CaptureService extends Service {
         for (Location point:points.subList(first,points.size())) nextCapturePoints.add(new Location(point));
         nextCaptureStartedAt=Instant.ofEpochMilli(nextCapturePoints.get(0).getTime()).toString();
         nextCaptureMode=continueMode;
+        nextCaptureJourneyId=UUID.randomUUID().toString();
     }
 
     private void finishCapture() {
@@ -744,6 +750,9 @@ public class CaptureService extends Service {
         final boolean stationBoundary = stationEndIndex >= 1 && stationEndIndex < points.size();
         final List<Location> savedPoints = new ArrayList<>(stationBoundary
                 ? points.subList(0, stationEndIndex + 1) : points);
+        final String savedNextMode = nextCaptureMode, savedNextStartedAt = nextCaptureStartedAt;
+        final String savedNextJourneyId = nextCaptureJourneyId;
+        final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
         final String savedJourneyId = journeyId;
@@ -807,7 +816,24 @@ public class CaptureService extends Service {
                 if (roadMode(savedMode) || "walking".equals(savedMode)) {
                     MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
                 }
-                checkpointFile.delete();
+                if (savedNextMode != null && savedNextPoints != null && !savedNextPoints.isEmpty()) {
+                    // Persist the next leg before clearing the old live state. A restart during
+                    // the handoff recovers the new leg using the same journey ID.
+                    JSONObject handoff = checkpointSnapshot(savedNextJourneyId, savedNextStartedAt,
+                            savedNextMode, routeDistanceMetres(savedNextPoints), 0, savedNextPoints);
+                    handoff.put("automatic_capture", true);
+                    handoff.put("station_reason", savedStationReason);
+                    handoff.put("station_code", savedStationCode);
+                    FileOutputStream output = null;
+                    try {
+                        output = checkpointFile.startWrite();
+                        output.write(handoff.toString().getBytes(StandardCharsets.UTF_8));
+                        checkpointFile.finishWrite(output);
+                    } catch (Exception error) {
+                        if (output != null) checkpointFile.failWrite(output);
+                        throw error;
+                    }
+                } else checkpointFile.delete();
                 savedSuccessfully = true;
             } catch (Exception ignored) {
                 // Report the failure on the service thread after the disk operation.
@@ -824,9 +850,10 @@ public class CaptureService extends Service {
             String continueMode = nextCaptureMode;
             List<Location> continuePoints = nextCapturePoints;
             String continueStartedAt = nextCaptureStartedAt;
+            String continueJourneyId = nextCaptureJourneyId;
             String continueStationCode = stationEvidenceCode;
             String continueStationReason = stationEvidenceReason;
-            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null;
+            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
@@ -847,6 +874,9 @@ public class CaptureService extends Service {
                 activateCapture(continueMode, continueStartedAt, continuePoints);
                 stationEvidenceCode = continueStationCode;
                 stationEvidenceReason = continueStationReason;
+                if (continueJourneyId != null) journeyId = continueJourneyId;
+                handler.removeCallbacks(checkpointCapture);
+                handler.post(checkpointCapture);
                 broadcastUpdate("Started a new " + continueMode + " journey leg.");
             } else {
                 storeDepartureAnchor(savedStopAnchor);
@@ -861,7 +891,7 @@ public class CaptureService extends Service {
                 stopSelf();
             }
         } else {
-            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null;
+            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1;
             broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
             // Retain the points and recording state so a later Stop can retry.
