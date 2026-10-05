@@ -33,9 +33,19 @@ public class CaptureStartGateTest {
         assertTrue(CaptureStartGate.shouldConfirmStart("unknown", 30_000, 120, false, 0));
     }
 
-    @Test public void newJourneyMustLeaveThePreviousStopArea() {
-        assertFalse(CaptureStartGate.shouldConfirmStart("walking", 60_000, 80, true, 74));
-        assertTrue(CaptureStartGate.shouldConfirmStart("walking", 60_000, 80, true, 75));
+    @Test public void nearbyPreviousStopDoesNotBlockWalkingCandidate() {
+        assertTrue(CaptureStartGate.shouldConfirmStart("walking", 60_000, 55, true, 10));
+        assertFalse(CaptureStartGate.shouldConfirmStart("walking", 10_000, 55, true, 10));
+    }
+
+    @Test public void nonWalkingCandidateStillMustLeavePreviousStopArea() {
+        assertFalse(CaptureStartGate.shouldConfirmStart("unknown", 60_000, 120, true, 149));
+        assertTrue(CaptureStartGate.shouldConfirmStart("unknown", 60_000, 120, true, 150));
+    }
+
+    @Test public void gpsUncertaintyIsDiscountedFromCandidateMovement() {
+        assertEquals(0f, CaptureStartGate.reliableMovementIncrement(2f, 5f, 5f), 0.001f);
+        assertEquals(17.5f, CaptureStartGate.reliableMovementIncrement(20f, 5f, 5f), 0.001f);
     }
 
     @Test public void briefTrafficPauseDoesNotCancelMovementCandidate() {

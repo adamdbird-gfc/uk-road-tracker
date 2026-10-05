@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,12 +12,17 @@ import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Timeline import and saved journey deletion tools. */
+/** Timeline import, backup and saved journey deletion tools. */
 public class DataManagementActivity extends Activity {
     private static final int NAVY=0xFF0B1C50,CARD=0xFF233B78,TEAL=0xFF67D5CC,MUTED=0xFFD3DCED;
+    private static final int REQUEST_EXPORT = 601, REQUEST_RESTORE = 602;
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private final Handler main=new Handler(Looper.getMainLooper());
     private TextView status;
@@ -29,12 +35,77 @@ public class DataManagementActivity extends Activity {
         TextView importHeading=text("Import data",19,Color.WHITE,true);importHeading.setPadding(0,dp(12),0,dp(8));root.addView(importHeading);
         addAction(root,"LOAD TIMELINE DATA","Import journeys from a Timeline export",false,()->startActivity(new Intent(this,TimelineImportActivity.class)));
         addAction(root,"ADD SERVICE STATION VISITS","Import Timeline data for service-station visits",false,()->{Intent i=new Intent(this,TimelineImportActivity.class);i.putExtra("service_only",true);startActivity(i);});
+
+        TextView backupHeading=text("Backup and restore",19,Color.WHITE,true);backupHeading.setPadding(0,dp(16),0,dp(8));root.addView(backupHeading);
+        addAction(root,"EXPORT ROADPRINTS DATA","Save journeys, visits and preferences. This backup is not encrypted; store it securely. Movement diagnostics are excluded.",false,this::chooseExport);
+        addAction(root,"RESTORE ROADPRINTS DATA","Replace this device’s saved Roadprints data from a backup",false,this::chooseRestore);
+
         TextView deleteHeading=text("Delete saved journeys",19,Color.WHITE,true);deleteHeading.setPadding(0,dp(16),0,dp(8));root.addView(deleteHeading);
         addAction(root,"DELETE ROAD DATA","Driving, bus and cycling journeys",true,()->confirmDelete("Delete road data?","This removes driving, bus and cycling journeys from this device.",new String[]{"driving","bus","cycling"}));
         addAction(root,"DELETE ON-FOOT DATA","Walking journeys",true,()->confirmDelete("Delete on-foot data?","This removes walking journeys from this device.",new String[]{"walking"}));
         addAction(root,"DELETE ALL SAVED DATA","Remove every saved journey",true,this::confirmDeleteAll);
         status=text("",14,TEAL,false);status.setPadding(0,dp(14),0,dp(8));root.addView(status);
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
+    }
+
+    private void chooseExport(){
+        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE,"roadprints-backup-"+LocalDate.now()+".zip");
+        startActivityForResult(intent,REQUEST_EXPORT);
+    }
+    private void chooseRestore(){
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"application/zip","application/octet-stream"});
+        startActivityForResult(intent,REQUEST_RESTORE);
+    }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
+        Uri uri=data.getData();
+        if(requestCode==REQUEST_EXPORT) exportTo(uri);
+        else if(requestCode==REQUEST_RESTORE) confirmRestore(uri);
+    }
+    private void exportTo(Uri uri){
+        status.setText("Creating Roadprints backup…");
+        io.execute(()->{
+            try(OutputStream output=getContentResolver().openOutputStream(uri,"w")){
+                if(output==null)throw new IllegalStateException("Could not open the selected file.");
+                int journeys=RoadprintsBackup.export(getApplicationContext(),output);
+                main.post(()->status.setText("Backup saved with "+journeys+" journeys."));
+            }catch(Exception error){main.post(()->status.setText("Could not export Roadprints data. Please choose another location."));}
+        });
+    }
+    private void confirmRestore(Uri uri){
+        new AlertDialog.Builder(this).setTitle("Replace saved Roadprints data?")
+                .setMessage("This replaces the saved journeys, visits, preferences and other app data on this device with the selected backup. Changes made since that backup will be lost. Precise movement diagnostics are kept separately and are not part of the backup.")
+                .setNegativeButton("Cancel",null)
+                .setPositiveButton("Restore",(dialog,which)->restoreFrom(uri)).show();
+    }
+    private void restoreFrom(Uri uri){
+        status.setText("Restoring Roadprints backup…");
+        io.execute(()->{
+            int journeys;
+            try(InputStream input=getContentResolver().openInputStream(uri)){
+                if(input==null)throw new IllegalStateException("Could not open the selected backup.");
+                journeys=RoadprintsBackup.restore(getApplicationContext(),input);
+            }catch(Exception error){
+                String message=error.getMessage();
+                main.post(()->status.setText(message==null?"Could not restore Roadprints data.":message));
+                return;
+            }
+            int restored=journeys;
+            main.post(()->{
+                status.setText("Backup restored.");
+                Intent restart=new Intent(this,OnboardingActivity.class);
+                restart.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(restart);
+                finish();
+            });
+        });
     }
     private void addAction(LinearLayout root,String label,String detail,boolean destructive,Runnable action){
         Button b=button(label,destructive);

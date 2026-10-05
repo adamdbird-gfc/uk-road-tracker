@@ -51,6 +51,7 @@ public class CaptureService extends Service {
     public static final String ACTION_DISARM = "com.roadprints.capture.DISARM";
     public static final String ACTION_ACTIVITY = "com.roadprints.capture.ACTIVITY";
     public static final String ACTION_UPDATE = "com.roadprints.capture.UPDATE";
+    public static final String ACTION_DIAGNOSTICS_CHANGED = "com.roadprints.capture.DIAGNOSTICS_CHANGED";
     public static final String EXTRA_MODE = "mode";
     public static final String EXTRA_ACTIVE = "active";
     public static final String EXTRA_ARMED = "armed";
@@ -82,6 +83,8 @@ public class CaptureService extends Service {
     private final List<Location> points = new ArrayList<>();
     private final List<Location> candidatePoints = new ArrayList<>();
     private Location candidateOrigin;
+    private Location candidateMovementLast;
+    private float candidateMovementMetres;
     private Location departureAnchor;
     private long candidateStartedAtMs;
     private long candidateStationarySince;
@@ -99,6 +102,11 @@ public class CaptureService extends Service {
     private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
     private boolean captureFinishing;
     private boolean checkpointPending;
+    private boolean diagnosticUpdatesRegistered;
+    private final Runnable diagnosticWindowExpiry = () -> {
+        MovementDiagnostics.isRunning(this);
+        refreshDiagnosticLocationUpdates();
+    };
     private String nextCaptureMode;
     private String pendingActivityMode;
     private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
@@ -121,9 +129,15 @@ public class CaptureService extends Service {
         @Override
         public void onLocationChanged(Location location) {
             if (!isActive(CaptureService.this)) {
-                if (candidateMode != null) collectCandidateLocation(location);
+                if (candidateMode != null) {
+                    MovementDiagnostics.recordLocation(CaptureService.this, location, "walk_candidate");
+                    collectCandidateLocation(location);
+                } else {
+                    MovementDiagnostics.recordLocation(CaptureService.this, location, "armed_waiting_for_movement");
+                }
                 return;
             }
+            MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
             if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
             lastPoint = location;
             points.add(location);
@@ -132,8 +146,12 @@ public class CaptureService extends Service {
             broadcastUpdate("Recording " + mode + " locally...");
         }
 
-        @Override public void onProviderEnabled(String provider) {}
-        @Override public void onProviderDisabled(String provider) {}
+        @Override public void onProviderEnabled(String provider) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "location_provider_enabled", provider);
+        }
+        @Override public void onProviderDisabled(String provider) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "location_provider_disabled", provider);
+        }
     };
 
     public static boolean isActive(Context context) {
@@ -176,6 +194,9 @@ public class CaptureService extends Service {
             armTracking();
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
+        } else if (ACTION_DIAGNOSTICS_CHANGED.equals(action)) {
+            if (isArmed(this)) startForegroundWithNotification();
+            refreshDiagnosticLocationUpdates();
         } else if (ACTION_ACTIVITY.equals(action)) {
             if (!isArmed(this) && !isActive(this)) {
                 // A transition can race with disarming or arrive after an old subscription fires.
@@ -206,6 +227,8 @@ public class CaptureService extends Service {
                 .putBoolean(STATE_ARMED, true)
                 .apply();
         startForegroundWithNotification();
+        MovementDiagnostics.recordEvent(this, "tracking_armed", "Automatic tracking enabled.");
+        refreshDiagnosticLocationUpdates();
 
         try {
             activityPendingIntent = PendingIntent.getBroadcast(
@@ -243,6 +266,7 @@ public class CaptureService extends Service {
     }
 
     private void disarmTracking() {
+        MovementDiagnostics.recordEvent(this, "tracking_disarmed", "Automatic tracking disabled.");
         cancelStartCandidate(null);
         nextCaptureMode = null;
         clearPendingActivityMode();
@@ -271,6 +295,8 @@ public class CaptureService extends Service {
 
         String activityLabel = activityLabel(activityType);
         boolean entering = transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER;
+        MovementDiagnostics.recordActivity(this, activityLabel, entering ? "entered" : "left",
+                isArmed(this), isActive(this), mode);
         broadcastUpdate("Android detected " + (entering ? "entered " : "left ")
                 + activityLabel + ".");
 
@@ -405,6 +431,8 @@ public class CaptureService extends Service {
     private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
         if (isActive(this)) return;
         mode = requestedMode == null ? "driving" : requestedMode;
+        diagnosticUpdatesRegistered = false;
+        MovementDiagnostics.recordEvent(this, "journey_capture_started", "Mode: " + mode);
         journeyId = UUID.randomUUID().toString();
         startedAt = captureStartedAt == null ? Instant.now().toString() : captureStartedAt;
         distanceMetres = 0;
@@ -439,12 +467,18 @@ public class CaptureService extends Service {
         if (requestedMode.equals(candidateMode)) return;
         cancelStartCandidate(null);
         candidateMode = requestedMode;
+        diagnosticUpdatesRegistered = false;
+        candidateMovementMetres = 0f;
+        candidateMovementLast = null;
         candidateStartedAtMs = System.currentTimeMillis();
+        MovementDiagnostics.recordEvent(this, "journey_candidate_started", "Mode: " + requestedMode);
         candidateStationarySince = 0;
         candidateStationaryAnchor = null;
         candidateStartedAt = Instant.now().toString();
         candidatePoints.clear();
         candidateOrigin = recentLastKnownLocation();
+        candidateMovementMetres = 0f;
+        candidateMovementLast = candidateOrigin == null ? null : new Location(candidateOrigin);
         if (candidateOrigin == null && departureAnchor != null) {
             candidateOrigin = new Location(departureAnchor);
             candidatePoints.add(new Location(departureAnchor));
@@ -482,7 +516,20 @@ public class CaptureService extends Service {
                 clearCandidateStillness();
             }
         }
-        if (candidateOrigin == null) candidateOrigin = new Location(location);
+        if (candidateOrigin == null) {
+            candidateOrigin = new Location(location);
+            candidateMovementLast = new Location(location);
+        }
+        if (candidateMovementLast != null) {
+            float stepMetres = candidateMovementLast.distanceTo(location);
+            float previousAccuracy = candidateMovementLast.hasAccuracy()
+                    ? candidateMovementLast.getAccuracy() : 15f;
+            // Credit only movement beyond GPS uncertainty so small location jitter
+            // does not accumulate into a false journey start.
+            candidateMovementMetres += CaptureStartGate.reliableMovementIncrement(
+                    stepMetres, previousAccuracy, location.getAccuracy());
+        }
+        candidateMovementLast = new Location(location);
         if (candidatePoints.isEmpty()
                 || candidatePoints.get(candidatePoints.size() - 1).distanceTo(location) >= 5f) {
             candidatePoints.add(new Location(location));
@@ -490,11 +537,25 @@ public class CaptureService extends Service {
         }
         float fromOrigin = candidateOrigin.distanceTo(location);
         float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
+        boolean walking = "walking".equals(candidateMode);
+        MovementDiagnostics.recordEvent(this, "journey_candidate_sample",
+                "mode=" + candidateMode
+                        + "; elapsed_ms=" + (System.currentTimeMillis() - candidateStartedAtMs)
+                        + "; path_m=" + Math.round(candidateMovementMetres)
+                        + "; straight_line_m=" + Math.round(fromOrigin)
+                        + "; accuracy_m=" + Math.round(location.getAccuracy())
+                        + "; previous_stop_distance_m=" + (departureAnchor == null ? "none" : Math.round(fromStop))
+                        + "; previous_stop_radius_enforced=" + (!walking && departureAnchor != null)
+                        + "; required_path_m=" + Math.round(CaptureStartGate.minimumMovementMetres(candidateMode)));
+        float confirmedMovement = walking ? candidateMovementMetres : fromOrigin;
+        boolean requireDepartureRadius = !walking && departureAnchor != null;
         if (!CaptureStartGate.shouldConfirmStart(candidateMode,
                 System.currentTimeMillis() - candidateStartedAtMs,
-                fromOrigin, departureAnchor != null, fromStop)) return;
+                confirmedMovement, requireDepartureRadius, fromStop)) return;
         String confirmedMode = candidateMode;
         String confirmedStart = candidateStartedAt;
+        MovementDiagnostics.recordEvent(this, "journey_candidate_confirmed",
+                "Mode: " + confirmedMode + "; uncertainty-adjusted path distance reached start threshold.");
         List<Location> seedPoints = new ArrayList<>(candidatePoints);
         cancelStartCandidate(null);
         clearDepartureAnchor();
@@ -516,9 +577,15 @@ public class CaptureService extends Service {
         candidateStartedAt = null;
         candidateStartedAtMs = 0;
         candidateOrigin = null;
+        candidateMovementLast = null;
+        candidateMovementMetres = 0f;
         candidatePoints.clear();
         if (!isActive(this)) locationManager.removeUpdates(locationListener);
-        if (message != null && isArmed(this)) broadcastUpdate(message);
+        if (message != null && isArmed(this)) {
+            MovementDiagnostics.recordEvent(this, "journey_candidate_rejected", message);
+            broadcastUpdate(message);
+        }
+        if (isArmed(this) && MovementDiagnostics.isRunning(this)) requestDiagnosticLocationUpdates();
     }
 
     private void restoreDepartureAnchor() {
@@ -565,6 +632,10 @@ public class CaptureService extends Service {
         final String savedJourneyId = journeyId;
         final String savedStartedAt = startedAt;
         final String savedMode = mode;
+        MovementDiagnostics.recordEvent(this, "journey_capture_finishing",
+                "Mode: " + savedMode + "; GPS points: " + points.size()
+                        + "; distance_m: " + Math.round(distanceMetres));
+        diagnosticUpdatesRegistered = false;
         final double savedDistanceMetres = distanceMetres;
         final int savedGpsPointCount = savedPoints.size();
         final boolean confirmedStationaryStop = stationarySince != 0
@@ -606,6 +677,9 @@ public class CaptureService extends Service {
                 if (serviceStationCandidates.length() > 0)
                     journey.put("service_station_candidates", serviceStationCandidates);
                 JourneyStore.save(getApplicationContext(), journey);
+                MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
+                        "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
+                                + "; distance_m: " + Math.round(routeDistance));
                 if (roadMode(savedMode) || "walking".equals(savedMode)) {
                     MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
                 }
@@ -644,7 +718,10 @@ public class CaptureService extends Service {
                 broadcastUpdate("Started a new " + continueMode + " journey leg.");
             } else {
                 storeDepartureAnchor(savedStopAnchor);
-                if (isArmed(this)) updateNotification();
+                if (isArmed(this)) {
+                    updateNotification();
+                    refreshDiagnosticLocationUpdates();
+                }
             }
             broadcastUpdate("Journey saved locally. Review its transport type next time.");
             if (!isArmed(this)) {
@@ -680,6 +757,42 @@ public class CaptureService extends Service {
         float minDistance = candidate ? 5f : (road ? ROAD_CAPTURE_MIN_DISTANCE_METRES : WALK_CAPTURE_MIN_DISTANCE_METRES);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 interval, minDistance, locationListener);
+        diagnosticUpdatesRegistered = false;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void refreshDiagnosticLocationUpdates() {
+        boolean diagnosticWindowOpen = MovementDiagnostics.isRunning(this);
+        if (diagnosticWindowOpen && isArmed(this)
+                && !isActive(this) && candidateMode == null) {
+            requestDiagnosticLocationUpdates();
+        } else {
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            if ((!diagnosticWindowOpen || !isArmed(this))
+                    && !isActive(this) && candidateMode == null && diagnosticUpdatesRegistered) {
+                locationManager.removeUpdates(locationListener);
+                diagnosticUpdatesRegistered = false;
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestDiagnosticLocationUpdates() {
+        if (!MovementDiagnostics.isRunning(this) || !isArmed(this)
+                || isActive(this) || candidateMode != null || diagnosticUpdatesRegistered) return;
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    30_000L, 10f, locationListener);
+            diagnosticUpdatesRegistered = true;
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            handler.postDelayed(diagnosticWindowExpiry,
+                    Math.max(1_000L, MovementDiagnostics.until(this) - System.currentTimeMillis()));
+            MovementDiagnostics.recordEvent(this, "movement_sampling_started",
+                    "GPS samples requested at most every 30 seconds while waiting for movement.");
+        } catch (SecurityException error) {
+            MovementDiagnostics.recordEvent(this, "location_updates_failed",
+                    "GPS permission: " + error.getClass().getSimpleName());
+        }
     }
 
     private void scheduleCaptureCheckpoint() {
@@ -929,6 +1042,7 @@ public class CaptureService extends Service {
     public void onDestroy() {
         removeActivityUpdates();
         handler.removeCallbacks(checkpointCapture);
+        handler.removeCallbacks(diagnosticWindowExpiry);
         clearPendingActivityMode();
         if (isActive(this)) {
             try {
