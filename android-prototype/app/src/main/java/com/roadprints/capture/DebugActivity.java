@@ -59,8 +59,9 @@ public class DebugActivity extends Activity {
         String movementReport=MovementDiagnostics.getReport(this);
         if(!movementReport.isEmpty()){
             root.addView(action("COPY MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
+                String latestReport=MovementDiagnostics.getReport(this);
                 ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                cb.setPrimaryClip(ClipData.newPlainText("Roadprints movement diagnostics",movementReport));
+                cb.setPrimaryClip(ClipData.newPlainText("Roadprints movement diagnostics",latestReport));
                 Toast.makeText(this,"Movement log copied. It contains precise location data.",Toast.LENGTH_LONG).show();
             }));
             root.addView(action("CLEAR MOVEMENT LOG",0xFF182B5A,MUTED,()->new AlertDialog.Builder(this)
