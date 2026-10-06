@@ -122,6 +122,7 @@ public class TownAchievementsTest {
         }
         JSONObject j=new JSONObject().put("journey_id","import").put("mode","walking").put("processing_status","complete")
                 .put("source",new JSONObject().put("type","timeline_import"))
+                .put("capture_quality",new JSONObject().put("gps_points",2).put("source_route_points",2))
                 .put("processing_result",new JSONObject().put("road_geojson",new JSONObject().put("features",features)));
         JourneyStore.save(app,j);AchievementStore.Snapshot result=AchievementStore.calculate(app);
         assertEquals(1,progress(result,"town-exploration").level);assertEquals(0,progress(result,"roaming-exploration").level);
