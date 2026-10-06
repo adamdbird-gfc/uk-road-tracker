@@ -240,7 +240,7 @@ final class AchievementStore {
         Definition d=progress.definition;double target=nextTarget(d,progress.value);
         if("distance".equals(d.type))return (d.id.startsWith("foot")?"Walking/running":"Driving and bus")+" · "+DistanceUnits.format(context,progress.value*MILE)
                 +" / "+DistanceUnits.format(context,target*MILE)+(levelFor(d,progress.value)==d.levels.length?" · complete":"");
-        if("road-completion".equals(d.type))return String.format(Locale.UK,"%.1f%% of %s · %s %.0f%%",progress.value,d.roadId,
+        if("road-completion".equals(d.type))return String.format(Locale.UK,"%.1f%% of %s · %s %.0f%%",progress.value,roadLabel(d.roadId),
                 progress.level==4?"complete":"next",target);
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
         if("mary-high-streets".equals(d.id)||"mastered-monopoly".equals(d.id))return String.format(Locale.UK,"%,d / %.0f different %s unlocked",(int)progress.value,target,
@@ -492,9 +492,12 @@ final class AchievementStore {
         Definition definition=new Definition(id,"",title,copy,copy,type,levels[0],null,0,0,0);
         definition.levels=levels;return definition;
     }
+    private static String roadLabel(String road) {
+        return road.startsWith("GB:")?road.substring(3):road.startsWith("NI:")?road.substring(3)+" (Northern Ireland)":road;
+    }
     private static Definition roadFamily(String id,String road) {
-        Definition definition=new Definition(id,"",road+" completion","Complete 25%, 50%, 75% and 100% of "+road+".",
-                road+" completed","road-completion",25,road,0,0,0);
+        Definition definition=new Definition(id,"",roadLabel(road)+" completion","Complete 25%, 50%, 75% and 100% of "+roadLabel(road)+".",
+                roadLabel(road)+" completed","road-completion",25,road,0,0,0);
         definition.levels=new double[]{25,50,75,100};return definition;
     }
     private static final String ELIGIBLE_A_ROADS="GB:A1,GB:A2,GB:A3,GB:A4,GB:A5,GB:A6,GB:A7,GB:A8,GB:A9,GB:A10,GB:A11,GB:A12,GB:A13,GB:A14,GB:A15,GB:A16,GB:A17,GB:A18,GB:A19,GB:A20,GB:A21,GB:A22,GB:A23,GB:A24,GB:A25,GB:A26,GB:A27,GB:A28,GB:A29,GB:A30,GB:A31,GB:A32,GB:A33,GB:A34,GB:A35,GB:A36,GB:A37,GB:A38,GB:A39,GB:A40,GB:A41,GB:A42,GB:A43,GB:A44,GB:A45,GB:A46,GB:A47,GB:A48,GB:A49,GB:A50,GB:A51,GB:A52,GB:A53,GB:A54,GB:A55,GB:A56,GB:A57,GB:A58,GB:A59,GB:A60,GB:A61,GB:A62,GB:A63,GB:A64,GB:A65,GB:A66,GB:A67,GB:A68,GB:A69,GB:A70,GB:A71,GB:A72,GB:A73,GB:A74,GB:A75,GB:A76,GB:A77,GB:A78,GB:A79,GB:A80,GB:A81,GB:A82,GB:A83,GB:A84,GB:A85,GB:A86,GB:A87,GB:A88,GB:A89,GB:A90,GB:A91,GB:A92,GB:A93,GB:A94,GB:A95,GB:A96,GB:A97,GB:A98,GB:A99";
