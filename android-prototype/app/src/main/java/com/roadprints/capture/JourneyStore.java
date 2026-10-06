@@ -35,6 +35,17 @@ public final class JourneyStore {
 
     private JourneyStore() {}
 
+    /** Open the committed archive while holding the store lock, then stream it
+     * outside the lock. Saves replace the file, so this descriptor remains a
+     * consistent snapshot even if matching saves a newer revision meanwhile. */
+    static synchronized FileInputStream openDiagnosticSnapshot(Context context, String journeyId)
+            throws IOException {
+        if (journeyId == null || journeyId.isEmpty() || journeyId.contains("/")
+                || journeyId.contains("\\")) throw new IOException("Invalid journey ID");
+        migrateLegacy(context);
+        return new FileInputStream(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
+    }
+
     public static synchronized void save(Context context, JSONObject journey) {
         migrateLegacy(context);
         String id = journey.optString("journey_id", "unknown");

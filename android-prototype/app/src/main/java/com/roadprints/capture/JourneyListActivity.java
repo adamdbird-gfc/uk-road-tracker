@@ -62,6 +62,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
 public class JourneyListActivity extends Activity {
+    private static final int SAVE_JOURNEY_DEBUG = 4102;
+    private String pendingDebugJourneyId;
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
     private static final int INITIAL_JOURNEY_CARDS = 40;
     private static final int ADDITIONAL_JOURNEY_CARDS = 40;
@@ -101,6 +103,7 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (state != null) pendingDebugJourneyId = state.getString("debug_journey_id");
         journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
         activeFilter = savedJourneyFilter;
         activeJourneyStatusFilter = savedJourneyStatusFilter;
@@ -131,6 +134,52 @@ public class JourneyListActivity extends Activity {
         refreshGeneration++;
         processor.shutdownNow();
         super.onDestroy();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putString("debug_journey_id", pendingDebugJourneyId);
+        super.onSaveInstanceState(state);
+    }
+
+    private void exportJourneyDebug(String journeyId) {
+        if (pendingDebugJourneyId != null) return;
+        pendingDebugJourneyId = journeyId;
+        Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        save.addCategory(Intent.CATEGORY_OPENABLE);
+        save.setType("application/json");
+        String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+                .withZone(java.time.ZoneOffset.UTC).format(Instant.now());
+        save.putExtra(Intent.EXTRA_TITLE, "roadprints-journey-" + stamp + ".json");
+        try {
+            startActivityForResult(save, SAVE_JOURNEY_DEBUG);
+        } catch (android.content.ActivityNotFoundException error) {
+            pendingDebugJourneyId = null;
+            Toast.makeText(this, "No file-saving app is available.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != SAVE_JOURNEY_DEBUG) return;
+        String journeyId = pendingDebugJourneyId;
+        pendingDebugJourneyId = null;
+        if (resultCode != RESULT_OK || data == null || data.getData() == null || journeyId == null) return;
+        android.net.Uri uri = data.getData();
+        android.content.Context app = getApplicationContext();
+        Toast.makeText(app, "Saving journey diagnostics…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String message;
+            try (OutputStream output = app.getContentResolver().openOutputStream(uri, "wt")) {
+                if (output == null) throw new java.io.IOException("Could not open selected file");
+                JourneyDebugExporter.write(app, journeyId, output);
+                message = "Journey diagnostics saved.";
+            } catch (Exception error) {
+                message = "Journey diagnostics could not be saved. Please try again.";
+            }
+            final String result = message;
+            new Handler(Looper.getMainLooper()).post(() ->
+                    Toast.makeText(app, result, Toast.LENGTH_LONG).show());
+        }, "journey-debug-export").start();
     }
 
     private void buildScreen() {
@@ -1302,13 +1351,29 @@ public class JourneyListActivity extends Activity {
         }
 
         TextView delete = new TextView(this);
-        delete.setText("Delete journey");
+        delete.setText("Delete Journey");
         delete.setTextSize(14);
         delete.setTextColor(0xFFFF8A8A);
         delete.setGravity(Gravity.CENTER);
         delete.setPadding(dp(12), dp(14), dp(12), dp(8));
         delete.setOnClickListener(v -> confirmDelete(journey));
-        actions.addView(delete, new LinearLayout.LayoutParams(
+        LinearLayout supplemental = new LinearLayout(this);
+        supplemental.setGravity(Gravity.CENTER);
+        supplemental.addView(delete);
+        TextView divider = new TextView(this);
+        divider.setText("|");
+        divider.setTextColor(0xFF8FA2C5);
+        divider.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        supplemental.addView(divider);
+        TextView debug = new TextView(this);
+        debug.setText("Debug Journey");
+        debug.setTextSize(14);
+        debug.setTextColor(0xFFD3DCED);
+        debug.setGravity(Gravity.CENTER);
+        debug.setPadding(dp(12), dp(14), dp(12), dp(8));
+        debug.setOnClickListener(v -> exportJourneyDebug(journey.optString("journey_id")));
+        supplemental.addView(debug);
+        actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         container.addView(actions);
 
