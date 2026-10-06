@@ -79,6 +79,19 @@ final class AchievementStore {
 
     static List<Definition> definitions() { return DEFINITIONS; }
 
+    /** Fixed cards and durable unlocks, without reading or calculating journey coverage. */
+    static Snapshot catalogueSnapshot(Context context) {
+        JSONObject unlocked=readUnlocked(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE));
+        List<Progress> rows=new ArrayList<>();
+        for(Definition definition:DEFINITIONS) {
+            boolean earned=unlocked.has(definition.id);
+            int total="crossing-set".equals(definition.type)?CROSSINGS.size():(int)definition.target;
+            rows.add(new Progress(definition,0,0,total,earned,
+                    earned?definition.detail:definition.description,null));
+        }
+        return new Snapshot(rows,Collections.emptyList(),Long.MIN_VALUE);
+    }
+
     /** Called by Progress after its existing cached town lookups complete. */
     static void recordHighStreetSettlements(Context context, String roadId,
                                              List<LocalRoadSettlementMatcher.Settlement> settlements) {
@@ -365,3 +378,4 @@ final class AchievementStore {
 
     static List<Crossing> crossings() { return CROSSINGS; }
 }
+

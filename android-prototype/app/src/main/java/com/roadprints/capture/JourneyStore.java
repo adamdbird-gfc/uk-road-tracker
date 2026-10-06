@@ -480,6 +480,7 @@ public final class JourneyStore {
         DiscoveryReplayCache.clear(context);
         JourneyReplayActivity.clearSeed();
         ProgressActivity.clearCachedStatistics(context);
+        AchievementsActivity.clearCachedAchievements(context);
         return deleted;
     }
 
@@ -625,5 +626,6 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+
 
 

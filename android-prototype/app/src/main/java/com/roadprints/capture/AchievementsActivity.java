@@ -47,7 +47,14 @@ public class AchievementsActivity extends Activity {
     private static int processHighStreetRevision=Integer.MIN_VALUE;
     private static long processStationRevision=Long.MIN_VALUE;
 
-    private final Handler mainHandler=new Handler(Looper.getMainLooper());
+    private static final String SNAPSHOT_PREFS="roadprints_achievement_snapshot";
+    private static java.util.concurrent.Executor achievementExecutor=ScreenDataLoader::execute;
+    private static java.util.function.Function<android.content.Context,AchievementStore.Snapshot> achievementCalculator=AchievementStore::calculate;
+    private static boolean loadInFlight;
+    private static int cacheEpoch;
+    private static final List<java.lang.ref.WeakReference<AchievementsActivity>> waitingScreens=new ArrayList<>();
+    private AchievementStore.Snapshot shownSnapshot;
+
     private final List<AchievementStore.Definition> celebrationQueue=new ArrayList<>();
     private LinearLayout content;
     private ScrollView scroll;
@@ -55,7 +62,6 @@ public class AchievementsActivity extends Activity {
     private long shownRevision=Long.MIN_VALUE;
     private int shownHighStreetEvidenceRevision=Integer.MIN_VALUE;
     private long shownServiceStationRevision=Long.MIN_VALUE;
-    private int generation;
     private boolean stationBackfillRequested;
     private int celebrationIndex;
     private Dialog celebrationDialog;
@@ -91,7 +97,6 @@ public class AchievementsActivity extends Activity {
             celebrationDialog.dismiss();
         }
         super.onDestroy();
-        generation++;
     }
 
     private void buildScreen() {
@@ -107,7 +112,7 @@ public class AchievementsActivity extends Activity {
         header.addView(brand);
         TextView eyebrow=text("YOUR TRAVEL RECORD",12,TEAL,true);
         TextView title=text("Achievements",28,Color.WHITE,true);
-        summary=text("Checking your saved journeys…",14,MUTED,false);
+        summary=text("Your achievements",14,MUTED,false);
         summary.setPadding(0,dp(5),0,0);
         header.addView(eyebrow);
         header.addView(title);
@@ -125,7 +130,30 @@ public class AchievementsActivity extends Activity {
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root,header,bottomNavigation);
-        renderMessage("Checking saved journeys and coverage…",false);
+        renderInitialSnapshot();
+    }
+
+    private void renderInitialSnapshot() {
+        AchievementStore.Snapshot cached;
+        synchronized(SNAPSHOT_CACHE_LOCK) { cached=processSnapshot; }
+        if(cached==null) {
+            try {
+                String saved=getSharedPreferences(SNAPSHOT_PREFS,MODE_PRIVATE).getString("snapshot",null);
+                if(saved!=null && saved.length()<=64*1024) {
+                    JSONObject root=new JSONObject(saved);
+                    if(root.optInt("format")==1) {
+                        cached=snapshotFromJson(root);
+                        if(cached!=null) synchronized(SNAPSHOT_CACHE_LOCK) {
+                            processSnapshot=cached;
+                            processSnapshotRevision=root.optLong("journeys",Long.MIN_VALUE);
+                            processHighStreetRevision=root.optInt("highStreets",Integer.MIN_VALUE);
+                            processStationRevision=root.optLong("stations",Long.MIN_VALUE);
+                        }
+                    }
+                }
+            } catch(Exception ignored) { }
+        }
+        render(cached==null?AchievementStore.catalogueSnapshot(this):cached);
     }
 
     private void loadAchievements() {
@@ -133,95 +161,154 @@ public class AchievementsActivity extends Activity {
                 && !ServiceStationStore.historicalBackfillComplete(this)) {
             stationBackfillRequested=true;
             ServiceStationStore.ensureHistoricalVisits(this,()->{
-                if(!isFinishing()) loadAchievements();
+                if(!isFinishing() && !isDestroyed()) loadAchievements();
             });
         }
-        int request=++generation;
-        long revision=JourneyStore.dataRevision(this);
-        int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
-        long stationRevision=ServiceStationStore.revision(this);
-        long cacheRevision=achievementCacheRevision(revision,highStreetRevision,stationRevision);
-        AchievementStore.Snapshot cached=null;
-        synchronized (SNAPSHOT_CACHE_LOCK) {
-            if (processSnapshot!=null && processSnapshotRevision==revision
-                    && processHighStreetRevision==highStreetRevision
-                    && processStationRevision==stationRevision) cached=processSnapshot;
-        }
-        if (cached==null) cached=readCachedSnapshot(cacheRevision);
-        if (cached!=null) {
-            synchronized (SNAPSHOT_CACHE_LOCK) {
-                processSnapshot=cached;
-                processSnapshotRevision=revision;
-                processHighStreetRevision=highStreetRevision;
-                processStationRevision=stationRevision;
+        final long revision=JourneyStore.dataRevision(this);
+        final int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
+        final long stationRevision=ServiceStationStore.revision(this);
+        final int epoch;
+        synchronized(SNAPSHOT_CACHE_LOCK) {
+            epoch=cacheEpoch;
+            if(processSnapshot!=null) {
+                if(shownSnapshot!=processSnapshot) render(processSnapshot);
+                if(processSnapshotRevision==revision && processHighStreetRevision==highStreetRevision
+                        && processStationRevision==stationRevision) {
+                    shownRevision=revision;
+                    shownHighStreetEvidenceRevision=highStreetRevision;
+                    shownServiceStationRevision=stationRevision;
+                    return;
+                }
             }
-            shownRevision=revision;
-            shownHighStreetEvidenceRevision=highStreetRevision;
-            shownServiceStationRevision=stationRevision;
-            render(cached);
-            return;
+            boolean waiting=false;
+            for(java.lang.ref.WeakReference<AchievementsActivity> reference:waitingScreens)
+                if(reference.get()==this) waiting=true;
+            if(!waiting) waitingScreens.add(new java.lang.ref.WeakReference<>(this));
+            if(loadInFlight) return;
+            loadInFlight=true;
         }
-        renderMessage("Checking saved journeys and coverage…",false);
         final android.content.Context appContext=getApplicationContext();
-        ScreenDataLoader.execute(() -> {
-            AchievementStore.Snapshot result;
-            try { result=AchievementStore.calculate(getApplicationContext()); }
-            catch (Exception error) {
-                android.util.Log.e("Roadprints", "Achievements could not be calculated", error);
-                mainHandler.post(() -> {
-                    if (request == generation && !isFinishing())
-                        renderMessage("Achievements could not be loaded. Your saved journeys are unchanged.",true);
-                });
-                return;
+        achievementExecutor.execute(() -> {
+            AchievementStore.Snapshot result=null;
+            Exception failure=null;
+            long cacheRevision=achievementCacheRevision(revision,highStreetRevision,stationRevision);
+            try {
+                // Migrate the previous exact-revision disk cache off the UI thread.
+                result=readCachedSnapshot(appContext,cacheRevision);
+                if(result==null) result=achievementCalculator.apply(appContext);
+                JSONObject saved=snapshotToJson(result);
+                if(saved!=null) {
+                    saved.put("format",1).put("journeys",revision)
+                            .put("highStreets",highStreetRevision).put("stations",stationRevision);
+                    synchronized(SNAPSHOT_CACHE_LOCK) {
+                        if(epoch==cacheEpoch) appContext.getSharedPreferences(SNAPSHOT_PREFS,MODE_PRIVATE).edit()
+                                .putString("snapshot",saved.toString()).apply();
+                    }
+                }
+                synchronized(SNAPSHOT_CACHE_LOCK) {
+                    if(epoch==cacheEpoch) {
+                    processSnapshot=new AchievementStore.Snapshot(result.achievements,
+                            java.util.Collections.emptyList(),result.dataRevision);
+                    // Tag the inputs captured before calculation, never newer evidence.
+                    processSnapshotRevision=revision;
+                    processHighStreetRevision=highStreetRevision;
+                    processStationRevision=stationRevision;
+                    }
+                }
+            } catch(Exception error) {
+                failure=error;
+                android.util.Log.e("Roadprints","Achievement refresh failed",error);
             }
-            synchronized (SNAPSHOT_CACHE_LOCK) {
-                processSnapshot=new AchievementStore.Snapshot(result.achievements,
-                        java.util.Collections.emptyList(),result.dataRevision);
-                processSnapshotRevision=result.dataRevision;
-                processHighStreetRevision=AchievementStore.highStreetEvidenceRevision(appContext);
-                processStationRevision=ServiceStationStore.revision(appContext);
-            }
-            PersistentScreenCache.write(appContext,"achievements",cacheRevision,
-                    snapshotToJson(result));
-            mainHandler.post(() -> {
-                if (request != generation || isFinishing()) return;
-                shownRevision=result.dataRevision;
-                shownHighStreetEvidenceRevision=AchievementStore.highStreetEvidenceRevision(this);
-                shownServiceStationRevision=ServiceStationStore.revision(this);
-                render(result);
-                showCelebrations(result.newlyUnlocked);
+            final AchievementStore.Snapshot completed=result;
+            final Exception error=failure;
+            new Handler(Looper.getMainLooper()).post(() -> {
+                List<AchievementsActivity> screens=new ArrayList<>();
+                synchronized(SNAPSHOT_CACHE_LOCK) {
+                    loadInFlight=false;
+                    for(java.lang.ref.WeakReference<AchievementsActivity> reference:waitingScreens) {
+                        AchievementsActivity screen=reference.get();
+                        if(screen!=null && !screen.isFinishing() && !screen.isDestroyed()) screens.add(screen);
+                    }
+                    waitingScreens.clear();
+                }
+                if(epoch!=cacheEpoch) {
+                    for(AchievementsActivity screen:screens) {
+                        screen.renderInitialSnapshot();
+                        screen.loadAchievements();
+                    }
+                    return;
+                }
+                boolean changed=JourneyStore.dataRevision(appContext)!=revision
+                        || AchievementStore.highStreetEvidenceRevision(appContext)!=highStreetRevision
+                        || ServiceStationStore.revision(appContext)!=stationRevision;
+                for(AchievementsActivity screen:screens) {
+                    if(error!=null || completed==null) {
+                        screen.summary.setText("Progress refresh unavailable · tap to retry");
+                        screen.summary.setOnClickListener(view -> screen.loadAchievements());
+                    } else {
+                        screen.summary.setOnClickListener(null);
+                        screen.shownRevision=revision;
+                        screen.shownHighStreetEvidenceRevision=highStreetRevision;
+                        screen.shownServiceStationRevision=stationRevision;
+                        screen.render(processSnapshot);
+                    }
+                }
+                if(error==null && completed!=null && !screens.isEmpty()) {
+                    // One carousel for this refresh, even after rapid tab reopening.
+                    screens.get(screens.size()-1).showCelebrations(completed.newlyUnlocked);
+                    if(changed) for(AchievementsActivity screen:screens) screen.loadAchievements();
+                }
             });
         });
     }
 
-    private long achievementCacheRevision(long journeys,int highStreets,long stations) {
+    static void clearCachedAchievements(android.content.Context context) {
+        synchronized(SNAPSHOT_CACHE_LOCK) {
+            cacheEpoch++;
+            processSnapshot=null;
+            processSnapshotRevision=Long.MIN_VALUE;
+            processHighStreetRevision=Integer.MIN_VALUE;
+            processStationRevision=Long.MIN_VALUE;
+            context.getSharedPreferences(SNAPSHOT_PREFS,MODE_PRIVATE).edit().clear().apply();
+        }
+    }
+
+    private static long achievementCacheRevision(long journeys,int highStreets,long stations) {
         return journeys*1_000_003L+highStreets*31L+stations;
     }
 
-    private AchievementStore.Snapshot readCachedSnapshot(long revision) {
-        JSONObject root=PersistentScreenCache.read(this,"achievements",revision);
+    private static AchievementStore.Snapshot readCachedSnapshot(android.content.Context context,long revision) {
+        return snapshotFromJson(PersistentScreenCache.read(context,"achievements",revision));
+    }
+
+    private static AchievementStore.Snapshot snapshotFromJson(JSONObject root) {
         JSONArray rows=root==null?null:root.optJSONArray("items");
         if(rows==null)return null;
         List<AchievementStore.Progress> output=new ArrayList<>();
+        java.util.Map<String,JSONObject> saved=new java.util.HashMap<>();
         for(int i=0;i<rows.length();i++) {
             JSONObject row=rows.optJSONObject(i);
-            if(row==null)continue;
-            AchievementStore.Definition definition=null;
-            for(AchievementStore.Definition item:AchievementStore.definitions())
-                if(item.id.equals(row.optString("id"))){definition=item;break;}
-            if(definition==null)continue;
+            if(row!=null) saved.put(row.optString("id"),row);
+        }
+        for(AchievementStore.Definition definition:AchievementStore.definitions()) {
+            JSONObject row=saved.get(definition.id);
+            if(row==null) {
+                output.add(new AchievementStore.Progress(definition,0,0,(int)definition.target,
+                        false,definition.description,null));
+                continue;
+            }
             JSONArray flags=row.optJSONArray("crossings");
             boolean[] crossings=null;
-            if(flags!=null){crossings=new boolean[flags.length()];for(int c=0;c<flags.length();c++)crossings[c]=flags.optBoolean(c);}
+            if(flags!=null){crossings=new boolean[AchievementStore.crossings().size()];for(int c=0;c<crossings.length;c++)crossings[c]=flags.optBoolean(c);}
             output.add(new AchievementStore.Progress(definition,row.optDouble("value"),
                     row.optInt("completed"),row.optInt("total"),row.optBoolean("unlocked"),
                     row.optString("display"),crossings));
         }
         return output.isEmpty()?null:new AchievementStore.Snapshot(output,
-                java.util.Collections.emptyList(),JourneyStore.dataRevision(this));
+                java.util.Collections.emptyList(),root.optLong("journeys",Long.MIN_VALUE));
     }
 
-    private JSONObject snapshotToJson(AchievementStore.Snapshot snapshot) {
+    private static JSONObject snapshotToJson(AchievementStore.Snapshot snapshot) {
         try {
             JSONArray rows=new JSONArray();
             for(AchievementStore.Progress item:snapshot.achievements) {
@@ -237,6 +324,8 @@ public class AchievementsActivity extends Activity {
     }
 
     private void render(AchievementStore.Snapshot snapshot) {
+        shownSnapshot=snapshot;
+        int savedScroll=scroll.getScrollY();
         content.removeAllViews();
         boolean showServices=ServiceStationStore.unlocked(this);
         List<AchievementStore.Progress> visible=new ArrayList<>();
@@ -261,9 +350,15 @@ public class AchievementsActivity extends Activity {
         overall.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF43598A));
         overview.addView(overall,new LinearLayout.LayoutParams(-1,dp(7)));
         content.addView(overview);
-        content.addView(sectionHeading("Road achievements"));
-        for(AchievementStore.Progress item:visible)
-            if(!"service-station".equals(item.definition.type)) content.addView(achievementCard(item));
+        String[] groups={"App milestones","Distance","Road discovery","Town exploration","Landmarks","Crossings"};
+        for(String group:groups) {
+            boolean heading=false;
+            for(AchievementStore.Progress item:visible) {
+                if(!group.equals(achievementGroup(item.definition))) continue;
+                if(!heading) { content.addView(sectionHeading(group)); heading=true; }
+                content.addView(achievementCard(item));
+            }
+        }
         if(showServices) {
             content.addView(sectionHeading("Service station achievements"));
             for(AchievementStore.Progress item:visible)
@@ -271,6 +366,14 @@ public class AchievementsActivity extends Activity {
         }
         content.addView(text("Achievements are calculated from saved UK driving and bus coverage, plus local-road settlement results.",
                 12,MUTED,false));
+        scroll.post(() -> scroll.scrollTo(0,savedScroll));
+    }
+
+    private static String achievementGroup(AchievementStore.Definition definition) {
+        if("service-station".equals(definition.type)) return "Collections";
+        if("crossing-set".equals(definition.type)) return "Crossings";
+        if("a-road-landmark".equals(definition.type) || "summit".equals(definition.type)) return "Landmarks";
+        return "Road discovery";
     }
 
     private TextView sectionHeading(String label) {
@@ -517,17 +620,6 @@ public class AchievementsActivity extends Activity {
         celebrationIndex=0;
     }
 
-    private void renderMessage(String message, boolean error) {
-        content.removeAllViews();
-        if (!error) {
-            content.addView(ScreenLoadingView.create(this, "Preparing achievements", message));
-        } else {
-            LinearLayout panel=panel();
-            panel.addView(text(message,14,0xFFFFC1B8,false));
-            content.addView(panel);
-        }
-    }
-
     private LinearLayout panel() {
         LinearLayout panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -623,4 +715,3 @@ public class AchievementsActivity extends Activity {
         return Math.round(value*getResources().getDisplayMetrics().density);
     }
 }
-
