@@ -400,7 +400,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():

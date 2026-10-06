@@ -28,8 +28,8 @@ jobs:
               try:
                   with urllib.request.urlopen('https://uk-road-tracker-api.onrender.com/health', timeout=20) as response:
                       health = json.load(response)
-                  if health.get('status') == 'ok' and health.get('road_recovery_version') == 1:
-                      print('Live road matcher recovery version 1 verified.')
+                  if health.get('status') == 'ok' and health.get('road_recovery_version') == 1 and health.get('road_distance_version') == 1:
+                      print('Live road matcher recovery and distance verification version 1 verified.')
                       break
                   print('Waiting for the new matcher deployment.', flush=True)
               except Exception as error:
