@@ -16,7 +16,8 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class ReturnExperienceTest {
     private Context app;
-    @Before public void setup() { app=RuntimeEnvironment.getApplication(); JourneyStore.deleteAll(app); }
+    @Before public void setup() { app=RuntimeEnvironment.getApplication(); JourneyStore.deleteAll(app);
+        Shadows.shadowOf((android.app.Application)app).grantPermissions("com.roadprints.capture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"); }
     @After public void cleanup() { JourneyStore.deleteAll(app); }
     private JSONObject row(String id, String source, long ended) throws Exception {
         return new JSONObject().put("journey_id",id).put("source",new JSONObject().put("type",source))
@@ -80,6 +81,40 @@ public class ReturnExperienceTest {
         MotorwayProgressCalculator fresh=new MotorwayProgressCalculator(app,cache,false,false);
         fresh.addJourney(motorway("new",new JSONArray().put(anchors.get(5)).put(anchors.get(6))));
         assertFalse(fresh.newlyCoveredSections(previous).get("M25").isEmpty());fresh.finish();
+    }
+    @Test public void replayKeepsMatchedGapsSeparateAndDoesNotCelebrateNamedRoadTwice() throws Exception {
+        JSONObject old = row("older", "android_activity_capture", 2000);
+        JSONObject fresh = row("fresh", "android_activity_capture", 4000);
+        JSONArray first = new JSONArray("[[-0.1,51.5],[-0.11,51.51]]");
+        JSONArray second = new JSONArray("[[-0.2,51.6],[-0.21,51.61]]");
+        JSONObject known = roadFeature("Known Road", first), added = roadFeature("Fresh Road", second);
+        finishJourney(old, new JSONArray().put(known), new JSONArray().put(known));
+        finishJourney(fresh, new JSONArray().put(known).put(added), new JSONArray().put(known).put(added));
+        JourneyStore.save(app,old); JourneyStore.save(app,fresh);
+        DiscoveryReplay replay = DiscoveryReplay.calculate(app,new HashSet<>(Arrays.asList("fresh")));
+        assertEquals(2,replay.routes.size());
+        assertEquals(new HashSet<>(Arrays.asList("Fresh Road")),replay.labels);
+        assertEquals(1,replay.discoveries.size());
+        assertEquals(second.toString(),replay.discoveries.get(0).points.toString());
+    }
+    @Test public void removedRoadEvidenceIsExcludedFromDiscoveryReplay() throws Exception {
+        JSONObject journey = row("removed", "android_activity_capture", 4000);
+        JSONObject road = roadFeature("Removed Road",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        finishJourney(journey,new JSONArray().put(road),new JSONArray().put(road));
+        journey.put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("name:removed road")));
+        JourneyStore.save(app,journey);
+        assertTrue(DiscoveryReplay.calculate(app,new HashSet<>(Arrays.asList("removed"))).labels.isEmpty());
+    }
+    private JSONObject roadFeature(String name,JSONArray coordinates) throws Exception {
+        return new JSONObject().put("properties",new JSONObject().put("name",name))
+                .put("geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates));
+    }
+    private void finishJourney(JSONObject journey,JSONArray roads,JSONArray routes) throws Exception {
+        journey.put("mode","walking").put("processing_status","complete")
+                .put("route_geometry",new JSONObject().put("type","LineString")
+                        .put("coordinates",routes.getJSONObject(0).getJSONObject("geometry").getJSONArray("coordinates")))
+                .put("processing_result",new JSONObject().put("road_geojson",new JSONObject().put("features",roads))
+                        .put("geojson",new JSONObject().put("features",routes)));
     }
     private JSONObject motorway(String id,JSONArray coordinates) throws Exception {
         JSONObject feature=new JSONObject().put("properties",new JSONObject().put("road_ref","M25"))
