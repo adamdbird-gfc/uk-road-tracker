@@ -237,11 +237,11 @@ public class RoutePreviewView extends View {
         replayPaint.setStyle(Paint.Style.STROKE);
         replayPaint.setStrokeCap(Paint.Cap.ROUND);
         replayPaint.setStrokeJoin(Paint.Join.ROUND);
-        replayPaint.setColor(fresh ? 0xFFF7C450 : Color.WHITE);
+        replayPaint.setColor(Color.WHITE);
         replayPaint.setStrokeWidth(dp(fresh ? 11 : 9));
         canvas.drawPath(visible, replayPaint);
-        replayPaint.setColor(section.color);
-        replayPaint.setStrokeWidth(dp(fresh ? 6 : 5));
+        replayPaint.setColor(fresh ? 0xFFF7C450 : section.color);
+        replayPaint.setStrokeWidth(dp(fresh ? 8 : 5));
         canvas.drawPath(visible, replayPaint);
         if (!fresh && fraction < 1) {
             float[] head = new float[2];
@@ -633,17 +633,16 @@ public class RoutePreviewView extends View {
                 drawEndpoint(canvas, endRoute, endRoute.length() - 1,
                         Color.rgb(190, 55, 55), "E");
             }
-        } else if (showEmptyMessage) {
-            drawEmptyMessage(canvas);
-        } else {
-            drawMessage(canvas, "Not enough GPS points for a route preview");
+        } else if (discoveryReplay == null) {
+            if (showEmptyMessage) drawEmptyMessage(canvas);
+            else drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
         if (roadsLayer >= 0) canvas.restoreToCount(roadsLayer);
         drawServiceStations(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
-        if (!hasTiles) drawMessage(canvas, coordinatesValid
+        if (!hasTiles) drawMessage(canvas, (coordinatesValid || discoveryReplay != null)
                 ? "Map tiles unavailable · showing route only"
                 : "Map tiles unavailable · check connection");
         if (routeEditMode) {
