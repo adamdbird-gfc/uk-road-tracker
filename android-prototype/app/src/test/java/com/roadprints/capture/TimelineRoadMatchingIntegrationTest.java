@@ -51,4 +51,11 @@ public class TimelineRoadMatchingIntegrationTest {
         JSONObject d=stored.getJSONObject("last_match_attempt").getJSONArray("section_diagnostics").getJSONObject(1);
         assertEquals(1,d.getJSONArray("unmatched_point_indices").getInt(0));assertEquals(2,d.getJSONArray("submitted_points").length());
     }
+    @Test public void unverifiedDistanceCannotReplaceTheOriginalTimelineTotal() throws Exception {
+        JourneyStore.save(app,journey());
+        coordinator=new MatchingCoordinator(app,(foot,payload)->result().put("matched_distance_is_deduplicated",false));
+        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
+        JSONObject stored=JourneyStore.get(app,"road");assertEquals(590,stored.getDouble("distance_meters"),.01);
+        assertFalse(stored.has("processing_result"));
+    }
 }
