@@ -175,6 +175,8 @@ final class MotorwayProgressCalculator {
     private final Map<String, JSONObject> assetRoads = new HashMap<>();
     private final Set<String> referenceFetchAttempts = new HashSet<>();
     private final boolean allowReferenceFetch;
+    private final boolean includeMapSections;
+    private Summary completedSummary;
 
     MotorwayProgressCalculator(Context context) {
         this(context, null, false);
@@ -186,6 +188,12 @@ final class MotorwayProgressCalculator {
 
     MotorwayProgressCalculator(Context context, JSONObject canonicalCache,
                                boolean allowReferenceFetch) {
+        this(context, canonicalCache, allowReferenceFetch, true);
+    }
+
+    MotorwayProgressCalculator(Context context, JSONObject canonicalCache,
+                               boolean allowReferenceFetch, boolean includeMapSections) {
+        this.includeMapSections = includeMapSections;
         this.context = context.getApplicationContext();
         this.allowReferenceFetch = allowReferenceFetch;
         if (canonicalCache == null) loadBundledReferences();
@@ -193,6 +201,7 @@ final class MotorwayProgressCalculator {
     }
 
     void addJourney(JSONObject journey) {
+        if (completedSummary != null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey == null || !"complete".equals(journey.optString("processing_status", ""))) return;
         String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
         if (!("driving".equals(mode) || "bus".equals(mode))) return;
@@ -225,6 +234,7 @@ final class MotorwayProgressCalculator {
     }
 
     Summary finish() {
+        if (completedSummary != null) return completedSummary;
         boolean missingReferences = false;
         List<String> missingReferenceRoads = new ArrayList<>();
         for (Road road : roads.values()) {
@@ -244,7 +254,8 @@ final class MotorwayProgressCalculator {
             road.referenceSections = reference.anchors.size();
             road.referenceKm = reference.totalKm > 0 ? reference.totalKm
                     : reference.anchors.size() * REFERENCE_SAMPLE_M / 1000.0;
-            buildMapSections(road, reference);
+            if (includeMapSections) buildMapSections(road, reference);
+            references.remove(road.id);
         }
 
         double gbKm = 0, niKm = 0;
@@ -265,7 +276,11 @@ final class MotorwayProgressCalculator {
             if (byRegion != 0) return byRegion;
             return String.CASE_INSENSITIVE_ORDER.compare(left.ref, right.ref);
         });
-        return new Summary(sorted, gbKm, niKm, missingReferences, missingReferenceRoads);
+        references.clear();
+        pendingSegments.clear();
+        assetRoads.clear();
+        completedSummary = new Summary(sorted, gbKm, niKm, missingReferences, missingReferenceRoads);
+        return completedSummary;
     }
 
     private Reference referenceFor(String id, Road road) {

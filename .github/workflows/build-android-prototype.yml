@@ -46,6 +46,21 @@ jobs:
           export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
           gradle --no-daemon -p android-prototype testDebugUnitTest lintDebug assembleDebug
 
+      - name: Verify APK signature and report test totals
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --verbose --print-certs android-prototype/app/build/outputs/apk/debug/app-debug.apk
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = {key: 0 for key in ("tests", "failures", "errors", "skipped")}
+          for path in glob.glob("android-prototype/app/build/test-results/testDebugUnitTest/TEST-*.xml"):
+              suite = ET.parse(path).getroot()
+              for key in totals:
+                  totals[key] += int(suite.get(key, 0))
+          print("Android test totals:", totals)
+          assert totals["tests"] > 0 and totals["failures"] == totals["errors"] == 0
+          PY
+
       - name: Publish verification reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,3 +86,39 @@ jobs:
           path: android-prototype/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/feat/station-journey-boundaries'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out verified source
+        uses: actions/checkout@v6
+
+      - name: Download verified signed APK
+        uses: actions/download-artifact@v4
+        with:
+          name: roadprints-capture-prototype-debug
+          path: verified-apk
+
+      - name: Publish versioned APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version=$(python3 -c 'import re,pathlib; print(re.search(r"versionName = \"([^\"]+)\"", pathlib.Path("android-prototype/app/build.gradle.kts").read_text()).group(1))')
+          tag="android-$version"
+          cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
+          cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
+          Signed Roadprints Android prototype update.
+          Timeline import uses the shared logo, rounded buttons and labelled summary tiles with grouped numbers.
+          Progress calculates A-road and motorway coverage without allocating map sections and releases reference lookup data after calculation.
+          The full Android test suite, lint and APK signature verification pass before publication.
+          NOTES
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists."
+          else
+            gh release create "$tag" "$RUNNER_TEMP/roadprints-$version.apk" --target "$GITHUB_SHA" --title "Roadprints $version" --notes-file "$RUNNER_TEMP/android-release-notes.md" --prerelease --latest=false
+          fi

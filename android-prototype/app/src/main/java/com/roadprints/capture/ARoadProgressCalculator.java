@@ -37,11 +37,12 @@ final class ARoadProgressCalculator {
         final List<JSONArray> coveredMapSections = new ArrayList<>();
         final List<JSONArray> incompleteMapSections = new ArrayList<>();
         final List<Anchor> anchors = new ArrayList<>();
+        int referenceSections;
         final Map<String, List<Anchor>> grid = new HashMap<>();
         double matchedMetres, totalKm;
         boolean referenceAvailable;
         Road(String id, String ref, String region) { this.id=id; this.ref=ref; this.region=region; }
-        double percent() { return referenceAvailable && !anchors.isEmpty() ? covered.size()*100.0/anchors.size() : Double.NaN; }
+        double percent() { return referenceAvailable && referenceSections>0 ? covered.size()*100.0/referenceSections : Double.NaN; }
         double uniqueKm() { return referenceAvailable ? totalKm * percent()/100.0 : 0; }
     }
     static final class Summary {
@@ -58,12 +59,18 @@ final class ARoadProgressCalculator {
         Anchor(int id,double lng,double lat,int component) { this.id=id;this.lng=lng;this.lat=lat;this.component=component;double[] xy=mercator(lng,lat);x=xy[0];y=xy[1]; }
     }
     private final Context context;
+    private final boolean includeMapSections;
+    private Summary completedSummary;
     private final Map<String,Road> roads=new TreeMap<>();
     private final Map<String,JSONObject> index=new HashMap<>();
     private final Set<String> failed=new HashSet<>();
-    ARoadProgressCalculator(Context context) { this.context=context.getApplicationContext(); loadIndex(); }
+    ARoadProgressCalculator(Context context) { this(context,true); }
+    ARoadProgressCalculator(Context context, boolean includeMapSections) {
+        this.context=context.getApplicationContext(); this.includeMapSections=includeMapSections; loadIndex();
+    }
 
     void addJourney(JSONObject journey) {
+        if(completedSummary!=null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey==null || !"complete".equals(journey.optString("processing_status",""))) return;
         String mode=journey.optString("mode","").toLowerCase(Locale.ROOT);
         if (!("driving".equals(mode)||"bus".equals(mode))) return;
@@ -90,15 +97,21 @@ final class ARoadProgressCalculator {
         }
     }
     Summary finish() {
+        if(completedSummary!=null) return completedSummary;
         List<String> missing=new ArrayList<>();
         for(Road road:roads.values()) {
-            if(!road.referenceAvailable) { missing.add(road.id); continue; }
-            buildMapSections(road);
+            if(!road.referenceAvailable) missing.add(road.id);
+            else if(includeMapSections) buildMapSections(road);
+            // Coverage figures retain counts, not the spatial lookup or anchors.
+            road.anchors.clear();
+            road.grid.clear();
         }
         List<Road> sorted=new ArrayList<>(roads.values());
         sorted.sort((a,b)->Double.compare(b.matchedMetres,a.matchedMetres));
         Summary result=new Summary(sorted,missing);
         for(Road road:sorted) result.matchedMetres+=road.matchedMetres;
+        index.clear();
+        completedSummary=result;
         return result;
     }
     private void loadIndex() {
@@ -133,7 +146,8 @@ final class ARoadProgressCalculator {
             }
             road.totalKm=VERIFIED_LENGTH_KM.getOrDefault(road.ref,
                     data.optDouble("total_km",entry.optDouble("total_km",0)));
-            road.referenceAvailable=!road.anchors.isEmpty()&&road.totalKm>0;
+            road.referenceSections=road.anchors.size();
+            road.referenceAvailable=road.referenceSections>0&&road.totalKm>0;
             if(!road.referenceAvailable)failed.add(road.id);
         }catch(Exception ignored){failed.add(road.id);}
     }

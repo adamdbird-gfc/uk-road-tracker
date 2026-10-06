@@ -183,6 +183,9 @@ public class ProgressActivity extends Activity {
         synchronized (STATS_CACHE_LOCK) {
             if (processCachedStats != null && processCachedRevision == currentRevision) {
                 cached = processCachedStats;
+            } else {
+                processCachedStats = null;
+                processCachedRevision = Long.MIN_VALUE;
             }
         }
         if (cached != null) {
@@ -195,6 +198,7 @@ public class ProgressActivity extends Activity {
             restoreProgressScroll();
             return;
         }
+        loadedStats = null;
         if (statisticsContent != null) {
             statisticsContent.removeAllViews();
             LinearLayout loading = ScreenLoadingView.create(this, "Preparing your progress",
@@ -256,8 +260,8 @@ public class ProgressActivity extends Activity {
         Map<String, Double> uniqueRoadEdges = new HashMap<>();
         Map<String, Double> uniqueFootEdges = new HashMap<>();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
-                context, null, true);
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context);
+                context, null, true, false);
+        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, false);
         int[] checkedJourneys = {0};
 
         JourneyStore.forEach(context, journey -> {
@@ -303,6 +307,8 @@ public class ProgressActivity extends Activity {
 
         stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
+        uniqueRoadEdges.clear();
+        uniqueFootEdges.clear();
         updateLoadingMessage(generation, "Calculating motorway coverage…");
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();
