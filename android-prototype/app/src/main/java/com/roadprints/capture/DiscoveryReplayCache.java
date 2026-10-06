@@ -62,7 +62,7 @@ final class DiscoveryReplayCache {
             List<Callback> callbacks;
             if(!valid(app,version,epoch))result=null;
             synchronized(DiscoveryReplayCache.class) {
-                if(epoch!=generation)result=null;
+                if(epoch!=generation||revision!=version)result=null;
                 if(result!=null){READY.put(diskKey,result);while(READY.size()>2)READY.remove(READY.keySet().iterator().next());}
                 callbacks=PENDING.remove(job);
             }
