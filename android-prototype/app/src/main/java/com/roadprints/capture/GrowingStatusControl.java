@@ -1,87 +1,74 @@
 package com.roadprints.capture;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** Small live shortcut shown in the heading of the main app screens. */
-public final class GrowingStatusControl {
+/** Fixed full-width jade status row above navigation; expands upwards while active. */
+public final class GrowingStatusControl extends TextView {
     private final Activity activity;
-    private final TextView chip;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable refresh = new Runnable() {
+    private final Handler handler=new Handler(Looper.getMainLooper());
+    private ValueAnimator resize;
+    private int targetHeight;
+    private final Runnable refresh=new Runnable() {
         @Override public void run() {
-            update();
-            handler.postDelayed(this, 700);
+            render(MatchingCoordinator.get(activity).snapshot());
+            handler.postDelayed(this,700);
         }
     };
 
-    public GrowingStatusControl(Activity activity, LinearLayout headingRow) {
-        this.activity = activity;
-        chip = new TextView(activity);
-        chip.setText("● Growing");
-        chip.setTextSize(12);
-        chip.setTypeface(null, android.graphics.Typeface.BOLD);
-        chip.setTextColor(Color.WHITE);
-        chip.setGravity(Gravity.CENTER);
-        chip.setPadding(dp(12), dp(9), dp(12), dp(9));
-        chip.setBackground(background());
-        chip.setContentDescription("Open matcher progress");
-        chip.setVisibility(View.GONE);
-        chip.setClickable(true);
-        chip.setFocusable(true);
-        chip.setOnClickListener(v -> activity.startActivity(new Intent(activity, GrowingActivity.class)));
-        headingRow.addView(chip, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    private GrowingStatusControl(Activity activity) {
+        super(activity);this.activity=activity;
+        setBackgroundColor(0xFF67D5CC);setTextColor(0xFF0B1C50);
+        setTextSize(12);setTypeface(null,android.graphics.Typeface.BOLD);
+        setGravity(Gravity.CENTER);setPadding(dp(16),0,dp(16),0);
+        setText("✓ Ready");targetHeight=dp(28);
+        setLayoutParams(new LinearLayout.LayoutParams(-1,targetHeight));
+        setOnClickListener(v->activity.startActivity(new Intent(activity,GrowingActivity.class)));
+        setClickable(false);setFocusable(false);
     }
 
-    public void start() {
-        handler.removeCallbacks(refresh);
-        refresh.run();
+    static View create(Activity activity) { return new GrowingStatusControl(activity); }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();handler.removeCallbacks(refresh);refresh.run();
+    }
+    @Override protected void onDetachedFromWindow() {
+        handler.removeCallbacks(refresh);if(resize!=null)resize.cancel();
+        super.onDetachedFromWindow();
     }
 
-    public void stop() { handler.removeCallbacks(refresh); chip.clearAnimation(); }
-
-    private void update() {
-        MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(activity).snapshot();
-        if (snapshot.state == MatchingCoordinator.State.IDLE) {
-            chip.clearAnimation();
-            chip.setVisibility(View.GONE);
-            return;
+    void render(MatchingCoordinator.Snapshot snapshot) {
+        boolean active=snapshot.isGrowing()||snapshot.state==MatchingCoordinator.State.ERROR
+                ||(snapshot.state==MatchingCoordinator.State.COMPLETE&&snapshot.failed>0);
+        String label;
+        switch(snapshot.state) {
+            case PAUSED: label="Ⅱ Paused";break;
+            case PAUSING: label="Pausing";break;
+            case PREPARING: label="Growing · preparing";break;
+            case RUNNING: label="Growing · "+snapshot.checked+" / "+snapshot.total;break;
+            case ERROR: label="Retry · matching needs attention";break;
+            case COMPLETE: label=snapshot.failed>0?"Retry · "+snapshot.failed+" unmatched":"✓ Ready";break;
+            default: label="✓ Ready";
         }
-        chip.setVisibility(View.VISIBLE);
-        chip.setText(snapshot.state == MatchingCoordinator.State.PAUSED ? "● Paused"
-                : snapshot.state == MatchingCoordinator.State.COMPLETE ? (snapshot.failed > 0 ? "● Retry" : "● Ready")
-                : snapshot.state == MatchingCoordinator.State.ERROR ? "● Retry" : "● Growing");
-        if (snapshot.state != MatchingCoordinator.State.RUNNING && snapshot.state != MatchingCoordinator.State.PREPARING) {
-            chip.clearAnimation();
-            return;
-        }
-        if (chip.getAnimation() == null) {
-            AlphaAnimation pulse = new AlphaAnimation(0.45f, 1f);
-            pulse.setDuration(750);
-            pulse.setRepeatMode(Animation.REVERSE);
-            pulse.setRepeatCount(Animation.INFINITE);
-            chip.startAnimation(pulse);
-        }
+        setText(label+(active?" · View activity ›":""));
+        setContentDescription(label+(active?". Open activity details":""));
+        setClickable(active);setFocusable(active);
+        int height=dp(active?52:28);
+        if(targetHeight==height)return;
+        targetHeight=height;if(resize!=null)resize.cancel();
+        int from=getLayoutParams().height;
+        resize=ValueAnimator.ofInt(from,height);resize.setDuration(220);
+        resize.addUpdateListener(animator->{
+            android.view.ViewGroup.LayoutParams params=getLayoutParams();
+            params.height=(int)animator.getAnimatedValue();setLayoutParams(params);
+        });resize.start();
     }
-
-    private GradientDrawable background() {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(0xFF233B78);
-        drawable.setCornerRadius(dp(24));
-        drawable.setStroke(dp(1), 0xFF46649E);
-        return drawable;
-    }
-    private int dp(float value) { return Math.round(value * activity.getResources().getDisplayMetrics().density); }
+    private int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
 }

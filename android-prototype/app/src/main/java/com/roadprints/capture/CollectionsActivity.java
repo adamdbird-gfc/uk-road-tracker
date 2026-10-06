@@ -45,7 +45,7 @@ public class CollectionsActivity extends Activity {
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true);
         body=new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(18),dp(4),dp(18),dp(18));
         scroll.addView(body); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        View nav=bottomNavigation(); root.addView(nav); setContentView(root); applyInsets(root,header,nav); render();
+        View nav=bottomNavigation(); root.addView(GrowingStatusControl.create(this)); root.addView(nav); setContentView(root); applyInsets(root,header,nav); render();
     }
 
     private void render() {
@@ -133,3 +133,4 @@ public class CollectionsActivity extends Activity {
     private void applyInsets(View root,View header,View nav){root.setOnApplyWindowInsetsListener((view,insets)->{int top,bottom;if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());top=bars.top;bottom=bars.bottom;}else{top=insets.getSystemWindowInsetTop();bottom=insets.getSystemWindowInsetBottom();}header.setPadding(dp(18),dp(17)+top,dp(18),dp(13));LinearLayout.LayoutParams p=(LinearLayout.LayoutParams)nav.getLayoutParams();p.height=dp(68)+bottom;nav.setPadding(dp(8),0,dp(8),bottom);nav.setLayoutParams(p);return insets;});root.requestApplyInsets();}
     private int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
 }
+

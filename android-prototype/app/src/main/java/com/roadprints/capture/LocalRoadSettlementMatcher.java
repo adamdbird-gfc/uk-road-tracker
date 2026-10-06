@@ -89,6 +89,12 @@ final class LocalRoadSettlementMatcher {
         return decode(new JSONObject(saved).optJSONArray("settlements"));
     }
 
+    static int cachedInventoryCount(Context context,String code) {
+        String saved=context.getSharedPreferences(INVENTORIES,Context.MODE_PRIVATE).getString(code,null);
+        if(saved==null)return -1;
+        try { return Integer.parseInt(saved); } catch(NumberFormatException invalid) { return -1; }
+    }
+
     static int inventoryCount(Context context, String code) throws Exception {
         String saved = context.getSharedPreferences(INVENTORIES, Context.MODE_PRIVATE)
                 .getString(code, null);
@@ -110,8 +116,11 @@ final class LocalRoadSettlementMatcher {
         }
         if (inventory == null || !"ready".equals(inventory.optString("status"))) return -1;
         int count = inventory.optInt("road_count", -1);
-        if (count >= 0) context.getSharedPreferences(INVENTORIES, Context.MODE_PRIVATE)
-                .edit().putString(code, Integer.toString(count)).apply();
+        if (count >= 0) {
+            context.getSharedPreferences(INVENTORIES, Context.MODE_PRIVATE)
+                    .edit().putString(code, Integer.toString(count)).apply();
+            AchievementStore.advanceEvidenceRevision(context);
+        }
         return count;
     }
 
@@ -230,3 +239,4 @@ final class LocalRoadSettlementMatcher {
         HttpFailure(int status, String message) { super(message); this.status = status; }
     }
 }
+

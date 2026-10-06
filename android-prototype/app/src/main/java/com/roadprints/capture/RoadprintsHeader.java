@@ -16,7 +16,7 @@ final class RoadprintsHeader {
     private RoadprintsHeader() {}
 
     static LinearLayout create(Activity activity) {
-        StatusHeader brand = new StatusHeader(activity);
+        LinearLayout brand = new LinearLayout(activity);
         brand.setOrientation(LinearLayout.HORIZONTAL);
         brand.setGravity(Gravity.CENTER_VERTICAL);
         brand.setClickable(true);
@@ -54,13 +54,9 @@ final class RoadprintsHeader {
         utilities.setOnClickListener(view -> activity.startActivity(
                 new Intent(activity, UtilitiesActivity.class)));
         brand.addView(utilities);
-        LinearLayout statusRow = new LinearLayout(activity);
-        statusRow.setGravity(Gravity.CENTER_VERTICAL);
-        brand.setStatusControl(new GrowingStatusControl(activity, statusRow));
         LinearLayout header = new LinearLayout(activity);
         header.setOrientation(LinearLayout.VERTICAL);
         header.addView(brand);
-        header.addView(statusRow);
         return header;
     }
 
@@ -124,32 +120,9 @@ final class RoadprintsHeader {
         return back;
     }
 
-    private static final class StatusHeader extends LinearLayout {
-        private GrowingStatusControl statusControl;
-
-        StatusHeader(Activity activity) {
-            super(activity);
-        }
-
-        void setStatusControl(GrowingStatusControl control) {
-            statusControl = control;
-        }
-
-        @Override
-        protected void onAttachedToWindow() {
-            super.onAttachedToWindow();
-            if (statusControl != null) statusControl.start();
-        }
-
-        @Override
-        protected void onDetachedFromWindow() {
-            if (statusControl != null) statusControl.stop();
-            super.onDetachedFromWindow();
-        }
-    }
-
     private static int dp(Activity activity, int value) {
         return Math.round(value * activity.getResources().getDisplayMetrics().density);
     }
 }
+
 

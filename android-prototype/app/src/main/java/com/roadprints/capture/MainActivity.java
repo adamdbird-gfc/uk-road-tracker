@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
-    private GrowingStatusControl growingStatus;
     private static final int LOCATION_REQUEST = 41;
     private static final String[] MODE_LABELS = {
             "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry", "Unknown"
@@ -121,7 +120,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updateDebugLink();
-        if (growingStatus != null) growingStatus.start();
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
             tracking = CaptureService.isArmed(this);
@@ -132,7 +130,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
-        if (growingStatus != null) growingStatus.stop();
         super.onPause();
     }
 
@@ -179,7 +176,6 @@ public class MainActivity extends Activity {
         version.setPadding(dp(10), 0, 0, 0);
         brandIdentity.addView(version);
         brand.addView(brandIdentity, new LinearLayout.LayoutParams(0, -2, 1));
-        growingStatus = new GrowingStatusControl(this, brand);
         content.addView(brand);
         TextView eyebrow = text("YOUR TRAVEL RECORD", 13, 0xFF67D5CC, true);
         eyebrow.setPadding(0, dp(30), 0, dp(4));
@@ -258,6 +254,7 @@ public class MainActivity extends Activity {
         }
         scroll.addView(content);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        root.addView(GrowingStatusControl.create(this));
         TextView utilityBack = null;
         if (isTrackingSettingsScreen()) {
             utilityBack = RoadprintsHeader.backLink(this, "BACK TO UTILITIES", this::finish);
@@ -900,5 +897,6 @@ public class MainActivity extends Activity {
         return 0;
     }
 }
+
 
 

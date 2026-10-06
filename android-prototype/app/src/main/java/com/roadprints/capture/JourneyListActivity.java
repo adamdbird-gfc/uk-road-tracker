@@ -313,6 +313,7 @@ public class JourneyListActivity extends Activity {
         root.addView(content, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         View bottomNavigation = buildBottomNavigation();
+        root.addView(GrowingStatusControl.create(this));
         root.addView(bottomNavigation);
         journeyRoot = root;
         setContentView(root);
@@ -2120,5 +2121,6 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
+
 
 
