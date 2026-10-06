@@ -17,15 +17,16 @@ import android.widget.TextView;
 public class OnboardingActivity extends Activity {
     private static final String PREFS = "roadprints_onboarding";
     private static final String COMPLETE = "complete";
-    private static final String TRAVELLER = "traveller_profile";
-    private static final int REQUEST_LOCATION = 41;
+
+
     private static final int NAVY = 0xFF0B1C50;
     private static final int CARD = 0xFF253B70;
     private static final int SELECTED = 0xFF35558F;
     private static final int TEAL = 0xFF27B9A9;
     private static final int GOLD = 0xFFF7C450;
     private int step = 0;
-    private int travellerChoice = -1;
+    private boolean welcomeShown;
+    private WelcomeDiscoveryView discovery;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -37,14 +38,14 @@ public class OnboardingActivity extends Activity {
         }
         if (state != null) {
             step = state.getInt("step", 0);
-            travellerChoice = state.getInt("traveller", -1);
+            welcomeShown = state.getBoolean("welcome_shown", false);
         }
         showStep();
     }
 
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putInt("step", step);
-        state.putInt("traveller", travellerChoice);
+        state.putBoolean("welcome_shown", welcomeShown);
         super.onSaveInstanceState(state);
     }
 
@@ -61,126 +62,88 @@ public class OnboardingActivity extends Activity {
         mark.setImageResource(R.drawable.roadprints_mark);
         mark.setContentDescription("Roadprints");
         mark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        root.addView(mark, new LinearLayout.LayoutParams(-1, dp(step == 0 ? 142 : 120)));
+        root.addView(mark, new LinearLayout.LayoutParams(-1, dp(step == 0 ? 96 : 90)));
         TextView brand = text("roadprints", 38, Color.WHITE, true);
         brand.setGravity(Gravity.CENTER);
         root.addView(brand);
         TextView tagline = text("Every road tells your story.", 17, 0xFF67D5CC, false);
         tagline.setGravity(Gravity.CENTER);
-        tagline.setPadding(0, dp(5), 0, dp(step == 0 ? 28 : 36));
+        tagline.setPadding(0, dp(5), 0, dp(18));
         root.addView(tagline);
 
-        if (step == 0) buildTravellerStep(root);
-        else if (step == 1) buildPermissionStep(root);
-        else buildStartingStep(root);
+        if (step == 0) buildWelcomeStep(root);
+        else if (step == 1) buildStartingStep(root);
+        else buildPermissionStep(root);
         scroll.addView(root);
         setContentView(scroll);
     }
 
-    private void buildTravellerStep(LinearLayout root) {
-        eyebrow(root, "A QUICK QUESTION");
-        TextView title = text("How much of a traveller are you?", 28, Color.WHITE, true);
-        title.setGravity(Gravity.CENTER);
-        root.addView(title);
-        TextView copy = text("Roadprints will use your answer to shape your starting experience.",
+    private void buildWelcomeStep(LinearLayout root) {
+        discovery = new WelcomeDiscoveryView(this, !welcomeShown);
+        welcomeShown = true;
+        root.addView(discovery, new LinearLayout.LayoutParams(-1, dp(240)));
+        TextView example = text("An example of your map coming to life", 12, 0xFF9FB3D0, false);
+        example.setGravity(Gravity.CENTER); example.setPadding(0, dp(6), 0, dp(18)); root.addView(example);
+        TextView title = text("Every journey grows your map.", 28, Color.WHITE, true);
+        title.setGravity(Gravity.CENTER); root.addView(title);
+        TextView copy = text("Discover new roads, explore new places and watch your progress grow.",
                 17, 0xFFD3DCED, false);
-        copy.setGravity(Gravity.CENTER);
-        copy.setPadding(0, dp(10), 0, dp(20));
-        root.addView(copy);
-
-        String[] labels = {"Local explorer", "National traveller", "Always on the move"};
-        String[] details = {"Mostly nearby roads and places.", "Regular journeys across the country.",
-                "Journeys that take you further afield."};
-        for (int i = 0; i < labels.length; i++) {
-            final int index = i;
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setGravity(Gravity.CENTER_VERTICAL);
-            card.setPadding(dp(18), dp(9), dp(18), dp(9));
-            card.setBackground(roundRect(i == travellerChoice ? SELECTED : CARD, dp(15)));
-            card.setClickable(true);
-            card.setFocusable(true);
-            card.setOnClickListener(v -> { travellerChoice = index; showStep(); });
-            card.addView(text(labels[i], 16, Color.WHITE, true));
-            TextView detail = text(details[i], 14, 0xFFD3DCED, true);
-            detail.setPadding(0, dp(3), 0, 0);
-            card.addView(detail);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(76));
-            params.bottomMargin = dp(10);
-            root.addView(card, params);
-        }
-        TextView next = action("CONTINUE", TEAL);
-        next.setEnabled(travellerChoice >= 0);
-        next.setAlpha(travellerChoice >= 0 ? 1f : .45f);
-        next.setOnClickListener(v -> {
-            String[] profiles = {"local", "national", "frequent"};
-            getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                    .putString(TRAVELLER, profiles[travellerChoice]).apply();
-            step = 1;
-            showStep();
-        });
-        addButton(root, next, 24);
+        copy.setGravity(Gravity.CENTER); copy.setPadding(0, dp(12), 0, dp(12)); root.addView(copy);
+        TextView begin = action("LET’S BEGIN", GOLD);
+        begin.setOnClickListener(v -> { step = 1; showStep(); }); addButton(root, begin, 16);
     }
 
     private void buildPermissionStep(LinearLayout root) {
-        eyebrow(root, "LOCATION SETUP");
-        root.addView(text("Can Roadprints follow your journeys?", 28, Color.WHITE, true));
-        TextView copy = text("Location lets Roadprints recognise journeys while you travel. "
-                + "Your archive stays on this device unless you choose otherwise.",
+        eyebrow(root, "START TRACKING");
+        root.addView(text("Make your next journey count.", 28, Color.WHITE, true));
+        TextView copy = text("Roadprints uses location and activity recognition to detect journeys. "
+                + "Notifications let you see when tracking is running. Android will ask for these permissions next.",
                 17, 0xFFD3DCED, false);
-        copy.setPadding(0, dp(12), 0, dp(24));
-        root.addView(copy);
-        TextView note = text("You can change this later in your device settings.",
-                15, 0xFFD3DCED, false);
-        note.setPadding(dp(16), dp(14), dp(16), dp(14));
-        note.setBackground(roundRect(CARD, dp(15)));
-        root.addView(note);
-        TextView allow = action("ALLOW LOCATION", TEAL);
-        allow.setOnClickListener(v -> requestLocation());
-        addButton(root, allow, 26);
-        TextView later = action("NOT NOW", CARD);
-        later.setTextColor(Color.WHITE);
-        later.setOnClickListener(v -> { step = 2; showStep(); });
-        addButton(root, later, 10);
-    }
-
-    private void requestLocation() {
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            step = 2;
-            showStep();
-            return;
-        }
-        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
-    }
-
-    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
-        super.onRequestPermissionsResult(requestCode, permissions, results);
-        if (requestCode == REQUEST_LOCATION) { step = 2; showStep(); }
+        copy.setPadding(0, dp(12), 0, dp(20)); root.addView(copy);
+        TextView note = text("Your saved journey archive stays on this device. Route matching sends route points "
+                + "to our matching service. You can manage permissions and tracking in Utilities.",
+                14, 0xFFD3DCED, false);
+        note.setPadding(dp(16), dp(14), dp(16), dp(14)); note.setBackground(roundRect(CARD, dp(15))); root.addView(note);
+        TextView allow = action("SET UP TRACKING", GOLD);
+        allow.setOnClickListener(v -> {
+            markComplete();
+            startActivity(new Intent(this, MainActivity.class).putExtra("tracking_settings_screen", true)
+                    .putExtra("onboarding_enable_tracking", true)); finish();
+        }); addButton(root, allow, 24);
+        TextView later = action("EXPLORE THE APP FIRST", CARD); later.setTextColor(Color.WHITE);
+        later.setOnClickListener(v -> { markComplete(); openCapture(); }); addButton(root, later, 10);
     }
 
     private void buildStartingStep(LinearLayout root) {
         eyebrow(root, "YOUR STARTING POINT");
-        root.addView(text("Have you got travel history?", 28, Color.WHITE, true));
-        TextView copy = text("Choose how to begin your Roadprint. After this, Roadprints works quietly in the background.",
-                17, 0xFFD3DCED, false);
-        copy.setPadding(0, dp(12), 0, dp(24));
-        root.addView(copy);
-        TextView timeline = action("I HAVE TIMELINE DATA", TEAL);
-        timeline.setOnClickListener(v -> {
-            markComplete();
-            startActivity(new Intent(this, TimelineImportActivity.class));
-            finish();
+        root.addView(text("Where shall we begin?", 28, Color.WHITE, true));
+        TextView copy = text("Bring your past journeys with you, or start discovering from today.", 17, 0xFFD3DCED, false);
+        copy.setPadding(0, dp(12), 0, dp(24)); root.addView(copy);
+        startingChoice(root, "IMPORT GOOGLE TIMELINE", "Discover where you’ve already been. Imperfect recordings may be partially matched.", () -> {
+            markComplete(); startActivity(new Intent(this, TimelineImportActivity.class)); finish();
         });
-        addButton(root, timeline, 12);
-        TextView fresh = action("NO — START FROM TODAY", TEAL);
-        fresh.setOnClickListener(v -> { markComplete(); openCapture(); });
-        addButton(root, fresh, 12);
-        TextView privacy = text("Your journey history stays on this device.", 14, 0xFF9FB3D0, false);
-        privacy.setGravity(Gravity.CENTER);
-        privacy.setPadding(0, dp(16), 0, 0);
-        root.addView(privacy);
+        startingChoice(root, "START TRACKING JOURNEYS", "Build your map from today. We’ll help you set up permissions.", () -> { step = 2; showStep(); });
+        startingChoice(root, "RESTORE A ROADPRINTS BACKUP", "Bring back your saved journeys, discoveries and preferences.", () -> {
+            startActivity(new Intent(this, DataManagementActivity.class).putExtra("onboarding_restore", true));
+        });
+    }
+
+    private void startingChoice(LinearLayout root, String label, String detail, Runnable click) {
+        LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18)); card.setBackground(roundRect(CARD, dp(15)));
+        card.setClickable(true); card.setFocusable(true); card.setOnClickListener(v -> click.run());
+        card.addView(text(label, 15, GOLD, true));
+        TextView description = text(detail, 14, 0xFFD3DCED, false); description.setPadding(0, dp(7), 0, 0); card.addView(description);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.bottomMargin = dp(14); root.addView(card, params);
+    }
+
+    @Override public void onBackPressed() {
+        if (step > 0) { step--; showStep(); } else super.onBackPressed();
+    }
+
+    @Override protected void onPause() {
+        if (discovery != null) discovery.finishAnimation();
+        super.onPause();
     }
 
     private void eyebrow(LinearLayout root, String label) {
@@ -233,3 +196,4 @@ public class OnboardingActivity extends Activity {
         finish();
     }
 }
+

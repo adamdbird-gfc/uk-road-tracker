@@ -104,6 +104,10 @@ public class MainActivity extends Activity {
         if (tracking) repairTrackingSubscription();
         else if (capturing) resumeActiveCapture();
         if (modeSpinner != null) modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
+        if (getIntent().getBooleanExtra("onboarding_enable_tracking", false)) {
+            getIntent().removeExtra("onboarding_enable_tracking");
+            if (!tracking && !capturing) toggleTracking();
+        }
     }
 
     @Override
@@ -889,3 +893,4 @@ public class MainActivity extends Activity {
         return 0;
     }
 }
+
