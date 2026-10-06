@@ -132,7 +132,7 @@ public class TimelineImportActivity extends Activity {
         captureParams.setMargins(0, dp(24), 0, 0);
         root.addView(capture, captureParams);
 
-        RoadprintsHeader.installUtilityPage(this, root, "BACK TO DATA MANAGEMENT", this::finish);
+        RoadprintsHeader.installUtilityPage(this, root, "BACK", this::finish);
     }
 
     private void chooseFile() {
@@ -509,8 +509,6 @@ public class TimelineImportActivity extends Activity {
     }
 
     private static final class ImportCounts {
-        int visitsSaved;
-        int stationsMatched;
         final int added;
         final int skipped;
         final int invalid;
@@ -1000,6 +998,8 @@ public class TimelineImportActivity extends Activity {
     }
 
     private static final class ImportResult {
+        int visitsSaved;
+        int stationsMatched;
         final int added;
         final int skipped;
         final int invalid;

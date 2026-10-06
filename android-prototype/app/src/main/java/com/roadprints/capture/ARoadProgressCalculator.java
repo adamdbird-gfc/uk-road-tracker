@@ -100,8 +100,8 @@ final class ARoadProgressCalculator {
         if(completedSummary!=null) return completedSummary;
         List<String> missing=new ArrayList<>();
         for(Road road:roads.values()) {
-            if(!road.referenceAvailable) { missing.add(road.id); continue; }
-            if(includeMapSections) buildMapSections(road);
+            if(!road.referenceAvailable) missing.add(road.id);
+            else if(includeMapSections) buildMapSections(road);
             // Coverage figures retain counts, not the spatial lookup or anchors.
             road.anchors.clear();
             road.grid.clear();
