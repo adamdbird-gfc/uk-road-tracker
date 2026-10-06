@@ -98,15 +98,19 @@ public class JourneyListActivity extends Activity {
     private int activeFilter = 0;
     private String activeJourneyStatusFilter = "all";
     private final List<TextView> filterChips = new ArrayList<>();
+    private Set<String> recapJourneyIds = Collections.emptySet();
     private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         if (state != null) pendingDebugJourneyId = state.getString("debug_journey_id");
+        ArrayList<String> recap = getIntent().getStringArrayListExtra("recap_journey_ids");
+        if (recap != null) recapJourneyIds = new HashSet<>(recap);
         journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
         activeFilter = savedJourneyFilter;
         activeJourneyStatusFilter = savedJourneyStatusFilter;
+        if (!recapJourneyIds.isEmpty()) { activeFilter = 0; activeJourneyStatusFilter = "all"; }
         Window window = getWindow();
         launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
@@ -292,6 +296,18 @@ public class JourneyListActivity extends Activity {
         content.addView(intro);
         content.addView(readinessSummary);
         content.addView(filterScroll);
+        if (!recapJourneyIds.isEmpty()) {
+            TextView recapNotice = new TextView(this);
+            recapNotice.setText("New recordings · tap to show all journeys");
+            recapNotice.setTextColor(0xFF67D5CC);
+            recapNotice.setPadding(0, dp(12), 0, dp(12));
+            recapNotice.setOnClickListener(view -> {
+                recapJourneyIds = Collections.emptySet();
+                recapNotice.setVisibility(View.GONE);
+                render();
+            });
+            content.addView(recapNotice);
+        }
         content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
@@ -426,6 +442,35 @@ public class JourneyListActivity extends Activity {
         }
     }
 
+    /** Prepares only compact rows; Map uses these before scheduling route geometry. */
+    static List<JSONObject> preloadSummaries(android.content.Context context, long revision) throws Exception {
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processJourneySummaries != null && processJourneyRevision == revision)
+                return new ArrayList<>(processJourneySummaries);
+        }
+        JSONObject saved = PersistentScreenCache.read(context, "journey-summaries", revision);
+        JSONArray rows = saved == null ? null : saved.optJSONArray("rows");
+        List<JSONObject> loaded = new ArrayList<>();
+        if (rows != null) {
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i); if (row != null) loaded.add(row);
+            }
+        } else {
+            loaded = JourneyStore.allSummaries(context);
+            JSONArray compact = new JSONArray(); for (JSONObject row : loaded) compact.put(row);
+            if (JourneyStore.dataRevision(context) == revision)
+                PersistentScreenCache.write(context, "journey-summaries", revision,
+                        new JSONObject().put("rows", compact));
+        }
+        if (JourneyStore.dataRevision(context) == revision) {
+            synchronized (SUMMARY_CACHE_LOCK) {
+                processJourneySummaries = new ArrayList<>(loaded);
+                processJourneyRevision = revision;
+            }
+        }
+        return loaded;
+    }
+
     private void refreshJourneysAsync() {
         if (journeyList == null) return;
         final int generation = ++refreshGeneration;
@@ -514,6 +559,7 @@ public class JourneyListActivity extends Activity {
     }
 
     private boolean matchesActiveFilter(JSONObject journey) {
+        if (!recapJourneyIds.isEmpty() && !recapJourneyIds.contains(journey.optString("journey_id"))) return false;
         if (!matchesJourneyStatusFilter(journey)) return false;
         return matchesFilter(journey, activeFilter);
     }
@@ -1013,7 +1059,7 @@ public class JourneyListActivity extends Activity {
         return segments;
     }
 
-    private static List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
+    static List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
         List<JSONArray> routes = matchedRouteSegments(
                 journey.optJSONObject("processing_result"));
         JSONObject corrections = journey.optJSONObject("journey_corrections");
@@ -1373,6 +1419,13 @@ public class JourneyListActivity extends Activity {
             }
             actions.addView(journeyAction, secondaryParams);
             if (matched) {
+                Button replay = styledModalButton("REPLAY DISCOVERIES", 0xFF233B78, Color.WHITE);
+                replay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> startActivity(new Intent(this, MapActivity.class)
+                                .putExtra("replay_journey_id", journey.optString("journey_id")))));
+                actions.addView(replay, actionLayoutParams());
                 Button rematch = styledModalButton("REMATCH JOURNEY", 0xFFF7C450, 0xFF0B1C50);
                 LinearLayout.LayoutParams rematchParams = actionLayoutParams();
                 rematchParams.topMargin = dp(8);
@@ -1920,4 +1973,5 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
+
 

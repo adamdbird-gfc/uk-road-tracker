@@ -24,9 +24,9 @@ final class DistanceUnits {
 
     static String format(double metres, boolean useKilometres) {
         if (useKilometres) {
-            return String.format(Locale.UK, "%.1f km", metres / 1000.0);
+            return String.format(Locale.UK, "%,.1f km", metres / 1000.0);
         }
-        return String.format(Locale.UK, "%.1f mi", metres / METRES_PER_MILE);
+        return String.format(Locale.UK, "%,.1f mi", metres / METRES_PER_MILE);
     }
 
     static String format(Context context, double metres) {
@@ -37,3 +37,4 @@ final class DistanceUnits {
         return String.format(Locale.UK, "%,d", Math.max(0, points));
     }
 }
+

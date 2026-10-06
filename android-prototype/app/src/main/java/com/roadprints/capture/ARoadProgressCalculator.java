@@ -69,7 +69,9 @@ final class ARoadProgressCalculator {
         this.context=context.getApplicationContext(); this.includeMapSections=includeMapSections; loadIndex();
     }
 
-    void addJourney(JSONObject journey) {
+    void addJourney(JSONObject journey) { addJourney(journey, null); }
+
+    void addJourney(JSONObject journey, Set<String> onlyRefs) {
         if(completedSummary!=null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey==null || !"complete".equals(journey.optString("processing_status",""))) return;
         String mode=journey.optString("mode","").toLowerCase(Locale.ROOT);
@@ -87,6 +89,7 @@ final class ARoadProgressCalculator {
             if(!ref.matches("A[0-9]+[A-Z]?")) continue;
             String region=props.optString("road_region","").toUpperCase(Locale.ROOT);
             if(!"NI".equals(region)) region=isNi(feature)?"NI":"GB";
+            if (onlyRefs != null && !onlyRefs.contains(ref)) continue;
             String id=region+":"+ref;
             Road road=roads.get(id);
             if(road==null){road=new Road(id,ref,region);roads.put(id,road);}
@@ -96,6 +99,32 @@ final class ARoadProgressCalculator {
             if(road.referenceAvailable) matchFeature(road,feature.optJSONObject("geometry"));
         }
     }
+    /** Uses the same canonical edge coverage rule as the Progress map. */
+    Map<String, List<JSONArray>> newlyCoveredSections(Map<String, Set<Integer>> previous) {
+        Map<String, List<JSONArray>> result = new TreeMap<>();
+        for (Road road : roads.values()) {
+            Set<Integer> before = previous.getOrDefault(road.id, java.util.Collections.emptySet());
+            List<JSONArray> lines = new ArrayList<>();
+            JSONArray current = null;
+            for (int i = 1; i < road.anchors.size(); i++) {
+                Anchor a = road.anchors.get(i - 1), b = road.anchors.get(i);
+                boolean fresh = (road.covered.contains(a.id) || road.covered.contains(b.id))
+                        && !before.contains(a.id) && !before.contains(b.id)
+                        && a.component == b.component && distance(a.lng, a.lat, b.lng, b.lat) <= 250;
+                if (!fresh) {
+                    if (current != null) lines.add(current);
+                    current = null;
+                } else {
+                    if (current == null) current = new JSONArray().put(coord(a));
+                    current.put(coord(b));
+                }
+            }
+            if (current != null) lines.add(current);
+            if (!lines.isEmpty()) result.put(road.id, lines);
+        }
+        return result;
+    }
+
     Summary finish() {
         if(completedSummary!=null) return completedSummary;
         List<String> missing=new ArrayList<>();
@@ -193,3 +222,4 @@ final class ARoadProgressCalculator {
     private static double[] mercator(double lng,double lat){double x=6378137*Math.toRadians(lng),y=6378137*Math.log(Math.tan(Math.PI/4+Math.toRadians(Math.max(-85,Math.min(85,lat)))/2));return new double[]{x,y};}
     private static double distance(double lng1,double lat1,double lng2,double lat2){double a=Math.toRadians(lat1),b=Math.toRadians(lat2),dl=Math.toRadians(lng2-lng1),dp=b-a;double h=Math.sin(dp/2)*Math.sin(dp/2)+Math.cos(a)*Math.cos(b)*Math.sin(dl/2)*Math.sin(dl/2);return 2*EARTH_RADIUS_M*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
 }
+

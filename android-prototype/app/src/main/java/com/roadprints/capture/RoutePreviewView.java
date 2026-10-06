@@ -117,6 +117,109 @@ public class RoutePreviewView extends View {
     }
 
     /** Refresh an open journey aperture after matching without rebuilding its form. */
+    private DiscoveryReplay discoveryReplay;
+    private android.animation.ValueAnimator discoveryAnimator;
+    private float discoveryFraction;
+    private final Paint replayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    public void startDiscoveryReplay(DiscoveryReplay replay, Runnable complete) {
+        stopDiscoveryReplay();
+        discoveryReplay = replay;
+        double minX = 1, maxX = 0, minY = 1, maxY = 0;
+        for (DiscoveryReplay.Section section : replay.routes) {
+            for (int i = 0; i < section.points.length(); i++) {
+                JSONArray point = section.points.optJSONArray(i);
+                if (point == null) continue;
+                double x = longitudeToUnitX(point.optDouble(0));
+                double y = latitudeToUnitY(point.optDouble(1));
+                minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+            }
+        }
+        if (maxX >= minX && maxY >= minY) {
+            double zoomX = log2(Math.max(1, getWidth() - dp(100)) / (Math.max(.000001, maxX - minX) * mapTileSize()));
+            double zoomY = log2(Math.max(1, getHeight() - dp(260)) / (Math.max(.000001, maxY - minY) * mapTileSize()));
+            restoreCameraState((minX + maxX) * 180 - 180, unitYToLatitude((minY + maxY) / 2),
+                    Math.min(zoomX, zoomY));
+        }
+        if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            discoveryFraction = 1;
+            invalidate(); complete.run(); return;
+        }
+        discoveryAnimator = android.animation.ValueAnimator.ofFloat(0, 1);
+        discoveryAnimator.setDuration(5500);
+        discoveryAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+        discoveryAnimator.addUpdateListener(animator -> {
+            discoveryFraction = (float) animator.getAnimatedValue(); invalidate();
+        });
+        discoveryAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean cancelled;
+            @Override public void onAnimationCancel(android.animation.Animator animator) { cancelled = true; }
+            @Override public void onAnimationEnd(android.animation.Animator animator) {
+                if (!cancelled) complete.run();
+            }
+        });
+        discoveryAnimator.start();
+    }
+
+    public void stopDiscoveryReplay() {
+        if (discoveryAnimator != null) { discoveryAnimator.cancel(); discoveryAnimator = null; }
+        discoveryReplay = null;
+        invalidate();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        stopDiscoveryReplay();
+        super.onDetachedFromWindow();
+    }
+
+    private void drawDiscoveryReplay(Canvas canvas) {
+        if (discoveryReplay == null) return;
+        float routeFraction = Math.min(1, discoveryFraction / .65f);
+        int total = 0;
+        for (DiscoveryReplay.Section section : discoveryReplay.routes) total += section.points.length();
+        float remaining = total * routeFraction;
+        for (DiscoveryReplay.Section section : discoveryReplay.routes) {
+            float fraction = Math.min(1, Math.max(0, remaining / section.points.length()));
+            drawReplaySection(canvas, section, fraction, false);
+            remaining -= section.points.length();
+        }
+        if (discoveryFraction > .65f) {
+            float fraction = Math.min(1, (discoveryFraction - .65f) / .35f);
+            for (DiscoveryReplay.Section section : discoveryReplay.discoveries)
+                drawReplaySection(canvas, section, fraction, true);
+        }
+    }
+
+    private void drawReplaySection(Canvas canvas, DiscoveryReplay.Section section, float fraction, boolean fresh) {
+        if (fraction <= 0) return;
+        Path path = new Path();
+        for (int i = 0; i < section.points.length(); i++) {
+            JSONArray point = section.points.optJSONArray(i);
+            if (point == null) continue;
+            float x = screenX(point.optDouble(0)), y = screenY(point.optDouble(1));
+            if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+        }
+        android.graphics.PathMeasure measure = new android.graphics.PathMeasure(path, false);
+        Path visible = new Path();
+        measure.getSegment(0, measure.getLength() * fraction, visible, true);
+        replayPaint.setStyle(Paint.Style.STROKE);
+        replayPaint.setStrokeCap(Paint.Cap.ROUND);
+        replayPaint.setStrokeJoin(Paint.Join.ROUND);
+        replayPaint.setColor(fresh ? 0xFFF7C450 : Color.WHITE);
+        replayPaint.setStrokeWidth(dp(fresh ? 11 : 9));
+        canvas.drawPath(visible, replayPaint);
+        replayPaint.setColor(section.color);
+        replayPaint.setStrokeWidth(dp(fresh ? 6 : 5));
+        canvas.drawPath(visible, replayPaint);
+        if (!fresh && fraction < 1) {
+            float[] head = new float[2];
+            measure.getPosTan(measure.getLength() * fraction, head, null);
+            replayPaint.setStyle(Paint.Style.FILL); replayPaint.setColor(0xFFF7C450);
+            canvas.drawCircle(head[0], head[1], dp(6), replayPaint);
+        }
+    }
+
     public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
         this.coordinates = coordinates;
         matchedSegments.clear();
@@ -185,6 +288,11 @@ public class RoutePreviewView extends View {
         removedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
         removedRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
                 new float[]{dp(7), dp(5)}, 0));
+    }
+
+    /** Overview maps do not label endpoints from unrelated saved journeys. */
+    public static RoutePreviewView overview(Context context) {
+        return new RoutePreviewView(context, null, Collections.emptyList(), true, true, false);
     }
 
     public RoutePreviewView(Context context) {
@@ -488,6 +596,7 @@ public class RoutePreviewView extends View {
         }
 
         drawServiceStations(canvas);
+        drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
         if (!hasTiles) drawMessage(canvas, coordinatesValid
                 ? "Map tiles unavailable · showing route only"
@@ -1372,6 +1481,7 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
 
 
 
