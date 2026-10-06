@@ -137,4 +137,22 @@ public class TownAchievementsTest {
         c.add(track);assertTrue(c.townRoads.containsKey("ref:Road 1"));assertTrue(c.townRoads.containsKey("name:farm lane"));
         assertEquals(2,c.townRoads.size());
     }
+
+    @Test public void existingProgressGeometryCacheIsReusableAcrossMultipleJourneys() throws Exception {
+        JSONObject a=geometry(0),b=geometry(.02);
+        JourneyStore.save(app,journey("a","walking","High Street",a));
+        JourneyStore.save(app,journey("b","bus","High Street",b));
+        final LinkedHashMap<String,JSONObject> progressGeometry=new LinkedHashMap<>();
+        JourneyStore.forEach(app,j->{
+            JSONObject g=j.optJSONObject("processing_result").optJSONObject("road_geojson")
+                    .optJSONArray("features").optJSONObject(0).optJSONObject("geometry");
+            progressGeometry.putIfAbsent(g.toString(),g);
+        });
+        LocalRoadSettlementMatcher.saveCached(app,"name:high street",new ArrayList<>(progressGeometry.values()),
+                Collections.singletonList(new LocalRoadSettlementMatcher.Settlement("a","Town")));
+        app.getSharedPreferences("roadprints_local_settlement_inventories_v1",0).edit().putString("a","800").commit();
+        CoreAchievementEvidence c=new CoreAchievementEvidence();JourneyStore.forEachAchievementEvidence(app,()->false,c::add);
+        TownAchievementEvidence e=new TownAchievementEvidence();e.collect(app,c);
+        assertEquals(1,e.towns.get("a").roads.size());assertEquals(0,e.unresolvedRoads);
+    }
 }

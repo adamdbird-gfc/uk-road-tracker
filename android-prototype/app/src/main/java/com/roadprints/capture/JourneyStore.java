@@ -369,7 +369,9 @@ public final class JourneyStore {
     static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
         migrateLegacy(context);
-        for (File file : archiveFiles(context)) {
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        for (File file : files) {
             if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
                 throw new java.util.concurrent.CancellationException();
             JSONObject journey = new JSONObject();
