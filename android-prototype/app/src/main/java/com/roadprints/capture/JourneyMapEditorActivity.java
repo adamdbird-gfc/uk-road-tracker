@@ -474,6 +474,7 @@ public class JourneyMapEditorActivity extends Activity {
             journey.put("journey_corrections", corrections);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             JourneyStore.save(this, journey);
+            AchievementStore.recordSavedEdit(this, journey.optString("journey_id"), correctionTrace != null);
             if (correctionTrace != null) {
                 boolean queued = MatchingCoordinator.get(this).rematch(journey.optString("journey_id"));
                 if (!queued) Toast.makeText(this,
@@ -705,3 +706,4 @@ public class JourneyMapEditorActivity extends Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
+

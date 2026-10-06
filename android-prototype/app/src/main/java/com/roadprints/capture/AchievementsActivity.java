@@ -54,6 +54,7 @@ public class AchievementsActivity extends Activity {
     private static int cacheEpoch;
     private static final List<java.lang.ref.WeakReference<AchievementsActivity>> waitingScreens=new ArrayList<>();
     private AchievementStore.Snapshot shownSnapshot;
+    private boolean shownKilometres;
 
     private final List<AchievementStore.Definition> celebrationQueue=new ArrayList<>();
     private LinearLayout content;
@@ -84,6 +85,7 @@ public class AchievementsActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if(shownSnapshot!=null && shownKilometres!=DistanceUnits.usesKilometres(this))render(shownSnapshot);
         long revision=JourneyStore.dataRevision(this);
         int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
         if (shownRevision != Long.MIN_VALUE
@@ -139,13 +141,13 @@ public class AchievementsActivity extends Activity {
         if(cached==null) {
             try {
                 String saved=getSharedPreferences(SNAPSHOT_PREFS,MODE_PRIVATE).getString("snapshot",null);
-                if(saved!=null && saved.length()<=64*1024) {
+                if(saved!=null && saved.length()<=256*1024) {
                     JSONObject root=new JSONObject(saved);
                     if(root.optInt("format")==1) {
                         cached=snapshotFromJson(root);
                         if(cached!=null) synchronized(SNAPSHOT_CACHE_LOCK) {
                             processSnapshot=cached;
-                            processSnapshotRevision=root.optLong("journeys",Long.MIN_VALUE);
+                            processSnapshotRevision=root.optInt("catalogue")==AchievementStore.CATALOGUE_VERSION?root.optLong("journeys",Long.MIN_VALUE):Long.MIN_VALUE;
                             processHighStreetRevision=root.optInt("highStreets",Integer.MIN_VALUE);
                             processStationRevision=root.optLong("stations",Long.MIN_VALUE);
                         }
@@ -198,7 +200,7 @@ public class AchievementsActivity extends Activity {
                 if(result==null) result=achievementCalculator.apply(appContext);
                 JSONObject saved=snapshotToJson(result);
                 if(saved!=null) {
-                    saved.put("format",1).put("journeys",revision)
+                    saved.put("format",1).put("catalogue",AchievementStore.CATALOGUE_VERSION).put("journeys",revision)
                             .put("highStreets",highStreetRevision).put("stations",stationRevision);
                     synchronized(SNAPSHOT_CACHE_LOCK) {
                         if(epoch==cacheEpoch) appContext.getSharedPreferences(SNAPSHOT_PREFS,MODE_PRIVATE).edit()
@@ -274,7 +276,7 @@ public class AchievementsActivity extends Activity {
     }
 
     private static long achievementCacheRevision(long journeys,int highStreets,long stations) {
-        return journeys*1_000_003L+highStreets*31L+stations;
+        return journeys*1_000_003L+highStreets*31L+stations+AchievementStore.CATALOGUE_VERSION*9_999_991L;
     }
 
     private static AchievementStore.Snapshot readCachedSnapshot(android.content.Context context,long revision) {
@@ -300,12 +302,19 @@ public class AchievementsActivity extends Activity {
             JSONArray flags=row.optJSONArray("crossings");
             boolean[] crossings=null;
             if(flags!=null){crossings=new boolean[AchievementStore.crossings().size()];for(int c=0;c<crossings.length;c++)crossings[c]=flags.optBoolean(c);}
-            output.add(new AchievementStore.Progress(definition,row.optDouble("value"),
-                    row.optInt("completed"),row.optInt("total"),row.optBoolean("unlocked"),
-                    row.optString("display"),crossings));
+            AchievementStore.Progress progress=new AchievementStore.Progress(definition,row.optDouble("value"),
+                    row.optInt("completed"),row.optInt("total"),row.optBoolean("unlocked"),row.optString("display"),crossings);
+            progress.level=row.optInt("level",progress.unlocked?1:0);
+            progress.contributions=stringList(row.optJSONArray("contributions"));
+            progress.milestones=stringList(row.optJSONArray("milestones"));
+            output.add(progress);
         }
         return output.isEmpty()?null:new AchievementStore.Snapshot(output,
                 java.util.Collections.emptyList(),root.optLong("journeys",Long.MIN_VALUE));
+    }
+
+    private static List<String> stringList(JSONArray values) {
+        List<String> result=new ArrayList<>();if(values!=null)for(int i=0;i<values.length();i++)result.add(values.optString(i));return result;
     }
 
     private static JSONObject snapshotToJson(AchievementStore.Snapshot snapshot) {
@@ -317,7 +326,8 @@ public class AchievementsActivity extends Activity {
                 rows.put(new JSONObject().put("id",item.definition.id).put("value",item.value)
                         .put("completed",item.completed).put("total",item.total)
                         .put("unlocked",item.unlocked).put("display",item.display)
-                        .put("crossings",flags==null?JSONObject.NULL:flags));
+                        .put("crossings",flags==null?JSONObject.NULL:flags).put("level",item.level)
+                        .put("contributions",new JSONArray("the-knowledge".equals(item.definition.id)?item.contributions.subList(0,Math.min(50,item.contributions.size())):item.contributions)).put("milestones",new JSONArray(item.milestones)));
             }
             return new JSONObject().put("items",rows);
         } catch (org.json.JSONException ignored) { return null; }
@@ -325,6 +335,7 @@ public class AchievementsActivity extends Activity {
 
     private void render(AchievementStore.Snapshot snapshot) {
         shownSnapshot=snapshot;
+        shownKilometres=DistanceUnits.usesKilometres(this);
         int savedScroll=scroll.getScrollY();
         content.removeAllViews();
         boolean showServices=ServiceStationStore.unlocked(this);
@@ -339,7 +350,7 @@ public class AchievementsActivity extends Activity {
         summary.setText(unlockedCount+" of "+visible.size()+" unlocked");
         LinearLayout overview=panel();
         TextView overviewTitle=text("Your milestones",18,Color.WHITE,true);
-        TextView overviewCopy=text("Road achievements and, when unlocked, service station achievements.",13,MUTED,false);
+        TextView overviewCopy=text("Your recordings, distance and discoveries. Each family grows with your progress.",13,MUTED,false);
         overview.addView(overviewTitle);
         overviewCopy.setPadding(0,dp(5),0,dp(12));
         overview.addView(overviewCopy);
@@ -356,24 +367,41 @@ public class AchievementsActivity extends Activity {
             for(AchievementStore.Progress item:visible) {
                 if(!group.equals(achievementGroup(item.definition))) continue;
                 if(!heading) { content.addView(sectionHeading(group)); heading=true; }
-                content.addView(achievementCard(item));
+                if(!"road-completion".equals(item.definition.type))content.addView(achievementCard(item));
             }
         }
+        addRoadCompletionSection(visible,"Motorway completion","completion-motorway-");
+        addRoadCompletionSection(visible,"A-road completion","completion-aroad-");
         if(showServices) {
             content.addView(sectionHeading("Service station achievements"));
             for(AchievementStore.Progress item:visible)
                 if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
         }
-        content.addView(text("Achievements are calculated from saved UK driving and bus coverage, plus local-road settlement results.",
+        content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
         scroll.post(() -> scroll.scrollTo(0,savedScroll));
     }
 
     private static String achievementGroup(AchievementStore.Definition definition) {
         if("service-station".equals(definition.type)) return "Collections";
+        if("app-use".equals(definition.type))return "App milestones";
+        if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";
         if("crossing-set".equals(definition.type)) return "Crossings";
         if("a-road-landmark".equals(definition.type) || "summit".equals(definition.type)) return "Landmarks";
         return "Road discovery";
+    }
+
+    private void addRoadCompletionSection(List<AchievementStore.Progress> visible,String name,String prefix) {
+        int earned=0,count=0;
+        for(AchievementStore.Progress p:visible)if(p.definition.id.startsWith(prefix)){count++;if(p.unlocked)earned++;}
+        TextView toggle=sectionHeading(name+" · "+earned+" / "+count+" ▾");
+        content.addView(toggle);
+        LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);rows.setVisibility(View.GONE);content.addView(rows);
+        toggle.setOnClickListener(v->{
+            boolean open=rows.getVisibility()!=View.VISIBLE;
+            if(open&&rows.getChildCount()==0)for(AchievementStore.Progress p:visible)if(p.definition.id.startsWith(prefix))rows.addView(achievementCard(p));
+            rows.setVisibility(open?View.VISIBLE:View.GONE);
+        });
     }
 
     private TextView sectionHeading(String label) {
@@ -404,14 +432,35 @@ public class AchievementsActivity extends Activity {
         LinearLayout copy=new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
         copy.setPadding(dp(12),0,0,0);
-        TextView status=text(progress.unlocked?"UNLOCKED":"NEXT MILESTONE",10,
+        TextView status=text(progress.definition.levels!=null?"LEVEL "+progress.level+" / "+progress.definition.levels.length:(progress.unlocked?"UNLOCKED":"NEXT MILESTONE"),10,
                 progress.unlocked?GOLD:TEAL,true);
         TextView name=text(progress.definition.title,16,Color.WHITE,true);
-        TextView detail=text(progress.display,13,MUTED,false);
+        String display="distance".equals(progress.definition.type)||progress.definition.levels!=null
+                || "road-count".equals(progress.definition.type)||"high-street-settlement".equals(progress.definition.type)
+                ||"app-use".equals(progress.definition.type)||"long-journey".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
+        TextView detail=text(display,13,MUTED,false);
         detail.setPadding(0,dp(3),0,0);
         copy.addView(status); copy.addView(name); copy.addView(detail);
         row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
         card.addView(row);
+        if("the-knowledge".equals(progress.definition.id)||"mary-high-streets".equals(progress.definition.id)
+                ||"mastered-monopoly".equals(progress.definition.id)||"distance".equals(progress.definition.type)) {
+            TextView requirement=text(progress.definition.description,12,MUTED,false);
+            requirement.setPadding(dp(60),dp(7),0,0);card.addView(requirement);
+        }
+        if(!progress.contributions.isEmpty()||!progress.milestones.isEmpty()) {
+            TextView toggle=text("View contributions and milestones ▾",12,TEAL,true);toggle.setPadding(dp(60),dp(10),0,0);
+            LinearLayout list=new LinearLayout(this);list.setOrientation(LinearLayout.VERTICAL);list.setVisibility(View.GONE);
+            toggle.setOnClickListener(v->{
+                boolean open=list.getVisibility()!=View.VISIBLE;
+                if(open&&list.getChildCount()==0) {
+                    for(String milestone:progress.milestones){TextView t=text(milestone,12,GOLD,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    int shown=0;for(String contribution:progress.contributions){if(shown++>=50)break;TextView t=text("✓ "+contribution,12,GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    if(progress.contributions.size()>50)list.addView(text("First 50 shown · "+progress.contributions.size()+" total",12,MUTED,false));
+                }
+                list.setVisibility(open?View.VISIBLE:View.GONE);
+            });card.addView(toggle);card.addView(list);
+        }
 
         if ("crossing-set".equals(progress.definition.type)) {
             TextView toggle=text("View crossing checklist  ▾",12,TEAL,true);
@@ -435,11 +484,12 @@ public class AchievementsActivity extends Activity {
             });
             card.addView(toggle); card.addView(checklist);
         } else if ("network-percent".equals(progress.definition.type)
-                || "high-street-settlement".equals(progress.definition.type)) {
+                || "high-street-settlement".equals(progress.definition.type) || progress.definition.levels!=null || "road-count".equals(progress.definition.type) || "picasso".equals(progress.definition.id)) {
             ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
-            int maximum="network-percent".equals(progress.definition.type)?100:10;
+            int maximum=1000;
+            double target=AchievementStore.nextTarget(progress.definition,progress.value);
             bar.setMax(maximum);
-            bar.setProgress((int)Math.min(maximum,Math.max(0,progress.value)));
+            bar.setProgress((int)Math.min(maximum,Math.max(0,progress.value/Math.max(1,target)*maximum)));
             bar.setProgressTintList(android.content.res.ColorStateList.valueOf(progress.unlocked?GOLD:TEAL));
             bar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF43598A));
             LinearLayout.LayoutParams barParams=new LinearLayout.LayoutParams(-1,dp(5));
@@ -589,6 +639,11 @@ public class AchievementsActivity extends Activity {
         celebrationTitle.setText(definition.title);
         celebrationDescription.setText(definition.description==null?"":definition.description);
         celebrationDetail.setText(definition.detail==null?"":definition.detail);
+        if(shownSnapshot!=null)for(AchievementStore.Progress progress:shownSnapshot.achievements)if(progress.definition.id.equals(definition.id)) {
+            celebrationDetail.setText((definition.levels==null?"":"Level "+progress.level+" / "+definition.levels.length+" · ")+AchievementStore.progressText(this,progress));
+            if("long-journey".equals(definition.type))celebrationDescription.setText("Complete one journey of "+DistanceUnits.format(this,1609.344*10)+" on foot or "+DistanceUnits.format(this,1609.344*250)+" by road.");
+            break;
+        }
         boolean multiple=celebrationQueue.size()>1;
         int visibility=multiple?View.VISIBLE:View.GONE;
         celebrationPrevious.setVisibility(visibility);
