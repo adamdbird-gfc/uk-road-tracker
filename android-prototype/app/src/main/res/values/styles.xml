@@ -6,4 +6,29 @@
         <item name="android:navigationBarColor">#0A2B43</item>
         <item name="android:statusBarColor">#0A2B43</item>
     </style>
+    <style name="RoadprintsDatePickerDialog" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#F7C450</item>
+        <item name="android:windowBackground">@drawable/roadprints_calendar_background</item>
+        <item name="android:colorBackground">#0B1C50</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B9C5D8</item>
+        <item name="android:datePickerStyle">@style/RoadprintsCalendar</item>
+    </style>
+    <style name="RoadprintsCalendar" parent="@android:style/Widget.Material.DatePicker">
+        <item name="android:headerBackground">#0B1C50</item>
+        <item name="android:headerMonthTextAppearance">@style/RoadprintsCalendarHeader</item>
+        <item name="android:headerYearTextAppearance">@style/RoadprintsCalendarHeader</item>
+        <item name="android:headerDayOfMonthTextAppearance">@style/RoadprintsCalendarHeader</item>
+        <item name="android:calendarTextColor">@color/roadprints_calendar_day</item>
+        <item name="android:dayOfWeekTextAppearance">@style/RoadprintsCalendarWeekday</item>
+    </style>
+    <style name="RoadprintsCalendarDay" parent="@android:style/TextAppearance.Material.Body1">
+        <item name="android:textColor">@color/roadprints_calendar_day</item>
+    </style>
+    <style name="RoadprintsCalendarWeekday" parent="@android:style/TextAppearance.Material.Body1">
+        <item name="android:textColor">#B9C5D8</item>
+    </style>
+    <style name="RoadprintsCalendarHeader" parent="@android:style/TextAppearance.Material.Title">
+        <item name="android:textColor">#67D5CC</item>
+    </style>
 </resources>
