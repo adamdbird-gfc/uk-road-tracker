@@ -12,8 +12,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 188
-        versionName = "0.25.142"
+        versionCode = 189
+        versionName = "0.25.143"
     }
 }
 
@@ -37,4 +37,5 @@ if (stableKeystore != null && stableStorePassword != null && stableKeyAlias != n
     }
     android.buildTypes.getByName("debug") { signingConfig = android.signingConfigs.getByName("stableDebug") }
 }
+
 
