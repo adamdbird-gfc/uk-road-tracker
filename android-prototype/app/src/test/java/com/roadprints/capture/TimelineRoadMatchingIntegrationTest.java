@@ -58,4 +58,53 @@ public class TimelineRoadMatchingIntegrationTest {
         JSONObject stored=JourneyStore.get(app,"road");assertEquals(590,stored.getDouble("distance_meters"),.01);
         assertFalse(stored.has("processing_result"));
     }
+    private JSONObject endpointJourney() throws Exception {
+        JSONObject j=journey();
+        j.getJSONObject("route_geometry").put("coordinates",new JSONArray("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]"));
+        j.getJSONObject("timeline_match_evidence").put("point_times_ms",new JSONArray("[0,60000,120000,180000,240000]"));
+        j.getJSONObject("capture_quality").put("gps_points",5).put("source_route_points",5);
+        return j;
+    }
+    private JSONObject endpointResult() throws Exception {
+        return result().put("input_points",5).put("matched_tracepoints",4).put("matched_distance_m",400)
+                .put("matched_point_indices",new JSONArray("[0,1,2,3]")).put("unmatched_point_indices",new JSONArray("[4]"))
+                .put("failed_sections",new JSONArray("[{\"start_point_index\":3,\"end_point_index\":4,\"points\":2,\"detail\":\"NoMatch\"}]"));
+    }
+    @Test public void endpointOnlyFailureIsSavedAsClearlyLabelledPartialRoadMatch() throws Exception {
+        JSONObject j=endpointJourney();String original=j.getJSONObject("route_geometry").toString();JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult());coordinator.start("road");await();
+        assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"road");
+        assertTrue(stored.getJSONObject("processing_result").getBoolean("endpoint_partial_match"));
+        assertEquals(1,stored.getJSONObject("processing_result").getJSONArray("failed_sections").length());
+        assertEquals(400,stored.getDouble("distance_meters"),.01);assertEquals(590,stored.getDouble("original_distance_meters"),.01);
+        assertEquals(original,stored.getJSONObject("route_geometry").toString());
+    }
+    @Test public void partialMatchWithoutTimelineTimingIsRejectedWithReloadInstruction() throws Exception {
+        JSONObject j=endpointJourney();j.remove("timeline_match_evidence");JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult());coordinator.start("road");await();
+        assertEquals(1,coordinator.snapshot().failed);assertTrue(JourneyStore.get(app,"road").getString("error_summary").contains("Load Timeline Data"));
+    }
+    @Test public void interiorUnmatchedPointStillFailsWithOriginalDistancePreserved() throws Exception {
+        JourneyStore.save(app,endpointJourney());
+        coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult()
+                .put("matched_point_indices",new JSONArray("[0,1,3,4]")).put("unmatched_point_indices",new JSONArray("[2]"))
+                .put("failed_sections",new JSONArray("[{\"start_point_index\":1,\"end_point_index\":2,\"points\":2}]")));
+        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
+        assertEquals(590,JourneyStore.get(app,"road").getDouble("distance_meters"),.01);
+    }
+    @Test public void aLaterInteriorFailureCannotBeHiddenByAnEarlierAcceptedEndpointPartial() throws Exception {
+        JSONObject j=endpointJourney();JSONArray coords=j.getJSONObject("route_geometry").getJSONArray("coordinates");
+        JSONArray times=j.getJSONObject("timeline_match_evidence").getJSONArray("point_times_ms");
+        for(int i=0;i<5;i++){coords.put(new JSONArray().put(.1+i*.001).put(0));times.put(3000000+i*60000);}
+        j.getJSONObject("capture_quality").put("gps_points",10).put("source_route_points",10);JourneyStore.save(app,j);
+        AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{
+            if(calls.incrementAndGet()==1)return endpointResult();
+            return endpointResult().put("matched_point_indices",new JSONArray("[0,1,3,4]"))
+                .put("unmatched_point_indices",new JSONArray("[2]"))
+                .put("failed_sections",new JSONArray("[{\"start_point_index\":1,\"end_point_index\":2,\"points\":2}]"));
+        });coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
+        assertFalse(JourneyStore.get(app,"road").has("processing_result"));
+    }
 }

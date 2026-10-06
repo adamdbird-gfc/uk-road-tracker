@@ -74,4 +74,37 @@ public class TimelineRoadPreparationTest {
         assertEquals(3,d.getJSONArray("unmatched_point_indices").getInt(0));
         assertEquals(2,d.getJSONArray("failed_sections").getJSONObject(0).getInt("start_point_index"));assertFalse(d.has("geojson"));
     }
+    private JSONObject partial(String indices,String omitted,String failures) throws Exception {
+        return new JSONObject().put("input_points",5).put("matched_tracepoints",4)
+                .put("matched_distance_is_deduplicated",true).put("matched_point_indices",new JSONArray(indices))
+                .put("unmatched_point_indices",new JSONArray(omitted)).put("failed_sections",new JSONArray(failures));
+    }
+    @Test public void verifiedUnmatchedTailIsAcceptedAsExplicitPartialEvidence() throws Exception {
+        assertTrue(TimelineRoadPreparation.endpointPartial(partial("[0,1,2,3]","[4]",
+            "[{\"start_point_index\":3,\"end_point_index\":4}]"),points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]")));
+    }
+    @Test public void interiorFailureCannotBeReclassifiedAsAnEndpoint() throws Exception {
+        assertFalse(TimelineRoadPreparation.endpointPartial(partial("[0,1,3,4]","[2]",
+            "[{\"start_point_index\":1,\"end_point_index\":2}]"),points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]")));
+    }
+    @Test public void failureInsideMatchedCoreIsRejectedEvenIfOmittedIndicesClaimATail() throws Exception {
+        assertFalse(TimelineRoadPreparation.endpointPartial(partial("[0,1,2,3]","[4]",
+            "[{\"start_point_index\":1,\"end_point_index\":2}]"),points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]")));
+    }
+    @Test public void nearDuplicateStartFixIsAllowedButDistantInteriorSampleIsNot() throws Exception {
+        JSONObject r=partial("[0,2,3,4]","[1]","[]");
+        assertTrue(TimelineRoadPreparation.endpointPartial(r,points("[[0,0],[0.00005,0],[0.002,0],[0.003,0],[0.004,0]]")));
+        assertFalse(TimelineRoadPreparation.endpointPartial(r,points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]")));
+    }
+    @Test public void sparseAndUnverifiedPartialEvidenceIsRejected() throws Exception {
+        JSONArray p=points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]");
+        JSONObject r=partial("[0,1,2,3]","[4]","[]").put("matched_distance_is_deduplicated",false);
+        assertFalse(TimelineRoadPreparation.endpointPartial(r,p));
+        r=partial("[0,1,2]","[3,4]","[]").put("matched_tracepoints",3);
+        assertFalse(TimelineRoadPreparation.endpointPartial(r,p));
+    }
+    @Test public void duplicatedMatcherIndicesAreRejected() throws Exception {
+        assertFalse(TimelineRoadPreparation.endpointPartial(partial("[0,1,2,2]","[4]","[]"),
+                points("[[0,0],[0.001,0],[0.002,0],[0.003,0],[0.004,0]]")));
+    }
 }
