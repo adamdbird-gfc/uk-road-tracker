@@ -18,6 +18,7 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -1128,6 +1129,10 @@ public class JourneyListActivity extends Activity {
         JourneyPreview route = journeyPreview(journey);
         if (preview != null) preview.setRouteData(route.coordinates, route.matches);
         if (legend != null) legend.setText(route.legend);
+        View replayPlay = root.findViewWithTag("journey_replay_play");
+        if (replayPlay != null) replayPlay.setVisibility(
+                !isPointToPointMode(journey.optString("mode", "")) && !route.matches.isEmpty()
+                        ? View.VISIBLE : View.GONE);
     }
 
     private void showDetails(JSONObject journey) {
@@ -1184,8 +1189,24 @@ public class JourneyListActivity extends Activity {
         JourneyPreview route = journeyPreview(journey);
         RoutePreviewView preview = new RoutePreviewView(this, route.coordinates, route.matches);
         preview.setTag("journey_route_preview");
-        body.addView(preview, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
+        FrameLayout previewFrame = new FrameLayout(this);
+        previewFrame.addView(preview, new FrameLayout.LayoutParams(-1, -1));
+        TextView replayPlay = new TextView(this);
+        replayPlay.setText("▶");
+        replayPlay.setTag("journey_replay_play");
+        replayPlay.setTextSize(22);
+        replayPlay.setTextColor(0xFF0B1C50);
+        replayPlay.setGravity(Gravity.CENTER);
+        replayPlay.setBackground(roundRect(0xFFF7C450, 0xFF0B1C50, dp(24)));
+        replayPlay.setContentDescription("Replay journey discoveries on the map");
+        replayPlay.setClickable(true);
+        replayPlay.setFocusable(true);
+        replayPlay.setVisibility(!pointToPoint && !route.matches.isEmpty() ? View.VISIBLE : View.GONE);
+        FrameLayout.LayoutParams playParams = new FrameLayout.LayoutParams(dp(48), dp(48),
+                Gravity.BOTTOM | Gravity.LEFT);
+        playParams.setMargins(dp(12), 0, 0, dp(12));
+        previewFrame.addView(replayPlay, playParams);
+        body.addView(previewFrame, new LinearLayout.LayoutParams(-1, dp(190)));
         TextView routeLegend = new TextView(this);
         routeLegend.setTag("journey_route_legend");
         routeLegend.setText(route.legend);
@@ -1386,6 +1407,11 @@ public class JourneyListActivity extends Activity {
         });
         updateSaveState.run();
         saveChanges.setOnClickListener(v -> saveEdits.run());
+        replayPlay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                        transportModes, savedTitle[0], savedMode[0]),
+                saveEdits, () -> startActivity(new Intent(this, MapActivity.class)
+                        .putExtra("replay_journey_id", journey.optString("journey_id")))));
         actions.addView(saveChanges, actionLayoutParams());
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
@@ -1419,13 +1445,6 @@ public class JourneyListActivity extends Activity {
             }
             actions.addView(journeyAction, secondaryParams);
             if (matched) {
-                Button replay = styledModalButton("REPLAY DISCOVERIES", 0xFF233B78, Color.WHITE);
-                replay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
-                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
-                                transportModes, savedTitle[0], savedMode[0]),
-                        saveEdits, () -> startActivity(new Intent(this, MapActivity.class)
-                                .putExtra("replay_journey_id", journey.optString("journey_id")))));
-                actions.addView(replay, actionLayoutParams());
                 Button rematch = styledModalButton("REMATCH JOURNEY", 0xFFF7C450, 0xFF0B1C50);
                 LinearLayout.LayoutParams rematchParams = actionLayoutParams();
                 rematchParams.topMargin = dp(8);

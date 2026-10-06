@@ -116,6 +116,24 @@ public class ReturnExperienceTest {
                 .put("processing_result",new JSONObject().put("road_geojson",new JSONObject().put("features",roads))
                         .put("geojson",new JSONObject().put("features",routes)));
     }
+    @Test public void finishingReplayRetainsJourneyCameraAndOverlayUntilExplicitStop() throws Exception {
+        RoutePreviewView view = RoutePreviewView.overview(app);
+        view.layout(0,0,600,800);
+        DiscoveryReplay replay = new DiscoveryReplay();
+        replay.routes.add(new DiscoveryReplay.Section(new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"),0xFF101820));
+        int[] completed = {0};
+        view.startDiscoveryReplay(replay, () -> completed[0]++);
+        double[] framed = view.cameraState();
+        view.finishDiscoveryReplay();
+        assertArrayEquals(framed,view.cameraState(),0.00001);
+        java.lang.reflect.Field retained = RoutePreviewView.class.getDeclaredField("discoveryReplay");
+        retained.setAccessible(true);assertSame(replay,retained.get(view));
+        java.lang.reflect.Field fraction = RoutePreviewView.class.getDeclaredField("discoveryFraction");
+        fraction.setAccessible(true);assertEquals(1f,fraction.getFloat(view),0f);
+        view.finishDiscoveryReplay();assertEquals(1,completed[0]);
+        view.stopDiscoveryReplay();assertNull(retained.get(view));
+    }
+
     private JSONObject motorway(String id,JSONArray coordinates) throws Exception {
         JSONObject feature=new JSONObject().put("properties",new JSONObject().put("road_ref","M25"))
                 .put("geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates));
