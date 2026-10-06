@@ -14,6 +14,38 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk=28)
 public class WalkingJourneyPreparationTest {
+    @Test public void legacyRecordingRecoversTimingFromRetainedMovementLog() throws Exception {
+        Context app=RuntimeEnvironment.getApplication();MovementDiagnostics.start(app);
+        try {
+            long now=System.currentTimeMillis();
+            JSONArray coords=new JSONArray("[[0,0],[0.00009,0],[0.00225,0],[0.00027,0],[0.00036,0]]");
+            for(int i=0;i<coords.length();i++) {
+                android.location.Location p=new android.location.Location("test");
+                p.setLongitude(coords.getJSONArray(i).getDouble(0));p.setLatitude(0);p.setAccuracy(15);
+                p.setSpeed(1);p.setTime(now+i*10000);MovementDiagnostics.recordLocation(app,p,"recording_walking");
+            }
+            JSONObject journey=journey("android_activity_capture")
+                    .put("started_at",java.time.Instant.ofEpochMilli(now-60000).toString())
+                    .put("ended_at",java.time.Instant.ofEpochMilli(now+60000).toString())
+                    .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords));
+            MovementDiagnostics.stop(app,"test");
+            WalkingJourneyPreparation.Prepared result=WalkingJourneyPreparation.prepare(app,journey);
+            assertTrue(result.validated);assertEquals(40,result.distance,1);
+            assertEquals("local_movement_log",result.details.getString("evidence_source"));
+            assertEquals(5,result.recoveredSamples.length());
+        } finally { MovementDiagnostics.clear(app); }
+    }
+    @Test public void savedStationArrivalSurvivesRematchingWithoutTheMovementLog() throws Exception {
+        Context app=RuntimeEnvironment.getApplication();MovementDiagnostics.clear(app);
+        JSONObject journey=journey("android_activity_capture")
+                .put("route_geometry",new JSONObject().put("type","LineString")
+                        .put("coordinates",new JSONArray("[[0,0],[0.0001,0],[0.0002,0]]")))
+                .put("raw_capture_samples",new JSONArray("[[0,0,5,100000,1],[0.0001,0,5,110000,1],[0.0002,0,5,500000,0]]"))
+                .put("walking_validation",new JSONObject().put("version",1).put("source_points",3)
+                        .put("station_tail_points",1).put("station_arrival_time_utc",java.time.Instant.ofEpochMilli(110000).toString()));
+        WalkingJourneyPreparation.Prepared result=WalkingJourneyPreparation.prepare(app,journey);
+        assertEquals(2,result.points.length());assertEquals(1,result.details.getInt("station_tail_points"));
+    }
     @Test public void nativeWalkUsesSavedEvidenceWithoutChangingOriginalGeometry() throws Exception {
         Context app=RuntimeEnvironment.getApplication();
         JSONObject journey=journey("android_activity_capture");
