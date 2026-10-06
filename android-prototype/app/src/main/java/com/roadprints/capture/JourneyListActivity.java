@@ -988,7 +988,7 @@ public class JourneyListActivity extends Activity {
         return roundRect(fill, stroke, radius);
     }
 
-    private List<JSONArray> matchedRouteSegments(JSONObject result) {
+    private static List<JSONArray> matchedRouteSegments(JSONObject result) {
         List<JSONArray> segments = new ArrayList<>();
         if (result == null) return segments;
         JSONObject geojson = result.optJSONObject("geojson");
@@ -1013,7 +1013,7 @@ public class JourneyListActivity extends Activity {
         return segments;
     }
 
-    private List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
+    private static List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
         List<JSONArray> routes = matchedRouteSegments(
                 journey.optJSONObject("processing_result"));
         JSONObject corrections = journey.optJSONObject("journey_corrections");
@@ -1047,6 +1047,41 @@ public class JourneyListActivity extends Activity {
             if (current != null && current.length() >= 2) visible.add(current);
         }
         return visible;
+    }
+
+    static final class JourneyPreview {
+        final JSONArray coordinates;
+        final List<JSONArray> matches;
+        final String legend;
+        JourneyPreview(JSONArray coordinates, List<JSONArray> matches, String legend) {
+            this.coordinates = coordinates; this.matches = matches; this.legend = legend;
+        }
+    }
+
+    static JourneyPreview journeyPreview(JSONObject journey) {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        String mode = journey.optString("mode", "unknown").trim().toLowerCase(java.util.Locale.ROOT);
+        if (isPointToPointMode(mode)) return new JourneyPreview(endpointCoordinates(coordinates),
+                java.util.Collections.emptyList(), "Point-to-point journey");
+        JSONObject result = journey.optJSONObject("processing_result");
+        if (!matchedRouteSegments(result).isEmpty()) {
+            List<JSONArray> visible = matchedRouteSegmentsForDisplay(journey);
+            boolean partial = isPartialMatchResult(result);
+            return new JourneyPreview(null, visible, visible.isEmpty() ? "All matched sections removed"
+                    : partial ? "Partially matched route · unmatched sections omitted" : "Matched route");
+        }
+        return new JourneyPreview(coordinates, java.util.Collections.emptyList(), "Recorded route");
+    }
+
+    private void refreshDetailPreview(AlertDialog dialog, JSONObject journey) {
+        View root = dialog.getWindow() == null ? null : dialog.getWindow().getDecorView();
+        if (root == null) return;
+        RoutePreviewView preview = root.findViewWithTag("journey_route_preview");
+        TextView legend = root.findViewWithTag("journey_route_legend");
+        JourneyPreview route = journeyPreview(journey);
+        if (preview != null) preview.setRouteData(route.coordinates, route.matches);
+        if (legend != null) legend.setText(route.legend);
     }
 
     private void showDetails(JSONObject journey) {
@@ -1100,24 +1135,18 @@ public class JourneyListActivity extends Activity {
         // matching the POC. Their detailed Timeline trace remains saved in the journey.
         String journeyMode = journey.optString("mode", "unknown").trim().toLowerCase();
         boolean pointToPoint = isPointToPointMode(journeyMode);
-        JSONArray previewCoordinates = pointToPoint
-                ? endpointCoordinates(coordinates) : coordinates;
-        // The overview uses the complete saved trace as one continuous line.
-        // Matched geometry stays available in the map editor for corrections.
-        List<JSONArray> previewMatches = java.util.Collections.emptyList();
-
-        // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
-        RoutePreviewView preview = new RoutePreviewView(this, previewCoordinates, previewMatches);
+        JourneyPreview route = journeyPreview(journey);
+        RoutePreviewView preview = new RoutePreviewView(this, route.coordinates, route.matches);
+        preview.setTag("journey_route_preview");
         body.addView(preview, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
-        if (previewCoordinates != null && previewCoordinates.length() >= 2) {
-            TextView routeLegend = new TextView(this);
-            routeLegend.setText("Recorded route");
-            routeLegend.setTextSize(11);
-            routeLegend.setTextColor(0xFFD3DCED);
-            routeLegend.setPadding(side, dp(6), side, dp(2));
-            body.addView(routeLegend);
-        }
+        TextView routeLegend = new TextView(this);
+        routeLegend.setTag("journey_route_legend");
+        routeLegend.setText(route.legend);
+        routeLegend.setTextSize(11);
+        routeLegend.setTextColor(0xFFD3DCED);
+        routeLegend.setPadding(side, dp(6), side, dp(2));
+        body.addView(routeLegend);
 
         LinearLayout fields = new LinearLayout(this);
         fields.setOrientation(LinearLayout.VERTICAL);
@@ -1622,8 +1651,11 @@ public class JourneyListActivity extends Activity {
                 boolean matched = "complete".equals(saved.optString("processing_status"))
                         && !matchedRouteSegments(saved.optJSONObject("processing_result")).isEmpty();
                 if (matched) {
-                    status.setText("✓  Processed · matched route available");
-                    status.setTextColor(0xFF8BE0B1);
+                    refreshDetailPreview(dialogRef[0], saved);
+                    boolean partial = isPartialMatchResult(saved.optJSONObject("processing_result"));
+                    status.setText(partial ? "Partially matched · some source sections could not be matched"
+                            : "✓  Processed · matched route available");
+                    status.setTextColor(partial ? 0xFFF7C450 : 0xFF8BE0B1);
                     action.setText(forceRematch ? "REMATCH JOURNEY" : "VIEW & EDIT ON MAP");
                     action.setEnabled(true);
                     action.setAlpha(1f);
@@ -1819,7 +1851,7 @@ public class JourneyListActivity extends Activity {
         return "Ready for road matching";
     }
 
-    private boolean isPartialMatchResult(JSONObject result) {
+    private static boolean isPartialMatchResult(JSONObject result) {
         if (result == null) return false;
         if (result.optBoolean("timeline_partial_match", false)) return true;
         JSONArray failed = result.optJSONArray("failed_sections");
