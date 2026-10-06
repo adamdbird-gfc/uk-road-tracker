@@ -516,8 +516,8 @@ public class CaptureService extends Service {
             for (Location point : initialPoints) {
                 Location copy = new Location(point);
                 points.add(copy);
-                if (!"walking".equals(mode) || lastPoint == null
-                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(copy, 1))) {
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(copy, 1), "walking".equals(mode) || "running".equals(mode))) {
                     if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
                     lastPoint = copy;
                 }
@@ -1105,8 +1105,8 @@ public class CaptureService extends Service {
             lastPoint = null;
             distanceMetres = 0;
             for (Location point : points) {
-                if (!"walking".equals(mode) || lastPoint == null
-                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(point, 1))) {
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(point, 1), "walking".equals(mode) || "running".equals(mode))) {
                     if (lastPoint != null) distanceMetres += lastPoint.distanceTo(point);
                     lastPoint = new Location(point);
                 }
