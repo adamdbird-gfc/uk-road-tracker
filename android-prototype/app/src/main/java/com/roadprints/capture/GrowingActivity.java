@@ -1,27 +1,34 @@
 package com.roadprints.capture;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
-import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class GrowingActivity extends Activity {
     private static final int NAVY = 0xFF0B1C50;
     private static final int CARD = 0xFF233B78;
     private static final int TEAL = 0xFF67D5CC;
     private static final int MUTED = 0xFFD3DCED;
+    private final NumberFormat counts = NumberFormat.getIntegerInstance(Locale.UK);
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable refresh = new Runnable() {
         @Override public void run() { renderSnapshot(); handler.postDelayed(this, 700); }
@@ -32,6 +39,11 @@ public class GrowingActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightNavigationBars(false);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(0xFF10275D);
         if (getIntent().getBooleanExtra("start_matching", false)) MatchingCoordinator.get(this).start();
@@ -51,6 +63,10 @@ public class GrowingActivity extends Activity {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(26), dp(30), dp(26), dp(24));
         scroll.addView(content);
+        LinearLayout brand = RoadprintsHeader.create(this);
+        LinearLayout.LayoutParams brandParams = new LinearLayout.LayoutParams(-1, -2);
+        brandParams.bottomMargin = dp(18);
+        content.addView(brand, brandParams);
 
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -73,7 +89,7 @@ public class GrowingActivity extends Activity {
 
         LinearLayout overallCard = card();
         TextView totalTitle = text("Matching your journeys", 18, Color.WHITE, true);
-        overall = text("0 / 0 checked", 24, Color.WHITE, true);
+        overall = text("", 15, Color.WHITE, false);
         overall.setPadding(0, dp(6), 0, dp(10));
         overallBar = progressBar();
         overallCard.addView(totalTitle); overallCard.addView(overall); overallCard.addView(overallBar);
@@ -94,6 +110,8 @@ public class GrowingActivity extends Activity {
         action = new Button(this);
         action.setTextColor(NAVY);
         action.setAllCaps(false);
+        action.setTextSize(14);
+        action.setTypeface(null, android.graphics.Typeface.BOLD);
         action.setMinHeight(dp(52));
         action.setBackground(roundRect(0xFFF7C450, dp(14)));
         action.setOnClickListener(v -> {
@@ -106,41 +124,36 @@ public class GrowingActivity extends Activity {
         actionParams.topMargin = dp(20);
         content.addView(action, actionParams);
 
-        TextView hint = text("Matching continues while you move between Map, Journeys and Progress.", 13, MUTED, false);
+        TextView hint = text("Matching continues while you explore the app.", 13, MUTED, false);
         hint.setPadding(0, dp(12), 0, dp(4));
         content.addView(hint);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        LinearLayout nav = new LinearLayout(this);
-        nav.setGravity(Gravity.CENTER);
-        nav.setPadding(dp(14), dp(10), dp(14), dp(10));
-        nav.setBackgroundColor(0xFF10275D);
-        addNav(nav, "MAP", MapActivity.class);
-        addNav(nav, "JOURNEYS", JourneyListActivity.class);
-        addNav(nav, "PROGRESS", ProgressActivity.class);
-        root.addView(nav);
+        View nav = RoadprintsNavigation.create(this, -1);
+        root.addView(nav, new LinearLayout.LayoutParams(-1, dp(68)));
         setContentView(root);
-        root.setOnApplyWindowInsetsListener((view, insets) -> {
-            int top = 0, bottom = 0;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
-                top = bars.top; bottom = bars.bottom;
-            } else { top = insets.getSystemWindowInsetTop(); bottom = insets.getSystemWindowInsetBottom(); }
-            content.setPadding(dp(26), dp(30) + top, dp(26), dp(24));
-            nav.setPadding(dp(14), dp(10), dp(14), dp(10) + bottom);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            androidx.core.graphics.Insets safe = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            root.setPadding(safe.left, 0, safe.right, 0);
+            content.setPadding(dp(26), dp(30) + safe.top, dp(26), dp(24));
+            nav.setPadding(dp(8), 0, dp(8), safe.bottom);
+            LinearLayout.LayoutParams navParams = (LinearLayout.LayoutParams) nav.getLayoutParams();
+            navParams.height = dp(68) + safe.bottom;
+            nav.setLayoutParams(navParams);
             return insets;
         });
-        root.requestApplyInsets();
+        ViewCompat.requestApplyInsets(root);
     }
 
     private void renderSnapshot() {
         if (overall == null) return;
         MatchingCoordinator.Snapshot s = MatchingCoordinator.get(this).snapshot();
-        overall.setText(s.checked + " / " + s.total + " checked  ·  " + s.matched + " matched  ·  " + s.failed + " failed");
+        overall.setText(summary(s.checked, s.total, s.matched, s.failed));
         overallBar.setMax(Math.max(1, s.total)); overallBar.setProgress(s.checked);
-        roadDetails.setText(s.roadChecked + " / " + s.roadTotal + " checked  ·  " + s.roadMatched + " matched  ·  " + (s.roadChecked - s.roadMatched) + " need retry");
+        roadDetails.setText(summary(s.roadChecked, s.roadTotal, s.roadMatched, s.roadChecked - s.roadMatched));
         roadBar.setMax(Math.max(1, s.roadTotal)); roadBar.setProgress(s.roadChecked);
-        footDetails.setText(s.footChecked + " / " + s.footTotal + " checked  ·  " + s.footMatched + " matched  ·  " + (s.footChecked - s.footMatched) + " need retry");
+        footDetails.setText(summary(s.footChecked, s.footTotal, s.footMatched, s.footChecked - s.footMatched));
         footBar.setMax(Math.max(1, s.footTotal)); footBar.setProgress(s.footChecked);
         message.setText(s.message);
         if (s.state == MatchingCoordinator.State.RUNNING) { action.setEnabled(true); action.setText("PAUSE GROWING"); }
@@ -151,13 +164,28 @@ public class GrowingActivity extends Activity {
         else { action.setEnabled(true); action.setText("START GROWING"); }
     }
 
-    private void addNav(LinearLayout nav, String label, Class<?> target) {
-        TextView item = text(label, 11, Color.WHITE, true);
-        item.setGravity(Gravity.CENTER);
-        item.setPadding(dp(12), dp(12), dp(12), dp(12));
-        item.setOnClickListener(v -> startActivity(new Intent(this, target).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)));
-        nav.addView(item, new LinearLayout.LayoutParams(0, -2, 1));
+    private CharSequence summary(int checked, int total, int matched, int retry) {
+        SpannableStringBuilder result = new SpannableStringBuilder();
+        appendValue(result, "Checked", counts.format(checked) + " / " + counts.format(total));
+        appendValue(result, "Matched", counts.format(matched));
+        appendValue(result, "Need retry", counts.format(retry));
+        return result;
     }
+
+    private void appendValue(SpannableStringBuilder result, String title, String value) {
+        if (result.length() > 0) result.append("\n");
+        int start = result.length();
+        result.append(title).append(": ");
+        result.setSpan(new ForegroundColorSpan(TEAL), start, result.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        result.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, result.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        start = result.length();
+        result.append(value);
+        result.setSpan(new ForegroundColorSpan(Color.WHITE), start, result.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
     private LinearLayout laneCard(String eyebrow, String title) {
         LinearLayout box = card();
         TextView small = text(eyebrow, 12, TEAL, true);
