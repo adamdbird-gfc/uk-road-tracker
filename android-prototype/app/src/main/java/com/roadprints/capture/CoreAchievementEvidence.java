@@ -12,6 +12,7 @@ final class CoreAchievementEvidence {
     final Set<String> edited=new HashSet<>();
     final Set<String> refs=new TreeSet<>();
     final Map<String,LinkedHashMap<String,JSONObject>> named=new TreeMap<>();
+    final Map<String,LinkedHashMap<String,JSONObject>> townRoads=new TreeMap<>();
     final Coverage roadCoverage=new Coverage(), footCoverage=new Coverage();
 
     void add(JSONObject journey) {
@@ -32,6 +33,7 @@ final class CoreAchievementEvidence {
         if((removed!=null&&removed.length()>0)||(removedRoads!=null&&removedRoads.length()>0))
             edited.add(journey.optString("journey_id"));
         if((!road&&!foot)||!"complete".equals(journey.optString("processing_status"))) return;
+        TownAchievementEvidence.addRoadDiscovery(journey,townRoads);
         JSONObject result=journey.optJSONObject("processing_result");
         if(result==null)return;
         (road?roadCoverage:footCoverage).add(result.optJSONObject("geojson"),removed);

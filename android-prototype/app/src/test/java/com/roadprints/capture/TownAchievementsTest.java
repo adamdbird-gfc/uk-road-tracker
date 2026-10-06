@@ -117,7 +117,7 @@ public class TownAchievementsTest {
     @Test public void calculateConnectsTownEvidenceToCurrentJourneys() throws Exception {
         JSONObject g=geometry(0);JSONArray features=new JSONArray();
         for(int i=0;i<101;i++) {
-            String name="street "+i;cache(name,Collections.singletonList(g),"a","A",401);
+            String name="street "+(char)('a'+i/26)+(char)('a'+i%26);cache(name,Collections.singletonList(g),"a","A",401);
             features.put(new JSONObject().put("geometry",g).put("properties",new JSONObject().put("name",name).put("highway","residential")));
         }
         JSONObject j=new JSONObject().put("journey_id","import").put("mode","walking").put("processing_status","complete")
@@ -126,5 +126,15 @@ public class TownAchievementsTest {
         JourneyStore.save(app,j);AchievementStore.Snapshot result=AchievementStore.calculate(app);
         assertEquals(1,progress(result,"town-exploration").level);assertEquals(0,progress(result,"roaming-exploration").level);
         JourneyStore.delete(app,"import");assertEquals(0,progress(AchievementStore.calculate(app),"town-exploration").level);
+    }
+
+    @Test public void localRoadIdentityMatchesProgressForDigitsNumericReferencesAndTracks() throws Exception {
+        JSONObject g=geometry(0);CoreAchievementEvidence c=new CoreAchievementEvidence();
+        c.add(journey("a","walking","Road 1",g));
+        JSONObject track=journey("b","walking","Farm Lane",g);
+        track.getJSONObject("processing_result").getJSONObject("road_geojson").getJSONArray("features")
+                .getJSONObject(0).getJSONObject("properties").put("highway","track").put("ref","2");
+        c.add(track);assertTrue(c.townRoads.containsKey("ref:Road 1"));assertTrue(c.townRoads.containsKey("name:farm lane"));
+        assertEquals(2,c.townRoads.size());
     }
 }

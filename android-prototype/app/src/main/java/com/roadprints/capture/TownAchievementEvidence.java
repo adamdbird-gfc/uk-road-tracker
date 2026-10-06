@@ -19,6 +19,36 @@ final class TownAchievementEvidence {
     final Map<String,Town> towns = new TreeMap<>();
     int unresolvedRoads;
 
+    /** Match Progress's local-road identities and geometry selection exactly, including names containing digits. */
+    static void addRoadDiscovery(JSONObject journey,Map<String,LinkedHashMap<String,JSONObject>> roads) {
+        JSONObject result=journey.optJSONObject("processing_result");if(result==null)return;
+        JSONObject geojson=result.optJSONObject("road_geojson");
+        JSONArray features=geojson==null?null:geojson.optJSONArray("features");
+        if(features==null||features.length()==0) {
+            features=new JSONArray();
+            for(String field:new String[]{"motorway_geojson","a_road_geojson"}) {
+                JSONObject collection=result.optJSONObject(field);JSONArray fallback=collection==null?null:collection.optJSONArray("features");
+                if(fallback!=null)for(int i=0;i<fallback.length();i++)features.put(fallback.opt(i));
+            }
+        }
+        for(int i=0;i<features.length();i++) {
+            JSONObject f=features.optJSONObject(i);if(f==null||JourneyCorrectionUtils.excludesRoadFeature(journey,f))continue;
+            JSONObject props=f.optJSONObject("properties"),geometry=f.optJSONObject("geometry");if(props==null||geometry==null)continue;
+            String kind=props.optString("highway").toLowerCase(Locale.ROOT);
+            if(kind.endsWith("_link")||Arrays.asList("service","footway","path","steps","cycleway").contains(kind))continue;
+            String raw=props.optString("road_ref",props.optString("ref",""));
+            for(String part:raw.split("[;,/]")) {
+                String label=part.trim().toUpperCase(Locale.ROOT).replaceAll("\\s+","");
+                if(label.matches("\\d+(?:[.,]\\d+)?"))label="";
+                if(label.isEmpty())label=props.optString("name",props.optString("road_name","")).trim();
+                if(label.isEmpty()||label.matches("\\d+(?:[.,]\\d+)?")
+                        ||label.matches("M[0-9]+[A-Z]?|M6T|M6TOLL|A[0-9]+\\(M\\)|[AB][0-9]+[A-Z]?"))continue;
+                String id=label.matches(".*[0-9].*")?"ref:"+label:"name:"+label.toLowerCase(Locale.ROOT);
+                roads.computeIfAbsent(id,key->new LinkedHashMap<>()).putIfAbsent(geometry.toString(),geometry);
+            }
+        }
+    }
+
     static boolean record(Context context,String roadId,List<JSONObject> geometry,
                        List<LocalRoadSettlementMatcher.Settlement> matches) {
         JSONArray array=new JSONArray();
@@ -37,8 +67,8 @@ final class TownAchievementEvidence {
     }
 
     void collect(Context context,CoreAchievementEvidence core) {
-        for(Map.Entry<String,LinkedHashMap<String,JSONObject>> entry:core.named.entrySet()) {
-            String roadId="name:"+entry.getKey();
+        for(Map.Entry<String,LinkedHashMap<String,JSONObject>> entry:core.townRoads.entrySet()) {
+            String roadId=entry.getKey();
             List<JSONObject> geometry=new ArrayList<>(entry.getValue().values());
             String value=context.getSharedPreferences(PREFS,0)
                     .getString(AchievementStore.roadEvidenceKey(roadId,geometry),null);
