@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import os
 import re
 import time
@@ -73,6 +74,8 @@ class Point(BaseModel):
 
 class MatchRequest(BaseModel):
     points: List[Point] = Field(min_length=2, max_length=MAX_MATCH_POINTS)
+    # Opt-in for Android; legacy browser requests retain their existing policy.
+    road_recovery: bool = False
 
 class SettlementGeometryRequest(BaseModel):
     geometry: dict[str, Any]
@@ -235,6 +238,24 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
     )
 
+def supported_road_recovery_snap(points, tracepoints, maximum_metres=60):
+    if len(tracepoints) != len(points):
+        return False
+    for point, snapped in zip(points, tracepoints):
+        if not snapped or not snapped.get("location") or len(snapped["location"]) != 2:
+            return False
+        lng, lat = snapped["location"]
+        if not all(math.isfinite(value) for value in (lng, lat)):
+            return False
+        lat1, lat2 = math.radians(point.lat), math.radians(lat)
+        dlat, dlng = lat2 - lat1, math.radians(lng - point.lng)
+        h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
+        distance = 6371008.8 * 2 * math.asin(min(1, math.sqrt(h)))
+        if distance > maximum_metres:
+            return False
+    return True
+
+
 async def match_chunk_resiliently(
     client,
     points,
@@ -243,6 +264,8 @@ async def match_chunk_resiliently(
     polite_delay_seconds=0.0,
     radius_attempts=RADIUS_ATTEMPTS,
     retry_no_match=False,
+    road_recovery=False,
+    point_offset=0,
 ):
     """Match a chunk without allowing one sparse portion to discard a journey.
 
@@ -265,7 +288,31 @@ async def match_chunk_resiliently(
         if exc.status_code != 422:
             raise
         if len(points) <= 2:
-            return {"matchings": [], "tracepoints": []}, None, [{"points": len(points), "detail": str(exc.detail)}]
+            if road_recovery and "NoMatch" in str(exc.detail):
+                try:
+                    # Retry only the irreducible failed portion, through Match.
+                    # Walking tolerance and browser requests remain unchanged.
+                    recovered, radius = await osrm_match_chunk(
+                        client, points, chunk_index, base_url, polite_delay_seconds,
+                        [40, 60], True,
+                    )
+                    tracepoints = recovered.get("tracepoints") or []
+                    if supported_road_recovery_snap(points, tracepoints):
+                        recovered["matched_point_indices"] = list(range(len(points)))
+                        recovered["road_recovery"] = [{
+                            "start_point_index": point_offset,
+                            "end_point_index": point_offset + len(points) - 1,
+                            "radius_m": radius,
+                        }]
+                        return recovered, radius, []
+                except HTTPException as recovery_error:
+                    if recovery_error.status_code != 422:
+                        raise
+            return {"matchings": [], "tracepoints": []}, None, [{
+                "points": len(points), "detail": str(exc.detail),
+                "start_point_index": point_offset,
+                "end_point_index": point_offset + len(points) - 1,
+            }]
 
         # Use a one-point overlap so splitting a trace never leaves a lone
         # coordinate.  The overlap is harmless because downstream coverage is
@@ -275,17 +322,18 @@ async def match_chunk_resiliently(
         right = points[midpoint:]
         left_data, left_radius, left_failures = await match_chunk_resiliently(
             client, left, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match,
+            radius_attempts, retry_no_match, road_recovery, point_offset,
         )
         right_data, right_radius, right_failures = await match_chunk_resiliently(
             client, right, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match,
+            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint,
         )
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),
             "tracepoints": (left_data.get("tracepoints") or []) + (right_data.get("tracepoints") or []),
             "matched_point_indices": sorted(set(left_data.get("matched_point_indices") or [])
                 | {midpoint + index for index in right_data.get("matched_point_indices") or []}),
+            "road_recovery": (left_data.get("road_recovery") or []) + (right_data.get("road_recovery") or []),
         }, left_radius or right_radius, left_failures + right_failures
 
 @app.middleware("http")
@@ -321,7 +369,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -496,7 +544,8 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
-    return await match_payload(payload, OSRM_BASE_URL, include_motorways=True)
+    return await match_payload(payload, OSRM_BASE_URL, include_motorways=True,
+                               road_recovery=payload.road_recovery)
 
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
@@ -542,6 +591,7 @@ async def match_payload(
     polite_delay_seconds: float = 0.0,
     radius_attempts=RADIUS_ATTEMPTS,
     retry_no_match: bool = False,
+    road_recovery: bool = False,
 ):
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
@@ -556,6 +606,7 @@ async def match_payload(
     matched_input_indices = set()
     tracepoints_seen = 0
     failed_sections = []
+    recovered_sections = []
 
     try:
         async with httpx.AsyncClient(
@@ -565,6 +616,7 @@ async def match_payload(
             for chunk_index, chunk in enumerate(chunks):
                 if chunk_index and polite_delay_seconds:
                     await asyncio.sleep(polite_delay_seconds)
+                chunk_start = chunk_index * max(1, OSRM_CHUNK_SIZE - OSRM_CHUNK_OVERLAP)
                 data, radius_used, chunk_failures = await match_chunk_resiliently(
                     client,
                     chunk,
@@ -573,8 +625,11 @@ async def match_payload(
                     polite_delay_seconds,
                     radius_attempts,
                     retry_no_match,
+                    road_recovery,
+                    chunk_start,
                 )
                 failed_sections.extend(chunk_failures)
+                recovered_sections.extend(data.get("road_recovery") or [])
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
                     geometry = matching.get("geometry")
@@ -665,6 +720,9 @@ async def match_payload(
         "chunks_used": len(chunks),
         "points_sent_to_matcher": tracepoints_seen,
         "matched_tracepoints": len(matched_input_indices),
+        "matched_point_indices": sorted(matched_input_indices),
+        "unmatched_point_indices": sorted(set(range(len(payload.points))) - matched_input_indices),
+        "road_recovery": recovered_sections,
         "failed_sections": failed_sections,
         "matched_distance_m": round(matched_distance_m, 1),
         "geojson": {"type": "FeatureCollection", "features": features},
