@@ -48,4 +48,11 @@ public class TimelineImportEvidenceTest {
         assertEquals("preserved",stored.getJSONObject("processing_result").getString("marker"));
         assertTrue(stored.has("timeline_match_evidence"));assertEquals(old.getString("journey_id"),stored.getString("journey_id"));
     }
+    @Test public void evidenceComparisonUsesCoordinatesRatherThanJsonFormatting() throws Exception {
+        JSONObject a=new JSONObject("{\"coordinates\":[[0,0],[0.01,0]],\"type\":\"LineString\"}");
+        JSONObject b=new JSONObject("{\"type\":\"LineString\",\"coordinates\":[[0.0,0.0],[0.01,0.0]],\"bbox\":[0,0,0.01,0]}");
+        assertTrue(TimelineRoadPreparation.sameGeometry(a,b));
+        b.getJSONArray("coordinates").getJSONArray(1).put(0,.02);
+        assertFalse(TimelineRoadPreparation.sameGeometry(a,b));
+    }
 }

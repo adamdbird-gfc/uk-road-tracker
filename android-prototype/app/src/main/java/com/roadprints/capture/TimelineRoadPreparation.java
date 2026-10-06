@@ -8,6 +8,20 @@ import java.util.List;
 /** Uses local Timeline evidence without changing the archived source geometry. */
 final class TimelineRoadPreparation {
     static final long GAP_MS = 30 * 60 * 1000L;
+    static boolean sameGeometry(JSONObject a, JSONObject b) {
+        if (a == null || b == null || !a.optString("type").equals(b.optString("type"))) return false;
+        JSONArray x = a.optJSONArray("coordinates"), y = b.optJSONArray("coordinates");
+        if (x == null || y == null || x.length() != y.length()) return false;
+        for (int i = 0; i < x.length(); i++) {
+            JSONArray p = x.optJSONArray(i), q = y.optJSONArray(i);
+            if (p == null || q == null || p.length() != q.length()) return false;
+            for (int j = 0; j < p.length(); j++) {
+                double left = p.optDouble(j), right = q.optDouble(j);
+                if (!Double.isFinite(left) || !Double.isFinite(right) || Math.abs(left - right) > .0000001) return false;
+            }
+        }
+        return true;
+    }
     static final class Prepared {
         final List<JSONArray> sections = new ArrayList<>();
         final JSONObject details = new JSONObject();
@@ -21,12 +35,14 @@ final class TimelineRoadPreparation {
         if (times == null || times.length() != points.length()
                 || !"timeline_import".equals(journey.optJSONObject("source") == null ? ""
                     : journey.optJSONObject("source").optString("type"))) {
+            out.details.put("evidence_status", "missing_or_misaligned_timestamps");
             out.sections.add(points); return out;
         }
         // Rounded minute timestamps can repeat. They must never be interpreted
         // as instantaneous movement or used to reorder equal-time samples.
         for (int i = 0; i < times.length(); i++) {
             if (times.optLong(i, -1) < 0 || (i > 0 && times.optLong(i) < times.optLong(i - 1))) {
+                out.details.put("evidence_status", "invalid_timestamps");
                 out.sections.add(points); return out;
             }
         }
@@ -65,7 +81,7 @@ final class TimelineRoadPreparation {
         if (section.length() < 2)
             throw new IllegalStateException("Not enough Timeline points remain to validate this section. The original route is preserved.");
         out.sections.add(section);
-        out.details.put("version", 1).put("sections", out.sections.size()).put("unrecorded_gaps", gaps)
+        out.details.put("version", 1).put("evidence_status", "available").put("sections", out.sections.size()).put("unrecorded_gaps", gaps)
                 .put("original_geometry_preserved", true);
         return out;
     }
@@ -76,6 +92,46 @@ final class TimelineRoadPreparation {
         double h = Math.pow(Math.sin(dlat / 2), 2)
                 + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dlng / 2), 2);
         return 6371008.8 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
+
+    /** Admit a labelled partial road portion, never an unexplained interior gap. */
+    static boolean endpointPartial(JSONObject result, JSONArray points) throws Exception {
+        int count = points.length();
+        JSONArray indices = result.optJSONArray("matched_point_indices");
+        JSONArray omitted = result.optJSONArray("unmatched_point_indices");
+        JSONArray failures = result.optJSONArray("failed_sections");
+        if (!result.optBoolean("matched_distance_is_deduplicated", false)
+                || result.optInt("input_points", -1) != count || indices == null || omitted == null
+                || indices.length() < 2 || indices.length() < Math.ceil(count * .75)
+                || indices.length() >= count || result.optInt("matched_tracepoints", -1) != indices.length()
+                || indices.length() + omitted.length() != count) return false;
+        boolean[] matched = new boolean[count], unmatched = new boolean[count];
+        for (int i = 0; i < indices.length(); i++) {
+            int index = indices.optInt(i, -1);
+            if (index < 0 || index >= count || matched[index]) return false;
+            matched[index] = true;
+        }
+        for (int i = 0; i < omitted.length(); i++) {
+            int index = omitted.optInt(i, -1);
+            if (index < 0 || index >= count || matched[index] || unmatched[index]) return false;
+            unmatched[index] = true;
+        }
+        int first = 0, last = count - 1;
+        while (!matched[first]) first++;
+        while (!matched[last]) last--;
+        for (int i = first; i <= last; i++) if (!matched[i]) {
+            // Timeline can repeat the initial stationary fix a few metres away.
+            // Only this near-start duplicate may be omitted within the core.
+            if (first != 0 || i != 1 || distance(points.getJSONObject(0), points.getJSONObject(i)) > 15)
+                return false;
+        }
+        if (failures != null) for (int i = 0; i < failures.length(); i++) {
+            JSONObject failure = failures.optJSONObject(i);
+            if (failure == null) return false;
+            int start = failure.optInt("start_point_index", -1), end = failure.optInt("end_point_index", -1);
+            if (start < 0 || end < start || end >= count || !(end <= first || start >= last)) return false;
+        }
+        return true;
     }
 
     /** Retain failure details without duplicating all matcher map geometry. */
@@ -106,6 +162,8 @@ final class TimelineRoadPreparation {
     static JSONObject merge(List<JSONObject> results) throws Exception {
         if (results.size() == 1) return results.get(0);
         JSONObject out = new JSONObject().put("status", "ok");
+        for (JSONObject result : results) if (result.optBoolean("endpoint_partial_match", false))
+            out.put("endpoint_partial_match", true).put("partial_match_reason", "unmatched_end_samples");
         boolean distanceVerified = true;
         for (JSONObject result : results) distanceVerified &= result.optBoolean("matched_distance_is_deduplicated", false);
         out.put("matched_distance_is_deduplicated", distanceVerified);

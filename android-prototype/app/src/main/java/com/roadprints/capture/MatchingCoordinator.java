@@ -290,6 +290,7 @@ public final class MatchingCoordinator {
             }
         }
         JSONObject result;
+        boolean acceptedEndpointPartial = false;
         if (road == null) {
             JSONObject payload = new JSONObject().put("points", requestPoints);
             result = matcher != null ? matcher.match(true, payload)
@@ -311,11 +312,19 @@ public final class MatchingCoordinator {
                     if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
                 }
                 JSONArray failures = sectionResult.optJSONArray("failed_sections");
+                boolean supportedPartial = road.details.optInt("version", 0) == 1
+                        && TimelineRoadPreparation.endpointPartial(sectionResult, submitted);
+                if (supportedPartial) {
+                    sectionResult.put("endpoint_partial_match", true).put("partial_match_reason", "unmatched_end_samples");
+                    acceptedEndpointPartial = true; road.changed = true;
+                    road.details.put("endpoint_partial_match", true);
+                }
                 if (!hasRoute(sectionResult)
-                        || shouldRejectMatchResult(sectionResult.optInt("matched_tracepoints", submitted.length()),
-                            sectionResult.optInt("input_points", submitted.length()), failures == null ? 0 : failures.length())) {
+                        || (!supportedPartial && shouldRejectMatchResult(sectionResult.optInt("matched_tracepoints", submitted.length()),
+                            sectionResult.optInt("input_points", submitted.length()), failures == null ? 0 : failures.length()))) {
                     result = sectionResult;
                     attempt.put("failed_section_index", index);
+                    acceptedEndpointPartial = false;
                     results.clear(); results.add(result); break;
                 }
                 results.add(sectionResult);
@@ -339,13 +348,16 @@ public final class MatchingCoordinator {
         int serverInput = result.optInt("input_points", points.length());
         int serverMatched = result.optInt("matched_tracepoints", serverInput);
         if (serverMatched < serverInput) attempt.put("partial_match", true);
-        if (shouldRejectMatchResult(serverMatched, serverInput, failedCount)) {
+        if (shouldRejectMatchResult(serverMatched, serverInput, failedCount) && !acceptedEndpointPartial) {
             synchronized (JourneyStore.class) {
                 JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
                 if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
             }
+            String reload = !foot && "timeline_import".equals(journey.optJSONObject("source") == null ? ""
+                    : journey.optJSONObject("source").optString("type")) && !journey.has("timeline_match_evidence")
+                    ? " Reload this journey using Utilities → Data management → Load Timeline Data to add its timing evidence." : " Rematch to try again.";
             throw new IllegalStateException("Partial route match: " + serverMatched + " of " + serverInput
-                    + " GPS points matched across " + failedCount + " unmatched section(s). Rematch to try again.");
+                    + " GPS points matched across " + failedCount + " unmatched section(s)." + reload);
         }
         synchronized (JourneyStore.class) {
         JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));

@@ -1232,7 +1232,9 @@ public class JourneyListActivity extends Activity {
             statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"));
-            statusText = partial ? "Partial match · some route sections were not matched"
+            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("endpoint_partial_match", false)
+                    ? "Road portion matched · start/end GPS samples remain unmatched"
+                    : "Partial match · some route sections were not matched")
                     : "✓  Processed · matched route available";
             statusColor = partial ? 0xFFF7C450 : 0xFF8BE0B1;
         } else if ("complete".equals(processingStatus)) {
@@ -1879,3 +1881,4 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
+

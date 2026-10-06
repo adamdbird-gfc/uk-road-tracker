@@ -39,6 +39,7 @@ public class TimelineImportActivity extends Activity {
     private TextView helpBody;
     private boolean serviceOnly;
     private LinearLayout importSummary;
+    private int refreshedEvidence;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
 
     @Override
@@ -188,6 +189,7 @@ public class TimelineImportActivity extends Activity {
     }
 
     private ImportResult importFile(Uri uri, boolean serviceOnly) throws Exception {
+        refreshedEvidence = 0;
         int added = 0;
         int skipped = 0;
         int invalid = 0;
@@ -420,12 +422,13 @@ public class TimelineImportActivity extends Activity {
             // titles or a user-confirmed transport correction on reimport.
             if (journey.has("timeline_match_evidence")
                     && !existing.has("timeline_match_evidence")
-                    && String.valueOf(existing.optJSONObject("route_geometry"))
-                            .equals(String.valueOf(journey.optJSONObject("route_geometry")))) {
+                    && TimelineRoadPreparation.sameGeometry(existing.optJSONObject("route_geometry"),
+                            journey.optJSONObject("route_geometry"))) {
                 try {
                     existing.put("timeline_match_evidence", journey.get("timeline_match_evidence"));
                     existing.put("revision", existing.optInt("revision", 1) + 1);
                     JourneyStore.save(this, existing);
+                    refreshedEvidence++;
                 } catch (Exception ignored) { }
                 return new ImportCounts(0, 1, 0, 1, withIntermediateTrace, sourceRoutePoints);
             }
@@ -434,6 +437,7 @@ public class TimelineImportActivity extends Activity {
                     journey.put("revision", existing.optInt("revision", 1) + 1);
                     if (existing.has("title")) journey.put("title", existing.opt("title"));
                     JourneyStore.save(this, journey);
+                    if (journey.has("timeline_match_evidence")) refreshedEvidence++;
                 } catch (Exception ignored) {
                     // Keep the existing archive if a refresh cannot be committed.
                 }
@@ -977,7 +981,9 @@ public class TimelineImportActivity extends Activity {
     }
 
     private void showImportSummary(ImportResult result) {
-        status.setText(serviceOnly ? "Service import complete" : "Import complete");
+        status.setText(serviceOnly ? "Service import complete" : refreshedEvidence > 0
+                ? "Import complete · route evidence updated for " + count(refreshedEvidence) + " journeys"
+                : "Import complete");
         importSummary.removeAllViews();
         if (serviceOnly) {
             addSummaryRow("Timeline visits saved", result.visitsSaved,
