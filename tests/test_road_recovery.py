@@ -33,7 +33,7 @@ class Client:
 def load_functions():
     path = pathlib.Path(__file__).resolve().parents[1] / "api.py"
     tree = ast.parse(path.read_text())
-    names = {"osrm_match_chunk", "supported_road_recovery_snap", "match_chunk_resiliently", "chunk_points", "match_payload"}
+    names = {"osrm_match_chunk", "matched_road_legs", "supported_road_recovery_snap", "match_chunk_resiliently", "chunk_points", "match_payload"}
     nodes = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name in names]
     namespace = dict(asyncio=asyncio, math=math, HTTPException=HTTPException, RADIUS_ATTEMPTS=[20, 10, 5],
                      OSRM_CHUNK_SIZE=8, OSRM_CHUNK_OVERLAP=2, MatchRequest=object,
@@ -71,6 +71,30 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         points = [types.SimpleNamespace(lat=0, lng=0)]
         self.assertFalse(check(points, [{"location": [0.001, 0]}]))
         self.assertTrue(check(points, [{"location": [0.0004, 0]}]))
+
+    async def test_leg_indices_follow_waypoints_and_keep_chunk_offsets(self):
+        data = {"matchings": [{"legs": [{"distance": 100}, {"distance": 200}]}],
+                "tracepoints": [{"matchings_index": 0, "waypoint_index": 0}, None,
+                                {"matchings_index": 0, "waypoint_index": 1},
+                                {"matchings_index": 0, "waypoint_index": 2}]}
+        legs, complete = self.api["matched_road_legs"](data, 6)
+        self.assertTrue(complete)
+        self.assertEqual([(6, 8, 100), (8, 9, 200)],
+                         [(l["start_point_index"], l["end_point_index"], l["distance_m"]) for l in legs])
+        data["tracepoints"].pop()
+        self.assertFalse(self.api["matched_road_legs"](data, 6)[1])
+
+    async def test_overlapping_chunk_leg_distance_is_counted_once(self):
+        async def request(client, points, radius, base_url):
+            data = {"code": "Ok", "tracepoints": [dict(matchings_index=0, waypoint_index=i, location=[0, 0]) for i in range(len(points))],
+                    "matchings": [{"distance": 100 * (len(points) - 1), "geometry": {"type": "LineString", "coordinates": [[0, 0], [0.001, 0]]},
+                                   "legs": [dict(distance=100, steps=[]) for _ in range(len(points) - 1)]}]}
+            return types.SimpleNamespace(status_code=200), data
+        self.api["request_match"] = request
+        points = [types.SimpleNamespace(lat=0, lng=0) for i in range(10)]
+        result = await self.api["match_payload"](types.SimpleNamespace(points=points), "unused", True, road_recovery=True)
+        self.assertEqual(900, result["matched_distance_m"])
+        self.assertTrue(result["matched_distance_is_deduplicated"])
 
     async def test_default_policy_does_not_widen_radius(self):
         _, _, failures = await self.match([0, 1])

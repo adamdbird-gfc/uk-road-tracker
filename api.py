@@ -238,6 +238,32 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
     )
 
+def matched_road_legs(data, point_offset):
+    """Identify observed legs so overlapping match chunks cannot inflate miles."""
+    legs = []
+    complete = True
+    for matching_index, matching in enumerate(data.get("matchings") or []):
+        route_legs = matching.get("legs") or []
+        waypoints = sorted(
+            (point["waypoint_index"], index)
+            for index, point in enumerate(data.get("tracepoints") or [])
+            if point and point.get("matchings_index") == matching_index
+            and isinstance(point.get("waypoint_index"), int)
+        )
+        if not route_legs or [w for w, _ in waypoints] != list(range(len(route_legs) + 1)):
+            complete = False
+            continue
+        for index, leg in enumerate(route_legs):
+            distance = leg.get("distance")
+            if not isinstance(distance, (int, float)) or not math.isfinite(distance) or distance < 0:
+                complete = False
+                continue
+            legs.append({"start_point_index": point_offset + waypoints[index][1],
+                         "end_point_index": point_offset + waypoints[index + 1][1],
+                         "distance_m": distance})
+    return legs, complete
+
+
 def supported_road_recovery_snap(points, tracepoints, maximum_metres=60):
     if len(tracepoints) != len(points):
         return False
@@ -283,6 +309,8 @@ async def match_chunk_resiliently(
             index for index, point in enumerate(data.get("tracepoints") or [])
             if point is not None and index < len(points)
         ]
+        if road_recovery:
+            data["road_distance_legs"], data["road_distance_complete"] = matched_road_legs(data, point_offset)
         return data, radius, []
     except HTTPException as exc:
         if exc.status_code != 422:
@@ -299,6 +327,7 @@ async def match_chunk_resiliently(
                     tracepoints = recovered.get("tracepoints") or []
                     if supported_road_recovery_snap(points, tracepoints):
                         recovered["matched_point_indices"] = list(range(len(points)))
+                        recovered["road_distance_legs"], recovered["road_distance_complete"] = matched_road_legs(recovered, point_offset)
                         recovered["road_recovery"] = [{
                             "start_point_index": point_offset,
                             "end_point_index": point_offset + len(points) - 1,
@@ -334,6 +363,8 @@ async def match_chunk_resiliently(
             "matched_point_indices": sorted(set(left_data.get("matched_point_indices") or [])
                 | {midpoint + index for index in right_data.get("matched_point_indices") or []}),
             "road_recovery": (left_data.get("road_recovery") or []) + (right_data.get("road_recovery") or []),
+            "road_distance_legs": (left_data.get("road_distance_legs") or []) + (right_data.get("road_distance_legs") or []),
+            "road_distance_complete": left_data.get("road_distance_complete", True) and right_data.get("road_distance_complete", True),
         }, left_radius or right_radius, left_failures + right_failures
 
 @app.middleware("http")
@@ -607,6 +638,8 @@ async def match_payload(
     tracepoints_seen = 0
     failed_sections = []
     recovered_sections = []
+    road_distance_legs = {}
+    road_distance_complete = True
 
     try:
         async with httpx.AsyncClient(
@@ -630,6 +663,11 @@ async def match_payload(
                 )
                 failed_sections.extend(chunk_failures)
                 recovered_sections.extend(data.get("road_recovery") or [])
+                if road_recovery:
+                    road_distance_complete = road_distance_complete and data.get("road_distance_complete", True)
+                    for leg in data.get("road_distance_legs") or []:
+                        key = (leg["start_point_index"], leg["end_point_index"])
+                        road_distance_legs.setdefault(key, leg["distance_m"])
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
                     geometry = matching.get("geometry")
@@ -714,6 +752,15 @@ async def match_payload(
     if not features:
         raise HTTPException(status_code=422, detail="The matcher returned no route geometry.")
 
+    if road_recovery:
+        previous_end = -1
+        for start, end in sorted(road_distance_legs):
+            # A dropped waypoint can produce differently bounded overlapping
+            # legs. Do not claim a verified distance unless overlap is exact.
+            if start < previous_end:
+                road_distance_complete = False
+            previous_end = max(previous_end, end)
+
     return {
         "status": "ok",
         "input_points": len(payload.points),
@@ -724,7 +771,8 @@ async def match_payload(
         "unmatched_point_indices": sorted(set(range(len(payload.points))) - matched_input_indices),
         "road_recovery": recovered_sections,
         "failed_sections": failed_sections,
-        "matched_distance_m": round(matched_distance_m, 1),
+        "matched_distance_m": round(sum(road_distance_legs.values()) if road_recovery and road_distance_complete else matched_distance_m, 1),
+        "matched_distance_is_deduplicated": bool(road_recovery and road_distance_complete and road_distance_legs),
         "geojson": {"type": "FeatureCollection", "features": features},
         "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
         "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
