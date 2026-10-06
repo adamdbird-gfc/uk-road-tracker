@@ -19,7 +19,6 @@ import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -31,11 +30,6 @@ import android.widget.Toast;
 import android.text.InputType;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.SpannableStringBuilder;
-import android.text.TextPaint;
-import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
-import android.text.Spanned;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -77,11 +71,12 @@ public class JourneyListActivity extends Activity {
     private static int savedJourneyCardLimit = INITIAL_JOURNEY_CARDS;
     private static int savedJourneyFilter;
     private static String savedJourneyStatusFilter = "all";
+    private static JourneyDateFilter savedJourneyDateFilter = JourneyDateFilter.all();
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
-            "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
-            "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry", "Unknowns"
+            "All transport", "Driving", "On foot", "Bus",
+            "Train", "Cycling", "Flight", "Ferry", "Unknown"
     };
     private static final String[] FILTER_VALUES = {
             "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
@@ -98,7 +93,10 @@ public class JourneyListActivity extends Activity {
     private int refreshGeneration;
     private int activeFilter = 0;
     private String activeJourneyStatusFilter = "all";
-    private final List<TextView> filterChips = new ArrayList<>();
+    private JourneyDateFilter activeDateFilter = JourneyDateFilter.all();
+    private TextView filterSummary;
+    private static final String[] STATUS_VALUES = {"all", "matched", "ready", "matching", "failed", "no_match"};
+    private static final String[] STATUS_LABELS = {"All statuses", "Matched", "Ready to match", "Matching", "Needs retry", "No matching needed"};
     private Set<String> recapJourneyIds = Collections.emptySet();
     private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
@@ -111,7 +109,13 @@ public class JourneyListActivity extends Activity {
         journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
         activeFilter = savedJourneyFilter;
         activeJourneyStatusFilter = savedJourneyStatusFilter;
-        if (!recapJourneyIds.isEmpty()) { activeFilter = 0; activeJourneyStatusFilter = "all"; }
+        activeDateFilter = savedJourneyDateFilter;
+        if (state != null) {
+            activeFilter = Math.max(0, Math.min(FILTER_VALUES.length - 1, state.getInt("filter_mode", activeFilter)));
+            activeJourneyStatusFilter = state.getString("filter_status", activeJourneyStatusFilter);
+            activeDateFilter = JourneyDateFilter.restore(state.getString("filter_date", "all"), state.getString("filter_from"), state.getString("filter_to"));
+        }
+        if (!recapJourneyIds.isEmpty() && state == null) { activeFilter = 0; activeJourneyStatusFilter = "all"; activeDateFilter = JourneyDateFilter.all(); }
         Window window = getWindow();
         launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
@@ -131,6 +135,7 @@ public class JourneyListActivity extends Activity {
         savedJourneyCardLimit = journeyCardLimit;
         savedJourneyFilter = activeFilter;
         savedJourneyStatusFilter = activeJourneyStatusFilter;
+        savedJourneyDateFilter = activeDateFilter;
         super.onPause();
     }
 
@@ -143,6 +148,11 @@ public class JourneyListActivity extends Activity {
 
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putString("debug_journey_id", pendingDebugJourneyId);
+        state.putInt("filter_mode", activeFilter);
+        state.putString("filter_status", activeJourneyStatusFilter);
+        state.putString("filter_date", activeDateFilter.preset);
+        state.putString("filter_from", activeDateFilter.from == null ? null : activeDateFilter.from.toString());
+        state.putString("filter_to", activeDateFilter.to == null ? null : activeDateFilter.to.toString());
         super.onSaveInstanceState(state);
     }
 
@@ -248,38 +258,25 @@ public class JourneyListActivity extends Activity {
         readinessSummary.setTextSize(12);
         readinessSummary.setTextColor(0xFFB9C5D8);
         readinessSummary.setLineSpacing(0, 1.1f);
-        readinessSummary.setMovementMethod(LinkMovementMethod.getInstance());
-        readinessSummary.setHighlightColor(Color.TRANSPARENT);
-        readinessSummary.setPadding(0, 0, 0, 16);
-
-        HorizontalScrollView filterScroll = new HorizontalScrollView(this);
-        filterScroll.setHorizontalScrollBarEnabled(false);
-        filterScroll.setPadding(0, dp(10), 0, dp(10));
+        readinessSummary.setPadding(0, 0, 0, dp(8));
         LinearLayout filters = new LinearLayout(this);
-        filters.setOrientation(LinearLayout.HORIZONTAL);
-        for (int index = 0; index < FILTER_LABELS.length; index++) {
-            final int selected = index;
-            TextView filter = new TextView(this);
-            filter.setText(FILTER_LABELS[index]);
-            filter.setTextSize(13);
-            filter.setGravity(Gravity.CENTER);
-            filter.setTypeface(null, android.graphics.Typeface.BOLD);
-            filter.setPadding(18, 0, 18, 0);
-            filter.setMinHeight(48);
-            filterChips.add(filter);
-            filter.setOnClickListener(v -> {
-                activeFilter = selected;
-                journeyCardLimit = INITIAL_JOURNEY_CARDS;
-                updateFilterStyles();
-                render();
-            });
-            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 48);
-            chipParams.setMargins(0, 0, 10, 0);
-            filters.addView(filter, chipParams);
-        }
-        filterScroll.addView(filters);
-        updateFilterStyles();
+        filters.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView filterIcon = RoadprintsIcons.image(this, R.drawable.ic_roadprints_filter, 0xFFF7C450, "Filters");
+        filters.addView(filterIcon, new LinearLayout.LayoutParams(dp(24), dp(24)));
+        TextView openFilters = actionButton("FILTER JOURNEYS", 0xFF233B78, Color.WHITE);
+        openFilters.setTag("journey_filters_open");
+        openFilters.setOnClickListener(v -> showJourneyFilters());
+        LinearLayout.LayoutParams openParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+        openParams.setMargins(dp(8), 0, dp(8), 0);
+        filters.addView(openFilters, openParams);
+        TextView reset = actionButton("RESET", 0xFF0B1C50, 0xFFF7C450);
+        reset.setOnClickListener(v -> { activeFilter = 0; activeJourneyStatusFilter = "all"; activeDateFilter = JourneyDateFilter.all(); applyJourneyFilters(); });
+        filters.addView(reset, new LinearLayout.LayoutParams(dp(72), dp(48)));
+        filterSummary = new TextView(this);
+        filterSummary.setTextColor(0xFF67D5CC);
+        filterSummary.setTextSize(13);
+        filterSummary.setPadding(0, dp(8), 0, dp(4));
+        filterSummary.setOnClickListener(v -> showJourneyFilters());
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
@@ -296,7 +293,8 @@ public class JourneyListActivity extends Activity {
         content.addView(headingRow);
         content.addView(intro);
         content.addView(readinessSummary);
-        content.addView(filterScroll);
+        content.addView(filters);
+        content.addView(filterSummary);
         if (!recapJourneyIds.isEmpty()) {
             TextView recapNotice = new TextView(this);
             recapNotice.setText("New recordings · tap to show all journeys");
@@ -411,8 +409,7 @@ public class JourneyListActivity extends Activity {
         if (journeyList == null || journeys == null) return;
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
-        updateReadinessSummary();
-        updateAvailableFilters();
+        updateFilterStyles();
         int visible = 0;
         int rendered = 0;
         for (JSONObject journey : journeys) {
@@ -425,6 +422,7 @@ public class JourneyListActivity extends Activity {
         }
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
         count.setVisibility(View.VISIBLE);
+        readinessSummary.setText(String.format(java.util.Locale.UK, "Showing: %,d journeys · newest first", visible));
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
@@ -433,7 +431,7 @@ public class JourneyListActivity extends Activity {
             empty.setPadding(0, 28, 0, 28);
             journeyList.addView(empty);
         } else if (visible > rendered) {
-            Button more = styledModalButton("SHOW MORE JOURNEYS · " + (visible - rendered)
+            Button more = styledModalButton("SHOW MORE JOURNEYS · " + String.format(java.util.Locale.UK, "%,d", visible - rendered)
                     + " REMAINING", 0xFF233B78, Color.WHITE);
             more.setOnClickListener(v -> {
                 journeyCardLimit += ADDITIONAL_JOURNEY_CARDS;
@@ -562,15 +560,19 @@ public class JourneyListActivity extends Activity {
     private boolean matchesActiveFilter(JSONObject journey) {
         if (!recapJourneyIds.isEmpty() && !recapJourneyIds.contains(journey.optString("journey_id"))) return false;
         if (!matchesJourneyStatusFilter(journey)) return false;
-        return matchesFilter(journey, activeFilter);
+        return matchesFilter(journey, activeFilter) && activeDateFilter.matches(journey, java.time.LocalDate.now(), ZoneId.systemDefault());
     }
 
     private boolean matchesJourneyStatusFilter(JSONObject journey) {
-        String filter = activeJourneyStatusFilter;
+        return matchesJourneyStatusFilter(journey, activeJourneyStatusFilter);
+    }
+
+    private boolean matchesJourneyStatusFilter(JSONObject journey, String filter) {
         if ("all".equals(filter)) return true;
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
         String status = journey.optString("processing_status", "pending");
         if ("no_match".equals(filter)) return !isRoadMode(mode) && !isFootMode(mode);
+        if (!isRoadMode(mode) && !isFootMode(mode)) return false;
         if ("matched".equals(filter)) return "complete".equals(status) && hasStoredMatch(journey);
         if ("failed".equals(filter)) return "failed".equals(status)
                 || ("complete".equals(status) && !hasStoredMatch(journey));
@@ -587,26 +589,11 @@ public class JourneyListActivity extends Activity {
                 || "other_travel".equals(mode);
     }
 
-    private void updateAvailableFilters() {
-        for (int filterIndex = 0; filterIndex < filterChips.size(); filterIndex++) {
-            boolean available = filterIndex == 0;
-            for (JSONObject journey : journeys) {
-                if (shouldShowJourney(journey) && matchesJourneyStatusFilter(journey)
-                        && matchesFilter(journey, filterIndex)) {
-                    available = true;
-                    break;
-                }
-            }
-            filterChips.get(filterIndex).setVisibility(available ? View.VISIBLE : View.GONE);
-            if (filterIndex == activeFilter && !available) activeFilter = 0;
-        }
-        updateFilterStyles();
-    }
-
     private boolean matchesFilter(JSONObject journey, int filterIndex) {
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
         if (filterIndex == 0) return true;
         if (filterIndex == FILTER_VALUES.length - 1) return isUnknownMode(mode);
+        if (filterIndex == 2) return isFootMode(mode);
         return FILTER_VALUES[filterIndex].equals(mode);
     }
 
@@ -854,10 +841,8 @@ public class JourneyListActivity extends Activity {
         cardContent.setGravity(Gravity.TOP);
         cardContent.addView(details);
 
-        TextView modeIcon = new TextView(this);
-        modeIcon.setText(transportIcon(mode));
-        modeIcon.setTextSize(26);
-        modeIcon.setGravity(Gravity.CENTER);
+        ImageView modeIcon = RoadprintsIcons.image(this, RoadprintsIcons.transport(mode), 0xFF67D5CC, displayMode(mode));
+        modeIcon.setPadding(dp(8), dp(8), dp(8), dp(8));
         modeIcon.setContentDescription(displayMode(mode));
         modeIcon.setBackground(roundRect(0xFF304B88, 0xFF8EA7D4, dp(12)));
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(44), dp(44));
@@ -1012,15 +997,119 @@ public class JourneyListActivity extends Activity {
     }
 
     private void updateFilterStyles() {
-        for (int index = 0; index < filterChips.size(); index++) {
-            boolean selected = index == activeFilter;
-            TextView chip = filterChips.get(index);
-            chip.setTextColor(selected ? 0xFF0B1C50 : Color.WHITE);
-            chip.setBackground(roundRect(
-                    selected ? 0xFFF7C450 : 0x1AFFFFFF,
-                    selected ? 0xFFF7C450 : 0xFF46649E,
-                    28));
-        }
+        if (filterSummary != null) filterSummary.setText(FILTER_LABELS[activeFilter] + " · " + statusLabel(activeJourneyStatusFilter) + " · " + activeDateFilter.label());
+    }
+
+    private String statusLabel(String value) {
+        for (int i = 0; i < STATUS_VALUES.length; i++) if (STATUS_VALUES[i].equals(value)) return STATUS_LABELS[i];
+        return STATUS_LABELS[0];
+    }
+
+    private void applyJourneyFilters() {
+        journeyCardLimit = INITIAL_JOURNEY_CARDS;
+        render();
+        if (journeyScroll != null) journeyScroll.post(() -> journeyScroll.scrollTo(0, 0));
+    }
+
+    private void showJourneyFilters() {
+        final int[] mode = {activeFilter};
+        final String[] status = {activeJourneyStatusFilter};
+        final JourneyDateFilter[] date = {activeDateFilter};
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(18), dp(18), dp(18), dp(18));
+        panel.setBackgroundColor(0xFF0B1C50);
+        TextView title = new TextView(this);
+        title.setText("Filter journeys"); title.setTextSize(24); title.setTextColor(Color.WHITE);
+        panel.addView(title);
+        TextView hint = new TextView(this);
+        hint.setText("Combine transport, status and journey start date."); hint.setTextColor(0xFFB9C5D8);
+        hint.setPadding(0, dp(8), 0, dp(12)); panel.addView(hint);
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout choices = new LinearLayout(this); choices.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(choices);
+        panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        Button apply = styledModalButton("SHOW JOURNEYS", 0xFFF7C450, 0xFF0B1C50);
+        apply.setTag("journey_filter_apply");
+        TextView error = new TextView(this); error.setTextColor(0xFFFF9393); panel.addView(error);
+        Runnable update = () -> {
+            int total = 0;
+            if (journeys != null) for (JSONObject journey : journeys) {
+                if (shouldShowJourney(journey) && (recapJourneyIds.isEmpty() || recapJourneyIds.contains(journey.optString("journey_id")))
+                        && matchesFilter(journey, mode[0]) && matchesJourneyStatusFilter(journey, status[0])
+                        && date[0].matches(journey, java.time.LocalDate.now(), ZoneId.systemDefault())) total++;
+            }
+            apply.setText(String.format(java.util.Locale.UK, "SHOW %,d JOURNEYS", total));
+            apply.setEnabled(date[0].valid());
+            error.setText(date[0].valid() ? "" : "Choose an end date on or after the start date.");
+        };
+        addFilterHeading(choices, "Transport");
+        Spinner transport = new Spinner(this);
+        transport.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, FILTER_LABELS) {
+            @Override public View getView(int position, View convert, android.view.ViewGroup parent) {
+                LinearLayout row = new LinearLayout(JourneyListActivity.this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(12), 0, dp(12), 0);
+                row.addView(RoadprintsIcons.image(JourneyListActivity.this, RoadprintsIcons.transport(FILTER_VALUES[position]), 0xFF0B1C50, FILTER_LABELS[position]), new LinearLayout.LayoutParams(dp(24), dp(24)));
+                TextView label = new TextView(JourneyListActivity.this); label.setText(FILTER_LABELS[position]); label.setTextColor(0xFF0B1C50); label.setPadding(dp(12), 0, 0, 0); row.addView(label); return row;
+            }
+        });
+        transport.setBackgroundColor(0xFFD3DCED); transport.setSelection(mode[0]);
+        choices.addView(transport, new LinearLayout.LayoutParams(-1, dp(48)));
+        transport.setOnItemSelectedListener(selection(position -> { mode[0] = position; update.run(); }));
+        addFilterHeading(choices, "Matching status");
+        Spinner statuses = filterSpinner(choices, STATUS_LABELS);
+        for (int i = 0; i < STATUS_VALUES.length; i++) if (STATUS_VALUES[i].equals(status[0])) statuses.setSelection(i);
+        statuses.setOnItemSelectedListener(selection(position -> { status[0] = STATUS_VALUES[position]; update.run(); }));
+        addFilterHeading(choices, "Date");
+        Spinner dates = filterSpinner(choices, JourneyDateFilter.LABELS);
+        for (int i = 0; i < JourneyDateFilter.VALUES.length; i++) if (JourneyDateFilter.VALUES[i].equals(date[0].preset)) dates.setSelection(i);
+        LinearLayout range = new LinearLayout(this); range.setOrientation(LinearLayout.VERTICAL); choices.addView(range);
+        Button from = styledModalButton("FROM", 0xFF233B78, Color.WHITE);
+        Button to = styledModalButton("TO", 0xFF233B78, Color.WHITE);
+        range.addView(from); range.addView(to);
+        Runnable rangeLabels = () -> {
+            range.setVisibility("custom".equals(date[0].preset) ? View.VISIBLE : View.GONE);
+            from.setText("From: " + (date[0].from == null ? "Choose date" : date[0].from.format(DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.UK))));
+            to.setText("To: " + (date[0].to == null ? "Choose date" : date[0].to.format(DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.UK))));
+        };
+        from.setOnClickListener(v -> pickFilterDate(date[0].from, chosen -> { date[0] = new JourneyDateFilter("custom", chosen, date[0].to); rangeLabels.run(); update.run(); }));
+        to.setOnClickListener(v -> pickFilterDate(date[0].to, chosen -> { date[0] = new JourneyDateFilter("custom", date[0].from, chosen); rangeLabels.run(); update.run(); }));
+        dates.setOnItemSelectedListener(selection(position -> {
+            date[0] = new JourneyDateFilter(JourneyDateFilter.VALUES[position], date[0].from, date[0].to);
+            if ("custom".equals(date[0].preset) && date[0].from == null) date[0] = new JourneyDateFilter("custom", java.time.LocalDate.now(), java.time.LocalDate.now());
+            rangeLabels.run(); update.run();
+        }));
+        Button reset = styledModalButton("RESET FILTERS", 0xFF233B78, Color.WHITE);
+        reset.setOnClickListener(v -> { mode[0] = 0; status[0] = "all"; date[0] = JourneyDateFilter.all(); transport.setSelection(0); statuses.setSelection(0); dates.setSelection(0); rangeLabels.run(); update.run(); });
+        panel.addView(reset); panel.addView(apply);
+        Button close = styledModalButton("CANCEL", 0xFF0B1C50, 0xFFF7C450); panel.addView(close);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(panel).create();
+        apply.setOnClickListener(v -> { if (!date[0].valid()) return; activeFilter = mode[0]; activeJourneyStatusFilter = status[0]; activeDateFilter = date[0]; applyJourneyFilters(); dialog.dismiss(); });
+        close.setOnClickListener(v -> dialog.dismiss());
+        rangeLabels.run(); update.run(); dialog.show();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels * .94), (int)(getResources().getDisplayMetrics().heightPixels * .82));
+    }
+
+    private void addFilterHeading(LinearLayout parent, String label) {
+        TextView heading = new TextView(this); heading.setText(label); heading.setTextColor(0xFF67D5CC); heading.setTextSize(16);
+        heading.setPadding(0, dp(16), 0, dp(8)); parent.addView(heading);
+    }
+
+    private Spinner filterSpinner(LinearLayout parent, String[] labels) {
+        Spinner spinner = new Spinner(this); spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, labels));
+        spinner.setBackgroundColor(0xFFD3DCED); parent.addView(spinner, new LinearLayout.LayoutParams(-1, dp(48))); return spinner;
+    }
+
+    private AdapterView.OnItemSelectedListener selection(java.util.function.IntConsumer listener) {
+        return new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) { listener.accept(position); }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        };
+    }
+
+    private void pickFilterDate(java.time.LocalDate current, java.util.function.Consumer<java.time.LocalDate> selected) {
+        java.time.LocalDate initial = current == null ? java.time.LocalDate.now() : current;
+        new android.app.DatePickerDialog(this, (picker, year, month, day) -> selected.accept(java.time.LocalDate.of(year, month + 1, day)), initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
     }
 
     private GradientDrawable roundRect(int fill, int stroke, int radius) {
@@ -1785,73 +1874,6 @@ public class JourneyListActivity extends Activity {
         return new JSONObject(body.toString());
     }
 
-    private void updateReadinessSummary() {
-        if (readinessSummary == null) return;
-        int roadReady = 0;
-        int footReady = 0;
-        int noMatch = 0;
-        int matched = 0;
-        int failed = 0;
-        int matching = 0;
-        for (JSONObject journey : journeys) {
-            String status = journey.optString("processing_status", "pending");
-            String mode = journey.optString("mode", "unknown");
-            if ((isFootMode(mode) || isRoadMode(mode))
-                    && !hasEnoughMatchingEvidence(journey)) {
-                continue;
-            }
-            if (!isFootMode(mode) && !isRoadMode(mode)) {
-                noMatch++;
-            } else if ("complete".equals(status) && hasStoredMatch(journey)) {
-                matched++;
-            } else if ("failed".equals(status)
-                    || ("complete".equals(status) && !hasStoredMatch(journey))) {
-                failed++;
-            } else if ("processing".equals(status)) {
-                matching++;
-            } else if (isFootMode(mode)) {
-                footReady++;
-            } else {
-                roadReady++;
-            }
-        }
-
-        SpannableStringBuilder readyLine = new SpannableStringBuilder();
-        appendStatusLink(readyLine, "Ready: " + roadReady + " road", "ready");
-        appendStatusLink(readyLine, footReady + " on foot", "ready");
-        appendStatusLink(readyLine, noMatch + " no matching", "no_match");
-        SpannableStringBuilder resultLine = new SpannableStringBuilder();
-        appendStatusLink(resultLine, "Matched: " + matched, "matched");
-        appendStatusLink(resultLine, "Unmatched / failed: " + failed, "failed");
-        if (matching > 0) appendStatusLink(resultLine, "Matching: " + matching, "matching");
-        SpannableStringBuilder summary = new SpannableStringBuilder();
-        summary.append(readyLine).append("\n").append(resultLine);
-        readinessSummary.setText(summary);
-    }
-
-    private void appendStatusLink(SpannableStringBuilder line, String label, String filter) {
-        if (line.length() > 0) line.append(" • ");
-        int start = line.length();
-        line.append(label);
-        line.setSpan(new ClickableSpan() {
-            @Override
-            public void onClick(View widget) {
-                activeJourneyStatusFilter = activeJourneyStatusFilter.equals(filter) ? "all" : filter;
-                savedJourneyStatusFilter = activeJourneyStatusFilter;
-                journeyCardLimit = INITIAL_JOURNEY_CARDS;
-                render();
-                if (journeyScroll != null) journeyScroll.post(() -> journeyScroll.scrollTo(0, 0));
-            }
-
-            @Override
-            public void updateDrawState(TextPaint drawState) {
-                drawState.setColor(activeJourneyStatusFilter.equals(filter) ? 0xFFF7C450 : 0xFF67D5CC);
-                drawState.setUnderlineText(true);
-                drawState.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            }
-        }, start, line.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-    }
-
     static boolean isPointToPointMode(String mode) {
         return "train".equals(mode) || "plane".equals(mode);
     }
@@ -1942,27 +1964,14 @@ public class JourneyListActivity extends Activity {
         startActivity(Intent.createChooser(share, "Share journey data"));
     }
 
-    private String transportIcon(String mode) {
-        switch (mode) {
-            case "driving": return "🚗";
-            case "walking":
-            case "running": return "👟";
-            case "bus": return "🚌";
-            case "train": return "🚆";
-            case "cycling": return "🚲";
-            case "plane": return "✈️";
-            case "ferry": return "⛴";
-            default: return "📍";
-        }
-    }
 
     private String displayMode(String value) {
         if ("driving".equals(value)) return "Driving";
-        if ("walking".equals(value)) return "On foot";
+        if (isFootMode(value)) return "On foot";
         if ("cycling".equals(value)) return "Cycling";
         if ("bus".equals(value)) return "Bus";
         if ("train".equals(value)) return "Train";
-        if ("plane".equals(value)) return "Plane";
+        if ("plane".equals(value)) return "Flight";
         if ("ferry".equals(value)) return "Ferry";
         return "Unknown";
     }

@@ -59,7 +59,7 @@ public class AchievementsActivity extends Activity {
     private boolean stationBackfillRequested;
     private int celebrationIndex;
     private Dialog celebrationDialog;
-    private TextView celebrationIcon;
+    private android.widget.ImageView celebrationIcon;
     private TextView celebrationTitle;
     private TextView celebrationDescription;
     private TextView celebrationDetail;
@@ -293,9 +293,8 @@ public class AchievementsActivity extends Activity {
         LinearLayout row=new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        TextView badge=text(progress.unlocked?progress.definition.icon:"🔒",25,
-                progress.unlocked?GOLD:MUTED,true);
-        badge.setGravity(Gravity.CENTER);
+        android.widget.ImageView badge=RoadprintsIcons.image(this, RoadprintsIcons.achievement(progress.definition.id), progress.unlocked?GOLD:MUTED, progress.definition.title + (progress.unlocked?", unlocked":", locked"));
+        badge.setPadding(dp(10),dp(10),dp(10),dp(10));
         badge.setBackground(roundRect(progress.unlocked?0xFF5B4C2F:0xFF344A7B,0x00446699,dp(28)));
         row.addView(badge,new LinearLayout.LayoutParams(dp(48),dp(48)));
 
@@ -403,8 +402,8 @@ public class AchievementsActivity extends Activity {
         card.setClickable(true);
         card.setOnClickListener(view -> { });
 
-        celebrationIcon=text("★",32,0xFF735300,true);
-        celebrationIcon.setGravity(Gravity.CENTER);
+        celebrationIcon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_star,0xFF0B1C50,"Achievement unlocked");
+        celebrationIcon.setPadding(dp(16),dp(16),dp(16),dp(16));
         celebrationIcon.setBackground(roundRect(0xFFF2B544,0xFFF2B544,dp(40)));
         card.addView(celebrationIcon,new LinearLayout.LayoutParams(dp(68),dp(68)));
 
@@ -482,7 +481,8 @@ public class AchievementsActivity extends Activity {
     private void renderCelebration() {
         if (celebrationQueue.isEmpty()) return;
         AchievementStore.Definition definition=celebrationQueue.get(celebrationIndex);
-        celebrationIcon.setText(definition.icon==null||definition.icon.isEmpty()?"★":definition.icon);
+        celebrationIcon.setImageResource(RoadprintsIcons.achievement(definition.id));
+        celebrationIcon.setContentDescription(definition.title);
         celebrationTitle.setText(definition.title);
         celebrationDescription.setText(definition.description==null?"":definition.description);
         celebrationDetail.setText(definition.detail==null?"":definition.detail);
@@ -623,3 +623,4 @@ public class AchievementsActivity extends Activity {
         return Math.round(value*getResources().getDisplayMetrics().density);
     }
 }
+
