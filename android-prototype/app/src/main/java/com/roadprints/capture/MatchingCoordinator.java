@@ -411,6 +411,9 @@ public final class MatchingCoordinator {
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");
         JourneyStore.save(app, stored);
+        JSONObject replaySource=stored.optJSONObject("source");
+        if(replaySource!=null&&"android_activity_capture".equals(replaySource.optString("type")))
+            DiscoveryReplayCache.request(app,java.util.Collections.singleton(stored.optString("journey_id")),null);
         }
     }
 
@@ -525,3 +528,4 @@ public final class MatchingCoordinator {
     private boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
     private String safeMessage(Exception error) { return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(); }
 }
+

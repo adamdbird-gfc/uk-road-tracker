@@ -106,15 +106,49 @@ final class DiscoveryReplay {
         return output;
     }
 
+    static DiscoveryReplay fromJourney(JSONObject journey) {
+        DiscoveryReplay output=new DiscoveryReplay();
+        if(journey!=null&&"complete".equals(journey.optString("processing_status")))
+            for(JSONArray route:JourneyListActivity.matchedRouteSegmentsForDisplay(journey))
+                output.add(output.routes,route,0xFF101820);
+        return output;
+    }
+
     static DiscoveryReplay loadRoutes(Context context, Set<String> ids) throws Exception {
         DiscoveryReplay output = new DiscoveryReplay();
         for (String id : ids) {
-            JSONObject journey = JourneyStore.get(context, id);
-            if (journey == null || !"complete".equals(journey.optString("processing_status"))) continue;
-            for (JSONArray route : JourneyListActivity.matchedRouteSegmentsForDisplay(journey))
-                output.add(output.routes, route, 0xFF101820);
+            DiscoveryReplay selected=fromJourney(JourneyStore.get(context,id));
+            for(Section section:selected.routes)output.add(output.routes,section.points,section.color);
         }
         return output;
+    }
+
+    JSONObject toJson() throws Exception {
+        JSONObject value=new JSONObject().put("format",1).put("simplified",simplified);
+        for(String key:new String[]{"routes","discoveries"}) {
+            JSONArray sections=new JSONArray();
+            for(Section section:"routes".equals(key)?routes:discoveries)
+                sections.put(new JSONObject().put("points",section.points).put("color",section.color));
+            value.put(key,sections);
+        }
+        JSONArray names=new JSONArray();for(String label:labels){if(names.length()>=100)break;names.put(label);}
+        return value.put("labels",names);
+    }
+
+    static DiscoveryReplay fromJson(JSONObject value) {
+        if(value==null||value.optInt("format")!=1||value.optJSONArray("routes")==null
+                ||value.optJSONArray("discoveries")==null||value.optJSONArray("labels")==null)return null;
+        DiscoveryReplay replay=new DiscoveryReplay();
+        for(String key:new String[]{"routes","discoveries"}) {
+            JSONArray sections=value.optJSONArray(key);
+            for(int i=0;i<Math.min(600,sections.length());i++) {
+                JSONObject section=sections.optJSONObject(i);if(section==null)return null;
+                replay.add("routes".equals(key)?replay.routes:replay.discoveries,section.optJSONArray("points"),section.optInt("color",0xFF101820));
+            }
+        }
+        JSONArray labels=value.optJSONArray("labels");
+        for(int i=0;i<Math.min(100,labels.length());i++)replay.labels.add(labels.optString(i));
+        replay.simplified|=value.optBoolean("simplified");return replay;
     }
 
     private static boolean older(JSONObject journey, long cutoff) {

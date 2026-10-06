@@ -477,6 +477,8 @@ public final class JourneyStore {
             throw new IllegalStateException("Could not clear legacy journey data");
         ServiceStationStore.clearOnDeleteAll(context);
         ReturnRecapStore.clear(context);
+        DiscoveryReplayCache.clear(context);
+        JourneyReplayActivity.clearSeed();
         return deleted;
     }
 
