@@ -413,8 +413,22 @@ public class TimelineImportActivity extends Activity {
         int sourceRoutePoints = quality == null
                 ? 0 : quality.optInt("source_route_points", 0);
         int withIntermediateTrace = gpsPoints > 2 ? 1 : 0;
+        synchronized (JourneyStore.class) {
         JSONObject existing = JourneyStore.get(this, id);
         if (existing != null) {
+            // Attach new local evidence without replacing matches, edited routes,
+            // titles or a user-confirmed transport correction on reimport.
+            if (journey.has("timeline_match_evidence")
+                    && !existing.has("timeline_match_evidence")
+                    && String.valueOf(existing.optJSONObject("route_geometry"))
+                            .equals(String.valueOf(journey.optJSONObject("route_geometry")))) {
+                try {
+                    existing.put("timeline_match_evidence", journey.get("timeline_match_evidence"));
+                    existing.put("revision", existing.optInt("revision", 1) + 1);
+                    JourneyStore.save(this, existing);
+                } catch (Exception ignored) { }
+                return new ImportCounts(0, 1, 0, 1, withIntermediateTrace, sourceRoutePoints);
+            }
             if (shouldRefreshImportedJourney(existing, journey)) {
                 try {
                     journey.put("revision", existing.optInt("revision", 1) + 1);
@@ -428,6 +442,7 @@ public class TimelineImportActivity extends Activity {
         }
         JourneyStore.save(this, journey);
         return new ImportCounts(1, 0, 0, 1, withIntermediateTrace, sourceRoutePoints);
+        }
     }
 
     private boolean shouldRefreshImportedJourney(
@@ -436,7 +451,9 @@ public class TimelineImportActivity extends Activity {
         if (source == null
                 || !"timeline_import".equals(source.optString("type", ""))) return false;
         if (!existing.optString("mode", "unknown")
-                .equals(incoming.optString("mode", "unknown"))) return true;
+                .equals(incoming.optString("mode", "unknown"))) return false;
+        if (existing.has("processing_result")
+                || "complete".equals(existing.optString("processing_status"))) return false;
 
         JSONObject oldQuality = existing.optJSONObject("capture_quality");
         JSONObject newQuality = incoming.optJSONObject("capture_quality");
@@ -570,9 +587,11 @@ public class TimelineImportActivity extends Activity {
             if (started.isEmpty() || ended.isEmpty()) return null;
 
             List<double[]> points = new ArrayList<>();
+            JSONArray pointTimes = new JSONArray();
             addLocationPoint(points, semantic
                     ? activity.optJSONObject("start")
                     : activity.optJSONObject("startLocation"));
+            if (!points.isEmpty()) pointTimes.put(parseTimelineTime(started));
 
             int sourceRoutePoints = 0;
             if (semantic && timelinePathPoints != null) {
@@ -584,7 +603,9 @@ public class TimelineImportActivity extends Activity {
                     if (pathPoint.timeMs > endMs) break;
                     if (pathPoint.timeMs >= startMs) {
                         sourceRoutePoints++;
-                        appendUniquePoint(points, pathPoint.coordinates);
+                        if (appendUniquePoint(points, pathPoint.coordinates)) pointTimes.put(pathPoint.timeMs);
+                        else if (pointTimes.length() > 0)
+                            pointTimes.put(pointTimes.length() - 1, pathPoint.timeMs);
                     }
                 }
             } else if (!semantic) {
@@ -601,9 +622,12 @@ public class TimelineImportActivity extends Activity {
                 }
             }
 
+            int beforeEnd = points.size();
             addLocationPoint(points, semantic
                     ? activity.optJSONObject("end")
                     : activity.optJSONObject("endLocation"));
+            boolean endAppended = points.size() > beforeEnd;
+            if (endAppended) pointTimes.put(parseTimelineTime(ended));
 
             if (points.isEmpty()) return null;
 
@@ -639,7 +663,7 @@ public class TimelineImportActivity extends Activity {
                     .put("road_matching", eligibleForRoadMatching ? "pending" : "not_required")
                     .put("foot_matching", footMode(mode) ? "pending" : "not_required");
 
-            return new JSONObject()
+            JSONObject journey = new JSONObject()
                     .put("journey_id", id)
                     .put("revision", 1)
                     .put("source", new JSONObject()
@@ -661,6 +685,23 @@ public class TimelineImportActivity extends Activity {
                             .put("distance_meters", distance)
                             .put("status", points.size() >= 2
                                     ? "usable" : "insufficient_gps_data"));
+            if (semantic && roadMode(mode) && pointTimes.length() == points.size()) {
+                JSONObject evidence = new JSONObject().put("version", 1)
+                        .put("point_times_ms", pointTimes).put("end_appended", endAppended)
+                        .put("source_distance_meters", activity.optDouble("distanceMeters", 0));
+                if (activity.has("topCandidate")) evidence.put("source_transport", activity.get("topCandidate"));
+                if (activity.has("probability")) evidence.put("activity_probability", activity.get("probability"));
+                JSONObject parking = activity.optJSONObject("parking");
+                List<double[]> parkingPoints = new ArrayList<>();
+                if (parking != null) addLocationPoint(parkingPoints, parking.optJSONObject("location"));
+                if (!parkingPoints.isEmpty()) {
+                    double[] point = parkingPoints.get(0);
+                    evidence.put("parking_coordinates", new JSONArray().put(point[1]).put(point[0]))
+                            .put("parking_time_ms", parseTimelineTime(parking.optString("startTime", "")));
+                }
+                journey.put("timeline_match_evidence", evidence);
+            }
+            return journey;
         } catch (Exception error) {
             return null;
         }
