@@ -1247,7 +1247,10 @@ public class JourneyListActivity extends Activity {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
         } else if ("failed".equals(processingStatus)) {
-            statusText = "Matching failed · retry from this journey";
+            JSONObject recordingQuality = journey.optJSONObject("recording_quality");
+            statusText = recordingQuality != null && !recordingQuality.optBoolean("resolved", true)
+                    ? "Recording quality issue · GPS gap or unreliable fixes. Original recording preserved."
+                    : "Matching failed · retry from this journey";
             statusColor = 0xFFF7C450;
         } else {
             statusText = "Ready to match from this journey";

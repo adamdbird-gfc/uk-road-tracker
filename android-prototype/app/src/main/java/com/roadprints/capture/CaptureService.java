@@ -167,7 +167,7 @@ public class CaptureService extends Service {
             boolean trusted = CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
                     footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
             // Retain rejected fixes as evidence, but do not credit their jumps
-            // as walking or let them reset the stop timer.
+            // as travelled distance or let them reset the stop timer.
             points.add(observation);
             if (trusted) {
                 if (lastPoint != null) distanceMetres += lastPoint.distanceTo(observation);
