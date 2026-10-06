@@ -96,6 +96,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         if (!isTrackingSettingsScreen()) {
+            if (CaptureService.isArmed(this)) repairTrackingSubscription();
+            else if (CaptureService.isActive(this)) resumeActiveCapture();
             startActivity(new Intent(this, MapActivity.class));
             finish();
             return;

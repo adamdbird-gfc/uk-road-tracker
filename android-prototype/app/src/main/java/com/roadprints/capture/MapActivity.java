@@ -311,7 +311,6 @@ public class MapActivity extends Activity {
                     : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
                             mapRoutes.matchedJourneys,
                             mapRoutes.simplified ? " · map simplified for performance." : "."));
-            stopReplay(false);
             double[] camera = mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
