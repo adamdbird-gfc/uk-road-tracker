@@ -307,6 +307,8 @@ public class ProgressActivity extends Activity {
 
         stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
         stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
+        uniqueRoadEdges.clear();
+        uniqueFootEdges.clear();
         updateLoadingMessage(generation, "Calculating motorway coverage…");
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();
