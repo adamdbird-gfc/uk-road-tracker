@@ -375,7 +375,10 @@ public final class JourneyStore {
                 JSONArray array = new JSONArray();reader.beginArray();
                 while(reader.hasNext()) array.put(readEvidenceValue(reader));
                 reader.endArray();return array;
-            case NUMBER: return reader.nextDouble();
+            case NUMBER:
+                String number=reader.nextString();
+                try { return Long.parseLong(number); }
+                catch(NumberFormatException decimal) { return Double.parseDouble(number); }
             case BOOLEAN: return reader.nextBoolean();
             case NULL: reader.nextNull();return JSONObject.NULL;
             default: return reader.nextString();

@@ -127,23 +127,7 @@ public class RoutePreviewView extends View {
         stopDiscoveryReplay();
         discoveryReplay = replay;
         discoveryComplete = complete;
-        double minX = 1, maxX = 0, minY = 1, maxY = 0;
-        for (DiscoveryReplay.Section section : replay.routes) {
-            for (int i = 0; i < section.points.length(); i++) {
-                JSONArray point = section.points.optJSONArray(i);
-                if (point == null) continue;
-                double x = longitudeToUnitX(point.optDouble(0));
-                double y = latitudeToUnitY(point.optDouble(1));
-                minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-                minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-            }
-        }
-        if (maxX >= minX && maxY >= minY) {
-            double zoomX = log2(Math.max(1, getWidth() - dp(100)) / (Math.max(.000001, maxX - minX) * mapTileSize()));
-            double zoomY = log2(Math.max(1, getHeight() - dp(260)) / (Math.max(.000001, maxY - minY) * mapTileSize()));
-            restoreCameraState((minX + maxX) * 180 - 180, unitYToLatitude((minY + maxY) / 2),
-                    Math.min(zoomX, zoomY));
-        }
+        fitDiscoveryReplay();
         if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
             discoveryFraction = 1;
             invalidate(); completeDiscoveryReplay(); return;
@@ -162,6 +146,28 @@ public class RoutePreviewView extends View {
             }
         });
         discoveryAnimator.start();
+    }
+
+    private void fitDiscoveryReplay() {
+        DiscoveryReplay replay = discoveryReplay;
+        if (replay == null || getWidth() <= 0 || getHeight() <= 0) return;
+        double minX = 1, maxX = 0, minY = 1, maxY = 0;
+        for (DiscoveryReplay.Section section : replay.routes) {
+            for (int i = 0; i < section.points.length(); i++) {
+                JSONArray point = section.points.optJSONArray(i);
+                if (point == null) continue;
+                double x = longitudeToUnitX(point.optDouble(0));
+                double y = latitudeToUnitY(point.optDouble(1));
+                minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+            }
+        }
+        if (maxX >= minX && maxY >= minY) {
+            double zoomX = log2(Math.max(1, getWidth() - dp(100)) / (Math.max(.000001, maxX - minX) * mapTileSize()));
+            double zoomY = log2(Math.max(1, getHeight() - dp(260)) / (Math.max(.000001, maxY - minY) * mapTileSize()));
+            restoreCameraState((minX + maxX) * 180 - 180, unitYToLatitude((minY + maxY) / 2),
+                    Math.min(zoomX, zoomY));
+        }
     }
 
     public void stopDiscoveryReplay() {
@@ -561,6 +567,7 @@ public class RoutePreviewView extends View {
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
         fitRouteIfReady();
+        if (discoveryReplay != null) fitDiscoveryReplay();
         invalidate();
     }
 
@@ -570,7 +577,7 @@ public class RoutePreviewView extends View {
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
 
-        // Composite the existing road overlays as one layer so overlaps also stay at 20%.
+        // Composite the existing road overlays as one layer so overlaps also stay at 50%.
         int roadsLayer = discoveryReplay == null ? -1
                 : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 128);
         if (coordinatesValid) {
