@@ -19,7 +19,7 @@ public class TimelineRoadPreparationTest {
     private JSONObject journey(String times) throws Exception {
         return new JSONObject().put("source",new JSONObject().put("type","timeline_import"))
                 .put("timeline_match_evidence",new JSONObject().put("point_times_ms",new JSONArray(times))
-                    .put("end_appended",true).put("parking_coordinates",new JSONArray("[[0.12,0]]"))
+                    .put("end_appended",true).put("parking_coordinates",new JSONArray("[0.12,0]"))
                     .put("parking_time_ms",180000));
     }
     @Test public void contradictoryEndpointIsOmittedOnlyWithNearbyTimedParkingEvidence() throws Exception {
@@ -31,7 +31,7 @@ public class TimelineRoadPreparationTest {
     }
     @Test public void inconsistentEndpointWithoutCorroborationIsPreserved() throws Exception {
         JSONObject journey=journey("[0,60000,120000,180000]");
-        journey.getJSONObject("timeline_match_evidence").put("parking_coordinates",new JSONArray("[[0,0]]"));
+        journey.getJSONObject("timeline_match_evidence").put("parking_coordinates",new JSONArray("[0,0]"));
         assertFalse(TimelineRoadPreparation.prepare(journey,points("[[0,0],[0.11,0],[0.12,0],[0,0]]")).changed);
     }
     @Test public void plausibleReturnAndStaleParkingAreNotRemoved() throws Exception {
