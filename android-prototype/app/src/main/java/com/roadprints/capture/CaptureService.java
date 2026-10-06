@@ -163,11 +163,21 @@ public class CaptureService extends Service {
                 return;
             }
             MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
-            if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
-            lastPoint = location;
-            points.add(location);
-            clearStillnessIfMovementContinues(location);
-            evaluateStationLocation(location, points.size() - 1);
+            Location observation = new Location(location);
+            boolean trusted = !"walking".equals(mode) || lastPoint == null
+                    || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(observation, 1));
+            // Retain rejected fixes as evidence, but do not credit their jumps
+            // as walking or let them reset the stop timer.
+            points.add(observation);
+            if (trusted) {
+                if (lastPoint != null) distanceMetres += lastPoint.distanceTo(observation);
+                lastPoint = observation;
+                clearStillnessIfMovementContinues(observation);
+            }
+            // Sustained real vehicle speed still reaches station departure
+            // detection while Android's activity callback is delayed.
+            if (trusted || (observation.hasSpeed() && observation.getSpeed() >= 6))
+                evaluateStationLocation(observation, points.size() - 1);
             if (captureFinishing) return;
             updateNotification();
             broadcastUpdate("Recording " + mode + " locally...");
@@ -505,9 +515,12 @@ public class CaptureService extends Service {
         if (initialPoints != null) {
             for (Location point : initialPoints) {
                 Location copy = new Location(point);
-                if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
                 points.add(copy);
-                lastPoint = copy;
+                if (!"walking".equals(mode) || lastPoint == null
+                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(copy, 1))) {
+                    if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
+                    lastPoint = copy;
+                }
             }
         }
         resetStationModel();
@@ -572,6 +585,11 @@ public class CaptureService extends Service {
     private void collectCandidateLocation(Location location) {
         if (candidateMode == null || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f) return;
+        if ("walking".equals(candidateMode) && candidateMovementLast != null
+                && !FootTraceValidator.plausible(footSample(candidateMovementLast, 0), footSample(location, 1))) {
+            candidatePoints.add(new Location(location));
+            return;
+        }
         if (candidateStationarySince != 0 && candidateStationaryAnchor != null) {
             float allowance = location.getAccuracy()
                     + (candidateStationaryAnchor.hasAccuracy() ? candidateStationaryAnchor.getAccuracy() : 15f);
@@ -790,12 +808,28 @@ public class CaptureService extends Service {
                 if (savedStationReason != null) journey.put("station_evidence", new JSONObject()
                         .put("reason", savedStationReason).put("station_code", savedStationCode)
                         .put("classification", "suggested"));
-                if (stationBoundary) journey.put("raw_capture_geometry", new JSONObject()
+                if (stationBoundary || "walking".equals(savedMode)) journey.put("raw_capture_geometry", new JSONObject()
                         .put("type", "LineString").put("coordinates", coordinates(fullCapturePoints)));
+                if ("walking".equals(savedMode)) journey.put("raw_capture_samples", sampleCoordinates(fullCapturePoints));
                 List<Location> routePoints = confirmedStationaryStop && !stationBoundary
                         ? collapseStationaryEndpoint(savedPoints, savedStopAnchor) : savedPoints;
                 double routeDistance = routePoints.size() < savedPoints.size()
                         ? routeDistanceMetres(routePoints) : savedDistanceMetres;
+                if ("walking".equals(savedMode)) {
+                    List<FootTraceValidator.Sample> evidence = new ArrayList<>();
+                    for (int i = 0; i < routePoints.size(); i++) evidence.add(footSample(routePoints.get(i), i));
+                    FootTraceValidator.Result validated = FootTraceValidator.validate(evidence);
+                    journey.put("original_distance_meters", routeDistanceMetres(routePoints));
+                    List<Location> cleaned = new ArrayList<>();
+                    for (FootTraceValidator.Sample point : validated.samples) cleaned.add(routePoints.get(point.index));
+                    routePoints = cleaned;
+                    routeDistance = validated.resolved ? validated.distance : 0;
+                    journey.put("capture_validation", new JSONObject().put("version", 1)
+                            .put("resolved", validated.resolved)
+                            .put("timing_available", validated.timed).put("removed_gps_points", validated.removed)
+                            .put("validated_points", cleaned.size()));
+                    journey.put("distance_source", validated.resolved && validated.timed ? "validated_gps" : "gps_unverified");
+                }
                 journey.put("distance_meters", routeDistance);
                 journey.put("gps_point_count", savedGpsPointCount);
                 journey.put("route_geometry", new JSONObject()
@@ -1062,7 +1096,15 @@ public class CaptureService extends Service {
                 points.add(point);
             }
             if (points.isEmpty()) throw new IllegalStateException("No saved GPS points");
-            lastPoint = new Location(points.get(points.size() - 1));
+            lastPoint = null;
+            distanceMetres = 0;
+            for (Location point : points) {
+                if (!"walking".equals(mode) || lastPoint == null
+                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(point, 1))) {
+                    if (lastPoint != null) distanceMetres += lastPoint.distanceTo(point);
+                    lastPoint = new Location(point);
+                }
+            }
 
             startForegroundWithNotification();
             scheduleCaptureCheckpoint();
@@ -1085,6 +1127,18 @@ public class CaptureService extends Service {
             checkpointFile.delete();
             broadcastUpdate("The previous recording could not be recovered.");
         }
+    }
+
+    static FootTraceValidator.Sample footSample(Location point, int index) {
+        return new FootTraceValidator.Sample(point.getLongitude(), point.getLatitude(),
+                point.hasAccuracy() ? point.getAccuracy() : 0, point.getTime(),
+                point.hasSpeed() ? point.getSpeed() : -1, index);
+    }
+
+    private JSONArray sampleCoordinates(List<Location> routePoints) throws Exception {
+        JSONArray samples = new JSONArray();
+        for (int i = 0; i < routePoints.size(); i++) samples.put(WalkingJourneyPreparation.sampleJson(footSample(routePoints.get(i), i)));
+        return samples;
     }
 
     private JSONArray coordinates(List<Location> routePoints) throws org.json.JSONException {
@@ -1235,4 +1289,3 @@ public class CaptureService extends Service {
         return null;
     }
 }
-

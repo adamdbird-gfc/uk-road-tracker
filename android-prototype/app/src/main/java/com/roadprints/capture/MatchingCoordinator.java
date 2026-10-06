@@ -258,15 +258,20 @@ public final class MatchingCoordinator {
         }
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
         boolean foot = isFoot(journey.optString("mode", "unknown"));
+        WalkingJourneyPreparation.Prepared walking = foot
+                ? WalkingJourneyPreparation.prepare(app, journey) : null;
+        if (walking != null) points = walking.points;
+        if (points.length() < 2) throw new IllegalStateException("Not enough reliable GPS points to match this walk. The original recording is preserved.");
         JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
         String endpointPath = foot ? "/match-walking" : "/match";
         JSONObject attempt = new JSONObject()
                 .put("started_at_utc", Instant.now().toString())
                 .put("mode", journey.optString("mode", "unknown"))
                 .put("endpoint", endpointPath)
-                .put("source_points", points.length())
+                .put("source_points", coordinates.length())
                 .put("submitted_points", requestPoints.length())
-                .put("points_reduced", requestPoints.length() < points.length());
+                .put("points_reduced", requestPoints.length() < coordinates.length());
+        if (walking != null) attempt.put("walking_validation", walking.details);
         synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
             if (stored != null) {
@@ -284,6 +289,13 @@ public final class MatchingCoordinator {
         int failedCount = failedSections == null ? 0 : failedSections.length();
         if (failedCount > 0) attempt.put("server_failed_sections", failedCount);
         if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
+        if (walking != null && walking.validated) {
+            double matched = result.optDouble("matched_distance_m", -1);
+            if (!Double.isFinite(matched) || matched <= 0
+                    || matched > Math.max(walking.distance * 1.6, walking.distance + 300)) {
+                throw new IllegalStateException("Matched walking route is substantially longer than the validated GPS evidence. The original recording is preserved.");
+            }
+        }
         int serverInput = result.optInt("input_points", points.length());
         int serverMatched = result.optInt("matched_tracepoints", serverInput);
         if (serverMatched < serverInput) attempt.put("partial_match", true);
@@ -309,6 +321,15 @@ public final class MatchingCoordinator {
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
         stored.put("processing_result", result);
+        if (walking != null && walking.validated) {
+            if (!stored.has("original_distance_meters"))
+                stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
+            if (!stored.has("raw_capture_samples") && walking.recoveredSamples.length() > 0)
+                stored.put("raw_capture_samples", walking.recoveredSamples);
+            stored.put("walking_validation", walking.details);
+            stored.put("distance_meters", result.getDouble("matched_distance_m"));
+            stored.put("distance_source", "validated_walking_match");
+        }
         stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");
