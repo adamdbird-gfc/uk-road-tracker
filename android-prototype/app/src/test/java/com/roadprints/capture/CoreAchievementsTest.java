@@ -13,7 +13,8 @@ import static org.junit.Assert.*;
 public class CoreAchievementsTest {
     private Context app;
     @Before public void setup(){app=RuntimeEnvironment.getApplication();JourneyStore.deleteAll(app);
-        app.getSharedPreferences("roadprints_achievements_v1",0).edit().clear().commit();DistanceUnits.setKilometres(app,false);}
+        app.getSharedPreferences("roadprints_achievements_v1",0).edit().clear().commit();
+        app.getSharedPreferences("roadprints_local_settlement_matches_v1",0).edit().clear().commit();DistanceUnits.setKilometres(app,false);}
     private JSONObject journey(String id,String mode,double metres) throws Exception {
         return new JSONObject().put("journey_id",id).put("mode",mode).put("distance_meters",metres)
                 .put("source",new JSONObject().put("type","timeline_import"))
@@ -119,4 +120,55 @@ public class CoreAchievementsTest {
         assertEquals(3,progress(AchievementStore.calculate(app),"foot-total").level);
         JourneyStore.delete(app,"one");assertEquals(0,progress(AchievementStore.calculate(app),"foot-total").level);
     }
+    @Test(timeout=5000) public void emptyLegacySettlementCacheReturnsAndPersistsNegativeResult() throws Exception {
+        List<JSONObject> geometry=Collections.singletonList(line(0,.001));String road="name:empty road";
+        LocalRoadSettlementMatcher.saveCached(app,road,geometry,Collections.emptyList());
+        assertTrue(AchievementStore.roadSettlements(app,road,geometry).isEmpty());
+        String key=AchievementStore.roadEvidenceKey(road,geometry);
+        assertTrue(app.getSharedPreferences("roadprints_achievements_v1",0).contains(key));
+        int revision=AchievementStore.highStreetEvidenceRevision(app);
+        for(int i=0;i<100;i++)assertTrue(AchievementStore.roadSettlements(app,road,geometry).isEmpty());
+        assertEquals(revision,AchievementStore.highStreetEvidenceRevision(app));
+    }
+    @Test(timeout=5000) public void blankLegacySettlementNamesAreACompletedEmptyLookup() throws Exception {
+        List<JSONObject> geometry=Collections.singletonList(line(0,.001));String road="name:blank road";
+        LocalRoadSettlementMatcher.saveCached(app,road,geometry,Arrays.asList(new LocalRoadSettlementMatcher.Settlement("a",""),new LocalRoadSettlementMatcher.Settlement("b","  ")));
+        assertTrue(AchievementStore.roadSettlements(app,road,geometry).isEmpty());
+        assertTrue(app.getSharedPreferences("roadprints_achievements_v1",0).contains(AchievementStore.roadEvidenceKey(road,geometry)));
+    }
+    @Test public void populatedLegacySettlementCacheMigratesSortedDistinctNames() throws Exception {
+        List<JSONObject> geometry=Collections.singletonList(line(0,.001));String road="name:station road";
+        LocalRoadSettlementMatcher.saveCached(app,road,geometry,Arrays.asList(new LocalRoadSettlementMatcher.Settlement("b","Town B"),new LocalRoadSettlementMatcher.Settlement("a","Town A"),new LocalRoadSettlementMatcher.Settlement("c","Town A")));
+        assertEquals(Arrays.asList("Town A","Town B"),AchievementStore.roadSettlements(app,road,geometry));
+    }
+    @Test public void absentAndMalformedSettlementCachesDoNotBecomeCompletedLookups() throws Exception {
+        List<JSONObject> geometry=Collections.singletonList(line(0,.001));String road="name:missing road";
+        assertTrue(AchievementStore.roadSettlements(app,road,geometry).isEmpty());
+        String key=AchievementStore.roadEvidenceKey(road,geometry);
+        assertFalse(app.getSharedPreferences("roadprints_achievements_v1",0).contains(key));
+        String legacyKey=road+":"+Integer.toHexString(geometry.toString().hashCode());
+        app.getSharedPreferences("roadprints_local_settlement_matches_v1",0).edit().putString(legacyKey,"not json").commit();
+        assertTrue(AchievementStore.roadSettlements(app,road,geometry).isEmpty());
+        assertFalse(app.getSharedPreferences("roadprints_achievements_v1",0).contains(key));
+    }
+    @Test public void emptyLookupCanLaterBeReplacedWithRealTownEvidence() throws Exception {
+        List<JSONObject> geometry=Collections.singletonList(line(0,.001));String road="name:high street";
+        AchievementStore.recordRoadSettlements(app,road,geometry,Collections.emptyList());
+        int revision=AchievementStore.highStreetEvidenceRevision(app);
+        AchievementStore.recordRoadSettlements(app,road,geometry,Collections.singletonList(new LocalRoadSettlementMatcher.Settlement("a","Town A")));
+        assertEquals(Collections.singletonList("Town A"),AchievementStore.roadSettlements(app,road,geometry));
+        assertNotEquals(revision,AchievementStore.highStreetEvidenceRevision(app));
+    }
+    @Test(timeout=15000) public void achievementScanFinishesForNamedRoadWithEmptyLegacySettlementCache() throws Exception {
+        JSONObject geometry=line(0,.001);List<JSONObject> geometries=Collections.singletonList(geometry);
+        LocalRoadSettlementMatcher.saveCached(app,"name:high street",geometries,Collections.emptyList());
+        JSONObject feature=new JSONObject().put("geometry",geometry).put("properties",new JSONObject().put("name","High Street").put("highway","residential"));
+        JourneyStore.save(app,journey("one","walking",1609.344).put("processing_status","complete")
+            .put("processing_result",new JSONObject().put("road_geojson",new JSONObject().put("features",new JSONArray().put(feature)))));
+        AchievementStore.Snapshot snapshot=AchievementStore.calculate(app);
+        assertEquals(1,progress(snapshot,"the-knowledge").value,0);
+        assertEquals(0,progress(snapshot,"mary-high-streets").value,0);
+        assertEquals(1,progress(snapshot,"foot-total").level);
+    }
+
 }
