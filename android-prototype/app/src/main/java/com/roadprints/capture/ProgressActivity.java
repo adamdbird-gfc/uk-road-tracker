@@ -1996,62 +1996,7 @@ public class ProgressActivity extends Activity {
     }
 
     private View buildBottomNavigation() {
-        LinearLayout nav = new LinearLayout(this);
-        nav.setOrientation(LinearLayout.HORIZONTAL);
-        nav.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        nav.setPadding(dp(8), 0, dp(8), 0);
-        nav.setBackgroundColor(NAV_BAR);
-        int[] icons = {R.drawable.ic_nav_map, R.drawable.ic_nav_journeys,
-                R.drawable.ic_nav_progress, R.drawable.ic_nav_achievements,
-                R.drawable.ic_nav_collections};
-        String[] labels = {"Map", "Journeys", "Progress", "Achievements", "Collections"};
-        for (int index = 0; index < labels.length; index++) {
-            int selected = index;
-            LinearLayout item = new LinearLayout(this);
-            item.setOrientation(LinearLayout.VERTICAL);
-            item.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-            item.setPadding(0, dp(4), 0, 0);
-            ImageView icon = new ImageView(this);
-            icon.setImageResource(icons[index]);
-            icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            icon.setColorFilter(index == 2 ? GOLD : MUTED,
-                    android.graphics.PorterDuff.Mode.SRC_IN);
-            item.addView(icon, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(32)));
-            TextView label = new TextView(this);
-            label.setText(labels[index]);
-            label.setTextSize(10);
-            label.setGravity(Gravity.CENTER);
-            label.setIncludeFontPadding(false);
-            label.setMaxLines(1);
-            label.setTextColor(index == 2 ? GOLD : MUTED);
-            item.addView(label, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
-            if (index <= 4) {
-                item.setClickable(true);
-                item.setFocusable(true);
-                item.setOnClickListener(v -> {
-                    if (selected == 0) {
-                        startActivity(new Intent(this, MapActivity.class));
-                        finish();
-                    } else if (selected == 1) {
-                        startActivity(new Intent(this, JourneyListActivity.class));
-                        finish();
-                    } else if (selected == 3) {
-                        startActivity(new Intent(this, AchievementsActivity.class));
-                        finish();
-                    } else if (selected == 4) {
-                        startActivity(new Intent(this, CollectionsActivity.class));
-                        finish();
-                    }
-                });
-            } else {
-                item.setAlpha(0.55f);
-            }
-            nav.addView(item, new LinearLayout.LayoutParams(0, dp(68), 1));
-        }
-        return nav;
+        return RoadprintsNavigation.create(this, 2);
     }
 
     private int dp(float value) {

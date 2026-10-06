@@ -12,8 +12,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 191
-        versionName = "0.25.145"
+        versionCode = 192
+        versionName = "0.25.146"
     }
 }
 
