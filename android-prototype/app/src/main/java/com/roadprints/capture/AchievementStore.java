@@ -162,6 +162,7 @@ final class AchievementStore {
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
         values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
+        for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
         TownAchievementEvidence towns=new TownAchievementEvidence();
         towns.collect(app,core);
         towns.requestInventories(app);
@@ -170,7 +171,6 @@ final class AchievementStore {
             values.put(id,value);
             lists.put(id,towns.contributions(nextTarget(findDefinition(id),value)));
         }
-        for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
         for(MotorwayProgressCalculator.Road road:motorwaySummary.roads) {
             if(Double.isFinite(road.percent()))values.put("completion-motorway-"+road.id,road.percent());
             lists.put("completion-motorway-"+road.id,Collections.singletonList(road.journeyIds.size()+" matched journeys contribute to this road"));
