@@ -291,8 +291,8 @@ public class ProgressActivity extends Activity {
 
     private DistanceStats summarizeSavedJourneys(android.content.Context context, int generation) {
         DistanceStats stats = new DistanceStats();
-        Map<String, Double> uniqueRoadEdges = new HashMap<>();
-        Map<String, Double> uniqueFootEdges = new HashMap<>();
+        CoreAchievementEvidence.Coverage uniqueRoadEdges = new CoreAchievementEvidence.Coverage();
+        CoreAchievementEvidence.Coverage uniqueFootEdges = new CoreAchievementEvidence.Coverage();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
                 context, null, true, false);
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, false);
@@ -311,13 +311,13 @@ public class ProgressActivity extends Activity {
             if ("driving".equals(mode) || "bus".equals(mode)) {
                 stats.drivingMetres += metres;
                 if ("complete".equals(journey.optString("processing_status", ""))) {
-                    collectUniqueMatchedEdges(journey, uniqueRoadEdges);
+                    uniqueRoadEdges.addJourney(journey);
                 }
             } else if ("walking".equals(mode) || "running".equals(mode)
                     || "pedestrian".equals(mode)) {
                 stats.footMetres += metres;
                 if ("complete".equals(journey.optString("processing_status", ""))) {
-                    collectUniqueMatchedEdges(journey, uniqueFootEdges);
+                    uniqueFootEdges.addJourney(journey);
                 }
             } else if ("train".equals(mode)) {
                 stats.trainMetres += metres;
@@ -339,10 +339,10 @@ public class ProgressActivity extends Activity {
             }
         });
 
-        stats.uniqueDrivingMetres = sumEdges(uniqueRoadEdges);
-        stats.uniqueFootMetres = sumEdges(uniqueFootEdges);
-        uniqueRoadEdges.clear();
-        uniqueFootEdges.clear();
+        stats.uniqueDrivingMetres = uniqueRoadEdges.metres();
+        stats.uniqueFootMetres = uniqueFootEdges.metres();
+        uniqueRoadEdges.intervals.clear();
+        uniqueFootEdges.intervals.clear();
         updateLoadingMessage(generation, "Calculating motorway coverage…");
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();

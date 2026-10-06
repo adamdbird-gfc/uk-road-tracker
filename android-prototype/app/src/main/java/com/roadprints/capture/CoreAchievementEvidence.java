@@ -100,6 +100,10 @@ final class CoreAchievementEvidence {
      * coordinate rounding; length uses ground-distance correction at segment latitude. */
     static final class Coverage {
         final Map<String,List<double[]>> intervals=new HashMap<>();
+        void addJourney(JSONObject journey) {
+            JSONObject result=journey.optJSONObject("processing_result"),edits=journey.optJSONObject("journey_corrections");
+            add(result==null?null:result.optJSONObject("geojson"),edits==null?null:edits.optJSONArray("removed_matched_segments"));
+        }
         void add(JSONObject collection,JSONArray removedValues) {
             Set<Integer> removed=new HashSet<>();if(removedValues!=null)for(int i=0;i<removedValues.length();i++)removed.add(removedValues.optInt(i,-1));
             JSONArray features=collection==null?null:collection.optJSONArray("features");if(features==null)return;
