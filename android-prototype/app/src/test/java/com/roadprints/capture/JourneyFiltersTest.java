@@ -118,6 +118,7 @@ public class JourneyFiltersTest {
         android.util.TypedValue accent=new android.util.TypedValue();dialog.getContext().getTheme().resolveAttribute(android.R.attr.colorAccent,accent,true);
         assertEquals(0xFFF7C450,accent.data);
         dialog.updateDate(2026,9,4);dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         assertEquals(LocalDate.of(2026,10,4),picked.get());screen.finish();
     }
     private Spinner findSpinner(View view) {if(view instanceof Spinner)return (Spinner)view;if(view instanceof android.view.ViewGroup){android.view.ViewGroup group=(android.view.ViewGroup)view;for(int i=0;i<group.getChildCount();i++){Spinner found=findSpinner(group.getChildAt(i));if(found!=null)return found;}}return null;}
