@@ -1,0 +1,16 @@
+name: Road matcher recovery regression
+on:
+  push:
+    paths: ["api.py", "tests/test_road_recovery.py", ".github/workflows/road-recovery-regression.yml"]
+  pull_request:
+    paths: ["api.py", "tests/test_road_recovery.py", ".github/workflows/road-recovery-regression.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m py_compile api.py
+      - run: python -m unittest discover -s tests -p test_road_recovery.py -v
