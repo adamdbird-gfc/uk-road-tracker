@@ -129,6 +129,25 @@ public class AchievementsAvailabilityTest {
         AchievementStore.Snapshot snapshot=(AchievementStore.Snapshot)invokeStatic("snapshotFromJson",new Class<?>[]{JSONObject.class},partial);
         assertEquals(AchievementStore.definitions().size(),snapshot.achievements.size());
     }
+    @Test public void levelsContributionsAndMilestoneDatesSurviveSnapshot() throws Exception {
+        AchievementStore.Definition d=AchievementStore.definitions().stream().filter(x->"foot-total".equals(x.id)).findFirst().get();
+        AchievementStore.Progress row=new AchievementStore.Progress(d,100,100,500,true,"stored",null);
+        row.level=3;row.contributions=java.util.Arrays.asList("One", "Two");row.milestones=java.util.Arrays.asList("Recognised today");
+        JSONObject json=(JSONObject)invokeStatic("snapshotToJson",new Class<?>[]{AchievementStore.Snapshot.class},new AchievementStore.Snapshot(java.util.Arrays.asList(row),Collections.emptyList(),0));
+        AchievementStore.Snapshot restored=(AchievementStore.Snapshot)invokeStatic("snapshotFromJson",new Class<?>[]{JSONObject.class},json);
+        AchievementStore.Progress saved=restored.achievements.stream().filter(x->"foot-total".equals(x.definition.id)).findFirst().get();
+        assertEquals(3,saved.level);assertEquals(row.contributions,saved.contributions);assertEquals(row.milestones,saved.milestones);
+    }
+    @Test public void distanceUnitsRefreshExistingCardsWithoutRescan() throws Exception {
+        AchievementStore.Definition d=AchievementStore.definitions().stream().filter(x->"foot-total".equals(x.id)).findFirst().get();
+        List<AchievementStore.Progress> rows=new ArrayList<>(AchievementStore.catalogueSnapshot(app).achievements);
+        AchievementStore.Progress row=new AchievementStore.Progress(d,25,25,100,true,"stored",null);row.level=2;
+        rows.set(AchievementStore.definitions().indexOf(d),row);
+        cache();field("processSnapshot").set(null,new AchievementStore.Snapshot(rows,Collections.emptyList(),JourneyStore.dataRevision(app)));
+        DistanceUnits.setKilometres(app,false);AchievementsActivity screen=screen();assertTrue(contains(content(screen),"25.0 mi"));
+        DistanceUnits.setKilometres(app,true);java.lang.reflect.Method resume=AchievementsActivity.class.getDeclaredMethod("onResume");resume.setAccessible(true);resume.invoke(screen);
+        assertTrue(contains(content(screen),"40.2 km"));assertTrue(jobs.isEmpty());DistanceUnits.setKilometres(app,false);
+    }
     private Object invokeStatic(String name,Class<?>[] types,Object value) throws Exception {
         java.lang.reflect.Method m=AchievementsActivity.class.getDeclaredMethod(name,types);m.setAccessible(true);return m.invoke(null,value);
     }

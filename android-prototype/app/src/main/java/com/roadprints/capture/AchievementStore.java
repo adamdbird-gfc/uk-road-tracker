@@ -245,6 +245,7 @@ final class AchievementStore {
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
         if("mary-high-streets".equals(d.id)||"mastered-monopoly".equals(d.id))return String.format(Locale.UK,"%,d / %.0f different %s unlocked",(int)progress.value,target,
                 "mary-high-streets".equals(d.id)?"High Streets":"Station Roads");
+        if("long-journey".equals(d.type))return progress.unlocked?d.detail:"Complete one journey of "+DistanceUnits.format(context,10*MILE)+" on foot or "+DistanceUnits.format(context,250*MILE)+" by road.";
         if("picasso".equals(d.id))return Math.min(5,(int)progress.value)+" / 5 distinct journeys edited";
         if("network-percent".equals(d.type))return String.format(Locale.UK,"%.1f%% of the UK motorway network · target %.0f%%",progress.value,d.target);
         if("crossing-set".equals(d.type))return (int)progress.value+" of "+CROSSINGS.size()+" great road crossings completed";
@@ -460,7 +461,7 @@ final class AchievementStore {
         output.add(new Definition("m62-summit", "🏔️", "M62 Summit",
                 "Cross the UK’s highest motorway point at Windy Hill.",
                 "372 m (1,221 ft) above sea level · M62, near junction 22", "summit", 1,"M62",-2.018561,53.62982,350));
-        output.add(new Definition("mary-high-streets", "👑", "Nice to meet you Mary",
+        output.add(new Definition("mary-high-streets", "👑", "Nice to meet you, Mary",
                 "A nod to Mary Portas, Queen of Shops. Unlock 10 different High Streets.",
                 "10 different High Streets discovered", "high-street-settlement", 10,null,0,0,0));
         output.add(new Definition("angel-of-the-north", "👼", "I Saw an Angel",

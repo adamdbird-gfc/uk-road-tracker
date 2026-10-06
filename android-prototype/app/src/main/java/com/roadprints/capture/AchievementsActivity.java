@@ -437,7 +437,7 @@ public class AchievementsActivity extends Activity {
         TextView name=text(progress.definition.title,16,Color.WHITE,true);
         String display="distance".equals(progress.definition.type)||progress.definition.levels!=null
                 || "road-count".equals(progress.definition.type)||"high-street-settlement".equals(progress.definition.type)
-                ||"app-use".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
+                ||"app-use".equals(progress.definition.type)||"long-journey".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
         TextView detail=text(display,13,MUTED,false);
         detail.setPadding(0,dp(3),0,0);
         copy.addView(status); copy.addView(name); copy.addView(detail);
@@ -639,6 +639,11 @@ public class AchievementsActivity extends Activity {
         celebrationTitle.setText(definition.title);
         celebrationDescription.setText(definition.description==null?"":definition.description);
         celebrationDetail.setText(definition.detail==null?"":definition.detail);
+        if(shownSnapshot!=null)for(AchievementStore.Progress progress:shownSnapshot.achievements)if(progress.definition.id.equals(definition.id)) {
+            celebrationDetail.setText((definition.levels==null?"":"Level "+progress.level+" / "+definition.levels.length+" · ")+AchievementStore.progressText(this,progress));
+            if("long-journey".equals(definition.type))celebrationDescription.setText("Complete one journey of "+DistanceUnits.format(this,1609.344*10)+" on foot or "+DistanceUnits.format(this,1609.344*250)+" by road.");
+            break;
+        }
         boolean multiple=celebrationQueue.size()>1;
         int visibility=multiple?View.VISIBLE:View.GONE;
         celebrationPrevious.setVisibility(visibility);
