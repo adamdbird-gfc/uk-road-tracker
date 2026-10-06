@@ -32,6 +32,11 @@ public class OnboardingActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAVY);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowInsetsControllerCompat bars =
+                androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        bars.setAppearanceLightStatusBars(false);
+        bars.setAppearanceLightNavigationBars(false);
         if (getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(COMPLETE, false)) {
             openCapture();
             return;
@@ -53,6 +58,14 @@ public class OnboardingActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(NAVY);
+        // Apply real device safe areas outside the existing design padding.
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(scroll, (view, insets) -> {
+            androidx.core.graphics.Insets safe = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars()
+                            | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+            return insets;
+        });
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -76,6 +89,7 @@ public class OnboardingActivity extends Activity {
         else buildPermissionStep(root);
         scroll.addView(root);
         setContentView(scroll);
+        androidx.core.view.ViewCompat.requestApplyInsets(scroll);
     }
 
     private void buildWelcomeStep(LinearLayout root) {
