@@ -41,6 +41,9 @@ public class ProgressActivity extends Activity {
     private static final Object STATS_CACHE_LOCK = new Object();
     private static DistanceStats processCachedStats;
     private static long processCachedRevision = Long.MIN_VALUE;
+    private static boolean statsLoadInFlight;
+    private static java.util.concurrent.Executor statisticsExecutor = ScreenDataLoader::execute;
+    private static final List<java.lang.ref.WeakReference<ProgressActivity>> screens = new ArrayList<>();
     private static final Set<String> expandedRoadCategories = new HashSet<>();
     private static final ExecutorService SETTLEMENT_WORKER = Executors.newSingleThreadExecutor();
     private static int savedScrollY;
@@ -51,6 +54,14 @@ public class ProgressActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
     private DistanceStats loadedStats;
+    private long loadedRevision = Long.MIN_VALUE;
+    private boolean renderedKilometres;
+    private boolean renderingPendingStats;
+    private LinearLayout roadDiscoveryHost;
+    private TextView refreshStatus;
+    private final Runnable revisionTicker = new Runnable() {
+        @Override public void run() { if (isFinishing() || isDestroyed()) return; loadStatistics(); mainHandler.postDelayed(this, 3000); }
+    };
     private TextView loadingDetail;
     private TextView localRoadProgressMessage;
     private TextView localRoadProgressDetail;
@@ -124,8 +135,14 @@ public class ProgressActivity extends Activity {
         statisticsContent = content;
         scroll.setOnScrollChangeListener((View view, int x, int y, int oldX, int oldY) ->
                 updateActiveProgressJump());
-        content.addView(ScreenLoadingView.create(this, "Preparing your progress",
-                "Reading saved journeys once and reusing the result."));
+        refreshStatus = new TextView(this); refreshStatus.setTextColor(MUTED); refreshStatus.setTextSize(12);
+        refreshStatus.setPadding(0, dp(8), 0, 0); heading.addView(refreshStatus);
+        synchronized (STATS_CACHE_LOCK) { screens.add(new java.lang.ref.WeakReference<>(this)); }
+        DistanceStats initial;
+        synchronized (STATS_CACHE_LOCK) { initial = processCachedStats; }
+        if (initial == null) initial = readStatisticsSnapshot();
+        if (initial == null) { initial = new DistanceStats(); initial.pending = true; }
+        loadedStats = initial; renderStatistics(content, initial);
 
         root.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
@@ -140,6 +157,7 @@ public class ProgressActivity extends Activity {
     protected void onResume() {
         super.onResume();
         useKilometres = DistanceUnits.usesKilometres(this);
+        mainHandler.removeCallbacks(revisionTicker); mainHandler.postDelayed(revisionTicker, 3000);
         if (hasResumed) {
             loadStatistics();
         } else {
@@ -151,6 +169,7 @@ public class ProgressActivity extends Activity {
     protected void onPause() {
         if (statisticsScroll != null) savedScrollY = statisticsScroll.getScrollY();
         stopLocalRoadProgressTicker();
+        mainHandler.removeCallbacks(revisionTicker);
         super.onPause();
     }
 
@@ -174,74 +193,89 @@ public class ProgressActivity extends Activity {
         return true;
     }
 
+    @Override protected void onDestroy() {
+        statsLoadGeneration++;
+        mainHandler.removeCallbacks(revisionTicker); stopLocalRoadProgressTicker();
+        synchronized (STATS_CACHE_LOCK) { screens.removeIf(ref -> ref.get() == null || ref.get() == this); }
+        super.onDestroy();
+    }
+
+    static void clearCachedStatistics(android.content.Context context) {
+        synchronized (STATS_CACHE_LOCK) { processCachedStats = null; processCachedRevision = Long.MIN_VALUE; }
+        context.getSharedPreferences("roadprints_progress_snapshot", MODE_PRIVATE).edit().clear().commit();
+        synchronized (STATS_CACHE_LOCK) { for (java.lang.ref.WeakReference<ProgressActivity> ref : screens) {
+            ProgressActivity screen = ref.get(); if (screen == null) continue;
+            screen.mainHandler.post(() -> { if (screen.isFinishing() || screen.isDestroyed()) return;
+                screen.loadedStats = new DistanceStats(); screen.loadedStats.pending = true;
+                screen.renderStatistics(screen.statisticsContent, screen.loadedStats); screen.loadStatistics(); });
+        } }
+    }
+
     private void loadStatistics() {
-        final int generation = ++statsLoadGeneration;
-        final android.content.Context appContext = getApplicationContext();
-        long currentRevision = JourneyStore.dataRevision(appContext);
-        final long loadRevision = currentRevision;
-        DistanceStats cached = null;
-        synchronized (STATS_CACHE_LOCK) {
-            if (processCachedStats != null && processCachedRevision == currentRevision) {
-                cached = processCachedStats;
-            } else {
-                processCachedStats = null;
-                processCachedRevision = Long.MIN_VALUE;
-            }
+        final android.content.Context app = getApplicationContext();
+        final long revision = JourneyStore.dataRevision(app);
+        final int generation = statsLoadGeneration;
+        DistanceStats cached; long cachedRevision;
+        synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
+        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres)) {
+            loadedStats = cached; renderStatistics(statisticsContent, cached); restoreProgressScroll();
+        } else if (loadedStats != null && renderedKilometres != useKilometres) {
+            renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
-        if (cached != null) {
-            loadedStats = cached;
-            loadingDetail = null;
-            statisticsContent.removeAllViews();
-            renderStatistics(statisticsContent, cached);
-            enrichLocalRoadTowns(cached, generation);
-            loadLocalTownInventoriesAsync(cached, generation);
-            restoreProgressScroll();
+        if (cached != null && cachedRevision == revision) {
+            loadedRevision = revision; refreshStatus.setVisibility(View.GONE);
+            enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation);
             return;
         }
-        loadedStats = null;
-        if (statisticsContent != null) {
-            statisticsContent.removeAllViews();
-            LinearLayout loading = ScreenLoadingView.create(this, "Preparing your progress",
-                    "Checking saved journeys…");
-            loadingDetail = ScreenLoadingView.detailText(loading);
-            statisticsContent.addView(loading);
-        }
-        ScreenDataLoader.execute(() -> {
-            DistanceStats stats = null;
-            Exception failure = null;
-            try {
-                stats = summarizeSavedJourneys(appContext, generation);
-            } catch (Exception error) {
-                failure = error;
-            }
-            final DistanceStats result = stats;
-            final Exception loadError = failure;
-            final long resultRevision = loadError == null
-                    ? JourneyStore.dataRevision(appContext) : Long.MIN_VALUE;
-            if (loadError == null && resultRevision == loadRevision) {
+        refreshStatus.setText(loadedStats == null || loadedStats.pending ? "Preparing your progress…" : "Updating progress · previous figures remain available");
+        refreshStatus.setVisibility(View.VISIBLE);
+        synchronized (STATS_CACHE_LOCK) { if (statsLoadInFlight) return; statsLoadInFlight = true; }
+        statisticsExecutor.execute(() -> {
+            DistanceStats result = null; Exception failure = null;
+            try { result = summarizeSavedJourneys(app, generation); } catch (Exception error) { failure = error; }
+            boolean current;
+            synchronized (JourneyStore.class) {
+                current = failure == null && JourneyStore.dataRevision(app) == revision;
                 synchronized (STATS_CACHE_LOCK) {
-                    processCachedStats = result;
-                    processCachedRevision = resultRevision;
+                    if (current) { processCachedStats = result; processCachedRevision = revision; writeStatisticsSnapshot(app, result, revision); }
+                    statsLoadInFlight = false;
                 }
             }
-            mainHandler.post(() -> {
-                if (generation != statsLoadGeneration || isFinishing() || isDestroyed()) return;
-                loadingDetail = null;
-                statisticsContent.removeAllViews();
-                if (loadError == null) {
-                    loadedStats = result;
-                    renderStatistics(statisticsContent, result);
-                    enrichLocalRoadTowns(result, generation);
-                    loadLocalTownInventoriesAsync(result, generation);
-                    restoreProgressScroll();
+            final Exception error = failure;
+            final List<ProgressActivity> listeners = new ArrayList<>();
+            synchronized (STATS_CACHE_LOCK) { for (java.lang.ref.WeakReference<ProgressActivity> ref : screens) if (ref.get() != null) listeners.add(ref.get()); }
+            for (ProgressActivity screen : listeners) screen.mainHandler.post(() -> {
+                if (screen.isFinishing() || screen.isDestroyed()) return;
+                if (current) { screen.loadStatistics(); }
+                else if (error != null) {
+                    screen.refreshStatus.setText("Progress update couldn't finish · tap to retry");
+                    screen.refreshStatus.setOnClickListener(v -> screen.loadStatistics());
                 } else {
-                    TextView error = new TextView(this);
-                    error.setText("Couldn't load progress. Your saved journeys are still on this device.");
-                    error.setTextColor(MUTED);
-                    statisticsContent.addView(error);
+                    // Matching changed the archive during this scan. Keep the last known
+                    // figures visible and coalesce another scan instead of publishing mixed totals.
+                    screen.mainHandler.postDelayed(() -> { if (!screen.isFinishing() && !screen.isDestroyed()) screen.loadStatistics(); }, 1500);
                 }
             });
         });
+    }
+
+    private static final String[] SNAPSHOT_FIELDS = {"drivingMetres", "footMetres", "trainMetres", "ferryMetres", "flightMetres", "transitMetres", "cyclingMetres", "unknownMetres", "uniqueDrivingMetres", "uniqueFootMetres"};
+    private static void writeStatisticsSnapshot(android.content.Context context, DistanceStats stats, long revision) {
+        try {
+            JSONObject json = new JSONObject().put("version",1).put("revision",revision).put("activities",stats.activities);
+            for (String name : SNAPSHOT_FIELDS) { java.lang.reflect.Field field = DistanceStats.class.getDeclaredField(name); field.setAccessible(true); json.put(name,field.getDouble(stats)); }
+            context.getSharedPreferences("roadprints_progress_snapshot", MODE_PRIVATE).edit().putString("summary",json.toString()).apply();
+        } catch (Exception error) { android.util.Log.w("Roadprints", "Progress snapshot unavailable", error); }
+    }
+    private DistanceStats readStatisticsSnapshot() {
+        try {
+            String saved = getSharedPreferences("roadprints_progress_snapshot", MODE_PRIVATE).getString("summary",null);
+            if (saved == null) return null;
+            JSONObject json = new JSONObject(saved); if (json.optInt("version") != 1) return null;
+            DistanceStats stats = new DistanceStats(); stats.summaryOnly = true; stats.activities = json.optInt("activities");
+            for (String name : SNAPSHOT_FIELDS) { java.lang.reflect.Field field = DistanceStats.class.getDeclaredField(name); field.setAccessible(true); field.setDouble(stats,json.getDouble(name)); }
+            return stats;
+        } catch (Exception invalid) { return null; }
     }
 
     private void restoreProgressScroll() {
@@ -268,7 +302,7 @@ public class ProgressActivity extends Activity {
             int checked = ++checkedJourneys[0];
             if (checked % 50 == 0) {
                 updateLoadingMessage(generation,
-                        "Checking saved journeys… " + checked + " checked");
+                        "Checking saved journeys… " + String.format(Locale.UK, "%,d", checked) + " checked");
             }
             String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
             double metres = Math.max(0, journey.optDouble("distance_meters", 0));
@@ -495,8 +529,19 @@ public class ProgressActivity extends Activity {
 
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
+        renderedKilometres = useKilometres;
+        renderingPendingStats = stats.pending;
         addCollectiveStatistics(parent, stats);
-        addRoadDiscoveryPanel(parent, stats);
+        renderingPendingStats = false;
+        roadDiscoveryHost = new LinearLayout(this); roadDiscoveryHost.setOrientation(LinearLayout.VERTICAL);
+        parent.addView(roadDiscoveryHost);
+        addRoadDiscoveryPanel(roadDiscoveryHost, stats);
+        if (stats.pending || stats.summaryOnly) {
+            for (String label : new String[]{"Road discovery", "Motorways", "A Roads"}) {
+                LinearLayout scaffold = statisticsPanel(label);
+                TextView state = new TextView(this); state.setText("Preparing saved road coverage…"); state.setTextColor(MUTED); scaffold.addView(state); parent.addView(scaffold);
+            }
+        }
         addMotorwayAggregatePanel(parent, stats);
         addMotorwayCoveragePanel(parent, stats);
         addARoadAggregatePanel(parent, stats);
@@ -1393,7 +1438,10 @@ public class ProgressActivity extends Activity {
     }
 
     private void loadLocalTownInventoriesAsync(DistanceStats stats, int generation) {
+        boolean pending = false;
         synchronized (stats) {
+            for (LocalTownProgress town : localTownProgress(stats).values()) if (!stats.settlementInventoryCounts.containsKey(town.settlement.code) && !stats.settlementInventoryPendingCodes.contains(town.settlement.code)) { pending = true; break; }
+            if (!pending) return;
             if (stats.localTownInventoryLoadRunning) return;
             stats.localTownInventoryLoadRunning = true;
         }
@@ -1434,14 +1482,19 @@ public class ProgressActivity extends Activity {
     }
 
     private void postSettlementProgress(DistanceStats stats, int generation) {
-        mainHandler.post(() -> {
-            if (generation != statsLoadGeneration || loadedStats != stats || isFinishing()) return;
-            int scrollY = statisticsScroll == null ? 0 : statisticsScroll.getScrollY();
-            statisticsContent.removeAllViews();
-            renderStatistics(statisticsContent, stats);
-            refreshLocalRoadProgress(stats);
-            if (statisticsScroll != null) statisticsScroll.post(() -> statisticsScroll.scrollTo(0, scrollY));
-        });
+        synchronized (STATS_CACHE_LOCK) {
+            for (java.lang.ref.WeakReference<ProgressActivity> ref : screens) {
+                ProgressActivity screen = ref.get();
+                if (screen == null) continue;
+                screen.mainHandler.post(() -> {
+                    if (screen.loadedStats != stats || screen.isFinishing() || screen.isDestroyed() || screen.roadDiscoveryHost == null) return;
+                    int y = screen.statisticsScroll == null ? 0 : screen.statisticsScroll.getScrollY();
+                    screen.stopLocalRoadProgressTicker(); screen.roadDiscoveryHost.removeAllViews();
+                    screen.addRoadDiscoveryPanel(screen.roadDiscoveryHost, stats); screen.refreshLocalRoadProgress(stats);
+                    if (screen.statisticsScroll != null) screen.statisticsScroll.post(() -> screen.statisticsScroll.scrollTo(0, y));
+                });
+            }
+        }
     }
 
     private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads) {
@@ -1774,10 +1827,7 @@ public class ProgressActivity extends Activity {
         hero.setGravity(Gravity.CENTER_VERTICAL);
         hero.setPadding(dp(17), dp(15), dp(17), dp(15));
         hero.setBackground(roundRect(0xFF263F7C, dp(16)));
-        TextView icon = new TextView(this);
-        icon.setText("🛣️");
-        icon.setTextSize(28);
-        icon.setGravity(Gravity.CENTER);
+        ImageView icon = RoadprintsIcons.image(this, R.drawable.ic_roadprints_road, TEAL, "Total distance");
         hero.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout copy = new LinearLayout(this);
         copy.setOrientation(LinearLayout.VERTICAL);
@@ -1788,7 +1838,7 @@ public class ProgressActivity extends Activity {
         label.setTypeface(null, android.graphics.Typeface.BOLD);
         label.setTextColor(0xFFB9C5D8);
         TextView value = new TextView(this);
-        value.setText(formatMiles(metres));
+        value.setText(renderingPendingStats ? "—" : formatMiles(metres));
         value.setTextSize(27);
         value.setTypeface(null, android.graphics.Typeface.BOLD);
         value.setTextColor(GOLD);
@@ -1831,52 +1881,48 @@ public class ProgressActivity extends Activity {
         card.setPadding(dp(13), dp(13), dp(10), dp(13));
         card.setMinimumHeight(dp(76));
         boolean empty = item.value <= 0;
-        int fill = empty ? 0xFFE3E8F1
-                : item.primary ? 0xFFEAF0FF : 0xFFF4F6FA;
+        int fill = empty ? 0xFF203563 : item.primary ? 0xFF304B88 : 0xFF233B78;
         card.setBackground(roundRect(fill, dp(14)));
 
         LinearLayout labelRow = new LinearLayout(this);
         labelRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView icon = new TextView(this);
-        icon.setText(statIcon(item.label));
-        icon.setTextSize(15);
-        icon.setGravity(Gravity.CENTER);
-        labelRow.addView(icon, new LinearLayout.LayoutParams(dp(23), dp(22)));
+        ImageView icon = RoadprintsIcons.image(this, statIcon(item.label), empty ? MUTED : TEAL, item.label);
+        labelRow.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
         TextView label = new TextView(this);
         label.setText(item.label);
         label.setTextSize(12);
         label.setTypeface(null, android.graphics.Typeface.BOLD);
-        label.setTextColor(empty ? 0xFF8A95A8 : 0xFF5A6880);
+        label.setTextColor(empty ? MUTED : Color.WHITE);
+        label.setPadding(dp(6), 0, 0, 0);
         labelRow.addView(label);
         card.addView(labelRow);
 
         TextView value = new TextView(this);
-        value.setText(item.count
+        value.setText(renderingPendingStats ? "—" : item.count
                 ? String.format(Locale.UK, "%,d", Math.round(item.value))
                 : item.percent
                         ? String.format(Locale.UK, "%.1f%%", item.value)
                         : formatMiles(item.value));
         value.setTextSize(19);
         value.setTypeface(null, android.graphics.Typeface.BOLD);
-        value.setTextColor(empty ? 0xFF8390A5 : 0xFF10275D);
+        value.setTextColor(empty ? MUTED : Color.WHITE);
         value.setPadding(0, dp(4), 0, 0);
         card.addView(value);
         return card;
     }
 
-    private String statIcon(String label) {
-        if (label.startsWith("By driving")) return "🚗";
-        if (label.equals("On foot") || label.equals("Unique on foot")) return "🚶";
-        if (label.contains("train")) return "🚆";
-        if (label.contains("ferry")) return "⛴️";
-        if (label.contains("plane")) return "✈️";
-        if (label.contains("cycling")) return "🚲";
-        if (label.contains("transit")) return "🚌";
-        if (label.equals("Unknown")) return "❔";
-        if (label.equals("Unique distance")) return "✨";
-        if (label.equals("Activities recorded")) return "📍";
-        if (label.startsWith("Driving that")) return "🛣️";
-        return "•";
+    private int statIcon(String label) {
+        if (label.startsWith("By driving") || label.equals("Unique driving")) return R.drawable.ic_roadprints_car;
+        if (label.equals("On foot") || label.equals("Unique on foot")) return R.drawable.ic_roadprints_foot;
+        if (label.contains("train")) return R.drawable.ic_roadprints_train;
+        if (label.contains("ferry")) return R.drawable.ic_roadprints_ferry;
+        if (label.contains("plane")) return R.drawable.ic_roadprints_plane;
+        if (label.contains("cycling")) return R.drawable.ic_roadprints_bicycle;
+        if (label.contains("transit")) return R.drawable.ic_roadprints_bus;
+        if (label.equals("Unknown")) return R.drawable.ic_roadprints_unknown;
+        if (label.equals("Unique distance")) return R.drawable.ic_roadprints_star;
+        if (label.equals("Activities recorded")) return R.drawable.ic_roadprints_all;
+        return R.drawable.ic_roadprints_road;
     }
 
     private String formatMiles(double metres) {
@@ -1907,6 +1953,8 @@ public class ProgressActivity extends Activity {
     }
 
     private static final class DistanceStats {
+        boolean pending;
+        boolean summaryOnly;
         double drivingMetres;
         double footMetres;
         double trainMetres;
@@ -2004,3 +2052,4 @@ public class ProgressActivity extends Activity {
     }
 
 }
+

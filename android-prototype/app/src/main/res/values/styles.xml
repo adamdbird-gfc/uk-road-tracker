@@ -17,7 +17,7 @@
     <style name="RoadprintsCalendar" parent="@android:style/Widget.Material.DatePicker">
         <item name="android:headerBackground">#0B1C50</item>
         <item name="android:headerMonthTextAppearance">@style/RoadprintsCalendarHeader</item>
-        <item name="android:headerYearTextAppearance">@style/RoadprintsCalendarHeader</item>
+        <item name="android:headerYearTextAppearance">@style/RoadprintsCalendarYear</item>
         <item name="android:headerDayOfMonthTextAppearance">@style/RoadprintsCalendarHeader</item>
         <item name="android:calendarTextColor">@color/roadprints_calendar_day</item>
         <item name="android:dayOfWeekTextAppearance">@style/RoadprintsCalendarWeekday</item>
@@ -30,5 +30,8 @@
     </style>
     <style name="RoadprintsCalendarHeader" parent="@android:style/TextAppearance.Material.Title">
         <item name="android:textColor">#67D5CC</item>
+    </style>
+    <style name="RoadprintsCalendarYear" parent="@android:style/TextAppearance.Material.Title">
+        <item name="android:textColor">#FFFFFF</item>
     </style>
 </resources>

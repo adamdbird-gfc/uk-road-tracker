@@ -1193,17 +1193,40 @@ public class JourneyListActivity extends Activity {
                 (picker, year, month, day) -> selected.accept(java.time.LocalDate.of(year, month + 1, day)),
                 initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth());
         dialog.show();
+        android.view.ViewTreeObserver.OnGlobalLayoutListener headerStyle = () -> styleCalendarYear(dialog.getDatePicker());
+        dialog.getDatePicker().getViewTreeObserver().addOnGlobalLayoutListener(headerStyle);
+        dialog.setOnDismissListener(closed -> dialog.getDatePicker().getViewTreeObserver().removeOnGlobalLayoutListener(headerStyle));
+        styleCalendarYear(dialog.getDatePicker());
         styleCalendarButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), 0xFFF7C450, 0xFF0B1C50);
         styleCalendarButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), 0xFF233B78, Color.WHITE);
     }
 
+    private void styleCalendarYear(View view) {
+        if (view instanceof TextView && ((TextView)view).getText().toString().matches("[12][0-9]{3}")) {
+            ((TextView)view).setTextColor(Color.WHITE); view.setAlpha(1f);
+        }
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup)view;
+            for (int i = 0; i < group.getChildCount(); i++) styleCalendarYear(group.getChildAt(i));
+        }
+    }
+
     private void styleCalendarButton(Button button, int background, int foreground) {
         button.setTextColor(foreground); button.setTextSize(14); button.setMinHeight(dp(48));
+        button.setStateListAnimator(null); button.setElevation(0);
+        if (button.getParent() instanceof android.view.ViewGroup) {
+            android.view.ViewGroup parent = (android.view.ViewGroup)button.getParent();
+            parent.setClipChildren(false); parent.setClipToPadding(false);
+            parent.setPadding(parent.getPaddingLeft(), dp(12), parent.getPaddingRight(), dp(12));
+            android.view.ViewGroup.LayoutParams row = parent.getLayoutParams();
+            if (row != null) { row.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT; parent.setLayoutParams(row); }
+        }
         button.setPadding(dp(16), 0, dp(16), 0); button.setBackground(roundRect(background, background, dp(12)));
         android.view.ViewGroup.LayoutParams original = button.getLayoutParams();
         if (original instanceof android.view.ViewGroup.MarginLayoutParams) {
             android.view.ViewGroup.MarginLayoutParams margins = (android.view.ViewGroup.MarginLayoutParams)original;
-            margins.setMargins(dp(6), dp(8), dp(6), dp(8)); button.setLayoutParams(margins);
+            margins.height = dp(48);
+            margins.setMargins(dp(6), 0, dp(6), 0); button.setLayoutParams(margins);
         }
     }
 

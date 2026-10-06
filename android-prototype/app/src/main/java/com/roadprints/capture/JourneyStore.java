@@ -479,6 +479,7 @@ public final class JourneyStore {
         ReturnRecapStore.clear(context);
         DiscoveryReplayCache.clear(context);
         JourneyReplayActivity.clearSeed();
+        ProgressActivity.clearCachedStatistics(context);
         return deleted;
     }
 
