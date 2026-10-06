@@ -1,6 +1,7 @@
 package com.roadprints.capture;
 
 import android.app.Activity;
+import android.content.Context;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -1638,62 +1639,53 @@ public class MapActivity extends Activity {
     }
 
     private void startReplay(Set<String> ids) {
-        if (replayPreparing || mapView == null) return;
-        replayPreparing = true;
-        replayIds = new HashSet<>(ids);
-        if (recapCard != null) mapFrame.removeView(recapCard);
-        recapCard = null;
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.VERTICAL);
-        controls.setPadding(dp(16), dp(12), dp(16), dp(12));
-        controls.setBackground(roundRect(0xF50B1C50, dp(16)));
-        replayMessage = recapText("Finding what these journeys added…", 14, Color.WHITE, true);
-        controls.addView(replayMessage);
-        TextView skip = recapText("CANCEL REPLAY", 12, GOLD, true);
-        skip.setPadding(0, dp(12), 0, dp(8));
-        skip.setOnClickListener(view -> {
-            if (replayPreparing || "BACK TO MAIN MAP".contentEquals(skip.getText())) stopReplay(true);
-            else if (mapView != null) mapView.finishDiscoveryReplay();
-        });
-        controls.addView(skip);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
-        params.setMargins(dp(12), 0, dp(12), dp(36));
-        mapFrame.addView(controls, params);
-        replayMessage.setTag(controls);
-        final TextView expectedMessage = replayMessage;
-        ScreenDataLoader.execute(() -> {
-            try {
-                DiscoveryReplay replay = DiscoveryReplay.calculate(getApplicationContext(), ids);
-                mainHandler.post(() -> {
-                    if (isFinishing() || !active || replayMessage != expectedMessage) return;
-                    replayPreparing = false;
-                    if (replay.routes.isEmpty()) {
-                        replayMessage.setText("No matched road or walking route is available yet.");
-                        skip.setText("BACK TO MAIN MAP");
-                        return;
+        startActivity(new Intent(this, JourneyReplayActivity.class)
+                .putStringArrayListExtra("journey_ids", new ArrayList<>(ids)));
+    }
+
+    static final class ReplayContext {
+        final List<JSONArray> roads = new ArrayList<>(), motorways = new ArrayList<>(), aRoads = new ArrayList<>();
+        int points;
+    }
+
+    static ReplayContext readReplayContext(Context context, DiscoveryReplay trace,
+            java.util.function.BooleanSupplier cancelled) throws Exception {
+        ReplayContext output = new ReplayContext();
+        double west=180,east=-180,south=90,north=-90;
+        for (DiscoveryReplay.Section section : trace.routes) for(int i=0;i<section.points.length();i++) {
+            JSONArray p=section.points.optJSONArray(i);if(p==null)continue;
+            west=Math.min(west,p.optDouble(0));east=Math.max(east,p.optDouble(0));
+            south=Math.min(south,p.optDouble(1));north=Math.max(north,p.optDouble(1));
+        }
+        final double w=west-.03,e=east+.03,s=south-.02,n=north+.02;
+        JourneyStore.forEachRoadEvidence(context,cancelled,journey->{
+            if(!"complete".equals(journey.optString("processing_status")))return;
+            JSONObject result=journey.optJSONObject("processing_result");if(result==null)return;
+            String[] keys={"road_geojson","motorway_geojson","a_road_geojson"};
+            List<List<JSONArray>> targets=java.util.Arrays.asList(output.roads,output.motorways,output.aRoads);
+            for(int k=0;k<keys.length;k++) {
+                JSONObject collection=result.optJSONObject(keys[k]);
+                JSONArray features=collection==null?null:collection.optJSONArray("features");if(features==null)continue;
+                for(int f=0;f<features.length();f++) {
+                    JSONObject feature=features.optJSONObject(f);
+                    if(feature==null||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                    for(JSONArray line:DiscoveryReplay.lines(feature.optJSONObject("geometry"))) {
+                        JSONArray retained=new JSONArray();
+                        for(int i=0;i<line.length();i++) {
+                            JSONArray p=line.optJSONArray(i);
+                            boolean nearby=p!=null&&p.optDouble(0)>=w&&p.optDouble(0)<=e&&p.optDouble(1)>=s&&p.optDouble(1)<=n;
+                            if(!nearby||output.points>=45000||output.roads.size()+output.motorways.size()+output.aRoads.size()>=2000) {
+                                if(retained.length()>1)targets.get(k).add(retained);
+                                retained=new JSONArray();continue;
+                            }
+                            retained.put(p);output.points++;
+                        }
+                        if(retained.length()>1)targets.get(k).add(retained);
                     }
-                    beforeReplayCamera = mapView.cameraState();
-                    replayMessage.setText("Your journeys are growing your map…");
-                    skip.setText("SKIP ANIMATION");
-                    mapView.startDiscoveryReplay(replay, () -> {
-                        if (replayMessage != expectedMessage) return;
-                        String summary = replay.labels.isEmpty()
-                                ? "Your matched journeys are on the map. No new road discoveries were confirmed."
-                                : "Your discoveries: " + android.text.TextUtils.join(" · ", replay.labels);
-                        if (summary.length() > 280) summary = summary.substring(0, 277) + "…";
-                        skip.setText("BACK TO MAIN MAP");
-                        replayMessage.setText(summary + (replay.simplified ? "\nReplay simplified for performance." : ""));
-                    });
-                });
-            } catch (Exception error) {
-                mainHandler.post(() -> {
-                    if (replayMessage != expectedMessage) return;
-                    replayPreparing = false;
-                    replayMessage.setText("Discoveries could not be prepared. Your saved map is still available.");
-                    skip.setText("BACK TO MAIN MAP");
-                });
+                }
             }
         });
+        return output;
     }
 
     private void stopReplay(boolean showRecap) {

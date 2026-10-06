@@ -27,6 +27,7 @@
         <activity android:name=".CollectionsActivity" android:exported="false" />
         <activity android:name=".GrowingActivity" android:exported="false" />
         <activity android:name=".MapActivity" android:exported="false" />
+        <activity android:name=".JourneyReplayActivity" android:exported="false" />
         <activity android:name=".JourneyMapEditorActivity" android:exported="false" />
         <activity android:name=".JourneyListActivity" android:exported="false" />
         <activity android:name=".TimelineImportActivity" android:exported="false" />
