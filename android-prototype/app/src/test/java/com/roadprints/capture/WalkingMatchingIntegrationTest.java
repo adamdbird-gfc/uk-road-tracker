@@ -58,4 +58,32 @@ public class WalkingMatchingIntegrationTest {
         assertEquals(45,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),.01);
         assertTrue(stored.getString("error_summary").contains("substantially longer"));
     }
+
+    @Test public void previouslyRejectedSamplingGapIsPreparedAndMatchedWithoutDiscardingRawData() throws Exception {
+        JSONObject walk=walk();
+        JSONArray coordinates=new JSONArray(),samples=new JSONArray();
+        int[] metres={0,10,15,150,160},seconds={0,10,190,200,210};
+        for(int i=0;i<metres.length;i++) {
+            double longitude=metres[i]/111195.0;
+            coordinates.put(new JSONArray().put(longitude).put(0));
+            samples.put(new JSONArray().put(longitude).put(0).put(5).put(100000+seconds[i]*1000).put(1));
+        }
+        walk.put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates))
+                .put("raw_capture_samples",samples).put("distance_meters",0).put("original_distance_meters",2000)
+                .put("capture_validation",new JSONObject().put("version",1).put("timing_available",true).put("resolved",false))
+                .put("processing_status","failed");
+        JourneyStore.save(app,walk);AtomicInteger submitted=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{
+            submitted.set(payload.getJSONArray("points").length());
+            return result(165).put("input_points",4).put("matched_tracepoints",4);
+        });
+        coordinator.start("walk");await();
+        assertEquals(1,coordinator.snapshot().matched);assertEquals(4,submitted.get());
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals(165,stored.getDouble("distance_meters"),.01);
+        assertEquals(2000,stored.getDouble("original_distance_meters"),.01);
+        assertEquals(5,stored.getJSONArray("raw_capture_samples").length());
+        assertEquals(coordinates.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+        assertEquals("validated_walking_match",stored.getString("distance_source"));
+    }
 }

@@ -5,6 +5,24 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class FootTraceValidatorTest {
+    @Test public void inconsistentFixAfterSamplingPauseDoesNotStrandTheRemainingWalk() {
+        List<FootTraceValidator.Sample> points=Arrays.asList(p(0,0,0,5,0),p(10,0,10,5,1),
+                p(15,0,190,5,2),p(150,0,200,5,3),p(160,0,210,5,4));
+        FootTraceValidator.Result result=FootTraceValidator.validate(points);
+        assertTrue(result.resolved);assertTrue(result.timed);assertEquals(4,result.samples.size());
+        assertEquals(160,result.distance,.1);assertEquals(4,result.samples.get(3).index);
+        assertFalse(result.samples.stream().anyMatch(point->point.index==2));
+    }
+    @Test public void samplingPauseDoesNotRemoveReliableCornersOrAcceptTeleportation() {
+        List<FootTraceValidator.Sample> corner=Arrays.asList(p(0,0,0,3,0),p(100,0,180,3,1),
+                p(100,100,210,3,2),p(110,100,220,3,3));
+        FootTraceValidator.Result turn=FootTraceValidator.validate(corner);
+        assertTrue(turn.resolved);assertEquals(4,turn.samples.size());assertEquals(210,turn.distance,.1);
+        List<FootTraceValidator.Sample> teleport=Arrays.asList(p(0,0,0,5,0),p(10000,0,180,5,1),
+                p(10010,0,190,5,2),p(10020,0,200,5,3));
+        FootTraceValidator.Result failed=FootTraceValidator.validate(teleport);
+        assertFalse(failed.resolved);assertEquals(teleport,failed.samples);
+    }
     @Test public void twoTimedEndpointsAreValidatedAndImpossiblePairsAreUnresolved() {
         FootTraceValidator.Result good=FootTraceValidator.validate(Arrays.asList(p(0,0,0,5,0),p(10,0,10,5,1)));
         assertTrue(good.timed);assertTrue(good.resolved);
