@@ -37,7 +37,8 @@ final class FootTraceValidator {
     static Result validate(List<Sample> input) {
         int n=input.size(), timed=0;
         for(Sample point:input) if(point.time>0) timed++;
-        if(n<3 || timed<n-1) return new Result(new ArrayList<>(input),n,false);
+        if(n<2 || timed==0 || timed<n-1 || (n==2 && timed<2))
+            return new Result(new ArrayList<>(input),n,false);
         boolean[] suspect=new boolean[n];
         for(int i=1;i<n-1;i++) suspect[i]=!plausible(input.get(i-1),input.get(i))
                 || !plausible(input.get(i),input.get(i+1));

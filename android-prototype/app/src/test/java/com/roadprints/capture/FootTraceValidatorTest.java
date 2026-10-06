@@ -5,6 +5,12 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class FootTraceValidatorTest {
+    @Test public void twoTimedEndpointsAreValidatedAndImpossiblePairsAreUnresolved() {
+        FootTraceValidator.Result good=FootTraceValidator.validate(Arrays.asList(p(0,0,0,5,0),p(10,0,10,5,1)));
+        assertTrue(good.timed);assertTrue(good.resolved);
+        FootTraceValidator.Result bad=FootTraceValidator.validate(Arrays.asList(p(0,0,0,5,0),p(10000,0,1,5,1)));
+        assertTrue(bad.timed);assertFalse(bad.resolved);
+    }
     @Test public void unrecoverableGapPreservesEvidenceAndDoesNotClaimValidation() {
         List<FootTraceValidator.Sample> points=Arrays.asList(p(0,0,0,5,0),p(10000,0,1,5,1),
                 p(10010,0,2,5,2),p(10020,0,3,5,3),p(10030,0,4,5,4));

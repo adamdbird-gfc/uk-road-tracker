@@ -44,7 +44,7 @@ public class WalkingJourneyPreparationTest {
                 .put("walking_validation",new JSONObject().put("version",1).put("source_points",3)
                         .put("station_tail_points",1).put("station_arrival_time_utc",java.time.Instant.ofEpochMilli(110000).toString()));
         WalkingJourneyPreparation.Prepared result=WalkingJourneyPreparation.prepare(app,journey);
-        assertEquals(2,result.points.length());assertEquals(1,result.details.getInt("station_tail_points"));
+        assertTrue(result.validated);assertEquals(2,result.points.length());assertEquals(1,result.details.getInt("station_tail_points"));
     }
     @Test public void nativeWalkUsesSavedEvidenceWithoutChangingOriginalGeometry() throws Exception {
         Context app=RuntimeEnvironment.getApplication();
