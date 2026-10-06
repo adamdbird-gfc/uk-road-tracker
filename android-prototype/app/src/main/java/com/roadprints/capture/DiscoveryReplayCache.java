@@ -51,6 +51,7 @@ final class DiscoveryReplayCache {
                 if(valid(app,version,epoch)) {
                     JSONObject saved=PersistentScreenCache.read(app,diskKey,version);
                     result=saved==null?null:DiscoveryReplay.fromJson(saved);
+                    if(result==null&&saved!=null)result=DiscoveryReplay.upgradeCached(app,selected,saved);
                     if(result==null)result=DiscoveryReplay.calculate(app,selected,()->!valid(app,version,epoch));
                     if(valid(app,version,epoch)&&result!=null) {
                         synchronized(DiscoveryReplayCache.class) {

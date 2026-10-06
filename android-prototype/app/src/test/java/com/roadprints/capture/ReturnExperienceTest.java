@@ -232,6 +232,68 @@ public class ReturnExperienceTest {
         java.lang.reflect.Field replay=RoutePreviewView.class.getDeclaredField("discoveryReplay");replay.setAccessible(true);assertSame(enriched,replay.get(map));
     }
 
+    @Test public void splitNamedRoadHighlightsAllFeaturesAndSeparateMultilineParts() throws Exception {
+        JSONObject journey=row("split-road","android_activity_capture",4000);
+        JSONArray first=new JSONArray("[[-0.1,51.5],[-0.11,51.51]]");
+        JSONArray second=new JSONArray("[[-0.11,51.51],[-0.12,51.52],[-0.13,51.53]]");
+        JSONArray third=new JSONArray("[[-0.2,51.6],[-0.21,51.61]]");
+        JSONArray fourth=new JSONArray("[[-0.3,51.7],[-0.31,51.71]]");
+        JSONObject multi=roadFeature("MISKIN WAY",third);
+        multi.put("geometry",new JSONObject().put("type","MultiLineString")
+                .put("coordinates",new JSONArray().put(third).put(fourth)));
+        JSONArray features=new JSONArray().put(roadFeature("Miskin Way",first))
+                .put(roadFeature("  Miskin   Way  ",second)).put(multi);
+        finishJourney(journey,features,new JSONArray().put(roadFeature("Miskin Way",first)));
+        JourneyStore.save(app,journey);
+        DiscoveryReplay replay=DiscoveryReplay.calculate(app,Collections.singleton("split-road"));
+        assertEquals(Collections.singleton("Miskin Way"),replay.labels);
+        assertEquals(4,replay.discoveries.size());
+        assertEquals(first.toString(),replay.discoveries.get(0).points.toString());
+        assertEquals(second.toString(),replay.discoveries.get(1).points.toString());
+        assertEquals(third.toString(),replay.discoveries.get(2).points.toString());
+        assertEquals(fourth.toString(),replay.discoveries.get(3).points.toString());
+    }
+    @Test public void newRoadAcrossSelectedJourneysKeepsEveryPieceAndIsAnnouncedOnce() throws Exception {
+        JSONObject a=row("piece-a","android_activity_capture",4000),b=row("piece-b","android_activity_capture",6000);
+        JSONObject first=roadFeature("Miskin Way",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        JSONObject second=roadFeature("Miskin Way",new JSONArray("[[-0.11,51.51],[-0.12,51.52]]"));
+        finishJourney(a,new JSONArray().put(first),new JSONArray().put(first));
+        finishJourney(b,new JSONArray().put(second),new JSONArray().put(second));
+        JourneyStore.save(app,a);JourneyStore.save(app,b);
+        Set<String> ids=new HashSet<>(Arrays.asList("piece-a","piece-b"));
+        DiscoveryReplay replay=DiscoveryReplay.calculate(app,ids);
+        assertEquals(Collections.singleton("Miskin Way"),replay.labels);assertEquals(2,replay.discoveries.size());
+        JSONObject old=row("previous-discovery","android_activity_capture",2000);
+        finishJourney(old,new JSONArray().put(first),new JSONArray().put(first));JourneyStore.save(app,old);
+        replay=DiscoveryReplay.calculate(app,ids);assertTrue(replay.labels.isEmpty());assertTrue(replay.discoveries.isEmpty());
+    }
+    @Test public void removedSplitRoadIsExcludedAndOldIncompleteHighlightCachesAreRejected() throws Exception {
+        JSONObject journey=row("split-removed","android_activity_capture",4000);
+        JSONObject first=roadFeature("Miskin Way",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        JSONObject second=roadFeature("Miskin Way",new JSONArray("[[-0.11,51.51],[-0.12,51.52]]"));
+        finishJourney(journey,new JSONArray().put(first).put(second),new JSONArray().put(first).put(second));
+        journey.put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("name:miskin way")));
+        JourneyStore.save(app,journey);
+        DiscoveryReplay replay=DiscoveryReplay.calculate(app,Collections.singleton("split-removed"));
+        assertTrue(replay.labels.isEmpty());assertTrue(replay.discoveries.isEmpty());
+        assertNull(DiscoveryReplay.fromJson(replay.toJson().put("format",1)));
+    }
+
+    @Test public void verifiedCachedDiscoveryExpandsWithoutScanningEarlierJourneys() throws Exception {
+        JSONObject journey=row("upgrade-split","android_activity_capture",4000);
+        JSONArray first=new JSONArray("[[-0.1,51.5],[-0.11,51.51]]");
+        JSONArray second=new JSONArray("[[-0.11,51.51],[-0.12,51.52]]");
+        JSONObject a=roadFeature("Miskin Way",first),b=roadFeature("Miskin Way",second);
+        finishJourney(journey,new JSONArray().put(a).put(b),new JSONArray().put(a).put(b));JourneyStore.save(app,journey);
+        // An unrelated corrupt archive entry proves migration uses only the selected match.
+        java.nio.file.Files.write(new java.io.File(app.getFilesDir(),"journey_unrelated.json").toPath(),"invalid".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        DiscoveryReplay old=DiscoveryReplay.fromJourney(journey);old.labels.add("Miskin Way");
+        old.discoveries.add(new DiscoveryReplay.Section(first,0xFF101820));
+        DiscoveryReplay updated=DiscoveryReplay.upgradeCached(app,Collections.singleton("upgrade-split"),old.toJson().put("format",1));
+        assertNotNull(updated);assertEquals(Collections.singleton("Miskin Way"),updated.labels);
+        assertEquals(2,updated.discoveries.size());assertEquals(second.toString(),updated.discoveries.get(1).points.toString());
+    }
+
     private JSONObject motorway(String id,JSONArray coordinates) throws Exception {
         JSONObject feature=new JSONObject().put("properties",new JSONObject().put("road_ref","M25"))
                 .put("geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates));
