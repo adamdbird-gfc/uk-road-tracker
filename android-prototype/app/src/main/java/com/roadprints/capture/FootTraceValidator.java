@@ -49,8 +49,9 @@ final class FootTraceValidator {
             for(int before=Math.max(0,i-12);before<i;before++) {
                 if(!Double.isFinite(costs[before]) || !plausible(input.get(before),input.get(i))) continue;
                 double discard=0; boolean allowed=true;
-                if(i-before>1 && (input.get(i).time-input.get(before).time>120000
-                        || input.get(before).time<=0)) continue;
+                if(i-before>1 && (input.get(before).time<=0
+                        || (input.get(i).time-input.get(before).time>120000
+                        && !recoverableSamplingGap(input,suspect,before,i)))) continue;
                 for(int skipped=before+1;skipped<i;skipped++) {
                     Sample point=input.get(skipped);
                     double uncertainty=Math.min(30,Math.max(5,point.accuracy*.6));
@@ -85,6 +86,20 @@ final class FootTraceValidator {
         double limit=Math.max(4.5,Math.min(10,reported*1.5));
         double allowance=Math.min(20,(Math.max(0,a.accuracy)+Math.max(0,b.accuracy))*.3);
         return metres(a,b)<=limit*seconds+allowance;
+    }
+
+    private static boolean recoverableSamplingGap(List<Sample> input, boolean[] suspect,
+                                                  int before, int after) {
+        // A delayed/inconsistent fix after a real sampling pause must not
+        // strand the rest of a walk. Bypass at most two suspect observations;
+        // ordinary recorded movement and reliable turns remain protected.
+        if(after-before>3) return false;
+        for(int at=before+1;at<after;at++) if(!suspect[at]) return false;
+        long largestGap=0;
+        for(int at=before+1;at<=after;at++)
+            largestGap=Math.max(largestGap,input.get(at).time-input.get(at-1).time);
+        long span=input.get(after).time-input.get(before).time;
+        return largestGap>=120000 && largestGap>=span*.8;
     }
 
     static double metres(Sample a, Sample b) {
