@@ -30,6 +30,17 @@ public class DataManagementActivity extends Activity {
         super.onCreate(state);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(24),dp(24),dp(24),dp(24));root.setBackgroundColor(NAVY);
         LinearLayout brand=RoadprintsHeader.create(this);brand.setPadding(0,0,0,dp(22));root.addView(brand);
+        if (getIntent().getBooleanExtra("onboarding_restore",false)) {
+            root.addView(text("RESTORE YOUR MAP",13,TEAL,true));
+            root.addView(text("Welcome back.",32,Color.WHITE,true));
+            TextView copy=text("Choose a Roadprints backup to bring back your saved journeys and progress.",16,MUTED,false);
+            copy.setPadding(0,dp(12),0,dp(24));root.addView(copy);
+            addAction(root,"CHOOSE ROADPRINTS BACKUP","Select the ZIP file you previously exported.",false,this::chooseRestore);
+            status=text("",14,TEAL,false);root.addView(status);
+            RoadprintsHeader.installUtilityPage(this,root,"BACK TO WELCOME",this::finish);
+            if(state==null) chooseRestore();
+            return;
+        }
         root.addView(text("UTILITIES",13,TEAL,true));root.addView(text("Data management",32,Color.WHITE,true));
         TextView intro=text("Import Timeline data again or manage journeys saved on this device.",15,MUTED,false);intro.setPadding(0,dp(8),0,dp(20));root.addView(intro);
         TextView importHeading=text("Import data",19,Color.WHITE,true);importHeading.setPadding(0,dp(12),0,dp(8));root.addView(importHeading);
@@ -100,6 +111,8 @@ public class DataManagementActivity extends Activity {
             int restored=journeys;
             main.post(()->{
                 status.setText("Backup restored.");
+                if(getIntent().getBooleanExtra("onboarding_restore",false))
+                    getSharedPreferences("roadprints_onboarding",MODE_PRIVATE).edit().putBoolean("complete",true).apply();
                 Intent restart=new Intent(this,OnboardingActivity.class);
                 restart.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(restart);
@@ -125,4 +138,5 @@ public class DataManagementActivity extends Activity {
     private TextView text(String s,float z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(null,android.graphics.Typeface.BOLD);return v;}
     private int dp(int x){return Math.round(x*getResources().getDisplayMetrics().density);}
 }
+
 
