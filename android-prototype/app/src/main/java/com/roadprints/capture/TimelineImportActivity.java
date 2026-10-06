@@ -38,6 +38,7 @@ public class TimelineImportActivity extends Activity {
     private TextView capture;
     private TextView helpBody;
     private boolean serviceOnly;
+    private LinearLayout importSummary;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
 
     @Override
@@ -56,19 +57,13 @@ public class TimelineImportActivity extends Activity {
     }
 
     private void buildScreen() {
-        ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(0xFF0B1C50);
-
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 48, 32, 36);
-        root.setOnApplyWindowInsetsListener((view, insets) -> {
-            int top = insets.getSystemWindowInsetTop();
-            int bottom = insets.getSystemWindowInsetBottom();
-            view.setPadding(32, 48 + top, 32, 36 + bottom);
-            return insets;
-        });
-        root.requestApplyInsets();
+        root.setPadding(dp(24), dp(24), dp(24), dp(24));
+        LinearLayout brand = RoadprintsHeader.create(this);
+        brand.setPadding(0, 0, 0, dp(22));
+        root.addView(brand);
+        root.addView(text("DATA MANAGEMENT", 13, 0xFF67D5CC, true));
 
         TextView title = text(serviceOnly ? "Service station visits" : "Timeline data",
                 30, Color.WHITE, true);
@@ -79,25 +74,32 @@ public class TimelineImportActivity extends Activity {
                     + "Saved journeys and route matching will be left untouched."
                 : "Choose your Google Timeline JSON file. It will be validated and imported into your local Roadprints archive.",
                 17, 0xFFD3DCED, false);
-        intro.setPadding(0, 12, 0, 26);
+        intro.setPadding(0, dp(8), 0, dp(22));
         root.addView(intro);
 
         choose = action(serviceOnly ? "ADD TIMELINE FILE" : "CHOOSE TIMELINE JSON");
         choose.setOnClickListener(v -> chooseFile());
-        root.addView(choose, new LinearLayout.LayoutParams(-1, 58));
+        root.addView(choose, new LinearLayout.LayoutParams(-1, -2));
 
         filename = text("No file selected.", 15, 0xFF9FB3D0, false);
-        filename.setPadding(0, 20, 0, 0);
+        filename.setPadding(0, dp(14), 0, 0);
         root.addView(filename);
 
         status = text(
                 "Nothing has been imported yet.",
                 16, 0xFF67D5CC, false);
-        status.setPadding(0, 16, 0, 0);
+        status.setPadding(0, dp(16), 0, 0);
         root.addView(status);
+        importSummary = new LinearLayout(this);
+        importSummary.setOrientation(LinearLayout.VERTICAL);
+        importSummary.setVisibility(View.GONE);
+        LinearLayout.LayoutParams summaryParams = new LinearLayout.LayoutParams(-1, -2);
+        summaryParams.topMargin = dp(16);
+        root.addView(importSummary, summaryParams);
 
         TextView help = text("▸ Where do I find my Timeline file?", 16, 0xFF67D5CC, true);
-        help.setPadding(0, 24, 0, 12);
+        help.setPadding(0, dp(24), 0, dp(12));
+        help.setMinHeight(dp(48));
         help.setClickable(true);
         help.setFocusable(true);
         root.addView(help);
@@ -106,7 +108,7 @@ public class TimelineImportActivity extends Activity {
                 + "Select the JSON file here. Roadprints reads and saves it on this device.",
                 14, 0xFFD3DCED, false);
         helpBody.setVisibility(View.GONE);
-        helpBody.setPadding(0, 0, 0, 12);
+        helpBody.setPadding(0, 0, 0, dp(12));
         root.addView(helpBody);
         help.setOnClickListener(v -> {
             boolean show = helpBody.getVisibility() != View.VISIBLE;
@@ -126,12 +128,11 @@ public class TimelineImportActivity extends Activity {
             }
             finish();
         });
-        LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, 58);
-        captureParams.setMargins(0, 28, 0, 0);
+        LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, -2);
+        captureParams.setMargins(0, dp(24), 0, 0);
         root.addView(capture, captureParams);
 
-        scroll.addView(root);
-        setContentView(scroll);
+        RoadprintsHeader.installUtilityPage(this, root, "BACK TO DATA MANAGEMENT", this::finish);
     }
 
     private void chooseFile() {
@@ -158,6 +159,9 @@ public class TimelineImportActivity extends Activity {
         }
 
         filename.setText("Selected: " + displayName(uri));
+        capture.setVisibility(View.GONE);
+        importSummary.removeAllViews();
+        importSummary.setVisibility(View.GONE);
         setBusy(true);
         status.setText("Reading Timeline file locally…");
 
@@ -175,6 +179,7 @@ public class TimelineImportActivity extends Activity {
                 status.setText(finalResult.message);
                 if (finalResult.message.startsWith("Import complete:")
                         || finalResult.message.startsWith("Service import complete:")) {
+                    showImportSummary(finalResult);
                     capture.setVisibility(View.VISIBLE);
                     capture.setEnabled(true);
                 }
@@ -276,10 +281,13 @@ public class TimelineImportActivity extends Activity {
         int matchedServiceStations =
                 ServiceStationStore.recordConfirmedTimelineVisits(this, confirmedTimelineVisits);
         if (serviceOnly) {
-            return new ImportResult(0, 0, 0,
-                    "Service import complete: " + confirmedTimelineVisits.length()
-                            + " Timeline place visits saved; " + matchedServiceStations
+            ImportResult result = new ImportResult(0, 0, 0,
+                    "Service import complete: " + count(confirmedTimelineVisits.length())
+                            + " Timeline place visits saved; " + count(matchedServiceStations)
                             + " service stations matched. Saved journeys were not changed.");
+            result.visitsSaved = confirmedTimelineVisits.length();
+            result.stationsMatched = matchedServiceStations;
+            return result;
         }
         semanticPathPoints.sort((left, right) -> Long.compare(left.timeMs, right.timeMs));
         int semanticActivitiesProcessed = 0;
@@ -303,9 +311,9 @@ public class TimelineImportActivity extends Activity {
                 added, skipped, invalid, journeyRecordsParsed,
                 journeysWithIntermediateTrace, sourceRoutePointsFound,
                 String.format(Locale.UK,
-                        "Import complete: %d added, %d already present, %d unsupported or insufficient. "
-                                + "Timeline paths: %d route points across %d journeys; "
-                                + "%d journeys contain intermediate points.",
+                        "Import complete: %,d added, %,d already present, %,d unsupported or insufficient. "
+                                + "Timeline paths: %,d route points across %,d journeys; "
+                                + "%,d journeys contain intermediate points.",
                         added, skipped, invalid, sourceRoutePointsFound,
                         journeyRecordsParsed, journeysWithIntermediateTrace));
     }
@@ -448,7 +456,7 @@ public class TimelineImportActivity extends Activity {
     private void publishImportProgress(int found, int added, int skipped, int invalid) {
         if (found == 1 || found % 10 == 0) {
             publishStatus(String.format(Locale.UK,
-                    "Imported %d journeys locally… %d new, %d already present.",
+                    "Imported %,d journeys locally… %,d new, %,d already present.",
                     found, added, skipped));
         }
     }
@@ -501,6 +509,8 @@ public class TimelineImportActivity extends Activity {
     }
 
     private static final class ImportCounts {
+        int visitsSaved;
+        int stationsMatched;
         final int added;
         final int skipped;
         final int invalid;
@@ -897,8 +907,8 @@ public class TimelineImportActivity extends Activity {
     private void setActionState(TextView button, boolean busy) {
         button.setEnabled(!busy);
         button.setAlpha(busy ? 0.72f : 1f);
-        button.setTextColor(busy ? 0xFF5D5D5D : 0xFF0B1C50);
-        button.setBackgroundColor(busy ? 0xFF9E9E9E : 0xFFF7C450);
+        button.setTextColor(busy ? 0xFFB9C5D8 : Color.WHITE);
+        button.setBackground(rounded(busy ? 0xFF233B78 : 0xFF35558F, 0xFF496096));
     }
 
     private String formatBytes(long bytes) {
@@ -913,13 +923,72 @@ public class TimelineImportActivity extends Activity {
     }
 
     private TextView action(String label) {
-        TextView button = text(label, 15, 0xFF0B1C50, true);
+        android.widget.Button button = new android.widget.Button(this);
+        button.setText(label);
+        button.setTextSize(15);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setTextColor(Color.WHITE);
         button.setGravity(Gravity.CENTER);
-        button.setBackgroundColor(0xFFF7C450);
+        button.setMinHeight(dp(58));
+        button.setPadding(dp(18), dp(12), dp(18), dp(12));
+        button.setBackground(rounded(0xFF35558F, 0xFF496096));
         button.setClickable(true);
         button.setFocusable(true);
         return button;
     }
+
+    private void showImportSummary(ImportResult result) {
+        status.setText(serviceOnly ? "Service import complete" : "Import complete");
+        importSummary.removeAllViews();
+        if (serviceOnly) {
+            addSummaryRow("Timeline visits saved", result.visitsSaved,
+                    "Service stations matched", result.stationsMatched);
+        } else {
+            addSummaryRow("Journeys added", result.added, "Already present", result.skipped);
+            addSummaryRow("Unsupported or insufficient", result.invalid, "Route points", result.sourceRoutePoints);
+            addSummaryRow("Journeys with paths", result.recordsParsed,
+                    "With intermediate points", result.journeysWithIntermediateTrace);
+        }
+        importSummary.setVisibility(View.VISIBLE);
+    }
+
+    private void addSummaryRow(String firstLabel, int firstValue, String secondLabel, int secondValue) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams left = new LinearLayout.LayoutParams(0, -1, 1);
+        left.rightMargin = dp(6);
+        LinearLayout.LayoutParams right = new LinearLayout.LayoutParams(0, -1, 1);
+        right.leftMargin = dp(6);
+        row.addView(summaryTile(firstLabel, firstValue), left);
+        row.addView(summaryTile(secondLabel, secondValue), right);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(12);
+        importSummary.addView(row, params);
+    }
+
+    private LinearLayout summaryTile(String label, int value) {
+        LinearLayout tile = new LinearLayout(this);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setPadding(dp(16), dp(16), dp(16), dp(16));
+        tile.setBackground(rounded(0xFF233B78, 0xFF35558F));
+        tile.addView(text(count(value), 24, 0xFF67D5CC, true));
+        TextView title = text(label, 13, 0xFFD3DCED, false);
+        title.setPadding(0, dp(6), 0, 0);
+        tile.addView(title);
+        return tile;
+    }
+
+    private static String count(int value) { return String.format(Locale.UK, "%,d", value); }
+
+    private android.graphics.drawable.GradientDrawable rounded(int colour, int border) {
+        android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
+        shape.setColor(colour);
+        shape.setCornerRadius(dp(14));
+        shape.setStroke(dp(1), border);
+        return shape;
+    }
+
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
     private TextView text(String value, float size, int colour, boolean bold) {
         TextView view = new TextView(this);

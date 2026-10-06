@@ -119,4 +119,39 @@ public class MotorwayProgressCalculatorTest {
                 summary.missingReferenceRoads.isEmpty());
     }
 
+
+    @Test public void statisticsModeKeepsCoverageAndOmitsMapSections() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JSONArray anchors = new JSONArray().put(new JSONArray().put(-0.2305338).put(51.6869996))
+                .put(new JSONArray().put(-0.2313622).put(51.6874356))
+                .put(new JSONArray().put(-0.2450000).put(51.7000000))
+                .put(new JSONArray().put(-0.2460000).put(51.7010000));
+        JSONObject cache = new JSONObject().put("roads", new JSONObject().put("M25",
+                new JSONObject().put("total_km", 234.8).put("anchors", anchors)));
+        JSONArray route = new JSONArray().put(anchors.getJSONArray(0))
+                .put(anchors.getJSONArray(1));
+        JSONObject geometry = new JSONObject().put("type", "LineString")
+                .put("coordinates", route);
+        JSONObject feature = new JSONObject().put("type", "Feature")
+                .put("properties", new JSONObject().put("road_ref", "M25")
+                        .put("distance_m", 1000))
+                .put("geometry", geometry);
+        JSONObject journey = new JSONObject().put("journey_id", "journey-1")
+                .put("mode", "driving").put("processing_status", "complete")
+                .put("processing_result", new JSONObject().put("motorway_geojson",
+                        new JSONObject().put("type", "FeatureCollection")
+                                .put("features", new JSONArray().put(feature))));
+
+
+        MotorwayProgressCalculator map=new MotorwayProgressCalculator(app,cache);
+        MotorwayProgressCalculator stats=new MotorwayProgressCalculator(app,cache,false,false);
+        map.addJourney(journey);stats.addJourney(journey);
+        MotorwayProgressCalculator.Summary mapped=map.finish(),counted=stats.finish();
+        assertEquals(mapped.ukUniqueKm(),counted.ukUniqueKm(),0.000001);
+        assertEquals(mapped.roads.get(0).percent(),counted.roads.get(0).percent(),0.000001);
+        assertTrue(counted.roads.get(0).coveredMapSections.isEmpty());
+        assertTrue(counted.roads.get(0).incompleteMapSections.isEmpty());
+        assertFalse(mapped.roads.get(0).coveredMapSections.isEmpty());
+        assertSame(counted,stats.finish());assertSame(mapped,map.finish());
+    }
 }
