@@ -43,7 +43,7 @@ public class RoutePreviewView extends View {
     private static final ExecutorService TILE_EXECUTOR = Executors.newFixedThreadPool(3);
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
-    private final JSONArray coordinates;
+    private JSONArray coordinates;
     private final List<JSONArray> matchedSegments;
     private final List<JSONArray> routeExtensions = new ArrayList<>();
     private final List<JSONArray> motorwaySegments = new ArrayList<>();
@@ -114,6 +114,17 @@ public class RoutePreviewView extends View {
     public RoutePreviewView(
             Context context, List<JSONArray> routeSections, boolean interactive) {
         this(context, null, routeSections, interactive, false, false);
+    }
+
+    /** Refresh an open journey aperture after matching without rebuilding its form. */
+    public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
+        this.coordinates = coordinates;
+        matchedSegments.clear();
+        if (sections != null) for (JSONArray section : sections)
+            if (hasRoutePoints(section)) matchedSegments.add(section);
+        coordinatesValid = hasRoutePoints(coordinates) || !matchedSegments.isEmpty();
+        routeFitPending = coordinatesValid;
+        invalidate();
     }
 
     public interface OnRouteEdgeTapListener {
@@ -1361,5 +1372,6 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
 
 
