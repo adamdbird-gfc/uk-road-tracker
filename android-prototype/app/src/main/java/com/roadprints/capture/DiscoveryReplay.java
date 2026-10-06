@@ -26,6 +26,10 @@ final class DiscoveryReplay {
     boolean simplified;
 
     static DiscoveryReplay calculate(Context context, Set<String> ids) throws Exception {
+        return calculate(context, ids, () -> false);
+    }
+
+    static DiscoveryReplay calculate(Context context, Set<String> ids, java.util.function.BooleanSupplier cancelled) throws Exception {
         DiscoveryReplay output = new DiscoveryReplay();
         List<JSONObject> candidates = new ArrayList<>();
         long first = Long.MAX_VALUE;
@@ -59,20 +63,17 @@ final class DiscoveryReplay {
         Set<String> priorNames = new HashSet<>();
         // Finish each calculator before constructing the next to release spatial indexes.
         MotorwayProgressCalculator oldMotorways = new MotorwayProgressCalculator(context, null, false, false);
-        JourneyStore.forEach(context, journey -> {
-            if (!ids.contains(journey.optString("journey_id")) && older(journey, cutoff))
-                oldMotorways.addJourney(journey, candidateRefs);
-        });
-        for (MotorwayProgressCalculator.Road road : oldMotorways.finish().roads)
-            priorMotorways.put(road.id, new HashSet<>(road.coveredSections));
         ARoadProgressCalculator oldARoads = new ARoadProgressCalculator(context, false);
-        JourneyStore.forEach(context, journey -> {
+        JourneyStore.forEachRoadEvidence(context, cancelled, journey -> {
             if (!ids.contains(journey.optString("journey_id")) && older(journey, cutoff)) {
+                oldMotorways.addJourney(journey, candidateRefs);
                 oldARoads.addJourney(journey, candidateRefs);
                 if ("complete".equals(journey.optString("processing_status")))
                     priorNames.addAll(localFeatures(journey).keySet());
             }
         });
+        for (MotorwayProgressCalculator.Road road : oldMotorways.finish().roads)
+            priorMotorways.put(road.id, new HashSet<>(road.coveredSections));
         for (ARoadProgressCalculator.Road road : oldARoads.finish().roads)
             priorARoads.put(road.id, new HashSet<>(road.covered));
         candidates.sort((a, b) -> Long.compare(ReturnRecapStore.time(a.optString("started_at")),
@@ -102,6 +103,17 @@ final class DiscoveryReplay {
         }
         output.addCanonical(aRoads.newlyCoveredSections(priorARoads), 0xFF008755);
         aRoads.finish();
+        return output;
+    }
+
+    static DiscoveryReplay loadRoutes(Context context, Set<String> ids) throws Exception {
+        DiscoveryReplay output = new DiscoveryReplay();
+        for (String id : ids) {
+            JSONObject journey = JourneyStore.get(context, id);
+            if (journey == null || !"complete".equals(journey.optString("processing_status"))) continue;
+            for (JSONArray route : JourneyListActivity.matchedRouteSegmentsForDisplay(journey))
+                output.add(output.routes, route, 0xFF101820);
+        }
         return output;
     }
 

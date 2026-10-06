@@ -134,6 +134,31 @@ public class ReturnExperienceTest {
         view.stopDiscoveryReplay();assertNull(retained.get(view));
     }
 
+    @Test public void replayEvidenceSkipsGpsAndKeepsCorrections() throws Exception {
+        JSONObject journey=row("streamed","android_activity_capture",4000);
+        JSONObject road=roadFeature("Stream Road",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        finishJourney(journey,new JSONArray().put(road),new JSONArray().put(road));
+        journey.put("raw_capture_samples",new JSONArray().put(new JSONObject().put("large","ignored")));
+        journey.put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("name:stream road")));
+        JourneyStore.save(app,journey);
+        List<JSONObject> evidence=new ArrayList<>();
+        JourneyStore.forEachRoadEvidence(app,()->false,evidence::add);
+        assertEquals(1,evidence.size());assertFalse(evidence.get(0).has("raw_capture_samples"));
+        assertFalse(evidence.get(0).has("route_geometry"));
+        assertFalse(evidence.get(0).getJSONObject("processing_result").has("geojson"));
+        assertTrue(DiscoveryReplay.localFeatures(evidence.get(0)).isEmpty());
+        try { JourneyStore.forEachRoadEvidence(app,()->true,evidence::add);fail("Expected cancellation"); }
+        catch(java.util.concurrent.CancellationException expected) { }
+    }
+    @Test public void surroundingContextDoesNotChangeFinishedJourneyCamera() throws Exception {
+        RoutePreviewView view=RoutePreviewView.overview(app);view.layout(0,0,600,800);
+        DiscoveryReplay replay=new DiscoveryReplay();
+        replay.routes.add(new DiscoveryReplay.Section(new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"),0xFF101820));
+        view.startDiscoveryReplay(replay,()->{});view.finishDiscoveryReplay();double[] camera=view.cameraState();
+        view.setReplayContext(Arrays.asList(new JSONArray("[[-4,55],[-3,56]]")),Collections.emptyList(),Collections.emptyList());
+        assertArrayEquals(camera,view.cameraState(),.00001);
+    }
+
     private JSONObject motorway(String id,JSONArray coordinates) throws Exception {
         JSONObject feature=new JSONObject().put("properties",new JSONObject().put("road_ref","M25"))
                 .put("geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates));

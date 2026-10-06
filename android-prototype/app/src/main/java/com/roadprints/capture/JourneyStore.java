@@ -326,6 +326,62 @@ public final class JourneyStore {
         }
     }
 
+    /** Replay reads road evidence without allocating raw capture arrays or matched GPS traces. */
+    static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        for (File file : archiveFiles(context)) {
+            if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
+                throw new java.util.concurrent.CancellationException();
+            JSONObject journey = new JSONObject();
+            try (JsonReader reader = new JsonReader(new InputStreamReader(
+                    new FileInputStream(file), StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+                    if ("processing_result".equals(key) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                        JSONObject result = new JSONObject(); reader.beginObject();
+                        while (reader.hasNext()) {
+                            String field = reader.nextName();
+                            if ("road_geojson".equals(field) || "motorway_geojson".equals(field)
+                                    || "a_road_geojson".equals(field)) result.put(field, readEvidenceValue(reader));
+                            else reader.skipValue();
+                        }
+                        reader.endObject(); journey.put(key, result);
+                    } else if ("journey_id".equals(key) || "mode".equals(key)
+                            || "processing_status".equals(key) || "started_at".equals(key)
+                            || "journey_corrections".equals(key)) journey.put(key, readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            JSONObject edits = journey.optJSONObject("journey_corrections");
+            JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
+            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
+            // Legacy edge-only corrections need the original trace to identify removed roads.
+            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
+                journey = upgrade(context, read(file));
+            if (journey != null) visitor.visit(journey);
+        }
+    }
+
+    private static Object readEvidenceValue(JsonReader reader) throws Exception {
+        switch (reader.peek()) {
+            case BEGIN_OBJECT:
+                JSONObject object = new JSONObject();reader.beginObject();
+                while(reader.hasNext()) object.put(reader.nextName(),readEvidenceValue(reader));
+                reader.endObject();return object;
+            case BEGIN_ARRAY:
+                JSONArray array = new JSONArray();reader.beginArray();
+                while(reader.hasNext()) array.put(readEvidenceValue(reader));
+                reader.endArray();return array;
+            case NUMBER: return reader.nextDouble();
+            case BOOLEAN: return reader.nextBoolean();
+            case NULL: reader.nextNull();return JSONObject.NULL;
+            default: return reader.nextString();
+        }
+    }
+
     private static boolean hasStoredRoute(JSONObject result) {
         JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");

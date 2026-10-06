@@ -238,6 +238,15 @@ public class RoutePreviewView extends View {
         }
     }
 
+    public void setReplayContext(List<JSONArray> roads, List<JSONArray> motorways, List<JSONArray> aRoads) {
+        double[] camera = cameraState();
+        setRouteData(null, roads);
+        setMotorwaySegments(motorways);
+        setARoadCoverageSegments(java.util.Collections.emptyList(), aRoads);
+        restoreCameraState(camera[0], camera[1], camera[2]);
+        routeFitPending = false;
+    }
+
     public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
         this.coordinates = coordinates;
         matchedSegments.clear();
@@ -563,7 +572,7 @@ public class RoutePreviewView extends View {
 
         // Composite the existing road overlays as one layer so overlaps also stay at 20%.
         int roadsLayer = discoveryReplay == null ? -1
-                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 51);
+                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 128);
         if (coordinatesValid) {
             for (JSONArray ring : settlementBoundaryRings)
                 drawRoute(canvas, ring, settlementBoundaryPaint, null);
