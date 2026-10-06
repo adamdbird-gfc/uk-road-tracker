@@ -156,7 +156,7 @@ public class MapActivity extends Activity {
         mapFrame.setBackgroundColor(NAVY);
         root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        mapView = new RoutePreviewView(this);
+        mapView = RoutePreviewView.overview(this);
         mapView.setFlatRoadMapStyle(true);
         mapView.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
         mapFrame.addView(mapView, new FrameLayout.LayoutParams(-1, -1));
@@ -314,7 +314,7 @@ public class MapActivity extends Activity {
             double[] camera = mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
-                map = new RoutePreviewView(this);
+                map = RoutePreviewView.overview(this);
                 mapFrame.addView(map, 0, new FrameLayout.LayoutParams(-1, -1));
             }
             map.setRouteData(null, mapRoutes.sections);
@@ -1672,7 +1672,7 @@ public class MapActivity extends Activity {
                     mapView.startDiscoveryReplay(replay, () -> {
                         if (replayMessage != expectedMessage) return;
                         String summary = replay.labels.isEmpty()
-                                ? "These journeys followed roads already on your map."
+                                ? "Your matched journeys are on the map. No new road discoveries were confirmed."
                                 : "Your discoveries: " + android.text.TextUtils.join(" · ", replay.labels);
                         if (summary.length() > 280) summary = summary.substring(0, 277) + "…";
                         replayMessage.setText(summary + (replay.simplified ? "\nReplay simplified for performance." : ""));

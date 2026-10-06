@@ -290,6 +290,11 @@ public class RoutePreviewView extends View {
                 new float[]{dp(7), dp(5)}, 0));
     }
 
+    /** Overview maps do not label endpoints from unrelated saved journeys. */
+    public static RoutePreviewView overview(Context context) {
+        return new RoutePreviewView(context, null, Collections.emptyList(), true, true, false);
+    }
+
     public RoutePreviewView(Context context) {
         this(context, null, Collections.emptyList(), true, true, true);
     }
