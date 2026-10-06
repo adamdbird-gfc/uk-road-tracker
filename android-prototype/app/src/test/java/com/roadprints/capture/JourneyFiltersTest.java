@@ -117,6 +117,9 @@ public class JourneyFiltersTest {
         android.app.DatePickerDialog dialog=(android.app.DatePickerDialog)ShadowAlertDialog.getLatestAlertDialog();
         android.util.TypedValue accent=new android.util.TypedValue();dialog.getContext().getTheme().resolveAttribute(android.R.attr.colorAccent,accent,true);
         assertEquals(0xFFF7C450,accent.data);
+        android.view.ViewGroup actions=(android.view.ViewGroup)dialog.getButton(AlertDialog.BUTTON_POSITIVE).getParent();
+        assertFalse(actions.getClipChildren());
+        assertEquals(Math.round(48 * screen.getResources().getDisplayMetrics().density),dialog.getButton(AlertDialog.BUTTON_POSITIVE).getLayoutParams().height);
         dialog.updateDate(2026,9,4);dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         assertEquals(LocalDate.of(2026,10,4),picked.get());screen.finish();
