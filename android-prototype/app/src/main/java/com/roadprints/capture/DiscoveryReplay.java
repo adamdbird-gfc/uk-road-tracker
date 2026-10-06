@@ -78,6 +78,7 @@ final class DiscoveryReplay {
             priorARoads.put(road.id, new HashSet<>(road.covered));
         candidates.sort((a, b) -> Long.compare(ReturnRecapStore.time(a.optString("started_at")),
                 ReturnRecapStore.time(b.optString("started_at"))));
+        Set<String> announcedNames = new HashSet<>();
         MotorwayProgressCalculator motorways = new MotorwayProgressCalculator(context, null, false, false);
         for (JSONObject row : candidates) {
             JSONObject journey = JourneyStore.get(context, row.optString("journey_id"));
@@ -85,13 +86,17 @@ final class DiscoveryReplay {
             motorways.addJourney(journey);
             for (JSONArray route : JourneyListActivity.matchedRouteSegmentsForDisplay(journey))
                 output.add(output.routes, route, 0xFF101820);
-            for (Map.Entry<String, JSONObject> entry : localFeatures(journey).entrySet()) {
-                if (!priorNames.add(entry.getKey())) continue;
-                JSONObject feature = entry.getValue();
-                JSONObject props = feature.optJSONObject("properties");
-                output.labels.add(props.optString("name", props.optString("road_name")));
-                for (JSONArray line : lines(feature.optJSONObject("geometry")))
-                    output.add(output.discoveries, line, 0xFF101820);
+            for (Map.Entry<String, List<JSONObject>> entry : localFeatures(journey).entrySet()) {
+                if (priorNames.contains(entry.getKey())) continue;
+                // One road name may span multiple matcher features and replay journeys.
+                // Count it once, but preserve every saved, unremoved piece of geometry.
+                if (announcedNames.add(entry.getKey())) {
+                    JSONObject props = entry.getValue().get(0).optJSONObject("properties");
+                    output.labels.add(props.optString("name", props.optString("road_name")).trim());
+                }
+                for (JSONObject feature : entry.getValue())
+                    for (JSONArray line : lines(feature.optJSONObject("geometry")))
+                        output.add(output.discoveries, line, 0xFF101820);
             }
         }
         output.addCanonical(motorways.newlyCoveredSections(priorMotorways), 0xFF176DB5);
@@ -124,7 +129,7 @@ final class DiscoveryReplay {
     }
 
     JSONObject toJson() throws Exception {
-        JSONObject value=new JSONObject().put("format",1).put("simplified",simplified);
+        JSONObject value=new JSONObject().put("format",2).put("simplified",simplified);
         for(String key:new String[]{"routes","discoveries"}) {
             JSONArray sections=new JSONArray();
             for(Section section:"routes".equals(key)?routes:discoveries)
@@ -136,7 +141,7 @@ final class DiscoveryReplay {
     }
 
     static DiscoveryReplay fromJson(JSONObject value) {
-        if(value==null||value.optInt("format")!=1||value.optJSONArray("routes")==null
+        if(value==null||value.optInt("format")!=2||value.optJSONArray("routes")==null
                 ||value.optJSONArray("discoveries")==null||value.optJSONArray("labels")==null)return null;
         DiscoveryReplay replay=new DiscoveryReplay();
         for(String key:new String[]{"routes","discoveries"}) {
@@ -149,6 +154,29 @@ final class DiscoveryReplay {
         JSONArray labels=value.optJSONArray("labels");
         for(int i=0;i<Math.min(100,labels.length());i++)replay.labels.add(labels.optString(i));
         replay.simplified|=value.optBoolean("simplified");return replay;
+    }
+
+    /** Expand previously verified local-road highlights using only the selected journeys. */
+    static DiscoveryReplay upgradeCached(Context context, Set<String> ids, JSONObject value) throws Exception {
+        if(value==null||value.optInt("format")!=1)return null;
+        DiscoveryReplay old=fromJson(value.put("format",2));
+        if(old==null||old.simplified||old.labels.size()>=100)return null;
+        DiscoveryReplay updated=new DiscoveryReplay();
+        for(Section route:old.routes)updated.add(updated.routes,route.points,route.color);
+        Set<String> verifiedNames=new HashSet<>();
+        for(String label:old.labels)verifiedNames.add("name:"+label.trim().toLowerCase(Locale.UK).replaceAll("\\s+"," "));
+        for(String id:ids) {
+            JSONObject journey=JourneyStore.get(context,id);
+            if(journey==null||!"complete".equals(journey.optString("processing_status")))return null;
+            for(Map.Entry<String,List<JSONObject>> entry:localFeatures(journey).entrySet()) {
+                if(!verifiedNames.contains(entry.getKey()))continue;
+                for(JSONObject feature:entry.getValue())for(JSONArray line:lines(feature.optJSONObject("geometry")))
+                    updated.add(updated.discoveries,line,0xFF101820);
+            }
+        }
+        for(Section section:old.discoveries)if(section.color!=0xFF101820)
+            updated.add(updated.discoveries,section.points,section.color);
+        updated.labels.addAll(old.labels);return updated;
     }
 
     private static boolean older(JSONObject journey, long cutoff) {
@@ -191,8 +219,8 @@ final class DiscoveryReplay {
         return result;
     }
 
-    static Map<String, JSONObject> localFeatures(JSONObject journey) {
-        Map<String, JSONObject> result = new LinkedHashMap<>();
+    static Map<String, List<JSONObject>> localFeatures(JSONObject journey) {
+        Map<String, List<JSONObject>> result = new LinkedHashMap<>();
         JSONObject match = journey.optJSONObject("processing_result");
         JSONObject collection = match == null ? null : match.optJSONObject("road_geojson");
         JSONArray features = collection == null ? null : collection.optJSONArray("features");
@@ -207,7 +235,7 @@ final class DiscoveryReplay {
             String name = props.optString("name", props.optString("road_name")).trim();
             if (name.isEmpty() || name.matches("\\d+(?:[.,]\\d+)?")) continue;
             String key = "name:" + name.toLowerCase(Locale.UK).replaceAll("\\s+", " ");
-            result.putIfAbsent(key, feature);
+            result.computeIfAbsent(key, ignored -> new ArrayList<>()).add(feature);
         }
         return result;
     }
