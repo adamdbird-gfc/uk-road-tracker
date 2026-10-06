@@ -56,6 +56,11 @@ final class MotorwayProgressCalculator {
     private static final Map<String, Double> NI_LENGTH_KM = lengths(
             "M1:61,M2:37,M3:1.3,M5:3.2,M12:2.4,M22:9");
 
+    static List<String> canonicalRoadIds() {
+        List<String> ids=new ArrayList<>(GB_LENGTH_KM.keySet());
+        for(String ref:NI_LENGTH_KM.keySet())ids.add("NI:"+ref);
+        java.util.Collections.sort(ids);return ids;
+    }
     static final class Road {
         final String id;
         final String ref;
@@ -696,4 +701,5 @@ final class MotorwayProgressCalculator {
         return 2 * EARTH_RADIUS_M * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     }
 }
+
 

@@ -22,7 +22,13 @@ final class RoadprintsIcons {
     }
     static int achievement(String id) {
         if(id==null)return R.drawable.ic_roadprints_star;
+        if(id.startsWith("foot-"))return R.drawable.ic_roadprints_foot;
+        if(id.startsWith("road-"))return R.drawable.ic_roadprints_car;
         switch(id) {
+            case "sat-nav-on":return R.drawable.ic_roadprints_car;
+            case "picasso":case "joining-the-dots":return R.drawable.ic_roadprints_star;
+            case "mastered-monopoly":return R.drawable.ic_roadprints_train;
+            case "the-knowledge":return R.drawable.ic_roadprints_road;
             case "m62-summit":return R.drawable.ic_roadprints_mountain;
             case "mary-high-streets":return R.drawable.ic_roadprints_crown;
             case "angel-of-the-north":return R.drawable.ic_roadprints_angel;
@@ -41,3 +47,4 @@ final class RoadprintsIcons {
         view.setContentDescription(description);return view;
     }
 }
+

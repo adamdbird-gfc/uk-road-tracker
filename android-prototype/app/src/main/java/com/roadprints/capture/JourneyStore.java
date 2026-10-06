@@ -62,6 +62,7 @@ public final class JourneyStore {
                 throw new IllegalStateException("Could not commit journey archive");
             }
             bumpDataRevision(context);
+            AchievementStore.recordCapture(context, journey);
             try { ServiceStationStore.recordJourney(context,journey); }
             catch(Exception stationError){android.util.Log.w("Roadprints","Service-station visit check skipped",stationError);}
         } catch (Exception error) {
@@ -365,6 +366,45 @@ public final class JourneyStore {
         }
     }
 
+    static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        for (File file : archiveFiles(context)) {
+            if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
+                throw new java.util.concurrent.CancellationException();
+            JSONObject journey = new JSONObject();
+            try (JsonReader reader = new JsonReader(new InputStreamReader(
+                    new FileInputStream(file), StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+                    if ("processing_result".equals(key) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                        JSONObject result = new JSONObject(); reader.beginObject();
+                        while (reader.hasNext()) {
+                            String field = reader.nextName();
+                            if ("road_geojson".equals(field) || "motorway_geojson".equals(field)
+                                    || "a_road_geojson".equals(field) || "geojson".equals(field)) result.put(field, readEvidenceValue(reader));
+                            else reader.skipValue();
+                        }
+                        reader.endObject(); journey.put(key, result);
+                    } else if ("journey_id".equals(key) || "mode".equals(key)
+                            || "processing_status".equals(key) || "started_at".equals(key)
+                            || "journey_corrections".equals(key) || "distance_meters".equals(key)
+                            || "ended_at".equals(key) || "source".equals(key)) journey.put(key, readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            JSONObject edits = journey.optJSONObject("journey_corrections");
+            JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
+            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
+            // Legacy edge-only corrections need the original trace to identify removed roads.
+            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
+                journey = upgrade(context, read(file));
+            if (journey != null) visitor.visit(journey);
+        }
+    }
+
     private static Object readEvidenceValue(JsonReader reader) throws Exception {
         switch (reader.peek()) {
             case BEGIN_OBJECT:
@@ -480,6 +520,7 @@ public final class JourneyStore {
         DiscoveryReplayCache.clear(context);
         JourneyReplayActivity.clearSeed();
         ProgressActivity.clearCachedStatistics(context);
+        AchievementStore.clearTravelUnlocks(context);
         AchievementsActivity.clearCachedAchievements(context);
         return deleted;
     }
@@ -626,6 +667,7 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+
 
 
 

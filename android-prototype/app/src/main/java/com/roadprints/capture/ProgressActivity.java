@@ -1379,8 +1379,8 @@ public class ProgressActivity extends Activity {
                     List<JSONObject> evidence = new ArrayList<>(road.geometryEvidence);
                     List<LocalRoadSettlementMatcher.Settlement> matches =
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
-                    AchievementStore.recordHighStreetSettlements(
-                            getApplicationContext(), road.id, matches);
+                    AchievementStore.recordRoadSettlements(
+                            getApplicationContext(), road.id, evidence, matches);
                     synchronized (stats) {
                         stats.settlementMatches.put(road.id, matches);
                         stats.localRoadLookupDone++;
@@ -2052,4 +2052,5 @@ public class ProgressActivity extends Activity {
     }
 
 }
+
 

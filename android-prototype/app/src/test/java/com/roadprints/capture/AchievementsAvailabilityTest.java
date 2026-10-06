@@ -64,9 +64,9 @@ public class AchievementsAvailabilityTest {
         return false;
     }
     private AchievementStore.Snapshot progress() {
-        AchievementStore.Definition d=AchievementStore.definitions().get(0);
+        AchievementStore.Definition d=AchievementStore.definitions().stream().filter(d->"motorway-quarter".equals(d.id)).findFirst().get();
         List<AchievementStore.Progress> rows=new ArrayList<>(AchievementStore.catalogueSnapshot(app).achievements);
-        rows.set(0,new AchievementStore.Progress(d,12.5,12,25,false,"12.5% saved coverage",null));
+        rows.set(AchievementStore.definitions().indexOf(d),new AchievementStore.Progress(d,12.5,12,25,false,"12.5% saved coverage",null));
         return new AchievementStore.Snapshot(rows,Collections.emptyList(),JourneyStore.dataRevision(app));
     }
     private void cache() throws Exception {
@@ -133,3 +133,4 @@ public class AchievementsAvailabilityTest {
         java.lang.reflect.Method m=AchievementsActivity.class.getDeclaredMethod(name,types);m.setAccessible(true);return m.invoke(null,value);
     }
 }
+
