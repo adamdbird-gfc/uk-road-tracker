@@ -283,13 +283,19 @@ final class AchievementStore {
             return "road:"+roadId+":"+hex;
         }catch(Exception error){throw new IllegalStateException(error);}
     }
+    private static java.util.TreeSet<String> settlementNames(List<LocalRoadSettlementMatcher.Settlement> settlements) {
+        java.util.TreeSet<String> names=new java.util.TreeSet<>();
+        if(settlements!=null)for(LocalRoadSettlementMatcher.Settlement settlement:settlements)
+            if(settlement!=null&&settlement.name!=null&&!settlement.name.trim().isEmpty())names.add(settlement.name.trim());
+        return names;
+    }
     static synchronized void recordRoadSettlements(Context context,String roadId,List<JSONObject> geometries,
             List<LocalRoadSettlementMatcher.Settlement> settlements) {
-        java.util.TreeSet<String> names=new java.util.TreeSet<>();
-        for(LocalRoadSettlementMatcher.Settlement settlement:settlements)if(settlement!=null&&!settlement.name.isEmpty())names.add(settlement.name);
+        java.util.TreeSet<String> names=settlementNames(settlements);
         SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
         String key=roadEvidenceKey(roadId,geometries);
-        if(!names.equals(p.getStringSet(key,Collections.emptySet())))p.edit().putStringSet(key,names)
+        // An empty set is a completed lookup, distinct from a missing cache entry.
+        if(!p.contains(key)||!names.equals(p.getStringSet(key,Collections.emptySet())))p.edit().putStringSet(key,names)
                 .putInt("evidence_revision",p.getInt("evidence_revision",0)+1).apply();
     }
     static List<String> roadSettlements(Context context,String roadId,List<JSONObject> geometries) {
@@ -298,7 +304,11 @@ final class AchievementStore {
         if(saved!=null)return new ArrayList<>(saved);
         try {
             List<LocalRoadSettlementMatcher.Settlement> matches=LocalRoadSettlementMatcher.cached(context,roadId,geometries);
-            if(matches!=null){recordRoadSettlements(context,roadId,geometries,matches);return roadSettlements(context,roadId,geometries);}
+            if(matches!=null) {
+                recordRoadSettlements(context,roadId,geometries,matches);
+                // Return the lookup result directly; never rely on a recursive cache read.
+                return new ArrayList<>(settlementNames(matches));
+            }
         }catch(Exception ignored){}
         return Collections.emptyList();
     }
