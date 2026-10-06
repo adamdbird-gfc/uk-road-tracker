@@ -14,3 +14,27 @@ jobs:
           python-version: "3.12"
       - run: python -m py_compile api.py
       - run: python -m unittest discover -s tests -p test_road_recovery.py -v
+  verify-deployment:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify deployed matcher capabilities
+        run: |
+          python3 - <<'PY'
+          import json, time, urllib.request
+          for attempt in range(12):
+              try:
+                  with urllib.request.urlopen('https://uk-road-tracker-api.onrender.com/health', timeout=20) as response:
+                      health = json.load(response)
+                  if health.get('status') == 'ok' and health.get('road_recovery_version') == 1:
+                      print('Live road matcher recovery version 1 verified.')
+                      break
+                  print('Waiting for the new matcher deployment.', flush=True)
+              except Exception as error:
+                  print('Health check pending:', type(error).__name__, flush=True)
+              time.sleep(15)
+          else:
+              raise SystemExit('The new matcher capability was not available before the verification deadline.')
+          PY
