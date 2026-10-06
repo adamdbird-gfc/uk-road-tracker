@@ -413,6 +413,7 @@ public class TimelineImportActivity extends Activity {
         int sourceRoutePoints = quality == null
                 ? 0 : quality.optInt("source_route_points", 0);
         int withIntermediateTrace = gpsPoints > 2 ? 1 : 0;
+        synchronized (JourneyStore.class) {
         JSONObject existing = JourneyStore.get(this, id);
         if (existing != null) {
             // Attach new local evidence without replacing matches, edited routes,
@@ -441,6 +442,7 @@ public class TimelineImportActivity extends Activity {
         }
         JourneyStore.save(this, journey);
         return new ImportCounts(1, 0, 0, 1, withIntermediateTrace, sourceRoutePoints);
+        }
     }
 
     private boolean shouldRefreshImportedJourney(
