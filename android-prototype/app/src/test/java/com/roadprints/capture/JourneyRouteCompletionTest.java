@@ -38,8 +38,8 @@ public class JourneyRouteCompletionTest {
         assertEquals(0.004, tail.getJSONArray(2).getDouble(0), 0.0);
     }
 
-    @Test public void acceptsPartialPointCountWhenMatcherReportsNoUnmatchedSections() {
-        assertFalse(MatchingCoordinator.shouldRejectMatchResult(18, 20, 0));
+    @Test public void rejectsPartialPointCountEvenWithoutFailedSections() {
+        assertTrue(MatchingCoordinator.shouldRejectMatchResult(18, 20, 0));
     }
 
     @Test public void rejectsPartialMatchWithUnmatchedSections() {
@@ -51,3 +51,4 @@ public class JourneyRouteCompletionTest {
         assertTrue(MatchingCoordinator.shouldRejectMatchResult(21, 20, 0));
     }
 }
+

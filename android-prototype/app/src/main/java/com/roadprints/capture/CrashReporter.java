@@ -271,6 +271,19 @@ public final class CrashReporter {
             if (!title.isEmpty()) output.append("Journey title: ").append(title).append('\n');
             output.append("Mode: ").append(journey.optString("mode", "unknown")).append('\n');
             if (source != null) output.append("Source: ").append(source.optString("type", "unknown")).append('\n');
+            JSONObject quality = journey.optJSONObject("recording_quality");
+            if (quality != null) {
+                output.append("Capture timing evidence: ").append(quality.optBoolean("evidence_available", false)).append('\n');
+                output.append("Capture quality resolved: ").append(quality.optBoolean("resolved", false)).append('\n');
+                JSONArray issues = quality.optJSONArray("issues");
+                if (issues != null) for (int i=0; i<Math.min(10, issues.length()); i++) {
+                    JSONObject issue = issues.optJSONObject(i); if (issue == null) continue;
+                    output.append("Capture issue: ").append(issue.optString("reason"))
+                            .append(" at point ").append(issue.optInt("point_index"))
+                            .append("; gap_ms=").append(issue.optLong("duration_ms", 0))
+                            .append("; displacement_m=").append(issue.optLong("displacement_m", 0)).append('\n');
+                }
+            }
             String summary = sanitizeDiagnosticError(journey.optString("error_summary", ""));
             if (!summary.isEmpty()) output.append("Stored error: ").append(limit(summary, MAX_MATCH_REPORT_CHARS / 2)).append('\n');
         }
@@ -396,3 +409,4 @@ public final class CrashReporter {
                 + "\n\n[Crash report shortened to fit local storage.]";
     }
 }
+

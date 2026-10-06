@@ -164,10 +164,10 @@ public class CaptureService extends Service {
             }
             MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
             Location observation = new Location(location);
-            boolean trusted = !"walking".equals(mode) || lastPoint == null
-                    || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(observation, 1));
+            boolean trusted = CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                    footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
             // Retain rejected fixes as evidence, but do not credit their jumps
-            // as walking or let them reset the stop timer.
+            // as travelled distance or let them reset the stop timer.
             points.add(observation);
             if (trusted) {
                 if (lastPoint != null) distanceMetres += lastPoint.distanceTo(observation);
@@ -516,8 +516,8 @@ public class CaptureService extends Service {
             for (Location point : initialPoints) {
                 Location copy = new Location(point);
                 points.add(copy);
-                if (!"walking".equals(mode) || lastPoint == null
-                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(copy, 1))) {
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(copy, 1), "walking".equals(mode) || "running".equals(mode))) {
                     if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
                     lastPoint = copy;
                 }
@@ -808,9 +808,9 @@ public class CaptureService extends Service {
                 if (savedStationReason != null) journey.put("station_evidence", new JSONObject()
                         .put("reason", savedStationReason).put("station_code", savedStationCode)
                         .put("classification", "suggested"));
-                if (stationBoundary || "walking".equals(savedMode)) journey.put("raw_capture_geometry", new JSONObject()
+                journey.put("raw_capture_geometry", new JSONObject()
                         .put("type", "LineString").put("coordinates", coordinates(fullCapturePoints)));
-                if ("walking".equals(savedMode)) journey.put("raw_capture_samples", sampleCoordinates(fullCapturePoints));
+                journey.put("raw_capture_samples", sampleCoordinates(fullCapturePoints));
                 List<Location> routePoints = confirmedStationaryStop && !stationBoundary
                         ? collapseStationaryEndpoint(savedPoints, savedStopAnchor) : savedPoints;
                 double routeDistance = routePoints.size() < savedPoints.size()
@@ -830,6 +830,11 @@ public class CaptureService extends Service {
                             .put("validated_points", cleaned.size()));
                     journey.put("distance_source", validated.resolved && validated.timed ? "validated_gps" : "gps_unverified");
                 }
+                JSONArray routeSamples = sampleCoordinates(routePoints);
+                journey.put("capture_route_samples", routeSamples);
+                JSONObject quality = CaptureQualityValidator.inspect(routeSamples, "walking".equals(savedMode) || "running".equals(savedMode));
+                journey.put("recording_quality", quality);
+                if (!quality.optBoolean("resolved")) routeDistance = 0;
                 journey.put("distance_meters", routeDistance);
                 journey.put("gps_point_count", savedGpsPointCount);
                 journey.put("route_geometry", new JSONObject()
@@ -951,7 +956,8 @@ public class CaptureService extends Service {
     private void requestLocationUpdatesForMode(String requestedMode, boolean candidate) {
         boolean road = roadMode(requestedMode);
         long interval = candidate ? 5_000L : (road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS);
-        float minDistance = candidate ? 5f : (road ? ROAD_CAPTURE_MIN_DISTANCE_METRES : WALK_CAPTURE_MIN_DISTANCE_METRES);
+        // Time-based fixes retain evidence during stops and make sampling gaps observable.
+        float minDistance = 0f;
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 interval, minDistance, locationListener);
         diagnosticUpdatesRegistered = false;
@@ -1099,8 +1105,8 @@ public class CaptureService extends Service {
             lastPoint = null;
             distanceMetres = 0;
             for (Location point : points) {
-                if (!"walking".equals(mode) || lastPoint == null
-                        || FootTraceValidator.plausible(footSample(lastPoint, 0), footSample(point, 1))) {
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(point, 1), "walking".equals(mode) || "running".equals(mode))) {
                     if (lastPoint != null) distanceMetres += lastPoint.distanceTo(point);
                     lastPoint = new Location(point);
                 }
@@ -1289,3 +1295,4 @@ public class CaptureService extends Service {
         return null;
     }
 }
+

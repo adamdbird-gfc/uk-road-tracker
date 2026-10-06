@@ -1231,8 +1231,11 @@ public class JourneyListActivity extends Activity {
                     : "Not enough GPS evidence to match this journey";
             statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
-            boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"));
-            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("endpoint_partial_match", false)
+            boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"))
+                    || journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false);
+            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false)
+                    ? "Partially matched · Timeline data is incomplete or inconsistent. Only matched sections count."
+                    : journey.optJSONObject("processing_result").optBoolean("endpoint_partial_match", false)
                     ? "Road portion matched · start/end GPS samples remain unmatched"
                     : "Partial match · some route sections were not matched")
                     : "✓  Processed · matched route available";
@@ -1244,7 +1247,10 @@ public class JourneyListActivity extends Activity {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
         } else if ("failed".equals(processingStatus)) {
-            statusText = "Matching failed · retry from this journey";
+            JSONObject recordingQuality = journey.optJSONObject("recording_quality");
+            statusText = recordingQuality != null && !recordingQuality.optBoolean("resolved", true)
+                    ? "Recording quality issue · GPS gap or unreliable fixes. Original recording preserved."
+                    : "Matching failed · retry from this journey";
             statusColor = 0xFFF7C450;
         } else {
             statusText = "Ready to match from this journey";
@@ -1815,6 +1821,7 @@ public class JourneyListActivity extends Activity {
 
     private boolean isPartialMatchResult(JSONObject result) {
         if (result == null) return false;
+        if (result.optBoolean("timeline_partial_match", false)) return true;
         JSONArray failed = result.optJSONArray("failed_sections");
         if (failed != null && failed.length() > 0) return true;
         int input = result.optInt("input_points", -1);
