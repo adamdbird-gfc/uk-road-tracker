@@ -42,8 +42,26 @@ final class RoadprintsHeader {
         wordmark.setTypeface(null, android.graphics.Typeface.BOLD);
         wordmark.setTextColor(Color.WHITE);
         brand.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
-        brand.setStatusControl(new GrowingStatusControl(activity, brand));
-        return brand;
+        TextView utilities = new TextView(activity);
+        utilities.setText("⚙ Utilities");
+        utilities.setTextSize(12);
+        utilities.setTextColor(0xFFF7C450);
+        utilities.setTypeface(null, android.graphics.Typeface.BOLD);
+        utilities.setPadding(dp(activity, 10), dp(activity, 12), 0, dp(activity, 12));
+        utilities.setClickable(true);
+        utilities.setFocusable(true);
+        utilities.setContentDescription("Open Utilities");
+        utilities.setOnClickListener(view -> activity.startActivity(
+                new Intent(activity, UtilitiesActivity.class)));
+        brand.addView(utilities);
+        LinearLayout statusRow = new LinearLayout(activity);
+        statusRow.setGravity(Gravity.CENTER_VERTICAL);
+        brand.setStatusControl(new GrowingStatusControl(activity, statusRow));
+        LinearLayout header = new LinearLayout(activity);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.addView(brand);
+        header.addView(statusRow);
+        return header;
     }
 
     static void installUtilityPage(Activity activity, LinearLayout content,
@@ -134,3 +152,4 @@ final class RoadprintsHeader {
         return Math.round(value * activity.getResources().getDisplayMetrics().density);
     }
 }
+

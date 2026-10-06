@@ -200,7 +200,9 @@ final class MotorwayProgressCalculator {
         else cacheBundledReferences(canonicalCache);
     }
 
-    void addJourney(JSONObject journey) {
+    void addJourney(JSONObject journey) { addJourney(journey, null); }
+
+    void addJourney(JSONObject journey, Set<String> onlyRefs) {
         if (completedSummary != null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey == null || !"complete".equals(journey.optString("processing_status", ""))) return;
         String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
@@ -218,7 +220,7 @@ final class MotorwayProgressCalculator {
             String rawRef = properties.optString("road_ref", "");
             for (String item : rawRef.split("[;,/]")) {
                 String ref = normalizeRef(item);
-                if (!isMotorway(ref)) continue;
+                if (!isMotorway(ref) || (onlyRefs != null && !onlyRefs.contains(ref))) continue;
                 String region = firstPointIsNi(feature) ? "NI" : "GB";
                 String id = "NI".equals(region) ? "NI:" + ref : ref;
                 Road road = roads.computeIfAbsent(id, ignored -> new Road(id, ref, region));
@@ -231,6 +233,34 @@ final class MotorwayProgressCalculator {
                 }
             }
         }
+    }
+
+    /** Canonical edges gained since a prior coverage snapshot; never changes credit. */
+    Map<String, List<JSONArray>> newlyCoveredSections(Map<String, Set<Integer>> previous) {
+        Map<String, List<JSONArray>> result = new TreeMap<>();
+        for (Road road : roads.values()) {
+            Reference reference = references.get(road.id);
+            if (reference == null) continue;
+            Set<Integer> before = previous.getOrDefault(road.id, Collections.emptySet());
+            List<JSONArray> lines = new ArrayList<>();
+            JSONArray current = null;
+            for (int i = 1; i < reference.anchors.size(); i++) {
+                Anchor a = reference.anchors.get(i - 1), b = reference.anchors.get(i);
+                boolean fresh = (road.coveredSections.contains(a.id) || road.coveredSections.contains(b.id))
+                        && !before.contains(a.id) && !before.contains(b.id)
+                        && haversine(a.lng, a.lat, b.lng, b.lat) <= 250;
+                if (!fresh) {
+                    if (current != null) lines.add(current);
+                    current = null;
+                } else {
+                    if (current == null) current = new JSONArray().put(mapCoordinate(a.lng, a.lat));
+                    current.put(mapCoordinate(b.lng, b.lat));
+                }
+            }
+            if (current != null) lines.add(current);
+            if (!lines.isEmpty()) result.put(road.id, lines);
+        }
+        return result;
     }
 
     Summary finish() {
@@ -666,3 +696,4 @@ final class MotorwayProgressCalculator {
         return 2 * EARTH_RADIUS_M * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     }
 }
+

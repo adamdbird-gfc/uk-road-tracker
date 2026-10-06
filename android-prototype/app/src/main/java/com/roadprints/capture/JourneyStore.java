@@ -417,6 +417,7 @@ public final class JourneyStore {
                 .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
             throw new IllegalStateException("Could not clear legacy journey data");
         ServiceStationStore.clearOnDeleteAll(context);
+        ReturnRecapStore.clear(context);
         return deleted;
     }
 
@@ -562,4 +563,5 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+
 

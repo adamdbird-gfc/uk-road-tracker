@@ -57,10 +57,31 @@ public class MapActivity extends Activity {
     private long displayedMapRevision = Long.MIN_VALUE;
     private double savedCameraLongitude, savedCameraLatitude, savedCameraZoom;
     private boolean hasSavedCamera;
+    private long loadingMapRevision = Long.MIN_VALUE;
+    private boolean recapLoading, replayPreparing, active;
+    private int recapGeneration;
+    private View recapCard;
+    private TextView replayMessage;
+    private List<JSONObject> recapJourneys = new ArrayList<>();
+    private Set<String> replayIds = new HashSet<>();
+    private double[] beforeReplayCamera;
+    private final Runnable observeChanges = new Runnable() {
+        @Override public void run() {
+            if (!active || getIntent().hasExtra("settlement_code")) return;
+            if (!replayPreparing && replayMessage == null && displayedMapRevision != mapDataRevision()) refreshMap();
+            refreshRecap();
+            mainHandler.postDelayed(this, 3000);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightNavigationBars(false);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAV_BAR);
         if (state != null && state.containsKey("map_camera_longitude")) {
@@ -70,6 +91,15 @@ public class MapActivity extends Activity {
             hasSavedCamera = true;
         }
 
+        if (!hasSavedCamera && !getIntent().hasExtra("settlement_code")) {
+            android.content.SharedPreferences camera = getSharedPreferences("roadprints_map_camera", MODE_PRIVATE);
+            if (camera.contains("longitude")) {
+                savedCameraLongitude = Double.longBitsToDouble(camera.getLong("longitude", 0));
+                savedCameraLatitude = Double.longBitsToDouble(camera.getLong("latitude", 0));
+                savedCameraZoom = Double.longBitsToDouble(camera.getLong("zoom", 0));
+                hasSavedCamera = true;
+            }
+        }
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(NAVY);
@@ -79,7 +109,7 @@ public class MapActivity extends Activity {
         heading.setPadding(dp(18), dp(18), dp(18), dp(14));
 
         LinearLayout brand = RoadprintsHeader.create(this);
-        brand.setPadding(0, 0, 0, dp(24));
+        brand.setPadding(0, 0, 0, dp(6));
         heading.addView(brand);
 
         TextView eyebrow = new TextView(this);
@@ -99,7 +129,7 @@ public class MapActivity extends Activity {
         mapSubtitle.setTextColor(0xFFD3DCED);
         mapSubtitle.setPadding(0, dp(4), 0, 0);
 
-        heading.addView(eyebrow);
+
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         title.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
@@ -118,7 +148,7 @@ public class MapActivity extends Activity {
             close.setOnClickListener(v -> finish());
             titleRow.addView(close);
         }
-                heading.addView(titleRow);
+                if (getIntent().hasExtra("settlement_code")) heading.addView(titleRow);
         heading.addView(mapSubtitle);
         root.addView(heading);
 
@@ -126,9 +156,14 @@ public class MapActivity extends Activity {
         mapFrame.setBackgroundColor(NAVY);
         root.addView(mapFrame, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        mapFrame.addView(ScreenLoadingView.create(this, "Preparing your map",
-                "Reading saved journeys within the memory limit."), new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        mapView = new RoutePreviewView(this);
+        mapView.setFlatRoadMapStyle(true);
+        mapView.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
+        mapFrame.addView(mapView, new FrameLayout.LayoutParams(-1, -1));
+        if (hasSavedCamera) mapView.restoreCameraState(
+                savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
+        addZoomControls(mapFrame, mapView);
+        mapSubtitle.setText("Updating your saved routes…");
 
         View bottomNavigation = buildBottomNavigation();
         root.addView(bottomNavigation);
@@ -139,11 +174,19 @@ public class MapActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        active = true;
+        // Queue lightweight summaries before the heavier route/coverage preparation.
+        refreshRecap();
         if (mapFrame != null && mapSubtitle != null) refreshMap();
+        mainHandler.removeCallbacks(observeChanges);
+        mainHandler.postDelayed(observeChanges, 3000);
     }
 
     @Override
     protected void onPause() {
+        active = false;
+        mainHandler.removeCallbacks(observeChanges);
+        stopReplay(false);
         saveMapCamera();
         super.onPause();
     }
@@ -167,11 +210,16 @@ public class MapActivity extends Activity {
         savedCameraLatitude = camera[1];
         savedCameraZoom = camera[2];
         hasSavedCamera = true;
+        getSharedPreferences("roadprints_map_camera", MODE_PRIVATE).edit()
+                .putLong("longitude", Double.doubleToLongBits(savedCameraLongitude))
+                .putLong("latitude", Double.doubleToLongBits(savedCameraLatitude))
+                .putLong("zoom", Double.doubleToLongBits(savedCameraZoom)).apply();
     }
 
     @Override
     protected void onDestroy() {
         mapLoadGeneration++;
+        recapGeneration++;
         super.onDestroy();
     }
 
@@ -179,6 +227,8 @@ public class MapActivity extends Activity {
         String settlementCode = getIntent().getStringExtra("settlement_code");
         if ((settlementCode == null || settlementCode.isEmpty())
                 && mapView != null && displayedMapRevision == mapDataRevision()) return;
+        final long requestedRevision = mapDataRevision();
+        if (loadingMapRevision == requestedRevision) return;
         saveMapCamera();
         final int generation = ++mapLoadGeneration;
         if (settlementCode != null && !settlementCode.isEmpty()) {
@@ -200,7 +250,8 @@ public class MapActivity extends Activity {
             displayMapRoutes(cached, generation);
             return;
         }
-        mapSubtitle.setText("Loading matched journeys…");
+        loadingMapRevision = revision;
+        mapSubtitle.setText("Updating your saved routes…");
         ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
             try {
@@ -223,14 +274,7 @@ public class MapActivity extends Activity {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != mapLoadGeneration) return;
                     mapSubtitle.setText("Map data could not be loaded. Reopen the map to retry.");
-                    mapFrame.removeAllViews();
-                    TextView failure = new TextView(this);
-                    failure.setText("Map data could not be loaded.");
-                    failure.setTextColor(Color.WHITE);
-                    failure.setGravity(Gravity.CENTER);
-                    mapFrame.addView(failure, new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT));
+                    loadingMapRevision = Long.MIN_VALUE;
                 });
                 return;
             }
@@ -267,10 +311,14 @@ public class MapActivity extends Activity {
                     : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
                             mapRoutes.matchedJourneys,
                             mapRoutes.simplified ? " · map simplified for performance." : "."));
-            mapFrame.removeAllViews();
-            RoutePreviewView map = mapRoutes.sections.isEmpty()
-                    ? new RoutePreviewView(this)
-                    : new RoutePreviewView(this, mapRoutes.sections, true);
+            stopReplay(false);
+            double[] camera = mapView == null ? null : mapView.cameraState();
+            RoutePreviewView map = mapView;
+            if (map == null) {
+                map = new RoutePreviewView(this);
+                mapFrame.addView(map, 0, new FrameLayout.LayoutParams(-1, -1));
+            }
+            map.setRouteData(null, mapRoutes.sections);
             map.setFlatRoadMapStyle(true);
             map.setMotorwaySegments(mapRoutes.motorwaySections);
             map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
@@ -286,15 +334,20 @@ public class MapActivity extends Activity {
             map.setMapRoadTapListener((latitude, longitude) ->
                     loadRoadSummaryAt(latitude, longitude));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
-            mapFrame.addView(map, new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-            if (hasSavedCamera) {
+            if (camera != null) map.restoreCameraState(camera[0], camera[1], camera[2]);
+            else if (hasSavedCamera) {
                 map.restoreCameraState(savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
                 hasSavedCamera = false;
             }
             mapView = map;
-            displayedMapRevision = mapDataRevision();
-            addZoomControls(mapFrame, map);
+            displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
+            loadingMapRevision = Long.MIN_VALUE;
+            renderRecap();
+            String replay = getIntent().getStringExtra("replay_journey_id");
+            if (replay != null) {
+                getIntent().removeExtra("replay_journey_id");
+                startReplay(new HashSet<>(java.util.Collections.singleton(replay)));
+            }
         });
     }
     private void refreshSettlementMap(int generation, String code, String name,
@@ -1461,89 +1514,194 @@ public class MapActivity extends Activity {
     }
 
     private void applySystemBarInsets(View root, View heading, View bottomNavigation) {
-        root.setOnApplyWindowInsetsListener((view, insets) -> {
-            int top;
-            int bottom;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars());
-                top = bars.top;
-                bottom = bars.bottom;
-            } else {
-                top = insets.getSystemWindowInsetTop();
-                bottom = insets.getSystemWindowInsetBottom();
-            }
-            heading.setPadding(dp(18), dp(18) + top, dp(18), dp(14));
-            LinearLayout.LayoutParams navParams =
-                    (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
-            navParams.height = dp(68) + bottom;
-            bottomNavigation.setPadding(dp(8), 0, dp(8), bottom);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            androidx.core.graphics.Insets safe = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars()
+                            | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            root.setPadding(safe.left, 0, safe.right, 0);
+            heading.setPadding(dp(18), dp(12) + safe.top, dp(18), dp(8));
+            LinearLayout.LayoutParams navParams = (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
+            navParams.height = dp(68) + safe.bottom;
+            bottomNavigation.setPadding(dp(8), 0, dp(8), safe.bottom);
             bottomNavigation.setLayoutParams(navParams);
             return insets;
         });
-        root.requestApplyInsets();
+        androidx.core.view.ViewCompat.requestApplyInsets(root);
+    }
+
+    private long recapRevision = Long.MIN_VALUE;
+
+    private void refreshRecap() {
+        if (getIntent().hasExtra("settlement_code") || recapLoading) return;
+        long revision = JourneyStore.dataRevision(getApplicationContext());
+        if (recapRevision == revision) return;
+        recapLoading = true;
+        int generation = ++recapGeneration;
+        final long observedAt = System.currentTimeMillis();
+        ScreenDataLoader.execute(() -> {
+            try {
+                List<JSONObject> rows = JourneyListActivity.preloadSummaries(getApplicationContext(), revision);
+                List<JSONObject> collected = ReturnRecapStore.collect(getApplicationContext(), rows, observedAt);
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != recapGeneration) return;
+                    recapLoading = false;
+                    recapRevision = revision;
+                    recapJourneys = collected;
+                    renderRecap();
+                });
+            } catch (Exception error) {
+                mainHandler.post(() -> { if (generation == recapGeneration) recapLoading = false; });
+            }
+        });
+    }
+
+    private Set<String> recapIds() {
+        Set<String> ids = new HashSet<>();
+        for (JSONObject journey : recapJourneys) ids.add(journey.optString("journey_id"));
+        return ids;
+    }
+
+    private TextView recapText(CharSequence value, int size, int color, boolean bold) {
+        TextView text = new TextView(this);
+        text.setText(value);
+        text.setTextSize(size);
+        text.setTextColor(color);
+        if (bold) text.setTypeface(null, Typeface.BOLD);
+        return text;
+    }
+
+    private TextView recapMetric(String title, String value) {
+        android.text.SpannableStringBuilder row = new android.text.SpannableStringBuilder(title + ": " + value);
+        row.setSpan(new android.text.style.ForegroundColorSpan(0xFF67D5CC), 0, title.length() + 1,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        row.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, title.length() + 1,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return recapText(row, 13, Color.WHITE, false);
+    }
+
+    private void renderRecap() {
+        if (mapFrame == null || replayMessage != null) return;
+        if (recapCard != null) mapFrame.removeView(recapCard);
+        recapCard = null;
+        if (recapJourneys.isEmpty()) return;
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(12), dp(16), dp(12));
+        card.setBackground(roundRect(0xF50B1C50, dp(16)));
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        titleRow.addView(recapText("Welcome back", 18, Color.WHITE, true),
+                new LinearLayout.LayoutParams(0, -2, 1));
+        TextView dismiss = recapText("DISMISS", 11, GOLD, true);
+        dismiss.setPadding(dp(8), dp(12), dp(8), dp(12));
+        dismiss.setContentDescription("Dismiss new journey recap");
+        dismiss.setOnClickListener(view -> {
+            ReturnRecapStore.dismiss(this, recapIds());
+            recapGeneration++;
+            recapLoading = false;
+            recapJourneys.clear();
+            renderRecap();
+        });
+        titleRow.addView(dismiss);
+        card.addView(titleRow);
+        int complete = 0, failed = 0;
+        double distance = 0;
+        for (JSONObject journey : recapJourneys) {
+            if ("complete".equals(journey.optString("processing_status"))) complete++;
+            else if ("failed".equals(journey.optString("processing_status"))) failed++;
+            double value = journey.optDouble("distance_meters", 0);
+            if (Double.isFinite(value) && value > 0) distance += value;
+        }
+        card.addView(recapMetric("Journeys recorded", DistanceUnits.formatPointCount(recapJourneys.size())));
+        card.addView(recapMetric("Distance", DistanceUnits.format(this, distance)));
+        int pending = recapJourneys.size() - complete - failed;
+        card.addView(recapMetric("Matching", DistanceUnits.formatPointCount(complete) + " complete"
+                + (pending > 0 ? " · " + DistanceUnits.formatPointCount(pending) + " pending" : "")
+                + (failed > 0 ? " · " + DistanceUnits.formatPointCount(failed) + " need retry" : "")));
+        LinearLayout actions = new LinearLayout(this);
+        TextView journeys = recapText("VIEW NEW JOURNEYS", 12, Color.WHITE, true);
+        journeys.setPadding(0, dp(14), dp(8), dp(10));
+        journeys.setOnClickListener(view -> startActivity(new Intent(this, JourneyListActivity.class)
+                .putStringArrayListExtra("recap_journey_ids", new ArrayList<>(recapIds()))));
+        actions.addView(journeys, new LinearLayout.LayoutParams(0, -2, 1));
+        if (complete > 0) {
+            TextView replay = recapText("SEE WHAT’S NEW", 12, GOLD, true);
+            replay.setPadding(dp(8), dp(14), 0, dp(10));
+            replay.setOnClickListener(view -> startReplay(recapIds()));
+            actions.addView(replay);
+        }
+        card.addView(actions);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
+        params.setMargins(dp(12), dp(12), dp(70), 0);
+        mapFrame.addView(card, params);
+        recapCard = card;
+    }
+
+    private void startReplay(Set<String> ids) {
+        if (replayPreparing || mapView == null) return;
+        replayPreparing = true;
+        replayIds = new HashSet<>(ids);
+        if (recapCard != null) mapFrame.removeView(recapCard);
+        recapCard = null;
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.VERTICAL);
+        controls.setPadding(dp(16), dp(12), dp(16), dp(12));
+        controls.setBackground(roundRect(0xF50B1C50, dp(16)));
+        replayMessage = recapText("Finding what these journeys added…", 14, Color.WHITE, true);
+        controls.addView(replayMessage);
+        TextView skip = recapText("SKIP / BACK TO MAP", 12, GOLD, true);
+        skip.setPadding(0, dp(12), 0, dp(8));
+        skip.setOnClickListener(view -> stopReplay(true));
+        controls.addView(skip);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        params.setMargins(dp(12), 0, dp(12), dp(36));
+        mapFrame.addView(controls, params);
+        replayMessage.setTag(controls);
+        final TextView expectedMessage = replayMessage;
+        ScreenDataLoader.execute(() -> {
+            try {
+                DiscoveryReplay replay = DiscoveryReplay.calculate(getApplicationContext(), ids);
+                mainHandler.post(() -> {
+                    if (isFinishing() || !active || replayMessage != expectedMessage) return;
+                    replayPreparing = false;
+                    if (replay.routes.isEmpty()) {
+                        replayMessage.setText("No matched road or walking route is available yet.");
+                        return;
+                    }
+                    beforeReplayCamera = mapView.cameraState();
+                    replayMessage.setText("Your journeys are growing your map…");
+                    mapView.startDiscoveryReplay(replay, () -> {
+                        if (replayMessage != expectedMessage) return;
+                        String summary = replay.labels.isEmpty()
+                                ? "These journeys followed roads already on your map."
+                                : "Your discoveries: " + android.text.TextUtils.join(" · ", replay.labels);
+                        if (summary.length() > 280) summary = summary.substring(0, 277) + "…";
+                        replayMessage.setText(summary + (replay.simplified ? "\nReplay simplified for performance." : ""));
+                    });
+                });
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (replayMessage != expectedMessage) return;
+                    replayPreparing = false;
+                    replayMessage.setText("Discoveries could not be prepared. Your saved map is still available.");
+                });
+            }
+        });
+    }
+
+    private void stopReplay(boolean showRecap) {
+        if (mapView != null) mapView.stopDiscoveryReplay();
+        if (replayMessage != null) mapFrame.removeView((View) replayMessage.getTag());
+        replayMessage = null;
+        replayPreparing = false;
+        if (beforeReplayCamera != null && mapView != null)
+            mapView.restoreCameraState(beforeReplayCamera[0], beforeReplayCamera[1], beforeReplayCamera[2]);
+        beforeReplayCamera = null;
+        if (showRecap) renderRecap();
     }
 
     private View buildBottomNavigation() {
-        LinearLayout nav = new LinearLayout(this);
-        nav.setOrientation(LinearLayout.HORIZONTAL);
-        nav.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        nav.setPadding(dp(8), 0, dp(8), 0);
-        nav.setBackgroundColor(NAV_BAR);
-
-        int[] icons = {R.drawable.ic_nav_map, R.drawable.ic_nav_journeys,
-                R.drawable.ic_nav_progress, R.drawable.ic_nav_achievements,
-                R.drawable.ic_nav_collections};
-        String[] labels = {"Map", "Journeys", "Progress", "Achievements", "Collections"};
-        for (int index = 0; index < labels.length; index++) {
-            final int selected = index;
-            LinearLayout item = new LinearLayout(this);
-            item.setOrientation(LinearLayout.VERTICAL);
-            item.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-            item.setPadding(0, dp(4), 0, 0);
-
-            ImageView icon = new ImageView(this);
-            icon.setImageResource(icons[index]);
-            icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            icon.setColorFilter(index == 0 ? GOLD : MUTED,
-                    android.graphics.PorterDuff.Mode.SRC_IN);
-            item.addView(icon, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(32)));
-
-            TextView label = new TextView(this);
-            label.setText(labels[index]);
-            label.setTextSize(10);
-            label.setGravity(Gravity.CENTER);
-            label.setIncludeFontPadding(false);
-            label.setMaxLines(1);
-            label.setTextColor(index == 0 ? GOLD : MUTED);
-            item.addView(label, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(24)));
-
-            if (index <= 4) {
-                item.setClickable(true);
-                item.setFocusable(true);
-                item.setOnClickListener(v -> {
-                    if (selected == 1) {
-                        startActivity(new Intent(this, JourneyListActivity.class));
-                        finish();
-                    } else if (selected == 2) {
-                        startActivity(new Intent(this, ProgressActivity.class));
-                        finish();
-                    } else if (selected == 3) {
-                        startActivity(new Intent(this, AchievementsActivity.class));
-                        finish();
-                    } else if (selected == 4) {
-                        startActivity(new Intent(this, CollectionsActivity.class));
-                        finish();
-                    }
-                });
-            } else {
-                item.setAlpha(0.55f);
-            }
-            nav.addView(item, new LinearLayout.LayoutParams(0, dp(68), 1));
-        }
-        return nav;
+        return RoadprintsNavigation.create(this, 0);
     }
 
     private int dp(float value) {
@@ -1689,3 +1847,4 @@ public class MapActivity extends Activity {
         }
     }
 }
+

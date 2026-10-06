@@ -95,6 +95,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (!isTrackingSettingsScreen()) {
+            startActivity(new Intent(this, MapActivity.class));
+            finish();
+            return;
+        }
         registerCaptureReceiver();
         buildScreen();
         capturing = CaptureService.isActive(this);
@@ -131,7 +136,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(captureReceiver);
+        if (isTrackingSettingsScreen()) unregisterReceiver(captureReceiver);
         archiveIo.shutdownNow();
         super.onDestroy();
     }
@@ -893,4 +898,5 @@ public class MainActivity extends Activity {
         return 0;
     }
 }
+
 
