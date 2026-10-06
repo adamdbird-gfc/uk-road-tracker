@@ -263,6 +263,13 @@ public final class MatchingCoordinator {
         if (walking != null) points = walking.points;
         if (points.length() < 2) throw new IllegalStateException("Not enough reliable GPS points to match this walk. The original recording is preserved.");
         JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
+        TimelineRoadPreparation.Prepared road = foot ? null : TimelineRoadPreparation.prepare(journey, points);
+        List<JSONArray> roadRequests = new ArrayList<>();
+        int submittedRoadPoints = 0;
+        if (road != null) for (JSONArray section : road.sections) {
+            JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
+            roadRequests.add(sampled); submittedRoadPoints += sampled.length();
+        }
         String endpointPath = foot ? "/match-walking" : "/match";
         JSONObject attempt = new JSONObject()
                 .put("started_at_utc", Instant.now().toString())
@@ -272,6 +279,9 @@ public final class MatchingCoordinator {
                 .put("submitted_points", requestPoints.length())
                 .put("points_reduced", requestPoints.length() < coordinates.length());
         if (walking != null) attempt.put("walking_validation", walking.details);
+        if (road != null) attempt.put("road_preparation", road.details)
+                .put("submitted_points", submittedRoadPoints)
+                .put("points_reduced", submittedRoadPoints < points.length());
         synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
             if (stored != null) {
@@ -279,9 +289,39 @@ public final class MatchingCoordinator {
                 JourneyStore.save(app, stored);
             }
         }
-        JSONObject payload = new JSONObject().put("points", requestPoints);
-        JSONObject result = matcher != null ? matcher.match(foot, payload)
-                : postWithRetry(API_BASE_URL + endpointPath, payload);
+        JSONObject result;
+        if (road == null) {
+            JSONObject payload = new JSONObject().put("points", requestPoints);
+            result = matcher != null ? matcher.match(true, payload)
+                    : postWithRetry(API_BASE_URL + endpointPath, payload);
+        } else {
+            List<JSONObject> results = new ArrayList<>();
+            JSONArray sectionDiagnostics = new JSONArray();
+            attempt.put("section_diagnostics", sectionDiagnostics);
+            for (int index = 0; index < roadRequests.size(); index++) {
+                JSONArray submitted = roadRequests.get(index);
+                JSONObject payload = new JSONObject().put("points", submitted).put("road_recovery", true);
+                JSONObject sectionResult = matcher != null ? matcher.match(false, payload)
+                        : postWithRetry(API_BASE_URL + endpointPath, payload);
+                sectionDiagnostics.put(TimelineRoadPreparation.diagnostics(sectionResult)
+                        .put("section_index", index).put("submitted_points", submitted));
+                // Persist before validation, including on failed or interrupted attempts.
+                synchronized (JourneyStore.class) {
+                    JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
+                    if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
+                }
+                JSONArray failures = sectionResult.optJSONArray("failed_sections");
+                if (!hasRoute(sectionResult)
+                        || shouldRejectMatchResult(sectionResult.optInt("matched_tracepoints", submitted.length()),
+                            sectionResult.optInt("input_points", submitted.length()), failures == null ? 0 : failures.length())) {
+                    result = sectionResult;
+                    attempt.put("failed_section_index", index);
+                    results.clear(); results.add(result); break;
+                }
+                results.add(sectionResult);
+            }
+            result = TimelineRoadPreparation.merge(results);
+        }
         attempt.put("finished_at_utc", Instant.now().toString());
         if (result.has("input_points")) attempt.put("server_input_points", result.optInt("input_points"));
         if (result.has("matched_tracepoints")) attempt.put("server_matched_tracepoints", result.optInt("matched_tracepoints"));
@@ -321,6 +361,15 @@ public final class MatchingCoordinator {
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
         stored.put("processing_result", result);
+        if (road != null && road.changed) {
+            double distance = result.optDouble("matched_distance_m", -1);
+            if (!Double.isFinite(distance) || distance <= 0)
+                throw new IllegalStateException("The prepared road match has no valid distance. The original route is preserved.");
+            if (!stored.has("original_distance_meters"))
+                stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
+            stored.put("road_preparation", road.details).put("distance_meters", distance)
+                    .put("distance_source", "validated_road_sections");
+        }
         if (walking != null && walking.validated) {
             if (!stored.has("original_distance_meters"))
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
