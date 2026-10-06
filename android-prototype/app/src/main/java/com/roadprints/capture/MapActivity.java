@@ -177,7 +177,7 @@ public class MapActivity extends Activity {
         active = true;
         // Queue lightweight summaries before the heavier route/coverage preparation.
         refreshRecap();
-        if (mapFrame != null && mapSubtitle != null) refreshMap();
+        if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         mainHandler.removeCallbacks(observeChanges);
         mainHandler.postDelayed(observeChanges, 3000);
     }
@@ -186,7 +186,8 @@ public class MapActivity extends Activity {
     protected void onPause() {
         active = false;
         mainHandler.removeCallbacks(observeChanges);
-        stopReplay(false);
+        if (replayPreparing) stopReplay(false);
+        else if (mapView != null) mapView.finishDiscoveryReplay();
         saveMapCamera();
         super.onPause();
     }
@@ -204,7 +205,7 @@ public class MapActivity extends Activity {
 
     private void saveMapCamera() {
         if (mapView == null || getIntent().hasExtra("settlement_code")) return;
-        double[] camera = mapView.cameraState();
+        double[] camera = beforeReplayCamera != null ? beforeReplayCamera : mapView.cameraState();
         if (camera == null || camera.length < 3) return;
         savedCameraLongitude = camera[0];
         savedCameraLatitude = camera[1];
@@ -1648,9 +1649,12 @@ public class MapActivity extends Activity {
         controls.setBackground(roundRect(0xF50B1C50, dp(16)));
         replayMessage = recapText("Finding what these journeys added…", 14, Color.WHITE, true);
         controls.addView(replayMessage);
-        TextView skip = recapText("SKIP / BACK TO MAP", 12, GOLD, true);
+        TextView skip = recapText("CANCEL REPLAY", 12, GOLD, true);
         skip.setPadding(0, dp(12), 0, dp(8));
-        skip.setOnClickListener(view -> stopReplay(true));
+        skip.setOnClickListener(view -> {
+            if (replayPreparing || "BACK TO MAIN MAP".contentEquals(skip.getText())) stopReplay(true);
+            else if (mapView != null) mapView.finishDiscoveryReplay();
+        });
         controls.addView(skip);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         params.setMargins(dp(12), 0, dp(12), dp(36));
@@ -1665,16 +1669,19 @@ public class MapActivity extends Activity {
                     replayPreparing = false;
                     if (replay.routes.isEmpty()) {
                         replayMessage.setText("No matched road or walking route is available yet.");
+                        skip.setText("BACK TO MAIN MAP");
                         return;
                     }
                     beforeReplayCamera = mapView.cameraState();
                     replayMessage.setText("Your journeys are growing your map…");
+                    skip.setText("SKIP ANIMATION");
                     mapView.startDiscoveryReplay(replay, () -> {
                         if (replayMessage != expectedMessage) return;
                         String summary = replay.labels.isEmpty()
                                 ? "Your matched journeys are on the map. No new road discoveries were confirmed."
                                 : "Your discoveries: " + android.text.TextUtils.join(" · ", replay.labels);
                         if (summary.length() > 280) summary = summary.substring(0, 277) + "…";
+                        skip.setText("BACK TO MAIN MAP");
                         replayMessage.setText(summary + (replay.simplified ? "\nReplay simplified for performance." : ""));
                     });
                 });
@@ -1683,6 +1690,7 @@ public class MapActivity extends Activity {
                     if (replayMessage != expectedMessage) return;
                     replayPreparing = false;
                     replayMessage.setText("Discoveries could not be prepared. Your saved map is still available.");
+                    skip.setText("BACK TO MAIN MAP");
                 });
             }
         });

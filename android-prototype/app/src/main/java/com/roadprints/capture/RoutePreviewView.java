@@ -120,11 +120,13 @@ public class RoutePreviewView extends View {
     private DiscoveryReplay discoveryReplay;
     private android.animation.ValueAnimator discoveryAnimator;
     private float discoveryFraction;
+    private Runnable discoveryComplete;
     private final Paint replayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public void startDiscoveryReplay(DiscoveryReplay replay, Runnable complete) {
         stopDiscoveryReplay();
         discoveryReplay = replay;
+        discoveryComplete = complete;
         double minX = 1, maxX = 0, minY = 1, maxY = 0;
         for (DiscoveryReplay.Section section : replay.routes) {
             for (int i = 0; i < section.points.length(); i++) {
@@ -144,7 +146,7 @@ public class RoutePreviewView extends View {
         }
         if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
             discoveryFraction = 1;
-            invalidate(); complete.run(); return;
+            invalidate(); completeDiscoveryReplay(); return;
         }
         discoveryAnimator = android.animation.ValueAnimator.ofFloat(0, 1);
         discoveryAnimator.setDuration(5500);
@@ -156,7 +158,7 @@ public class RoutePreviewView extends View {
             private boolean cancelled;
             @Override public void onAnimationCancel(android.animation.Animator animator) { cancelled = true; }
             @Override public void onAnimationEnd(android.animation.Animator animator) {
-                if (!cancelled) complete.run();
+                if (!cancelled) completeDiscoveryReplay();
             }
         });
         discoveryAnimator.start();
@@ -165,11 +167,27 @@ public class RoutePreviewView extends View {
     public void stopDiscoveryReplay() {
         if (discoveryAnimator != null) { discoveryAnimator.cancel(); discoveryAnimator = null; }
         discoveryReplay = null;
+        discoveryComplete = null;
         invalidate();
     }
 
+    /** Freeze the final journey overlay without restoring the overview camera. */
+    public void finishDiscoveryReplay() {
+        if (discoveryReplay == null) return;
+        if (discoveryAnimator != null) { discoveryAnimator.cancel(); discoveryAnimator = null; }
+        discoveryFraction = 1;
+        invalidate();
+        completeDiscoveryReplay();
+    }
+
+    private void completeDiscoveryReplay() {
+        Runnable complete = discoveryComplete;
+        discoveryComplete = null;
+        if (complete != null) complete.run();
+    }
+
     @Override protected void onDetachedFromWindow() {
-        stopDiscoveryReplay();
+        finishDiscoveryReplay();
         super.onDetachedFromWindow();
     }
 
@@ -543,6 +561,9 @@ public class RoutePreviewView extends View {
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
 
+        // Composite the existing road overlays as one layer so overlaps also stay at 20%.
+        int roadsLayer = discoveryReplay == null ? -1
+                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 51);
         if (coordinatesValid) {
             for (JSONArray ring : settlementBoundaryRings)
                 drawRoute(canvas, ring, settlementBoundaryPaint, null);
@@ -595,6 +616,7 @@ public class RoutePreviewView extends View {
             drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
+        if (roadsLayer >= 0) canvas.restoreToCount(roadsLayer);
         drawServiceStations(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
