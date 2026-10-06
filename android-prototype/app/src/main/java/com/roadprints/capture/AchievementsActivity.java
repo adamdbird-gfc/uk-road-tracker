@@ -85,6 +85,8 @@ public class AchievementsActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
+        evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);
         if(shownSnapshot!=null && shownKilometres!=DistanceUnits.usesKilometres(this))render(shownSnapshot);
         long revision=JourneyStore.dataRevision(this);
         int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
@@ -92,6 +94,21 @@ public class AchievementsActivity extends Activity {
                 && (revision != shownRevision || highStreetRevision != shownHighStreetEvidenceRevision
                 || ServiceStationStore.revision(this) != shownServiceStationRevision))
             loadAchievements();
+    }
+
+    private final Handler evidenceRefreshHandler=new Handler(Looper.getMainLooper());
+    private final Runnable evidenceRefresh=new Runnable() {
+        @Override public void run() {
+            if(shownRevision!=Long.MIN_VALUE && (JourneyStore.dataRevision(AchievementsActivity.this)!=shownRevision
+                    ||AchievementStore.highStreetEvidenceRevision(AchievementsActivity.this)!=shownHighStreetEvidenceRevision
+                    ||ServiceStationStore.revision(AchievementsActivity.this)!=shownServiceStationRevision))loadAchievements();
+            evidenceRefreshHandler.postDelayed(this,2000);
+        }
+    };
+
+    @Override protected void onPause() {
+        evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
+        super.onPause();
     }
 
     @Override protected void onDestroy() {
@@ -129,6 +146,7 @@ public class AchievementsActivity extends Activity {
         scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         View bottomNavigation=buildBottomNavigation();
+        root.addView(GrowingStatusControl.create(this));
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root,header,bottomNavigation);
@@ -384,6 +402,7 @@ public class AchievementsActivity extends Activity {
 
     private static String achievementGroup(AchievementStore.Definition definition) {
         if("service-station".equals(definition.type)) return "Collections";
+        if("town-exploration".equals(definition.type))return "Town exploration";
         if("app-use".equals(definition.type))return "App milestones";
         if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";
         if("crossing-set".equals(definition.type)) return "Crossings";
@@ -434,7 +453,7 @@ public class AchievementsActivity extends Activity {
         copy.setPadding(dp(12),0,0,0);
         TextView status=text(progress.definition.levels!=null?"LEVEL "+progress.level+" / "+progress.definition.levels.length:(progress.unlocked?"UNLOCKED":"NEXT MILESTONE"),10,
                 progress.unlocked?GOLD:TEAL,true);
-        TextView name=text(progress.definition.title,16,Color.WHITE,true);
+        TextView name=text(AchievementStore.titleFor(progress.definition,progress.level),16,Color.WHITE,true);
         String display="distance".equals(progress.definition.type)||progress.definition.levels!=null
                 || "road-count".equals(progress.definition.type)||"high-street-settlement".equals(progress.definition.type)
                 ||"app-use".equals(progress.definition.type)||"long-journey".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
@@ -444,7 +463,7 @@ public class AchievementsActivity extends Activity {
         row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
         card.addView(row);
         if("the-knowledge".equals(progress.definition.id)||"mary-high-streets".equals(progress.definition.id)
-                ||"mastered-monopoly".equals(progress.definition.id)||"distance".equals(progress.definition.type)) {
+                ||"mastered-monopoly".equals(progress.definition.id)||"distance".equals(progress.definition.type)||"town-exploration".equals(progress.definition.type)) {
             TextView requirement=text(progress.definition.description,12,MUTED,false);
             requirement.setPadding(dp(60),dp(7),0,0);card.addView(requirement);
         }
@@ -455,7 +474,7 @@ public class AchievementsActivity extends Activity {
                 boolean open=list.getVisibility()!=View.VISIBLE;
                 if(open&&list.getChildCount()==0) {
                     for(String milestone:progress.milestones){TextView t=text(milestone,12,GOLD,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
-                    int shown=0;for(String contribution:progress.contributions){if(shown++>=50)break;TextView t=text("✓ "+contribution,12,GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    int shown=0;for(String contribution:progress.contributions){if(shown++>=50)break;TextView t=text(("town-exploration".equals(progress.definition.type)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
                     if(progress.contributions.size()>50)list.addView(text("First 50 shown · "+progress.contributions.size()+" total",12,MUTED,false));
                 }
                 list.setVisibility(open?View.VISIBLE:View.GONE);
@@ -640,6 +659,7 @@ public class AchievementsActivity extends Activity {
         celebrationDescription.setText(definition.description==null?"":definition.description);
         celebrationDetail.setText(definition.detail==null?"":definition.detail);
         if(shownSnapshot!=null)for(AchievementStore.Progress progress:shownSnapshot.achievements)if(progress.definition.id.equals(definition.id)) {
+            celebrationTitle.setText(AchievementStore.titleFor(definition,progress.level));
             celebrationDetail.setText((definition.levels==null?"":"Level "+progress.level+" / "+definition.levels.length+" · ")+AchievementStore.progressText(this,progress));
             if("long-journey".equals(definition.type))celebrationDescription.setText("Complete one journey of "+DistanceUnits.format(this,1609.344*10)+" on foot or "+DistanceUnits.format(this,1609.344*250)+" by road.");
             break;

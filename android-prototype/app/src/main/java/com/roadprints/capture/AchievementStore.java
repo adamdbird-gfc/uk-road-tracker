@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=2;
+    static final int CATALOGUE_VERSION=3;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -29,6 +29,7 @@ final class AchievementStore {
         final String id, icon, title, description, detail, type, roadId;
         final double target, longitude, latitude, radiusMetres;
         double[] levels;
+        String[] levelTitles;
         Definition(String id, String icon, String title, String description, String detail,
                    String type, double target, String roadId, double longitude,
                    double latitude, double radiusMetres) {
@@ -161,6 +162,14 @@ final class AchievementStore {
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
         values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
+        TownAchievementEvidence towns=new TownAchievementEvidence();
+        towns.collect(app,core);
+        towns.requestInventories(app);
+        for(String id:new String[]{"town-exploration","roaming-exploration"}) {
+            double value=towns.value(id.startsWith("roaming"));
+            values.put(id,value);
+            lists.put(id,towns.contributions(nextTarget(findDefinition(id),value)));
+        }
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
         for(MotorwayProgressCalculator.Road road:motorwaySummary.roads) {
             if(Double.isFinite(road.percent()))values.put("completion-motorway-"+road.id,road.percent());
@@ -219,13 +228,24 @@ final class AchievementStore {
             List<String> milestoneDates=new ArrayList<>();
             for(int i=1;i<=(definition.levels==null?1:definition.levels.length);i++) {
                 long when=dates.optLong(String.valueOf(i),0);
-                if(when>0)milestoneDates.add("Level "+i+" · recognised "+new java.text.SimpleDateFormat("d MMM yyyy",Locale.UK).format(new java.util.Date(when))
+                if(when>0)milestoneDates.add((definition.levelTitles==null?"Level "+i:titleFor(definition,i))+" · recognised "+new java.text.SimpleDateFormat("d MMM yyyy",Locale.UK).format(new java.util.Date(when))
                         +(i>level?" · previous milestone":""));
             }
             progress.milestones=milestoneDates;output.add(progress);
         }
         preferences.edit().putString("unlocked",unlocked.toString()).putString("level_history",history.toString()).apply();
         return new Snapshot(output,newly,revision);
+    }
+    private static Definition findDefinition(String id) {
+        for(Definition d:DEFINITIONS)if(d.id.equals(id))return d;
+        throw new IllegalArgumentException(id);
+    }
+    static String titleFor(Definition d,int level) {
+        return d.levelTitles==null?d.title:d.levelTitles[Math.max(0,Math.min(d.levelTitles.length-1,level-1))];
+    }
+    static synchronized void advanceEvidenceRevision(Context context) {
+        SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        p.edit().putInt("evidence_revision",p.getInt("evidence_revision",0)+1).apply();
     }
     static int levelFor(Definition definition,double value) {
         if(definition.levels==null)return value>=definition.target?1:0;
@@ -240,6 +260,9 @@ final class AchievementStore {
         Definition d=progress.definition;double target=nextTarget(d,progress.value);
         if("distance".equals(d.type))return (d.id.startsWith("foot")?"Walking/running":"Driving and bus")+" · "+DistanceUnits.format(context,progress.value*MILE)
                 +" / "+DistanceUnits.format(context,target*MILE)+(levelFor(d,progress.value)==d.levels.length?" · complete":"");
+        if("town-exploration".equals(d.type))return String.format(Locale.UK,
+                "%s · %.1f%% / %.0f%% · towns with more than 400 roads",
+                d.id.startsWith("roaming")?"Third qualifying town":"Best qualifying town",progress.value,target);
         if("road-completion".equals(d.type))return String.format(Locale.UK,"%.1f%% of %s · %s %.0f%%",progress.value,roadLabel(d.roadId),
                 progress.level==4?"complete":"next",target);
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
@@ -291,11 +314,12 @@ final class AchievementStore {
     }
     static synchronized void recordRoadSettlements(Context context,String roadId,List<JSONObject> geometries,
             List<LocalRoadSettlementMatcher.Settlement> settlements) {
+        boolean townChanged=TownAchievementEvidence.record(context,roadId,geometries,settlements);
         java.util.TreeSet<String> names=settlementNames(settlements);
         SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
         String key=roadEvidenceKey(roadId,geometries);
         // An empty set is a completed lookup, distinct from a missing cache entry.
-        if(!p.contains(key)||!names.equals(p.getStringSet(key,Collections.emptySet())))p.edit().putStringSet(key,names)
+        if(townChanged||!p.contains(key)||!names.equals(p.getStringSet(key,Collections.emptySet())))p.edit().putStringSet(key,names)
                 .putInt("evidence_revision",p.getInt("evidence_revision",0)+1).apply();
     }
     static List<String> roadSettlements(Context context,String roadId,List<JSONObject> geometries) {
@@ -444,6 +468,8 @@ final class AchievementStore {
         output.add(family("road-total","Going the distance","Driving and bus","distance",new double[]{10,100,1000,10000,25000}));
         output.add(family("foot-unique","Blazing a trail","Unique walking/running coverage","distance",new double[]{1,10,50,100,250}));
         output.add(family("road-unique","Blazing a trail","Unique driving and bus coverage","distance",new double[]{10,100,500,1000,5000}));
+        output.add(townFamily(false));
+        output.add(townFamily(true));
         output.add(family("the-knowledge","The Knowledge","A nod to London taxi drivers’ street knowledge. Unlock distinct roads across eligible modes.","road-count",new double[]{10,100,500,1000,5000}));
         output.add(new Definition("sat-nav-on","","Sat nav: on","Complete your first journey recorded by Roadprints.","Your first Roadprints recording completed.","app-use",1,null,0,0,0));
         output.add(new Definition("picasso","","The artist formerly known as Picasso","Save edits to five distinct journeys.","Five distinct journeys edited.","app-use",5,null,0,0,0));
@@ -498,6 +524,15 @@ final class AchievementStore {
         return Collections.unmodifiableList(output);
     }
 
+    private static Definition townFamily(boolean roaming) {
+        String[] titles=roaming?new String[]{"Roaming Explorer","Roaming Legend","Roaming Mayor","Roaming Centurion"}
+                :new String[]{"Town Explorer","Town Legend","Town Mayor","Town Centurion"};
+        Definition d=family(roaming?"roaming-exploration":"town-exploration",titles[0],
+                "Unlock 25%, 50%, 75% and 100% of the roads in "+(roaming?"three distinct qualifying towns":"one qualifying town")
+                +". Each town must contain more than 400 roads. Walking/running, driving and bus discovery count together.",
+                "town-exploration",new double[]{25,50,75,100});
+        d.levelTitles=titles;return d;
+    }
     private static Definition family(String id,String title,String copy,String type,double[] levels) {
         Definition definition=new Definition(id,"",title,copy,copy,type,levels[0],null,0,0,0);
         definition.levels=levels;return definition;

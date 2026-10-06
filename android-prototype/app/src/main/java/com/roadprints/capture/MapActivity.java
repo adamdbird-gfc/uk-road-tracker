@@ -167,6 +167,7 @@ public class MapActivity extends Activity {
         mapSubtitle.setText("Updating your saved routes…");
 
         View bottomNavigation = buildBottomNavigation();
+        root.addView(GrowingStatusControl.create(this));
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
@@ -1860,4 +1861,5 @@ public class MapActivity extends Activity {
         }
     }
 }
+
 

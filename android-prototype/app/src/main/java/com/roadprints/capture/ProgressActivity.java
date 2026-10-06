@@ -147,6 +147,7 @@ public class ProgressActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         View bottomNavigation = buildBottomNavigation();
+        root.addView(GrowingStatusControl.create(this));
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
