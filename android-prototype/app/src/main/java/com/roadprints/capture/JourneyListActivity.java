@@ -1187,6 +1187,8 @@ public class JourneyListActivity extends Activity {
         String journeyMode = journey.optString("mode", "unknown").trim().toLowerCase();
         boolean pointToPoint = isPointToPointMode(journeyMode);
         JourneyPreview route = journeyPreview(journey);
+        if(!pointToPoint&&!route.matches.isEmpty())
+            DiscoveryReplayCache.request(getApplicationContext(),java.util.Collections.singleton(journey.optString("journey_id")),null);
         RoutePreviewView preview = new RoutePreviewView(this, route.coordinates, route.matches);
         preview.setTag("journey_route_preview");
         FrameLayout previewFrame = new FrameLayout(this);
@@ -1410,8 +1412,7 @@ public class JourneyListActivity extends Activity {
         replayPlay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
                 dialogRef[0], hasUnsavedChanges(titleInput, transport,
                         transportModes, savedTitle[0], savedMode[0]),
-                saveEdits, () -> startActivity(new Intent(this, JourneyReplayActivity.class)
-                        .putExtra("journey_id", journey.optString("journey_id")))));
+                saveEdits, () -> startActivity(JourneyReplayActivity.replayIntent(this, journey))));
         actions.addView(saveChanges, actionLayoutParams());
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();

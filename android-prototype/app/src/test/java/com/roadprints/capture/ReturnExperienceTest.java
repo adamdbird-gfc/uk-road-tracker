@@ -16,6 +16,16 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class ReturnExperienceTest {
     private Context app;
+    private java.util.concurrent.Executor previousPreparer;
+    private final List<Runnable> replayJobs=new ArrayList<>();
+    @Before public void deferReplayPreparation() throws Exception {
+        java.lang.reflect.Field field=DiscoveryReplayCache.class.getDeclaredField("preparer");field.setAccessible(true);
+        previousPreparer=(java.util.concurrent.Executor)field.get(null);
+        field.set(null,(java.util.concurrent.Executor)replayJobs::add);
+    }
+    @After public void restoreReplayPreparation() throws Exception {
+        java.lang.reflect.Field field=DiscoveryReplayCache.class.getDeclaredField("preparer");field.setAccessible(true);field.set(null,previousPreparer);
+    }
     @Before public void setup() { app=RuntimeEnvironment.getApplication(); JourneyStore.deleteAll(app);
         Shadows.shadowOf((android.app.Application)app).grantPermissions("com.roadprints.capture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"); }
     @After public void cleanup() { JourneyStore.deleteAll(app); }
@@ -157,6 +167,69 @@ public class ReturnExperienceTest {
         view.startDiscoveryReplay(replay,()->{});view.finishDiscoveryReplay();double[] camera=view.cameraState();
         view.setReplayContext(Arrays.asList(new JSONArray("[[-4,55],[-3,56]]")),Collections.emptyList(),Collections.emptyList());
         assertArrayEquals(camera,view.cameraState(),.00001);
+    }
+
+    @Test public void cardReplayStartsWhileDiscoveryPreparationIsBlocked() throws Exception {
+        JSONObject journey=row("instant","android_activity_capture",4000);
+        JSONObject road=roadFeature("Instant Road",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        finishJourney(journey,new JSONArray().put(road),new JSONArray().put(road));JourneyStore.save(app,journey);
+        Intent intent=JourneyReplayActivity.replayIntent(app,journey);
+        org.robolectric.android.controller.ActivityController<JourneyReplayActivity> screen=
+                Robolectric.buildActivity(JourneyReplayActivity.class,intent).create();
+        java.lang.reflect.Field field=JourneyReplayActivity.class.getDeclaredField("action");field.setAccessible(true);
+        android.widget.TextView action=(android.widget.TextView)field.get(screen.get());
+        assertTrue(action.isEnabled());assertFalse(action.getText().toString().contains("PREPARING"));
+        field=JourneyReplayActivity.class.getDeclaredField("prepared");field.setAccessible(true);
+        assertEquals(1,((DiscoveryReplay)field.get(screen.get())).routes.size());
+        assertEquals(1,replayJobs.size());
+        field=JourneyReplayActivity.class.getDeclaredField("status");field.setAccessible(true);
+        assertFalse(((android.widget.TextView)field.get(screen.get())).getText().toString().contains("no new"));
+        screen.destroy();
+    }
+    @Test public void replayCacheCoalescesPreparationPersistsAndInvalidatesAfterEdits() throws Exception {
+        JSONObject journey=row("cached","android_activity_capture",4000);
+        JSONObject road=roadFeature("Cached Road",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        finishJourney(journey,new JSONArray().put(road),new JSONArray().put(road));JourneyStore.save(app,journey);
+        Set<String> ids=Collections.singleton("cached");List<DiscoveryReplay> answers=new ArrayList<>();
+        DiscoveryReplayCache.request(app,ids,answers::add);DiscoveryReplayCache.request(app,ids,answers::add);
+        assertEquals(1,replayJobs.size());assertNull(DiscoveryReplayCache.peek(app,ids));
+        replayJobs.remove(0).run();assertEquals(2,answers.size());assertSame(answers.get(0),answers.get(1));
+        DiscoveryReplay result=DiscoveryReplayCache.peek(app,ids);assertNotNull(result);
+        assertEquals(Collections.singleton("Cached Road"),result.labels);
+        assertEquals(result.toJson().toString(),DiscoveryReplay.fromJson(result.toJson()).toJson().toString());
+        java.io.File[] files=new java.io.File(app.getFilesDir(),"screen-cache").listFiles((dir,name)->name.startsWith("journey-replay-"));
+        assertNotNull(files);assertEquals(1,files.length);
+        java.lang.reflect.Field memory=DiscoveryReplayCache.class.getDeclaredField("READY");memory.setAccessible(true);
+        ((Map<?,?>)memory.get(null)).clear();
+        DiscoveryReplayCache.request(app,ids,answers::add);replayJobs.remove(0).run();
+        assertEquals(Collections.singleton("Cached Road"),DiscoveryReplayCache.peek(app,ids).labels);
+        journey.put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("name:cached road")));
+        JourneyStore.save(app,journey);assertNull(DiscoveryReplayCache.peek(app,ids));
+        DiscoveryReplayCache.request(app,ids,answers::add);replayJobs.remove(0).run();
+        assertTrue(DiscoveryReplayCache.peek(app,ids).labels.isEmpty());
+    }
+    @Test public void deletingArchiveCancelsQueuedReplayAndRemovesDerivedData() throws Exception {
+        JSONObject journey=row("deleted","android_activity_capture",4000);
+        JSONObject road=roadFeature("Deleted Road",new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"));
+        finishJourney(journey,new JSONArray().put(road),new JSONArray().put(road));JourneyStore.save(app,journey);
+        Set<String> ids=Collections.singleton("deleted");DiscoveryReplayCache.request(app,ids,null);
+        JourneyStore.deleteAll(app);replayJobs.remove(0).run();
+        assertNull(DiscoveryReplayCache.peek(app,ids));
+        java.io.File[] files=new java.io.File(app.getFilesDir(),"screen-cache").listFiles((dir,name)->name.startsWith("journey-replay-"));
+        assertTrue(files==null||files.length==0);
+    }
+    @Test public void lateDiscoveryHighlightsDoNotRestartFinishedReplayOrMoveCamera() throws Exception {
+        RoutePreviewView map=RoutePreviewView.overview(app);map.layout(0,0,600,800);
+        DiscoveryReplay initial=new DiscoveryReplay();
+        initial.routes.add(new DiscoveryReplay.Section(new JSONArray("[[-0.1,51.5],[-0.11,51.51]]"),0xFF101820));
+        int[] complete={0};map.startDiscoveryReplay(initial,()->complete[0]++);map.finishDiscoveryReplay();
+        double[] camera=map.cameraState();DiscoveryReplay enriched=new DiscoveryReplay();enriched.routes.addAll(initial.routes);
+        enriched.discoveries.add(new DiscoveryReplay.Section(initial.routes.get(0).points,0xFF008755));
+        map.updateDiscoveryReplay(enriched);
+        assertArrayEquals(camera,map.cameraState(),.00001);assertEquals(1,complete[0]);
+        java.lang.reflect.Field fraction=RoutePreviewView.class.getDeclaredField("discoveryFraction");fraction.setAccessible(true);
+        assertEquals(1f,fraction.getFloat(map),0f);
+        java.lang.reflect.Field replay=RoutePreviewView.class.getDeclaredField("discoveryReplay");replay.setAccessible(true);assertSame(enriched,replay.get(map));
     }
 
     private JSONObject motorway(String id,JSONArray coordinates) throws Exception {

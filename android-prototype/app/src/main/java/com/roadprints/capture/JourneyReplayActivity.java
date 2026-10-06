@@ -30,8 +30,30 @@ public class JourneyReplayActivity extends Activity {
     private ProgressBar spinner;
     private Set<String> ids;
     private volatile boolean closed;
-    private boolean animating, resumed;
+    private boolean animating;
     private DiscoveryReplay prepared;
+    private boolean discoveriesReady, discoveryFailed;
+    private static Seed pendingSeed;
+    private static final class Seed {
+        final String token,id;final long revision;final DiscoveryReplay trace;
+        Seed(String id,long revision,DiscoveryReplay trace){this.token=java.util.UUID.randomUUID().toString();this.id=id;this.revision=revision;this.trace=trace;}
+    }
+    static Intent replayIntent(android.content.Context context,JSONObject journey) {
+        String id=journey.optString("journey_id");
+        Seed seed=new Seed(id,JourneyStore.dataRevision(context),DiscoveryReplay.fromJourney(journey));
+        synchronized(JourneyReplayActivity.class){pendingSeed=seed;}
+        return new Intent(context,JourneyReplayActivity.class).putExtra("journey_id",id).putExtra("replay_seed",seed.token);
+    }
+    static synchronized void clearSeed(){pendingSeed=null;}
+    private DiscoveryReplay takeSeed() {
+        long currentRevision=JourneyStore.dataRevision(this);
+        synchronized(JourneyReplayActivity.class){
+            Seed seed=pendingSeed;
+            if(seed==null||!seed.token.equals(getIntent().getStringExtra("replay_seed")))return null;
+            pendingSeed=null;
+            return ids.size()==1&&ids.contains(seed.id)&&seed.revision==currentRevision?seed.trace:null;
+        }
+    }
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -48,7 +70,11 @@ public class JourneyReplayActivity extends Activity {
         String id = getIntent().getStringExtra("journey_id");
         if (id != null && !id.isEmpty()) ids.add(id);
         buildScreen();
-        loadJourney();
+        DiscoveryReplay seed=takeSeed();
+        DiscoveryReplay cached=DiscoveryReplayCache.peek(this,ids);
+        if(cached!=null){discoveriesReady=true;showRoute(cached);}
+        else if(seed!=null)showRoute(seed);
+        else loadJourney();
     }
 
     private void buildScreen() {
@@ -61,7 +87,7 @@ public class JourneyReplayActivity extends Activity {
         TextView close = text("CLOSE",13,0xFFF7C450,true);
         close.setPadding(dp(12),dp(12),dp(12),dp(12));close.setOnClickListener(view -> finish());
         title.addView(close);header.addView(title);
-        header.addView(text("Watch your route unfold. Surrounding recorded roads are shown at 50% opacity.",14,0xFFD3DCED,false));
+        header.addView(text("Watch your route unfold, with your surrounding roads in the background.",14,0xFFD3DCED,false));
         root.addView(header);
         FrameLayout frame = new FrameLayout(this);
         map = RoutePreviewView.overview(this);map.setFlatRoadMapStyle(true);
@@ -107,46 +133,61 @@ public class JourneyReplayActivity extends Activity {
     private void loadJourney() {
         worker.execute(()->{
             try {
-                DiscoveryReplay trace = DiscoveryReplay.loadRoutes(getApplicationContext(),ids);
-                main.post(()->{
-                    if(closed)return;
-                    if(trace.routes.isEmpty()){
-                        spinner.setVisibility(View.GONE);status.setText("No matched route is available for replay.");return;
-                    }
-                    // The selected trace is visible before any whole-archive discovery scan.
-                    map.startDiscoveryReplay(trace,()->{});map.finishDiscoveryReplay();
-                    status.setText("Preparing discoveries… Your matched route is ready to explore.");
-                });
-                if(trace.routes.isEmpty())return;
+                DiscoveryReplay trace=DiscoveryReplay.loadRoutes(getApplicationContext(),ids);
+                main.post(()->{if(!closed)showRoute(trace);});
+            }catch(Exception error){main.post(()->{if(!closed){spinner.setVisibility(View.GONE);
+                status.setText("This saved route could not be opened. Close and try again.");}});}
+        });
+    }
+
+    private void showRoute(DiscoveryReplay trace) {
+        if(trace.routes.isEmpty()){
+            spinner.setVisibility(View.GONE);status.setText("No matched route is available for replay.");return;
+        }
+        prepared=trace;spinner.setVisibility(View.GONE);action.setEnabled(true);action.setAlpha(1);
+        play();
+        MapActivity.ReplayContext cached=MapActivity.cachedReplayContext(getApplicationContext());
+        if(cached!=null)map.setReplayContext(cached.roads,cached.motorways,cached.aRoads);
+        else ScreenDataLoader.execute(()->{
+            try {
                 MapActivity.ReplayContext context=MapActivity.readReplayContext(getApplicationContext(),trace,()->closed);
                 main.post(()->{if(!closed)map.setReplayContext(context.roads,context.motorways,context.aRoads);});
-                DiscoveryReplay result=DiscoveryReplay.calculate(getApplicationContext(),ids,()->closed);
-                main.post(()->{
-                    if(closed)return;prepared=result;spinner.setVisibility(View.GONE);
-                    action.setEnabled(true);action.setAlpha(1);play();
-                    if(!resumed)map.finishDiscoveryReplay();
-                });
-            } catch(Exception error) {
-                main.post(()->{if(!closed){spinner.setVisibility(View.GONE);
-                    status.setText("Discoveries could not be prepared. Your matched route remains available.");
-                    action.setText("RETRY REPLAY");action.setEnabled(true);action.setAlpha(1);
-                    action.setOnClickListener(view->{spinner.setVisibility(View.VISIBLE);action.setEnabled(false);loadJourney();});}});
-            }
+            }catch(Exception ignored){/* Surrounding overlays are supplemental to the selected route. */}
+        });
+        if(discoveriesReady)return;
+        java.lang.ref.WeakReference<JourneyReplayActivity> screen=new java.lang.ref.WeakReference<>(this);
+        DiscoveryReplayCache.request(getApplicationContext(),ids,result->{
+            JourneyReplayActivity owner=screen.get();if(owner==null||owner.closed)return;
+            owner.main.post(()->{
+                if(owner.closed)return;
+                if(result==null||DiscoveryReplayCache.peek(owner,owner.ids)!=result){
+                    owner.discoveryFailed=true;if(!owner.animating)owner.showSummary();return;
+                }
+                owner.prepared=result;owner.discoveriesReady=true;
+                owner.map.updateDiscoveryReplay(result);
+                if(!owner.animating)owner.showSummary();
+            });
         });
     }
 
     private void play(){
-        if(prepared==null)return;animating=true;action.setText("SKIP ANIMATION");status.setText("Your journey is growing your map…");
+        if(prepared==null)return;
+        animating=true;action.setText("SKIP ANIMATION");status.setText("Replaying your journey…");
         map.startDiscoveryReplay(prepared,()->{
-            if(closed)return;animating=false;action.setText("PLAY AGAIN");
-            String summary=prepared.labels.isEmpty()?"Your matched journey · no new road discoveries confirmed."
-                    :"Your discoveries: "+android.text.TextUtils.join(" · ",prepared.labels);
-            if(summary.length()>280)summary=summary.substring(0,277)+"…";
-            status.setText(summary);
+            if(closed)return;animating=false;action.setText("PLAY AGAIN");showSummary();
         });
     }
-    @Override protected void onResume(){super.onResume();resumed=true;}
-    @Override protected void onPause(){resumed=false;if(map!=null)map.finishDiscoveryReplay();super.onPause();}
+    private void showSummary(){
+        if(!discoveriesReady){
+            status.setText(discoveryFailed?"Journey replay complete. Discovery details are unavailable right now."
+                    :"Journey replay complete. Discovery details will appear when ready.");return;
+        }
+        String summary=prepared.labels.isEmpty()?"Your matched journey · no new road discoveries confirmed."
+                :"Your discoveries: "+android.text.TextUtils.join(" · ",prepared.labels);
+        if(summary.length()>280)summary=summary.substring(0,277)+"…";
+        status.setText(summary);
+    }
+    @Override protected void onPause(){if(map!=null)map.finishDiscoveryReplay();super.onPause();}
     @Override protected void onDestroy(){closed=true;worker.shutdownNow();main.removeCallbacksAndMessages(null);super.onDestroy();}
     private TextView text(String value,int size,int color,boolean bold){TextView v=new TextView(this);v.setText(value);v.setTextSize(size);
         v.setTextColor(color);if(bold)v.setTypeface(null,Typeface.BOLD);return v;}

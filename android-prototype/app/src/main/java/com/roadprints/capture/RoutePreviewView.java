@@ -126,6 +126,7 @@ public class RoutePreviewView extends View {
     public void startDiscoveryReplay(DiscoveryReplay replay, Runnable complete) {
         stopDiscoveryReplay();
         discoveryReplay = replay;
+        discoveryFraction = 0;
         discoveryComplete = complete;
         fitDiscoveryReplay();
         if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
@@ -146,6 +147,12 @@ public class RoutePreviewView extends View {
             }
         });
         discoveryAnimator.start();
+    }
+
+    /** Add confirmed highlights without restarting animation or changing the camera. */
+    public void updateDiscoveryReplay(DiscoveryReplay replay) {
+        if(discoveryReplay==null)return;
+        discoveryReplay=replay;invalidate();
     }
 
     private void fitDiscoveryReplay() {

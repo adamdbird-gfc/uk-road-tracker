@@ -1648,6 +1648,20 @@ public class MapActivity extends Activity {
         int points;
     }
 
+    /** Reuse already displayed overview geometry; no disk read or archive scan on Play. */
+    static ReplayContext cachedReplayContext(Context context) {
+        long revision=31L*JourneyStore.dataRevision(context)+ServiceStationStore.revision(context);
+        synchronized(MAP_CACHE_LOCK) {
+            if(processMapCache==null||processMapCacheRevision!=revision)return null;
+            ReplayContext result=new ReplayContext();
+            result.roads.addAll(processMapCache.sections);
+            result.motorways.addAll(processMapCache.coveredMotorwaySections);
+            if(result.motorways.isEmpty())result.motorways.addAll(processMapCache.motorwaySections);
+            result.aRoads.addAll(processMapCache.coveredARoadSections);
+            return result;
+        }
+    }
+
     static ReplayContext readReplayContext(Context context, DiscoveryReplay trace,
             java.util.function.BooleanSupplier cancelled) throws Exception {
         ReplayContext output = new ReplayContext();
