@@ -70,17 +70,17 @@ final class TimelineRoadPreparation {
         JSONArray gaps = new JSONArray();
         for (int i = 0; i < end; i++) {
             if (i > 0 && times.getLong(i) - times.getLong(i - 1) > GAP_MS) {
-                if (section.length() < 2)
-                    throw new IllegalStateException("A Timeline recording gap leaves a section with too little GPS evidence. The original route is preserved.");
-                out.sections.add(section); section = new JSONArray(); out.changed = true;
+                if (section.length() >= 2) out.sections.add(section);
+                else out.details.put("isolated_samples_omitted", out.details.optInt("isolated_samples_omitted") + section.length());
+                section = new JSONArray(); out.changed = true;
                 gaps.put(new JSONObject().put("after_point_index", i - 1)
                         .put("duration_ms", times.getLong(i) - times.getLong(i - 1)));
             }
             section.put(points.get(i));
         }
-        if (section.length() < 2)
-            throw new IllegalStateException("Not enough Timeline points remain to validate this section. The original route is preserved.");
-        out.sections.add(section);
+        if (section.length() >= 2) out.sections.add(section);
+        else { out.changed = true; out.details.put("isolated_samples_omitted", out.details.optInt("isolated_samples_omitted") + section.length()); }
+        if (out.sections.isEmpty()) throw new IllegalStateException("Not enough connected Timeline points remain to match. The original route is preserved.");
         out.details.put("version", 1).put("evidence_status", "available").put("sections", out.sections.size()).put("unrecorded_gaps", gaps)
                 .put("original_geometry_preserved", true);
         return out;
@@ -134,6 +134,31 @@ final class TimelineRoadPreparation {
         return true;
     }
 
+    /** A partial import needs complete point accounting and verified road distance.
+     * Router geometry already contains separate successful sections; no connectors are added. */
+    static boolean importPartial(JSONObject result, JSONArray points) throws Exception {
+        int count=points.length();
+        JSONArray matched=result.optJSONArray("matched_point_indices"), omitted=result.optJSONArray("unmatched_point_indices");
+        JSONArray failures=result.optJSONArray("failed_sections");
+        double distance=result.optDouble("matched_distance_m",-1);
+        if(!result.optBoolean("matched_distance_is_deduplicated") || !Double.isFinite(distance) || distance<=0
+                || result.optInt("input_points",-1)!=count || matched==null || omitted==null || matched.length()<2
+                || result.optInt("matched_tracepoints",-1)!=matched.length() || matched.length()+omitted.length()!=count
+                || (omitted.length()==0 && (failures==null || failures.length()==0))) return false;
+        boolean[] accounted=new boolean[count];
+        for(JSONArray indices:new JSONArray[]{matched,omitted}) for(int i=0;i<indices.length();i++) {
+            int index=indices.optInt(i,-1);
+            if(index<0 || index>=count || accounted[index]) return false;
+            accounted[index]=true;
+        }
+        if(failures!=null) for(int i=0;i<failures.length();i++) {
+            JSONObject f=failures.optJSONObject(i);
+            if(f==null || f.optInt("start_point_index",-1)<0 || f.optInt("end_point_index",-1)<=f.optInt("start_point_index",-1)
+                    || f.optInt("end_point_index",count)>=count) return false;
+        }
+        return true;
+    }
+
     /** Retain failure details without duplicating all matcher map geometry. */
     static JSONObject diagnostics(JSONObject result) throws Exception {
         JSONObject out = new JSONObject();
@@ -164,6 +189,8 @@ final class TimelineRoadPreparation {
         JSONObject out = new JSONObject().put("status", "ok");
         for (JSONObject result : results) if (result.optBoolean("endpoint_partial_match", false))
             out.put("endpoint_partial_match", true).put("partial_match_reason", "unmatched_end_samples");
+        for (JSONObject result : results) if (result.optBoolean("timeline_partial_match", false))
+            out.put("timeline_partial_match", true).put("partial_match_reason", "incomplete_timeline_data");
         boolean distanceVerified = true;
         for (JSONObject result : results) distanceVerified &= result.optBoolean("matched_distance_is_deduplicated", false);
         out.put("matched_distance_is_deduplicated", distanceVerified);

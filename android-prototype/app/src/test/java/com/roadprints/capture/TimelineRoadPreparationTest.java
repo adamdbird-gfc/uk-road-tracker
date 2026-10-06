@@ -47,8 +47,9 @@ public class TimelineRoadPreparationTest {
         assertEquals(2,p.sections.size());assertEquals(2,p.sections.get(0).length());assertEquals(2,p.sections.get(1).length());
         assertEquals(9240000,p.details.getJSONArray("unrecorded_gaps").getJSONObject(0).getLong("duration_ms"));
     }
-    @Test(expected=IllegalStateException.class) public void isolatedPointAcrossGapCannotBeSilentlyDropped() throws Exception {
-        TimelineRoadPreparation.prepare(journey("[0,9300000,9360000]"),points("[[0,0],[0.1,0],[0.101,0]]"));
+    @Test public void isolatedPointAcrossGapIsReportedWithoutBlockingSupportedSection() throws Exception {
+        TimelineRoadPreparation.Prepared p=TimelineRoadPreparation.prepare(journey("[0,9300000,9360000]"),points("[[0,0],[0.1,0],[0.101,0]]"));
+        assertEquals(1,p.details.getInt("isolated_samples_omitted"));assertTrue(p.changed);assertEquals(1,p.sections.size());
     }
     @Test public void duplicateMinuteTimesAreKeptInSourceOrder() throws Exception {
         JSONObject j=journey("[0,60000,60000,180000]");

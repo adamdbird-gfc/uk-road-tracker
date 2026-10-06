@@ -258,6 +258,17 @@ public final class MatchingCoordinator {
         }
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
         boolean foot = isFoot(journey.optString("mode", "unknown"));
+        JSONObject source = journey.optJSONObject("source");
+        boolean timelineImport = source != null && "timeline_import".equals(source.optString("type"));
+        if (source != null && "android_activity_capture".equals(source.optString("type"))) {
+            JSONObject quality = CaptureQualityValidator.inspect(journey.optJSONArray("capture_route_samples"), foot);
+            synchronized (JourneyStore.class) {
+                JSONObject saved = JourneyStore.get(app, journey.optString("journey_id"));
+                if (saved != null) { saved.put("recording_quality", quality); JourneyStore.save(app, saved); }
+            }
+            if (!quality.optBoolean("resolved")) throw new IllegalStateException(
+                    "This app recording contains unreliable GPS fixes or a gap while moving. Full matching is blocked; your original recording is preserved. Use Debug Journey to report this capture issue.");
+        }
         WalkingJourneyPreparation.Prepared walking = foot
                 ? WalkingJourneyPreparation.prepare(app, journey) : null;
         if (walking != null) points = walking.points;
@@ -312,12 +323,13 @@ public final class MatchingCoordinator {
                     if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
                 }
                 JSONArray failures = sectionResult.optJSONArray("failed_sections");
-                boolean supportedPartial = road.details.optInt("version", 0) == 1
-                        && TimelineRoadPreparation.endpointPartial(sectionResult, submitted);
+                boolean supportedPartial = timelineImport
+                        && TimelineRoadPreparation.importPartial(sectionResult, submitted);
                 if (supportedPartial) {
-                    sectionResult.put("endpoint_partial_match", true).put("partial_match_reason", "unmatched_end_samples");
+                    sectionResult.put("timeline_partial_match", true).put("partial_match_reason", "incomplete_timeline_data");
+                    if (TimelineRoadPreparation.endpointPartial(sectionResult, submitted)) sectionResult.put("endpoint_partial_match", true);
                     acceptedEndpointPartial = true; road.changed = true;
-                    road.details.put("endpoint_partial_match", true);
+                    road.details.put("timeline_partial_match", true);
                 }
                 if (!hasRoute(sectionResult)
                         || (!supportedPartial && shouldRejectMatchResult(sectionResult.optInt("matched_tracepoints", submitted.length()),
@@ -330,6 +342,9 @@ public final class MatchingCoordinator {
                 results.add(sectionResult);
             }
             result = TimelineRoadPreparation.merge(results);
+        }
+        if (road != null && timelineImport && road.changed) {
+            result.put("timeline_partial_match", true).put("partial_match_reason", "incomplete_timeline_data");
         }
         attempt.put("finished_at_utc", Instant.now().toString());
         if (result.has("input_points")) attempt.put("server_input_points", result.optInt("input_points"));
@@ -400,7 +415,7 @@ public final class MatchingCoordinator {
     }
 
     static boolean shouldRejectMatchResult(int matchedPoints, int inputPoints, int failedSections) {
-        return failedSections > 0 || matchedPoints <= 0 || matchedPoints > inputPoints;
+        return failedSections > 0 || inputPoints < 2 || matchedPoints != inputPoints;
     }
 
     private void markFailed(String journeyId, Exception error) {

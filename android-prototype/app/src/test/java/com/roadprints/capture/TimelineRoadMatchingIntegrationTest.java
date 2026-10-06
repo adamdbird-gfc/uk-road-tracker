@@ -80,20 +80,21 @@ public class TimelineRoadMatchingIntegrationTest {
         assertEquals(400,stored.getDouble("distance_meters"),.01);assertEquals(590,stored.getDouble("original_distance_meters"),.01);
         assertEquals(original,stored.getJSONObject("route_geometry").toString());
     }
-    @Test public void partialMatchWithoutTimelineTimingIsRejectedWithReloadInstruction() throws Exception {
+    @Test public void partialMatchWithoutTimelineTimingRecoversWithoutCustomRepairFile() throws Exception {
         JSONObject j=endpointJourney();j.remove("timeline_match_evidence");JourneyStore.save(app,j);
         coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult());coordinator.start("road");await();
-        assertEquals(1,coordinator.snapshot().failed);assertTrue(JourneyStore.get(app,"road").getString("error_summary").contains("Load Timeline Data"));
+        assertEquals(1,coordinator.snapshot().matched);assertTrue(JourneyStore.get(app,"road").getJSONObject("processing_result").getBoolean("timeline_partial_match"));
     }
-    @Test public void interiorUnmatchedPointStillFailsWithOriginalDistancePreserved() throws Exception {
+    @Test public void interiorUnmatchedPointRetainsOnlyVerifiedMatchedDistance() throws Exception {
         JourneyStore.save(app,endpointJourney());
         coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult()
                 .put("matched_point_indices",new JSONArray("[0,1,3,4]")).put("unmatched_point_indices",new JSONArray("[2]"))
                 .put("failed_sections",new JSONArray("[{\"start_point_index\":1,\"end_point_index\":2,\"points\":2}]")));
-        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
-        assertEquals(590,JourneyStore.get(app,"road").getDouble("distance_meters"),.01);
+        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().matched);
+        assertEquals(400,JourneyStore.get(app,"road").getDouble("distance_meters"),.01);
+        assertTrue(JourneyStore.get(app,"road").getJSONObject("processing_result").getBoolean("timeline_partial_match"));
     }
-    @Test public void aLaterInteriorFailureCannotBeHiddenByAnEarlierAcceptedEndpointPartial() throws Exception {
+    @Test public void aLaterMalformedFailureCannotBeHiddenByAnEarlierAcceptedPartial() throws Exception {
         JSONObject j=endpointJourney();JSONArray coords=j.getJSONObject("route_geometry").getJSONArray("coordinates");
         JSONArray times=j.getJSONObject("timeline_match_evidence").getJSONArray("point_times_ms");
         for(int i=0;i<5;i++){coords.put(new JSONArray().put(.1+i*.001).put(0));times.put(3000000+i*60000);}
@@ -101,10 +102,27 @@ public class TimelineRoadMatchingIntegrationTest {
         AtomicInteger calls=new AtomicInteger();
         coordinator=new MatchingCoordinator(app,(foot,payload)->{
             if(calls.incrementAndGet()==1)return endpointResult();
-            return endpointResult().put("matched_point_indices",new JSONArray("[0,1,3,4]"))
+            return endpointResult().put("matched_point_indices",new JSONArray("[0,1,3,3]"))
                 .put("unmatched_point_indices",new JSONArray("[2]"))
                 .put("failed_sections",new JSONArray("[{\"start_point_index\":1,\"end_point_index\":2,\"points\":2}]"));
         });coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
         assertFalse(JourneyStore.get(app,"road").has("processing_result"));
+    }
+
+    @Test public void nativeCaptureCannotUseImportPartialPolicy() throws Exception {
+        JSONObject j=endpointJourney().put("source",new JSONObject().put("type","android_activity_capture"));
+        JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->endpointResult().put("failed_sections",new JSONArray()));
+        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);
+        JSONObject stored=JourneyStore.get(app,"road");assertFalse(stored.has("processing_result"));
+        assertEquals(590,stored.getDouble("distance_meters"),.01);
+    }
+    @Test public void movingCaptureGapIsBlockedBeforeCallingMatcher() throws Exception {
+        JSONObject j=endpointJourney().put("source",new JSONObject().put("type","android_activity_capture"))
+                .put("capture_route_samples",new JSONArray("[[0,0,10,100000,1],[0.01,0,10,300000,1]]"));
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{calls.incrementAndGet();return result();});
+        coordinator.start("road");await();assertEquals(1,coordinator.snapshot().failed);assertEquals(0,calls.get());
+        assertFalse(JourneyStore.get(app,"road").getJSONObject("recording_quality").getBoolean("resolved"));
     }
 }
