@@ -363,7 +363,8 @@ public final class MatchingCoordinator {
         stored.put("processing_result", result);
         if (road != null && road.changed) {
             double distance = result.optDouble("matched_distance_m", -1);
-            if (!Double.isFinite(distance) || distance <= 0)
+            if (!Double.isFinite(distance) || distance <= 0
+                    || !result.optBoolean("matched_distance_is_deduplicated", false))
                 throw new IllegalStateException("The prepared road match has no valid distance. The original route is preserved.");
             if (!stored.has("original_distance_meters"))
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));

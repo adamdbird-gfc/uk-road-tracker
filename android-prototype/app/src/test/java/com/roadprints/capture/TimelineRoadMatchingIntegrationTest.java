@@ -20,7 +20,7 @@ public class TimelineRoadMatchingIntegrationTest {
         return new JSONObject("{\"journey_id\":\"road\",\"mode\":\"driving\",\"distance_meters\":590,\"processing_status\":\"pending\",\"capture_quality\":{\"gps_points\":4,\"source_route_points\":4},\"source\":{\"type\":\"timeline_import\"},\"route_geometry\":{\"type\":\"LineString\",\"coordinates\":[[0,0],[0.001,0],[0.1,0],[0.101,0]]},\"timeline_match_evidence\":{\"point_times_ms\":[0,60000,9300000,9360000],\"end_appended\":false}}");
     }
     private JSONObject result() throws Exception {
-        return new JSONObject("{\"input_points\":2,\"matched_tracepoints\":2,\"matched_distance_m\":110,\"failed_sections\":[],\"geojson\":{\"features\":[{\"geometry\":{\"type\":\"LineString\",\"coordinates\":[[0,0],[0.001,0]]}}]}}");
+        return new JSONObject("{\"input_points\":2,\"matched_tracepoints\":2,\"matched_distance_m\":110,\"matched_distance_is_deduplicated\":true,\"failed_sections\":[],\"geojson\":{\"features\":[{\"geometry\":{\"type\":\"LineString\",\"coordinates\":[[0,0],[0.001,0]]}}]}}");
     }
     private void await() throws Exception {
         long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);

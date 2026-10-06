@@ -82,7 +82,7 @@ final class TimelineRoadPreparation {
     static JSONObject diagnostics(JSONObject result) throws Exception {
         JSONObject out = new JSONObject();
         for (String key : new String[]{"input_points", "matched_tracepoints", "matched_distance_m",
-                "matched_point_indices", "unmatched_point_indices", "road_recovery"}) {
+                "matched_point_indices", "unmatched_point_indices", "road_recovery", "matched_distance_is_deduplicated"}) {
             if (result.has(key)) out.put(key, result.get(key));
         }
         JSONArray failures = result.optJSONArray("failed_sections"), retained = new JSONArray();
@@ -106,6 +106,9 @@ final class TimelineRoadPreparation {
     static JSONObject merge(List<JSONObject> results) throws Exception {
         if (results.size() == 1) return results.get(0);
         JSONObject out = new JSONObject().put("status", "ok");
+        boolean distanceVerified = true;
+        for (JSONObject result : results) distanceVerified &= result.optBoolean("matched_distance_is_deduplicated", false);
+        out.put("matched_distance_is_deduplicated", distanceVerified);
         for (String key : new String[]{"input_points", "matched_tracepoints", "chunks_used", "points_sent_to_matcher"}) {
             int total = 0; for (JSONObject result : results) total += result.optInt(key);
             out.put(key, total);
