@@ -364,7 +364,7 @@ public final class JourneyStore {
 
     public static synchronized int countByModes(Context context, String... modes) {
         int count = 0;
-        for (JSONObject journey : all(context)) {
+        for (JSONObject journey : allSummaries(context)) {
             String value = journey.optString("mode", "unknown");
             for (String mode : modes) {
                 if (mode.equals(value)) {
@@ -378,7 +378,7 @@ public final class JourneyStore {
 
     public static synchronized int deleteByModes(Context context, String... modes) {
         int deleted = 0;
-        List<JSONObject> journeys = all(context);
+        List<JSONObject> journeys = allSummaries(context);
         for (JSONObject journey : journeys) {
             String value = journey.optString("mode", "unknown");
             boolean match = false;
@@ -396,12 +396,26 @@ public final class JourneyStore {
         return deleted;
     }
 
+    /** Deletion must not parse, upgrade or migrate the data being discarded. */
     public static synchronized int deleteAll(Context context) {
         int deleted = 0;
-        for (JSONObject journey : all(context)) {
-            delete(context, journey.optString("journey_id"));
-            deleted++;
+        File[] files = context.getFilesDir().listFiles((directory, name) ->
+                name.startsWith(PREFIX) && (name.endsWith(SUFFIX) || name.endsWith(".tmp")));
+        try {
+            if (files != null) for (File file : files) {
+                if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
+                if (file.getName().endsWith(SUFFIX)) deleted++;
+            }
+        } finally {
+            // A partially completed deletion also invalidates cached screen data.
+            if (deleted > 0) bumpDataRevision(context);
         }
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long revision = preferences.getLong(DATA_REVISION, 0L);
+        // Discard legacy preference records without migrating them into new files.
+        if (!preferences.edit().clear().putBoolean(MIGRATED, true)
+                .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
+            throw new IllegalStateException("Could not clear legacy journey data");
         ServiceStationStore.clearOnDeleteAll(context);
         return deleted;
     }
@@ -548,3 +562,4 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+
