@@ -3,7 +3,11 @@ package com.roadprints.capture;
 import org.json.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
+@RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class DrivingJourneyPreparationTest {
     private JSONObject point(double x,double y) throws Exception {
         return new JSONObject().put("lng",x/111195).put("lat",y/111195);

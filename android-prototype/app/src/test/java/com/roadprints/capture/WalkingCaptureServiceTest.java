@@ -51,6 +51,9 @@ public class WalkingCaptureServiceTest {
     @Test public void drivingGpsArrivalSurvivesLateVehicleCallbacksAndResetsOnDeparture() throws Exception {
         gpsStop("driving",DetectedActivity.IN_VEHICLE);
     }
+    @Test public void unconfirmedVehicleCaptureUsesGpsArrivalEvidence() throws Exception {
+        gpsStop("unknown",DetectedActivity.IN_VEHICLE);
+    }
     private void gpsStop(String mode,int activity) throws Exception {
         CaptureService service=Robolectric.buildService(CaptureService.class).get();
         service.getSharedPreferences("roadprints_capture_state",0).edit()

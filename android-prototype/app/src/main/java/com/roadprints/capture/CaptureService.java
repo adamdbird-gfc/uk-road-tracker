@@ -178,7 +178,7 @@ public class CaptureService extends Service {
             // Retain rejected fixes as evidence, but do not credit their jumps
             // as travelled distance or let them reset the stop timer.
             points.add(observation);
-            if (automaticCapture && (roadMode(mode) || "walking".equals(mode) || "running".equals(mode)))
+            if (automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
                 observeWalkingStillness(observation);
             if (trusted) {
                 if (lastPoint != null) distanceMetres += lastPoint.distanceTo(observation);
@@ -405,6 +405,7 @@ public class CaptureService extends Service {
         }
 
         String detectedMode = modeForActivity(activityType);
+        if (activityType == DetectedActivity.IN_VEHICLE && roadMode(mode)) detectedMode = mode;
         boolean gpsQuiet=automaticCapture && gpsStillness
                 && (mode.equals(detectedMode) || ("running".equals(mode) && "walking".equals(detectedMode)))
                 && walkingStillness.quiet(System.currentTimeMillis());
@@ -492,7 +493,7 @@ public class CaptureService extends Service {
     }
 
     private void observeWalkingStillness(Location location) {
-        walkingStillness.accept(footSample(location,points.size()-1),roadMode(mode));
+        walkingStillness.accept(footSample(location,points.size()-1),roadMode(mode) || "unknown".equals(mode));
         long now=System.currentTimeMillis();
         if(!walkingStillness.quiet(now)) {
             if(gpsStillness) {
@@ -1189,8 +1190,8 @@ public class CaptureService extends Service {
             }
 
             walkingStillness.reset(); gpsStillness=snapshot.optBoolean("gps_stillness", false);
-            if(automaticCapture && (roadMode(mode) || "walking".equals(mode) || "running".equals(mode))) {
-                for(int i=0;i<points.size();i++) walkingStillness.accept(footSample(points.get(i),i),roadMode(mode));
+            if(automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode))) {
+                for(int i=0;i<points.size();i++) walkingStillness.accept(footSample(points.get(i),i),roadMode(mode) || "unknown".equals(mode));
                 if(walkingStillness.quiet(System.currentTimeMillis())) {
                     FootTraceValidator.Sample anchor=walkingStillness.anchor();
                     gpsStillness=true; stationarySince=anchor.time;
