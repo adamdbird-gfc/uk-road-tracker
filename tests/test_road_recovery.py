@@ -36,7 +36,7 @@ def load_functions():
     names = {"osrm_match_chunk", "matched_road_legs", "supported_road_recovery_snap", "match_chunk_resiliently", "chunk_points", "match_payload"}
     nodes = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name in names]
     namespace = dict(asyncio=asyncio, math=math, HTTPException=HTTPException, RADIUS_ATTEMPTS=[20, 10, 5],
-                     OSRM_CHUNK_SIZE=8, OSRM_CHUNK_OVERLAP=2, MatchRequest=object,
+                     OSRM_CHUNK_SIZE=8, OSRM_CHUNK_OVERLAP=2, CYCLE_OSRM_BASE_URL="bike", MatchRequest=object,
                      httpx=types.SimpleNamespace(AsyncClient=Client, HTTPError=NetworkError),
                      motorway_refs=lambda ref: [], a_road_refs=lambda ref: [])
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(path), "exec"), namespace)
