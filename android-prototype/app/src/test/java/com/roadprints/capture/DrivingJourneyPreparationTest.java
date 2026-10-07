@@ -76,6 +76,11 @@ public class DrivingJourneyPreparationTest {
         try { DrivingJourneyPreparation.validateDistance(new JSONObject().put("matched_distance_m",2000),points);fail(); }
         catch(IllegalStateException expected) { }
     }
+    @Test public void repeatedCoordinatesWithVehicleSpeedCannotConfirmArrival() {
+        WalkingStillnessDetector detector=new WalkingStillnessDetector();
+        for(int i=0;i<=12;i++) detector.accept(new FootTraceValidator.Sample(0,0,5,100000+i*30000,10,i),true);
+        assertFalse(detector.canFinish(460000));assertFalse(detector.quiet(460000));
+    }
     @Test public void movingVehicleResetsStopEvidenceAndGpsSilenceCannotConfirmArrival() {
         WalkingStillnessDetector detector=new WalkingStillnessDetector();
         for(int i=0;i<=10;i++) detector.accept(new FootTraceValidator.Sample(0,0,5,100000+i*30000,0,i),true);

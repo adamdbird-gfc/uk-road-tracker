@@ -14,6 +14,10 @@ final class WalkingStillnessDetector {
         if (!usable(point) || point.accuracy>50) return;
         if (latest!=null && point.time<=latest.time) return;
         if (latest!=null && !CaptureQualityValidator.reliable(latest,point,!road)) return;
+        // A repeated coordinate with reported vehicle motion is not arrival evidence.
+        if (road && Double.isFinite(point.speed) && point.speed>=2.5) {
+            anchor=point; latest=point; observations=1; confirmed=false; movement=0; return;
+        }
         // Replay the same timer decision a live capture can make between fixes.
         // This still needs several corroborating fixes fresh at the five-minute mark.
         if(anchor!=null && latest!=null && observations>=3
