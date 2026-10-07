@@ -446,7 +446,7 @@ public class AchievementsActivity extends Activity {
     private static String achievementGroup(AchievementStore.Definition definition) {
         if("service-station".equals(definition.type)) return "Collections";
         if("town-exploration".equals(definition.type))return "Town exploration";
-        if("app-use".equals(definition.type)||"repeat-journey".equals(definition.type))return "App milestones";
+        if("app-use".equals(definition.type)||"repeat-journey".equals(definition.type)||"cycling-journey".equals(definition.type))return "App milestones";
         if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";
         if("crossing-set".equals(definition.type)) return "Crossings";
         if("landmark".equals(definition.type)||"landmark-count".equals(definition.type)||"a-road-landmark".equals(definition.type) || "summit".equals(definition.type)) return "Landmarks";

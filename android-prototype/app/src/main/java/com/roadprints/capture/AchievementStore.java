@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=6;
+    static final int CATALOGUE_VERSION=7;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -177,7 +177,11 @@ final class AchievementStore {
         values.putAll(serviceGoals.values);
         values.put("foot-total",core.footMetres/MILE);values.put("road-total",core.roadMetres/MILE);
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
-        values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE?1.0:0.0);
+        values.put("cycle-total",core.cycleMetres/MILE);values.put("cycle-unique",core.cycleCoverage.metres()/MILE);
+        values.put("cycle-first",core.cycleJourneys.isEmpty()?0.0:1.0);
+        values.put("cycle-rides",(double)core.cycleJourneys.size());
+        values.put("cycle-longest",core.longestCycle/MILE);
+        values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE||core.longestCycle>=25*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
         lists.putAll(serviceGoals.lists);
@@ -317,7 +321,7 @@ final class AchievementStore {
     }
     static String progressText(Context context,Progress progress) {
         Definition d=progress.definition;double target=nextTarget(d,progress.value);
-        if("distance".equals(d.type))return (d.id.startsWith("foot")?"Walking/running":"Driving and bus")+" · "+DistanceUnits.format(context,progress.value*MILE)
+        if("distance".equals(d.type))return (d.id.startsWith("foot")?"Walking/running":d.id.equals("cycle-longest")?"Longest cycling journey":d.id.startsWith("cycle-")?"Cycling":"Driving and bus")+" · "+DistanceUnits.format(context,progress.value*MILE)
                 +" / "+DistanceUnits.format(context,target*MILE)+(levelFor(d,progress.value)==d.levels.length?" · complete":"");
         if("town-exploration".equals(d.type))return String.format(Locale.UK,
                 "%s · %.1f%% / %.0f%% · towns with more than 400 roads",
@@ -331,7 +335,8 @@ final class AchievementStore {
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
         if("mary-high-streets".equals(d.id)||"mastered-monopoly".equals(d.id))return String.format(Locale.UK,"%,d / %.0f different %s unlocked",(int)progress.value,target,
                 "mary-high-streets".equals(d.id)?"High Streets":"Station Roads");
-        if("long-journey".equals(d.type))return progress.unlocked?d.detail:"Complete one journey of "+DistanceUnits.format(context,10*MILE)+" on foot or "+DistanceUnits.format(context,250*MILE)+" by road.";
+        if("cycle-rides".equals(d.id))return (int)progress.value+" / "+(int)target+" completed cycling journeys";
+        if("long-journey".equals(d.type))return progress.unlocked?d.detail:"Complete one journey of "+DistanceUnits.format(context,10*MILE)+" on foot, "+DistanceUnits.format(context,25*MILE)+" cycling or "+DistanceUnits.format(context,250*MILE)+" by road.";
         if("picasso".equals(d.id))return Math.min(5,(int)progress.value)+" / 5 distinct journeys edited";
         if("network-percent".equals(d.type))return String.format(Locale.UK,"%.1f%% of the UK motorway network · target %.0f%%",progress.value,d.target);
         if("crossing-set".equals(d.type))return (int)progress.value+" of "+CROSSINGS.size()+" great road crossings completed";
@@ -534,6 +539,11 @@ final class AchievementStore {
         output.add(family("road-total","Going the distance","Driving and bus","distance",new double[]{10,100,1000,10000,25000}));
         output.add(family("foot-unique","Blazing a trail","Unique walking/running coverage","distance",new double[]{1,10,50,100,250}));
         output.add(family("road-unique","Blazing a trail","Unique driving and bus coverage","distance",new double[]{10,100,500,1000,5000}));
+        output.add(family("cycle-total","Going the distance","Cycling","distance",new double[]{1,25,100,500,1000}));
+        output.add(family("cycle-unique","Blazing a trail","Unique cycling coverage","distance",new double[]{1,10,50,100,250}));
+        output.add(new Definition("cycle-first","","On your bike","Complete your first matched cycling journey.","Your first cycling journey completed.","cycling-journey",1,null,0,0,0));
+        output.add(family("cycle-rides","Keep the wheels turning","Complete matched cycling journeys. Each journey counts once.","cycling-journey",new double[]{5,25,100}));
+        output.add(family("cycle-longest","The long ride","Longest completed cycling journey","distance",new double[]{5,10,25,50,100}));
         output.add(townFamily(false));
         output.add(townFamily(true));
         Definition county=family("county-collector","County Collector",
@@ -545,7 +555,7 @@ final class AchievementStore {
         output.add(new Definition("sat-nav-on","","Sat nav: on","Complete your first journey recorded by Roadprints.","Your first Roadprints recording completed.","app-use",1,null,0,0,0));
         output.add(new Definition("picasso","","The artist formerly known as Picasso","Save edits to five distinct journeys.","Five distinct journeys edited.","app-use",5,null,0,0,0));
         output.add(new Definition("joining-the-dots","","Joining the dots","Save your first correction trace using the drawing tool.","Your first correction trace saved.","app-use",1,null,0,0,0));
-        output.add(new Definition("long-way-home","","Taking the long way home","Complete one journey of 10 miles on foot or 250 miles by road.","A long journey completed.","long-journey",1,null,0,0,0));
+        output.add(new Definition("long-way-home","","Taking the long way home","Complete one journey of 10 miles on foot, 25 miles cycling or 250 miles by road.","A long journey completed.","long-journey",1,null,0,0,0));
         output.add(new Definition("mastered-monopoly","","Mastered Monopoly","Unlock four different Station Roads. You do not collect £200.","Four different Station Roads unlocked. You do not collect £200.","road-count",4,null,0,0,0));
         for(String id:MotorwayProgressCalculator.canonicalRoadIds()) output.add(roadFamily("completion-motorway-"+id,id));
         // The two highest A-road tiers, using the bundled canonical GB catalogue.

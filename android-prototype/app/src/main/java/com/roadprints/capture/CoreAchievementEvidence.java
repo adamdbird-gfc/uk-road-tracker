@@ -7,22 +7,26 @@ import java.util.*;
 
 /** One bounded, streaming scan: totals and distinct matched coverage are separate. */
 final class CoreAchievementEvidence {
-    double roadMetres, footMetres, longestRoad, longestFoot;
+    double roadMetres, footMetres, cycleMetres, longestRoad, longestFoot, longestCycle;
+    final Set<String> cycleJourneys=new HashSet<>();
     boolean captured;
     final Set<String> edited=new HashSet<>();
     final Set<String> refs=new TreeSet<>();
     final Map<String,LinkedHashMap<String,JSONObject>> named=new TreeMap<>();
     final Map<String,LinkedHashMap<String,JSONObject>> townRoads=new TreeMap<>();
-    final Coverage roadCoverage=new Coverage(), footCoverage=new Coverage();
+    final Coverage roadCoverage=new Coverage(), footCoverage=new Coverage(), cycleCoverage=new Coverage();
 
     void add(JSONObject journey) {
         String mode=journey.optString("mode","").toLowerCase(Locale.ROOT);
         boolean road="driving".equals(mode)||"bus".equals(mode);
         boolean foot="walking".equals(mode)||"running".equals(mode)||"pedestrian".equals(mode);
+        boolean cycle="cycling".equals(mode)||"bicycle".equals(mode);
         double metres=journey.optDouble("distance_meters",0);
         if(!Double.isFinite(metres)||metres<0) metres=0;
         if(road){roadMetres+=metres;longestRoad=Math.max(longestRoad,metres);}
         if(foot){footMetres+=metres;longestFoot=Math.max(longestFoot,metres);}
+        // Total travel distance follows the existing foot/road rules, including imports.
+        if(cycle)cycleMetres+=metres;
         JSONObject source=journey.optJSONObject("source");
         if(source!=null&&"android_activity_capture".equals(source.optString("type"))
                 &&!journey.optString("ended_at").isEmpty()) captured=true;
@@ -32,6 +36,20 @@ final class CoreAchievementEvidence {
         JSONArray removedRoads=edits==null?null:edits.optJSONArray("removed_road_ids");
         if((removed!=null&&removed.length()>0)||(removedRoads!=null&&removedRoads.length()>0))
             edited.add(journey.optString("journey_id"));
+        if(cycle&&"complete".equals(journey.optString("processing_status"))) {
+            JSONObject result=journey.optJSONObject("processing_result");
+            if(result!=null)cycleCoverage.add(result.optJSONObject("geojson"),removed);
+            double retained=0;
+            for(List<double[]> part:TravelAchievementRoutes.matched(journey))
+                for(int i=1;i<part.size();i++)retained+=TravelAchievementRoutes.metres(part.get(i-1),part.get(i));
+            // Failed, empty and entirely deleted matches are not completed rides.
+            if(retained>0) {
+                String id=journey.optString("journey_id");
+                if(!id.isEmpty())cycleJourneys.add(id);
+                // Edits must not leave a long-ride badge earned by a removed detour.
+                longestCycle=Math.max(longestCycle,removed!=null&&removed.length()>0?Math.min(metres,retained):metres);
+            }
+        }
         if((!road&&!foot)||!"complete".equals(journey.optString("processing_status"))) return;
         TownAchievementEvidence.addRoadDiscovery(journey,townRoads);
         JSONObject result=journey.optJSONObject("processing_result");
