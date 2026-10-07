@@ -261,13 +261,33 @@ public class JourneyListActivity extends Activity {
         readinessSummary.setPadding(0, 0, 0, dp(8));
         LinearLayout filters = new LinearLayout(this);
         filters.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView filterIcon = RoadprintsIcons.image(this, R.drawable.ic_roadprints_filter, 0xFFF7C450, "Filters");
-        filters.addView(filterIcon, new LinearLayout.LayoutParams(dp(24), dp(24)));
-        TextView openFilters = actionButton("FILTER JOURNEYS", 0xFF233B78, Color.WHITE);
+        LinearLayout openFilters = new LinearLayout(this);
+        openFilters.setGravity(Gravity.CENTER);
+        openFilters.setPadding(dp(16), 0, dp(16), 0);
+        openFilters.setBackground(roundRect(0xFF233B78, 0xFF46649E, dp(12)));
         openFilters.setTag("journey_filters_open");
+        openFilters.setContentDescription("Filter journeys");
+        openFilters.setFocusable(true);
         openFilters.setOnClickListener(v -> showJourneyFilters());
+        openFilters.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override public void onInitializeAccessibilityNodeInfo(View host,
+                    android.view.accessibility.AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(android.widget.Button.class.getName());
+            }
+        });
+        ImageView filterIcon = RoadprintsIcons.image(this, R.drawable.ic_roadprints_filter, Color.WHITE, "");
+        filterIcon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        openFilters.addView(filterIcon, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView filterLabel = actionButton("FILTER JOURNEYS", 0xFF233B78, Color.WHITE);
+        filterLabel.setBackground(null);
+        filterLabel.setPadding(0, 0, 0, 0);
+        filterLabel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-2, -2);
+        labelParams.leftMargin = dp(8);
+        openFilters.addView(filterLabel, labelParams);
         LinearLayout.LayoutParams openParams = new LinearLayout.LayoutParams(0, dp(48), 1);
-        openParams.setMargins(dp(8), 0, dp(8), 0);
+        openParams.rightMargin = dp(8);
         filters.addView(openFilters, openParams);
         TextView reset = actionButton("RESET", 0xFF0B1C50, 0xFFF7C450);
         reset.setOnClickListener(v -> { activeFilter = 0; activeJourneyStatusFilter = "all"; activeDateFilter = JourneyDateFilter.all(); applyJourneyFilters(); });
