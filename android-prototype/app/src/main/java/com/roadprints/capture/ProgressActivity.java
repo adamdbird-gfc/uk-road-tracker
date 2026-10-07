@@ -562,7 +562,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
-        if (ServiceStationStore.unlocked(this)) addProgressJump(row, "Service stations", "services");
+        if (ServiceStationStore.unlocked(this)) addProgressJump(row, "Motorway Service Stations", "services");
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;
@@ -620,7 +620,7 @@ public class ProgressActivity extends Activity {
     }
 
     private void addServiceStationPanel(LinearLayout parent) {
-        LinearLayout panel=statisticsPanel("Service stations");
+        LinearLayout panel=statisticsPanel("Motorway Service Stations");
         try {
             JSONArray stations=ServiceStationStore.stations(this);
             Set<String> completed=ServiceStationStore.completed(this);
@@ -699,7 +699,7 @@ public class ProgressActivity extends Activity {
             panel.setTag("progress:motorways");
         else if ("A-road aggregate".equals(titleText) || "A-road coverage".equals(titleText))
             panel.setTag("progress:a_roads");
-        else if ("Service stations".equals(titleText)) panel.setTag("progress:services");
+        else if ("Motorway Service Stations".equals(titleText)) panel.setTag("progress:services");
 
         TextView heading = new TextView(this);
         heading.setText(titleText);
