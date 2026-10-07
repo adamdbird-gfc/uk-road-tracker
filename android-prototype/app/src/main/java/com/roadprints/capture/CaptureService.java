@@ -920,12 +920,13 @@ public class CaptureService extends Service {
                 journey.put("processing", new JSONObject()
                         .put("import", "complete")
                         .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
-                        .put("foot_matching", ("walking".equals(savedMode) || "running".equals(savedMode)) ? "pending" : "not_required"));
+                        .put("foot_matching", ("walking".equals(savedMode) || "running".equals(savedMode)) ? "pending" : "not_required")
+                        .put("cycle_matching", MatchingCoordinator.isCycle(savedMode) ? "pending" : "not_required"));
                 JourneyStore.save(getApplicationContext(), journey);
                 MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
                         "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
                                 + "; distance_m: " + Math.round(routeDistance));
-                if (roadMode(savedMode) || "walking".equals(savedMode)) {
+                if (roadMode(savedMode) || "walking".equals(savedMode) || MatchingCoordinator.isCycle(savedMode)) {
                     MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
                 }
                 if (savedNextMode != null && savedNextPoints != null && !savedNextPoints.isEmpty()) {

@@ -19,7 +19,7 @@ public class GrowingStatusControlTest {
         bar=(GrowingStatusControl)GrowingStatusControl.create(activity);
     }
     private MatchingCoordinator.Snapshot snapshot(MatchingCoordinator.State state,int failed) {
-        return new MatchingCoordinator.Snapshot(state,10,4,4,failed,10,4,4,0,0,0,"");
+        return new MatchingCoordinator.Snapshot(state,10,4,4,failed,10,4,4,0,0,0,0,0,0,"");
     }
     private int dp(int value) { return Math.round(value*activity.getResources().getDisplayMetrics().density); }
     @Test public void idleReadyIsSlimFullWidthAndNotAnInactiveShortcut() {

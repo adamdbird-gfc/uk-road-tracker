@@ -47,7 +47,7 @@ public class MatchingCoordinatorTest {
         save("road", "bus", "processing"); save("foot", "walking", "pending"); save("train", "train", "pending");
         AtomicInteger road = new AtomicInteger(), foot = new AtomicInteger();
         coordinator = new MatchingCoordinator(app, (isFoot, payload) -> {
-            (isFoot ? foot : road).incrementAndGet(); return route();
+            ("/match-walking".equals(isFoot) ? foot : road).incrementAndGet(); return route();
         });
         coordinator.start(); await(MatchingCoordinator.State.COMPLETE);
         assertEquals(1, road.get()); assertEquals(1, foot.get());
@@ -134,7 +134,7 @@ public class MatchingCoordinatorTest {
                 .put("route_geometry", new JSONObject().put("type", "LineString").put("coordinates", coordinates)));
         AtomicInteger sentCount = new AtomicInteger();
         coordinator = new MatchingCoordinator(app, (foot, payload) -> {
-            assertFalse(foot);
+            assertEquals("/match", foot);
             JSONArray sent = payload.optJSONArray("points");
             sentCount.set(sent.length());
             assertEquals(0.3, sent.getJSONObject(0).optDouble("lng"), 0.000001);
@@ -162,7 +162,7 @@ public class MatchingCoordinatorTest {
                 .put("route_geometry", new JSONObject().put("type", "LineString").put("coordinates", coordinates)));
         AtomicInteger sentCount = new AtomicInteger();
         coordinator = new MatchingCoordinator(app, (foot, payload) -> {
-            assertTrue(foot);
+            assertEquals("/match-walking", foot);
             JSONArray sent = payload.optJSONArray("points");
             sentCount.set(sent.length());
             assertEquals(0.15, sent.getJSONObject(0).optDouble("lng"), 0.000001);
@@ -221,4 +221,60 @@ public class MatchingCoordinatorTest {
         assertTrue(report.contains("HTTP 422: test matcher detail"));
     }
 
+
+    private JSONObject cycleRoute() throws Exception {
+        return route().put("matching_mode", "cycling").put("matched_distance_m", 100)
+                .put("matched_distance_is_deduplicated", true);
+    }
+    @Test public void cyclingUsesSeparateEndpointAndStageWithoutCallingRoadOrFoot() throws Exception {
+        save("cycle", "cycling", "pending"); save("bicycle", "bicycle", "pending");
+        AtomicInteger calls = new AtomicInteger();
+        coordinator = new MatchingCoordinator(app, (endpoint, payload) -> {
+            assertEquals("/match-cycling", endpoint); assertFalse(payload.has("road_recovery"));
+            calls.incrementAndGet(); return cycleRoute();
+        });
+        coordinator.start(); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(2, calls.get()); assertEquals(2, coordinator.snapshot().cycleMatched);
+        assertEquals(0, coordinator.snapshot().roadMatched); assertEquals(0, coordinator.snapshot().footMatched);
+        JSONObject saved = JourneyStore.get(app, "cycle");
+        assertEquals("complete", saved.getJSONObject("processing").getString("cycle_matching"));
+        assertEquals("/match-cycling", saved.getJSONObject("last_match_attempt").getString("endpoint"));
+        assertEquals(100, saved.getDouble("distance_meters"), 0);
+        assertEquals("validated_cycling_match", saved.getString("distance_source"));
+    }
+    @Test public void failedCycleMatchPreservesTraceAndCanRetry() throws Exception {
+        save("cycle", "cycling", "pending"); AtomicInteger calls = new AtomicInteger();
+        String raw = JourneyStore.get(app, "cycle").getJSONObject("route_geometry").toString();
+        coordinator = new MatchingCoordinator(app, (endpoint, payload) -> {
+            if (calls.incrementAndGet() == 1) throw new IllegalStateException("HTTP 503: Cycling router busy");
+            return cycleRoute();
+        });
+        coordinator.start("cycle"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals("failed", JourneyStore.get(app, "cycle").getString("processing_status"));
+        assertEquals(raw, JourneyStore.get(app, "cycle").getJSONObject("route_geometry").toString());
+        coordinator.start("cycle"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals("complete", JourneyStore.get(app, "cycle").getString("processing_status"));
+    }
+    @Test public void cycleCannotReuseCarMatchAfterChangingTransport() throws Exception {
+        save("change", "driving", "complete");
+        JSONObject before=JourneyStore.get(app,"change"); before.put("processing_result",route()); JourneyStore.save(app,before);
+        JourneyStore.updateMode(app,"change","cycling");
+        JSONObject after=JourneyStore.get(app,"change");
+        assertFalse(after.has("processing_result")); assertEquals("pending",after.getString("processing_status"));
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{assertEquals("/match-cycling",endpoint);return cycleRoute();});
+        coordinator.start("change"); await(MatchingCoordinator.State.COMPLETE);
+        assertEquals(1,coordinator.snapshot().cycleMatched);
+    }
+    @Test public void cyclingRejectsUnverifiedDistanceAndEndpointOnlyTimeline() throws Exception {
+        save("cycle", "cycling", "pending");
+        JSONObject sparse=JourneyStore.get(app,"cycle");
+        sparse.put("source",new JSONObject().put("type","timeline_import"));
+        sparse.put("capture_quality",new JSONObject().put("source_route_points",0));JourneyStore.save(app,sparse);
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->cycleRoute());
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);assertEquals(0,coordinator.snapshot().total);
+        sparse.put("capture_quality",new JSONObject().put("source_route_points",2));JourneyStore.save(app,sparse);
+        coordinator.shutdownForTest(); coordinator=new MatchingCoordinator(app,(endpoint,payload)->route());
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);assertEquals(1,coordinator.snapshot().failed);
+        assertFalse(JourneyStore.get(app,"cycle").has("processing_result"));
+    }
 }

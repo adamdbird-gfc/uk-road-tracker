@@ -617,6 +617,18 @@ public final class JourneyStore {
         JSONObject journey = read(file);
         if (journey == null) return;
         try {
+            if (!mode.equals(journey.optString("mode"))) {
+                journey.remove("processing_result"); journey.remove("last_match_attempt");
+                journey.remove("error_summary"); journey.remove("processing_completed_at");
+                journey.put("processing_status", "pending");
+                JSONObject stages = new JSONObject().put("import", "complete")
+                        .put("road_matching", "not_required").put("foot_matching", "not_required")
+                        .put("cycle_matching", "not_required");
+                if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
+                        || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
+                    stages.put(MatchingCoordinator.matchingStage(mode), "pending");
+                journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+            }
             journey.put("mode", mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             journey.put("transport_confirmation", "confirmed");

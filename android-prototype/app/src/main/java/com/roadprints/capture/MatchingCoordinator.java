@@ -35,11 +35,13 @@ public final class MatchingCoordinator {
         public final int total, checked, matched, failed;
         public final int roadTotal, roadChecked, roadMatched;
         public final int footTotal, footChecked, footMatched;
+        public final int cycleTotal, cycleChecked, cycleMatched;
         public final String message;
 
         Snapshot(State state, int total, int checked, int matched, int failed,
                  int roadTotal, int roadChecked, int roadMatched,
-                 int footTotal, int footChecked, int footMatched, String message) {
+                 int footTotal, int footChecked, int footMatched,
+                 int cycleTotal, int cycleChecked, int cycleMatched, String message) {
             this.state = state;
             this.total = total;
             this.checked = checked;
@@ -51,6 +53,7 @@ public final class MatchingCoordinator {
             this.footTotal = footTotal;
             this.footChecked = footChecked;
             this.footMatched = footMatched;
+            this.cycleTotal = cycleTotal; this.cycleChecked = cycleChecked; this.cycleMatched = cycleMatched;
             this.message = message;
         }
 
@@ -61,8 +64,8 @@ public final class MatchingCoordinator {
     }
 
     private final Context app;
-    // One coordinator thread prepares the queue while three match workers run.
-    private final ExecutorService workers = Executors.newFixedThreadPool(4);
+    // One coordinator thread prepares two road workers and one worker per active mode.
+    private final ExecutorService workers = Executors.newFixedThreadPool(5);
     private volatile boolean pauseRequested;
     private volatile State state = State.IDLE;
     private volatile String message = "Ready to grow your map";
@@ -73,9 +76,11 @@ public final class MatchingCoordinator {
     private final AtomicInteger roadMatched = new AtomicInteger();
     private final AtomicInteger footChecked = new AtomicInteger();
     private final AtomicInteger footMatched = new AtomicInteger();
-    private volatile int total, roadTotal, footTotal;
+    private final AtomicInteger cycleChecked = new AtomicInteger();
+    private final AtomicInteger cycleMatched = new AtomicInteger();
+    private volatile int total, roadTotal, footTotal, cycleTotal;
 
-    interface Matcher { JSONObject match(boolean foot, JSONObject payload) throws Exception; }
+    interface Matcher { JSONObject match(String endpoint, JSONObject payload) throws Exception; }
     private final Matcher matcher;
 
     private MatchingCoordinator(Context context) { this(context, null); }
@@ -123,28 +128,31 @@ public final class MatchingCoordinator {
     public Snapshot snapshot() {
         return new Snapshot(state, total, checked.get(), matched.get(), failed.get(),
                 roadTotal, roadChecked.get(), roadMatched.get(),
-                footTotal, footChecked.get(), footMatched.get(), message);
+                footTotal, footChecked.get(), footMatched.get(),
+                cycleTotal, cycleChecked.get(), cycleMatched.get(), message);
     }
 
     private void prepareAndRun(String journeyId, boolean forceRematch) {
         try {
             List<String> road = new ArrayList<>();
             List<String> foot = new ArrayList<>();
+            List<String> cycle = new ArrayList<>();
             Map<String, String> queuedModes = new HashMap<>();
             if (journeyId != null) {
                 // A per-journey request must not parse every large archived journey.
                 JSONObject journey = JourneyStore.get(app, journeyId);
-                if (journey != null) enqueueIfMatchable(journey, road, foot, queuedModes, forceRematch);
+                if (journey != null) enqueueIfMatchable(journey, road, foot, cycle, queuedModes, forceRematch);
             } else {
                 // Keep only IDs in the work queue; full GeoJSON stays on disk until a
                 // worker needs that journey, avoiding a heap-sized archive snapshot.
-                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot, queuedModes, false));
+                JourneyStore.forEach(app, journey -> enqueueIfMatchable(journey, road, foot, cycle, queuedModes, false));
             }
             roadTotal = road.size();
             footTotal = foot.size();
-            total = roadTotal + footTotal;
+            cycleTotal = cycle.size();
+            total = roadTotal + footTotal + cycleTotal;
             checked.set(0); matched.set(0); failed.set(0);
-            roadChecked.set(0); roadMatched.set(0); footChecked.set(0); footMatched.set(0);
+            roadChecked.set(0); roadMatched.set(0); footChecked.set(0); footMatched.set(0); cycleChecked.set(0); cycleMatched.set(0);
             if (total == 0) {
                 state = State.COMPLETE;
                 message = "All eligible journeys are matched";
@@ -154,25 +162,27 @@ public final class MatchingCoordinator {
             message = "Matching journeys";
             ConcurrentLinkedQueue<String> roadWork = new ConcurrentLinkedQueue<>(road);
             ConcurrentLinkedQueue<String> footWork = new ConcurrentLinkedQueue<>(foot);
-            CountDownLatch done = new CountDownLatch(3);
-            for (int i = 0; i < 3; i++) {
+            ConcurrentLinkedQueue<String> cycleWork = new ConcurrentLinkedQueue<>(cycle);
+            CountDownLatch done = new CountDownLatch(4);
+            for (int i = 0; i < 4; i++) {
                 final boolean footLane = i == 2;
+                final boolean cycleLane = i == 3;
                 workers.execute(() -> {
                     try {
-                        ConcurrentLinkedQueue<String> lane = footLane ? footWork : roadWork;
+                        ConcurrentLinkedQueue<String> lane = cycleLane ? cycleWork : footLane ? footWork : roadWork;
                         String nextJourneyId;
                         while (!pauseRequested && (nextJourneyId = lane.poll()) != null) {
                             try {
                                 JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId), forceRematch);
                                 matchJourney(journey);
                                 matched.incrementAndGet();
-                                if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
+                                if (cycleLane) cycleMatched.incrementAndGet(); else if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
                             } catch (Exception error) {
                                 failed.incrementAndGet();
                                 markFailed(nextJourneyId, error);
                             } finally {
                                 checked.incrementAndGet();
-                                if (footLane) footChecked.incrementAndGet(); else roadChecked.incrementAndGet();
+                                if (cycleLane) cycleChecked.incrementAndGet(); else if (footLane) footChecked.incrementAndGet(); else roadChecked.incrementAndGet();
                             }
                         }
                     } finally {
@@ -195,7 +205,7 @@ public final class MatchingCoordinator {
     }
 
     private void enqueueIfMatchable(
-            JSONObject journey, List<String> road, List<String> foot,
+            JSONObject journey, List<String> road, List<String> foot, List<String> cycle,
             Map<String, String> queuedModes, boolean forceRematch) {
         recoverIfInterrupted(journey);
         if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
@@ -204,7 +214,7 @@ public final class MatchingCoordinator {
         if (journeyId.isEmpty()) return;
         String mode = journey.optString("mode", "unknown");
         queuedModes.put(journeyId, mode);
-        (isFoot(mode) ? foot : road).add(journeyId);
+        (isCycle(mode) ? cycle : isFoot(mode) ? foot : road).add(journeyId);
     }
 
     private void recoverIfInterrupted(JSONObject journey) {
@@ -212,7 +222,7 @@ public final class MatchingCoordinator {
         synchronized (JourneyStore.class) {
             try {
                 journey.put("processing_status", "pending");
-                String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+                String stage = matchingStage(journey.optString("mode", "unknown"));
                 JSONObject stages = journey.optJSONObject("stage_statuses");
                 if (stages != null) stages.put(stage, "pending");
                 JSONObject processing = journey.optJSONObject("processing");
@@ -233,7 +243,7 @@ public final class MatchingCoordinator {
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
             if (!forceRematch && "complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey))
                 throw new IllegalStateException("Journey already has a matched route");
-            String stage = isFoot(journey.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+            String stage = matchingStage(journey.optString("mode", "unknown"));
             journey.put("processing_status", "processing");
             JSONObject stages = journey.optJSONObject("stage_statuses");
             if (stages == null) stages = new JSONObject();
@@ -257,7 +267,9 @@ public final class MatchingCoordinator {
             }
         }
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
-        boolean foot = isFoot(journey.optString("mode", "unknown"));
+        String mode = journey.optString("mode", "unknown");
+        boolean foot = isFoot(mode);
+        boolean cycle = isCycle(mode);
         JSONObject source = journey.optJSONObject("source");
         boolean timelineImport = source != null && "timeline_import".equals(source.optString("type"));
         WalkingJourneyPreparation.Prepared walking = foot
@@ -274,15 +286,22 @@ public final class MatchingCoordinator {
         }
         if (walking != null) points = walking.points;
         if (points.length() < 2) throw new IllegalStateException("Not enough reliable GPS points to match this walk. The original recording is preserved.");
+        if (cycle) {
+            double[][] fixes = new double[points.length()][2];
+            for (int i=0;i<points.length();i++) { JSONObject fix=points.getJSONObject(i); fixes[i][0]=fix.getDouble("lng"); fixes[i][1]=fix.getDouble("lat"); }
+            JSONArray reduced = new JSONArray();
+            for (int index : CyclingTraceSimplifier.retainedIndices(fixes)) reduced.put(points.get(index));
+            points = reduced;
+        }
         JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
-        TimelineRoadPreparation.Prepared road = foot ? null : TimelineRoadPreparation.prepare(journey, points);
+        TimelineRoadPreparation.Prepared road = (foot || cycle) ? null : TimelineRoadPreparation.prepare(journey, points);
         List<JSONArray> roadRequests = new ArrayList<>();
         int submittedRoadPoints = 0;
         if (road != null) for (JSONArray section : road.sections) {
             JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
             roadRequests.add(sampled); submittedRoadPoints += sampled.length();
         }
-        String endpointPath = foot ? "/match-walking" : "/match";
+        String endpointPath = endpointForMode(mode);
         JSONObject attempt = new JSONObject()
                 .put("started_at_utc", Instant.now().toString())
                 .put("mode", journey.optString("mode", "unknown"))
@@ -305,7 +324,7 @@ public final class MatchingCoordinator {
         boolean acceptedEndpointPartial = false;
         if (road == null) {
             JSONObject payload = new JSONObject().put("points", requestPoints);
-            result = matcher != null ? matcher.match(true, payload)
+            result = matcher != null ? matcher.match(endpointPath, payload)
                     : postWithRetry(API_BASE_URL + endpointPath, payload);
         } else {
             List<JSONObject> results = new ArrayList<>();
@@ -314,7 +333,7 @@ public final class MatchingCoordinator {
             for (int index = 0; index < roadRequests.size(); index++) {
                 JSONArray submitted = roadRequests.get(index);
                 JSONObject payload = new JSONObject().put("points", submitted).put("road_recovery", true);
-                JSONObject sectionResult = matcher != null ? matcher.match(false, payload)
+                JSONObject sectionResult = matcher != null ? matcher.match(endpointPath, payload)
                         : postWithRetry(API_BASE_URL + endpointPath, payload);
                 sectionDiagnostics.put(TimelineRoadPreparation.diagnostics(sectionResult)
                         .put("section_index", index).put("submitted_points", submitted));
@@ -361,6 +380,15 @@ public final class MatchingCoordinator {
                 throw new IllegalStateException("Matched walking route is substantially longer than the validated GPS evidence. The original recording is preserved.");
             }
         }
+        if (cycle) {
+            double matchedDistance = result.optDouble("matched_distance_m", -1);
+            double recordedDistance = journey.optDouble("distance_meters", 0);
+            if (!"cycling".equals(result.optString("matching_mode"))
+                    || !result.optBoolean("matched_distance_is_deduplicated")
+                    || !Double.isFinite(matchedDistance) || matchedDistance <= 0
+                    || (recordedDistance > 0 && matchedDistance > Math.max(recordedDistance * 1.6, recordedDistance + 300)))
+                throw new IllegalStateException("Cycling match has no reliable distance or exceeds the saved GPS evidence. Your original recording is preserved.");
+        }
         int serverInput = result.optInt("input_points", points.length());
         int serverMatched = result.optInt("matched_tracepoints", serverInput);
         if (serverMatched < serverInput) attempt.put("partial_match", true);
@@ -382,7 +410,7 @@ public final class MatchingCoordinator {
                 || !geometry.toString().equals(String.valueOf(stored.optJSONObject("route_geometry")))) {
             throw new IllegalStateException("Journey changed during matching · retry with its current route and mode");
         }
-        String stage = foot ? "foot_matching" : "road_matching";
+        String stage = matchingStage(mode);
         stored.put("processing_status", "complete");
         JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
         stages.put(stage, "complete"); stored.put("stage_statuses", stages);
@@ -408,6 +436,11 @@ public final class MatchingCoordinator {
             stored.put("distance_meters", result.getDouble("matched_distance_m"));
             stored.put("distance_source", "validated_walking_match");
         }
+        if (cycle) {
+            if (!stored.has("original_distance_meters")) stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
+            stored.put("distance_meters", result.getDouble("matched_distance_m"));
+            stored.put("distance_source", "validated_cycling_match");
+        }
         stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");
@@ -427,7 +460,7 @@ public final class MatchingCoordinator {
             synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journeyId);
             if (stored == null) return;
-            String stage = isFoot(stored.optString("mode", "unknown")) ? "foot_matching" : "road_matching";
+            String stage = matchingStage(stored.optString("mode", "unknown"));
             stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
             JSONObject attempt = stored.optJSONObject("last_match_attempt");
             if (attempt != null) {
@@ -493,11 +526,11 @@ public final class MatchingCoordinator {
 
     private boolean canMatch(JSONObject j) {
         String mode = j.optString("mode", "unknown");
-        if (!isFoot(mode) && !isRoad(mode)) return false;
+        if (!isFoot(mode) && !isRoad(mode) && !isCycle(mode)) return false;
         JSONObject geometry = j.optJSONObject("route_geometry");
         JSONArray points = geometry == null ? null : geometry.optJSONArray("coordinates");
         if (points == null || points.length() < 2) return false;
-        if (isRoad(mode)) {
+        if (isRoad(mode) || isCycle(mode)) {
             JSONObject source = j.optJSONObject("source");
             if (source != null && "timeline_import".equals(source.optString("type", ""))) {
                 JSONObject quality = j.optJSONObject("capture_quality");
@@ -524,6 +557,16 @@ public final class MatchingCoordinator {
             }
         }
         return false;
+    }
+    static boolean isCycle(String mode) { return "cycling".equals(mode) || "bicycle".equals(mode); }
+    static String endpointForMode(String mode) {
+        if (isCycle(mode)) return "/match-cycling";
+        if ("walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode)) return "/match-walking";
+        return "/match";
+    }
+    static String matchingStage(String mode) {
+        if (isCycle(mode)) return "cycle_matching";
+        return "/match-walking".equals(endpointForMode(mode)) ? "foot_matching" : "road_matching";
     }
     private boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
     private boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }

@@ -577,7 +577,7 @@ public class MapActivity extends Activity {
             boolean roadJourney = "driving".equals(mode) || "bus".equals(mode);
             boolean footJourney = "walking".equals(mode) || "running".equals(mode)
                     || "pedestrian".equals(mode);
-            if (!roadJourney && !footJourney) return;
+            if (!roadJourney && !footJourney && !MatchingCoordinator.isCycle(mode)) return;
             motorwayCalculator.addJourney(journey);
             aRoadCalculator.addJourney(journey);
             // The main map represents matched travel along the road network. Raw GPS
