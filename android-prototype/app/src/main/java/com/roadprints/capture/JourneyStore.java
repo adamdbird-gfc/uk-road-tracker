@@ -327,6 +327,24 @@ public final class JourneyStore {
         }
     }
 
+    static void forEachServiceStationEvidence(Context context,JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        for(File file:archiveFiles(context)) {
+            JSONObject journey=new JSONObject();
+            try(JsonReader reader=new JsonReader(new InputStreamReader(new FileInputStream(file),StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while(reader.hasNext()) {
+                    String key=reader.nextName();
+                    if("journey_id".equals(key)||"source".equals(key)||"raw_capture_samples".equals(key)
+                            ||"capture_route_samples".equals(key))journey.put(key,readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            visitor.visit(journey);
+        }
+    }
+
     /** Replay reads road evidence without allocating raw capture arrays or matched GPS traces. */
     static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
@@ -509,6 +527,7 @@ public final class JourneyStore {
         if (file.exists()) {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
+            ServiceStationStore.forgetJourney(context,journeyId);
         }
     }
 

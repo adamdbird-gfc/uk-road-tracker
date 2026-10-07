@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=5;
+    static final int CATALOGUE_VERSION=6;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -173,12 +173,14 @@ final class AchievementStore {
         boolean[] crossings=crossingTracker.completed();int completeCrossings=0;
         for(boolean crossing:crossings)if(crossing)completeCrossings++;
         values.put("spanning-the-nation",(double)completeCrossings);
-        values.putAll(ServiceStationStore.achievementValues(app));
+        ServiceStationAchievements.Snapshot serviceGoals=ServiceStationStore.achievementSnapshot(app);
+        values.putAll(serviceGoals.values);
         values.put("foot-total",core.footMetres/MILE);values.put("road-total",core.roadMetres/MILE);
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
         values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
+        lists.putAll(serviceGoals.lists);
         lists.put("county-collector",counties.checklist());
         lists.put("sightseer",landmarks.checklist());
         lists.put("groundhog-day",groundhog.contributions());
@@ -206,7 +208,10 @@ final class AchievementStore {
             values.put("sat-nav-on",preferences.getBoolean("capture_used",false)?1.0:0.0);
             values.put("picasso",(double)preferences.getStringSet("edited_journeys",Collections.emptySet()).size());
             values.put("joining-the-dots",preferences.getBoolean("trace_used",false)?1.0:0.0);
-            return evaluate(app,values,lists,crossings,revision);
+            Snapshot result=evaluate(app,values,lists,crossings,revision);
+            for(Progress progress:result.achievements)if("service-station".equals(progress.definition.type))
+                progress.display=serviceGoals.display.getOrDefault(progress.definition.id,progress.display);
+            return result;
         }
     }
 
@@ -255,6 +260,36 @@ final class AchievementStore {
         preferences.edit().putString("unlocked",unlocked.toString()).putString("level_history",history.toString()).apply();
         return new Snapshot(output,newly,revision);
     }
+    static synchronized void clearLegacyServiceUnlocks(Context context) {
+        SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        JSONObject earned=readUnlocked(p),history;
+        try{history=new JSONObject(p.getString("level_history","{}"));}catch(Exception error){history=new JSONObject();}
+        for(String id:new String[]{"service-first-stop","service-ten-stops","service-moneybags","service-being-posh"}) {
+            earned.remove(id);history.remove(id);
+        }
+        p.edit().putString("unlocked",earned.toString()).putString("level_history",history.toString()).apply();
+    }
+
+    static synchronized void recognizeServiceAchievements(Context context) {
+        if(!ServiceStationStore.unlocked(context))return;
+        ServiceStationAchievements.Snapshot goals=ServiceStationStore.achievementSnapshot(context);
+        SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        JSONObject earned=readUnlocked(p),history;
+        try{history=new JSONObject(p.getString("level_history","{}"));}catch(Exception error){history=new JSONObject();}
+        try {
+            for(Definition d:DEFINITIONS)if("service-station".equals(d.type)) {
+                if(goals.values.getOrDefault(d.id,0.0)>=d.target) {
+                    JSONObject dates=history.optJSONObject(d.id);if(dates==null)dates=new JSONObject();
+                    if(!dates.has("1"))dates.put("1",System.currentTimeMillis());
+                    history.put(d.id,dates);
+                    earned.put(d.id,new JSONObject().put("level",1).put("unlocked_at",dates.optLong("1")));
+                } else earned.remove(d.id);
+            }
+            earned.remove("service-ten-stops");history.remove("service-ten-stops");
+            p.edit().putString("unlocked",earned.toString()).putString("level_history",history.toString()).apply();
+        }catch(Exception error){throw new IllegalStateException("Service achievements could not be recognized",error);}
+    }
+
     private static Definition findDefinition(String id) {
         for(Definition d:DEFINITIONS)if(d.id.equals(id))return d;
         throw new IllegalArgumentException(id);
@@ -547,18 +582,7 @@ final class AchievementStore {
         output.add(new Definition("spanning-the-nation", "🌉", "Spanning the Nation",
                 "Complete the UK’s great road crossings.",
                 "Seven great road crossings completed", "crossing-set", 7,null,0,0,0));
-        output.add(new Definition("service-first-stop", "⛽", "First Stop",
-                "Visit your first motorway service area.",
-                "Your first motorway service area is on the board.", "service-station", 1,null,0,0,0));
-        output.add(new Definition("service-ten-stops", "🔟", "Ten Stops",
-                "Visit ten different motorway service areas.",
-                "Ten different motorway service areas collected.", "service-station", 1,null,0,0,0));
-        output.add(new Definition("service-moneybags", "💰", "Moneybags",
-                "Stop at Norton Canes on the M6 Toll.",
-                "M6 Toll · Norton Canes Services", "service-station", 1,null,0,0,0));
-        output.add(new Definition("service-being-posh", "🎩", "Being Posh",
-                "Stop at Peterborough Services on the A1(M).",
-                "A1(M) · Peterborough Services", "service-station", 1,null,0,0,0));
+        ServiceStationAchievements.definitions(output);
         return Collections.unmodifiableList(output);
     }
 

@@ -102,6 +102,22 @@ def deduplicate_services(services):
         })
     return sorted(collection,key=lambda item:(item["name"].casefold(),item["id"]))
 
+def enrich_achievement_metadata(service):
+    operator=(service.get("operator") or "").casefold().replace(" ","")
+    group=None
+    if "welcomebreak" in operator: group="Welcome Break"
+    elif operator=="moto": group="Moto"
+    elif "roadchef" in operator: group="Roadchef"
+    elif operator in ("extra","extramsa"): group="Extra"
+    elif "westmorland" in operator or "tebay" in service["name"].casefold(): group="Westmorland"
+    if group: service["operator_group"]=group
+    road=service.get("road")
+    if road in ("A74(M)","M74","M8","M9","M90"): service["country"]="Scotland"
+    elif road=="M4" and service["lng"] < -2.7: service["country"]="Wales"
+    elif road and service.get("region","GB")=="GB": service["country"]="England"
+    return service
+
+
 def main():
     request=Request(
         OVERPASS_URL,
@@ -134,7 +150,7 @@ def main():
             "operator":operator or None,
             "road":str(tags.get("ref") or tags.get("motorway") or "").strip() or None,
         })
-    services=deduplicate_services(services)
+    services=[enrich_achievement_metadata(s) for s in deduplicate_services(services)]
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps({
         "version":"v1",

@@ -816,7 +816,7 @@ public class JourneyListActivity extends Activity {
         details.addView(heading);
         details.addView(summary);
         details.addView(evidence);
-        addServiceStationConfirmation(details, journey);
+
         List<String> newRoads = newRoadHighlights.get(journey.optString("journey_id", ""));
         if (newRoads != null && !newRoads.isEmpty()) {
             TextView discoveries = new TextView(this);
@@ -893,96 +893,6 @@ public class JourneyListActivity extends Activity {
                 showDetails(journey);
             });
         });
-    }
-
-    private void addServiceStationConfirmation(LinearLayout details, JSONObject journey) {
-        String processingStatus = journey.optString("processing_status", "");
-        if (!ServiceStationStore.unlocked(this)
-                || !("complete".equals(processingStatus) || "failed".equals(processingStatus))) return;
-        JSONArray candidates = journey.optJSONArray("service_station_candidates");
-        if (candidates == null || candidates.length() == 0) return;
-
-        LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(12), dp(10), dp(12), dp(10));
-        panel.setBackground(roundRect(0xFF1A3269, 0xFF67D5CC, dp(12)));
-        TextView heading = new TextView(this);
-        heading.setText("POSSIBLE SERVICE STATION STOP");
-        heading.setTextColor(0xFF67D5CC);
-        heading.setTextSize(12);
-        heading.setTypeface(null, android.graphics.Typeface.BOLD);
-        panel.addView(heading);
-
-        for (int i = 0; i < candidates.length(); i++) {
-            JSONObject candidate = candidates.optJSONObject(i);
-            if (candidate == null) continue;
-            String stationId = candidate.optString("id", "");
-            String stationName = candidate.optString("name", "Service station");
-            TextView name = new TextView(this);
-            name.setText(stationName + " · Did you stop here?");
-            name.setTextSize(14);
-            name.setTextColor(Color.WHITE);
-            name.setPadding(0, dp(8), 0, dp(8));
-            panel.addView(name);
-
-            LinearLayout choices = new LinearLayout(this);
-            choices.setOrientation(LinearLayout.HORIZONTAL);
-            TextView confirm = actionButton("Yes, I visited", 0xFFF7C450, 0xFF0B1C50);
-            confirm.setOnClickListener(v -> resolveServiceStationCandidate(
-                    journey, stationId, true));
-            TextView dismiss = actionButton("No", 0xFF102047, 0xFFD3DCED);
-            dismiss.setOnClickListener(v -> resolveServiceStationCandidate(
-                    journey, stationId, false));
-            LinearLayout.LayoutParams choiceParams = new LinearLayout.LayoutParams(
-                    0, dp(44), 1);
-            choices.addView(confirm, choiceParams);
-            LinearLayout.LayoutParams dismissParams = new LinearLayout.LayoutParams(
-                    0, dp(44), 1);
-            dismissParams.leftMargin = dp(8);
-            choices.addView(dismiss, dismissParams);
-            panel.addView(choices);
-        }
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.bottomMargin = dp(10);
-        details.addView(panel, params);
-    }
-
-    private void resolveServiceStationCandidate(JSONObject journey, String stationId,
-                                                boolean confirmedVisit) {
-        String journeyId = journey.optString("journey_id", "");
-        if (journeyId.isEmpty() || stationId.isEmpty()) return;
-        try {
-            processor.execute(() -> {
-                try {
-                    JSONObject latest = JourneyStore.get(getApplicationContext(), journeyId);
-                    if (latest == null) return;
-                    JSONArray existing = latest.optJSONArray("service_station_candidates");
-                    JSONArray remaining = new JSONArray();
-                    if (existing != null) {
-                        for (int i = 0; i < existing.length(); i++) {
-                            JSONObject item = existing.optJSONObject(i);
-                            if (item != null && !stationId.equals(item.optString("id", "")))
-                                remaining.put(item);
-                        }
-                    }
-                    latest.put("service_station_candidates", remaining);
-                    JourneyStore.save(getApplicationContext(), latest);
-                    if (confirmedVisit) {
-                        ServiceStationVisitStore.confirm(
-                                getApplicationContext(), stationId, journeyId);
-                    }
-                    mainHandler.post(this::refreshJourneysAsync);
-                } catch (Exception error) {
-                    android.util.Log.w("Roadprints", "Could not save service station confirmation", error);
-                    mainHandler.post(() -> Toast.makeText(this,
-                            "Service station confirmation could not be saved.",
-                            Toast.LENGTH_LONG).show());
-                }
-            });
-        } catch (RejectedExecutionException ignored) {
-            // The activity is already closing.
-        }
     }
 
     private TextView actionButton(String text, int background, int foreground) {

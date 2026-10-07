@@ -159,6 +159,8 @@ final class RoadprintsBackup {
             if (!validManifest) throw new IllegalArgumentException("Roadprints backup information is missing.");
             replaceFiles(app, new File(stage, "files"));
             replacePreferences(app, new File(stage, "preferences"));
+            ServiceStationStore.resetHistory(app);
+            if(ServiceStationStore.unlocked(app))ServiceStationStore.ensureHistoricalVisits(app,null);
             return journeyCount;
         } finally {
             deleteRecursively(stage);
