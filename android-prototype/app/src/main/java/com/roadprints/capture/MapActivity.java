@@ -49,6 +49,7 @@ public class MapActivity extends Activity {
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
     private TextView mapSubtitle;
+    private MapLoadingView loadingCard;
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int mapLoadGeneration;
@@ -164,7 +165,7 @@ public class MapActivity extends Activity {
         if (hasSavedCamera) mapView.restoreCameraState(
                 savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
         addZoomControls(mapFrame, mapView);
-        mapSubtitle.setText("Updating your saved routes…");
+        showMapLoading(false);
 
         View bottomNavigation = buildBottomNavigation();
         root.addView(GrowingStatusControl.create(this));
@@ -177,6 +178,7 @@ public class MapActivity extends Activity {
     protected void onResume() {
         super.onResume();
         active = true;
+        if (loadingCard != null) loadingCard.start();
         // Queue lightweight summaries before the heavier route/coverage preparation.
         refreshRecap();
         if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
@@ -187,6 +189,7 @@ public class MapActivity extends Activity {
     @Override
     protected void onPause() {
         active = false;
+        if (loadingCard != null) loadingCard.stop();
         mainHandler.removeCallbacks(observeChanges);
         if (replayPreparing) stopReplay(false);
         else if (mapView != null) mapView.finishDiscoveryReplay();
@@ -221,15 +224,42 @@ public class MapActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        mainHandler.removeCallbacks(observeChanges);
+        hideMapLoading();
         mapLoadGeneration++;
         recapGeneration++;
         super.onDestroy();
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String previous = getIntent().getStringExtra("settlement_code");
+        setIntent(intent);
+        if (!java.util.Objects.equals(previous, intent.getStringExtra("settlement_code"))) recreate();
+    }
+
+    private void showMapLoading(boolean updating) {
+        hideMapLoading();
+        if (mapView != null) mapView.setOverviewLoading(true);
+        mapSubtitle.setText(updating ? "Adding your latest journeys…" : "Bringing your roads into view…");
+        loadingCard = new MapLoadingView(this, updating);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        params.setMargins(dp(16), dp(16), dp(16), dp(32));
+        mapFrame.addView(loadingCard, params);
+        if (active) loadingCard.start();
+    }
+
+    private void hideMapLoading() {
+        if (loadingCard == null) return;
+        loadingCard.stop();
+        mapFrame.removeView(loadingCard);
+        loadingCard = null;
+    }
+
     private void refreshMap() {
         String settlementCode = getIntent().getStringExtra("settlement_code");
-        if ((settlementCode == null || settlementCode.isEmpty())
-                && mapView != null && displayedMapRevision == mapDataRevision()) return;
+        if (mapView != null && displayedMapRevision == mapDataRevision()) return;
         final long requestedRevision = mapDataRevision();
         if (loadingMapRevision == requestedRevision) return;
         saveMapCamera();
@@ -254,7 +284,7 @@ public class MapActivity extends Activity {
             return;
         }
         loadingMapRevision = revision;
-        mapSubtitle.setText("Updating your saved routes…");
+        showMapLoading(displayedMapRevision != Long.MIN_VALUE);
         ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
             try {
@@ -276,7 +306,10 @@ public class MapActivity extends Activity {
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != mapLoadGeneration) return;
-                    mapSubtitle.setText("Map data could not be loaded. Reopen the map to retry.");
+                    hideMapLoading();
+                    if (mapView != null) mapView.setOverviewLoading(true);
+                    mapSubtitle.setText("Your roads could not be loaded. Tap here to try again.");
+                    mapSubtitle.setOnClickListener(view -> refreshMap());
                     loadingMapRevision = Long.MIN_VALUE;
                 });
                 return;
@@ -305,6 +338,8 @@ public class MapActivity extends Activity {
     private void displayMapRoutes(MapRoutes mapRoutes, int generation) {
         mainHandler.post(() -> {
             if (isFinishing() || generation != mapLoadGeneration) return;
+            hideMapLoading();
+            mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
@@ -320,6 +355,7 @@ public class MapActivity extends Activity {
                 map = RoutePreviewView.overview(this);
                 mapFrame.addView(map, 0, new FrameLayout.LayoutParams(-1, -1));
             }
+            map.setOverviewLoading(false);
             map.setRouteData(null, mapRoutes.sections);
             map.setFlatRoadMapStyle(true);
             map.setMotorwaySegments(mapRoutes.motorwaySections);
@@ -354,7 +390,9 @@ public class MapActivity extends Activity {
     }
     private void refreshSettlementMap(int generation, String code, String name,
                                       String journeyIdJson) {
-        mapSubtitle.setText("Loading " + name + " and your visited roads…");
+        loadingMapRevision = mapDataRevision();
+        showMapLoading(false);
+        mapSubtitle.setText("Finding your roads in " + (name == null ? "this place" : name) + "…");
         ScreenDataLoader.execute(() -> {
             JSONObject boundary = null;
             List<JSONArray> roads = new ArrayList<>();
@@ -405,6 +443,9 @@ public class MapActivity extends Activity {
             final String resultFailure = failure;
             mainHandler.post(() -> {
                 if (isFinishing() || generation != mapLoadGeneration) return;
+                hideMapLoading();
+                loadingMapRevision = Long.MIN_VALUE;
+                displayedMapRevision = mapDataRevision();
                 mapFrame.removeAllViews();
                 mapSubtitle.setText((name == null ? "Settlement" : name)
                         + " · visited roads inside the red boundary");

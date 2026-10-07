@@ -119,9 +119,10 @@ jobs:
           cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
           cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
           Signed Roadprints Android prototype update.
-          Service station visits unlock automatically from confirmed Timeline visits and sustained Roadprints stops, including saved history.
-          Adds service collection percentage milestones, motorway and operator sets, named stops and regional challenges. Removes manual progress ticking.
-          Includes the completed landmarks, Sightseer, Groundhog Day and historic county work from 0.25.164.
+          Roadprints map loading now includes a branded spinner and rotating offline road facts.
+          Keeps the map, camera and decoded tiles alive while switching between main tabs; only changed saved data refreshes routes.
+          Separates loading, empty travel record and retry states.
+          Includes all automatic service station and 0.25.164 achievement improvements.
           The full Android test suite, lint and APK signature verification pass before publication.
           NOTES
           if gh release view "$tag" >/dev/null 2>&1; then

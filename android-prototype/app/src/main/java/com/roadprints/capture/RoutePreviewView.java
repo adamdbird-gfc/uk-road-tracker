@@ -57,6 +57,7 @@ public class RoutePreviewView extends View {
     private final Paint settlementBoundaryPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final boolean interactive;
     private final boolean showEmptyMessage;
+    private boolean overviewLoading;
     private final boolean showEndpointMarkers;
     private boolean routeEditMode;
     private Set<Integer> removedRouteEdges = Collections.emptySet();
@@ -634,7 +635,7 @@ public class RoutePreviewView extends View {
                         Color.rgb(190, 55, 55), "E");
             }
         } else if (discoveryReplay == null) {
-            if (showEmptyMessage) drawEmptyMessage(canvas);
+            if (showEmptyMessage) { if (!overviewLoading) drawEmptyMessage(canvas); }
             else drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
@@ -1144,9 +1145,14 @@ public class RoutePreviewView extends View {
         }
     }
 
+    void setOverviewLoading(boolean loading) {
+        overviewLoading = loading;
+        invalidate();
+    }
+
     private void drawEmptyMessage(Canvas canvas) {
-        String title = "Your map is ready to explore";
-        String subtitle = "Travelled roads will appear here as journeys are matched.";
+        String title = "Your Roadprints start here";
+        String subtitle = "Matched journeys will light up the roads you travel.";
         float centerY = getHeight() * 0.76f;
         Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
         background.setColor(0xEFFFFFFF);
