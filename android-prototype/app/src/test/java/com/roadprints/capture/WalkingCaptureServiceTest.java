@@ -1,12 +1,16 @@
 package com.roadprints.capture;
 
 import android.location.Location;
+import android.location.LocationManager;
+import android.content.Context;
 import java.lang.reflect.*;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.ActivityTransition;
@@ -20,6 +24,26 @@ public class WalkingCaptureServiceTest {
     private Location p(double metres,long time) {
         Location p=new Location("gps");p.setLongitude(metres/111195);p.setLatitude(0);
         p.setAccuracy(5);p.setTime(time);p.setSpeed(0);return p;
+    }
+    @Test public void lateAndroidStartKeepsBufferedFixesAndCancelledCandidatesResumeSampling() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions("android.permission.ACCESS_FINE_LOCATION");
+        field("locationManager").set(service,service.getSystemService(Context.LOCATION_SERVICE));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().putBoolean("armed",true).apply();
+        @SuppressWarnings("unchecked") List<Location> buffered=(List<Location>)field("armedWalkingPoints").get(service);
+        long first=System.currentTimeMillis()-30000;
+        Location a=p(0,first),b=p(20,first+30000);a.setSpeed(1);b.setSpeed(1);
+        buffered.add(a);buffered.add(b);
+        Method begin=CaptureService.class.getDeclaredMethod("beginStartCandidate",String.class);begin.setAccessible(true);
+        begin.invoke(service,"walking");
+        assertEquals(first,field("candidateStartedAtMs").getLong(service));
+        @SuppressWarnings("unchecked") List<Location> candidate=(List<Location>)field("candidatePoints").get(service);
+        assertEquals(2,candidate.size());assertEquals(first,candidate.get(0).getTime());
+        Method cancel=CaptureService.class.getDeclaredMethod("cancelStartCandidate",String.class);cancel.setAccessible(true);
+        cancel.invoke(service,new Object[]{null});
+        assertTrue(field("diagnosticUpdatesRegistered").getBoolean(service));
+        ((LocationManager)field("locationManager").get(service)).removeUpdates((android.location.LocationListener)field("locationListener").get(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
     }
     @Test public void gpsStartsTheStopTimerAndLateWalkingCallbacksDoNotClearIt() throws Exception {
         CaptureService service=Robolectric.buildService(CaptureService.class).get();

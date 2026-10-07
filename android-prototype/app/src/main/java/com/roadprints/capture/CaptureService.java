@@ -486,15 +486,7 @@ public class CaptureService extends Service {
         List<FootTraceValidator.Sample> evidence=new ArrayList<>();
         for(int i=0;i<armedWalkingPoints.size();i++) evidence.add(footSample(armedWalkingPoints.get(i),i));
         if(!WalkingStartEvidence.confirmed(evidence,System.currentTimeMillis())) return;
-        List<Location> buffered=new ArrayList<>(armedWalkingPoints);
         beginStartCandidate("walking");
-        candidateStartedAtMs=buffered.get(0).getTime();
-        candidateStartedAt=Instant.ofEpochMilli(candidateStartedAtMs).toString();
-        candidatePoints.clear(); candidateOrigin=null; candidateMovementLast=null; candidateMovementMetres=0;
-        for(Location point:buffered) {
-            if(candidateMode==null) break;
-            collectCandidateLocation(point);
-        }
         armedWalkingPoints.clear();
     }
 
@@ -633,6 +625,18 @@ public class CaptureService extends Service {
             handler.removeCallbacks(candidateTimeout);
             handler.postDelayed(candidateTimeout, CaptureStartGate.START_CANDIDATE_TIMEOUT_MS);
             broadcastUpdate("Checking movement before saving a journey...");
+            if ("walking".equals(requestedMode) && !armedWalkingPoints.isEmpty()
+                    && Math.abs(System.currentTimeMillis()-armedWalkingPoints.get(armedWalkingPoints.size()-1).getTime())<=60_000L) {
+                List<Location> buffered=new ArrayList<>(armedWalkingPoints);
+                armedWalkingPoints.clear();
+                candidateStartedAtMs=buffered.get(0).getTime();
+                candidateStartedAt=Instant.ofEpochMilli(candidateStartedAtMs).toString();
+                candidatePoints.clear(); candidateOrigin=null; candidateMovementLast=null; candidateMovementMetres=0;
+                for(Location point:buffered) {
+                    if(candidateMode==null) break;
+                    collectCandidateLocation(point);
+                }
+            }
         } catch (SecurityException error) {
             cancelStartCandidate("Location permission is required to confirm movement.");
         }
@@ -736,7 +740,7 @@ public class CaptureService extends Service {
             MovementDiagnostics.recordEvent(this, "journey_candidate_rejected", message);
             broadcastUpdate(message);
         }
-        if (isArmed(this) && MovementDiagnostics.isRunning(this)) requestDiagnosticLocationUpdates();
+        if (isArmed(this)) requestDiagnosticLocationUpdates();
     }
 
     private void restoreDepartureAnchor() {
