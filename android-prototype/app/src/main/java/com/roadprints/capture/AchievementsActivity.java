@@ -19,6 +19,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -59,6 +60,9 @@ public class AchievementsActivity extends Activity {
     private final List<AchievementStore.Definition> celebrationQueue=new ArrayList<>();
     private LinearLayout content;
     private ScrollView scroll;
+    private LinearLayout jumpRow;
+    private final java.util.Map<String,TextView> jumpChips=new java.util.LinkedHashMap<>();
+    private final java.util.Map<String,View> groupAnchors=new java.util.LinkedHashMap<>();
     private TextView summary;
     private long shownRevision=Long.MIN_VALUE;
     private int shownHighStreetEvidenceRevision=Integer.MIN_VALUE;
@@ -136,10 +140,16 @@ public class AchievementsActivity extends Activity {
         header.addView(eyebrow);
         header.addView(title);
         header.addView(summary);
+        HorizontalScrollView jumpMenu=new HorizontalScrollView(this);
+        jumpMenu.setHorizontalScrollBarEnabled(false);
+        jumpRow=new LinearLayout(this);
+        jumpRow.setPadding(0,dp(14),0,dp(4));
+        jumpMenu.addView(jumpRow);header.addView(jumpMenu);
         root.addView(header);
 
         scroll=new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setOnScrollChangeListener((View view,int x,int y,int oldX,int oldY)->updateActiveJump());
         content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(18),dp(2),dp(18),dp(18));
@@ -356,6 +366,7 @@ public class AchievementsActivity extends Activity {
         shownKilometres=DistanceUnits.usesKilometres(this);
         int savedScroll=scroll.getScrollY();
         content.removeAllViews();
+        groupAnchors.clear();
         boolean showServices=ServiceStationStore.unlocked(this);
         List<AchievementStore.Progress> visible=new ArrayList<>();
         int unlockedCount=0;
@@ -379,25 +390,57 @@ public class AchievementsActivity extends Activity {
         overall.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF43598A));
         overview.addView(overall,new LinearLayout.LayoutParams(-1,dp(7)));
         content.addView(overview);
+        groupAnchors.put("Overview",overview);
         String[] groups={"App milestones","Distance","Road discovery","Town exploration","Landmarks","Crossings"};
         for(String group:groups) {
             boolean heading=false;
             for(AchievementStore.Progress item:visible) {
                 if(!group.equals(achievementGroup(item.definition))) continue;
-                if(!heading) { content.addView(sectionHeading(group)); heading=true; }
+                if(!heading) { View anchor=sectionHeading(group);content.addView(anchor);groupAnchors.put(group,anchor);heading=true; }
                 if(!"road-completion".equals(item.definition.type))content.addView(achievementCard(item));
             }
+            if("Road discovery".equals(group)) {
+                addRoadCompletionSection(visible,"Motorway completion","completion-motorway-");
+                addRoadCompletionSection(visible,"A-road completion","completion-aroad-");
+            }
         }
-        addRoadCompletionSection(visible,"Motorway completion","completion-motorway-");
-        addRoadCompletionSection(visible,"A-road completion","completion-aroad-");
         if(showServices) {
-            content.addView(sectionHeading("Service station achievements"));
+            View anchor=sectionHeading("Service station achievements");content.addView(anchor);groupAnchors.put("Collections",anchor);
             for(AchievementStore.Progress item:visible)
                 if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
-        scroll.post(() -> scroll.scrollTo(0,savedScroll));
+        rebuildJumpMenu();
+        scroll.post(() -> {scroll.scrollTo(0,savedScroll);updateActiveJump();});
+    }
+
+    private void rebuildJumpMenu() {
+        jumpRow.removeAllViews();jumpChips.clear();
+        for(String group:groupAnchors.keySet()) {
+            TextView chip=text(group,12,Color.WHITE,true);chip.setGravity(Gravity.CENTER);
+            chip.setPadding(dp(13),dp(9),dp(13),dp(9));chip.setTag("achievement-jump:"+group);
+            LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-2,-2);params.rightMargin=dp(7);
+            jumpRow.addView(chip,params);jumpChips.put(group,chip);
+            chip.setOnClickListener(v->{View target=groupAnchors.get(group);if(target!=null)scroll.smoothScrollTo(0,Math.max(0,target.getTop()-dp(8)));});
+        }
+        updateActiveJump();
+    }
+
+    private void updateActiveJump() {
+        String active="Overview";
+        if(scroll!=null) {
+            int threshold=scroll.getScrollY()+dp(28);
+            for(java.util.Map.Entry<String,View> row:groupAnchors.entrySet())
+                if(row.getValue().getTop()<=threshold)active=row.getKey();
+            if(scroll.getHeight()>0&&content!=null&&content.getHeight()>scroll.getHeight()
+                    &&scroll.getScrollY()>=content.getHeight()-scroll.getHeight()-dp(2))
+                for(String group:groupAnchors.keySet())active=group;
+        }
+        for(java.util.Map.Entry<String,TextView> row:jumpChips.entrySet()) {
+            boolean selected=row.getKey().equals(active);TextView chip=row.getValue();
+            chip.setTextColor(selected?NAVY:Color.WHITE);chip.setBackground(roundRect(selected?GOLD:CARD,0,dp(18)));chip.setSelected(selected);
+        }
     }
 
     private static String achievementGroup(AchievementStore.Definition definition) {
@@ -463,7 +506,7 @@ public class AchievementsActivity extends Activity {
         row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
         card.addView(row);
         if("the-knowledge".equals(progress.definition.id)||"mary-high-streets".equals(progress.definition.id)
-                ||"mastered-monopoly".equals(progress.definition.id)||"distance".equals(progress.definition.type)||"town-exploration".equals(progress.definition.type)) {
+                ||"mastered-monopoly".equals(progress.definition.id)||"county-collector".equals(progress.definition.id)||"distance".equals(progress.definition.type)||"town-exploration".equals(progress.definition.type)) {
             TextView requirement=text(progress.definition.description,12,MUTED,false);
             requirement.setPadding(dp(60),dp(7),0,0);card.addView(requirement);
         }
@@ -474,8 +517,9 @@ public class AchievementsActivity extends Activity {
                 boolean open=list.getVisibility()!=View.VISIBLE;
                 if(open&&list.getChildCount()==0) {
                     for(String milestone:progress.milestones){TextView t=text(milestone,12,GOLD,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
-                    int shown=0;for(String contribution:progress.contributions){if(shown++>=50)break;TextView t=text(("town-exploration".equals(progress.definition.type)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
-                    if(progress.contributions.size()>50)list.addView(text("First 50 shown · "+progress.contributions.size()+" total",12,MUTED,false));
+                    int limit="county-collector".equals(progress.definition.id)?92:50;
+                    int shown=0;for(String contribution:progress.contributions){if(shown++>=limit)break;TextView t=text(("town-exploration".equals(progress.definition.type)||"county-collector".equals(progress.definition.id)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    if(progress.contributions.size()>limit)list.addView(text("First "+limit+" shown · "+progress.contributions.size()+" total",12,MUTED,false));
                 }
                 list.setVisibility(open?View.VISIBLE:View.GONE);
             });card.addView(toggle);card.addView(list);
