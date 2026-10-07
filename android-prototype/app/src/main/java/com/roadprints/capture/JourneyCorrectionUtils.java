@@ -180,7 +180,7 @@ final class JourneyCorrectionUtils {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
     }
 
-    private static double distanceToGeometryMetres(double longitude, double latitude,
+    static double distanceToGeometryMetres(double longitude, double latitude,
                                                    JSONObject geometry) {
         String type = geometry.optString("type", "");
         JSONArray coordinates = geometry.optJSONArray("coordinates");

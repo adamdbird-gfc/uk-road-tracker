@@ -19,39 +19,11 @@ Decision: 7 October 2026. Build on the current released app, preserving the
 - Fixed jump menu like Progress. Motorway/A-road completion accordions belong
   inside Road discovery. Preserve instant catalogue and cached screen behavior.
 
-## Part 2 — Landmarks, Sightseer and Groundhog Day
+## Part 2 — Landmarks, Sightseer and Groundhog Day (0.25.164)
 
-Preserve the agreed 6 October specification and existing badge IDs/rules.
-
-| Landmark | Name | Qualification to verify |
-| --- | --- | --- |
-| Big Ben | Tick Tock | Westminster Bridge crossing |
-| Blackpool Tower | Paris is lovely this time of year | Defined promenade stretch |
-| Humber Bridge | No longer the longest | Bridge crossing |
-| Trent Bridge | Football or Cricket, Sir? | Bridge crossing |
-| Bullring bull | Mooooo! | Immediate pedestrian area |
-| Ness Point | The Far East | Reach the actual point |
-| Windsor Castle | Royal drive-by | Defined M4 stretch |
-| Stonehenge | Enjoying the Solstice | Preserve A303 rule and existing identity |
-| Angel of the North | I Saw an Angel | Preserve A1 rule and existing identity |
-| Loch Ness | Why hello Nessie | Qualifying lakeside road route |
-| Conwy Castle | The Iron Ring | Immediate area or qualifying adjacent bridge |
-| Stormont | Weather warning, Storms likely | Grounds near Parliament Buildings |
-
-Sightseer upgrades at 3, 6 and 12 distinct landmarks, with a completed/remaining
-checklist. Define individual road corridors and pedestrian areas; nearby travel
-alone must not qualify. The abandoned branch has no committed implementation or
-geography assets to reuse. Earlier screenshots described 5 km of distinct Loch
-Ness lakeside road coverage in one journey; verify this and all geographic rules
-before packaging. Preserve existing crossing rules and avoid duplicate records.
-
-Groundhog Day: broadly the same trip on five distinct weekday dates (not five
-repeats on one date), consecutive or spread out. Same mode, direction, start,
-destination and broadly same route, tolerating normal GPS variation. Walking,
-cycling, road travel and train journeys qualify; imported history qualifies.
-Opposite directions are different trips. Recalculate after edits/deletion.
-Test short trips, loops, duplicates, weekends, local dates/timezones and uncertain
-or missing route evidence. Route similarity tolerances require verification.
-
-Each part has its own tested, signed APK. Keep private journey history out of
-repository fixtures and use synthetic regression data.
+Implemented all 12 fixed landmark cards (preserving existing Angel/Stonehenge),
+Sightseer levels 3/6/12 with completed/remaining checklist, and Groundhog Day
+(five distinct local weekdays on the same mode, direction and broad route).
+Offline geometry, per-landmark qualification, route tolerances, edit/deletion
+recalculation and recognition history are documented in [LANDMARK-EVIDENCE.md](LANDMARK-EVIDENCE.md).
+County/settlement consolidation and pedestrian capture prevention remain intact.

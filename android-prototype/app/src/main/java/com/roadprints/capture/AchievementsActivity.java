@@ -446,10 +446,10 @@ public class AchievementsActivity extends Activity {
     private static String achievementGroup(AchievementStore.Definition definition) {
         if("service-station".equals(definition.type)) return "Collections";
         if("town-exploration".equals(definition.type))return "Town exploration";
-        if("app-use".equals(definition.type))return "App milestones";
+        if("app-use".equals(definition.type)||"repeat-journey".equals(definition.type))return "App milestones";
         if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";
         if("crossing-set".equals(definition.type)) return "Crossings";
-        if("a-road-landmark".equals(definition.type) || "summit".equals(definition.type)) return "Landmarks";
+        if("landmark".equals(definition.type)||"landmark-count".equals(definition.type)||"a-road-landmark".equals(definition.type) || "summit".equals(definition.type)) return "Landmarks";
         return "Road discovery";
     }
 
@@ -499,15 +499,15 @@ public class AchievementsActivity extends Activity {
         TextView name=text(AchievementStore.titleFor(progress.definition,progress.level),16,Color.WHITE,true);
         String display="distance".equals(progress.definition.type)||progress.definition.levels!=null
                 || "road-count".equals(progress.definition.type)||"high-street-settlement".equals(progress.definition.type)
-                ||"app-use".equals(progress.definition.type)||"long-journey".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
+                ||"repeat-journey".equals(progress.definition.type)||"app-use".equals(progress.definition.type)||"long-journey".equals(progress.definition.type)?AchievementStore.progressText(this,progress):progress.display;
         TextView detail=text(display,13,MUTED,false);
         detail.setPadding(0,dp(3),0,0);
         copy.addView(status); copy.addView(name); copy.addView(detail);
         row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
         card.addView(row);
-        if("the-knowledge".equals(progress.definition.id)||"mary-high-streets".equals(progress.definition.id)
+        if("landmark".equals(progress.definition.type)||"landmark-count".equals(progress.definition.type)||"repeat-journey".equals(progress.definition.type)||"the-knowledge".equals(progress.definition.id)||"mary-high-streets".equals(progress.definition.id)
                 ||"mastered-monopoly".equals(progress.definition.id)||"county-collector".equals(progress.definition.id)||"distance".equals(progress.definition.type)||"town-exploration".equals(progress.definition.type)) {
-            TextView requirement=text(progress.definition.description,12,MUTED,false);
+            TextView requirement=text("loch-ness".equals(progress.definition.id)?progress.definition.description.replace("5 km",DistanceUnits.format(this,5000)):progress.definition.description,12,MUTED,false);
             requirement.setPadding(dp(60),dp(7),0,0);card.addView(requirement);
         }
         if(!progress.contributions.isEmpty()||!progress.milestones.isEmpty()) {
@@ -518,7 +518,7 @@ public class AchievementsActivity extends Activity {
                 if(open&&list.getChildCount()==0) {
                     for(String milestone:progress.milestones){TextView t=text(milestone,12,GOLD,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
                     int limit="county-collector".equals(progress.definition.id)?92:50;
-                    int shown=0;for(String contribution:progress.contributions){if(shown++>=limit)break;TextView t=text(("town-exploration".equals(progress.definition.type)||"county-collector".equals(progress.definition.id)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    int shown=0;for(String contribution:progress.contributions){if(shown++>=limit)break;TextView t=text(("town-exploration".equals(progress.definition.type)||"county-collector".equals(progress.definition.id)||"landmark-count".equals(progress.definition.type)||"repeat-journey".equals(progress.definition.type)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
                     if(progress.contributions.size()>limit)list.addView(text("First "+limit+" shown · "+progress.contributions.size()+" total",12,MUTED,false));
                 }
                 list.setVisibility(open?View.VISIBLE:View.GONE);
