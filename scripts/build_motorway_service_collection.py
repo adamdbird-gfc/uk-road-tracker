@@ -125,6 +125,14 @@ def apply_reviewed_reference(service,reference):
         source_ids=set(service.get("source_ids",[]))
         candidates=[item for item in reference.values() if source_ids.intersection(item.get("source_ids",[]))]
         if len(candidates)==1: existing=candidates[0]
+    if existing is None:
+        def site_name(name):
+            key=collection_name(name)
+            return re.sub(r"^(roadchef|moto|welcome break|westmorland|applegreen|extra) ","",key)
+        candidates=[item for item in reference.values()
+                    if site_name(item["name"])==site_name(service["name"])
+                    and haversine_m((item["lat"],item["lng"]),(service["lat"],service["lng"]))<=1500]
+        if len(candidates)==1: existing=candidates[0]
     if existing:
         # Names and OSM centroids can change. Keep the collection identity for the same source site.
         service["id"]=existing["id"]
