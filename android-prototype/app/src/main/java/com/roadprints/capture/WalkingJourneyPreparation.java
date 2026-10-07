@@ -15,12 +15,14 @@ final class WalkingJourneyPreparation {
         final JSONArray points=new JSONArray(), recoveredSamples=new JSONArray();
         final JSONObject details=new JSONObject();
         boolean validated;
+        final JSONArray validatedSamples=new JSONArray();
+        JSONObject quality;
         double distance;
     }
     static Prepared prepare(Context context, JSONObject journey) throws Exception {
         JSONArray coords=journey.getJSONObject("route_geometry").getJSONArray("coordinates");
         JSONObject source=journey.optJSONObject("source");
-        boolean nativeWalk="walking".equals(journey.optString("mode")) && source!=null
+        boolean nativeWalk=("walking".equals(journey.optString("mode")) || "running".equals(journey.optString("mode"))) && source!=null
                 && "android_activity_capture".equals(source.optString("type"));
         Map<String,List<FootTraceValidator.Sample>> evidence=new HashMap<>();
         JSONArray saved=journey.optJSONArray("raw_capture_samples");
@@ -85,22 +87,25 @@ final class WalkingJourneyPreparation {
             } catch(IOException unavailable) { /* Keep the full trace if public station data is unavailable. */ }
         }
         List<FootTraceValidator.Sample> leg=stationEnd>=1?new ArrayList<>(samples.subList(0,stationEnd+1)):samples;
-        JSONObject captureValidation=journey.optJSONObject("capture_validation");
-        boolean alreadyValidated=nativeWalk && captureValidation!=null && captureValidation.optInt("version")==1
-                && captureValidation.optBoolean("timing_available") && captureValidation.optBoolean("resolved",true);
-        FootTraceValidator.Result result=nativeWalk && !alreadyValidated?FootTraceValidator.validate(leg)
-                :new FootTraceValidator.Result(leg,leg.size(),false);
+        WalkingCaptureEvidence.Result capture=nativeWalk?WalkingCaptureEvidence.prepare(leg):null;
+        FootTraceValidator.Result result=capture!=null?capture.route:new FootTraceValidator.Result(leg,leg.size(),false);
         if(nativeWalk && result.timed && !result.resolved) throw new IllegalStateException(
                 "This walking recording contains a GPS gap that cannot be validated. Your original recording is preserved.");
-        Prepared prepared=new Prepared(); prepared.validated=nativeWalk && (result.timed || alreadyValidated);
+        Prepared prepared=new Prepared(); prepared.validated=nativeWalk && result.timed;
         prepared.distance=result.distance;
         for(FootTraceValidator.Sample point:result.samples) prepared.points.put(new JSONObject().put("lng",point.lon).put("lat",point.lat));
+        for(FootTraceValidator.Sample point:result.samples) prepared.validatedSamples.put(sampleJson(point));
+        prepared.quality=CaptureQualityValidator.inspect(prepared.validatedSamples,true);
+        if(prepared.validated && !prepared.quality.optBoolean("resolved")) throw new IllegalStateException(
+                "This walking recording has a moving GPS gap or unreliable route evidence. Your original recording is preserved.");
         if(prepared.validated) for(FootTraceValidator.Sample point:samples) prepared.recoveredSamples.put(sampleJson(point));
-        prepared.details.put("version",1).put("timing_available",result.timed || alreadyValidated)
+        prepared.details.put("version",1).put("timing_available",result.timed)
                 .put("source_points",samples.size()).put("validated_points",result.samples.size())
                 .put("removed_gps_points",result.removed).put("station_tail_points",samples.size()-leg.size())
                 .put("evidence_source",saved!=null?"saved_capture_samples":recovered?"local_movement_log":"coordinates_only")
-                .put("validated_gps_distance_m",result.distance);
+                .put("validated_gps_distance_m",result.distance)
+                .put("capture_preparation_version",2).put("rejected_fixes",capture==null?0:capture.rejectedFixes)
+                .put("stationary_tail_points",capture==null?0:capture.stationaryTail);
         if(stationEnd>=1) prepared.details.put("station_arrival_time_utc",
                 java.time.Instant.ofEpochMilli(samples.get(stationEnd).time).toString());
         return prepared;

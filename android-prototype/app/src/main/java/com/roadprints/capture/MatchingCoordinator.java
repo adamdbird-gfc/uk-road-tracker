@@ -260,8 +260,11 @@ public final class MatchingCoordinator {
         boolean foot = isFoot(journey.optString("mode", "unknown"));
         JSONObject source = journey.optJSONObject("source");
         boolean timelineImport = source != null && "timeline_import".equals(source.optString("type"));
+        WalkingJourneyPreparation.Prepared walking = foot
+                ? WalkingJourneyPreparation.prepare(app, journey) : null;
         if (source != null && "android_activity_capture".equals(source.optString("type"))) {
-            JSONObject quality = CaptureQualityValidator.inspect(journey.optJSONArray("capture_route_samples"), foot);
+            JSONObject quality = walking != null && walking.validated ? walking.quality
+                    : CaptureQualityValidator.inspect(journey.optJSONArray("capture_route_samples"), foot);
             synchronized (JourneyStore.class) {
                 JSONObject saved = JourneyStore.get(app, journey.optString("journey_id"));
                 if (saved != null) { saved.put("recording_quality", quality); JourneyStore.save(app, saved); }
@@ -269,8 +272,6 @@ public final class MatchingCoordinator {
             if (!quality.optBoolean("resolved")) throw new IllegalStateException(
                     "This app recording contains unreliable GPS fixes or a gap while moving. Full matching is blocked; your original recording is preserved. Use Debug Journey to report this capture issue.");
         }
-        WalkingJourneyPreparation.Prepared walking = foot
-                ? WalkingJourneyPreparation.prepare(app, journey) : null;
         if (walking != null) points = walking.points;
         if (points.length() < 2) throw new IllegalStateException("Not enough reliable GPS points to match this walk. The original recording is preserved.");
         JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
