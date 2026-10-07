@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=4;
+    static final int CATALOGUE_VERSION=5;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -129,12 +129,17 @@ final class AchievementStore {
         ARoadProgressCalculator aRoads=new ARoadProgressCalculator(app,false);
         CrossingTracker crossingTracker=new CrossingTracker();
         CoreAchievementEvidence core=new CoreAchievementEvidence();
+        GroundhogDayEvidence groundhog=new GroundhogDayEvidence();
+        final LandmarkEvidence landmarks;
+        try { landmarks=new LandmarkEvidence(app); }
+        catch(java.io.IOException invalid) { throw new IllegalStateException("Landmark reference unavailable",invalid); }
         final CountyCollectorEvidence counties;
         try { counties=new CountyCollectorEvidence(new HistoricCountyCatalog(app)); }
         catch(java.io.IOException unavailable) { throw new IllegalStateException("Historic county reference unavailable",unavailable); }
         try {
             JourneyStore.forEachAchievementEvidence(app,()->false,journey -> {
                 core.add(journey);
+                landmarks.add(journey);groundhog.add(journey);
                 try { counties.add(journey); }
                 catch(java.io.IOException invalid) { throw new IllegalStateException("County boundary evidence unavailable",invalid); }
                 if (!"complete".equals(journey.optString("processing_status", ""))) return;
@@ -160,6 +165,11 @@ final class AchievementStore {
         values.put("m62-summit",motorwaySummitReached(motorwaySummary)?1.0:0.0);
         values.put("angel-of-the-north",aRoadLandmarkReached(aRoadSummary,"GB:A1",-1.5908431,54.91330845,250)?1.0:0.0);
         values.put("stonehenge-solstice",aRoadLandmarkReached(aRoadSummary,"GB:A303",-1.8262,51.1789,500)?1.0:0.0);
+        landmarks.legacy("angel-of-the-north",values.get("angel-of-the-north")>0);
+        landmarks.legacy("stonehenge-solstice",values.get("stonehenge-solstice")>0);
+        for(String[] landmark:LandmarkDefinitions.ALL)values.put(landmark[0],landmarks.completed.contains(landmark[0])?1.0:0.0);
+        values.put("sightseer",(double)landmarks.count());
+        values.put("groundhog-day",(double)groundhog.value());
         boolean[] crossings=crossingTracker.completed();int completeCrossings=0;
         for(boolean crossing:crossings)if(crossing)completeCrossings++;
         values.put("spanning-the-nation",(double)completeCrossings);
@@ -170,6 +180,8 @@ final class AchievementStore {
         Map<String,List<String>> lists=core.roadLists(app);
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
         lists.put("county-collector",counties.checklist());
+        lists.put("sightseer",landmarks.checklist());
+        lists.put("groundhog-day",groundhog.contributions());
         TownAchievementEvidence towns=new TownAchievementEvidence();
         towns.collect(app,core);
         towns.requestInventories(app);
@@ -283,6 +295,9 @@ final class AchievementStore {
         if("picasso".equals(d.id))return Math.min(5,(int)progress.value)+" / 5 distinct journeys edited";
         if("network-percent".equals(d.type))return String.format(Locale.UK,"%.1f%% of the UK motorway network · target %.0f%%",progress.value,d.target);
         if("crossing-set".equals(d.type))return (int)progress.value+" of "+CROSSINGS.size()+" great road crossings completed";
+        if("landmark-count".equals(d.type))return (int)progress.value+" / "+(int)target+" distinct landmarks · "+(int)progress.value+" of 12 visited";
+        if("repeat-journey".equals(d.type))return (int)progress.value+" / 5 distinct weekday dates on the same route";
+        if("loch-ness".equals(d.id))return "Cover at least "+DistanceUnits.format(context,5000)+" of distinct qualifying lakeside road in one journey.";
         return progress.unlocked?d.detail:d.description;
     }
 
@@ -463,7 +478,7 @@ final class AchievementStore {
                     new double[][]{{-2.695,51.553},{-2.642,51.553},{-2.592,51.553},
                             {-2.705,51.611},{-2.647,51.611},{-2.590,51.611}}),
             new Crossing("Humber Bridge", "A15 · near Hull", 550,
-                    new double[][]{{-0.317,53.708}}),
+                    new double[][]{{-0.450,53.708}}),
             new Crossing("Blackwall Tunnel", "A102 · London", 350,
                     new double[][]{{0.007,51.500}}),
             new Crossing("Tyne Tunnels", "A19 · near Jarrow", 550,
@@ -522,6 +537,13 @@ final class AchievementStore {
         output.add(new Definition("stonehenge-solstice", "🌞", "Enjoying the Solstice",
                 "Drive the A303 past Stonehenge.", "A303 · Stonehenge, Wiltshire",
                 "a-road-landmark", 1,"GB:A303",-1.8262,51.1789,500));
+        for(int i=2;i<LandmarkDefinitions.ALL.length;i++) {
+            String[] landmark=LandmarkDefinitions.ALL[i];
+            output.add(new Definition(landmark[0],"",landmark[1],landmark[3],landmark[2]+" · "+landmark[3],"landmark",1,null,0,0,0));
+        }
+        Definition sightseer=family("sightseer","Sightseer","Visit 3, 6 and all 12 distinct landmarks. Completed and remaining landmarks are listed below.","landmark-count",new double[]{3,6,12});
+        sightseer.levelTitles=new String[]{"Sightseer · Bronze","Sightseer · Silver","Sightseer · Gold"};output.add(sightseer);
+        output.add(new Definition("groundhog-day","","Groundhog Day","Complete the same broadly similar route, in the same mode and direction, on five distinct local weekday dates. Dates may be spread out; imports count. Same-day repeats and weekends do not count.","Five weekday dates on the same route.","repeat-journey",5,null,0,0,0));
         output.add(new Definition("spanning-the-nation", "🌉", "Spanning the Nation",
                 "Complete the UK’s great road crossings.",
                 "Seven great road crossings completed", "crossing-set", 7,null,0,0,0));

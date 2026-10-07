@@ -34,6 +34,15 @@ final class RoadprintsIcons {
             case "mary-high-streets":return R.drawable.ic_roadprints_crown;
             case "angel-of-the-north":return R.drawable.ic_roadprints_angel;
             case "stonehenge-solstice":return R.drawable.ic_roadprints_stones;
+            case "groundhog-day":return R.drawable.ic_roadprints_repeat;
+            case "sightseer":return R.drawable.ic_roadprints_binoculars;
+            case "big-ben":case "blackpool-tower":return R.drawable.ic_roadprints_clocktower;
+            case "conwy-castle":case "stormont":return R.drawable.ic_roadprints_castle;
+            case "windsor-castle":return R.drawable.ic_roadprints_crown;
+            case "bullring-bull":return R.drawable.ic_roadprints_bull;
+            case "ness-point":return R.drawable.ic_nav_map;
+            case "loch-ness":return R.drawable.ic_roadprints_lake;
+            case "humber-bridge-landmark":case "trent-bridge":
             case "spanning-the-nation":return R.drawable.ic_roadprints_bridge;
             case "service-moneybags":return R.drawable.ic_roadprints_wallet;
             case "service-being-posh":return R.drawable.ic_roadprints_hat;

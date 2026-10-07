@@ -389,10 +389,13 @@ public final class JourneyStore {
                             else reader.skipValue();
                         }
                         reader.endObject(); journey.put(key, result);
+                    } else if ("route_geometry".equals(key) && reader.peek()==JsonToken.BEGIN_OBJECT) {
+                        journey.put(key, readPatternGeometry(reader));
                     } else if ("journey_id".equals(key) || "mode".equals(key)
                             || "processing_status".equals(key) || "started_at".equals(key)
                             || "journey_corrections".equals(key) || "distance_meters".equals(key)
-                            || "ended_at".equals(key) || "source".equals(key)) journey.put(key, readEvidenceValue(reader));
+                            || "ended_at".equals(key) || "timezone".equals(key)
+                            || "source".equals(key)) journey.put(key, readEvidenceValue(reader));
                     else reader.skipValue();
                 }
                 reader.endObject();
@@ -405,6 +408,44 @@ public final class JourneyStore {
                 journey = upgrade(context, read(file));
             if (journey != null) visitor.visit(journey);
         }
+    }
+
+    /** Retain a small ordered train-route fingerprint without allocating raw GPS history. */
+    private static JSONObject readPatternGeometry(JsonReader reader) throws Exception {
+        JSONObject geometry=new JSONObject();JSONArray output=new JSONArray();
+        reader.beginObject();
+        while(reader.hasNext()) {
+            String key=reader.nextName();
+            if("type".equals(key))geometry.put(key,readScalar(reader));
+            else if("coordinates".equals(key)&&reader.peek()==JsonToken.BEGIN_ARRAY) {
+                java.util.List<JSONArray> points=new java.util.ArrayList<>();JSONArray last=null;
+                int stride=1,index=0;reader.beginArray();
+                while(reader.hasNext()) {
+                    if(reader.peek()==JsonToken.BEGIN_ARRAY) {
+                        JSONArray value=new JSONArray();reader.beginArray();
+                        while(reader.hasNext()) {
+                            if(value.length()<2&&(reader.peek()==JsonToken.NUMBER||reader.peek()==JsonToken.STRING))
+                                value.put(readScalar(reader));
+                            else reader.skipValue();
+                        }
+                        reader.endArray();
+                        if(TravelAchievementRoutes.point(value)==null)geometry.put("pattern_route_invalid",true);
+                        last=value;
+                        if(index%stride==0)points.add(last);
+                        if(points.size()>257) {
+                            java.util.List<JSONArray> reduced=new java.util.ArrayList<>();
+                            for(int i=0;i<points.size();i+=2)reduced.add(points.get(i));
+                            points=reduced;stride*=2;
+                        }
+                        index++;
+                    }else {reader.skipValue();geometry.put("pattern_route_invalid",true);}
+                }
+                reader.endArray();
+                if(last!=null&&(points.isEmpty()||points.get(points.size()-1)!=last))points.add(last);
+                for(JSONArray point:points)output.put(point);
+            }else reader.skipValue();
+        }
+        reader.endObject();geometry.put("coordinates",output);return geometry;
     }
 
     private static Object readEvidenceValue(JsonReader reader) throws Exception {
@@ -669,7 +710,6 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
-
 
 
 
