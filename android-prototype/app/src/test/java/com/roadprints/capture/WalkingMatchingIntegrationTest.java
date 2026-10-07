@@ -38,6 +38,31 @@ public class WalkingMatchingIntegrationTest {
         while(coordinator.snapshot().state!=MatchingCoordinator.State.COMPLETE && System.nanoTime()<end) Thread.sleep(10);
         assertEquals(MatchingCoordinator.State.COMPLETE,coordinator.snapshot().state);
     }
+    @Test public void failedCaptureQualityIsReevaluatedBeforeTheMatcherOnRepeatedRetries() throws Exception {
+        JSONArray coords=new JSONArray(),samples=new JSONArray();
+        for(int i=0;i<22;i++) {
+            double metres=i==0?-20:i<7?i*40:240+i%3;
+            coords.put(new JSONArray().put(metres/111195).put(0));
+            samples.put(new JSONArray().put(metres/111195).put(0).put(i==0?178:10)
+                    .put(i==0?0:100000+i*30000).put(1));
+        }
+        JSONObject j=walk().put("raw_capture_samples",samples).put("capture_route_samples",samples)
+                .put("recording_quality",new JSONObject().put("resolved",false))
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords))
+                .put("distance_meters",0).put("processing_status","failed");
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{
+            calls.incrementAndGet(); int count=payload.getJSONArray("points").length();
+            assertTrue(count<22); return result(210).put("input_points",count).put("matched_tracepoints",count);
+        });
+        coordinator.rematch("walk");await();
+        assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertTrue(stored.getJSONObject("recording_quality").getBoolean("resolved"));
+        assertEquals(samples.toString(),stored.getJSONArray("raw_capture_samples").toString());
+        assertEquals(coords.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+        coordinator.rematch("walk");await();assertEquals(2,calls.get());
+    }
     @Test public void successfulRematchCorrectsDistancePreservesRawTraceAndIsRepeatable() throws Exception {
         JSONObject walk=walk();JourneyStore.save(app,walk);AtomicInteger submitted=new AtomicInteger();
         coordinator=new MatchingCoordinator(app,(foot,payload)->{submitted.set(payload.getJSONArray("points").length());return result(44);});
@@ -59,7 +84,7 @@ public class WalkingMatchingIntegrationTest {
         assertTrue(stored.getString("error_summary").contains("substantially longer"));
     }
 
-    @Test public void previouslyRejectedSamplingGapIsPreparedAndMatchedWithoutDiscardingRawData() throws Exception {
+    @Test public void movingSamplingGapRemainsBlockedAfterPreparationWithoutDiscardingRawData() throws Exception {
         JSONObject walk=walk();
         JSONArray coordinates=new JSONArray(),samples=new JSONArray();
         int[] metres={0,10,15,150,160},seconds={0,10,190,200,210};
@@ -78,12 +103,12 @@ public class WalkingMatchingIntegrationTest {
             return result(165).put("input_points",4).put("matched_tracepoints",4);
         });
         coordinator.start("walk");await();
-        assertEquals(1,coordinator.snapshot().matched);assertEquals(4,submitted.get());
+        assertEquals(1,coordinator.snapshot().failed);assertEquals(0,submitted.get());
         JSONObject stored=JourneyStore.get(app,"walk");
-        assertEquals(165,stored.getDouble("distance_meters"),.01);
+        assertEquals(0,stored.getDouble("distance_meters"),.01);
         assertEquals(2000,stored.getDouble("original_distance_meters"),.01);
         assertEquals(5,stored.getJSONArray("raw_capture_samples").length());
         assertEquals(coordinates.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
-        assertEquals("validated_walking_match",stored.getString("distance_source"));
+        assertTrue(stored.getString("error_summary").contains("moving GPS gap"));
     }
 }

@@ -14,6 +14,33 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk=28)
 public class WalkingJourneyPreparationTest {
+    @Test public void rejectedAnchorAndIndoorTailRecoverForAnyNativeWalkWithoutChangingItsSource() throws Exception {
+        Context app=RuntimeEnvironment.getApplication();
+        JSONArray coords=new JSONArray(),samples=new JSONArray();
+        for(int i=0;i<22;i++) {
+            double metres=i==0?-20:i<7?i*40:240+i%3;
+            coords.put(new JSONArray().put(metres/111195).put(0));
+            samples.put(new JSONArray().put(metres/111195).put(0).put(i==0?178:10)
+                    .put(i==0?0:100000+i*30000).put(1));
+        }
+        JSONObject j=journey("android_activity_capture")
+                .put("raw_capture_samples",samples).put("capture_route_samples",samples)
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords))
+                .put("capture_validation",new JSONObject().put("version",1).put("resolved",true).put("timing_available",true));
+        String original=j.toString();
+        WalkingJourneyPreparation.Prepared prepared=WalkingJourneyPreparation.prepare(app,j);
+        assertTrue(prepared.validated);assertTrue(prepared.quality.getBoolean("resolved"));
+        assertTrue(prepared.details.getInt("stationary_tail_points")>0);
+        assertEquals(original,j.toString());assertTrue(prepared.distance<250);
+    }
+    @Test public void droppingInaccurateFixesCannotMakeAMovingSignalGapMatchable() throws Exception {
+        JSONObject j=journey("android_activity_capture")
+                .put("raw_capture_samples",new JSONArray("[[0,0,5,100000,1],[0.002,0,150,200000,1],[0.004,0,5,500000,1]]"))
+                .put("route_geometry",new JSONObject().put("type","LineString")
+                        .put("coordinates",new JSONArray("[[0,0],[0.002,0],[0.004,0]]")));
+        try { WalkingJourneyPreparation.prepare(RuntimeEnvironment.getApplication(),j);fail("Moving gap must remain blocked"); }
+        catch(IllegalStateException expected) { assertTrue(expected.getMessage().contains("gap")); }
+    }
     @Test public void legacyRecordingRecoversTimingFromRetainedMovementLog() throws Exception {
         Context app=RuntimeEnvironment.getApplication();MovementDiagnostics.start(app);
         try {
