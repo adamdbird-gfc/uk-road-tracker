@@ -24,6 +24,7 @@ final class RoadprintsIcons {
         if(id==null)return R.drawable.ic_roadprints_star;
         if(id.startsWith("foot-"))return R.drawable.ic_roadprints_foot;
         if(id.startsWith("road-"))return R.drawable.ic_roadprints_car;
+        if(id.startsWith("cycle-"))return R.drawable.ic_roadprints_bicycle;
         switch(id) {
             case "county-collector":return R.drawable.ic_nav_map;
             case "sat-nav-on":return R.drawable.ic_roadprints_car;
