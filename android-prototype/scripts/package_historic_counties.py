@@ -19,6 +19,7 @@ def main():
     source,out=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2]);out.mkdir(parents=True,exist_ok=True)
     expected=json.loads((out/'catalogue.json').read_text()) if (out/'catalogue.json').exists() else None
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
+    if expected and digest!=expected['source_sha256']: raise ValueError('County source changed; review and version the reference before building')
     z=zipfile.ZipFile(source)
     def part(ext): return io.BytesIO(z.read(next(n for n in z.namelist() if n.lower().endswith(ext))))
     r=shapefile.Reader(shp=part('.shp'),shx=part('.shx'),dbf=part('.dbf'))
@@ -55,17 +56,6 @@ def main():
     counts={n:sum(c['nation']==n for c in metadata) for n in ['England','Scotland','Wales','Northern Ireland']}
     assert list(counts.values())==[39,34,13,6],counts
     manifest=dict(format=1,dataset='HCT Definition A WGS84 full resolution',version='2026-10-06',source='https://county-borders.co.uk/UKDefinitionA_WG84_Full_Resolution.zip',source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),data_sha256=hashlib.sha256((out/'boundaries.bin').read_bytes()).hexdigest(),coordinate_scale=1000000,counties=metadata)
-    if expected:
-        # ZIP timestamps/compression can change without changing the county reference.
-        # Verify the actual boundary bytes AND every catalogue field used by the app.
-        comparable={k:v for k,v in manifest.items() if k!='source_sha256'}
-        pinned={k:v for k,v in expected.items() if k!='source_sha256'}
-        if comparable!=pinned:
-            (out/'boundaries.bin').unlink()
-            raise ValueError('County boundary data changed; review and version the reference before building')
-        if digest!=expected['source_sha256']:
-            print('County archive packaging changed; exact pinned boundary data and catalogue verified')
-    else:
-        (out/'catalogue.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
+    (out/'catalogue.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     print(dict(counts=counts,vertices=vertices,compressed_bytes=offset))
 if __name__=='__main__':main()
