@@ -277,4 +277,30 @@ public class MatchingCoordinatorTest {
         coordinator.start();await(MatchingCoordinator.State.COMPLETE);assertEquals(1,coordinator.snapshot().failed);
         assertFalse(JourneyStore.get(app,"cycle").has("processing_result"));
     }
+    @Test public void nativeDrivingRetriesOnlyCorroboratedTidyFixAndPreservesSavedRoute() throws Exception {
+        JSONArray coordinates=new JSONArray("[[0,0],[0.000089932,0.000062952],[0.00089932,0]]");
+        JSONArray samples=new JSONArray();
+        for(int i=0;i<3;i++) samples.put(new JSONArray().put(coordinates.getJSONArray(i).getDouble(0))
+                .put(coordinates.getJSONArray(i).getDouble(1)).put(18).put(100000+i*9000).put(10));
+        JourneyStore.save(app,new JSONObject().put("journey_id","native-drive").put("mode","driving")
+                .put("source",new JSONObject().put("type","android_activity_capture"))
+                .put("capture_route_samples",samples).put("distance_meters",100)
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coordinates)));
+        AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)-> {
+            assertEquals("/match",endpoint);int call=calls.incrementAndGet();
+            int count=payload.getJSONArray("points").length();assertEquals(call==1?3:2,count);
+            return route().put("input_points",count).put("matched_tracepoints",2).put("matched_distance_m",110)
+                    .put("matched_point_indices",new JSONArray(call==1?"[0,2]":"[0,1]"))
+                    .put("unmatched_point_indices",new JSONArray(call==1?"[1]":"[]"))
+                    .put("failed_sections",new JSONArray());
+        });
+        coordinator.start("native-drive");await(MatchingCoordinator.State.COMPLETE);
+        JSONObject saved=JourneyStore.get(app,"native-drive");
+        assertEquals(2,calls.get());assertEquals("complete",saved.getString("processing_status"));
+        assertEquals(coordinates.toString(),saved.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+        assertEquals(100,saved.getDouble("distance_meters"),.01);
+        assertTrue(saved.getJSONObject("road_preparation").getBoolean("redundant_fix_retry"));
+    }
+
 }
