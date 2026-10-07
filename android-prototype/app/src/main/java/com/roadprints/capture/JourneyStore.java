@@ -424,9 +424,17 @@ public final class JourneyStore {
                     if(reader.peek()==JsonToken.BEGIN_ARRAY) {
                         JSONArray value=new JSONArray();reader.beginArray();
                         while(reader.hasNext()) {
-                            if(value.length()<2&&(reader.peek()==JsonToken.NUMBER||reader.peek()==JsonToken.STRING))
-                                value.put(readScalar(reader));
-                            else reader.skipValue();
+                            if(value.length()<2&&(reader.peek()==JsonToken.NUMBER||reader.peek()==JsonToken.STRING)) {
+                                String coordinate=reader.nextString();
+                                try {
+                                    double number=Double.parseDouble(coordinate);
+                                    if(Double.isFinite(number))value.put(number);
+                                    else {geometry.put("pattern_route_invalid",true);value.put(coordinate);}
+                                }catch(NumberFormatException invalid){geometry.put("pattern_route_invalid",true);value.put(coordinate);}
+                            } else {
+                                if(value.length()<2)geometry.put("pattern_route_invalid",true);
+                                reader.skipValue();
+                            }
                         }
                         reader.endArray();
                         if(TravelAchievementRoutes.point(value)==null)geometry.put("pattern_route_invalid",true);

@@ -116,7 +116,8 @@ public class FinalTravelAchievementsTest {
         train.remove("processing_result");train.put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",raw)).put("raw_capture_samples",raw);
         JourneyStore.save(app,train);List<JSONObject> read=new ArrayList<>();JourneyStore.forEachAchievementEvidence(app,()->false,read::add);
         assertEquals(1,read.size());JSONArray retained=read.get(0).getJSONObject("route_geometry").getJSONArray("coordinates");assertTrue(retained.length()<=258);
-        assertEquals(raw.getJSONArray(0).toString(),retained.getJSONArray(0).toString());assertEquals(raw.getJSONArray(19999).toString(),retained.getJSONArray(retained.length()-1).toString());
+        for(int axis=0;axis<2;axis++){assertEquals(raw.getJSONArray(0).getDouble(axis),retained.getJSONArray(0).getDouble(axis),1e-12);assertEquals(raw.getJSONArray(19999).getDouble(axis),retained.getJSONArray(retained.length()-1).getDouble(axis),1e-12);}
+        assertTrue(retained.getJSONArray(0).get(0) instanceof Number);
         assertEquals("Europe/London",read.get(0).getString("timezone"));assertFalse(read.get(0).has("raw_capture_samples"));assertNotNull(GroundhogDayEvidence.read(read.get(0)));
     }
     @Test public void motorwayPromenadeAndAreasUseTheirSpecificModesAndReferences()throws Exception {
