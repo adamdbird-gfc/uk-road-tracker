@@ -84,7 +84,7 @@ public class WalkingMatchingIntegrationTest {
         assertTrue(stored.getString("error_summary").contains("substantially longer"));
     }
 
-    @Test public void previouslyRejectedSamplingGapIsPreparedAndMatchedWithoutDiscardingRawData() throws Exception {
+    @Test public void movingSamplingGapRemainsBlockedAfterPreparationWithoutDiscardingRawData() throws Exception {
         JSONObject walk=walk();
         JSONArray coordinates=new JSONArray(),samples=new JSONArray();
         int[] metres={0,10,15,150,160},seconds={0,10,190,200,210};
@@ -103,12 +103,12 @@ public class WalkingMatchingIntegrationTest {
             return result(165).put("input_points",4).put("matched_tracepoints",4);
         });
         coordinator.start("walk");await();
-        assertEquals(1,coordinator.snapshot().matched);assertEquals(4,submitted.get());
+        assertEquals(1,coordinator.snapshot().failed);assertEquals(0,submitted.get());
         JSONObject stored=JourneyStore.get(app,"walk");
-        assertEquals(165,stored.getDouble("distance_meters"),.01);
+        assertEquals(0,stored.getDouble("distance_meters"),.01);
         assertEquals(2000,stored.getDouble("original_distance_meters"),.01);
         assertEquals(5,stored.getJSONArray("raw_capture_samples").length());
         assertEquals(coordinates.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
-        assertEquals("validated_walking_match",stored.getString("distance_source"));
+        assertTrue(stored.getString("error_summary").contains("moving GPS gap"));
     }
 }
