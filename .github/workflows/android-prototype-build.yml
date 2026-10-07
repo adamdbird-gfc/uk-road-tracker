@@ -44,6 +44,9 @@ jobs:
           test -f "$ANDROID_HOME/build-tools/35.0.0/apksigner"
           test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
 
+      - name: Package pinned offline historic county reference
+        run: bash android-prototype/scripts/prepare_county_reference.sh
+
       - name: Prepare stable debug signing key
         run: |
           test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }

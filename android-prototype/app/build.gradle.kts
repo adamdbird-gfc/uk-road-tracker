@@ -5,6 +5,7 @@ plugins {
 android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
+    androidResources { noCompress += "bin" }
     sourceSets.getByName("main").assets.srcDir("../../canonical-a-roads-v5")
     testOptions { unitTests.isIncludeAndroidResources = true }
     buildFeatures { buildConfig = true }
@@ -12,8 +13,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 207
-        versionName = "0.25.161"
+        versionCode = 208
+        versionName = "0.25.162"
     }
 }
 
@@ -37,7 +38,6 @@ if (stableKeystore != null && stableStorePassword != null && stableKeyAlias != n
     }
     android.buildTypes.getByName("debug") { signingConfig = android.signingConfigs.getByName("stableDebug") }
 }
-
 
 
 

@@ -148,8 +148,43 @@ public class AchievementsAvailabilityTest {
         DistanceUnits.setKilometres(app,true);java.lang.reflect.Method resume=AchievementsActivity.class.getDeclaredMethod("onResume");resume.setAccessible(true);resume.invoke(screen);
         assertTrue(contains(content(screen),"40.2 km"));assertTrue(jobs.isEmpty());DistanceUnits.setKilometres(app,false);
     }
+    @Test public void jumpMenuStaysOutsideTheScrollAndCompletionListsStayInRoadDiscovery() throws Exception {
+        cache();AchievementsActivity screen=screen();
+        android.widget.ScrollView scroll=(android.widget.ScrollView)field("scroll").get(screen);
+        View row=(View)field("jumpRow").get(screen);
+        assertNotSame(scroll,row.getParent());assertNotSame(content(screen),row.getParent());
+        @SuppressWarnings("unchecked") java.util.Map<String,View> anchors=(java.util.Map<String,View>)field("groupAnchors").get(screen);
+        @SuppressWarnings("unchecked") java.util.Map<String,TextView> chips=(java.util.Map<String,TextView>)field("jumpChips").get(screen);
+        assertEquals(anchors.keySet(),chips.keySet());assertTrue(chips.containsKey("Road discovery"));assertTrue(chips.containsKey("Landmarks"));
+        View decor=screen.getWindow().getDecorView();decor.measure(View.MeasureSpec.makeMeasureSpec(1080,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(1800,View.MeasureSpec.EXACTLY));decor.layout(0,0,1080,1800);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        scroll.scrollTo(0,anchors.get("Road discovery").getTop());
+        assertTrue(chips.get("Road discovery").isSelected());assertFalse(chips.get("Overview").isSelected());
+        int roadIndex=content(screen).indexOfChild(anchors.get("Road discovery")),townIndex=content(screen).indexOfChild(anchors.get("Town exploration"));
+        boolean motorway=false,aRoad=false;
+        for(int i=roadIndex;i<townIndex;i++){View v=content(screen).getChildAt(i);motorway|=contains(v,"Motorway completion");aRoad|=contains(v,"A-road completion");}
+        assertTrue(motorway);assertTrue(aRoad);
+    }
+    @Test public void countyChecklistShowsAll92IncludingRemainingItemsAndSurvivesSnapshot() throws Exception {
+        cache();AchievementStore.Snapshot base=progress();
+        AchievementStore.Progress county=base.achievements.stream().filter(p->p.definition.id.equals("county-collector")).findFirst().get();
+        county.contributions=new CountyCollectorEvidence(new HistoricCountyCatalog(app)).checklist();
+        JSONObject json=(JSONObject)invokeStatic("snapshotToJson",new Class<?>[]{AchievementStore.Snapshot.class},base);
+        AchievementStore.Snapshot restored=(AchievementStore.Snapshot)invokeStatic("snapshotFromJson",new Class<?>[]{JSONObject.class},json);
+        assertEquals(92,restored.achievements.stream().filter(p->p.definition.id.equals("county-collector")).findFirst().get().contributions.size());
+        field("processSnapshot").set(null,restored);AchievementsActivity screen=screen();
+        TextView title=findText(content(screen),"County Collector");assertNotNull(title);
+        View card=(View)title.getParent().getParent().getParent();
+        findText(card,"View contributions and milestones").performClick();
+        assertTrue(contains(card,"○ Yorkshire"));assertTrue(contains(card,"○ Antrim"));assertTrue(contains(card,"○ Kent"));
+        assertFalse(contains(card,"First 50 shown"));assertFalse(contains(card,"✓ ○"));
+    }
+    private TextView findText(View view,String value) {
+        if(view instanceof TextView&&((TextView)view).getText().toString().contains(value))return (TextView)view;
+        if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++){TextView found=findText(((ViewGroup)view).getChildAt(i),value);if(found!=null)return found;}
+        return null;
+    }
     private Object invokeStatic(String name,Class<?>[] types,Object value) throws Exception {
         java.lang.reflect.Method m=AchievementsActivity.class.getDeclaredMethod(name,types);m.setAccessible(true);return m.invoke(null,value);
     }
 }
-

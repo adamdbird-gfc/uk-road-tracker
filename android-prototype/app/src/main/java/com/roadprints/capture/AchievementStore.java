@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=3;
+    static final int CATALOGUE_VERSION=4;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -129,9 +129,13 @@ final class AchievementStore {
         ARoadProgressCalculator aRoads=new ARoadProgressCalculator(app,false);
         CrossingTracker crossingTracker=new CrossingTracker();
         CoreAchievementEvidence core=new CoreAchievementEvidence();
+        final CountyCollectorEvidence counties;
+        try { counties=new CountyCollectorEvidence(new HistoricCountyCatalog(app)); }
+        catch(java.io.IOException unavailable) { throw new IllegalStateException("Historic county reference unavailable",unavailable); }
         try {
             JourneyStore.forEachAchievementEvidence(app,()->false,journey -> {
                 core.add(journey);
+                counties.add(journey);
                 if (!"complete".equals(journey.optString("processing_status", ""))) return;
                 String mode=journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
                 if (!"driving".equals(mode) && !"bus".equals(mode)) return;
@@ -146,6 +150,7 @@ final class AchievementStore {
         MotorwayProgressCalculator.Summary motorwaySummary=motorways.finish();
         ARoadProgressCalculator.Summary aRoadSummary=aRoads.finish();
         Map<String,Double> values=new LinkedHashMap<>();
+        values.put("county-collector",counties.percent());
         values.put("motorway-quarter",motorwaySummary.ukPercent());
         values.put("motorway-halfway",motorwaySummary.ukPercent());
         values.put("motorway-three-quarters",motorwaySummary.ukPercent());
@@ -163,6 +168,7 @@ final class AchievementStore {
         values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
+        lists.put("county-collector",counties.checklist());
         TownAchievementEvidence towns=new TownAchievementEvidence();
         towns.collect(app,core);
         towns.requestInventories(app);
@@ -263,6 +269,10 @@ final class AchievementStore {
         if("town-exploration".equals(d.type))return String.format(Locale.UK,
                 "%s · %.1f%% / %.0f%% · towns with more than 400 roads",
                 d.id.startsWith("roaming")?"Third qualifying town":"Best qualifying town",progress.value,target);
+        if("county-collector".equals(d.id))return String.format(Locale.UK,
+                "%d / 92 historic counties · %.1f%% · %s %d counties (%.0f%%)",
+                (int)Math.round(progress.value*92/100),progress.value,progress.level==4?"complete":"next",
+                (int)Math.ceil(target*92/100),target);
         if("road-completion".equals(d.type))return String.format(Locale.UK,"%.1f%% of %s · %s %.0f%%",progress.value,roadLabel(d.roadId),
                 progress.level==4?"complete":"next",target);
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
@@ -470,6 +480,11 @@ final class AchievementStore {
         output.add(family("road-unique","Blazing a trail","Unique driving and bus coverage","distance",new double[]{10,100,500,1000,5000}));
         output.add(townFamily(false));
         output.add(townFamily(true));
+        Definition county=family("county-collector","County Collector",
+                "Unlock at least one road within each historic county. Collect all 92 across the UK.",
+                "county-percent",new double[]{10,25,50,100});
+        county.levelTitles=new String[]{"County Collector · Bronze","County Collector · Silver","County Collector · Gold","County Collector · Platinum"};
+        output.add(county);
         output.add(family("the-knowledge","The Knowledge","A nod to London taxi drivers’ street knowledge. Unlock distinct roads across eligible modes.","road-count",new double[]{10,100,500,1000,5000}));
         output.add(new Definition("sat-nav-on","","Sat nav: on","Complete your first journey recorded by Roadprints.","Your first Roadprints recording completed.","app-use",1,null,0,0,0));
         output.add(new Definition("picasso","","The artist formerly known as Picasso","Save edits to five distinct journeys.","Five distinct journeys edited.","app-use",5,null,0,0,0));

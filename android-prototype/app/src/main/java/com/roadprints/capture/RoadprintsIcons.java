@@ -25,6 +25,7 @@ final class RoadprintsIcons {
         if(id.startsWith("foot-"))return R.drawable.ic_roadprints_foot;
         if(id.startsWith("road-"))return R.drawable.ic_roadprints_car;
         switch(id) {
+            case "county-collector":return R.drawable.ic_nav_map;
             case "sat-nav-on":return R.drawable.ic_roadprints_car;
             case "picasso":case "joining-the-dots":return R.drawable.ic_roadprints_star;
             case "mastered-monopoly":return R.drawable.ic_roadprints_train;
@@ -47,4 +48,3 @@ final class RoadprintsIcons {
         view.setContentDescription(description);return view;
     }
 }
-
