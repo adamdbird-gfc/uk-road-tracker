@@ -56,6 +56,7 @@ public class ProgressActivity extends Activity {
     private DistanceStats loadedStats;
     private long loadedRevision = Long.MIN_VALUE;
     private boolean renderedKilometres;
+    private long renderedServiceRevision=Long.MIN_VALUE;
     private boolean renderingPendingStats;
     private LinearLayout roadDiscoveryHost;
     private TextView refreshStatus;
@@ -78,6 +79,9 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if(ServiceStationStore.unlocked(this)&&!ServiceStationStore.historicalBackfillComplete(this))ServiceStationStore.ensureHistoricalVisits(this,()->{
+            if(!isFinishing()&&!isDestroyed())loadStatistics();
+        });
         useKilometres = DistanceUnits.usesKilometres(this);
         getWindow().setStatusBarColor(NAVY);
         getWindow().setNavigationBarColor(NAV_BAR);
@@ -218,9 +222,9 @@ public class ProgressActivity extends Activity {
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
         synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
-        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres)) {
+        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != ServiceStationStore.revision(this))) {
             loadedStats = cached; renderStatistics(statisticsContent, cached); restoreProgressScroll();
-        } else if (loadedStats != null && renderedKilometres != useKilometres) {
+        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != ServiceStationStore.revision(this))) {
             renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
         if (cached != null && cachedRevision == revision) {
@@ -531,6 +535,7 @@ public class ProgressActivity extends Activity {
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
         renderedKilometres = useKilometres;
+        renderedServiceRevision = ServiceStationStore.revision(this);
         renderingPendingStats = stats.pending;
         addCollectiveStatistics(parent, stats);
         renderingPendingStats = false;
@@ -635,7 +640,7 @@ public class ProgressActivity extends Activity {
             count.setTextColor(Color.WHITE);count.setTextSize(16);
             count.setTypeface(null,android.graphics.Typeface.BOLD);panel.addView(count);
             TextView note=new TextView(this);
-            note.setText("Automatic matches use confirmed Timeline place visits within 350 m. Re-import Timeline to refresh confirmed stops.");
+            note.setText("Visits unlock automatically from Timeline visits or recorded stops. Either carriageway counts once.");
             note.setTextColor(MUTED);note.setTextSize(12);note.setPadding(0,dp(5),0,dp(9));panel.addView(note);
             addServiceStationRegion(panel,stations,"GB",completed,automatic);
             addServiceStationRegion(panel,stations,"NI",completed,automatic);
@@ -669,18 +674,11 @@ public class ProgressActivity extends Activity {
                 roadTitle.setPadding(dp(4),dp(7),0,dp(2));panel.addView(roadTitle);previousRoad=road;
             }
             String id=station.optString("id","");
-            CheckBox item=new CheckBox(this);
-            item.setText(station.optString("name","Service area")
-                    +(automatic.contains(id)?" · Timeline confirmed":""));
-            item.setTextColor(Color.WHITE);item.setTextSize(13);
-            item.setButtonTintList(android.content.res.ColorStateList.valueOf(completed.contains(id)?GOLD:MUTED));
-            item.setChecked(completed.contains(id));item.setEnabled(!automatic.contains(id));panel.addView(item);
-            item.setOnCheckedChangeListener((button,checked)->{
-                int y=statisticsScroll==null?0:statisticsScroll.getScrollY();
-                ServiceStationStore.setManual(this,id,checked);
-                if(loadedStats!=null) renderStatistics(statisticsContent,loadedStats);
-                if(statisticsScroll!=null) statisticsScroll.post(()->statisticsScroll.scrollTo(0,y));
-            });
+            TextView item=new TextView(this);
+            item.setText((completed.contains(id)?"✓ ":"○ ")+station.optString("name","Service area")
+                    +(automatic.contains(id)?" · Timeline visit":completed.contains(id)?" · Roadprints visit":""));
+            item.setTextColor(completed.contains(id)?GOLD:MUTED);item.setTextSize(13);
+            item.setPadding(dp(4),dp(8),0,dp(8));panel.addView(item);
         }
     }
 

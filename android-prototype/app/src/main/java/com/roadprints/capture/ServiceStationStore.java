@@ -1,231 +1,172 @@
 package com.roadprints.capture;
 
 import android.content.Context;
-import android.location.Location;
 import android.content.SharedPreferences;
-
+import android.os.Handler;
+import android.os.Looper;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/** Local entitlement, visit ledger and bundled UK motorway services catalogue. */
+/** Entitlement gates the collection, never the retention of automatic visit evidence. */
 final class ServiceStationStore {
-    private static final String PREFS = "roadprints_collections_v1";
-    private static final String MANUAL = "service_station_manual";
-    private static final String AUTOMATIC = "service_station_automatic";
-    private static final String REVISION = "revision";
-    private static final String HISTORICAL_BACKFILL_COMPLETE = "historical_backfill_v1_complete";
-    private static final String CONFIRMED_ONLY_MIGRATION = "confirmed_timeline_only_v1";
+    private static final String PREFS="roadprints_collections_v1", AUTOMATIC="service_station_automatic", REVISION="revision";
+    private static final String BACKFILL="automatic_visits_v2_backfill", MIGRATION="automatic_visits_v2_migration";
+    private static final Object STATE_LOCK=new Object(), TIMELINE_LOCK=new Object();
+    private static final java.util.concurrent.ExecutorService BACKFILL_EXECUTOR=java.util.concurrent.Executors.newSingleThreadExecutor();
+    private static final java.util.List<Runnable> CALLBACKS=new java.util.ArrayList<>();
+    private static boolean backfillRunning;
+    private static long generation;
     private static volatile JSONArray catalogue;
     private ServiceStationStore() {}
-
-    static boolean unlocked(Context context) {
-        return prefs(context).getBoolean("service_stations_unlocked", false);
-    }
+    static boolean unlocked(Context context) { return prefs(context).getBoolean("service_stations_unlocked",false); }
     static void unlockForTesting(Context context) {
-        prefs(context).edit().putBoolean("service_stations_unlocked", true)
-                .putLong(REVISION, revision(context)+1).apply();
+        prefs(context).edit().putBoolean("service_stations_unlocked",true).apply();bumpRevision(context);
+        ensureHistoricalVisits(context,null);
     }
-    static long revision(Context context) { return prefs(context).getLong(REVISION, 0); }
-    static boolean historicalBackfillComplete(Context context) {
-        ensureConfirmedOnlyMigration(context);
-        return prefs(context).getBoolean(HISTORICAL_BACKFILL_COMPLETE, false);
+    static long revision(Context context) { return prefs(context).getLong(REVISION,0); }
+    private static void bumpRevision(Context context) {
+        synchronized(STATE_LOCK) { prefs(context).edit().putLong(REVISION,revision(context)+1).apply(); }
     }
-    static Set<String> manual(Context context) { return set(context, MANUAL); }
-    static Set<String> automatic(Context context) {
-        ensureConfirmedOnlyMigration(context);
-        return set(context, AUTOMATIC);
-    }
+    static boolean historicalBackfillComplete(Context context) { ensureMigration(context);return prefs(context).getBoolean(BACKFILL,false); }
+    static Set<String> automatic(Context context) { ensureMigration(context);return new HashSet<>(prefs(context).getStringSet(AUTOMATIC,java.util.Collections.emptySet())); }
     static Set<String> completed(Context context) {
-        Set<String> result=manual(context);
-        result.addAll(automatic(context));
-        result.addAll(ServiceStationVisitStore.stationIds(context));
-        return result;
-    }
-
-    /** Candidate stops are suggestions only and are never credited without user confirmation. */
-    static JSONArray trackedCandidates(Context context, java.util.List<Location> points)
-            throws Exception {
-        JSONArray candidates = new JSONArray();
-        if (!unlocked(context) || points == null || points.isEmpty()) return candidates;
-        JSONArray services = stations(context);
-        final long maximumSampleGapMs = 2L * 60L * 1000L;
-        final long minimumDwellMs = 3L * 60L * 1000L;
-        final int minimumPoints = 4;
-        for (int serviceIndex = 0; serviceIndex < services.length(); serviceIndex++) {
-            JSONObject service = services.optJSONObject(serviceIndex);
-            if (service == null) continue;
-            double serviceLat = service.optDouble("lat", Double.NaN);
-            double serviceLng = service.optDouble("lng", Double.NaN);
-            if (!Double.isFinite(serviceLat) || !Double.isFinite(serviceLng)) continue;
-            long firstInside = -1;
-            long lastInside = -1;
-            int samples = 0;
-            boolean sustainedStop = false;
-            for (Location point : points) {
-                if (point == null) continue;
-                long time = point.getTime();
-                if (haversineMetres(point.getLatitude(), point.getLongitude(),
-                        serviceLat, serviceLng) > 300.0) {
-                    firstInside = -1;
-                    lastInside = -1;
-                    samples = 0;
-                    continue;
-                }
-                if (firstInside < 0 || time - lastInside > maximumSampleGapMs
-                        || time < lastInside) {
-                    firstInside = time;
-                    samples = 1;
-                } else {
-                    samples++;
-                }
-                lastInside = time;
-                if (samples >= minimumPoints && lastInside - firstInside >= minimumDwellMs) {
-                    sustainedStop = true;
-                    break;
-                }
-            }
-            if (sustainedStop) {
-                JSONObject candidate = new JSONObject();
-                candidate.put("id", service.optString("id", ""));
-                candidate.put("name", service.optString("name", "Service station"));
-                candidates.put(candidate);
-            }
-        }
-        return candidates;
-    }
-    static void setManual(Context context, String id, boolean visited) {
-        SharedPreferences p=prefs(context);
-        Set<String> ids=set(context, MANUAL);
-        if (visited) ids.add(id); else ids.remove(id);
-        p.edit().putStringSet(MANUAL, ids).putLong(REVISION, revision(context)+1).apply();
+        Set<String> result=automatic(context);result.addAll(ServiceStationVisitStore.stationIds(context));return result;
     }
     static JSONArray stations(Context context) throws Exception {
-        JSONArray cached=catalogue;
-        if (cached != null) return cached;
-        try (InputStream input=context.getAssets().open("uk-motorway-services-v1.json")) {
-            byte[] bytes=new byte[input.available()];
-            int offset=0, count;
-            while(offset<bytes.length && (count=input.read(bytes,offset,bytes.length-offset))>=0) offset+=count;
-            JSONArray result=new JSONObject(new String(bytes,0,offset,StandardCharsets.UTF_8))
-                    .optJSONArray("services");
-            catalogue=result==null?new JSONArray():result;
-            return catalogue;
+        JSONArray cached=catalogue;if(cached!=null)return cached;
+        try(InputStream input=context.getAssets().open("uk-motorway-services-v1.json")) {
+            java.io.ByteArrayOutputStream output=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[8192];int n;
+            while((n=input.read(buffer))!=-1)output.write(buffer,0,n);
+            JSONArray result=new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8)).optJSONArray("services");
+            if(result==null)throw new IllegalStateException("Service station catalogue has no services");
+            catalogue=result;return result;
         }
     }
-    static int recordJourney(Context context, JSONObject journey) {
-        // Passing close to a station does not prove that a user stopped there.
-        return 0;
-    }
-
-    private static void ensureConfirmedOnlyMigration(Context context) {
-        SharedPreferences p=prefs(context);
-        if(p.getBoolean(CONFIRMED_ONLY_MIGRATION,false)) return;
-        p.edit().remove(AUTOMATIC).putBoolean(CONFIRMED_ONLY_MIGRATION,true)
-                .putBoolean(HISTORICAL_BACKFILL_COMPLETE,true)
-                .putLong(REVISION,revision(context)+1).apply();
-    }
-
-    /**
-     * Retain explicit Timeline place visits as source evidence, then rebuild station matches.
-     * The raw visit ledger is authoritative; automatic station IDs are a derived cache.
-     */
-    static int recordConfirmedTimelineVisits(Context context, JSONArray visits) {
-        ensureConfirmedOnlyMigration(context);
-        automatic(context);
+    static int recordJourney(Context context,JSONObject journey) {
+        ensureMigration(context);
         try {
-            TimelineVisitStore.merge(context, visits);
-            rebuildConfirmedTimelineMatches(context);
-        } catch (Exception error) {
-            android.util.Log.w("Roadprints", "Could not persist Timeline place visits", error);
-            return 0;
-        }
-        return automatic(context).size();
+            Set<String> ids=ServiceStationEvidence.visits(journey,stations(context));
+            if(ServiceStationVisitStore.replaceJourney(context,journey.optString("journey_id"),ids)) {
+                bumpRevision(context);
+                if(unlocked(context)) BACKFILL_EXECUTOR.execute(()->AchievementStore.recognizeServiceAchievements(context));
+            }
+            return ids.size();
+        }catch(Exception error){throw new IllegalStateException("Service station evidence could not be evaluated",error);}
     }
+    static void forgetJourney(Context context,String journeyId) {
+        if(ServiceStationVisitStore.replaceJourney(context,journeyId,java.util.Collections.emptySet()))bumpRevision(context);
+    }
+    private static void ensureMigration(Context context) {
+        boolean migrated=false;
+        synchronized(STATE_LOCK) {
+            SharedPreferences p=prefs(context);if(p.getBoolean(MIGRATION,false))return;
+            // Old proximity guesses are discarded, but confirmed Timeline matches survive.
+            SharedPreferences.Editor edit=p.edit().remove("service_station_manual")
+                    .remove("service_station_confirmed_journey_visits_v1").putBoolean(MIGRATION,true).putBoolean(BACKFILL,false);
+            if(!p.getBoolean("confirmed_timeline_only_v1",false))edit.remove(AUTOMATIC);
+            edit.putBoolean("confirmed_timeline_only_v1",true).putLong(REVISION,revision(context)+1).apply();
+            migrated=true;
+        }
+        if(migrated)AchievementStore.clearLegacyServiceUnlocks(context);
+    }
+    static int recordConfirmedTimelineVisits(Context context,JSONArray visits) {
+        ensureMigration(context);
+        try {
+            synchronized(TIMELINE_LOCK) { TimelineVisitStore.merge(context,visits);rebuildTimelineMatches(context); }
+            if(unlocked(context))BACKFILL_EXECUTOR.execute(()->AchievementStore.recognizeServiceAchievements(context));
+            return automatic(context).size();
+        }catch(Exception error){android.util.Log.w("Roadprints","Could not persist Timeline visits",error);return 0;}
+    }
+    private static void rebuildTimelineMatches(Context context) throws Exception {
+        long epoch; synchronized(STATE_LOCK){epoch=generation;}
+        JSONArray visits=TimelineVisitStore.all(context),services=stations(context);Set<String> ids=new HashSet<>();
+        for(int i=0;i<visits.length();i++) {
+            JSONObject visit=visits.optJSONObject(i);if(visit==null)continue;
+            JSONObject station=ServiceStationEvidence.nearest(services,visit.optDouble("lat",Double.NaN),visit.optDouble("lng",Double.NaN),350);
+            if(station!=null)ids.add(station.optString("id"));
+        }
+        synchronized(STATE_LOCK) {
+            if(epoch==generation&&!ids.equals(automatic(context))) {
+                prefs(context).edit().putStringSet(AUTOMATIC,ids).apply();bumpRevision(context);
+            }
+        }
+    }
+    /** One background scan after upgrade/purchase. Each archive record is projected, not fully loaded. */
+    static void ensureHistoricalVisits(Context context,Runnable onComplete) {
+        Context app=context.getApplicationContext();ensureMigration(app);
+        synchronized(STATE_LOCK) {
+            if(prefs(app).getBoolean(BACKFILL,false)) { post(onComplete);return; }
+            if(onComplete!=null)CALLBACKS.add(onComplete);
+            if(backfillRunning)return;backfillRunning=true;
+        }
+        BACKFILL_EXECUTOR.execute(()->{
+            boolean done=false;long epoch;
+            synchronized(STATE_LOCK){epoch=generation;}
+            try {
+                for(int attempt=0;attempt<3&&!done;attempt++) {
+                    long archiveRevision=JourneyStore.dataRevision(app);JSONObject records=new JSONObject();
+                    JSONArray services=stations(app);
+                    JourneyStore.forEachServiceStationEvidence(app,journey->{
+                        Set<String> ids=ServiceStationEvidence.visits(journey,services);
+                        if(!ids.isEmpty())try {records.put(journey.optString("journey_id"),ServiceStationVisitStore.array(ids));}
+                        catch(Exception error){throw new IllegalStateException(error);}
+                    });
+                    synchronized(TIMELINE_LOCK){rebuildTimelineMatches(app);}
+                    synchronized(JourneyStore.class) {
+                        if(JourneyStore.dataRevision(app)!=archiveRevision)continue;
+                        synchronized(STATE_LOCK) {
+                            if(epoch!=generation)break;
 
-    private static void rebuildConfirmedTimelineMatches(Context context) throws Exception {
-        JSONArray evidence = TimelineVisitStore.all(context);
-        JSONArray services = stations(context);
-        Set<String> credited = new HashSet<>();
-        for (int i = 0; i < evidence.length(); i++) {
-            JSONObject visit = evidence.optJSONObject(i);
-            if (visit == null) continue;
-            double lat = visit.optDouble("lat", Double.NaN);
-            double lng = visit.optDouble("lng", Double.NaN);
-            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
-            JSONObject nearest = null;
-            double nearestMetres = Double.MAX_VALUE;
-            for (int j = 0; j < services.length(); j++) {
-                JSONObject service = services.optJSONObject(j);
-                if (service == null) continue;
-                double distance = haversineMetres(lat, lng,
-                        service.optDouble("lat", Double.NaN),
-                        service.optDouble("lng", Double.NaN));
-                if (distance < nearestMetres) {
-                    nearestMetres = distance;
-                    nearest = service;
+                            if(ServiceStationVisitStore.replaceAll(app,records))bumpRevision(app);
+                            prefs(app).edit().putBoolean(BACKFILL,true).apply();bumpRevision(app);done=true;
+                        }
+                    }
+                }
+                if(done&&unlocked(app))AchievementStore.recognizeServiceAchievements(app);
+            }catch(Exception error){android.util.Log.w("Roadprints","Historical service visit scan will be retried",error);}
+            java.util.List<Runnable> callbacks;
+            synchronized(STATE_LOCK){backfillRunning=false;callbacks=new java.util.ArrayList<>(CALLBACKS);CALLBACKS.clear();}
+            for(Runnable callback:callbacks)post(callback);
+        });
+    }
+    private static void post(Runnable callback) { if(callback!=null)new Handler(Looper.getMainLooper()).post(callback); }
+    static ServiceStationAchievements.Snapshot achievementSnapshot(Context context) {
+        try {
+            Set<String> visits=completed(context);
+            ServiceStationAchievements.Snapshot result=ServiceStationAchievements.calculate(stations(context),visits,unlocked(context));
+            if(unlocked(context)) {
+                SharedPreferences achievementPrefs=context.getSharedPreferences("roadprints_achievements_v1",Context.MODE_PRIVATE);
+                JSONObject earned=new JSONObject(achievementPrefs.getString("unlocked","{}"));
+                JSONObject proofs=new JSONObject(achievementPrefs.getString("service_goal_proofs_v1","{}"));
+                for(AchievementStore.Definition d:AchievementStore.definitions())if("service-station".equals(d.type)&&earned.has(d.id)) {
+                    JSONArray proof=proofs.optJSONArray(d.id);boolean supported=proof!=null&&proof.length()>0;
+                    if(proof!=null)for(int i=0;i<proof.length();i++)supported&=visits.contains(proof.optString(i));
+                    if(supported&&result.values.getOrDefault(d.id,0.0)<d.target) {
+                        result.values.put(d.id,d.target);
+                        result.display.put(d.id,result.display.get(d.id)+" · earned milestone retained");
+                    }
                 }
             }
-            if (nearest != null && nearestMetres <= 350) {
-                String id = nearest.optString("id", "");
-                if (!id.isEmpty()) credited.add(id);
-            }
+            return result;
         }
-        Set<String> existing = set(context, AUTOMATIC);
-        if (!existing.equals(credited)) {
-            prefs(context).edit().putStringSet(AUTOMATIC, credited)
-                    .putLong(REVISION, revision(context) + 1).apply();
-        }
+        catch(Exception error){throw new IllegalStateException("Service achievement catalogue unavailable",error);}
     }
-
-    private static double haversineMetres(double lat1,double lng1,double lat2,double lng2) {
-        if(!Double.isFinite(lat2)||!Double.isFinite(lng2)) return Double.MAX_VALUE;
-        double radians=Math.PI/180d,dLat=(lat2-lat1)*radians,dLng=(lng2-lng1)*radians;
-        double a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*radians)*Math.cos(lat2*radians)
-                *Math.sin(dLng/2)*Math.sin(dLng/2);
-        return 6_371_000d*2d*Math.atan2(Math.sqrt(a),Math.sqrt(1d-a));
-    }
-
-    /** Route paths cannot reconstruct the confirmed Timeline place visits. */
-    static void ensureHistoricalVisits(Context context, Runnable onComplete) {
-        ensureConfirmedOnlyMigration(context);
-        if(onComplete!=null) onComplete.run();
-    }
-
-    static Map<String, Double> achievementValues(Context context) {
-        Set<String> complete=completed(context);
-        boolean unlocked=unlocked(context);
-        Map<String, Double> values=new HashMap<>();
-        values.put("service-first-stop",unlocked&&complete.size()>=1?1.0:0.0);
-        values.put("service-ten-stops",unlocked&&complete.size()>=10?1.0:0.0);
-        values.put("service-moneybags",unlocked&&complete.contains("msa:norton-canes:52.6643:-1.9688")?1.0:0.0);
-        values.put("service-being-posh",unlocked&&complete.contains("msa:peterborough:52.5314:-0.3215")?1.0:0.0);
-        return values;
+    static Map<String,Double> achievementValues(Context context) { return achievementSnapshot(context).values; }
+    static void resetHistory(Context context) {
+        synchronized(STATE_LOCK){generation++;prefs(context).edit().putBoolean(BACKFILL,false).apply();bumpRevision(context);}
     }
     static void clearOnDeleteAll(Context context) {
-        TimelineVisitStore.clear(context);
-        ServiceStationVisitStore.clear(context);
-        prefs(context).edit().remove("service_stations_unlocked").remove(MANUAL)
-                .remove(AUTOMATIC).remove(CONFIRMED_ONLY_MIGRATION)
-                .remove(HISTORICAL_BACKFILL_COMPLETE)
-                .putLong(REVISION,revision(context)+1).apply();
+        synchronized(STATE_LOCK) {
+            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);
+            // Deleting journeys does not revoke a purchased entitlement.
+            prefs(context).edit().remove("service_station_manual").remove(AUTOMATIC).putBoolean(BACKFILL,false)
+                    .putBoolean(MIGRATION,true).putLong(REVISION,revision(context)+1).apply();
+        }
     }
-    private static Set<String> set(Context context,String key) {
-        return new HashSet<>(prefs(context).getStringSet(key, java.util.Collections.emptySet()));
-    }
-    private static SharedPreferences prefs(Context context) {
-        return context.getApplicationContext().getSharedPreferences(PREFS,Context.MODE_PRIVATE);
-    }
-    private static double pointSegmentDistance(double lng,double lat,double ax,double ay,double bx,double by) {
-        double mx=111320.0*Math.cos(Math.toRadians(lat)), my=111320.0;
-        double px=(lng-ax)*mx, py=(lat-ay)*my, dx=(bx-ax)*mx, dy=(by-ay)*my;
-        double d=dx*dx+dy*dy, t=d<=0?0:Math.max(0,Math.min(1,(px*dx+py*dy)/d));
-        return Math.hypot(px-t*dx,py-t*dy);
-    }
+    private static SharedPreferences prefs(Context context) {return context.getApplicationContext().getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
 }

@@ -102,6 +102,47 @@ def deduplicate_services(services):
         })
     return sorted(collection,key=lambda item:(item["name"].casefold(),item["id"]))
 
+def enrich_achievement_metadata(service):
+    operator=(service.get("operator") or "").casefold().replace(" ","")
+    group=None
+    if "welcomebreak" in operator: group="Welcome Break"
+    elif operator=="moto": group="Moto"
+    elif "roadchef" in operator: group="Roadchef"
+    elif operator in ("extra","extramsa"): group="Extra"
+    elif "westmorland" in operator or "tebay" in service["name"].casefold(): group="Westmorland"
+    if group: service["operator_group"]=group
+    road=service.get("road")
+    if service.get("region")=="NI": service["country"]="Northern Ireland"
+    elif road in ("A74(M)","M74","M8","M9","M90"): service["country"]="Scotland"
+    elif road=="M4" and service["lng"] < -2.7: service["country"]="Wales"
+    elif road and service.get("region","GB")=="GB": service["country"]="England"
+    return service
+
+
+def apply_reviewed_reference(service,reference):
+    existing=reference.get(service["id"])
+    if existing is None:
+        source_ids=set(service.get("source_ids",[]))
+        candidates=[item for item in reference.values() if source_ids.intersection(item.get("source_ids",[]))]
+        if len(candidates)==1: existing=candidates[0]
+    if existing is None:
+        def site_name(name):
+            key=collection_name(name)
+            return re.sub(r"^(roadchef|moto|welcome break|westmorland|applegreen|extra) ","",key)
+        candidates=[item for item in reference.values()
+                    if site_name(item["name"])==site_name(service["name"])
+                    and haversine_m((item["lat"],item["lng"]),(service["lat"],service["lng"]))<=1500]
+        if len(candidates)==1: existing=candidates[0]
+    if existing:
+        # Names and OSM centroids can change. Keep the collection identity for the same source site.
+        service["id"]=existing["id"]
+        for key in ("road","region","road_match_distance_m"):
+            if key in existing: service[key]=existing[key]
+    if not service.get("road") or not service.get("region"):
+        raise ValueError("New service area needs a reviewed motorway/region assignment: "+service["name"])
+    return enrich_achievement_metadata(service)
+
+
 def main():
     request=Request(
         OVERPASS_URL,
@@ -134,7 +175,10 @@ def main():
             "operator":operator or None,
             "road":str(tags.get("ref") or tags.get("motorway") or "").strip() or None,
         })
+    reference_path=Path("android-prototype/app/src/main/assets/uk-motorway-services-v1.json")
+    reference={s["id"]:s for s in json.loads(reference_path.read_text())["services"]}
     services=deduplicate_services(services)
+    services=[apply_reviewed_reference(service,reference) for service in services]
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps({
         "version":"v1",

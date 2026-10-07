@@ -921,10 +921,6 @@ public class CaptureService extends Service {
                         .put("import", "complete")
                         .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
                         .put("foot_matching", ("walking".equals(savedMode) || "running".equals(savedMode)) ? "pending" : "not_required"));
-                JSONArray serviceStationCandidates = ServiceStationStore.trackedCandidates(
-                        getApplicationContext(), savedPoints);
-                if (serviceStationCandidates.length() > 0)
-                    journey.put("service_station_candidates", serviceStationCandidates);
                 JourneyStore.save(getApplicationContext(), journey);
                 MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
                         "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount

@@ -59,7 +59,7 @@ public class CollectionsActivity extends Activity {
         heading.addView(icon,iconParams);
         TextView name=text("Motorway Service Stations",20,Color.WHITE,true);
         heading.addView(name,new LinearLayout.LayoutParams(0,-2,1));
-        TextView copy=text("Collect motorway service areas across Great Britain and Northern Ireland. Visits can be confirmed from journeys or marked manually.",14,MUTED,false);
+        TextView copy=text("Collect motorway service areas across Great Britain and Northern Ireland. Visits are recognised automatically from Timeline visits and recorded Roadprints stops, including your existing history.",14,MUTED,false);
         copy.setPadding(0,dp(8),0,dp(14)); card.addView(heading); card.addView(copy);
         if(!ServiceStationStore.unlocked(this)) {
             TextView fakePayment=text("Unlock · £0.99",16,NAVY,true); fakePayment.setGravity(Gravity.CENTER);
@@ -71,6 +71,9 @@ public class CollectionsActivity extends Activity {
                     .setPositiveButton("Continue",(dialog,which)->{
                         ServiceStationStore.unlockForTesting(this);
                         render();
+                        ServiceStationStore.ensureHistoricalVisits(this,()->{
+                            if(!isFinishing()&&!isDestroyed())render();
+                        });
                     }).show());
             card.addView(fakePayment);
             body.addView(card);
@@ -80,7 +83,9 @@ public class CollectionsActivity extends Activity {
             return;
         }
         body.addView(card);
-        ServiceStationStore.historicalBackfillComplete(this); // Clears legacy route-proximity guesses once.
+        if(!ServiceStationStore.historicalBackfillComplete(this))ServiceStationStore.ensureHistoricalVisits(this,()->{
+            if(!isFinishing()&&!isDestroyed())render();
+        });
         summary.setText("Your Motorway Service Stations collection is available from Progress.");
         TextView message=text("View the full motorway-by-motorway list, confirmed visits and collection progress on the Progress screen.",14,MUTED,false);
         message.setPadding(dp(4),dp(8),dp(4),dp(12));body.addView(message);
@@ -90,31 +95,6 @@ public class CollectionsActivity extends Activity {
         openProgress.setBackground(roundRect(GOLD,dp(12)));
         openProgress.setOnClickListener(v->{startActivity(new Intent(this,ProgressActivity.class));finish();});
         body.addView(openProgress);
-    }
-
-    private void addRegion(JSONArray all,String region,Set<String> complete,Set<String> automatic) {
-        List<JSONObject> values=new ArrayList<>();
-        for(int i=0;i<all.length();i++){JSONObject item=all.optJSONObject(i);if(item!=null&&region.equals(item.optString("region","GB")))values.add(item);}
-        values.sort(Comparator.comparing((JSONObject o)->o.optString("road"),this::naturalCompare)
-                .thenComparing(o->o.optString("name"),String.CASE_INSENSITIVE_ORDER));
-        if(values.isEmpty()) {
-            TextView empty=text(region.equals("NI")?"No Northern Ireland service areas are listed yet.":"No service areas listed.",13,MUTED,false);
-            empty.setPadding(dp(5),dp(6),dp(5),dp(8)); body.addView(empty); return;
-        }
-        String previous="";
-        for(JSONObject station:values) {
-            String road=station.optString("road","Unknown road");
-            if(!road.equals(previous)){TextView roadTitle=text(road,16,TEAL,true);roadTitle.setPadding(dp(5),dp(13),dp(5),dp(3));body.addView(roadTitle);previous=road;}
-            String id=station.optString("id"), stationName=station.optString("name","Service area");
-            CheckBox check=new CheckBox(this);check.setText(stationName+(automatic.contains(id)?" · Journey confirmed":""));
-            check.setTextColor(Color.WHITE);check.setButtonTintList(android.content.res.ColorStateList.valueOf(complete.contains(id)?GOLD:MUTED));
-            check.setChecked(complete.contains(id));check.setEnabled(!automatic.contains(id));
-            check.setPadding(dp(5),dp(2),dp(5),dp(2));
-            check.setOnCheckedChangeListener((button,isChecked)->{
-                ServiceStationStore.setManual(this,id,isChecked);
-                render();
-            });body.addView(check);
-        }
     }
 
     private int naturalCompare(String a,String b) {
