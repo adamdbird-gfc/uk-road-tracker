@@ -107,7 +107,7 @@ final class FootTraceValidator {
         double h=Math.pow(Math.sin((y-x)/2),2)+Math.cos(x)*Math.cos(y)*Math.pow(Math.sin(dl/2),2);
         return 12742000*Math.asin(Math.sqrt(Math.min(1,h)));
     }
-    private static double segmentGap(Sample point, Sample a, Sample b) {
+    static double segmentGap(Sample point, Sample a, Sample b) {
         double scale=Math.cos(Math.toRadians(point.lat));
         double dx=(b.lon-a.lon)*scale,dy=b.lat-a.lat;
         double px=(point.lon-a.lon)*scale,py=point.lat-a.lat,norm=dx*dx+dy*dy;

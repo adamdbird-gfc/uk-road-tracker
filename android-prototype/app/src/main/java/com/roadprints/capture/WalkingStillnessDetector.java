@@ -9,10 +9,11 @@ final class WalkingStillnessDetector {
     private double movement;
 
     void reset() { anchor=null; latest=null; observations=0; confirmed=false; movement=0; }
-    void accept(FootTraceValidator.Sample point) {
+    void accept(FootTraceValidator.Sample point) { accept(point,false); }
+    void accept(FootTraceValidator.Sample point, boolean road) {
         if (!usable(point) || point.accuracy>50) return;
         if (latest!=null && point.time<=latest.time) return;
-        if (latest!=null && !FootTraceValidator.plausible(latest,point)) return;
+        if (latest!=null && !CaptureQualityValidator.reliable(latest,point,!road)) return;
         // Replay the same timer decision a live capture can make between fixes.
         // This still needs several corroborating fixes fresh at the five-minute mark.
         if(anchor!=null && latest!=null && observations>=3
