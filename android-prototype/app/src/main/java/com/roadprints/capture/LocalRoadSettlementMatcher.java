@@ -26,9 +26,12 @@ final class LocalRoadSettlementMatcher {
     static final class Settlement {
         final String code;
         final String name;
-        String county;
+        String county; // Source administrative label, separate from historic geography.
         String region;
         String nation;
+        List<String> historicCountyCodes = java.util.Collections.emptyList();
+        List<String> historicCountyNames = java.util.Collections.emptyList();
+        String historicCountyVersion = "";
         Settlement(String code, String name) { this(code, name, "", "", ""); }
         Settlement(String code, String name, String county, String region, String nation) {
             this.code = code;
@@ -75,6 +78,7 @@ final class LocalRoadSettlementMatcher {
         }
         List<Settlement> resolved = new ArrayList<>(result.values());
         if (needsMetadata(resolved)) hydrateMetadata(resolved);
+        HistoricSettlementCounties.align(context, resolved);
         Thread.sleep(1050L);
         save(context, cacheKey, resolved);
         return resolved;
@@ -86,7 +90,9 @@ final class LocalRoadSettlementMatcher {
         String saved = context.getSharedPreferences(CACHE, Context.MODE_PRIVATE)
                 .getString(cacheKey, null);
         if (saved == null) return null;
-        return decode(new JSONObject(saved).optJSONArray("settlements"));
+        List<Settlement> rows = decode(new JSONObject(saved).optJSONArray("settlements"));
+        HistoricSettlementCounties.align(context, rows);
+        return rows;
     }
 
     static int cachedInventoryCount(Context context,String code) {
@@ -187,7 +193,9 @@ final class LocalRoadSettlementMatcher {
         for (Settlement settlement : settlements) {
             values.put(new JSONObject().put("code", settlement.code)
                     .put("name", settlement.name).put("county", settlement.county)
-                    .put("region", settlement.region).put("nation", settlement.nation));
+                    .put("region", settlement.region).put("nation", settlement.nation)
+                    .put("historic_county_codes", new JSONArray(settlement.historicCountyCodes))
+                    .put("historic_county_version", settlement.historicCountyVersion));
         }
         context.getSharedPreferences(CACHE, Context.MODE_PRIVATE).edit()
                 .putString(cacheKey, new JSONObject().put("settlements", values).toString()).apply();
@@ -239,4 +247,3 @@ final class LocalRoadSettlementMatcher {
         HttpFailure(int status, String message) { super(message); this.status = status; }
     }
 }
-
