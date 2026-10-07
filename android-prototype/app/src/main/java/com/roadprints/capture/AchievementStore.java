@@ -135,7 +135,8 @@ final class AchievementStore {
         try {
             JourneyStore.forEachAchievementEvidence(app,()->false,journey -> {
                 core.add(journey);
-                counties.add(journey);
+                try { counties.add(journey); }
+                catch(java.io.IOException invalid) { throw new IllegalStateException("County boundary evidence unavailable",invalid); }
                 if (!"complete".equals(journey.optString("processing_status", ""))) return;
                 String mode=journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
                 if (!"driving".equals(mode) && !"bus".equals(mode)) return;

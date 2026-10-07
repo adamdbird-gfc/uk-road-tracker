@@ -28,7 +28,9 @@ public class CountyCollectorTest {
     }
     private CountyCollectorEvidence scan() throws Exception {
         CountyCollectorEvidence e=new CountyCollectorEvidence(catalogue);
-        JourneyStore.forEachAchievementEvidence(app,()->false,e::add);return e;
+        JourneyStore.forEachAchievementEvidence(app,()->false,journey->{
+            try { e.add(journey); }catch(java.io.IOException invalid){throw new IllegalStateException(invalid);}
+        });return e;
     }
     @Test public void all92OfflinePolygonsContainTheirIndependentInteriorFixture() throws Exception {
         assertEquals(92,catalogue.counties.size());Map<String,Integer> counts=new HashMap<>();
