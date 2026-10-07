@@ -27,3 +27,13 @@ accuracy remains separate from reference precision.
 
 A four-megabyte cache bounds retained boundary arrays. Data are loaded during the
 background evidence scan, never to construct the initial achievement cards.
+
+`settlements.bin` is the offline ONS settlement-boundary membership index
+added in 0.25.163. All 8,545 existing GB settlement IDs are mapped; 537 have
+positive overlap with multiple historic counties. Ordered county codes put the
+largest footprint first for a single Progress group. Eight invalid ONS polygons
+were repaired using `make_valid`, with their IDs recorded for review. The index
+pins the same county source hash/version and separately records settlement
+source hashes. It does not award travel achievements or change town identity.
+See `docs/settlement-historic-county-alignment.md` for scope, attribution and
+rebuild instructions, including the outstanding NI settlement source gap.

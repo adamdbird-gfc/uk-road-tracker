@@ -11,7 +11,9 @@ Decision: 7 October 2026. Build on the current released app, preserving the
   it. Matched road modes qualify; train, plane, failed/unmatched GPS and paths
   alone do not. The full completed/remaining list stays available offline.
 - Pinned HCT Definition A full-resolution boundaries; all four nations, islands
-  and holes retained. Modern Progress county grouping is independent.
+  and holes retained. County awards remain based on matched road locations;
+  settlement reference membership never grants an award. The subsequent
+  0.25.163 consolidation aligns Progress to the same historic county IDs.
 - Recalculate after journey edits and deletions; retain recognition history and
   existing achievement celebrations without duplicate reopening awards.
 - Fixed jump menu like Progress. Motorway/A-road completion accordions belong
