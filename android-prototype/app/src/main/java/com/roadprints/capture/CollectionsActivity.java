@@ -40,7 +40,7 @@ public class CollectionsActivity extends Activity {
         LinearLayout header=new LinearLayout(this); header.setOrientation(LinearLayout.VERTICAL); header.setPadding(dp(18),dp(17),dp(18),dp(13));
         LinearLayout brand=RoadprintsHeader.create(this); brand.setPadding(0,0,0,dp(20)); header.addView(brand);
         TextView eyebrow=text("YOUR TRAVEL RECORD",12,TEAL,true), title=text("Collections",28,Color.WHITE,true);
-        summary=text("Collect the service stations you visit.",14,MUTED,false); summary.setPadding(0,dp(5),0,0);
+        summary=text("Collect the motorway service stations you visit.",14,MUTED,false); summary.setPadding(0,dp(5),0,0);
         header.addView(eyebrow); header.addView(title); header.addView(summary); root.addView(header);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true);
         body=new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(18),dp(4),dp(18),dp(18));
@@ -51,14 +51,21 @@ public class CollectionsActivity extends Activity {
     private void render() {
         body.removeAllViews();
         LinearLayout card=panel();
-        TextView name=text("⛽  Service stations",20,Color.WHITE,true);
+        LinearLayout heading=new LinearLayout(this); heading.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView icon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_fuel,NAVY,null);
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        icon.setPadding(dp(6),dp(6),dp(6),dp(6)); icon.setBackground(roundRect(TEAL,dp(10)));
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(40),dp(40)); iconParams.rightMargin=dp(12);
+        heading.addView(icon,iconParams);
+        TextView name=text("Motorway Service Stations",20,Color.WHITE,true);
+        heading.addView(name,new LinearLayout.LayoutParams(0,-2,1));
         TextView copy=text("Collect motorway service areas across Great Britain and Northern Ireland. Visits can be confirmed from journeys or marked manually.",14,MUTED,false);
-        copy.setPadding(0,dp(8),0,dp(14)); card.addView(name); card.addView(copy);
+        copy.setPadding(0,dp(8),0,dp(14)); card.addView(heading); card.addView(copy);
         if(!ServiceStationStore.unlocked(this)) {
             TextView fakePayment=text("Unlock · £0.99",16,NAVY,true); fakePayment.setGravity(Gravity.CENTER);
             fakePayment.setPadding(dp(12),dp(13),dp(12),dp(13)); fakePayment.setBackground(roundRect(GOLD,dp(12)));
             fakePayment.setClickable(true); fakePayment.setOnClickListener(v -> new AlertDialog.Builder(this)
-                    .setTitle("Service stations")
+                    .setTitle("Motorway Service Stations")
                     .setMessage("This is a simulated checkout for testing. No payment will be taken.")
                     .setNegativeButton("Cancel",null)
                     .setPositiveButton("Continue",(dialog,which)->{
@@ -67,17 +74,17 @@ public class CollectionsActivity extends Activity {
                     }).show());
             card.addView(fakePayment);
             body.addView(card);
-            TextView note=text("The service-station collection is the only collection available in this build.",13,MUTED,false);
+            TextView note=text("Motorway Service Stations is the only collection available in this build.",13,MUTED,false);
             note.setPadding(dp(4),dp(12),dp(4),0); body.addView(note);
             summary.setText("One collection available · test unlock");
             return;
         }
         body.addView(card);
         ServiceStationStore.historicalBackfillComplete(this); // Clears legacy route-proximity guesses once.
-        summary.setText("Your service station collection is available from Progress.");
+        summary.setText("Your Motorway Service Stations collection is available from Progress.");
         TextView message=text("View the full motorway-by-motorway list, confirmed visits and collection progress on the Progress screen.",14,MUTED,false);
         message.setPadding(dp(4),dp(8),dp(4),dp(12));body.addView(message);
-        TextView openProgress=text("View service stations in Progress  →",15,NAVY,true);
+        TextView openProgress=text("View collection in Progress  →",15,NAVY,true);
         openProgress.setGravity(Gravity.CENTER);
         openProgress.setPadding(dp(12),dp(13),dp(12),dp(13));
         openProgress.setBackground(roundRect(GOLD,dp(12)));
