@@ -272,6 +272,9 @@ public final class MatchingCoordinator {
         boolean cycle = isCycle(mode);
         JSONObject source = journey.optJSONObject("source");
         boolean timelineImport = source != null && "timeline_import".equals(source.optString("type"));
+        boolean capturedDrive = !foot && !cycle && source != null
+                && "android_activity_capture".equals(source.optString("type"))
+                && DrivingJourneyPreparation.aligned(journey,points);
         WalkingJourneyPreparation.Prepared walking = foot
                 ? WalkingJourneyPreparation.prepare(app, journey) : null;
         if (source != null && "android_activity_capture".equals(source.optString("type"))) {
@@ -294,7 +297,7 @@ public final class MatchingCoordinator {
             points = reduced;
         }
         JSONArray requestPoints = sampleMatchPoints(points, MAX_MATCH_REQUEST_POINTS);
-        TimelineRoadPreparation.Prepared road = (foot || cycle) ? null : TimelineRoadPreparation.prepare(journey, points);
+        TimelineRoadPreparation.Prepared road = (foot || cycle) ? null : (capturedDrive ? DrivingJourneyPreparation.prepare(journey, points) : TimelineRoadPreparation.prepare(journey, points));
         List<JSONArray> roadRequests = new ArrayList<>();
         int submittedRoadPoints = 0;
         if (road != null) for (JSONArray section : road.sections) {
@@ -335,6 +338,23 @@ public final class MatchingCoordinator {
                 JSONObject payload = new JSONObject().put("points", submitted).put("road_recovery", true);
                 JSONObject sectionResult = matcher != null ? matcher.match(endpointPath, payload)
                         : postWithRetry(API_BASE_URL + endpointPath, payload);
+                if (capturedDrive) {
+                    JSONArray retry=DrivingJourneyPreparation.retryPoints(sectionResult,submitted,journey);
+                    if(retry!=null) {
+                        sectionDiagnostics.put(TimelineRoadPreparation.diagnostics(sectionResult)
+                                .put("section_index",index).put("submitted_points",submitted)
+                                .put("retry_reason","redundant_interior_fixes"));
+                        int removedCount=submitted.length()-retry.length();
+                        attempt.put("submitted_points",attempt.optInt("submitted_points")-removedCount)
+                                .put("points_reduced",true);
+                        submitted=retry;
+                        payload=new JSONObject().put("points",submitted).put("road_recovery",true);
+                        sectionResult=matcher!=null ? matcher.match(endpointPath,payload)
+                                : postWithRetry(API_BASE_URL+endpointPath,payload);
+                        road.details.put("redundant_fix_retry",true);
+                    }
+                    DrivingJourneyPreparation.validateDistance(sectionResult,submitted);
+                }
                 sectionDiagnostics.put(TimelineRoadPreparation.diagnostics(sectionResult)
                         .put("section_index", index).put("submitted_points", submitted));
                 // Persist before validation, including on failed or interrupted attempts.
@@ -417,7 +437,7 @@ public final class MatchingCoordinator {
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
         stored.put("processing_result", result);
-        if (road != null && road.changed) {
+        if (road != null && road.changed && !capturedDrive) {
             double distance = result.optDouble("matched_distance_m", -1);
             if (!Double.isFinite(distance) || distance <= 0
                     || !result.optBoolean("matched_distance_is_deduplicated", false))
@@ -427,6 +447,7 @@ public final class MatchingCoordinator {
             stored.put("road_preparation", road.details).put("distance_meters", distance)
                     .put("distance_source", "validated_road_sections");
         }
+        if (capturedDrive) stored.put("road_preparation",road.details);
         if (walking != null && walking.validated) {
             if (!stored.has("original_distance_meters"))
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
