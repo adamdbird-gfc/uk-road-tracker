@@ -552,7 +552,7 @@ public class JourneyListActivity extends Activity {
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
         // Journeys that cannot be matched because they lack route points add no
         // review value. Keep them in the archive, but omit them from this list.
-        if (isRoadMode(mode) || isFootMode(mode)) {
+        if (isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode)) {
             return hasEnoughMatchingEvidence(journey);
         }
         return true;
@@ -572,8 +572,8 @@ public class JourneyListActivity extends Activity {
         if ("all".equals(filter)) return true;
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
         String status = journey.optString("processing_status", "pending");
-        if ("no_match".equals(filter)) return !isRoadMode(mode) && !isFootMode(mode);
-        if (!isRoadMode(mode) && !isFootMode(mode)) return false;
+        if ("no_match".equals(filter)) return !isRoadMode(mode) && !isFootMode(mode) && !MatchingCoordinator.isCycle(mode);
+        if (!isRoadMode(mode) && !isFootMode(mode) && !MatchingCoordinator.isCycle(mode)) return false;
         if ("matched".equals(filter)) return "complete".equals(status) && hasStoredMatch(journey);
         if ("failed".equals(filter)) return "failed".equals(status)
                 || ("complete".equals(status) && !hasStoredMatch(journey));
@@ -631,7 +631,7 @@ public class JourneyListActivity extends Activity {
                         JourneyStore.forEach(getApplicationContext(), journey -> {
                             if (!"complete".equals(journey.optString("processing_status"))) return;
                             String mode = journey.optString("mode", "unknown").toLowerCase();
-                            if (!(isRoadMode(mode) || isFootMode(mode))) return;
+                            if (!(isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) return;
                             Map<String, String> roads = new LinkedHashMap<>();
                             for (JSONObject feature : discoveryFeatures(journey)) {
                                 JSONObject properties = feature.optJSONObject("properties");
@@ -1429,7 +1429,7 @@ public class JourneyListActivity extends Activity {
         String processingStatus = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
         boolean footMode = isFootMode(mode);
-        boolean processableMode = footMode || isRoadMode(mode);
+        boolean processableMode = footMode || isRoadMode(mode) || MatchingCoordinator.isCycle(mode);
         boolean enoughEvidence = hasEnoughMatchingEvidence(journey);
         TextView status = new TextView(this);
         String statusText;
@@ -1939,26 +1939,26 @@ public class JourneyListActivity extends Activity {
     private boolean hasEnoughMatchingEvidence(JSONObject journey) {
         if (pointCount(journey) < 2) return false;
         String mode = journey.optString("mode", "unknown");
-        if (isRoadMode(mode)) {
+        if (isRoadMode(mode) || MatchingCoordinator.isCycle(mode)) {
             JSONObject source = journey.optJSONObject("source");
             if (source != null && "timeline_import".equals(source.optString("type", ""))) {
                 JSONObject quality = journey.optJSONObject("capture_quality");
                 return quality != null && quality.optInt("source_route_points", 0) >= 2;
             }
         }
-        return isFootMode(mode) || isRoadMode(mode);
+        return isFootMode(mode) || isRoadMode(mode) || MatchingCoordinator.isCycle(mode);
     }
 
     private boolean canMatchJourney(JSONObject journey) {
         String mode = journey.optString("mode", "unknown");
-        return (isFootMode(mode) || isRoadMode(mode))
+        return (isFootMode(mode) || isRoadMode(mode) || MatchingCoordinator.isCycle(mode))
                 && hasEnoughMatchingEvidence(journey);
     }
 
     private String journeyStatusText(JSONObject journey, int points) {
         String status = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
-        if (!isFootMode(mode) && !isRoadMode(mode)) return "No route matching required";
+        if (!isFootMode(mode) && !isRoadMode(mode) && !MatchingCoordinator.isCycle(mode)) return "No route matching required";
         if (!hasEnoughMatchingEvidence(journey)) {
             return isRoadMode(mode)
                     ? "Insufficient Timeline points for reliable road matching"
@@ -1971,6 +1971,7 @@ public class JourneyListActivity extends Activity {
         }
         if ("processing".equals(status)) return "Processing journey…";
         if ("failed".equals(status)) return "Processing failed — retry available";
+        if (MatchingCoordinator.isCycle(mode)) return "Ready for cycling matching";
         if (isFootMode(mode)) return "Ready for on-foot matching";
         return "Ready for road matching";
     }

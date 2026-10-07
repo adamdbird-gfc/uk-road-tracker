@@ -471,7 +471,8 @@ public class TimelineImportActivity extends Activity {
         return !oldProcessing.optString("road_matching", "")
                         .equals(newProcessing.optString("road_matching", ""))
                 || !oldProcessing.optString("foot_matching", "")
-                        .equals(newProcessing.optString("foot_matching", ""));
+                        .equals(newProcessing.optString("foot_matching", ""))
+                || !oldProcessing.optString("cycle_matching", "").equals(newProcessing.optString("cycle_matching", ""));
     }
 
     private void publishImportProgress(int found, int added, int skipped, int invalid) {
@@ -637,7 +638,7 @@ public class TimelineImportActivity extends Activity {
 
             String mode = modeFor(activity, semantic);
             if ((roadMode(mode) && sourceRoutePoints < 2)
-                    || (footMode(mode) && points.size() < 2)) {
+                    || ((footMode(mode) || MatchingCoordinator.isCycle(mode)) && points.size() < 2)) {
                 // Insufficient-evidence road and walking trips cannot be matched
                 // or usefully reviewed, so do not add them to the local archive.
                 return null;
@@ -665,7 +666,8 @@ public class TimelineImportActivity extends Activity {
             JSONObject processing = new JSONObject()
                     .put("import", "complete")
                     .put("road_matching", eligibleForRoadMatching ? "pending" : "not_required")
-                    .put("foot_matching", footMode(mode) ? "pending" : "not_required");
+                    .put("foot_matching", footMode(mode) ? "pending" : "not_required")
+                    .put("cycle_matching", MatchingCoordinator.isCycle(mode) && sourceRoutePoints >= 2 ? "pending" : "not_required");
 
             JSONObject journey = new JSONObject()
                     .put("journey_id", id)
@@ -838,7 +840,7 @@ public class TimelineImportActivity extends Activity {
         String mode = value.toUpperCase(Locale.UK);
         if (mode.contains("WALK") || mode.contains("RUN") || mode.contains("PEDESTRIAN")) return "walking";
         if (mode.contains("IN_PASSENGER_VEHICLE") || mode.contains("IN_VEHICLE") || mode.equals("DRIVING")) return "driving";
-        if (mode.contains("CYCL")) return "cycling";
+        if (mode.contains("CYCL") || mode.contains("BICYCLE") || mode.equals("BIKING")) return "cycling";
         if (mode.contains("BUS")) return "bus";
         if (mode.contains("RAIL") || mode.contains("TRAIN")
                 || mode.contains("SUBWAY") || mode.contains("TRAM")) return "train";
@@ -849,8 +851,7 @@ public class TimelineImportActivity extends Activity {
     }
 
     private boolean roadMode(String mode) {
-        // Match the web POC: buses use roads, while cycling and unknown modes
-        // remain visible in the journey list without entering road matching.
+        // Buses share driving matching; cycling has its own bicycle profile.
         return "driving".equals(mode) || "bus".equals(mode);
     }
 

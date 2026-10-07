@@ -95,7 +95,7 @@ jobs:
 
   publish:
     needs: build
-    if: github.ref == 'refs/heads/feat/station-journey-boundaries'
+    if: github.ref == 'refs/heads/feat/cycling-matcher'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -118,12 +118,13 @@ jobs:
           tag="android-$version"
           cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
           cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
-          Signed Roadprints Android prototype update.
-          Roadprints map loading now includes a branded spinner and rotating offline road facts.
-          Keeps the map, camera and decoded tiles alive while switching between main tabs; only changed saved data refreshes routes.
-          Separates loading, empty travel record and retry states.
-          Includes all automatic service station and 0.25.164 achievement improvements.
-          The full Android test suite, lint and APK signature verification pass before publication.
+          Signed Roadprints Android cycling matcher test update.
+          Cycling uses a dedicated bicycle matching profile for Timeline imports and capture.
+          Supports automatic matching, retries, matched map display and cycling distance.
+          Preserves GPS bends when reducing dense recordings. Original traces remain saved.
+          Road and A-road completion credit is deferred until physical segment attribution is verified.
+          Includes the existing achievements and map loading improvements.
+          Android tests, lint and APK signature verification run before publication.
           NOTES
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists."

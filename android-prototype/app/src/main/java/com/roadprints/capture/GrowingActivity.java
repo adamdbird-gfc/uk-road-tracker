@@ -33,8 +33,8 @@ public class GrowingActivity extends Activity {
     private final Runnable refresh = new Runnable() {
         @Override public void run() { renderSnapshot(); handler.postDelayed(this, 700); }
     };
-    private TextView overall, roadDetails, footDetails, message;
-    private ProgressBar overallBar, roadBar, footBar;
+    private TextView overall, roadDetails, footDetails, cycleDetails, message;
+    private ProgressBar overallBar, roadBar, footBar, cycleBar;
     private Button action;
 
     @Override protected void onCreate(Bundle state) {
@@ -107,6 +107,12 @@ public class GrowingActivity extends Activity {
         footCard.addView(footDetails); footCard.addView(footBar);
         content.addView(footCard, cardParams());
 
+        LinearLayout cycleCard = laneCard("CYCLING MATCHING", "Roads, cycleways and shared paths");
+        cycleDetails = text("Preparing cycling journeys…", 15, MUTED, false);
+        cycleBar = progressBar();
+        cycleCard.addView(cycleDetails); cycleCard.addView(cycleBar);
+        content.addView(cycleCard, cardParams());
+
         action = new Button(this);
         action.setTextColor(NAVY);
         action.setAllCaps(false);
@@ -155,6 +161,8 @@ public class GrowingActivity extends Activity {
         roadBar.setMax(Math.max(1, s.roadTotal)); roadBar.setProgress(s.roadChecked);
         footDetails.setText(summary(s.footChecked, s.footTotal, s.footMatched, s.footChecked - s.footMatched));
         footBar.setMax(Math.max(1, s.footTotal)); footBar.setProgress(s.footChecked);
+        cycleDetails.setText(summary(s.cycleChecked, s.cycleTotal, s.cycleMatched, s.cycleChecked - s.cycleMatched));
+        cycleBar.setMax(Math.max(1, s.cycleTotal)); cycleBar.setProgress(s.cycleChecked);
         message.setText(s.message);
         if (s.state == MatchingCoordinator.State.RUNNING) { action.setEnabled(true); action.setText("PAUSE GROWING"); }
         else if (s.state == MatchingCoordinator.State.PAUSING) { action.setText("PAUSING…"); action.setEnabled(false); }

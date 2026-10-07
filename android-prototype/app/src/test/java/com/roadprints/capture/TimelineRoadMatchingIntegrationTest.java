@@ -30,7 +30,7 @@ public class TimelineRoadMatchingIntegrationTest {
     @Test public void gapsAreMatchedSeparatelyAndDistanceDoesNotIncludeAnInventedConnector() throws Exception {
         JSONObject j=journey();String original=j.getJSONObject("route_geometry").toString();JourneyStore.save(app,j);
         AtomicInteger calls=new AtomicInteger();coordinator=new MatchingCoordinator(app,(foot,payload)->{
-            assertFalse(foot);assertTrue(payload.getBoolean("road_recovery"));assertEquals(2,payload.getJSONArray("points").length());
+            assertEquals("/match", foot);assertTrue(payload.getBoolean("road_recovery"));assertEquals(2,payload.getJSONArray("points").length());
             calls.incrementAndGet();return result();
         });coordinator.start("road");await();
         assertEquals(2,calls.get());assertEquals(1,coordinator.snapshot().matched);
