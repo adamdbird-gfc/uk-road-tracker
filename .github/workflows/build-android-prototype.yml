@@ -31,6 +31,9 @@ jobs:
         with:
           gradle-version: "8.10"
 
+      - name: Verify service catalogue metadata rules
+        run: python3 scripts/test_service_collection_metadata.py
+
       - name: Package pinned offline historic county reference
         run: bash android-prototype/scripts/prepare_county_reference.sh
 
@@ -116,8 +119,9 @@ jobs:
           cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
           cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
           Signed Roadprints Android prototype update.
-          Timeline import uses the shared logo, rounded buttons and labelled summary tiles with grouped numbers.
-          Progress calculates A-road and motorway coverage without allocating map sections and releases reference lookup data after calculation.
+          Service station visits unlock automatically from confirmed Timeline visits and sustained Roadprints stops, including saved history.
+          Adds service collection percentage milestones, motorway and operator sets, named stops and regional challenges. Removes manual progress ticking.
+          Includes the completed landmarks, Sightseer, Groundhog Day and historic county work from 0.25.164.
           The full Android test suite, lint and APK signature verification pass before publication.
           NOTES
           if gh release view "$tag" >/dev/null 2>&1; then

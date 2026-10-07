@@ -119,6 +119,22 @@ def enrich_achievement_metadata(service):
     return service
 
 
+def apply_reviewed_reference(service,reference):
+    existing=reference.get(service["id"])
+    if existing is None:
+        source_ids=set(service.get("source_ids",[]))
+        candidates=[item for item in reference.values() if source_ids.intersection(item.get("source_ids",[]))]
+        if len(candidates)==1: existing=candidates[0]
+    if existing:
+        # Names and OSM centroids can change. Keep the collection identity for the same source site.
+        service["id"]=existing["id"]
+        for key in ("road","region","road_match_distance_m"):
+            if key in existing: service[key]=existing[key]
+    if not service.get("road") or not service.get("region"):
+        raise ValueError("New service area needs a reviewed motorway/region assignment: "+service["name"])
+    return enrich_achievement_metadata(service)
+
+
 def main():
     request=Request(
         OVERPASS_URL,
@@ -154,14 +170,7 @@ def main():
     reference_path=Path("android-prototype/app/src/main/assets/uk-motorway-services-v1.json")
     reference={s["id"]:s for s in json.loads(reference_path.read_text())["services"]}
     services=deduplicate_services(services)
-    for service in services:
-        existing=reference.get(service["id"],{})
-        # OSM services rarely carry a motorway ref. Preserve reviewed assignments.
-        for key in ("road","region","road_match_distance_m"):
-            if key in existing: service[key]=existing[key]
-        if not service.get("road") or not service.get("region"):
-            raise ValueError("New service area needs a reviewed motorway/region assignment: "+service["name"])
-        enrich_achievement_metadata(service)
+    services=[apply_reviewed_reference(service,reference) for service in services]
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps({
         "version":"v1",
