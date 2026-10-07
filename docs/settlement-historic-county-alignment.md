@@ -59,7 +59,7 @@ Install `pyshp==3.1.6` and `shapely==2.2.0`, then run from the repository root:
 python scripts/build_settlement_historic_counties.py \
   /path/to/UKDefinitionA_WG84_Full_Resolution.zip \
   settlement-catalogue-v1.json /path/to/temporary-page-cache \
-  android-prototype/app/src/main/assets/historic-counties/settlements.json.gz
+  android-prototype/app/src/main/assets/historic-counties/settlements.bin
 python -m unittest discover -s scripts -p test_settlement_historic_counties.py
 ```
 

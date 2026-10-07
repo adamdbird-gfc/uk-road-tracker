@@ -21,6 +21,7 @@ import org.json.JSONObject;
 /** Public boundary memberships, keyed by settlement ID, never travel evidence. */
 final class HistoricSettlementCounties {
     private static HistoricSettlementCounties shared;
+    private static boolean unavailable;
     final String version;
     final Map<String, Membership> settlements = new HashMap<>();
 
@@ -35,7 +36,7 @@ final class HistoricSettlementCounties {
 
     HistoricSettlementCounties(Context context) throws IOException {
         JSONObject countyRoot = read(context, "catalogue.json");
-        JSONObject root = read(context, "settlements.json.gz");
+        JSONObject root = read(context, "settlements.bin");
         try {
             version = root.getString("county_version");
             if (root.getInt("format") != 1 || !version.equals(countyRoot.getString("version"))
@@ -72,7 +73,7 @@ final class HistoricSettlementCounties {
 
     private static JSONObject read(Context context, String name) throws IOException {
         try (InputStream raw = context.getAssets().open(HistoricCountyCatalog.ASSETS + name);
-             InputStream input = name.endsWith(".gz") ? new GZIPInputStream(raw) : raw) {
+             InputStream input = name.endsWith(".bin") ? new GZIPInputStream(raw) : raw) {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             byte[] buffer = new byte[8192]; int n;
             while ((n = input.read(buffer)) != -1) bytes.write(buffer, 0, n);
@@ -81,9 +82,17 @@ final class HistoricSettlementCounties {
         }
     }
 
-    static synchronized void align(Context context, List<LocalRoadSettlementMatcher.Settlement> rows)
-            throws IOException {
-        if (shared == null) shared = new HistoricSettlementCounties(context.getApplicationContext());
+    static synchronized void align(Context context, List<LocalRoadSettlementMatcher.Settlement> rows) {
+        if (rows.isEmpty() || unavailable) return;
+        if (shared == null) {
+            try { shared = new HistoricSettlementCounties(context.getApplicationContext()); }
+            catch (IOException error) {
+                // Reference enrichment must never discard a valid road/town cache.
+                unavailable = true;
+                android.util.Log.w("Roadprints", "Historic settlement reference unavailable", error);
+                return;
+            }
+        }
         for (LocalRoadSettlementMatcher.Settlement row : rows) {
             Membership membership = shared.settlements.get(row.code);
             // Old labels and similarly named places must never guess membership.

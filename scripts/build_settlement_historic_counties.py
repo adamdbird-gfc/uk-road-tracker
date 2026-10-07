@@ -125,7 +125,7 @@ def main():
                   settlements={code: memberships[code] for code in sorted(memberships)})
     encoded = (json.dumps(output, separators=(',', ':')) + '\n').encode()
     output_file.write_bytes(gzip.compress(encoded, compresslevel=9, mtime=0)
-                            if output_file.suffix == '.gz' else encoded)
+                            if output_file.suffix in ('.gz', '.bin') else encoded)
     print(json.dumps(dict(settlements=len(memberships),
                           spanning_counties=sum(len(v) > 1 for v in memberships.values()),
                           repaired_boundaries=len(repaired), bytes=output_file.stat().st_size)), flush=True)

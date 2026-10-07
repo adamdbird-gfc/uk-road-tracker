@@ -28,7 +28,7 @@ accuracy remains separate from reference precision.
 A four-megabyte cache bounds retained boundary arrays. Data are loaded during the
 background evidence scan, never to construct the initial achievement cards.
 
-`settlements.json.gz` is the offline ONS settlement-boundary membership index
+`settlements.bin` is the offline ONS settlement-boundary membership index
 added in 0.25.163. All 8,545 existing GB settlement IDs are mapped; 537 have
 positive overlap with multiple historic counties. Ordered county codes put the
 largest footprint first for a single Progress group. Eight invalid ONS polygons
