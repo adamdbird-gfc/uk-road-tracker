@@ -274,11 +274,16 @@ final class AchievementStore {
         if(!ServiceStationStore.unlocked(context))return;
         ServiceStationAchievements.Snapshot goals=ServiceStationStore.achievementSnapshot(context);
         SharedPreferences p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
-        JSONObject earned=readUnlocked(p),history;
+        JSONObject earned=readUnlocked(p),history,proofs;
         try{history=new JSONObject(p.getString("level_history","{}"));}catch(Exception error){history=new JSONObject();}
+        try{proofs=new JSONObject(p.getString("service_goal_proofs_v1","{}"));}catch(Exception error){proofs=new JSONObject();}
+        Set<String> visits=ServiceStationStore.completed(context);
         try {
             for(Definition d:DEFINITIONS)if("service-station".equals(d.type)) {
                 if(goals.values.getOrDefault(d.id,0.0)>=d.target) {
+                    JSONArray previousProof=proofs.optJSONArray(d.id);boolean supported=previousProof!=null&&previousProof.length()>0;
+                    if(previousProof!=null)for(int i=0;i<previousProof.length();i++)supported&=visits.contains(previousProof.optString(i));
+                    if(!supported)proofs.put(d.id,ServiceStationVisitStore.array(goals.proofs.getOrDefault(d.id,Collections.emptySet())));
                     JSONObject dates=history.optJSONObject(d.id);if(dates==null)dates=new JSONObject();
                     if(!dates.has("1"))dates.put("1",System.currentTimeMillis());
                     history.put(d.id,dates);
@@ -286,7 +291,7 @@ final class AchievementStore {
                 } else earned.remove(d.id);
             }
             earned.remove("service-ten-stops");history.remove("service-ten-stops");
-            p.edit().putString("unlocked",earned.toString()).putString("level_history",history.toString()).apply();
+            p.edit().putString("unlocked",earned.toString()).putString("level_history",history.toString()).putString("service_goal_proofs_v1",proofs.toString()).apply();
         }catch(Exception error){throw new IllegalStateException("Service achievements could not be recognized",error);}
     }
 

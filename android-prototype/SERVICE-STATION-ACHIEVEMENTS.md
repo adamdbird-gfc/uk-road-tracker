@@ -16,4 +16,6 @@ Evidence is retained before entitlement. Unlock runs an asynchronous archive bac
 
 One streaming archive record is projected at a time, skipping matched/map geometry. A generation and archive-revision check prevent a stale backfill from restoring deleted or replaced journeys. Deleted journeys lose their derived visit links; other supporting journeys or Timeline visits remain valid. Backup restore triggers a fresh evidence scan. Delete All preserves collection entitlement.
 
+Earned milestones retain a cohort of supporting visited sites: adding stations or changing operators does not revoke an earned badge, while deleting the underlying evidence still recalculates it.
+
 Tests cover accurate stops, pass-throughs, movement, missing/poor accuracy, gaps, duplicate/reversed times, both carriageways, pre-purchase capture, old archives, Timeline deduplication, stale manual confirmations, deletion, milestone boundaries and catalogue completeness.

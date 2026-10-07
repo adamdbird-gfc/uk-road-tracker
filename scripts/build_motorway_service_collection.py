@@ -112,7 +112,8 @@ def enrich_achievement_metadata(service):
     elif "westmorland" in operator or "tebay" in service["name"].casefold(): group="Westmorland"
     if group: service["operator_group"]=group
     road=service.get("road")
-    if road in ("A74(M)","M74","M8","M9","M90"): service["country"]="Scotland"
+    if service.get("region")=="NI": service["country"]="Northern Ireland"
+    elif road in ("A74(M)","M74","M8","M9","M90"): service["country"]="Scotland"
     elif road=="M4" and service["lng"] < -2.7: service["country"]="Wales"
     elif road and service.get("region","GB")=="GB": service["country"]="England"
     return service
@@ -150,7 +151,17 @@ def main():
             "operator":operator or None,
             "road":str(tags.get("ref") or tags.get("motorway") or "").strip() or None,
         })
-    services=[enrich_achievement_metadata(s) for s in deduplicate_services(services)]
+    reference_path=Path("android-prototype/app/src/main/assets/uk-motorway-services-v1.json")
+    reference={s["id"]:s for s in json.loads(reference_path.read_text())["services"]}
+    services=deduplicate_services(services)
+    for service in services:
+        existing=reference.get(service["id"],{})
+        # OSM services rarely carry a motorway ref. Preserve reviewed assignments.
+        for key in ("road","region","road_match_distance_m"):
+            if key in existing: service[key]=existing[key]
+        if not service.get("road") or not service.get("region"):
+            raise ValueError("New service area needs a reviewed motorway/region assignment: "+service["name"])
+        enrich_achievement_metadata(service)
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps({
         "version":"v1",

@@ -136,7 +136,24 @@ final class ServiceStationStore {
     }
     private static void post(Runnable callback) { if(callback!=null)new Handler(Looper.getMainLooper()).post(callback); }
     static ServiceStationAchievements.Snapshot achievementSnapshot(Context context) {
-        try{return ServiceStationAchievements.calculate(stations(context),completed(context),unlocked(context));}
+        try {
+            Set<String> visits=completed(context);
+            ServiceStationAchievements.Snapshot result=ServiceStationAchievements.calculate(stations(context),visits,unlocked(context));
+            if(unlocked(context)) {
+                SharedPreferences achievementPrefs=context.getSharedPreferences("roadprints_achievements_v1",Context.MODE_PRIVATE);
+                JSONObject earned=new JSONObject(achievementPrefs.getString("unlocked","{}"));
+                JSONObject proofs=new JSONObject(achievementPrefs.getString("service_goal_proofs_v1","{}"));
+                for(AchievementStore.Definition d:AchievementStore.definitions())if("service-station".equals(d.type)&&earned.has(d.id)) {
+                    JSONArray proof=proofs.optJSONArray(d.id);boolean supported=proof!=null&&proof.length()>0;
+                    if(proof!=null)for(int i=0;i<proof.length();i++)supported&=visits.contains(proof.optString(i));
+                    if(supported&&result.values.getOrDefault(d.id,0.0)<d.target) {
+                        result.values.put(d.id,d.target);
+                        result.display.put(d.id,result.display.get(d.id)+" · earned milestone retained");
+                    }
+                }
+            }
+            return result;
+        }
         catch(Exception error){throw new IllegalStateException("Service achievement catalogue unavailable",error);}
     }
     static Map<String,Double> achievementValues(Context context) { return achievementSnapshot(context).values; }

@@ -146,9 +146,26 @@ public class ServiceStationCollectionTest {
         assertEquals(100,goals.values.get("service-loyalty-points"),0);
         assertEquals(0,ServiceStationAchievements.calculate(catalogue,visited,false).values.get("service-percent-100"),0);
     }
+    @Test public void catalogueExpansionPreservesEarnedMilestonesWhileEvidenceDeletionRevokesThem() throws Exception {
+        java.lang.reflect.Field field=ServiceStationStore.class.getDeclaredField("catalogue");field.setAccessible(true);
+        Object original=field.get(null);JSONArray sites=new JSONArray();
+        for(int i=0;i<4;i++)sites.put(station("old"+i,-2+i*.1,52));
+        field.set(null,sites);
+        try {
+            ServiceStationStore.recordConfirmedTimelineVisits(app,new JSONArray().put(new JSONObject().put("id","old-visit").put("lat",52).put("lng",-2)));
+            ServiceStationStore.unlockForTesting(app);drain();
+            assertEquals(25,ServiceStationStore.achievementSnapshot(app).values.get("service-percent-25"),0);
+            sites.put(station("new-site",-3,52));
+            ServiceStationAchievements.Snapshot goals=ServiceStationStore.achievementSnapshot(app);
+            assertEquals(25,goals.values.get("service-percent-25"),0);
+            assertTrue(goals.display.get("service-percent-25").contains("retained"));
+            TimelineVisitStore.clear(app);ServiceStationStore.recordConfirmedTimelineVisits(app,new JSONArray());drain();
+            assertEquals(0,ServiceStationStore.achievementSnapshot(app).values.get("service-percent-25"),0);
+        } finally {field.set(null,original);}
+    }
     @Test public void catalogueHasGoalsForEveryRoadAndAllNamedStops() throws Exception {
         JSONArray catalogue=ServiceStationStore.stations(app);Set<String> roads=new HashSet<>(),all=new HashSet<>();
-        for(int i=0;i<catalogue.length();i++){JSONObject s=catalogue.getJSONObject(i);roads.add(s.getString("road"));all.add(s.getString("id"));assertFalse(s.optString("country").isEmpty());}
+        for(int i=0;i<catalogue.length();i++){JSONObject s=catalogue.getJSONObject(i);roads.add(ServiceStationAchievements.groupRoad(s));all.add(s.getString("id"));assertFalse(s.optString("country").isEmpty());}
         assertEquals(roads,new HashSet<>(Arrays.asList(ServiceStationAchievements.ROADS)));
         ServiceStationAchievements.Snapshot goals=ServiceStationAchievements.calculate(catalogue,all,true);
         for(String[] special:ServiceStationAchievements.SPECIAL)assertEquals(special[1],1,goals.values.get(special[0]),0);

@@ -42,7 +42,7 @@
       ],
       "road_match_distance_m": 42,
       "region": "NI",
-      "country": "England"
+      "country": "Northern Ireland"
     },
     {
       "id": "msa:burton in kendal:54.1783:-2.7345",
@@ -579,7 +579,7 @@
       ],
       "road_match_distance_m": 12,
       "region": "NI",
-      "country": "England"
+      "country": "Northern Ireland"
     },
     {
       "id": "msa:london gateway:51.6327:-0.2666",
