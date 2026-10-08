@@ -969,6 +969,15 @@ public class CaptureService extends Service {
                         ? collapseStationaryEndpoint(savedPoints, savedStopAnchor) : savedPoints;
                 double routeDistance = routePoints.size() < savedPoints.size()
                         ? routeDistanceMetres(routePoints) : savedDistanceMetres;
+                List<Location> chronologicalPoints = new ArrayList<>();
+                for (Location point : routePoints) {
+                    if (!WalkingStillnessDetector.usable(footSample(point, 0))) continue;
+                    if (!chronologicalPoints.isEmpty()
+                            && point.getTime() <= chronologicalPoints.get(chronologicalPoints.size()-1).getTime()) continue;
+                    chronologicalPoints.add(point);
+                }
+                routePoints = chronologicalPoints;
+                routeDistance = routeDistanceMetres(routePoints);
                 if ("walking".equals(savedMode) || "running".equals(savedMode)) {
                     List<FootTraceValidator.Sample> evidence = new ArrayList<>();
                     for (int i = 0; i < routePoints.size(); i++) evidence.add(footSample(routePoints.get(i), i));

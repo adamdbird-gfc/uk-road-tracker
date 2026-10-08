@@ -22,10 +22,10 @@ public class CaptureMovementEvidenceTest {
     }
     @Test public void sustainedShortWalkAndLoopRemainJourneys() {
         List<FootTraceValidator.Sample> samples = new ArrayList<>();
-        for (int i=0; i<7; i++) samples.add(point(i*15, 1000+i*15000L, 5, 1, i));
+        for (int i=0; i<7; i++) samples.add(point(i*16, 1000+i*15000L, 5, 1, i));
         assertTrue(CaptureMovementEvidence.hasJourneyMovement(samples, "walking"));
         assertTrue(CaptureMovementEvidence.confirmsMode(samples, "walking", 1000, 91000));
-        for (int i=7; i<13; i++) samples.add(point((12-i)*15, 1000+i*15000L, 5, 1, i));
+        for (int i=7; i<13; i++) samples.add(point((12-i)*16, 1000+i*15000L, 5, 1, i));
         assertTrue(CaptureMovementEvidence.hasJourneyMovement(samples, "walking"));
     }
     @Test public void vehicleSpeedVetoesWalkingDespiteAndroidLabel() {
@@ -38,6 +38,11 @@ public class CaptureMovementEvidenceTest {
         List<FootTraceValidator.Sample> samples = new ArrayList<>();
         for (int i=0; i<10; i++) samples.add(point(i%3, 1000+i*10000L, 5, 0, i));
         assertFalse(CaptureMovementEvidence.confirmsMode(samples, "walking", 1000, 91000));
+    }
+    @Test public void ordinaryCyclingCanCorroborateABicycleCallback() {
+        List<FootTraceValidator.Sample> samples = new ArrayList<>();
+        for (int i=0; i<7; i++) samples.add(point(i*30, 1000+i*10000L, 5, 3, i));
+        assertTrue(CaptureMovementEvidence.confirmsMode(samples, "cycling", 1000, 61000));
     }
     @Test public void longNearbyBreakHasNoRoutableConnectionButTunnelStaysOpen() {
         FootTraceValidator.Sample before=point(0, 1000, 2, 9, 0);
