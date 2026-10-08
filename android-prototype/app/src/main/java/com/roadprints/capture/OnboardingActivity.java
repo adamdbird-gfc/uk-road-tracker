@@ -111,14 +111,15 @@ public class OnboardingActivity extends Activity {
         eyebrow(root, "START TRACKING");
         root.addView(text("Make your next journey count.", 28, Color.WHITE, true));
         TextView copy = text("Roadprints uses location and activity recognition to detect journeys. "
-                + "Notifications let you see when tracking is running. Android will ask for these permissions next.",
+                + "Automatic tracking starts as soon as you grant precise location and physical activity permissions. "
+                + "Notifications let you see when tracking is running.",
                 17, 0xFFD3DCED, false);
         copy.setPadding(0, dp(12), 0, dp(20)); root.addView(copy);
         TextView note = text("Your saved journey archive stays on this device. Route matching sends route points "
-                + "to our matching service. You can manage permissions and tracking in Utilities.",
+                + "to our matching service. You can turn automatic tracking off in Utilities > Tracking settings.",
                 14, 0xFFD3DCED, false);
         note.setPadding(dp(16), dp(14), dp(16), dp(14)); note.setBackground(roundRect(CARD, dp(15))); root.addView(note);
-        TextView allow = action("SET UP TRACKING", GOLD);
+        TextView allow = action("ENABLE AUTOMATIC TRACKING", GOLD);
         allow.setOnClickListener(v -> {
             markComplete();
             startActivity(new Intent(this, MainActivity.class).putExtra("tracking_settings_screen", true)

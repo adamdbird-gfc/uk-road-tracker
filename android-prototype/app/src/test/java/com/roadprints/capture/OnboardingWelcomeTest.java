@@ -41,7 +41,7 @@ public class OnboardingWelcomeTest {
     @Test public void timelineChoiceOpensImportDirectly(){choices();tap("IMPORT GOOGLE TIMELINE");
         Intent next=Shadows.shadowOf(activity).getNextStartedActivity();assertEquals(TimelineImportActivity.class.getName(),next.getComponent().getClassName());}
     @Test public void trackingChoiceExplainsPermissionsBeforeStartingSetup(){choices();tap("START TRACKING JOURNEYS");
-        assertNull(Shadows.shadowOf(activity).getNextStartedActivity());tap("SET UP TRACKING");
+        assertNull(Shadows.shadowOf(activity).getNextStartedActivity());tap("ENABLE AUTOMATIC TRACKING");
         Intent next=Shadows.shadowOf(activity).getNextStartedActivity();assertEquals(MainActivity.class.getName(),next.getComponent().getClassName());
         assertTrue(next.getBooleanExtra("tracking_settings_screen",false));assertTrue(next.getBooleanExtra("onboarding_enable_tracking",false));}
     @Test public void restoreChoiceDoesNotCompleteOnboardingBeforeBackupSucceeds(){choices();tap("RESTORE A ROADPRINTS BACKUP");
