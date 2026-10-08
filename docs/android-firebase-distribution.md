@@ -1,6 +1,7 @@
 # Roadprints Firebase APK uploads
 
-The existing **Build Android capture prototype** workflow can upload its signed,
+The **Android prototype build** workflow (`android-prototype-build.yml`) on the
+latest `fix/onboarding-start-tracking` branch can upload its signed,
 verified APK to Firebase App Distribution via Firebase CLI 15.33.0.
 The Firebase job depends on the build job, so unit tests, lint and APK signature
 verification must succeed first. GitHub release publication continues separately.
@@ -23,12 +24,14 @@ No Android version change is needed for this deployment setup.
    and cannot authenticate a deployment.
 5. To enable automatic uploads, add a repository **Actions variable** named
    **ROADPRINTS_FIREBASE_UPLOAD** with value **true**. This enables uploads for builds
+   on `fix/onboarding-start-tracking` and `main` for **Android prototype build**.
+   The older **Build Android capture prototype** workflow also supports uploads
    on `feat/firebase-beta-measurement` and `main`. Other branches can use the manual
    option below. Leave the variable unset to use manual uploads only.
 
 ## Deploy from GitHub
 
-Run **Build Android capture prototype**, select `feat/firebase-beta-measurement`
+Run **Android prototype build**, select `fix/onboarding-start-tracking`
 (or another branch containing this workflow), and tick
 **Upload the verified APK to Firebase App Distribution**.
 The Firebase job will print the release links after a successful upload.
