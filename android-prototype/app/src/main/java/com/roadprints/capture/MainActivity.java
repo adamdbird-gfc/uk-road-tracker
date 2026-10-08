@@ -41,6 +41,8 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 41;
+    private static final int TRACKING_REQUEST = 42;
+    private static final String PENDING_TRACKING = "pending_tracking_permission";
     private static final String[] MODE_LABELS = {
             "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry", "Unknown"
     };
@@ -57,6 +59,7 @@ public class MainActivity extends Activity {
     private Spinner modeSpinner;
     private boolean capturing;
     private boolean tracking;
+    private boolean pendingTrackingPermission;
     private final ExecutorService archiveIo = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private TextView deleteRoadAction;
@@ -94,6 +97,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        pendingTrackingPermission = state != null && state.getBoolean(PENDING_TRACKING, false);
         if (!isTrackingSettingsScreen()) {
             if (CaptureService.isArmed(this)) repairTrackingSubscription();
             else if (CaptureService.isActive(this)) resumeActiveCapture();
@@ -112,7 +116,26 @@ public class MainActivity extends Activity {
         if (modeSpinner != null) modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
         if (getIntent().getBooleanExtra("onboarding_enable_tracking", false)) {
             getIntent().removeExtra("onboarding_enable_tracking");
-            if (!tracking && !capturing) toggleTracking();
+            if (!tracking && !pendingTrackingPermission) toggleTracking();
+        }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putBoolean(PENDING_TRACKING, pendingTrackingPermission);
+        super.onSaveInstanceState(state);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != TRACKING_REQUEST || !pendingTrackingPermission) return;
+        pendingTrackingPermission = false;
+        // Check actual permission state: notification approval is optional, and
+        // Android can return an empty result when the permission dialog closes.
+        if (hasTrackingPermissions()) {
+            startAutomaticTracking();
+        } else {
+            status.setText("Automatic tracking is off. Allow precise location and physical activity "
+                    + "in Utilities > Permissions, then enable automatic tracking in Tracking settings.");
         }
     }
 
@@ -535,35 +558,46 @@ public class MainActivity extends Activity {
             return;
         }
 
-        boolean locationGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
-        boolean activityGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                || checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION)
-                == PackageManager.PERMISSION_GRANTED;
-
-        if (!locationGranted || !activityGranted) {
+        if (!hasTrackingPermissions()) {
+            if (pendingTrackingPermission) return;
+            pendingTrackingPermission = true;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACTIVITY_RECOGNITION,
                         Manifest.permission.POST_NOTIFICATIONS
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACTIVITY_RECOGNITION
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             } else {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             }
             return;
         }
+        startAutomaticTracking();
+    }
 
+    private boolean hasTrackingPermissions() {
+        boolean locationGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean activityGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                || checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION)
+                == PackageManager.PERMISSION_GRANTED;
+
+        return locationGranted && activityGranted;
+    }
+
+    private void startAutomaticTracking() {
+        // Permission completion enables tracking; it must never toggle it off.
+        if (tracking || CaptureService.isArmed(this)) return;
         Intent start = new Intent(this, CaptureService.class)
                 .setAction(CaptureService.ACTION_ARM);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
