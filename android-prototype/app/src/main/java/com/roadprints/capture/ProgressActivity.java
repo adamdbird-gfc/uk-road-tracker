@@ -237,7 +237,9 @@ public class ProgressActivity extends Activity {
         synchronized (STATS_CACHE_LOCK) { if (statsLoadInFlight) return; statsLoadInFlight = true; }
         statisticsExecutor.execute(() -> {
             DistanceStats result = null; Exception failure = null;
-            try { result = summarizeSavedJourneys(app, generation); } catch (Exception error) { failure = error; }
+            try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "progress_data_load")) {
+                result = summarizeSavedJourneys(app, generation);
+            } catch (Exception error) { failure = error; }
             boolean current;
             synchronized (JourneyStore.class) {
                 current = failure == null && JourneyStore.dataRevision(app) == revision;

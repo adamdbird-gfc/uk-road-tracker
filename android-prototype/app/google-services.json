@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "138967660563",
+    "project_id": "roadprints-822cc",
+    "storage_bucket": "roadprints-822cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:138967660563:android:d6ff13ee7ab7b7353ba7e6",
+        "android_client_info": {
+          "package_name": "com.roadprints.capture"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvt9Y9OrZWj1Ih5kM1LZTR3z_cd8Ht6bw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

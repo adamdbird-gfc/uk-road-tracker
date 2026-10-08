@@ -287,7 +287,7 @@ public class MapActivity extends Activity {
         showMapLoading(displayedMapRevision != Long.MIN_VALUE);
         ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
-            try {
+            try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
                 JSONObject saved = PersistentScreenCache.read(getApplicationContext(),
                         "map-routes", revision);
                 mapRoutes = saved == null ? null : mapRoutesFromCache(saved);

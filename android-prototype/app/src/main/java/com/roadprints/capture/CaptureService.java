@@ -596,9 +596,17 @@ public class CaptureService extends Service {
         try {
             requestCaptureLocationUpdates();
             scheduleCaptureCheckpoint();
+            android.os.Bundle measurement = new android.os.Bundle();
+            measurement.putString("mode", BetaMeasurement.normalizedMode(mode));
+            measurement.putString("source", "capture");
+            measurement.putString("capture_type", automaticCapture ? "automatic" : "manual");
+            BetaMeasurement.event(this, "capture_started", measurement);
             broadcastUpdate("Confirmed " + mode + " journey; recording locally...");
         } catch (SecurityException error) {
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit().putBoolean(STATE_ACTIVE, false).apply();
+            android.os.Bundle failure = new android.os.Bundle();
+            failure.putString("error_category", "permission");
+            BetaMeasurement.event(this, "capture_start_failed", failure);
             broadcastUpdate("Location permission is required to record.");
             if (!isArmed(this)) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
         }
@@ -925,6 +933,9 @@ public class CaptureService extends Service {
                         .put("foot_matching", ("walking".equals(savedMode) || "running".equals(savedMode)) ? "pending" : "not_required")
                         .put("cycle_matching", MatchingCoordinator.isCycle(savedMode) ? "pending" : "not_required"));
                 JourneyStore.save(getApplicationContext(), journey);
+                android.os.Bundle measurement = BetaMeasurement.journeyParameters(journey);
+                measurement.putLong("gps_points", savedGpsPointCount);
+                BetaMeasurement.event(getApplicationContext(), "capture_saved", measurement);
                 MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
                         "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
                                 + "; distance_m: " + Math.round(routeDistance));
@@ -1008,6 +1019,10 @@ public class CaptureService extends Service {
         } else {
             nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1;
+            android.os.Bundle failure = new android.os.Bundle();
+            failure.putString("mode", BetaMeasurement.normalizedMode(mode));
+            failure.putString("source", "capture");
+            BetaMeasurement.event(this, "capture_save_failed", failure);
             broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
             // Retain the points and recording state so a later Stop can retry.
             try {

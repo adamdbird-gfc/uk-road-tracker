@@ -37,6 +37,7 @@ public class UtilitiesActivity extends Activity {
         add(root, "Tracking settings", "Journey type, automatic tracking and manual capture",
                 TrackingSettingsActivity.class);
         add(root, "Settings", "Distance units and display preferences", SettingsActivity.class);
+        add(root, "Privacy and diagnostics", "Choose optional analytics and diagnostic sharing", MeasurementSettingsActivity.class);
         LinearLayout debug = menuItem("Debug", "View or copy diagnostic reports");
         debug.setOnClickListener(v -> startActivity(new Intent(this, DebugActivity.class)));
         root.addView(debug, params());

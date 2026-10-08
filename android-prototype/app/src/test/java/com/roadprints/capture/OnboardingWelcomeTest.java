@@ -16,6 +16,7 @@ public class OnboardingWelcomeTest {
     private org.robolectric.android.controller.ActivityController<OnboardingActivity> controller;
     private OnboardingActivity activity;
     @Before public void setup(){
+        RuntimeEnvironment.getApplication().getSharedPreferences("roadprints_measurement",Context.MODE_PRIVATE).edit().putBoolean("prompt_seen",true).commit();
         RuntimeEnvironment.getApplication().getSharedPreferences("roadprints_onboarding",Context.MODE_PRIVATE).edit().clear().commit();
         controller=Robolectric.buildActivity(OnboardingActivity.class).setup();activity=controller.get();
     }

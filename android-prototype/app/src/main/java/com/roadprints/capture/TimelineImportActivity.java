@@ -166,11 +166,24 @@ public class TimelineImportActivity extends Activity {
         setBusy(true);
         status.setText("Reading Timeline file locally…");
 
+        BetaMeasurement.event(this, "import_started", null);
         importer.submit(() -> {
             ImportResult result;
-            try {
+            try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "timeline_import")) {
                 result = importFile(uri, serviceOnly);
+                android.os.Bundle parameters = new android.os.Bundle();
+                parameters.putLong("duration_ms", measurement.duration());
+                parameters.putLong("added", result.added);
+                parameters.putLong("skipped", result.skipped);
+                parameters.putLong("invalid", result.invalid);
+                boolean completed = result.message.startsWith("Import complete:")
+                        || result.message.startsWith("Service import complete:");
+                BetaMeasurement.event(this, completed ? "import_completed" : "import_failed", parameters);
             } catch (Exception error) {
+                android.os.Bundle parameters = new android.os.Bundle();
+                parameters.putString("error_category", BetaMeasurement.errorCategory(error));
+                BetaMeasurement.event(this, "import_failed", parameters);
+                BetaMeasurement.reportFailure(this, error);
                 result = new ImportResult(0, 0, 1,
                         "Import failed: " + safeMessage(error));
             }

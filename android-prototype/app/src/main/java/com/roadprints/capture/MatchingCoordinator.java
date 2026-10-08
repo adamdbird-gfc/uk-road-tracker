@@ -172,15 +172,32 @@ public final class MatchingCoordinator {
                         ConcurrentLinkedQueue<String> lane = cycleLane ? cycleWork : footLane ? footWork : roadWork;
                         String nextJourneyId;
                         while (!pauseRequested && (nextJourneyId = lane.poll()) != null) {
+                            JSONObject measurementJourney = null;
+                            BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "journey_match");
                             try {
                                 JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId), forceRematch);
+                                measurementJourney = journey;
+                                android.os.Bundle parameters = BetaMeasurement.journeyParameters(journey);
+                                parameters.putString("attempt_type", forceRematch ? "rematch" : "match");
+                                BetaMeasurement.event(app, "match_started", parameters);
                                 matchJourney(journey);
+                                parameters.putLong("duration_ms", measurement.duration());
+                                BetaMeasurement.event(app, "match_completed", parameters);
                                 matched.incrementAndGet();
                                 if (cycleLane) cycleMatched.incrementAndGet(); else if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
                             } catch (Exception error) {
                                 failed.incrementAndGet();
                                 markFailed(nextJourneyId, error);
+                                if (measurementJourney != null) {
+                                    android.os.Bundle parameters = BetaMeasurement.journeyParameters(measurementJourney);
+                                    parameters.putString("attempt_type", forceRematch ? "rematch" : "match");
+                                    parameters.putString("error_category", BetaMeasurement.errorCategory(error));
+                                    parameters.putLong("duration_ms", measurement.duration());
+                                    BetaMeasurement.event(app, "match_failed", parameters);
+                                    BetaMeasurement.reportFailure(app, error);
+                                }
                             } finally {
+                                measurement.close();
                                 checked.incrementAndGet();
                                 if (cycleLane) cycleChecked.incrementAndGet(); else if (footLane) footChecked.incrementAndGet(); else roadChecked.incrementAndGet();
                             }

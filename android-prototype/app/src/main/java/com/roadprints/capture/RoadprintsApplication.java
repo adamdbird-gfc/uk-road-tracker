@@ -6,6 +6,7 @@ import android.app.Application;
 public class RoadprintsApplication extends Application {
     @Override public void onCreate() {
         super.onCreate();
+        BetaMeasurement.install(this);
         CrashReporter.install(this);
     }
 
