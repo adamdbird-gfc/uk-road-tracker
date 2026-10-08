@@ -25,6 +25,46 @@ public class WalkingCaptureServiceTest {
         Location p=new Location("gps");p.setLongitude(metres/111195);p.setLatitude(0);
         p.setAccuracy(5);p.setTime(time);p.setSpeed(0);return p;
     }
+    @Test public void activityAfterCompletedCaptureCannotDereferenceNullMode() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear()
+                .putBoolean("armed",true).putBoolean("active",false).apply();
+        field("mode").set(service,null);
+        field("automaticCapture").set(service,true);
+        field("gpsStillness").set(service,true);
+        Method transition=CaptureService.class.getDeclaredMethod("handleTransition",int.class,int.class);
+        transition.setAccessible(true);
+        transition.invoke(service,DetectedActivity.UNKNOWN,ActivityTransition.ACTIVITY_TRANSITION_ENTER);
+        assertFalse(field("gpsStillness").getBoolean(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+    }
+    @Test public void repeatedStillCallbacksKeepOriginalCandidateDeadline() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().putBoolean("armed",true).apply();
+        field("candidateMode").set(service,"walking");
+        long began=System.currentTimeMillis()-240000;
+        field("candidateStationarySince").setLong(service,began);
+        Method transition=CaptureService.class.getDeclaredMethod("handleTransition",int.class,int.class);
+        transition.setAccessible(true);
+        transition.invoke(service,DetectedActivity.STILL,ActivityTransition.ACTIVITY_TRANSITION_ENTER);
+        assertEquals(began,field("candidateStationarySince").getLong(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+    }
+    @Test public void stationaryVehicleActivityCannotSplitIntoWalking() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear()
+                .putBoolean("armed",true).putBoolean("active",true).apply();
+        field("mode").set(service,"unknown");field("automaticCapture").setBoolean(service,true);
+        field("pendingActivityMode").set(service,"walking");
+        field("pendingActivitySince").setLong(service,System.currentTimeMillis()-30000);
+        @SuppressWarnings("unchecked") List<Location> points=(List<Location>)field("points").get(service);
+        for(int i=0;i<4;i++) points.add(p(i%2,System.currentTimeMillis()-30000+i*10000));
+        Method commit=CaptureService.class.getDeclaredMethod("commitPendingActivityMode");commit.setAccessible(true);
+        commit.invoke(service);
+        assertNull(field("nextCaptureMode").get(service));
+        assertFalse(field("captureFinishing").getBoolean(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+    }
     @Test public void lateAndroidStartKeepsBufferedFixesAndCancelledCandidatesResumeSampling() throws Exception {
         CaptureService service=Robolectric.buildService(CaptureService.class).get();
         Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions("android.permission.ACCESS_FINE_LOCATION");
