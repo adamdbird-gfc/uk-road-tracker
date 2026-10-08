@@ -14,7 +14,8 @@ final class CaptureMovementEvidence {
             if (origin == null) { origin = p; first = p.time; }
             if (previous != null && CaptureQualityValidator.reliable(previous, p, false)
                     && p.time - previous.time <= 120_000L) {
-                path += Math.max(0, FootTraceValidator.metres(previous, p) - previous.accuracy - p.accuracy);
+                path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
+                        (float)previous.accuracy, (float)p.accuracy);
             }
             extent = Math.max(extent, FootTraceValidator.metres(origin, p) - origin.accuracy - p.accuracy);
             previous = p; last = p.time;
@@ -38,7 +39,8 @@ final class CaptureMovementEvidence {
             if (foot && p.speed >= 5) return false;
             if (first == null) first = p;
             if (previous != null && fixes > 0)
-                path += Math.max(0, FootTraceValidator.metres(previous, p) - previous.accuracy - p.accuracy);
+                path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
+                        (float)previous.accuracy, (float)p.accuracy);
             if (foot ? p.speed >= .5 && p.speed <= 3.5
                     : cycle ? p.speed >= .8 && p.speed <= 12 : p.speed >= 6) moving++;
             fixes++; previous = p; last = p;

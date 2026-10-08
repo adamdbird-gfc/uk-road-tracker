@@ -44,6 +44,12 @@ public class CaptureMovementEvidenceTest {
         for (int i=0; i<7; i++) samples.add(point(i*30, 1000+i*10000L, 5, 3, i));
         assertTrue(CaptureMovementEvidence.confirmsMode(samples, "cycling", 1000, 61000));
     }
+    @Test public void ordinaryPhoneAccuracyDoesNotHideAShortWalk() {
+        List<FootTraceValidator.Sample> samples = new ArrayList<>();
+        for (int i=0; i<5; i++) samples.add(point(i*20, 1000+i*20000L, 14, 1, i));
+        assertTrue(CaptureMovementEvidence.hasJourneyMovement(samples, "walking"));
+        assertTrue(CaptureMovementEvidence.confirmsMode(samples, "walking", 1000, 81000));
+    }
     @Test public void longNearbyBreakHasNoRoutableConnectionButTunnelStaysOpen() {
         FootTraceValidator.Sample before=point(0, 1000, 2, 9, 0);
         assertTrue(CaptureMovementEvidence.separateSamplingSessions(before, point(337, 4060878, 9, 0, 1)));
