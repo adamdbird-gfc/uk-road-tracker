@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - codex/matching-coordinator
+      - fix/onboarding-start-tracking
     paths:
       - "android-prototype/**"
       - ".github/workflows/android-prototype-build.yml"
@@ -12,6 +13,11 @@ on:
       - "android-prototype/**"
       - ".github/workflows/android-prototype-build.yml"
   workflow_dispatch:
+    inputs:
+      firebase_upload:
+        description: Upload the verified signed APK to Firebase App Distribution
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -58,7 +64,7 @@ jobs:
 
       - name: Build, test and verify signed APK
         run: |
-          gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:assembleDebug
+          gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose android-prototype/app/build/outputs/apk/debug/app-debug.apk
           mkdir -p roadprints-output
           cp android-prototype/app/build/outputs/apk/debug/app-debug.apk roadprints-output/app-debug.apk
@@ -70,3 +76,60 @@ jobs:
           path: roadprints-output/
           if-no-files-found: error
           retention-days: 7
+
+  firebase:
+    needs: build-debug-apk
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.firebase_upload) ||
+      (github.event_name == 'push' && vars.ROADPRINTS_FIREBASE_UPLOAD == 'true' &&
+      (github.ref == 'refs/heads/fix/onboarding-start-tracking' || github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out verified source
+        uses: actions/checkout@v6
+
+      - name: Download verified signed APK
+        uses: actions/download-artifact@v4
+        with:
+          name: roadprints-android-debug-${{ github.sha }}
+          path: verified-apk
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools@15.33.0
+
+      - name: Upload APK to Firebase App Distribution
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-firebase-credentials.json"
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          python3 - <<'PY'
+          import json, os, pathlib
+          raw = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON', '')
+          if not raw:
+              raise SystemExit('Configure the FIREBASE_SERVICE_ACCOUNT_JSON repository Actions secret first. See docs/android-firebase-distribution.md.')
+          try:
+              credentials = json.loads(raw)
+          except ValueError:
+              raise SystemExit('FIREBASE_SERVICE_ACCOUNT_JSON must contain valid service-account JSON.')
+          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc' or not credentials.get('private_key') or not credentials.get('client_email'):
+              raise SystemExit('Expected a service-account key for roadprints-822cc, not google-services.json.')
+          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+          path.touch(mode=0o600, exist_ok=False)
+          path.write_text(raw)
+          PY
+          unset FIREBASE_SERVICE_ACCOUNT_JSON
+          bash scripts/upload_android_firebase.sh verified-apk/app-debug.apk
+
+      - name: Remove deployment credential
+        if: always()
+        run: rm -f "$RUNNER_TEMP/roadprints-firebase-credentials.json"
