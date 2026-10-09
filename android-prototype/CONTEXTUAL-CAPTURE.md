@@ -1,4 +1,4 @@
-# Contextual capture (0.25.174)
+# Contextual capture (0.25.175)
 
 Capture uses departure, travel, pause and arrival evidence rather than requiring Android activity callbacks for every boundary. Decisions remain suggestions: users can correct modes in Journeys.
 
@@ -13,6 +13,7 @@ Capture uses departure, travel, pause and arrival evidence rather than requiring
 
 - Bundled railway stations remain usable offline. Public OpenStreetMap ways supply road/rail geometry and building, parking and outdoor footprints.
 - Map requests are asynchronous, cover rounded geographic tiles and contain no user/journey identifiers. Tiles are retained locally for seven days, with a 64-tile bound, a 4 MB response bound and at most one request per minute. Fetch failure does not block capture or establish arrival.
+- Online context is off until enabled in Utilities > Tracking settings. The choice describes the approximate-area requests sent to Overpass; bundled station recognition and movement capture remain available without it. The preference is checked before queueing a request and again before a queued network lookup begins.
 - Building/parking arrival requires sustained stationary fixes and an accuracy circle within the footprint, away from a mapped vehicle road. A POI label or missing map geometry alone is insufficient.
 - Road/rail/outdoor pauses extend the normal stop timer up to 15 minutes. Train pauses remain open until supported alighting. This cap lets long ambiguous stops become reviewable boundaries rather than unbounded recordings.
 - A mapped destination dwell ends the route at arrival, not when the confirmation timer expires. Raw dwell samples remain available for service-area evidence.

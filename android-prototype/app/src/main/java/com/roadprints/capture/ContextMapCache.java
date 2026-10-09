@@ -17,13 +17,17 @@ import java.util.concurrent.Executors;
 /** Bounded, asynchronous public map tiles. Requests contain no user or journey identifiers. */
 final class ContextMapCache {
     private final File directory;
+    private final Context app;
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final Handler main=new Handler(Looper.getMainLooper());
     private JSONArray features;
     private double south,west;
     private boolean busy,closed;
     private long attemptedAt;
-    ContextMapCache(Context context) {directory=new File(context.getCacheDir(),"capture-context-v1");}
+    static boolean enabled(Context context) {
+        return context.getSharedPreferences("roadprints_capture_state",Context.MODE_PRIVATE).getBoolean("public_map_context",false);
+    }
+    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v1");}
     ContextMap.Evidence evidence(double lat,double lon,float accuracy) {
         return ContextMap.at(covers(lat,lon)?features:null,lat,lon,accuracy);
     }
@@ -31,7 +35,7 @@ final class ContextMapCache {
         return features!=null&&lat>=south-.003&&lat<=south+.013&&lon>=west-.006&&lon<=west+.026;
     }
     void request(double lat,double lon,Runnable callback) {
-        if(closed||busy||covers(lat,lon)||System.currentTimeMillis()-attemptedAt<60_000L)return;
+        if(!enabled(app)||closed||busy||covers(lat,lon)||System.currentTimeMillis()-attemptedAt<60_000L)return;
         busy=true; attemptedAt=System.currentTimeMillis();
         final double s=Math.floor(lat*100)/100,w=Math.floor(lon*50)/50;
         final String key=String.format(Locale.ROOT,"%.2f_%.2f.json",s,w);
@@ -42,13 +46,14 @@ final class ContextMapCache {
                 if(file.isFile()&&System.currentTimeMillis()-file.lastModified()<7*86400000L)
                     loaded=new JSONObject(new String(Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8)).getJSONArray("elements");
                 else {
+                    if(!enabled(app))throw new java.io.IOException("Online context disabled");
                     String bbox=String.format(Locale.ROOT,"%.3f,%.3f,%.3f,%.3f",s-.003,w-.006,s+.013,w+.026);
                     String query="[out:json][timeout:12];(way[highway]("+bbox+");way[railway=rail]("+bbox+");"
                             +"way[building]("+bbox+");way[amenity=parking]("+bbox+");way[leisure]("+bbox+");way[natural]("+bbox+"));out geom;";
                     connection=(HttpURLConnection)new URL("https://overpass-api.de/api/interpreter").openConnection();
                     connection.setConnectTimeout(6000); connection.setReadTimeout(16000);
                     connection.setRequestMethod("POST"); connection.setDoOutput(true);
-                    connection.setRequestProperty("User-Agent","Roadprints/0.25.174");
+                    connection.setRequestProperty("User-Agent","Roadprints/0.25.175");
                     connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
                     byte[] body=("data="+java.net.URLEncoder.encode(query,"UTF-8")).getBytes(StandardCharsets.UTF_8);
                     try(java.io.OutputStream out=connection.getOutputStream()){out.write(body);}
