@@ -19,6 +19,9 @@ final class StationJourneyModel {
     private double walkMetres, lastLat, lastLon;
     private float lastAccuracy;
     private int walkingSamples;
+    private long quietSince, railSince, footSince;
+    private double quietLat, quietLon, footMetres;
+    private int quietIndex=-1, footIndex=-1, railSamples, footSamples;
 
     StationJourneyModel(RailStationCatalog catalog) { this.catalog=catalog; }
     void activity(String value, long time, int pointIndex) {
@@ -36,6 +39,12 @@ final class StationJourneyModel {
         if (!"walking".equals(value)) { walkIndex=-1; walkMetres=0; walkingSamples=0; }
     }
     Decision sample(String mode, int index, long time, double lat, double lon, float accuracy, float speed) {
+        return sample(mode,index,time,lat,lon,accuracy,speed,false);
+    }
+    Decision sample(String mode, int index, long time, double lat, double lon, float accuracy, float speed, boolean railAligned) {
+        return sample(mode,index,time,lat,lon,accuracy,speed,railAligned,false);
+    }
+    Decision sample(String mode, int index, long time, double lat, double lon, float accuracy, float speed, boolean railAligned, boolean mapAvailable) {
         if (!Float.isFinite(accuracy) || accuracy<=0 || accuracy>80 || time<=lastTime) return null;
         RailStationCatalog.Station nearby=catalog.nearest(lat,lon,accuracy);
         double step=lastTime==0 ? 0 : RailStationCatalog.metres(lastLat,lastLon,lat,lon);
@@ -52,6 +61,31 @@ final class StationJourneyModel {
             fastSince=0; departureIndex=-1; departedFromStation=false; departureConfirmed=false; walkIndex="walking".equals(activity)?index:-1; walkMetres=0; walkingSamples=0;
         }
         if (station==null) return null;
+        // A station dwell can be established by spatially stable fixes even when
+        // Android never delivers STILL. Preserve the actual arrival boundary.
+        if(speed<=.5 && accuracy<=35) {
+            if(quietSince==0 || gap>120000 || RailStationCatalog.metres(lat,lon,quietLat,quietLon)>35) {
+                quietSince=time; quietLat=lat; quietLon=lon; quietIndex=index;
+            }
+            if(time-quietSince>=60000 && !stopEvidence) {
+                stopEvidence=true; arrivalTime=quietSince; arrivalIndex=quietIndex;
+            }
+        } else quietSince=0;
+        if(railAligned && speed>=6) {
+            if(railSince==0 || gap>60000){railSince=time;railSamples=0;}
+            railSamples++;
+        } else {railSince=0;railSamples=0;}
+        boolean railDeparture=railSamples>=3 && time-railSince>=20000;
+        // Walking away is a boundary, not just a new label on the whole train.
+        if(("train".equals(mode)||"unknown".equals(mode)) && speed>=.5 && speed<=3.5
+                && accuracy<=35 && step<=100 && gap>0 && gap<=60000) {
+            if(footSince==0){footSince=time;footIndex=Math.max(arrivalIndex,index-1);footMetres=0;footSamples=0;}
+            footMetres+=Math.max(0,step-(accuracy+lastAccuracy)*.35);footSamples++;
+            double from=RailStationCatalog.metres(lat,lon,station.latitude,station.longitude);
+            if(footSamples>=3 && time-footSince>=30000 && footMetres>=35
+                    && ((mapAvailable && !railAligned) || "walking".equals(activity) || from>station.radius+100))
+                return new Decision(Math.max(1,footIndex),Math.max(1,footIndex),"walking",station.code,"station_gps_alighting");
+        } else {footSince=0;footIndex=-1;footMetres=0;footSamples=0;}
         // A train stop, even a long one, is not an arrival unless reliable walking follows.
         if ("train".equals(mode) && "walking".equals(activity) && walkIndex>=0
                 && time-activitySince>=30000 && walkingSamples>=3 && walkMetres>=35) {
@@ -68,7 +102,7 @@ final class StationJourneyModel {
             if (!departureConfirmed && speed<3.5) { departureIndex=-1; departedFromStation=false; }
         }
         if (departureConfirmed && fromStation>station.radius+400
-                && stopEvidence && "vehicle".equals(activity) && time-activitySince>=15000
+                && stopEvidence && (("vehicle".equals(activity) && time-activitySince>=15000) || railDeparture)
                 && time-arrivalTime>=60000 && !"train".equals(mode)) {
             if ("walking".equals(mode))
                 return new Decision(Math.max(1,arrivalIndex),Math.max(1,departureIndex),"train",station.code,"station_boarding_departure");
@@ -91,6 +125,7 @@ final class StationJourneyModel {
     void clearStation() {
         station=null; arrivalIndex=-1; arrivalTime=0; stopEvidence=false; departedFromStation=false; departureConfirmed=false;
         departureIndex=-1; fastSince=0; walkIndex=-1; walkMetres=0; walkingSamples=0;
+        quietSince=0;railSince=0;footSince=0;quietIndex=-1;footIndex=-1;railSamples=0;footSamples=0;footMetres=0;
     }
     int stationaryEndIndex(String mode) { return "walking".equals(mode) && stopEvidence ? arrivalIndex : -1; }
     String currentActivity() { return activity; }
@@ -99,10 +134,13 @@ final class StationJourneyModel {
                 String.valueOf(departureIndex),String.valueOf(walkIndex),String.valueOf(activitySince),
                 String.valueOf(fastSince),String.valueOf(lastTime),activity,String.valueOf(stopEvidence),
                 String.valueOf(walkMetres),String.valueOf(lastLat),String.valueOf(lastLon),
-                String.valueOf(lastAccuracy),String.valueOf(walkingSamples),String.valueOf(departedFromStation),String.valueOf(departureConfirmed)};
+                String.valueOf(lastAccuracy),String.valueOf(walkingSamples),String.valueOf(departedFromStation),String.valueOf(departureConfirmed),
+                String.valueOf(quietSince),String.valueOf(quietLat),String.valueOf(quietLon),String.valueOf(quietIndex),
+                String.valueOf(railSince),String.valueOf(railSamples),String.valueOf(footSince),String.valueOf(footIndex),
+                String.valueOf(footMetres),String.valueOf(footSamples)};
     }
     void restore(String[] state, int pointCount) {
-        if (state.length!=17) return;
+        if (state.length!=17 && state.length!=27) return;
         try {
             int arrival=Integer.parseInt(state[1]), walk=Integer.parseInt(state[4]);
             if (arrival>=pointCount || walk>=pointCount) return;
@@ -115,6 +153,12 @@ final class StationJourneyModel {
             lastLat=Double.parseDouble(state[11]); lastLon=Double.parseDouble(state[12]);
             lastAccuracy=Float.parseFloat(state[13]); walkingSamples=Integer.parseInt(state[14]);
             departedFromStation=Boolean.parseBoolean(state[15]); departureConfirmed=Boolean.parseBoolean(state[16]);
+            if(state.length==27) {
+                quietSince=Long.parseLong(state[17]);quietLat=Double.parseDouble(state[18]);quietLon=Double.parseDouble(state[19]);quietIndex=Integer.parseInt(state[20]);
+                railSince=Long.parseLong(state[21]);railSamples=Integer.parseInt(state[22]);footSince=Long.parseLong(state[23]);footIndex=Integer.parseInt(state[24]);
+                footMetres=Double.parseDouble(state[25]);footSamples=Integer.parseInt(state[26]);
+                if(quietIndex>=pointCount||footIndex>=pointCount)clearStation();
+            }
         } catch (RuntimeException ignored) { clearStation(); }
     }
     String stationCode() { return station==null ? "" : station.code; }

@@ -4,6 +4,24 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class StationJourneyModelTest {
+    @Test public void gpsStationDwellAndRailDepartureWorkWithoutActivityCallbacks() {
+        StationJourneyModel m=model();
+        fix(m,"walking",0,1000,-100,1);
+        fix(m,"walking",1,11000,0,0);
+        fix(m,"walking",2,41000,1,0);
+        fix(m,"walking",3,71000,0,0);
+        assertTrue(m.holdStill("walking",71000));
+        assertNull(m.sample("walking",4,81000,LAT+300/111195.0,LON,5,10,true));
+        assertNull(m.sample("walking",5,101000,LAT+600/111195.0,LON,5,15,true));
+        StationJourneyModel.Decision d=m.sample("walking",6,121000,LAT+1000/111195.0,LON,5,20,true);
+        assertNotNull(d);assertEquals("train",d.nextMode);assertEquals(1,d.endIndex);assertEquals(4,d.startIndex);
+    }
+    @Test public void gpsWalkingAwayFromTrainWorksWithoutActivityCallbacks() {
+        StationJourneyModel m=model();fix(m,"train",0,1000,0,0);fix(m,"train",1,11000,0,0);
+        StationJourneyModel.Decision d=null;
+        for(int i=2;i<=6;i++)d=m.sample("train",i,11000+(i-1)*10000,LAT+15*(i-1)/111195.0,LON,5,1.5f,false,true);
+        assertNotNull(d);assertEquals("walking",d.nextMode);assertEquals(1,d.startIndex);
+    }
     private static final double LAT=51.5,LON=-.1;
     private StationJourneyModel model() {
         RailStationCatalog catalog=new RailStationCatalog();
