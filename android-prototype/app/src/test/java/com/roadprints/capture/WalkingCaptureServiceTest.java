@@ -18,6 +18,12 @@ import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class WalkingCaptureServiceTest {
+    @Test public void runningActivityIsNotTranslatedBackToWalking() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        Method classify=CaptureService.class.getDeclaredMethod("modeForActivity",int.class);classify.setAccessible(true);
+        assertEquals("running",classify.invoke(service,DetectedActivity.RUNNING));
+        assertEquals("walking",classify.invoke(service,DetectedActivity.WALKING));
+    }
     private Field field(String name) throws Exception {
         Field f=CaptureService.class.getDeclaredField(name);f.setAccessible(true);return f;
     }

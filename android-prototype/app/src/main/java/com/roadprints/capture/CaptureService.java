@@ -114,6 +114,9 @@ public class CaptureService extends Service {
     private String pendingActivityMode;
     private RailStationCatalog stationCatalog;
     private StationJourneyModel stationModel;
+    private ContextMapCache contextCache;
+    private ContextJourneyModel contextModel=new ContextJourneyModel();
+    private String contextReason;
     private String currentActivity = "unknown";
     private long currentActivityAtMs;
     private String stationEvidenceReason, stationEvidenceCode;
@@ -140,10 +143,23 @@ public class CaptureService extends Service {
             if (stationModel != null && stationModel.holdStill(mode, System.currentTimeMillis())) {
                 handler.postDelayed(this.finishIfStill, 30_000L);
             } else {
+                ContextMap.Evidence context=stationaryAnchor==null||contextCache==null?new ContextMap.Evidence()
+                        :contextCache.evidence(stationaryAnchor.getLatitude(),stationaryAnchor.getLongitude(),stationaryAnchor.getAccuracy());
+                if(automaticCapture && contextModel.holdPause(mode,System.currentTimeMillis()-stationarySince,context)) {
+                    handler.postDelayed(this.finishIfStill,30000L);
+                    broadcastUpdate("Paused on the route; listening for movement...");
+                    return;
+                }
                 if (stationModel!=null && stationModel.stationaryEndIndex(mode)>=1) {
                     stationEndIndex=stationModel.stationaryEndIndex(mode);
                     stationEvidenceReason="station_arrival_waiting";
                     stationEvidenceCode=stationModel.stationCode();
+                    // If a mode transition was missed, keep the remaining travel
+                    // as an uncertain leg instead of trimming it out of history.
+                    List<FootTraceValidator.Sample> remainder=new ArrayList<>();
+                    for(int i=stationEndIndex+1;i<points.size();i++)remainder.add(footSample(points.get(i),i));
+                    if(CaptureMovementEvidence.hasJourneyMovement(remainder,"unknown"))
+                        prepareStationSplit(stationEndIndex,stationEndIndex+1,"unknown");
                 }
                 finishCapture();
             }
@@ -178,6 +194,7 @@ public class CaptureService extends Service {
             }
             MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
             Location observation = new Location(location);
+            requestContext(observation);
             if (automaticCapture && lastPoint != null && CaptureMovementEvidence.separateSamplingSessions(
                     footSample(lastPoint, 0), footSample(observation, 1))) {
                 // Do not draw or match across a long indoor/signal break. Preserve both
@@ -209,6 +226,8 @@ public class CaptureService extends Service {
             if (trusted || (observation.hasSpeed() && observation.getSpeed() >= 6))
                 evaluateStationLocation(observation, points.size() - 1);
             if (captureFinishing) return;
+            if(automaticCapture) evaluateContextLocation(observation,points.size()-1);
+            if(captureFinishing)return;
             updateNotification();
             broadcastUpdate("Recording " + mode + " locally...");
         }
@@ -238,6 +257,7 @@ public class CaptureService extends Service {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
+        contextCache=new ContextMapCache(this);
         restoreDepartureAnchor();
         if (isActive(this)) restoreActiveCapture();
         captureIo.execute(() -> {
@@ -387,7 +407,7 @@ public class CaptureService extends Service {
             currentActivityAtMs=System.currentTimeMillis();
             currentActivity = activityType == DetectedActivity.IN_VEHICLE ? "vehicle"
                     : (activityType == DetectedActivity.STILL ? "still"
-                    : (modeForActivity(activityType) != null && "walking".equals(modeForActivity(activityType)) ? "walking" : "unknown"));
+                    : (("walking".equals(modeForActivity(activityType)) || "running".equals(modeForActivity(activityType))) ? "walking" : "unknown"));
             if (stationModel != null) stationModel.activity(currentActivity, System.currentTimeMillis(), points.size()-1);
         }
         if (!entering) {
@@ -507,6 +527,7 @@ public class CaptureService extends Service {
     }
 
     private void considerArmedMovement(Location location) {
+        requestContext(location);
         if (isArmed(this) && location != null && location.hasAccuracy() && location.getAccuracy() <= 25
                 && location.hasSpeed() && location.getSpeed() >= 6
                 && Math.abs(System.currentTimeMillis()-location.getTime()) <= 60_000L) {
@@ -609,9 +630,9 @@ public class CaptureService extends Service {
         // IN_VEHICLE. Keep this unclassified until the user confirms transport.
         if (activityType == DetectedActivity.IN_VEHICLE) return "unknown";
         if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
+        if (activityType == DetectedActivity.RUNNING) return "running";
         if (activityType == DetectedActivity.WALKING
-                || activityType == DetectedActivity.ON_FOOT
-                || activityType == DetectedActivity.RUNNING) {
+                || activityType == DetectedActivity.ON_FOOT) {
             return "walking";
         }
         return null;
@@ -845,8 +866,15 @@ public class CaptureService extends Service {
     private void clearDepartureAnchor() { storeDepartureAnchor(null); }
 
     private JSONArray restoredStationState;
+    private JSONArray restoredContextState;
 
     private void resetStationModel() {
+        contextModel=new ContextJourneyModel();
+        if(restoredContextState!=null) {
+            String[] state=new String[restoredContextState.length()];
+            for(int i=0;i<state.length;i++)state[i]=restoredContextState.optString(i);
+            contextModel.restore(state,points.size());restoredContextState=null;
+        }
         stationModel = stationCatalog == null || !automaticCapture ? null : new StationJourneyModel(stationCatalog);
         if (stationModel == null) return;
         if (restoredStationState != null) {
@@ -869,10 +897,13 @@ public class CaptureService extends Service {
 
     private void evaluateStationLocation(Location location, int index) {
         if (!automaticCapture || stationModel==null || captureFinishing) return;
+        ContextMap.Evidence map=contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(location.getLatitude(),location.getLongitude(),location.getAccuracy());
         StationJourneyModel.Decision decision=stationModel.sample(mode,index,location.getTime(),
                 location.getLatitude(),location.getLongitude(),
                 location.hasAccuracy()?location.getAccuracy():Float.POSITIVE_INFINITY,
-                location.hasSpeed()?location.getSpeed():-1);
+                location.hasSpeed()?location.getSpeed():-1,
+                map.rail&&!map.road,map.available);
         if (decision==null) return;
         stationEvidenceReason=decision.reason; stationEvidenceCode=decision.stationCode;
         MovementDiagnostics.recordEvent(this,"station_transition_confirmed",
@@ -884,6 +915,37 @@ public class CaptureService extends Service {
             return;
         }
         prepareStationSplit(decision.endIndex,decision.startIndex,decision.nextMode);
+        finishCapture();
+    }
+
+    private void requestContext(Location location) {
+        if(contextCache==null||!isArmed(this)||location==null||!location.hasAccuracy()||location.getAccuracy()>50)return;
+        contextCache.request(location.getLatitude(),location.getLongitude(),()->{
+            MovementDiagnostics.recordEvent(this,"place_context_updated","Public map context lookup completed; recording remains active.");
+        });
+    }
+
+    private void evaluateContextLocation(Location location,int index) {
+        ContextMap.Evidence evidence=contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(location.getLatitude(),location.getLongitude(),location.getAccuracy());
+        boolean atStation=stationModel!=null&&!stationModel.stationCode().isEmpty();
+        ContextJourneyModel.Decision decision=contextModel.sample(mode,index,location.getTime(),
+                location.getLatitude(),location.getLongitude(),location.hasAccuracy()?location.getAccuracy():Float.POSITIVE_INFINITY,
+                location.hasSpeed()?location.getSpeed():-1,evidence,atStation);
+        if(decision==null)return;
+        contextReason=decision.reason;
+        MovementDiagnostics.recordEvent(this,"context_transition_confirmed",
+                "reason="+decision.reason+"; next_mode="+decision.nextMode+"; boundary_point="+decision.boundary);
+        clearPendingActivityMode();
+        if("unknown".equals(mode) && ("driving".equals(decision.nextMode)||"train".equals(decision.nextMode))) {
+            mode=decision.nextMode;
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
+            return;
+        }
+        if(decision.nextMode==null) {
+            stationEndIndex=Math.min(decision.boundary,points.size()-1);
+            stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
+        } else prepareStationSplit(decision.boundary,decision.boundary,decision.nextMode);
         finishCapture();
     }
 
@@ -923,6 +985,7 @@ public class CaptureService extends Service {
         final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
+        final String savedContextReason=contextReason;
         final String savedJourneyId = journeyId;
         final String savedStartedAt = startedAt;
         final String savedMode = mode;
@@ -958,6 +1021,8 @@ public class CaptureService extends Service {
                 journey.put("timezone", savedTimezone);
                 journey.put("mode", savedMode);
                 journey.put("transport_confirmation", "required");
+                if(savedContextReason!=null)journey.put("context_evidence",new JSONObject().put("version",1)
+                        .put("reason",savedContextReason).put("classification","suggested"));
                 if (savedStationReason != null) journey.put("station_evidence", new JSONObject()
                         .put("reason", savedStationReason).put("station_code", savedStationCode)
                         .put("classification", "suggested"));
@@ -1011,14 +1076,31 @@ public class CaptureService extends Service {
                 }
                 List<FootTraceValidator.Sample> movementEvidence = new ArrayList<>();
                 for (int i = 0; i < routePoints.size(); i++) movementEvidence.add(footSample(routePoints.get(i), i));
-                if (savedAutomatic && !CaptureMovementEvidence.hasJourneyMovement(movementEvidence, savedMode)) {
+                String persistedMode=savedMode;
+                List<FootTraceValidator.Sample> originalEvidence=new ArrayList<>();
+                for(int i=0;i<savedPoints.size();i++)originalEvidence.add(footSample(savedPoints.get(i),i));
+                if(savedAutomatic && ("walking".equals(savedMode)||"running".equals(savedMode))
+                        && CaptureMovementEvidence.hasVehicleMovement(originalEvidence)) {
+                    // Failed segmentation must remain reviewable, with no foot
+                    // credit for the vehicle travel removed by the foot validator.
+                    persistedMode="unknown";journey.put("mode",persistedMode);
+                    journey.put("context_evidence",new JSONObject().put("version",1).put("reason","mixed_mode_requires_review").put("classification","uncertain"));
+                    routePoints=new ArrayList<>();movementEvidence=new ArrayList<>();
+                    for(Location point:savedPoints) {
+                        Location previous=routePoints.isEmpty()?null:routePoints.get(routePoints.size()-1);
+                        if(CaptureQualityValidator.reliable(previous==null?null:footSample(previous,0),footSample(point,1),false))routePoints.add(point);
+                    }
+                    for(int i=0;i<routePoints.size();i++)movementEvidence.add(footSample(routePoints.get(i),i));
+                    routeSamples=sampleCoordinates(routePoints);routeDistance=routeDistanceMetres(routePoints);
+                }
+                if (savedAutomatic && !CaptureMovementEvidence.hasJourneyMovement(movementEvidence, persistedMode)) {
                     discarded = true;
                     MovementDiagnostics.recordEvent(getApplicationContext(), "capture_rejected_no_movement",
                             "Mode: " + savedMode + "; cleaned recording did not establish a journey.");
                     // Save any pending handoff before retiring the rejected leg, too.
                 } else {
                 journey.put("capture_route_samples", routeSamples);
-                JSONObject quality = CaptureQualityValidator.inspect(routeSamples, "walking".equals(savedMode) || "running".equals(savedMode));
+                JSONObject quality = CaptureQualityValidator.inspect(routeSamples, "walking".equals(persistedMode) || "running".equals(persistedMode));
                 journey.put("recording_quality", quality);
                 if (!quality.optBoolean("resolved")) routeDistance = 0;
                 journey.put("distance_meters", routeDistance);
@@ -1028,9 +1110,9 @@ public class CaptureService extends Service {
                         .put("coordinates", coordinates(routePoints)));
                 journey.put("processing", new JSONObject()
                         .put("import", "complete")
-                        .put("road_matching", roadMode(savedMode) ? "pending" : "not_required")
-                        .put("foot_matching", ("walking".equals(savedMode) || "running".equals(savedMode)) ? "pending" : "not_required")
-                        .put("cycle_matching", MatchingCoordinator.isCycle(savedMode) ? "pending" : "not_required"));
+                        .put("road_matching", roadMode(persistedMode) ? "pending" : "not_required")
+                        .put("foot_matching", ("walking".equals(persistedMode) || "running".equals(persistedMode)) ? "pending" : "not_required")
+                        .put("cycle_matching", MatchingCoordinator.isCycle(persistedMode) ? "pending" : "not_required"));
                 JourneyStore.save(getApplicationContext(), journey);
                 android.os.Bundle measurement = BetaMeasurement.journeyParameters(journey);
                 measurement.putLong("gps_points", savedGpsPointCount);
@@ -1038,7 +1120,7 @@ public class CaptureService extends Service {
                 MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
                         "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
                                 + "; distance_m: " + Math.round(routeDistance));
-                if (roadMode(savedMode) || "walking".equals(savedMode) || MatchingCoordinator.isCycle(savedMode)) {
+                if (roadMode(persistedMode) || "walking".equals(persistedMode) || "running".equals(persistedMode) || MatchingCoordinator.isCycle(persistedMode)) {
                     MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
                 }
                 }
@@ -1085,6 +1167,7 @@ public class CaptureService extends Service {
             String continueStationReason = stationEvidenceReason;
             nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null;
+            contextReason=null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
                     .remove(STATE_MODE)
@@ -1223,6 +1306,8 @@ public class CaptureService extends Service {
                 final boolean savedGpsStillness = gpsStillness;
                 final String savedStationReason = stationEvidenceReason, savedStationCode = stationEvidenceCode;
                 final String[] stationState = stationModel == null ? null : stationModel.checkpoint();
+                final String[] contextState=contextModel.checkpoint();
+                final String savedContextReason=contextReason;
                 captureIo.execute(() -> {
                     FileOutputStream output = null;
                     try {
@@ -1232,6 +1317,8 @@ public class CaptureService extends Service {
                         snapshot.put("gps_stillness", savedGpsStillness);
                         snapshot.put("station_reason", savedStationReason);
                         snapshot.put("station_code", savedStationCode);
+                        snapshot.put("context_state",new JSONArray(Arrays.asList(contextState)));
+                        snapshot.put("context_reason",savedContextReason);
                         if (stationState != null) snapshot.put("station_state", new JSONArray(Arrays.asList(stationState)));
                         output = checkpointFile.startWrite();
                         output.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));
@@ -1291,6 +1378,8 @@ public class CaptureService extends Service {
             stationarySince = snapshot.optLong("stationary_since", 0);
             automaticCapture = snapshot.optBoolean("automatic_capture", true);
             restoredStationState = snapshot.optJSONArray("station_state");
+            restoredContextState=snapshot.optJSONArray("context_state");
+            contextReason=snapshot.isNull("context_reason")?null:snapshot.optString("context_reason",null);
             stationEvidenceReason = snapshot.isNull("station_reason") ? null : snapshot.optString("station_reason", null);
             stationEvidenceCode = snapshot.isNull("station_code") ? null : snapshot.optString("station_code", null);
             points.clear();
@@ -1503,6 +1592,7 @@ public class CaptureService extends Service {
             } catch (Exception ignored) {}
         }
         captureIo.shutdown();
+        if(contextCache!=null)contextCache.close();
         super.onDestroy();
     }
 

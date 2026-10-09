@@ -104,7 +104,7 @@ jobs:
     if: >-
       (github.event_name == 'workflow_dispatch' && inputs.firebase_upload) ||
       (vars.ROADPRINTS_FIREBASE_UPLOAD == 'true' &&
-      (github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/main'))
+      (github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture' || github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -158,7 +158,7 @@ jobs:
 
   publish:
     needs: build
-    if: github.ref == 'refs/heads/feat/cycling-matcher' || github.ref == 'refs/heads/feat/firebase-beta-measurement'
+    if: github.ref == 'refs/heads/feat/cycling-matcher' || github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -180,7 +180,16 @@ jobs:
           version=$(python3 -c 'import re,pathlib; print(re.search(r"versionName = \"([^\"]+)\"", pathlib.Path("android-prototype/app/build.gradle.kts").read_text()).group(1))')
           tag="android-$version"
           cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
-          if [ "$GITHUB_REF_NAME" = "feat/firebase-beta-measurement" ]; then
+          if [ "$GITHUB_REF_NAME" = "feat/contextual-journey-capture" ]; then
+            cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
+          Contextual departure, travel, pause and arrival capture.
+          Uses asynchronous cached public building, parking, road, rail and outdoor map evidence.
+          Station dwell, rail departure and walking-away boundaries tolerate missing Android activity callbacks.
+          Preserves uncertain mixed-mode travel for review and checkpoints pending context transitions.
+          Includes sustained walk/run transitions and existing evidence-based service-station visits.
+          Android tests, lint and stable APK signature verification run before publication.
+          NOTES
+          elif [ "$GITHUB_REF_NAME" = "feat/firebase-beta-measurement" ]; then
             cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
           Signed Roadprints Android beta measurement update.
           Adds Firebase Analytics, Crashlytics and Performance Monitoring.

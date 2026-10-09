@@ -4,6 +4,20 @@ import java.util.List;
 
 /** Movement corroboration independent of Android's sometimes late activity labels. */
 final class CaptureMovementEvidence {
+    static boolean hasVehicleMovement(List<FootTraceValidator.Sample> samples) {
+        FootTraceValidator.Sample first=null,previous=null;int count=0;double path=0;
+        for(FootTraceValidator.Sample p:samples) {
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy>50||!Double.isFinite(p.speed)||p.speed<6
+                    ||previous!=null&&(!CaptureQualityValidator.reliable(previous,p,false)||p.time-previous.time>60000)) {
+                first=null;previous=null;count=0;path=0;continue;
+            }
+            if(first==null)first=p;
+            if(previous!=null)path+=CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous,p),(float)previous.accuracy,(float)p.accuracy);
+            previous=p;count++;
+            if(count>=3&&p.time-first.time>=20000&&path>=100)return true;
+        }
+        return false;
+    }
     static boolean hasJourneyMovement(List<FootTraceValidator.Sample> samples, String mode) {
         if (samples.size() < 3) return false;
         FootTraceValidator.Sample origin = null, previous = null;
