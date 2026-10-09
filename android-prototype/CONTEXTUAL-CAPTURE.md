@@ -1,4 +1,4 @@
-# Contextual capture (0.25.175)
+# Contextual capture (0.25.176)
 
 Capture uses departure, travel, pause and arrival evidence rather than requiring Android activity callbacks for every boundary. Decisions remain suggestions: users can correct modes in Journeys.
 

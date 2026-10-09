@@ -53,7 +53,7 @@ final class ContextMapCache {
                     connection=(HttpURLConnection)new URL("https://overpass-api.de/api/interpreter").openConnection();
                     connection.setConnectTimeout(6000); connection.setReadTimeout(16000);
                     connection.setRequestMethod("POST"); connection.setDoOutput(true);
-                    connection.setRequestProperty("User-Agent","Roadprints/0.25.175");
+                    connection.setRequestProperty("User-Agent","Roadprints/"+BuildConfig.VERSION_NAME);
                     connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
                     byte[] body=("data="+java.net.URLEncoder.encode(query,"UTF-8")).getBytes(StandardCharsets.UTF_8);
                     try(java.io.OutputStream out=connection.getOutputStream()){out.write(body);}

@@ -407,7 +407,7 @@ public class CaptureService extends Service {
             currentActivityAtMs=System.currentTimeMillis();
             currentActivity = activityType == DetectedActivity.IN_VEHICLE ? "vehicle"
                     : (activityType == DetectedActivity.STILL ? "still"
-                    : (modeForActivity(activityType) != null && "walking".equals(modeForActivity(activityType)) ? "walking" : "unknown"));
+                    : (("walking".equals(modeForActivity(activityType)) || "running".equals(modeForActivity(activityType))) ? "walking" : "unknown"));
             if (stationModel != null) stationModel.activity(currentActivity, System.currentTimeMillis(), points.size()-1);
         }
         if (!entering) {
@@ -630,9 +630,9 @@ public class CaptureService extends Service {
         // IN_VEHICLE. Keep this unclassified until the user confirms transport.
         if (activityType == DetectedActivity.IN_VEHICLE) return "unknown";
         if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
+        if (activityType == DetectedActivity.RUNNING) return "running";
         if (activityType == DetectedActivity.WALKING
-                || activityType == DetectedActivity.ON_FOOT
-                || activityType == DetectedActivity.RUNNING) {
+                || activityType == DetectedActivity.ON_FOOT) {
             return "walking";
         }
         return null;

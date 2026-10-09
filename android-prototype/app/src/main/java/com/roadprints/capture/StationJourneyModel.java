@@ -55,7 +55,7 @@ final class StationJourneyModel {
             walkMetres+=Math.max(0,step-(lastAccuracy+accuracy)*.35); walkingSamples++;
         }
         lastTime=time; lastLat=lat; lastLon=lon; lastAccuracy=accuracy;
-        if (!"walking".equals(mode) && !"unknown".equals(mode) && !"train".equals(mode)) return null;
+        if (!"walking".equals(mode) && !"running".equals(mode) && !"unknown".equals(mode) && !"train".equals(mode)) return null;
         if (nearby!=null && speed<=3 && !departedFromStation && (station==null || !nearby.code.equals(station.code))) {
             station=nearby; arrivalIndex=index; arrivalTime=time; stopEvidence="still".equals(activity);
             fastSince=0; departureIndex=-1; departedFromStation=false; departureConfirmed=false; walkIndex="walking".equals(activity)?index:-1; walkMetres=0; walkingSamples=0;
@@ -104,7 +104,7 @@ final class StationJourneyModel {
         if (departureConfirmed && fromStation>station.radius+400
                 && stopEvidence && (("vehicle".equals(activity) && time-activitySince>=15000) || railDeparture)
                 && time-arrivalTime>=60000 && !"train".equals(mode)) {
-            if ("walking".equals(mode))
+            if ("walking".equals(mode) || "running".equals(mode))
                 return new Decision(Math.max(1,arrivalIndex),Math.max(1,departureIndex),"train",station.code,"station_boarding_departure");
             // Origin, dwell, activity and sustained departure support a train suggestion.
             // Existing transport confirmation remains required, including possible car/bus departures.
@@ -120,14 +120,14 @@ final class StationJourneyModel {
         return "train".equals(mode) || (station!=null && stopEvidence && now-arrivalTime<45*60000L);
     }
     boolean ownsModeChange(String mode) {
-        return "train".equals(mode) || (station!=null && stopEvidence && "walking".equals(mode));
+        return "train".equals(mode) || (station!=null && stopEvidence && ("walking".equals(mode)||"running".equals(mode)));
     }
     void clearStation() {
         station=null; arrivalIndex=-1; arrivalTime=0; stopEvidence=false; departedFromStation=false; departureConfirmed=false;
         departureIndex=-1; fastSince=0; walkIndex=-1; walkMetres=0; walkingSamples=0;
         quietSince=0;railSince=0;footSince=0;quietIndex=-1;footIndex=-1;railSamples=0;footSamples=0;footMetres=0;
     }
-    int stationaryEndIndex(String mode) { return "walking".equals(mode) && stopEvidence ? arrivalIndex : -1; }
+    int stationaryEndIndex(String mode) { return ("walking".equals(mode)||"running".equals(mode)) && stopEvidence ? arrivalIndex : -1; }
     String currentActivity() { return activity; }
     String[] checkpoint() {
         return new String[]{stationCode(),String.valueOf(arrivalIndex),String.valueOf(arrivalTime),
