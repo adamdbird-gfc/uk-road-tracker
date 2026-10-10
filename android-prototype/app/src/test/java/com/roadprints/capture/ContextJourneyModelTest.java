@@ -22,7 +22,7 @@ public class ContextJourneyModelTest {
     @Test public void buildingArrivalUsesStartOfDwell() {
         ContextJourneyModel m=new ContextJourneyModel();fix(m,"driving",0,1000,-200,10,"road",false);
         ContextJourneyModel.Decision d=null;
-        for(int i=1;i<=19;i++)d=fix(m,"driving",i,1000+i*10000,0,0,"building",false);
+        for(int i=1;i<=7;i++)d=fix(m,"driving",i,1000+i*10000,0,0,"building",false);
         assertNotNull(d);assertNull(d.nextMode);assertEquals(1,d.boundary);assertEquals("arrival_building",d.reason);
     }
     @Test public void aNearbyStationDoesNotEndAThroughTrain() {
@@ -76,6 +76,20 @@ public class ContextJourneyModelTest {
         ContextJourneyModel.Decision d=null;
         for(int i=4;i<7;i++)d=fix(recovered,"walking",i,1000+i*10000,i*30,3,"park",false);
         assertNotNull(d);assertEquals("running",d.nextMode);assertEquals(1,d.boundary);
+    }
+    @Test public void networkFixesDoNotCancelVehicleTransition() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        assertNull(fix(m,"walking",0,1000,0,1,"unknown",false));
+        ContextJourneyModel.Decision d=null;
+        for(int i=1;i<=5;i++) {
+            d=fix(m,"walking",i*2,1000+i*10000,i*100,10,"unknown",false);
+            assertNull(m.sample("walking",i*2+1,1500+i*10000,51.5,-.1,20,-1,context("unknown"),false));
+        }
+        assertNotNull(d);assertEquals("unknown",d.nextMode);assertEquals(2,d.boundary);
+    }
+    @Test public void destinationNeedsAccurateStoppedEvidence() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        for(int i=0;i<20;i++)assertNull(m.sample("driving",i,1000+i*10000,51.5,-.1,40,0,context("building"),false));
     }
     @Test public void parallelRoadAndRailRemainUncertain() {
         ContextJourneyModel m=new ContextJourneyModel();ContextMap.Evidence e=context("rail");e.road=true;

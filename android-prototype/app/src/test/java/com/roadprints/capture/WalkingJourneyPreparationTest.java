@@ -21,7 +21,7 @@ public class WalkingJourneyPreparationTest {
             double metres=i==0?-20:i<7?i*40:240+i%3;
             coords.put(new JSONArray().put(metres/111195).put(0));
             samples.put(new JSONArray().put(metres/111195).put(0).put(i==0?178:10)
-                    .put(i==0?0:100000+i*30000).put(1));
+                    .put(i==0?0:100000+i*30000).put(i<7?1:0));
         }
         JSONObject j=journey("android_activity_capture")
                 .put("raw_capture_samples",samples).put("capture_route_samples",samples)

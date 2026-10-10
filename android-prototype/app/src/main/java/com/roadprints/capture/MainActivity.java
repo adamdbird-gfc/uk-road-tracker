@@ -143,6 +143,10 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updateDebugLink();
+        if (CaptureService.isArmed(this) && getSharedPreferences("roadprints_capture_state",MODE_PRIVATE)
+                .contains("tracking_blocked")) {
+            startForegroundService(new Intent(this,CaptureService.class).setAction(CaptureService.ACTION_ARM));
+        }
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
             tracking = CaptureService.isArmed(this);
@@ -737,8 +741,16 @@ public class MainActivity extends Activity {
 
     private void editJourney(JSONObject journey) {
         Spinner reviewSpinner = new Spinner(this);
-        reviewSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+        ArrayAdapter<String> transportAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,MODE_LABELS) {
+            @Override public android.view.View getView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(16,16,16,16);return text;
+            }
+            @Override public android.view.View getDropDownView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getDropDownView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setBackgroundColor(0xFF233B78);return text;
+            }
+        };
+        reviewSpinner.setAdapter(transportAdapter);
+        reviewSpinner.setBackgroundColor(0xFF233B78);
         reviewSpinner.setSelection(modeIndex(journey.optString("mode", "driving")));
 
         double metres = journey.optDouble("distance_meters", 0);
@@ -886,8 +898,16 @@ public class MainActivity extends Activity {
 
         String currentMode = journey.optString("mode", "driving");
         Spinner reviewSpinner = new Spinner(this);
-        reviewSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+        ArrayAdapter<String> transportAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,MODE_LABELS) {
+            @Override public android.view.View getView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(16,16,16,16);return text;
+            }
+            @Override public android.view.View getDropDownView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getDropDownView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setBackgroundColor(0xFF233B78);return text;
+            }
+        };
+        reviewSpinner.setAdapter(transportAdapter);
+        reviewSpinner.setBackgroundColor(0xFF233B78);
         reviewSpinner.setSelection(modeIndex(currentMode));
 
         LinearLayout container = new LinearLayout(this);
@@ -910,7 +930,7 @@ public class MainActivity extends Activity {
         container.addView(message);
         container.addView(reviewSpinner);
 
-        new AlertDialog.Builder(this)
+        RoadprintsDialog.show(new AlertDialog.Builder(this)
                 .setTitle("Review journey")
                 .setView(container)
                 .setNegativeButton("Later", null)
@@ -932,8 +952,7 @@ public class MainActivity extends Activity {
                             });
                         }
                     });
-                })
-                .show();
+                }));
     }
 
     private int modeIndex(String value) {

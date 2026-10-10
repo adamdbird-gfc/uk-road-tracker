@@ -26,7 +26,7 @@ final class WalkingCaptureEvidence {
         List<FootTraceValidator.Sample> retained=new ArrayList<>();
         for(FootTraceValidator.Sample p:input) {
             if(endpoint>=0 && p.index>endpoint) { tail++; continue; }
-            if(!WalkingStillnessDetector.usable(p)) { rejected++; continue; }
+            if(!WalkingStillnessDetector.usable(p) || p.accuracy>50) { rejected++; continue; }
             retained.add(p);
         }
         FootTraceValidator.Result checked=FootTraceValidator.validate(retained);
