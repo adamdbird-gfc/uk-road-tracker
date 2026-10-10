@@ -76,6 +76,17 @@ public class DrivingJourneyPreparationTest {
         try { DrivingJourneyPreparation.validateDistance(new JSONObject().put("matched_distance_m",2000),points);fail(); }
         catch(IllegalStateException expected) { }
     }
+    @Test public void partialCaptureRequiresVerifiedDistanceAndCompleteAccounting() throws Exception {
+        JSONArray points=new JSONArray().put(point(0,0)).put(point(400,0)).put(point(1000,0));
+        JSONObject result=partial(3,1).put("matched_distance_m",1000).put("matched_distance_is_deduplicated",true);
+        assertTrue(DrivingJourneyPreparation.supportedPartial(result,points));
+        result.put("matched_distance_is_deduplicated",false);
+        assertFalse(DrivingJourneyPreparation.supportedPartial(result,points));
+        result.put("matched_distance_is_deduplicated",true).put("matched_distance_m",1500);
+        assertFalse(DrivingJourneyPreparation.supportedPartial(result,points));
+        result.put("matched_distance_m",1000).put("matched_tracepoints",3);
+        assertFalse(DrivingJourneyPreparation.supportedPartial(result,points));
+    }
     @Test public void repeatedCoordinatesWithVehicleSpeedCannotConfirmArrival() {
         WalkingStillnessDetector detector=new WalkingStillnessDetector();
         for(int i=0;i<=12;i++) detector.accept(new FootTraceValidator.Sample(0,0,5,100000+i*30000,10,i),true);

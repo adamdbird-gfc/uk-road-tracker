@@ -226,6 +226,32 @@ public class MatchingCoordinatorTest {
         return route().put("matching_mode", "cycling").put("matched_distance_m", 100)
                 .put("matched_distance_is_deduplicated", true);
     }
+    @Test public void verifiedCapturePartialIsSavedAndRawRecordingIsPreserved() throws Exception {
+        JSONArray coords=new JSONArray(),samples=new JSONArray(),matched=new JSONArray();
+        for(int i=0;i<10;i++) {
+            coords.put(new JSONArray().put(.3+i*.0015).put(51.4));
+            samples.put(new JSONArray().put(.3+i*.0015).put(51.4).put(5).put(100000+i*10000).put(10));
+            if(i!=5)matched.put(i);
+        }
+        JSONObject journey=new JSONObject().put("journey_id","partial-capture").put("mode","driving")
+                .put("source",new JSONObject().put("type","android_activity_capture"))
+                .put("processing_status","pending").put("distance_meters",950)
+                .put("capture_route_samples",samples).put("raw_capture_samples",samples)
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords));
+        JourneyStore.save(app,journey);
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->route().put("input_points",10)
+                .put("matched_tracepoints",9).put("matched_point_indices",matched)
+                .put("unmatched_point_indices",new JSONArray().put(5)).put("failed_sections",new JSONArray())
+                .put("matched_distance_m",900).put("matched_distance_is_deduplicated",true));
+        coordinator.start("partial-capture");await(MatchingCoordinator.State.COMPLETE);
+        JSONObject stored=JourneyStore.get(app,"partial-capture");
+        assertEquals("complete",stored.getString("processing_status"));
+        assertTrue(stored.getJSONObject("processing_result").getBoolean("capture_partial_match"));
+        assertEquals(900,stored.getDouble("distance_meters"),0);
+        assertEquals(950,stored.getDouble("original_distance_meters"),0);
+        assertEquals(samples.toString(),stored.getJSONArray("raw_capture_samples").toString());
+        assertEquals(coords.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+    }
     @Test public void cyclingUsesSeparateEndpointAndStageWithoutCallingRoadOrFoot() throws Exception {
         save("cycle", "cycling", "pending"); save("bicycle", "bicycle", "pending");
         AtomicInteger calls = new AtomicInteger();

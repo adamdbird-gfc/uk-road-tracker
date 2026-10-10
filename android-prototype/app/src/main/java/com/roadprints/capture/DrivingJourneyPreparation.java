@@ -103,4 +103,14 @@ final class DrivingJourneyPreparation {
         if(!Double.isFinite(matched) || matched<=0 || matched>Math.max(recorded*1.4,recorded+300))
             throw new IllegalStateException("Matched drive exceeds its GPS distance evidence. The original recording is preserved.");
     }
+
+    static boolean supportedPartial(JSONObject result, JSONArray points) throws Exception {
+        if (!TimelineRoadPreparation.importPartial(result, points)) return false;
+        double recorded=0;
+        for(int i=1;i<points.length();i++) recorded+=TimelineRoadPreparation.distance(points.getJSONObject(i-1),points.getJSONObject(i));
+        // Verified, separate router sections may count; an inflated or
+        // unverified aggregate must never be admitted by percentage alone.
+        return result.optDouble("matched_distance_m",Double.POSITIVE_INFINITY)
+                <=Math.max(recorded*1.2,recorded+300);
+    }
 }

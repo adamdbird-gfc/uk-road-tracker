@@ -380,13 +380,16 @@ public final class MatchingCoordinator {
                     if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
                 }
                 JSONArray failures = sectionResult.optJSONArray("failed_sections");
-                boolean supportedPartial = timelineImport
-                        && TimelineRoadPreparation.importPartial(sectionResult, submitted);
+                boolean capturedPartial = capturedDrive
+                        && DrivingJourneyPreparation.supportedPartial(sectionResult, submitted);
+                boolean supportedPartial = capturedPartial || (timelineImport
+                        && TimelineRoadPreparation.importPartial(sectionResult, submitted));
                 if (supportedPartial) {
-                    sectionResult.put("timeline_partial_match", true).put("partial_match_reason", "incomplete_timeline_data");
-                    if (TimelineRoadPreparation.endpointPartial(sectionResult, submitted)) sectionResult.put("endpoint_partial_match", true);
+                    sectionResult.put(capturedPartial ? "capture_partial_match" : "timeline_partial_match", true)
+                            .put("partial_match_reason", capturedPartial ? "unmatched_capture_samples" : "incomplete_timeline_data");
+                    if (!capturedPartial && TimelineRoadPreparation.endpointPartial(sectionResult, submitted)) sectionResult.put("endpoint_partial_match", true);
                     acceptedEndpointPartial = true; road.changed = true;
-                    road.details.put("timeline_partial_match", true);
+                    road.details.put(capturedPartial ? "capture_partial_match" : "timeline_partial_match", true);
                 }
                 if (!hasRoute(sectionResult)
                         || (!supportedPartial && shouldRejectMatchResult(sectionResult.optInt("matched_tracepoints", submitted.length()),
@@ -416,6 +419,8 @@ public final class MatchingCoordinator {
                     || matched > Math.max(walking.distance * 1.6, walking.distance + 300)) {
                 throw new IllegalStateException("Matched walking route is substantially longer than the validated GPS evidence. The original recording is preserved.");
             }
+            if (walking.details.optInt("vehicle_tail_points")>0)
+                result.put("capture_partial_match",true).put("partial_match_reason","vehicle_tail_excluded");
         }
         if (cycle) {
             double matchedDistance = result.optDouble("matched_distance_m", -1);
@@ -465,7 +470,14 @@ public final class MatchingCoordinator {
             stored.put("road_preparation", road.details).put("distance_meters", distance)
                     .put("distance_source", "validated_road_sections");
         }
-        if (capturedDrive) stored.put("road_preparation",road.details);
+        if (capturedDrive) {
+            stored.put("road_preparation",road.details);
+            if(result.optBoolean("capture_partial_match")) {
+                if(!stored.has("original_distance_meters"))stored.put("original_distance_meters",stored.optDouble("distance_meters",0));
+                stored.put("distance_meters",result.getDouble("matched_distance_m"))
+                        .put("distance_source","validated_road_sections");
+            }
+        }
         if (walking != null && walking.validated) {
             if (!stored.has("original_distance_meters"))
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
