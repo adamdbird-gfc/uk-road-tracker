@@ -833,7 +833,6 @@ public class CaptureService extends Service {
                 "Mode: " + confirmedMode + "; uncertainty-adjusted path distance reached start threshold.");
         List<Location> seedPoints = new ArrayList<>(candidatePoints);
         cancelStartCandidate(null);
-        clearDepartureAnchor();
         automaticCapture = true;
         activateCapture(confirmedMode, confirmedStart, seedPoints);
     }
@@ -871,6 +870,7 @@ public class CaptureService extends Service {
         anchor.setLatitude(preferences.getLong("departure_lat_e7", 0L) / 10_000_000.0);
         anchor.setLongitude(preferences.getLong("departure_lng_e7", 0L) / 10_000_000.0);
         anchor.setAccuracy(preferences.getFloat("departure_accuracy", 25f));
+        anchor.setTime(preferences.getLong("departure_time",0));
         departureAnchor = anchor;
     }
 
@@ -878,11 +878,12 @@ public class CaptureService extends Service {
         departureAnchor = anchor == null ? null : new Location(anchor);
         SharedPreferences.Editor editor = getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit();
         if (anchor == null) {
-            editor.remove("departure_lat_e7").remove("departure_lng_e7").remove("departure_accuracy");
+            editor.remove("departure_lat_e7").remove("departure_lng_e7").remove("departure_accuracy").remove("departure_time");
         } else {
             editor.putLong("departure_lat_e7", Math.round(anchor.getLatitude() * 10_000_000.0))
                     .putLong("departure_lng_e7", Math.round(anchor.getLongitude() * 10_000_000.0))
-                    .putFloat("departure_accuracy", anchor.hasAccuracy() ? anchor.getAccuracy() : 25f);
+                    .putFloat("departure_accuracy", anchor.hasAccuracy() ? anchor.getAccuracy() : 25f)
+                    .putLong("departure_time",anchor.getTime());
         }
         editor.apply();
     }
@@ -908,6 +909,14 @@ public class CaptureService extends Service {
             restoredStationState = null;
             currentActivity = stationModel.currentActivity();
         } else {
+            // A previous confirmed station arrival supplies origin context,
+            // while only new movement belongs to this journey's geometry.
+            if(departureAnchor!=null && departureAnchor.getTime()>0 && !points.isEmpty()
+                    && points.get(0).getTime()-departureAnchor.getTime()<3*60*60*1000L) {
+                stationModel.sample("unknown",0,departureAnchor.getTime(),departureAnchor.getLatitude(),
+                        departureAnchor.getLongitude(),departureAnchor.getAccuracy(),0);
+                stationModel.activity("still",departureAnchor.getTime(),0);
+            }
             // Seed station origin from reliable retained candidate points, without making a split.
             for (int i=0;i<points.size();i++) {
                 Location point=points.get(i);
@@ -928,6 +937,7 @@ public class CaptureService extends Service {
                 location.hasAccuracy()?location.getAccuracy():Float.POSITIVE_INFINITY,
                 location.hasSpeed()?location.getSpeed():-1,
                 map.rail&&!map.road,map.available);
+        if(decision==null)decision=stationModel.arrivalBoundary(mode,location.getTime());
         if (decision==null) return;
         stationEvidenceReason=decision.reason; stationEvidenceCode=decision.stationCode;
         MovementDiagnostics.recordEvent(this,"station_transition_confirmed",
@@ -938,7 +948,10 @@ public class CaptureService extends Service {
             getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
             return;
         }
-        prepareStationSplit(decision.endIndex,decision.startIndex,decision.nextMode);
+        if(decision.nextMode==null) {
+            stationEndIndex=Math.min(decision.endIndex,points.size()-1);
+            stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
+        } else prepareStationSplit(decision.endIndex,decision.startIndex,decision.nextMode);
         finishCapture();
     }
 

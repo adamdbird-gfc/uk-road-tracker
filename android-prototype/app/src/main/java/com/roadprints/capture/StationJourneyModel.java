@@ -49,7 +49,9 @@ final class StationJourneyModel {
         RailStationCatalog.Station nearby=catalog.nearest(lat,lon,accuracy);
         double step=lastTime==0 ? 0 : RailStationCatalog.metres(lastLat,lastLon,lat,lon);
         long gap=time-lastTime;
-        if (!Float.isFinite(speed) || speed<0) speed=gap>0 && gap<=120000 ? (float)(step*1000/gap) : 0;
+        // Network positions may corroborate location, but not cancel pending
+        // GPS departure/alighting evidence with an inferred jitter speed.
+        if (!Float.isFinite(speed) || speed<0) return null;
         // Large jumps are not walking evidence even when GPS claims good accuracy.
         if ("walking".equals(activity) && walkIndex>=0 && speed<=3 && gap>0 && gap<=60000 && step<=100) {
             walkMetres+=Math.max(0,step-(lastAccuracy+accuracy)*.35); walkingSamples++;
@@ -114,6 +116,12 @@ final class StationJourneyModel {
         if (!"train".equals(mode) && fromStation>station.radius+200 && speed<3 && fastSince==0 && !departureConfirmed) clearStation();
         // Through trains discard the old stop evidence once they leave its area.
         if ("train".equals(mode) && fromStation>station.radius+400 && speed>=6) clearStation();
+        return null;
+    }
+    Decision arrivalBoundary(String mode,long now) {
+        if(("walking".equals(mode)||"running".equals(mode)) && station!=null
+                && quietSince>0 && now-quietSince>=60000 && quietIndex>=1 && stopEvidence)
+            return new Decision(quietIndex,quietIndex,null,station.code,"station_arrival_waiting");
         return null;
     }
     boolean holdStill(String mode, long now) {
