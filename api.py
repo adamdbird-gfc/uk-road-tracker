@@ -96,11 +96,11 @@ class SettlementInventoryRequest(BaseModel):
 class SettlementMetadataRequest(BaseModel):
     names: List[str] = Field(min_length=1, max_length=500)
 
-def chunk_points(points, chunk_size=OSRM_CHUNK_SIZE):
+def chunk_points(points, chunk_size=OSRM_CHUNK_SIZE, overlap=OSRM_CHUNK_OVERLAP):
     if len(points) <= chunk_size:
         return [points]
     chunks = []
-    step = max(1, chunk_size - OSRM_CHUNK_OVERLAP)
+    step = max(1, chunk_size - overlap)
     start = 0
     while start < len(points):
         end = min(len(points), start + chunk_size)
@@ -424,7 +424,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 1, "cycling_match_version": 1, "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -677,7 +677,11 @@ async def match_payload(
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
 
-    chunks = chunk_points(payload.points, chunk_size)
+    # Share a waypoint, never a travelled interval, for captured-road recovery.
+    # Dropped waypoints otherwise give overlapping chunks differently bounded
+    # legs whose distances cannot safely be deduplicated.
+    overlap = 1 if road_recovery else OSRM_CHUNK_OVERLAP
+    chunks = chunk_points(payload.points, chunk_size, overlap)
     features = []
     motorway_features = []
     a_road_features = []
@@ -699,7 +703,7 @@ async def match_payload(
             for chunk_index, chunk in enumerate(chunks):
                 if chunk_index and polite_delay_seconds:
                     await asyncio.sleep(polite_delay_seconds)
-                chunk_start = chunk_index * max(1, chunk_size - OSRM_CHUNK_OVERLAP)
+                chunk_start = chunk_index * max(1, chunk_size - overlap)
                 data, radius_used, chunk_failures = await match_chunk_resiliently(
                     client,
                     chunk,
@@ -791,7 +795,7 @@ async def match_payload(
                                 other_road_distance_m += float(step.get("distance") or 0.0)
 
                 tracepoints = data.get("tracepoints") or []
-                chunk_start = chunk_index * max(1, chunk_size - OSRM_CHUNK_OVERLAP)
+                chunk_start = chunk_index * max(1, chunk_size - overlap)
                 matched_input_indices.update(
                     chunk_start + index for index in data.get("matched_point_indices") or []
                     if chunk_start + index < len(payload.points)
