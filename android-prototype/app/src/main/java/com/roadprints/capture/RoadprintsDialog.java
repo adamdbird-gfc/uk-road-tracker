@@ -54,7 +54,8 @@ final class RoadprintsDialog {
         }
         if(content!=null)body.addView(content);
         scroll.addView(body);panel.addView(scroll);
-        AlertDialog dialog=new AlertDialog.Builder(context).setView(panel,0,0,0,0).create();
+        AlertDialog dialog=new AlertDialog.Builder(context).create();
+        dialog.setView(panel,0,0,0,0);
         close.setOnClickListener(v->dialog.dismiss());
         addAction(context,panel,dialog,primaryLabel,primaryAction,true);
         if(secondaryLabel!=null)addAction(context,panel,dialog,secondaryLabel,secondaryAction,false);
