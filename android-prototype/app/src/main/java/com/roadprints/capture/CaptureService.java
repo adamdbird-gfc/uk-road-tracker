@@ -131,6 +131,26 @@ public class CaptureService extends Service {
 
     private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
     private AtomicFile checkpointFile;
+    private long lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
+    private final Runnable samplingWatchdog=new Runnable() {
+        @Override public void run() {
+            if(isArmed(CaptureService.this) && !captureFinishing
+                    && android.os.SystemClock.elapsedRealtime()-lastReliableSampleAt>90_000L) {
+                MovementDiagnostics.recordEvent(CaptureService.this,"sampling_refresh_after_silence",
+                        "No recent accurate fix; refreshing subscriptions. Missing travel remains uncredited.");
+                try {
+                    locationManager.removeUpdates(locationListener);
+                    diagnosticUpdatesRegistered=false;
+                    if(isActive(CaptureService.this))requestCaptureLocationUpdates();
+                    else refreshDiagnosticLocationUpdates();
+                } catch(SecurityException error) {
+                    broadcastUpdate("Location access is needed to resume tracking.");
+                }
+                lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
+            }
+            handler.postDelayed(this,60_000L);
+        }
+    };
     private final Runnable finishIfStill = () -> {
         if (isActive(this) && stationarySince != 0
                 && CaptureStartGate.shouldEndAfterStillness(System.currentTimeMillis() - stationarySince)) {
@@ -178,6 +198,9 @@ public class CaptureService extends Service {
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            if(location.hasAccuracy() && location.getAccuracy()<=50
+                    && Math.abs(System.currentTimeMillis()-location.getTime())<=60_000L)
+                lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
             if (captureFinishing) {
                 if (nextCapturePoints != null) nextCapturePoints.add(new Location(location));
                 return;
@@ -257,6 +280,7 @@ public class CaptureService extends Service {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
         createNotificationChannel();
+        handler.postDelayed(samplingWatchdog,60_000L);
         contextCache=new ContextMapCache(this);
         restoreDepartureAnchor();
         if (isActive(this)) restoreActiveCapture();
@@ -298,7 +322,7 @@ public class CaptureService extends Service {
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
         } else if (ACTION_DIAGNOSTICS_CHANGED.equals(action)) {
-            if (isArmed(this)) startForegroundWithNotification();
+            if (isArmed(this) && !startForegroundWithNotification()) return START_NOT_STICKY;
             refreshDiagnosticLocationUpdates();
         } else if (ACTION_ACTIVITY.equals(action)) {
             if (!isArmed(this) && !isActive(this)) {
@@ -309,7 +333,7 @@ public class CaptureService extends Service {
             }
             // Promote before processing the event. Candidate detection may wait for GPS points
             // and previously left this startForegroundService() request unpromoted.
-            startForegroundWithNotification();
+            if (!startForegroundWithNotification()) return START_NOT_STICKY;
             handleTransition(
                     intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
                     intent.getIntExtra(EXTRA_TRANSITION, -1));
@@ -329,7 +353,7 @@ public class CaptureService extends Service {
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, true)
                 .apply();
-        startForegroundWithNotification();
+        if (!startForegroundWithNotification()) return;
         MovementDiagnostics.recordEvent(this, "tracking_armed", "Automatic tracking enabled.");
         refreshDiagnosticLocationUpdates();
 
@@ -674,7 +698,7 @@ public class CaptureService extends Service {
         resetStationModel();
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ACTIVE, true).putString(STATE_MODE, mode).apply();
-        startForegroundWithNotification();
+        if (!startForegroundWithNotification()) return;
         try {
             requestCaptureLocationUpdates();
             scheduleCaptureCheckpoint();
@@ -1035,7 +1059,9 @@ public class CaptureService extends Service {
                 double routeDistance = routePoints.size() < savedPoints.size()
                         ? routeDistanceMetres(routePoints) : savedDistanceMetres;
                 List<Location> chronologicalPoints = new ArrayList<>();
+                long routeEndTime=Instant.parse(savedEndedAt).toEpochMilli();
                 for (Location point : routePoints) {
+                    if (point.getTime()>routeEndTime) continue;
                     if (!WalkingStillnessDetector.usable(footSample(point, 0))) continue;
                     if (!chronologicalPoints.isEmpty()
                             && point.getTime() <= chronologicalPoints.get(chronologicalPoints.size()-1).getTime()) continue;
@@ -1417,7 +1443,7 @@ public class CaptureService extends Service {
                     stationaryAnchor=new Location(points.get(anchor.index));
                 }
             }
-            startForegroundWithNotification();
+            if (!startForegroundWithNotification()) return;
             scheduleCaptureCheckpoint();
             if (stationarySince > 0) {
                 long remaining = Math.max(1L, STILLNESS_END_THRESHOLD_MS
@@ -1522,13 +1548,28 @@ public class CaptureService extends Service {
         activityPendingIntent = null;
     }
 
-    private void startForegroundWithNotification() {
+    private boolean startForegroundWithNotification() {
+        try {
         Notification notification = buildNotification();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
         } else {
             startForeground(NOTIFICATION_ID, notification);
+        }
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().remove("tracking_blocked").apply();
+        return true;
+        } catch (RuntimeException error) {
+            if (!(error instanceof SecurityException)
+                    && !"ForegroundServiceStartNotAllowedException".equals(error.getClass().getSimpleName())) throw error;
+            // Retain the last checkpoint and active preference for a visible-app
+            // retry. Never turn a permission/start refusal into data deletion.
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit()
+                    .putString("tracking_blocked",error.getClass().getSimpleName()).apply();
+            MovementDiagnostics.recordEvent(this,"tracking_start_blocked",error.getClass().getSimpleName());
+            broadcastUpdate("Tracking paused by Android. Open Roadprints to resume; check background location access in Permissions.");
+            stopSelf();
+            return false;
         }
     }
 
@@ -1583,6 +1624,7 @@ public class CaptureService extends Service {
     @Override
     public void onDestroy() {
         removeActivityUpdates();
+        handler.removeCallbacks(samplingWatchdog);
         handler.removeCallbacks(checkpointCapture);
         handler.removeCallbacks(diagnosticWindowExpiry);
         clearPendingActivityMode();

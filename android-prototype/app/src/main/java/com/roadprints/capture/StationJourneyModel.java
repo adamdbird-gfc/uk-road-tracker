@@ -108,7 +108,7 @@ final class StationJourneyModel {
                 return new Decision(Math.max(1,arrivalIndex),Math.max(1,departureIndex),"train",station.code,"station_boarding_departure");
             // Origin, dwell, activity and sustained departure support a train suggestion.
             // Existing transport confirmation remains required, including possible car/bus departures.
-            return new Decision(-1,-1,"train",station.code,"station_departure_train_suggestion");
+            return new Decision(Math.max(1,departureIndex),Math.max(1,departureIndex),"train",station.code,"station_departure_train_suggestion");
         }
         // Walking past the station must not leave a stale boarding candidate behind.
         if (!"train".equals(mode) && fromStation>station.radius+200 && speed<3 && fastSince==0 && !departureConfirmed) clearStation();

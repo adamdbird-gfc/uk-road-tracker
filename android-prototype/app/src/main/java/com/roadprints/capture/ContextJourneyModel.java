@@ -18,7 +18,12 @@ final class ContextJourneyModel {
         if(!Float.isFinite(accuracy)||accuracy<=0||accuracy>50||time<=lastTime)return null;
         double step=lastTime==0?0:RailStationCatalog.metres(lastLat,lastLon,lat,lon);
         long gap=time-lastTime;
-        if(!Float.isFinite(speed)||speed<0) speed=gap>0&&gap<=60000?(float)(step*1000/gap):0;
+        boolean measuredSpeed=Float.isFinite(speed)&&speed>=0;
+        if(!measuredSpeed) {
+            // Network jitter is not a vote against a pending GPS mode change.
+            // Leave the previous trusted observation and proposal intact.
+            return null;
+        }
         boolean plausible=lastTime==0 || (gap>0&&step/gap*1000<80);
         float previousAccuracy=lastAccuracy;
         lastLat=lat;lastLon=lon;lastTime=time;lastAccuracy=accuracy;
@@ -29,7 +34,7 @@ final class ContextJourneyModel {
             }
             pauseContext=context;
             clearProposal();
-            if(!atStation && !"train".equals(mode) && context.destination && time-pauseSince>=180000)
+            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=60000)
                 return new Decision(Math.max(1,pauseIndex),null,"arrival_"+context.kind);
             return null;
         }
@@ -37,7 +42,7 @@ final class ContextJourneyModel {
             // A new departure confirms the preceding stay. Ordinary road/rail
             // pauses remain one journey; unknown places require a longer dwell.
             long dwell=time-pauseSince;
-            if(!atStation && !"train".equals(mode) && dwell>=180000 && pauseContext.destination) {
+            if(!atStation && !"train".equals(mode) && dwell>=60000 && pauseContext.destination) {
                 Decision d=new Decision(Math.max(1,pauseIndex),mode,"departure_after_place_stay");pauseSince=0;clearProposal();return d;
             }
             pauseSince=0;pauseIndex=-1;
@@ -52,7 +57,7 @@ final class ContextJourneyModel {
         else if("unknown".equals(mode) && context.rail && !context.road && speed>=6) suggested="train";
         if(suggested.isEmpty()){clearProposal();return null;}
         if(!suggested.equals(proposal)||gap>60000) {
-            proposal=suggested;proposalSince=time;proposalIndex=Math.max(1,index-1);proposalSamples=0;path=0;
+            proposal=suggested;proposalSince=time;proposalIndex=Math.max(1,index);proposalSamples=0;path=0;
         }
         proposalSamples++;path+=Math.max(0,step-(accuracy+previousAccuracy)*.35);
         long duration=("running".equals(suggested)||"walking".equals(mode)&&"walking".equals(suggested))?60000:40000;

@@ -14,6 +14,12 @@ final class WalkingStillnessDetector {
         if (!usable(point) || point.accuracy>50) return;
         if (latest!=null && point.time<=latest.time) return;
         if (latest!=null && !CaptureQualityValidator.reliable(latest,point,!road)) return;
+        // Dwell requires a measured stop. Uncertainty circles and network
+        // positions alone must not erase a real short walk during cleanup.
+        if (!Double.isFinite(point.speed) || point.speed<0) return;
+        if (point.speed>.8) {
+            anchor=point; latest=point; observations=1; confirmed=false; movement=0; return;
+        }
         // A repeated coordinate with reported vehicle motion is not arrival evidence.
         if (road && Double.isFinite(point.speed) && point.speed>=2.5) {
             anchor=point; latest=point; observations=1; confirmed=false; movement=0; return;

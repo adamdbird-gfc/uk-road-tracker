@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 
 public class WalkingCaptureEvidenceTest {
     private FootTraceValidator.Sample p(double metres,double accuracy,long time,int index) {
-        return new FootTraceValidator.Sample(metres/111195,0,accuracy,time,1,index);
+        return new FootTraceValidator.Sample(metres/111195,0,accuracy,time,0,index);
     }
     @Test public void stationaryIndoorDriftDoesNotBecomeTravelOrPreventAStop() {
         WalkingStillnessDetector d=new WalkingStillnessDetector();
@@ -51,6 +51,12 @@ public class WalkingCaptureEvidenceTest {
         assertEquals(1,result.rejectedFixes);assertEquals(40,result.route.distance,1);
         List<FootTraceValidator.Sample> drawn=Arrays.asList(p(0,5,100000,0),p(10,0,0,1),p(20,5,120000,2));
         assertEquals(3,WalkingCaptureEvidence.prepare(drawn).route.samples.size());
+    }
+    @Test public void measuredWalkingIsNotTrimmedAsStationaryTail() {
+        List<FootTraceValidator.Sample> points=new ArrayList<>();
+        for(int i=0;i<40;i++)points.add(new FootTraceValidator.Sample(i*8/111195.0,0,20,100000+i*10000,1.2,i));
+        WalkingCaptureEvidence.Result result=WalkingCaptureEvidence.prepare(points);
+        assertEquals(0,result.stationaryTail);assertTrue(result.route.distance>250);
     }
     @Test public void shortRepeatedWalkingLoopsAreMovementEvenInsideTheStopRadius() {
         WalkingStillnessDetector d=new WalkingStillnessDetector();

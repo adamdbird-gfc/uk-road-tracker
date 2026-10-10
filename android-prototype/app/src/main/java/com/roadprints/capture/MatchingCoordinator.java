@@ -438,7 +438,8 @@ public final class MatchingCoordinator {
                     : journey.optJSONObject("source").optString("type")) && !journey.has("timeline_match_evidence")
                     ? " Reload this journey using Utilities → Data management → Load Timeline Data to add its timing evidence." : " Rematch to try again.";
             throw new IllegalStateException("Partial route match: " + serverMatched + " of " + serverInput
-                    + " GPS points matched across " + failedCount + " unmatched section(s)." + reload);
+                    + " GPS points matched; " + (serverInput-serverMatched) + " points remain unmatched"
+                    + (failedCount>0 ? " across " + failedCount + " failed section(s)" : "") + "." + reload);
         }
         synchronized (JourneyStore.class) {
         JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));

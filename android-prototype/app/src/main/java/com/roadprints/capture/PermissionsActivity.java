@@ -53,7 +53,7 @@ public class PermissionsActivity extends Activity {
     }
     @Override protected void onResume(){super.onResume(); if(locationState!=null)refreshStates();}
     private void refreshStates(){
-        boolean loc=hasLocation(); locationState.setText(loc?"Location access is on":"Location access is off");
+        boolean loc=hasLocation(); locationState.setText(loc?(Build.VERSION.SDK_INT<29 || checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)==PackageManager.PERMISSION_GRANTED ? "Location access is on, including background recovery" : "Location is on while using the app. For automatic recovery, open Location permissions and choose Allow all the time."):"Location access is off");
         notificationState.setText(notificationsEnabled()?"Notifications are on":"Notifications are off");
     }
     private boolean hasLocation(){return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;}

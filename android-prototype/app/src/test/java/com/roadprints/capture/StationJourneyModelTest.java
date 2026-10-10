@@ -64,11 +64,11 @@ public class StationJourneyModelTest {
         assertEquals(1,d.endIndex); assertEquals(3,d.startIndex);
         assertTrue(d.startIndex>d.endIndex); // waiting GPS is retained outside the matched walk
     }
-    @Test public void unknownDepartureGetsTrainSuggestionWithoutAnotherJourney() {
+    @Test public void unknownDepartureSeparatesWaitingFromTrainTravel() {
         StationJourneyModel m=model(); fix(m,"unknown",0,1000,0,0); m.activity("vehicle",2000,0);
         fix(m,"unknown",1,71000,300,10);
         StationJourneyModel.Decision d=fix(m,"unknown",2,111000,850,20);
-        assertNotNull(d); assertEquals(-1,d.endIndex); assertEquals("train",d.nextMode);
+        assertNotNull(d); assertEquals(1,d.endIndex); assertEquals(1,d.startIndex); assertEquals("train",d.nextMode);
     }
     @Test public void walkingPastStationDoesNotSplitOrLeaveBoardingEvidence() {
         StationJourneyModel m=model(); m.activity("walking",1000,0);
