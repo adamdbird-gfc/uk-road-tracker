@@ -191,6 +191,8 @@ final class TimelineRoadPreparation {
             out.put("endpoint_partial_match", true).put("partial_match_reason", "unmatched_end_samples");
         for (JSONObject result : results) if (result.optBoolean("timeline_partial_match", false))
             out.put("timeline_partial_match", true).put("partial_match_reason", "incomplete_timeline_data");
+        for (JSONObject result : results) if (result.optBoolean("capture_partial_match", false))
+            out.put("capture_partial_match", true).put("partial_match_reason", "unmatched_capture_samples");
         boolean distanceVerified = true;
         for (JSONObject result : results) distanceVerified &= result.optBoolean("matched_distance_is_deduplicated", false);
         out.put("matched_distance_is_deduplicated", distanceVerified);

@@ -116,4 +116,26 @@ public class WalkingJourneyPreparationTest {
         return new JSONObject().put("mode","walking").put("source",new JSONObject().put("type",source))
                 .put("started_at","2026-10-05T17:00:00Z").put("ended_at","2026-10-05T17:10:00Z");
     }
+    @Test public void vehicleTailIsExcludedWithoutChangingOriginalCapture() throws Exception {
+        Context app=RuntimeEnvironment.getApplication();
+        JSONArray coords=new JSONArray(),samples=new JSONArray();
+        for(int i=0;i<9;i++) {
+            double metres=i<6?i*15:75+(i-5)*150;
+            JSONArray p=new JSONArray().put(metres/111195).put(0);
+            coords.put(p);samples.put(new JSONArray().put(p.getDouble(0)).put(0).put(5)
+                    .put(100000+i*15000).put(i<6?1:10));
+        }
+        JSONObject j=journey("android_activity_capture").put("raw_capture_samples",samples)
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords));
+        String original=j.toString();
+        WalkingJourneyPreparation.Prepared prepared=WalkingJourneyPreparation.prepare(app,j);
+        assertTrue(prepared.validated);assertEquals(3,prepared.details.getInt("vehicle_tail_points"));
+        assertEquals(75,prepared.distance,1);assertEquals(original,j.toString());
+    }
+    @Test public void briefFastOutlierDoesNotRemoveFootEvidence() {
+        List<FootTraceValidator.Sample> samples=new ArrayList<>();
+        for(int i=0;i<10;i++)samples.add(new FootTraceValidator.Sample(i*15/111195.0,0,5,
+                100000+i*15000,i==6?10:1,i));
+        assertEquals(-1,WalkingJourneyPreparation.vehicleTailStart(samples));
+    }
 }

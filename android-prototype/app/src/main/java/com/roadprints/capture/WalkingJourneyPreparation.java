@@ -87,6 +87,9 @@ final class WalkingJourneyPreparation {
             } catch(IOException unavailable) { /* Keep the full trace if public station data is unavailable. */ }
         }
         List<FootTraceValidator.Sample> leg=stationEnd>=1?new ArrayList<>(samples.subList(0,stationEnd+1)):samples;
+        int vehicleTail=nativeWalk?vehicleTailStart(leg):-1;
+        int vehicleTailPoints=vehicleTail>=1?leg.size()-vehicleTail:0;
+        if(vehicleTail>=1)leg=new ArrayList<>(leg.subList(0,vehicleTail));
         WalkingCaptureEvidence.Result capture=nativeWalk?WalkingCaptureEvidence.prepare(leg):null;
         FootTraceValidator.Result result=capture!=null?capture.route:new FootTraceValidator.Result(leg,leg.size(),false);
         if(nativeWalk && result.timed && !result.resolved) throw new IllegalStateException(
@@ -101,14 +104,39 @@ final class WalkingJourneyPreparation {
         if(prepared.validated) for(FootTraceValidator.Sample point:samples) prepared.recoveredSamples.put(sampleJson(point));
         prepared.details.put("version",1).put("timing_available",result.timed)
                 .put("source_points",samples.size()).put("validated_points",result.samples.size())
-                .put("removed_gps_points",result.removed).put("station_tail_points",samples.size()-leg.size())
+                .put("removed_gps_points",result.removed).put("station_tail_points",stationEnd>=1?samples.size()-stationEnd-1:0)
                 .put("evidence_source",saved!=null?"saved_capture_samples":recovered?"local_movement_log":"coordinates_only")
                 .put("validated_gps_distance_m",result.distance)
                 .put("capture_preparation_version",2).put("rejected_fixes",capture==null?0:capture.rejectedFixes)
+                .put("vehicle_tail_points",vehicleTailPoints)
                 .put("stationary_tail_points",capture==null?0:capture.stationaryTail);
         if(stationEnd>=1) prepared.details.put("station_arrival_time_utc",
                 java.time.Instant.ofEpochMilli(samples.get(stationEnd).time).toString());
         return prepared;
+    }
+    /** End foot credit at the first fix of sustained, accurate vehicle travel.
+     * Unmeasured network observations cannot interrupt that evidence. */
+    static int vehicleTailStart(List<FootTraceValidator.Sample> samples) {
+        FootTraceValidator.Sample first=null,previous=null;
+        int firstIndex=-1,count=0;double path=0;
+        for(int i=0;i<samples.size();i++) {
+            FootTraceValidator.Sample p=samples.get(i);
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy>25||!Double.isFinite(p.speed)||p.speed<0)continue;
+            if(p.speed<6 || previous!=null&&(p.time-previous.time>60000
+                    || !CaptureQualityValidator.reliable(previous,p,false))) {
+                first=null;previous=null;firstIndex=-1;count=0;path=0;
+                if(p.speed<6)continue;
+            }
+            if(first==null){first=p;firstIndex=i;}
+            if(previous!=null)path+=CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous,p),
+                    (float)previous.accuracy,(float)p.accuracy);
+            previous=p;count++;
+            if(count>=3&&p.time-first.time>=20000&&path>=100) {
+                List<FootTraceValidator.Sample> prefix=samples.subList(0,firstIndex);
+                return CaptureMovementEvidence.hasJourneyMovement(prefix,"walking")?firstIndex:-1;
+            }
+        }
+        return -1;
     }
     static int stationWaitingEnd(List<FootTraceValidator.Sample> samples,List<JSONObject> activities,
                                  RailStationCatalog catalog,long endedAt) {

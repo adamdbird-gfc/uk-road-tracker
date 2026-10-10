@@ -1469,7 +1469,9 @@ public class JourneyListActivity extends Activity {
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"))
                     || journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false);
-            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false)
+            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("capture_partial_match", false)
+                    ? "Partially matched · only validated sections count. Original recording preserved."
+                    : journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false)
                     ? "Partially matched · Timeline data is incomplete or inconsistent. Only matched sections count."
                     : journey.optJSONObject("processing_result").optBoolean("endpoint_partial_match", false)
                     ? "Road portion matched · start/end GPS samples remain unmatched"
@@ -1998,6 +2000,7 @@ public class JourneyListActivity extends Activity {
 
     private static boolean isPartialMatchResult(JSONObject result) {
         if (result == null) return false;
+        if (result.optBoolean("capture_partial_match", false)) return true;
         if (result.optBoolean("timeline_partial_match", false)) return true;
         JSONArray failed = result.optJSONArray("failed_sections");
         if (failed != null && failed.length() > 0) return true;
