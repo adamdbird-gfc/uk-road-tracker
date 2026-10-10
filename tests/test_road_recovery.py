@@ -101,6 +101,26 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([20], [r for _, r in self.calls])
         self.assertEqual(1, len(failures))
 
+    async def test_dropped_boundary_waypoint_keeps_distance_verifiable(self):
+        seen=[]
+        async def request(client, points, radius, base_url):
+            seen.append([p.tag for p in points])
+            kept=[(i,p) for i,p in enumerate(points) if p.tag!=6]
+            trace=[None]*len(points)
+            for waypoint,(i,p) in enumerate(kept):
+                trace[i]=dict(matchings_index=0,waypoint_index=waypoint,location=[0,0])
+            legs=[dict(distance=(b.tag-a.tag)*100,steps=[]) for (_,a),(_,b) in zip(kept,kept[1:])]
+            data=dict(code='Ok',tracepoints=trace,matchings=[dict(distance=sum(l['distance'] for l in legs),
+                geometry=dict(type='LineString',coordinates=[[0,0],[0.001,0]]),legs=legs)])
+            return types.SimpleNamespace(status_code=200),data
+        self.api['request_match']=request
+        points=[types.SimpleNamespace(lat=0,lng=0,tag=i) for i in range(10)]
+        result=await self.api['match_payload'](types.SimpleNamespace(points=points),'unused',True,road_recovery=True)
+        self.assertEqual([[0,1,2,3,4,5,6,7],[7,8,9]],seen)
+        self.assertEqual(900,result['matched_distance_m'])
+        self.assertTrue(result['matched_distance_is_deduplicated'])
+        self.assertEqual([6],result['unmatched_point_indices'])
+
     async def test_android_recovers_failed_pair_at_40_metres(self):
         self.respond = lambda points, radius: "Ok" if radius >= 40 else "NoMatch"
         data, radius, failures = await self.match([0, 1], road_recovery=True, point_offset=8)
