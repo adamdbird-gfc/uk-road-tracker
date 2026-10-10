@@ -900,19 +900,20 @@ public class MainActivity extends Activity {
         Spinner reviewSpinner = new Spinner(this);
         ArrayAdapter<String> transportAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,MODE_LABELS) {
             @Override public android.view.View getView(int position,android.view.View reuse,android.view.ViewGroup parent) {
-                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(16,16,16,16);return text;
+                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(dp(12),dp(12),dp(12),dp(12));return text;
             }
             @Override public android.view.View getDropDownView(int position,android.view.View reuse,android.view.ViewGroup parent) {
                 TextView text=(TextView)super.getDropDownView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setBackgroundColor(0xFF233B78);return text;
             }
         };
         reviewSpinner.setAdapter(transportAdapter);
-        reviewSpinner.setBackgroundColor(0xFF233B78);
+        reviewSpinner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF67D5CC));
+        reviewSpinner.setMinimumHeight(dp(52));
         reviewSpinner.setSelection(modeIndex(currentMode));
 
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(24, 0, 24, 0);
+        container.setPadding(0, 0, 0, 0);
         TextView message = new TextView(this);
         double metres = journey.optDouble("distance_meters", 0);
         int points = journey.optJSONObject("route_geometry") == null
@@ -926,15 +927,13 @@ public class MainActivity extends Activity {
                 "Latest journey: %s across %d GPS points. Was it recorded using the right transport?",
                 DistanceUnits.format(this, metres), points));
         message.setTextSize(16);
-        message.setPadding(0, 0, 0, 16);
+        message.setTextColor(0xFFB9C5D8);
+        message.setPadding(0, 0, 0, dp(12));
         container.addView(message);
         container.addView(reviewSpinner);
 
-        RoadprintsDialog.show(new AlertDialog.Builder(this)
-                .setTitle("Review journey")
-                .setView(container)
-                .setNegativeButton("Later", null)
-                .setPositiveButton("Save transport", (dialog, which) -> {
+        RoadprintsDialog.show(this,"Review journey",null,container,
+                "SAVE TRANSPORT", () -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
                     status.setText("Saving journey…");
                     archiveIo.execute(() -> {
@@ -952,7 +951,7 @@ public class MainActivity extends Activity {
                             });
                         }
                     });
-                }));
+                },null,null);
     }
 
     private int modeIndex(String value) {

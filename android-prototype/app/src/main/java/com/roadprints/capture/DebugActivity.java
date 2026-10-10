@@ -105,7 +105,13 @@ public class DebugActivity extends Activity {
                     .setPositiveButton("Close",null).show();
         }));
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
-        if(available)RoadprintsDialog.show(new AlertDialog.Builder(this).setTitle("Debug report ready").setMessage("The report is stored on this device. Copy it only when you want to share it.").setNegativeButton("Close",null).setPositiveButton("Copy report",(d,w)->{ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);cb.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports",report));Toast.makeText(this,"Debug report copied",Toast.LENGTH_SHORT).show();}).setNeutralButton("Clear reports",(d,w)->{CrashReporter.clear(this);finish();}));
+        if(available)RoadprintsDialog.show(this,"Debug report ready",
+                "The report is stored on this device. Copy it only when you want to share it.",null,
+                "COPY REPORT",()->{
+                    ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                    cb.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports",report));
+                    Toast.makeText(this,"Debug report copied",Toast.LENGTH_SHORT).show();
+                },"CLEAR REPORTS",()->{CrashReporter.clear(this);finish();});
     }
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
         super.onActivityResult(requestCode,resultCode,data);
