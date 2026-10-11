@@ -34,3 +34,14 @@ Existing collection logic recognises stops automatically from original timed cap
 Synthetic tests cover station dwell/departure with missing activity labels, alighting, through trains, road/rail ambiguity, destination footprint accuracy, traffic lights, outdoor pauses, walk/run transitions and restart recovery. Uploaded movement logs are used only for local replay, never committed. Full Android tests, lint and stable signing verification precede publication.
 
 Real-world accuracy depends on GPS and public map coverage. Missing context preserves uncertain travel instead of claiming a definitive mode or destination.
+
+## Arrival reliability update (0.25.181)
+
+- Corroborated vehicle stops tolerate isolated reported speeds below 6 m/s when observations remain inside the stop uncertainty area. The original dwell deadline survives. Sustained speed without fresh quiet fixes, real displacement, silence and poor fixes cannot establish arrival; pedestrian stillness rules are unchanged.
+- GPS dwell completion uses the supported arrival sample for both the saved end time and travelled-route boundary. Confirmation observations remain in raw capture evidence, outside route distance and matching.
+- Activity labels during GPS-corroborated stillness do not queue a walking leg. Context mode suggestions require net displacement as well as elapsed time and path length. Transition origin survives new checkpoints; old checkpoints retain dwell but restart pending mode proposals safely.
+- An initial pedestrian label can resolve to an uncertain vehicle mode within two minutes when sustained vehicle evidence exists and no supported initial walking leg exists. Genuine walking before boarding remains a separate leg. Vehicle type still requires evidence or user confirmation.
+- Road/rail/outdoor pause holds and station-owned train transitions remain in place. Offline GPS dwell does not claim a named destination.
+- Synthetic regression cases cover noisy stops, resuming driving, walking away, pedestrian loops, no-GPS intervals, checkpoint recovery, false departure labels and genuine walks to transport. Private traces remain local and are not included in commits.
+
+This update needs fresh real-device validation; it does not establish that every recognised-place requirement in #76 has been delivered.

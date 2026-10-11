@@ -8,7 +8,8 @@ final class ContextJourneyModel {
         Decision(int boundary,String nextMode,String reason){this.boundary=boundary;this.nextMode=nextMode;this.reason=reason;}
     }
     private long lastTime, pauseSince, proposalSince;
-    private double lastLat,lastLon,anchorLat,anchorLon,path;
+    private double lastLat,lastLon,anchorLat,anchorLon,path,proposalLat,proposalLon;
+    private float proposalAccuracy;
     private float lastAccuracy;
     private int pauseIndex=-1,proposalIndex=-1,proposalSamples;
     private String proposal="";
@@ -58,10 +59,16 @@ final class ContextJourneyModel {
         if(suggested.isEmpty()){clearProposal();return null;}
         if(!suggested.equals(proposal)||gap>60000) {
             proposal=suggested;proposalSince=time;proposalIndex=Math.max(1,index);proposalSamples=0;path=0;
+            proposalLat=lat;proposalLon=lon;proposalAccuracy=accuracy;
         }
-        proposalSamples++;path+=Math.max(0,step-(accuracy+previousAccuracy)*.35);
+        if(proposalSamples>0)path+=Math.max(0,step-(accuracy+previousAccuracy)*.35);
+        proposalSamples++;
         long duration=("running".equals(suggested)||"walking".equals(mode)&&"walking".equals(suggested))?60000:40000;
         if(proposalSamples<4 || time-proposalSince<duration || path<("walking".equals(suggested)?40:100))return null;
+        // Jitter can accumulate path length inside a home or station. A mode
+        // change also needs departure from the proposal's uncertainty area.
+        double extent=RailStationCatalog.metres(proposalLat,proposalLon,lat,lon)-proposalAccuracy-accuracy;
+        if(extent<("walking".equals(suggested)||"running".equals(suggested)?25:50))return null;
         // A station owns walking-to-vehicle handoffs until rail context resolves them.
         if(atStation && foot && "unknown".equals(suggested) && time-proposalSince<90000)return null;
         Decision d=new Decision(proposalIndex,suggested,"context_mode_"+suggested);clearProposal();return d;
@@ -71,13 +78,15 @@ final class ContextJourneyModel {
     }
     private void clearProposal(){proposal="";proposalSince=0;proposalIndex=-1;proposalSamples=0;path=0;}
     String[] checkpoint() {
-        return new String[]{"1",String.valueOf(lastTime),String.valueOf(lastLat),String.valueOf(lastLon),String.valueOf(lastAccuracy),
+        return new String[]{"2",String.valueOf(lastTime),String.valueOf(lastLat),String.valueOf(lastLon),String.valueOf(lastAccuracy),
                 String.valueOf(pauseSince),String.valueOf(pauseIndex),String.valueOf(anchorLat),String.valueOf(anchorLon),
                 proposal,String.valueOf(proposalSince),String.valueOf(proposalIndex),String.valueOf(proposalSamples),String.valueOf(path),
-                pauseContext.kind,String.valueOf(pauseContext.destination),String.valueOf(pauseContext.road),String.valueOf(pauseContext.rail),String.valueOf(pauseContext.outdoor)};
+                pauseContext.kind,String.valueOf(pauseContext.destination),String.valueOf(pauseContext.road),String.valueOf(pauseContext.rail),String.valueOf(pauseContext.outdoor),
+                String.valueOf(proposalLat),String.valueOf(proposalLon),String.valueOf(proposalAccuracy)};
     }
     void restore(String[] state,int pointCount) {
-        if(state.length!=19||!"1".equals(state[0]))return;
+        boolean old=state.length==19&&"1".equals(state[0]);
+        if(!old && (state.length!=22||!"2".equals(state[0])))return;
         try {
             if(Integer.parseInt(state[6])>=pointCount||Integer.parseInt(state[11])>=pointCount)return;
             lastTime=Long.parseLong(state[1]);lastLat=Double.parseDouble(state[2]);lastLon=Double.parseDouble(state[3]);lastAccuracy=Float.parseFloat(state[4]);
@@ -85,6 +94,8 @@ final class ContextJourneyModel {
             proposal=state[9];proposalSince=Long.parseLong(state[10]);proposalIndex=Integer.parseInt(state[11]);proposalSamples=Integer.parseInt(state[12]);path=Double.parseDouble(state[13]);
             pauseContext.kind=state[14];pauseContext.destination=Boolean.parseBoolean(state[15]);pauseContext.road=Boolean.parseBoolean(state[16]);
             pauseContext.rail=Boolean.parseBoolean(state[17]);pauseContext.outdoor=Boolean.parseBoolean(state[18]);
+            if(old)clearProposal(); // An old checkpoint lacks the transition origin.
+            else {proposalLat=Double.parseDouble(state[19]);proposalLon=Double.parseDouble(state[20]);proposalAccuracy=Float.parseFloat(state[21]);}
         } catch(RuntimeException ignored){lastTime=0;pauseSince=0;clearProposal();}
     }
 }

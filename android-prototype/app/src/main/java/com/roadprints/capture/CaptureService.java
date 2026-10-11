@@ -170,6 +170,7 @@ public class CaptureService extends Service {
                     broadcastUpdate("Paused on the route; listening for movement...");
                     return;
                 }
+                resolveGpsArrivalBoundary(System.currentTimeMillis());
                 if (stationModel!=null && stationModel.stationaryEndIndex(mode)>=1) {
                     stationEndIndex=stationModel.stationaryEndIndex(mode);
                     stationEvidenceReason="station_arrival_waiting";
@@ -252,7 +253,9 @@ public class CaptureService extends Service {
             if(automaticCapture) evaluateContextLocation(observation,points.size()-1);
             if(captureFinishing)return;
             updateNotification();
-            broadcastUpdate("Recording " + mode + " locally...");
+            broadcastUpdate(gpsStillness
+                    ? "Checking arrival; waiting for sustained movement or a confirmed stop..."
+                    : "Recording " + mode + " locally...");
         }
 
         @Override public void onProviderEnabled(String provider) {
@@ -487,6 +490,9 @@ public class CaptureService extends Service {
             } else if (stationModel != null && automaticCapture && stationModel.ownsModeChange(mode)) {
                 clearPendingActivityMode();
                 broadcastUpdate("Checking station arrival or departure before changing the journey leg...");
+            } else if (gpsQuiet) {
+                clearPendingActivityMode();
+                broadcastUpdate("Checking arrival; small local movements do not start a new journey leg...");
             } else if (detectedMode.equals(mode)) {
                 clearPendingActivityMode();
             } else {
@@ -516,6 +522,10 @@ public class CaptureService extends Service {
             handler.postDelayed(confirmActivityModeChange, 1_000L);
             return;
         }
+        if (automaticCapture && gpsStillness) {
+            clearPendingActivityMode();
+            return;
+        }
         if (stationModel != null && automaticCapture && stationModel.ownsModeChange(mode)) {
             clearPendingActivityMode();
             return;
@@ -534,6 +544,7 @@ public class CaptureService extends Service {
         }
         long confirmedSince = pendingActivitySince;
         clearPendingActivityMode();
+        if (promoteProvisionalDepartureMode(confirmedMode))return;
         if (points.size() < 2) {
             broadcastUpdate("Activity changed, but this segment is too short to split safely.");
             return;
@@ -613,6 +624,17 @@ public class CaptureService extends Service {
         handler.removeCallbacks(finishIfStill);
         handler.postDelayed(finishIfStill,Math.max(1L,
                 STILLNESS_END_THRESHOLD_MS-(now-stationarySince)));
+    }
+
+    private void resolveGpsArrivalBoundary(long now) {
+        if(!automaticCapture || !gpsStillness || !walkingStillness.canFinish(now))return;
+        FootTraceValidator.Sample arrival=walkingStillness.anchor();
+        if(arrival==null || arrival.index<1 || arrival.index>=points.size())return;
+        stationEndIndex=arrival.index;
+        contextReason="arrival_gps_dwell";
+        clearPendingActivityMode();
+        MovementDiagnostics.recordEvent(this,"gps_arrival_confirmed",
+                "Sustained GPS dwell; confirmation observations retained outside the travelled route.");
     }
 
     private void clearStillnessIfMovementContinues(Location location) {
@@ -977,6 +999,7 @@ public class CaptureService extends Service {
         MovementDiagnostics.recordEvent(this,"context_transition_confirmed",
                 "reason="+decision.reason+"; next_mode="+decision.nextMode+"; boundary_point="+decision.boundary);
         clearPendingActivityMode();
+        if(promoteProvisionalDepartureMode(decision.nextMode))return;
         if("unknown".equals(mode) && ("driving".equals(decision.nextMode)||"train".equals(decision.nextMode))) {
             mode=decision.nextMode;
             getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
@@ -987,6 +1010,22 @@ public class CaptureService extends Service {
             stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
         } else prepareStationSplit(decision.boundary,decision.boundary,decision.nextMode);
         finishCapture();
+    }
+
+    private boolean promoteProvisionalDepartureMode(String proposed) {
+        if(!automaticCapture || !("walking".equals(mode)||"running".equals(mode))
+                || !("unknown".equals(proposed)||roadMode(proposed)) || points.size()<3)return false;
+        List<FootTraceValidator.Sample> evidence=new ArrayList<>();
+        for(int i=0;i<points.size();i++)evidence.add(footSample(points.get(i),i));
+        if(points.get(points.size()-1).getTime()-points.get(0).getTime()>120000
+                || !CaptureMovementEvidence.hasVehicleMovement(evidence)
+                || CaptureMovementEvidence.hasInitialFootLeg(evidence))return false;
+        mode=proposed;
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
+        contextReason="provisional_departure_mode_resolved";
+        MovementDiagnostics.recordEvent(this,"departure_mode_resolved",
+                "Vehicle movement resolved the initial provisional label; no supported walking leg was removed.");
+        return true;
     }
 
     private void prepareStationSplit(int endIndex,int startIndex,String continueMode) {

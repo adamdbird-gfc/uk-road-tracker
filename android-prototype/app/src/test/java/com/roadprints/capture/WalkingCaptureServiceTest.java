@@ -100,6 +100,60 @@ public class WalkingCaptureServiceTest {
     @Test public void unconfirmedVehicleCaptureUsesGpsArrivalEvidence() throws Exception {
         gpsStop("unknown",DetectedActivity.IN_VEHICLE);
     }
+    @Test public void walkingLabelsDuringGpsDwellDoNotQueueANewLeg() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear()
+                .putBoolean("armed",true).putBoolean("active",true).apply();
+        field("mode").set(service,"driving");field("automaticCapture").setBoolean(service,true);
+        field("gpsStillness").setBoolean(service,true);
+        long began=System.currentTimeMillis()-120000;
+        field("stationarySince").setLong(service,began);
+        Method transition=CaptureService.class.getDeclaredMethod("handleTransition",int.class,int.class);
+        transition.setAccessible(true);
+        transition.invoke(service,DetectedActivity.WALKING,ActivityTransition.ACTIVITY_TRANSITION_ENTER);
+        assertNull(field("pendingActivityMode").get(service));
+        assertEquals(began,field("stationarySince").getLong(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+    }
+    @Test public void corroboratedArrivalResolvesBoundaryBeforeConfirmationTail() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        field("mode").set(service,"driving");field("automaticCapture").setBoolean(service,true);
+        @SuppressWarnings("unchecked") List<Location> points=(List<Location>)field("points").get(service);
+        Method observe=CaptureService.class.getDeclaredMethod("observeWalkingStillness",Location.class);observe.setAccessible(true);
+        long now=System.currentTimeMillis();
+        points.add(p(-300,now-400000));
+        for(int i=0;i<=50;i++) {
+            Location fix=p(i%3,now-350000+i*7000);fix.setAccuracy(25);
+            fix.setSpeed(i>3&&i%7==0?3.8f:.15f);points.add(fix);observe.invoke(service,fix);
+        }
+        Method resolve=CaptureService.class.getDeclaredMethod("resolveGpsArrivalBoundary",long.class);resolve.setAccessible(true);
+        resolve.invoke(service,now);
+        assertEquals(1,field("stationEndIndex").getInt(service));
+        assertEquals("arrival_gps_dwell",field("contextReason").get(service));
+        assertEquals(now-350000,field("stationarySince").getLong(service));
+        assertEquals(52,points.size()); // Raw confirmation evidence is retained.
+    }
+    @Test public void briefFalseWalkingStartBecomesOneVehicleLegButRealWalkIsPreserved() throws Exception {
+        for(boolean realWalk:new boolean[]{false,true}) {
+            CaptureService service=Robolectric.buildService(CaptureService.class).get();
+            field("mode").set(service,"walking");field("automaticCapture").setBoolean(service,true);
+            @SuppressWarnings("unchecked") List<Location> points=(List<Location>)field("points").get(service);
+            long now=System.currentTimeMillis();
+            for(int i=0;i<3;i++) {
+                Location fix=p(realWalk?i*20:i,now-70000+i*10000);
+                fix.setSpeed(realWalk?1.5f:.1f);points.add(fix);
+            }
+            for(int i=0;i<4;i++) {
+                Location fix=p(100+i*100,now-40000+i*10000);fix.setSpeed(10);points.add(fix);
+            }
+            Method promote=CaptureService.class.getDeclaredMethod("promoteProvisionalDepartureMode",String.class);
+            promote.setAccessible(true);
+            assertEquals(!realWalk,promote.invoke(service,"unknown"));
+            assertEquals(realWalk?"walking":"unknown",field("mode").get(service));
+            assertNull(field("nextCaptureMode").get(service));assertEquals(7,points.size());
+            service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+        }
+    }
     private void gpsStop(String mode,int activity) throws Exception {
         CaptureService service=Robolectric.buildService(CaptureService.class).get();
         service.getSharedPreferences("roadprints_capture_state",0).edit()

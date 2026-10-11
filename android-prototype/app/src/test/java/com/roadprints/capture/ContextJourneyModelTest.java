@@ -95,4 +95,21 @@ public class ContextJourneyModelTest {
         ContextJourneyModel m=new ContextJourneyModel();ContextMap.Evidence e=context("rail");e.road=true;
         for(int i=0;i<10;i++)assertNull(m.sample("unknown",i,1000+i*10000,51.5+i*100/111195.0,-.1,5,10,e,false));
     }
+    @Test public void localJitterCannotAccumulateAWalkingModeChange() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        for(int i=0;i<60;i++)assertNull(fix(m,"driving",i,1000+i*10000,i%2==0?0:20,1.5f,"unknown",false));
+    }
+    @Test public void proposalExtentSurvivesCheckpointWithoutInventingDeparture() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        for(int i=0;i<4;i++)assertNull(fix(m,"driving",i,1000+i*10000,i%2==0?0:20,1.5f,"unknown",false));
+        ContextJourneyModel recovered=new ContextJourneyModel();recovered.restore(m.checkpoint(),4);
+        for(int i=4;i<20;i++)assertNull(fix(recovered,"driving",i,1000+i*10000,i%2==0?0:20,1.5f,"unknown",false));
+    }
+    @Test public void oldCheckpointKeepsDwellButRequiresFreshModeEvidence() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        for(int i=0;i<4;i++)assertNull(fix(m,"walking",i,1000+i*10000,i*30,3,"park",false));
+        String[] old=java.util.Arrays.copyOf(m.checkpoint(),19);old[0]="1";
+        ContextJourneyModel recovered=new ContextJourneyModel();recovered.restore(old,4);
+        assertNull(fix(recovered,"walking",4,41000,120,3,"park",false));
+    }
 }

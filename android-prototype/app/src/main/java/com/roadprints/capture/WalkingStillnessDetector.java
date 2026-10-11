@@ -17,6 +17,14 @@ final class WalkingStillnessDetector {
         // Dwell requires a measured stop. Uncertainty circles and network
         // positions alone must not erase a real short walk during cleanup.
         if (!Double.isFinite(point.speed) || point.speed<0) return;
+        // One speed spike inside an already corroborated vehicle stop is not
+        // a departure. Keep the low-speed evidence and its original deadline.
+        // Sustained speed (no fresh quiet fixes), displacement or a real walk
+        // still resets the detector; pedestrian stop rules remain unchanged.
+        if (road && point.speed>.8 && point.speed<6 && anchor!=null && latest!=null && observations>=3
+                && point.time-latest.time<=60_000L
+                && FootTraceValidator.metres(anchor,point)<=35+anchor.accuracy+point.accuracy)
+            return;
         if (point.speed>.8) {
             anchor=point; latest=point; observations=1; confirmed=false; movement=0; return;
         }
