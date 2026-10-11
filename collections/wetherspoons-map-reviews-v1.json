@@ -544,7 +544,7 @@
       "source_name": "The Spirit Merchant",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-spirit-merchant-newtownards/",
-      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. Rechecked individual operator listing and schedule during Northern Ireland batch; approval retained, not an additional new pin."
     },
     {
       "id": "spoons-osm-n383979033",
@@ -557,7 +557,7 @@
       "source_name": "The Central Bar",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-central-bar-carrickfergus/",
-      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. Rechecked individual operator listing and schedule during Northern Ireland batch; approval retained, not an additional new pin."
     },
     {
       "id": "spoons-osm-n4385247294",
@@ -752,7 +752,7 @@
       "source_name": "The Bridge House",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bridge-house-belfast/",
-      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. OSM postcode BT2 7EG differs from operator BT2 7EJ; same Bedford Street premises/locality, discrepancy retained without overwriting source."
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. OSM postcode BT2 7EG differs from operator BT2 7EJ; same Bedford Street premises/locality, discrepancy retained without overwriting source. Rechecked individual operator listing and schedule during Northern Ireland batch; approval retained, not an additional new pin."
     },
     {
       "id": "spoons-osm-w511169062",
@@ -950,11 +950,14 @@
       ],
       "lat": 54.9996404,
       "lon": -7.3218005,
-      "decision": "hold_map",
+      "decision": "exclude_current",
       "source_name": "The Trinity Bar",
       "reviewed_at": "2026-10-11",
-      "evidence_url": "https://www.hygienescore.co.uk/londonderry/latest",
-      "basis": "Trinity Bar in Derry appears as a renamed former Ice Wharf in current public records. Current Wetherspoon operation not established; hold pending direct operator/independent ownership verification, not a confirmed closure."
+      "evidence_url": "https://www.thecladdaghbarderry.com/",
+      "basis": "Current venue website identifies Claddagh Bar at 24 Strand Road BT48 7AB as former Trinity Bar. CAMRA links Trinity to former Ice Wharf/Wetherspoon days. Same source locality/address; exclude former Wetherspoon from current collection and preserve historical identity, without claiming the pub itself closed.",
+      "additional_evidence_urls": [
+        "https://camra.org.uk/pubs/trinity-londonderry-118438"
+      ]
     },
     {
       "id": "spoons-osm-n10106883876",

@@ -8,11 +8,10 @@
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
     "map_venues": 172,
-    "excluded_current": 3,
-    "unreviewed_candidates": 656,
+    "excluded_current": 4,
+    "unreviewed_candidates": 655,
     "needs_rereview": [
-      "spoons-osm-w38325241",
-      "spoons-osm-n957682753"
+      "spoons-osm-w38325241"
     ]
   },
   "counties": [
@@ -898,8 +897,8 @@
       },
       "candidate_count": 1,
       "map_approved": 0,
-      "excluded": 0,
-      "held": 1,
+      "excluded": 1,
+      "held": 0,
       "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
       "unreviewed_ids": []
@@ -1692,6 +1691,16 @@
       "missing_venue_search_complete": false,
       "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
       "basis": "Cross-check identified missing Red Gown and former Cross Keys Peebles. Current airport/pub operator listings confirm Sir Walter Scott despite former-site entry. Red Gown requires OSM identity/position reconciliation before map approval; planned William Chambers stays inactive."
+    },
+    "Northern Ireland": {
+      "existing_candidates": 4,
+      "map_approved": 3,
+      "excluded": 1,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "basis": "Three individual current operator pub listings reconfirmed; researcher current NI subset agrees with these names/localities. Historical entries are not operating candidates. Derry hold resolved by current Claddagh operator website and CAMRA former Ice Wharf/Trinity history. No additional operating venue identified during this cross-check; no authoritative completeness guarantee."
     }
   }
 }
