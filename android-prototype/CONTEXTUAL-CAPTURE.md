@@ -45,3 +45,15 @@ Real-world accuracy depends on GPS and public map coverage. Missing context pres
 - Synthetic regression cases cover noisy stops, resuming driving, walking away, pedestrian loops, no-GPS intervals, checkpoint recovery, false departure labels and genuine walks to transport. Private traces remain local and are not included in commits.
 
 This update needs fresh real-device validation; it does not establish that every recognised-place requirement in #76 has been delivered.
+
+## 0.25.182: persistent place boundary evidence
+
+Automatic supported arrivals now populate local `stops` and `places`. GPS dwell remains an estimated stop; footprint/station evidence is supported, and only an explicit user review confirms a place. A venue visit/collection unlock is not inferred from this classification. Arrival time excludes the confirmation wait.
+
+The last supported stop is retained locally across restarts. A subsequent candidate must contain fresh observed fixes in that stop's uncertainty area before its departure is linked. The last measured still fix anchors departure; a walk to transport is retained. No old arrival coordinate or missing journey is inserted into route geometry. Candidate evidence used for the boundary is retained with the departure. Pending departure metadata is checkpointed and preserved through genuine station handoffs.
+
+Journey details offer a place review: correct/confirm its name or reject the stop. Original coordinates/provenance remain available. Background matching cannot overwrite a newer review; rejecting or deleting the origin invalidates its cached use. Existing preference backup includes the compact last-stop record. Place reviews do not change travelled geometry or award collection credit.
+
+Mapped polygon holes remain excluded from destination interiors. The shared service may serve the same area contract from a bounded Postpass query, preserving public OSM object identity without retaining names/addresses. Recording and estimated GPS arrivals remain available without online context. New tests cover evidence classification, departure anchoring, review persistence, deletion and courtyard holes. Real-device validation remains #68.
+
+A confidently road-centred stop remains a route pause even after fifteen minutes, avoiding false arrivals in a long queue. An uncertainty circle merely overlapping a nearby road does not establish that the user is on that road; long uncertain stops can still resolve as estimates. Rail pauses remain under station handoff control.

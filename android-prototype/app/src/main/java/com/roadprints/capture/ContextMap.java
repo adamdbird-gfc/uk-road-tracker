@@ -6,8 +6,8 @@ import org.json.JSONObject;
 /** Public map evidence. A POI name alone never establishes arrival. */
 final class ContextMap {
     static final class Evidence {
-        boolean available, rail, road, outdoor, destination, parking;
-        String name = "", kind = "unknown";
+        boolean available, rail, road, outdoor, destination, parking, routeAmbiguous;
+        String name = "", kind = "unknown", featureId = "";
     }
     static Evidence at(JSONArray features, double lat, double lon, float accuracy) {
         Evidence result = new Evidence();
@@ -22,12 +22,18 @@ final class ContextMap {
                     ||lon<bounds.optDouble("minlon")-.002 ||lon>bounds.optDouble("maxlon")+.002))continue;
             JSONArray geometry=f.optJSONArray("geometry");
             double distance=distance(geometry,lat,lon);
+            boolean inHole=false;
+            JSONArray holes=f.optJSONArray("holes");
+            if(holes!=null)for(int h=0;h<holes.length();h++) {
+                JSONArray ring=holes.optJSONArray(h);
+                inHole|=inside(ring,lat,lon);distance=Math.min(distance,distance(ring,lat,lon));
+            }
             String highway=tags.optString("highway"), railway=tags.optString("railway");
             if ("rail".equals(railway) && distance<=Math.max(15,accuracy)) result.rail=true;
             if (!highway.isEmpty() && !"footway".equals(highway) && !"path".equals(highway)
                     && !"steps".equals(highway) && !"pedestrian".equals(highway)
                     && !"cycleway".equals(highway)) roadDistance=Math.min(roadDistance,distance);
-            if (inside(geometry,lat,lon)) {
+            if (inside(geometry,lat,lon) && !inHole) {
                 if (tags.has("leisure") || tags.has("natural")) result.outdoor=true;
                 boolean parking="parking".equals(tags.optString("amenity"));
                 boolean building=tags.has("building") && !"no".equals(tags.optString("building"));
@@ -37,11 +43,13 @@ final class ContextMap {
                     result.kind=parking?"parking":("house".equals(tags.optString("building"))
                             || "residential".equals(tags.optString("building"))?"residential":"building");
                     result.name=tags.optString("name",result.kind);
+                    result.featureId=f.optLong("id",0)>0?"osm:"+("relation".equals(f.optString("type"))?"relation":"way")+":"+f.optLong("id"):"";
                 }
             }
         }
         result.road=roadDistance<=Math.max(15,accuracy);
-        if(result.road)result.destination=false;
+        result.routeAmbiguous=result.road && roadDistance+accuracy>15;
+        if(result.road && roadDistance<=accuracy)result.destination=false;
         return result;
     }
     static double distance(JSONArray geometry,double lat,double lon) {

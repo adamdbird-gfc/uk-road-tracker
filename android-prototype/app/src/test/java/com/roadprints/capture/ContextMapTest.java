@@ -40,4 +40,18 @@ public class ContextMapTest {
         f=new JSONArray().put(new JSONObject().put("tags",new JSONObject().put("leisure","park")).put("geometry",rectangle(100)));
         ContextMap.Evidence e=ContextMap.at(f,51.5,-.1,5);assertTrue(e.outdoor);assertFalse(e.destination);
     }
+    @Test public void courtyardHoleIsNotInsideBuildingAndAccuracyMustClearHoleEdge() throws Exception {
+        JSONObject f=building(100).put("holes",new JSONArray().put(rectangle(20)));
+        assertFalse(ContextMap.at(new JSONArray().put(f),51.5,-.1,5).destination);
+        assertFalse(ContextMap.at(new JSONArray().put(f),51.5+25.0/111195,-.1,10).destination);
+        assertTrue(ContextMap.at(new JSONArray().put(f),51.5+40.0/111195,-.1,5).destination);
+    }
+    @Test public void nearbyRoadDoesNotOverrideAContainedBuildingFix() throws Exception {
+        double scale=111195*Math.cos(Math.toRadians(51.5));
+        JSONArray road=new JSONArray().put(new JSONObject().put("lat",51.499).put("lon",-.1+38/scale))
+                .put(new JSONObject().put("lat",51.501).put("lon",-.1+38/scale));
+        JSONArray features=new JSONArray().put(building(30)).put(new JSONObject().put("tags",new JSONObject().put("highway","residential")).put("geometry",road));
+        ContextMap.Evidence e=ContextMap.at(features,51.5,-.1+25/scale,3);
+        assertTrue(e.destination);assertTrue(e.routeAmbiguous);
+    }
 }

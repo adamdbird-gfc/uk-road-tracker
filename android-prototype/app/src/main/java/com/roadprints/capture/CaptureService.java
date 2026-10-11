@@ -117,6 +117,7 @@ public class CaptureService extends Service {
     private ContextMapCache contextCache;
     private ContextJourneyModel contextModel=new ContextJourneyModel();
     private String contextReason;
+    private JSONObject departurePlace;
     private String currentActivity = "unknown";
     private long currentActivityAtMs;
     private String stationEvidenceReason, stationEvidenceCode;
@@ -689,6 +690,7 @@ public class CaptureService extends Service {
         cancelStartCandidate(null);
         clearDepartureAnchor();
         automaticCapture = false;
+        departurePlace=null;
         activateCapture(requestedMode, Instant.now().toString(), null);
     }
 
@@ -854,8 +856,22 @@ public class CaptureService extends Service {
         MovementDiagnostics.recordEvent(this, "journey_candidate_confirmed",
                 "Mode: " + confirmedMode + "; uncertainty-adjusted path distance reached start threshold.");
         List<Location> seedPoints = new ArrayList<>(candidatePoints);
+        JSONObject origin=PlaceAnchorStore.last(this);
+        List<FootTraceValidator.Sample> departureEvidence=new ArrayList<>();
+        for(int i=0;i<seedPoints.size();i++)departureEvidence.add(footSample(seedPoints.get(i),i));
+        int departureIndex=PlaceBoundaryEvidence.departureIndex(origin,departureEvidence);
+        JSONObject supportedDeparture=null;
+        if(departureIndex>=0) {
+            try {
+                supportedDeparture=PlaceBoundaryEvidence.departure(origin,departureEvidence.get(departureIndex));
+                supportedDeparture.put("candidate_samples",sampleCoordinates(seedPoints));
+                seedPoints=new ArrayList<>(seedPoints.subList(departureIndex,seedPoints.size()));
+                confirmedStart=Instant.ofEpochMilli(seedPoints.get(0).getTime()).toString();
+            } catch(Exception ignored){supportedDeparture=null; /* Preserve the measured candidate when origin is unavailable. */ }
+        }
         cancelStartCandidate(null);
         automaticCapture = true;
+        departurePlace=supportedDeparture;
         activateCapture(confirmedMode, confirmedStart, seedPoints);
     }
 
@@ -1065,6 +1081,7 @@ public class CaptureService extends Service {
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
         final String savedContextReason=contextReason;
+        final JSONObject savedDeparturePlace=departurePlace;
         final String savedJourneyId = journeyId;
         final String savedStartedAt = startedAt;
         final String savedMode = mode;
@@ -1085,6 +1102,17 @@ public class CaptureService extends Service {
         final String savedTimezone = ZoneId.systemDefault().toString();
         final Location savedStopAnchor = stationaryAnchor == null
                 ? null : new Location(stationaryAnchor);
+        final Location stopEvidenceAnchor=stationBoundary?savedPoints.get(savedPoints.size()-1):savedStopAnchor;
+        final long stopConfirmedAt=System.currentTimeMillis();
+        final boolean placeBoundary=savedAutomatic && stopEvidenceAnchor!=null && (
+                gpsStillness&&walkingStillness.canFinish(stopConfirmedAt)
+                || savedContextReason!=null&&(savedContextReason.startsWith("arrival_")||"departure_after_place_stay".equals(savedContextReason))
+                || "station_arrival_waiting".equals(savedStationReason)
+                || "station_gps_alighting".equals(savedStationReason)
+                || "station_alighting_or_transfer".equals(savedStationReason)
+                || "station_boarding_departure".equals(savedStationReason));
+        final ContextMap.Evidence arrivalMap=stopEvidenceAnchor==null||contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(stopEvidenceAnchor.getLatitude(),stopEvidenceAnchor.getLongitude(),stopEvidenceAnchor.getAccuracy());
         broadcastUpdate("Saving journey locally...");
 
         captureIo.execute(() -> {
@@ -1100,6 +1128,9 @@ public class CaptureService extends Service {
                 journey.put("timezone", savedTimezone);
                 journey.put("mode", savedMode);
                 journey.put("transport_confirmation", "required");
+                JSONObject arrivalPlace=placeBoundary?PlaceBoundaryEvidence.arrival(savedJourneyId,
+                        footSample(stopEvidenceAnchor,savedPoints.size()-1),stopConfirmedAt,arrivalMap,savedStationCode,savedContextReason):null;
+                PlaceBoundaryEvidence.attach(journey,savedDeparturePlace,arrivalPlace);
                 if(savedContextReason!=null)journey.put("context_evidence",new JSONObject().put("version",1)
                         .put("reason",savedContextReason).put("classification","suggested"));
                 if (savedStationReason != null) journey.put("station_evidence", new JSONObject()
@@ -1213,6 +1244,8 @@ public class CaptureService extends Service {
                     handoff.put("automatic_capture", true);
                     handoff.put("station_reason", savedStationReason);
                     handoff.put("station_code", savedStationCode);
+                    if(arrivalPlace!=null && !savedNextPoints.isEmpty())
+                        handoff.put("departure_place",PlaceBoundaryEvidence.departure(arrivalPlace,footSample(savedNextPoints.get(0),0)));
                     FileOutputStream output = null;
                     try {
                         output = checkpointFile.startWrite();
@@ -1246,9 +1279,16 @@ public class CaptureService extends Service {
             String continueJourneyId = nextCaptureJourneyId;
             String continueStationCode = stationEvidenceCode;
             String continueStationReason = stationEvidenceReason;
+            JSONObject continueDeparture=null;
+            if(continueMode!=null) {
+                JSONObject stop=PlaceAnchorStore.last(this);
+                if(stop!=null && journeyId!=null && journeyId.equals(stop.optString("journey_id")) && continuePoints!=null&&!continuePoints.isEmpty())
+                    try {continueDeparture=PlaceBoundaryEvidence.departure(stop,footSample(continuePoints.get(0),0));}catch(org.json.JSONException ignored){}
+            }
             nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null;
             contextReason=null;
+            departurePlace=null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
                     .remove(STATE_MODE)
@@ -1271,6 +1311,7 @@ public class CaptureService extends Service {
             if (continueMode != null) {
                 clearDepartureAnchor();
                 automaticCapture = true;
+                departurePlace=continueDeparture;
                 activateCapture(continueMode, continueStartedAt, continuePoints);
                 stationEvidenceCode = continueStationCode;
                 stationEvidenceReason = continueStationReason;
@@ -1389,6 +1430,7 @@ public class CaptureService extends Service {
                 final String[] stationState = stationModel == null ? null : stationModel.checkpoint();
                 final String[] contextState=contextModel.checkpoint();
                 final String savedContextReason=contextReason;
+                final JSONObject savedDeparturePlace=departurePlace;
                 captureIo.execute(() -> {
                     FileOutputStream output = null;
                     try {
@@ -1400,6 +1442,7 @@ public class CaptureService extends Service {
                         snapshot.put("station_code", savedStationCode);
                         snapshot.put("context_state",new JSONArray(Arrays.asList(contextState)));
                         snapshot.put("context_reason",savedContextReason);
+                        snapshot.put("departure_place",savedDeparturePlace);
                         if (stationState != null) snapshot.put("station_state", new JSONArray(Arrays.asList(stationState)));
                         output = checkpointFile.startWrite();
                         output.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));
@@ -1461,6 +1504,7 @@ public class CaptureService extends Service {
             restoredStationState = snapshot.optJSONArray("station_state");
             restoredContextState=snapshot.optJSONArray("context_state");
             contextReason=snapshot.isNull("context_reason")?null:snapshot.optString("context_reason",null);
+            departurePlace=snapshot.optJSONObject("departure_place");
             stationEvidenceReason = snapshot.isNull("station_reason") ? null : snapshot.optString("station_reason", null);
             stationEvidenceCode = snapshot.isNull("station_code") ? null : snapshot.optString("station_code", null);
             points.clear();

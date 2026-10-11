@@ -52,6 +52,7 @@ public final class JourneyStore {
         File target = new File(context.getFilesDir(), PREFIX + id + SUFFIX);
         File temporary = new File(context.getFilesDir(), PREFIX + id + ".tmp");
         try (FileOutputStream output = new FileOutputStream(temporary)) {
+            PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
             ensureSharedFields(journey);
             output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
             output.flush();
@@ -62,6 +63,7 @@ public final class JourneyStore {
                 throw new IllegalStateException("Could not commit journey archive");
             }
             bumpDataRevision(context);
+            PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
             try { ServiceStationStore.recordJourney(context,journey); }
             catch(Exception stationError){android.util.Log.w("Roadprints","Service-station visit check skipped",stationError);}
@@ -187,6 +189,18 @@ public final class JourneyStore {
     }
 
     /** Keeps metadata objects small and flat, ignoring unexpected nested payloads. */
+    private static JSONObject readPlaceReviews(File file) throws Exception {
+        try(JsonReader reader=new JsonReader(new InputStreamReader(new FileInputStream(file),StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while(reader.hasNext()) {
+                String key=reader.nextName();
+                if("stops".equals(key))return new JSONObject().put("stops",readEvidenceValue(reader));
+                reader.skipValue();
+            }
+        }
+        return null;
+    }
+
     private static JSONObject readFlatObject(JsonReader reader)
             throws IOException, org.json.JSONException {
         JSONObject value = new JSONObject();
@@ -528,6 +542,7 @@ public final class JourneyStore {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
             ServiceStationStore.forgetJourney(context,journeyId);
+            PlaceAnchorStore.forget(context,journeyId);
         }
     }
 
@@ -586,6 +601,7 @@ public final class JourneyStore {
                 .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
             throw new IllegalStateException("Could not clear legacy journey data");
         ServiceStationStore.clearOnDeleteAll(context);
+        PlaceAnchorStore.clear(context);
         ReturnRecapStore.clear(context);
         DiscoveryReplayCache.clear(context);
         JourneyReplayActivity.clearSeed();
@@ -593,6 +609,25 @@ public final class JourneyStore {
         AchievementStore.clearTravelUnlocks(context);
         AchievementsActivity.clearCachedAchievements(context);
         return deleted;
+    }
+
+    static synchronized void reviewStop(Context context,String journeyId,String stopId,String name,boolean confirmed) {
+        JSONObject journey=get(context,journeyId);
+        if(journey==null)throw new IllegalArgumentException("Journey is unavailable");
+        JSONArray stops=journey.optJSONArray("stops");
+        try {
+            if(stops!=null)for(int i=0;i<stops.length();i++) {
+                JSONObject stop=stops.optJSONObject(i);
+                if(stop!=null&&stopId.equals(stop.optString("id"))) {
+                    stops.put(i,PlaceBoundaryEvidence.review(stop,name,confirmed,
+                            Math.max(System.currentTimeMillis(),stop.optLong("reviewed_at_ms")+1)));
+                    PlaceBoundaryEvidence.rebuildPlaces(journey);
+                    journey.put("revision",journey.optInt("revision",1)+1);
+                    save(context,journey);return;
+                }
+            }
+        } catch(org.json.JSONException invalid){throw new IllegalStateException("Could not save place review",invalid);}
+        throw new IllegalArgumentException("Stop is unavailable");
     }
 
     public static synchronized void updateTitle(Context context, String journeyId, String title) {
@@ -749,6 +784,3 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
-
-
-

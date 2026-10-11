@@ -74,7 +74,9 @@ final class ContextJourneyModel {
         Decision d=new Decision(proposalIndex,suggested,"context_mode_"+suggested);clearProposal();return d;
     }
     boolean holdPause(String mode,long dwell,ContextMap.Evidence context) {
-        return "train".equals(mode) || ((context.road||context.rail||context.outdoor)&&!context.destination&&dwell<900000);
+        return "train".equals(mode) || (!context.destination && (context.rail
+                || context.road&&!context.routeAmbiguous
+                || (context.road||context.outdoor)&&dwell<900000));
     }
     private void clearProposal(){proposal="";proposalSince=0;proposalIndex=-1;proposalSamples=0;path=0;}
     String[] checkpoint() {
