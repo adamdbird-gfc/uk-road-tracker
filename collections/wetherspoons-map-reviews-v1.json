@@ -2294,6 +2294,573 @@
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/hunters-hall-galashiels/",
       "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n10604807681",
+      "decision": "active_map",
+      "source_name": "The Hat and Feathers",
+      "osm_aliases": [
+        "node/10604807681"
+      ],
+      "lat": 54.837122,
+      "lon": -1.3334897,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hat-and-feathers-seaham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2739758554",
+      "decision": "active_map",
+      "source_name": "The Half Moon Inn",
+      "osm_aliases": [
+        "node/2739758554"
+      ],
+      "lat": 54.6073899,
+      "lon": -1.293606,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-half-moon-inn-billingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3268702293",
+      "decision": "active_map",
+      "source_name": "The Plimsoll Line",
+      "osm_aliases": [
+        "node/3268702293"
+      ],
+      "lat": 54.6172402,
+      "lon": -1.0604839,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-plimsoll-line-redcar/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3841493266",
+      "decision": "active_map",
+      "source_name": "Luther's",
+      "osm_aliases": [
+        "node/3841493266"
+      ],
+      "lat": 54.9789772,
+      "lon": -1.6151776,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/luthers-bar-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Source Luther's corresponds to operator Luther's Bar at Newcastle Students Union; campus presence is not pub entry."
+    },
+    {
+      "id": "spoons-osm-n3854427061",
+      "decision": "active_map",
+      "source_name": "The William Stead",
+      "osm_aliases": [
+        "node/3854427061"
+      ],
+      "lat": 54.5255479,
+      "lon": -1.5527303,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-stead-darlington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Source Crown Street 8 matches operator; postcode DL1 1PD/ DL1 1LU discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-n3854561975",
+      "decision": "active_map",
+      "source_name": "The Tanners Hall",
+      "osm_aliases": [
+        "node/3854561975"
+      ],
+      "lat": 54.5255712,
+      "lon": -1.5572181,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tanners-hall-darlington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n391445314",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://camra.org.uk/pubs/saba-maison-de-luxe-sunderland-192672",
+      "basis": "CAMRA March 2026 update identifies source Victors/Lambton Worm at Low Row SR1 3PY as Saba Maison De Luxe, reopened as a restaurant in December 2023. Not a current Wetherspoon; preserve historical source identity."
+    },
+    {
+      "id": "spoons-osm-n4325193512",
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "osm_aliases": [
+        "node/4325193512"
+      ],
+      "lat": 55.1313955,
+      "lon": -1.6005543,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-bedlington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4398544132",
+      "decision": "active_map",
+      "source_name": "The Tilley Stone",
+      "osm_aliases": [
+        "node/4398544132"
+      ],
+      "lat": 54.9617485,
+      "lon": -1.6021773,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tilley-stone-gateshead/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Jackson Street matches; postcode NE8 1EE/NE8 1ED discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-n4515538558",
+      "decision": "active_map",
+      "source_name": "Keel Row",
+      "osm_aliases": [
+        "node/4515538558"
+      ],
+      "lat": 54.972578,
+      "lon": -1.6184624,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-keel-row-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4790151513",
+      "decision": "active_map",
+      "source_name": "The Ironstone Miner",
+      "osm_aliases": [
+        "node/4790151513"
+      ],
+      "lat": 54.5347508,
+      "lon": -1.0562948,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ironstone-miner-guisborough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n5060517988",
+      "decision": "active_map",
+      "source_name": "The Horse Shoe Inn",
+      "osm_aliases": [
+        "node/5060517988"
+      ],
+      "lat": 54.7149831,
+      "lon": -1.7430609,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-horse-shoe-inn-crook/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n639597138",
+      "decision": "active_map",
+      "source_name": "The Highland Laddie",
+      "osm_aliases": [
+        "node/639597138"
+      ],
+      "lat": 54.5878385,
+      "lon": -1.3107667,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-highland-laddie-norton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Norton/Stockton locality variant reviewed."
+    },
+    {
+      "id": "spoons-osm-n6482828602",
+      "decision": "active_map",
+      "source_name": "Wetherspoons",
+      "osm_aliases": [
+        "node/6482828602"
+      ],
+      "lat": 54.9578078,
+      "lon": -1.6664019,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoons-gateshead/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Source Russell Way Metrocentre matches operator; postcode NE11 9YP/NE11 9XX discrepancy retained. Shopping-centre presence is not pub entry."
+    },
+    {
+      "id": "spoons-osm-n765370023",
+      "decision": "active_map",
+      "source_name": "The Wicket Gate",
+      "osm_aliases": [
+        "node/765370023"
+      ],
+      "lat": 54.8521283,
+      "lon": -1.5734256,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wicket-gate-chester-le-street/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n7692938506",
+      "decision": "active_map",
+      "source_name": "The Bishops' Mill",
+      "osm_aliases": [
+        "node/7692938506"
+      ],
+      "lat": 54.7782349,
+      "lon": -1.5757294,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bishops-mill-durham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n929406324",
+      "decision": "active_map",
+      "source_name": "The Forum",
+      "osm_aliases": [
+        "node/929406324"
+      ],
+      "lat": 54.971874,
+      "lon": -2.1009738,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-forum-hexham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-r10695656",
+      "decision": "active_map",
+      "source_name": "The Ritz",
+      "osm_aliases": [
+        "relation/10695656"
+      ],
+      "lat": 54.99083815,
+      "lon": -1.5369693287371762,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ritz-wallsend/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1093253094",
+      "decision": "active_map",
+      "source_name": "The Mile Castle",
+      "osm_aliases": [
+        "way/1093253094"
+      ],
+      "lat": 54.9702694,
+      "lon": -1.616342597536648,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mile-castle-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Grainger Street 19-25 matches; postcode NE1 5AE/NE1 5JE discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w1103772307",
+      "decision": "active_map",
+      "source_name": "Job Bulman",
+      "osm_aliases": [
+        "way/1103772307"
+      ],
+      "lat": 55.00472215,
+      "lon": -1.619395203565218,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-job-bulman-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1151600915",
+      "decision": "active_map",
+      "source_name": "The Stanley Jefferson",
+      "osm_aliases": [
+        "way/1151600915"
+      ],
+      "lat": 54.6652385,
+      "lon": -1.6730122344188787,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-stanley-jefferson-bishop-auckland/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1264206847",
+      "decision": "active_map",
+      "source_name": "The Swatters Carr",
+      "osm_aliases": [
+        "way/1264206847"
+      ],
+      "lat": 54.56985175,
+      "lon": -1.2383478058357353,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-swatters-carr-middlesbrough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w127030035",
+      "decision": "active_map",
+      "source_name": "The Electrical Wizard",
+      "osm_aliases": [
+        "way/127030035"
+      ],
+      "lat": 55.166779399999996,
+      "lon": -1.6911554500000001,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-electrical-wizard-morpeth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1283698313",
+      "decision": "active_map",
+      "source_name": "The Cooper Rose",
+      "osm_aliases": [
+        "way/1283698313"
+      ],
+      "lat": 54.903301400000004,
+      "lon": -1.3876715589172521,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-cooper-rose-sunderland/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w131661186",
+      "decision": "active_map",
+      "source_name": "The Quayside",
+      "osm_aliases": [
+        "way/131661186"
+      ],
+      "lat": 54.96745625,
+      "lon": -1.6104821142373413,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-quayside-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w134968549",
+      "decision": "active_map",
+      "source_name": "The Wallaw",
+      "osm_aliases": [
+        "way/134968549"
+      ],
+      "lat": 55.1265661,
+      "lon": -1.508050505615242,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wallaw-blyth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1470036586",
+      "decision": "active_map",
+      "source_name": "The Blue Bell",
+      "osm_aliases": [
+        "way/1470036586"
+      ],
+      "lat": 55.027521,
+      "lon": -1.5235180121218814,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-blue-bell-newcastle/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Holystone/Newcastle locality variant; operating franchise checked independently."
+    },
+    {
+      "id": "spoons-osm-w307003093",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://camra.org.uk/pubs/william-jameson-sunderland-192676",
+      "basis": "Current CAMRA listing explicitly identifies former Wetherspoons at 30-32 Fawcett Street, now Just Pubs. Former operator pub page redirects to homepage. Exclude from current collection; no claim pub itself closed."
+    },
+    {
+      "id": "spoons-osm-w402155606",
+      "decision": "active_map",
+      "source_name": "The Sir William de Wessyngton",
+      "osm_aliases": [
+        "way/402155606"
+      ],
+      "lat": 54.91253695,
+      "lon": -1.5230396119305654,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-william-de-wessyngton-washington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w405131816",
+      "decision": "active_map",
+      "source_name": "The Company Row",
+      "osm_aliases": [
+        "way/405131816"
+      ],
+      "lat": 54.85210865,
+      "lon": -1.8309126535254758,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-company-row-consett/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Victoria Road matches; postcode DH8 5AB/DH8 5BQ discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w411107028",
+      "decision": "active_map",
+      "source_name": "The High Main",
+      "osm_aliases": [
+        "way/411107028"
+      ],
+      "lat": 54.97713435,
+      "lon": -1.5843057232344893,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-high-main-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w413609340",
+      "decision": "active_map",
+      "source_name": "The Grand Electric Hall",
+      "osm_aliases": [
+        "way/413609340"
+      ],
+      "lat": 54.6997377,
+      "lon": -1.6000382096877885,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-grand-electric-hall-spennymoor/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w436862096",
+      "decision": "active_map",
+      "source_name": "The Wouldhave",
+      "osm_aliases": [
+        "way/436862096"
+      ],
+      "lat": 55.000035999999994,
+      "lon": -1.4333905055725065,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wouldhave-south-shields/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w444907821",
+      "decision": "active_map",
+      "source_name": "The Harry Clasper",
+      "osm_aliases": [
+        "way/444907821"
+      ],
+      "lat": 54.94591925,
+      "lon": -1.67334063264791,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-harry-clasper-whickham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Front Street Whickham matches; postcode NE16 4EG/NE16 4HF discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w452919351",
+      "decision": "active_map",
+      "source_name": "The Fire Station",
+      "osm_aliases": [
+        "way/452919351"
+      ],
+      "lat": 55.0427223,
+      "lon": -1.445024213677966,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-fire-station-whitley-bay/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w69719630",
+      "decision": "active_map",
+      "source_name": "The Red Anchor",
+      "osm_aliases": [
+        "way/69719630"
+      ],
+      "lat": 54.54596075,
+      "lon": -1.332147618721973,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-anchor-stockton-on-tees/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Operating Stockton franchise approved using current individual pub listing."
+    },
+    {
+      "id": "spoons-osm-w76280648",
+      "decision": "active_map",
+      "source_name": "The Wild Boar",
+      "osm_aliases": [
+        "way/76280648"
+      ],
+      "lat": 54.8434414,
+      "lon": -1.469268449999997,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wild-boar-houghton-le-spring/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w837633516",
+      "decision": "active_map",
+      "source_name": "The Five Swans",
+      "osm_aliases": [
+        "way/837633516"
+      ],
+      "lat": 54.97766765,
+      "lon": -1.6118977697169812,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-five-swans-newcastle-upon-tyne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w844175661",
+      "decision": "active_map",
+      "source_name": "The Five Quarter",
+      "osm_aliases": [
+        "way/844175661"
+      ],
+      "lat": 54.758475149999995,
+      "lon": -1.3324560081023153,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-five-quarter-peterlee/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w90701058",
+      "decision": "active_map",
+      "source_name": "John The Clerk of Cramlington",
+      "osm_aliases": [
+        "way/90701058"
+      ],
+      "lat": 55.0865364,
+      "lon": -1.5851705114396903,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/john-the-clerk-of-cramlington-cramlington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w931735938",
+      "decision": "active_map",
+      "source_name": "The Ward Jackson",
+      "osm_aliases": [
+        "way/931735938"
+      ],
+      "lat": 54.6855487,
+      "lon": -1.2085877376685041,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ward-jackson-hartlepool/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Church Square 3-9 matches; postcode TS24 7EY/TS24 7EU discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w97457171",
+      "decision": "active_map",
+      "source_name": "The Rohan Kanhai",
+      "osm_aliases": [
+        "way/97457171"
+      ],
+      "lat": 55.183688000000004,
+      "lon": -1.567644756417296,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-rohan-kanhai-ashington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Woodhorn Road 1-4 matches; postcode NE63 9AE/NE63 9UX discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w974986122",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://camra.org.uk/pubs/isaac-wilson-middlesbrough-184921",
+      "basis": "CAMRA explicitly identifies former Wetherspoon conversion at 61 Wilson Street TS1 1SF; current listings identify Tees Inns. Exclude current collection, retain historical identity; no claim pub itself closed."
+    },
+    {
+      "id": "spoons-osm-w99788997",
+      "decision": "active_map",
+      "source_name": "The Thomas Sheraton",
+      "osm_aliases": [
+        "way/99788997"
+      ],
+      "lat": 54.5613574,
+      "lon": -1.313198557271912,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-thomas-sheraton-stockton-on-tees/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Bridge Road 4 matches; postcode TS18 1BH/TS18 3BW discrepancy retained."
+    },
+    {
+      "id": "spoons-osm-w99791953",
+      "decision": "active_map",
+      "source_name": "Moor Farm",
+      "osm_aliases": [
+        "way/99791953"
+      ],
+      "lat": 55.06539215,
+      "lon": -1.5815367380381138,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-new-moor-farm-cramlington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, coordinates, county and omitted address fields retained. Map only; premises/visits not approved. Source Moor Farm corresponds to current New Moor Farm, Annitsford/Cramlington, same NE23 7QA. Franchise name variant explicitly reviewed; no source rename/coordinate change."
     }
   ]
 }
