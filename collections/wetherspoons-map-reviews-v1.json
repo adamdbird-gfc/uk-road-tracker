@@ -955,6 +955,617 @@
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.hygienescore.co.uk/londonderry/latest",
       "basis": "Trinity Bar in Derry appears as a renamed former Ice Wharf in current public records. Current Wetherspoon operation not established; hold pending direct operator/independent ownership verification, not a confirmed closure."
+    },
+    {
+      "id": "spoons-osm-n10106883876",
+      "osm_aliases": [
+        "node/10106883876"
+      ],
+      "lat": 51.7711484,
+      "lon": -3.2452164,
+      "decision": "active_map",
+      "source_name": "The Olympia",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-olympia-tredegar/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n10738667292",
+      "osm_aliases": [
+        "node/10738667292"
+      ],
+      "lat": 51.6686006,
+      "lon": -3.922752,
+      "decision": "active_map",
+      "source_name": "The Red Lion Inn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-inn-swansea/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator locality Morriston is within OSM Swansea; same postcode."
+    },
+    {
+      "id": "spoons-osm-n11171985290",
+      "osm_aliases": [
+        "node/11171985290"
+      ],
+      "lat": 51.6691999,
+      "lon": -3.1954763,
+      "decision": "active_map",
+      "source_name": "The Sirhowy",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sirhowy-blackwood/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n11172006305",
+      "osm_aliases": [
+        "node/11172006305"
+      ],
+      "lat": 51.7298017,
+      "lon": -3.1345053,
+      "decision": "active_map",
+      "source_name": "The Pontlottyn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-pontlottyn-abertillery/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n1122522301",
+      "osm_aliases": [
+        "node/1122522301"
+      ],
+      "lat": 51.7473463,
+      "lon": -3.3782556,
+      "decision": "active_map",
+      "source_name": "Y Dic Penderyn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/y-dic-penderyn-merthyr-tydfil/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+    },
+    {
+      "id": "spoons-osm-n11280493976",
+      "osm_aliases": [
+        "node/11280493976"
+      ],
+      "lat": 51.8117825,
+      "lon": -2.7156106,
+      "decision": "active_map",
+      "source_name": "The Kings Head",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kings-head-monmouth/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n1129686325",
+      "osm_aliases": [
+        "node/1129686325"
+      ],
+      "lat": 51.7126821,
+      "lon": -3.4463791,
+      "decision": "active_map",
+      "source_name": "Yr Ieuan ap Iago",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/yr-ieuan-ap-iago-aberdare/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n12288727359",
+      "osm_aliases": [
+        "node/12288727359"
+      ],
+      "lat": 51.6810989,
+      "lon": -4.1630477,
+      "decision": "active_map",
+      "source_name": "The York Palace",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-york-palace-llanelli/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source postcode missing; no operator postcode copied into app data."
+    },
+    {
+      "id": "spoons-osm-n1296032060",
+      "osm_aliases": [
+        "node/1296032060"
+      ],
+      "lat": 53.2244595,
+      "lon": -4.1289646,
+      "decision": "active_map",
+      "source_name": "The Black Bull Inn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-black-bull-inn-bangor/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n13038195354",
+      "osm_aliases": [
+        "node/13038195354"
+      ],
+      "lat": 51.4775637,
+      "lon": -3.1779773,
+      "decision": "active_map",
+      "source_name": "The Prince Of Wales",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-prince-of-wales-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n13038195392",
+      "osm_aliases": [
+        "node/13038195392"
+      ],
+      "lat": 51.4765922,
+      "lon": -3.1769493,
+      "decision": "active_map",
+      "source_name": "The Great Western",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-western-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n26787665",
+      "osm_aliases": [
+        "node/26787665"
+      ],
+      "lat": 53.1664744,
+      "lon": -3.1412,
+      "decision": "active_map",
+      "source_name": "The Gold Cape",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gold-cape-mold/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n291562392",
+      "osm_aliases": [
+        "node/291562392"
+      ],
+      "lat": 51.8570991,
+      "lon": -4.3050534,
+      "decision": "active_map",
+      "source_name": "Yr Hen Dderwen",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/yr-hen-dderwen-carmarthen/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n492079348",
+      "osm_aliases": [
+        "node/492079348"
+      ],
+      "lat": 51.588945,
+      "lon": -2.9980773,
+      "decision": "active_map",
+      "source_name": "The John Wallace Linton",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-wallace-linton-newport/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n6001083143",
+      "osm_aliases": [
+        "node/6001083143"
+      ],
+      "lat": 51.8014989,
+      "lon": -4.9678706,
+      "decision": "active_map",
+      "source_name": "The William Owen",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-owen-haverfordwest/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+    },
+    {
+      "id": "spoons-osm-n6592686784",
+      "osm_aliases": [
+        "node/6592686784"
+      ],
+      "lat": 51.5066897,
+      "lon": -3.5793567,
+      "decision": "active_map",
+      "source_name": "The Wyndham Arms",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wyndham-arms-hotel-bridgend/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator uses a different article/hotel or brand prefix; reviewed as the same venue, OSM name retained."
+    },
+    {
+      "id": "spoons-osm-n731435998",
+      "osm_aliases": [
+        "node/731435998"
+      ],
+      "lat": 51.4857144,
+      "lon": -3.165617,
+      "decision": "active_map",
+      "source_name": "Ernest Willows",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ernest-willows-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator uses a different article/hotel or brand prefix; reviewed as the same venue, OSM name retained."
+    },
+    {
+      "id": "spoons-osm-n7449053702",
+      "osm_aliases": [
+        "node/7449053702"
+      ],
+      "lat": 52.4141758,
+      "lon": -4.081626,
+      "decision": "active_map",
+      "source_name": "Yr Hen Orsaf",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/yr-hen-orsaf-aberystwyth/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Station-site pub: OSM postcode SY23 1LH differs from operator SY23 1LN. Same Aberystwyth station/Alexandra Road locality, discrepancy retained; station-wide GPS evidence cannot award a pub visit."
+    },
+    {
+      "id": "spoons-osm-n7827962966",
+      "osm_aliases": [
+        "node/7827962966"
+      ],
+      "lat": 51.655277,
+      "lon": -3.0205266,
+      "decision": "active_map",
+      "source_name": "The John Fielding",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-fielding-cwmbran/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n8508241004",
+      "osm_aliases": [
+        "node/8508241004"
+      ],
+      "lat": 51.4833342,
+      "lon": -3.1728919,
+      "decision": "active_map",
+      "source_name": "The Central Bar",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-central-bar-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n8919811946",
+      "osm_aliases": [
+        "node/8919811946"
+      ],
+      "lat": 51.5897708,
+      "lon": -2.9784779,
+      "decision": "active_map",
+      "source_name": "The Godfrey Morgan",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-godfrey-morgan-newport/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n9005858168",
+      "osm_aliases": [
+        "node/9005858168"
+      ],
+      "lat": 51.4813232,
+      "lon": -3.2003875,
+      "decision": "active_map",
+      "source_name": "The Ivor Davies",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ivor-davies-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n901177437",
+      "osm_aliases": [
+        "node/901177437"
+      ],
+      "lat": 53.1146084,
+      "lon": -3.3103535,
+      "decision": "active_map",
+      "source_name": "Castle Hotel",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-castle-hotel-ruthin/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator uses a different article/hotel or brand prefix; reviewed as the same venue, OSM name retained."
+    },
+    {
+      "id": "spoons-osm-n901545308",
+      "osm_aliases": [
+        "node/901545308"
+      ],
+      "lat": 51.6618573,
+      "lon": -3.806378,
+      "decision": "active_map",
+      "source_name": "The David Protheroe",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-david-protheroe-neath/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+    },
+    {
+      "id": "spoons-osm-n915322033",
+      "osm_aliases": [
+        "node/915322033"
+      ],
+      "lat": 51.6423928,
+      "lon": -2.6735977,
+      "decision": "active_map",
+      "source_name": "The Bell Hanger",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bell-hanger-chepstow/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n9812347261",
+      "osm_aliases": [
+        "node/9812347261"
+      ],
+      "lat": 51.5994943,
+      "lon": -3.3407264,
+      "decision": "active_map",
+      "source_name": "The Tumble Inn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tumble-inn-pontypridd/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w105804094",
+      "osm_aliases": [
+        "way/105804094"
+      ],
+      "lat": 51.5077909,
+      "lon": -3.1999521016121677,
+      "decision": "active_map",
+      "source_name": "The Aneurin Bevan",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-aneurin-bevan-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1076206136",
+      "osm_aliases": [
+        "way/1076206136"
+      ],
+      "lat": 52.887847,
+      "lon": -4.417581387635214,
+      "decision": "active_map",
+      "source_name": "Pen Cob",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/pen-cob-pwllheli/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1080139848",
+      "osm_aliases": [
+        "way/1080139848"
+      ],
+      "lat": 51.59431295,
+      "lon": -3.782248714081478,
+      "decision": "active_map",
+      "source_name": "The Lord Caradoc",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lord-caradoc-port-talbot/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1493545686",
+      "osm_aliases": [
+        "way/1493545686"
+      ],
+      "lat": 51.608501700000005,
+      "lon": -3.6597384220297022,
+      "decision": "active_map",
+      "source_name": "The Sawyer's Arms",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sawyers-arms-maesteg/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w157017541",
+      "osm_aliases": [
+        "way/157017541"
+      ],
+      "lat": 51.66910005,
+      "lon": -4.037636255181624,
+      "decision": "active_map",
+      "source_name": "The Mardy Inn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mardy-inn-swansea/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator locality Gorseinon is within OSM Swansea; same postcode."
+    },
+    {
+      "id": "spoons-osm-w178567393",
+      "osm_aliases": [
+        "way/178567393"
+      ],
+      "lat": 51.4625951,
+      "lon": -3.1664128008414303,
+      "decision": "active_map",
+      "source_name": "The Mount Stuart",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mount-stuart-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w223309617",
+      "osm_aliases": [
+        "way/223309617"
+      ],
+      "lat": 53.32496825,
+      "lon": -3.83212434940772,
+      "decision": "active_map",
+      "source_name": "The Palladium",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-palladium-llandudno/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w299067245",
+      "osm_aliases": [
+        "way/299067245"
+      ],
+      "lat": 53.21233455,
+      "lon": -3.038989527919851,
+      "decision": "active_map",
+      "source_name": "Central Hotel",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-central-hotel-shotton/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator uses a different article/hotel or brand prefix; reviewed as the same venue, OSM name retained. Operator locality Shotton is within OSM Deeside; same postcode."
+    },
+    {
+      "id": "spoons-osm-w322522516",
+      "osm_aliases": [
+        "way/322522516"
+      ],
+      "lat": 53.320842299999995,
+      "lon": -3.4918476550541495,
+      "decision": "active_map",
+      "source_name": "The Sussex",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sussex-rhyl/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w401727609",
+      "osm_aliases": [
+        "way/401727609"
+      ],
+      "lat": 53.2967885,
+      "lon": -3.727671122866468,
+      "decision": "active_map",
+      "source_name": "The Picture House",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-house-colwyn-bay/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w403378977",
+      "osm_aliases": [
+        "way/403378977"
+      ],
+      "lat": 53.14101825,
+      "lon": -4.274943982376416,
+      "decision": "active_map",
+      "source_name": "Tafarn Y Porth",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/tafarn-y-porth-caernarfon/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w509639600",
+      "osm_aliases": [
+        "way/509639600"
+      ],
+      "lat": 52.51652585,
+      "lon": -3.3156848908313434,
+      "decision": "active_map",
+      "source_name": "The Black Boy",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-black-boy-newtown/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w511135764",
+      "osm_aliases": [
+        "way/511135764"
+      ],
+      "lat": 51.61930445,
+      "lon": -3.949313409952722,
+      "decision": "active_map",
+      "source_name": "The Potters Wheel",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-potters-wheel-swansea/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w527261588",
+      "osm_aliases": [
+        "way/527261588"
+      ],
+      "lat": 51.572244600000005,
+      "lon": -3.2200914902298527,
+      "decision": "active_map",
+      "source_name": "The Malcolm Uphill",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-malcolm-uphill-caerphilly/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w727263744",
+      "osm_aliases": [
+        "way/727263744"
+      ],
+      "lat": 51.94854215,
+      "lon": -3.39092655165509,
+      "decision": "active_map",
+      "source_name": "The George Hotel",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-brecon/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Source postcode missing; no operator postcode copied into app data."
+    },
+    {
+      "id": "spoons-osm-w727692740",
+      "osm_aliases": [
+        "way/727692740"
+      ],
+      "lat": 51.823270300000004,
+      "lon": -3.0190141957836403,
+      "decision": "active_map",
+      "source_name": "Wetherspoon The Coliseum",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-coliseum-abergavenny/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Operator uses a different article/hotel or brand prefix; reviewed as the same venue, OSM name retained."
+    },
+    {
+      "id": "spoons-osm-w835448801",
+      "osm_aliases": [
+        "way/835448801"
+      ],
+      "lat": 51.6192298,
+      "lon": -3.9405855202349365,
+      "decision": "active_map",
+      "source_name": "The Bank Statement",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bank-statement-swansea/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+    },
+    {
+      "id": "spoons-osm-w926770527",
+      "osm_aliases": [
+        "way/926770527"
+      ],
+      "lat": 51.7795413,
+      "lon": -3.207911048465659,
+      "decision": "active_map",
+      "source_name": "The Picture House",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-house-ebbw-vale/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. OSM postcode NP23 6HL differs from operator NP23 6HP; name and Market Street/Ebbw Vale locality agree. Source postcode retained."
+    },
+    {
+      "id": "spoons-osm-w936398472",
+      "osm_aliases": [
+        "way/936398472"
+      ],
+      "lat": 53.0472523,
+      "lon": -2.996869441405633,
+      "decision": "active_map",
+      "source_name": "The Elihu Yale",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-elihu-yale-wrexham/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w945842426",
+      "osm_aliases": [
+        "way/945842426"
+      ],
+      "lat": 51.39866495,
+      "lon": -3.2843616737583963,
+      "decision": "active_map",
+      "source_name": "The Sir Samuel Romilly",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-samuel-romilly-barry/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source postcode missing; no operator postcode copied into app data."
+    },
+    {
+      "id": "spoons-osm-w95037866",
+      "osm_aliases": [
+        "way/95037866"
+      ],
+      "lat": 51.4802795,
+      "lon": -3.1817806838244387,
+      "decision": "active_map",
+      "source_name": "The Gatekeeper",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gatekeeper-cardiff/",
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
     }
   ]
 }

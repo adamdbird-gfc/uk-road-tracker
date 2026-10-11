@@ -7,9 +7,9 @@
   "completion_target": null,
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
-    "map_venues": 70,
+    "map_venues": 117,
     "excluded_current": 2,
-    "unreviewed_candidates": 759,
+    "unreviewed_candidates": 712,
     "needs_rereview": [
       "spoons-osm-w38325241",
       "spoons-osm-n957682753"
@@ -153,14 +153,12 @@
         "nation": "Wales"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-w727263744"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -194,17 +192,12 @@
         "nation": "Wales"
       },
       "candidate_count": 4,
-      "map_approved": 0,
+      "map_approved": 4,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1296032060",
-        "spoons-osm-w1076206136",
-        "spoons-osm-w223309617",
-        "spoons-osm-w403378977"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -233,14 +226,12 @@
         "nation": "Wales"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n7449053702"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -249,15 +240,12 @@
         "nation": "Wales"
       },
       "candidate_count": 2,
-      "map_approved": 0,
+      "map_approved": 2,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n12288727359",
-        "spoons-osm-n291562392"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -364,16 +352,12 @@
         "nation": "Wales"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n901177437",
-        "spoons-osm-w401727609",
-        "spoons-osm-w936398472"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -588,16 +572,12 @@
         "nation": "Wales"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n26787665",
-        "spoons-osm-w299067245",
-        "spoons-osm-w322522516"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -606,34 +586,12 @@
         "nation": "Wales"
       },
       "candidate_count": 21,
-      "map_approved": 0,
+      "map_approved": 21,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n10738667292",
-        "spoons-osm-n1122522301",
-        "spoons-osm-n1129686325",
-        "spoons-osm-n13038195354",
-        "spoons-osm-n13038195392",
-        "spoons-osm-n6592686784",
-        "spoons-osm-n731435998",
-        "spoons-osm-n8508241004",
-        "spoons-osm-n9005858168",
-        "spoons-osm-n901545308",
-        "spoons-osm-n9812347261",
-        "spoons-osm-w105804094",
-        "spoons-osm-w1080139848",
-        "spoons-osm-w1493545686",
-        "spoons-osm-w157017541",
-        "spoons-osm-w178567393",
-        "spoons-osm-w511135764",
-        "spoons-osm-w527261588",
-        "spoons-osm-w835448801",
-        "spoons-osm-w945842426",
-        "spoons-osm-w95037866"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1088,23 +1046,12 @@
         "nation": "Wales"
       },
       "candidate_count": 10,
-      "map_approved": 0,
+      "map_approved": 10,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n10106883876",
-        "spoons-osm-n11171985290",
-        "spoons-osm-n11172006305",
-        "spoons-osm-n11280493976",
-        "spoons-osm-n492079348",
-        "spoons-osm-n7827962966",
-        "spoons-osm-n8919811946",
-        "spoons-osm-n915322033",
-        "spoons-osm-w727692740",
-        "spoons-osm-w926770527"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1113,14 +1060,12 @@
         "nation": "Wales"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-w509639600"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1299,14 +1244,12 @@
         "nation": "Wales"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n6001083143"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1804,5 +1747,15 @@
       ]
     }
   ],
-  "unreviewed_without_decision": 757
+  "unreviewed_without_decision": 710,
+  "nation_checks": {
+    "Wales": {
+      "existing_candidates": 47,
+      "map_approved": 47,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "basis": "Independent dated researcher list has matching Welsh names/localities; corroboration only, not an authoritative completeness guarantee. Presthaven proposal is not an operating pub."
+    }
+  }
 }
