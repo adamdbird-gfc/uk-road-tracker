@@ -55,11 +55,33 @@
       ],
       "basis": "Operator currently lists operating St Andrews university pub; absent from pinned candidate names. Reconcile an OSM pub identity and premises position before map addition; university/student association centroid cannot stand in for the pub.",
       "map_enabled": false
+    },
+    {
+      "key": "sir-thomas-haggerston",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.haven.com/discover/whats-new/haggerston-castle",
+      "additional_evidence_urls": [
+        "https://www.haven.com/discover/whats-new/wetherspoon"
+      ],
+      "basis": "Haven operator confirms named Wetherspoon operating at Haggerston Castle; absent from pinned candidate names. Reconcile actual OSM pub identity and premises position before adding a map pin; holiday-park centroid/boundary cannot substitute for pub premises.",
+      "map_enabled": false
     }
   ],
   "delivery_sequence": [
     "Establish and reconcile UK catalogue",
     "Bundle approved catalogue in a new app release",
     "Implement silent validated catalogue updates with offline fallback"
-  ]
+  ],
+  "english_batch_order": [
+    "North East",
+    "North West",
+    "Yorkshire and the Humber",
+    "East Midlands",
+    "West Midlands",
+    "East of England",
+    "South West",
+    "South East",
+    "London"
+  ],
+  "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch."
 }

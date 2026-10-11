@@ -7,9 +7,9 @@
   "completion_target": null,
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
-    "map_venues": 172,
-    "excluded_current": 4,
-    "unreviewed_candidates": 655,
+    "map_venues": 214,
+    "excluded_current": 7,
+    "unreviewed_candidates": 610,
     "needs_rereview": [
       "spoons-osm-w38325241"
     ]
@@ -474,37 +474,12 @@
         "nation": "England"
       },
       "candidate_count": 24,
-      "map_approved": 0,
-      "excluded": 0,
+      "map_approved": 22,
+      "excluded": 2,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n10604807681",
-        "spoons-osm-n2739758554",
-        "spoons-osm-n3854427061",
-        "spoons-osm-n3854561975",
-        "spoons-osm-n391445314",
-        "spoons-osm-n4398544132",
-        "spoons-osm-n5060517988",
-        "spoons-osm-n639597138",
-        "spoons-osm-n6482828602",
-        "spoons-osm-n765370023",
-        "spoons-osm-n7692938506",
-        "spoons-osm-w1151600915",
-        "spoons-osm-w1283698313",
-        "spoons-osm-w307003093",
-        "spoons-osm-w402155606",
-        "spoons-osm-w405131816",
-        "spoons-osm-w413609340",
-        "spoons-osm-w436862096",
-        "spoons-osm-w444907821",
-        "spoons-osm-w69719630",
-        "spoons-osm-w76280648",
-        "spoons-osm-w844175661",
-        "spoons-osm-w931735938",
-        "spoons-osm-w99788997"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1080,30 +1055,12 @@
         "nation": "England"
       },
       "candidate_count": 17,
-      "map_approved": 0,
+      "map_approved": 17,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n3841493266",
-        "spoons-osm-n4325193512",
-        "spoons-osm-n4515538558",
-        "spoons-osm-n929406324",
-        "spoons-osm-r10695656",
-        "spoons-osm-w1093253094",
-        "spoons-osm-w1103772307",
-        "spoons-osm-w127030035",
-        "spoons-osm-w131661186",
-        "spoons-osm-w134968549",
-        "spoons-osm-w1470036586",
-        "spoons-osm-w411107028",
-        "spoons-osm-w452919351",
-        "spoons-osm-w837633516",
-        "spoons-osm-w90701058",
-        "spoons-osm-w97457171",
-        "spoons-osm-w99791953"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1591,8 +1548,8 @@
         "nation": "England"
       },
       "candidate_count": 75,
-      "map_approved": 2,
-      "excluded": 0,
+      "map_approved": 5,
+      "excluded": 1,
       "held": 0,
       "existing_candidate_review_complete": false,
       "missing_venue_search_complete": false,
@@ -1613,12 +1570,10 @@
         "spoons-osm-n305686960",
         "spoons-osm-n313099976",
         "spoons-osm-n314442295",
-        "spoons-osm-n3268702293",
         "spoons-osm-n3278252833",
         "spoons-osm-n4201150153",
         "spoons-osm-n441938181",
         "spoons-osm-n462615653",
-        "spoons-osm-n4790151513",
         "spoons-osm-n4974198714",
         "spoons-osm-n5508872798",
         "spoons-osm-n5798940953",
@@ -1635,7 +1590,6 @@
         "spoons-osm-w1149961617",
         "spoons-osm-w1221524519",
         "spoons-osm-w1238952267",
-        "spoons-osm-w1264206847",
         "spoons-osm-w140960383",
         "spoons-osm-w1426862050",
         "spoons-osm-w150695875",
@@ -1668,12 +1622,11 @@
         "spoons-osm-w848041614",
         "spoons-osm-w859915399",
         "spoons-osm-w87266453",
-        "spoons-osm-w927836711",
-        "spoons-osm-w974986122"
+        "spoons-osm-w927836711"
       ]
     }
   ],
-  "unreviewed_without_decision": 654,
+  "unreviewed_without_decision": 609,
   "nation_checks": {
     "Wales": {
       "existing_candidates": 47,
@@ -1701,6 +1654,66 @@
       "missing_venue_search_complete": false,
       "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
       "basis": "Three individual current operator pub listings reconfirmed; researcher current NI subset agrees with these names/localities. Historical entries are not operating candidates. Derry hold resolved by current Claddagh operator website and CAMRA former Ice Wharf/Trinity history. No additional operating venue identified during this cross-check; no authoritative completeness guarantee."
+    }
+  },
+  "region_checks": {
+    "North East": {
+      "existing_candidates": 45,
+      "map_approved": 42,
+      "excluded": 3,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "candidate_ids": [
+        "spoons-osm-n10604807681",
+        "spoons-osm-n2739758554",
+        "spoons-osm-n3268702293",
+        "spoons-osm-n3841493266",
+        "spoons-osm-n3854427061",
+        "spoons-osm-n3854561975",
+        "spoons-osm-n391445314",
+        "spoons-osm-n4325193512",
+        "spoons-osm-n4398544132",
+        "spoons-osm-n4515538558",
+        "spoons-osm-n4790151513",
+        "spoons-osm-n5060517988",
+        "spoons-osm-n639597138",
+        "spoons-osm-n6482828602",
+        "spoons-osm-n765370023",
+        "spoons-osm-n7692938506",
+        "spoons-osm-n929406324",
+        "spoons-osm-r10695656",
+        "spoons-osm-w1093253094",
+        "spoons-osm-w1103772307",
+        "spoons-osm-w1151600915",
+        "spoons-osm-w1264206847",
+        "spoons-osm-w127030035",
+        "spoons-osm-w1283698313",
+        "spoons-osm-w131661186",
+        "spoons-osm-w134968549",
+        "spoons-osm-w1470036586",
+        "spoons-osm-w307003093",
+        "spoons-osm-w402155606",
+        "spoons-osm-w405131816",
+        "spoons-osm-w411107028",
+        "spoons-osm-w413609340",
+        "spoons-osm-w436862096",
+        "spoons-osm-w444907821",
+        "spoons-osm-w452919351",
+        "spoons-osm-w69719630",
+        "spoons-osm-w76280648",
+        "spoons-osm-w837633516",
+        "spoons-osm-w844175661",
+        "spoons-osm-w90701058",
+        "spoons-osm-w931735938",
+        "spoons-osm-w97457171",
+        "spoons-osm-w974986122",
+        "spoons-osm-w99788997",
+        "spoons-osm-w99791953"
+      ],
+      "scope_basis": "North East regional work batch: Northumberland, Tyne and Wear, Durham, Darlington, Hartlepool, Stockton, Middlesbrough and Redcar/Cleveland. Snapshot historic counties remain unchanged: DRH/NHB and four reviewed YRK Teesside identities. Region review must not mark all Yorkshire complete.",
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "basis": "Regional list cross-check identifies missing operating Sir Thomas Haggerston (Haven operator confirms) and former-pub exclusions. Operating franchises included after individual checks. Missing venue identity/premises reconciliation remains incomplete."
     }
   }
 }
