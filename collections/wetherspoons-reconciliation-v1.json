@@ -32,6 +32,21 @@
       "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
       "basis": "Advertised 26 January opening is after review date; revisit after opening, do not auto-activate.",
       "map_enabled": false
+    },
+    {
+      "key": "boathouse-presthaven",
+      "status": "proposal_reported_scrapped_not_operating",
+      "evidence_url": "https://www.dailypost.co.uk/news/north-wales-news/holiday-park-scraps-wetherspoons-plan-32958262",
+      "additional_evidence_urls": [
+        "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html"
+      ],
+      "basis": "Proposed Haven pub at Presthaven; later November 2025 reports say plans scrapped. No current operating-pub listing established; do not add an active pin or count. Review new evidence if plans restart.",
+      "map_enabled": false
     }
+  ],
+  "delivery_sequence": [
+    "Establish and reconcile UK catalogue",
+    "Bundle approved catalogue in a new app release",
+    "Implement silent validated catalogue updates with offline fallback"
   ]
 }
