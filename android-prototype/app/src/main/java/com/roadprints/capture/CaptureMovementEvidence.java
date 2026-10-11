@@ -4,6 +4,25 @@ import java.util.List;
 
 /** Movement corroboration independent of Android's sometimes late activity labels. */
 final class CaptureMovementEvidence {
+    /** Keep a real walk to transport, but do not save a transient start label as a leg. */
+    static boolean hasInitialFootLeg(List<FootTraceValidator.Sample> samples) {
+        FootTraceValidator.Sample first=null,previous=null;int moving=0;double path=0;
+        for(FootTraceValidator.Sample p:samples) {
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy>25)continue;
+            if(Double.isFinite(p.speed)&&p.speed>=6)break;
+            if(!Double.isFinite(p.speed)||p.speed<.5||p.speed>3.5)continue;
+            if(previous!=null && (!CaptureQualityValidator.reliable(previous,p,true)||p.time-previous.time>60000)) {
+                first=null;previous=null;moving=0;path=0;
+            }
+            if(first==null)first=p;
+            if(previous!=null)path+=CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous,p),
+                    (float)previous.accuracy,(float)p.accuracy);
+            previous=p;moving++;
+            if(moving>=3 && p.time-first.time>=20000 && path>=30
+                    && FootTraceValidator.metres(first,p)-first.accuracy-p.accuracy>=25)return true;
+        }
+        return false;
+    }
     static boolean hasVehicleMovement(List<FootTraceValidator.Sample> samples) {
         FootTraceValidator.Sample first=null,previous=null;int count=0;double path=0;
         for(FootTraceValidator.Sample p:samples) {
