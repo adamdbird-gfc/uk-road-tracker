@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /** Public map evidence. A POI name alone never establishes arrival. */
 final class ContextMap {
     static final class Evidence {
-        boolean available, rail, road, outdoor, destination, parking;
+        boolean available, rail, road, outdoor, destination, parking, routeAmbiguous;
         String name = "", kind = "unknown", featureId = "";
     }
     static Evidence at(JSONArray features, double lat, double lon, float accuracy) {
@@ -48,7 +48,8 @@ final class ContextMap {
             }
         }
         result.road=roadDistance<=Math.max(15,accuracy);
-        if(result.road)result.destination=false;
+        result.routeAmbiguous=result.road && roadDistance+accuracy>15;
+        if(result.road && roadDistance<=accuracy)result.destination=false;
         return result;
     }
     static double distance(JSONArray geometry,double lat,double lon) {

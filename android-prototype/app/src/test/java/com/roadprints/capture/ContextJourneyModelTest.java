@@ -19,6 +19,13 @@ public class ContextJourneyModelTest {
         assertTrue(m.holdPause("walking",300000,context("park")));
         assertTrue(m.holdPause("train",1800000,context("rail")));
     }
+    @Test public void confirmedRoadQueueDoesNotBecomeArrivalAfterFifteenMinutes() {
+        ContextJourneyModel m=new ContextJourneyModel();
+        assertTrue(m.holdPause("driving",1800000,context("road")));
+        assertTrue(m.holdPause("unknown",1800000,context("rail")));
+        ContextMap.Evidence uncertain=context("road");uncertain.routeAmbiguous=true;
+        assertFalse(m.holdPause("driving",1800000,uncertain));
+    }
     @Test public void buildingArrivalUsesStartOfDwell() {
         ContextJourneyModel m=new ContextJourneyModel();fix(m,"driving",0,1000,-200,10,"road",false);
         ContextJourneyModel.Decision d=null;
