@@ -132,7 +132,8 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                     causes = []
                     cause = exc
                     while cause is not None and len(causes) < 6:
-                        causes.append(cause.__class__.__name__)
+                        errno = getattr(cause, "errno", None)
+                        causes.append(cause.__class__.__name__ + (f"({errno})" if isinstance(errno, int) else ""))
                         cause = cause.__cause__
                     logger.warning("Shared context fill failed: %s; upstream_status=%s; causes=%s",
                                    exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None),
