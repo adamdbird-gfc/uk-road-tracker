@@ -86,6 +86,7 @@ public class RoutePreviewView extends View {
     private final Paint serviceStationPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint serviceStationOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private JSONArray serviceStations = new JSONArray();
+    private String collectionKind=CollectionAccessStore.SERVICES;
     private Set<String> visitedServiceStationIds = Collections.emptySet();
     private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
@@ -470,6 +471,10 @@ public class RoutePreviewView extends View {
 
     /** Adds the local service-station catalogue as map pins. */
     public void setServiceStations(JSONArray stations, Set<String> visitedIds) {
+        setCollectionVenues(CollectionAccessStore.SERVICES,stations,visitedIds);
+    }
+    public void setCollectionVenues(String id,JSONArray stations,Set<String> visitedIds) {
+        collectionKind=id;
         serviceStations = stations == null ? new JSONArray() : stations;
         visitedServiceStationIds = visitedIds == null
                 ? Collections.emptySet() : new java.util.HashSet<>(visitedIds);
@@ -964,23 +969,6 @@ public class RoutePreviewView extends View {
         }
     }
 
-    private static final class ServiceStationCluster {
-        float xTotal;
-        float yTotal;
-        int count;
-        int visitedCount;
-
-        void add(float x, float y, boolean visited) {
-            xTotal += x;
-            yTotal += y;
-            count++;
-            if (visited) visitedCount++;
-        }
-
-        float centerX() { return xTotal / count; }
-        float centerY() { return yTotal / count; }
-    }
-
     private boolean tapMapRoad(float x, float y) {
         if (mapRoadTapListener == null) return false;
         float nearest = Float.MAX_VALUE;
@@ -1027,70 +1015,47 @@ public class RoutePreviewView extends View {
         return true;
     }
 
-    private boolean tapServiceStation(float x, float y) {
-        if (serviceStationTapListener == null || serviceStations.length() == 0) return false;
-        float hitRadius = dp(38);
-        double nearestDistance = hitRadius * hitRadius;
-        org.json.JSONObject nearest = null;
-        for (int i = 0; i < serviceStations.length(); i++) {
-            org.json.JSONObject station = serviceStations.optJSONObject(i);
-            if (station == null) continue;
-            double lat = station.optDouble("lat", Double.NaN);
-            double lng = station.optDouble("lng", Double.NaN);
-            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
-            float sx = screenX(lng), sy = screenY(lat);
-            double dx = sx - x, dy = sy - y, distance = dx * dx + dy * dy;
-            if (distance <= nearestDistance) {
-                nearestDistance = distance;
-                nearest = station;
-            }
-        }
-        if (nearest == null) return false;
-        serviceStationTapListener.onServiceStationTap(nearest);
-        return true;
+    private List<CollectionMapClusters.Cluster> collectionClusters() {
+        return CollectionMapClusters.build(serviceStations,visitedServiceStationIds,
+                new CollectionMapClusters.Projection(){
+                    public float x(double longitude){return screenX(longitude);}
+                    public float y(double latitude){return screenY(latitude);}
+                },getWidth(),getHeight(),dp(54));
+    }
+    private boolean tapServiceStation(float x,float y) {
+        if(serviceStationTapListener==null||serviceStations.length()==0)return false;
+        CollectionMapClusters.Cluster cluster=CollectionMapClusters.hit(collectionClusters(),x,y,dp(38));
+        if(cluster==null)return false;
+        if(cluster.venues.size()==1){serviceStationTapListener.onServiceStationTap(cluster.venues.get(0));return true;}
+        org.json.JSONObject first=cluster.venues.get(0);boolean coincident=true;
+        for(org.json.JSONObject venue:cluster.venues)if(ServiceStationEvidence.metres(
+                first.optDouble("lat"),first.optDouble("lng"),venue.optDouble("lat"),venue.optDouble("lng"))>2){coincident=false;break;}
+        if(!coincident&&cameraZoom<MAX_ZOOM-.5){zoomAt(2.0,cluster.x(),cluster.y());return true;}
+        String[] names=new String[cluster.venues.size()];
+        for(int i=0;i<names.length;i++)names[i]=cluster.venues.get(i).optString("name","Venue");
+        new android.app.AlertDialog.Builder(getContext()).setTitle("Choose a venue")
+                .setItems(names,(dialog,which)->serviceStationTapListener.onServiceStationTap(cluster.venues.get(which)))
+                .setNegativeButton("Cancel",null).show();return true;
     }
 
     private void drawServiceStations(Canvas canvas) {
         float singleRadius = dp(10);
-        float cellSize = dp(54);
-        Map<Long, ServiceStationCluster> clusters = new LinkedHashMap<>();
-        for (int i = 0; i < serviceStations.length(); i++) {
-            org.json.JSONObject station = serviceStations.optJSONObject(i);
-            if (station == null) continue;
-            double lat = station.optDouble("lat", Double.NaN);
-            double lng = station.optDouble("lng", Double.NaN);
-            if (!Double.isFinite(lat) || !Double.isFinite(lng)) continue;
-            float x = screenX(lng);
-            float y = screenY(lat);
-            if (x < -cellSize || x > getWidth() + cellSize
-                    || y < -cellSize || y > getHeight() + cellSize) continue;
-            int column = (int) Math.floor(x / cellSize);
-            int row = (int) Math.floor(y / cellSize);
-            long key = (((long) column) << 32) ^ (row & 0xffffffffL);
-            ServiceStationCluster cluster = clusters.get(key);
-            if (cluster == null) {
-                cluster = new ServiceStationCluster();
-                clusters.put(key, cluster);
-            }
-            String id = station.optString("id", "");
-            cluster.add(x, y, visitedServiceStationIds.contains(id));
-        }
-
+        List<CollectionMapClusters.Cluster> clusters=collectionClusters();
         float originalTextSize = markerTextPaint.getTextSize();
         int originalTextColor = markerTextPaint.getColor();
         markerTextPaint.setTextSize(dp(10));
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
-        for (ServiceStationCluster cluster : clusters.values()) {
-            float x = cluster.centerX();
-            float y = cluster.centerY();
-            boolean visited = cluster.visitedCount > 0;
-            serviceStationPaint.setColor(visited ? 0xFFF7C450 : 0xFF74829A);
-            if (cluster.count > 1) {
+        for (CollectionMapClusters.Cluster cluster : clusters) {
+            float x = cluster.x();
+            float y = cluster.y();
+            boolean visited = cluster.visited > 0;
+            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.SPOONS.equals(collectionKind)?0xFF238F89:0xFF74829A);
+            if (cluster.venues.size() > 1) {
                 float radius = dp(14);
                 canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, radius, serviceStationPaint);
                 markerTextPaint.setColor(Color.WHITE);
-                String label = cluster.count > 99 ? "99+" : String.valueOf(cluster.count);
+                String label = cluster.venues.size() > 99 ? "99+" : String.valueOf(cluster.venues.size());
                 canvas.drawText(label, x,
                         y - (markerTextPaint.ascent() + markerTextPaint.descent()) / 2,
                         markerTextPaint);
@@ -1098,7 +1063,10 @@ public class RoutePreviewView extends View {
                 canvas.drawCircle(x, y, singleRadius + dp(2), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
                 markerPaint.setColor(Color.WHITE);
-                canvas.drawCircle(x, y, dp(2.5f), markerPaint);
+                if(CollectionAccessStore.SPOONS.equals(collectionKind)) {
+                    markerTextPaint.setColor(Color.WHITE);canvas.drawText("P",x,
+                            y-(markerTextPaint.ascent()+markerTextPaint.descent())/2,markerTextPaint);
+                } else canvas.drawCircle(x,y,dp(2.5f),markerPaint);
             }
         }
         markerTextPaint.setTextSize(originalTextSize);

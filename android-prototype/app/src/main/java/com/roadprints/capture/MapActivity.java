@@ -48,7 +48,9 @@ public class MapActivity extends Activity {
     private static final Object MAP_CACHE_LOCK = new Object();
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
-    private TextView mapSubtitle;
+    private TextView mapSubtitle, collectionSelector, collectionNotice;
+    private JSONArray collectionServiceVenues=new JSONArray();
+    private Set<String> collectionServiceVisits=java.util.Collections.emptySet();
     private MapLoadingView loadingCard;
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -153,6 +155,13 @@ public class MapActivity extends Activity {
         }
                 if (getIntent().hasExtra("settlement_code")) heading.addView(titleRow);
         heading.addView(mapSubtitle);
+        collectionSelector=new TextView(this);collectionSelector.setTextColor(0xFF67D5CC);
+        collectionSelector.setTextSize(14);collectionSelector.setTypeface(null,Typeface.BOLD);
+        collectionSelector.setPadding(dp(12),dp(12),dp(12),dp(12));
+        collectionSelector.setBackground(roundRect(0xFF182F62,dp(10)));
+        collectionSelector.setOnClickListener(v->chooseCollection());heading.addView(collectionSelector);
+        collectionNotice=new TextView(this);collectionNotice.setTextSize(13);collectionNotice.setTextColor(0xFFD3DCED);
+        collectionNotice.setPadding(0,dp(6),0,0);heading.addView(collectionNotice);
         root.addView(heading);
 
         mapFrame = new FrameLayout(this);
@@ -179,6 +188,9 @@ public class MapActivity extends Activity {
     protected void onResume() {
         super.onResume();
         active = true;
+        String requestedCollection=getIntent().getStringExtra("collection_id");
+        if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
+        applyCollectionLayer();
         if (loadingCard != null) loadingCard.start();
         // Queue lightweight summaries before the heavier route/coverage preparation.
         refreshRecap();
@@ -238,6 +250,42 @@ public class MapActivity extends Activity {
         String previous = getIntent().getStringExtra("settlement_code");
         setIntent(intent);
         if (!java.util.Objects.equals(previous, intent.getStringExtra("settlement_code"))) recreate();
+        else {String requested=intent.getStringExtra("collection_id");
+            if(requested!=null){CollectionAccessStore.select(this,requested);intent.removeExtra("collection_id");}
+            applyCollectionLayer();}
+    }
+
+    private void chooseCollection() {
+        List<String> ids=new ArrayList<>();ids.add(CollectionAccessStore.NONE);ids.addAll(CollectionAccessStore.installed(this));
+        String[] names=new String[ids.size()];int selected=0;
+        for(int i=0;i<ids.size();i++){names[i]=CollectionAccessStore.name(ids.get(i));
+            if(ids.get(i).equals(CollectionAccessStore.selected(this)))selected=i;}
+        new AlertDialog.Builder(this).setTitle("Show a collection")
+                .setSingleChoiceItems(names,selected,(dialog,which)->{
+                    CollectionAccessStore.select(this,ids.get(which));applyCollectionLayer();dialog.dismiss();
+                }).setNegativeButton("Cancel",null).show();
+    }
+    private void applyCollectionLayer() {
+        if(mapView==null||collectionSelector==null)return;
+        List<String> installed=CollectionAccessStore.installed(this);
+        String selected=CollectionAccessStore.selected(this);
+        boolean townMap=getIntent().hasExtra("settlement_code");
+        collectionSelector.setVisibility(!townMap&&installed.size()>1?View.VISIBLE:View.GONE);
+        collectionSelector.setText("Collections · "+CollectionAccessStore.name(selected)+" ▾");
+        collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
+        collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
+        collectionNotice.setText("Pub locations are being verified. Your journeys remain visible.");
+        if(townMap)return;
+        double[] camera=mapView.cameraState();
+        JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
+                :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
+        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:java.util.Collections.emptySet();
+        mapView.setCollectionVenues(selected,pins,visited);
+        mapView.setServiceStationTapListener(venue->{
+            if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
+                showServiceStationCard(venue,collectionServiceVisits.contains(venue.optString("id")));
+        });
+        if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
     }
 
     private void showMapLoading(boolean updating) {
@@ -344,9 +392,7 @@ public class MapActivity extends Activity {
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
-                    ? (mapRoutes.serviceStations.length() > 0
-                        ? "Service stations are shown on the map. Recorded journeys will appear here."
-                        : "Recorded journeys will appear here.")
+                    ? "Recorded journeys will appear here."
                     : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
                             mapRoutes.matchedJourneys,
                             mapRoutes.simplified ? " · map simplified for performance." : "."));
@@ -364,10 +410,10 @@ public class MapActivity extends Activity {
                     mapRoutes.coveredMotorwaySections);
             map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
                     mapRoutes.coveredARoadSections);
-            map.setServiceStations(mapRoutes.serviceStations,
-                    mapRoutes.visitedServiceStationIds);
-            map.setServiceStationTapListener(station -> showServiceStationCard(
-                    station, mapRoutes.visitedServiceStationIds.contains(station.optString("id", ""))));
+            collectionServiceVenues=mapRoutes.serviceStations;
+            collectionServiceVisits=mapRoutes.visitedServiceStationIds;
+            mapView=map;
+            applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
             map.setMapRoadTapListener((latitude, longitude) ->
