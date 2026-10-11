@@ -596,7 +596,7 @@ public class JourneyListActivity extends Activity {
         if (!isRoadMode(mode) && !isFootMode(mode) && !MatchingCoordinator.isCycle(mode)) return false;
         if ("matched".equals(filter)) return "complete".equals(status) && hasStoredMatch(journey);
         if ("failed".equals(filter)) return "failed".equals(status)
-                || ("complete".equals(status) && !hasStoredMatch(journey));
+                || ("complete".equals(status) && !hasStoredMatch(journey) && !WalkingMatchOutcome.terminal(journey));
         if ("matching".equals(filter)) return "processing".equals(status);
         if ("ready".equals(filter)) return canMatchJourney(journey)
                 && !"complete".equals(status) && !"failed".equals(status)
@@ -1461,6 +1461,9 @@ public class JourneyListActivity extends Activity {
         } else if (!processableMode) {
             statusText = "No route matching required for this transport type";
             statusColor = 0xFFB9C5D8;
+        } else if (WalkingMatchOutcome.label(journey)!=null) {
+            statusText=WalkingMatchOutcome.label(journey)+". Original trace and distance preserved.";
+            statusColor=0xFF67D5CC;
         } else if (!enoughEvidence) {
             statusText = isRoadMode(mode)
                     ? "Insufficient Timeline points for reliable road matching"
@@ -1978,6 +1981,8 @@ public class JourneyListActivity extends Activity {
     }
 
     private String journeyStatusText(JSONObject journey, int points) {
+        String walkingLabel=WalkingMatchOutcome.label(journey);
+        if(walkingLabel!=null)return walkingLabel;
         String status = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
         if (!isFootMode(mode) && !isRoadMode(mode) && !MatchingCoordinator.isCycle(mode)) return "No route matching required";
@@ -2000,6 +2005,7 @@ public class JourneyListActivity extends Activity {
 
     private static boolean isPartialMatchResult(JSONObject result) {
         if (result == null) return false;
+        if (result.optBoolean("walking_partial_match", false)) return true;
         if (result.optBoolean("capture_partial_match", false)) return true;
         if (result.optBoolean("timeline_partial_match", false)) return true;
         JSONArray failed = result.optJSONArray("failed_sections");

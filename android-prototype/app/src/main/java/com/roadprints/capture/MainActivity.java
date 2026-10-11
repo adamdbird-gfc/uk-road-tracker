@@ -248,13 +248,9 @@ public class MainActivity extends Activity {
             mapContext.setText("Use online place and route context");
             mapContext.setTextColor(Color.WHITE);mapContext.setMinHeight(dp(56));
             mapContext.setChecked(ContextMapCache.enabled(this));
-            mapContext.setOnCheckedChangeListener((button,checked)->getSharedPreferences("roadprints_capture_state",MODE_PRIVATE)
-                    .edit().putBoolean("public_map_context",checked).apply());
+            mapContext.setOnCheckedChangeListener((button,checked)->ContextConsent.choose(this,checked));
             content.addView(mapContext,new LinearLayout.LayoutParams(-1,-2));
-            TextView contextCopy=text("Use nearby buildings, parking, roads and railways to help recognise arrivals and transport changes. "
-                    +"When enabled, OpenStreetMap's Overpass service receives requests for your approximate area. "
-                    +"Your recorded route, journey names and identifiers are not sent. Downloaded maps are cached on this device. "
-                    +"Offline station recognition and movement recording work with this switched off.",14,0xFFD3DCED,false);
+            TextView contextCopy=text(ContextConsent.COPY,14,0xFFD3DCED,false);
             contextCopy.setPadding(0,0,0,dp(18));content.addView(contextCopy);
             captureButton = new Button(this);
             captureButton.setOnClickListener(v -> toggleCapture());

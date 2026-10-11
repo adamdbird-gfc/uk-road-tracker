@@ -140,7 +140,7 @@ public final class JourneyStore {
                 switch (name) {
                     case "journey_id": case "started_at": case "ended_at":
                     case "distance_meters": case "gps_point_count": case "mode": case "title":
-                    case "processing_status": case "error_summary":
+                    case "processing_status": case "error_summary": case "walking_outcome":
                         summary.put(name, readScalar(reader));
                         break;
                     case "source": case "capture_quality":
@@ -619,7 +619,7 @@ public final class JourneyStore {
         try {
             if (!mode.equals(journey.optString("mode"))) {
                 journey.remove("processing_result"); journey.remove("last_match_attempt");
-                journey.remove("error_summary"); journey.remove("processing_completed_at");
+                journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
                 journey.put("processing_status", "pending");
                 JSONObject stages = new JSONObject().put("import", "complete")
                         .put("road_matching", "not_required").put("foot_matching", "not_required")

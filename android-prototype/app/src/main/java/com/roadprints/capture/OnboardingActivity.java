@@ -119,14 +119,22 @@ public class OnboardingActivity extends Activity {
                 + "to our matching service. You can turn automatic tracking off in Utilities > Tracking settings.",
                 14, 0xFFD3DCED, false);
         note.setPadding(dp(16), dp(14), dp(16), dp(14)); note.setBackground(roundRect(CARD, dp(15))); root.addView(note);
+        android.widget.Switch mapContext=new android.widget.Switch(this);
+        mapContext.setText("Use map context for smarter stops");mapContext.setTextColor(Color.WHITE);
+        mapContext.setMinHeight(dp(56));mapContext.setChecked(ContextMapCache.enabled(this));
+        mapContext.setOnCheckedChangeListener((button,checked)->ContextConsent.choose(this,checked));
+        root.addView(mapContext,new LinearLayout.LayoutParams(-1,-2));
+        TextView contextCopy=text(ContextConsent.COPY,14,0xFFD3DCED,false);
+        contextCopy.setPadding(0,dp(8),0,dp(12));root.addView(contextCopy);
         TextView allow = action("ENABLE AUTOMATIC TRACKING", GOLD);
         allow.setOnClickListener(v -> {
+            ContextConsent.choose(this,mapContext.isChecked());
             markComplete();
             startActivity(new Intent(this, MainActivity.class).putExtra("tracking_settings_screen", true)
                     .putExtra("onboarding_enable_tracking", true)); finish();
         }); addButton(root, allow, 24);
         TextView later = action("EXPLORE THE APP FIRST", CARD); later.setTextColor(Color.WHITE);
-        later.setOnClickListener(v -> { markComplete(); openCapture(); }); addButton(root, later, 10);
+        later.setOnClickListener(v -> { ContextConsent.choose(this,mapContext.isChecked()); markComplete(); openCapture(); }); addButton(root, later, 10);
     }
 
     private void buildStartingStep(LinearLayout root) {

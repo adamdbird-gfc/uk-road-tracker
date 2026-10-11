@@ -79,6 +79,7 @@ public class MapActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        getWindow().getDecorView().post(()->ContextConsent.maybeExplain(this));
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
