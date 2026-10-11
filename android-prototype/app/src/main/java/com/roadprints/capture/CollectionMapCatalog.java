@@ -1,32 +1,55 @@
 package com.roadprints.capture;
 
 import android.content.Context;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Pub pins cannot consume the reference-only candidate catalogue. */
+/** Only individually reviewed map venues; never a visit evidence provider. */
 final class CollectionMapCatalog {
+    private static JSONObject bundled;
     private CollectionMapCatalog() {}
     static JSONArray approvedVenues(JSONObject catalogue) {
         if(catalogue==null||!"wetherspoons".equals(catalogue.optString("collection_id"))
                 ||!"UK".equals(catalogue.optString("scope"))
                 ||!catalogue.optBoolean("ready_for_app",false)
-                ||!"approved".equals(catalogue.optString("release_status")))return new JSONArray();
+                ||!"approved".equals(catalogue.optString("release_status"))
+                ||!"map_only_partial_beta".equals(catalogue.optString("approval_scope"))
+                ||catalogue.optBoolean("visit_enabled",true)
+                ||!catalogue.isNull("completion_target"))return new JSONArray();
         JSONArray rows=catalogue.optJSONArray("venues"),result=new JSONArray();
         if(rows==null)return result;
+        HashSet<String> ids=new HashSet<>();
         for(int i=0;i<rows.length();i++) {
             JSONObject row=rows.optJSONObject(i);
-            if(row==null||!"active".equals(row.optString("status"))||row.optString("id").isEmpty())continue;
+            if(row==null||!"active".equals(row.optString("status"))||row.optString("id").isEmpty()
+                    ||!"reviewed_current".equals(row.optString("operating_status"))
+                    ||row.optBoolean("visit_enabled",true)||row.optString("map_reviewed_at").isEmpty())continue;
+            if(!ids.add(row.optString("id")))return new JSONArray();
             double lat=row.optDouble("lat",Double.NaN),lng=row.optDouble("lon",Double.NaN);
             if(!Double.isFinite(lat)||!Double.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)continue;
             try {JSONObject pin=new JSONObject();pin.put("id",row.getString("id"));
-                pin.put("name",row.optString("name"));pin.put("lat",lat);pin.put("lng",lng);result.put(pin);}
+                pin.put("name",row.optString("name"));pin.put("town",row.optString("town"));
+                pin.put("lat",lat);pin.put("lng",lng);result.put(pin);}
             catch(Exception error){throw new IllegalStateException("Invalid approved venue",error);}
         }
         return result;
     }
-    static JSONArray spoons(Context context) {
-        // Slice 1 remains audit-only. No candidate asset is packaged or activated.
-        return approvedVenues(null);
+    static synchronized JSONArray spoons(Context context) {
+        if(bundled==null) {
+            try(InputStream input=context.getAssets().open("collections/uk-wetherspoons-map-v1.json");
+                    ByteArrayOutputStream output=new ByteArrayOutputStream()) {
+                byte[] buffer=new byte[4096];int n;
+                while((n=input.read(buffer))!=-1) {
+                    if(output.size()+n>65536)return new JSONArray();
+                    output.write(buffer,0,n);
+                }
+                bundled=new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8));
+            }catch(Exception unavailable){return new JSONArray();}
+        }
+        return approvedVenues(bundled);
     }
 }

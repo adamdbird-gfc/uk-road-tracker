@@ -32,12 +32,12 @@ public class CollectionAccessAndMapTest {
         assertEquals(1,CollectionAccessStore.installed(app).size());
         assertEquals(CollectionAccessStore.SERVICES,CollectionAccessStore.selected(app));
     }
-    @Test public void testInstallGrantsAccessButNoVisitsOrCatalogueActivation() {
+    @Test public void testInstallGrantsAccessButNoVisits() {
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertTrue(CollectionAccessStore.installed(app,CollectionAccessStore.SPOONS));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
-        assertEquals(0,CollectionMapCatalog.spoons(app).length());
+        assertEquals(4,CollectionMapCatalog.spoons(app).length());
         assertEquals("UK Wetherspoons Collection",CollectionAccessStore.name(CollectionAccessStore.SPOONS));
     }
     @Test public void selectionPersistsAndUninstalledCollectionCannotBeSelected() {
@@ -61,14 +61,37 @@ public class CollectionAccessAndMapTest {
         assertEquals(CollectionAccessStore.SERVICES,CollectionAccessStore.selected(app));
     }
     @Test public void auditCatalogueAndUnapprovedStatusesNeverProducePubPins() throws Exception {
-        JSONObject venue=new JSONObject().put("id","spoons-example").put("status","active").put("name","Example").put("lat",51).put("lon",0);
+        JSONObject venue=new JSONObject().put("id","spoons-example").put("status","active").put("name","Example").put("lat",51).put("lon",0).put("operating_status","reviewed_current")
+                .put("visit_enabled",false).put("map_reviewed_at","2026-10-11");
         JSONObject root=new JSONObject().put("collection_id","wetherspoons").put("scope","UK")
-                .put("ready_for_app",false).put("release_status","audit_only").put("venues",new JSONArray().put(venue));
+                .put("ready_for_app",false).put("release_status","audit_only").put("venues",new JSONArray().put(venue))
+                .put("approval_scope","map_only_partial_beta").put("visit_enabled",false).put("completion_target",JSONObject.NULL);
         assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
         root.put("ready_for_app",true);assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
         root.put("release_status","approved");assertEquals(1,CollectionMapCatalog.approvedVenues(root).length());
         venue.put("status","candidate");assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
     }
+    @Test public void packagedMapContainsOnlyReviewedVenuesAndExcludesFormerPub() throws Exception {
+        JSONArray pins=CollectionMapCatalog.spoons(app);
+        java.util.Set<String> actual=new java.util.HashSet<>();
+        for(int i=0;i<pins.length();i++)actual.add(pins.getJSONObject(i).getString("id"));
+        assertEquals(new java.util.HashSet<>(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
+                "spoons-osm-w103691610","spoons-osm-w30110330")),actual);
+        assertFalse(actual.contains("spoons-osm-w262652847"));
+        assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
+    }
+    @Test public void unreviewedRowsAndVisitEnabledCataloguesCannotProducePins() throws Exception {
+        JSONObject row=new JSONObject().put("id","spoons-a").put("status","active").put("lat",51).put("lon",0);
+        JSONObject root=new JSONObject().put("collection_id","wetherspoons").put("scope","UK")
+                .put("ready_for_app",true).put("release_status","approved").put("approval_scope","map_only_partial_beta")
+                .put("visit_enabled",false).put("completion_target",JSONObject.NULL).put("venues",new JSONArray().put(row));
+        assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
+        row.put("operating_status","reviewed_current").put("visit_enabled",false).put("map_reviewed_at","2026-10-11");
+        assertEquals(1,CollectionMapCatalog.approvedVenues(root).length());
+        root.put("visit_enabled",true);assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
+        root.put("visit_enabled",false).put("completion_target",827);assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
+    }
+
     private JSONObject pin(String id,double lng,double lat) throws Exception {
         return new JSONObject().put("id",id).put("name",id).put("lng",lng).put("lat",lat);
     }

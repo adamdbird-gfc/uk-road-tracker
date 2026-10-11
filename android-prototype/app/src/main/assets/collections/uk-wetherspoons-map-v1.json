@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "collection_id": "wetherspoons",
+  "display_name": "UK Wetherspoons Collection",
+  "scope": "UK",
+  "release_status": "approved",
+  "approval_scope": "map_only_partial_beta",
+  "ready_for_app": true,
+  "coverage_complete": false,
+  "visit_enabled": false,
+  "completion_target": null,
+  "catalogue_version": "2026-10-11.a73181561e23",
+  "candidate_version": "2026-10-11.41b1d2fb63de",
+  "source": {
+    "dataset": "OpenStreetMap",
+    "provider": "https://postpass.geofabrik.de/api/interpreter",
+    "retrieved_at": "2026-10-11T18:56:36.365883Z",
+    "sha256": "d2acb64b1b608f56c87eb17de8306ec96e9f0642bda4e275c50c0b7853c26de3",
+    "query_sha256": "2b999c30dc4c52835b0f9f1d435c0a3c6f495cc27ae3069260a90c2222146d73",
+    "licence": "ODbL-1.0",
+    "licence_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "© OpenStreetMap contributors"
+  },
+  "attribution": "© OpenStreetMap contributors · ODbL 1.0",
+  "review_summary": {
+    "map_venues": 4,
+    "excluded_current": 1,
+    "unreviewed_candidates": 826,
+    "needs_rereview": []
+  },
+  "venues": [
+    {
+      "id": "spoons-osm-n528965858",
+      "name": "The Robert Pocock",
+      "lat": 51.442238,
+      "lon": 0.369119,
+      "town": "Gravesend",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/528965858"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w103691610",
+      "name": "The Benjamin Huntsman",
+      "lat": 53.37986685,
+      "lon": -1.4725314699292436,
+      "town": "Sheffield",
+      "county": {
+        "code": "YRK",
+        "name": "Yorkshire",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/103691610"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w30110330",
+      "name": "Sheffield Water Works Company",
+      "lat": 53.3803359,
+      "lon": -1.4730586437609965,
+      "town": "Sheffield",
+      "county": {
+        "code": "YRK",
+        "name": "Yorkshire",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/30110330"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w310891787",
+      "name": "The Stag and Pheasant",
+      "lat": 53.1459059,
+      "lon": -1.1954016588896121,
+      "town": "Mansfield",
+      "county": {
+        "code": "NOT",
+        "name": "Nottinghamshire",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/310891787"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    }
+  ]
+}
