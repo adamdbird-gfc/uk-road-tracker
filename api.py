@@ -620,8 +620,18 @@ def map_context_area(lat_cell: int, lon_cell: int):
                             headers={"Retry-After": str(exc.retry_after)}) from exc
 
 
+def recorded_walking_result(point_count):
+    return {"status": "recorded", "walking_outcome": "insufficient_detail" if point_count <= 3 else "no_route_found",
+            "input_points": point_count, "matched_tracepoints": 0,
+            "matched_point_indices": [], "unmatched_point_indices": list(range(point_count)),
+            "geojson": {"type": "FeatureCollection", "features": []},
+            "road_geojson": {"type": "FeatureCollection", "features": []}}
+
+
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
+    if payload.walking_recovery and len(payload.points) <= 2:
+        return recorded_walking_result(len(payload.points))
     # The preloaded shared public reference is used first. The request is
     # read-only and transient: no Timeline route data is retained by Postgres.
     try:
@@ -656,11 +666,7 @@ async def match_walking_activity(payload: MatchRequest):
     except HTTPException as exc:
         if payload.walking_recovery and exc.status_code == 422 and (
                 "NoMatch" in str(exc.detail) or str(exc.detail) == "The matcher returned no route geometry."):
-            return {"status": "recorded", "walking_outcome": "insufficient_detail" if len(payload.points) <= 3 else "no_route_found",
-                    "input_points": len(payload.points), "matched_tracepoints": 0,
-                    "matched_point_indices": [], "unmatched_point_indices": list(range(len(payload.points))),
-                    "geojson": {"type": "FeatureCollection", "features": []},
-                    "road_geojson": {"type": "FeatureCollection", "features": []}}
+            return recorded_walking_result(len(payload.points))
         raise
     except asyncio.TimeoutError as exc:
         raise HTTPException(

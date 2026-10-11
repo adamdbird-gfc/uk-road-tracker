@@ -18,7 +18,7 @@ Map-assisted context remains opt-in. New users see the choice and explanation du
 
 ## Walking outcomes
 
-Android opts into `walking_recovery` at /match-walking. Known no-match results become non-error recorded outcomes: insufficient_detail for up to three submitted points, otherwise no_route_found. The latter means the matcher found no suitable route; it does not prove that the person was in a field or that no map path exists. Temporary HTTP failures remain retryable errors. Older clients retain their existing matching contract.
+Android opts into `walking_recovery` at /match-walking. Two-point traces are retained as insufficient_detail without requesting a speculative route. Known no-match results become non-error recorded outcomes: insufficient_detail for up to three submitted points, otherwise no_route_found. The latter means the matcher found no suitable route; it does not prove that the person was in a field or that no map path exists. Temporary HTTP failures remain retryable errors. Older clients retain their existing matching contract.
 
 Recorded-only walks keep original geometry and distance, contribute to walking history/distance, and have no matched road/path geometry to credit. Automatic matching skips completed recorded-only outcomes; explicit rematch remains available. Changing transport or correcting a trace clears the outcome.
 
