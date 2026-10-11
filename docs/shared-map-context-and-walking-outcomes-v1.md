@@ -27,3 +27,14 @@ Partial walking routes need real matched geometry, complete non-overlapping inpu
 ## Validation
 
 Backend regression workflow uses an isolated PostgreSQL service to test shared cache reuse, persistent failure delays/day budgets and concurrent fill suppression. Walking tests distinguish no-match outcomes from outages and preserve the legacy contract. Android checks cover consent, restart-safe budgets, retained trace/distance, queue skipping, partial-result validation and retryable router errors. #68 records real-device scenarios and stays open until those journeys have been checked.
+
+
+## Provider adapter and object identity (0.25.182)
+
+`CONTEXT_PROVIDER_FORMAT=postpass` enables the fixed, read-only Postpass query; set `CONTEXT_INTERPRETER_URL=https://postpass.geofabrik.de/api/interpreter`. Default format remains `overpass`. Provider selection is explicit: there is no automatic fan-out or budget reset. Both formats use the existing global spacing, daily budget, durable provider backoff, cache size and response bounds.
+
+Postpass requests only a validated UK area envelope and allowed context tags. Geometry is clipped to the buffered area to bound payload size; there is at least 333 m latitude buffer outside the phone's core cell, exceeding the 50 m maximum accuracy used for destination evidence. Separate line components stay separate, and polygon courtyard holes remain holes. A truncated/oversized/invalid response is unavailable, never positive arrival evidence. Public way/relation IDs survive sanitisation; names and addresses are not cached. The phone remains responsible for dwell and confidence.
+
+Provider protocol/schema references: https://github.com/woodpeck/postpass-ops and https://github.com/woodpeck/postpass-ops/blob/main/SCHEMA.md. The public instance is an interim beta source, not a service guarantee; a dedicated source remains a future scaling choice. No new paid infrastructure is provisioned.
+
+Connection failure logs now include a fixed diagnostic category without exception text, query, coordinates or identifiers. Live fill and repeat-hit verification must still be recorded separately from automated checks.

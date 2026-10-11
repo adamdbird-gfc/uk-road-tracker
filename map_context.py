@@ -20,6 +20,7 @@ MAX_AREAS = 256
 MAX_CACHE_BYTES = 64_000_000
 DAILY_LIMIT = int(os.getenv("CONTEXT_DAILY_UPSTREAM_LIMIT", "200"))
 UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass-api.de/api/interpreter")
+PROVIDER_FORMAT = os.getenv("CONTEXT_PROVIDER_FORMAT", "overpass")
 LOCK = 713940181
 logger = logging.getLogger("roadprints.context")
 
@@ -53,15 +54,27 @@ def clean_document(document):
         tags = item.get("tags", {})
         tags = {k: v for k, v in tags.items() if k in
                 {"highway", "railway", "building", "amenity", "leisure", "natural", "access", "area"}}
-        elements.append({"type": "way", "tags": tags, "geometry": geometry,
+        feature = {"type": "relation" if item.get("type")=="relation" else "way", "tags": tags, "geometry": geometry,
                          "bounds": {"minlat": min(p["lat"] for p in geometry),
                                     "maxlat": max(p["lat"] for p in geometry),
                                     "minlon": min(p["lon"] for p in geometry),
-                                    "maxlon": max(p["lon"] for p in geometry)}})
+                                    "maxlon": max(p["lon"] for p in geometry)}}
+        if isinstance(item.get("id"), int) and item["id"] > 0:
+            feature["id"] = item["id"]
+        if item.get("holes"):
+            validated = clean_document({"elements": [{"geometry": ring} for ring in item["holes"]]})
+            if len(validated) != len(item["holes"]):
+                raise ValueError("Invalid context holes")
+            feature["holes"] = [ring["geometry"] for ring in validated]
+        elements.append(feature)
     return elements
 
 
 def fetch_elements(bounds):
+    if PROVIDER_FORMAT == "postpass":
+        return fetch_postpass_elements(bounds)
+    if PROVIDER_FORMAT != "overpass":
+        raise ValueError("Unsupported context provider format")
     bbox = ",".join(f"{v:.3f}" for v in bounds)
     query = f"[out:json][timeout:12];(way[highway]({bbox});way[railway=rail]({bbox});" \
             f"way[building]({bbox});way[amenity=parking]({bbox});way[leisure]({bbox});way[natural]({bbox}););out geom;"
@@ -75,6 +88,76 @@ def fetch_elements(bounds):
                 if len(raw) > MAX_BYTES:
                     raise ValueError("Context area too large")
     return clean_document(json.loads(raw))
+
+
+def postpass_query(bounds):
+    south, west, north, east = bounds
+    # Only validated public area bounds enter this fixed read-only query.
+    bbox = f"ST_MakeEnvelope({west:.3f},{south:.3f},{east:.3f},{north:.3f},4326)"
+    return "SELECT osm_id,osm_type,(SELECT jsonb_object_agg(key,value) FROM jsonb_each(tags) " \
+           "WHERE key IN ('highway','railway','building','amenity','leisure','natural','access','area')) AS tags," \
+           f"ST_Multi(ST_CollectionExtract(ST_Intersection(geom,{bbox})," \
+           "CASE WHEN GeometryType(geom)='MULTIPOLYGON' THEN 3 ELSE 2 END)) AS geom " \
+           f"FROM postpass_linepolygon WHERE geom && {bbox} AND " \
+           "(tags ?| ARRAY['highway','building','leisure','natural'] OR tags->>'railway'='rail' " \
+           "OR tags->>'amenity'='parking') LIMIT 10001"
+
+
+def clean_postpass(document):
+    features = document.get("features")
+    if document.get("type") != "FeatureCollection" or not isinstance(features,list) or len(features)>=10001:
+        raise ValueError("Incomplete Postpass context area")
+    elements=[]
+    for feature in features:
+        geometry=feature.get("geometry") or {}
+        kind=geometry.get("type")
+        coordinates=geometry.get("coordinates")
+        properties=feature.get("properties") or {}
+        if kind=="LineString": parts=[(coordinates,[])]
+        elif kind=="MultiLineString": parts=[(line,[]) for line in coordinates]
+        elif kind=="Polygon": parts=[(coordinates[0],coordinates[1:])]
+        elif kind=="MultiPolygon": parts=[(polygon[0],polygon[1:]) for polygon in coordinates]
+        else: raise ValueError("Unsupported context geometry")
+        for outer,holes in parts:
+            def ring(points):
+                if not isinstance(points,list) or any(not isinstance(p,list) or len(p)<2 for p in points):
+                    raise ValueError("Invalid Postpass geometry")
+                return [{"lon":p[0],"lat":p[1]} for p in points]
+            elements.append({"type":"relation" if properties.get("osm_type")=="R" else "way",
+                             "id":properties.get("osm_id"),"tags":properties.get("tags") or {},
+                             "geometry":ring(outer),"holes":[ring(hole) for hole in holes]})
+    return clean_document({"elements":elements})
+
+
+def fetch_postpass_elements(bounds):
+    with httpx.Client(timeout=httpx.Timeout(18,connect=5),follow_redirects=False) as client:
+        with client.stream("GET",UPSTREAM,params={"data":postpass_query(bounds),"cache_for":"86400"},
+                           headers={"User-Agent":"Roadprints-SharedContext/1"}) as response:
+            response.raise_for_status()
+            raw=bytearray()
+            for chunk in response.iter_bytes():
+                raw.extend(chunk)
+                if len(raw)>MAX_BYTES:raise ValueError("Context area too large")
+    return clean_postpass(json.loads(raw))
+
+
+def connection_failure_category(exc):
+    """A bounded diagnostic code, never exception text, query or coordinates."""
+    seen = set()
+    while exc is not None and id(exc) not in seen:
+        seen.add(id(exc))
+        message = str(exc).lower()
+        for category, markers in (
+            ("tls_verification", ("certificate verify failed", "certificate_verify_failed")),
+            ("dns", ("name or service not known", "temporary failure in name resolution", "nodename nor servname")),
+            ("connection_refused", ("connection refused",)),
+            ("network_unreachable", ("network is unreachable", "no route to host")),
+            ("timeout", ("timed out", "timeout")),
+        ):
+            if any(marker in message for marker in markers):
+                return category
+        exc = exc.__cause__ or exc.__context__
+    return "unclassified"
 
 
 def read_area(cursor, key, now):
@@ -135,9 +218,9 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                         errno = getattr(cause, "errno", None)
                         causes.append(cause.__class__.__name__ + (f"({errno})" if isinstance(errno, int) else ""))
                         cause = cause.__cause__
-                    logger.warning("Shared context fill failed: %s; upstream_status=%s; causes=%s",
+                    logger.warning("Shared context fill failed: %s; upstream_status=%s; causes=%s; category=%s",
                                    exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None),
-                                   ",".join(causes))
+                                   ",".join(causes), connection_failure_category(exc))
                     delay = min(14400, 600 * 2 ** min(failures, 5))
                     cursor.execute("UPDATE map_context_provider_budget SET failures=%s,next_allowed=%s WHERE provider=%s",
                                    (min(failures + 1, 6), int(clock()) + delay, UPSTREAM))
