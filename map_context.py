@@ -4,6 +4,7 @@ Postgres provides durable cache/budgets and a cross-process upstream lock.
 A configurable interpreter URL permits a dedicated provider without app changes.
 """
 import json
+import logging
 import math
 import os
 import time
@@ -20,6 +21,7 @@ MAX_CACHE_BYTES = 64_000_000
 DAILY_LIMIT = int(os.getenv("CONTEXT_DAILY_UPSTREAM_LIMIT", "200"))
 UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass-api.de/api/interpreter")
 LOCK = 713940181
+logger = logging.getLogger("roadprints.context")
 
 
 class ContextUnavailable(Exception):
@@ -122,6 +124,8 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                     if len(json.dumps(document).encode()) > MAX_BYTES:
                         raise ValueError("Context area too large")
                 except Exception as exc:
+                    logger.warning("Shared context fill failed: %s; upstream_status=%s",
+                                   exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None))
                     delay = min(14400, 600 * 2 ** min(failures, 5))
                     cursor.execute("UPDATE map_context_budget SET failures=%s,next_allowed=%s WHERE singleton=true",
                                    (min(failures + 1, 6), int(clock()) + delay))
