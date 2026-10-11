@@ -19,7 +19,7 @@ MAX_BYTES = 4_000_000
 MAX_AREAS = 256
 MAX_CACHE_BYTES = 64_000_000
 DAILY_LIMIT = int(os.getenv("CONTEXT_DAILY_UPSTREAM_LIMIT", "200"))
-UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass.kumi.systems/api/interpreter")
+UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass-api.de/api/interpreter")
 LOCK = 713940181
 logger = logging.getLogger("roadprints.context")
 
@@ -129,8 +129,14 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                     if len(json.dumps(document).encode()) > MAX_BYTES:
                         raise ValueError("Context area too large")
                 except Exception as exc:
-                    logger.warning("Shared context fill failed: %s; upstream_status=%s",
-                                   exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None))
+                    causes = []
+                    cause = exc
+                    while cause is not None and len(causes) < 6:
+                        causes.append(cause.__class__.__name__)
+                        cause = cause.__cause__
+                    logger.warning("Shared context fill failed: %s; upstream_status=%s; causes=%s",
+                                   exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None),
+                                   ",".join(causes))
                     delay = min(14400, 600 * 2 ** min(failures, 5))
                     cursor.execute("UPDATE map_context_provider_budget SET failures=%s,next_allowed=%s WHERE provider=%s",
                                    (min(failures + 1, 6), int(clock()) + delay, UPSTREAM))
