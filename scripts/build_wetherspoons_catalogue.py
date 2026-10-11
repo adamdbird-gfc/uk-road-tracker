@@ -15,7 +15,7 @@ import subprocess
 import urllib.parse
 import zipfile
 
-NAME = "Wetherspoons Collection"
+NAME = "UK Wetherspoons Collection"
 KEY = "wetherspoons"
 PROVIDER = "https://postpass.geofabrik.de/api/interpreter"
 MAX_OBJECTS = 2000

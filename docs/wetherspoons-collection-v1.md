@@ -1,6 +1,6 @@
-# Wetherspoons Collection — catalogue slice
+# UK Wetherspoons Collection — catalogue slice
 
-The agreed display name is **Wetherspoons Collection**. Its stable internal key
+The agreed display name is **UK Wetherspoons Collection**. Its stable internal key
 is `wetherspoons`. This slice adds reference tooling and an audit snapshot only;
 it does not change the app, recorder, matcher, importer or Services behaviour.
 

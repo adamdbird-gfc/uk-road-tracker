@@ -1,6 +1,6 @@
 {
-  "display_name": "Wetherspoons Collection",
-  "catalogue_version": "2026-10-11.9aae7bb17c4c",
+  "display_name": "UK Wetherspoons Collection",
+  "catalogue_version": "2026-10-11.41b1d2fb63de",
   "raw_objects": 836,
   "candidate_venues": 831,
   "excluded_objects": [
