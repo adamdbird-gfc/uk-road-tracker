@@ -1,0 +1,1808 @@
+{
+  "format": 1,
+  "collection_id": "wetherspoons",
+  "as_of": "2026-10-11",
+  "candidate_version": "2026-10-11.41b1d2fb63de",
+  "coverage_complete": false,
+  "completion_target": null,
+  "packaged_app_map_venues": 37,
+  "next_build_review_summary": {
+    "map_venues": 70,
+    "excluded_current": 2,
+    "unreviewed_candidates": 759,
+    "needs_rereview": [
+      "spoons-osm-w38325241",
+      "spoons-osm-n957682753"
+    ]
+  },
+  "counties": [
+    {
+      "county": {
+        "code": "ABN",
+        "name": "Aberdeenshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 4,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n9312703779",
+        "spoons-osm-w108258769",
+        "spoons-osm-w314561430",
+        "spoons-osm-w404933595"
+      ]
+    },
+    {
+      "county": {
+        "code": "ANG",
+        "name": "Angus",
+        "nation": "Scotland"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2736282895",
+        "spoons-osm-w458355462",
+        "spoons-osm-w466475732"
+      ]
+    },
+    {
+      "county": {
+        "code": "ANM",
+        "name": "Antrim",
+        "nation": "Northern Ireland"
+      },
+      "candidate_count": 2,
+      "map_approved": 2,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": []
+    },
+    {
+      "county": {
+        "code": "ARG",
+        "name": "Argyllshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n4296143957"
+      ]
+    },
+    {
+      "county": {
+        "code": "AYS",
+        "name": "Ayrshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 6,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11171968322",
+        "spoons-osm-n11171985065",
+        "spoons-osm-n11171989461",
+        "spoons-osm-n3956019390",
+        "spoons-osm-n6483613736",
+        "spoons-osm-w359514410"
+      ]
+    },
+    {
+      "county": {
+        "code": "BED",
+        "name": "Bedfordshire",
+        "nation": "England"
+      },
+      "candidate_count": 6,
+      "map_approved": 1,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n291304778",
+        "spoons-osm-n4195191858",
+        "spoons-osm-w139527483",
+        "spoons-osm-w38424470",
+        "spoons-osm-w951318819"
+      ]
+    },
+    {
+      "county": {
+        "code": "BER",
+        "name": "Berkshire",
+        "nation": "England"
+      },
+      "candidate_count": 7,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1796624600",
+        "spoons-osm-n2984533744",
+        "spoons-osm-n298897894",
+        "spoons-osm-w1203508201",
+        "spoons-osm-w144154171",
+        "spoons-osm-w302819546",
+        "spoons-osm-w619162940"
+      ]
+    },
+    {
+      "county": {
+        "code": "BRN",
+        "name": "Brecknockshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w727263744"
+      ]
+    },
+    {
+      "county": {
+        "code": "BUC",
+        "name": "Buckinghamshire",
+        "nation": "England"
+      },
+      "candidate_count": 10,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1043180244",
+        "spoons-osm-n1703574512",
+        "spoons-osm-n27512260",
+        "spoons-osm-n440802281",
+        "spoons-osm-n6046369542",
+        "spoons-osm-w1323980995",
+        "spoons-osm-w133781113",
+        "spoons-osm-w1382889057",
+        "spoons-osm-w34995425",
+        "spoons-osm-w548638674"
+      ]
+    },
+    {
+      "county": {
+        "code": "CRN",
+        "name": "Caernarfonshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 4,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1296032060",
+        "spoons-osm-w1076206136",
+        "spoons-osm-w223309617",
+        "spoons-osm-w403378977"
+      ]
+    },
+    {
+      "county": {
+        "code": "CMB",
+        "name": "Cambridgeshire",
+        "nation": "England"
+      },
+      "candidate_count": 5,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1779104706",
+        "spoons-osm-n271746016",
+        "spoons-osm-w1204234283",
+        "spoons-osm-w236844338",
+        "spoons-osm-w406835356"
+      ]
+    },
+    {
+      "county": {
+        "code": "CRD",
+        "name": "Cardiganshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n7449053702"
+      ]
+    },
+    {
+      "county": {
+        "code": "CRM",
+        "name": "Carmarthenshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 2,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n12288727359",
+        "spoons-osm-n291562392"
+      ]
+    },
+    {
+      "county": {
+        "code": "CHE",
+        "name": "Cheshire",
+        "nation": "England"
+      },
+      "candidate_count": 22,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1583392012",
+        "spoons-osm-n1624244677",
+        "spoons-osm-n1672838590",
+        "spoons-osm-n2088624694",
+        "spoons-osm-n21093896",
+        "spoons-osm-n314177166",
+        "spoons-osm-n355004030",
+        "spoons-osm-n3867808003",
+        "spoons-osm-n488230836",
+        "spoons-osm-n4972275365",
+        "spoons-osm-n5530396000",
+        "spoons-osm-n964992652",
+        "spoons-osm-r4271629",
+        "spoons-osm-w1355563612",
+        "spoons-osm-w251459866",
+        "spoons-osm-w254815356",
+        "spoons-osm-w303534168",
+        "spoons-osm-w317031137",
+        "spoons-osm-w323491609",
+        "spoons-osm-w323539113",
+        "spoons-osm-w387673289",
+        "spoons-osm-w42226809"
+      ]
+    },
+    {
+      "county": {
+        "code": "CLM",
+        "name": "Clackmannanshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10657218607"
+      ]
+    },
+    {
+      "county": {
+        "code": "CNW",
+        "name": "Cornwall",
+        "nation": "England"
+      },
+      "candidate_count": 9,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11096730684",
+        "spoons-osm-n5003932432",
+        "spoons-osm-n745954212",
+        "spoons-osm-n756795851",
+        "spoons-osm-n9560506718",
+        "spoons-osm-w118448552",
+        "spoons-osm-w1191945528",
+        "spoons-osm-w451764075",
+        "spoons-osm-w693543491"
+      ]
+    },
+    {
+      "county": {
+        "code": "CUM",
+        "name": "Cumberland",
+        "nation": "England"
+      },
+      "candidate_count": 6,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2969881472",
+        "spoons-osm-n3469712840",
+        "spoons-osm-n3469712841",
+        "spoons-osm-w277707569",
+        "spoons-osm-w294322182",
+        "spoons-osm-w294804422"
+      ]
+    },
+    {
+      "county": {
+        "code": "DBH",
+        "name": "Denbighshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n901177437",
+        "spoons-osm-w401727609",
+        "spoons-osm-w936398472"
+      ]
+    },
+    {
+      "county": {
+        "code": "DRB",
+        "name": "Derbyshire",
+        "nation": "England"
+      },
+      "candidate_count": 12,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2324083929",
+        "spoons-osm-w101264384",
+        "spoons-osm-w1027135795",
+        "spoons-osm-w108162784",
+        "spoons-osm-w127068259",
+        "spoons-osm-w128387334",
+        "spoons-osm-w241931739",
+        "spoons-osm-w279472341",
+        "spoons-osm-w376695700",
+        "spoons-osm-w393047687",
+        "spoons-osm-w75871739",
+        "spoons-osm-w95853536"
+      ]
+    },
+    {
+      "county": {
+        "code": "DVN",
+        "name": "Devon",
+        "nation": "England"
+      },
+      "candidate_count": 23,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10076043581",
+        "spoons-osm-n10115426180",
+        "spoons-osm-n11094266157",
+        "spoons-osm-n1605452537",
+        "spoons-osm-n306485629",
+        "spoons-osm-n308995685",
+        "spoons-osm-n3737846239",
+        "spoons-osm-n599055428",
+        "spoons-osm-w1042141586",
+        "spoons-osm-w1054804979",
+        "spoons-osm-w1137962303",
+        "spoons-osm-w1246127439",
+        "spoons-osm-w1249689250",
+        "spoons-osm-w1312516749",
+        "spoons-osm-w1505111277",
+        "spoons-osm-w175308977",
+        "spoons-osm-w234090581",
+        "spoons-osm-w241101550",
+        "spoons-osm-w433828512",
+        "spoons-osm-w891204341",
+        "spoons-osm-w923155037",
+        "spoons-osm-w943292533",
+        "spoons-osm-w968445111"
+      ]
+    },
+    {
+      "county": {
+        "code": "DRS",
+        "name": "Dorset",
+        "nation": "England"
+      },
+      "candidate_count": 8,
+      "map_approved": 1,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11151791658",
+        "spoons-osm-n12601910921",
+        "spoons-osm-n1760662954",
+        "spoons-osm-w199423476",
+        "spoons-osm-w355550822",
+        "spoons-osm-w446736302",
+        "spoons-osm-w596884645"
+      ]
+    },
+    {
+      "county": {
+        "code": "DWN",
+        "name": "Down",
+        "nation": "Northern Ireland"
+      },
+      "candidate_count": 1,
+      "map_approved": 1,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": []
+    },
+    {
+      "county": {
+        "code": "DMF",
+        "name": "Dumfriesshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n514408432"
+      ]
+    },
+    {
+      "county": {
+        "code": "DUN",
+        "name": "Dunbartonshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11171999155",
+        "spoons-osm-w1010713389",
+        "spoons-osm-w1227632091"
+      ]
+    },
+    {
+      "county": {
+        "code": "DRH",
+        "name": "Durham",
+        "nation": "England"
+      },
+      "candidate_count": 24,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10604807681",
+        "spoons-osm-n2739758554",
+        "spoons-osm-n3854427061",
+        "spoons-osm-n3854561975",
+        "spoons-osm-n391445314",
+        "spoons-osm-n4398544132",
+        "spoons-osm-n5060517988",
+        "spoons-osm-n639597138",
+        "spoons-osm-n6482828602",
+        "spoons-osm-n765370023",
+        "spoons-osm-n7692938506",
+        "spoons-osm-w1151600915",
+        "spoons-osm-w1283698313",
+        "spoons-osm-w307003093",
+        "spoons-osm-w402155606",
+        "spoons-osm-w405131816",
+        "spoons-osm-w413609340",
+        "spoons-osm-w436862096",
+        "spoons-osm-w444907821",
+        "spoons-osm-w69719630",
+        "spoons-osm-w76280648",
+        "spoons-osm-w844175661",
+        "spoons-osm-w931735938",
+        "spoons-osm-w99788997"
+      ]
+    },
+    {
+      "county": {
+        "code": "ESE",
+        "name": "Essex",
+        "nation": "England"
+      },
+      "candidate_count": 27,
+      "map_approved": 26,
+      "excluded": 1,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": []
+    },
+    {
+      "county": {
+        "code": "FFE",
+        "name": "Fife",
+        "nation": "Scotland"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2497123174",
+        "spoons-osm-w259913624",
+        "spoons-osm-w625113735"
+      ]
+    },
+    {
+      "county": {
+        "code": "FLT",
+        "name": "Flintshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n26787665",
+        "spoons-osm-w299067245",
+        "spoons-osm-w322522516"
+      ]
+    },
+    {
+      "county": {
+        "code": "GLM",
+        "name": "Glamorgan",
+        "nation": "Wales"
+      },
+      "candidate_count": 21,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10738667292",
+        "spoons-osm-n1122522301",
+        "spoons-osm-n1129686325",
+        "spoons-osm-n13038195354",
+        "spoons-osm-n13038195392",
+        "spoons-osm-n6592686784",
+        "spoons-osm-n731435998",
+        "spoons-osm-n8508241004",
+        "spoons-osm-n9005858168",
+        "spoons-osm-n901545308",
+        "spoons-osm-n9812347261",
+        "spoons-osm-w105804094",
+        "spoons-osm-w1080139848",
+        "spoons-osm-w1493545686",
+        "spoons-osm-w157017541",
+        "spoons-osm-w178567393",
+        "spoons-osm-w511135764",
+        "spoons-osm-w527261588",
+        "spoons-osm-w835448801",
+        "spoons-osm-w945842426",
+        "spoons-osm-w95037866"
+      ]
+    },
+    {
+      "county": {
+        "code": "GLC",
+        "name": "Gloucestershire",
+        "nation": "England"
+      },
+      "candidate_count": 16,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n4955531721",
+        "spoons-osm-w123975995",
+        "spoons-osm-w166280437",
+        "spoons-osm-w217861635",
+        "spoons-osm-w261464014",
+        "spoons-osm-w269097613",
+        "spoons-osm-w294410657",
+        "spoons-osm-w329050803",
+        "spoons-osm-w438526596",
+        "spoons-osm-w498114477",
+        "spoons-osm-w516916703",
+        "spoons-osm-w553376867",
+        "spoons-osm-w685242436",
+        "spoons-osm-w717248013",
+        "spoons-osm-w816445156",
+        "spoons-osm-w822472639"
+      ]
+    },
+    {
+      "county": {
+        "code": "HMP",
+        "name": "Hampshire",
+        "nation": "England"
+      },
+      "candidate_count": 32,
+      "map_approved": 1,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1297605107",
+        "spoons-osm-n1383417516",
+        "spoons-osm-n360689820",
+        "spoons-osm-n366593186",
+        "spoons-osm-n392878947",
+        "spoons-osm-n4328332802",
+        "spoons-osm-n451139620",
+        "spoons-osm-n49341270",
+        "spoons-osm-n5119504347",
+        "spoons-osm-n8093989",
+        "spoons-osm-n914625493",
+        "spoons-osm-n938872820",
+        "spoons-osm-n94979144",
+        "spoons-osm-w1029291902",
+        "spoons-osm-w1172274523",
+        "spoons-osm-w126358102",
+        "spoons-osm-w1312916488",
+        "spoons-osm-w1328924383",
+        "spoons-osm-w1415376935",
+        "spoons-osm-w183772279",
+        "spoons-osm-w202349595",
+        "spoons-osm-w224638835",
+        "spoons-osm-w306950270",
+        "spoons-osm-w326938937",
+        "spoons-osm-w355512196",
+        "spoons-osm-w428354651",
+        "spoons-osm-w65073128",
+        "spoons-osm-w671548622",
+        "spoons-osm-w672254742",
+        "spoons-osm-w734750734",
+        "spoons-osm-w931373268"
+      ]
+    },
+    {
+      "county": {
+        "code": "HRF",
+        "name": "Herefordshire",
+        "nation": "England"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w205254381",
+        "spoons-osm-w442430654",
+        "spoons-osm-w607939804"
+      ]
+    },
+    {
+      "county": {
+        "code": "HTF",
+        "name": "Hertfordshire",
+        "nation": "England"
+      },
+      "candidate_count": 14,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1586998347",
+        "spoons-osm-n2650561794",
+        "spoons-osm-n3426875595",
+        "spoons-osm-n4160226990",
+        "spoons-osm-w123242809",
+        "spoons-osm-w1455017855",
+        "spoons-osm-w163783034",
+        "spoons-osm-w178680197",
+        "spoons-osm-w294418709",
+        "spoons-osm-w367478765",
+        "spoons-osm-w427181353",
+        "spoons-osm-w466212139",
+        "spoons-osm-w595124545",
+        "spoons-osm-w999531990"
+      ]
+    },
+    {
+      "county": {
+        "code": "HNT",
+        "name": "Huntingdonshire",
+        "nation": "England"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n4314921340",
+        "spoons-osm-w276517613",
+        "spoons-osm-w556484714"
+      ]
+    },
+    {
+      "county": {
+        "code": "INS",
+        "name": "Inverness-shire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 2,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2260062092",
+        "spoons-osm-n365980077"
+      ]
+    },
+    {
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "candidate_count": 35,
+      "map_approved": 35,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": []
+    },
+    {
+      "county": {
+        "code": "LNK",
+        "name": "Lanarkshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 12,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1106088427",
+        "spoons-osm-n11171993568",
+        "spoons-osm-n1495513134",
+        "spoons-osm-n1496494932",
+        "spoons-osm-n247937950",
+        "spoons-osm-n275225265",
+        "spoons-osm-n322342821",
+        "spoons-osm-n4019988144",
+        "spoons-osm-n6363086934",
+        "spoons-osm-w115481049",
+        "spoons-osm-w302750892",
+        "spoons-osm-w667343490"
+      ]
+    },
+    {
+      "county": {
+        "code": "LCS",
+        "name": "Lancashire",
+        "nation": "England"
+      },
+      "candidate_count": 70,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11094151072",
+        "spoons-osm-n11094210662",
+        "spoons-osm-n11094221654",
+        "spoons-osm-n11096550499",
+        "spoons-osm-n11096554317",
+        "spoons-osm-n1152814411",
+        "spoons-osm-n1279869959",
+        "spoons-osm-n1448041271",
+        "spoons-osm-n1527511894",
+        "spoons-osm-n1743655871",
+        "spoons-osm-n1965797021",
+        "spoons-osm-n2116959254",
+        "spoons-osm-n258869419",
+        "spoons-osm-n2611247314",
+        "spoons-osm-n277972341",
+        "spoons-osm-n3084282734",
+        "spoons-osm-n3177340628",
+        "spoons-osm-n32532722",
+        "spoons-osm-n3281856146",
+        "spoons-osm-n3418630193",
+        "spoons-osm-n347027232",
+        "spoons-osm-n3475300207",
+        "spoons-osm-n348176545",
+        "spoons-osm-n4089854762",
+        "spoons-osm-n4126468089",
+        "spoons-osm-n4263059206",
+        "spoons-osm-n433743946",
+        "spoons-osm-n4517941594",
+        "spoons-osm-n4557100347",
+        "spoons-osm-n4771046861",
+        "spoons-osm-n4795819572",
+        "spoons-osm-n523836688",
+        "spoons-osm-n632341237",
+        "spoons-osm-n6391875966",
+        "spoons-osm-n9605211185",
+        "spoons-osm-r17021263",
+        "spoons-osm-w1060162573",
+        "spoons-osm-w1064403905",
+        "spoons-osm-w1066737150",
+        "spoons-osm-w1076190829",
+        "spoons-osm-w1091833099",
+        "spoons-osm-w1096984431",
+        "spoons-osm-w1115745073",
+        "spoons-osm-w1125737285",
+        "spoons-osm-w1161803017",
+        "spoons-osm-w1162448877",
+        "spoons-osm-w1248788505",
+        "spoons-osm-w1257918168",
+        "spoons-osm-w1274608964",
+        "spoons-osm-w146610676",
+        "spoons-osm-w183081118",
+        "spoons-osm-w272159072",
+        "spoons-osm-w276504956",
+        "spoons-osm-w33419416",
+        "spoons-osm-w364968948",
+        "spoons-osm-w456965789",
+        "spoons-osm-w472316251",
+        "spoons-osm-w507289751",
+        "spoons-osm-w567798101",
+        "spoons-osm-w573943846",
+        "spoons-osm-w593692673",
+        "spoons-osm-w769758846",
+        "spoons-osm-w786193472",
+        "spoons-osm-w910885489",
+        "spoons-osm-w913566548",
+        "spoons-osm-w922945824",
+        "spoons-osm-w941417293",
+        "spoons-osm-w954655928",
+        "spoons-osm-w975566384",
+        "spoons-osm-w988393501"
+      ]
+    },
+    {
+      "county": {
+        "code": "LCR",
+        "name": "Leicestershire",
+        "nation": "England"
+      },
+      "candidate_count": 11,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1059478029",
+        "spoons-osm-n2402328609",
+        "spoons-osm-n2556172184",
+        "spoons-osm-n26942245",
+        "spoons-osm-n3721812304",
+        "spoons-osm-n5302330323",
+        "spoons-osm-n553248758",
+        "spoons-osm-w248902319",
+        "spoons-osm-w322013548",
+        "spoons-osm-w490672667",
+        "spoons-osm-w49789745"
+      ]
+    },
+    {
+      "county": {
+        "code": "LNC",
+        "name": "Lincolnshire",
+        "nation": "England"
+      },
+      "candidate_count": 17,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n12846582848",
+        "spoons-osm-n1312827540",
+        "spoons-osm-n1514499025",
+        "spoons-osm-n295637093",
+        "spoons-osm-n5077620226",
+        "spoons-osm-n5263669268",
+        "spoons-osm-n7255825775",
+        "spoons-osm-n9799701331",
+        "spoons-osm-r1601540",
+        "spoons-osm-r19909351",
+        "spoons-osm-w219905509",
+        "spoons-osm-w231158130",
+        "spoons-osm-w366849843",
+        "spoons-osm-w531505245",
+        "spoons-osm-w69043435",
+        "spoons-osm-w728206447",
+        "spoons-osm-w947148095"
+      ]
+    },
+    {
+      "county": {
+        "code": "LDR",
+        "name": "Londonderry",
+        "nation": "Northern Ireland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 1,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": []
+    },
+    {
+      "county": {
+        "code": "MSX",
+        "name": "Middlesex",
+        "nation": "England"
+      },
+      "candidate_count": 51,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 1,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1117274890",
+        "spoons-osm-n11445942141",
+        "spoons-osm-n12529152052",
+        "spoons-osm-n1713315332",
+        "spoons-osm-n2531024418",
+        "spoons-osm-n25473538",
+        "spoons-osm-n256404255",
+        "spoons-osm-n267777279",
+        "spoons-osm-n29395318",
+        "spoons-osm-n294950903",
+        "spoons-osm-n302166735",
+        "spoons-osm-n3128532357",
+        "spoons-osm-n331529890",
+        "spoons-osm-n348817410",
+        "spoons-osm-n366073245",
+        "spoons-osm-n385560795",
+        "spoons-osm-n3895190286",
+        "spoons-osm-n411115268",
+        "spoons-osm-n5141625722",
+        "spoons-osm-n618653525",
+        "spoons-osm-n6284663193",
+        "spoons-osm-n646585258",
+        "spoons-osm-n6677415686",
+        "spoons-osm-n733975796",
+        "spoons-osm-n915100787",
+        "spoons-osm-r2981008",
+        "spoons-osm-w1002485834",
+        "spoons-osm-w1194233515",
+        "spoons-osm-w140144150",
+        "spoons-osm-w148305760",
+        "spoons-osm-w248749056",
+        "spoons-osm-w277929219",
+        "spoons-osm-w279322556",
+        "spoons-osm-w279651998",
+        "spoons-osm-w358385140",
+        "spoons-osm-w370461873",
+        "spoons-osm-w391735310",
+        "spoons-osm-w438299712",
+        "spoons-osm-w441509845",
+        "spoons-osm-w448779543",
+        "spoons-osm-w569138325",
+        "spoons-osm-w609808911",
+        "spoons-osm-w671115966",
+        "spoons-osm-w671119848",
+        "spoons-osm-w753674033",
+        "spoons-osm-w794475475",
+        "spoons-osm-w818160419",
+        "spoons-osm-w863516669",
+        "spoons-osm-w87853299",
+        "spoons-osm-w91002646"
+      ]
+    },
+    {
+      "county": {
+        "code": "MLT",
+        "name": "Midlothian",
+        "nation": "Scotland"
+      },
+      "candidate_count": 9,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2121794767",
+        "spoons-osm-n2175962241",
+        "spoons-osm-n2654714334",
+        "spoons-osm-n3148972370",
+        "spoons-osm-n3166444934",
+        "spoons-osm-n3270658212",
+        "spoons-osm-n6088894700",
+        "spoons-osm-n766185386",
+        "spoons-osm-w377738789"
+      ]
+    },
+    {
+      "county": {
+        "code": "MNM",
+        "name": "Monmouthshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 10,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10106883876",
+        "spoons-osm-n11171985290",
+        "spoons-osm-n11172006305",
+        "spoons-osm-n11280493976",
+        "spoons-osm-n492079348",
+        "spoons-osm-n7827962966",
+        "spoons-osm-n8919811946",
+        "spoons-osm-n915322033",
+        "spoons-osm-w727692740",
+        "spoons-osm-w926770527"
+      ]
+    },
+    {
+      "county": {
+        "code": "MTG",
+        "name": "Montgomeryshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w509639600"
+      ]
+    },
+    {
+      "county": {
+        "code": "MOY",
+        "name": "Morayshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w1107816851"
+      ]
+    },
+    {
+      "county": {
+        "code": "NRF",
+        "name": "Norfolk",
+        "nation": "England"
+      },
+      "candidate_count": 10,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n447082105",
+        "spoons-osm-w1036300491",
+        "spoons-osm-w119604430",
+        "spoons-osm-w123077955",
+        "spoons-osm-w136363795",
+        "spoons-osm-w175596035",
+        "spoons-osm-w330496112",
+        "spoons-osm-w374728401",
+        "spoons-osm-w391447404",
+        "spoons-osm-w865314605"
+      ]
+    },
+    {
+      "county": {
+        "code": "NHP",
+        "name": "Northamptonshire",
+        "nation": "England"
+      },
+      "candidate_count": 9,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n732723631",
+        "spoons-osm-n915945768",
+        "spoons-osm-w135225345",
+        "spoons-osm-w199746721",
+        "spoons-osm-w236051419",
+        "spoons-osm-w307424812",
+        "spoons-osm-w336749947",
+        "spoons-osm-w465838746",
+        "spoons-osm-w768297772"
+      ]
+    },
+    {
+      "county": {
+        "code": "NHB",
+        "name": "Northumberland",
+        "nation": "England"
+      },
+      "candidate_count": 17,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n3841493266",
+        "spoons-osm-n4325193512",
+        "spoons-osm-n4515538558",
+        "spoons-osm-n929406324",
+        "spoons-osm-r10695656",
+        "spoons-osm-w1093253094",
+        "spoons-osm-w1103772307",
+        "spoons-osm-w127030035",
+        "spoons-osm-w131661186",
+        "spoons-osm-w134968549",
+        "spoons-osm-w1470036586",
+        "spoons-osm-w411107028",
+        "spoons-osm-w452919351",
+        "spoons-osm-w837633516",
+        "spoons-osm-w90701058",
+        "spoons-osm-w97457171",
+        "spoons-osm-w99791953"
+      ]
+    },
+    {
+      "county": {
+        "code": "NOT",
+        "name": "Nottinghamshire",
+        "nation": "England"
+      },
+      "candidate_count": 22,
+      "map_approved": 1,
+      "excluded": 1,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1707777586",
+        "spoons-osm-n2204462606",
+        "spoons-osm-n2293805043",
+        "spoons-osm-n2675764810",
+        "spoons-osm-n9979244972",
+        "spoons-osm-w1107958111",
+        "spoons-osm-w149487940",
+        "spoons-osm-w193906082",
+        "spoons-osm-w244632071",
+        "spoons-osm-w251921199",
+        "spoons-osm-w280976668",
+        "spoons-osm-w294896124",
+        "spoons-osm-w30805139",
+        "spoons-osm-w327309162",
+        "spoons-osm-w350473517",
+        "spoons-osm-w352173619",
+        "spoons-osm-w38295818",
+        "spoons-osm-w408065117",
+        "spoons-osm-w79093218",
+        "spoons-osm-w91751576"
+      ]
+    },
+    {
+      "county": {
+        "code": "OXD",
+        "name": "Oxfordshire",
+        "nation": "England"
+      },
+      "candidate_count": 7,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n13232653830",
+        "spoons-osm-n175707113",
+        "spoons-osm-n319253505",
+        "spoons-osm-n467652897",
+        "spoons-osm-w365573727",
+        "spoons-osm-w683618350",
+        "spoons-osm-w938780793"
+      ]
+    },
+    {
+      "county": {
+        "code": "PBS",
+        "name": "Peeblesshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w771367301"
+      ]
+    },
+    {
+      "county": {
+        "code": "PMB",
+        "name": "Pembrokeshire",
+        "nation": "Wales"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n6001083143"
+      ]
+    },
+    {
+      "county": {
+        "code": "PRT",
+        "name": "Perthshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 2,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1709743790",
+        "spoons-osm-n2606892747"
+      ]
+    },
+    {
+      "county": {
+        "code": "RNF",
+        "name": "Renfrewshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 3,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n29553512",
+        "spoons-osm-n3675356298",
+        "spoons-osm-n4576898052"
+      ]
+    },
+    {
+      "county": {
+        "code": "RXB",
+        "name": "Roxburghshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 2,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n4465042890",
+        "spoons-osm-w914947701"
+      ]
+    },
+    {
+      "county": {
+        "code": "RTL",
+        "name": "Rutland",
+        "nation": "England"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w1352918774"
+      ]
+    },
+    {
+      "county": {
+        "code": "SHP",
+        "name": "Shropshire",
+        "nation": "England"
+      },
+      "candidate_count": 7,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n12672758143",
+        "spoons-osm-n447878280",
+        "spoons-osm-n450205148",
+        "spoons-osm-n4729242019",
+        "spoons-osm-n560526527",
+        "spoons-osm-n918731487",
+        "spoons-osm-w217581670"
+      ]
+    },
+    {
+      "county": {
+        "code": "SMS",
+        "name": "Somerset",
+        "nation": "England"
+      },
+      "candidate_count": 17,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1186907430",
+        "spoons-osm-n13042314503",
+        "spoons-osm-n2382520958",
+        "spoons-osm-n2989490660",
+        "spoons-osm-n469412641",
+        "spoons-osm-n5926671789",
+        "spoons-osm-w1082680017",
+        "spoons-osm-w1203903192",
+        "spoons-osm-w1204936359",
+        "spoons-osm-w132880235",
+        "spoons-osm-w205786050",
+        "spoons-osm-w273064147",
+        "spoons-osm-w424695257",
+        "spoons-osm-w469255563",
+        "spoons-osm-w469797774",
+        "spoons-osm-w894734721",
+        "spoons-osm-w92222991"
+      ]
+    },
+    {
+      "county": {
+        "code": "STF",
+        "name": "Staffordshire",
+        "nation": "England"
+      },
+      "candidate_count": 30,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n201468310",
+        "spoons-osm-n2804103075",
+        "spoons-osm-n289446284",
+        "spoons-osm-n410996349",
+        "spoons-osm-n410996418",
+        "spoons-osm-n4968623459",
+        "spoons-osm-n507143546",
+        "spoons-osm-n529936258",
+        "spoons-osm-n5313735958",
+        "spoons-osm-n5313836924",
+        "spoons-osm-n559787381",
+        "spoons-osm-n6413297687",
+        "spoons-osm-n821785725",
+        "spoons-osm-n894511596",
+        "spoons-osm-w104192800",
+        "spoons-osm-w1300983689",
+        "spoons-osm-w154502747",
+        "spoons-osm-w203601490",
+        "spoons-osm-w204044220",
+        "spoons-osm-w216653665",
+        "spoons-osm-w217787104",
+        "spoons-osm-w256896544",
+        "spoons-osm-w288392019",
+        "spoons-osm-w295058642",
+        "spoons-osm-w305890365",
+        "spoons-osm-w308488028",
+        "spoons-osm-w404170616",
+        "spoons-osm-w593889513",
+        "spoons-osm-w88085195",
+        "spoons-osm-w987129477"
+      ]
+    },
+    {
+      "county": {
+        "code": "STL",
+        "name": "Stirlingshire",
+        "nation": "Scotland"
+      },
+      "candidate_count": 2,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n4315886730",
+        "spoons-osm-w142989589"
+      ]
+    },
+    {
+      "county": {
+        "code": "SFF",
+        "name": "Suffolk",
+        "nation": "England"
+      },
+      "candidate_count": 9,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n2263243364",
+        "spoons-osm-n2291314726",
+        "spoons-osm-w219495247",
+        "spoons-osm-w234118181",
+        "spoons-osm-w318145476",
+        "spoons-osm-w508431878",
+        "spoons-osm-w567871851",
+        "spoons-osm-w638831299",
+        "spoons-osm-w849768138"
+      ]
+    },
+    {
+      "county": {
+        "code": "SUR",
+        "name": "Surrey",
+        "nation": "England"
+      },
+      "candidate_count": 38,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1132744385",
+        "spoons-osm-n12231843057",
+        "spoons-osm-n12860890723",
+        "spoons-osm-n13376685635",
+        "spoons-osm-n153620231",
+        "spoons-osm-n1786418431",
+        "spoons-osm-n2642161110",
+        "spoons-osm-n293516727",
+        "spoons-osm-n29579960",
+        "spoons-osm-n3282498381",
+        "spoons-osm-n3569354105",
+        "spoons-osm-n394942390",
+        "spoons-osm-n4485727695",
+        "spoons-osm-n4699900372",
+        "spoons-osm-n5046986705",
+        "spoons-osm-n5046986721",
+        "spoons-osm-n5713591363",
+        "spoons-osm-n6284670927",
+        "spoons-osm-n7816165250",
+        "spoons-osm-n812415878",
+        "spoons-osm-n87355103",
+        "spoons-osm-n9556520554",
+        "spoons-osm-w1204173381",
+        "spoons-osm-w1249142247",
+        "spoons-osm-w1562612297",
+        "spoons-osm-w161764743",
+        "spoons-osm-w169137575",
+        "spoons-osm-w198678837",
+        "spoons-osm-w321450393",
+        "spoons-osm-w324737722",
+        "spoons-osm-w422437719",
+        "spoons-osm-w424790398",
+        "spoons-osm-w441808906",
+        "spoons-osm-w479854544",
+        "spoons-osm-w65382138",
+        "spoons-osm-w671115609",
+        "spoons-osm-w80823095",
+        "spoons-osm-w94758909"
+      ]
+    },
+    {
+      "county": {
+        "code": "SUS",
+        "name": "Sussex",
+        "nation": "England"
+      },
+      "candidate_count": 17,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1155519665",
+        "spoons-osm-n21096827",
+        "spoons-osm-n29938962",
+        "spoons-osm-n416683903",
+        "spoons-osm-n4497151303",
+        "spoons-osm-n4680454625",
+        "spoons-osm-n5300022706",
+        "spoons-osm-n535576584",
+        "spoons-osm-n764901582",
+        "spoons-osm-w1020864175",
+        "spoons-osm-w1088541244",
+        "spoons-osm-w138533463",
+        "spoons-osm-w186608067",
+        "spoons-osm-w313477174",
+        "spoons-osm-w579831172",
+        "spoons-osm-w669923434",
+        "spoons-osm-w910441377"
+      ]
+    },
+    {
+      "county": {
+        "code": "WRW",
+        "name": "Warwickshire",
+        "nation": "England"
+      },
+      "candidate_count": 28,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n10210502045",
+        "spoons-osm-n10671165176",
+        "spoons-osm-n11085337411",
+        "spoons-osm-n2043095960",
+        "spoons-osm-n257906968",
+        "spoons-osm-n258179670",
+        "spoons-osm-n300415616",
+        "spoons-osm-n319266430",
+        "spoons-osm-n3212139122",
+        "spoons-osm-n351791577",
+        "spoons-osm-n4465391587",
+        "spoons-osm-n452904588",
+        "spoons-osm-n5769176646",
+        "spoons-osm-n6801059782",
+        "spoons-osm-n975847498",
+        "spoons-osm-w102824957",
+        "spoons-osm-w106181175",
+        "spoons-osm-w137335708",
+        "spoons-osm-w158005236",
+        "spoons-osm-w183853111",
+        "spoons-osm-w244088515",
+        "spoons-osm-w249010045",
+        "spoons-osm-w25372738",
+        "spoons-osm-w276371641",
+        "spoons-osm-w384913991",
+        "spoons-osm-w88521326",
+        "spoons-osm-w94961209",
+        "spoons-osm-w98286602"
+      ]
+    },
+    {
+      "county": {
+        "code": "WML",
+        "name": "Westmorland",
+        "nation": "England"
+      },
+      "candidate_count": 1,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-w357742334"
+      ]
+    },
+    {
+      "county": {
+        "code": "WTS",
+        "name": "Wiltshire",
+        "nation": "England"
+      },
+      "candidate_count": 11,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n1776838960",
+        "spoons-osm-n2092714898",
+        "spoons-osm-n2093722923",
+        "spoons-osm-n2119762389",
+        "spoons-osm-n410328052",
+        "spoons-osm-n4388231168",
+        "spoons-osm-n756960203",
+        "spoons-osm-w186004389",
+        "spoons-osm-w261289736",
+        "spoons-osm-w271760930",
+        "spoons-osm-w903893001"
+      ]
+    },
+    {
+      "county": {
+        "code": "WRC",
+        "name": "Worcestershire",
+        "nation": "England"
+      },
+      "candidate_count": 14,
+      "map_approved": 0,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n3730921232",
+        "spoons-osm-n59741388",
+        "spoons-osm-w1050092693",
+        "spoons-osm-w1077630695",
+        "spoons-osm-w1432402136",
+        "spoons-osm-w1465394526",
+        "spoons-osm-w150398083",
+        "spoons-osm-w220316285",
+        "spoons-osm-w235008006",
+        "spoons-osm-w312335223",
+        "spoons-osm-w343177059",
+        "spoons-osm-w58704822",
+        "spoons-osm-w75614314",
+        "spoons-osm-w95611906"
+      ]
+    },
+    {
+      "county": {
+        "code": "YRK",
+        "name": "Yorkshire",
+        "nation": "England"
+      },
+      "candidate_count": 75,
+      "map_approved": 2,
+      "excluded": 0,
+      "held": 0,
+      "existing_candidate_review_complete": false,
+      "missing_venue_search_complete": false,
+      "unreviewed_ids": [
+        "spoons-osm-n11094181188",
+        "spoons-osm-n11158016988",
+        "spoons-osm-n11167121278",
+        "spoons-osm-n1227482082",
+        "spoons-osm-n129955609",
+        "spoons-osm-n1692462987",
+        "spoons-osm-n1708443827",
+        "spoons-osm-n1807313262",
+        "spoons-osm-n249310902",
+        "spoons-osm-n27402368",
+        "spoons-osm-n27475944",
+        "spoons-osm-n28151851",
+        "spoons-osm-n28345934",
+        "spoons-osm-n305686960",
+        "spoons-osm-n313099976",
+        "spoons-osm-n314442295",
+        "spoons-osm-n3268702293",
+        "spoons-osm-n3278252833",
+        "spoons-osm-n4201150153",
+        "spoons-osm-n441938181",
+        "spoons-osm-n462615653",
+        "spoons-osm-n4790151513",
+        "spoons-osm-n4974198714",
+        "spoons-osm-n5508872798",
+        "spoons-osm-n5798940953",
+        "spoons-osm-n656386994",
+        "spoons-osm-n8990249588",
+        "spoons-osm-w1002819856",
+        "spoons-osm-w1037437853",
+        "spoons-osm-w103805916",
+        "spoons-osm-w1054251201",
+        "spoons-osm-w1058020319",
+        "spoons-osm-w1064424695",
+        "spoons-osm-w1064617915",
+        "spoons-osm-w1115820424",
+        "spoons-osm-w1149961617",
+        "spoons-osm-w1221524519",
+        "spoons-osm-w1238952267",
+        "spoons-osm-w1264206847",
+        "spoons-osm-w140960383",
+        "spoons-osm-w1426862050",
+        "spoons-osm-w150695875",
+        "spoons-osm-w1565661751",
+        "spoons-osm-w178220562",
+        "spoons-osm-w183238324",
+        "spoons-osm-w219467091",
+        "spoons-osm-w293413564",
+        "spoons-osm-w307293546",
+        "spoons-osm-w315482178",
+        "spoons-osm-w320593480",
+        "spoons-osm-w335363375",
+        "spoons-osm-w360039615",
+        "spoons-osm-w360260600",
+        "spoons-osm-w361426957",
+        "spoons-osm-w385275117",
+        "spoons-osm-w413633120",
+        "spoons-osm-w461181952",
+        "spoons-osm-w465904338",
+        "spoons-osm-w477335465",
+        "spoons-osm-w480208222",
+        "spoons-osm-w521936371",
+        "spoons-osm-w523693345",
+        "spoons-osm-w566139273",
+        "spoons-osm-w615614607",
+        "spoons-osm-w680991983",
+        "spoons-osm-w68456916",
+        "spoons-osm-w776012154",
+        "spoons-osm-w78507131",
+        "spoons-osm-w848041614",
+        "spoons-osm-w859915399",
+        "spoons-osm-w87266453",
+        "spoons-osm-w927836711",
+        "spoons-osm-w974986122"
+      ]
+    }
+  ],
+  "unreviewed_without_decision": 757
+}

@@ -492,7 +492,7 @@
     },
     {
       "id": "spoons-osm-w965765986",
-      "decision": "hold_map",
+      "decision": "active_map",
       "source_name": "The Furze Wren",
       "osm_aliases": [
         "way/965765986"
@@ -501,7 +501,460 @@
       "lon": 0.14789554813410297,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-furze-wren-bexleyheath/",
-      "basis": "Operating pub page exists, but OSM address/postcode differ from the current operator page. Withhold map position pending location reconciliation; do not claim closure or overwrite coordinates from another directory."
+      "basis": "Address-only hold reconciled: operator pub page uses Mayplace Road West but its own pub history uses Broadway Square/6 Market Place. FSA business 329367 independently places the pub about 36 metres from the OSM label. Evidence supports the same venue/site; retain OSM coordinates and address variants, no claim of postal authority or approved visit boundary.",
+      "additional_evidence_urls": [
+        "https://www.jdwetherspoon.com/pub-histories/the-furze-wren-bexleyheath/",
+        "https://ratings.food.gov.uk/business/329367/the-furze-wren-kent"
+      ]
+    },
+    {
+      "id": "spoons-osm-n12330754904",
+      "osm_aliases": [
+        "node/12330754904"
+      ],
+      "lat": 51.5702662,
+      "lon": 0.4600951,
+      "decision": "active_map",
+      "source_name": "Sigered, King of Essex",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/sigered-king-of-essex-basildon/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n2522664082",
+      "osm_aliases": [
+        "node/2522664082"
+      ],
+      "lat": 51.5628208,
+      "lon": 0.2164084,
+      "decision": "active_map",
+      "source_name": "J.J. Moon's",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/j-j-moons-hornchurch/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n2964369609",
+      "osm_aliases": [
+        "node/2964369609"
+      ],
+      "lat": 54.5942631,
+      "lon": -5.7010986,
+      "decision": "active_map",
+      "source_name": "The Spirit Merchant",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-spirit-merchant-newtownards/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n383979033",
+      "osm_aliases": [
+        "node/383979033"
+      ],
+      "lat": 54.7146649,
+      "lon": -5.8062958,
+      "decision": "active_map",
+      "source_name": "The Central Bar",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-central-bar-carrickfergus/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n4385247294",
+      "osm_aliases": [
+        "node/4385247294"
+      ],
+      "lat": 51.7711687,
+      "lon": 0.0920313,
+      "decision": "active_map",
+      "source_name": "The William Aylmer",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-aylmer-harlow/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n4636003065",
+      "osm_aliases": [
+        "node/4636003065"
+      ],
+      "lat": 51.6207556,
+      "lon": 0.3044383,
+      "decision": "active_map",
+      "source_name": "The Dairyman",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dairyman-brentwood/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n5749452623",
+      "osm_aliases": [
+        "node/5749452623"
+      ],
+      "lat": 51.5366663,
+      "lon": 0.7129353,
+      "decision": "active_map",
+      "source_name": "The Last Post",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-last-post-southend-on-sea/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n5793837555",
+      "osm_aliases": [
+        "node/5793837555"
+      ],
+      "lat": 51.5988869,
+      "lon": 0.1609218,
+      "decision": "active_map",
+      "source_name": "The Colley Rowe Inn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-colley-rowe-inn-collier-row/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. OSM town Romford is broader than operator locality Collier Row; postcode agrees, OSM town retained."
+    },
+    {
+      "id": "spoons-osm-n666417271",
+      "osm_aliases": [
+        "node/666417271"
+      ],
+      "lat": 51.54791,
+      "lon": 0.6557802,
+      "decision": "active_map",
+      "source_name": "The Elms",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-elms-leigh-on-sea/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1050524775",
+      "osm_aliases": [
+        "way/1050524775"
+      ],
+      "lat": 51.6269792,
+      "lon": 0.4183799455022441,
+      "decision": "active_map",
+      "source_name": "The Blue Boar",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-blue-boar-billericay/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1135278013",
+      "osm_aliases": [
+        "way/1135278013"
+      ],
+      "lat": 51.561999650000004,
+      "lon": 0.069081710753586,
+      "decision": "active_map",
+      "source_name": "The Great Spoon of Ilford",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-spoon-of-ilford-ilford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w140034197",
+      "osm_aliases": [
+        "way/140034197"
+      ],
+      "lat": 51.936308350000004,
+      "lon": 1.280915956077715,
+      "decision": "active_map",
+      "source_name": "The Bottle Kiln",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-kiln-harwich/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w1504081862",
+      "osm_aliases": [
+        "way/1504081862"
+      ],
+      "lat": 51.57055175,
+      "lon": 0.13022801919231614,
+      "decision": "active_map",
+      "source_name": "The Eva Hart",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-eva-hart-chadwell-heath/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. OSM town Romford is broader than operator locality Chadwell Heath; postcode agrees, OSM town retained."
+    },
+    {
+      "id": "spoons-osm-w1534575754",
+      "osm_aliases": [
+        "way/1534575754"
+      ],
+      "lat": 51.54073545,
+      "lon": 0.7822319212068034,
+      "decision": "active_map",
+      "source_name": "Parsons' Barn",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/parsons-barn-shoeburyness/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w170606529",
+      "osm_aliases": [
+        "way/170606529"
+      ],
+      "lat": 51.58504055,
+      "lon": 0.6033116300332098,
+      "decision": "active_map",
+      "source_name": "The Roebuck",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-roebuck-rayleigh/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w328223880",
+      "osm_aliases": [
+        "way/328223880"
+      ],
+      "lat": 51.732424949999995,
+      "lon": 0.4734094495334784,
+      "decision": "active_map",
+      "source_name": "The Ivory Peg",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ivory-peg-chelmsford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w365149560",
+      "osm_aliases": [
+        "way/365149560"
+      ],
+      "lat": 51.88751430000001,
+      "lon": 0.896878775999311,
+      "decision": "active_map",
+      "source_name": "The Playhouse",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-playhouse-colchester/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w370650569",
+      "osm_aliases": [
+        "way/370650569"
+      ],
+      "lat": 51.889860150000004,
+      "lon": 0.26001113447906543,
+      "decision": "active_map",
+      "source_name": "The Windmill",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-windmill-stansted/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. Airport after-security premises: position is within Stansted terminal; no airport-wide visit inference. OSM town/postcode missing, left unchanged."
+    },
+    {
+      "id": "spoons-osm-w475034730",
+      "osm_aliases": [
+        "way/475034730"
+      ],
+      "lat": 54.593013049999996,
+      "lon": -5.931891742215058,
+      "decision": "active_map",
+      "source_name": "The Bridge House",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bridge-house-belfast/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. OSM postcode BT2 7EG differs from operator BT2 7EJ; same Bedford Street premises/locality, discrepancy retained without overwriting source."
+    },
+    {
+      "id": "spoons-osm-w511169062",
+      "osm_aliases": [
+        "way/511169062"
+      ],
+      "lat": 51.5698685,
+      "lon": 0.012646398076923077,
+      "decision": "active_map",
+      "source_name": "The Walnut Tree",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-walnut-tree-leytonstone/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w547761738",
+      "osm_aliases": [
+        "way/547761738"
+      ],
+      "lat": 51.79836475,
+      "lon": 0.6377111258697162,
+      "decision": "active_map",
+      "source_name": "The Battesford Court",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-battesford-court-witham/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w593947032",
+      "osm_aliases": [
+        "way/593947032"
+      ],
+      "lat": 51.87716855,
+      "lon": 0.5538130783868588,
+      "decision": "active_map",
+      "source_name": "The Picture Palace",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-palace-braintree/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w611600821",
+      "osm_aliases": [
+        "way/611600821"
+      ],
+      "lat": 51.594121200000004,
+      "lon": 0.08499951094945685,
+      "decision": "active_map",
+      "source_name": "The New Fairlop Oak",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-new-fairlop-oak-fairlop/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w631646422",
+      "osm_aliases": [
+        "way/631646422"
+      ],
+      "lat": 52.0221607,
+      "lon": 0.2388663469911933,
+      "decision": "active_map",
+      "source_name": "The Temeraire",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-temeraire-saffron-walden/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w671045075",
+      "osm_aliases": [
+        "way/671045075"
+      ],
+      "lat": 51.5760456,
+      "lon": 0.1830915209330114,
+      "decision": "active_map",
+      "source_name": "The Moon and Stars",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-and-stars-romford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w685395571",
+      "osm_aliases": [
+        "way/685395571"
+      ],
+      "lat": 51.61636215,
+      "lon": -0.017034781512268102,
+      "decision": "active_map",
+      "source_name": "The King's Ford",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kings-ford-chingford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w686345950",
+      "osm_aliases": [
+        "way/686345950"
+      ],
+      "lat": 52.104670799999994,
+      "lon": -0.507086350000004,
+      "decision": "active_map",
+      "source_name": "The Fletton Brick",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-fletton-brick-bedford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w72865249",
+      "osm_aliases": [
+        "way/72865249"
+      ],
+      "lat": 51.78763735,
+      "lon": 1.154070491791169,
+      "decision": "active_map",
+      "source_name": "Moon and Starfish",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/moon-and-starfish-clacton-on-sea/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w80187143",
+      "osm_aliases": [
+        "way/80187143"
+      ],
+      "lat": 50.81070975,
+      "lon": -1.874586098584288,
+      "decision": "active_map",
+      "source_name": "The Cranborne Hundred",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-cranborne-hundred-ferndown/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w930548529",
+      "osm_aliases": [
+        "way/930548529"
+      ],
+      "lat": 51.5437903,
+      "lon": 0.003737369529410656,
+      "decision": "active_map",
+      "source_name": "Goldengrove",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/goldengrove-stratford/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w947463474",
+      "osm_aliases": [
+        "way/947463474"
+      ],
+      "lat": 50.8512643,
+      "lon": -1.417062445691673,
+      "decision": "active_map",
+      "source_name": "The Heath Hotel",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-heath-hotel-southampton/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-w97772564",
+      "osm_aliases": [
+        "way/97772564"
+      ],
+      "lat": 51.730821,
+      "lon": 0.681546646739614,
+      "decision": "active_map",
+      "source_name": "Rose & Crown",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/rose-crown-maldon/",
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n333279289",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.london.camra.org.uk/viewnode.php?id=212439",
+      "basis": "Dated CAMRA January 2024 update identifies Miller's Well as ex-Wetherspoon, reopened by another operator in December 2023. Exclude from current collection, not a claim that the building/pub is closed today."
+    },
+    {
+      "id": "spoons-osm-w38325241",
+      "osm_aliases": [
+        "way/38325241"
+      ],
+      "lat": 51.5081419,
+      "lon": -0.12573929272179374,
+      "decision": "hold_map",
+      "source_name": "The Benjamin Franklin",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
+      "basis": "Operator lists Benjamin Franklin as opening 2 March 2027, after the review date. Future-opening candidate must not activate until operating status is rechecked; no automatic activation on advertised date."
+    },
+    {
+      "id": "spoons-osm-n957682753",
+      "osm_aliases": [
+        "node/957682753"
+      ],
+      "lat": 54.9996404,
+      "lon": -7.3218005,
+      "decision": "hold_map",
+      "source_name": "The Trinity Bar",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.hygienescore.co.uk/londonderry/latest",
+      "basis": "Trinity Bar in Derry appears as a renamed former Ice Wharf in current public records. Current Wetherspoon operation not established; hold pending direct operator/independent ownership verification, not a confirmed closure."
     }
   ]
 }
