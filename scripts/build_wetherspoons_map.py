@@ -23,13 +23,16 @@ def build(catalogue, reviews, as_of):
         if ident in seen:
             raise ValueError('Duplicate review identity')
         seen.add(ident)
-        if review['decision'] not in ('active_map', 'exclude_current'):
+        if review['decision'] not in ('active_map', 'exclude_current', 'hold_map'):
             raise ValueError('Unknown review decision')
         if not review.get('evidence_url', '').startswith('https://'):
             raise ValueError('Review requires source link')
         age = (date.fromisoformat(as_of) - date.fromisoformat(review['reviewed_at'])).days
         if age < 0:
             raise ValueError('Future review')
+        if review['decision'] == 'hold_map':
+            pending.append(ident)
+            continue
         if review['decision'] == 'exclude_current':
             # Tombstones survive source omission; an OSM refresh cannot reactivate them.
             excluded.append(ident)

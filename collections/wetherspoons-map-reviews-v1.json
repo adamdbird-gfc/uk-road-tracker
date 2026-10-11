@@ -60,6 +60,448 @@
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.mansfield.camra.org.uk/viewnode.php?id=227821",
       "basis": "CAMRA report dated 2024-10-01 identifies former Wetherspoon under another name/operator. Adam reports Wetherspoon closure in 2023; exact closure date not independently verified. Retain historical identity."
+    },
+    {
+      "id": "spoons-osm-n11067789496",
+      "decision": "active_map",
+      "source_name": "The Greyhound",
+      "osm_aliases": [
+        "node/11067789496"
+      ],
+      "lat": 51.4064359,
+      "lon": 0.013411,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-greyhound-bromley/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n13041365700",
+      "decision": "active_map",
+      "source_name": "The Golden Lion",
+      "osm_aliases": [
+        "node/13041365700"
+      ],
+      "lat": 51.3865691,
+      "lon": 0.5069238,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-lion-rochester/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n13257916655",
+      "decision": "active_map",
+      "source_name": "The Thomas Waghorn",
+      "osm_aliases": [
+        "node/13257916655"
+      ],
+      "lat": 51.3827779,
+      "lon": 0.5230929,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-thomas-waghorn-chatham/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n13714548834",
+      "decision": "active_map",
+      "source_name": "The Mechanical Elephant",
+      "osm_aliases": [
+        "node/13714548834"
+      ],
+      "lat": 51.3866772,
+      "lon": 1.3778256,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mechanical-elephant-margate/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1590157935",
+      "decision": "active_map",
+      "source_name": "The Samuel Peto",
+      "osm_aliases": [
+        "node/1590157935"
+      ],
+      "lat": 51.0805902,
+      "lon": 1.1813992,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-samuel-peto-folkestone/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1973967757",
+      "decision": "active_map",
+      "source_name": "Opera House",
+      "osm_aliases": [
+        "node/1973967757"
+      ],
+      "lat": 51.1337432,
+      "lon": 0.2639965,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/opera-house-royal-tunbridge-wells/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n263047441",
+      "decision": "active_map",
+      "source_name": "The Humphrey Bean",
+      "osm_aliases": [
+        "node/263047441"
+      ],
+      "lat": 51.1951727,
+      "lon": 0.2744729,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-humphrey-bean-tonbridge/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2635076328",
+      "decision": "active_map",
+      "source_name": "The Peter Cushing",
+      "osm_aliases": [
+        "node/2635076328"
+      ],
+      "lat": 51.3565377,
+      "lon": 1.0241353,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-peter-cushing-whitstable/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n27237430",
+      "decision": "active_map",
+      "source_name": "The County Hotel",
+      "osm_aliases": [
+        "node/27237430"
+      ],
+      "lat": 51.1490338,
+      "lon": 0.8752104,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-county-hotel-ashford/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved. Postcode discrepancy retained for review; street and building number match. No postcode is packaged or copied from the operator."
+    },
+    {
+      "id": "spoons-osm-n310608696",
+      "decision": "active_map",
+      "source_name": "The Society Rooms",
+      "osm_aliases": [
+        "node/310608696"
+      ],
+      "lat": 51.2775104,
+      "lon": 0.521712,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-society-rooms-maidstone/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n315518537",
+      "decision": "active_map",
+      "source_name": "The West Gate Inn",
+      "osm_aliases": [
+        "node/315518537"
+      ],
+      "lat": 51.2820079,
+      "lon": 1.0756173,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-west-gate-inn-canterbury/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n350201743",
+      "decision": "active_map",
+      "source_name": "The Leading Light",
+      "osm_aliases": [
+        "node/350201743"
+      ],
+      "lat": 51.3137231,
+      "lon": 0.8911161,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-leading-light-faversham/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n410607359",
+      "decision": "active_map",
+      "source_name": "The Sennockian",
+      "osm_aliases": [
+        "node/410607359"
+      ],
+      "lat": 51.2725771,
+      "lon": 0.19257,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sennockian-sevenoaks/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n5074355021",
+      "decision": "active_map",
+      "source_name": "The Eight Bells",
+      "osm_aliases": [
+        "node/5074355021"
+      ],
+      "lat": 51.1257951,
+      "lon": 1.3125513,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-eight-bells-dover/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n512246937",
+      "decision": "active_map",
+      "source_name": "The Sovereign of the Seas",
+      "osm_aliases": [
+        "node/512246937"
+      ],
+      "lat": 51.3893065,
+      "lon": 0.0720908,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sovereign-of-the-seas-petts-wood/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n951344064",
+      "decision": "active_map",
+      "source_name": "The New Cross Turnpike",
+      "osm_aliases": [
+        "node/951344064"
+      ],
+      "lat": 51.4629158,
+      "lon": 0.1039166,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-new-cross-turnpike-welling/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n958771969",
+      "decision": "active_map",
+      "source_name": "The Great Harry",
+      "osm_aliases": [
+        "node/958771969"
+      ],
+      "lat": 51.4899129,
+      "lon": 0.0667107,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-harry-woolwich/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-n9664484171",
+      "decision": "active_map",
+      "source_name": "The Belle And Lion",
+      "osm_aliases": [
+        "node/9664484171"
+      ],
+      "lat": 51.4408292,
+      "lon": 0.7602208,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-belle-and-lion-sheerness/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w103966079",
+      "decision": "active_map",
+      "source_name": "Royal Victoria Pavilion",
+      "osm_aliases": [
+        "way/103966079"
+      ],
+      "lat": 51.3318046,
+      "lon": 1.4238618145807647,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/royal-victoria-pavilion-ramsgate/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1240494104",
+      "decision": "active_map",
+      "source_name": "The Stargazer",
+      "osm_aliases": [
+        "way/1240494104"
+      ],
+      "lat": 51.5039067,
+      "lon": 0.0021468003157611316,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-stargazer-greenwich/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w151706139",
+      "decision": "active_map",
+      "source_name": "The Thomas Ingoldsby",
+      "osm_aliases": [
+        "way/151706139"
+      ],
+      "lat": 51.27830685,
+      "lon": 1.0843127474920728,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-thomas-ingoldsby-canterbury/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w160669972",
+      "decision": "active_map",
+      "source_name": "The Gate Clock",
+      "osm_aliases": [
+        "way/160669972"
+      ],
+      "lat": 51.48156245,
+      "lon": -0.0111911826732684,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gate-clock-greenwich/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w200175760",
+      "decision": "active_map",
+      "source_name": "The Brockley Barge",
+      "osm_aliases": [
+        "way/200175760"
+      ],
+      "lat": 51.46405765,
+      "lon": -0.03649561103158851,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-brockley-barge-brockley/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w245210513",
+      "decision": "active_map",
+      "source_name": "The Muggleton Inn",
+      "osm_aliases": [
+        "way/245210513"
+      ],
+      "lat": 51.273750500000006,
+      "lon": 0.5222658443990866,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-muggleton-inn-maidstone/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w315002920",
+      "decision": "active_map",
+      "source_name": "The Watch House",
+      "osm_aliases": [
+        "way/315002920"
+      ],
+      "lat": 51.45996625,
+      "lon": -0.011723222801047317,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-watch-house-lewisham/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w48239489",
+      "decision": "active_map",
+      "source_name": "The Golden Hope",
+      "osm_aliases": [
+        "way/48239489"
+      ],
+      "lat": 51.3403406,
+      "lon": 0.7322445951943231,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-hope-sittingbourne/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w520713807",
+      "decision": "active_map",
+      "source_name": "The Tailor's Chalk",
+      "osm_aliases": [
+        "way/520713807"
+      ],
+      "lat": 51.42628345,
+      "lon": 0.10358788464031146,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tailors-chalk-sidcup/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w540185919",
+      "decision": "active_map",
+      "source_name": "The Richmal Crompton",
+      "osm_aliases": [
+        "way/540185919"
+      ],
+      "lat": 51.39980535,
+      "lon": 0.016275675117980247,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-richmal-crompton-bromley/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w729378689",
+      "decision": "active_map",
+      "source_name": "The Wrong 'Un",
+      "osm_aliases": [
+        "way/729378689"
+      ],
+      "lat": 51.457934449999996,
+      "lon": 0.13741196107426007,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wrong-un-bexleyheath/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w733027152",
+      "decision": "active_map",
+      "source_name": "The Railway",
+      "osm_aliases": [
+        "way/733027152"
+      ],
+      "lat": 51.365885,
+      "lon": 0.6116393849500117,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-railway-rainham/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w828302568",
+      "decision": "active_map",
+      "source_name": "The Flying Boat",
+      "osm_aliases": [
+        "way/828302568"
+      ],
+      "lat": 51.44466655,
+      "lon": 0.21472930825021558,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-boat-dartford/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w879792799",
+      "decision": "active_map",
+      "source_name": "The Sir Norman Wisdom",
+      "osm_aliases": [
+        "way/879792799"
+      ],
+      "lat": 51.22327095,
+      "lon": 1.4016050124600707,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-norman-wisdom-deal/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w936847271",
+      "decision": "active_map",
+      "source_name": "The Saxon Shore",
+      "osm_aliases": [
+        "way/936847271"
+      ],
+      "lat": 51.37258545,
+      "lon": 1.1258902386789131,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-saxon-shore-herne-bay/",
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+    },
+    {
+      "id": "spoons-osm-w965765986",
+      "decision": "hold_map",
+      "source_name": "The Furze Wren",
+      "osm_aliases": [
+        "way/965765986"
+      ],
+      "lat": 51.456602849999996,
+      "lon": 0.14789554813410297,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-furze-wren-bexleyheath/",
+      "basis": "Operating pub page exists, but OSM address/postcode differ from the current operator page. Withhold map position pending location reconciliation; do not claim closure or overwrite coordinates from another directory."
     }
   ]
 }

@@ -22,6 +22,13 @@ class ReviewedMapTest(unittest.TestCase):
         self.ledger['venues'] = []
         self.assertEqual([], self.result()['venues'])
 
+    def test_held_position_is_hidden_without_claiming_pub_closure(self):
+        self.review['decision'] = 'hold_map'
+        r = self.result()
+        self.assertEqual([], r['venues'])
+        self.assertEqual(0, r['review_summary']['excluded_current'])
+        self.assertEqual(['pub-a'], r['review_summary']['needs_rereview'])
+
     def test_approval_is_map_only_and_not_a_completion_target(self):
         r = self.result()
         self.assertEqual(1, len(r['venues']))
