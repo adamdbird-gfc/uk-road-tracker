@@ -1,0 +1,59 @@
+{
+  "display_name": "Wetherspoons Collection",
+  "catalogue_version": "2026-10-11.9aae7bb17c4c",
+  "raw_objects": 836,
+  "candidate_venues": 831,
+  "excluded_objects": [
+    {
+      "osm_id": "way/187923791",
+      "name": "The Shrewsbury Hotel",
+      "reason": "not_tagged_current_pub"
+    },
+    {
+      "osm_id": "way/1204936358",
+      "name": "Cabot Court Hotel",
+      "reason": "not_tagged_current_pub"
+    }
+  ],
+  "point_only": 369,
+  "mapped_footprints": 462,
+  "county_unassigned": [],
+  "missing_postcode": 47,
+  "missing_town": 73,
+  "nearby_pairs": [
+    {
+      "ids": [
+        "spoons-osm-w103691610",
+        "spoons-osm-w30110330"
+      ],
+      "names": [
+        "The Benjamin Huntsman",
+        "Sheffield Water Works Company"
+      ],
+      "distance_metres": 63,
+      "action": "review; never merge by proximity alone"
+    },
+    {
+      "ids": [
+        "spoons-osm-w262652847",
+        "spoons-osm-w310891787"
+      ],
+      "names": [
+        "The Widow Frost",
+        "The Stag and Pheasant"
+      ],
+      "distance_metres": 28,
+      "action": "review; never merge by proximity alone"
+    }
+  ],
+  "source_missing": [],
+  "all_operating_statuses_unverified": true,
+  "ready_for_app": false,
+  "remaining_gates": [
+    "Verify current operation and source coverage; counts alone do not establish completeness",
+    "Review node/building aliases and source-missing identities",
+    "Review venue footprints, point-only and shared-building cases",
+    "Resolve county gaps before county completion targets",
+    "Define an approved active catalogue before app packaging"
+  ]
+}

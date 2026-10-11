@@ -1,0 +1,22 @@
+name: Wetherspoons catalogue regression
+on:
+  push:
+    paths:
+      - 'scripts/*wetherspoons*'
+      - 'collections/*wetherspoons*'
+      - '.github/workflows/wetherspoons-catalogue.yml'
+  pull_request:
+    paths:
+      - 'scripts/*wetherspoons*'
+      - 'collections/*wetherspoons*'
+      - '.github/workflows/wetherspoons-catalogue.yml'
+jobs:
+  catalogue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s scripts -p 'test_wetherspoons_catalogue.py' -v
+      - run: python scripts/validate_wetherspoons_catalogue.py
