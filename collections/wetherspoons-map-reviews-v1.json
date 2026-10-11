@@ -1566,6 +1566,731 @@
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gatekeeper-cardiff/",
       "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary."
+    },
+    {
+      "id": "spoons-osm-n10657218607",
+      "decision": "active_map",
+      "source_name": "The Bobbing John",
+      "osm_aliases": [
+        "node/10657218607"
+      ],
+      "lat": 56.1160318,
+      "lon": -3.791344,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bobbing-john-alloa/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1106088427",
+      "decision": "active_map",
+      "source_name": "Black Bear",
+      "osm_aliases": [
+        "node/1106088427"
+      ],
+      "lat": 55.8369942,
+      "lon": -4.1102735,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/black-bear-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Operator lists Black Bear at Uddingston/Glasgow; current franchise included as a pub."
+    },
+    {
+      "id": "spoons-osm-n11171968322",
+      "decision": "active_map",
+      "source_name": "The Wheatsheaf Inn",
+      "osm_aliases": [
+        "node/11171968322"
+      ],
+      "lat": 55.611083,
+      "lon": -4.497007,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wheatsheaf-inn-kilmarnock/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n11171985065",
+      "decision": "active_map",
+      "source_name": "The Auld Brig",
+      "osm_aliases": [
+        "node/11171985065"
+      ],
+      "lat": 55.6124274,
+      "lon": -4.6729596,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-auld-brig-irvine/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n11171989461",
+      "decision": "active_map",
+      "source_name": "The Salt Cot",
+      "osm_aliases": [
+        "node/11171989461"
+      ],
+      "lat": 55.6337304,
+      "lon": -4.7894425,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-salt-cot-saltcoats/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n11171993568",
+      "decision": "active_map",
+      "source_name": "The Brandon Works",
+      "osm_aliases": [
+        "node/11171993568"
+      ],
+      "lat": 55.7916225,
+      "lon": -3.9902654,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-brandon-works-motherwell/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n11171999155",
+      "decision": "active_map",
+      "source_name": "The Henry Bell",
+      "osm_aliases": [
+        "node/11171999155"
+      ],
+      "lat": 56.0040827,
+      "lon": -4.7376017,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-henry-bell-helensburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1495513134",
+      "decision": "active_map",
+      "source_name": "The Hengler's Circus",
+      "osm_aliases": [
+        "node/1495513134"
+      ],
+      "lat": 55.8656663,
+      "lon": -4.2666642,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-henglers-circus-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1496494932",
+      "decision": "active_map",
+      "source_name": "Society Room",
+      "osm_aliases": [
+        "node/1496494932"
+      ],
+      "lat": 55.8622507,
+      "lon": -4.2571298,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-society-room-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1709743790",
+      "decision": "active_map",
+      "source_name": "The Capital Asset",
+      "osm_aliases": [
+        "node/1709743790"
+      ],
+      "lat": 56.3964429,
+      "lon": -3.4258741,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-capital-asset-perth/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2121794767",
+      "decision": "active_map",
+      "source_name": "The Playfair",
+      "osm_aliases": [
+        "node/2121794767"
+      ],
+      "lat": 55.9565487,
+      "lon": -3.1857314,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-playfair-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2175962241",
+      "decision": "active_map",
+      "source_name": "White Lady",
+      "osm_aliases": [
+        "node/2175962241"
+      ],
+      "lat": 55.9429686,
+      "lon": -3.2825386,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-lady-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2260062092",
+      "decision": "active_map",
+      "source_name": "The Great Glen",
+      "osm_aliases": [
+        "node/2260062092"
+      ],
+      "lat": 56.8164498,
+      "lon": -5.1137752,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-glen-fort-william/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. OSM postcode PH33 6DG differs from operator PH33 6AD; source High Street 98-104 agrees with operator 104 High Street."
+    },
+    {
+      "id": "spoons-osm-n247937950",
+      "decision": "active_map",
+      "source_name": "The Counting House",
+      "osm_aliases": [
+        "node/247937950"
+      ],
+      "lat": 55.8610648,
+      "lon": -4.2517617,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-counting-house-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2497123174",
+      "decision": "active_map",
+      "source_name": "The Robert Nairn",
+      "osm_aliases": [
+        "node/2497123174"
+      ],
+      "lat": 56.1119547,
+      "lon": -3.1579431,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-robert-nairn-kirkcaldy/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2606892747",
+      "decision": "active_map",
+      "source_name": "Fair O'Blair",
+      "osm_aliases": [
+        "node/2606892747"
+      ],
+      "lat": 56.592626,
+      "lon": -3.3383662,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-fair-oblair-blairgowrie/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2654714334",
+      "decision": "active_map",
+      "source_name": "The Newyearfield",
+      "osm_aliases": [
+        "node/2654714334"
+      ],
+      "lat": 55.882588,
+      "lon": -3.5178027,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-newyearfield-livingston/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2736282895",
+      "decision": "active_map",
+      "source_name": "The Corn Exchange",
+      "osm_aliases": [
+        "node/2736282895"
+      ],
+      "lat": 56.5585038,
+      "lon": -2.5825137,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-corn-exchange-arbroath/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n275225265",
+      "decision": "active_map",
+      "source_name": "The Sir John Moore",
+      "osm_aliases": [
+        "node/275225265"
+      ],
+      "lat": 55.8588046,
+      "lon": -4.2599323,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-john-moore-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n29553512",
+      "decision": "active_map",
+      "source_name": "The Last Post",
+      "osm_aliases": [
+        "node/29553512"
+      ],
+      "lat": 55.8466392,
+      "lon": -4.42465,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-last-post-paisley/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3148972370",
+      "decision": "active_map",
+      "source_name": "The Alexander Graham Bell",
+      "osm_aliases": [
+        "node/3148972370"
+      ],
+      "lat": 55.9518706,
+      "lon": -3.2053157,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-alexander-graham-bell-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3166444934",
+      "decision": "active_map",
+      "source_name": "The Standing Order",
+      "osm_aliases": [
+        "node/3166444934"
+      ],
+      "lat": 55.9529173,
+      "lon": -3.1995774,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-standing-order-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n322342821",
+      "decision": "active_map",
+      "source_name": "The Esquire House",
+      "osm_aliases": [
+        "node/322342821"
+      ],
+      "lat": 55.888413,
+      "lon": -4.321738,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-esquire-house-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3270658212",
+      "decision": "active_map",
+      "source_name": "The Sir Walter Scott",
+      "osm_aliases": [
+        "node/3270658212"
+      ],
+      "lat": 55.9487488,
+      "lon": -3.3632758,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-walter-scott-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Airport operator independently lists current pub by gate 10 after security. Researcher former-site entry must not imply current pub closure. Airport-wide presence does not prove pub entry; precise premises/indoor position requires future visit review.",
+      "additional_evidence_urls": [
+        "https://www.edinburghairport.com/shopping-and-eating/restaurants/the-sir-walter-scott"
+      ]
+    },
+    {
+      "id": "spoons-osm-n365980077",
+      "decision": "active_map",
+      "source_name": "The King's Highway",
+      "osm_aliases": [
+        "node/365980077"
+      ],
+      "lat": 57.4796523,
+      "lon": -4.2275063,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kings-highway-inverness/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3675356298",
+      "decision": "active_map",
+      "source_name": "The James Watt Bar",
+      "osm_aliases": [
+        "node/3675356298"
+      ],
+      "lat": 55.9468434,
+      "lon": -4.7535734,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-james-watt-greenock/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n3956019390",
+      "decision": "active_map",
+      "source_name": "Prestwick Pioneer",
+      "osm_aliases": [
+        "node/3956019390"
+      ],
+      "lat": 55.4995645,
+      "lon": -4.6107041,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-prestwick-pioneer-prestwick/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Source town/postcode missing; retained unchanged. Reviewed as Prestwick town-centre pub, not airport."
+    },
+    {
+      "id": "spoons-osm-n4019988144",
+      "decision": "active_map",
+      "source_name": "The Hay Stook",
+      "osm_aliases": [
+        "node/4019988144"
+      ],
+      "lat": 55.7609551,
+      "lon": -4.176813,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hay-stook-east-kilbride/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4296143957",
+      "decision": "active_map",
+      "source_name": "The Corryvreckan",
+      "osm_aliases": [
+        "node/4296143957"
+      ],
+      "lat": 56.4126816,
+      "lon": -5.4745146,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-corryvreckan-oban/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4315886730",
+      "decision": "active_map",
+      "source_name": "The Crossed Peels",
+      "osm_aliases": [
+        "node/4315886730"
+      ],
+      "lat": 56.1186335,
+      "lon": -3.9387947,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crossed-peels-stirling/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. OSM postcode FK8 1DU differs from operator FK8 1AT; source and operator both identify 8 Spittal Street."
+    },
+    {
+      "id": "spoons-osm-n4465042890",
+      "decision": "active_map",
+      "source_name": "The Bourtree",
+      "osm_aliases": [
+        "node/4465042890"
+      ],
+      "lat": 55.4252559,
+      "lon": -2.783564,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bourtree-hawick/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4576898052",
+      "decision": "active_map",
+      "source_name": "The Lord of the Isles",
+      "osm_aliases": [
+        "node/4576898052"
+      ],
+      "lat": 55.8783575,
+      "lon": -4.3715561,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lord-of-the-isles-renfrew/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n514408432",
+      "decision": "active_map",
+      "source_name": "Robert the Bruce",
+      "osm_aliases": [
+        "node/514408432"
+      ],
+      "lat": 55.0703639,
+      "lon": -3.6135373,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/robert-the-bruce-dumfries/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. OSM postcode DG1 2AB differs from operator DG1 1DJ; source Buccleuch Street 81-85 agrees with operator 81-83."
+    },
+    {
+      "id": "spoons-osm-n6088894700",
+      "decision": "active_map",
+      "source_name": "The David Macbeth Moir",
+      "osm_aliases": [
+        "node/6088894700"
+      ],
+      "lat": 55.9435826,
+      "lon": -3.0579836,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-david-macbeth-moir-musselburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n6363086934",
+      "decision": "active_map",
+      "source_name": "An Ruadh-Ghleann",
+      "osm_aliases": [
+        "node/6363086934"
+      ],
+      "lat": 55.8280477,
+      "lon": -4.2176704,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/an-ruadh-ghleann-rutherglen/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n6483613736",
+      "decision": "active_map",
+      "source_name": "The Paddle Steamer",
+      "osm_aliases": [
+        "node/6483613736"
+      ],
+      "lat": 55.7952664,
+      "lon": -4.870149,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-paddle-steamer-largs/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n766185386",
+      "decision": "active_map",
+      "source_name": "The Caley Picture House",
+      "osm_aliases": [
+        "node/766185386"
+      ],
+      "lat": 55.9482513,
+      "lon": -3.2060765,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-caley-picture-house-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n9312703779",
+      "decision": "active_map",
+      "source_name": "The Cross Keys",
+      "osm_aliases": [
+        "node/9312703779"
+      ],
+      "lat": 57.5057722,
+      "lon": -1.7789761,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-cross-keys-peterhead/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1010713389",
+      "decision": "active_map",
+      "source_name": "Kirky Puffer",
+      "osm_aliases": [
+        "way/1010713389"
+      ],
+      "lat": 55.93819055,
+      "lon": -4.154563115178108,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kirky-puffer-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w108258769",
+      "decision": "active_map",
+      "source_name": "The Gordon Highlander",
+      "osm_aliases": [
+        "way/108258769"
+      ],
+      "lat": 57.28473435,
+      "lon": -2.3797127103105717,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gordon-highlander-inverurie/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1107816851",
+      "decision": "active_map",
+      "source_name": "The Muckle Cross",
+      "osm_aliases": [
+        "way/1107816851"
+      ],
+      "lat": 57.6486707,
+      "lon": -3.31239011237458,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-muckle-cross-elgin/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w115481049",
+      "decision": "active_map",
+      "source_name": "The Crystal Palace",
+      "osm_aliases": [
+        "way/115481049"
+      ],
+      "lat": 55.85760795,
+      "lon": -4.257530073590589,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crystal-palace-glasgow/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1227632091",
+      "decision": "active_map",
+      "source_name": "The Captain James Lang",
+      "osm_aliases": [
+        "way/1227632091"
+      ],
+      "lat": 55.94318955,
+      "lon": -4.57168361624041,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-captain-james-lang-dumbarton/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w142989589",
+      "decision": "active_map",
+      "source_name": "The Carron Works Wetherspoon",
+      "osm_aliases": [
+        "way/142989589"
+      ],
+      "lat": 56.00027445,
+      "lon": -3.7830286436605576,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-carron-works-falkirk/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w259913624",
+      "decision": "active_map",
+      "source_name": "Golden Acorn Hotel",
+      "osm_aliases": [
+        "way/259913624"
+      ],
+      "lat": 56.195882999999995,
+      "lon": -3.167859536415649,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-acorn-glenrothes/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w302750892",
+      "decision": "active_map",
+      "source_name": "The Wishaw Malt",
+      "osm_aliases": [
+        "way/302750892"
+      ],
+      "lat": 55.7737635,
+      "lon": -3.9182011028929735,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wishaw-malt-wishaw/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w314561430",
+      "decision": "active_map",
+      "source_name": "The Archibald Simpson",
+      "osm_aliases": [
+        "way/314561430"
+      ],
+      "lat": 57.14815435,
+      "lon": -2.093748619708114,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-archibald-simpson-aberdeen/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w359514410",
+      "decision": "active_map",
+      "source_name": "The West Kirk",
+      "osm_aliases": [
+        "way/359514410"
+      ],
+      "lat": 55.462901450000004,
+      "lon": -4.634444077832515,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-west-kirk-ayr/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w377738789",
+      "decision": "active_map",
+      "source_name": "Booking Office",
+      "osm_aliases": [
+        "way/377738789"
+      ],
+      "lat": 55.951739,
+      "lon": -3.1913982839975303,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-booking-office-edinburgh/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Waverley Bridge station location does not prove pub entry."
+    },
+    {
+      "id": "spoons-osm-w404933595",
+      "decision": "active_map",
+      "source_name": "The Justice Mill",
+      "osm_aliases": [
+        "way/404933595"
+      ],
+      "lat": 57.1431171,
+      "lon": -2.109426786258833,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-justice-mill-aberdeen/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w458355462",
+      "decision": "active_map",
+      "source_name": "Jolly's Hotel",
+      "osm_aliases": [
+        "way/458355462"
+      ],
+      "lat": 56.466073449999996,
+      "lon": -2.8738009444089743,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/jollys-hotel-broughty-ferry/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Source town Dundee corresponds to operator Broughty Ferry, Dundee City."
+    },
+    {
+      "id": "spoons-osm-w466475732",
+      "decision": "active_map",
+      "source_name": "The Counting House",
+      "osm_aliases": [
+        "way/466475732"
+      ],
+      "lat": 56.4620375,
+      "lon": -2.9716733615664177,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-counting-house-dundee/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w625113735",
+      "decision": "active_map",
+      "source_name": "The Guildhall & Linen Exchange",
+      "osm_aliases": [
+        "way/625113735"
+      ],
+      "lat": 56.0712159,
+      "lon": -3.4613590918031605,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-guildhall-linen-exchange-dunfermline/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w667343490",
+      "decision": "active_map",
+      "source_name": "The John Fairweather",
+      "osm_aliases": [
+        "way/667343490"
+      ],
+      "lat": 55.8184047,
+      "lon": -4.166022437673112,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-fairweather-cambuslang/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w771367301",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://camra.org.uk/pubs/cross-keys-peebles-151556",
+      "basis": "CAMRA listing last updated 2026-03-01 reports no longer Wetherspoon since May 2024 and another operator. Former operator URL redirects to homepage; preserve historical identity, exclude from current map. Not a claim the pub itself is closed."
+    },
+    {
+      "id": "spoons-osm-w914947701",
+      "decision": "active_map",
+      "source_name": "Hunters Hall",
+      "osm_aliases": [
+        "way/914947701"
+      ],
+      "lat": 55.618021850000005,
+      "lon": -2.8108701692451223,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/hunters-hall-galashiels/",
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved."
     }
   ]
 }
