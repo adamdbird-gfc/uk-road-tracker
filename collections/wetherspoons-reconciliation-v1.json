@@ -30,8 +30,11 @@
       "key": "william-chambers",
       "status": "future_opening_not_in_candidate_names",
       "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
-      "basis": "Advertised 26 January opening is after review date; revisit after opening, do not auto-activate.",
-      "map_enabled": false
+      "basis": "Both operator sources identify a future opening, but individual pub page says 3 November 2026 while new-openings page says 26 January. Date conflict recorded; no active pin and no automatic activation. Recheck actual opening and reconcile OSM identity before approval.",
+      "map_enabled": false,
+      "additional_evidence_urls": [
+        "https://www.jdwetherspoon.com/pubs/the-william-chambers-edinburgh/"
+      ]
     },
     {
       "key": "boathouse-presthaven",
@@ -41,6 +44,16 @@
         "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html"
       ],
       "basis": "Proposed Haven pub at Presthaven; later November 2025 reports say plans scrapped. No current operating-pub listing established; do not add an active pin or count. Review new evidence if plans restart.",
+      "map_enabled": false
+    },
+    {
+      "key": "red-gown-st-andrews",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-gown-st-andrews/",
+      "additional_evidence_urls": [
+        "https://www.jdwetherspoon.com/new-openings/"
+      ],
+      "basis": "Operator currently lists operating St Andrews university pub; absent from pinned candidate names. Reconcile an OSM pub identity and premises position before map addition; university/student association centroid cannot stand in for the pub.",
       "map_enabled": false
     }
   ],

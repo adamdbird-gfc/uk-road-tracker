@@ -7,9 +7,9 @@
   "completion_target": null,
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
-    "map_venues": 117,
-    "excluded_current": 2,
-    "unreviewed_candidates": 712,
+    "map_venues": 172,
+    "excluded_current": 3,
+    "unreviewed_candidates": 656,
     "needs_rereview": [
       "spoons-osm-w38325241",
       "spoons-osm-n957682753"
@@ -23,17 +23,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 4,
-      "map_approved": 0,
+      "map_approved": 4,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n9312703779",
-        "spoons-osm-w108258769",
-        "spoons-osm-w314561430",
-        "spoons-osm-w404933595"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -42,16 +37,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n2736282895",
-        "spoons-osm-w458355462",
-        "spoons-osm-w466475732"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -74,14 +65,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n4296143957"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -90,19 +79,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 6,
-      "map_approved": 0,
+      "map_approved": 6,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n11171968322",
-        "spoons-osm-n11171985065",
-        "spoons-osm-n11171989461",
-        "spoons-osm-n3956019390",
-        "spoons-osm-n6483613736",
-        "spoons-osm-w359514410"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -291,14 +273,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n10657218607"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -467,14 +447,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n514408432"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -483,16 +461,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n11171999155",
-        "spoons-osm-w1010713389",
-        "spoons-osm-w1227632091"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -554,16 +528,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n2497123174",
-        "spoons-osm-w259913624",
-        "spoons-osm-w625113735"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -742,15 +712,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 2,
-      "map_approved": 0,
+      "map_approved": 2,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n2260062092",
-        "spoons-osm-n365980077"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -773,25 +740,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 12,
-      "map_approved": 0,
+      "map_approved": 12,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1106088427",
-        "spoons-osm-n11171993568",
-        "spoons-osm-n1495513134",
-        "spoons-osm-n1496494932",
-        "spoons-osm-n247937950",
-        "spoons-osm-n275225265",
-        "spoons-osm-n322342821",
-        "spoons-osm-n4019988144",
-        "spoons-osm-n6363086934",
-        "spoons-osm-w115481049",
-        "spoons-osm-w302750892",
-        "spoons-osm-w667343490"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1022,22 +976,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 9,
-      "map_approved": 0,
+      "map_approved": 9,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n2121794767",
-        "spoons-osm-n2175962241",
-        "spoons-osm-n2654714334",
-        "spoons-osm-n3148972370",
-        "spoons-osm-n3166444934",
-        "spoons-osm-n3270658212",
-        "spoons-osm-n6088894700",
-        "spoons-osm-n766185386",
-        "spoons-osm-w377738789"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1074,14 +1018,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-w1107816851"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1229,13 +1171,11 @@
       },
       "candidate_count": 1,
       "map_approved": 0,
-      "excluded": 0,
+      "excluded": 1,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-w771367301"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1258,15 +1198,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 2,
-      "map_approved": 0,
+      "map_approved": 2,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1709743790",
-        "spoons-osm-n2606892747"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1275,16 +1212,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 3,
-      "map_approved": 0,
+      "map_approved": 3,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n29553512",
-        "spoons-osm-n3675356298",
-        "spoons-osm-n4576898052"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1293,15 +1226,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 2,
-      "map_approved": 0,
+      "map_approved": 2,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n4465042890",
-        "spoons-osm-w914947701"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1425,15 +1355,12 @@
         "nation": "Scotland"
       },
       "candidate_count": 2,
-      "map_approved": 0,
+      "map_approved": 2,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n4315886730",
-        "spoons-osm-w142989589"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1747,7 +1674,7 @@
       ]
     }
   ],
-  "unreviewed_without_decision": 710,
+  "unreviewed_without_decision": 654,
   "nation_checks": {
     "Wales": {
       "existing_candidates": 47,
@@ -1756,6 +1683,15 @@
       "missing_venue_search_complete": false,
       "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
       "basis": "Independent dated researcher list has matching Welsh names/localities; corroboration only, not an authoritative completeness guarantee. Presthaven proposal is not an operating pub."
+    },
+    "Scotland": {
+      "existing_candidates": 56,
+      "map_approved": 55,
+      "excluded": 1,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "basis": "Cross-check identified missing Red Gown and former Cross Keys Peebles. Current airport/pub operator listings confirm Sir Walter Scott despite former-site entry. Red Gown requires OSM identity/position reconciliation before map approval; planned William Chambers stays inactive."
     }
   }
 }
