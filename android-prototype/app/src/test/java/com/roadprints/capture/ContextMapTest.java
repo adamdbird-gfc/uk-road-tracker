@@ -40,4 +40,10 @@ public class ContextMapTest {
         f=new JSONArray().put(new JSONObject().put("tags",new JSONObject().put("leisure","park")).put("geometry",rectangle(100)));
         ContextMap.Evidence e=ContextMap.at(f,51.5,-.1,5);assertTrue(e.outdoor);assertFalse(e.destination);
     }
+    @Test public void courtyardHoleIsNotInsideBuildingAndAccuracyMustClearHoleEdge() throws Exception {
+        JSONObject f=building(100).put("holes",new JSONArray().put(rectangle(20)));
+        assertFalse(ContextMap.at(new JSONArray().put(f),51.5,-.1,5).destination);
+        assertFalse(ContextMap.at(new JSONArray().put(f),51.5+25.0/111195,-.1,10).destination);
+        assertTrue(ContextMap.at(new JSONArray().put(f),51.5+40.0/111195,-.1,5).destination);
+    }
 }
