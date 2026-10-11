@@ -1,4 +1,4 @@
-# Wetherspoons Collection reference attribution
+# UK Wetherspoons Collection reference attribution
 
 `wetherspoons-osm-source-v1.json` and the OSM-derived venue data in
 `uk-wetherspoons-candidates-v1.json` are © OpenStreetMap contributors, available

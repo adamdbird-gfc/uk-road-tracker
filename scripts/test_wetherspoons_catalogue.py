@@ -60,7 +60,7 @@ class WetherspoonsCatalogueTest(unittest.TestCase):
         self.assertEqual(1, audit["mapped_footprints"])
         self.assertFalse(result["ready_for_app"])
         self.assertIsNone(result["completion_target"])
-        self.assertEqual("Wetherspoons Collection", result["display_name"])
+        self.assertEqual("UK Wetherspoons Collection", result["display_name"])
 
     def test_invalid_or_truncated_extract_fails_closed(self):
         bad = feature()
