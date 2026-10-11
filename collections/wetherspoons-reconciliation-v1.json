@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "collection_id": "wetherspoons",
+  "as_of": "2026-10-11",
+  "coverage_complete": false,
+  "source_policy": "OSM-derived app names/positions; individual status checks and source links only. No bulk copy of operator directory, descriptions, photos or coordinates.",
+  "leads": [
+    {
+      "key": "belle-vue-manchester-airport",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-belle-vue-manchester/",
+      "basis": "Current operator listing identifies an operating airside Terminal 2 pub. No matching name in pinned UK candidate snapshot; find and reconcile an OSM venue identity and premises position before adding a pin. Terminal/airport coordinates are insufficient.",
+      "map_enabled": false
+    },
+    {
+      "key": "piccadilly-hall",
+      "status": "future_opening_not_in_candidate_names",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
+      "basis": "Advertised 3 November opening is after review date; revisit after opening, do not auto-activate.",
+      "map_enabled": false
+    },
+    {
+      "key": "wellers-entire",
+      "status": "future_opening_not_in_candidate_names",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
+      "basis": "Advertised 8 December opening is after review date; revisit after opening, do not auto-activate.",
+      "map_enabled": false
+    },
+    {
+      "key": "william-chambers",
+      "status": "future_opening_not_in_candidate_names",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
+      "basis": "Advertised 26 January opening is after review date; revisit after opening, do not auto-activate.",
+      "map_enabled": false
+    }
+  ]
+}
