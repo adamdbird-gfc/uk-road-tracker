@@ -21,12 +21,12 @@ class WalkingOutcomeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['matched_tracepoints'],0)
     async def test_rate_limit_and_server_errors_are_not_reported_as_off_path(self):
         for code in [429,502,503,504]:
-            with self.assertRaises(HTTPException) as failure:await self.call(error=HTTPException(code,'temporary failure'))
+            with self.assertRaises(HTTPException) as failure:await self.call(n=4,error=HTTPException(code,'temporary failure'))
             self.assertEqual(failure.exception.status_code,code)
     async def test_invalid_input_and_old_clients_keep_failure_semantics(self):
         for recovery,error in [(False,HTTPException(422,'The matcher returned no route geometry.')),
                                (True,HTTPException(422,'Invalid request'))]:
-            with self.assertRaises(HTTPException):await self.call(recovery=recovery,error=error)
+            with self.assertRaises(HTTPException):await self.call(n=4,recovery=recovery,error=error)
 
     async def test_upstream_500_is_not_downgraded_to_no_match(self):
         from types import SimpleNamespace
@@ -34,3 +34,9 @@ class WalkingOutcomeTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(HTTPException) as failure:
                 await api.osrm_match_chunk(None,[],0,'unused')
             self.assertEqual(failure.exception.status_code,502)
+
+    async def test_two_fixes_do_not_invent_a_path_or_contact_router(self):
+        with patch.object(api,'match_pedestrian_reference') as reference, patch.object(api,'match_payload',new=AsyncMock()) as router:
+            result=await api.match_walking_activity(api.MatchRequest(points=[{'lat':51.44,'lng':.37}]*2,walking_recovery=True))
+            self.assertEqual(result['walking_outcome'],'insufficient_detail')
+            reference.assert_not_called();router.assert_not_awaited()
