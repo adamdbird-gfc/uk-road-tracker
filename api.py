@@ -12,6 +12,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from map_context import shared_area, ContextUnavailable
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -81,6 +82,7 @@ class MatchRequest(BaseModel):
     points: List[Point] = Field(min_length=2, max_length=MAX_MATCH_POINTS)
     # Opt-in for Android; legacy browser requests retain their existing policy.
     road_recovery: bool = False
+    walking_recovery: bool = False
 
 class SettlementGeometryRequest(BaseModel):
     geometry: dict[str, Any]
@@ -247,6 +249,10 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
                 detail=("The cycling router" if base_url == CYCLE_OSRM_BASE_URL else "The pedestrian router") + " is rate-limiting requests. Retry this journey later.",
                 headers={"Retry-After": response.headers.get("Retry-After", "120")},
             )
+        if response.status_code >= 500:
+            raise HTTPException(status_code=502, detail="The router is temporarily unavailable. Retry later.")
+        if data.get("code") not in {"Ok", "NoMatch", "NoSegment", "TooBig"}:
+            raise HTTPException(status_code=502, detail="The router returned an invalid response. Retry later.")
         if response.status_code == 200 and data.get("code") == "Ok":
             return data, radius
         code = data.get("code", f"HTTP {response.status_code}")
@@ -393,7 +399,7 @@ async def match_chunk_resiliently(
 
 @app.middleware("http")
 async def request_guard(request: Request, call_next):
-    if request.url.path in RATE_LIMITED_PATHS:
+    if request.url.path in RATE_LIMITED_PATHS or request.url.path.startswith("/map-context/v1/"):
         client = request.client.host if request.client else "unknown"
         now = time.monotonic()
         window = request_windows[client]
@@ -424,7 +430,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -602,6 +608,18 @@ async def match_journey(payload: MatchRequest):
     return await match_payload(payload, OSRM_BASE_URL, include_motorways=True,
                                road_recovery=payload.road_recovery)
 
+@app.get("/map-context/v1/{lat_cell}/{lon_cell}")
+def map_context_area(lat_cell: int, lon_cell: int):
+    try:
+        document = shared_area(os.getenv("DATABASE_URL"), lat_cell, lon_cell)
+        return JSONResponse(document, headers={"Cache-Control": "public, max-age=3600"})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ContextUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Map context temporarily unavailable; recording can continue.",
+                            headers={"Retry-After": str(exc.retry_after)}) from exc
+
+
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
     # The preloaded shared public reference is used first. The request is
@@ -632,7 +650,18 @@ async def match_walking_activity(payload: MatchRequest):
             polite_delay_seconds=1.05,
             radius_attempts=FOOT_RADIUS_ATTEMPTS,
             retry_no_match=True,
+            deduplicate_distance=payload.walking_recovery,
+            disjoint_chunks=payload.walking_recovery,
         ), timeout=55.0)
+    except HTTPException as exc:
+        if payload.walking_recovery and exc.status_code == 422 and (
+                "NoMatch" in str(exc.detail) or str(exc.detail) == "The matcher returned no route geometry."):
+            return {"status": "recorded", "walking_outcome": "insufficient_detail" if len(payload.points) <= 3 else "no_route_found",
+                    "input_points": len(payload.points), "matched_tracepoints": 0,
+                    "matched_point_indices": [], "unmatched_point_indices": list(range(len(payload.points))),
+                    "geojson": {"type": "FeatureCollection", "features": []},
+                    "road_geojson": {"type": "FeatureCollection", "features": []}}
+        raise
     except asyncio.TimeoutError as exc:
         raise HTTPException(
             status_code=504,
@@ -673,6 +702,7 @@ async def match_payload(
     road_recovery: bool = False,
     chunk_size: int = OSRM_CHUNK_SIZE,
     deduplicate_distance: bool = False,
+    disjoint_chunks: bool = False,
 ):
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
@@ -680,7 +710,7 @@ async def match_payload(
     # Share a waypoint, never a travelled interval, for captured-road recovery.
     # Dropped waypoints otherwise give overlapping chunks differently bounded
     # legs whose distances cannot safely be deduplicated.
-    overlap = 1 if road_recovery else OSRM_CHUNK_OVERLAP
+    overlap = 1 if road_recovery or disjoint_chunks else OSRM_CHUNK_OVERLAP
     chunks = chunk_points(payload.points, chunk_size, overlap)
     features = []
     motorway_features = []
