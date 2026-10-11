@@ -9,7 +9,7 @@
   "coverage_complete": false,
   "visit_enabled": false,
   "completion_target": null,
-  "catalogue_version": "2026-10-11.a73181561e23",
+  "catalogue_version": "2026-10-11.b836714ae5c7",
   "candidate_version": "2026-10-11.41b1d2fb63de",
   "source": {
     "dataset": "OpenStreetMap",
@@ -23,12 +23,299 @@
   },
   "attribution": "© OpenStreetMap contributors · ODbL 1.0",
   "review_summary": {
-    "map_venues": 4,
+    "map_venues": 37,
     "excluded_current": 1,
-    "unreviewed_candidates": 826,
-    "needs_rereview": []
+    "unreviewed_candidates": 793,
+    "needs_rereview": [
+      "spoons-osm-w965765986"
+    ]
   },
   "venues": [
+    {
+      "id": "spoons-osm-n11067789496",
+      "name": "The Greyhound",
+      "lat": 51.4064359,
+      "lon": 0.013411,
+      "town": "Bromley",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/11067789496"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n13041365700",
+      "name": "The Golden Lion",
+      "lat": 51.3865691,
+      "lon": 0.5069238,
+      "town": "",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/13041365700"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n13257916655",
+      "name": "The Thomas Waghorn",
+      "lat": 51.3827779,
+      "lon": 0.5230929,
+      "town": "Chatham",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/13257916655"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n13714548834",
+      "name": "The Mechanical Elephant",
+      "lat": 51.3866772,
+      "lon": 1.3778256,
+      "town": "Margate",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/13714548834"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n1590157935",
+      "name": "The Samuel Peto",
+      "lat": 51.0805902,
+      "lon": 1.1813992,
+      "town": "Folkestone",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/1590157935"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n1973967757",
+      "name": "Opera House",
+      "lat": 51.1337432,
+      "lon": 0.2639965,
+      "town": "Royal Tunbridge Wells",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/1973967757"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n263047441",
+      "name": "The Humphrey Bean",
+      "lat": 51.1951727,
+      "lon": 0.2744729,
+      "town": "",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/263047441"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n2635076328",
+      "name": "The Peter Cushing",
+      "lat": 51.3565377,
+      "lon": 1.0241353,
+      "town": "Whitstable",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/2635076328"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n27237430",
+      "name": "The County Hotel",
+      "lat": 51.1490338,
+      "lon": 0.8752104,
+      "town": "Ashford",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/27237430"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n310608696",
+      "name": "The Society Rooms",
+      "lat": 51.2775104,
+      "lon": 0.521712,
+      "town": "Maidstone",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/310608696"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n315518537",
+      "name": "The West Gate Inn",
+      "lat": 51.2820079,
+      "lon": 1.0756173,
+      "town": "Canterbury",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/315518537"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n350201743",
+      "name": "The Leading Light",
+      "lat": 51.3137231,
+      "lon": 0.8911161,
+      "town": "Faversham",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/350201743"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n410607359",
+      "name": "The Sennockian",
+      "lat": 51.2725771,
+      "lon": 0.19257,
+      "town": "",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/410607359"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n5074355021",
+      "name": "The Eight Bells",
+      "lat": 51.1257951,
+      "lon": 1.3125513,
+      "town": "Dover",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/5074355021"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n512246937",
+      "name": "The Sovereign of the Seas",
+      "lat": 51.3893065,
+      "lon": 0.0720908,
+      "town": "Orpington",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/512246937"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
     {
       "id": "spoons-osm-n528965858",
       "name": "The Robert Pocock",
@@ -49,6 +336,63 @@
       "visit_enabled": false
     },
     {
+      "id": "spoons-osm-n951344064",
+      "name": "The New Cross Turnpike",
+      "lat": 51.4629158,
+      "lon": 0.1039166,
+      "town": "Welling",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/951344064"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n958771969",
+      "name": "The Great Harry",
+      "lat": 51.4899129,
+      "lon": 0.0667107,
+      "town": "",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/958771969"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-n9664484171",
+      "name": "The Belle And Lion",
+      "lat": 51.4408292,
+      "lon": 0.7602208,
+      "town": "Sheerness",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "node/9664484171"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
       "id": "spoons-osm-w103691610",
       "name": "The Benjamin Huntsman",
       "lat": 53.37986685,
@@ -61,6 +405,120 @@
       },
       "osm_aliases": [
         "way/103691610"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w103966079",
+      "name": "Royal Victoria Pavilion",
+      "lat": 51.3318046,
+      "lon": 1.4238618145807647,
+      "town": "Ramsgate",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/103966079"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w1240494104",
+      "name": "The Stargazer",
+      "lat": 51.5039067,
+      "lon": 0.0021468003157611316,
+      "town": "London",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/1240494104"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w151706139",
+      "name": "The Thomas Ingoldsby",
+      "lat": 51.27830685,
+      "lon": 1.0843127474920728,
+      "town": "Canterbury",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/151706139"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w160669972",
+      "name": "The Gate Clock",
+      "lat": 51.48156245,
+      "lon": -0.0111911826732684,
+      "town": "London",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/160669972"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w200175760",
+      "name": "The Brockley Barge",
+      "lat": 51.46405765,
+      "lon": -0.03649561103158851,
+      "town": "London",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/200175760"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w245210513",
+      "name": "The Muggleton Inn",
+      "lat": 51.273750500000006,
+      "lon": 0.5222658443990866,
+      "town": "Maidstone",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/245210513"
       ],
       "status": "active",
       "operating_status": "reviewed_current",
@@ -99,6 +557,177 @@
       },
       "osm_aliases": [
         "way/310891787"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w315002920",
+      "name": "The Watch House",
+      "lat": 51.45996625,
+      "lon": -0.011723222801047317,
+      "town": "London",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/315002920"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w48239489",
+      "name": "The Golden Hope",
+      "lat": 51.3403406,
+      "lon": 0.7322445951943231,
+      "town": "Sittingbourne",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/48239489"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w520713807",
+      "name": "The Tailor's Chalk",
+      "lat": 51.42628345,
+      "lon": 0.10358788464031146,
+      "town": "",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/520713807"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w540185919",
+      "name": "The Richmal Crompton",
+      "lat": 51.39980535,
+      "lon": 0.016275675117980247,
+      "town": "Bromley",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/540185919"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w729378689",
+      "name": "The Wrong 'Un",
+      "lat": 51.457934449999996,
+      "lon": 0.13741196107426007,
+      "town": "Bexleyheath",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/729378689"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w733027152",
+      "name": "The Railway",
+      "lat": 51.365885,
+      "lon": 0.6116393849500117,
+      "town": "Rainham",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/733027152"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w828302568",
+      "name": "The Flying Boat",
+      "lat": 51.44466655,
+      "lon": 0.21472930825021558,
+      "town": "Dartford",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/828302568"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w879792799",
+      "name": "The Sir Norman Wisdom",
+      "lat": 51.22327095,
+      "lon": 1.4016050124600707,
+      "town": "Deal",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/879792799"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w936847271",
+      "name": "The Saxon Shore",
+      "lat": 51.37258545,
+      "lon": 1.1258902386789131,
+      "town": "Herne Bay",
+      "county": {
+        "code": "KNT",
+        "name": "Kent",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/936847271"
       ],
       "status": "active",
       "operating_status": "reviewed_current",

@@ -1067,7 +1067,7 @@ public class RoutePreviewView extends View {
                 canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
                 markerPaint.setColor(Color.WHITE);
                 if(CollectionAccessStore.SPOONS.equals(collectionKind)) {
-                    markerTextPaint.setColor(Color.WHITE);canvas.drawText("P",x,
+                    markerTextPaint.setColor(Color.WHITE);canvas.drawText("W",x,
                             y-(markerTextPaint.ascent()+markerTextPaint.descent())/2,markerTextPaint);
                 } else canvas.drawCircle(x,y,dp(2.5f),markerPaint);
             }

@@ -37,7 +37,7 @@ public class CollectionAccessAndMapTest {
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertTrue(CollectionAccessStore.installed(app,CollectionAccessStore.SPOONS));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
-        assertEquals(4,CollectionMapCatalog.spoons(app).length());
+        assertEquals(37,CollectionMapCatalog.spoons(app).length());
         assertEquals("UK Wetherspoons Collection",CollectionAccessStore.name(CollectionAccessStore.SPOONS));
     }
     @Test public void selectionPersistsAndUninstalledCollectionCannotBeSelected() {
@@ -75,9 +75,11 @@ public class CollectionAccessAndMapTest {
         JSONArray pins=CollectionMapCatalog.spoons(app);
         java.util.Set<String> actual=new java.util.HashSet<>();
         for(int i=0;i<pins.length();i++)actual.add(pins.getJSONObject(i).getString("id"));
-        assertEquals(new java.util.HashSet<>(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
-                "spoons-osm-w103691610","spoons-osm-w30110330")),actual);
+        assertEquals(37,actual.size());
+        assertTrue(actual.containsAll(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
+                "spoons-osm-w103691610","spoons-osm-w30110330")));
         assertFalse(actual.contains("spoons-osm-w262652847"));
+        assertFalse(actual.contains("spoons-osm-w965765986"));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
     }
     @Test public void unreviewedRowsAndVisitEnabledCataloguesCannotProducePins() throws Exception {
