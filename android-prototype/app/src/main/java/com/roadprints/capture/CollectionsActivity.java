@@ -55,7 +55,7 @@ public class CollectionsActivity extends Activity {
                 "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
                 R.drawable.ic_roadprints_fuel);
         addCollection(CollectionAccessStore.SPOONS,
-                "Explore UK pubs and their memorable names. Pub locations are being verified; the pub map, progress and achievements are coming soon.",
+                "Explore UK pubs and their memorable names. The incomplete beta map shows individually reviewed pubs. Visit recording, progress and achievements are coming soon.",
                 R.drawable.ic_nav_collections);
     }
 

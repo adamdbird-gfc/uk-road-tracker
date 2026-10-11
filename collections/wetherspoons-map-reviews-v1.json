@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "collection_id": "wetherspoons",
+  "venues": [
+    {
+      "id": "spoons-osm-n528965858",
+      "decision": "active_map",
+      "source_name": "The Robert Pocock",
+      "osm_aliases": [
+        "node/528965858"
+      ],
+      "lat": 51.442238,
+      "lon": 0.369119,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-robert-pocock-gravesend/",
+      "basis": "Current operator pub page; matching OSM venue name and locality. Map position from OSM; premises not approved for visits."
+    },
+    {
+      "id": "spoons-osm-w103691610",
+      "decision": "active_map",
+      "source_name": "The Benjamin Huntsman",
+      "osm_aliases": [
+        "way/103691610"
+      ],
+      "lat": 53.37986685,
+      "lon": -1.4725314699292436,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-benjamin-huntsman-sheffield/",
+      "basis": "Current operator pub page; matching OSM venue name and locality. Map position from OSM; premises not approved for visits."
+    },
+    {
+      "id": "spoons-osm-w30110330",
+      "decision": "active_map",
+      "source_name": "Sheffield Water Works Company",
+      "osm_aliases": [
+        "way/30110330"
+      ],
+      "lat": 53.3803359,
+      "lon": -1.4730586437609965,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/sheffield-water-works-company-sheffield/",
+      "basis": "Current operator pub page; matching OSM venue name and locality. Map position from OSM; premises not approved for visits."
+    },
+    {
+      "id": "spoons-osm-w310891787",
+      "decision": "active_map",
+      "source_name": "The Stag and Pheasant",
+      "osm_aliases": [
+        "way/310891787"
+      ],
+      "lat": 53.1459059,
+      "lon": -1.1954016588896121,
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-stag-pheasant-mansfield/",
+      "basis": "Current operator pub page; matching OSM venue name and locality. Map position from OSM; premises not approved for visits."
+    },
+    {
+      "id": "spoons-osm-w262652847",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-11",
+      "evidence_url": "https://www.mansfield.camra.org.uk/viewnode.php?id=227821",
+      "basis": "CAMRA report dated 2024-10-01 identifies former Wetherspoon under another name/operator. Adam reports Wetherspoon closure in 2023; exact closure date not independently verified. Retain historical identity."
+    }
+  ]
+}

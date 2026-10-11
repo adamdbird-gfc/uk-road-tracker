@@ -159,7 +159,7 @@ public class MapActivity extends Activity {
         collectionSelector.setTextSize(14);collectionSelector.setTypeface(null,Typeface.BOLD);
         collectionSelector.setPadding(dp(12),dp(12),dp(12),dp(12));
         collectionSelector.setBackground(roundRect(0xFF182F62,dp(10)));
-        collectionSelector.setOnClickListener(v->chooseCollection());heading.addView(collectionSelector);
+        collectionSelector.setOnClickListener(v->chooseCollection());LinearLayout.LayoutParams collectionParams=new LinearLayout.LayoutParams(-1,-2);collectionParams.topMargin=dp(12);collectionParams.bottomMargin=dp(8);heading.addView(collectionSelector,collectionParams);
         collectionNotice=new TextView(this);collectionNotice.setTextSize(13);collectionNotice.setTextColor(0xFFD3DCED);
         collectionNotice.setPadding(0,dp(6),0,0);heading.addView(collectionNotice);
         root.addView(heading);
@@ -260,10 +260,22 @@ public class MapActivity extends Activity {
         String[] names=new String[ids.size()];int selected=0;
         for(int i=0;i<ids.size();i++){names[i]=CollectionAccessStore.name(ids.get(i));
             if(ids.get(i).equals(CollectionAccessStore.selected(this)))selected=i;}
-        new AlertDialog.Builder(this).setTitle("Show a collection")
-                .setSingleChoiceItems(names,selected,(dialog,which)->{
-                    CollectionAccessStore.select(this,ids.get(which));applyCollectionLayer();dialog.dismiss();
-                }).setNegativeButton("Cancel",null).show();
+        LinearLayout content=cardContainer();
+        addCardLabel(content,"COLLECTIONS");
+        addCardTitle(content,"Show on map");
+        addCardBody(content,"Choose one collection to show alongside your journeys.");
+        AlertDialog picker=new AlertDialog.Builder(this).setView(content).create();
+        for(int i=0;i<ids.size();i++) {
+            final String id=ids.get(i);
+            TextView row=cardAction((i==selected?"✓  ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]),i==selected);
+            row.setGravity(Gravity.CENTER_VERTICAL);row.setMinHeight(dp(48));
+            row.setContentDescription((i==selected?"Selected. ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]));
+            row.setOnClickListener(v->{CollectionAccessStore.select(this,id);applyCollectionLayer();picker.dismiss();});
+            content.addView(row);
+        }
+        TextView close=cardAction("CANCEL",false);close.setOnClickListener(v->picker.dismiss());content.addView(close);
+        picker.setOnShowListener(dialog->{if(picker.getWindow()!=null)picker.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
+        picker.show();
     }
     private void applyCollectionLayer() {
         if(mapView==null||collectionSelector==null)return;
@@ -271,10 +283,10 @@ public class MapActivity extends Activity {
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
         collectionSelector.setVisibility(!townMap&&installed.size()>1?View.VISIBLE:View.GONE);
-        collectionSelector.setText("Collections · "+CollectionAccessStore.name(selected)+" ▾");
+        collectionSelector.setText("Showing on map\n"+(CollectionAccessStore.NONE.equals(selected)?"No collection":CollectionAccessStore.name(selected))+"  ▾");
         collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
         collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
-        collectionNotice.setText("Pub locations are being verified. Your journeys remain visible.");
+        collectionNotice.setText("Beta pub map · "+CollectionMapCatalog.spoons(this).length()+" reviewed locations · catalogue incomplete");
         if(townMap)return;
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
@@ -284,6 +296,7 @@ public class MapActivity extends Activity {
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
                 showServiceStationCard(venue,collectionServiceVisits.contains(venue.optString("id")));
+            else if(CollectionAccessStore.SPOONS.equals(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
     }
@@ -906,6 +919,21 @@ public class MapActivity extends Activity {
 
     private boolean hasLinePoints(JSONArray points) {
         return points != null && points.length() >= 2;
+    }
+
+    private void showPubCard(JSONObject pub) {
+        if(pub==null||isFinishing())return;
+        LinearLayout content=cardContainer();
+        addCardLabel(content,"UK WETHERSPOONS COLLECTION");
+        addCardTitle(content,pub.optString("name","Pub"));
+        if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
+        addCardBody(content,"Reviewed map location · beta catalogue incomplete");
+        addCardBody(content,"Pub visit recording and achievements are coming soon.");
+        addCardBody(content,"© OpenStreetMap contributors · ODbL 1.0");
+        AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
+        TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());content.addView(close);
+        popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
+        popup.show();
     }
 
     private void showServiceStationCard(JSONObject station, boolean visited) {
