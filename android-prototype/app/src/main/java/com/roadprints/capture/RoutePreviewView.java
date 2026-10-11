@@ -597,9 +597,6 @@ public class RoutePreviewView extends View {
             for (JSONArray ring : settlementBoundaryRings)
                 drawRoute(canvas, ring, settlementBoundaryPaint, null);
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
-            JSONArray startEndRoute = hasRoutePoints(coordinates)
-                    ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
-                    : firstMotorwayRoute();
             if (hasMatchedRoute) {
                 if (routeEditMode) {
                     drawEditableRoutes(canvas);
@@ -631,13 +628,18 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, segment, motorwayPaint, null);
             }
             if (showEndpointMarkers) {
+                JSONArray startEndRoute = hasRoutePoints(coordinates)
+                        ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
+                        : firstMotorwayRoute();
                 JSONArray endRoute = hasRoutePoints(coordinates)
                         ? coordinates : hasMatchedRoute
                                 ? matchedSegments.get(matchedSegments.size() - 1)
                                 : lastMotorwayRoute();
-                drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
-                drawEndpoint(canvas, endRoute, endRoute.length() - 1,
-                        Color.rgb(190, 55, 55), "E");
+                if (hasRoutePoints(startEndRoute))
+                    drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
+                if (hasRoutePoints(endRoute))
+                    drawEndpoint(canvas, endRoute, endRoute.length() - 1,
+                            Color.rgb(190, 55, 55), "E");
             }
         } else if (discoveryReplay == null) {
             if (showEmptyMessage) { if (!overviewLoading) drawEmptyMessage(canvas); }
@@ -784,7 +786,7 @@ public class RoutePreviewView extends View {
         if (!coveredMotorwaySegments.isEmpty()) return coveredMotorwaySegments.get(0);
         if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(0);
         if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(0);
-        return incompleteARoadSegments.get(0);
+        return incompleteARoadSegments.isEmpty() ? null : incompleteARoadSegments.get(0);
     }
 
     private JSONArray lastMotorwayRoute() {
@@ -794,7 +796,8 @@ public class RoutePreviewView extends View {
         }
         if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(incompleteMotorwaySegments.size() - 1);
         if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(coveredARoadSegments.size() - 1);
-        return incompleteARoadSegments.get(incompleteARoadSegments.size() - 1);
+        return incompleteARoadSegments.isEmpty() ? null
+                : incompleteARoadSegments.get(incompleteARoadSegments.size() - 1);
     }
 
     private boolean drawTiles(Canvas canvas) {
