@@ -957,8 +957,11 @@ public class CaptureService extends Service {
 
     private void requestContext(Location location) {
         if(contextCache==null||!isArmed(this)||location==null||!location.hasAccuracy()||location.getAccuracy()>50)return;
+        boolean needsContext=stationarySince>0 || pendingActivityMode!=null || "unknown".equals(mode)
+                || (location.hasSpeed() && location.getSpeed()<=1.2f);
+        if(!needsContext)return;
         contextCache.request(location.getLatitude(),location.getLongitude(),()->{
-            MovementDiagnostics.recordEvent(this,"place_context_updated","Public map context lookup completed; recording remains active.");
+            MovementDiagnostics.recordEvent(this,"place_context_updated","Shared map context lookup completed; recording remains active.");
         });
     }
 

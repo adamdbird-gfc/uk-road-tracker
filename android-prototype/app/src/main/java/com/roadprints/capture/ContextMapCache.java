@@ -22,17 +22,20 @@ final class ContextMapCache {
     private final Handler main=new Handler(Looper.getMainLooper());
     private JSONArray features;
     private double south,west;
+    private long validUntil;
     private boolean busy,closed;
     private long attemptedAt;
+    private final ContextRequestBudget budget;
+    private static final String SERVICE="https://uk-road-tracker-api.onrender.com/map-context/v1/";
     static boolean enabled(Context context) {
         return context.getSharedPreferences("roadprints_capture_state",Context.MODE_PRIVATE).getBoolean("public_map_context",false);
     }
-    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v1");}
+    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v2");budget=new ContextRequestBudget(app);}
     ContextMap.Evidence evidence(double lat,double lon,float accuracy) {
-        return ContextMap.at(covers(lat,lon)?features:null,lat,lon,accuracy);
+        return ContextMap.at(enabled(app)&&covers(lat,lon)?features:null,lat,lon,accuracy);
     }
     private boolean covers(double lat,double lon) {
-        return features!=null&&lat>=south-.003&&lat<=south+.013&&lon>=west-.006&&lon<=west+.026;
+        return features!=null&&System.currentTimeMillis()<validUntil&&lat>=south-.003&&lat<=south+.013&&lon>=west-.006&&lon<=west+.026;
     }
     void request(double lat,double lon,Runnable callback) {
         if(!enabled(app)||closed||busy||covers(lat,lon)||System.currentTimeMillis()-attemptedAt<60_000L)return;
@@ -40,30 +43,35 @@ final class ContextMapCache {
         final double s=Math.floor(lat*100)/100,w=Math.floor(lon*50)/50;
         final String key=String.format(Locale.ROOT,"%.2f_%.2f.json",s,w);
         worker.execute(()->{
-            JSONArray loaded=null; HttpURLConnection connection=null;
+            JSONArray loaded=null; HttpURLConnection connection=null; boolean reserved=false; long retryAfter=0,expires=0;
             try {
                 directory.mkdirs(); File file=new File(directory,key);
-                if(file.isFile()&&System.currentTimeMillis()-file.lastModified()<7*86400000L)
-                    loaded=new JSONObject(new String(Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8)).getJSONArray("elements");
-                else {
+                JSONObject cached=null;
+                if(file.isFile())try {cached=new JSONObject(new String(Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8));}
+                catch(Exception invalid){file.delete();}
+                if(cached!=null && cached.optInt("schema_version")==1
+                        && cached.optLong("expires_at")*1000L>System.currentTimeMillis()) {
+                    loaded=cached.getJSONArray("elements");expires=cached.getLong("expires_at")*1000L;
+                } else {
                     if(!enabled(app))throw new java.io.IOException("Online context disabled");
-                    String bbox=String.format(Locale.ROOT,"%.3f,%.3f,%.3f,%.3f",s-.003,w-.006,s+.013,w+.026);
-                    String query="[out:json][timeout:12];(way[highway]("+bbox+");way[railway=rail]("+bbox+");"
-                            +"way[building]("+bbox+");way[amenity=parking]("+bbox+");way[leisure]("+bbox+");way[natural]("+bbox+"));out geom;";
-                    connection=(HttpURLConnection)new URL("https://overpass-api.de/api/interpreter").openConnection();
-                    connection.setConnectTimeout(6000); connection.setReadTimeout(16000);
-                    connection.setRequestMethod("POST"); connection.setDoOutput(true);
+                    if(!budget.reserve(System.currentTimeMillis()))throw new java.io.IOException("Context request budget paused");
+                    reserved=true;
+                    connection=(HttpURLConnection)new URL(SERVICE+(int)Math.floor(lat*100)+"/"+(int)Math.floor(lon*50)).openConnection();
+                    connection.setConnectTimeout(6000); connection.setReadTimeout(25000);
+                    connection.setRequestMethod("GET");
                     connection.setRequestProperty("User-Agent","Roadprints/"+BuildConfig.VERSION_NAME);
-                    connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-                    byte[] body=("data="+java.net.URLEncoder.encode(query,"UTF-8")).getBytes(StandardCharsets.UTF_8);
-                    try(java.io.OutputStream out=connection.getOutputStream()){out.write(body);}
-                    if(connection.getResponseCode()!=200)throw new java.io.IOException("Context unavailable");
+                    int response=connection.getResponseCode();
+                    try {retryAfter=Long.parseLong(connection.getHeaderField("Retry-After"));}catch(Exception ignored){}
+                    if(response!=200)throw new java.io.IOException("Context unavailable");
                     java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[8192];
                     try(java.io.InputStream input=connection.getInputStream()) {
                         int n;while((n=input.read(buffer))!=-1){out.write(buffer,0,n);if(out.size()>4_000_000)throw new java.io.IOException("Context tile too large");}
                     }
                     JSONObject document=new JSONObject(out.toString("UTF-8"));
-                    if(document.has("remark"))throw new java.io.IOException("Incomplete map context");
+                    if(document.optInt("schema_version")!=1 || !document.optString("area_key").equals("v1:"+(int)Math.floor(lat*100)+":"+(int)Math.floor(lon*50)))
+                        throw new java.io.IOException("Invalid map context area");
+                    expires=document.getLong("expires_at")*1000L;
+                    if(expires<=System.currentTimeMillis())throw new java.io.IOException("Expired context area");
                     loaded=document.getJSONArray("elements");
                     for(int i=0;i<loaded.length();i++) {
                         JSONObject f=loaded.optJSONObject(i);if(f==null)continue;
@@ -83,10 +91,15 @@ final class ContextMapCache {
                     }
                     Files.write(file.toPath(),document.toString().getBytes(StandardCharsets.UTF_8));
                 }
-            } catch(Exception ignored) { /* Keep recording; unavailable context is not arrival evidence. */ }
+                if(reserved)budget.success();
+            } catch(Exception ignored) {
+                loaded=null;
+                if(reserved)budget.failure(System.currentTimeMillis(),retryAfter);
+                // Keep recording; unavailable context is not arrival evidence.
+            }
             finally {if(connection!=null)connection.disconnect();}
-            final JSONArray result=loaded;
-            main.post(()->{busy=false;if(closed)return;if(result!=null){features=result;south=s;west=w;}callback.run();});
+            final JSONArray result=loaded; final long resultExpiry=expires;
+            main.post(()->{busy=false;if(closed)return;if(result!=null){features=result;south=s;west=w;validUntil=resultExpiry;}callback.run();});
         });
     }
     void close(){closed=true;worker.shutdownNow();}

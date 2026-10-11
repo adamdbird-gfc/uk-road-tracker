@@ -329,4 +329,39 @@ public class MatchingCoordinatorTest {
         assertTrue(saved.getJSONObject("road_preparation").getBoolean("redundant_fix_retry"));
     }
 
+    @Test public void recordedOnlyWalkKeepsDistanceAndDoesNotRetryAutomatically() throws Exception {
+        save("field","walking","pending");
+        JSONObject original=JourneyStore.get(app,"field");original.put("distance_meters",1234);JourneyStore.save(app,original);
+        AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{
+            calls.incrementAndGet();assertTrue(payload.optBoolean("walking_recovery"));
+            return new JSONObject().put("walking_outcome","insufficient_detail").put("input_points",2)
+                    .put("matched_tracepoints",0).put("geojson",new JSONObject().put("features",new JSONArray()));
+        });
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);
+        JSONObject saved=JourneyStore.get(app,"field");
+        assertEquals("complete",saved.optString("processing_status"));assertEquals(1234,saved.optDouble("distance_meters"),0);
+        assertEquals(original.getJSONObject("route_geometry").toString(),saved.getJSONObject("route_geometry").toString());
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);assertEquals(1,calls.get());
+        assertEquals("insufficient_detail",JourneyStore.allSummaries(app).get(0).optString("walking_outcome"));
+    }
+    @Test public void temporaryWalkingRouterFailureRemainsRetryable() throws Exception {
+        save("retry-walk","walking","pending");
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{throw new IllegalStateException("HTTP 503: router busy");});
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);
+        JSONObject saved=JourneyStore.get(app,"retry-walk");assertEquals("failed",saved.optString("processing_status"));
+        assertFalse(saved.has("walking_outcome"));
+    }
+    @Test public void verifiedPartialWalkPreservesOriginalAndRejectsUnaccountedPoints() throws Exception {
+        save("partial-walk","walking","pending");JSONObject original=JourneyStore.get(app,"partial-walk");
+        original.put("distance_meters",900);original.getJSONObject("route_geometry").put("coordinates",new JSONArray("[[0.3,51.4],[0.301,51.401],[0.302,51.402]]"));JourneyStore.save(app,original);
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->route().put("input_points",3).put("matched_tracepoints",2)
+                .put("matched_point_indices",new JSONArray("[0,1]")).put("unmatched_point_indices",new JSONArray("[2]"))
+                .put("matched_distance_m",150).put("matched_distance_is_deduplicated",true));
+        coordinator.start();await(MatchingCoordinator.State.COMPLETE);JSONObject saved=JourneyStore.get(app,"partial-walk");
+        assertEquals("partial",saved.optString("walking_outcome"));assertEquals(900,saved.optDouble("distance_meters"),0);
+        assertEquals(original.getJSONObject("route_geometry").toString(),saved.getJSONObject("route_geometry").toString());
+        JSONObject invalid=saved.getJSONObject("processing_result");invalid.put("unmatched_point_indices",new JSONArray("[1]"));
+        assertFalse(WalkingMatchOutcome.verifiedPartial(invalid,3));
+    }
 }

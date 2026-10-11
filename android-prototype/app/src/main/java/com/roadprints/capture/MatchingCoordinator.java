@@ -226,7 +226,7 @@ public final class MatchingCoordinator {
             Map<String, String> queuedModes, boolean forceRematch) {
         recoverIfInterrupted(journey);
         if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
-        if (!forceRematch && "complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey)) return;
+        if (!forceRematch && "complete".equals(journey.optString("processing_status")) && (hasStoredMatch(journey)||WalkingMatchOutcome.terminal(journey))) return;
         String journeyId = journey.optString("journey_id", "");
         if (journeyId.isEmpty()) return;
         String mode = journey.optString("mode", "unknown");
@@ -258,9 +258,10 @@ public final class MatchingCoordinator {
             if ("processing".equals(journey.optString("processing_status")))
                 throw new IllegalStateException("Journey is already being matched · retry");
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
-            if (!forceRematch && "complete".equals(journey.optString("processing_status")) && hasStoredMatch(journey))
+            if (!forceRematch && "complete".equals(journey.optString("processing_status")) && (hasStoredMatch(journey)||WalkingMatchOutcome.terminal(journey)))
                 throw new IllegalStateException("Journey already has a matched route");
             String stage = matchingStage(journey.optString("mode", "unknown"));
+            journey.remove("walking_outcome");
             journey.put("processing_status", "processing");
             JSONObject stages = journey.optJSONObject("stage_statuses");
             if (stages == null) stages = new JSONObject();
@@ -344,6 +345,7 @@ public final class MatchingCoordinator {
         boolean acceptedEndpointPartial = false;
         if (road == null) {
             JSONObject payload = new JSONObject().put("points", requestPoints);
+            if(foot)payload.put("walking_recovery",true);
             result = matcher != null ? matcher.match(endpointPath, payload)
                     : postWithRetry(API_BASE_URL + endpointPath, payload);
         } else {
@@ -412,6 +414,23 @@ public final class MatchingCoordinator {
         JSONArray failedSections = result.optJSONArray("failed_sections");
         int failedCount = failedSections == null ? 0 : failedSections.length();
         if (failedCount > 0) attempt.put("server_failed_sections", failedCount);
+        if(foot && WalkingMatchOutcome.recordedOnly(result,requestPoints.length())) {
+            synchronized(JourneyStore.class) {
+                JSONObject stored=JourneyStore.get(app,journey.optString("journey_id"));
+                if(stored==null || !journey.optString("mode").equals(stored.optString("mode"))
+                        || !geometry.toString().equals(String.valueOf(stored.optJSONObject("route_geometry"))))
+                    throw new IllegalStateException("Journey changed during matching · retry");
+                stored.put("processing_status","complete").put("walking_outcome",result.getString("walking_outcome"))
+                        .put("processing_result",result).put("last_match_attempt",attempt);
+                for(String key:new String[]{"stage_statuses","processing"}) {
+                    JSONObject stages=stored.optJSONObject(key);if(stages==null)stages=new JSONObject();
+                    stages.put("foot_matching","complete");stored.put(key,stages);
+                }
+                stored.remove("error_summary");stored.put("processing_completed_at",Instant.now().toString());
+                JourneyStore.save(app,stored);
+            }
+            return;
+        }
         if (!hasRoute(result)) throw new IllegalStateException("Matcher returned no route geometry");
         if (walking != null && walking.validated) {
             double matched = result.optDouble("matched_distance_m", -1);
@@ -434,7 +453,15 @@ public final class MatchingCoordinator {
         int serverInput = result.optInt("input_points", points.length());
         int serverMatched = result.optInt("matched_tracepoints", serverInput);
         if (serverMatched < serverInput) attempt.put("partial_match", true);
-        if (shouldRejectMatchResult(serverMatched, serverInput, failedCount) && !acceptedEndpointPartial) {
+        boolean walkingPartial=foot && WalkingMatchOutcome.verifiedPartial(result,requestPoints.length());
+        if(walkingPartial) {
+            double evidence=journey.optDouble("distance_meters",0);
+            if(evidence<=0)for(int i=1;i<requestPoints.length();i++)evidence+=TimelineRoadPreparation.distance(requestPoints.getJSONObject(i-1),requestPoints.getJSONObject(i));
+            walkingPartial=Double.isFinite(evidence) && evidence>0
+                    && result.optDouble("matched_distance_m")<=Math.max(evidence*1.6,evidence+300);
+            if(walkingPartial)result.put("walking_partial_match",true);
+        }
+        if (shouldRejectMatchResult(serverMatched, serverInput, failedCount) && !acceptedEndpointPartial && !walkingPartial) {
             synchronized (JourneyStore.class) {
                 JSONObject stored = JourneyStore.get(app, journey.optString("journey_id"));
                 if (stored != null) { stored.put("last_match_attempt", attempt); JourneyStore.save(app, stored); }
@@ -460,6 +487,7 @@ public final class MatchingCoordinator {
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
         stored.put("processing_result", result);
+        if(foot)stored.put("walking_outcome",walkingPartial?"partial":"matched");
         if (road != null && road.changed && !capturedDrive) {
             double distance = result.optDouble("matched_distance_m", -1);
             if (!Double.isFinite(distance) || distance <= 0
@@ -484,8 +512,11 @@ public final class MatchingCoordinator {
             if (!stored.has("raw_capture_samples") && walking.recoveredSamples.length() > 0)
                 stored.put("raw_capture_samples", walking.recoveredSamples);
             stored.put("walking_validation", walking.details);
-            stored.put("distance_meters", result.getDouble("matched_distance_m"));
-            stored.put("distance_source", "validated_walking_match");
+            stored.put("matched_walking_distance_meters",result.getDouble("matched_distance_m"));
+            if(!walkingPartial) {
+                stored.put("distance_meters",result.getDouble("matched_distance_m"));
+                stored.put("distance_source","validated_walking_match");
+            }
         }
         if (cycle) {
             if (!stored.has("original_distance_meters")) stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));

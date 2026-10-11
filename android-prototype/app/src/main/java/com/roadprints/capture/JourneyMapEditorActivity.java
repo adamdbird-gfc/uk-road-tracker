@@ -465,6 +465,7 @@ public class JourneyMapEditorActivity extends Activity {
                 geometry.put("coordinates", corrected);
                 geometry.put("type", "LineString");
                 journey.put("route_geometry", geometry);
+                journey.remove("walking_outcome");
                 journey.remove("processing_result");
                 journey.put("processing_status", "pending");
                 journey.remove("error_summary");
