@@ -2,6 +2,7 @@ import os
 import pathlib
 import threading
 import unittest
+from unittest.mock import patch
 import psycopg
 import map_context as context
 
@@ -29,8 +30,9 @@ class SharedStorageTests(unittest.TestCase):
     def setUp(self):
         self.url=os.environ["TEST_CONTEXT_DATABASE_URL"]
         with psycopg.connect(self.url,autocommit=True) as db:
-            db.execute("DROP TABLE IF EXISTS map_context_areas,map_context_budget")
+            db.execute("DROP TABLE IF EXISTS map_context_areas,map_context_budget,map_context_provider_budget")
             db.execute(pathlib.Path('migrations/008_shared_map_context.sql').read_text())
+            db.execute(pathlib.Path('migrations/009_context_provider_cooldowns.sql').read_text())
         self.now=86400000
         self.calls=0
     def fetch(self,bounds):
@@ -70,3 +72,17 @@ class SharedStorageTests(unittest.TestCase):
         finally:release.set();worker.join(5)
         self.assertEqual(len(results),1);self.assertEqual(self.calls,0)
         self.assertEqual(self.area(),results[0])
+
+    def test_provider_change_keeps_global_limits_and_previous_provider_cooldown(self):
+        old=context.UPSTREAM
+        def fail(bounds):raise RuntimeError('unreachable provider')
+        with self.assertRaises(context.ContextUnavailable):
+            context.shared_area(self.url,5144,18,fetch=fail,clock=lambda:self.now)
+        with patch.object(context,'UPSTREAM','https://dedicated-provider.example/interpreter'):
+            with self.assertRaises(context.ContextUnavailable):self.area()
+            self.now+=60;self.area()
+        self.now+=60
+        with self.assertRaises(context.ContextUnavailable):self.area(cell=5145)
+        with psycopg.connect(self.url) as db:
+            self.assertEqual(db.execute('SELECT requests FROM map_context_budget').fetchone()[0],2)
+            self.assertEqual(db.execute('SELECT failures FROM map_context_provider_budget WHERE provider=%s',(old,)).fetchone()[0],1)

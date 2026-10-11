@@ -19,7 +19,7 @@ MAX_BYTES = 4_000_000
 MAX_AREAS = 256
 MAX_CACHE_BYTES = 64_000_000
 DAILY_LIMIT = int(os.getenv("CONTEXT_DAILY_UPSTREAM_LIMIT", "200"))
-UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass-api.de/api/interpreter")
+UPSTREAM = os.getenv("CONTEXT_INTERPRETER_URL", "https://overpass.kumi.systems/api/interpreter")
 LOCK = 713940181
 logger = logging.getLogger("roadprints.context")
 
@@ -104,8 +104,12 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                 cached = read_area(cursor, key, now)
                 if cached is not None:
                     return cached
-                cursor.execute("SELECT day, requests, failures, next_allowed FROM map_context_budget WHERE singleton=true")
-                day, requests, failures, next_allowed = cursor.fetchone()
+                cursor.execute("SELECT day, requests, next_allowed FROM map_context_budget WHERE singleton=true")
+                day, requests, next_allowed = cursor.fetchone()
+                cursor.execute("SELECT failures,next_allowed FROM map_context_provider_budget WHERE provider=%s",(UPSTREAM,))
+                provider=cursor.fetchone()
+                failures,provider_next=provider if provider else (0,0)
+                next_allowed=max(next_allowed,provider_next)
                 today = now // 86400
                 if day != today:
                     requests = 0
@@ -116,6 +120,7 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                 # Commit reservation before network I/O, including unsuccessful calls.
                 cursor.execute("UPDATE map_context_budget SET day=%s,requests=%s,next_allowed=%s WHERE singleton=true",
                                (today, requests + 1, now + 60))
+                cursor.execute("INSERT INTO map_context_provider_budget(provider) VALUES(%s) ON CONFLICT DO NOTHING",(UPSTREAM,))
                 try:
                     elements = fetch(bounds)
                     document = {"schema_version": VERSION, "area_key": key, "bounds": bounds,
@@ -127,13 +132,13 @@ def shared_area(database_url, lat_cell, lon_cell, fetch=fetch_elements, clock=ti
                     logger.warning("Shared context fill failed: %s; upstream_status=%s",
                                    exc.__class__.__name__, getattr(getattr(exc,"response",None),"status_code",None))
                     delay = min(14400, 600 * 2 ** min(failures, 5))
-                    cursor.execute("UPDATE map_context_budget SET failures=%s,next_allowed=%s WHERE singleton=true",
-                                   (min(failures + 1, 6), int(clock()) + delay))
+                    cursor.execute("UPDATE map_context_provider_budget SET failures=%s,next_allowed=%s WHERE provider=%s",
+                                   (min(failures + 1, 6), int(clock()) + delay, UPSTREAM))
                     raise ContextUnavailable(delay) from exc
                 cursor.execute("INSERT INTO map_context_areas(area_key,document,refreshed_at) VALUES(%s,%s,%s) "
                                "ON CONFLICT(area_key) DO UPDATE SET document=EXCLUDED.document,refreshed_at=EXCLUDED.refreshed_at",
                                (key, Jsonb(document), now))
-                cursor.execute("UPDATE map_context_budget SET failures=0 WHERE singleton=true")
+                cursor.execute("UPDATE map_context_provider_budget SET failures=0 WHERE provider=%s",(UPSTREAM,))
                 cursor.execute("DELETE FROM map_context_areas WHERE area_key IN (SELECT area_key FROM map_context_areas "
                                "ORDER BY refreshed_at DESC,area_key OFFSET %s)", (MAX_AREAS,))
                 cursor.execute("DELETE FROM map_context_areas WHERE area_key IN (SELECT area_key FROM "
