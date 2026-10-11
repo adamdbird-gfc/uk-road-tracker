@@ -222,9 +222,9 @@ public class ProgressActivity extends Activity {
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
         synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
-        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != ServiceStationStore.revision(this))) {
+        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)))) {
             loadedStats = cached; renderStatistics(statisticsContent, cached); restoreProgressScroll();
-        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != ServiceStationStore.revision(this))) {
+        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)))) {
             renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
         if (cached != null && cachedRevision == revision) {
@@ -537,7 +537,7 @@ public class ProgressActivity extends Activity {
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
         renderedKilometres = useKilometres;
-        renderedServiceRevision = ServiceStationStore.revision(this);
+        renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this));
         renderingPendingStats = stats.pending;
         addCollectiveStatistics(parent, stats);
         renderingPendingStats = false;
@@ -554,7 +554,7 @@ public class ProgressActivity extends Activity {
         addMotorwayCoveragePanel(parent, stats);
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
-        if (ServiceStationStore.unlocked(this)) addServiceStationPanel(parent);
+        if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addServiceStationPanel(parent);
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
 
@@ -569,7 +569,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
-        if (ServiceStationStore.unlocked(this)) addProgressJump(row, "Motorway Service Stations", "services");
+        if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addProgressJump(row, "Motorway Service Stations", "services");
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;

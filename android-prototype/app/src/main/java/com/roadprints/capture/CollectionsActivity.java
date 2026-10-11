@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/** Service-station collection port; other demonstration collections stay out of the app. */
+/** Collection installation and purchase-free beta access. */
 public class CollectionsActivity extends Activity {
     private static final int NAVY=0xFF0B1C50, NAV_BAR=0xFF10275D, PANEL=0xFF182F62;
     private static final int CARD=0xFF233B78, MUTED=0xFFB9C5D8, GOLD=0xFFF7C450, TEAL=0xFF67D5CC;
@@ -50,51 +50,59 @@ public class CollectionsActivity extends Activity {
 
     private void render() {
         body.removeAllViews();
+        summary.setText("Choose the collections you want to explore. Beta access is free.");
+        addCollection(CollectionAccessStore.SERVICES,
+                "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
+                R.drawable.ic_roadprints_fuel);
+        addCollection(CollectionAccessStore.SPOONS,
+                "Explore UK pubs and their memorable names. Pub locations are being verified; the pub map, progress and achievements are coming soon.",
+                R.drawable.ic_nav_collections);
+    }
+
+    private void addCollection(String id,String copy,int drawable) {
         LinearLayout card=panel();
-        LinearLayout heading=new LinearLayout(this); heading.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView icon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_fuel,NAVY,null);
+        LinearLayout heading=new LinearLayout(this);heading.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView icon=RoadprintsIcons.image(this,drawable,NAVY,null);
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        icon.setPadding(dp(6),dp(6),dp(6),dp(6)); icon.setBackground(roundRect(TEAL,dp(10)));
-        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(40),dp(40)); iconParams.rightMargin=dp(12);
-        heading.addView(icon,iconParams);
-        TextView name=text("Motorway Service Stations",20,Color.WHITE,true);
-        heading.addView(name,new LinearLayout.LayoutParams(0,-2,1));
-        TextView copy=text("Collect motorway service areas across Great Britain and Northern Ireland. Visits are recognised automatically from Timeline visits and recorded Roadprints stops, including your existing history.",14,MUTED,false);
-        copy.setPadding(0,dp(8),0,dp(14)); card.addView(heading); card.addView(copy);
-        if(!ServiceStationStore.unlocked(this)) {
-            TextView fakePayment=text("Unlock · £0.99",16,NAVY,true); fakePayment.setGravity(Gravity.CENTER);
-            fakePayment.setPadding(dp(12),dp(13),dp(12),dp(13)); fakePayment.setBackground(roundRect(GOLD,dp(12)));
-            fakePayment.setClickable(true); fakePayment.setOnClickListener(v -> new AlertDialog.Builder(this)
-                    .setTitle("Motorway Service Stations")
-                    .setMessage("This is a simulated checkout for testing. No payment will be taken.")
-                    .setNegativeButton("Cancel",null)
-                    .setPositiveButton("Continue",(dialog,which)->{
-                        ServiceStationStore.unlockForTesting(this);
-                        render();
-                        ServiceStationStore.ensureHistoricalVisits(this,()->{
-                            if(!isFinishing()&&!isDestroyed())render();
-                        });
-                    }).show());
-            card.addView(fakePayment);
-            body.addView(card);
-            TextView note=text("Motorway Service Stations is the only collection available in this build.",13,MUTED,false);
-            note.setPadding(dp(4),dp(12),dp(4),0); body.addView(note);
-            summary.setText("One collection available · test unlock");
-            return;
+        icon.setPadding(dp(6),dp(6),dp(6),dp(6));icon.setBackground(roundRect(TEAL,dp(10)));
+        LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(40),dp(40));ip.rightMargin=dp(12);
+        heading.addView(icon,ip);heading.addView(text(CollectionAccessStore.name(id),20,Color.WHITE,true),new LinearLayout.LayoutParams(0,-2,1));
+        card.addView(heading);
+        TextView description=text(copy,14,MUTED,false);description.setPadding(0,dp(10),0,dp(12));card.addView(description);
+        boolean installed=CollectionAccessStore.installed(this,id);
+        if(!installed) {
+            addAction(card,"Install for beta testing",()->{
+                CollectionAccessStore.installForTesting(this,id);render();
+                if(CollectionAccessStore.SERVICES.equals(id))ServiceStationStore.ensureHistoricalVisits(this,()->{
+                    if(!isFinishing()&&!isDestroyed())render();
+                });
+            });
+        } else {
+            TextView status=text("Installed · beta access",13,TEAL,true);status.setPadding(0,0,0,dp(12));card.addView(status);
+            addAction(card,"Show on map",()->{
+                CollectionAccessStore.select(this,id);
+                startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",id));finish();
+            });
+            if(CollectionAccessStore.SERVICES.equals(id)) {
+                if(!ServiceStationStore.historicalBackfillComplete(this))ServiceStationStore.ensureHistoricalVisits(this,()->{
+                    if(!isFinishing()&&!isDestroyed())render();
+                });
+                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class));finish();});
+            }
+            TextView remove=text("Remove collection",14,MUTED,false);remove.setPadding(dp(4),dp(12),dp(4),dp(12));
+            remove.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Remove "+CollectionAccessStore.name(id)+"?")
+                    .setMessage("The collection will be hidden from your map and progress. Your existing visits will be kept.")
+                    .setNegativeButton("Cancel",null).setPositiveButton("Remove",(dialog,which)->{
+                        CollectionAccessStore.remove(this,id);render();
+                    }).show());card.addView(remove);
         }
         body.addView(card);
-        if(!ServiceStationStore.historicalBackfillComplete(this))ServiceStationStore.ensureHistoricalVisits(this,()->{
-            if(!isFinishing()&&!isDestroyed())render();
-        });
-        summary.setText("Your Motorway Service Stations collection is available from Progress.");
-        TextView message=text("View the full motorway-by-motorway list, confirmed visits and collection progress on the Progress screen.",14,MUTED,false);
-        message.setPadding(dp(4),dp(8),dp(4),dp(12));body.addView(message);
-        TextView openProgress=text("View collection in Progress  →",15,NAVY,true);
-        openProgress.setGravity(Gravity.CENTER);
-        openProgress.setPadding(dp(12),dp(13),dp(12),dp(13));
-        openProgress.setBackground(roundRect(GOLD,dp(12)));
-        openProgress.setOnClickListener(v->{startActivity(new Intent(this,ProgressActivity.class));finish();});
-        body.addView(openProgress);
+    }
+    private void addAction(LinearLayout parent,String label,Runnable action) {
+        TextView button=text(label,15,NAVY,true);button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(12),dp(13),dp(12),dp(13));button.setBackground(roundRect(GOLD,dp(12)));
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(8);parent.addView(button,p);
+        button.setOnClickListener(v->action.run());
     }
 
     private int naturalCompare(String a,String b) {
