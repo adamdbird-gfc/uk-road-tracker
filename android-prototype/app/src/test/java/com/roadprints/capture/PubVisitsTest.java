@@ -140,4 +140,18 @@ public class PubVisitsTest {
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertEquals(0,TimelineVisitStore.all(app).length());
     }
+    @Test public void backupRestoresProofsAndReconciliationWaitsForHistoryReplacement() throws Exception {
+        PubVisitStore.confirmLive(app,pub.getString("id"),fix(),true);
+        java.io.ByteArrayOutputStream archive=new java.io.ByteArrayOutputStream();
+        RoadprintsBackup.export(app,archive);
+        PubVisitStore.clear(app);
+        assertTrue(PubVisitStore.completed(app).isEmpty());
+        RoadprintsBackup.restore(app,new java.io.ByteArrayInputStream(archive.toByteArray()));
+        assertEquals(1,PubVisitStore.completed(app).size());
+        TimelineVisitStore.merge(app,new JSONArray().put(visit("restore",pub.getString("name"))));
+        PubVisitStore.beginHistoryReplacement();
+        try{assertEquals(0,PubVisitStore.reconcile(app,CollectionMapCatalog.spoons(app)));}
+        finally{PubVisitStore.endHistoryReplacement();}
+        assertEquals(1,PubVisitStore.reconcile(app,CollectionMapCatalog.spoons(app)));
+    }
 }

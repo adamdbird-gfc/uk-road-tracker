@@ -13,6 +13,7 @@ import java.util.Set;
 final class PubVisitStore {
     static final String PREFS="roadprints_pub_visits_v1";
     private static long generation;
+    private static boolean replacingHistory;
     private PubVisitStore(){}
     static String visitedLabel(int count){return count+(count==1?" pub visited":" pubs visited");}
     private static JSONObject read(Context context){
@@ -55,7 +56,7 @@ final class PubVisitStore {
     static int reconcile(Context context,JSONArray pubs) throws Exception {
         if(!CollectionAccessStore.installed(context,CollectionAccessStore.SPOONS))return 0;
         JSONObject records;long epoch;
-        synchronized(PubVisitStore.class){records=read(context);epoch=generation;}
+        synchronized(PubVisitStore.class){if(replacingHistory)return 0;records=read(context);epoch=generation;}
         JSONArray visits=TimelineVisitStore.all(context);JSONObject additions=new JSONObject();
         long now=System.currentTimeMillis();
         for(int i=0;i<visits.length();i++){
@@ -73,7 +74,7 @@ final class PubVisitStore {
             }
         }
         synchronized(PubVisitStore.class){
-            if(epoch!=generation||!CollectionAccessStore.installed(context,CollectionAccessStore.SPOONS))return 0;
+            if(epoch!=generation||replacingHistory||!CollectionAccessStore.installed(context,CollectionAccessStore.SPOONS))return 0;
             records=read(context);int added=0;
             java.util.Iterator<String> keys=additions.keys();
             while(keys.hasNext()){String key=keys.next();if(!records.has(key)){records.put(key,additions.get(key));added++;}}
@@ -161,4 +162,6 @@ final class PubVisitStore {
         generation++;
         context.getSharedPreferences(PREFS,0).edit().clear().commit();
     }
+    static synchronized void beginHistoryReplacement(){generation++;replacingHistory=true;}
+    static synchronized void endHistoryReplacement(){generation++;replacingHistory=false;}
 }

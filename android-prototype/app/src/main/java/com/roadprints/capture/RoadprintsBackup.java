@@ -157,11 +157,14 @@ final class RoadprintsBackup {
                 zip.closeEntry();
             }
             if (!validManifest) throw new IllegalArgumentException("Roadprints backup information is missing.");
+            PubVisitStore.beginHistoryReplacement();
+            try {
             replaceFiles(app, new File(stage, "files"));
             replacePreferences(app, new File(stage, "preferences"));
             ServiceStationStore.resetHistory(app);
             if(ServiceStationStore.unlocked(app))ServiceStationStore.ensureHistoricalVisits(app,null);
             return journeyCount;
+            } finally {PubVisitStore.endHistoryReplacement();}
         } finally {
             deleteRecursively(stage);
         }
@@ -368,3 +371,4 @@ final class RoadprintsBackup {
         file.delete();
     }
 }
+
