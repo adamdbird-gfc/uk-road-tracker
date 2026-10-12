@@ -1,0 +1,550 @@
+{
+  "format": 1,
+  "collection_id": "wetherspoons",
+  "as_of": "2026-10-12",
+  "status": "research_checkpoint_not_app_asset",
+  "coverage_complete": false,
+  "completion_target": null,
+  "source_snapshot_candidate_count": 831,
+  "coordinate_policy": "Location candidates only. Explicit confirmation required for future pub visits. Parent building/park IDs must never be assigned as pub aliases. Existing OSM names and positions are preserved; directory points require an individually reconciled source before production promotion.",
+  "venues": [
+    {
+      "key": "belle-vue-manchester-airport",
+      "name": "The Belle Vue",
+      "locality": "Manchester Airport, Terminal 2",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-belle-vue-manchester/",
+      "candidate_location": {
+        "lat": 53.3667,
+        "lon": -2.27947,
+        "precision": "approximate_parent_building",
+        "evidence_url": "https://mapcarta.com/W18515536",
+        "parent_osm_id": "way/18515536"
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Terminal building only; not a pub identity. User accepts approximate terminal pin with explicit pub confirmation.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-n4972275365",
+          "name": "The Unicorn",
+          "distance_m": 5191
+        },
+        {
+          "id": "spoons-osm-w1162448877",
+          "name": "The Gateway",
+          "distance_m": 6043
+        },
+        {
+          "id": "spoons-osm-n1583392012",
+          "name": "The J. P. Joule",
+          "distance_m": 6865
+        }
+      ]
+    },
+    {
+      "key": "red-gown-st-andrews",
+      "name": "The Red Gown",
+      "locality": "St Andrews",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-gown-st-andrews/",
+      "candidate_location": {
+        "lat": 56.34073,
+        "lon": -2.80023,
+        "precision": "approximate_parent_building",
+        "evidence_url": "https://mapcarta.com/W26817288",
+        "parent_osm_id": "way/26817288"
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Students’ Association building, corroborated against the named operator address. Main Bar/Club 601 elsewhere in building need identity checks.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w458355462",
+          "name": "Jolly's Hotel",
+          "distance_m": 14654
+        },
+        {
+          "id": "spoons-osm-w466475732",
+          "name": "The Counting House",
+          "distance_m": 17124
+        },
+        {
+          "id": "spoons-osm-n2736282895",
+          "name": "The Corn Exchange",
+          "distance_m": 27666
+        }
+      ]
+    },
+    {
+      "key": "sir-thomas-haggerston",
+      "name": "The Sir Thomas Haggerston",
+      "locality": "Haggerston Castle",
+      "operating_evidence_url": "https://www.haven.com/discover/whats-new/haggerston-castle",
+      "candidate_location": {
+        "lat": 55.687592945144,
+        "lon": -1.932566399231,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/sir-thomas-haggerston-haggerston-198812",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "CAMRA directions coordinate; precise footprint not verified.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w914947701",
+          "name": "Hunters Hall",
+          "distance_m": 55642
+        },
+        {
+          "id": "spoons-osm-w127030035",
+          "name": "The Electrical Wizard",
+          "distance_m": 59882
+        },
+        {
+          "id": "spoons-osm-w97457171",
+          "name": "The Rohan Kanhai",
+          "distance_m": 60576
+        }
+      ]
+    },
+    {
+      "key": "springfield-cala-gran",
+      "name": "The Springfield",
+      "locality": "Cala Gran, Fleetwood",
+      "operating_evidence_url": "https://news.haven.com/news/havens-cala-gran-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-springfield",
+      "candidate_location": {
+        "lat": 53.89814,
+        "lon": -3.0197,
+        "precision": "parent_park_point_only",
+        "evidence_url": "https://mapcarta.com/W160318964",
+        "parent_osm_id": "way/160318964"
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Park point only, not verified pub building. Former Mash and Barrel lead from secondary sources; requires main-complex/pub placement check before promotion.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w276504956",
+          "name": "The Thomas Drummond",
+          "distance_m": 2691
+        },
+        {
+          "id": "spoons-osm-n1448041271",
+          "name": "The Jolly Tars",
+          "distance_m": 2694
+        },
+        {
+          "id": "spoons-osm-n2611247314",
+          "name": "The Poulton Elk",
+          "distance_m": 6131
+        }
+      ]
+    },
+    {
+      "key": "alfred-wainwright-lakeland",
+      "name": "The Alfred Wainwright",
+      "locality": "Lakeland, Flookburgh",
+      "operating_evidence_url": "https://news.haven.com/news/havens-lakeland-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-alfred-wainwright",
+      "candidate_location": {
+        "lat": 54.157711,
+        "lon": -2.96619,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/alfred-wainwright-flookburgh-187837",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "CAMRA venue point may represent leisure complex. Contractor confirms conversion of Lakeside Bay Restaurant; reconcile former identity.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w769758846",
+          "name": "The Eric Bartholomew",
+          "distance_m": 11492
+        },
+        {
+          "id": "spoons-osm-w567798101",
+          "name": "The Sir Richard Owen",
+          "distance_m": 16372
+        },
+        {
+          "id": "spoons-osm-w1248788505",
+          "name": "The Furness Railway",
+          "distance_m": 17686
+        }
+      ]
+    },
+    {
+      "key": "marshfield-bank-farm-house-crewe",
+      "name": "The Marshfield Bank Farm House",
+      "locality": "Woolstanwood, Crewe",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-marshfield-bank-farm-house-crewe/",
+      "candidate_location": {
+        "lat": 53.09564,
+        "lon": -2.48528,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/marshfield-bank-farmhouse-woolstanwood-136118",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Former Farmhouse Beefeater. CAMRA distinguishes actual pub from separate unoccupied listed farmhouse and adjacent Premier Inn; do not use either as pub footprint.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w1355563612",
+          "name": "The George Inn",
+          "distance_m": 9773
+        },
+        {
+          "id": "spoons-osm-w317031137",
+          "name": "The Queens Arms",
+          "distance_m": 11064
+        },
+        {
+          "id": "spoons-osm-r4271629",
+          "name": "The Penny Black",
+          "distance_m": 18561
+        }
+      ]
+    },
+    {
+      "key": "white-clover-hopton",
+      "name": "The White Clover",
+      "locality": "Hopton, Norfolk",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-clover-great-yarmouth/",
+      "candidate_location": {
+        "lat": 52.54158,
+        "lon": 1.73349,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/white-clover-hopton-holiday-village-hopton-200203",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "CAMRA named-pub directions point. Norfolk matches operator; erroneous Blackpool phrase in Haven announcement must not change county.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w219495247",
+          "name": "The William Adams",
+          "distance_m": 4338
+        },
+        {
+          "id": "spoons-osm-w175596035",
+          "name": "The Troll Cart",
+          "distance_m": 7331
+        },
+        {
+          "id": "spoons-osm-w318145476",
+          "name": "The Joseph Conrad",
+          "distance_m": 7572
+        }
+      ]
+    },
+    {
+      "key": "bluff-inn-hayle",
+      "name": "The Bluff Inn",
+      "locality": "Phillack, Hayle",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-bluff-inn-hayle/",
+      "candidate_location": {
+        "lat": 50.196797,
+        "lon": -5.429489,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/bluff-inn-phillack-139081",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Existing Bluff Inn converted to Wetherspoon. CAMRA 19 versus operator 18 Riviere Towans discrepancy retained; do not overwrite address or duplicate former identity.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w451764075",
+          "name": "John Francis Basset",
+          "distance_m": 9302
+        },
+        {
+          "id": "spoons-osm-n745954212",
+          "name": "The Tremenheere",
+          "distance_m": 11591
+        },
+        {
+          "id": "spoons-osm-n5003932432",
+          "name": "The Coinage Hall",
+          "distance_m": 15322
+        }
+      ]
+    },
+    {
+      "key": "red-rocks-exmouth",
+      "name": "The Red Rocks",
+      "locality": "Devon Cliffs, Exmouth",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-rocks-exmouth/",
+      "candidate_location": {
+        "lat": 50.614886,
+        "lon": -3.36667,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/red-rocks-exmouth-166375",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Named CAMRA pub point; confirm former venue identity and exact premises rather than whole park.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-n599055428",
+          "name": "The Powder Monkey",
+          "distance_m": 3369
+        },
+        {
+          "id": "spoons-osm-n3737846239",
+          "name": "The Jolie Brise",
+          "distance_m": 11756
+        },
+        {
+          "id": "spoons-osm-n10076043581",
+          "name": "George's Meeting House",
+          "distance_m": 16451
+        }
+      ]
+    },
+    {
+      "key": "london-stone-kent-coast",
+      "name": "The London Stone",
+      "locality": "Allhallows-on-Sea",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-stone-rochester/",
+      "candidate_location": {
+        "lat": 51.477374106588,
+        "lon": 0.644724385251,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/london-stone-allhallows-on-sea-198835",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Correct Allhallows venue, not London Stone in Woking. Haven operator is consistent with franchise; park presence alone is insufficient.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-n666417271",
+          "name": "The Elms",
+          "distance_m": 7880
+        },
+        {
+          "id": "spoons-osm-n5749452623",
+          "name": "The Last Post",
+          "distance_m": 8109
+        },
+        {
+          "id": "spoons-osm-n9664484171",
+          "name": "The Belle And Lion",
+          "distance_m": 8975
+        }
+      ]
+    },
+    {
+      "key": "sir-ronald-wates-guildford",
+      "name": "The Sir Ronald Wates",
+      "locality": "Guildford, Stag Hill",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-ronald-wates-guildford/",
+      "candidate_location": {
+        "lat": 51.241897,
+        "lon": -0.590636,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/sir-ronald-wates-guildford-151525",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Former Wates House, not university-wide centroid. Reconcile old name/identity.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-n29579960",
+          "name": "The Rodboro Buildings",
+          "distance_m": 1083
+        },
+        {
+          "id": "spoons-osm-n9556520554",
+          "name": "The Jack Phillips",
+          "distance_m": 6414
+        },
+        {
+          "id": "spoons-osm-n12860890723",
+          "name": "The Herbert Wells",
+          "distance_m": 9078
+        }
+      ]
+    },
+    {
+      "key": "round-coppice-whiteley",
+      "name": "The Round Coppice",
+      "locality": "Whiteley",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-round-coppice-fareham/",
+      "candidate_location": {
+        "lat": 50.886160848938,
+        "lon": -1.2479822721727,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/round-coppice-whiteley-199945",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Unit F4, Whiteley Shopping Centre. Distinguish pub unit from shopping centre or unrelated Round Coppice woodland.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-n4328332802",
+          "name": "The Lord Arthur Lee",
+          "distance_m": 5992
+        },
+        {
+          "id": "spoons-osm-w671548622",
+          "name": "The Crown Inn",
+          "distance_m": 6264
+        },
+        {
+          "id": "spoons-osm-w672254742",
+          "name": "The Red Lion",
+          "distance_m": 8330
+        }
+      ]
+    },
+    {
+      "key": "sir-frank-whittle-heathrow",
+      "name": "The Sir Frank Whittle",
+      "locality": "Heathrow Terminal 2",
+      "operating_evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-frank-whittle-hounslow/",
+      "candidate_location": {
+        "lat": 51.469172502159,
+        "lon": -0.4496724829,
+        "precision": "directory_pub_point_unverified_footprint",
+        "evidence_url": "https://camra.org.uk/pubs/sir-frank-whittle-heathrow-airport-194312",
+        "parent_osm_id": null
+      },
+      "pub_osm_identity": null,
+      "identity_reconciliation_complete": false,
+      "map_enabled": false,
+      "visit_enabled": false,
+      "confirmation_required": true,
+      "notes": "Former Big Smoke Taphouse & Kitchen. Preserve separate Crown Rivers T5 and Star Light T4; directory photo/title still old, current venue body identifies Wetherspoon.",
+      "nearby_pinned_candidates": [
+        {
+          "id": "spoons-osm-w358385140",
+          "name": "The Star Light",
+          "distance_m": 913
+        },
+        {
+          "id": "spoons-osm-w438299712",
+          "name": "The Crown Rivers",
+          "distance_m": 2678
+        },
+        {
+          "id": "spoons-osm-w753674033",
+          "name": "The Moon on the Square",
+          "distance_m": 3727
+        }
+      ]
+    }
+  ],
+  "held_status_checks": [
+    {
+      "id": "spoons-osm-w507289751",
+      "name": "The Art Picture House",
+      "outcome": "remain_held_temporary_closure",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-art-picture-house-bury/",
+      "advertised_reopening": "2026-12-04",
+      "notes": "Current operator page explicitly says temporarily closed. No activation based on future date."
+    },
+    {
+      "id": "spoons-osm-w38325241",
+      "name": "The Benjamin Franklin",
+      "outcome": "remain_held_future_opening",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/",
+      "advertised_opening": "2027-03-02",
+      "notes": "Current operator new-openings page still advertises future opening."
+    },
+    {
+      "id": "spoons-osm-w1465394526",
+      "name": "The Court of Requests",
+      "outcome": "remain_held_reopening_evidence_conflict",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/",
+      "notes": "Current retrieval shows Open and ordinary hours, without temporary notice; no independent actual reopening confirmation found. Original cached-status conflict remains unresolved."
+    },
+    {
+      "id": "spoons-osm-w98286602",
+      "name": "The Bottle of Sack",
+      "outcome": "remain_held_reopening_evidence_conflict",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/",
+      "notes": "Current retrieval shows Open and ordinary hours. Non-trailing-slash indexed source still reports 5 October reopening. No independent actual reopening confirmation found."
+    }
+  ],
+  "future_and_proposed": [
+    {
+      "key": "piccadilly-hall",
+      "outcome": "future_opening",
+      "advertised_opening": "2026-11-03",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/"
+    },
+    {
+      "key": "wellers-entire",
+      "outcome": "future_opening",
+      "advertised_opening": "2026-12-08",
+      "evidence_url": "https://www.jdwetherspoon.com/new-openings/"
+    },
+    {
+      "key": "william-chambers",
+      "outcome": "future_opening_date_conflict",
+      "evidence_urls": [
+        "https://www.jdwetherspoon.com/new-openings/",
+        "https://www.jdwetherspoon.com/pubs/the-william-chambers-edinburgh/"
+      ],
+      "notes": "Individual page says 3 November 2026; new-openings page says Tuesday 26 January (next such January date is 2027; year inferred). Neither establishes current operation."
+    },
+    {
+      "key": "oast-house-derby",
+      "outcome": "reported_proposal_still_unverified",
+      "evidence_urls": [
+        "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+        "https://camra.org.uk/index.php/pubs/oast-house-derby-143567"
+      ],
+      "notes": "Researcher proposal retained; CAMRA indexed record still identifies Table Table/Whitbread. No current operating Wetherspoon listing established. No opening date inferred."
+    },
+    {
+      "key": "boathouse-presthaven",
+      "outcome": "retain_prior_scrapped_proposal",
+      "evidence_url": "https://www.dailypost.co.uk/news/north-wales-news/holiday-park-scraps-wetherspoons-plan-32958262",
+      "notes": "Prior reconciliation records scrapped proposal. Not freshly independently reverified in this pass; no change or active pin."
+    }
+  ]
+}
