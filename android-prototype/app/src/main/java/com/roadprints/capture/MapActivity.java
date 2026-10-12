@@ -191,6 +191,9 @@ public class MapActivity extends Activity {
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
         applyCollectionLayer();
+        CollectionCatalogueUpdates.refreshIfDue(this,()->{
+            if(active&&!isFinishing()&&!isDestroyed())applyCollectionLayer();
+        });
         if (loadingCard != null) loadingCard.start();
         // Queue lightweight summaries before the heavier route/coverage preparation.
         refreshRecap();
@@ -1977,6 +1980,7 @@ public class MapActivity extends Activity {
         }
     }
 }
+
 
 
 

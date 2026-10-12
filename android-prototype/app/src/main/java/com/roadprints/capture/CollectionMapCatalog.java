@@ -58,7 +58,8 @@ final class CollectionMapCatalog {
                 bundled=readCatalogue(input);
             }catch(Exception unavailable){bundled=new JSONObject();}
         }
-        return approvedVenues(bundled);
+        return CollectionCatalogueUpdates.pins(context,bundled);
     }
 }
+
 
