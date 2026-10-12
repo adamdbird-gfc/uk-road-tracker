@@ -18,6 +18,11 @@ final class RoadprintsDialog {
     static AlertDialog show(Context context, String title, String message, View content,
                             String primaryLabel, Runnable primaryAction,
                             String secondaryLabel, Runnable secondaryAction) {
+        return show(context,title,message,content,primaryLabel,primaryAction,secondaryLabel,secondaryAction,true);
+    }
+    static AlertDialog show(Context context, String title, String message, View content,
+                            String primaryLabel, Runnable primaryAction,
+                            String secondaryLabel, Runnable secondaryAction, boolean dismissOnAction) {
         LinearLayout panel=new LinearLayout(context);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(context,20),dp(context,12),dp(context,20),dp(context,20));
@@ -57,8 +62,8 @@ final class RoadprintsDialog {
         AlertDialog dialog=new AlertDialog.Builder(context).create();
         dialog.setView(panel,0,0,0,0);
         close.setOnClickListener(v->dialog.dismiss());
-        addAction(context,panel,dialog,primaryLabel,primaryAction,true);
-        if(secondaryLabel!=null)addAction(context,panel,dialog,secondaryLabel,secondaryAction,false);
+        addAction(context,panel,dialog,primaryLabel,primaryAction,true,dismissOnAction);
+        if(secondaryLabel!=null)addAction(context,panel,dialog,secondaryLabel,secondaryAction,false,dismissOnAction);
         dialog.show();
         if(dialog.getWindow()!=null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -67,8 +72,9 @@ final class RoadprintsDialog {
         }
         return dialog;
     }
-    private static void addAction(Context context,LinearLayout panel,AlertDialog dialog,String label,Runnable action,boolean primary) {
+    private static void addAction(Context context,LinearLayout panel,AlertDialog dialog,String label,Runnable action,boolean primary,boolean dismissOnAction) {
         Button button=new Button(context);button.setText(label);button.setAllCaps(false);
+        button.setTag(primary?"roadprints_dialog_primary":"roadprints_dialog_secondary");
         button.setTextSize(15);button.setTypeface(null,Typeface.BOLD);
         button.setTextColor(primary?0xFF0B1C50:0xFF67D5CC);
         button.setMinHeight(dp(context,52));button.setMinimumHeight(dp(context,52));
@@ -76,7 +82,7 @@ final class RoadprintsDialog {
         button.setBackground(background(context,primary?0xFFF7C450:0xFF233B78,14,false));
         LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.topMargin=dp(context,12);
         panel.addView(button,params);
-        button.setOnClickListener(v->{dialog.dismiss();if(action!=null)action.run();});
+        button.setOnClickListener(v->{if(dismissOnAction)dialog.dismiss();if(action!=null)action.run();});
     }
     private static GradientDrawable background(Context context,int colour,int radius,boolean border) {
         GradientDrawable shape=new GradientDrawable();shape.setColor(colour);shape.setCornerRadius(dp(context,radius));

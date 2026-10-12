@@ -72,6 +72,7 @@ public class JourneyListActivity extends Activity {
     private static int savedJourneyFilter;
     private static String savedJourneyStatusFilter = "all";
     private static JourneyDateFilter savedJourneyDateFilter = JourneyDateFilter.all();
+    private volatile RailStationCatalog placeStationCatalog;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = {
@@ -898,6 +899,12 @@ public class JourneyListActivity extends Activity {
             JSONObject loaded;
             try {
                 loaded = JourneyStore.get(getApplicationContext(), journeyId);
+                if (placeStationCatalog == null) {
+                    try (InputStreamReader stations = new InputStreamReader(
+                            getAssets().open("rail-stations/stations.csv"), StandardCharsets.UTF_8)) {
+                        placeStationCatalog = RailStationCatalog.read(stations);
+                    } catch (Exception unavailable) { /* Do not invent station identity without reference data. */ }
+                }
             } catch (Exception error) {
                 loaded = null;
             }
@@ -1675,9 +1682,11 @@ public class JourneyListActivity extends Activity {
 
     private void addPlaceReviewFields(LinearLayout fields,JSONObject journey) {
         JSONArray stops=journey.optJSONArray("stops");if(stops==null||stops.length()==0)return;
-        fields.addView(fieldLabel("Journey places"));
+        boolean headingAdded=false;
         for(int i=0;i<stops.length();i++) {
             JSONObject stop=stops.optJSONObject(i);if(stop==null||stop.optString("id").isEmpty())continue;
+            if(!StationPlaceEvidence.reviewable(stop,placeStationCatalog))continue;
+            if(!headingAdded){fields.addView(fieldLabel("Journey places"));headingAdded=true;}
             TextView review=new TextView(this);
             review.setTextColor(0xFF67D5CC);review.setTextSize(15);review.setPadding(0,dp(12),0,dp(12));
             review.setTag("review_place_"+stop.optString("role"));
@@ -1690,31 +1699,39 @@ public class JourneyListActivity extends Activity {
         String classification=stop.optString("classification","estimated");
         String status="confirmed".equals(classification)?"confirmed": "supported".equals(classification)?"suggested":
                 "rejected".equals(classification)?"not a stop":"estimated";
-        view.setText(("departure".equals(stop.optString("role"))?"From: ":"To: ")+stop.optString("name","Estimated stop")
+        view.setText(("departure".equals(stop.optString("role"))?"From: ":"To: ")+StationPlaceEvidence.label(stop,placeStationCatalog)
                 +" · "+status+"\nTap to confirm or correct");
     }
     private void showPlaceReview(String journeyId,JSONObject stop,TextView label) {
-        LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);form.setPadding(dp(20),dp(12),dp(20),dp(12));
+        LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);
+        form.addView(fieldLabel("Place name"));
         EditText name=new EditText(this);name.setSingleLine(true);name.setHint("Place name");
-        name.setText("estimated".equals(stop.optString("kind"))&&"Estimated stop".equals(stop.optString("name"))?"":stop.optString("name"));
+        name.setText("estimated".equals(stop.optString("kind"))&&"Estimated stop".equals(stop.optString("name"))
+                ?"":StationPlaceEvidence.label(stop,placeStationCatalog));
+        name.setTextColor(Color.WHITE);name.setHintTextColor(0xFFB9C5D8);name.setTextSize(16);
+        name.setBackground(roundRect(0xFF142957,0xFF7188B8,dp(10)));
+        name.setPadding(dp(14),dp(10),dp(14),dp(10));name.setMinHeight(dp(52));
         name.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(120)});
         form.addView(name);
-        TextView note=new TextView(this);note.setText("Confirm or correct the place name, or mark this as not a stop. Your original recording remains saved.");
-        note.setPadding(0,dp(12),0,0);form.addView(note);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Review journey place").setView(form)
-                .setPositiveButton("Confirm place",null).setNeutralButton("Not a stop",null).setNegativeButton("Cancel",null).create();
-        dialog.setOnShowListener(v->{
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button->{
-                if(name.getText().toString().trim().isEmpty()){name.setError("Enter a place name");return;}
-                savePlaceReview(journeyId,stop,name.getText().toString(),true,label,dialog);
-            });
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(button->savePlaceReview(journeyId,stop,"",false,label,dialog));
-        });
-        dialog.show();
+        TextView note=new TextView(this);
+        note.setText("Confirm or correct this "+("departure".equals(stop.optString("role"))?"departure":"arrival")
+                +" place, or mark it as not a stop. Your original recording remains saved.");
+        note.setTextColor(0xFFB9C5D8);note.setTextSize(15);note.setPadding(0,dp(12),0,0);form.addView(note);
+        AlertDialog[] dialogRef=new AlertDialog[1];
+        dialogRef[0]=RoadprintsDialog.show(this,"Review journey place",null,form,"CONFIRM PLACE",()->{
+            if(name.getText().toString().trim().isEmpty()){name.setError("Enter a place name");return;}
+            savePlaceReview(journeyId,stop,name.getText().toString(),true,label,dialogRef[0]);
+        },"NOT A STOP",()->savePlaceReview(journeyId,stop,"",false,label,dialogRef[0]),false);
+    }
+    private void setPlaceReviewActionsEnabled(AlertDialog dialog,boolean enabled) {
+        if(dialog.getWindow()==null)return;
+        for(String tag:new String[]{"roadprints_dialog_primary","roadprints_dialog_secondary"}) {
+            View action=dialog.getWindow().getDecorView().findViewWithTag(tag);
+            if(action!=null){action.setEnabled(enabled);action.setAlpha(enabled?1f:.5f);}
+        }
     }
     private void savePlaceReview(String journeyId,JSONObject stop,String name,boolean confirmed,TextView label,AlertDialog dialog) {
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(false);
+        setPlaceReviewActionsEnabled(dialog,false);
         new Thread(()->{
             try {
                 JourneyStore.reviewStop(getApplicationContext(),journeyId,stop.optString("id"),name,confirmed);
@@ -1725,8 +1742,8 @@ public class JourneyListActivity extends Activity {
                 JSONObject result=reviewed;
                 runOnUiThread(()->{if(result!=null){updatePlaceLabel(label,result);label.setOnClickListener(v->showPlaceReview(journeyId,result,label));}
                     dialog.dismiss();});
-            } catch(Exception failed) {runOnUiThread(()->{dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(true);Toast.makeText(this,"Could not save the place review. Please try again.",Toast.LENGTH_LONG).show();});}
+            } catch(Exception failed) {runOnUiThread(()->{setPlaceReviewActionsEnabled(dialog,true);
+                Toast.makeText(this,"Could not save the place review. Please try again.",Toast.LENGTH_LONG).show();});}
         },"roadprints-place-review").start();
     }
 

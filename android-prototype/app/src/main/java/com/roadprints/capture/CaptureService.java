@@ -1080,6 +1080,7 @@ public class CaptureService extends Service {
         final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
+        final RailStationCatalog savedStationCatalog = stationCatalog;
         final String savedContextReason=contextReason;
         final JSONObject savedDeparturePlace=departurePlace;
         final String savedJourneyId = journeyId;
@@ -1128,8 +1129,8 @@ public class CaptureService extends Service {
                 journey.put("timezone", savedTimezone);
                 journey.put("mode", savedMode);
                 journey.put("transport_confirmation", "required");
-                JSONObject arrivalPlace=placeBoundary?PlaceBoundaryEvidence.arrival(savedJourneyId,
-                        footSample(stopEvidenceAnchor,savedPoints.size()-1),stopConfirmedAt,arrivalMap,savedStationCode,savedContextReason):null;
+                JSONObject arrivalPlace=placeBoundary?StationPlaceEvidence.arrival(savedJourneyId,
+                        footSample(stopEvidenceAnchor,savedPoints.size()-1),stopConfirmedAt,arrivalMap,savedStationCode,savedContextReason,savedStationCatalog):null;
                 PlaceBoundaryEvidence.attach(journey,savedDeparturePlace,arrivalPlace);
                 if(savedContextReason!=null)journey.put("context_evidence",new JSONObject().put("version",1)
                         .put("reason",savedContextReason).put("classification","suggested"));
