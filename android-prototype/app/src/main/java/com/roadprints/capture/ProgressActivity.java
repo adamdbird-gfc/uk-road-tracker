@@ -69,6 +69,31 @@ public class ProgressActivity extends Activity {
         heading.addView(eyebrow);
         heading.addView(title);
         heading.addView(intro);
+        TextView grow = new TextView(this);
+        grow.setText("GROW YOUR MAP");
+        grow.setTextSize(15);
+        grow.setTypeface(null, android.graphics.Typeface.BOLD);
+        grow.setTextColor(NAVY);
+        grow.setGravity(Gravity.CENTER);
+        grow.setBackground(roundRect(GOLD, dp(14)));
+        grow.setMinHeight(dp(52));
+        grow.setClickable(true);
+        grow.setFocusable(true);
+        grow.setOnClickListener(v -> {
+            Intent intent = new Intent(this, JourneyListActivity.class);
+            intent.putExtra("open_growing", true);
+            startActivity(intent);
+        });
+        LinearLayout.LayoutParams growParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+        growParams.topMargin = dp(14);
+        heading.addView(grow, growParams);
+        TextView growHint = new TextView(this);
+        growHint.setText("Match ready journeys to build your road and walking map.");
+        growHint.setTextSize(12);
+        growHint.setTextColor(MUTED);
+        growHint.setPadding(0, dp(6), 0, 0);
+        heading.addView(growHint);
         root.addView(heading);
 
         ScrollView scroll = new ScrollView(this);
