@@ -7,9 +7,9 @@
   "completion_target": null,
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
-    "map_venues": 565,
-    "excluded_current": 19,
-    "unreviewed_candidates": 247,
+    "map_venues": 648,
+    "excluded_current": 22,
+    "unreviewed_candidates": 161,
     "needs_rereview": [
       "spoons-osm-w38325241",
       "spoons-osm-w507289751",
@@ -254,22 +254,12 @@
         "nation": "England"
       },
       "candidate_count": 9,
-      "map_approved": 0,
+      "map_approved": 9,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n11096730684",
-        "spoons-osm-n5003932432",
-        "spoons-osm-n745954212",
-        "spoons-osm-n756795851",
-        "spoons-osm-n9560506718",
-        "spoons-osm-w118448552",
-        "spoons-osm-w1191945528",
-        "spoons-osm-w451764075",
-        "spoons-osm-w693543491"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -320,36 +310,12 @@
         "nation": "England"
       },
       "candidate_count": 23,
-      "map_approved": 0,
-      "excluded": 0,
+      "map_approved": 22,
+      "excluded": 1,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n10076043581",
-        "spoons-osm-n10115426180",
-        "spoons-osm-n11094266157",
-        "spoons-osm-n1605452537",
-        "spoons-osm-n306485629",
-        "spoons-osm-n308995685",
-        "spoons-osm-n3737846239",
-        "spoons-osm-n599055428",
-        "spoons-osm-w1042141586",
-        "spoons-osm-w1054804979",
-        "spoons-osm-w1137962303",
-        "spoons-osm-w1246127439",
-        "spoons-osm-w1249689250",
-        "spoons-osm-w1312516749",
-        "spoons-osm-w1505111277",
-        "spoons-osm-w175308977",
-        "spoons-osm-w234090581",
-        "spoons-osm-w241101550",
-        "spoons-osm-w433828512",
-        "spoons-osm-w891204341",
-        "spoons-osm-w923155037",
-        "spoons-osm-w943292533",
-        "spoons-osm-w968445111"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -358,20 +324,12 @@
         "nation": "England"
       },
       "candidate_count": 8,
-      "map_approved": 1,
+      "map_approved": 8,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n11151791658",
-        "spoons-osm-n12601910921",
-        "spoons-osm-n1760662954",
-        "spoons-osm-w199423476",
-        "spoons-osm-w355550822",
-        "spoons-osm-w446736302",
-        "spoons-osm-w596884645"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -492,29 +450,12 @@
         "nation": "England"
       },
       "candidate_count": 16,
-      "map_approved": 0,
-      "excluded": 0,
+      "map_approved": 15,
+      "excluded": 1,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n4955531721",
-        "spoons-osm-w123975995",
-        "spoons-osm-w166280437",
-        "spoons-osm-w217861635",
-        "spoons-osm-w261464014",
-        "spoons-osm-w269097613",
-        "spoons-osm-w294410657",
-        "spoons-osm-w329050803",
-        "spoons-osm-w438526596",
-        "spoons-osm-w498114477",
-        "spoons-osm-w516916703",
-        "spoons-osm-w553376867",
-        "spoons-osm-w685242436",
-        "spoons-osm-w717248013",
-        "spoons-osm-w816445156",
-        "spoons-osm-w822472639"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -523,7 +464,7 @@
         "nation": "England"
       },
       "candidate_count": 32,
-      "map_approved": 1,
+      "map_approved": 4,
       "excluded": 0,
       "held": 0,
       "existing_candidate_review_complete": false,
@@ -555,11 +496,8 @@
         "spoons-osm-w326938937",
         "spoons-osm-w355512196",
         "spoons-osm-w428354651",
-        "spoons-osm-w65073128",
         "spoons-osm-w671548622",
-        "spoons-osm-w672254742",
-        "spoons-osm-w734750734",
-        "spoons-osm-w931373268"
+        "spoons-osm-w672254742"
       ]
     },
     {
@@ -658,9 +596,11 @@
       "map_approved": 67,
       "excluded": 2,
       "held": 1,
-      "existing_candidate_review_complete": true,
+      "existing_candidate_review_complete": false,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": []
+      "unreviewed_ids": [
+        "spoons-osm-w507289751"
+      ]
     },
     {
       "county": {
@@ -752,6 +692,7 @@
         "spoons-osm-w279651998",
         "spoons-osm-w358385140",
         "spoons-osm-w370461873",
+        "spoons-osm-w38325241",
         "spoons-osm-w391735310",
         "spoons-osm-w438299712",
         "spoons-osm-w441509845",
@@ -1007,30 +948,12 @@
         "nation": "England"
       },
       "candidate_count": 17,
-      "map_approved": 0,
+      "map_approved": 17,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1186907430",
-        "spoons-osm-n13042314503",
-        "spoons-osm-n2382520958",
-        "spoons-osm-n2989490660",
-        "spoons-osm-n469412641",
-        "spoons-osm-n5926671789",
-        "spoons-osm-w1082680017",
-        "spoons-osm-w1203903192",
-        "spoons-osm-w1204936359",
-        "spoons-osm-w132880235",
-        "spoons-osm-w205786050",
-        "spoons-osm-w273064147",
-        "spoons-osm-w424695257",
-        "spoons-osm-w469255563",
-        "spoons-osm-w469797774",
-        "spoons-osm-w894734721",
-        "spoons-osm-w92222991"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1169,9 +1092,11 @@
       "map_approved": 26,
       "excluded": 1,
       "held": 1,
-      "existing_candidate_review_complete": true,
+      "existing_candidate_review_complete": false,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": []
+      "unreviewed_ids": [
+        "spoons-osm-w98286602"
+      ]
     },
     {
       "county": {
@@ -1194,24 +1119,12 @@
         "nation": "England"
       },
       "candidate_count": 11,
-      "map_approved": 0,
-      "excluded": 0,
+      "map_approved": 10,
+      "excluded": 1,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1776838960",
-        "spoons-osm-n2092714898",
-        "spoons-osm-n2093722923",
-        "spoons-osm-n2119762389",
-        "spoons-osm-n410328052",
-        "spoons-osm-n4388231168",
-        "spoons-osm-n756960203",
-        "spoons-osm-w186004389",
-        "spoons-osm-w261289736",
-        "spoons-osm-w271760930",
-        "spoons-osm-w903893001"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1223,9 +1136,11 @@
       "map_approved": 13,
       "excluded": 0,
       "held": 1,
-      "existing_candidate_review_complete": true,
+      "existing_candidate_review_complete": false,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": []
+      "unreviewed_ids": [
+        "spoons-osm-w1465394526"
+      ]
     },
     {
       "county": {
@@ -1242,7 +1157,7 @@
       "unreviewed_ids": []
     }
   ],
-  "unreviewed_without_decision": 243,
+  "unreviewed_without_decision": 157,
   "nation_checks": {
     "Wales": {
       "existing_candidates": 47,
@@ -1861,6 +1776,112 @@
       "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
       "scope_basis": "Current East of England regional scope retains historic app counties. Include two Peterborough pubs assigned historic Northamptonshire, Admiral Byng Potters Bar assigned historic Middlesex, Royston Manor House assigned historic Cambridgeshire and Gorleston William Adams assigned historic Suffolk. Defer Railway Bell in New Barnet (historic Hertfordshire) to London; prior London venues assigned historic Essex remain reviewed separately. Do not mark whole historic Hertfordshire or Middlesex complete.",
       "basis": "48 individual current operator pub reviews, 16 Essex regional approvals and Kempston Fletton Brick carried forward unchanged. Current regional names/localities cross-check identifies operating White Clover Hopton absent from pinned candidate names; record reconciliation lead pending OSM pub identity and actual premises position. Full coverage and missing-venue reconciliation remain incomplete."
+    },
+    "South West": {
+      "reviewed_at": "2026-10-12",
+      "existing_candidates": 87,
+      "map_approved": 84,
+      "new_map_approvals": 83,
+      "carried_forward_map_approvals": 1,
+      "excluded": 3,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "candidate_ids": [
+        "spoons-osm-n10076043581",
+        "spoons-osm-n10115426180",
+        "spoons-osm-n11094266157",
+        "spoons-osm-n11096730684",
+        "spoons-osm-n11151791658",
+        "spoons-osm-n1186907430",
+        "spoons-osm-n12601910921",
+        "spoons-osm-n13042314503",
+        "spoons-osm-n1605452537",
+        "spoons-osm-n1760662954",
+        "spoons-osm-n1776838960",
+        "spoons-osm-n2092714898",
+        "spoons-osm-n2093722923",
+        "spoons-osm-n2119762389",
+        "spoons-osm-n2382520958",
+        "spoons-osm-n2989490660",
+        "spoons-osm-n306485629",
+        "spoons-osm-n308995685",
+        "spoons-osm-n3737846239",
+        "spoons-osm-n410328052",
+        "spoons-osm-n4388231168",
+        "spoons-osm-n469412641",
+        "spoons-osm-n4955531721",
+        "spoons-osm-n5003932432",
+        "spoons-osm-n5926671789",
+        "spoons-osm-n599055428",
+        "spoons-osm-n745954212",
+        "spoons-osm-n756795851",
+        "spoons-osm-n756960203",
+        "spoons-osm-n9560506718",
+        "spoons-osm-w1042141586",
+        "spoons-osm-w1054804979",
+        "spoons-osm-w1082680017",
+        "spoons-osm-w1137962303",
+        "spoons-osm-w118448552",
+        "spoons-osm-w1191945528",
+        "spoons-osm-w1203903192",
+        "spoons-osm-w1204936359",
+        "spoons-osm-w123975995",
+        "spoons-osm-w1246127439",
+        "spoons-osm-w1249689250",
+        "spoons-osm-w1312516749",
+        "spoons-osm-w132880235",
+        "spoons-osm-w1505111277",
+        "spoons-osm-w166280437",
+        "spoons-osm-w175308977",
+        "spoons-osm-w186004389",
+        "spoons-osm-w199423476",
+        "spoons-osm-w205786050",
+        "spoons-osm-w217861635",
+        "spoons-osm-w234090581",
+        "spoons-osm-w241101550",
+        "spoons-osm-w261289736",
+        "spoons-osm-w261464014",
+        "spoons-osm-w269097613",
+        "spoons-osm-w271760930",
+        "spoons-osm-w273064147",
+        "spoons-osm-w294410657",
+        "spoons-osm-w329050803",
+        "spoons-osm-w355550822",
+        "spoons-osm-w424695257",
+        "spoons-osm-w433828512",
+        "spoons-osm-w438526596",
+        "spoons-osm-w446736302",
+        "spoons-osm-w451764075",
+        "spoons-osm-w469255563",
+        "spoons-osm-w469797774",
+        "spoons-osm-w498114477",
+        "spoons-osm-w516916703",
+        "spoons-osm-w553376867",
+        "spoons-osm-w596884645",
+        "spoons-osm-w65073128",
+        "spoons-osm-w685242436",
+        "spoons-osm-w693543491",
+        "spoons-osm-w717248013",
+        "spoons-osm-w734750734",
+        "spoons-osm-w80187143",
+        "spoons-osm-w816445156",
+        "spoons-osm-w822472639",
+        "spoons-osm-w891204341",
+        "spoons-osm-w894734721",
+        "spoons-osm-w903893001",
+        "spoons-osm-w92222991",
+        "spoons-osm-w923155037",
+        "spoons-osm-w931373268",
+        "spoons-osm-w943292533",
+        "spoons-osm-w968445111"
+      ],
+      "carried_forward_ids": [
+        "spoons-osm-w80187143"
+      ],
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "scope_basis": "South West regional locality scope includes Bristol across historic Gloucestershire/Somerset and three Bournemouth/Winton pubs assigned historic Hampshire. Existing app counties unchanged; remaining Hampshire candidates defer to South East.",
+      "basis": "Current individual operator listings and weekly schedules; three former venues corroborated by council/current operator evidence. Two operating Haven venues absent from pinned candidate names recorded for location reconciliation. Emersons Green is already present under generic source name Wetherspoons; do not duplicate. Full coverage remains incomplete."
     }
   }
 }
