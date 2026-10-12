@@ -3,12 +3,14 @@ on:
   push:
     paths:
       - 'scripts/*wetherspoons_map.py'
+      - 'collections/published/wetherspoons/**'
       - 'collections/wetherspoons-map-reviews-v1.json'
       - 'collections/wetherspoons-supplemental-map-reviews-v1.json'
       - 'android-prototype/app/src/main/assets/collections/**'
   pull_request:
     paths:
       - 'scripts/*wetherspoons_map.py'
+      - 'collections/published/wetherspoons/**'
       - 'collections/wetherspoons-map-reviews-v1.json'
       - 'collections/wetherspoons-supplemental-map-reviews-v1.json'
       - 'android-prototype/app/src/main/assets/collections/**'
@@ -20,5 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 -m unittest discover -s scripts -p test_wetherspoons_map.py -v
+      - run: python3 -m unittest discover -s scripts -p 'test_*wetherspoons_map.py' -v
+
+      - run: python3 scripts/publish_wetherspoons_map.py --verify --directory collections/published/wetherspoons
 
