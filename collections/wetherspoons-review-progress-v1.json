@@ -7,9 +7,9 @@
   "completion_target": null,
   "packaged_app_map_venues": 37,
   "next_build_review_summary": {
-    "map_venues": 382,
-    "excluded_current": 13,
-    "unreviewed_candidates": 436,
+    "map_venues": 439,
+    "excluded_current": 17,
+    "unreviewed_candidates": 375,
     "needs_rereview": [
       "spoons-osm-w38325241",
       "spoons-osm-w507289751"
@@ -316,23 +316,12 @@
         "nation": "England"
       },
       "candidate_count": 12,
-      "map_approved": 2,
+      "map_approved": 12,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n2324083929",
-        "spoons-osm-w1027135795",
-        "spoons-osm-w127068259",
-        "spoons-osm-w128387334",
-        "spoons-osm-w241931739",
-        "spoons-osm-w279472341",
-        "spoons-osm-w376695700",
-        "spoons-osm-w393047687",
-        "spoons-osm-w75871739",
-        "spoons-osm-w95853536"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -711,24 +700,12 @@
         "nation": "England"
       },
       "candidate_count": 11,
-      "map_approved": 0,
-      "excluded": 0,
+      "map_approved": 10,
+      "excluded": 1,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1059478029",
-        "spoons-osm-n2402328609",
-        "spoons-osm-n2556172184",
-        "spoons-osm-n26942245",
-        "spoons-osm-n3721812304",
-        "spoons-osm-n5302330323",
-        "spoons-osm-n553248758",
-        "spoons-osm-w248902319",
-        "spoons-osm-w322013548",
-        "spoons-osm-w490672667",
-        "spoons-osm-w49789745"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -737,25 +714,12 @@
         "nation": "England"
       },
       "candidate_count": 17,
-      "map_approved": 5,
+      "map_approved": 17,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1514499025",
-        "spoons-osm-n295637093",
-        "spoons-osm-n5077620226",
-        "spoons-osm-n7255825775",
-        "spoons-osm-n9799701331",
-        "spoons-osm-r19909351",
-        "spoons-osm-w219905509",
-        "spoons-osm-w231158130",
-        "spoons-osm-w531505245",
-        "spoons-osm-w69043435",
-        "spoons-osm-w728206447",
-        "spoons-osm-w947148095"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -924,21 +888,14 @@
         "nation": "England"
       },
       "candidate_count": 9,
-      "map_approved": 0,
+      "map_approved": 7,
       "excluded": 0,
       "held": 0,
       "existing_candidate_review_complete": false,
       "missing_venue_search_complete": false,
       "unreviewed_ids": [
-        "spoons-osm-n732723631",
         "spoons-osm-n915945768",
-        "spoons-osm-w135225345",
-        "spoons-osm-w199746721",
-        "spoons-osm-w236051419",
-        "spoons-osm-w307424812",
-        "spoons-osm-w336749947",
-        "spoons-osm-w465838746",
-        "spoons-osm-w768297772"
+        "spoons-osm-w236051419"
       ]
     },
     {
@@ -962,33 +919,12 @@
         "nation": "England"
       },
       "candidate_count": 22,
-      "map_approved": 1,
-      "excluded": 1,
+      "map_approved": 18,
+      "excluded": 4,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-n1707777586",
-        "spoons-osm-n2204462606",
-        "spoons-osm-n2293805043",
-        "spoons-osm-n2675764810",
-        "spoons-osm-n9979244972",
-        "spoons-osm-w1107958111",
-        "spoons-osm-w149487940",
-        "spoons-osm-w193906082",
-        "spoons-osm-w244632071",
-        "spoons-osm-w251921199",
-        "spoons-osm-w280976668",
-        "spoons-osm-w294896124",
-        "spoons-osm-w30805139",
-        "spoons-osm-w327309162",
-        "spoons-osm-w350473517",
-        "spoons-osm-w352173619",
-        "spoons-osm-w38295818",
-        "spoons-osm-w408065117",
-        "spoons-osm-w79093218",
-        "spoons-osm-w91751576"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1089,14 +1025,12 @@
         "nation": "England"
       },
       "candidate_count": 1,
-      "map_approved": 0,
+      "map_approved": 1,
       "excluded": 0,
       "held": 0,
-      "existing_candidate_review_complete": false,
+      "existing_candidate_review_complete": true,
       "missing_venue_search_complete": false,
-      "unreviewed_ids": [
-        "spoons-osm-w1352918774"
-      ]
+      "unreviewed_ids": []
     },
     {
       "county": {
@@ -1447,7 +1381,7 @@
       "unreviewed_ids": []
     }
   ],
-  "unreviewed_without_decision": 434,
+  "unreviewed_without_decision": 373,
   "nation_checks": {
     "Wales": {
       "existing_candidates": 47,
@@ -1752,6 +1686,106 @@
       "scope_basis": "Regional Yorkshire/Humber scope, excluding Middlesbrough and Redcar/Cleveland reviewed with North East. Include five North/North East Lincolnshire pubs plus Sheffield Woodseats Palace and Scarsdale Hundred despite historic Derbyshire county assignments. App county groups unchanged; do not mark whole Lincolnshire or Derbyshire reviewed.",
       "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
       "basis": "Individual operator checks and current regional researcher names/localities cross-check. No additional operating missing venue identified in this cross-check; completeness guarantee remains disabled. Carry Sheffield approvals once and preserve former-pub exclusions."
+    },
+    "East Midlands": {
+      "reviewed_at": "2026-10-12",
+      "existing_candidates": 62,
+      "map_approved": 58,
+      "new_map_approvals": 57,
+      "carried_forward_map_approvals": 1,
+      "excluded": 4,
+      "new_exclusions": 3,
+      "carried_forward_exclusions": 1,
+      "held": 0,
+      "existing_candidate_review_complete": true,
+      "missing_venue_search_complete": false,
+      "candidate_ids": [
+        "spoons-osm-n1059478029",
+        "spoons-osm-n1514499025",
+        "spoons-osm-n1707777586",
+        "spoons-osm-n2204462606",
+        "spoons-osm-n2293805043",
+        "spoons-osm-n2324083929",
+        "spoons-osm-n2402328609",
+        "spoons-osm-n2556172184",
+        "spoons-osm-n2675764810",
+        "spoons-osm-n26942245",
+        "spoons-osm-n295637093",
+        "spoons-osm-n3721812304",
+        "spoons-osm-n5077620226",
+        "spoons-osm-n5302330323",
+        "spoons-osm-n553248758",
+        "spoons-osm-n7255825775",
+        "spoons-osm-n732723631",
+        "spoons-osm-n9799701331",
+        "spoons-osm-r19909351",
+        "spoons-osm-w1027135795",
+        "spoons-osm-w1107958111",
+        "spoons-osm-w127068259",
+        "spoons-osm-w128387334",
+        "spoons-osm-w135225345",
+        "spoons-osm-w1352918774",
+        "spoons-osm-w149487940",
+        "spoons-osm-w193906082",
+        "spoons-osm-w199746721",
+        "spoons-osm-w219905509",
+        "spoons-osm-w231158130",
+        "spoons-osm-w241931739",
+        "spoons-osm-w244632071",
+        "spoons-osm-w248902319",
+        "spoons-osm-w251921199",
+        "spoons-osm-w279472341",
+        "spoons-osm-w280976668",
+        "spoons-osm-w294896124",
+        "spoons-osm-w307424812",
+        "spoons-osm-w30805139",
+        "spoons-osm-w322013548",
+        "spoons-osm-w327309162",
+        "spoons-osm-w336749947",
+        "spoons-osm-w350473517",
+        "spoons-osm-w352173619",
+        "spoons-osm-w376695700",
+        "spoons-osm-w38295818",
+        "spoons-osm-w393047687",
+        "spoons-osm-w408065117",
+        "spoons-osm-w465838746",
+        "spoons-osm-w490672667",
+        "spoons-osm-w49789745",
+        "spoons-osm-w531505245",
+        "spoons-osm-w69043435",
+        "spoons-osm-w728206447",
+        "spoons-osm-w75871739",
+        "spoons-osm-w768297772",
+        "spoons-osm-w79093218",
+        "spoons-osm-w91751576",
+        "spoons-osm-w947148095",
+        "spoons-osm-w95853536",
+        "spoons-osm-w262652847",
+        "spoons-osm-w310891787"
+      ],
+      "carried_forward_ids": [
+        "spoons-osm-w310891787",
+        "spoons-osm-w262652847"
+      ],
+      "supplemental_legacy_review_ids": [
+        "spoons-osm-n9979244972"
+      ],
+      "deferred_east_of_england_ids": [
+        "spoons-osm-n915945768",
+        "spoons-osm-w236051419"
+      ],
+      "excluded_from_regional_scope_prior_yorkshire_humber_ids": [
+        "spoons-osm-n12846582848",
+        "spoons-osm-n1312827540",
+        "spoons-osm-n5263669268",
+        "spoons-osm-r1601540",
+        "spoons-osm-w101264384",
+        "spoons-osm-w108162784",
+        "spoons-osm-w366849843"
+      ],
+      "scope_basis": "Current regional scope retains historic app counties. Seven northern Lincolnshire/Sheffield identities remain reviewed with Yorkshire/Humber; two historic Northamptonshire Peterborough pubs are deferred to East of England. Running Horse at Doncaster Airport, assigned historic Nottinghamshire, is reviewed as a supplemental closed Yorkshire/Humber legacy venue, outside the 62 East Midlands candidates. Stag and Pheasant approval and Widow Frost exclusion carried once.",
+      "crosscheck_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "basis": "Current individual operator pages corroborate the 58 operating venues in regional researcher name/locality cross-check. No additional operating missing venue identified. Reported Oast House proposal recorded without activation; full coverage guarantee and missing-venue reconciliation remain incomplete."
     }
   }
 }
