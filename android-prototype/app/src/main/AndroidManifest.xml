@@ -42,6 +42,7 @@
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".AchievementsActivity" android:exported="false" />
         <activity android:name=".CollectionsActivity" android:exported="false" />
+        <activity android:name=".PubVisitsActivity" android:exported="false" />
         <activity android:name=".GrowingActivity" android:exported="false" />
         <activity android:name=".MapActivity" android:exported="false" />
         <activity android:name=".JourneyReplayActivity" android:exported="false" />
@@ -67,3 +68,4 @@
             android:exported="false" />
     </application>
 </manifest>
+

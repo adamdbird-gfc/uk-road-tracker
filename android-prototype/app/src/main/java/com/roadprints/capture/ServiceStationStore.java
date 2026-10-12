@@ -162,7 +162,7 @@ final class ServiceStationStore {
     }
     static void clearOnDeleteAll(Context context) {
         synchronized(STATE_LOCK) {
-            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);
+            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);PubVisitStore.clear(context);
             // Deleting journeys does not revoke a purchased entitlement.
             prefs(context).edit().remove("service_station_manual").remove(AUTOMATIC).putBoolean(BACKFILL,false)
                     .putBoolean(MIGRATION,true).putLong(REVISION,revision(context)+1).apply();
@@ -170,3 +170,4 @@ final class ServiceStationStore {
     }
     private static SharedPreferences prefs(Context context) {return context.getApplicationContext().getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
 }
+

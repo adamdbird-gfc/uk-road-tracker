@@ -38,6 +38,7 @@ public class TimelineImportActivity extends Activity {
     private TextView capture;
     private TextView helpBody;
     private boolean serviceOnly;
+    private boolean pubVisitsOnly;
     private LinearLayout importSummary;
     private int refreshedEvidence;
     private final ExecutorService importer = Executors.newSingleThreadExecutor();
@@ -48,6 +49,8 @@ public class TimelineImportActivity extends Activity {
         getWindow().setStatusBarColor(0xFF0B1C50);
         getWindow().setNavigationBarColor(0xFF0B1C50);
         serviceOnly = getIntent().getBooleanExtra("service_only", false);
+        pubVisitsOnly = getIntent().getBooleanExtra("pub_visits_only", false);
+        if(pubVisitsOnly)serviceOnly=true;
         buildScreen();
     }
 
@@ -66,11 +69,13 @@ public class TimelineImportActivity extends Activity {
         root.addView(brand);
         root.addView(text("DATA MANAGEMENT", 13, 0xFF67D5CC, true));
 
-        TextView title = text(serviceOnly ? "Service station visits" : "Timeline data",
+        TextView title = text(pubVisitsOnly ? "Pub place visits" : serviceOnly ? "Service station visits" : "Timeline data",
                 30, Color.WHITE, true);
         root.addView(title);
 
-        TextView intro = text(serviceOnly
+        TextView intro = text(pubVisitsOnly
+                ? "Import Timeline place visits for your pub collection. Named pub visits can be recognised; nearby places need review. Saved journeys and route matching will be left untouched."
+                : serviceOnly
                 ? "Add another Google Timeline JSON file to update service station visits. "
                     + "Saved journeys and route matching will be left untouched."
                 : "Choose your Google Timeline JSON file. It will be validated and imported into your local Roadprints archive.",
@@ -117,11 +122,11 @@ public class TimelineImportActivity extends Activity {
             help.setText((show ? "▾ " : "▸ ") + "Where do I find my Timeline file?");
         });
 
-        capture = action(serviceOnly ? "RETURN TO MAP" : "CONTINUE TO GROWING");
+        capture = action(pubVisitsOnly ? "RETURN TO PUB VISITS" : serviceOnly ? "RETURN TO MAP" : "CONTINUE TO GROWING");
         capture.setVisibility(View.GONE);
         capture.setOnClickListener(v -> {
             if (serviceOnly) {
-                startActivity(new Intent(this, MapActivity.class));
+                startActivity(new Intent(this, pubVisitsOnly ? PubVisitsActivity.class : MapActivity.class));
             } else {
                 Intent growing = new Intent(this, JourneyListActivity.class);
                 growing.putExtra("open_growing", true);
@@ -177,7 +182,7 @@ public class TimelineImportActivity extends Activity {
                 parameters.putLong("skipped", result.skipped);
                 parameters.putLong("invalid", result.invalid);
                 boolean completed = result.message.startsWith("Import complete:")
-                        || result.message.startsWith("Service import complete:");
+                        || result.message.startsWith("Service import complete:") || result.message.startsWith("Pub import complete:");
                 BetaMeasurement.event(this, completed ? "import_completed" : "import_failed", parameters);
             } catch (Exception error) {
                 android.os.Bundle parameters = new android.os.Bundle();
@@ -192,7 +197,7 @@ public class TimelineImportActivity extends Activity {
                 setBusy(false);
                 status.setText(finalResult.message);
                 if (finalResult.message.startsWith("Import complete:")
-                        || finalResult.message.startsWith("Service import complete:")) {
+                        || finalResult.message.startsWith("Service import complete:") || finalResult.message.startsWith("Pub import complete:")) {
                     showImportSummary(finalResult);
                     capture.setVisibility(View.VISIBLE);
                     capture.setEnabled(true);
@@ -295,11 +300,13 @@ public class TimelineImportActivity extends Activity {
         }
         int matchedServiceStations =
                 ServiceStationStore.recordConfirmedTimelineVisits(this, confirmedTimelineVisits);
+        if(CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS))
+            PubVisitStore.reconcile(this,CollectionMapCatalog.spoons(this));
         if (serviceOnly) {
             ImportResult result = new ImportResult(0, 0, 0,
-                    "Service import complete: " + count(confirmedTimelineVisits.length())
-                            + " Timeline place visits saved; " + count(matchedServiceStations)
-                            + " service stations matched. Saved journeys were not changed.");
+                    (pubVisitsOnly?"Pub import complete: ":"Service import complete: ") + count(confirmedTimelineVisits.length())
+                            + " Timeline place visits saved; " + count(pubVisitsOnly?PubVisitStore.completed(this).size():matchedServiceStations)
+                            + (pubVisitsOnly?" pubs visited. Review ambiguous place visits in Pub visits. Saved journeys were not changed.":" service stations matched. Saved journeys were not changed."));
             result.visitsSaved = confirmedTimelineVisits.length();
             result.stationsMatched = matchedServiceStations;
             return result;
@@ -995,13 +1002,13 @@ public class TimelineImportActivity extends Activity {
     }
 
     private void showImportSummary(ImportResult result) {
-        status.setText(serviceOnly ? "Service import complete" : refreshedEvidence > 0
+        status.setText(pubVisitsOnly ? "Pub import complete" : serviceOnly ? "Service import complete" : refreshedEvidence > 0
                 ? "Import complete · route evidence updated for " + count(refreshedEvidence) + " journeys"
                 : "Import complete");
         importSummary.removeAllViews();
         if (serviceOnly) {
             addSummaryRow("Timeline visits saved", result.visitsSaved,
-                    "Service stations matched", result.stationsMatched);
+                    pubVisitsOnly?"Pubs visited":"Service stations matched", pubVisitsOnly?PubVisitStore.completed(this).size():result.stationsMatched);
         } else {
             addSummaryRow("Journeys added", result.added, "Already present", result.skipped);
             addSummaryRow("Unsupported or insufficient", result.invalid, "Route points", result.sourceRoutePoints);
@@ -1085,3 +1092,4 @@ public class TimelineImportActivity extends Activity {
         }
     }
 }
+
