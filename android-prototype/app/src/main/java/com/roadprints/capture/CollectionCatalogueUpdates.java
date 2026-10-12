@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 
 /** Reviewed map data only. No journey, visit or location information is sent. */
 final class CollectionCatalogueUpdates {
-    static final long BUNDLED_REVISION=2026101201L;
+    static final long BUNDLED_REVISION=2026101202L;
     static final long DAY_MS=24L*60*60*1000, RETRY_MS=60L*60*1000;
     static final int MANIFEST_LIMIT=32*1024;
     static final String BASE_URL="https://raw.githubusercontent.com/adamdbird-gfc/uk-road-tracker/refs/heads/fix/onboarding-start-tracking/collections/published/wetherspoons/";

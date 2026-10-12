@@ -48,11 +48,11 @@ public class DebugActivity extends Activity {
                 startService(changed);
                 recreate();
             }else if(!CaptureService.isArmed(this)){
-                new AlertDialog.Builder(this).setTitle("Automatic tracking is off")
+                new RoadprintsDialog.Builder(this).setTitle("Automatic tracking is off")
                         .setMessage("Turn on automatic tracking first, then start the movement log here.")
                         .setPositiveButton("OK",null).show();
             }else{
-                new AlertDialog.Builder(this).setTitle("Record movement diagnostics?")
+                new RoadprintsDialog.Builder(this).setTitle("Record movement diagnostics?")
                         .setMessage("For up to 24 hours, Roadprints will save Android activity changes and precise GPS samples about every 30 seconds while it waits for movement, plus samples while confirming or recording a journey. This log stays on this phone, is never uploaded automatically, and is removed after 7 days. Starting a new log replaces any previous movement log. You can stop it at any time and copy it from this screen.")
                         .setNegativeButton("Cancel",null)
                         .setPositiveButton("Start log",(dialog,which)->{
@@ -71,13 +71,24 @@ public class DebugActivity extends Activity {
             root.addView(action("COPY MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
                 String latestReport=MovementDiagnostics.getClipboardReport(this);
                 if(latestReport==null || !copyReportToClipboard(this,"Roadprints movement diagnostics",latestReport)){
-                    new AlertDialog.Builder(this).setTitle("Download the movement log")
+                    new RoadprintsDialog.Builder(this).setTitle("Download the movement log")
                             .setMessage("This log could not be copied safely. Download the complete file to share it.")
                             .setNegativeButton("Cancel",null)
                             .setPositiveButton("DOWNLOAD LOG",(dialog,which)->downloadMovementLog()).show();
                 }else Toast.makeText(this,"Movement log copied. It contains precise location data.",Toast.LENGTH_LONG).show();
             }));
-            root.addView(action("CLEAR MOVEMENT LOG",0xFF182B5A,MUTED,()->new AlertDialog.Builder(this)
+        }
+        root.addView(action("RAIL STATION DATA",0xFF172D5B,MUTED,()->{
+            android.widget.ScrollView scroll=new android.widget.ScrollView(this);
+            TextView attribution=text("Rail station data: davwheat / UK Railway Stations, derived from Trainline EU. Sources include OpenStreetMap, SNCF OpenData, GeoNames, Digitraffic.fi, OpenTransportData.swiss and admin.ch. Distributed under the Open Database License (ODbL). Station lookup runs locally; transport suggestions still require confirmation. This reference covers Great Britain National Rail stations; underground journeys are outside this first release.\n\nhttps://github.com/davwheat/uk-railway-stations\nhttps://github.com/trainline-eu/stations\nhttps://opendatacommons.org/licenses/odbl/1-0/",14,Color.WHITE,false);
+            attribution.setPadding(dp(16),dp(12),dp(16),dp(12));
+            android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
+            scroll.addView(attribution);
+            new RoadprintsDialog.Builder(this).setTitle("Rail station data").setView(scroll)
+                    .setPositiveButton("Close",null).show();
+        }));
+        if(MovementDiagnostics.hasReport(this)){
+            root.addView(action("CLEAR MOVEMENT LOG",0xFF182B5A,0xFFFF8A8A,()->new RoadprintsDialog.Builder(this)
                     .setTitle("Clear movement log?")
                     .setMessage("The local movement log, including its GPS coordinates, will be deleted.")
                     .setNegativeButton("Cancel",null)
@@ -91,15 +102,6 @@ public class DebugActivity extends Activity {
                     })
                     .show()));
         }
-        root.addView(action("RAIL STATION DATA",0xFF172D5B,MUTED,()->{
-            android.widget.ScrollView scroll=new android.widget.ScrollView(this);
-            TextView attribution=text("Rail station data: davwheat / UK Railway Stations, derived from Trainline EU. Sources include OpenStreetMap, SNCF OpenData, GeoNames, Digitraffic.fi, OpenTransportData.swiss and admin.ch. Distributed under the Open Database License (ODbL). Station lookup runs locally; transport suggestions still require confirmation. This reference covers Great Britain National Rail stations; underground journeys are outside this first release.\n\nhttps://github.com/davwheat/uk-railway-stations\nhttps://github.com/trainline-eu/stations\nhttps://opendatacommons.org/licenses/odbl/1-0/",14,Color.BLACK,false);
-            attribution.setPadding(dp(16),dp(12),dp(16),dp(12));
-            android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
-            scroll.addView(attribution);
-            new AlertDialog.Builder(this).setTitle("Rail station data").setView(scroll)
-                    .setPositiveButton("Close",null).show();
-        }));
         RoadprintsHeader.installUtilityPage(this,root,"BACK TO UTILITIES",this::finish);
         if(available)RoadprintsDialog.show(this,"Debug report ready",
                 "The report is stored on this device. Copy it only when you want to share it.",null,

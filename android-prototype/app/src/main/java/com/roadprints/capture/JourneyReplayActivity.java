@@ -84,7 +84,7 @@ public class JourneyReplayActivity extends Activity {
         header.setPadding(dp(20),dp(12),dp(20),dp(12));
         LinearLayout title = new LinearLayout(this);title.setGravity(Gravity.CENTER_VERTICAL);
         title.addView(text("Replay journey",21,Color.WHITE,true),new LinearLayout.LayoutParams(0,-2,1));
-        TextView close = text("CLOSE",13,0xFFF7C450,true);
+        TextView close = RoadprintsDialog.closeControl(this,this::finish);
         close.setPadding(dp(12),dp(12),dp(12),dp(12));close.setOnClickListener(view -> finish());
         title.addView(close);header.addView(title);
         header.addView(text("Watch your route unfold, with your surrounding roads in the background.",14,0xFFD3DCED,false));

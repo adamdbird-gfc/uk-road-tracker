@@ -9,7 +9,7 @@
   "coverage_complete": false,
   "visit_enabled": false,
   "completion_target": null,
-  "catalogue_version": "2026-10-12.7856612f5c7c",
+  "catalogue_version": "2026-10-12.b3906a1283c8",
   "candidate_version": "2026-10-11.41b1d2fb63de",
   "source": {
     "dataset": "OpenStreetMap",
@@ -907,7 +907,7 @@
       "name": "Y Dic Penderyn",
       "lat": 51.7473463,
       "lon": -3.3782556,
-      "town": "",
+      "town": "Merthyr Tydfil",
       "county": {
         "code": "GLM",
         "name": "Glamorgan",
@@ -1021,7 +1021,7 @@
       "name": "The Post & Telegraph",
       "lat": 50.8230339,
       "lon": -0.1404452,
-      "town": "",
+      "town": "Brighton",
       "county": {
         "code": "SUS",
         "name": "Sussex",
@@ -1287,7 +1287,7 @@
       "name": "The Three John Scotts",
       "lat": 53.7439862,
       "lon": -0.3327824,
-      "town": "",
+      "town": "Kingston upon Hull",
       "county": {
         "code": "YRK",
         "name": "Yorkshire",
@@ -1344,7 +1344,7 @@
       "name": "The Golden Lion",
       "lat": 51.3865691,
       "lon": 0.5069238,
-      "town": "",
+      "town": "Rochester",
       "county": {
         "code": "KNT",
         "name": "Kent",
@@ -1439,7 +1439,7 @@
       "name": "The Sun Wharf",
       "lat": 51.5055788,
       "lon": -0.0857864,
-      "town": "",
+      "town": "London Bridge",
       "county": {
         "code": "SUR",
         "name": "Surrey",
@@ -1591,7 +1591,7 @@
       "name": "The Moon on the Hill",
       "lat": 51.3618835,
       "lon": -0.1932923,
-      "town": "",
+      "town": "Sutton",
       "county": {
         "code": "SUR",
         "name": "Surrey",
@@ -1876,7 +1876,7 @@
       "name": "The Man in the Wall",
       "lat": 50.8008139,
       "lon": -1.9883538,
-      "town": "",
+      "town": "Wimborne",
       "county": {
         "code": "DRS",
         "name": "Dorset",
@@ -1895,7 +1895,7 @@
       "name": "The Bear",
       "lat": 51.3749108,
       "lon": -2.138618,
-      "town": "",
+      "town": "Melksham",
       "county": {
         "code": "WTS",
         "name": "Wiltshire",
@@ -2066,7 +2066,7 @@
       "name": "The Counting House",
       "lat": 53.1638077,
       "lon": -2.2147352,
-      "town": "",
+      "town": "Congleton",
       "county": {
         "code": "CHE",
         "name": "Cheshire",
@@ -2142,7 +2142,7 @@
       "name": "Regal Moon",
       "lat": 53.6173412,
       "lon": -2.1567608,
-      "town": "",
+      "town": "Rochdale",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -2522,7 +2522,7 @@
       "name": "The Figure of Eight",
       "lat": 52.4765251,
       "lon": -1.9121985,
-      "town": "",
+      "town": "Birmingham",
       "county": {
         "code": "WRW",
         "name": "Warwickshire",
@@ -2598,7 +2598,7 @@
       "name": "The Humphrey Bean",
       "lat": 51.1951727,
       "lon": 0.2744729,
-      "town": "",
+      "town": "Tonbridge",
       "county": {
         "code": "KNT",
         "name": "Kent",
@@ -2693,7 +2693,7 @@
       "name": "The Village Inn",
       "lat": 51.5767796,
       "lon": -0.3709372,
-      "town": "",
+      "town": "Rayners Lane",
       "county": {
         "code": "MSX",
         "name": "Middlesex",
@@ -2902,7 +2902,7 @@
       "name": "The Premier",
       "lat": 53.3704085,
       "lon": -2.724379,
-      "town": "",
+      "town": "Widnes",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -3510,7 +3510,7 @@
       "name": "The Harbord Harbord",
       "lat": 53.5500829,
       "lon": -2.1981824,
-      "town": "",
+      "town": "Middleton",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -3548,7 +3548,7 @@
       "name": "The Dragon Inn",
       "lat": 52.4743083,
       "lon": -1.8967181,
-      "town": "",
+      "town": "Birmingham",
       "county": {
         "code": "WRW",
         "name": "Warwickshire",
@@ -3814,7 +3814,7 @@
       "name": "Castle in the Air",
       "lat": 53.4686663,
       "lon": -2.3610487,
-      "town": "",
+      "town": "Manchester",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -4042,7 +4042,7 @@
       "name": "George Hotel",
       "lat": 52.3757878,
       "lon": -2.3155524,
-      "town": "",
+      "town": "Bewdley",
       "county": {
         "code": "WRC",
         "name": "Worcestershire",
@@ -4251,7 +4251,7 @@
       "name": "Prestwick Pioneer",
       "lat": 55.4995645,
       "lon": -4.6107041,
-      "town": "",
+      "town": "Prestwick",
       "county": {
         "code": "AYS",
         "name": "Ayrshire",
@@ -4327,7 +4327,7 @@
       "name": "The Sennockian",
       "lat": 51.2725771,
       "lon": 0.19257,
-      "town": "",
+      "town": "Sevenoaks",
       "county": {
         "code": "KNT",
         "name": "Kent",
@@ -4346,7 +4346,7 @@
       "name": "The Waterfront Inn",
       "lat": 52.485871,
       "lon": -2.1143846,
-      "town": "",
+      "town": "Brierley Hill",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -4498,7 +4498,7 @@
       "name": "The Ash Tree",
       "lat": 53.4899205,
       "lon": -2.0923706,
-      "town": "",
+      "town": "Ashton-under-Lyne",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -5296,7 +5296,7 @@
       "name": "The Beehive",
       "lat": 51.1570031,
       "lon": -0.162448,
-      "town": "",
+      "town": "Gatwick Airport",
       "county": {
         "code": "SUR",
         "name": "Surrey",
@@ -5315,7 +5315,7 @@
       "name": "The Flying Horse",
       "lat": 51.1558381,
       "lon": -0.1626146,
-      "town": "",
+      "town": "Gatwick Airport",
       "county": {
         "code": "SUR",
         "name": "Surrey",
@@ -5543,7 +5543,7 @@
       "name": "The Moon Under Water",
       "lat": 52.4721808,
       "lon": -2.0825964,
-      "town": "",
+      "town": "Cradley Heath",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -5600,7 +5600,7 @@
       "name": "The Linford Arms",
       "lat": 52.689464,
       "lon": -2.0322234,
-      "town": "",
+      "town": "Cannock",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -5619,7 +5619,7 @@
       "name": "The Bloxwich Showman",
       "lat": 52.6147885,
       "lon": -2.0042425,
-      "town": "",
+      "town": "Bloxwich",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -5714,7 +5714,7 @@
       "name": "The Clifton",
       "lat": 52.541379,
       "lon": -2.1224519,
-      "town": "",
+      "town": "Sedgley",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -5885,7 +5885,7 @@
       "name": "The William Owen",
       "lat": 51.8014989,
       "lon": -4.9678706,
-      "town": "",
+      "town": "Haverfordwest",
       "county": {
         "code": "PMB",
         "name": "Pembrokeshire",
@@ -5980,7 +5980,7 @@
       "name": "J.J. Moon's",
       "lat": 51.4278691,
       "lon": -0.1684081,
-      "town": "",
+      "town": "Tooting",
       "county": {
         "code": "SUR",
         "name": "Surrey",
@@ -6303,7 +6303,7 @@
       "name": "Yr Hen Orsaf",
       "lat": 52.4141758,
       "lon": -4.081626,
-      "town": "",
+      "town": "Aberystwyth",
       "county": {
         "code": "CRD",
         "name": "Cardiganshire",
@@ -6379,7 +6379,7 @@
       "name": "The West Quay",
       "lat": 50.8121516,
       "lon": -0.1036382,
-      "town": "",
+      "town": "Brighton",
       "county": {
         "code": "SUS",
         "name": "Sussex",
@@ -6626,7 +6626,7 @@
       "name": "Stick or Twist",
       "lat": 53.8026217,
       "lon": -1.5431621,
-      "town": "",
+      "town": "Leeds",
       "county": {
         "code": "YRK",
         "name": "Yorkshire",
@@ -6683,7 +6683,7 @@
       "name": "The David Protheroe",
       "lat": 51.6618573,
       "lon": -3.806378,
-      "town": "",
+      "town": "Neath",
       "county": {
         "code": "GLM",
         "name": "Glamorgan",
@@ -6930,7 +6930,7 @@
       "name": "The Great Harry",
       "lat": 51.4899129,
       "lon": 0.0667107,
-      "town": "",
+      "town": "Woolwich",
       "county": {
         "code": "KNT",
         "name": "Kent",
@@ -7253,7 +7253,7 @@
       "name": "The Charlie Hall",
       "lat": 52.5240621,
       "lon": -1.840152154278008,
-      "town": "",
+      "town": "Erdington",
       "county": {
         "code": "WRW",
         "name": "Warwickshire",
@@ -7652,7 +7652,7 @@
       "name": "The Queen's Picture House",
       "lat": 53.474395799999996,
       "lon": -3.0276383037533434,
-      "town": "",
+      "town": "Waterloo",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -8222,7 +8222,7 @@
       "name": "The King Of Wessex",
       "lat": 51.380825900000005,
       "lon": -2.3645624277176625,
-      "town": "",
+      "town": "Bath",
       "county": {
         "code": "SMS",
         "name": "Somerset",
@@ -8735,7 +8735,7 @@
       "name": "The Chiltern (Wetherspoon)",
       "lat": 51.6098108,
       "lon": -0.6454055,
-      "town": "",
+      "town": "Beaconsfield",
       "county": {
         "code": "BUC",
         "name": "Buckinghamshire",
@@ -8850,7 +8850,7 @@
       "name": "The George Inn",
       "lat": 53.14333725,
       "lon": -2.362275815565458,
-      "town": "",
+      "town": "Sandbach",
       "county": {
         "code": "CHE",
         "name": "Cheshire",
@@ -8907,7 +8907,7 @@
       "name": "The Crowborough Cross",
       "lat": 51.06035925,
       "lon": 0.16145896461584763,
-      "town": "",
+      "town": "Crowborough",
       "county": {
         "code": "SUS",
         "name": "Sussex",
@@ -9516,7 +9516,7 @@
       "name": "The Roebuck",
       "lat": 51.58504055,
       "lon": 0.6033116300332098,
-      "town": "",
+      "town": "Rayleigh",
       "county": {
         "code": "ESE",
         "name": "Essex",
@@ -9611,7 +9611,7 @@
       "name": "The Railway Bell",
       "lat": 51.650474700000004,
       "lon": -0.17301318958965997,
-      "town": "",
+      "town": "Barnet",
       "county": {
         "code": "HTF",
         "name": "Hertfordshire",
@@ -9706,7 +9706,7 @@
       "name": "The Savoy",
       "lat": 51.55980825,
       "lon": -1.7821185223067122,
-      "town": "",
+      "town": "Swindon",
       "county": {
         "code": "WTS",
         "name": "Wiltshire",
@@ -9858,7 +9858,7 @@
       "name": "The Sir Henry Newbolt",
       "lat": 52.564272149999994,
       "lon": -2.080439665842273,
-      "town": "",
+      "town": "Bilston",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -9877,7 +9877,7 @@
       "name": "The Plaza",
       "lat": 52.757551750000005,
       "lon": -1.9347723499999945,
-      "town": "",
+      "town": "Rugeley",
       "county": {
         "code": "STF",
         "name": "Staffordshire",
@@ -10219,7 +10219,7 @@
       "name": "The George Hotel",
       "lat": 52.5560509,
       "lon": -0.1274415272383833,
-      "town": "",
+      "town": "Whittlesey",
       "county": {
         "code": "CMB",
         "name": "Cambridgeshire",
@@ -10238,7 +10238,7 @@
       "name": "The Union Rooms",
       "lat": 50.369490400000004,
       "lon": -4.148001189029904,
-      "town": "",
+      "town": "Plymouth",
       "county": {
         "code": "DVN",
         "name": "Devon",
@@ -10352,7 +10352,7 @@
       "name": "The Earl of Mercia",
       "lat": 52.40704805,
       "lon": -1.5086817311427458,
-      "town": "",
+      "town": "Coventry",
       "county": {
         "code": "WRW",
         "name": "Warwickshire",
@@ -10770,7 +10770,7 @@
       "name": "The Crown Inn",
       "lat": 54.0092305,
       "lon": -1.4687400650000018,
-      "town": "",
+      "town": "Knaresborough",
       "county": {
         "code": "YRK",
         "name": "Yorkshire",
@@ -10979,7 +10979,7 @@
       "name": "Society Rooms",
       "lat": 53.4811758,
       "lon": -2.0572120007119965,
-      "town": "",
+      "town": "Stalybridge",
       "county": {
         "code": "CHE",
         "name": "Cheshire",
@@ -11663,7 +11663,7 @@
       "name": "The Star Light",
       "lat": 51.461371850000006,
       "lon": -0.4455700509085549,
-      "town": "",
+      "town": "Heathrow Airport, Terminal 4",
       "county": {
         "code": "MSX",
         "name": "Middlesex",
@@ -11872,7 +11872,7 @@
       "name": "The Windmill",
       "lat": 51.889860150000004,
       "lon": 0.26001113447906543,
-      "town": "",
+      "town": "Stansted Airport",
       "county": {
         "code": "ESE",
         "name": "Essex",
@@ -12214,7 +12214,7 @@
       "name": "The Wheatsheaf Inn",
       "lat": 52.66330885,
       "lon": 0.16314838657094555,
-      "town": "",
+      "town": "Wisbech",
       "county": {
         "code": "CMB",
         "name": "Cambridgeshire",
@@ -12461,7 +12461,7 @@
       "name": "The Crown Rivers",
       "lat": 51.4730765,
       "lon": -0.4878310739289931,
-      "town": "",
+      "town": "Heathrow Airport, Terminal 5",
       "county": {
         "code": "MSX",
         "name": "Middlesex",
@@ -13050,7 +13050,7 @@
       "name": "The Tailor's Chalk",
       "lat": 51.42628345,
       "lon": 0.10358788464031146,
-      "town": "",
+      "town": "Sidcup",
       "county": {
         "code": "KNT",
         "name": "Kent",
@@ -13354,7 +13354,7 @@
       "name": "The William Tyler",
       "lat": 52.46730425,
       "lon": -1.8083721638586918,
-      "town": "",
+      "town": "Yardley",
       "county": {
         "code": "WRC",
         "name": "Worcestershire",
@@ -13544,7 +13544,7 @@
       "name": "The Old Manor",
       "lat": 51.4164671,
       "lon": -0.7455363,
-      "town": "",
+      "town": "Bracknell",
       "county": {
         "code": "BER",
         "name": "Berkshire",
@@ -13621,7 +13621,7 @@
       "name": "The Moon in the Square",
       "lat": 50.7195488,
       "lon": -1.8804189805713372,
-      "town": "",
+      "town": "Bournemouth",
       "county": {
         "code": "HMP",
         "name": "Hampshire",
@@ -13982,7 +13982,7 @@
       "name": "The George Hotel",
       "lat": 51.94854215,
       "lon": -3.39092655165509,
-      "town": "",
+      "town": "Brecon",
       "county": {
         "code": "BRN",
         "name": "Brecknockshire",
@@ -14096,7 +14096,7 @@
       "name": "The Mary Shelley",
       "lat": 50.720690399999995,
       "lon": -1.8760923205882487,
-      "town": "",
+      "town": "Bournemouth",
       "county": {
         "code": "HMP",
         "name": "Hampshire",
@@ -14438,7 +14438,7 @@
       "name": "The Bank Statement",
       "lat": 51.6192298,
       "lon": -3.9405855202349365,
-      "town": "",
+      "town": "Swansea",
       "county": {
         "code": "GLM",
         "name": "Glamorgan",
@@ -14818,7 +14818,7 @@
       "name": "The Nine Arches",
       "lat": 53.452420599999996,
       "lon": -2.6440550989734417,
-      "town": "",
+      "town": "Newton-le-Willows",
       "county": {
         "code": "LCS",
         "name": "Lancashire",
@@ -14989,7 +14989,7 @@
       "name": "The Parkstone and Heatherlands",
       "lat": 50.7433434,
       "lon": -1.8783628981924911,
-      "town": "",
+      "town": "Winton",
       "county": {
         "code": "HMP",
         "name": "Hampshire",
@@ -15103,7 +15103,7 @@
       "name": "The Britannia Inn",
       "lat": 50.38575045,
       "lon": -4.157252685412608,
-      "town": "",
+      "town": "Milehouse",
       "county": {
         "code": "DVN",
         "name": "Devon",
@@ -15331,7 +15331,7 @@
       "name": "The Admiral Collingwood",
       "lat": 51.2100693,
       "lon": -4.119296194845971,
-      "town": "",
+      "town": "Ilfracombe",
       "county": {
         "code": "DVN",
         "name": "Devon",

@@ -57,7 +57,18 @@ final class PubVisitStore {
     static int reconcile(Context context,JSONArray pubs) throws Exception {
         if(!CollectionAccessStore.installed(context,CollectionAccessStore.SPOONS))return 0;
         JSONObject records;long epoch;
-        synchronized(PubVisitStore.class){if(replacingHistory)return 0;records=read(context);epoch=generation;}
+        synchronized(PubVisitStore.class){
+            if(replacingHistory)return 0;records=read(context);epoch=generation;
+            boolean changed=false;java.util.Iterator<String> existing=records.keys();
+            while(existing.hasNext()){
+                JSONObject proof=records.optJSONObject(existing.next());if(proof==null)continue;
+                JSONObject pub=find(pubs,proof.optString("pub_id"));if(pub==null)continue;
+                JSONObject county=pub.optJSONObject("county");
+                if(proof.optString("nation").isEmpty()&&county!=null){proof.put("nation",county.optString("nation"));changed=true;}
+                if(proof.optString("town").isEmpty()&&!pub.optString("town").isEmpty()){proof.put("town",pub.optString("town"));changed=true;}
+            }
+            if(changed)write(context,records);
+        }
         JSONArray visits=TimelineVisitStore.all(context);JSONObject additions=new JSONObject();
         long now=System.currentTimeMillis();
         for(int i=0;i<visits.length();i++){
@@ -145,7 +156,7 @@ final class PubVisitStore {
     }
     private static JSONObject proof(JSONObject pub,String source,String at) throws Exception {
         return new JSONObject().put("pub_id",pub.getString("id")).put("name",pub.getString("name"))
-                .put("town",pub.optString("town")).put("source",source).put("visited_at",at);
+                .put("town",pub.optString("town")).put("nation",pub.optJSONObject("county")==null?"":pub.optJSONObject("county").optString("nation")).put("source",source).put("visited_at",at);
     }
     static JSONObject find(JSONArray pubs,String id){
         if(id==null||id.isEmpty())return null;

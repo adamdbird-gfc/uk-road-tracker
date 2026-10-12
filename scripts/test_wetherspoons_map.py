@@ -111,7 +111,19 @@ class ReviewedMapTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             build(self.catalogue, self.ledger, '2026-10-10', self.supplement())
 
+    def test_sourced_town_correction_preserves_identity_and_position(self):
+        self.catalogue['venues'][0]['town']=''
+        self.review.update(town='Rochester',town_evidence_url='https://example.org/address',town_reviewed_at='2026-10-11')
+        row=self.result()['venues'][0]
+        self.assertEqual('Rochester',row['town'])
+        self.assertEqual('pub-a',row['id'])
+        self.assertEqual(51,row['lat'])
+        self.assertFalse(row['visit_enabled'])
+
+    def test_town_override_requires_a_dated_source(self):
+        self.review['town']='Rochester'
+        with self.assertRaises(ValueError):self.result()
+
 
 if __name__ == '__main__':
     unittest.main()
-

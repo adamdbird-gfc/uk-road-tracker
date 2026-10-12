@@ -141,16 +141,7 @@ public class MapActivity extends Activity {
         titleRow.addView(title);
         String settlementCode = getIntent().getStringExtra("settlement_code");
         if (settlementCode != null && !settlementCode.isEmpty()) {
-            TextView close = new TextView(this);
-            close.setText("× Close");
-            close.setTextSize(13);
-            close.setTypeface(null, Typeface.BOLD);
-            close.setTextColor(0xFFD3DCED);
-            close.setGravity(Gravity.CENTER);
-            close.setPadding(dp(12), dp(8), dp(12), dp(8));
-            close.setBackground(roundRect(0xFF182F62, dp(10)));
-            close.setContentDescription("Close town map and return to Progress");
-            close.setOnClickListener(v -> finish());
+            TextView close = RoadprintsDialog.closeControl(this,this::finish);
             titleRow.addView(close);
         }
                 if (getIntent().hasExtra("settlement_code")) heading.addView(titleRow);
@@ -941,7 +932,7 @@ public class MapActivity extends Activity {
         detail.setOnClickListener(v->{popup.dismiss();if(visited)PubVisitUi.details(this,pub,this::applyCollectionLayer);
             else PubVisitUi.live(this,pub,this::applyCollectionLayer,null);});
         TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());
-        actions.addView(detail);actions.addView(close);content.addView(actions);
+        actions.addView(detail);content.addView(actions);RoadprintsDialog.placeClose(content,close);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
         popup.show();
     }
@@ -965,7 +956,7 @@ public class MapActivity extends Activity {
             });
             actions.addView(related);
         }
-        actions.addView(close);
+        RoadprintsDialog.placeClose(content,close);
         LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, -2);
         actionParams.topMargin = dp(14);
         content.addView(actions, actionParams);
@@ -1232,7 +1223,7 @@ public class MapActivity extends Activity {
         actions.setGravity(Gravity.END);
         TextView close = cardAction("CLOSE", false);
         close.setOnClickListener(v -> journeyListDialog.dismiss());
-        actions.addView(close);
+        RoadprintsDialog.placeClose(content,close);
         content.addView(actions);
         journeyListDialog = new AlertDialog.Builder(this).setView(content).create();
         journeyListDialog.setOnShowListener(dialog -> {
@@ -1394,7 +1385,7 @@ public class MapActivity extends Activity {
         actions.setGravity(Gravity.END);
         TextView close = cardAction("CLOSE", false);
         close.setOnClickListener(v -> roadDialog.dismiss());
-        actions.addView(close);
+        RoadprintsDialog.placeClose(content,close);
         content.addView(actions);
         presentRoadSummaryContent(content);
     }
@@ -1529,7 +1520,7 @@ public class MapActivity extends Activity {
             roadSummaryRequestId++;
             roadDialog.dismiss();
         });
-        actions.addView(close); content.addView(actions);
+        content.addView(actions);RoadprintsDialog.placeClose(content,close);
         presentRoadSummaryContent(content);
     }
 
@@ -1557,6 +1548,8 @@ public class MapActivity extends Activity {
         LinearLayout.LayoutParams loadingParams = new LinearLayout.LayoutParams(-1, -2);
         loadingParams.topMargin = dp(12);
         content.addView(loading, loadingParams);
+        TextView close=RoadprintsDialog.closeControl(this,()->{roadSummaryRequestId++;if(roadDialog!=null)roadDialog.dismiss();});
+        RoadprintsDialog.placeClose(content,close);
         presentRoadSummaryContent(content);
     }
 

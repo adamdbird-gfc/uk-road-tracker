@@ -52,8 +52,10 @@ def build(catalogue, reviews, as_of, supplemental=None):
         if (not all(isinstance(n, (int, float)) and not isinstance(n, bool) and math.isfinite(n) for n in (lat, lon))
                 or not 49 <= lat <= 61 or not -9 <= lon <= 2 or not row.get('county')):
             raise ValueError('Invalid UK map position/county')
+        if 'town' in review and (not isinstance(review['town'],str) or not review['town'].strip() or len(review['town'])>200 or not review.get('town_evidence_url','').startswith('https://') or not review.get('town_reviewed_at') or date.fromisoformat(review['town_reviewed_at'])>date.fromisoformat(as_of)):
+            raise ValueError('Town correction requires dated source evidence')
         active.append({k: row[k] for k in ('id', 'name', 'lat', 'lon', 'town', 'county', 'osm_aliases')} |
-                      {'status': 'active', 'operating_status': 'reviewed_current',
+                      {'town': review.get('town',row['town']), 'status': 'active', 'operating_status': 'reviewed_current',
                        'map_reviewed_at': review['reviewed_at'], 'visit_enabled': False})
     supplemental = supplemental or {'format': 1, 'collection_id': 'wetherspoons',
                                     'approval_scope': 'map_only_supplement', 'venues': []}

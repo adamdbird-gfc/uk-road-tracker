@@ -85,7 +85,11 @@
       "lon": 0.5069238,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-lion-rochester/",
-      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved.",
+      "town": "Rochester",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-lion-rochester/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "147–151 High Street, Rochester, Kent, ME1 1EL"
     },
     {
       "id": "spoons-osm-n13257916655",
@@ -150,7 +154,11 @@
       "lon": 0.2744729,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-humphrey-bean-tonbridge/",
-      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved.",
+      "town": "Tonbridge",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-humphrey-bean-tonbridge/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "94 High Street, Tonbridge, Kent, TN9 1AP"
     },
     {
       "id": "spoons-osm-n2635076328",
@@ -228,7 +236,11 @@
       "lon": 0.19257,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sennockian-sevenoaks/",
-      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved.",
+      "town": "Sevenoaks",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-sennockian-sevenoaks/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "139–141 High Street, Sevenoaks, Kent, TN13 1UX"
     },
     {
       "id": "spoons-osm-n5074355021",
@@ -280,7 +292,11 @@
       "lon": 0.0667107,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-harry-woolwich/",
-      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved.",
+      "town": "Woolwich",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-great-harry-woolwich/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "7–9 Wellington Street, Woolwich, Greenwich, SE18 6PQ"
     },
     {
       "id": "spoons-osm-n9664484171",
@@ -410,7 +426,11 @@
       "lon": 0.10358788464031146,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tailors-chalk-sidcup/",
-      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved."
+      "basis": "Current operator pub page with opening schedule; checked venue name and locality/address against OSM. All packaged data remain OSM-derived. Map only; premises/visits not approved.",
+      "town": "Sidcup",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-tailors-chalk-sidcup/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "47–49 Sidcup High Street, Sidcup, Bexley, DA14 6ED"
     },
     {
       "id": "spoons-osm-w540185919",
@@ -700,7 +720,11 @@
       "source_name": "The Roebuck",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-roebuck-rayleigh/",
-      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary."
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary.",
+      "town": "Rayleigh",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-roebuck-rayleigh/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "138 High Street, Rayleigh, Essex, SS6 7BU"
     },
     {
       "id": "spoons-osm-w328223880",
@@ -739,7 +763,11 @@
       "source_name": "The Windmill",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-windmill-stansted/",
-      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. Airport after-security premises: position is within Stansted terminal; no airport-wide visit inference. OSM town/postcode missing, left unchanged."
+      "basis": "Current operator listing and opening schedule match OSM venue identity and locality. OSM name/position retained; informational map approval only, not a verified visit boundary. Airport after-security premises: position is within Stansted terminal; no airport-wide visit inference. OSM town/postcode missing, left unchanged.",
+      "town": "Stansted Airport",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-windmill-stansted/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Stansted Airport (after security), Stansted, Essex, CM24 1RW"
     },
     {
       "id": "spoons-osm-w475034730",
@@ -1022,7 +1050,11 @@
       "source_name": "Y Dic Penderyn",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/y-dic-penderyn-merthyr-tydfil/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged.",
+      "town": "Merthyr Tydfil",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/y-dic-penderyn-merthyr-tydfil/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "102–103 High Street, Merthyr Tydfil, CF47 8AP"
     },
     {
       "id": "spoons-osm-n11280493976",
@@ -1152,7 +1184,11 @@
       "source_name": "The William Owen",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-owen-haverfordwest/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged.",
+      "town": "Haverfordwest",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-owen-haverfordwest/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "6 Quay Street, Haverfordwest, Pembrokeshire, SA61 1BG"
     },
     {
       "id": "spoons-osm-n6592686784",
@@ -1191,7 +1227,11 @@
       "source_name": "Yr Hen Orsaf",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/yr-hen-orsaf-aberystwyth/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Station-site pub: OSM postcode SY23 1LH differs from operator SY23 1LN. Same Aberystwyth station/Alexandra Road locality, discrepancy retained; station-wide GPS evidence cannot award a pub visit."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Station-site pub: OSM postcode SY23 1LH differs from operator SY23 1LN. Same Aberystwyth station/Alexandra Road locality, discrepancy retained; station-wide GPS evidence cannot award a pub visit.",
+      "town": "Aberystwyth",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/yr-hen-orsaf-aberystwyth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Alexandra Road, Aberystwyth, Ceredigion, SY23 1LN"
     },
     {
       "id": "spoons-osm-n7827962966",
@@ -1269,7 +1309,11 @@
       "source_name": "The David Protheroe",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-david-protheroe-neath/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged.",
+      "town": "Neath",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-david-protheroe-neath/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "7 Windsor Road, Neath, Neath Port Talbot, SA11 1LS"
     },
     {
       "id": "spoons-osm-n915322033",
@@ -1490,7 +1534,11 @@
       "source_name": "The George Hotel",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-brecon/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Source postcode missing; no operator postcode copied into app data."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged. Source postcode missing; no operator postcode copied into app data.",
+      "town": "Brecon",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-brecon/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "George Street, Brecon, Powys, LD3 7LD"
     },
     {
       "id": "spoons-osm-w727692740",
@@ -1516,7 +1564,11 @@
       "source_name": "The Bank Statement",
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bank-statement-swansea/",
-      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged."
+      "basis": "Individual current operator pub listing matches OSM venue identity/locality. Regular operating schedule distinguishes daily closing from permanent closure. Original OSM name, town and label position retained; map-only approval, no verified visit boundary. Source town missing; reviewed locality confirmed by pub identity/postcode/position, source field left unchanged.",
+      "town": "Swansea",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-bank-statement-swansea/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "57–58 Wind Street, Swansea, SA1 1EP"
     },
     {
       "id": "spoons-osm-w926770527",
@@ -1922,7 +1974,11 @@
       "lon": -4.6107041,
       "reviewed_at": "2026-10-11",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-prestwick-pioneer-prestwick/",
-      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Source town/postcode missing; retained unchanged. Reviewed as Prestwick town-centre pub, not airport."
+      "basis": "Current individual operator pub listing and opening schedule checked against OSM venue name/locality/postcode; article, punctuation, branding and hotel suffix variants reviewed. Names and map positions remain OSM-derived; map only, premises and visits not approved. Source town/postcode missing; retained unchanged. Reviewed as Prestwick town-centre pub, not airport.",
+      "town": "Prestwick",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-prestwick-pioneer-prestwick/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "87 Main Street, Prestwick, South Ayrshire, KA9 1JS"
     },
     {
       "id": "spoons-osm-n4019988144",
@@ -3055,7 +3111,11 @@
       "lon": -2.2147352,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-counting-house-congleton/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town; Congleton."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town; Congleton.",
+      "town": "Congleton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-counting-house-congleton/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "18 Swan Bank, Congleton, Cheshire, CW12 1AH"
     },
     {
       "id": "spoons-osm-n21093896",
@@ -3081,7 +3141,11 @@
       "lon": -2.1567608,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-regal-moon-rochdale/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town; Rochdale."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town; Rochdale.",
+      "town": "Rochdale",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-regal-moon-rochdale/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "The Butts, Rochdale, Lancashire, OL16 1HB"
     },
     {
       "id": "spoons-osm-n258869419",
@@ -3120,7 +3184,11 @@
       "lon": -2.724379,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-premier-widnes/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Widnes."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Widnes.",
+      "town": "Widnes",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-premier-widnes/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "93–99 Albert Road, Widnes, Cheshire, WA8 6JS"
     },
     {
       "id": "spoons-osm-n2969881472",
@@ -3172,7 +3240,11 @@
       "lon": -2.1981824,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-harbord-harbord-middleton/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Middleton."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Middleton.",
+      "town": "Middleton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-harbord-harbord-middleton/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "17–21 Long Street, Middleton, Manchester, M24 6TE"
     },
     {
       "id": "spoons-osm-n32532722",
@@ -3257,7 +3329,11 @@
       "lon": -2.3610487,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/castle-in-the-air-manchester/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Chill Factore/Trafford. Presence in shopping/leisure complex or station alone cannot prove pub entry."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Chill Factore/Trafford. Presence in shopping/leisure complex or station alone cannot prove pub entry.",
+      "town": "Manchester",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/castle-in-the-air-manchester/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "The Snow Centre, 7 Trafford Way, Manchester, M41 7JA"
     },
     {
       "id": "spoons-osm-n348176545",
@@ -3335,7 +3411,11 @@
       "lon": -2.0923706,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ash-tree-ashton-under-lyne/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved.",
+      "town": "Ashton-under-Lyne",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-ash-tree-ashton-under-lyne/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "9–11 Wellington Road, Ashton-under-Lyne, Lancashire, OL6 6DA"
     },
     {
       "id": "spoons-osm-n433743946",
@@ -3576,7 +3656,11 @@
       "lon": -3.0276383037533434,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-queens-picture-house-liverpool/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Waterloo/Liverpool."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Waterloo/Liverpool.",
+      "town": "Waterloo",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-queens-picture-house-liverpool/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "47–49 South Road, Waterloo, Liverpool, Merseyside, L22 5PE"
     },
     {
       "id": "spoons-osm-w1091833099",
@@ -3706,7 +3790,11 @@
       "lon": -2.362275815565458,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-inn-sandbach/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved.",
+      "town": "Sandbach",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-inn-sandbach/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "39 High Street, Sandbach, Cheshire, CW11 1AL"
     },
     {
       "id": "spoons-osm-w146610676",
@@ -3830,7 +3918,11 @@
       "lon": -2.0572120007119965,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-society-rooms-stalybridge/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Stalybridge."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Stalybridge.",
+      "town": "Stalybridge",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-society-rooms-stalybridge/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "49–51 Grosvenor Street, Stalybridge, Cheshire, SK15 2JN"
     },
     {
       "id": "spoons-osm-w317031137",
@@ -4059,7 +4151,11 @@
       "lon": -2.6440550989734417,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-nine-arches-newton-le-willows/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Newton-le-Willows."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Names, map positions, county and omitted source fields remain OSM-derived. Map only; premises/visit recognition not approved. Explicit locality/source omission review: missing source town/postcode; Newton-le-Willows.",
+      "town": "Newton-le-Willows",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-nine-arches-newton-le-willows/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "3 Legh Street, Newton-le-Willows, Merseyside, WA12 9NE"
     },
     {
       "id": "spoons-osm-w922945824",
@@ -4183,7 +4279,11 @@
       "lon": -0.3327824,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-three-john-scotts-kingston-upon-hull/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source town missing; Alfred Gelder Street Hull checked."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source town missing; Alfred Gelder Street Hull checked.",
+      "town": "Kingston upon Hull",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-three-john-scotts-kingston-upon-hull/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "City Exchange, Alfred Gelder Street, Lowgate, Kingston Upon Hull, East Riding of Yorkshire, HU1 1AA"
     },
     {
       "id": "spoons-osm-n1692462987",
@@ -4437,7 +4537,11 @@
       "lon": -1.5431621,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/stick-or-twist-leeds/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Current rebuilt Stick or Twist individually verified; do not apply former demolished-site listing to current pub. Exact future visit premises remain unapproved."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Current rebuilt Stick or Twist individually verified; do not apply former demolished-site listing to current pub. Exact future visit premises remain unapproved.",
+      "town": "Leeds",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/stick-or-twist-leeds/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Merrion Way, Leeds, West Yorkshire, LS2 8PD"
     },
     {
       "id": "spoons-osm-w1002819856",
@@ -4685,7 +4789,11 @@
       "lon": -1.4687400650000018,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-inn-knaresborough/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source town/postcode missing; reviewed as Knaresborough."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source town/postcode missing; reviewed as Knaresborough.",
+      "town": "Knaresborough",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-inn-knaresborough/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "71–75 High Street, Knaresborough, North Yorkshire, HG5 0HB"
     },
     {
       "id": "spoons-osm-w307293546",
@@ -5974,7 +6082,11 @@
         "node/258179670"
       ],
       "lat": 52.4765251,
-      "lon": -1.9121985
+      "lon": -1.9121985,
+      "town": "Birmingham",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-figure-of-eight-birmingham/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "236–239 Broad Street, Birmingham, West Midlands, B1 2HG"
     },
     {
       "id": "spoons-osm-n2804103075",
@@ -6026,7 +6138,11 @@
         "node/319266430"
       ],
       "lat": 52.4743083,
-      "lon": -1.8967181
+      "lon": -1.8967181,
+      "town": "Birmingham",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-dragon-inn-birmingham/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Hurst Street, Birmingham, West Midlands, B5 4TD"
     },
     {
       "id": "spoons-osm-n3212139122",
@@ -6065,7 +6181,11 @@
         "node/3730921232"
       ],
       "lat": 52.3757878,
-      "lon": -2.3155524
+      "lon": -2.3155524,
+      "town": "Bewdley",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/george-hotel-bewdley/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Load Street, Bewdley, Worcestershire, DY12 2AW"
     },
     {
       "id": "spoons-osm-n410996349",
@@ -6078,7 +6198,11 @@
         "node/410996349"
       ],
       "lat": 52.485871,
-      "lon": -2.1143846
+      "lon": -2.1143846,
+      "town": "Brierley Hill",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-waterfront-inn-brierley-hill/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "6–7 Waterfront East, Level Street, Brierley Hill, West Midlands, DY5 1XG"
     },
     {
       "id": "spoons-osm-n410996418",
@@ -6195,7 +6319,11 @@
         "node/529936258"
       ],
       "lat": 52.4721808,
-      "lon": -2.0825964
+      "lon": -2.0825964,
+      "town": "Cradley Heath",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-under-water-cradley-heath/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "164–166 High Street, Cradley Heath, West Midlands, B64 5HJ"
     },
     {
       "id": "spoons-osm-n5313735958",
@@ -6208,7 +6336,11 @@
         "node/5313735958"
       ],
       "lat": 52.689464,
-      "lon": -2.0322234
+      "lon": -2.0322234,
+      "town": "Cannock",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-linford-arms-cannock/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "79 Market Place, Cannock, Staffordshire, WS11 1BN"
     },
     {
       "id": "spoons-osm-n5313836924",
@@ -6221,7 +6353,11 @@
         "node/5313836924"
       ],
       "lat": 52.6147885,
-      "lon": -2.0042425
+      "lon": -2.0042425,
+      "town": "Bloxwich",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-bloxwich-showman-bloxwich/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "156A High Street, Bloxwich, West Midlands, WS3 3JT"
     },
     {
       "id": "spoons-osm-n559787381",
@@ -6234,7 +6370,11 @@
         "node/559787381"
       ],
       "lat": 52.541379,
-      "lon": -2.1224519
+      "lon": -2.1224519,
+      "town": "Sedgley",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-clifton-sedgley/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Bull Ring, Sedgley, West Midlands, DY3 1RX"
     },
     {
       "id": "spoons-osm-n560526527",
@@ -6358,7 +6498,11 @@
         "way/102824957"
       ],
       "lat": 52.5240621,
-      "lon": -1.840152154278008
+      "lon": -1.840152154278008,
+      "town": "Erdington",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-charlie-hall-birmingham/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "49 Barnabas Road, Erdington, Birmingham, West Midlands, B23 6SH"
     },
     {
       "id": "spoons-osm-w104192800",
@@ -6521,7 +6665,11 @@
         "way/203601490"
       ],
       "lat": 52.564272149999994,
-      "lon": -2.080439665842273
+      "lon": -2.080439665842273,
+      "town": "Bilston",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-henry-newbolt-bilston/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "45–47 High Street, Bilston, West Midlands, WV14 0EP"
     },
     {
       "id": "spoons-osm-w204044220",
@@ -6534,7 +6682,11 @@
         "way/204044220"
       ],
       "lat": 52.757551750000005,
-      "lon": -1.9347723499999945
+      "lon": -1.9347723499999945,
+      "town": "Rugeley",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-plaza-rugeley/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Horsefair, Rugeley, Staffordshire, WS15 2EH"
     },
     {
       "id": "spoons-osm-w205254381",
@@ -6638,7 +6790,11 @@
         "way/249010045"
       ],
       "lat": 52.40704805,
-      "lon": -1.5086817311427458
+      "lon": -1.5086817311427458,
+      "town": "Coventry",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-earl-of-mercia-coventry/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "18 High Street, Coventry, West Midlands, CV1 5RE"
     },
     {
       "id": "spoons-osm-w25372738",
@@ -6807,7 +6963,11 @@
         "way/58704822"
       ],
       "lat": 52.46730425,
-      "lon": -1.8083721638586918
+      "lon": -1.8083721638586918,
+      "town": "Yardley",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-tyler-birmingham/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "140 Church Road, Yardley, Birmingham, West Midlands, B25 8UT"
     },
     {
       "id": "spoons-osm-w593889513",
@@ -7263,7 +7423,11 @@
       "lon": -0.1274415272383833,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-peterborough/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source missing town/postcode; checked as Whittlesey near Peterborough, not other George Hotels."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source missing town/postcode; checked as Whittlesey near Peterborough, not other George Hotels.",
+      "town": "Whittlesey",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-peterborough/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "10 Market Place, Whittlesey, Peterborough, Cambridgeshire, PE7 1AB"
     },
     {
       "id": "spoons-osm-w276517613",
@@ -7380,7 +7544,11 @@
       "lon": 0.16314838657094555,
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wheatsheaf-inn-wisbech/",
-      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source missing town/postcode; checked as Wisbech."
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source missing town/postcode; checked as Wisbech.",
+      "town": "Wisbech",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-wheatsheaf-inn-wisbech/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "18–22 Church Terrace, Wisbech, Cambridgeshire, PE13 1BL"
     },
     {
       "id": "spoons-osm-w427181353",
@@ -7666,7 +7834,11 @@
       "source_name": "The Man in the Wall",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-man-in-the-wall-wimborne/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Wimborne",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-man-in-the-wall-wimborne/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "10 West Borough, Wimborne, Dorset, BH21 1NF"
     },
     {
       "id": "spoons-osm-n1776838960",
@@ -7679,7 +7851,11 @@
       "source_name": "The Bear",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bear-melksham/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Melksham",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-bear-melksham/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "3 Bath Road, Melksham, Wiltshire, SN12 6LL"
     },
     {
       "id": "spoons-osm-n2092714898",
@@ -8017,7 +8193,11 @@
       "source_name": "The King Of Wessex",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-king-of-wessex-bath/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Bath",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-king-of-wessex-bath/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "5–10 James Street West, Bath, Somerset, BA1 2BX"
     },
     {
       "id": "spoons-osm-w1204936359",
@@ -8147,7 +8327,11 @@
       "source_name": "The Savoy",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-savoy-swindon/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Swindon",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-savoy-swindon/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "38–40 Regent Street, Swindon, Wiltshire, SN1 1JL"
     },
     {
       "id": "spoons-osm-w199423476",
@@ -8212,7 +8396,11 @@
       "source_name": "The Union Rooms",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-union-rooms-plymouth/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Plymouth",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-union-rooms-plymouth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "19 Union Street, Plymouth, Devon, PL1 2SU"
     },
     {
       "id": "spoons-osm-w261289736",
@@ -8602,7 +8790,11 @@
       "source_name": "The Britannia Inn",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-britannia-inn-plymouth/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Milehouse",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-britannia-inn-plymouth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "1 Wolseley Road, Milehouse, Plymouth, Devon, PL2 3AA"
     },
     {
       "id": "spoons-osm-w968445111",
@@ -8615,7 +8807,11 @@
       "source_name": "The Admiral Collingwood",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-admiral-collingwood-ilfracombe/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved.",
+      "town": "Ilfracombe",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-admiral-collingwood-ilfracombe/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Wilder Road, Ilfracombe, Devon, EX34 9AR"
     },
     {
       "id": "spoons-osm-w65073128",
@@ -8628,7 +8824,11 @@
       "source_name": "The Moon in the Square",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-in-the-square-bournemouth/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained.",
+      "town": "Bournemouth",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-in-the-square-bournemouth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "4–8 Exeter Road, Bournemouth, Dorset, BH2 5AQ"
     },
     {
       "id": "spoons-osm-w734750734",
@@ -8641,7 +8841,11 @@
       "source_name": "The Mary Shelley",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mary-shelley-bournemouth/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained.",
+      "town": "Bournemouth",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-mary-shelley-bournemouth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "St Peters Quarter, Bournemouth, Dorset, BH1 2AD"
     },
     {
       "id": "spoons-osm-w931373268",
@@ -8654,7 +8858,11 @@
       "source_name": "The Parkstone and Heatherlands",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-parkstone-and-heatherlands-bournemouth/",
-      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained."
+      "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained.",
+      "town": "Winton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-parkstone-and-heatherlands-bournemouth/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "433–437 Wimborne Road, Winton, Bournemouth, Dorset, BH9 2AN"
     },
     {
       "id": "spoons-osm-n1043180244",
@@ -8680,7 +8888,11 @@
       "source_name": "The Post & Telegraph",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-post-telegraph-brighton/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved.",
+      "town": "Brighton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-post-telegraph-brighton/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "155–158 North Street, Brighton, East Sussex, BN1 1EA"
     },
     {
       "id": "spoons-osm-n12860890723",
@@ -9044,7 +9256,11 @@
       "source_name": "The Beehive",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-beehive-crawley/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal before security. Source RH6 0NN differs from operator RH6 0NQ; retain source fields. Terminal presence cannot award a pub visit."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal before security. Source RH6 0NN differs from operator RH6 0NQ; retain source fields. Terminal presence cannot award a pub visit.",
+      "town": "Gatwick Airport",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-beehive-crawley/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Gatwick Airport, South Terminal (before security), Crawley, West Sussex, RH6 0NQ"
     },
     {
       "id": "spoons-osm-n5046986721",
@@ -9057,7 +9273,11 @@
       "source_name": "The Flying Horse",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-horse-crawley/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal after security; terminal presence cannot award a pub visit."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal after security; terminal presence cannot award a pub visit.",
+      "town": "Gatwick Airport",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-horse-crawley/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Gatwick Airport, South Terminal (after security), Crawley, West Sussex, RH6 0NN"
     },
     {
       "id": "spoons-osm-n5119504347",
@@ -9135,7 +9355,11 @@
       "source_name": "The West Quay",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-west-quay-brighton/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved.",
+      "town": "Brighton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-west-quay-brighton/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Brighton Marina Village, Brighton, East Sussex, BN2 5UT"
     },
     {
       "id": "spoons-osm-n7816165250",
@@ -9331,7 +9555,11 @@
       "source_name": "The Chiltern (Wetherspoon)",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-chiltern-beaconsfield/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. The Chiltern is a distinct operating Beaconsfield pub, not the closed Hope & Champion at the services. Retain source name including Wetherspoon qualifier."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. The Chiltern is a distinct operating Beaconsfield pub, not the closed Hope & Champion at the services. Retain source name including Wetherspoon qualifier.",
+      "town": "Beaconsfield",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-chiltern-beaconsfield/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "12 Station Road, Beaconsfield, Buckinghamshire, HP9 1QR"
     },
     {
       "id": "spoons-osm-w1328924383",
@@ -9357,7 +9585,11 @@
       "source_name": "The Crowborough Cross",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crowborough-cross-crowborough/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved.",
+      "town": "Crowborough",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-crowborough-cross-crowborough/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Beacon Road, Crowborough, East Sussex, TN6 1AF"
     },
     {
       "id": "spoons-osm-w1415376935",
@@ -9596,7 +9828,11 @@
       "source_name": "The Old Manor",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-manor-bracknell/",
-      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved.",
+      "town": "Bracknell",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-manor-bracknell/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Grenville Place, Bracknell, Berkshire, RG12 1BP"
     },
     {
       "id": "spoons-osm-w669923434",
@@ -9786,7 +10022,11 @@
       "source_name": "The Sun Wharf",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sun-wharf-london-bridge/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval.",
+      "town": "London Bridge",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-sun-wharf-london-bridge/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "50 Tooley Street, London Bridge, Southwark, SE1 2TF"
     },
     {
       "id": "spoons-osm-n153620231",
@@ -9799,7 +10039,11 @@
       "source_name": "The Moon on the Hill",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-on-the-hill-sutton/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval.",
+      "town": "Sutton",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-on-the-hill-sutton/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "5–9 Hill Road, Sutton, SM1 1DZ"
     },
     {
       "id": "spoons-osm-n1713315332",
@@ -9877,7 +10121,11 @@
       "source_name": "The Village Inn",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-village-inn-rayners-lane/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval.",
+      "town": "Rayners Lane",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-village-inn-rayners-lane/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "402–408 Rayners Lane, Rayners Lane, Harrow, HA5 5DY"
     },
     {
       "id": "spoons-osm-n293516727",
@@ -10085,7 +10333,11 @@
       "source_name": "J.J. Moon's",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/j-j-moons-tooting/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval.",
+      "town": "Tooting",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/j-j-moons-tooting/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "56a High Street, Tooting, Wandsworth, SW17 0RN"
     },
     {
       "id": "spoons-osm-n646585258",
@@ -10272,7 +10524,11 @@
         "https://camra.org.uk/pubs/railway-bell-new-barnet-157874",
         "https://barnetpost.co.uk/2026/09/04/new-barnet-received-top-hygiene-rating/",
         "https://www.jdwetherspoon.com/pub-histories/the-railway-bell-barnet/"
-      ]
+      ],
+      "town": "Barnet",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-railway-bell-barnet/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "13 East Barnet Road, Barnet, EN4 8RR"
     },
     {
       "id": "spoons-osm-w198678837",
@@ -10363,7 +10619,11 @@
       "source_name": "The Star Light",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/star-light-hounslow/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval. Operator uses Star Light without initial article at Heathrow Terminal 4 after security. Retain source name. Terminal presence cannot award a pub visit."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval. Operator uses Star Light without initial article at Heathrow Terminal 4 after security. Retain source name. Terminal presence cannot award a pub visit.",
+      "town": "Heathrow Airport, Terminal 4",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/star-light-hounslow/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Heathrow Airport, Terminal 4 (after security) , Hounslow, Middlesex, TW6 3XA"
     },
     {
       "id": "spoons-osm-w391735310",
@@ -10415,7 +10675,11 @@
       "source_name": "The Crown Rivers",
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-rivers-hounslow/",
-      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval. Crown Rivers is Heathrow Terminal 5 after security. Terminal presence cannot award a pub visit."
+      "basis": "Current individually checked operator pub page, matching named locality/address and regular weekly schedule support operation. Opening-hours Closed text is not permanent closure. OSM-derived identity, name and map position retained; no strict premises boundary or visit approval. Crown Rivers is Heathrow Terminal 5 after security. Terminal presence cannot award a pub visit.",
+      "town": "Heathrow Airport, Terminal 5",
+      "town_evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-rivers-hounslow/",
+      "town_reviewed_at": "2026-10-12",
+      "town_address": "Heathrow Airport, Terminal 5 (after security) , Hounslow, Hillingdon, TW6 2GA"
     },
     {
       "id": "spoons-osm-w441509845",

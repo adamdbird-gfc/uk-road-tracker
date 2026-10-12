@@ -142,7 +142,7 @@ final class PubVisitUi {
             if(proof==null||!pub.optString("id").equals(proof.optString("pub_id")))continue;
             count++;
             body.addView(text(activity,date(proof.optString("visited_at"))+" · "+source(proof),15,Color.WHITE,false));
-            TextView remove=text(activity,"Remove incorrect visit",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);
+            TextView remove=text(activity,"Remove incorrect visit",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setTag("roadprints_destructive");
             remove.setPadding(dp(activity,12),dp(activity,14),dp(activity,12),dp(activity,8));body.addView(remove);
             remove.setOnClickListener(v->RoadprintsDialog.show(activity,"Remove this visit?",
                     "Other supported visits will be retained. A removed Timeline visit will not return on reimport.",null,
@@ -157,34 +157,54 @@ final class PubVisitUi {
                 current?"Check in now":"Close",current?()->live(activity,pub,changed,null):null,current?"Close":null,null);
         return holder[0];
     }
+    interface LocationRequester {
+        com.google.android.gms.tasks.Task<android.location.Location> get(Activity activity,CancellationTokenSource request);
+    }
+    static final LocationRequester DEVICE_LOCATION=(activity,request)->LocationServices.getFusedLocationProviderClient(activity)
+            .getCurrentLocation(new com.google.android.gms.location.CurrentLocationRequest.Builder()
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY).setMaxUpdateAgeMillis(0).setDurationMillis(15000).build(),request.getToken());
+    static LocationRequester locationRequester=DEVICE_LOCATION;
     static AlertDialog live(Activity activity,JSONObject pub,Runnable changed,Runnable closed){
+        LinearLayout body=vertical(activity);
         TextView status=text(activity,"Check your location, then confirm you are inside this named pub.",15,MUTED,false);
-        CancellationTokenSource[] request={null};
-        AlertDialog[] holder={null};
-        holder[0]=RoadprintsDialog.show(activity,pub.optString("name"),pub.optString("town"),status,
+        status.setTag("pub_location_status");body.addView(status);
+        android.widget.ProgressBar spinner=new android.widget.ProgressBar(activity);spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(TEAL));
+        spinner.setTag("pub_location_spinner");spinner.setVisibility(View.GONE);body.addView(spinner,new LinearLayout.LayoutParams(dp(activity,32),dp(activity,32)));
+        CancellationTokenSource[] request={null};int[] attempt={0};AlertDialog[] holder={null};
+        android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());Runnable[] timeout={null};
+        holder[0]=RoadprintsDialog.show(activity,pub.optString("name"),pub.optString("town"),body,
                 "Check location",()->{
                     if(activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
-                        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},91);
-                        status.setText("Grant precise location, then tap Check location again.");return;
+                        status.setText("Precise location permission is required. Grant it, then tap Check location again.");
+                        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},91);return;
                     }
                     if(request[0]!=null)request[0].cancel();request[0]=new CancellationTokenSource();
-                    status.setText("Checking your location…");
-                    try{LocationServices.getFusedLocationProviderClient(activity)
-                            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,request[0].getToken())
-                            .addOnSuccessListener(activity,fix->{
-                                if(!holder[0].isShowing())return;
-                                String problem=PubVisitEvidence.liveProblem(pub,fix,SystemClock.elapsedRealtimeNanos());
-                                if(!problem.isEmpty()){status.setText(problem);return;}
-                                RoadprintsDialog.show(activity,"Visiting "+pub.optString("name")+"?",
-                                        "Confirm that you are inside this pub, rather than only at the airport, holiday park or another nearby place.",null,
-                                        "Confirm pub visit",()->{
-                                            try{PubVisitStore.confirmLive(activity,pub.optString("id"),fix,true);if(changed!=null)changed.run();holder[0].dismiss();}
-                                            catch(Exception error){status.setText(error.getMessage());}
-                                        },"Cancel",null);
-                            }).addOnFailureListener(activity,error->status.setText("Location could not be checked. Please try again."));
-                    }catch(SecurityException denied){status.setText("Precise location permission is required.");}
+                    final int current=++attempt[0];
+                    View button=holder[0].getWindow().getDecorView().findViewWithTag("roadprints_dialog_primary");button.setEnabled(false);
+                    spinner.setVisibility(View.VISIBLE);status.setText("Checking your current location…");
+                    Runnable ready=()->{spinner.setVisibility(View.GONE);button.setEnabled(true);((TextView)button).setText("Check location again");if(timeout[0]!=null)handler.removeCallbacks(timeout[0]);};
+                    timeout[0]=()->{if(current!=attempt[0]||!holder[0].isShowing())return;attempt[0]++;request[0].cancel();ready.run();status.setText("No fresh location arrived. Check that device Location is switched on, then try again.");};
+                    handler.postDelayed(timeout[0],20000);
+                    try{locationRequester.get(activity,request[0]).addOnCompleteListener(activity,task->{
+                        if(current!=attempt[0]||!holder[0].isShowing())return;
+                        ready.run();
+                        if(!task.isSuccessful()){status.setText("Location could not be checked. Check device Location and try again.");return;}
+                        android.location.Location fix=task.getResult();
+                        String problem=PubVisitEvidence.liveProblem(pub,fix,SystemClock.elapsedRealtimeNanos());
+                        if(!problem.isEmpty()){
+                            if(fix!=null&&fix.hasAccuracy())problem+="\nReported distance: "+DistanceUnits.format(activity,ServiceStationEvidence.metres(fix.getLatitude(),fix.getLongitude(),pub.optDouble("lat"),pub.optDouble("lng")))+" · accuracy: "+Math.round(fix.getAccuracy())+" m.";
+                            status.setText(problem);return;
+                        }
+                        status.setText("Location checked. Confirm the named pub visit to save it.");
+                        RoadprintsDialog.show(activity,"Visiting "+pub.optString("name")+"?",
+                                "Confirm that you are inside this pub, rather than only at the airport, holiday park or another nearby place.",null,
+                                "Confirm pub visit",()->{
+                                    try{PubVisitStore.confirmLive(activity,pub.optString("id"),fix,true);if(changed!=null)changed.run();holder[0].dismiss();}
+                                    catch(Exception error){status.setText(error.getMessage());}
+                                },"Cancel",null);
+                    });}catch(Exception denied){ready.run();status.setText("Location could not be checked. Check device Location and try again.");}
                 },"Cancel",()->holder[0].dismiss(),false);
-        holder[0].setOnDismissListener(dialog->{if(request[0]!=null)request[0].cancel();if(closed!=null)closed.run();});
+        holder[0].setOnDismissListener(dialog->{attempt[0]++;if(request[0]!=null)request[0].cancel();if(timeout[0]!=null)handler.removeCallbacks(timeout[0]);if(closed!=null)closed.run();});
         return holder[0];
     }
     static String date(String iso){

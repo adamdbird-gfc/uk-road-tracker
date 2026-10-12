@@ -1036,7 +1036,7 @@ public class RoutePreviewView extends View {
         if(!coincident&&cameraZoom<MAX_ZOOM-.5){zoomAt(2.0,cluster.x(),cluster.y());return true;}
         String[] names=new String[cluster.venues.size()];
         for(int i=0;i<names.length;i++)names[i]=cluster.venues.get(i).optString("name","Venue");
-        new android.app.AlertDialog.Builder(getContext()).setTitle("Choose a venue")
+        new RoadprintsDialog.Builder(getContext()).setTitle("Choose a venue")
                 .setItems(names,(dialog,which)->serviceStationTapListener.onServiceStationTap(cluster.venues.get(which)))
                 .setNegativeButton("Cancel",null).show();return true;
     }

@@ -421,7 +421,9 @@ public class JourneyMapEditorActivity extends Activity {
         actions.addView(confirm);
         panel.addView(actions, actionsParams);
 
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(panel).create();
+        TextView close=RoadprintsDialog.closeControl(this,null);RoadprintsDialog.placeClose(panel,close);
+        AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(panel).create();
+        close.setOnClickListener(v->dialog.dismiss());
         cancel.setOnClickListener(v -> dialog.dismiss());
         confirm.setOnClickListener(v -> {
             dialog.dismiss();

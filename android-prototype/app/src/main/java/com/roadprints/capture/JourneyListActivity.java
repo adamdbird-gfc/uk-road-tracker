@@ -1024,7 +1024,7 @@ public class JourneyListActivity extends Activity {
         reset.setTag("journey_filter_reset");
         addFilterButton(panel, reset); addFilterButton(panel, apply);
         Button close = styledModalButton("CANCEL", 0xFF0B1C50, 0xFFF7C450); addFilterButton(panel, close);
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(panel).create();
+        AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(panel).create();
         apply.setOnClickListener(v -> { if (!date[0].valid()) return; activeFilter = mode[0]; activeJourneyStatusFilter = status[0]; activeDateFilter = date[0]; applyJourneyFilters(); dialog.dismiss(); });
         close.setOnClickListener(v -> dialog.dismiss());
         rangeLabels.run(); update.run(); dialog.show();
@@ -1305,13 +1305,7 @@ public class JourneyListActivity extends Activity {
         modalTitle.setTextColor(Color.WHITE);
         header.addView(modalTitle, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        TextView close = new TextView(this);
-        close.setText("CLOSE");
-        close.setTextSize(13);
-        close.setTypeface(null, android.graphics.Typeface.BOLD);
-        close.setTextColor(0xFFF7C450);
-        close.setGravity(Gravity.CENTER);
-        close.setPadding(dp(12), dp(12), 0, dp(12));
+        TextView close = RoadprintsDialog.closeControl(this,null);
         header.addView(close);
         container.addView(header);
 
@@ -1620,12 +1614,6 @@ public class JourneyListActivity extends Activity {
         delete.setOnClickListener(v -> confirmDelete(journey));
         LinearLayout supplemental = new LinearLayout(this);
         supplemental.setGravity(Gravity.CENTER);
-        supplemental.addView(delete);
-        TextView divider = new TextView(this);
-        divider.setText("|");
-        divider.setTextColor(0xFF8FA2C5);
-        divider.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        supplemental.addView(divider);
         TextView debug = new TextView(this);
         debug.setText("Debug Journey");
         debug.setTextSize(14);
@@ -1636,6 +1624,7 @@ public class JourneyListActivity extends Activity {
         supplemental.addView(debug);
         actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        actions.addView(delete,new LinearLayout.LayoutParams(-1,-2));
         container.addView(actions);
 
         close.setOnClickListener(v -> requestCloseWithUnsavedChanges(
@@ -1644,7 +1633,7 @@ public class JourneyListActivity extends Activity {
                 saveEdits, () -> {
                     if (dialogRef[0] != null) dialogRef[0].dismiss();
                 }));
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(container).create();
+        AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
@@ -1760,7 +1749,7 @@ public class JourneyListActivity extends Activity {
             continueAction.run();
             return;
         }
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Unsaved changes")
                 .setMessage("Save your journey changes before closing?")
                 .setPositiveButton("Save changes", (prompt, which) -> {
@@ -1837,7 +1826,7 @@ public class JourneyListActivity extends Activity {
     }
 
     private void confirmDelete(JSONObject journey) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete journey?")
                 .setMessage("This will permanently remove this journey from this device.")
                 .setNegativeButton("Cancel", null)
