@@ -142,7 +142,7 @@ public class TimelineImportActivity extends Activity {
         if(pubVisitsOnly){
             android.graphics.drawable.GradientDrawable panel=new android.graphics.drawable.GradientDrawable();
             panel.setColor(0xFF0B1C50);panel.setCornerRadius(dp(22));panel.setStroke(dp(1),0xFF496096);root.setBackground(panel);
-            TextView close=action("CLOSE");close.setOnClickListener(v->finish());root.addView(close);
+            TextView close=RoadprintsDialog.closeControl(this,this::finish);RoadprintsDialog.placeClose(root,close);
             android.widget.ScrollView popup=new android.widget.ScrollView(this);popup.addView(root);setContentView(popup);
         }else RoadprintsHeader.installUtilityPage(this, root, "BACK", this::finish);
     }

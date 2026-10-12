@@ -96,7 +96,7 @@ public class AchievementsActivity extends Activity {
         int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
         if (shownRevision != Long.MIN_VALUE
                 && (revision != shownRevision || highStreetRevision != shownHighStreetEvidenceRevision
-                || ServiceStationStore.revision(this) != shownServiceStationRevision))
+                || collectionEvidenceRevision(this) != shownServiceStationRevision))
             loadAchievements();
     }
 
@@ -105,7 +105,7 @@ public class AchievementsActivity extends Activity {
         @Override public void run() {
             if(shownRevision!=Long.MIN_VALUE && (JourneyStore.dataRevision(AchievementsActivity.this)!=shownRevision
                     ||AchievementStore.highStreetEvidenceRevision(AchievementsActivity.this)!=shownHighStreetEvidenceRevision
-                    ||ServiceStationStore.revision(AchievementsActivity.this)!=shownServiceStationRevision))loadAchievements();
+                    ||collectionEvidenceRevision(AchievementsActivity.this)!=shownServiceStationRevision))loadAchievements();
             evidenceRefreshHandler.postDelayed(this,2000);
         }
     };
@@ -186,7 +186,15 @@ public class AchievementsActivity extends Activity {
         render(cached==null?AchievementStore.catalogueSnapshot(this):cached);
     }
 
+    private static long collectionEvidenceRevision(android.content.Context context){
+        return 31L*ServiceStationStore.revision(context)+1009L*PubVisitStore.revision(context)+CollectionAccessStore.revision(context)+CollectionCatalogueUpdates.revision();
+    }
+
+    private boolean pubBackfillRequested;
     private void loadAchievements() {
+        if(!pubBackfillRequested&&CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)){
+            pubBackfillRequested=true;PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())loadAchievements();});
+        }
         if (!stationBackfillRequested && ServiceStationStore.unlocked(this)
                 && !ServiceStationStore.historicalBackfillComplete(this)) {
             stationBackfillRequested=true;
@@ -196,7 +204,7 @@ public class AchievementsActivity extends Activity {
         }
         final long revision=JourneyStore.dataRevision(this);
         final int highStreetRevision=AchievementStore.highStreetEvidenceRevision(this);
-        final long stationRevision=ServiceStationStore.revision(this);
+        final long stationRevision=collectionEvidenceRevision(this);
         final int epoch;
         synchronized(SNAPSHOT_CACHE_LOCK) {
             epoch=cacheEpoch;
@@ -270,7 +278,7 @@ public class AchievementsActivity extends Activity {
                 }
                 boolean changed=JourneyStore.dataRevision(appContext)!=revision
                         || AchievementStore.highStreetEvidenceRevision(appContext)!=highStreetRevision
-                        || ServiceStationStore.revision(appContext)!=stationRevision;
+                        || collectionEvidenceRevision(appContext)!=stationRevision;
                 for(AchievementsActivity screen:screens) {
                     if(error!=null || completed==null) {
                         screen.summary.setText("Progress refresh unavailable · tap to retry");
@@ -373,6 +381,7 @@ public class AchievementsActivity extends Activity {
         for(AchievementStore.Progress item:snapshot.achievements) {
             boolean service="service-station".equals(item.definition.type);
             if(service&&!showServices) continue;
+            if("pub-visit".equals(item.definition.type)&&!CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS))continue;
             visible.add(item);
             if(item.unlocked) unlockedCount++;
         }
@@ -409,6 +418,10 @@ public class AchievementsActivity extends Activity {
             for(AchievementStore.Progress item:visible)
                 if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
         }
+        if(CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)){
+            View anchor=sectionHeading("Wetherspoons achievements");content.addView(anchor);groupAnchors.put("Wetherspoons",anchor);
+            for(AchievementStore.Progress item:visible)if("pub-visit".equals(item.definition.type))content.addView(achievementCard(item));
+        }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
         rebuildJumpMenu();
@@ -444,7 +457,7 @@ public class AchievementsActivity extends Activity {
     }
 
     private static String achievementGroup(AchievementStore.Definition definition) {
-        if("service-station".equals(definition.type)) return "Collections";
+        if("service-station".equals(definition.type)||"pub-visit".equals(definition.type)) return "Collections";
         if("town-exploration".equals(definition.type))return "Town exploration";
         if("app-use".equals(definition.type)||"repeat-journey".equals(definition.type)||"cycling-journey".equals(definition.type))return "App milestones";
         if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";
@@ -618,6 +631,8 @@ public class AchievementsActivity extends Activity {
         card.setClickable(true);
         card.setOnClickListener(view -> { });
 
+        TextView close=RoadprintsDialog.closeControl(this,()->closeCelebrations());close.setBackground(roundRect(NAVY,NAVY,dp(12)));
+        LinearLayout closeRow=new LinearLayout(this);closeRow.setGravity(Gravity.END);closeRow.addView(close);card.addView(closeRow);
         celebrationIcon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_star,0xFF0B1C50,"Achievement unlocked");
         celebrationIcon.setPadding(dp(16),dp(16),dp(16),dp(16));
         celebrationIcon.setBackground(roundRect(0xFFF2B544,0xFFF2B544,dp(40)));

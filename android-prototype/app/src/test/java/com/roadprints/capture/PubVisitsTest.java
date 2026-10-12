@@ -154,4 +154,17 @@ public class PubVisitsTest {
         finally{PubVisitStore.endHistoryReplacement();}
         assertEquals(1,PubVisitStore.reconcile(app,CollectionMapCatalog.spoons(app)));
     }
+
+    @Test public void oldProofReceivesReviewedTownAndNationWithoutChangingItsVisit() throws Exception {
+        TimelineVisitStore.merge(app,new JSONArray().put(visit("metadata",pub.getString("name"))));
+        PubVisitStore.reconcile(app,CollectionMapCatalog.spoons(app));
+        String raw=app.getSharedPreferences(PubVisitStore.PREFS,0).getString("records","{}");
+        JSONObject saved=new JSONObject(raw),proof=saved.getJSONObject("timeline:metadata");
+        String when=proof.getString("visited_at");proof.remove("nation");proof.put("town","");
+        app.getSharedPreferences(PubVisitStore.PREFS,0).edit().putString("records",saved.toString()).commit();
+        assertEquals(0,PubVisitStore.reconcile(app,CollectionMapCatalog.spoons(app)));
+        JSONObject corrected=PubVisitStore.records(app).getJSONObject(0);
+        assertEquals(when,corrected.getString("visited_at"));assertEquals("England",corrected.getString("nation"));
+        assertEquals(pub.getString("town"),corrected.getString("town"));assertEquals(1,PubVisitStore.completed(app).size());
+    }
 }

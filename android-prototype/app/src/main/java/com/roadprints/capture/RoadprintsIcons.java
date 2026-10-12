@@ -21,6 +21,7 @@ final class RoadprintsIcons {
         }
     }
     static int achievement(String id) {
+        if(id!=null&&id.startsWith("spoons-"))return R.drawable.ic_nav_collections;
         if(id==null)return R.drawable.ic_roadprints_star;
         if(id.startsWith("foot-"))return R.drawable.ic_roadprints_foot;
         if(id.startsWith("road-"))return R.drawable.ic_roadprints_car;

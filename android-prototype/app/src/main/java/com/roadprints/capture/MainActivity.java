@@ -336,7 +336,7 @@ public class MainActivity extends Activity {
         ScrollView reportScroll = new ScrollView(this);
         reportScroll.addView(details);
 
-        AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+        AlertDialog.Builder dialog = new RoadprintsDialog.Builder(this)
                 .setTitle(available ? "Debug reports" : "Debug")
                 .setView(reportScroll)
                 .setNegativeButton(available ? "Close" : "OK", null);
@@ -487,7 +487,7 @@ public class MainActivity extends Activity {
     }
 
     private void confirmDeleteData(String title, String message, String[] modes) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle(title)
                 .setMessage(message)
                 .setNegativeButton("Cancel", null)
@@ -515,7 +515,7 @@ public class MainActivity extends Activity {
     }
 
     private void confirmDeleteAll() {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete all saved data?")
                 .setMessage("This removes every saved journey and returns you to the Roadprints welcome screen.")
                 .setNegativeButton("Cancel", null)
@@ -696,7 +696,7 @@ public class MainActivity extends Activity {
     private void showJourneyHistory(List<JSONObject> journeys) {
         if (isFinishing()) return;
         if (journeys.isEmpty()) {
-            new AlertDialog.Builder(this)
+            new RoadprintsDialog.Builder(this)
                     .setTitle("Saved journeys")
                     .setMessage("No journeys have been saved on this device yet.")
                     .setPositiveButton("Close", null)
@@ -720,7 +720,7 @@ public class MainActivity extends Activity {
                     journeyDuration(journey), points);
         }
 
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Saved journeys")
                 .setItems(rows, (dialog, which) -> {
                     String journeyId = journeys.get(which).optString("journey_id");
@@ -787,7 +787,7 @@ public class MainActivity extends Activity {
         container.addView(message);
         container.addView(reviewSpinner);
 
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Journey details")
                 .setView(container)
                 .setNegativeButton("Close", null)
@@ -827,7 +827,7 @@ public class MainActivity extends Activity {
     }
 
     private void confirmDeleteJourney(JSONObject journey) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete journey?")
                 .setMessage("This removes the saved journey and its GPS route from this device.")
                 .setNegativeButton("Cancel", null)

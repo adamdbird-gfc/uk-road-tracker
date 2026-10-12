@@ -72,7 +72,7 @@ public class GrowingActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = text("Your Roadprint is forming", 25, Color.WHITE, true);
         titleRow.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-        TextView close = text("CLOSE", 14, 0xFFF7C450, true);
+        TextView close = RoadprintsDialog.closeControl(this,this::finish);
         close.setGravity(Gravity.CENTER);
         close.setPadding(dp(8), dp(10), dp(4), dp(10));
         close.setOnClickListener(v -> finish());

@@ -56,7 +56,7 @@ public class CollectionCatalogueUpdatesTest {
         JSONArray before=CollectionMapCatalog.spoons(app);
         String id=before.getJSONObject(0).getString("id");
         assertEquals(811,before.length());
-        assertTrue(update(catalogue(),2026101202L));
+        assertTrue(update(catalogue(),(CollectionCatalogueUpdates.BUNDLED_REVISION+1)));
         assertEquals("Updated pub",CollectionMapCatalog.spoons(app).getJSONObject(0).getString("name"));
         assertEquals(id,CollectionMapCatalog.spoons(app).getJSONObject(0).getString("id"));
         CollectionCatalogueUpdates.resetForTests();
@@ -67,7 +67,7 @@ public class CollectionCatalogueUpdatesTest {
     @Test public void unchangedManifestDoesNotDownloadPayload() throws Exception {
         JSONObject data=catalogue();
         byte[] bytes=data.toString().getBytes(StandardCharsets.UTF_8);
-        JSONObject m=manifest(bytes,2026101201L,data.getString("catalogue_version"));
+        JSONObject m=manifest(bytes,CollectionCatalogueUpdates.BUNDLED_REVISION,data.getString("catalogue_version"));
         int[] requests={0};
         assertFalse(CollectionCatalogueUpdates.refreshNow(app,(path,limit)->{
             requests[0]++;
@@ -77,7 +77,7 @@ public class CollectionCatalogueUpdatesTest {
         assertEquals(1,requests[0]);assertFalse(cache.exists());
     }
     @Test public void interruptedDownloadKeepsLastGoodCache() throws Exception {
-        assertTrue(update(catalogue(),2026101202L));
+        assertTrue(update(catalogue(),(CollectionCatalogueUpdates.BUNDLED_REVISION+1)));
         byte[] saved=Files.readAllBytes(cache.toPath());
         try{
             CollectionCatalogueUpdates.refreshNow(app,(path,limit)->{throw new java.io.IOException("offline");});
@@ -87,11 +87,11 @@ public class CollectionCatalogueUpdatesTest {
         assertEquals("Updated pub",CollectionMapCatalog.spoons(app).getJSONObject(0).getString("name"));
     }
     @Test public void payloadHashAndLengthFailuresNeverReplaceGoodCache() throws Exception {
-        assertTrue(update(catalogue(),2026101202L));
+        assertTrue(update(catalogue(),(CollectionCatalogueUpdates.BUNDLED_REVISION+1)));
         byte[] saved=Files.readAllBytes(cache.toPath());
         JSONObject data=catalogue();
         byte[] bytes=data.toString().getBytes(StandardCharsets.UTF_8);
-        JSONObject m=manifest(bytes,2026101203L,data.getString("catalogue_version"));
+        JSONObject m=manifest(bytes,(CollectionCatalogueUpdates.BUNDLED_REVISION+2),data.getString("catalogue_version"));
         for(boolean corruptHash:new boolean[]{true,false}){
             m.put("sha256",CollectionCatalogueUpdates.sha256(bytes));
             m.put("bytes",bytes.length);
@@ -115,15 +115,15 @@ public class CollectionCatalogueUpdatesTest {
             if(scenario==4)data.getJSONArray("venues").getJSONObject(1)
                     .put("id",data.getJSONArray("venues").getJSONObject(0).getString("id"));
             if(scenario==5)data.getJSONArray("venues").getJSONObject(0).put("lat",0);
-            try{update(data,2026101202L);fail("Invalid catalogue must fail");}
+            try{update(data,(CollectionCatalogueUpdates.BUNDLED_REVISION+1));fail("Invalid catalogue must fail");}
             catch(IllegalArgumentException expected){}
             assertFalse(cache.exists());assertEquals(811,CollectionMapCatalog.spoons(app).length());
         }
     }
     @Test public void cachedDowngradeAndTamperingFallBackToBundledMap() throws Exception {
-        assertTrue(update(catalogue(),2026101203L));
+        assertTrue(update(catalogue(),(CollectionCatalogueUpdates.BUNDLED_REVISION+2)));
         JSONObject older=catalogue();older.getJSONArray("venues").getJSONObject(0).put("name","Old pub");
-        assertFalse(update(older,2026101202L));
+        assertFalse(update(older,(CollectionCatalogueUpdates.BUNDLED_REVISION+1)));
         assertEquals("Updated pub",CollectionMapCatalog.spoons(app).getJSONObject(0).getString("name"));
         JSONObject stored=new JSONObject(new String(Files.readAllBytes(cache.toPath()),StandardCharsets.UTF_8));
         stored.put("payload",stored.getString("payload").replace("Updated pub","Tampered pub"));
@@ -135,7 +135,7 @@ public class CollectionCatalogueUpdatesTest {
     @Test public void manifestCannotRedirectToOtherData() throws Exception {
         JSONObject data=catalogue();
         byte[] bytes=data.toString().getBytes(StandardCharsets.UTF_8);
-        JSONObject m=manifest(bytes,2026101202L,data.getString("catalogue_version"));
+        JSONObject m=manifest(bytes,(CollectionCatalogueUpdates.BUNDLED_REVISION+1),data.getString("catalogue_version"));
         m.put("filename","https://example.com/pub-data");
         try{CollectionCatalogueUpdates.validateManifest(m);fail("Unexpected filename must fail");}
         catch(IllegalArgumentException expected){}

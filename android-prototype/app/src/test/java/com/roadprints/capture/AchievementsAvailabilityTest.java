@@ -73,7 +73,8 @@ public class AchievementsAvailabilityTest {
         field("processSnapshot").set(null,progress());
         field("processSnapshotRevision").setLong(null,JourneyStore.dataRevision(app));
         field("processHighStreetRevision").setInt(null,AchievementStore.highStreetEvidenceRevision(app));
-        field("processStationRevision").setLong(null,ServiceStationStore.revision(app));
+        java.lang.reflect.Method revision=AchievementsActivity.class.getDeclaredMethod("collectionEvidenceRevision",Context.class);revision.setAccessible(true);
+        field("processStationRevision").setLong(null,(Long)revision.invoke(null,app));
     }
     @Test public void firstLaunchShowsFixedCatalogueBeforeAnyWorkRuns() throws Exception {
         AchievementsActivity screen=screen();
