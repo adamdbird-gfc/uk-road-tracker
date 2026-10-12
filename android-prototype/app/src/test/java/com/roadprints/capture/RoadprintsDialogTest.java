@@ -43,6 +43,7 @@ public class RoadprintsDialogTest {
         AlertDialog dialog=new RoadprintsDialog.Builder(activity).setTitle("Delete journey?")
                 .setMessage("Confirm removal").setPositiveButton("Delete",(d,w)->removed[0]=true)
                 .setNegativeButton("Cancel",null).show();
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         View root=dialog.getWindow().getDecorView();assertNotNull(root.findViewWithTag("roadprints_dialog_close"));
         android.widget.Button delete=dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         assertEquals(0xFFFF8A8A,delete.getCurrentTextColor());

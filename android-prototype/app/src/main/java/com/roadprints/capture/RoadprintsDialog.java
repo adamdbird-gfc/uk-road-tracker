@@ -91,7 +91,7 @@ final class RoadprintsDialog {
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)collectDestructive(group.getChildAt(i),found);}
     }
     static TextView closeControl(Context context,Runnable action){
-        TextView close=new TextView(context);close.setText("CLOSE");close.setTextSize(13);close.setTypeface(null,Typeface.BOLD);
+        Button close=new Button(context);close.setAllCaps(false);close.setBackground(background(context,Color.TRANSPARENT,12,false));close.setText("CLOSE");close.setTextSize(13);close.setTypeface(null,Typeface.BOLD);
         close.setTextColor(0xFFF7C450);close.setGravity(Gravity.CENTER);close.setContentDescription("Close");
         close.setTag("roadprints_dialog_close");close.setMinHeight(dp(context,48));close.setMinWidth(dp(context,64));
         close.setPadding(dp(context,8),0,dp(context,8),0);close.setClickable(true);close.setFocusable(true);
