@@ -130,4 +130,20 @@ public class PubVisitsScreenTest {
         assertEquals(ProgressActivity.class.getName(),started.getComponent().getClassName());
         assertEquals("wetherspoons",started.getStringExtra("progress_section"));controller.destroy();
     }
+
+    @Test public void repeatedPubVisitsHaveOneFinalRemovalActionAndCancellationKeepsBoth() throws Exception {
+        JSONObject pub=CollectionMapCatalog.spoons(app).getJSONObject(0);
+        TimelineVisitStore.merge(app,new JSONArray().put(visit(pub,"history-one")).put(visit(pub,"history-two")));
+        PubVisitStore.confirmTimeline(app,"history-one",pub.getString("id"));PubVisitStore.confirmTimeline(app,"history-two",pub.getString("id"));
+        ActivityController<Activity> controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        AlertDialog history=PubVisitUi.details(activity,pub,()->{});View root=history.getWindow().getDecorView();
+        TextView remove=find(root,"Remove incorrect visit");assertNotNull(remove);
+        ViewGroup panel=(ViewGroup)remove.getParent();assertSame(remove,panel.getChildAt(panel.getChildCount()-1));
+        assertNull(root.findViewWithTag("roadprints_dialog_secondary"));remove.performClick();
+        AlertDialog chooser=ShadowAlertDialog.getLatestAlertDialog();assertNotSame(history,chooser);
+        find(chooser.getWindow().getDecorView(),PubVisitUi.date(visit(pub,"x").getString("start"))+" · Confirmed Timeline visit").performClick();
+        AlertDialog confirmation=ShadowAlertDialog.getLatestAlertDialog();
+        confirmation.getWindow().getDecorView().findViewWithTag("roadprints_dialog_secondary").performClick();
+        assertEquals(2,PubVisitStore.records(app).length());history.dismiss();controller.destroy();
+    }
 }

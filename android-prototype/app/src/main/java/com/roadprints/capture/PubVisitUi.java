@@ -135,27 +135,41 @@ final class PubVisitUi {
         LinearLayout body=vertical(activity);
         body.addView(text(activity,pub.optString("location_label","Reviewed map location"),13,MUTED,false));
         if(!pub.optString("attribution").isEmpty())body.addView(text(activity,pub.optString("attribution"),12,MUTED,false));
-        JSONArray proofs=PubVisitStore.records(activity);int count=0;
+        JSONArray proofs=PubVisitStore.records(activity),related=new JSONArray();int count=0;
         AlertDialog[] holder={null};
         for(int i=0;i<proofs.length();i++){
             JSONObject proof=proofs.optJSONObject(i);
             if(proof==null||!pub.optString("id").equals(proof.optString("pub_id")))continue;
-            count++;
+            count++;related.put(proof);
             body.addView(text(activity,date(proof.optString("visited_at"))+" · "+source(proof),15,Color.WHITE,false));
+        }
+        if(count>0){
             TextView remove=text(activity,"Remove incorrect visit",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setTag("roadprints_destructive");
             remove.setPadding(dp(activity,12),dp(activity,14),dp(activity,12),dp(activity,8));body.addView(remove);
-            remove.setOnClickListener(v->RoadprintsDialog.show(activity,"Remove this visit?",
-                    "Other supported visits will be retained. A removed Timeline visit will not return on reimport.",null,
-                    "Remove visit",()->{
-                        try{PubVisitStore.removeProof(activity,proof.optString("record_key"));holder[0].dismiss();if(changed!=null)changed.run();details(activity,pub,changed);}
-                        catch(Exception failure){Toast.makeText(activity,"Could not remove this visit.",Toast.LENGTH_LONG).show();}
-                    },"Cancel",null));
+            remove.setOnClickListener(v->{
+                if(related.length()==1){confirmRemoval(activity,pub,related.optJSONObject(0),holder[0],changed);return;}
+                LinearLayout choices=vertical(activity);AlertDialog[] selection={null};
+                for(int i=0;i<related.length();i++){
+                    JSONObject proof=related.optJSONObject(i);
+                    Button choice=button(activity,date(proof.optString("visited_at"))+" · "+source(proof),false);
+                    choices.addView(choice);choice.setOnClickListener(view->{selection[0].dismiss();confirmRemoval(activity,pub,proof,holder[0],changed);});
+                }
+                selection[0]=RoadprintsDialog.show(activity,"Choose the incorrect visit",pub.optString("name"),choices,null,null,null,null);
+            });
         }
         if(count==0)body.addView(text(activity,"Not visited",16,MUTED,false));
         boolean current=PubVisitStore.find(CollectionMapCatalog.spoons(activity),pub.optString("id"))!=null;
         holder[0]=RoadprintsDialog.show(activity,pub.optString("name"),pub.optString("town"),body,
                 current?"Check in now":"Close",current?()->live(activity,pub,changed,null):null,current?"Close":null,null);
         return holder[0];
+    }
+    private static void confirmRemoval(Activity activity,JSONObject pub,JSONObject proof,AlertDialog history,Runnable changed){
+        RoadprintsDialog.show(activity,"Remove this visit?",date(proof.optString("visited_at"))+" · "+source(proof)+
+                "\nOther supported visits will be retained. A removed Timeline visit will not return on reimport.",null,
+                "Remove visit",()->{
+                    try{PubVisitStore.removeProof(activity,proof.optString("record_key"));history.dismiss();if(changed!=null)changed.run();details(activity,pub,changed);}
+                    catch(Exception failure){Toast.makeText(activity,"Could not remove this visit.",Toast.LENGTH_LONG).show();}
+                },"Cancel",null);
     }
     interface LocationRequester {
         com.google.android.gms.tasks.Task<android.location.Location> get(Activity activity,CancellationTokenSource request);
