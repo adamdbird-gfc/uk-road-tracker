@@ -133,7 +133,7 @@
       "map_enabled": false,
       "visit_enabled": false,
       "confirmation_required": true,
-      "notes": "Park point only, not verified pub building. Former Mash and Barrel lead from secondary sources; requires main-complex/pub placement check before promotion.",
+      "notes": "User-supplied close-up screenshot and resolved Maps listing identify shared main-complex building with Springfield and Live Lounge. Current numeric coordinate remains park-level, not a verified building/pub point. Precise coordinate extraction and old Mash and Barrel/OSM identity reconciliation remain outstanding.",
       "nearby_pinned_candidates": [
         {
           "id": "spoons-osm-w276504956",
@@ -150,7 +150,16 @@
           "name": "The Poulton Elk",
           "distance_m": 6131
         }
-      ]
+      ],
+      "user_supplied_location_evidence": {
+        "share_url": "https://maps.app.goo.gl/JBJ6Soi9DAHBEAiL9",
+        "resolved_place_url": "https://www.google.com/maps/place/The+Springfield,+Fleetwood+Rd,+Fleetwood+FY7+8JY/data=!4m2!3m1!1s0x487b5d3de1844da9:0xccea23f81da48c8a!18m1!1e1",
+        "google_place_feature_id": "0x487b5d3de1844da9:0xccea23f81da48c8a",
+        "screenshot_filename": "28697.png",
+        "observed": "Named Springfield pin on shared main-complex footprint, beside The Live Lounge; Wetherspoon signage visible in listing photo.",
+        "coordinate_extraction_complete": false,
+        "notes": "Short link resolved via HTTP redirect, but returned Google Maps HTML did not expose target pin coordinates. Keep existing point explicitly park-level until a building coordinate is independently extracted; feature ID is not an OSM pub alias."
+      }
     },
     {
       "key": "alfred-wainwright-lakeland",
