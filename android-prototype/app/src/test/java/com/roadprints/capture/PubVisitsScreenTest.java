@@ -19,6 +19,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.android.controller.ActivityController;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class PubVisitsScreenTest {
         TimelineVisitStore.merge(app,new JSONArray().put(first).put(second));
         JSONArray pending=new JSONArray().put(new JSONObject().put("visit",first).put("pubs",new JSONArray().put(pub)))
                 .put(new JSONObject().put("visit",second).put("pubs",new JSONArray().put(pub)));
-        var controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        ActivityController<Activity> controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
         AlertDialog dialog=PubVisitUi.showSlider(activity,pending,()->{});
         View root=dialog.getWindow().getDecorView();
         TextView counter=root.findViewWithTag("pub_review_counter");
@@ -74,7 +75,7 @@ public class PubVisitsScreenTest {
     @Test public void countyAndTownListsAreLazyAndRetainExpansion() throws Exception {
         JSONObject pub=CollectionMapCatalog.spoons(app).getJSONObject(0);
         String county=pub.getJSONObject("county").getString("name"),town=pub.getString("town");
-        var controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        ActivityController<Activity> controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
         LinearLayout panel=new LinearLayout(activity);Set<String> expanded=new HashSet<>();
         PubProgressPanel.populate(activity,panel,expanded,()->{});
         String countyKey="pub-county:"+county,townKey=countyKey+":town:"+town,rowKey="pub-row:"+pub.getString("id");
@@ -92,14 +93,14 @@ public class PubVisitsScreenTest {
     }
     @Test public void legacyPubLinkRoutesToProgressAndPreservesCheckinTarget(){
         Intent intent=new Intent(app,PubVisitsActivity.class).putExtra("pub_id","selected-pub");
-        var controller=Robolectric.buildActivity(PubVisitsActivity.class,intent).create();
+        ActivityController<PubVisitsActivity> controller=Robolectric.buildActivity(PubVisitsActivity.class,intent).create();
         Intent started=Shadows.shadowOf(controller.get()).getNextStartedActivity();
         assertEquals(ProgressActivity.class.getName(),started.getComponent().getClassName());
         assertEquals("wetherspoons",started.getStringExtra("progress_section"));
         assertEquals("selected-pub",started.getStringExtra("pub_checkin_id"));controller.destroy();
     }
     @Test public void popupImporterIsPlaceOnlyAndCloseDoesNotCreateVisits(){
-        var controller=Robolectric.buildActivity(PubTimelineImportActivity.class).create();
+        ActivityController<PubTimelineImportActivity> controller=Robolectric.buildActivity(PubTimelineImportActivity.class).create();
         PubTimelineImportActivity activity=controller.get();
         assertTrue(activity.getIntent().getBooleanExtra("pub_visits_only",false));
         assertTrue(activity.getIntent().getBooleanExtra("service_only",false));
@@ -107,8 +108,17 @@ public class PubVisitsScreenTest {
         find(root,"CLOSE").performClick();assertTrue(activity.isFinishing());
         assertTrue(PubVisitStore.completed(app).isEmpty());controller.destroy();
     }
+    @Test public void progressJumpMenuShowsInstalledCollectionOnly() throws Exception {
+        ActivityController<ProgressActivity> controller=Robolectric.buildActivity(ProgressActivity.class);
+        ProgressActivity activity=controller.get();
+        java.lang.reflect.Method build=ProgressActivity.class.getDeclaredMethod("buildProgressJumpMenu");
+        build.setAccessible(true);
+        assertNotNull(find((View)build.invoke(activity),"Wetherspoons"));
+        CollectionAccessStore.remove(app,CollectionAccessStore.SPOONS);
+        assertNull(find((View)build.invoke(activity),"Wetherspoons"));
+    }
     @Test public void collectionActionsOpenMapBeforeProgressAndHidePubCount(){
-        var controller=Robolectric.buildActivity(CollectionsActivity.class).create();
+        ActivityController<CollectionsActivity> controller=Robolectric.buildActivity(CollectionsActivity.class).create();
         CollectionsActivity activity=controller.get();View root=activity.getWindow().getDecorView();
         TextView heading=find(root,CollectionAccessStore.name(CollectionAccessStore.SPOONS));
         ViewGroup card=(ViewGroup)heading.getParent().getParent();
