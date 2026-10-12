@@ -125,6 +125,30 @@
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-rocks-exmouth/",
       "basis": "Current individual operator listing identifies operating Red Rocks at Devon Cliffs, Exmouth, with regular weekly schedule. No matching name in pinned candidate snapshot. Reconcile OSM pub identity and actual premises position before adding a pin; holiday-park centroids/boundaries cannot substitute for pub location.",
       "map_enabled": false
+    },
+    {
+      "key": "london-stone-kent-coast",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-stone-rochester/",
+      "basis": "Current operator page identifies operating pub at Haven Kent Coast, Allhallows-on-Sea. Missing from pinned candidate names; find actual OSM pub identity and premises position. Holiday park centroid cannot substitute for pub.",
+      "map_enabled": false,
+      "additional_evidence_urls": [
+        "https://news.haven.com/news/one-millionth-meal-sold-in-haven-jd-wetherspoons"
+      ]
+    },
+    {
+      "key": "sir-ronald-wates-guildford",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-ronald-wates-guildford/",
+      "basis": "Current operator listing and new-openings page identify operating University of Surrey pub at Wates House, Stag Hill. Missing from pinned candidate names; reconcile actual OSM pub identity and position. University presence alone cannot award a visit.",
+      "map_enabled": false
+    },
+    {
+      "key": "round-coppice-whiteley",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-round-coppice-fareham/",
+      "basis": "Current operator listing and new-openings page identify operating pub at Whiteley Shopping Centre. Missing from pinned candidate names; reconcile actual OSM pub identity and position. Shopping-centre centroid cannot substitute for pub.",
+      "map_enabled": false
     }
   ],
   "delivery_sequence": [
