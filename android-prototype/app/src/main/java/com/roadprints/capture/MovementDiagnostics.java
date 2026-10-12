@@ -21,6 +21,10 @@ import java.time.format.DateTimeFormatter;
 
 /** Opt-in, local-only movement diagnostics with a bounded collection window. */
 final class MovementDiagnostics {
+    // Keep clipboard parcels well below Binder's shared transaction budget.
+    static final int MAX_CLIPBOARD_CHARS = 32 * 1024;
+    private static final String REPORT_HEADER =
+            "Roadprints movement diagnostics (precise location; stored locally only)\n";
     private static final String PREFS = "roadprints_movement_diagnostics";
     private static final String ENABLED = "enabled";
     private static final String UNTIL = "until";
@@ -127,6 +131,44 @@ final class MovementDiagnostics {
             if (location.hasBearing()) item.put("bearing_degrees", location.getBearing());
             appendIfRunning(context, item);
         } catch (Exception ignored) {}
+    }
+
+    static boolean hasReport(Context context) {
+        return retainedLogFile(context).exists();
+    }
+
+    /** Null means a full file export is needed; never silently copy a partial log. */
+    static String getClipboardReport(Context context) {
+        File file = retainedLogFile(context);
+        if (!file.exists()) return "";
+        StringBuilder report = new StringBuilder(REPORT_HEADER);
+        try (InputStreamReader reader = new InputStreamReader(
+                new FileInputStream(file), StandardCharsets.UTF_8)) {
+            char[] buffer = new char[4096];
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+                if (report.length() + count > MAX_CLIPBOARD_CHARS) return null;
+                report.append(buffer, 0, count);
+            }
+        } catch (IOException unavailable) {
+            return null;
+        }
+        if (context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(TRUNCATED, false))
+            report.append("\nLog reached its 4 MiB safety limit; later samples were omitted.\n");
+        return report.length() > MAX_CLIPBOARD_CHARS ? null : report.toString();
+    }
+
+    private static File retainedLogFile(Context context) {
+        Context app = context.getApplicationContext();
+        synchronized (LOCK) {
+            SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (!isRunning(app)) {
+                long retainUntil = prefs.getLong(RETAIN_UNTIL, 0L);
+                if (retainUntil > 0 && System.currentTimeMillis() >= retainUntil) clear(app);
+            }
+            return logFile(app);
+        }
     }
 
     static String getReport(Context context) {
