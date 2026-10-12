@@ -43,6 +43,7 @@
         <activity android:name=".AchievementsActivity" android:exported="false" />
         <activity android:name=".CollectionsActivity" android:exported="false" />
         <activity android:name=".PubVisitsActivity" android:exported="false" />
+        <activity android:name=".PubTimelineImportActivity" android:exported="false" android:theme="@style/RoadprintsPopupTheme" />
         <activity android:name=".GrowingActivity" android:exported="false" />
         <activity android:name=".MapActivity" android:exported="false" />
         <activity android:name=".JourneyReplayActivity" android:exported="false" />
@@ -68,4 +69,5 @@
             android:exported="false" />
     </application>
 </manifest>
+
 

@@ -15,6 +15,7 @@ final class PubVisitStore {
     private static long generation;
     private static boolean replacingHistory;
     private PubVisitStore(){}
+    static long revision(Context context){return context.getSharedPreferences(PREFS,0).getLong("revision",0);}
     static String visitedLabel(int count){return count+(count==1?" pub visited":" pubs visited");}
     private static JSONObject read(Context context){
         try{return new JSONObject(context.getSharedPreferences(PREFS,0).getString("records","{}"));}
@@ -165,3 +166,4 @@ final class PubVisitStore {
     static synchronized void beginHistoryReplacement(){generation++;replacingHistory=true;}
     static synchronized void endHistoryReplacement(){generation++;replacingHistory=false;}
 }
+

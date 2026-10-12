@@ -35,6 +35,7 @@ final class CollectionCatalogueUpdates {
     private static boolean inFlight;
     interface Transport { byte[] get(String filename,int limit) throws Exception; }
     private CollectionCatalogueUpdates(){}
+    static long revision(){synchronized(LOCK){return revision;}}
 
     static JSONArray pins(Context context,JSONObject bundled){
         synchronized(LOCK){
@@ -191,3 +192,4 @@ final class CollectionCatalogueUpdates {
     }
     static void resetForTests(){synchronized(LOCK){current=null;pins=null;revision=BUNDLED_REVISION;}}
 }
+

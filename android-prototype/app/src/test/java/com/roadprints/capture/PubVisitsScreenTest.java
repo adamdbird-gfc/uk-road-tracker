@@ -1,10 +1,12 @@
 package com.roadprints.capture;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,10 +18,10 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
-import org.robolectric.shadows.ShadowAlertDialog;
 import org.robolectric.annotation.Config;
-import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
@@ -43,32 +45,79 @@ public class PubVisitsScreenTest {
         }
         return null;
     }
-    @Test public void timelineButtonOpensPlaceOnlyImportAndReviewCannotAwardOnOpening() throws Exception {
-        JSONArray pubs=CollectionMapCatalog.spoons(app);
-        JSONObject pub=pubs.getJSONObject(0);
-        JSONObject visit=new JSONObject().put("id","ui-review").put("source","google_timeline_placeVisit")
+    private JSONObject visit(JSONObject pub,String id) throws Exception {
+        return new JSONObject().put("id",id).put("source","google_timeline_placeVisit")
                 .put("start",Instant.now().minusSeconds(3600).toString()).put("end",Instant.now().minusSeconds(3000).toString())
                 .put("lat",pub.getDouble("lat")).put("lng",pub.getDouble("lng")).put("place_name","Shared building");
-        TimelineVisitStore.merge(app,new JSONArray().put(visit));
-        org.robolectric.android.controller.ActivityController<PubVisitsActivity> controller=
-                Robolectric.buildActivity(PubVisitsActivity.class).create();
-        PubVisitsActivity activity=controller.get();
-        Method render=PubVisitsActivity.class.getDeclaredMethod("render",JSONArray.class,JSONArray.class,JSONArray.class,String.class);
-        render.setAccessible(true);render.invoke(activity,pubs,new JSONArray(),PubVisitStore.pending(app,pubs),null);
-        View root=activity.getWindow().getDecorView();
-        assertNotNull(find(root,"0 pubs visited"));
-        assertNotNull(find(root,"IMPORT TIMELINE PLACE VISITS"));
-        find(root,"IMPORT TIMELINE PLACE VISITS").performClick();
+    }
+    @Test public void reviewSliderCanNavigateAndCloseWithoutAwarding() throws Exception {
+        JSONObject pub=CollectionMapCatalog.spoons(app).getJSONObject(0);
+        JSONObject first=visit(pub,"first"),second=visit(pub,"second");
+        TimelineVisitStore.merge(app,new JSONArray().put(first).put(second));
+        JSONArray pending=new JSONArray().put(new JSONObject().put("visit",first).put("pubs",new JSONArray().put(pub)))
+                .put(new JSONObject().put("visit",second).put("pubs",new JSONArray().put(pub)));
+        var controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        AlertDialog dialog=PubVisitUi.showSlider(activity,pending,()->{});
+        View root=dialog.getWindow().getDecorView();
+        TextView counter=root.findViewWithTag("pub_review_counter");
+        assertEquals("1 of 2",counter.getText().toString());
+        assertFalse(root.findViewWithTag("pub_review_previous").isEnabled());
+        root.findViewWithTag("pub_review_next").performClick();
+        assertEquals("2 of 2",counter.getText().toString());
+        root.findViewWithTag("pub_review_previous").performClick();
+        assertEquals("1 of 2",counter.getText().toString());
+        assertTrue(PubVisitStore.completed(app).isEmpty());
+        find(root,"CLOSE").performClick();
+        assertFalse(dialog.isShowing());assertTrue(PubVisitStore.completed(app).isEmpty());
+        assertEquals(2,TimelineVisitStore.all(app).length());controller.destroy();
+    }
+    @Test public void countyAndTownListsAreLazyAndRetainExpansion() throws Exception {
+        JSONObject pub=CollectionMapCatalog.spoons(app).getJSONObject(0);
+        String county=pub.getJSONObject("county").getString("name"),town=pub.getString("town");
+        var controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        LinearLayout panel=new LinearLayout(activity);Set<String> expanded=new HashSet<>();
+        PubProgressPanel.populate(activity,panel,expanded,()->{});
+        String countyKey="pub-county:"+county,townKey=countyKey+":town:"+town,rowKey="pub-row:"+pub.getString("id");
+        assertNull(panel.findViewWithTag(rowKey));
+        panel.findViewWithTag(countyKey+":header").performClick();
+        assertNull(panel.findViewWithTag(rowKey));
+        panel.findViewWithTag(townKey+":header").performClick();
+        assertNotNull(panel.findViewWithTag(rowKey));
+        LinearLayout rebuilt=new LinearLayout(activity);PubProgressPanel.populate(activity,rebuilt,expanded,()->{});
+        assertNotNull(rebuilt.findViewWithTag(rowKey));assertTrue(expanded.contains(townKey));
+        rebuilt.findViewWithTag("pub_timeline_import").performClick();
         Intent started=Shadows.shadowOf(activity).getNextStartedActivity();
-        assertTrue(started.getBooleanExtra("service_only",false));
-        assertTrue(started.getBooleanExtra("pub_visits_only",false));
-        find(root,"REVIEW: "+pub.getString("name")).performClick();
-        AlertDialog dialog=ShadowAlertDialog.getLatestAlertDialog();
-        assertTrue(dialog.isShowing());
-        assertTrue(PubVisitStore.completed(app).isEmpty());
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
-        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
-        assertTrue(PubVisitStore.completed(app).isEmpty());
+        assertEquals(PubTimelineImportActivity.class.getName(),started.getComponent().getClassName());
         controller.destroy();
+    }
+    @Test public void legacyPubLinkRoutesToProgressAndPreservesCheckinTarget(){
+        Intent intent=new Intent(app,PubVisitsActivity.class).putExtra("pub_id","selected-pub");
+        var controller=Robolectric.buildActivity(PubVisitsActivity.class,intent).create();
+        Intent started=Shadows.shadowOf(controller.get()).getNextStartedActivity();
+        assertEquals(ProgressActivity.class.getName(),started.getComponent().getClassName());
+        assertEquals("wetherspoons",started.getStringExtra("progress_section"));
+        assertEquals("selected-pub",started.getStringExtra("pub_checkin_id"));controller.destroy();
+    }
+    @Test public void popupImporterIsPlaceOnlyAndCloseDoesNotCreateVisits(){
+        var controller=Robolectric.buildActivity(PubTimelineImportActivity.class).create();
+        PubTimelineImportActivity activity=controller.get();
+        assertTrue(activity.getIntent().getBooleanExtra("pub_visits_only",false));
+        assertTrue(activity.getIntent().getBooleanExtra("service_only",false));
+        View root=activity.getWindow().getDecorView();assertNotNull(find(root,"Import from Timeline"));
+        find(root,"CLOSE").performClick();assertTrue(activity.isFinishing());
+        assertTrue(PubVisitStore.completed(app).isEmpty());controller.destroy();
+    }
+    @Test public void collectionActionsOpenMapBeforeProgressAndHidePubCount(){
+        var controller=Robolectric.buildActivity(CollectionsActivity.class).create();
+        CollectionsActivity activity=controller.get();View root=activity.getWindow().getDecorView();
+        TextView heading=find(root,CollectionAccessStore.name(CollectionAccessStore.SPOONS));
+        ViewGroup card=(ViewGroup)heading.getParent().getParent();
+        TextView map=find(card,"Show on map"),progress=find(card,"View progress");
+        assertTrue(card.indexOfChild(map)<card.indexOfChild(progress));
+        assertNull(find(card,"0 pubs visited"));
+        TextView remove=find(card,"Remove collection");assertEquals(0xFFFF8A8A,remove.getCurrentTextColor());
+        progress.performClick();Intent started=Shadows.shadowOf(activity).getNextStartedActivity();
+        assertEquals(ProgressActivity.class.getName(),started.getComponent().getClassName());
+        assertEquals("wetherspoons",started.getStringExtra("progress_section"));controller.destroy();
     }
 }
