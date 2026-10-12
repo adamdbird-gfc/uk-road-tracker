@@ -75,6 +75,7 @@ public class DebugClipboardTest {
         AlertDialog dialog=ShadowAlertDialog.getLatestAlertDialog();
         assertTrue(dialog.isShowing());
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         Intent save=Shadows.shadowOf(activity).getNextStartedActivityForResult().intent;
         assertEquals(Intent.ACTION_CREATE_DOCUMENT,save.getAction());
         assertEquals("text/plain",save.getType());
