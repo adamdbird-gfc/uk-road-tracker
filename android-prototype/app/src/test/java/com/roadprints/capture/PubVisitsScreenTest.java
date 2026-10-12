@@ -18,6 +18,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
+import org.robolectric.shadows.ShadowAlertDialog;
 import org.robolectric.annotation.Config;
 import org.robolectric.android.controller.ActivityController;
 import java.time.Instant;
@@ -141,7 +142,7 @@ public class PubVisitsScreenTest {
         ViewGroup panel=(ViewGroup)remove.getParent();assertSame(remove,panel.getChildAt(panel.getChildCount()-1));
         assertNull(root.findViewWithTag("roadprints_dialog_secondary"));remove.performClick();
         AlertDialog chooser=ShadowAlertDialog.getLatestAlertDialog();assertNotSame(history,chooser);
-        find(chooser.getWindow().getDecorView(),PubVisitUi.date(visit(pub,"x").getString("start"))+" · Confirmed Timeline visit").performClick();
+        find(chooser.getWindow().getDecorView(),PubVisitUi.date(PubVisitStore.records(app).getJSONObject(0).getString("visited_at"))+" · Confirmed Timeline visit").performClick();
         AlertDialog confirmation=ShadowAlertDialog.getLatestAlertDialog();
         confirmation.getWindow().getDecorView().findViewWithTag("roadprints_dialog_secondary").performClick();
         assertEquals(2,PubVisitStore.records(app).length());history.dismiss();controller.destroy();
