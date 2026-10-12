@@ -1,7 +1,7 @@
 {
   "format": 1,
   "collection_id": "wetherspoons",
-  "as_of": "2026-10-11",
+  "as_of": "2026-10-12",
   "coverage_complete": false,
   "source_policy": "OSM-derived app names/positions; individual status checks and source links only. No bulk copy of operator directory, descriptions, photos or coordinates.",
   "leads": [
@@ -65,6 +65,30 @@
       ],
       "basis": "Haven operator confirms named Wetherspoon operating at Haggerston Castle; absent from pinned candidate names. Reconcile actual OSM pub identity and premises position before adding a map pin; holiday-park centroid/boundary cannot substitute for pub premises.",
       "map_enabled": false
+    },
+    {
+      "key": "springfield-cala-gran",
+      "status": "operating_venue_missing_candidate_identity",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://news.haven.com/news/havens-cala-gran-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-springfield",
+      "basis": "Haven operator confirms operating pub at Cala Gran; absent from pinned candidate names. Reconcile OSM pub identity and actual premises position; park-wide presence is insufficient.",
+      "map_enabled": false
+    },
+    {
+      "key": "alfred-wainwright-lakeland",
+      "status": "operating_venue_missing_candidate_identity",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://news.haven.com/news/havens-lakeland-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-alfred-wainwright",
+      "basis": "Haven operator confirms operating pub at Lakeland; absent from pinned candidate names. Reconcile OSM pub identity and actual premises position, not holiday park centroid.",
+      "map_enabled": false
+    },
+    {
+      "key": "marshfield-bank-farm-house-crewe",
+      "status": "operating_venue_missing_candidate_identity",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-marshfield-bank-farm-house-crewe/",
+      "basis": "Individual operator listing confirms operating pub at Woolstanwood/Crewe; absent from pinned candidate names. Reconcile OSM pub identity and actual premises position before map addition.",
+      "map_enabled": false
     }
   ],
   "delivery_sequence": [
@@ -83,5 +107,6 @@
     "South East",
     "London"
   ],
-  "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch."
+  "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch.",
+  "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly."
 }
