@@ -5871,6 +5871,1048 @@
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wye-bridge-house-buxton/",
       "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n10210502045",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-and-north-western-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. New Street/Grand Central station or shopping-centre presence cannot prove pub entry.",
+      "source_name": "The London and North Western",
+      "osm_aliases": [
+        "node/10210502045"
+      ],
+      "lat": 52.4769243,
+      "lon": -1.8997012
+    },
+    {
+      "id": "spoons-osm-n10671165176",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bear-ragged-staff-bedworth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Ampersand/and naming variant.",
+      "source_name": "The Bear and Ragged Staff",
+      "osm_aliases": [
+        "node/10671165176"
+      ],
+      "lat": 52.4796134,
+      "lon": -1.4710546
+    },
+    {
+      "id": "spoons-osm-n11085337411",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://eat.thenec.co.uk/restaurants/piazza-jd-wetherspoon/",
+      "basis": "Current NEC venue operator identifies JD Wetherspoon in Piazza. Wetherspoon November 2025 trading update confirms one NEC pub reopened as franchise after both leases expired; CAMRA Piazza entry records previous name NEC Wetherspoons and Unit A B40 1NT. Reconcile this named venue independently from closed Atrium. Opening hours depend on exhibitions/trade; no everyday availability promise. Source OSM name/position retained; exhibition-centre presence does not prove pub entry. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "NEC Wetherspoons",
+      "osm_aliases": [
+        "node/11085337411"
+      ],
+      "lat": 52.4539232,
+      "lon": -1.7170217
+    },
+    {
+      "id": "spoons-osm-n12672758143",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-shrewsbury-hotel-shrewsbury/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Shrewsbury Hotel",
+      "osm_aliases": [
+        "node/12672758143"
+      ],
+      "lat": 52.7094675,
+      "lon": -2.7569689
+    },
+    {
+      "id": "spoons-osm-n201468310",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-under-water-wolverhampton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Moon Under Water",
+      "osm_aliases": [
+        "node/201468310"
+      ],
+      "lat": 52.5867569,
+      "lon": -2.1240476
+    },
+    {
+      "id": "spoons-osm-n2043095960",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/joes-bar-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Current university franchise Joe’s corresponds to source Joe’s Bar. Campus presence is not pub entry.",
+      "source_name": "Joe's Bar",
+      "osm_aliases": [
+        "node/2043095960"
+      ],
+      "lat": 52.4491543,
+      "lon": -1.9273838
+    },
+    {
+      "id": "spoons-osm-n257906968",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-swan-solihull/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The White Swan",
+      "osm_aliases": [
+        "node/257906968"
+      ],
+      "lat": 52.4145251,
+      "lon": -1.7812667
+    },
+    {
+      "id": "spoons-osm-n258179670",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-figure-of-eight-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained.",
+      "source_name": "The Figure of Eight",
+      "osm_aliases": [
+        "node/258179670"
+      ],
+      "lat": 52.4765251,
+      "lon": -1.9121985
+    },
+    {
+      "id": "spoons-osm-n2804103075",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-acorn-inn-lichfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Acorn Inn",
+      "osm_aliases": [
+        "node/2804103075"
+      ],
+      "lat": 52.6837113,
+      "lon": -1.8259673
+    },
+    {
+      "id": "spoons-osm-n289446284",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-swan-uttoxeter/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Old Swan",
+      "osm_aliases": [
+        "node/289446284"
+      ],
+      "lat": 52.897868,
+      "lon": -1.8634294
+    },
+    {
+      "id": "spoons-osm-n300415616",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-rupert-brooke-rugby/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "Rupert Brooke",
+      "osm_aliases": [
+        "node/300415616"
+      ],
+      "lat": 52.3730024,
+      "lon": -1.2593303
+    },
+    {
+      "id": "spoons-osm-n319266430",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dragon-inn-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained.",
+      "source_name": "The Dragon Inn",
+      "osm_aliases": [
+        "node/319266430"
+      ],
+      "lat": 52.4743083,
+      "lon": -1.8967181
+    },
+    {
+      "id": "spoons-osm-n3212139122",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-pump-house-solihull/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Solihull/Shirley locality variant. Source/operator postcode discrepancy B90 3GG/B90 3AQ retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Pump House",
+      "osm_aliases": [
+        "node/3212139122"
+      ],
+      "lat": 52.4127149,
+      "lon": -1.8277878
+    },
+    {
+      "id": "spoons-osm-n351791577",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-soloman-cutler-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Soloman Cutler",
+      "osm_aliases": [
+        "node/351791577"
+      ],
+      "lat": 52.4780633,
+      "lon": -1.9100937
+    },
+    {
+      "id": "spoons-osm-n3730921232",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/george-hotel-bewdley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source omits leading article and town; same Bewdley Load Street venue.",
+      "source_name": "George Hotel",
+      "osm_aliases": [
+        "node/3730921232"
+      ],
+      "lat": 52.3757878,
+      "lon": -2.3155524
+    },
+    {
+      "id": "spoons-osm-n410996349",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-waterfront-inn-brierley-hill/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town retained.",
+      "source_name": "The Waterfront Inn",
+      "osm_aliases": [
+        "node/410996349"
+      ],
+      "lat": 52.485871,
+      "lon": -2.1143846
+    },
+    {
+      "id": "spoons-osm-n410996418",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/abraham-darby-brierley-hill/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Operator omits leading article. Merry Hill shopping-centre presence cannot prove pub entry. Source/operator postcode discrepancy DY5 1SX/DY5 1QX retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "Abraham Darby",
+      "osm_aliases": [
+        "node/410996418"
+      ],
+      "lat": 52.4796946,
+      "lon": -2.1113792
+    },
+    {
+      "id": "spoons-osm-n4465391587",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoon-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Current after-security Birmingham Airport Wetherspoon independently verified; do not apply former airport outlets to current pub. Airport-wide presence cannot prove pub entry.",
+      "source_name": "Airport Wetherspoons",
+      "osm_aliases": [
+        "node/4465391587"
+      ],
+      "lat": 52.4538382,
+      "lon": -1.7327169
+    },
+    {
+      "id": "spoons-osm-n447878280",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/montgomerys-tower-shrewsbury/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Apostrophe variant retained.",
+      "source_name": "Montgomery's Tower",
+      "osm_aliases": [
+        "node/447878280"
+      ],
+      "lat": 52.7092537,
+      "lon": -2.7587329
+    },
+    {
+      "id": "spoons-osm-n450205148",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-thomas-botfield-telford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy TF3 4DR/TF3 4BW retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Thomas Botfield",
+      "osm_aliases": [
+        "node/450205148"
+      ],
+      "lat": 52.67533,
+      "lon": -2.445659
+    },
+    {
+      "id": "spoons-osm-n452904588",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-benjamin-satchwell-royal-leamington-spa/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Royal Leamington Spa locality variant.",
+      "source_name": "The Benjamin Satchwell",
+      "osm_aliases": [
+        "node/452904588"
+      ],
+      "lat": 52.2897439,
+      "lon": -1.5356243
+    },
+    {
+      "id": "spoons-osm-n4729242019",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-withering-wellington/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Telford/Wellington locality variant.",
+      "source_name": "The William Withering",
+      "osm_aliases": [
+        "node/4729242019"
+      ],
+      "lat": 52.7005527,
+      "lon": -2.5167493
+    },
+    {
+      "id": "spoons-osm-n4968623459",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-arthur-robertson-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Perry Barr locality variant; shopping-centre presence is not pub entry.",
+      "source_name": "The Arthur Robertson",
+      "osm_aliases": [
+        "node/4968623459"
+      ],
+      "lat": 52.5168248,
+      "lon": -1.9027802
+    },
+    {
+      "id": "spoons-osm-n507143546",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-full-moon-dudley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy DY1 1PS/DY1 1PY retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Full Moon",
+      "osm_aliases": [
+        "node/507143546"
+      ],
+      "lat": 52.5090691,
+      "lon": -2.0842888
+    },
+    {
+      "id": "spoons-osm-n529936258",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-under-water-cradley-heath/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town retained; independently checked as Cradley Heath, not Wolverhampton or another Moon Under Water.",
+      "source_name": "The Moon Under Water",
+      "osm_aliases": [
+        "node/529936258"
+      ],
+      "lat": 52.4721808,
+      "lon": -2.0825964
+    },
+    {
+      "id": "spoons-osm-n5313735958",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-linford-arms-cannock/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town retained; checked as Cannock.",
+      "source_name": "The Linford Arms",
+      "osm_aliases": [
+        "node/5313735958"
+      ],
+      "lat": 52.689464,
+      "lon": -2.0322234
+    },
+    {
+      "id": "spoons-osm-n5313836924",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bloxwich-showman-bloxwich/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Walsall/Bloxwich locality variant.",
+      "source_name": "The Bloxwich Showman",
+      "osm_aliases": [
+        "node/5313836924"
+      ],
+      "lat": 52.6147885,
+      "lon": -2.0042425
+    },
+    {
+      "id": "spoons-osm-n559787381",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-clifton-sedgley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town retained; checked as Sedgley.",
+      "source_name": "The Clifton",
+      "osm_aliases": [
+        "node/559787381"
+      ],
+      "lat": 52.541379,
+      "lon": -2.1224519
+    },
+    {
+      "id": "spoons-osm-n560526527",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hippodrome-market-drayton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Hippodrome",
+      "osm_aliases": [
+        "node/560526527"
+      ],
+      "lat": 52.9061505,
+      "lon": -2.4857829
+    },
+    {
+      "id": "spoons-osm-n5769176646",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-felix-holt-nuneaton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Felix Holt",
+      "osm_aliases": [
+        "node/5769176646"
+      ],
+      "lat": 52.5229952,
+      "lon": -1.469262
+    },
+    {
+      "id": "spoons-osm-n59741388",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-spread-eagle-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Acocks Green locality variant.",
+      "source_name": "The Spread Eagle",
+      "osm_aliases": [
+        "node/59741388"
+      ],
+      "lat": 52.4467249,
+      "lon": -1.8196256
+    },
+    {
+      "id": "spoons-osm-n6413297687",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bradley-green-biddulph/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source Stoke-on-Trent locality corresponds to Biddulph named venue.",
+      "source_name": "The Bradley Green",
+      "osm_aliases": [
+        "node/6413297687"
+      ],
+      "lat": 53.1157336,
+      "lon": -2.1762556
+    },
+    {
+      "id": "spoons-osm-n6801059782",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://camra.org.uk/pubs/atrium-solihull-121497",
+      "basis": "Current CAMRA branch listing records Atrium at NEC Bickenhill B40 1NT closed long term from 6 August 2025. Operator November 2025 trading update confirms both NEC leases expired and only one reopened as franchise; current NEC operator identifies Piazza, not Atrium. Exclude former Atrium while preserving identity; do not merge with nearby NEC Piazza."
+    },
+    {
+      "id": "spoons-osm-n821785725",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wheatsheaf-stoke-on-trent/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Wheatsheaf",
+      "osm_aliases": [
+        "node/821785725"
+      ],
+      "lat": 53.0040845,
+      "lon": -2.185286
+    },
+    {
+      "id": "spoons-osm-n894511596",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lord-burton-burton-upon-trent/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Burton-on-Trent/Burton upon Trent locality variant.",
+      "source_name": "The Lord Burton",
+      "osm_aliases": [
+        "node/894511596"
+      ],
+      "lat": 52.8030012,
+      "lon": -1.6294402
+    },
+    {
+      "id": "spoons-osm-n918731487",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-jewel-of-the-severn-bridgnorth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "Jewel of the Severn",
+      "osm_aliases": [
+        "node/918731487"
+      ],
+      "lat": 52.5367627,
+      "lon": -2.4202955
+    },
+    {
+      "id": "spoons-osm-n975847498",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-briar-rose-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Briar Rose",
+      "osm_aliases": [
+        "node/975847498"
+      ],
+      "lat": 52.4799005,
+      "lon": -1.9001993
+    },
+    {
+      "id": "spoons-osm-w102824957",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-charlie-hall-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained; checked as Erdington.",
+      "source_name": "The Charlie Hall",
+      "osm_aliases": [
+        "way/102824957"
+      ],
+      "lat": 52.5240621,
+      "lon": -1.840152154278008
+    },
+    {
+      "id": "spoons-osm-w104192800",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-arnold-machin-newcastle-under-lyme/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Arnold Machin",
+      "osm_aliases": [
+        "way/104192800"
+      ],
+      "lat": 53.0120562,
+      "lon": -2.225251664820969
+    },
+    {
+      "id": "spoons-osm-w1050092693",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-worcester/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source Crown Hotel corresponds to operator Crown at same Worcester premises.",
+      "source_name": "The Crown Hotel",
+      "osm_aliases": [
+        "way/1050092693"
+      ],
+      "lat": 52.19293545,
+      "lon": -2.2224563609581565
+    },
+    {
+      "id": "spoons-osm-w106181175",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-city-arms-coventry/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Coventry/Earlsdon locality variant.",
+      "source_name": "The City Arms",
+      "osm_aliases": [
+        "way/106181175"
+      ],
+      "lat": 52.3995127,
+      "lon": -1.530794710780524
+    },
+    {
+      "id": "spoons-osm-w1077630695",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-swanne-inne-evesham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Old Swanne Inne",
+      "osm_aliases": [
+        "way/1077630695"
+      ],
+      "lat": 52.094304550000004,
+      "lon": -1.9462885648627446
+    },
+    {
+      "id": "spoons-osm-w1300983689",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bellwether-wednesbury/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Bellwether",
+      "osm_aliases": [
+        "way/1300983689"
+      ],
+      "lat": 52.553296149999994,
+      "lon": -2.019142623262562
+    },
+    {
+      "id": "spoons-osm-w137335708",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bishop-vesey-sutton-coldfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Sutton Coldfield/Boldmere locality variant.",
+      "source_name": "The Bishop Vesey",
+      "osm_aliases": [
+        "way/137335708"
+      ],
+      "lat": 52.54850735,
+      "lon": -1.840825006921384
+    },
+    {
+      "id": "spoons-osm-w1432402136",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-foley-arms-hotel-great-malvern/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Foley Arms Hotel",
+      "osm_aliases": [
+        "way/1432402136"
+      ],
+      "lat": 52.11252865,
+      "lon": -2.3298625325443787
+    },
+    {
+      "id": "spoons-osm-w1465394526",
+      "decision": "hold_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/",
+      "basis": "Operator retrieval explicitly reported temporary closure and advertised reopening 10 October 2026. Subsequent cached operator retrieval shows ordinary closed/open-hours status without the temporary notice, so status evidence conflicts. Date has passed but actual reopening is not independently confirmed. Hold map pending fresh verification, not a former-pub exclusion; no automatic activation from date or schedule alone. Preserve source identity."
+    },
+    {
+      "id": "spoons-osm-w150398083",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-chequers-inn-stourbridge/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Chequers Inn",
+      "osm_aliases": [
+        "way/150398083"
+      ],
+      "lat": 52.4549617,
+      "lon": -2.1438271639978312
+    },
+    {
+      "id": "spoons-osm-w154502747",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wheatsheaf-cheadle/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Wheatsheaf",
+      "osm_aliases": [
+        "way/154502747"
+      ],
+      "lat": 52.9867629,
+      "lon": -1.9896859666454394
+    },
+    {
+      "id": "spoons-osm-w158005236",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-golden-bee-stratford-upon-avon/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Golden Bee",
+      "osm_aliases": [
+        "way/158005236"
+      ],
+      "lat": 52.191835850000004,
+      "lon": -1.705565956433282
+    },
+    {
+      "id": "spoons-osm-w183853111",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mare-pool-mere-green/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Sutton Coldfield/Mere Green locality variant.",
+      "source_name": "The Mare Pool",
+      "osm_aliases": [
+        "way/183853111"
+      ],
+      "lat": 52.5864744,
+      "lon": -1.828603872576982
+    },
+    {
+      "id": "spoons-osm-w203601490",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-henry-newbolt-bilston/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained; checked as Bilston.",
+      "source_name": "The Sir Henry Newbolt",
+      "osm_aliases": [
+        "way/203601490"
+      ],
+      "lat": 52.564272149999994,
+      "lon": -2.080439665842273
+    },
+    {
+      "id": "spoons-osm-w204044220",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-plaza-rugeley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town retained; checked as Rugeley. Source/operator postcode discrepancy WS15 2EJ/WS15 2EH retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Plaza",
+      "osm_aliases": [
+        "way/204044220"
+      ],
+      "lat": 52.757551750000005,
+      "lon": -1.9347723499999945
+    },
+    {
+      "id": "spoons-osm-w205254381",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-mail-rooms-ross-on-wye/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Mail Rooms",
+      "osm_aliases": [
+        "way/205254381"
+      ],
+      "lat": 51.913684700000005,
+      "lon": -2.5820795183151932
+    },
+    {
+      "id": "spoons-osm-w216653665",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-poste-of-stone-stone/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Poste of Stone",
+      "osm_aliases": [
+        "way/216653665"
+      ],
+      "lat": 52.90359415,
+      "lon": -2.1486858020211974
+    },
+    {
+      "id": "spoons-osm-w217581670",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wilfred-owen-oswestry/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy SY11 1AF/SY11 1AJ retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Wilfred Owen",
+      "osm_aliases": [
+        "way/217581670"
+      ],
+      "lat": 52.8594794,
+      "lon": -3.0567031946863183
+    },
+    {
+      "id": "spoons-osm-w217787104",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-house-stafford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Picture House",
+      "osm_aliases": [
+        "way/217787104"
+      ],
+      "lat": 52.804429549999995,
+      "lon": -2.116204201308002
+    },
+    {
+      "id": "spoons-osm-w220316285",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-royal-enfield-redditch/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Royal Enfield",
+      "osm_aliases": [
+        "way/220316285"
+      ],
+      "lat": 52.306991100000005,
+      "lon": -1.9433982239507295
+    },
+    {
+      "id": "spoons-osm-w235008006",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-shenstone-halesowen/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The William Shenstone",
+      "osm_aliases": [
+        "way/235008006"
+      ],
+      "lat": 52.44966785,
+      "lon": -2.0507292007154643
+    },
+    {
+      "id": "spoons-osm-w244088515",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-thomas-lloyd-warwick/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Thomas Lloyd",
+      "osm_aliases": [
+        "way/244088515"
+      ],
+      "lat": 52.28226455,
+      "lon": -1.5901213800296827
+    },
+    {
+      "id": "spoons-osm-w249010045",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-earl-of-mercia-coventry/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained; checked as Coventry.",
+      "source_name": "The Earl of Mercia",
+      "osm_aliases": [
+        "way/249010045"
+      ],
+      "lat": 52.40704805,
+      "lon": -1.5086817311427458
+    },
+    {
+      "id": "spoons-osm-w25372738",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-standard-coventry/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Flying Standard",
+      "osm_aliases": [
+        "way/25372738"
+      ],
+      "lat": 52.4090229,
+      "lon": -1.5094455781139846
+    },
+    {
+      "id": "spoons-osm-w256896544",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/st-matthews-hall-walsall/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Apostrophe variant retained.",
+      "source_name": "St. Matthew's Hall",
+      "osm_aliases": [
+        "way/256896544"
+      ],
+      "lat": 52.585288649999995,
+      "lon": -1.9799945913893373
+    },
+    {
+      "id": "spoons-osm-w276371641",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dictum-of-kenilworth-kenilworth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Dictum of Kenilworth",
+      "osm_aliases": [
+        "way/276371641"
+      ],
+      "lat": 52.34289575,
+      "lon": -1.5799084477774574
+    },
+    {
+      "id": "spoons-osm-w288392019",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-reginald-mitchell-hanley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy ST1 1PW/ST1 1NQ retained for this named/locality venue, without directory-field overwrite.",
+      "source_name": "The Reginald Mitchell",
+      "osm_aliases": [
+        "way/288392019"
+      ],
+      "lat": 53.025366649999995,
+      "lon": -2.1744312690056606
+    },
+    {
+      "id": "spoons-osm-w295058642",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-royal-tiger-wednesfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Wolverhampton/Wednesfield locality variant.",
+      "source_name": "The Royal Tiger",
+      "osm_aliases": [
+        "way/295058642"
+      ],
+      "lat": 52.60042755,
+      "lon": -2.08194582632904
+    },
+    {
+      "id": "spoons-osm-w305890365",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-cross-inn-kingswinford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Cross Inn",
+      "osm_aliases": [
+        "way/305890365"
+      ],
+      "lat": 52.497572399999996,
+      "lon": -2.1684615810821084
+    },
+    {
+      "id": "spoons-osm-w308488028",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-green-dragon-leek/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Green Dragon",
+      "osm_aliases": [
+        "way/308488028"
+      ],
+      "lat": 53.1064175,
+      "lon": -2.0272823152015373
+    },
+    {
+      "id": "spoons-osm-w312335223",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-elizabeth-of-york-moseley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Moseley locality variant.",
+      "source_name": "The Elizabeth of York",
+      "osm_aliases": [
+        "way/312335223"
+      ],
+      "lat": 52.4462413,
+      "lon": -1.8876156500000025
+    },
+    {
+      "id": "spoons-osm-w343177059",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/golden-cross-hotel-bromsgrove/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Operator omits leading article.",
+      "source_name": "Golden Cross Hotel",
+      "osm_aliases": [
+        "way/343177059"
+      ],
+      "lat": 52.3338506,
+      "lon": -2.061569239586267
+    },
+    {
+      "id": "spoons-osm-w384913991",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bole-bridge-tamworth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Historic Warwickshire assignment retained despite current Staffordshire locality.",
+      "source_name": "The Bole Bridge",
+      "osm_aliases": [
+        "way/384913991"
+      ],
+      "lat": 52.63315075,
+      "lon": -1.6915933598989936
+    },
+    {
+      "id": "spoons-osm-w404170616",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hedgeford-lodge-hednesford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Hedgeford Lodge",
+      "osm_aliases": [
+        "way/404170616"
+      ],
+      "lat": 52.7092351,
+      "lon": -2.0004344462771844
+    },
+    {
+      "id": "spoons-osm-w442430654",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kings-fee-hereford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Kings Fee",
+      "osm_aliases": [
+        "way/442430654"
+      ],
+      "lat": 52.05817555,
+      "lon": -2.710409493027786
+    },
+    {
+      "id": "spoons-osm-w58704822",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-tyler-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source town/postcode retained; checked as Yardley.",
+      "source_name": "The William Tyler",
+      "osm_aliases": [
+        "way/58704822"
+      ],
+      "lat": 52.46730425,
+      "lon": -1.8083721638586918
+    },
+    {
+      "id": "spoons-osm-w593889513",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-britannia-rowley-regis/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Rowley Regis/Blackheath locality variant.",
+      "source_name": "The Britannia",
+      "osm_aliases": [
+        "way/593889513"
+      ],
+      "lat": 52.47378615,
+      "lon": -2.0419145482037084
+    },
+    {
+      "id": "spoons-osm-w607939804",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dukes-head-leominster/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Duke's Head",
+      "osm_aliases": [
+        "way/607939804"
+      ],
+      "lat": 52.227337,
+      "lon": -2.7377772172394037
+    },
+    {
+      "id": "spoons-osm-w75614314",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-navigation-inn-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Kings Norton locality variant.",
+      "source_name": "The Navigation Inn",
+      "osm_aliases": [
+        "way/75614314"
+      ],
+      "lat": 52.407894150000004,
+      "lon": -1.9266238113064527
+    },
+    {
+      "id": "spoons-osm-w88085195",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-avion-aldridge/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Avion",
+      "osm_aliases": [
+        "way/88085195"
+      ],
+      "lat": 52.60345905,
+      "lon": -1.919817295915712
+    },
+    {
+      "id": "spoons-osm-w88521326",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hornet-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Ward End locality variant.",
+      "source_name": "The Hornet",
+      "osm_aliases": [
+        "way/88521326"
+      ],
+      "lat": 52.492600550000006,
+      "lon": -1.819364722304012
+    },
+    {
+      "id": "spoons-osm-w94961209",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-square-peg-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved.",
+      "source_name": "The Square Peg",
+      "osm_aliases": [
+        "way/94961209"
+      ],
+      "lat": 52.48171375,
+      "lon": -1.8952732655768953
+    },
+    {
+      "id": "spoons-osm-w95611906",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-black-horse-birmingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Birmingham/Northfield locality variant.",
+      "source_name": "The Black Horse",
+      "osm_aliases": [
+        "way/95611906"
+      ],
+      "lat": 52.411917349999996,
+      "lon": -1.9735246676781473
+    },
+    {
+      "id": "spoons-osm-w98286602",
+      "decision": "hold_map",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/",
+      "basis": "Operator retrieval explicitly reported temporary closure and advertised reopening 5 October 2026. Subsequent cached operator retrieval shows ordinary closed/open-hours status without the temporary notice, so status evidence conflicts. Date has passed but actual reopening is not independently confirmed. Hold map pending fresh verification, not a former-pub exclusion; no automatic activation from date or schedule alone. Preserve source identity."
+    },
+    {
+      "id": "spoons-osm-w987129477",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://thebutlersbellbydavenports.co.uk/",
+      "basis": "Current named operator website identifies Butlers Bell Stafford as My Local by Davenports Brewery. Regional former-Wetherspoon cross-check corroborates same Gaolgate Street venue. Exclude current collection membership, not the operating pub; retain source position and missing town/postcode."
     }
   ]
 }
