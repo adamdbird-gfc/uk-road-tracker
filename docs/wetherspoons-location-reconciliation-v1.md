@@ -10,7 +10,7 @@ The companion file `collections/wetherspoons-location-research-v1.json` records 
 
 Adam accepts an approximate Terminal 2 building location for The Belle Vue, provided users explicitly confirm a visit to that particular pub. Terminal presence alone must never award a visit. Apply the same separation between display location and visit evidence when reviewing other shared buildings.
 
-A parent building or holiday-park OSM ID is context only, never a pub alias or proof of pub entry. Directory pub points are candidates, not OSM identities. The Springfield park point is insufficient to locate its pub building and remains a placement gap.
+A parent building or holiday-park OSM ID is context only, never a pub alias or proof of pub entry. Directory pub points are candidates, not OSM identities. The Springfield now has a user-supplied dropped-pin coordinate on its shared main-complex building. This is building-level display evidence, not an exact pub boundary.
 
 The current Android Wetherspoons collection is map-only. Existing documentation and builder leave visits disabled; this research does not implement a confirmation flow. Any future check-in implementation must enforce the agreed rule. Do not promise that current code already supports it.
 
@@ -21,7 +21,7 @@ The current Android Wetherspoons collection is map-only. Existing documentation 
 | The Belle Vue | Manchester Airport, Terminal 2 | 53.366700 | -2.279470 | Parent building |
 | The Red Gown | St Andrews | 56.340730 | -2.800230 | Parent building |
 | The Sir Thomas Haggerston | Haggerston Castle | 55.687593 | -1.932566 | Named directory point; footprint unverified |
-| The Springfield | Cala Gran, Fleetwood | 53.898140 | -3.019700 | Park only; unresolved pub placement |
+| The Springfield | Cala Gran, Fleetwood | 53.898169 | -3.019847 | User-placed point on shared main complex |
 | The Alfred Wainwright | Lakeland, Flookburgh | 54.157711 | -2.966190 | Named directory point; footprint unverified |
 | The Marshfield Bank Farm House | Woolstanwood, Crewe | 53.095640 | -2.485280 | Named directory point; footprint unverified |
 | The White Clover | Hopton, Norfolk | 52.541580 | 1.733490 | Named directory point; footprint unverified |
@@ -59,7 +59,7 @@ CAMRA directions coordinate; precise footprint not verified.
 
 ### The Springfield
 
-Park point only, not verified pub building. Former Mash and Barrel lead from secondary sources; requires main-complex/pub placement check before promotion.
+User-supplied dropped-pin coordinate identifies the shared Springfield/Live Lounge main complex. Former Mash and Barrel identity still requires reconciliation; pub boundary remains unverified.
 
 - Operating evidence: https://news.haven.com/news/havens-cala-gran-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-springfield
 - Candidate location evidence: https://mapcarta.com/W160318964
@@ -164,7 +164,7 @@ Oast House, Derby remains a reported proposal without established current operat
 
 ## Remaining work and validation
 
-Research now covers all 13 leads. Twelve have named-pub or parent-building coordinate candidates; Springfield has only a park-level numeric fallback; a user-supplied close-up now identifies the shared main-complex building, but its coordinate still needs extraction. All thirteen still need production identity/source reconciliation. The two conflicting reopening cases remain outstanding.
+Research now covers all 13 leads. All thirteen now have named-pub or building-level coordinate candidates. Springfield’s user-placed building point is recorded; exact pub footprint and production identity reconciliation remain outstanding. All thirteen still need production identity/source reconciliation. The two conflicting reopening cases remain outstanding.
 
 Validated: 13 unique lead keys, exact match to the 13 operating leads, UK coordinate ranges, original 831-source count, nearest-candidate proximity screen, no pub alias derived from a parent ID, and all map/visit promotion flags disabled. No app files, version, builder, existing review decisions or packaged assets are changed by this checkpoint. Documentation/research data do not need an Android build.
 
@@ -173,3 +173,7 @@ Delivery remains: reconcile UK catalogue, bundle approved map catalogue in app r
 ## Springfield user evidence follow-up
 
 Adam supplied 28697.png showing the named Springfield pin on the main complex beside The Live Lounge, plus https://maps.app.goo.gl/JBJ6Soi9DAHBEAiL9. The link resolves to the specific Springfield Maps listing (feature ID 0x487b5d3de1844da9:0xccea23f81da48c8a), confirming the listing identity. Target coordinates were not exposed in the returned HTML; no coordinate was guessed. Keep the research coordinate classified park-only until the building point is independently extracted. The Google feature ID is reference evidence, not an OSM alias. Main-complex identity is now evidenced; exact coordinate and OSM identity remain outstanding.
+
+## Springfield coordinate resolved
+
+Adam supplied 28699.png with dropped-pin coordinates **53.898169, -3.019847** over The Springfield/main complex beside The Live Lounge. Replace the park-level research point with this user-placed building-level point, retaining the earlier park point as provenance. This is not a device GPS measurement, surveyed pub boundary or OSM pub identity. The coordinate extraction gap described in the earlier follow-up is now resolved. No map/visit activation occurs; production source/identity reconciliation remains necessary.
