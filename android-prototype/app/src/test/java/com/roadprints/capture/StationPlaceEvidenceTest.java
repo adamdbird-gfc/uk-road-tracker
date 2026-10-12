@@ -15,7 +15,7 @@ public class StationPlaceEvidenceTest {
         return catalog;
     }
     private FootTraceValidator.Sample sample(double lat) {
-        return new FootTraceValidator.Sample(lat,-.123689,10,100000,.1,0);
+        return new FootTraceValidator.Sample(-.123689,lat,10,100000,.1,0);
     }
     @Test public void walkingAwayCannotReuseDepartureStationAsArrival() throws Exception {
         JSONObject arrival=StationPlaceEvidence.arrival("walk",sample(51.53),400000,

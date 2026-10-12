@@ -104,7 +104,7 @@ jobs:
     if: >-
       (github.event_name == 'workflow_dispatch' && inputs.firebase_upload) ||
       (vars.ROADPRINTS_FIREBASE_UPLOAD == 'true' &&
-      (github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture' || github.ref == 'refs/heads/main'))
+      (github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture' || github.ref == 'refs/heads/fix/onboarding-start-tracking' || github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
