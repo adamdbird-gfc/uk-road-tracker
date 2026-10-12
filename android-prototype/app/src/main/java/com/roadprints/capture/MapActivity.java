@@ -191,6 +191,9 @@ public class MapActivity extends Activity {
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
         applyCollectionLayer();
+        PubVisitStore.ensureHistory(this,()->{
+            if(active&&!isFinishing()&&!isDestroyed())applyCollectionLayer();
+        });
         CollectionCatalogueUpdates.refreshIfDue(this,()->{
             if(active&&!isFinishing()&&!isDestroyed())applyCollectionLayer();
         });
@@ -289,12 +292,13 @@ public class MapActivity extends Activity {
         collectionSelector.setText("Showing on map\n"+(CollectionAccessStore.NONE.equals(selected)?"No collection":CollectionAccessStore.name(selected))+"  ▾");
         collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
         collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
-        collectionNotice.setText("UK pub map · "+CollectionMapCatalog.spoons(this).length()+" reviewed locations · visits coming soon");
+        collectionNotice.setText("UK pub map · "+PubVisitStore.visitedLabel(PubVisitStore.completed(this).size())+" · "+CollectionMapCatalog.spoons(this).length()+" mapped");
         if(townMap)return;
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
                 :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
-        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:java.util.Collections.emptySet();
+        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:
+                CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
@@ -931,9 +935,13 @@ public class MapActivity extends Activity {
         addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
         addCardBody(content,pub.optString("location_label","Reviewed map location"));
-        addCardBody(content,"Pub visit recording and achievements are coming soon.");
+        addCardBody(content,PubVisitStore.completed(this).contains(pub.optString("id"))?"Visited":"Not yet visited");
+        addCardBody(content,"Live check-ins require a location check and confirmation of this pub. You can also review Timeline place visits. Achievements are coming later.");
         addCardBody(content,pub.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
+        TextView visits=cardAction("CHECK IN / VIEW PUB VISITS",true);
+        visits.setOnClickListener(v->{popup.dismiss();startActivity(new Intent(this,PubVisitsActivity.class).putExtra("pub_id",pub.optString("id")));});
+        content.addView(visits);
         TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());content.addView(close);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
         popup.show();
@@ -1980,6 +1988,7 @@ public class MapActivity extends Activity {
         }
     }
 }
+
 
 
 

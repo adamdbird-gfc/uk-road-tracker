@@ -46,6 +46,7 @@ public class CollectionsActivity extends Activity {
         body=new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(18),dp(4),dp(18),dp(18));
         scroll.addView(body); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         View nav=bottomNavigation(); root.addView(GrowingStatusControl.create(this)); root.addView(nav); setContentView(root); applyInsets(root,header,nav); render();
+        PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())render();});
     }
 
     private void render() {
@@ -55,7 +56,7 @@ public class CollectionsActivity extends Activity {
                 "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
                 R.drawable.ic_roadprints_fuel);
         addCollection(CollectionAccessStore.SPOONS,
-                "Explore individually reviewed pubs across the UK. Temporarily closed pubs awaiting reopening checks are withheld from the map. Visit recording, progress and achievements are coming soon.",
+                "Explore reviewed UK pubs, check in with location evidence and confirmation, and review historical Timeline place visits. Temporarily closed pubs awaiting checks are withheld from the map. Achievements are coming later.",
                 R.drawable.ic_nav_collections);
     }
 
@@ -73,12 +74,19 @@ public class CollectionsActivity extends Activity {
         if(!installed) {
             addAction(card,"Install for beta testing",()->{
                 CollectionAccessStore.installForTesting(this,id);render();
+                if(CollectionAccessStore.SPOONS.equals(id))PubVisitStore.ensureHistory(this,()->{
+                    if(!isFinishing()&&!isDestroyed())render();
+                });
                 if(CollectionAccessStore.SERVICES.equals(id))ServiceStationStore.ensureHistoricalVisits(this,()->{
                     if(!isFinishing()&&!isDestroyed())render();
                 });
             });
         } else {
             TextView status=text("Installed · beta access",13,TEAL,true);status.setPadding(0,0,0,dp(12));card.addView(status);
+            if(CollectionAccessStore.SPOONS.equals(id)){
+                card.addView(text(PubVisitStore.visitedLabel(PubVisitStore.completed(this).size()),16,TEAL,true));
+                addAction(card,"View pub visits",()->startActivity(new Intent(this,PubVisitsActivity.class)));
+            }
             addAction(card,"Show on map",()->{
                 CollectionAccessStore.select(this,id);
                 startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",id));finish();
@@ -128,5 +136,6 @@ public class CollectionsActivity extends Activity {
     private void applyInsets(View root,View header,View nav){root.setOnApplyWindowInsetsListener((view,insets)->{int top,bottom;if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());top=bars.top;bottom=bars.bottom;}else{top=insets.getSystemWindowInsetTop();bottom=insets.getSystemWindowInsetBottom();}header.setPadding(dp(18),dp(17)+top,dp(18),dp(13));LinearLayout.LayoutParams p=(LinearLayout.LayoutParams)nav.getLayoutParams();p.height=dp(68)+bottom;nav.setPadding(dp(8),0,dp(8),bottom);nav.setLayoutParams(p);return insets;});root.requestApplyInsets();}
     private int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
 }
+
 
 
