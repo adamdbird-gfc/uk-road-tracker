@@ -66,15 +66,15 @@ public class TimelineImportActivity extends Activity {
         root.setPadding(dp(24), dp(24), dp(24), dp(24));
         LinearLayout brand = RoadprintsHeader.create(this);
         brand.setPadding(0, 0, 0, dp(22));
-        root.addView(brand);
-        root.addView(text("DATA MANAGEMENT", 13, 0xFF67D5CC, true));
+        if(!pubVisitsOnly)root.addView(brand);
+        root.addView(text(pubVisitsOnly?"WETHERSPOONS":"DATA MANAGEMENT", 13, 0xFF67D5CC, true));
 
-        TextView title = text(pubVisitsOnly ? "Pub place visits" : serviceOnly ? "Service station visits" : "Timeline data",
+        TextView title = text(pubVisitsOnly ? "Import from Timeline" : serviceOnly ? "Service station visits" : "Timeline data",
                 30, Color.WHITE, true);
         root.addView(title);
 
         TextView intro = text(pubVisitsOnly
-                ? "Import Timeline place visits for your pub collection. Named pub visits can be recognised; nearby places need review. Saved journeys and route matching will be left untouched."
+                ? "Choose your Timeline file to check historical pub visits. Your existing journeys stay as they are."
                 : serviceOnly
                 ? "Add another Google Timeline JSON file to update service station visits. "
                     + "Saved journeys and route matching will be left untouched."
@@ -122,9 +122,10 @@ public class TimelineImportActivity extends Activity {
             help.setText((show ? "▾ " : "▸ ") + "Where do I find my Timeline file?");
         });
 
-        capture = action(pubVisitsOnly ? "RETURN TO PUB VISITS" : serviceOnly ? "RETURN TO MAP" : "CONTINUE TO GROWING");
+        capture = action(pubVisitsOnly ? "DONE" : serviceOnly ? "RETURN TO MAP" : "CONTINUE TO GROWING");
         capture.setVisibility(View.GONE);
         capture.setOnClickListener(v -> {
+            if(pubVisitsOnly){finish();return;}
             if (serviceOnly) {
                 startActivity(new Intent(this, pubVisitsOnly ? PubVisitsActivity.class : MapActivity.class));
             } else {
@@ -138,7 +139,12 @@ public class TimelineImportActivity extends Activity {
         captureParams.setMargins(0, dp(24), 0, 0);
         root.addView(capture, captureParams);
 
-        RoadprintsHeader.installUtilityPage(this, root, "BACK", this::finish);
+        if(pubVisitsOnly){
+            android.graphics.drawable.GradientDrawable panel=new android.graphics.drawable.GradientDrawable();
+            panel.setColor(0xFF0B1C50);panel.setCornerRadius(dp(22));panel.setStroke(dp(1),0xFF496096);root.setBackground(panel);
+            TextView close=action("CLOSE");close.setOnClickListener(v->finish());root.addView(close);
+            android.widget.ScrollView popup=new android.widget.ScrollView(this);popup.addView(root);setContentView(popup);
+        }else RoadprintsHeader.installUtilityPage(this, root, "BACK", this::finish);
     }
 
     private void chooseFile() {
@@ -306,7 +312,7 @@ public class TimelineImportActivity extends Activity {
             ImportResult result = new ImportResult(0, 0, 0,
                     (pubVisitsOnly?"Pub import complete: ":"Service import complete: ") + count(confirmedTimelineVisits.length())
                             + " Timeline place visits saved; " + count(pubVisitsOnly?PubVisitStore.completed(this).size():matchedServiceStations)
-                            + (pubVisitsOnly?" pubs visited. Review ambiguous place visits in Pub visits. Saved journeys were not changed.":" service stations matched. Saved journeys were not changed."));
+                            + (pubVisitsOnly?" pubs visited. Use Manual check on Progress to review nearby place visits. Saved journeys were not changed.":" service stations matched. Saved journeys were not changed."));
             result.visitsSaved = confirmedTimelineVisits.length();
             result.stationsMatched = matchedServiceStations;
             return result;
@@ -991,11 +997,12 @@ public class TimelineImportActivity extends Activity {
         button.setText(label);
         button.setTextSize(15);
         button.setTypeface(null, android.graphics.Typeface.BOLD);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(pubVisitsOnly?("CLOSE".equalsIgnoreCase(label)?0xFF67D5CC:0xFF0B1C50):Color.WHITE);
+        if(pubVisitsOnly)button.setAllCaps(false);
         button.setGravity(Gravity.CENTER);
         button.setMinHeight(dp(58));
         button.setPadding(dp(18), dp(12), dp(18), dp(12));
-        button.setBackground(rounded(0xFF35558F, 0xFF496096));
+        button.setBackground(pubVisitsOnly?rounded("CLOSE".equalsIgnoreCase(label)?0xFF233B78:0xFFF7C450,0xFF496096):rounded(0xFF35558F, 0xFF496096));
         button.setClickable(true);
         button.setFocusable(true);
         return button;
@@ -1092,4 +1099,5 @@ public class TimelineImportActivity extends Activity {
         }
     }
 }
+
 

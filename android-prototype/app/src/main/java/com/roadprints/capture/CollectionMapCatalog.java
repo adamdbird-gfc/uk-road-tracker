@@ -34,6 +34,7 @@ final class CollectionMapCatalog {
             if(!Double.isFinite(lat)||!Double.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)continue;
             try {JSONObject pin=new JSONObject();pin.put("id",row.getString("id"));
                 pin.put("name",row.optString("name"));pin.put("town",row.optString("town"));
+                pin.put("county",row.optJSONObject("county"));
                 pin.put("lat",lat);pin.put("lng",lng);
                 pin.put("location_label",row.optString("location_label","Reviewed map location"));
                 pin.put("attribution",row.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
@@ -61,6 +62,7 @@ final class CollectionMapCatalog {
         return CollectionCatalogueUpdates.pins(context,bundled);
     }
 }
+
 
 
 

@@ -56,7 +56,7 @@ public class CollectionsActivity extends Activity {
                 "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
                 R.drawable.ic_roadprints_fuel);
         addCollection(CollectionAccessStore.SPOONS,
-                "Explore reviewed UK pubs, check in with location evidence and confirmation, and review historical Timeline place visits. Temporarily closed pubs awaiting checks are withheld from the map. Achievements are coming later.",
+                "Collect the Wetherspoons pubs you visit across the UK. Confirm visits using Timeline history or a location-checked check-in.",
                 R.drawable.ic_nav_collections);
     }
 
@@ -83,10 +83,6 @@ public class CollectionsActivity extends Activity {
             });
         } else {
             TextView status=text("Installed · beta access",13,TEAL,true);status.setPadding(0,0,0,dp(12));card.addView(status);
-            if(CollectionAccessStore.SPOONS.equals(id)){
-                card.addView(text(PubVisitStore.visitedLabel(PubVisitStore.completed(this).size()),16,TEAL,true));
-                addAction(card,"View pub visits",()->startActivity(new Intent(this,PubVisitsActivity.class)));
-            }
             addAction(card,"Show on map",()->{
                 CollectionAccessStore.select(this,id);
                 startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",id));finish();
@@ -97,12 +93,14 @@ public class CollectionsActivity extends Activity {
                 });
                 addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class));finish();});
             }
-            TextView remove=text("Remove collection",14,MUTED,false);remove.setPadding(dp(4),dp(12),dp(4),dp(12));
-            remove.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Remove "+CollectionAccessStore.name(id)+"?")
-                    .setMessage("The collection will be hidden from your map and progress. Your existing visits will be kept.")
-                    .setNegativeButton("Cancel",null).setPositiveButton("Remove",(dialog,which)->{
+            if(CollectionAccessStore.SPOONS.equals(id))
+                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","wetherspoons"));finish();});
+            TextView remove=text("Remove collection",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setPadding(dp(12),dp(14),dp(12),dp(8));
+            remove.setOnClickListener(v->RoadprintsDialog.show(this,"Remove "+CollectionAccessStore.name(id)+"?",
+                    "The collection will be hidden from your map and progress. Your existing visits will be kept.",null,
+                    "Remove collection",()->{
                         CollectionAccessStore.remove(this,id);render();
-                    }).show());card.addView(remove);
+                    },"Cancel",null));card.addView(remove);
         }
         body.addView(card);
     }
@@ -136,6 +134,7 @@ public class CollectionsActivity extends Activity {
     private void applyInsets(View root,View header,View nav){root.setOnApplyWindowInsetsListener((view,insets)->{int top,bottom;if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());top=bars.top;bottom=bars.bottom;}else{top=insets.getSystemWindowInsetTop();bottom=insets.getSystemWindowInsetBottom();}header.setPadding(dp(18),dp(17)+top,dp(18),dp(13));LinearLayout.LayoutParams p=(LinearLayout.LayoutParams)nav.getLayoutParams();p.height=dp(68)+bottom;nav.setPadding(dp(8),0,dp(8),bottom);nav.setLayoutParams(p);return insets;});root.requestApplyInsets();}
     private int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
 }
+
 
 
 

@@ -930,19 +930,18 @@ public class MapActivity extends Activity {
 
     private void showPubCard(JSONObject pub) {
         if(pub==null||isFinishing())return;
+        boolean visited=PubVisitStore.completed(this).contains(pub.optString("id"));
         LinearLayout content=cardContainer();
-        addCardLabel(content,"UK WETHERSPOONS COLLECTION");
-        addCardTitle(content,pub.optString("name","Pub"));
+        addCardLabel(content,"WETHERSPOONS");addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
-        addCardBody(content,pub.optString("location_label","Reviewed map location"));
-        addCardBody(content,PubVisitStore.completed(this).contains(pub.optString("id"))?"Visited":"Not yet visited");
-        addCardBody(content,"Live check-ins require a location check and confirmation of this pub. You can also review Timeline place visits. Achievements are coming later.");
-        addCardBody(content,pub.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
+        addCardBody(content,visited?"Visited":"Not visited");
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
-        TextView visits=cardAction("CHECK IN / VIEW PUB VISITS",true);
-        visits.setOnClickListener(v->{popup.dismiss();startActivity(new Intent(this,PubVisitsActivity.class).putExtra("pub_id",pub.optString("id")));});
-        content.addView(visits);
-        TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());content.addView(close);
+        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+        TextView detail=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);
+        detail.setOnClickListener(v->{popup.dismiss();if(visited)PubVisitUi.details(this,pub,this::applyCollectionLayer);
+            else PubVisitUi.live(this,pub,this::applyCollectionLayer,null);});
+        TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());
+        actions.addView(detail);actions.addView(close);content.addView(actions);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
         popup.show();
     }
@@ -1988,6 +1987,7 @@ public class MapActivity extends Activity {
         }
     }
 }
+
 
 
 

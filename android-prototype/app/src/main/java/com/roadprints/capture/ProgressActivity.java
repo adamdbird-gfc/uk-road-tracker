@@ -51,6 +51,7 @@ public class ProgressActivity extends Activity {
     private ScrollView statisticsScroll;
     private final Map<String, TextView> progressJumpChips = new LinkedHashMap<>();
     private boolean hasResumed;
+    private String requestedProgressSection;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
     private DistanceStats loadedStats;
@@ -161,6 +162,19 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        String checkinId=getIntent().getStringExtra("pub_checkin_id");
+        if(checkinId!=null){
+            getIntent().removeExtra("pub_checkin_id");
+            JSONObject pub=PubVisitStore.find(CollectionMapCatalog.spoons(this),checkinId);
+            if(pub!=null)PubVisitUi.live(this,pub,this::refreshPubProgress,null);
+        }
+        PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())refreshPubProgress();});
+        String requestedSection=getIntent().getStringExtra("progress_section");
+        if(requestedSection!=null){
+            getIntent().removeExtra("progress_section");
+            requestedProgressSection=requestedSection;
+            restoreProgressScroll();
+        }
         useKilometres = DistanceUnits.usesKilometres(this);
         mainHandler.removeCallbacks(revisionTicker); mainHandler.postDelayed(revisionTicker, 3000);
         if (hasResumed) {
@@ -222,9 +236,9 @@ public class ProgressActivity extends Activity {
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
         synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
-        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)))) {
+        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()))) {
             loadedStats = cached; renderStatistics(statisticsContent, cached); restoreProgressScroll();
-        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)))) {
+        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()))) {
             renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
         if (cached != null && cachedRevision == revision) {
@@ -288,6 +302,10 @@ public class ProgressActivity extends Activity {
     private void restoreProgressScroll() {
         if (statisticsScroll != null) {
             statisticsScroll.post(() -> {
+                if(requestedProgressSection!=null){
+                    View target=findProgressSection(requestedProgressSection);
+                    if(target!=null){savedScrollY=Math.max(0,target.getTop()-dp(8));requestedProgressSection=null;}
+                }
                 if (savedScrollY > 0) statisticsScroll.scrollTo(0, savedScrollY);
                 updateActiveProgressJump();
             });
@@ -537,7 +555,7 @@ public class ProgressActivity extends Activity {
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
         renderedKilometres = useKilometres;
-        renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this));
+        renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision());
         renderingPendingStats = stats.pending;
         addCollectiveStatistics(parent, stats);
         renderingPendingStats = false;
@@ -555,6 +573,11 @@ public class ProgressActivity extends Activity {
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
         if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addServiceStationPanel(parent);
+        if (CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)) {
+            LinearLayout panel=statisticsPanel("Wetherspoons");panel.setTag("progress:wetherspoons");
+            PubProgressPanel.populate(this,panel,expandedRoadCategories,this::refreshPubProgress);
+            parent.addView(panel);
+        }
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
 
@@ -570,9 +593,14 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
         if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addProgressJump(row, "Motorway Service Stations", "services");
+        if (CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)) addProgressJump(row, "Wetherspoons", "wetherspoons");
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;
+    }
+    private void refreshPubProgress(){
+        if(statisticsScroll!=null)savedScrollY=statisticsScroll.getScrollY();
+        loadStatistics();restoreProgressScroll();
     }
 
     private void addProgressJump(LinearLayout row, String label, String section) {
@@ -608,7 +636,7 @@ public class ProgressActivity extends Activity {
         String active = "statistics";
         if (statisticsScroll != null && statisticsContent != null) {
             int threshold = statisticsScroll.getScrollY() + dp(28);
-            for (String section : new String[] {"statistics", "road_discovery", "motorways", "a_roads", "services"}) {
+            for (String section : new String[] {"statistics", "road_discovery", "motorways", "a_roads", "services", "wetherspoons"}) {
                 View target = findProgressSection(section);
                 if (target != null && target.getTop() <= threshold) active = section;
             }
@@ -1949,5 +1977,6 @@ public class ProgressActivity extends Activity {
     }
 
 }
+
 
 
