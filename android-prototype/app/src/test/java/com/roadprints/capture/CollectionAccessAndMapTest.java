@@ -37,7 +37,7 @@ public class CollectionAccessAndMapTest {
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertTrue(CollectionAccessStore.installed(app,CollectionAccessStore.SPOONS));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
-        assertEquals(37,CollectionMapCatalog.spoons(app).length());
+        assertEquals(811,CollectionMapCatalog.spoons(app).length());
         assertEquals("UK Wetherspoons Collection",CollectionAccessStore.name(CollectionAccessStore.SPOONS));
     }
     @Test public void selectionPersistsAndUninstalledCollectionCannotBeSelected() {
@@ -75,12 +75,39 @@ public class CollectionAccessAndMapTest {
         JSONArray pins=CollectionMapCatalog.spoons(app);
         java.util.Set<String> actual=new java.util.HashSet<>();
         for(int i=0;i<pins.length();i++)actual.add(pins.getJSONObject(i).getString("id"));
-        assertEquals(37,actual.size());
+        assertEquals(811,actual.size());
         assertTrue(actual.containsAll(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
                 "spoons-osm-w103691610","spoons-osm-w30110330")));
         assertFalse(actual.contains("spoons-osm-w262652847"));
-        assertFalse(actual.contains("spoons-osm-w965765986"));
+        assertTrue(actual.contains("spoons-osm-w965765986"));
+        assertTrue(actual.contains("spoons-curated-springfield-cala-gran"));
+        assertTrue(actual.contains("spoons-curated-belle-vue-manchester-airport"));
+        assertFalse(actual.contains("spoons-osm-w507289751"));
+        assertFalse(actual.contains("spoons-osm-w38325241"));
+        assertFalse(actual.contains("spoons-osm-w1465394526"));
+        assertFalse(actual.contains("spoons-osm-w98286602"));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
+    }
+    @Test public void nationwideAssetLoadsAboveOldLimitAndOversizedAssetIsRejected() throws Exception {
+        try(java.io.InputStream input=app.getAssets().open("collections/uk-wetherspoons-map-v1.json")) {
+            assertTrue(input.available()>65536);
+            assertEquals(811,CollectionMapCatalog.approvedVenues(CollectionMapCatalog.readCatalogue(input)).length());
+        }
+        byte[] oversized=new byte[CollectionMapCatalog.MAX_CATALOGUE_BYTES+1];
+        assertEquals(0,CollectionMapCatalog.readCatalogue(new java.io.ByteArrayInputStream(oversized)).length());
+    }
+    @Test public void supplementalPinsRetainApproximationAndSourceLabels() throws Exception {
+        JSONArray pins=CollectionMapCatalog.spoons(app);boolean found=false;
+        for(int i=0;i<pins.length();i++) {
+            JSONObject pin=pins.getJSONObject(i);
+            if("spoons-curated-springfield-cala-gran".equals(pin.getString("id"))) {
+                found=true;assertEquals(53.898169,pin.getDouble("lat"),1e-9);
+                assertEquals(-3.019847,pin.getDouble("lng"),1e-9);
+                assertEquals("Approximate building location",pin.getString("location_label"));
+                assertEquals("Location: Roadprints review",pin.getString("attribution"));
+            }
+        }
+        assertTrue(found);
     }
     @Test public void unreviewedRowsAndVisitEnabledCataloguesCannotProducePins() throws Exception {
         JSONObject row=new JSONObject().put("id","spoons-a").put("status","active").put("lat",51).put("lon",0);
@@ -138,3 +165,4 @@ public class CollectionAccessAndMapTest {
         assertEquals(View.GONE,selector.getVisibility());controller.destroy();
     }
 }
+

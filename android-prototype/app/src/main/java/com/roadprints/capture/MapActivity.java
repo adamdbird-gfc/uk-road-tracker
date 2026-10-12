@@ -286,7 +286,7 @@ public class MapActivity extends Activity {
         collectionSelector.setText("Showing on map\n"+(CollectionAccessStore.NONE.equals(selected)?"No collection":CollectionAccessStore.name(selected))+"  ▾");
         collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
         collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
-        collectionNotice.setText("Beta pub map · "+CollectionMapCatalog.spoons(this).length()+" reviewed locations · catalogue incomplete");
+        collectionNotice.setText("UK pub map · "+CollectionMapCatalog.spoons(this).length()+" reviewed locations · visits coming soon");
         if(townMap)return;
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
@@ -927,9 +927,9 @@ public class MapActivity extends Activity {
         addCardLabel(content,"UK WETHERSPOONS COLLECTION");
         addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
-        addCardBody(content,"Reviewed map location · beta catalogue incomplete");
+        addCardBody(content,pub.optString("location_label","Reviewed map location"));
         addCardBody(content,"Pub visit recording and achievements are coming soon.");
-        addCardBody(content,"© OpenStreetMap contributors · ODbL 1.0");
+        addCardBody(content,pub.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
         TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());content.addView(close);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
@@ -1977,5 +1977,6 @@ public class MapActivity extends Activity {
         }
     }
 }
+
 
 

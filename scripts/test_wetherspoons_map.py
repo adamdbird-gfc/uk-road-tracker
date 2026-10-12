@@ -61,6 +61,57 @@ class ReviewedMapTest(unittest.TestCase):
                 self.assertEqual([], self.result()['venues'])
                 self.catalogue['venues'][0][key] = old
 
+    def supplement(self):
+        return {'format': 1, 'collection_id': 'wetherspoons', 'approval_scope': 'map_only_supplement',
+                'venues': [{'id': 'spoons-curated-new-pub', 'decision': 'active_map',
+                            'name': 'New Pub', 'town': 'Town', 'county': {'code': 'KNT'},
+                            'lat': 51.1, 'lon': 0.1, 'osm_aliases': [], 'parent_osm_id': 'way/20',
+                            'reviewed_at': '2026-10-11', 'operating_evidence_url': 'https://example.org/new-pub',
+                            'location_evidence_url': 'https://example.org/map',
+                            'location_precision': 'approximate_building', 'location_label': 'Approximate building location',
+                            'attribution': 'Location: Roadprints review', 'confirmation_required': True, 'visit_enabled': False}]}
+
+    def test_curated_building_point_uses_distinct_identity_and_disables_visits(self):
+        r = build(self.catalogue, self.ledger, '2026-10-11', self.supplement())
+        self.assertEqual(2, len(r['venues']))
+        row = next(v for v in r['venues'] if v['id'].startswith('spoons-curated-'))
+        self.assertEqual([], row['osm_aliases'])
+        self.assertFalse(row['visit_enabled'])
+        self.assertTrue(row['confirmation_required'])
+        self.assertEqual('Approximate building location', row['location_label'])
+        self.assertIsNone(r['completion_target'])
+
+    def test_raw_research_cannot_be_used_as_supplement(self):
+        s = self.supplement(); s['approval_scope'] = 'research_checkpoint_not_app_asset'
+        with self.assertRaises(ValueError):
+            build(self.catalogue, self.ledger, '2026-10-11', s)
+
+    def test_parent_alias_and_existing_osm_alias_cannot_be_assigned_to_new_pub(self):
+        for alias in ['way/20', 'node/1']:
+            s = self.supplement(); s['venues'][0]['osm_aliases'] = [alias]
+            with self.assertRaises(ValueError):
+                build(self.catalogue, self.ledger, '2026-10-11', s)
+
+    def test_unapproved_or_park_only_supplement_never_activates(self):
+        for key, value in [('decision', 'hold_map'), ('visit_enabled', True),
+                           ('confirmation_required', False), ('location_precision', 'parent_park_point_only')]:
+            s = self.supplement(); s['venues'][0][key] = value
+            with self.assertRaises(ValueError):
+                build(self.catalogue, self.ledger, '2026-10-11', s)
+
+    def test_duplicate_supplement_ids_are_rejected(self):
+        s = self.supplement(); s['venues'].append(copy.deepcopy(s['venues'][0]))
+        with self.assertRaises(ValueError):
+            build(self.catalogue, self.ledger, '2026-10-11', s)
+
+    def test_stale_supplement_is_withheld_and_future_review_rejected(self):
+        r = build(self.catalogue, self.ledger, '2027-02-01', self.supplement())
+        self.assertEqual([], r['venues'])
+        self.assertIn('spoons-curated-new-pub', r['review_summary']['needs_rereview'])
+        with self.assertRaises(ValueError):
+            build(self.catalogue, self.ledger, '2026-10-10', self.supplement())
+
 
 if __name__ == '__main__':
     unittest.main()
+
