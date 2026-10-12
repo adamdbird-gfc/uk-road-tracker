@@ -119,6 +119,28 @@
     "London"
   ],
   "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch.",
-  "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly.",
-  "regional_scope_note": "Regional batches use current regional locality scope while retaining historic app counties. Teesside Yorkshire venues stay with North East; Humber-side Lincolnshire and Sheffield historic Derbyshire venues are reviewed with Yorkshire/Humber. Persist exact IDs and carry prior approvals/exclusions once into later batches. East Midlands defers historic Northamptonshire Peterborough pubs to East of England and reviews Doncaster Airport Running Horse as a supplemental Yorkshire/Humber closed legacy venue despite historic Nottinghamshire assignment. App counties unchanged."
+  "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly. Conflicting cached temporary versus ordinary closed/open-hours statuses require explicit reopening verification; passed reopening dates alone do not activate a held pub.",
+  "regional_scope_note": "Regional batches use current regional locality scope while retaining historic app counties. Teesside Yorkshire venues stay with North East; Humber-side Lincolnshire and Sheffield historic Derbyshire venues are reviewed with Yorkshire/Humber. Persist exact IDs and carry prior approvals/exclusions once into later batches. East Midlands defers historic Northamptonshire Peterborough pubs to East of England and reviews Doncaster Airport Running Horse as a supplemental Yorkshire/Humber closed legacy venue despite historic Nottinghamshire assignment. App counties unchanged.",
+  "temporary_status_checks": [
+    {
+      "id": "spoons-osm-w1465394526",
+      "name": "The Court of Requests",
+      "status": "temporary_closure_reopening_evidence_conflict",
+      "reviewed_at": "2026-10-12",
+      "advertised_reopening": "2026-10-10",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/",
+      "basis": "Earlier operator retrieval has temporary notice; later retrieval lacks notice but actual reopening not confirmed. Recheck before full catalogue release; keep held meanwhile.",
+      "map_enabled": false
+    },
+    {
+      "id": "spoons-osm-w98286602",
+      "name": "The Bottle of Sack",
+      "status": "temporary_closure_reopening_evidence_conflict",
+      "reviewed_at": "2026-10-12",
+      "advertised_reopening": "2026-10-05",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/",
+      "basis": "Earlier operator retrieval has temporary notice; later retrieval lacks notice but actual reopening not confirmed. Recheck before full catalogue release; keep held meanwhile.",
+      "map_enabled": false
+    }
+  ]
 }
