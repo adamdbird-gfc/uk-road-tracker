@@ -89,6 +89,17 @@
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-marshfield-bank-farm-house-crewe/",
       "basis": "Individual operator listing confirms operating pub at Woolstanwood/Crewe; absent from pinned candidate names. Reconcile OSM pub identity and actual premises position before map addition.",
       "map_enabled": false
+    },
+    {
+      "key": "oast-house-derby",
+      "status": "reported_proposal_operating_status_unverified",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.homepages.ucl.ac.uk/~ccaajpa/pubs-spoons.html",
+      "additional_evidence_urls": [
+        "https://www.derbytelegraph.co.uk/whats-on/whats-on-news/derby-getting-new-wetherspoon-pub-11041370"
+      ],
+      "basis": "Researcher July 2026 update and local reporting identify proposed conversion of Oast House in Derby. No current operating Wetherspoon pub listing or confirmed actual opening established in this cross-check; no active pin, no promised date and no automatic activation. Recheck operator status and reconcile OSM pub identity/actual premises position first.",
+      "map_enabled": false
     }
   ],
   "delivery_sequence": [
@@ -109,5 +120,5 @@
   ],
   "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch.",
   "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly.",
-  "regional_scope_note": "Regional batches use current regional locality scope while retaining historic app counties. Teesside Yorkshire venues stay with North East; Humber-side Lincolnshire and Sheffield historic Derbyshire venues are reviewed with Yorkshire/Humber. Persist exact IDs and carry prior approvals/exclusions once into later batches."
+  "regional_scope_note": "Regional batches use current regional locality scope while retaining historic app counties. Teesside Yorkshire venues stay with North East; Humber-side Lincolnshire and Sheffield historic Derbyshire venues are reviewed with Yorkshire/Humber. Persist exact IDs and carry prior approvals/exclusions once into later batches. East Midlands defers historic Northamptonshire Peterborough pubs to East of England and reviews Doncaster Airport Running Horse as a supplemental Yorkshire/Humber closed legacy venue despite historic Nottinghamshire assignment. App counties unchanged."
 }

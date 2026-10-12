@@ -5102,6 +5102,775 @@
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-scarsdale-hundred-sheffield/",
       "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Reviewed with Yorkshire/Humber regional batch; historic Derbyshire grouping unchanged."
+    },
+    {
+      "id": "spoons-osm-n1059478029",
+      "decision": "active_map",
+      "source_name": "The Kettleby Cross",
+      "osm_aliases": [
+        "node/1059478029"
+      ],
+      "lat": 52.7656606,
+      "lon": -0.8891467,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-kettleby-cross-melton-mowbray/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n1514499025",
+      "decision": "active_map",
+      "source_name": "The Packhorse Inn",
+      "osm_aliases": [
+        "node/1514499025"
+      ],
+      "lat": 52.9997124,
+      "lon": -0.4105121,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-packhorse-inn-sleaford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n1707777586",
+      "decision": "active_map",
+      "source_name": "The Joseph Else",
+      "osm_aliases": [
+        "node/1707777586"
+      ],
+      "lat": 52.9530026,
+      "lon": -1.14972,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-joseph-else-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n2204462606",
+      "decision": "active_map",
+      "source_name": "The Roebuck Inn",
+      "osm_aliases": [
+        "node/2204462606"
+      ],
+      "lat": 52.9529812,
+      "lon": -1.1522602,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-roebuck-inn-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n2293805043",
+      "decision": "active_map",
+      "source_name": "The William Peverel",
+      "osm_aliases": [
+        "node/2293805043"
+      ],
+      "lat": 53.0025023,
+      "lon": -1.1961904,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-peverel-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Bulwell locality variant."
+    },
+    {
+      "id": "spoons-osm-n2324083929",
+      "decision": "active_map",
+      "source_name": "The Smithy Fold",
+      "osm_aliases": [
+        "node/2324083929"
+      ],
+      "lat": 53.4425955,
+      "lon": -1.9487993,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-smithy-fold-glossop/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Shopping-park presence is not pub entry."
+    },
+    {
+      "id": "spoons-osm-n2402328609",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://hinckleyandbosworth.camra.org.uk/viewnode.php?id=32488",
+      "basis": "Current CAMRA branch listing identifies New Baron/Crafty Baron at 5-7 Regent Street, opened October 2019 by Crafty Pub Group in former Wetherspoons premises. Independent membership exclusion; preserve source identity and LE10 0AZ postcode despite CAMRA LE10 0QA difference."
+    },
+    {
+      "id": "spoons-osm-n2556172184",
+      "decision": "active_map",
+      "source_name": "The Lord Keeper Of The Great Seal",
+      "osm_aliases": [
+        "node/2556172184"
+      ],
+      "lat": 52.6007548,
+      "lon": -1.0841366,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lord-keeper-of-the-great-seal-oadby/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n2675764810",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://camra.org.uk/pubs/regent-kirkby-in-ashfield-165311",
+      "basis": "CAMRA July 2026 update explicitly identifies former JD Wetherspoon Regent under independent ownership since 2024. Kingsway/Diamond Avenue and NG17 7BB/NG17 7GR address variants retained without overwriting source identity. Historical operator pub-history page is not evidence of current membership."
+    },
+    {
+      "id": "spoons-osm-n26942245",
+      "decision": "active_map",
+      "source_name": "The High Cross",
+      "osm_aliases": [
+        "node/26942245"
+      ],
+      "lat": 52.6353764,
+      "lon": -1.1384198,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-high-cross-leicester/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n295637093",
+      "decision": "active_map",
+      "source_name": "The Moon Under Water",
+      "osm_aliases": [
+        "node/295637093"
+      ],
+      "lat": 52.9767701,
+      "lon": -0.0243409,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-under-water-boston/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Operator title includes Boston qualifier; same named locality venue."
+    },
+    {
+      "id": "spoons-osm-n3721812304",
+      "decision": "active_map",
+      "source_name": "The Monkey Walk",
+      "osm_aliases": [
+        "node/3721812304"
+      ],
+      "lat": 52.7235921,
+      "lon": -1.3743738,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-monkey-walk-coalville/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n5077620226",
+      "decision": "active_map",
+      "source_name": "The Stamford Post",
+      "osm_aliases": [
+        "node/5077620226"
+      ],
+      "lat": 52.6511009,
+      "lon": -0.4807921,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-stamford-post-stamford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n5302330323",
+      "decision": "active_map",
+      "source_name": "The Shoulder of Mutton",
+      "osm_aliases": [
+        "node/5302330323"
+      ],
+      "lat": 52.7467702,
+      "lon": -1.4735598,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-shoulder-of-mutton-ashby-de-la-zouch/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n553248758",
+      "decision": "active_map",
+      "source_name": "The Amber Rooms",
+      "osm_aliases": [
+        "node/553248758"
+      ],
+      "lat": 52.7737388,
+      "lon": -1.2093743,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-amber-rooms-loughborough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n7255825775",
+      "decision": "active_map",
+      "source_name": "The Ivy Wall",
+      "osm_aliases": [
+        "node/7255825775"
+      ],
+      "lat": 52.7885802,
+      "lon": -0.1514053,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ivy-wall-spalding/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n732723631",
+      "decision": "active_map",
+      "source_name": "The Railway Inn",
+      "osm_aliases": [
+        "node/732723631"
+      ],
+      "lat": 52.2930244,
+      "lon": -0.5990961,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-railway-inn-rushden/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-n9799701331",
+      "decision": "active_map",
+      "source_name": "The Raymond Mays",
+      "osm_aliases": [
+        "node/9799701331"
+      ],
+      "lat": 52.7698247,
+      "lon": -0.3768155,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-raymond-mays-bourne/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Missing source postcode retained."
+    },
+    {
+      "id": "spoons-osm-n9979244972",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://doncaster.camra.org.uk/wp-content/uploads/2023/09/DD-151_6-web.pdf",
+      "basis": "CAMRA branch Spring 2023 report confirms Running Horse closed with Robin Hood Airport. October 2026 regional cross-check still lists it as former/closed; no current operator pub listing verified. Source position corresponds to Doncaster airport despite historic Nottinghamshire assignment. Supplemental Yorkshire/Humber legacy review, not an East Midlands operating pub. Preserve identity and require new evidence before any reopening activation."
+    },
+    {
+      "id": "spoons-osm-r19909351",
+      "decision": "active_map",
+      "source_name": "The Sweyn Forkbeard",
+      "osm_aliases": [
+        "relation/19909351"
+      ],
+      "lat": 53.3985345,
+      "lon": -0.7770518709155564,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sweyn-forkbeard-gainsborough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w1027135795",
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "osm_aliases": [
+        "way/1027135795"
+      ],
+      "lat": 53.05092045,
+      "lon": -1.4074878528145693,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-ripley/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w1107958111",
+      "decision": "active_map",
+      "source_name": "The Liquorice Gardens",
+      "osm_aliases": [
+        "way/1107958111"
+      ],
+      "lat": 53.3044717,
+      "lon": -1.1236105177705,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-liquorice-gardens-worksop/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w127068259",
+      "decision": "active_map",
+      "source_name": "The Standing Order",
+      "osm_aliases": [
+        "way/127068259"
+      ],
+      "lat": 52.92396495,
+      "lon": -1.4779446795209221,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-standing-order-derby/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w128387334",
+      "decision": "active_map",
+      "source_name": "The Observatory",
+      "osm_aliases": [
+        "way/128387334"
+      ],
+      "lat": 52.9716443,
+      "lon": -1.3079306296325879,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-observatory-ilkeston/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w135225345",
+      "decision": "active_map",
+      "source_name": "The Cordwainer",
+      "osm_aliases": [
+        "way/135225345"
+      ],
+      "lat": 52.23787135,
+      "lon": -0.8928281922025498,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-cordwainer-northampton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w1352918774",
+      "decision": "active_map",
+      "source_name": "The Captain Noel Newton",
+      "osm_aliases": [
+        "way/1352918774"
+      ],
+      "lat": 52.6702752,
+      "lon": -0.731193989519856,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-captain-noel-newton-oakham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w149487940",
+      "decision": "active_map",
+      "source_name": "The Admiral Sir John Borlase Warren",
+      "osm_aliases": [
+        "way/149487940"
+      ],
+      "lat": 52.927670899999995,
+      "lon": -1.2780179214934475,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-admiral-sir-john-borlase-warren-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Stapleford locality variant."
+    },
+    {
+      "id": "spoons-osm-w193906082",
+      "decision": "active_map",
+      "source_name": "Lloyds No.1 Bar",
+      "osm_aliases": [
+        "way/193906082"
+      ],
+      "lat": 52.9537361,
+      "lon": -1.145123713401236,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/lloyds-no-1-bar-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Lloyds punctuation/branding variant retained."
+    },
+    {
+      "id": "spoons-osm-w199746721",
+      "decision": "active_map",
+      "source_name": "The Saxon Crown",
+      "osm_aliases": [
+        "way/199746721"
+      ],
+      "lat": 52.48715785,
+      "lon": -0.6994484450839342,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-saxon-crown-corby/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w219905509",
+      "decision": "active_map",
+      "source_name": "The Tollemache Inn",
+      "osm_aliases": [
+        "way/219905509"
+      ],
+      "lat": 52.90987015,
+      "lon": -0.6394549043171638,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tollemache-inn-grantham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w231158130",
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "osm_aliases": [
+        "way/231158130"
+      ],
+      "lat": 53.1438747,
+      "lon": 0.33638646468196853,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-skegness/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w241931739",
+      "decision": "active_map",
+      "source_name": "The Portland Hotel",
+      "osm_aliases": [
+        "way/241931739"
+      ],
+      "lat": 53.235195700000006,
+      "lon": -1.4311815750535344,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-portland-hotel-chesterfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w244632071",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://proper-pubs.com/our-proper-pubs/court-house-mansfield/",
+      "basis": "Current Proper Pubs operator listing identifies Court House at Market Place Mansfield NG18 1HX under its own brand; CAMRA September 2026 update also confirms former Wetherspoon, vacated in early/mid 2010s. Exclude current collection membership, not the operating business."
+    },
+    {
+      "id": "spoons-osm-w248902319",
+      "decision": "active_map",
+      "source_name": "The Corn Exchange",
+      "osm_aliases": [
+        "way/248902319"
+      ],
+      "lat": 52.634513600000005,
+      "lon": -1.1333739984523867,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-corn-exchange-leicester/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w251921199",
+      "decision": "active_map",
+      "source_name": "The Picture House",
+      "osm_aliases": [
+        "way/251921199"
+      ],
+      "lat": 53.1259931,
+      "lon": -1.2617870660241568,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-house-sutton-in-ashfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy NG17 1BD/NG17 1DA retained for this named/locality venue, without directory-field overwrite."
+    },
+    {
+      "id": "spoons-osm-w279472341",
+      "decision": "active_map",
+      "source_name": "Waggon and Horses",
+      "osm_aliases": [
+        "way/279472341"
+      ],
+      "lat": 53.097111999999996,
+      "lon": -1.3902258376146814,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/waggon-and-horses-alfreton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w280976668",
+      "decision": "active_map",
+      "source_name": "The Pilgrim Oak",
+      "osm_aliases": [
+        "way/280976668"
+      ],
+      "lat": 53.0383645,
+      "lon": -1.202331387613047,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-pilgrim-oak-hucknall/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Hucknall locality variant."
+    },
+    {
+      "id": "spoons-osm-w294896124",
+      "decision": "active_map",
+      "source_name": "The Gooseberry Bush",
+      "osm_aliases": [
+        "way/294896124"
+      ],
+      "lat": 52.959627850000004,
+      "lon": -1.1560061128003984,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-gooseberry-bush-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w307424812",
+      "decision": "active_map",
+      "source_name": "The Saracens Head Inn",
+      "osm_aliases": [
+        "way/307424812"
+      ],
+      "lat": 52.257728400000005,
+      "lon": -1.164663518873934,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-saracens-head-inn-daventry/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w30805139",
+      "decision": "active_map",
+      "source_name": "The Samuel Hall",
+      "osm_aliases": [
+        "way/30805139"
+      ],
+      "lat": 52.9814407,
+      "lon": -1.1466724453350592,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-samuel-hall-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Sherwood locality variant."
+    },
+    {
+      "id": "spoons-osm-w322013548",
+      "decision": "active_map",
+      "source_name": "The White House",
+      "osm_aliases": [
+        "way/322013548"
+      ],
+      "lat": 52.6429713,
+      "lon": -1.0466484175366746,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-house-leicester/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Leicester/Scraptoft locality variant."
+    },
+    {
+      "id": "spoons-osm-w327309162",
+      "decision": "active_map",
+      "source_name": "The Lady Chatterley",
+      "osm_aliases": [
+        "way/327309162"
+      ],
+      "lat": 53.018030350000004,
+      "lon": -1.3049211780138497,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lady-chatterley-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Eastwood locality variant."
+    },
+    {
+      "id": "spoons-osm-w336749947",
+      "decision": "active_map",
+      "source_name": "The Red Well",
+      "osm_aliases": [
+        "way/336749947"
+      ],
+      "lat": 52.30176565,
+      "lon": -0.6952023285911588,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-well-wellingborough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w350473517",
+      "decision": "active_map",
+      "source_name": "The Woodthorpe Top",
+      "osm_aliases": [
+        "way/350473517"
+      ],
+      "lat": 52.9838319,
+      "lon": -1.1232817405017919,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-woodthorpe-top-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Mapperley locality variant."
+    },
+    {
+      "id": "spoons-osm-w352173619",
+      "decision": "active_map",
+      "source_name": "The Free Man",
+      "osm_aliases": [
+        "way/352173619"
+      ],
+      "lat": 52.96617715,
+      "lon": -1.109255654551764,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-free-man-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Carlton locality variant."
+    },
+    {
+      "id": "spoons-osm-w376695700",
+      "decision": "active_map",
+      "source_name": "The Spa Lane Vaults",
+      "osm_aliases": [
+        "way/376695700"
+      ],
+      "lat": 53.2351564,
+      "lon": -1.4239553237667568,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/spa-lane-vaults-chesterfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Operator omits leading article; source name retained."
+    },
+    {
+      "id": "spoons-osm-w38295818",
+      "decision": "active_map",
+      "source_name": "The Dominie Cross",
+      "osm_aliases": [
+        "way/38295818"
+      ],
+      "lat": 53.3222607,
+      "lon": -0.9399841518385861,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dominie-cross-retford/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w393047687",
+      "decision": "active_map",
+      "source_name": "The Pillar of Rock",
+      "osm_aliases": [
+        "way/393047687"
+      ],
+      "lat": 53.22998389999999,
+      "lon": -1.293810589937019,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-pillar-of-rock-chesterfield/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Bolsover/Chesterfield locality variant."
+    },
+    {
+      "id": "spoons-osm-w408065117",
+      "decision": "active_map",
+      "source_name": "The Butter Cross",
+      "osm_aliases": [
+        "way/408065117"
+      ],
+      "lat": 52.952719450000004,
+      "lon": -0.951681063041563,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-butter-cross-bingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Bingham locality variant."
+    },
+    {
+      "id": "spoons-osm-w465838746",
+      "decision": "active_map",
+      "source_name": "Earl of Dalkeith",
+      "osm_aliases": [
+        "way/465838746"
+      ],
+      "lat": 52.39946615,
+      "lon": -0.7256546902200633,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-earl-of-dalkeith-kettering/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w490672667",
+      "decision": "active_map",
+      "source_name": "The William Wygston",
+      "osm_aliases": [
+        "way/490672667"
+      ],
+      "lat": 52.5877648,
+      "lon": -1.1057688930605414,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-wygston-wigston/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w49789745",
+      "decision": "active_map",
+      "source_name": "The Sugar Loaf",
+      "osm_aliases": [
+        "way/49789745"
+      ],
+      "lat": 52.478831099999994,
+      "lon": -0.9229073900315174,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sugar-loaf-market-harborough/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w531505245",
+      "decision": "active_map",
+      "source_name": "The Joseph Morton",
+      "osm_aliases": [
+        "way/531505245"
+      ],
+      "lat": 53.3653791,
+      "lon": -0.0053106153707266675,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-joseph-morton-louth/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w69043435",
+      "decision": "active_map",
+      "source_name": "The Hykeham Manor",
+      "osm_aliases": [
+        "way/69043435"
+      ],
+      "lat": 53.177041849999995,
+      "lon": -0.6212144279026794,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hykeham-manor-lincoln/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Current franchise at South Hykeham checked individually."
+    },
+    {
+      "id": "spoons-osm-w728206447",
+      "decision": "active_map",
+      "source_name": "The Square Sail",
+      "osm_aliases": [
+        "way/728206447"
+      ],
+      "lat": 53.2288638,
+      "lon": -0.5437344912799749,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-square-sail-lincoln/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w75871739",
+      "decision": "active_map",
+      "source_name": "The Sir Nigel Gresley",
+      "osm_aliases": [
+        "way/75871739"
+      ],
+      "lat": 52.773893,
+      "lon": -1.5578594437883435,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-nigel-gresley-swadlincote/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy DE11 9DA/DE11 0AD retained for this named/locality venue, without directory-field overwrite."
+    },
+    {
+      "id": "spoons-osm-w768297772",
+      "decision": "active_map",
+      "source_name": "The Samuel Lloyd",
+      "osm_aliases": [
+        "way/768297772"
+      ],
+      "lat": 52.50765015,
+      "lon": -0.7062264499999957,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-samuel-lloyd-corby/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Source/operator postcode discrepancy NN17 4BH/NN17 4AP retained for this named/locality venue, without directory-field overwrite."
+    },
+    {
+      "id": "spoons-osm-w79093218",
+      "decision": "active_map",
+      "source_name": "The Trent Bridge Inn",
+      "osm_aliases": [
+        "way/79093218"
+      ],
+      "lat": 52.937164499999994,
+      "lon": -1.1342358801970969,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/trent-bridge-inn-nottingham/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/West Bridgford and leading-article variants."
+    },
+    {
+      "id": "spoons-osm-w91751576",
+      "decision": "active_map",
+      "source_name": "The Last Post",
+      "osm_aliases": [
+        "way/91751576"
+      ],
+      "lat": 52.9263694,
+      "lon": -1.2169088105746346,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-last-post-beeston/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved. Nottingham/Beeston locality variant. Source/operator postcode discrepancy NG9 1AE/NG9 1AA retained for this named/locality venue, without directory-field overwrite."
+    },
+    {
+      "id": "spoons-osm-w947148095",
+      "decision": "active_map",
+      "source_name": "Ritz",
+      "osm_aliases": [
+        "way/947148095"
+      ],
+      "lat": 53.2242839,
+      "lon": -0.543559358955886,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/ritz-lincoln/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
+    },
+    {
+      "id": "spoons-osm-w95853536",
+      "decision": "active_map",
+      "source_name": "The Wye Bridge House",
+      "osm_aliases": [
+        "way/95853536"
+      ],
+      "lat": 53.259476750000005,
+      "lon": -1.9052555864045913,
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wye-bridge-house-buxton/",
+      "basis": "Individual current operator pub listing, location and regular opening schedule checked against OSM name/locality. Source names, positions, historic counties and omitted fields retained. Informational map approval only; premises/visit recognition not approved."
     }
   ]
 }
