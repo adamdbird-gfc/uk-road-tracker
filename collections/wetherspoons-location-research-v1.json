@@ -122,18 +122,21 @@
       "locality": "Cala Gran, Fleetwood",
       "operating_evidence_url": "https://news.haven.com/news/havens-cala-gran-holiday-park-opens-its-doors-to-new-j-d-wetherspoon-pub-the-springfield",
       "candidate_location": {
-        "lat": 53.89814,
-        "lon": -3.0197,
-        "precision": "parent_park_point_only",
-        "evidence_url": "https://mapcarta.com/W160318964",
-        "parent_osm_id": "way/160318964"
+        "lat": 53.898169,
+        "lon": -3.019847,
+        "precision": "user_placed_point_on_shared_main_complex",
+        "evidence_url": "https://maps.app.goo.gl/JBJ6Soi9DAHBEAiL9",
+        "parent_osm_id": null,
+        "screenshot_filename": "28699.png",
+        "coordinate_source": "User supplied Google Maps dropped-pin screenshot; not device GPS measurement.",
+        "pub_boundary_verified": false
       },
       "pub_osm_identity": null,
       "identity_reconciliation_complete": false,
       "map_enabled": false,
       "visit_enabled": false,
       "confirmation_required": true,
-      "notes": "User-supplied close-up screenshot and resolved Maps listing identify shared main-complex building with Springfield and Live Lounge. Current numeric coordinate remains park-level, not a verified building/pub point. Precise coordinate extraction and old Mash and Barrel/OSM identity reconciliation remain outstanding.",
+      "notes": "User-supplied close-up and dropped-pin coordinate identify the shared main complex containing Springfield and Live Lounge. Use as approximate building-level display point; explicit pub confirmation required for future visit awards. Old Mash and Barrel/OSM identity reconciliation and exact pub boundary remain outstanding.",
       "nearby_pinned_candidates": [
         {
           "id": "spoons-osm-w276504956",
@@ -157,8 +160,16 @@
         "google_place_feature_id": "0x487b5d3de1844da9:0xccea23f81da48c8a",
         "screenshot_filename": "28697.png",
         "observed": "Named Springfield pin on shared main-complex footprint, beside The Live Lounge; Wetherspoon signage visible in listing photo.",
-        "coordinate_extraction_complete": false,
-        "notes": "Short link resolved via HTTP redirect, but returned Google Maps HTML did not expose target pin coordinates. Keep existing point explicitly park-level until a building coordinate is independently extracted; feature ID is not an OSM pub alias."
+        "coordinate_extraction_complete": true,
+        "notes": "User supplied dropped-pin coordinates visible on screenshot over Springfield/main-complex building beside Live Lounge. Coordinate now recorded; not an exact pub boundary, measured GPS fix or OSM identity.",
+        "coordinate_screenshot_filename": "28699.png"
+      },
+      "previous_parent_park_location": {
+        "lat": 53.89814,
+        "lon": -3.0197,
+        "precision": "parent_park_point_only",
+        "evidence_url": "https://mapcarta.com/W160318964",
+        "parent_osm_id": "way/160318964"
       }
     },
     {
