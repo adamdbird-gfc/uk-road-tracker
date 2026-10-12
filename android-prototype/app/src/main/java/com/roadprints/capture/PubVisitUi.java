@@ -174,9 +174,14 @@ final class PubVisitUi {
     interface LocationRequester {
         com.google.android.gms.tasks.Task<android.location.Location> get(Activity activity,CancellationTokenSource request);
     }
-    static final LocationRequester DEVICE_LOCATION=(activity,request)->LocationServices.getFusedLocationProviderClient(activity)
-            .getCurrentLocation(new com.google.android.gms.location.CurrentLocationRequest.Builder()
-                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY).setMaxUpdateAgeMillis(0).setDurationMillis(15000).build(),request.getToken());
+    static final LocationRequester DEVICE_LOCATION=(activity,request)->{
+        if(activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED)
+            throw new SecurityException("Precise location permission is required");
+        try{return LocationServices.getFusedLocationProviderClient(activity)
+                .getCurrentLocation(new com.google.android.gms.location.CurrentLocationRequest.Builder()
+                        .setPriority(Priority.PRIORITY_HIGH_ACCURACY).setMaxUpdateAgeMillis(0).setDurationMillis(15000).build(),request.getToken());}
+        catch(SecurityException revoked){return com.google.android.gms.tasks.Tasks.forException(revoked);}
+    };
     static LocationRequester locationRequester=DEVICE_LOCATION;
     static AlertDialog live(Activity activity,JSONObject pub,Runnable changed,Runnable closed){
         LinearLayout body=vertical(activity);
