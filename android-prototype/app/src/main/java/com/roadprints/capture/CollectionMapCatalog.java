@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 /** Only individually reviewed map venues; never a visit evidence provider. */
 final class CollectionMapCatalog {
+    static final int MAX_CATALOGUE_BYTES = 2 * 1024 * 1024;
     private static JSONObject bundled;
     private CollectionMapCatalog() {}
     static JSONArray approvedVenues(JSONObject catalogue) {
@@ -33,23 +34,31 @@ final class CollectionMapCatalog {
             if(!Double.isFinite(lat)||!Double.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)continue;
             try {JSONObject pin=new JSONObject();pin.put("id",row.getString("id"));
                 pin.put("name",row.optString("name"));pin.put("town",row.optString("town"));
-                pin.put("lat",lat);pin.put("lng",lng);result.put(pin);}
+                pin.put("lat",lat);pin.put("lng",lng);
+                pin.put("location_label",row.optString("location_label","Reviewed map location"));
+                pin.put("attribution",row.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
+                result.put(pin);}
             catch(Exception error){throw new IllegalStateException("Invalid approved venue",error);}
         }
         return result;
     }
+    static JSONObject readCatalogue(InputStream input) throws Exception {
+        try(ByteArrayOutputStream output=new ByteArrayOutputStream()) {
+            byte[] buffer=new byte[4096];int n;
+            while((n=input.read(buffer))!=-1) {
+                if(output.size()+n>MAX_CATALOGUE_BYTES)return new JSONObject();
+                output.write(buffer,0,n);
+            }
+            return new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8));
+        }
+    }
     static synchronized JSONArray spoons(Context context) {
         if(bundled==null) {
-            try(InputStream input=context.getAssets().open("collections/uk-wetherspoons-map-v1.json");
-                    ByteArrayOutputStream output=new ByteArrayOutputStream()) {
-                byte[] buffer=new byte[4096];int n;
-                while((n=input.read(buffer))!=-1) {
-                    if(output.size()+n>65536)return new JSONArray();
-                    output.write(buffer,0,n);
-                }
-                bundled=new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8));
-            }catch(Exception unavailable){return new JSONArray();}
+            try(InputStream input=context.getAssets().open("collections/uk-wetherspoons-map-v1.json")) {
+                bundled=readCatalogue(input);
+            }catch(Exception unavailable){bundled=new JSONObject();}
         }
         return approvedVenues(bundled);
     }
 }
+

@@ -55,7 +55,7 @@ public class CollectionsActivity extends Activity {
                 "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
                 R.drawable.ic_roadprints_fuel);
         addCollection(CollectionAccessStore.SPOONS,
-                "Explore UK pubs and their memorable names. The incomplete beta map shows individually reviewed pubs. Visit recording, progress and achievements are coming soon.",
+                "Explore individually reviewed pubs across the UK. Temporarily closed pubs awaiting reopening checks are withheld from the map. Visit recording, progress and achievements are coming soon.",
                 R.drawable.ic_nav_collections);
     }
 
@@ -128,4 +128,5 @@ public class CollectionsActivity extends Activity {
     private void applyInsets(View root,View header,View nav){root.setOnApplyWindowInsetsListener((view,insets)->{int top,bottom;if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());top=bars.top;bottom=bars.bottom;}else{top=insets.getSystemWindowInsetTop();bottom=insets.getSystemWindowInsetBottom();}header.setPadding(dp(18),dp(17)+top,dp(18),dp(13));LinearLayout.LayoutParams p=(LinearLayout.LayoutParams)nav.getLayoutParams();p.height=dp(68)+bottom;nav.setPadding(dp(8),0,dp(8),bottom);nav.setLayoutParams(p);return insets;});root.requestApplyInsets();}
     private int dp(float value){return Math.round(value*getResources().getDisplayMetrics().density);}
 }
+
 
