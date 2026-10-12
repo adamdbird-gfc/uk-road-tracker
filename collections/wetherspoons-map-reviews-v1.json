@@ -8655,6 +8655,1060 @@
       "reviewed_at": "2026-10-12",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-parkstone-and-heatherlands-bournemouth/",
       "basis": "Individual current operator pub listing, named locality/address and regular weekly opening schedule checked against OSM candidate. Source name, position, historic county and omitted fields retained. Informational map approval only; premises and visit recognition not approved. Bournemouth/Winton locality belongs to current South West; historic Hampshire app grouping retained."
+    },
+    {
+      "id": "spoons-osm-n1043180244",
+      "osm_aliases": [
+        "node/1043180244"
+      ],
+      "lat": 52.0418811,
+      "lon": -0.7489833,
+      "decision": "active_map",
+      "source_name": "The Moon Under Water",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-under-water-milton-keynes/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Xscape locality agrees; source postcode MK9 3XA differs from operator MK9 3NN. Retain source fields."
+    },
+    {
+      "id": "spoons-osm-n1155519665",
+      "osm_aliases": [
+        "node/1155519665"
+      ],
+      "lat": 50.8230339,
+      "lon": -0.1404452,
+      "decision": "active_map",
+      "source_name": "The Post & Telegraph",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-post-telegraph-brighton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n12860890723",
+      "osm_aliases": [
+        "node/12860890723"
+      ],
+      "lat": 51.3205221,
+      "lon": -0.555466,
+      "decision": "active_map",
+      "source_name": "The Herbert Wells",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-herbert-wells-woking/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1297605107",
+      "osm_aliases": [
+        "node/1297605107"
+      ],
+      "lat": 50.7842302,
+      "lon": -1.0889979,
+      "decision": "active_map",
+      "source_name": "The Lord Palmerston",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lord-palmerston-southsea/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Operator locality Southsea is within source Portsmouth."
+    },
+    {
+      "id": "spoons-osm-n13232653830",
+      "osm_aliases": [
+        "node/13232653830"
+      ],
+      "lat": 51.8988026,
+      "lon": -1.1516681,
+      "decision": "active_map",
+      "source_name": "The Penny Black",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-penny-black-bicester/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1383417516",
+      "osm_aliases": [
+        "node/1383417516"
+      ],
+      "lat": 51.2934346,
+      "lon": -0.756605,
+      "decision": "active_map",
+      "source_name": "The Tilly Shilling",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-tilly-shilling-farnborough/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n1703574512",
+      "osm_aliases": [
+        "node/1703574512"
+      ],
+      "lat": 51.5095021,
+      "lon": -0.5958583,
+      "decision": "active_map",
+      "source_name": "The Moon and Spoon",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-moon-and-spoon-slough/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Slough is current Berkshire; retain historic Buckinghamshire grouping."
+    },
+    {
+      "id": "spoons-osm-n175707113",
+      "osm_aliases": [
+        "node/175707113"
+      ],
+      "lat": 51.732299,
+      "lon": -1.2176127,
+      "decision": "active_map",
+      "source_name": "William Morris",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-william-morris-oxford/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Operator uses The William Morris, Cowley, Oxford; source omits initial article. Retain source name."
+    },
+    {
+      "id": "spoons-osm-n1796624600",
+      "osm_aliases": [
+        "node/1796624600"
+      ],
+      "lat": 51.4547337,
+      "lon": -0.9634371,
+      "decision": "active_map",
+      "source_name": "The Back of Beyond",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-back-of-beyond-reading/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n21096827",
+      "osm_aliases": [
+        "node/21096827"
+      ],
+      "lat": 51.063729,
+      "lon": -0.3323018,
+      "decision": "active_map",
+      "source_name": "The Lynd Cross",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lynd-cross-horsham/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Source postcode RH12 1QR differs from operator RH12 2PG; named Springfield Road locality agrees. Retain source fields."
+    },
+    {
+      "id": "spoons-osm-n2642161110",
+      "osm_aliases": [
+        "node/2642161110"
+      ],
+      "lat": 51.3371432,
+      "lon": -0.7435825,
+      "decision": "active_map",
+      "source_name": "The Claude du Vall",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-claude-du-vall-camberley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n27512260",
+      "osm_aliases": [
+        "node/27512260"
+      ],
+      "lat": 51.8153916,
+      "lon": -0.8098354,
+      "decision": "active_map",
+      "source_name": "The White Hart",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-hart-aylesbury/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n29579960",
+      "osm_aliases": [
+        "node/29579960"
+      ],
+      "lat": 51.2367304,
+      "lon": -0.5774568,
+      "decision": "active_map",
+      "source_name": "The Rodboro Buildings",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-rodboro-buildings-guildford/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n2984533744",
+      "osm_aliases": [
+        "node/2984533744"
+      ],
+      "lat": 51.6702176,
+      "lon": -1.2834466,
+      "decision": "active_map",
+      "source_name": "The Narrows",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-narrows-abingdon-on-thames/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Abingdon-on-Thames is current Oxfordshire; retain existing historic Berkshire grouping."
+    },
+    {
+      "id": "spoons-osm-n298897894",
+      "osm_aliases": [
+        "node/298897894"
+      ],
+      "lat": 51.5231837,
+      "lon": -0.7178638,
+      "decision": "active_map",
+      "source_name": "The Bear",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bear-maidenhead/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n29938962",
+      "osm_aliases": [
+        "node/29938962"
+      ],
+      "lat": 50.836736,
+      "lon": -0.7800548,
+      "decision": "active_map",
+      "source_name": "The Dolphin & Anchor",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-dolphin-anchor-chichester/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n319253505",
+      "osm_aliases": [
+        "node/319253505"
+      ],
+      "lat": 51.7511201,
+      "lon": -1.2616715,
+      "decision": "active_map",
+      "source_name": "The Swan & Castle",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-swan-castle-oxford/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n360689820",
+      "osm_aliases": [
+        "node/360689820"
+      ],
+      "lat": 50.8448329,
+      "lon": -1.0672401,
+      "decision": "active_map",
+      "source_name": "The First Post",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-first-post-cosham/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Operator locality Cosham is within source Portsmouth."
+    },
+    {
+      "id": "spoons-osm-n366593186",
+      "osm_aliases": [
+        "node/366593186"
+      ],
+      "lat": 50.8409205,
+      "lon": -1.0976136,
+      "decision": "active_map",
+      "source_name": "The Sir Alec Rose",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-alec-rose-portsmouth/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n392878947",
+      "osm_aliases": [
+        "node/392878947"
+      ],
+      "lat": 50.7983251,
+      "lon": -1.0767273,
+      "decision": "active_map",
+      "source_name": "The John Jacques",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-jacques-portsmouth/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n416683903",
+      "osm_aliases": [
+        "node/416683903"
+      ],
+      "lat": 50.8223525,
+      "lon": -0.144318,
+      "decision": "active_map",
+      "source_name": "The Bright Helm",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bright-helm-brighton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n440802281",
+      "osm_aliases": [
+        "node/440802281"
+      ],
+      "lat": 51.6291639,
+      "lon": -0.7512928,
+      "decision": "active_map",
+      "source_name": "The Falcon",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-falcon-high-wycombe/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4485727695",
+      "osm_aliases": [
+        "node/4485727695"
+      ],
+      "lat": 51.1612259,
+      "lon": -0.1790688,
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-crawley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick North Terminal after security; terminal presence cannot award a pub visit."
+    },
+    {
+      "id": "spoons-osm-n4497151303",
+      "osm_aliases": [
+        "node/4497151303"
+      ],
+      "lat": 51.1264063,
+      "lon": -0.0087369,
+      "decision": "active_map",
+      "source_name": "The Ounce & Ivy Bush",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ounce-ivy-bush-east-grinstead/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n451139620",
+      "osm_aliases": [
+        "node/451139620"
+      ],
+      "lat": 51.2623509,
+      "lon": -1.0878648,
+      "decision": "active_map",
+      "source_name": "The Maidenhead Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-maidenhead-inn-basingstoke/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n467652897",
+      "osm_aliases": [
+        "node/467652897"
+      ],
+      "lat": 51.7533993,
+      "lon": -1.2620909,
+      "decision": "active_map",
+      "source_name": "The Four Candles",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-four-candles-oxford/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4680454625",
+      "osm_aliases": [
+        "node/4680454625"
+      ],
+      "lat": 51.1153816,
+      "lon": -0.1904243,
+      "decision": "active_map",
+      "source_name": "The Jubilee Oak",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-jubilee-oak-crawley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n4699900372",
+      "osm_aliases": [
+        "node/4699900372"
+      ],
+      "lat": 51.1703836,
+      "lon": -0.1617358,
+      "decision": "active_map",
+      "source_name": "The Jack Fairman",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-jack-fairman-horley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n49341270",
+      "osm_aliases": [
+        "node/49341270"
+      ],
+      "lat": 50.795465,
+      "lon": -1.1220843,
+      "decision": "active_map",
+      "source_name": "The Star",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-star-gosport/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n5046986705",
+      "osm_aliases": [
+        "node/5046986705"
+      ],
+      "lat": 51.1570031,
+      "lon": -0.162448,
+      "decision": "active_map",
+      "source_name": "The Beehive",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-beehive-crawley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal before security. Source RH6 0NN differs from operator RH6 0NQ; retain source fields. Terminal presence cannot award a pub visit."
+    },
+    {
+      "id": "spoons-osm-n5046986721",
+      "osm_aliases": [
+        "node/5046986721"
+      ],
+      "lat": 51.1558381,
+      "lon": -0.1626146,
+      "decision": "active_map",
+      "source_name": "The Flying Horse",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-horse-crawley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Gatwick South Terminal after security; terminal presence cannot award a pub visit."
+    },
+    {
+      "id": "spoons-osm-n5119504347",
+      "osm_aliases": [
+        "node/5119504347"
+      ],
+      "lat": 50.7001485,
+      "lon": -1.2957899,
+      "decision": "active_map",
+      "source_name": "The Man in the Moon",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-man-in-the-moon-newport/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Newport on Isle of Wight, not Newport Wales; retain historic Hampshire grouping."
+    },
+    {
+      "id": "spoons-osm-n5300022706",
+      "osm_aliases": [
+        "node/5300022706"
+      ],
+      "lat": 50.7831696,
+      "lon": -0.6756437,
+      "decision": "active_map",
+      "source_name": "The Hatter's Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hatters-inn-bognor-regis/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n535576584",
+      "osm_aliases": [
+        "node/535576584"
+      ],
+      "lat": 50.8091103,
+      "lon": -0.5437467,
+      "decision": "active_map",
+      "source_name": "The George Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-inn-littlehampton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n5713591363",
+      "osm_aliases": [
+        "node/5713591363"
+      ],
+      "lat": 51.241413,
+      "lon": -0.1682658,
+      "decision": "active_map",
+      "source_name": "The Sun",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sun-redhill/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n6046369542",
+      "osm_aliases": [
+        "node/6046369542"
+      ],
+      "lat": 51.9957713,
+      "lon": -0.7263349,
+      "decision": "active_map",
+      "source_name": "Captain Ridley's shooting party",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/captain-ridleys-shooting-party-milton-keynes/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n764901582",
+      "osm_aliases": [
+        "node/764901582"
+      ],
+      "lat": 50.8121516,
+      "lon": -0.1036382,
+      "decision": "active_map",
+      "source_name": "The West Quay",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-west-quay-brighton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n7816165250",
+      "osm_aliases": [
+        "node/7816165250"
+      ],
+      "lat": 51.2574873,
+      "lon": -0.0045368,
+      "decision": "active_map",
+      "source_name": "The Oxted Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-oxted-inn-oxted/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n8093989",
+      "osm_aliases": [
+        "node/8093989"
+      ],
+      "lat": 50.7302936,
+      "lon": -1.1627483,
+      "decision": "active_map",
+      "source_name": "S. Fowler & Co.",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/s-fowler-co-ryde/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Ryde on Isle of Wight; retain historic Hampshire grouping."
+    },
+    {
+      "id": "spoons-osm-n914625493",
+      "osm_aliases": [
+        "node/914625493"
+      ],
+      "lat": 51.0638111,
+      "lon": -1.3162573,
+      "decision": "active_map",
+      "source_name": "The Old Gaolhouse",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-gaolhouse-winchester/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n938872820",
+      "osm_aliases": [
+        "node/938872820"
+      ],
+      "lat": 50.8154303,
+      "lon": -1.0794719,
+      "decision": "active_map",
+      "source_name": "Sir John Baker",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-john-baker-portsmouth/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n94979144",
+      "osm_aliases": [
+        "node/94979144"
+      ],
+      "lat": 50.8520375,
+      "lon": -0.9845229,
+      "decision": "active_map",
+      "source_name": "The Parchment Makers",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-parchment-makers-havant/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-n9556520554",
+      "osm_aliases": [
+        "node/9556520554"
+      ],
+      "lat": 51.1858291,
+      "lon": -0.6122933,
+      "decision": "active_map",
+      "source_name": "The Jack Phillips",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-jack-phillips-godalming/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1020864175",
+      "osm_aliases": [
+        "way/1020864175"
+      ],
+      "lat": 50.855987799999994,
+      "lon": 0.5795864223717602,
+      "decision": "active_map",
+      "source_name": "The John Logie Baird",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-logie-baird-hastings/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1029291902",
+      "osm_aliases": [
+        "way/1029291902"
+      ],
+      "lat": 51.2656548,
+      "lon": -1.0839934829928954,
+      "decision": "active_map",
+      "source_name": "The Angel",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-angel-basingstoke/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1088541244",
+      "osm_aliases": [
+        "way/1088541244"
+      ],
+      "lat": 50.81332885,
+      "lon": -0.37047372644148047,
+      "decision": "active_map",
+      "source_name": "The Three Fishes",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-three-fishes-worthing/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1172274523",
+      "osm_aliases": [
+        "way/1172274523"
+      ],
+      "lat": 51.2497629,
+      "lon": -0.7675238004871747,
+      "decision": "active_map",
+      "source_name": "The Queen Hotel",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-queen-hotel-aldershot/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1203508201",
+      "osm_aliases": [
+        "way/1203508201"
+      ],
+      "lat": 51.45640505,
+      "lon": -0.9753817384882552,
+      "decision": "active_map",
+      "source_name": "The Hope Tap",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hope-tap-reading/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1204173381",
+      "osm_aliases": [
+        "way/1204173381"
+      ],
+      "lat": 51.2952418,
+      "lon": -0.3273628570368478,
+      "decision": "active_map",
+      "source_name": "The Edmund Tylney",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-edmund-tylney-leatherhead/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w126358102",
+      "osm_aliases": [
+        "way/126358102"
+      ],
+      "lat": 50.91967855,
+      "lon": -1.4306777747638217,
+      "decision": "active_map",
+      "source_name": "The Bright Water Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bright-water-inn-shirley/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Operator locality Shirley is within source Southampton."
+    },
+    {
+      "id": "spoons-osm-w1312916488",
+      "osm_aliases": [
+        "way/1312916488"
+      ],
+      "lat": 50.88079175,
+      "lon": -1.03065445,
+      "decision": "active_map",
+      "source_name": "The Denmead Queen",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-denmead-queen-waterlooville/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1323980995",
+      "osm_aliases": [
+        "node/14271292401",
+        "way/1323980995"
+      ],
+      "lat": 51.6098108,
+      "lon": -0.6454055,
+      "decision": "active_map",
+      "source_name": "The Chiltern (Wetherspoon)",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-chiltern-beaconsfield/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. The Chiltern is a distinct operating Beaconsfield pub, not the closed Hope & Champion at the services. Retain source name including Wetherspoon qualifier."
+    },
+    {
+      "id": "spoons-osm-w1328924383",
+      "osm_aliases": [
+        "way/1328924383"
+      ],
+      "lat": 51.00393035,
+      "lon": -0.9337068485826735,
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-petersfield/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w138533463",
+      "osm_aliases": [
+        "way/138533463"
+      ],
+      "lat": 51.06035925,
+      "lon": 0.16145896461584763,
+      "decision": "active_map",
+      "source_name": "The Crowborough Cross",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crowborough-cross-crowborough/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w1415376935",
+      "osm_aliases": [
+        "way/1415376935"
+      ],
+      "lat": 51.2069248,
+      "lon": -1.4785054294816418,
+      "decision": "active_map",
+      "source_name": "The John Russell Fox",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-john-russell-fox-andover/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w144154171",
+      "osm_aliases": [
+        "way/144154171"
+      ],
+      "lat": 51.483678850000004,
+      "lon": -0.6088361088109374,
+      "decision": "active_map",
+      "source_name": "The King And Castle",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-king-and-castle-windsor/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w161764743",
+      "osm_aliases": [
+        "way/161764743"
+      ],
+      "lat": 51.3326567,
+      "lon": -0.2699301256646909,
+      "decision": "active_map",
+      "source_name": "The Assembly Rooms",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-assembly-rooms-epsom/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w183772279",
+      "osm_aliases": [
+        "way/183772279"
+      ],
+      "lat": 50.90053725,
+      "lon": -1.403539130539143,
+      "decision": "active_map",
+      "source_name": "The Standing Order",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-standing-order-southampton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w186608067",
+      "osm_aliases": [
+        "way/186608067"
+      ],
+      "lat": 50.8620297,
+      "lon": 0.259618139643573,
+      "decision": "active_map",
+      "source_name": "The George Hotel",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-hotel-hailsham/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w202349595",
+      "osm_aliases": [
+        "way/202349595"
+      ],
+      "lat": 50.7576047,
+      "lon": -1.545634483629447,
+      "decision": "active_map",
+      "source_name": "The Six Bells",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-six-bells-lymington/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w224638835",
+      "osm_aliases": [
+        "way/224638835"
+      ],
+      "lat": 50.910988200000006,
+      "lon": -1.4043679988256272,
+      "decision": "active_map",
+      "source_name": "The Giddy Bridge",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-giddy-bridge-southampton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w302819546",
+      "osm_aliases": [
+        "way/302819546"
+      ],
+      "lat": 51.400841850000006,
+      "lon": -1.3227056600200449,
+      "decision": "active_map",
+      "source_name": "The Hatchet Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-hatchet-inn-newbury/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w306950270",
+      "osm_aliases": [
+        "way/306950270"
+      ],
+      "lat": 50.9695066,
+      "lon": -1.350710553841953,
+      "decision": "active_map",
+      "source_name": "The Wagon Works",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-wagon-works-eastleigh/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w313477174",
+      "osm_aliases": [
+        "way/313477174"
+      ],
+      "lat": 50.840346249999996,
+      "lon": 0.4711053739718334,
+      "decision": "active_map",
+      "source_name": "The Picture Playhouse",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-picture-playhouse-bexhill-on-sea/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w326938937",
+      "osm_aliases": [
+        "way/326938937"
+      ],
+      "lat": 51.2789262,
+      "lon": -0.8452198728188606,
+      "decision": "active_map",
+      "source_name": "The Prince Arthur",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-prince-arthur-fleet/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w34995425",
+      "osm_aliases": [
+        "way/34995425"
+      ],
+      "lat": 52.0376734,
+      "lon": -0.7676712482386554,
+      "decision": "active_map",
+      "source_name": "Wetherspoons",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoons-milton-keynes/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w355512196",
+      "osm_aliases": [
+        "way/355512196"
+      ],
+      "lat": 51.1464437,
+      "lon": -0.9779727444478719,
+      "decision": "active_map",
+      "source_name": "The Ivy House",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-ivy-house-alton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w365573727",
+      "osm_aliases": [
+        "way/365573727"
+      ],
+      "lat": 51.537851599999996,
+      "lon": -0.90402708409588,
+      "decision": "active_map",
+      "source_name": "The Catherine Wheel",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-catherine-wheel-henley-on-thames/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w428354651",
+      "osm_aliases": [
+        "way/428354651"
+      ],
+      "lat": 50.79703155,
+      "lon": -1.0928974401074596,
+      "decision": "active_map",
+      "source_name": "The Isambard Kingdom Brunel",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-isambard-kingdom-brunel-portsmouth/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w548638674",
+      "osm_aliases": [
+        "way/548638674"
+      ],
+      "lat": 51.5720149,
+      "lon": -0.7775874693285958,
+      "decision": "active_map",
+      "source_name": "The Grand Assembly",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-grand-assembly-marlow/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. OSM way 548638674 corroboration identifies the same 2–3 Market Square building as operator. Source SL7 1BE differs from operator SL7 3HH; reconcile identity for map only, retain source fields.",
+      "additional_evidence_urls": [
+        "https://mapcarta.com/W548638674",
+        "https://ratings.food.gov.uk/business/1996591/the-grand-assembly-buckinghamshire"
+      ]
+    },
+    {
+      "id": "spoons-osm-w579831172",
+      "osm_aliases": [
+        "way/579831172"
+      ],
+      "lat": 50.767695149999994,
+      "lon": 0.28473837680108527,
+      "decision": "active_map",
+      "source_name": "Cornfield Garage",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/cornfield-garage-eastbourne/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w619162940",
+      "osm_aliases": [
+        "node/1123932873",
+        "way/619162940"
+      ],
+      "lat": 51.4164671,
+      "lon": -0.7455363,
+      "decision": "active_map",
+      "source_name": "The Old Manor",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-old-manor-bracknell/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w669923434",
+      "osm_aliases": [
+        "way/669923434"
+      ],
+      "lat": 50.76880285,
+      "lon": 0.28165973720720716,
+      "decision": "active_map",
+      "source_name": "The London & County",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-county-eastbourne/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w671548622",
+      "osm_aliases": [
+        "way/671548622"
+      ],
+      "lat": 50.8521967,
+      "lon": -1.1767744812970387,
+      "decision": "active_map",
+      "source_name": "The Crown Inn",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-inn-fareham/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w672254742",
+      "osm_aliases": [
+        "way/672254742"
+      ],
+      "lat": 50.9143859,
+      "lon": -1.3580109211717295,
+      "decision": "active_map",
+      "source_name": "The Red Lion",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-southampton/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w683618350",
+      "osm_aliases": [
+        "way/683618350"
+      ],
+      "lat": 51.78357615,
+      "lon": -1.4845835544207882,
+      "decision": "active_map",
+      "source_name": "The Company of Weavers",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-company-of-weavers-witney/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w910441377",
+      "osm_aliases": [
+        "way/910441377"
+      ],
+      "lat": 50.9556893,
+      "lon": -0.13119731996402306,
+      "decision": "active_map",
+      "source_name": "The Six Gold Martlets",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-six-gold-martlets-burgess-hill/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w938780793",
+      "osm_aliases": [
+        "way/938780793"
+      ],
+      "lat": 52.0605637,
+      "lon": -1.33879941913144,
+      "decision": "active_map",
+      "source_name": "The Exchange",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-exchange-banbury/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved."
+    },
+    {
+      "id": "spoons-osm-w370461873",
+      "osm_aliases": [
+        "way/370461873"
+      ],
+      "lat": 51.4337411,
+      "lon": -0.5134022680000001,
+      "decision": "active_map",
+      "source_name": "The George",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-george-staines-upon-thames/",
+      "basis": "Current individual operator pub listing, named locality/address and regular weekly schedule support current operation. Opening-hours Closed text is not permanent closure. OSM-derived source identity and map position retained; premises boundary and visits not approved. Staines-upon-Thames belongs in South East; retain historic Middlesex grouping."
+    },
+    {
+      "id": "spoons-osm-n4328332802",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://camra.org.uk/pubs/lord-arthur-lee-fareham-190192",
+      "basis": "CAMRA identifies 100–108 West Street, Fareham as a former Wetherspoon sports bar, surveyed 31 July 2024 and updated 23 April 2025. Exclude current Wetherspoon membership, not the existence of an operating pub. Old operator history page is not evidence of current membership."
+    },
+    {
+      "id": "spoons-osm-w133781113",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://bell-hotel.com/",
+      "basis": "Current independent Bell Gastro Pub & Hotel site identifies 40 Market Square, Aylesbury HP20 1TX, matching source premises. Historic Wetherspoon identity retained; exclude current collection membership. Sale in May 2022 is corroborated by later hotel reports; do not claim premises closed."
+    },
+    {
+      "id": "spoons-osm-w1382889057",
+      "decision": "exclude_current",
+      "reviewed_at": "2026-10-12",
+      "evidence_url": "https://camra.org.uk/pubs/hope-champion-beaconsfield-116039",
+      "basis": "CAMRA explicitly dates long-term closure at Beaconsfield Services to 4 January 2026, marketed for sale by Wetherspoon. Former operator pub URL redirects to homepage. January 2026 closure reporting corroborates commercial closure and staff transfer to distinct Chiltern pub. Exclude from current active collection; do not rely on old history/menu pages."
     }
   ]
 }
