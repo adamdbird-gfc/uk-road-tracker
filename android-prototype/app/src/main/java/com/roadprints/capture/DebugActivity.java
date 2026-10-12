@@ -64,22 +64,18 @@ public class DebugActivity extends Activity {
                         }).show();
             }
         }));
-        String movementReport=MovementDiagnostics.getReport(this);
-        if(!movementReport.isEmpty()){
+        if(MovementDiagnostics.hasReport(this)){
             root.addView(action("DOWNLOAD MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
-                Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                save.addCategory(Intent.CATEGORY_OPENABLE);
-                save.setType("text/plain");
-                String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
-                        .withZone(ZoneOffset.UTC).format(Instant.now());
-                save.putExtra(Intent.EXTRA_TITLE,"roadprints-movement-" + stamp + ".txt");
-                startActivityForResult(save,SAVE_MOVEMENT_LOG);
+                downloadMovementLog();
             }));
             root.addView(action("COPY MOVEMENT LOG",0xFF29437F,Color.WHITE,()->{
-                String latestReport=MovementDiagnostics.getReport(this);
-                ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                cb.setPrimaryClip(ClipData.newPlainText("Roadprints movement diagnostics",latestReport));
-                Toast.makeText(this,"Movement log copied. It contains precise location data.",Toast.LENGTH_LONG).show();
+                String latestReport=MovementDiagnostics.getClipboardReport(this);
+                if(latestReport==null || !copyReportToClipboard(this,"Roadprints movement diagnostics",latestReport)){
+                    new AlertDialog.Builder(this).setTitle("Download the movement log")
+                            .setMessage("This log could not be copied safely. Download the complete file to share it.")
+                            .setNegativeButton("Cancel",null)
+                            .setPositiveButton("DOWNLOAD LOG",(dialog,which)->downloadMovementLog()).show();
+                }else Toast.makeText(this,"Movement log copied. It contains precise location data.",Toast.LENGTH_LONG).show();
             }));
             root.addView(action("CLEAR MOVEMENT LOG",0xFF182B5A,MUTED,()->new AlertDialog.Builder(this)
                     .setTitle("Clear movement log?")
@@ -108,10 +104,29 @@ public class DebugActivity extends Activity {
         if(available)RoadprintsDialog.show(this,"Debug report ready",
                 "The report is stored on this device. Copy it only when you want to share it.",null,
                 "COPY REPORT",()->{
-                    ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                    cb.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports",report));
-                    Toast.makeText(this,"Debug report copied",Toast.LENGTH_SHORT).show();
+                    boolean copied=copyReportToClipboard(this,"Roadprints debug reports",report);
+                    Toast.makeText(this,copied?"Debug report copied":"Report could not be copied. Please try again.",Toast.LENGTH_LONG).show();
                 },"CLEAR REPORTS",()->{CrashReporter.clear(this);finish();});
+    }
+    private void downloadMovementLog(){
+        Intent save=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        save.addCategory(Intent.CATEGORY_OPENABLE);
+        save.setType("text/plain");
+        String stamp=DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+                .withZone(ZoneOffset.UTC).format(Instant.now());
+        save.putExtra(Intent.EXTRA_TITLE,"roadprints-movement-"+stamp+".txt");
+        startActivityForResult(save,SAVE_MOVEMENT_LOG);
+    }
+    static boolean copyReportToClipboard(Context context,String label,String report){
+        if(report==null || report.isEmpty() || report.length()>MovementDiagnostics.MAX_CLIPBOARD_CHARS)return false;
+        try{
+            ClipboardManager clipboard=(ClipboardManager)context.getSystemService(CLIPBOARD_SERVICE);
+            if(clipboard==null)return false;
+            clipboard.setPrimaryClip(ClipData.newPlainText(label,report));
+            return true;
+        }catch(RuntimeException unavailable){
+            return false;
+        }
     }
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
         super.onActivityResult(requestCode,resultCode,data);
