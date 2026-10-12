@@ -108,5 +108,6 @@
     "London"
   ],
   "english_batch_policy": "Regional review batches carry forward existing venue decisions; app progress and achievements continue to use historic counties. Use exact reviewed venue identities for cross-county regions; do not infer a whole county reviewed from a regional batch.",
-  "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly."
+  "temporary_closure_policy": "Current collection pubs explicitly temporarily closed are held from active map pending actual reopening verification under the present map schema. Preserve identities; do not treat as former pubs or auto-activate on advertised dates. Future catalogue update design must represent temporary status explicitly.",
+  "regional_scope_note": "Regional batches use current regional locality scope while retaining historic app counties. Teesside Yorkshire venues stay with North East; Humber-side Lincolnshire and Sheffield historic Derbyshire venues are reviewed with Yorkshire/Humber. Persist exact IDs and carry prior approvals/exclusions once into later batches."
 }
