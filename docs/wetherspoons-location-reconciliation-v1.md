@@ -164,8 +164,12 @@ Oast House, Derby remains a reported proposal without established current operat
 
 ## Remaining work and validation
 
-Research now covers all 13 leads. Twelve have named-pub or parent-building coordinate candidates; Springfield has only a park-level fallback and still needs pub/main-complex placement. All thirteen still need production identity/source reconciliation. The two conflicting reopening cases remain outstanding.
+Research now covers all 13 leads. Twelve have named-pub or parent-building coordinate candidates; Springfield has only a park-level numeric fallback; a user-supplied close-up now identifies the shared main-complex building, but its coordinate still needs extraction. All thirteen still need production identity/source reconciliation. The two conflicting reopening cases remain outstanding.
 
 Validated: 13 unique lead keys, exact match to the 13 operating leads, UK coordinate ranges, original 831-source count, nearest-candidate proximity screen, no pub alias derived from a parent ID, and all map/visit promotion flags disabled. No app files, version, builder, existing review decisions or packaged assets are changed by this checkpoint. Documentation/research data do not need an Android build.
 
 Delivery remains: reconcile UK catalogue, bundle approved map catalogue in app release (including the existing loader-size requirement), then implement silent validated updates. Visit support is separate and must enforce confirmation for ambiguous shared premises.
+
+## Springfield user evidence follow-up
+
+Adam supplied 28697.png showing the named Springfield pin on the main complex beside The Live Lounge, plus https://maps.app.goo.gl/JBJ6Soi9DAHBEAiL9. The link resolves to the specific Springfield Maps listing (feature ID 0x487b5d3de1844da9:0xccea23f81da48c8a), confirming the listing identity. Target coordinates were not exposed in the returned HTML; no coordinate was guessed. Keep the research coordinate classified park-only until the building point is independently extracted. The Google feature ID is reference evidence, not an OSM alias. Main-complex identity is now evidenced; exact coordinate and OSM identity remain outstanding.
