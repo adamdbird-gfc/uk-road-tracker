@@ -131,8 +131,24 @@ final class RoadprintsDialog {
                 recolourLegacyText(dialog.getWindow().getDecorView());
                 Button destructive=null;
                 for(int which:new int[]{AlertDialog.BUTTON_POSITIVE,AlertDialog.BUTTON_NEGATIVE,AlertDialog.BUTTON_NEUTRAL}){Button b=dialog.getButton(which);if(b!=null&&isDestructive(b.getText().toString()))destructive=b;}
-                if(destructive!=null&&destructive.getParent() instanceof LinearLayout){
-                    LinearLayout actions=(LinearLayout)destructive.getParent();actions.setOrientation(LinearLayout.VERTICAL);actions.removeView(destructive);actions.addView(destructive,new LinearLayout.LayoutParams(-1,dp(getContext(),52)));
+                if(destructive!=null&&destructive.getParent() instanceof ViewGroup){
+                    // Native ButtonBarLayout reverses children when it stacks; use a plain
+                    // action column so destructive actions remain last at every width.
+                    ViewGroup old=(ViewGroup)destructive.getParent();
+                    if(old.getParent() instanceof ViewGroup){
+                        ViewGroup parent=(ViewGroup)old.getParent();int index=parent.indexOfChild(old);
+                        ViewGroup.LayoutParams params=old.getLayoutParams();
+                        LinearLayout actions=new LinearLayout(getContext());actions.setOrientation(LinearLayout.VERTICAL);actions.setId(old.getId());
+                        actions.setPadding(dp(getContext(),12),dp(getContext(),4),dp(getContext(),12),dp(getContext(),12));
+                        for(int which:new int[]{AlertDialog.BUTTON_NEGATIVE,AlertDialog.BUTTON_NEUTRAL,AlertDialog.BUTTON_POSITIVE}){
+                            Button button=dialog.getButton(which);
+                            if(button==null||button==destructive||button.getVisibility()!=View.VISIBLE)continue;
+                            if(button.getParent() instanceof ViewGroup)((ViewGroup)button.getParent()).removeView(button);
+                            actions.addView(button,new LinearLayout.LayoutParams(-1,dp(getContext(),52)));
+                        }
+                        old.removeView(destructive);actions.addView(destructive,new LinearLayout.LayoutParams(-1,dp(getContext(),52)));
+                        parent.removeView(old);parent.addView(actions,index,params);
+                    }
                 }
             });
             return holder[0];
