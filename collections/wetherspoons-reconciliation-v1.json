@@ -149,6 +149,16 @@
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-round-coppice-fareham/",
       "basis": "Current operator listing and new-openings page identify operating pub at Whiteley Shopping Centre. Missing from pinned candidate names; reconcile actual OSM pub identity and position. Shopping-centre centroid cannot substitute for pub.",
       "map_enabled": false
+    },
+    {
+      "key": "sir-frank-whittle-heathrow",
+      "status": "operating_venue_missing_candidate_identity",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-frank-whittle-hounslow/",
+      "additional_evidence_urls": [
+        "https://www.heathrow.com/at-the-airport/restaurants-a-z/the-sir-frank-whittle"
+      ],
+      "basis": "Current operator and Heathrow airport listings identify operating Terminal 2 after-security pub near gates A19–26/A21, absent from pinned candidate names. Reconcile actual OSM pub identity and premises position before adding map pin. Preserve separate identities for Star Light Terminal 4 and Crown Rivers Terminal 5. Operator and airport opening times differ; no hours field is copied. Airport/terminal centroid cannot substitute for pub and cannot award a visit.",
+      "map_enabled": false
     }
   ],
   "delivery_sequence": [
