@@ -55,7 +55,7 @@ public class CollectionCatalogueUpdatesTest {
     @Test public void updateSurvivesRestartOfflineAndDoesNotAwardVisits() throws Exception {
         JSONArray before=CollectionMapCatalog.spoons(app);
         String id=before.getJSONObject(0).getString("id");
-        assertEquals(811,before.length());
+        assertEquals(813,before.length());
         assertTrue(update(catalogue(),(CollectionCatalogueUpdates.BUNDLED_REVISION+1)));
         assertEquals("Updated pub",CollectionMapCatalog.spoons(app).getJSONObject(0).getString("name"));
         assertEquals(id,CollectionMapCatalog.spoons(app).getJSONObject(0).getString("id"));
@@ -117,7 +117,7 @@ public class CollectionCatalogueUpdatesTest {
             if(scenario==5)data.getJSONArray("venues").getJSONObject(0).put("lat",0);
             try{update(data,(CollectionCatalogueUpdates.BUNDLED_REVISION+1));fail("Invalid catalogue must fail");}
             catch(IllegalArgumentException expected){}
-            assertFalse(cache.exists());assertEquals(811,CollectionMapCatalog.spoons(app).length());
+            assertFalse(cache.exists());assertEquals(813,CollectionMapCatalog.spoons(app).length());
         }
     }
     @Test public void cachedDowngradeAndTamperingFallBackToBundledMap() throws Exception {
@@ -130,7 +130,7 @@ public class CollectionCatalogueUpdatesTest {
         Files.write(cache.toPath(),stored.toString().getBytes(StandardCharsets.UTF_8));
         CollectionCatalogueUpdates.resetForTests();
         assertNotEquals("Tampered pub",CollectionMapCatalog.spoons(app).getJSONObject(0).getString("name"));
-        assertEquals(811,CollectionMapCatalog.spoons(app).length());
+        assertEquals(813,CollectionMapCatalog.spoons(app).length());
     }
     @Test public void manifestCannotRedirectToOtherData() throws Exception {
         JSONObject data=catalogue();

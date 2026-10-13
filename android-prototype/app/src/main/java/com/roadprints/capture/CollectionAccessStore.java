@@ -14,10 +14,10 @@ final class CollectionAccessStore {
         if(known(id))return VenueCollection.definition(id).name;
         return "None";
     }
-    static boolean known(String id){return SERVICES.equals(id)||SPOONS.equals(id);}
+    static boolean known(String id){return VenueCollection.known(id);}
     static boolean entitled(Context context,String id) {
         if(SERVICES.equals(id))return ServiceStationStore.unlocked(context);
-        return SPOONS.equals(id)&&prefs(context).getBoolean("wetherspoons_test_access",false);
+        return known(id)&&prefs(context).getBoolean(id+"_test_access",false);
     }
     static boolean installed(Context context,String id) {
         // Existing Services owners retain their current installation after upgrade.
@@ -25,14 +25,14 @@ final class CollectionAccessStore {
     }
     static List<String> installed(Context context) {
         List<String> result=new ArrayList<>();
-        for(String id:new String[]{SERVICES,SPOONS})if(installed(context,id))result.add(id);
+        for(VenueCollection.Definition definition:VenueCollection.all())if(installed(context,definition.id))result.add(definition.id);
         return result;
     }
     static synchronized void installForTesting(Context context,String id) {
         if(!known(id))throw new IllegalArgumentException("Unknown collection");
         if(SERVICES.equals(id)&&!entitled(context,id))ServiceStationStore.unlockForTesting(context);
         SharedPreferences.Editor edit=prefs(context).edit();
-        if(SPOONS.equals(id))edit.putBoolean("wetherspoons_test_access",true);
+        if(!SERVICES.equals(id))edit.putBoolean(id+"_test_access",true);
         edit.putBoolean(id+"_installed",true).putLong("revision",revision(context)+1).apply();
         // Retain an existing map selection; Show on map is an explicit separate action.
     }
@@ -45,7 +45,6 @@ final class CollectionAccessStore {
     static String selected(Context context) {
         List<String> ids=installed(context);
         if(ids.isEmpty())return NONE;
-        if(ids.size()==1)return ids.get(0);
         String value=prefs(context).getString("map_collection",SERVICES);
         return NONE.equals(value)||ids.contains(value)?value:ids.get(0);
     }

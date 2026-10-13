@@ -13,8 +13,11 @@ final class CollectionMapCatalog {
     static final int MAX_CATALOGUE_BYTES = 2 * 1024 * 1024;
     private static JSONObject bundled;
     private CollectionMapCatalog() {}
-    static JSONArray approvedVenues(JSONObject catalogue) {
-        if(catalogue==null||!"wetherspoons".equals(catalogue.optString("collection_id"))
+    static JSONArray approvedVenues(JSONObject catalogue) {return approvedVenues(catalogue,VenueCollection.definition("wetherspoons"));}
+    static JSONArray approvedVenues(JSONObject catalogue,VenueCollection.Definition definition) {
+        if("services_v1".equals(definition.catalogueFormat)){JSONArray rows=catalogue.optJSONArray("services");return rows==null?new JSONArray():rows;}
+
+        if(catalogue==null||!definition.id.equals(catalogue.optString("collection_id"))
                 ||!"UK".equals(catalogue.optString("scope"))
                 ||!catalogue.optBoolean("ready_for_app",false)
                 ||!"approved".equals(catalogue.optString("release_status"))
@@ -54,16 +57,9 @@ final class CollectionMapCatalog {
             return new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8));
         }
     }
-    static synchronized JSONArray spoons(Context context) {
-        if(bundled==null) {
-            try(InputStream input=context.getAssets().open("collections/uk-wetherspoons-map-v1.json")) {
-                bundled=readCatalogue(input);
-            }catch(Exception unavailable){bundled=new JSONObject();}
-        }
-        return CollectionCatalogueUpdates.pins(context,bundled);
+    static JSONArray venues(Context context,VenueCollection.Definition definition){
+        VenueCatalogueUpdates store=VenueCatalogueUpdates.forCollection(definition);
+        try{return store.pins(context);}catch(Exception unavailable){throw new IllegalStateException("Offline catalogue unavailable",unavailable);}
     }
+    static JSONArray spoons(Context context){return venues(context,VenueCollection.definition("wetherspoons"));}
 }
-
-
-
-

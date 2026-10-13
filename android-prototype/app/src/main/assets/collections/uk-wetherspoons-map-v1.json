@@ -9,7 +9,7 @@
   "coverage_complete": false,
   "visit_enabled": false,
   "completion_target": null,
-  "catalogue_version": "2026-10-12.b3906a1283c8",
+  "catalogue_version": "2026-10-13.5519b24b30cd",
   "candidate_version": "2026-10-11.41b1d2fb63de",
   "source": {
     "dataset": "OpenStreetMap",
@@ -23,14 +23,12 @@
   },
   "attribution": "© OpenStreetMap contributors · ODbL 1.0",
   "review_summary": {
-    "map_venues": 811,
+    "map_venues": 813,
     "excluded_current": 29,
-    "unreviewed_candidates": 4,
+    "unreviewed_candidates": 2,
     "needs_rereview": [
       "spoons-osm-w38325241",
-      "spoons-osm-w507289751",
-      "spoons-osm-w1465394526",
-      "spoons-osm-w98286602"
+      "spoons-osm-w507289751"
     ]
   },
   "venues": [
@@ -9113,6 +9111,25 @@
       "visit_enabled": false
     },
     {
+      "id": "spoons-osm-w1465394526",
+      "name": "The Court of Requests",
+      "lat": 52.50471305,
+      "lon": -2.0156826771569394,
+      "town": "Oldbury",
+      "county": {
+        "code": "WRC",
+        "name": "Worcestershire",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/1465394526"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-13",
+      "visit_enabled": false
+    },
+    {
       "id": "spoons-osm-w146610676",
       "name": "The Layton Rakes",
       "lat": 53.818186,
@@ -15400,6 +15417,25 @@
       "status": "active",
       "operating_status": "reviewed_current",
       "map_reviewed_at": "2026-10-11",
+      "visit_enabled": false
+    },
+    {
+      "id": "spoons-osm-w98286602",
+      "name": "The Bottle of Sack",
+      "lat": 52.56028835,
+      "lon": -1.825674348041514,
+      "town": "Sutton Coldfield",
+      "county": {
+        "code": "WRW",
+        "name": "Warwickshire",
+        "nation": "England"
+      },
+      "osm_aliases": [
+        "way/98286602"
+      ],
+      "status": "active",
+      "operating_status": "reviewed_current",
+      "map_reviewed_at": "2026-10-13",
       "visit_enabled": false
     },
     {

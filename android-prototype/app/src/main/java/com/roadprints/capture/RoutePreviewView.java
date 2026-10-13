@@ -43,6 +43,7 @@ public class RoutePreviewView extends View {
     private static final ExecutorService TILE_EXECUTOR = Executors.newFixedThreadPool(3);
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
+    private boolean travelVisible=true,motorwayVisible=true,aRoadVisible=true,remainingVisible=true,boundaryVisible=true;
     private JSONArray coordinates;
     private final List<JSONArray> matchedSegments;
     private final List<JSONArray> routeExtensions = new ArrayList<>();
@@ -358,27 +359,27 @@ public class RoutePreviewView extends View {
         this.coordinatesValid = hasRoutePoints(coordinates) || !this.matchedSegments.isEmpty();
         this.routeFitPending = coordinatesValid;
 
-        routePaint.setColor(Color.BLACK);
+        routePaint.setColor(MapLayerPreferences.Layer.TRAVEL.color);
         routePaint.setStyle(Paint.Style.STROKE);
         routePaint.setStrokeWidth(dp(7));
         routePaint.setStrokeCap(Paint.Cap.ROUND);
         routePaint.setStrokeJoin(Paint.Join.ROUND);
-        motorwayPaint.setColor(Color.rgb(0, 94, 184));
+        motorwayPaint.setColor(MapLayerPreferences.Layer.MOTORWAYS.color);
         motorwayPaint.setStyle(Paint.Style.STROKE);
         motorwayPaint.setStrokeWidth(dp(4));
         motorwayPaint.setStrokeCap(Paint.Cap.ROUND);
         motorwayPaint.setStrokeJoin(Paint.Join.ROUND);
-        motorwayIncompletePaint.setColor(Color.rgb(217, 58, 58));
+        motorwayIncompletePaint.setColor(MapLayerPreferences.Layer.REMAINING.color);
         motorwayIncompletePaint.setStyle(Paint.Style.STROKE);
         motorwayIncompletePaint.setStrokeWidth(dp(4));
         motorwayIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
         motorwayIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
-        aRoadPaint.setColor(0xFF25834A);
+        aRoadPaint.setColor(MapLayerPreferences.Layer.A_ROADS.color);
         aRoadPaint.setStyle(Paint.Style.STROKE);
         aRoadPaint.setStrokeWidth(dp(4));
         aRoadPaint.setStrokeCap(Paint.Cap.ROUND);
         aRoadPaint.setStrokeJoin(Paint.Join.ROUND);
-        aRoadIncompletePaint.setColor(Color.rgb(217, 58, 58));
+        aRoadIncompletePaint.setColor(MapLayerPreferences.Layer.REMAINING.color);
         aRoadIncompletePaint.setStyle(Paint.Style.STROKE);
         aRoadIncompletePaint.setStrokeWidth(dp(4));
         aRoadIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
@@ -594,10 +595,10 @@ public class RoutePreviewView extends View {
         int roadsLayer = discoveryReplay == null ? -1
                 : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 128);
         if (coordinatesValid) {
-            for (JSONArray ring : settlementBoundaryRings)
+            if(boundaryVisible) for (JSONArray ring : settlementBoundaryRings)
                 drawRoute(canvas, ring, settlementBoundaryPaint, null);
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
-            if (hasMatchedRoute) {
+            if (travelVisible && hasMatchedRoute) {
                 if (routeEditMode) {
                     drawEditableRoutes(canvas);
                     for (JSONArray extension : routeExtensions) {
@@ -608,23 +609,23 @@ public class RoutePreviewView extends View {
                     drawRoute(canvas, segment, routePaint,
                             flatRoadMapStyle ? null : routeHaloPaint);
                 }
-            } else if (hasRoutePoints(coordinates)) {
+            } else if (travelVisible && hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
-            for (JSONArray segment : incompleteMotorwaySegments) {
+            if(remainingVisible) for (JSONArray segment : incompleteMotorwaySegments) {
                 drawRoute(canvas, segment, motorwayIncompletePaint, null);
             }
-            for (JSONArray segment : incompleteARoadSegments) {
+            if(remainingVisible) for (JSONArray segment : incompleteARoadSegments) {
                 drawRoute(canvas, segment, aRoadIncompletePaint, null);
             }
-            for (JSONArray segment : coveredARoadSegments) {
+            if(aRoadVisible) for (JSONArray segment : coveredARoadSegments) {
                 drawRoute(canvas, segment, aRoadPaint, null);
             }
-            for (JSONArray segment : coveredMotorwaySegments) {
+            if(motorwayVisible) for (JSONArray segment : coveredMotorwaySegments) {
                 drawRoute(canvas, segment, motorwayPaint, null);
             }
-            for (JSONArray segment : motorwaySegments) {
+            if(motorwayVisible) for (JSONArray segment : motorwaySegments) {
                 drawRoute(canvas, segment, motorwayPaint, null);
             }
             if (showEndpointMarkers) {
@@ -658,6 +659,15 @@ public class RoutePreviewView extends View {
             if (correctionDrawMode) drawCorrectionModeHint(canvas);
             drawZoomControls(canvas);
         }
+    }
+
+    public void setMapLayersFromPreferences(){
+        travelVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.TRAVEL);
+        motorwayVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MOTORWAYS);
+        aRoadVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.A_ROADS);
+        remainingVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.REMAINING);
+        boundaryVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.BOUNDARIES);
+        invalidate();
     }
 
     private void drawCorrectionModeHint(Canvas canvas) {
@@ -978,13 +988,13 @@ public class RoutePreviewView extends View {
         double selectedLongitude = Double.NaN;
         double selectedLatitude = Double.NaN;
         List<List<JSONArray>> groups = new ArrayList<>();
-        groups.add(matchedSegments);
-        groups.add(routeExtensions);
-        groups.add(motorwaySegments);
-        groups.add(incompleteMotorwaySegments);
-        groups.add(coveredMotorwaySegments);
-        groups.add(incompleteARoadSegments);
-        groups.add(coveredARoadSegments);
+        if(travelVisible) groups.add(matchedSegments);
+        if(travelVisible) groups.add(routeExtensions);
+        if(motorwayVisible) groups.add(motorwaySegments);
+        if(remainingVisible) groups.add(incompleteMotorwaySegments);
+        if(motorwayVisible) groups.add(coveredMotorwaySegments);
+        if(remainingVisible) groups.add(incompleteARoadSegments);
+        if(aRoadVisible) groups.add(coveredARoadSegments);
         for (List<JSONArray> group : groups) {
             for (JSONArray route : group) {
                 for (int i = 1; i < route.length(); i++) {
@@ -1052,7 +1062,7 @@ public class RoutePreviewView extends View {
             float x = cluster.x();
             float y = cluster.y();
             boolean visited = cluster.visited > 0;
-            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.SPOONS.equals(collectionKind)?0xFF238F89:0xFF74829A);
+            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.known(collectionKind)?VenueCollection.definition(collectionKind).pinColor:0xFF74829A);
             if (cluster.venues.size() > 1) {
                 float radius = dp(14);
                 canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
@@ -1066,8 +1076,8 @@ public class RoutePreviewView extends View {
                 canvas.drawCircle(x, y, singleRadius + dp(2), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
                 markerPaint.setColor(Color.WHITE);
-                if(CollectionAccessStore.SPOONS.equals(collectionKind)) {
-                    markerTextPaint.setColor(Color.WHITE);canvas.drawText("W",x,
+                if(CollectionAccessStore.known(collectionKind)&&!VenueCollection.definition(collectionKind).pinLabel.isEmpty()) {
+                    markerTextPaint.setColor(Color.WHITE);canvas.drawText(VenueCollection.definition(collectionKind).pinLabel,x,
                             y-(markerTextPaint.ascent()+markerTextPaint.descent())/2,markerTextPaint);
                 } else canvas.drawCircle(x,y,dp(2.5f),markerPaint);
             }

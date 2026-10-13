@@ -10,6 +10,10 @@ on:
   push:
     paths:
       - "android-prototype/**"
+      - "collections/venue-collections-v1.json"
+      - "scripts/generate_venue_collections.py"
+      - "scripts/publish_venue_catalogue.py"
+      - "scripts/test_venue_catalogue.py"
       - ".github/workflows/build-android-prototype.yml"
       - "scripts/upload_android_firebase.sh"
 
@@ -36,6 +40,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.10"
+
+      - name: Verify declarative venue registry
+        run: |
+          python3 scripts/generate_venue_collections.py --check
+          python3 -m unittest discover -s scripts -p test_venue_catalogue.py
 
       - name: Verify service catalogue metadata rules
         run: python3 scripts/test_service_collection_metadata.py

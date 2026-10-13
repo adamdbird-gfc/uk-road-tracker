@@ -48,7 +48,7 @@ public class MapActivity extends Activity {
     private static final Object MAP_CACHE_LOCK = new Object();
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
-    private TextView mapSubtitle, collectionSelector, collectionNotice;
+    private TextView mapSubtitle, legendButton;
     private JSONArray collectionServiceVenues=new JSONArray();
     private Set<String> collectionServiceVisits=java.util.Collections.emptySet();
     private MapLoadingView loadingCard;
@@ -146,13 +146,6 @@ public class MapActivity extends Activity {
         }
                 if (getIntent().hasExtra("settlement_code")) heading.addView(titleRow);
         heading.addView(mapSubtitle);
-        collectionSelector=new TextView(this);collectionSelector.setTextColor(0xFF67D5CC);
-        collectionSelector.setTextSize(14);collectionSelector.setTypeface(null,Typeface.BOLD);
-        collectionSelector.setPadding(dp(12),dp(12),dp(12),dp(12));
-        collectionSelector.setBackground(roundRect(0xFF182F62,dp(10)));
-        collectionSelector.setOnClickListener(v->chooseCollection());LinearLayout.LayoutParams collectionParams=new LinearLayout.LayoutParams(-1,-2);collectionParams.topMargin=dp(12);collectionParams.bottomMargin=dp(8);heading.addView(collectionSelector,collectionParams);
-        collectionNotice=new TextView(this);collectionNotice.setTextSize(13);collectionNotice.setTextColor(0xFFD3DCED);
-        collectionNotice.setPadding(0,dp(6),0,0);heading.addView(collectionNotice);
         root.addView(heading);
 
         mapFrame = new FrameLayout(this);
@@ -166,6 +159,14 @@ public class MapActivity extends Activity {
         if (hasSavedCamera) mapView.restoreCameraState(
                 savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
         addZoomControls(mapFrame, mapView);
+        legendButton=new TextView(this);legendButton.setText("☷ Legend");legendButton.setTextSize(14);legendButton.setTextColor(NAVY);
+        legendButton.setTypeface(null,Typeface.BOLD);legendButton.setGravity(Gravity.CENTER);legendButton.setMinHeight(dp(48));
+        legendButton.setPadding(dp(14),dp(10),dp(14),dp(10));legendButton.setBackground(roundRect(GOLD,dp(14)));legendButton.setTag("map_legend_button");
+        legendButton.setContentDescription("Legend, map layer visibility and collection selection");
+        legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
+        FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
+        legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
+        mapView.setMapLayersFromPreferences();
         showMapLoading(false);
 
         View bottomNavigation = buildBottomNavigation();
@@ -252,50 +253,21 @@ public class MapActivity extends Activity {
             applyCollectionLayer();}
     }
 
-    private void chooseCollection() {
-        List<String> ids=new ArrayList<>();ids.add(CollectionAccessStore.NONE);ids.addAll(CollectionAccessStore.installed(this));
-        String[] names=new String[ids.size()];int selected=0;
-        for(int i=0;i<ids.size();i++){names[i]=CollectionAccessStore.name(ids.get(i));
-            if(ids.get(i).equals(CollectionAccessStore.selected(this)))selected=i;}
-        LinearLayout content=cardContainer();
-        addCardLabel(content,"COLLECTIONS");
-        addCardTitle(content,"Show on map");
-        addCardBody(content,"Choose one collection to show alongside your journeys.");
-        AlertDialog picker=new AlertDialog.Builder(this).setView(content).create();
-        for(int i=0;i<ids.size();i++) {
-            final String id=ids.get(i);
-            TextView row=cardAction((i==selected?"✓  ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]),i==selected);
-            row.setGravity(Gravity.CENTER_VERTICAL);row.setMinHeight(dp(48));
-            row.setContentDescription((i==selected?"Selected. ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]));
-            row.setOnClickListener(v->{CollectionAccessStore.select(this,id);applyCollectionLayer();picker.dismiss();});
-            content.addView(row);
-        }
-        TextView close=cardAction("CANCEL",false);close.setOnClickListener(v->picker.dismiss());content.addView(close);
-        picker.setOnShowListener(dialog->{if(picker.getWindow()!=null)picker.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
-        picker.show();
-    }
     private void applyCollectionLayer() {
-        if(mapView==null||collectionSelector==null)return;
-        List<String> installed=CollectionAccessStore.installed(this);
+        if(mapView==null)return;
+        mapView.setMapLayersFromPreferences();
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
-        collectionSelector.setVisibility(!townMap&&installed.size()>1?View.VISIBLE:View.GONE);
-        collectionSelector.setText("Showing on map\n"+(CollectionAccessStore.NONE.equals(selected)?"No collection":CollectionAccessStore.name(selected))+"  ▾");
-        collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
-        collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
-        collectionNotice.setText("UK pub map · "+PubVisitStore.visitedLabel(PubVisitStore.completed(this).size())+" · "+CollectionMapCatalog.spoons(this).length()+" mapped");
         if(townMap)return;
         double[] camera=mapView.cameraState();
-        JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
-                :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
-        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?ServiceStationStore.completed(this):
-                CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
+        JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
+        Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
         VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
                 showServiceStationCard(venue,ServiceStationStore.completed(this).contains(venue.optString("id")));
-            else if(CollectionAccessStore.SPOONS.equals(CollectionAccessStore.selected(this)))showPubCard(venue);
+            else if(CollectionAccessStore.known(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
     }
@@ -922,16 +894,19 @@ public class MapActivity extends Activity {
 
     private void showPubCard(JSONObject pub) {
         if(pub==null||isFinishing())return;
-        boolean visited=PubVisitStore.completed(this).contains(pub.optString("id"));
+        String collection=CollectionAccessStore.selected(this);
+        boolean visited=VenueCollection.completed(this,collection).contains(pub.optString("id"));
         LinearLayout content=cardContainer();
-        addCardLabel(content,"WETHERSPOONS");addCardTitle(content,pub.optString("name","Pub"));
+        addCardLabel(content,CollectionAccessStore.name(collection).toUpperCase(java.util.Locale.ROOT));addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
         addCardBody(content,visited?"Visited":"Not visited");
+        if(!pub.optString("location_label").isEmpty())addCardBody(content,pub.optString("location_label"));
+        if(!pub.optString("attribution").isEmpty())addCardBody(content,pub.optString("attribution"));
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
         TextView detail=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);
-        detail.setOnClickListener(v->{popup.dismiss();if(visited)PubVisitUi.details(this,pub,this::applyCollectionLayer);
-            else PubVisitUi.live(this,pub,this::applyCollectionLayer,null);});
+        detail.setOnClickListener(v->{popup.dismiss();if(visited)VenueVisitUi.details(this,collection,pub,this::applyCollectionLayer);
+            else VenueVisitUi.live(this,collection,pub,this::applyCollectionLayer,null);});
         TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());
         actions.addView(detail);content.addView(actions);RoadprintsDialog.placeClose(content,close);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
@@ -1362,6 +1337,7 @@ public class MapActivity extends Activity {
     }
 
     private RoadCoverageSegment nearestIncompleteRoad(double latitude, double longitude) {
+        if(!MapLayerPreferences.visible(this,MapLayerPreferences.Layer.REMAINING))return null;
         RoadCoverageSegment nearest = null;
         double nearestDistance = Double.MAX_VALUE;
         for (RoadCoverageSegment segment : incompleteRoadSegments) {

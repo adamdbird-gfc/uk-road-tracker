@@ -109,9 +109,12 @@ public class TimelineImportActivity extends Activity {
         help.setClickable(true);
         help.setFocusable(true);
         root.addView(help);
-        helpBody = text("In Google Maps, open your profile and choose Your Timeline. "
-                + "Open the Timeline menu, choose Settings and privacy, then Export Timeline data. "
-                + "Select the JSON file here. Roadprints reads and saves it on this device.",
+        helpBody = text("1. Open your phone’s Settings app.\n"
+                + "2. Choose Location → Location services → Timeline.\n"
+                + "3. Tap Export Timeline data, then Continue.\n"
+                + "4. Choose a folder such as Downloads and tap Save.\n"
+                + "5. Wait for Export complete, return here and choose the exported JSON file.\n\n"
+                + "Menu names can vary by device. Roadprints reads and saves the file on this device.",
                 14, 0xFFD3DCED, false);
         helpBody.setVisibility(View.GONE);
         helpBody.setPadding(0, 0, 0, dp(12));

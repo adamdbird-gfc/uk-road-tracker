@@ -4057,7 +4057,7 @@
       ],
       "lat": 53.591542950000004,
       "lon": -2.2984672171014244,
-      "reviewed_at": "2026-10-12",
+      "reviewed_at": "2026-10-13",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-art-picture-house-bury/",
       "basis": "Current operator page explicitly says closed temporarily and reopening Friday 4 December 2026. Hold from active map until actual reopening verified; not a former-pub exclusion. Retain identity and no automatic activation based on advertised date.",
       "hold_reason": "temporary_closure_pending_reopening_review"
@@ -6597,10 +6597,16 @@
     },
     {
       "id": "spoons-osm-w1465394526",
-      "decision": "hold_map",
-      "reviewed_at": "2026-10-12",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-13",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/",
-      "basis": "Operator retrieval explicitly reported temporary closure and advertised reopening 10 October 2026. Subsequent cached operator retrieval shows ordinary closed/open-hours status without the temporary notice, so status evidence conflicts. Date has passed but actual reopening is not independently confirmed. Hold map pending fresh verification, not a former-pub exclusion; no automatic activation from date or schedule alone. Preserve source identity."
+      "basis": "Fresh operator listing explicitly reports open on 13 October 2026. This resolves the previous temporary-closure conflict; approval is based on current open status, not the passed advertised reopening date. Preserve pinned OSM identity, position and historic county. Map approval only; no venue evidence or badge is manufactured.",
+      "source_name": "The Court of Requests",
+      "osm_aliases": [
+        "way/1465394526"
+      ],
+      "lat": 52.50471305,
+      "lon": -2.0156826771569394
     },
     {
       "id": "spoons-osm-w150398083",
@@ -7062,10 +7068,16 @@
     },
     {
       "id": "spoons-osm-w98286602",
-      "decision": "hold_map",
-      "reviewed_at": "2026-10-12",
+      "decision": "active_map",
+      "reviewed_at": "2026-10-13",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/",
-      "basis": "Operator retrieval explicitly reported temporary closure and advertised reopening 5 October 2026. Subsequent cached operator retrieval shows ordinary closed/open-hours status without the temporary notice, so status evidence conflicts. Date has passed but actual reopening is not independently confirmed. Hold map pending fresh verification, not a former-pub exclusion; no automatic activation from date or schedule alone. Preserve source identity."
+      "basis": "Fresh operator listing explicitly reports open on 13 October 2026. This resolves the previous temporary-closure conflict; approval is based on current open status, not the passed advertised reopening date. Preserve pinned OSM identity, position and historic county. Map approval only; no venue evidence or badge is manufactured.",
+      "source_name": "The Bottle of Sack",
+      "osm_aliases": [
+        "way/98286602"
+      ],
+      "lat": 52.56028835,
+      "lon": -1.825674348041514
     },
     {
       "id": "spoons-osm-w987129477",

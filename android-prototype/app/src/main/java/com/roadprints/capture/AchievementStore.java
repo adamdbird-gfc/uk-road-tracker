@@ -28,6 +28,7 @@ final class AchievementStore {
     static final class Definition {
         final String id, icon, title, description, detail, type, roadId;
         final double target, longitude, latitude, radiusMetres;
+        String collectionId="",unit="";
         double[] levels;
         String[] levelTitles;
         Definition(String id, String icon, String title, String description, String detail,
@@ -175,7 +176,9 @@ final class AchievementStore {
         values.put("spanning-the-nation",(double)completeCrossings);
         ServiceStationAchievements.Snapshot serviceGoals=ServiceStationStore.achievementSnapshot(app);
         values.putAll(serviceGoals.values);
-        PubAchievements.Snapshot pubGoals=PubAchievements.snapshot(app);values.putAll(pubGoals.values);
+        VenueAchievements.Snapshot venueGoals=new VenueAchievements.Snapshot();
+        for(VenueCollection.Definition collection:VenueCollection.all())if(!CollectionAccessStore.SERVICES.equals(collection.id)){VenueAchievements.Snapshot goals=VenueAchievements.snapshot(app,collection);venueGoals.values.putAll(goals.values);venueGoals.lists.putAll(goals.lists);}
+        values.putAll(venueGoals.values);
         values.put("foot-total",core.footMetres/MILE);values.put("road-total",core.roadMetres/MILE);
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
         values.put("cycle-total",core.cycleMetres/MILE);values.put("cycle-unique",core.cycleCoverage.metres()/MILE);
@@ -185,7 +188,7 @@ final class AchievementStore {
         values.put("long-way-home",core.longestFoot>=10*MILE||core.longestRoad>=250*MILE||core.longestCycle>=25*MILE?1.0:0.0);
         Map<String,List<String>> lists=core.roadLists(app);
         for(Map.Entry<String,List<String>> entry:lists.entrySet())values.put(entry.getKey(),(double)entry.getValue().size());
-        lists.putAll(serviceGoals.lists);lists.putAll(pubGoals.lists);
+        lists.putAll(serviceGoals.lists);lists.putAll(venueGoals.lists);
         lists.put("county-collector",counties.checklist());
         lists.put("sightseer",landmarks.checklist());
         lists.put("groundhog-day",groundhog.contributions());
@@ -336,7 +339,7 @@ final class AchievementStore {
         if("the-knowledge".equals(d.id))return String.format(Locale.UK,"%,d / %,.0f distinct roads unlocked",(int)progress.value,target);
         if("mary-high-streets".equals(d.id)||"mastered-monopoly".equals(d.id))return String.format(Locale.UK,"%,d / %.0f different %s unlocked",(int)progress.value,target,
                 "mary-high-streets".equals(d.id)?"High Streets":"Station Roads");
-        if("pub-visit".equals(d.type))return String.format(Locale.UK,"%,d / %,.0f %s",(int)progress.value,target,"spoons-collector".equals(d.id)?"distinct pubs":"spoons-nations".equals(d.id)?"home nations":"spoons-grand-tour".equals(d.id)?"areas": "spoons-stage".equals(d.id)?"curated venues":"qualifying visits");
+        if(!d.collectionId.isEmpty()&&!"service-station".equals(d.type))return String.format(Locale.UK,"%,d / %,.0f %s",(int)progress.value,target,d.unit);
         if("cycle-rides".equals(d.id))return (int)progress.value+" / "+(int)target+" completed cycling journeys";
         if("long-journey".equals(d.type))return progress.unlocked?d.detail:"Complete one journey of "+DistanceUnits.format(context,10*MILE)+" on foot, "+DistanceUnits.format(context,25*MILE)+" cycling or "+DistanceUnits.format(context,250*MILE)+" by road.";
         if("picasso".equals(d.id))return Math.min(5,(int)progress.value)+" / 5 distinct journeys edited";
@@ -599,7 +602,7 @@ final class AchievementStore {
         output.add(new Definition("spanning-the-nation", "🌉", "Spanning the Nation",
                 "Complete the UK’s great road crossings.",
                 "Seven great road crossings completed", "crossing-set", 7,null,0,0,0));
-        ServiceStationAchievements.definitions(output);PubAchievements.definitions(output);
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueAchievements.definitions(collection,output);
         return Collections.unmodifiableList(output);
     }
 

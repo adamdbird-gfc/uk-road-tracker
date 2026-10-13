@@ -37,7 +37,7 @@ public class CollectionAccessAndMapTest {
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertTrue(CollectionAccessStore.installed(app,CollectionAccessStore.SPOONS));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
-        assertEquals(811,CollectionMapCatalog.spoons(app).length());
+        assertEquals(813,CollectionMapCatalog.spoons(app).length());
         assertEquals("UK Wetherspoons Collection",CollectionAccessStore.name(CollectionAccessStore.SPOONS));
     }
     @Test public void selectionPersistsAndUninstalledCollectionCannotBeSelected() {
@@ -49,7 +49,7 @@ public class CollectionAccessAndMapTest {
         assertEquals(CollectionAccessStore.NONE,CollectionAccessStore.selected(app));
         CollectionAccessStore.remove(app,CollectionAccessStore.SPOONS);
         assertFalse(CollectionAccessStore.select(app,CollectionAccessStore.SPOONS));
-        assertEquals(CollectionAccessStore.SERVICES,CollectionAccessStore.selected(app));
+        assertEquals(CollectionAccessStore.NONE,CollectionAccessStore.selected(app));
     }
     @Test public void removeAndReinstallPreserveServicesOwnershipAndEvidence() {
         servicesOwner();app.getSharedPreferences("roadprints_collections_v1",0).edit().putString("evidence","keep").commit();
@@ -75,7 +75,7 @@ public class CollectionAccessAndMapTest {
         JSONArray pins=CollectionMapCatalog.spoons(app);
         java.util.Set<String> actual=new java.util.HashSet<>();
         for(int i=0;i<pins.length();i++)actual.add(pins.getJSONObject(i).getString("id"));
-        assertEquals(811,actual.size());
+        assertEquals(813,actual.size());
         assertTrue(actual.containsAll(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
                 "spoons-osm-w103691610","spoons-osm-w30110330")));
         assertFalse(actual.contains("spoons-osm-w262652847"));
@@ -84,14 +84,14 @@ public class CollectionAccessAndMapTest {
         assertTrue(actual.contains("spoons-curated-belle-vue-manchester-airport"));
         assertFalse(actual.contains("spoons-osm-w507289751"));
         assertFalse(actual.contains("spoons-osm-w38325241"));
-        assertFalse(actual.contains("spoons-osm-w1465394526"));
-        assertFalse(actual.contains("spoons-osm-w98286602"));
+        assertTrue(actual.contains("spoons-osm-w1465394526"));
+        assertTrue(actual.contains("spoons-osm-w98286602"));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
     }
     @Test public void nationwideAssetLoadsAboveOldLimitAndOversizedAssetIsRejected() throws Exception {
         try(java.io.InputStream input=app.getAssets().open("collections/uk-wetherspoons-map-v1.json")) {
             assertTrue(input.available()>65536);
-            assertEquals(811,CollectionMapCatalog.approvedVenues(CollectionMapCatalog.readCatalogue(input)).length());
+            assertEquals(813,CollectionMapCatalog.approvedVenues(CollectionMapCatalog.readCatalogue(input)).length());
         }
         byte[] oversized=new byte[CollectionMapCatalog.MAX_CATALOGUE_BYTES+1];
         assertEquals(0,CollectionMapCatalog.readCatalogue(new java.io.ByteArrayInputStream(oversized)).length());
@@ -147,22 +147,22 @@ public class CollectionAccessAndMapTest {
         List<CollectionMapClusters.Cluster> result=clusters(new JSONArray().put(pin("a",1,1)).put(pin("b",1,1)));
         assertEquals(1,result.size());assertEquals(2,result.get(0).venues.size());
     }
-    @Test public void mapSelectorIsOnlyVisibleWithMultipleInstallationsAndSwapKeepsCamera() throws Exception {
+    @Test public void floatingLegendReplacesHeaderSelectorAndCollectionSwapKeepsCamera() throws Exception {
         servicesOwner();
         org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class).create();
         MapActivity activity=controller.get();
-        java.lang.reflect.Field selectorField=MapActivity.class.getDeclaredField("collectionSelector");selectorField.setAccessible(true);
         java.lang.reflect.Field mapField=MapActivity.class.getDeclaredField("mapView");mapField.setAccessible(true);
         java.lang.reflect.Method apply=MapActivity.class.getDeclaredMethod("applyCollectionLayer");apply.setAccessible(true);
-        View selector=(View)selectorField.get(activity);RoutePreviewView map=(RoutePreviewView)mapField.get(activity);
-        map.restoreCameraState(.36,51.44,14);apply.invoke(activity);assertEquals(View.GONE,selector.getVisibility());
+        View button=activity.getWindow().getDecorView().findViewWithTag("map_legend_button");assertNotNull(button);
+        assertTrue(button.getParent() instanceof android.widget.FrameLayout);
+        RoutePreviewView map=(RoutePreviewView)mapField.get(activity);
+        map.restoreCameraState(.36,51.44,14);apply.invoke(activity);
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
         CollectionAccessStore.select(app,CollectionAccessStore.SPOONS);apply.invoke(activity);
-        assertEquals(View.VISIBLE,selector.getVisibility());assertArrayEquals(new double[]{.36,51.44,14},map.cameraState(),1e-9);
-        CollectionAccessStore.select(app,CollectionAccessStore.NONE);apply.invoke(activity);
         assertArrayEquals(new double[]{.36,51.44,14},map.cameraState(),1e-9);
+        CollectionAccessStore.select(app,CollectionAccessStore.NONE);apply.invoke(activity);
         CollectionAccessStore.remove(app,CollectionAccessStore.SPOONS);apply.invoke(activity);
-        assertEquals(View.GONE,selector.getVisibility());controller.destroy();
+        assertEquals(CollectionAccessStore.NONE,CollectionAccessStore.selected(app));
+        assertArrayEquals(new double[]{.36,51.44,14},map.cameraState(),1e-9);controller.destroy();
     }
 }
-
