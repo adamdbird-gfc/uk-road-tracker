@@ -22,6 +22,7 @@ public class VenueCollectionFrameworkTest {
         app.getSharedPreferences(CollectionAccessStore.PREFS,0).edit().clear().commit();
         app.getSharedPreferences("roadprints_collections_v1",0).edit().clear().commit();
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
+        app.getSharedPreferences("roadprints_collections_v1",0).edit().putBoolean("service_stations_unlocked",true).putBoolean("automatic_visits_v2_migration",true).putBoolean("confirmed_timeline_only_v1",true).commit();
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SERVICES);
         pub=CollectionMapCatalog.spoons(app).getJSONObject(0);service=ServiceStationStore.stations(app).getJSONObject(0);
     }
@@ -88,6 +89,15 @@ public class VenueCollectionFrameworkTest {
         PubVisitStore.removeProof(app,PubVisitStore.records(app).getJSONObject(0).getString("record_key"));
         VenueVisitStore.recordJourney(app,"wetherspoons",journey);assertEquals(0,PubVisitStore.records(app).length());
         VenueVisitStore.forgetJourney(app,"framework-test");assertEquals(0,PubVisitStore.records(app).length());
+    }
+    @Test public void automaticAndManualSameVisitHaveOneHistoryEntryWithBothProofs()throws Exception{
+        VenueVisitStore.recordJourney(app,"wetherspoons",capture(pub,true,0));
+        PubVisitStore.confirmLive(app,pub.getString("id"),fix(pub),true);
+        assertEquals(1,PubVisitStore.records(app).length());
+        assertEquals(2,PubVisitStore.records(app).getJSONObject(0).getJSONArray("evidence_records").length());
+        assertEquals(1,PubVisitStore.completed(app).size());
+        PubVisitStore.removeProof(app,PubVisitStore.records(app).getJSONObject(0).getString("record_key"));
+        assertEquals(0,PubVisitStore.records(app).length());
     }
     @Test public void definitionFixtureUsesSharedQualificationWithoutCopiedUi()throws Exception{
         JSONObject fixture=new JSONObject().put("id","fixture-restaurant").put("name","Fixture restaurant").put("lat",51.4).put("lng",.3);

@@ -43,7 +43,20 @@ final class VenueVisitStore {
             if(record!=null&&!record.optBoolean("pending")&&!record.optBoolean("dismissed")&&!record.optString("venue_id").isEmpty())try{result.put(record.put("record_key",key));}
             catch(Exception invalid){throw new IllegalStateException(invalid);}
         }
-        return result;
+        return groupSessions(result);
+    }
+    private static long time(JSONObject record){try{return Instant.parse(record.optString("visited_at")).toEpochMilli();}catch(Exception absent){return 0;}}
+    private static boolean sameSession(JSONObject a,JSONObject b){
+        long one=time(a),two=time(b);return one>0&&two>0&&Math.abs(one-two)<900000&&a.optString("venue_id").equals(b.optString("venue_id"));
+    }
+    private static JSONArray groupSessions(JSONArray rows){
+        JSONArray out=new JSONArray();
+        try{for(int i=0;i<rows.length();i++){
+            JSONObject row=rows.getJSONObject(i),group=null;
+            for(int j=0;j<out.length();j++)if(sameSession(out.getJSONObject(j),row)){group=out.getJSONObject(j);break;}
+            if(group==null){group=new JSONObject(row.toString()).put("evidence_records",new JSONArray());out.put(group);}
+            group.getJSONArray("evidence_records").put(new JSONObject(row.toString()));
+        }}catch(Exception invalid){throw new IllegalStateException(invalid);}return out;
     }
     static void ensureHistory(Context context,String collection,Runnable callback){
         Context app=context.getApplicationContext();
@@ -61,7 +74,7 @@ final class VenueVisitStore {
             if(context.getSharedPreferences(PREFS,0).getLong(collection+":native_scan_revision",-1)==revision)return;
         }
         JourneyStore.forEachServiceStationEvidence(context,journey->{
-            synchronized(VenueVisitStore.class){if(epoch==generation&&!replacingHistory)recordJourney(context,collection,journey);}
+            synchronized(VenueVisitStore.class){if(epoch==generation&&!replacingHistory)try{recordJourney(context,collection,journey);}catch(Exception invalid){throw new IllegalStateException("Saved visit evidence could not be evaluated",invalid);}}
         });
         long currentRevision=JourneyStore.dataRevision(context);
         synchronized(VenueVisitStore.class){if(epoch==generation&&currentRevision==revision)
@@ -148,9 +161,16 @@ final class VenueVisitStore {
         requireInstalled(context,collection);
         JSONObject records=read(context,collection);
         if(!records.has(key))return;
-        if(key.startsWith("timeline:")||key.startsWith("native:")||key.startsWith("legacy-"))records.put(key,new JSONObject().put("dismissed",true).put("journey_id",records.optJSONObject(key).optString("journey_id")).put("venue_id",records.optJSONObject(key).optString("venue_id")));
-        else if(key.startsWith("live:"))records.remove(key);
-        else throw new IllegalArgumentException("Unsupported visit record");
+        JSONObject target=records.optJSONObject(key);java.util.List<String> remove=new java.util.ArrayList<>();
+        java.util.Iterator<String> keys=records.keys();
+        while(keys.hasNext()){String candidate=keys.next();JSONObject row=records.optJSONObject(candidate);
+            if(candidate.equals(key)||(row!=null&&sameSession(target,row)))remove.add(candidate);}
+        for(String candidate:remove){JSONObject row=records.optJSONObject(candidate);
+            if(candidate.startsWith("timeline:")||candidate.startsWith("native:")||candidate.startsWith("legacy-"))
+                records.put(candidate,new JSONObject().put("dismissed",true).put("journey_id",row.optString("journey_id")).put("venue_id",row.optString("venue_id")));
+            else if(candidate.startsWith("live:"))records.remove(candidate);
+            else throw new IllegalArgumentException("Unsupported visit record");
+        }
         write(context,collection,records);
     }
     static synchronized void confirmLive(Context context,String collection,String pubId,Location fix,boolean confirmed) throws Exception {
@@ -258,7 +278,12 @@ final class VenueVisitStore {
         JSONArray out=new JSONArray();JSONObject records=read(context,collection);java.util.Iterator<String> keys=records.keys();
         while(keys.hasNext()){
             String key=keys.next();JSONObject proof=records.optJSONObject(key);
-            if(proof!=null&&proof.optBoolean("pending")&&!proof.optBoolean("dismissed"))try{out.put(new JSONObject(proof.toString()).put("record_key",key));}
+            if(proof!=null&&proof.optBoolean("pending")&&!proof.optBoolean("dismissed"))try{
+                boolean alreadyConfirmed=false;java.util.Iterator<String> other=records.keys();
+                while(other.hasNext()){JSONObject accepted=records.optJSONObject(other.next());
+                    if(accepted!=null&&!accepted.optBoolean("pending")&&!accepted.optBoolean("dismissed")&&sameSession(accepted,proof))alreadyConfirmed=true;}
+                if(!alreadyConfirmed)out.put(new JSONObject(proof.toString()).put("record_key",key));
+            }
             catch(Exception invalid){throw new IllegalStateException(invalid);}
         }return out;
     }

@@ -143,6 +143,11 @@ final class VenueVisitUi {
             if(proof==null||!pub.optString("id").equals(proof.optString("venue_id")))continue;
             count++;related.put(proof);
             body.addView(text(activity,date(proof.optString("visited_at"))+" · "+source(proof),15,Color.WHITE,false));
+            String journeyId=proof.optString("journey_id");
+            if(!journeyId.isEmpty()){
+                TextView journey=text(activity,"View related journey",14,TEAL,true);body.addView(journey);
+                journey.setOnClickListener(v->activity.startActivity(new Intent(activity,JourneyMapEditorActivity.class).putExtra("journey_id",journeyId)));
+            }
         }
         if(count>0){
             TextView remove=text(activity,"Remove incorrect visit",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setTag("roadprints_destructive");

@@ -71,7 +71,7 @@ final class PubAchievements {
         if(installed)for(int i=0;i<records.length();i++){
             JSONObject proof=records.optJSONObject(i);if(proof==null)continue;
             String source=proof.optString("source"),id=proof.optString("pub_id");
-            if(id.isEmpty()||!("confirmed_live_checkin".equals(source)||"confirmed_timeline_visit".equals(source)||"named_timeline_visit".equals(source)))continue;
+            if(id.isEmpty()||!("confirmed_live_checkin".equals(source)||"confirmed_timeline_visit".equals(source)||"named_timeline_visit".equals(source)||"native_stop".equals(source)||"confirmed_native_stop".equals(source)))continue;
             visited.add(id);if(!proof.optString("nation").isEmpty())nations.put(id,proof.optString("nation"));
         }
         result.values.put("spoons-collector",(double)visited.size());
