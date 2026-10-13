@@ -96,7 +96,7 @@ final class AchievementStore {
             Progress progress=new Progress(definition,0,0,total,earned,
                     earned?definition.detail:definition.description,null);
             JSONObject state=unlocked.optJSONObject(definition.id);
-            progress.level=state==null?0:state.optInt("level",earned?1:0);
+            progress.level=state==null?(earned?1:0):state.optInt("level",earned?1:0);
             rows.add(progress);
         }
         return new Snapshot(rows,Collections.emptyList(),Long.MIN_VALUE);
