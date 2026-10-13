@@ -45,7 +45,6 @@ final class CollectionAccessStore {
     static String selected(Context context) {
         List<String> ids=installed(context);
         if(ids.isEmpty())return NONE;
-        if(ids.size()==1)return ids.get(0);
         String value=prefs(context).getString("map_collection",SERVICES);
         return NONE.equals(value)||ids.contains(value)?value:ids.get(0);
     }

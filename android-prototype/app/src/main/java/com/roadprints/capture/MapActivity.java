@@ -48,7 +48,7 @@ public class MapActivity extends Activity {
     private static final Object MAP_CACHE_LOCK = new Object();
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
-    private TextView mapSubtitle, collectionSelector, collectionNotice;
+    private TextView mapSubtitle, legendButton;
     private JSONArray collectionServiceVenues=new JSONArray();
     private Set<String> collectionServiceVisits=java.util.Collections.emptySet();
     private MapLoadingView loadingCard;
@@ -146,13 +146,6 @@ public class MapActivity extends Activity {
         }
                 if (getIntent().hasExtra("settlement_code")) heading.addView(titleRow);
         heading.addView(mapSubtitle);
-        collectionSelector=new TextView(this);collectionSelector.setTextColor(0xFF67D5CC);
-        collectionSelector.setTextSize(14);collectionSelector.setTypeface(null,Typeface.BOLD);
-        collectionSelector.setPadding(dp(12),dp(12),dp(12),dp(12));
-        collectionSelector.setBackground(roundRect(0xFF182F62,dp(10)));
-        collectionSelector.setOnClickListener(v->chooseCollection());LinearLayout.LayoutParams collectionParams=new LinearLayout.LayoutParams(-1,-2);collectionParams.topMargin=dp(12);collectionParams.bottomMargin=dp(8);heading.addView(collectionSelector,collectionParams);
-        collectionNotice=new TextView(this);collectionNotice.setTextSize(13);collectionNotice.setTextColor(0xFFD3DCED);
-        collectionNotice.setPadding(0,dp(6),0,0);heading.addView(collectionNotice);
         root.addView(heading);
 
         mapFrame = new FrameLayout(this);
@@ -166,6 +159,14 @@ public class MapActivity extends Activity {
         if (hasSavedCamera) mapView.restoreCameraState(
                 savedCameraLongitude, savedCameraLatitude, savedCameraZoom);
         addZoomControls(mapFrame, mapView);
+        legendButton=new TextView(this);legendButton.setText("☷ Legend");legendButton.setTextSize(14);legendButton.setTextColor(NAVY);
+        legendButton.setTypeface(null,Typeface.BOLD);legendButton.setGravity(Gravity.CENTER);legendButton.setMinHeight(dp(48));
+        legendButton.setPadding(dp(14),dp(10),dp(14),dp(10));legendButton.setBackground(roundRect(GOLD,dp(14)));legendButton.setTag("map_legend_button");
+        legendButton.setContentDescription("Legend, map layer visibility and collection selection");
+        legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
+        FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
+        legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
+        mapView.setMapLayersFromPreferences();
         showMapLoading(false);
 
         View bottomNavigation = buildBottomNavigation();
@@ -252,38 +253,11 @@ public class MapActivity extends Activity {
             applyCollectionLayer();}
     }
 
-    private void chooseCollection() {
-        List<String> ids=new ArrayList<>();ids.add(CollectionAccessStore.NONE);ids.addAll(CollectionAccessStore.installed(this));
-        String[] names=new String[ids.size()];int selected=0;
-        for(int i=0;i<ids.size();i++){names[i]=CollectionAccessStore.name(ids.get(i));
-            if(ids.get(i).equals(CollectionAccessStore.selected(this)))selected=i;}
-        LinearLayout content=cardContainer();
-        addCardLabel(content,"COLLECTIONS");
-        addCardTitle(content,"Show on map");
-        addCardBody(content,"Choose one collection to show alongside your journeys.");
-        AlertDialog picker=new AlertDialog.Builder(this).setView(content).create();
-        for(int i=0;i<ids.size();i++) {
-            final String id=ids.get(i);
-            TextView row=cardAction((i==selected?"✓  ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]),i==selected);
-            row.setGravity(Gravity.CENTER_VERTICAL);row.setMinHeight(dp(48));
-            row.setContentDescription((i==selected?"Selected. ":"")+ (CollectionAccessStore.NONE.equals(id)?"No collection":names[i]));
-            row.setOnClickListener(v->{CollectionAccessStore.select(this,id);applyCollectionLayer();picker.dismiss();});
-            content.addView(row);
-        }
-        TextView close=cardAction("CANCEL",false);close.setOnClickListener(v->picker.dismiss());content.addView(close);
-        picker.setOnShowListener(dialog->{if(picker.getWindow()!=null)picker.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});
-        picker.show();
-    }
     private void applyCollectionLayer() {
-        if(mapView==null||collectionSelector==null)return;
-        List<String> installed=CollectionAccessStore.installed(this);
+        if(mapView==null)return;
+        mapView.setMapLayersFromPreferences();
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
-        collectionSelector.setVisibility(!townMap&&installed.size()>1?View.VISIBLE:View.GONE);
-        collectionSelector.setText("Showing on map\n"+(CollectionAccessStore.NONE.equals(selected)?"No collection":CollectionAccessStore.name(selected))+"  ▾");
-        collectionSelector.setContentDescription("Choose map collection. Currently "+CollectionAccessStore.name(selected));
-        collectionNotice.setVisibility(!townMap&&CollectionAccessStore.SPOONS.equals(selected)?View.VISIBLE:View.GONE);
-        collectionNotice.setText("UK pub map · "+PubVisitStore.visitedLabel(PubVisitStore.completed(this).size())+" · "+CollectionMapCatalog.spoons(this).length()+" mapped");
         if(townMap)return;
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
@@ -1362,6 +1336,7 @@ public class MapActivity extends Activity {
     }
 
     private RoadCoverageSegment nearestIncompleteRoad(double latitude, double longitude) {
+        if(!MapLayerPreferences.visible(this,MapLayerPreferences.Layer.REMAINING))return null;
         RoadCoverageSegment nearest = null;
         double nearestDistance = Double.MAX_VALUE;
         for (RoadCoverageSegment segment : incompleteRoadSegments) {
