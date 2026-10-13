@@ -670,7 +670,7 @@ public class ProgressActivity extends Activity {
             count.setTextColor(Color.WHITE);count.setTextSize(16);
             count.setTypeface(null,android.graphics.Typeface.BOLD);panel.addView(count);
             TextView note=new TextView(this);
-            note.setText("Visits unlock automatically from Timeline visits or recorded stops. Either carriageway counts once.");
+            note.setText("Supported visits check in automatically. You can also check in manually. Either carriageway counts once.");
             note.setTextColor(MUTED);note.setTextSize(12);note.setPadding(0,dp(5),0,dp(9));panel.addView(note);
             addServiceStationRegion(panel,stations,"GB",completed,automatic);
             addServiceStationRegion(panel,stations,"NI",completed,automatic);
@@ -705,6 +705,7 @@ public class ProgressActivity extends Activity {
             }
             String id=station.optString("id","");
             TextView item=new TextView(this);
+            item.setOnClickListener(v->VenueVisitUi.details(this,CollectionAccessStore.SERVICES,station,this::refreshPubProgress));
             item.setText((completed.contains(id)?"✓ ":"○ ")+station.optString("name","Service area")
                     +(automatic.contains(id)?" · Timeline visit":completed.contains(id)?" · Roadprints visit":""));
             item.setTextColor(completed.contains(id)?GOLD:MUTED);item.setTextSize(13);

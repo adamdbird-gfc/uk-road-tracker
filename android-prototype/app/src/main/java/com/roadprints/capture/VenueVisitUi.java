@@ -1,0 +1,285 @@
+package com.roadprints.capture;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.os.SystemClock;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Shared Roadprints-styled pub review, history and live confirmation modals. */
+final class VenueVisitUi {
+    private static final int NAVY=0xFF0B1C50,TEAL=0xFF67D5CC,MUTED=0xFFB9C5D8,GOLD=0xFFF7C450;
+    private VenueVisitUi(){}
+    static void importTimeline(Activity activity){
+        activity.startActivity(new Intent(activity,PubTimelineImportActivity.class));
+    }
+    static void review(Activity activity,String collection,Runnable changed){
+        LinearLayout loading=new LinearLayout(activity);
+        android.widget.ProgressBar spinner=new android.widget.ProgressBar(activity);spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(TEAL));loading.addView(spinner);
+        AlertDialog waiting=RoadprintsDialog.show(activity,"Manual check","Finding saved place visits to review…",loading,"Cancel",null,null,null);
+        ScreenDataLoader.execute(()->{
+            JSONArray pending=null;
+            try{pending=VenueVisitStore.pending(activity,collection,VenueCollection.catalogue(activity,collection));}
+            catch(Exception unavailable){ /* Report the failure without changing source records. */ }
+            final JSONArray result=pending;
+            activity.runOnUiThread(()->{
+                if(activity.isFinishing()||activity.isDestroyed()||!waiting.isShowing())return;
+                waiting.dismiss();
+                if(result==null)RoadprintsDialog.show(activity,"Manual check","Saved visits could not be read. Please try again.",null,"Close",null,null,null);
+                else showSlider(activity,collection,result,changed);
+            });
+        });
+    }
+    static AlertDialog showSlider(Activity activity,String collection,JSONArray pending,Runnable changed){
+        List<JSONObject> queue=new ArrayList<>();
+        for(int i=0;i<pending.length();i++){
+            JSONObject item=pending.optJSONObject(i);if(item==null)continue;
+            JSONArray pubs=item.optJSONArray("pubs");if(pubs==null)continue;
+            for(int j=0;j<pubs.length();j++)try{
+                queue.add(new JSONObject().put("visit",item.getJSONObject("visit")).put("pub",pubs.getJSONObject(j)));
+            }catch(Exception invalid){throw new IllegalArgumentException(invalid);}
+        }
+        if(queue.isEmpty())return RoadprintsDialog.show(activity,"Manual check",
+                "No saved place visits need review. Import Timeline place visits to check more of your history.",null,
+                "Import from Timeline",()->importTimeline(activity),"Close",null);
+        LinearLayout content=vertical(activity),summary=vertical(activity);
+        summary.setBackground(background(0xFF182F62,16));summary.setPadding(dp(activity,16),dp(activity,14),dp(activity,16),dp(activity,14));
+        content.addView(summary);
+        TextView counter=text(activity,"",13,TEAL,true);counter.setTag("pub_review_counter");content.addView(counter);
+        LinearLayout navigation=new LinearLayout(activity);navigation.setGravity(Gravity.CENTER);
+        Button previous=button(activity,"‹ Previous",false),next=button(activity,"Next ›",false);
+        previous.setTag("pub_review_previous");next.setTag("pub_review_next");
+        navigation.addView(previous,new LinearLayout.LayoutParams(0,-2,1));navigation.addView(next,new LinearLayout.LayoutParams(0,-2,1));content.addView(navigation);
+        int[] index={0};boolean[] busy={false};AlertDialog[] holder={null};
+        Runnable[] render={null};
+        render[0]=()->{
+            if(queue.isEmpty()){holder[0].dismiss();Toast.makeText(activity,"All saved visits reviewed",Toast.LENGTH_SHORT).show();return;}
+            index[0]=Math.max(0,Math.min(index[0],queue.size()-1));
+            JSONObject entry=queue.get(index[0]),pub=entry.optJSONObject("pub"),visit=entry.optJSONObject("visit");
+            summary.removeAllViews();
+            summary.addView(text(activity,pub.optString("name"),24,Color.WHITE,true));
+            if(!pub.optString("town").isEmpty())summary.addView(text(activity,pub.optString("town"),15,MUTED,false));
+            summary.addView(text(activity,date(visit.optString("start")),16,TEAL,true));
+            String place=visit.optString("place_name");if(place.isEmpty())place="Unnamed Timeline place";
+            summary.addView(text(activity,"Recorded place: "+place,14,MUTED,false));
+            summary.addView(text(activity,"Confirm only if you visited this venue, rather than another place nearby.",14,MUTED,false));
+            counter.setText((index[0]+1)+" of "+queue.size());
+            previous.setEnabled(!busy[0]&&index[0]>0);next.setEnabled(!busy[0]&&index[0]+1<queue.size());
+        };
+        java.util.function.Consumer<Boolean> save=confirm->{
+            if(busy[0]||queue.isEmpty())return;
+            busy[0]=true;
+            JSONObject entry=queue.get(index[0]);String visitId=entry.optJSONObject("visit").optString("id");
+            String pubId=entry.optJSONObject("pub").optString("id");
+            previous.setEnabled(false);next.setEnabled(false);
+            ScreenDataLoader.execute(()->{
+                String problem=null;
+                try{if(confirm)VenueVisitStore.confirmTimeline(activity,collection,visitId,pubId);else VenueVisitStore.dismissTimeline(activity,collection,visitId);}
+                catch(Exception unavailable){problem="This visit could not be saved. Please try again.";}
+                final String result=problem;
+                activity.runOnUiThread(()->{
+                    if(activity.isFinishing()||activity.isDestroyed())return;
+                    busy[0]=false;
+                    if(result==null){
+                        int removedBefore=0;
+                        for(int i=0;i<index[0];i++)if(visitId.equals(queue.get(i).optJSONObject("visit").optString("id")))removedBefore++;
+                        queue.removeIf(item->visitId.equals(item.optJSONObject("visit").optString("id")));
+                        index[0]-=removedBefore;
+                        if(changed!=null)changed.run();
+                    }else Toast.makeText(activity,result,Toast.LENGTH_LONG).show();
+                    if(holder[0].isShowing())render[0].run();
+                });
+            });
+        };
+        holder[0]=RoadprintsDialog.show(activity,"Manual check",null,content,"Confirm visit",()->save.accept(true),
+                "Not a visit",()->save.accept(false),false);
+        previous.setOnClickListener(v->{if(!busy[0]){index[0]--;render[0].run();}});
+        next.setOnClickListener(v->{if(!busy[0]){index[0]++;render[0].run();}});
+        float[] down={0,0};
+        summary.setOnTouchListener((view,event)->{
+            if(event.getAction()==MotionEvent.ACTION_DOWN){down[0]=event.getX();down[1]=event.getY();return true;}
+            if(event.getAction()==MotionEvent.ACTION_UP){
+                float dx=event.getX()-down[0],dy=event.getY()-down[1];
+                if(!busy[0]&&Math.abs(dx)>dp(activity,48)&&Math.abs(dx)>Math.abs(dy)){
+                    index[0]+=dx<0?1:-1;render[0].run();
+                }else view.performClick();
+                return true;
+            }
+            return false;
+        });
+        render[0].run();return holder[0];
+    }
+    static AlertDialog details(Activity activity,String collection,JSONObject pub,Runnable changed){
+        LinearLayout body=vertical(activity);
+        body.addView(text(activity,pub.optString("location_label","Reviewed map location"),13,MUTED,false));
+        if(!pub.optString("attribution").isEmpty())body.addView(text(activity,pub.optString("attribution"),12,MUTED,false));
+        JSONArray proofs=VenueVisitStore.records(activity,collection),related=new JSONArray();int count=0;
+        AlertDialog[] holder={null};
+        for(int i=0;i<proofs.length();i++){
+            JSONObject proof=proofs.optJSONObject(i);
+            if(proof==null||!pub.optString("id").equals(proof.optString("venue_id")))continue;
+            count++;related.put(proof);
+            body.addView(text(activity,date(proof.optString("visited_at"))+" · "+source(proof),15,Color.WHITE,false));
+        }
+        if(count>0){
+            TextView remove=text(activity,"Remove incorrect visit",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setTag("roadprints_destructive");
+            remove.setPadding(dp(activity,12),dp(activity,14),dp(activity,12),dp(activity,8));body.addView(remove);
+            remove.setOnClickListener(v->{
+                if(related.length()==1){confirmRemoval(activity,collection,pub,related.optJSONObject(0),holder[0],changed);return;}
+                LinearLayout choices=vertical(activity);AlertDialog[] selection={null};
+                for(int i=0;i<related.length();i++){
+                    JSONObject proof=related.optJSONObject(i);
+                    Button choice=button(activity,date(proof.optString("visited_at"))+" · "+source(proof),false);
+                    choices.addView(choice);choice.setOnClickListener(view->{selection[0].dismiss();confirmRemoval(activity,collection,pub,proof,holder[0],changed);});
+                }
+                selection[0]=RoadprintsDialog.show(activity,"Choose the incorrect visit",pub.optString("name"),choices,null,null,null,null);
+            });
+        }
+        if(count==0)body.addView(text(activity,"Not visited",16,MUTED,false));
+        boolean current=VenueVisitStore.find(VenueCollection.catalogue(activity,collection),pub.optString("id"))!=null;
+        holder[0]=RoadprintsDialog.show(activity,pub.optString("name"),pub.optString("town"),body,
+                current?"Check in now":"Close",current?()->live(activity,collection,pub,changed,null):null,current?"Close":null,null);
+        return holder[0];
+    }
+    private static void confirmRemoval(Activity activity,String collection,JSONObject pub,JSONObject proof,AlertDialog history,Runnable changed){
+        RoadprintsDialog.show(activity,"Remove this visit?",date(proof.optString("visited_at"))+" · "+source(proof)+
+                "\nOther supported visits will be retained. A removed Timeline visit will not return on reimport.",null,
+                "Remove visit",()->{
+                    try{VenueVisitStore.removeProof(activity,collection,proof.optString("record_key"));history.dismiss();if(changed!=null)changed.run();details(activity,collection,pub,changed);}
+                    catch(Exception failure){Toast.makeText(activity,"Could not remove this visit.",Toast.LENGTH_LONG).show();}
+                },"Cancel",null);
+    }
+    interface LocationRequester {
+        com.google.android.gms.tasks.Task<android.location.Location> get(Activity activity,CancellationTokenSource request);
+    }
+    static final LocationRequester DEVICE_LOCATION=(activity,request)->{
+        if(activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED)
+            throw new SecurityException("Precise location permission is required");
+        try{return LocationServices.getFusedLocationProviderClient(activity)
+                .getCurrentLocation(new com.google.android.gms.location.CurrentLocationRequest.Builder()
+                        .setPriority(Priority.PRIORITY_HIGH_ACCURACY).setMaxUpdateAgeMillis(0).setDurationMillis(15000).build(),request.getToken());}
+        catch(SecurityException revoked){return com.google.android.gms.tasks.Tasks.forException(revoked);}
+    };
+    static LocationRequester locationRequester=DEVICE_LOCATION;
+    static AlertDialog live(Activity activity,String collection,JSONObject pub,Runnable changed,Runnable closed){
+        LinearLayout body=vertical(activity);
+        TextView status=text(activity,"Check your location, then confirm you are at this named venue.",15,MUTED,false);
+        status.setTag("pub_location_status");body.addView(status);
+        android.widget.ProgressBar spinner=new android.widget.ProgressBar(activity);spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(TEAL));
+        spinner.setTag("pub_location_spinner");spinner.setVisibility(View.GONE);body.addView(spinner,new LinearLayout.LayoutParams(dp(activity,32),dp(activity,32)));
+        CancellationTokenSource[] request={null};int[] attempt={0};AlertDialog[] holder={null};
+        android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());Runnable[] timeout={null};
+        holder[0]=RoadprintsDialog.show(activity,pub.optString("name"),pub.optString("town"),body,
+                "Check location",()->{
+                    if(activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
+                        status.setText("Precise location permission is required. Grant it, then tap Check location again.");
+                        activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},91);return;
+                    }
+                    if(request[0]!=null)request[0].cancel();request[0]=new CancellationTokenSource();
+                    final int current=++attempt[0];
+                    View button=holder[0].getWindow().getDecorView().findViewWithTag("roadprints_dialog_primary");button.setEnabled(false);
+                    spinner.setVisibility(View.VISIBLE);status.setText("Checking your current location…");
+                    Runnable ready=()->{spinner.setVisibility(View.GONE);button.setEnabled(true);((TextView)button).setText("Check location again");if(timeout[0]!=null)handler.removeCallbacks(timeout[0]);};
+                    timeout[0]=()->{if(current!=attempt[0]||!holder[0].isShowing())return;attempt[0]++;request[0].cancel();ready.run();status.setText("No fresh location arrived. Check that device Location is switched on, then try again.");};
+                    handler.postDelayed(timeout[0],20000);
+                    try{PubVisitUi.locationRequester.get(activity,request[0]).addOnCompleteListener(activity,task->{
+                        if(current!=attempt[0]||!holder[0].isShowing())return;
+                        ready.run();
+                        if(!task.isSuccessful()){status.setText("Location could not be checked. Check device Location and try again.");return;}
+                        android.location.Location fix=task.getResult();
+                        String problem=VenueEvidence.liveProblem(collection,pub,fix,SystemClock.elapsedRealtimeNanos());
+                        if(!problem.isEmpty()){
+                            if(fix!=null&&fix.hasAccuracy())problem+="\nReported distance: "+DistanceUnits.format(activity,VenueCollection.distance(pub,fix.getLatitude(),fix.getLongitude()))+" · accuracy: "+Math.round(fix.getAccuracy())+" m.";
+                            status.setText(problem);return;
+                        }
+                        status.setText("Location checked. Confirm the named visit to save it.");
+                        RoadprintsDialog.show(activity,"Visiting "+pub.optString("name")+"?",
+                                "Confirm that you visited this named venue, rather than another nearby place.",null,
+                                "Confirm visit",()->{
+                                    try{VenueVisitStore.confirmLive(activity,collection,pub.optString("id"),fix,true);if(changed!=null)changed.run();holder[0].dismiss();}
+                                    catch(Exception error){status.setText(error.getMessage());}
+                                },"Cancel",null);
+                    });}catch(Exception denied){ready.run();status.setText("Location could not be checked. Check device Location and try again.");}
+                },"Cancel",()->holder[0].dismiss(),false);
+        holder[0].setOnDismissListener(dialog->{attempt[0]++;if(request[0]!=null)request[0].cancel();if(timeout[0]!=null)handler.removeCallbacks(timeout[0]);if(closed!=null)closed.run();});
+        return holder[0];
+    }
+    private static final java.util.WeakHashMap<Activity,Boolean> offered=new java.util.WeakHashMap<>();
+    static void offerPending(Activity activity,Runnable changed){
+        if(activity.isFinishing()||activity.isDestroyed()||offered.containsKey(activity))return;
+        for(VenueCollection.Definition definition:VenueCollection.all()){
+            if(!CollectionAccessStore.installed(activity,definition.id))continue;
+            JSONArray pending=VenueVisitStore.nativePending(activity,definition.id);
+            if(pending.length()==0)continue;
+            offered.put(activity,true);showNative(activity,definition.id,pending,0,changed);return;
+        }
+    }
+    static void reviewNative(Activity activity,String collection,Runnable changed){
+        JSONArray pending=VenueVisitStore.nativePending(activity,collection);
+        if(pending.length()==0)review(activity,collection,changed);
+        else showNative(activity,collection,pending,0,changed);
+    }
+    private static void showNative(Activity activity,String collection,JSONArray rows,int index,Runnable changed){
+        if(index>=rows.length()||activity.isFinishing()||activity.isDestroyed())return;
+        JSONObject proof=rows.optJSONObject(index);
+        RoadprintsDialog.show(activity,"Did you visit "+proof.optString("name")+"?",
+                date(proof.optString("visited_at"))+"\nRoadprints recorded a stop nearby. Confirm only if you visited this named venue.",null,
+                "Confirm visit",()->saveNative(activity,collection,rows,index,true,changed),
+                "Not a visit",()->saveNative(activity,collection,rows,index,false,changed));
+    }
+    private static void saveNative(Activity activity,String collection,JSONArray rows,int index,boolean confirm,Runnable changed){
+        ScreenDataLoader.execute(()->{
+            String problem=null;
+            try{VenueVisitStore.reviewNative(activity,collection,rows.optJSONObject(index).optString("record_key"),confirm);}
+            catch(Exception unavailable){problem="Visit could not be saved. Open Manual check to try again.";}
+            final String error=problem;
+            activity.runOnUiThread(()->{if(activity.isFinishing()||activity.isDestroyed())return;
+                if(error!=null)Toast.makeText(activity,error,Toast.LENGTH_LONG).show();
+                else {if(changed!=null)changed.run();showNative(activity,collection,rows,index+1,changed);}
+            });
+        });
+    }
+    static String date(String iso){
+        try{return DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(iso));}
+        catch(Exception invalid){return "Date unavailable";}
+    }
+    static String source(JSONObject record){
+        if("native_stop".equals(record.optString("source")))return "Automatic Roadprints visit";
+        if("confirmed_native_stop".equals(record.optString("source")))return "Confirmed Roadprints visit";
+        return "confirmed_live_checkin".equals(record.optString("source"))?"Live check-in":
+                "confirmed_timeline_visit".equals(record.optString("source"))?"Confirmed Timeline visit":"Timeline visit";
+    }
+    private static LinearLayout vertical(Activity activity){LinearLayout result=new LinearLayout(activity);result.setOrientation(LinearLayout.VERTICAL);return result;}
+    private static TextView text(Activity activity,String label,int size,int colour,boolean bold){
+        TextView result=new TextView(activity);result.setText(label);result.setTextSize(size);result.setTextColor(colour);
+        result.setPadding(0,dp(activity,6),0,dp(activity,6));if(bold)result.setTypeface(null,Typeface.BOLD);return result;
+    }
+    private static Button button(Activity activity,String label,boolean primary){
+        Button result=new Button(activity);result.setText(label);result.setAllCaps(false);result.setTextColor(primary?NAVY:TEAL);
+        result.setTextSize(14);result.setMinHeight(dp(activity,48));result.setBackground(background(primary?GOLD:0xFF233B78,12));return result;
+    }
+    private static GradientDrawable background(int colour,int radius){GradientDrawable shape=new GradientDrawable();shape.setColor(colour);shape.setCornerRadius(radius);return shape;}
+    private static int dp(Activity activity,int value){return Math.round(value*activity.getResources().getDisplayMetrics().density);}
+}

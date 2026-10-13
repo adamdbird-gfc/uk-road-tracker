@@ -35,7 +35,7 @@ final class ServiceStationStore {
     static boolean historicalBackfillComplete(Context context) { ensureMigration(context);return prefs(context).getBoolean(BACKFILL,false); }
     static Set<String> automatic(Context context) { ensureMigration(context);return new HashSet<>(prefs(context).getStringSet(AUTOMATIC,java.util.Collections.emptySet())); }
     static Set<String> completed(Context context) {
-        Set<String> result=automatic(context);result.addAll(ServiceStationVisitStore.stationIds(context));return result;
+        Set<String> result=automatic(context);result.addAll(ServiceStationVisitStore.stationIds(context));result.addAll(VenueVisitStore.completed(context,CollectionAccessStore.SERVICES));return result;
     }
     static JSONArray stations(Context context) throws Exception {
         JSONArray cached=catalogue;if(cached!=null)return cached;
@@ -162,7 +162,7 @@ final class ServiceStationStore {
     }
     static void clearOnDeleteAll(Context context) {
         synchronized(STATE_LOCK) {
-            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);PubVisitStore.clear(context);
+            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);PubVisitStore.clear(context);VenueVisitStore.clear(context,CollectionAccessStore.SERVICES);
             // Deleting journeys does not revoke a purchased entitlement.
             prefs(context).edit().remove("service_station_manual").remove(AUTOMATIC).putBoolean(BACKFILL,false)
                     .putBoolean(MIGRATION,true).putLong(REVISION,revision(context)+1).apply();

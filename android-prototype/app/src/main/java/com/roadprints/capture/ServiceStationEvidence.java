@@ -22,39 +22,8 @@ final class ServiceStationEvidence {
     }
 
     static Set<String> stops(JSONArray samples, JSONArray stations) {
-        Set<String> result = new HashSet<>();
-        if (samples == null || stations == null) return result;
-        String active = "";
-        long first = 0, previous = 0;
-        double anchorLat = 0, anchorLng = 0;
-        int count = 0;
-        for (int i = 0; i < samples.length(); i++) {
-            JSONArray p = samples.optJSONArray(i);
-            double lng = p == null ? Double.NaN : p.optDouble(0, Double.NaN);
-            double lat = p == null ? Double.NaN : p.optDouble(1, Double.NaN);
-            double accuracy = p == null ? Double.NaN : p.optDouble(2, Double.NaN);
-            long time = p == null ? 0 : p.optLong(3, 0);
-            double speed = p == null ? -1 : p.optDouble(4, -1);
-            if (!valid(lat, lng) || !Double.isFinite(accuracy) || accuracy <= 0
-                    || accuracy > MAX_ACCURACY_METRES || time <= 0
-                    || !Double.isFinite(speed) || speed > 2.0) {
-                active = ""; count = 0; previous = 0;
-                continue;
-            }
-            // Repeated fixes do not add time or evidence. Reversed timestamps break a stop.
-            if (time == previous) continue;
-            JSONObject nearest = nearest(stations, lat, lng, STOP_RADIUS_METRES);
-            if (nearest == null) { active = ""; count = 0; previous = 0; continue; }
-            String id = nearest.optString("id", "");
-            boolean reset = !id.equals(active) || time < previous
-                    || time - previous > MAX_GAP_MS
-                    || metres(lat, lng, anchorLat, anchorLng) > 80;
-            if (reset) {
-                active = id; first = time; count = 1; anchorLat = lat; anchorLng = lng;
-            } else count++;
-            previous = time;
-            if (!id.isEmpty() && count >= 4 && time - first >= MIN_DWELL_MS) result.add(id);
-        }
+        Set<String> result=new HashSet<>();
+        for(VenueStopDetector.Stop stop:VenueStopDetector.stops(samples,stations))result.add(stop.id);
         return result;
     }
 

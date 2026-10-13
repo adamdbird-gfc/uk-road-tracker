@@ -291,6 +291,7 @@ public class MapActivity extends Activity {
         Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:
                 CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
+        VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
                 showServiceStationCard(venue,collectionServiceVisits.contains(venue.optString("id")));
@@ -956,6 +957,11 @@ public class MapActivity extends Activity {
             });
             actions.addView(related);
         }
+        TextView checkin=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);
+        checkin.setOnClickListener(v->{stationDialog.dismiss();
+            if(visited)VenueVisitUi.details(this,CollectionAccessStore.SERVICES,station,this::applyCollectionLayer);
+            else VenueVisitUi.live(this,CollectionAccessStore.SERVICES,station,this::applyCollectionLayer,null);});
+        actions.addView(checkin);
         RoadprintsDialog.placeClose(content,close);
         LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, -2);
         actionParams.topMargin = dp(14);
