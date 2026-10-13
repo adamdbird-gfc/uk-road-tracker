@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=8;
+    static final int CATALOGUE_VERSION=9;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -28,7 +28,7 @@ final class AchievementStore {
     static final class Definition {
         final String id, icon, title, description, detail, type, roadId;
         final double target, longitude, latitude, radiusMetres;
-        String collectionId="",unit="";
+        String collectionId="",unit="";JSONObject venueRule;
         double[] levels;
         String[] levelTitles;
         Definition(String id, String icon, String title, String description, String detail,
@@ -177,7 +177,7 @@ final class AchievementStore {
         ServiceStationAchievements.Snapshot serviceGoals=ServiceStationStore.achievementSnapshot(app);
         values.putAll(serviceGoals.values);
         VenueAchievements.Snapshot venueGoals=new VenueAchievements.Snapshot();
-        for(VenueCollection.Definition collection:VenueCollection.all())if(!CollectionAccessStore.SERVICES.equals(collection.id)){VenueAchievements.Snapshot goals=VenueAchievements.snapshot(app,collection);venueGoals.values.putAll(goals.values);venueGoals.lists.putAll(goals.lists);}
+        for(VenueCollection.Definition collection:VenueCollection.all())if(!CollectionAccessStore.SERVICES.equals(collection.id)){VenueAchievements.Snapshot goals=VenueAchievements.snapshot(app,collection);venueGoals.values.putAll(goals.values);venueGoals.lists.putAll(goals.lists);venueGoals.display.putAll(goals.display);}
         values.putAll(venueGoals.values);
         values.put("foot-total",core.footMetres/MILE);values.put("road-total",core.roadMetres/MILE);
         values.put("foot-unique",core.footCoverage.metres()/MILE);values.put("road-unique",core.roadCoverage.metres()/MILE);
@@ -217,8 +217,10 @@ final class AchievementStore {
             values.put("picasso",(double)preferences.getStringSet("edited_journeys",Collections.emptySet()).size());
             values.put("joining-the-dots",preferences.getBoolean("trace_used",false)?1.0:0.0);
             Snapshot result=evaluate(app,values,lists,crossings,revision);
-            for(Progress progress:result.achievements)if("service-station".equals(progress.definition.type))
-                progress.display=serviceGoals.display.getOrDefault(progress.definition.id,progress.display);
+            for(Progress progress:result.achievements){
+                if("service-station".equals(progress.definition.type))progress.display=serviceGoals.display.getOrDefault(progress.definition.id,progress.display);
+                else progress.display=venueGoals.display.getOrDefault(progress.definition.id,progress.display);
+            }
             return result;
         }
     }

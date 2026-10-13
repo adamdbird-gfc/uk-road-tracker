@@ -21,9 +21,7 @@ final class CollectionMapCatalog {
                 ||!"UK".equals(catalogue.optString("scope"))
                 ||!catalogue.optBoolean("ready_for_app",false)
                 ||!"approved".equals(catalogue.optString("release_status"))
-                ||!"map_only_partial_beta".equals(catalogue.optString("approval_scope"))
-                ||catalogue.optBoolean("visit_enabled",true)
-                ||!catalogue.isNull("completion_target"))return new JSONArray();
+                ||!VenueCatalogueApproval.valid(catalogue))return new JSONArray();
         JSONArray rows=catalogue.optJSONArray("venues"),result=new JSONArray();
         if(rows==null)return result;
         HashSet<String> ids=new HashSet<>();

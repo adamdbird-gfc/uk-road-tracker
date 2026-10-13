@@ -274,6 +274,7 @@ public class MapActivity extends Activity {
 
     private void showMapLoading(boolean updating) {
         hideMapLoading();
+        if (legendButton != null) legendButton.setVisibility(View.GONE);
         if (mapView != null) mapView.setOverviewLoading(true);
         mapSubtitle.setText(updating ? "Adding your latest journeys…" : "Bringing your roads into view…");
         loadingCard = new MapLoadingView(this, updating);
@@ -284,10 +285,12 @@ public class MapActivity extends Activity {
     }
 
     private void hideMapLoading() {
-        if (loadingCard == null) return;
-        loadingCard.stop();
-        mapFrame.removeView(loadingCard);
-        loadingCard = null;
+        if (loadingCard != null) {
+            loadingCard.stop();
+            mapFrame.removeView(loadingCard);
+            loadingCard = null;
+        }
+        if (legendButton != null) legendButton.setVisibility(View.VISIBLE);
     }
 
     private void refreshMap() {

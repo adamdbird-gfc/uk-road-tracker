@@ -387,6 +387,7 @@ public class AchievementsActivity extends Activity {
         int unlockedCount=0;
         for(AchievementStore.Progress item:snapshot.achievements) {
             if(!item.definition.collectionId.isEmpty()&&!collectionVisible(item.definition.collectionId))continue;
+            if(!item.unlocked&&!VenueCompletion.available(this,item.definition))continue;
             visible.add(item);
             if(item.unlocked) unlockedCount++;
         }
@@ -425,7 +426,8 @@ public class AchievementsActivity extends Activity {
         }
         for(VenueCollection.Definition collection:VenueCollection.all())if(collectionVisible(collection.id)){
             String label=collection.name;View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
-            for(AchievementStore.Progress item:visible)if(collection.id.equals(item.definition.collectionId))content.addView(achievementCard(item));
+            for(AchievementStore.Progress item:visible)if(collection.id.equals(item.definition.collectionId)&&!item.definition.id.startsWith("spoons-county-"))content.addView(achievementCard(item));
+            if("wetherspoons".equals(collection.id))addRoadCompletionSection(visible,"County completion","spoons-county-");
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
@@ -536,8 +538,8 @@ public class AchievementsActivity extends Activity {
                 boolean open=list.getVisibility()!=View.VISIBLE;
                 if(open&&list.getChildCount()==0) {
                     for(String milestone:progress.milestones){TextView t=text(milestone,12,GOLD,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
-                    int limit="county-collector".equals(progress.definition.id)?92:50;
-                    int shown=0;for(String contribution:progress.contributions){if(shown++>=limit)break;TextView t=text(("town-exploration".equals(progress.definition.type)||"county-collector".equals(progress.definition.id)||"landmark-count".equals(progress.definition.type)||"repeat-journey".equals(progress.definition.type)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
+                    int limit="county-collector".equals(progress.definition.id)||"spoons-pub-crawl".equals(progress.definition.id)?92:50;
+                    int shown=0;for(String contribution:progress.contributions){if(shown++>=limit)break;TextView t=text((!progress.definition.collectionId.isEmpty()||"town-exploration".equals(progress.definition.type)||"county-collector".equals(progress.definition.id)||"landmark-count".equals(progress.definition.type)||"repeat-journey".equals(progress.definition.type)?"":"✓ ")+contribution,12,contribution.startsWith("○")?MUTED:GREEN,false);t.setPadding(dp(60),dp(5),0,0);list.addView(t);}
                     if(progress.contributions.size()>limit)list.addView(text("First "+limit+" shown · "+progress.contributions.size()+" total",12,MUTED,false));
                 }
                 list.setVisibility(open?View.VISIBLE:View.GONE);

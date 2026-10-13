@@ -43,6 +43,7 @@ final class VenueCatalogueUpdates {
         }
     }
     interface Transport { byte[] get(String filename,int limit) throws Exception; }
+    JSONObject root(Context context)throws Exception{pins(context);synchronized(LOCK){return current;}}
     long revision(){synchronized(LOCK){return revision;}}
 
     JSONArray pins(Context context)throws Exception{
@@ -135,14 +136,13 @@ final class VenueCatalogueUpdates {
         }
         if(root.getInt("schema_version")!=1 || !definition.id.equals(root.getString("collection_id"))
                 || !"UK".equals(root.getString("scope")) || !"approved".equals(root.getString("release_status"))
-                || !"map_only_partial_beta".equals(root.getString("approval_scope"))
                 || !Boolean.TRUE.equals(root.opt("ready_for_app"))
                 || !Boolean.FALSE.equals(root.opt("visit_enabled"))
-                || !Boolean.FALSE.equals(root.opt("coverage_complete"))
-                || !root.has("completion_target") || root.opt("completion_target")!=JSONObject.NULL
                 || !manifest.getString("catalogue_version").equals(root.getString("catalogue_version"))
                 || root.getString("attribution").isEmpty())
             throw new IllegalArgumentException("Unsupported venue catalogue");
+        VenueCatalogueApproval.validate(root);
+        if("reviewed_uk_completion_v1".equals(root.optString("approval_scope"))&&!definition.lifecycleStartedAt.equals(root.optString("lifecycle_started_at")))throw new IllegalArgumentException("Catalogue cannot change lifecycle epoch");
         JSONArray venues=root.getJSONArray("venues");
         if(venues.length()>5000 || root.getJSONObject("review_summary").getInt("map_venues")!=venues.length())
             throw new IllegalArgumentException("Venue count does not match review");

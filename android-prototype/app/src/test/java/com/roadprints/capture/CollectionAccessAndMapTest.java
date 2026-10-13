@@ -65,7 +65,7 @@ public class CollectionAccessAndMapTest {
                 .put("visit_enabled",false).put("map_reviewed_at","2026-10-11");
         JSONObject root=new JSONObject().put("collection_id","wetherspoons").put("scope","UK")
                 .put("ready_for_app",false).put("release_status","audit_only").put("venues",new JSONArray().put(venue))
-                .put("approval_scope","map_only_partial_beta").put("visit_enabled",false).put("completion_target",JSONObject.NULL);
+                .put("approval_scope","map_only_partial_beta").put("coverage_complete",false).put("visit_enabled",false).put("completion_target",JSONObject.NULL);
         assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
         root.put("ready_for_app",true);assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
         root.put("release_status","approved");assertEquals(1,CollectionMapCatalog.approvedVenues(root).length());
@@ -112,7 +112,7 @@ public class CollectionAccessAndMapTest {
     @Test public void unreviewedRowsAndVisitEnabledCataloguesCannotProducePins() throws Exception {
         JSONObject row=new JSONObject().put("id","spoons-a").put("status","active").put("lat",51).put("lon",0);
         JSONObject root=new JSONObject().put("collection_id","wetherspoons").put("scope","UK")
-                .put("ready_for_app",true).put("release_status","approved").put("approval_scope","map_only_partial_beta")
+                .put("ready_for_app",true).put("release_status","approved").put("approval_scope","map_only_partial_beta").put("coverage_complete",false)
                 .put("visit_enabled",false).put("completion_target",JSONObject.NULL).put("venues",new JSONArray().put(row));
         assertEquals(0,CollectionMapCatalog.approvedVenues(root).length());
         row.put("operating_status","reviewed_current").put("visit_enabled",false).put("map_reviewed_at","2026-10-11");
@@ -155,6 +155,12 @@ public class CollectionAccessAndMapTest {
         java.lang.reflect.Method apply=MapActivity.class.getDeclaredMethod("applyCollectionLayer");apply.setAccessible(true);
         View button=activity.getWindow().getDecorView().findViewWithTag("map_legend_button");assertNotNull(button);
         assertTrue(button.getParent() instanceof android.widget.FrameLayout);
+        assertEquals(View.GONE,button.getVisibility());
+        java.lang.reflect.Method hideLoading=MapActivity.class.getDeclaredMethod("hideMapLoading");hideLoading.setAccessible(true);
+        java.lang.reflect.Method showLoading=MapActivity.class.getDeclaredMethod("showMapLoading",boolean.class);showLoading.setAccessible(true);
+        hideLoading.invoke(activity);assertEquals(View.VISIBLE,button.getVisibility());
+        showLoading.invoke(activity,true);assertEquals(View.GONE,button.getVisibility());
+        hideLoading.invoke(activity);assertEquals(View.VISIBLE,button.getVisibility());
         RoutePreviewView map=(RoutePreviewView)mapField.get(activity);
         map.restoreCameraState(.36,51.44,14);apply.invoke(activity);
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);

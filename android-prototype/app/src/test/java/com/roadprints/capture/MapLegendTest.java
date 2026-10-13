@@ -30,7 +30,12 @@ public class MapLegendTest {
         app.getSharedPreferences("roadprints_collections_v1",0).edit().putBoolean("service_stations_unlocked",true).putString("keep","evidence").commit();
         int[] changed={0};AlertDialog dialog=MapLegendPanel.show(activity,false,()->changed[0]++);
         Switch toggle=dialog.getWindow().getDecorView().findViewWithTag("map_layer:REMAINING");
-        assertTrue(toggle.isChecked());toggle.setChecked(false);assertEquals(1,changed[0]);
+        assertTrue(toggle.isChecked());
+        android.widget.TextView state=dialog.getWindow().getDecorView().findViewWithTag("map_layer_state:REMAINING");assertEquals("On",state.getText().toString());
+        View lines=dialog.getWindow().getDecorView().findViewWithTag("map_legend_lines");
+        assertEquals(android.graphics.Color.WHITE,((android.graphics.drawable.GradientDrawable)lines.getBackground()).getColor().getDefaultColor());
+        assertTrue(lines.getPaddingLeft()>0);
+        toggle.setChecked(false);assertEquals(1,changed[0]);assertEquals("Off",state.getText().toString());
         assertFalse(MapLayerPreferences.visible(app.getApplicationContext(),MapLayerPreferences.Layer.REMAINING));
         View none=dialog.getWindow().getDecorView().findViewWithTag("map_collection:none");none.performClick();
         assertEquals(CollectionAccessStore.NONE,CollectionAccessStore.selected(app));assertEquals("evidence",app.getSharedPreferences("roadprints_collections_v1",0).getString("keep",""));

@@ -4,14 +4,16 @@ import argparse,hashlib,json,math,re
 from datetime import date
 from pathlib import Path
 from generate_venue_collections import ROOT,generate
+from venue_approval import validate_approval
 MAX_BYTES=2*1024*1024
 
 def validate(root,definition):
     if (root.get('schema_version')!=1 or root.get('collection_id')!=definition['id'] or root.get('scope')!='UK' or root.get('release_status')!='approved' or not root.get('catalogue_version') or not root.get('attribution')):raise ValueError('Unsupported approved catalogue')
     site=definition['catalogue_format']=='services_v1'
     if not site:
-        required={'approval_scope':'map_only_partial_beta','ready_for_app':True,'visit_enabled':False,'coverage_complete':False,'completion_target':None}
+        required={'ready_for_app':True,'visit_enabled':False}
         if any(k not in root or type(root[k]) is not type(v) or root[k]!=v for k,v in required.items()):raise ValueError('Unsupported map approval')
+        validate_approval(root)
     rows=root['services' if site else 'venues'];ids=set();aliases=set()
     if len(rows)>5000 or (site and not rows):raise ValueError('Invalid catalogue size')
     if not site and root['review_summary']['map_venues']!=len(rows):raise ValueError('Review count mismatch')
