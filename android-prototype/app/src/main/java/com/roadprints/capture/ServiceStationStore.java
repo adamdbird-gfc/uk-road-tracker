@@ -28,14 +28,14 @@ final class ServiceStationStore {
         prefs(context).edit().putBoolean("service_stations_unlocked",true).apply();bumpRevision(context);
         ensureHistoricalVisits(context,null);
     }
-    static long revision(Context context) { return prefs(context).getLong(REVISION,0); }
+    static long revision(Context context) { return prefs(context).getLong(REVISION,0)+VenueVisitStore.revision(context,CollectionAccessStore.SERVICES); }
     private static void bumpRevision(Context context) {
-        synchronized(STATE_LOCK) { prefs(context).edit().putLong(REVISION,revision(context)+1).apply(); }
+        synchronized(STATE_LOCK) { prefs(context).edit().putLong(REVISION,prefs(context).getLong(REVISION,0)+1).apply(); }
     }
     static boolean historicalBackfillComplete(Context context) { ensureMigration(context);return prefs(context).getBoolean(BACKFILL,false); }
     static Set<String> automatic(Context context) { ensureMigration(context);return new HashSet<>(prefs(context).getStringSet(AUTOMATIC,java.util.Collections.emptySet())); }
     static Set<String> completed(Context context) {
-        Set<String> result=automatic(context);result.addAll(ServiceStationVisitStore.stationIds(context));return result;
+        ensureMigration(context);return VenueVisitStore.completed(context,CollectionAccessStore.SERVICES);
     }
     static JSONArray stations(Context context) throws Exception {
         JSONArray cached=catalogue;if(cached!=null)return cached;
@@ -69,7 +69,7 @@ final class ServiceStationStore {
             SharedPreferences.Editor edit=p.edit().remove("service_station_manual")
                     .remove("service_station_confirmed_journey_visits_v1").putBoolean(MIGRATION,true).putBoolean(BACKFILL,false);
             if(!p.getBoolean("confirmed_timeline_only_v1",false))edit.remove(AUTOMATIC);
-            edit.putBoolean("confirmed_timeline_only_v1",true).putLong(REVISION,revision(context)+1).apply();
+            edit.putBoolean("confirmed_timeline_only_v1",true).putLong(REVISION,prefs(context).getLong(REVISION,0)+1).apply();
             migrated=true;
         }
         if(migrated)AchievementStore.clearLegacyServiceUnlocks(context);
@@ -91,7 +91,9 @@ final class ServiceStationStore {
             if(station!=null)ids.add(station.optString("id"));
         }
         synchronized(STATE_LOCK) {
-            if(epoch==generation&&!ids.equals(automatic(context))) {
+            if(epoch==generation) {
+                VenueVisitStore.replaceServiceTimeline(context,ids);
+                if(ids.equals(automatic(context)))return;
                 prefs(context).edit().putStringSet(AUTOMATIC,ids).apply();bumpRevision(context);
             }
         }
@@ -162,10 +164,10 @@ final class ServiceStationStore {
     }
     static void clearOnDeleteAll(Context context) {
         synchronized(STATE_LOCK) {
-            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);PubVisitStore.clear(context);
+            generation++;TimelineVisitStore.clear(context);ServiceStationVisitStore.clear(context);PubVisitStore.clear(context);VenueVisitStore.clear(context,CollectionAccessStore.SERVICES);
             // Deleting journeys does not revoke a purchased entitlement.
             prefs(context).edit().remove("service_station_manual").remove(AUTOMATIC).putBoolean(BACKFILL,false)
-                    .putBoolean(MIGRATION,true).putLong(REVISION,revision(context)+1).apply();
+                    .putBoolean(MIGRATION,true).putLong(REVISION,prefs(context).getLong(REVISION,0)+1).apply();
         }
     }
     private static SharedPreferences prefs(Context context) {return context.getApplicationContext().getSharedPreferences(PREFS,Context.MODE_PRIVATE);}

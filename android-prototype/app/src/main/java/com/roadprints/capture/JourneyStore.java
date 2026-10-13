@@ -65,7 +65,8 @@ public final class JourneyStore {
             bumpDataRevision(context);
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
-            try { ServiceStationStore.recordJourney(context,journey); }
+            try { ServiceStationStore.recordJourney(context,journey);
+                for(VenueCollection.Definition collection:VenueCollection.all()) VenueVisitStore.recordJourney(context,collection.id,journey); }
             catch(Exception stationError){android.util.Log.w("Roadprints","Service-station visit check skipped",stationError);}
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey locally", error);
@@ -350,7 +351,7 @@ public final class JourneyStore {
                 while(reader.hasNext()) {
                     String key=reader.nextName();
                     if("journey_id".equals(key)||"source".equals(key)||"raw_capture_samples".equals(key)
-                            ||"capture_route_samples".equals(key))journey.put(key,readEvidenceValue(reader));
+                            ||"capture_route_samples".equals(key)||"stops".equals(key))journey.put(key,readEvidenceValue(reader));
                     else reader.skipValue();
                 }
                 reader.endObject();
@@ -542,6 +543,7 @@ public final class JourneyStore {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
             ServiceStationStore.forgetJourney(context,journeyId);
+            VenueVisitStore.forgetJourney(context,journeyId);
             PlaceAnchorStore.forget(context,journeyId);
         }
     }

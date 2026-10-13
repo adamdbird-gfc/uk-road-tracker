@@ -134,7 +134,8 @@ public class PubVisitsScreenTest {
 
     @Test public void repeatedPubVisitsHaveOneFinalRemovalActionAndCancellationKeepsBoth() throws Exception {
         JSONObject pub=CollectionMapCatalog.spoons(app).getJSONObject(0);
-        TimelineVisitStore.merge(app,new JSONArray().put(visit(pub,"history-one")).put(visit(pub,"history-two")));
+        JSONObject second=visit(pub,"history-two").put("start",Instant.now().minusSeconds(90000).toString()).put("end",Instant.now().minusSeconds(89400).toString());
+        TimelineVisitStore.merge(app,new JSONArray().put(visit(pub,"history-one")).put(second));
         PubVisitStore.confirmTimeline(app,"history-one",pub.getString("id"));PubVisitStore.confirmTimeline(app,"history-two",pub.getString("id"));
         ActivityController<Activity> controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
         AlertDialog history=PubVisitUi.details(activity,pub,()->{});View root=history.getWindow().getDecorView();

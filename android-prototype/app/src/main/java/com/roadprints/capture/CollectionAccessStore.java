@@ -11,8 +11,7 @@ final class CollectionAccessStore {
     static final String PREFS="roadprints_collection_access_v1";
     private CollectionAccessStore() {}
     static String name(String id) {
-        if(SERVICES.equals(id))return "Motorway Service Stations";
-        if(SPOONS.equals(id))return "UK Wetherspoons Collection";
+        if(known(id))return VenueCollection.definition(id).name;
         return "None";
     }
     static boolean known(String id){return SERVICES.equals(id)||SPOONS.equals(id);}

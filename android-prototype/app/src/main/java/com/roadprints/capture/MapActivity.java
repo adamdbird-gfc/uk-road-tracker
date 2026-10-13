@@ -182,7 +182,7 @@ public class MapActivity extends Activity {
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
         applyCollectionLayer();
-        PubVisitStore.ensureHistory(this,()->{
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{
             if(active&&!isFinishing()&&!isDestroyed())applyCollectionLayer();
         });
         CollectionCatalogueUpdates.refreshIfDue(this,()->{
@@ -288,12 +288,13 @@ public class MapActivity extends Activity {
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
                 :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
-        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:
+        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?ServiceStationStore.completed(this):
                 CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
+        VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
-                showServiceStationCard(venue,collectionServiceVisits.contains(venue.optString("id")));
+                showServiceStationCard(venue,ServiceStationStore.completed(this).contains(venue.optString("id")));
             else if(CollectionAccessStore.SPOONS.equals(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
@@ -956,6 +957,11 @@ public class MapActivity extends Activity {
             });
             actions.addView(related);
         }
+        TextView checkin=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);
+        checkin.setOnClickListener(v->{stationDialog.dismiss();
+            if(visited)VenueVisitUi.details(this,CollectionAccessStore.SERVICES,station,this::applyCollectionLayer);
+            else VenueVisitUi.live(this,CollectionAccessStore.SERVICES,station,this::applyCollectionLayer,null);});
+        actions.addView(checkin);
         RoadprintsDialog.placeClose(content,close);
         LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, -2);
         actionParams.topMargin = dp(14);
