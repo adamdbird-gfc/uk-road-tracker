@@ -33,6 +33,7 @@ public class AchievementsAvailabilityTest {
         app=RuntimeEnvironment.getApplication();
         JourneyStore.deleteAll(app);
         app.getSharedPreferences("roadprints_achievements_v1",Context.MODE_PRIVATE).edit().clear().commit();
+        app.getSharedPreferences("roadprints_achievement_celebrations_v1",0).edit().clear().commit();
         app.getSharedPreferences("roadprints_service_stations_v1",Context.MODE_PRIVATE).edit().clear().commit();
         oldExecutor=field("achievementExecutor").get(null);
         oldCalculator=field("achievementCalculator").get(null);
@@ -179,6 +180,48 @@ public class AchievementsAvailabilityTest {
         findText(card,"View contributions and milestones").performClick();
         assertTrue(contains(card,"○ Yorkshire"));assertTrue(contains(card,"○ Antrim"));assertTrue(contains(card,"○ Kent"));
         assertFalse(contains(card,"First 50 shown"));assertFalse(contains(card,"✓ ○"));
+    }
+
+    private void recogniseTwo() {
+        java.util.Map<String,Double> values=new java.util.HashMap<>();values.put("motorway-quarter",25.0);values.put("angel-of-the-north",1.0);
+        AchievementStore.evaluate(app,values,Collections.emptyMap(),new boolean[7],JourneyStore.dataRevision(app));
+    }
+    private android.app.Dialog celebration(AchievementsActivity screen) throws Exception {return (android.app.Dialog)field("celebrationDialog").get(screen);}
+    @Test public void cachedUnlocksCelebrateOnResumeWithoutARescan() throws Exception {
+        recogniseTwo();cache();AchievementsActivity screen=screen();
+        assertNull(celebration(screen));controllers.get(0).start().resume();Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertTrue(celebration(screen).isShowing());assertTrue(jobs.isEmpty());
+        assertEquals(2,AchievementCelebrations.pending(app).size());
+    }
+    @Test public void nextAndCloseOnlyAcknowledgeCardsActuallyPresented() throws Exception {
+        recogniseTwo();cache();AchievementsActivity screen=screen();controllers.get(0).start().resume();
+        android.app.Dialog dialog=celebration(screen);View root=dialog.getWindow().getDecorView();
+        root.findViewWithTag("achievement_celebration_continue").performClick();
+        assertEquals(1,AchievementCelebrations.pending(app).size());assertTrue(dialog.isShowing());
+        assertEquals("2 of 2",((TextView)root.findViewWithTag("achievement_celebration_position")).getText().toString());
+        root.findViewWithTag("roadprints_dialog_close").performClick();assertTrue(AchievementCelebrations.pending(app).isEmpty());
+        assertFalse(dialog.isShowing());
+    }
+    @Test public void closingFirstCardDefersOthersAndCanResumeFromOverview() throws Exception {
+        recogniseTwo();cache();AchievementsActivity screen=screen();controllers.get(0).start().resume();
+        celebration(screen).getWindow().getDecorView().findViewWithTag("roadprints_dialog_close").performClick();
+        assertEquals(1,AchievementCelebrations.pending(app).size());assertFalse(celebration(screen).isShowing());
+        load(screen);assertFalse(celebration(screen).isShowing());
+        screen.getWindow().getDecorView().findViewWithTag("achievement_celebrations_action").performClick();assertTrue(celebration(screen).isShowing());
+    }
+    @Test public void leavingBeforeInteractingDoesNotConsumeCelebration() throws Exception {
+        recogniseTwo();cache();AchievementsActivity screen=screen();controllers.get(0).start().resume();
+        assertTrue(celebration(screen).isShowing());controllers.get(0).pause().stop();
+        assertEquals(2,AchievementCelebrations.pending(app).size());
+    }
+    @Test public void collectionHeadingsAndJumpLabelsMatchCollectionNames() throws Exception {
+        ServiceStationStore.unlockForTesting(app);CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
+        cache();AchievementsActivity screen=screen();
+        @SuppressWarnings("unchecked") java.util.Map<String,TextView> chips=(java.util.Map<String,TextView>)field("jumpChips").get(screen);
+        assertTrue(chips.containsKey(CollectionAccessStore.name(CollectionAccessStore.SERVICES)));
+        assertTrue(chips.containsKey(CollectionAccessStore.name(CollectionAccessStore.SPOONS)));assertFalse(chips.containsKey("Collections"));
+        assertTrue(contains(content(screen),CollectionAccessStore.name(CollectionAccessStore.SERVICES)));
+        assertTrue(contains(content(screen),CollectionAccessStore.name(CollectionAccessStore.SPOONS)));
     }
     private TextView findText(View view,String value) {
         if(view instanceof TextView&&((TextView)view).getText().toString().contains(value))return (TextView)view;

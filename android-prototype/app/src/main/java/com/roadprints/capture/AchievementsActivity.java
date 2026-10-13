@@ -57,7 +57,7 @@ public class AchievementsActivity extends Activity {
     private AchievementStore.Snapshot shownSnapshot;
     private boolean shownKilometres;
 
-    private final List<AchievementStore.Definition> celebrationQueue=new ArrayList<>();
+    private final List<AchievementCelebrations.Event> celebrationQueue=new ArrayList<>();
     private LinearLayout content;
     private ScrollView scroll;
     private LinearLayout jumpRow;
@@ -68,6 +68,7 @@ public class AchievementsActivity extends Activity {
     private int shownHighStreetEvidenceRevision=Integer.MIN_VALUE;
     private long shownServiceStationRevision=Long.MIN_VALUE;
     private boolean stationBackfillRequested;
+    private boolean celebrationHostResumed,celebrationsDeferred;
     private int celebrationIndex;
     private Dialog celebrationDialog;
     private android.widget.ImageView celebrationIcon;
@@ -78,6 +79,7 @@ public class AchievementsActivity extends Activity {
     private Button celebrationPrevious;
     private Button celebrationNext;
     private Button celebrationClaim;
+    private TextView celebrationsAction;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -89,6 +91,7 @@ public class AchievementsActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        celebrationHostResumed=true;
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);
         if(shownSnapshot!=null && shownKilometres!=DistanceUnits.usesKilometres(this))render(shownSnapshot);
@@ -98,6 +101,7 @@ public class AchievementsActivity extends Activity {
                 && (revision != shownRevision || highStreetRevision != shownHighStreetEvidenceRevision
                 || collectionEvidenceRevision(this) != shownServiceStationRevision))
             loadAchievements();
+        maybeShowPendingCelebrations();
     }
 
     private final Handler evidenceRefreshHandler=new Handler(Looper.getMainLooper());
@@ -111,7 +115,9 @@ public class AchievementsActivity extends Activity {
     };
 
     @Override protected void onPause() {
+        celebrationHostResumed=false;
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
+        if(celebrationDialog!=null&&celebrationDialog.isShowing())celebrationDialog.dismiss();
         super.onPause();
     }
 
@@ -215,6 +221,7 @@ public class AchievementsActivity extends Activity {
                     shownRevision=revision;
                     shownHighStreetEvidenceRevision=highStreetRevision;
                     shownServiceStationRevision=stationRevision;
+                    maybeShowPendingCelebrations();
                     return;
                 }
             }
@@ -293,7 +300,7 @@ public class AchievementsActivity extends Activity {
                 }
                 if(error==null && completed!=null && !screens.isEmpty()) {
                     // One carousel for this refresh, even after rapid tab reopening.
-                    screens.get(screens.size()-1).showCelebrations(completed.newlyUnlocked);
+                    screens.get(screens.size()-1).maybeShowPendingCelebrations();
                     if(changed) for(AchievementsActivity screen:screens) screen.loadAchievements();
                 }
             });
@@ -398,6 +405,11 @@ public class AchievementsActivity extends Activity {
         overall.setProgressTintList(android.content.res.ColorStateList.valueOf(GOLD));
         overall.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF43598A));
         overview.addView(overall,new LinearLayout.LayoutParams(-1,dp(7)));
+        celebrationsAction=text("",14,NAVY,true);celebrationsAction.setGravity(Gravity.CENTER);
+        celebrationsAction.setPadding(dp(12),dp(12),dp(12),dp(12));celebrationsAction.setBackground(roundRect(GOLD,GOLD,dp(12)));
+        celebrationsAction.setTag("achievement_celebrations_action");
+        LinearLayout.LayoutParams celebrationParams=new LinearLayout.LayoutParams(-1,-2);celebrationParams.topMargin=dp(12);overview.addView(celebrationsAction,celebrationParams);
+        celebrationsAction.setOnClickListener(v->{celebrationsDeferred=false;maybeShowPendingCelebrations();});updateCelebrationAction();
         content.addView(overview);
         groupAnchors.put("Overview",overview);
         String[] groups={"App milestones","Distance","Road discovery","Town exploration","Landmarks","Crossings"};
@@ -414,12 +426,14 @@ public class AchievementsActivity extends Activity {
             }
         }
         if(showServices) {
-            View anchor=sectionHeading("Service station achievements");content.addView(anchor);groupAnchors.put("Collections",anchor);
+            String label=CollectionAccessStore.name(CollectionAccessStore.SERVICES);
+            View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
             for(AchievementStore.Progress item:visible)
                 if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
         }
         if(CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)){
-            View anchor=sectionHeading("Wetherspoons achievements");content.addView(anchor);groupAnchors.put("Wetherspoons",anchor);
+            String label=CollectionAccessStore.name(CollectionAccessStore.SPOONS);
+            View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
             for(AchievementStore.Progress item:visible)if("pub-visit".equals(item.definition.type))content.addView(achievementCard(item));
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
@@ -575,7 +589,16 @@ public class AchievementsActivity extends Activity {
         return card;
     }
 
-    private void showCelebrations(List<AchievementStore.Definition> definitions) {
+    private void maybeShowPendingCelebrations(){
+        if(!celebrationHostResumed||celebrationsDeferred||isFinishing()||isDestroyed()||shownSnapshot==null
+                ||shownRevision!=JourneyStore.dataRevision(this)
+                ||shownHighStreetEvidenceRevision!=AchievementStore.highStreetEvidenceRevision(this)
+                ||shownServiceStationRevision!=collectionEvidenceRevision(this)
+                ||(celebrationDialog!=null&&celebrationDialog.isShowing()))return;
+        showCelebrations(AchievementCelebrations.pending(this));
+    }
+
+    private void showCelebrations(List<AchievementCelebrations.Event> definitions) {
         if (definitions == null || definitions.isEmpty() || isFinishing()) return;
         celebrationQueue.clear();
         celebrationQueue.addAll(definitions);
@@ -583,6 +606,11 @@ public class AchievementsActivity extends Activity {
         buildCelebrationDialog();
         renderCelebration();
         celebrationDialog.show();
+        if(android.animation.ValueAnimator.areAnimatorsEnabled()){
+            celebrationIcon.setScaleX(.8f);celebrationIcon.setScaleY(.8f);
+            celebrationIcon.animate().scaleX(1f).scaleY(1f).setDuration(280).setInterpolator(new android.view.animation.OvershootInterpolator(1.2f)).start();
+        }
+        celebrationIcon.announceForAccessibility("Achievement unlocked. "+celebrationTitle.getText());
         Window window=celebrationDialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -641,6 +669,7 @@ public class AchievementsActivity extends Activity {
         TextView eyebrow=text("ACHIEVEMENT UNLOCKED",12,0xFF735300,true);
         eyebrow.setPadding(0,dp(17),0,dp(4));
         card.addView(eyebrow);
+        TextView invitation=text("Look what you’ve unlocked!",16,0xFF735300,true);invitation.setGravity(Gravity.CENTER);card.addView(invitation);
 
         celebrationTitle=text("Achievement",24,0xFF172033,true);
         celebrationTitle.setGravity(Gravity.CENTER);
@@ -689,11 +718,16 @@ public class AchievementsActivity extends Activity {
         celebrationDialog.setContentView(overlay);
         celebrationDialog.setCancelable(true);
         celebrationDialog.setCanceledOnTouchOutside(false);
-        celebrationDialog.setOnCancelListener(dialog -> clearCelebrationQueue());
+        celebrationDialog.setOnCancelListener(dialog -> closeCelebrations());
         celebrationDialog.setOnDismissListener(dialog -> clearCelebrationQueue());
+        celebrationPrevious.setTag("achievement_celebration_previous");
+        celebrationNext.setTag("achievement_celebration_next");
         celebrationPrevious.setOnClickListener(view -> moveCelebration(-1));
         celebrationNext.setOnClickListener(view -> moveCelebration(1));
-        celebrationClaim.setOnClickListener(view -> closeCelebrations());
+        celebrationClaim.setTag("achievement_celebration_continue");
+        celebrationClaim.setOnClickListener(view -> {
+            if(celebrationIndex+1<celebrationQueue.size())moveCelebration(1);else closeCelebrations();
+        });
     }
 
     private Button celebrationArrow(String label,String description) {
@@ -711,15 +745,17 @@ public class AchievementsActivity extends Activity {
 
     private void renderCelebration() {
         if (celebrationQueue.isEmpty()) return;
-        AchievementStore.Definition definition=celebrationQueue.get(celebrationIndex);
+        AchievementCelebrations.Event event=celebrationQueue.get(celebrationIndex);
+        AchievementStore.Definition definition=event.definition;
         celebrationIcon.setImageResource(RoadprintsIcons.achievement(definition.id));
         celebrationIcon.setContentDescription(definition.title);
-        celebrationTitle.setText(definition.title);
+        celebrationTitle.setTag("achievement_celebration_title");
+        celebrationTitle.setText(AchievementStore.titleFor(definition,event.level));
         celebrationDescription.setText(definition.description==null?"":definition.description);
         celebrationDetail.setText(definition.detail==null?"":definition.detail);
         if(shownSnapshot!=null)for(AchievementStore.Progress progress:shownSnapshot.achievements)if(progress.definition.id.equals(definition.id)) {
-            celebrationTitle.setText(AchievementStore.titleFor(definition,progress.level));
-            celebrationDetail.setText((definition.levels==null?"":"Level "+progress.level+" / "+definition.levels.length+" · ")+AchievementStore.progressText(this,progress));
+            celebrationTitle.setText(AchievementStore.titleFor(definition,event.level));
+            celebrationDetail.setText((definition.levels==null?"":"Level "+event.level+" / "+definition.levels.length+" · ")+(progress.level==event.level?AchievementStore.progressText(this,progress):definition.detail));
             if("long-journey".equals(definition.type))celebrationDescription.setText("Complete one journey of "+DistanceUnits.format(this,1609.344*10)+" on foot or "+DistanceUnits.format(this,1609.344*250)+" by road.");
             break;
         }
@@ -732,19 +768,36 @@ public class AchievementsActivity extends Activity {
         celebrationNext.setEnabled(celebrationIndex<celebrationQueue.size()-1);
         celebrationPrevious.setAlpha(celebrationIndex>0?1f:0.45f);
         celebrationNext.setAlpha(celebrationIndex<celebrationQueue.size()-1?1f:0.45f);
+        celebrationPosition.setTag("achievement_celebration_position");
         celebrationPosition.setText(multiple
                 ?(celebrationIndex+1)+" of "+celebrationQueue.size():"");
         celebrationClaim.setText(multiple&&celebrationIndex<celebrationQueue.size()-1
-                ?"Claim all achievements":"Claim achievement");
+                ?"Next achievement":"Let’s go!");
     }
 
     private void moveCelebration(int offset) {
         if (celebrationQueue.isEmpty()) return;
+        acknowledgeCurrentCelebration();
         celebrationIndex=Math.max(0,Math.min(celebrationQueue.size()-1,celebrationIndex+offset));
         renderCelebration();
     }
 
+    private void updateCelebrationAction(){
+        if(celebrationsAction==null)return;
+        int count=AchievementCelebrations.pending(this).size();
+        celebrationsAction.setText("Celebrate "+count+(count==1?" achievement":" achievements"));
+        celebrationsAction.setVisibility(count==0?View.GONE:View.VISIBLE);
+    }
+    private void acknowledgeCurrentCelebration(){
+        if(!celebrationQueue.isEmpty()){
+            try{AchievementCelebrations.acknowledge(this,celebrationQueue.get(celebrationIndex));}
+            catch(Exception unavailable){android.util.Log.w("Roadprints","Celebration delivery could not be saved",unavailable);}
+        }
+        updateCelebrationAction();
+    }
+
     private void closeCelebrations() {
+        acknowledgeCurrentCelebration();celebrationsDeferred=true;
         if (celebrationDialog!=null && celebrationDialog.isShowing()) celebrationDialog.dismiss();
         clearCelebrationQueue();
     }
