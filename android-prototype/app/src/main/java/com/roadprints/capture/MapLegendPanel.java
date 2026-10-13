@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.view.Gravity;
 import android.widget.LinearLayout;
@@ -20,17 +21,29 @@ final class MapLegendPanel {
     static AlertDialog show(Activity activity,boolean townMap,Runnable changed){
         LinearLayout body=new LinearLayout(activity);body.setOrientation(LinearLayout.VERTICAL);
         body.addView(text(activity,"ROADPRINTS LINES",14,0xFF67D5CC,true));
+        LinearLayout lines=new LinearLayout(activity);lines.setOrientation(LinearLayout.VERTICAL);lines.setTag("map_legend_lines");
+        lines.setPadding(dp(activity,10),dp(activity,8),dp(activity,10),dp(activity,8));
+        GradientDrawable background=new GradientDrawable();background.setColor(Color.WHITE);background.setCornerRadius(dp(activity,12));lines.setBackground(background);
+        LinearLayout.LayoutParams lineParams=new LinearLayout.LayoutParams(-1,-2);lineParams.topMargin=dp(activity,4);lineParams.bottomMargin=dp(activity,10);body.addView(lines,lineParams);
         for(MapLayerPreferences.Layer layer:MapLayerPreferences.Layer.values()){
             if(layer==MapLayerPreferences.Layer.BOUNDARIES&&!townMap)continue;
-            LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);
-            row.addView(new Sample(activity,layer.color,null,layer==MapLayerPreferences.Layer.BOUNDARIES),new LinearLayout.LayoutParams(dp(activity,62),dp(activity,48)));
+            LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(activity,4),0,dp(activity,4));
+            LinearLayout.LayoutParams sampleParams=new LinearLayout.LayoutParams(dp(activity,40),dp(activity,48));sampleParams.rightMargin=dp(activity,6);
+            row.addView(new Sample(activity,layer.color,null,layer==MapLayerPreferences.Layer.BOUNDARIES),sampleParams);
             LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);
-            labels.addView(text(activity,layer.label,15,Color.WHITE,true));labels.addView(text(activity,layer.detail,12,0xFFB9C5D8,false));
+            labels.addView(text(activity,layer.label,15,0xFF0B1C50,true));labels.addView(text(activity,layer.detail,12,0xFF43516A,false));
             row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
             Switch toggle=new Switch(activity);toggle.setTag("map_layer:"+layer.name());toggle.setMinHeight(dp(activity,48));
             toggle.setContentDescription("Show "+layer.label);toggle.setChecked(MapLayerPreferences.visible(activity,layer));
-            toggle.setThumbTintList(ColorStateList.valueOf(0xFFF7C450));
-            toggle.setOnCheckedChangeListener((button,on)->{MapLayerPreferences.set(activity,layer,on);changed.run();});row.addView(toggle);body.addView(row);
+            int[][] states={{android.R.attr.state_checked},{}};
+            toggle.setTrackTintList(new ColorStateList(states,new int[]{0xFF0B1C50,0xFF71809A}));
+            toggle.setThumbTintList(new ColorStateList(states,new int[]{0xFFF7C450,0xFFE1E6ED}));
+            LinearLayout control=new LinearLayout(activity);control.setOrientation(LinearLayout.VERTICAL);control.setGravity(Gravity.CENTER);
+            control.addView(toggle,new LinearLayout.LayoutParams(-2,dp(activity,48)));
+            TextView state=text(activity,toggle.isChecked()?"On":"Off",12,0xFF0B1C50,true);state.setTag("map_layer_state:"+layer.name());state.setGravity(Gravity.CENTER);state.setPadding(0,0,0,dp(activity,4));
+            state.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);control.addView(state,new LinearLayout.LayoutParams(-1,-2));
+            toggle.setOnCheckedChangeListener((button,on)->{state.setText(on?"On":"Off");MapLayerPreferences.set(activity,layer,on);changed.run();});
+            row.addView(control,new LinearLayout.LayoutParams(dp(activity,60),-2));lines.addView(row);
         }
         body.addView(text(activity,"These colours describe Roadprints overlays. Recorded travel can overlap the coloured coverage lines. The background map uses its own colours.",12,0xFFB9C5D8,false));
         if(!townMap){
@@ -68,10 +81,11 @@ final class MapLegendPanel {
         @Override protected void onDraw(Canvas canvas){
             float x=getWidth()/2f,y=getHeight()/2f;paint.setStyle(Paint.Style.FILL);
             if(symbol==null){
-                paint.setColor(0xFFEFF6FA);canvas.drawRoundRect(6,y-14,getWidth()-6,y+14,6,6,paint);
+                float inset=dp(getContext(),6),lineInset=dp(getContext(),10),halfHeight=dp(getContext(),7);
+                paint.setColor(0xFFEFF6FA);canvas.drawRoundRect(inset,y-halfHeight,getWidth()-inset,y+halfHeight,dp(getContext(),3),dp(getContext(),3),paint);
                 paint.setColor(color);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(getContext(),4));paint.setStrokeCap(Paint.Cap.ROUND);
-                if(outline){paint.setPathEffect(new android.graphics.DashPathEffect(new float[]{8,6},0));canvas.drawRect(14,y-9,getWidth()-14,y+9,paint);paint.setPathEffect(null);}
-                else canvas.drawLine(14,y,getWidth()-14,y,paint);
+                if(outline){paint.setPathEffect(new android.graphics.DashPathEffect(new float[]{8,6},0));canvas.drawRect(lineInset,y-dp(getContext(),9),getWidth()-lineInset,y+dp(getContext(),9),paint);paint.setPathEffect(null);}
+                else canvas.drawLine(lineInset,y,getWidth()-lineInset,y,paint);
             }else{
                 float radius=dp(getContext(),"3".equals(symbol)?14:10);paint.setColor(Color.WHITE);canvas.drawCircle(x,y,radius+dp(getContext(),2),paint);paint.setColor(color);canvas.drawCircle(x,y,radius,paint);
                 paint.setColor(Color.WHITE);paint.setTextSize(dp(getContext(),10));paint.setTextAlign(Paint.Align.CENTER);paint.setTypeface(Typeface.DEFAULT_BOLD);

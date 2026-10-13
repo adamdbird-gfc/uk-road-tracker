@@ -155,6 +155,12 @@ public class CollectionAccessAndMapTest {
         java.lang.reflect.Method apply=MapActivity.class.getDeclaredMethod("applyCollectionLayer");apply.setAccessible(true);
         View button=activity.getWindow().getDecorView().findViewWithTag("map_legend_button");assertNotNull(button);
         assertTrue(button.getParent() instanceof android.widget.FrameLayout);
+        assertEquals(View.GONE,button.getVisibility());
+        java.lang.reflect.Method hideLoading=MapActivity.class.getDeclaredMethod("hideMapLoading");hideLoading.setAccessible(true);
+        java.lang.reflect.Method showLoading=MapActivity.class.getDeclaredMethod("showMapLoading",boolean.class);showLoading.setAccessible(true);
+        hideLoading.invoke(activity);assertEquals(View.VISIBLE,button.getVisibility());
+        showLoading.invoke(activity,true);assertEquals(View.GONE,button.getVisibility());
+        hideLoading.invoke(activity);assertEquals(View.VISIBLE,button.getVisibility());
         RoutePreviewView map=(RoutePreviewView)mapField.get(activity);
         map.restoreCameraState(.36,51.44,14);apply.invoke(activity);
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
