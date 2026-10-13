@@ -1,7 +1,7 @@
 # Map legend and device Timeline help
 
-Prepared for the next combined release (#116/#117). No separate APK distribution
-is requested for this slice.
+Included in combined 0.25.196 (#116/#117), alongside the shared venue framework.
+No separate APK is distributed for this slice.
 
 The phone export help now uses device Settings, Location, Location services,
 Timeline, Export Timeline data, Continue, folder selection and Save. It is shared

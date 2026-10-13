@@ -16,14 +16,30 @@ import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class PubAchievementsTest {
+static final String[][] NAMED={
+        {"spoons-rochester-castle","(Not) The OG","spoons-osm-n256404255","The Rochester Castle","Stoke Newington","London"},
+        {"spoons-hawkshaw","Nice to meet you Sir","spoons-osm-n5141625722","The Sir John Hawkshaw","Cannon Street, London","London"},
+        {"spoons-pavilion","It’s echoey in here","spoons-osm-w103966079","Royal Victoria Pavilion","Ramsgate","South East"},
+        {"spoons-opera","Nessun dorma","spoons-osm-n1973967757","Opera House","Royal Tunbridge Wells","South East"},
+        {"spoons-justice","Guilty as charged","spoons-osm-w277707569","The Chief Justice of the Common Pleas","Keswick","North West"},
+        {"spoons-winter","It’s a kinda chilly","spoons-osm-n462615653","The Winter Gardens","Harrogate","Yorkshire and the Humber"},
+        {"spoons-palladium","Sunday night at the Palladium","spoons-osm-w223309617","The Palladium","Llandudno","Wales"},
+        {"spoons-wallaw","No way, downstairs loos!","spoons-osm-w134968549","The Wallaw","Blyth","North East"},
+        {"spoons-kettleby","Pie & a Pint","spoons-osm-n1059478029","The Kettleby Cross","Melton Mowbray","East Midlands"},
+        {"spoons-square-peg","Round Holes","spoons-osm-w94961209","The Square Peg","Birmingham","West Midlands"},
+        {"spoons-corn-exchange","Buried in opulence","spoons-osm-n2291314726","The Corn Exchange","Bury St Edmunds","East of England"},
+        {"spoons-imperial","Anyone for drinks in the orangery?","spoons-osm-w175308977","The Imperial","Exeter","South West"},
+        {"spoons-counting-house","1, 2, 3, 4, 5","spoons-osm-n247937950","The Counting House","Glasgow","Scotland"},
+        {"spoons-spirit-merchant","Single or double?","spoons-osm-n2964369609","The Spirit Merchant","Newtownards","Northern Ireland"}
+    };
     private Context app;private JSONArray pubs,categories;
     @Before public void reset(){app=RuntimeEnvironment.getApplication();app.getSharedPreferences("roadprints_achievements_v1",0).edit().clear().commit();pubs=CollectionMapCatalog.spoons(app);categories=PubAchievements.categories(app);}
     private JSONObject proof(String id) throws Exception {return new JSONObject().put("pub_id",id).put("source","confirmed_timeline_visit").put("visited_at","2026-09-01T12:00:00Z");}
     private PubAchievements.Snapshot calculate(JSONArray records){return PubAchievements.calculate(pubs,records,true,categories);}
     @Test public void allNamedAndCategoryIdentitiesResolveToReviewedCurrentPubs() throws Exception {
         Set<String> areas=new HashSet<>();
-        for(String[] row:PubAchievements.NAMED){JSONObject pub=PubVisitStore.find(pubs,row[2]);assertNotNull(row[3],pub);areas.add(row[5]);}
-        assertEquals(12,areas.size());assertEquals(14,PubAchievements.NAMED.length);
+        for(String[] row:NAMED){JSONObject pub=PubVisitStore.find(pubs,row[2]);assertNotNull(row[3],pub);areas.add(row[5]);}
+        assertEquals(12,areas.size());assertEquals(14,NAMED.length);
         for(int i=0;i<categories.length();i++)assertNotNull(PubVisitStore.find(pubs,categories.getJSONObject(i).getString("id")));
         assertEquals("Glasgow",PubVisitStore.find(pubs,"spoons-osm-n247937950").getString("town"));
     }
@@ -36,10 +52,10 @@ public class PubAchievementsTest {
     }
     @Test public void eitherLondonAndSouthEastNomineeCompletesTheSameTourAreas() throws Exception {
         JSONArray records=new JSONArray();
-        for(String[] row:PubAchievements.NAMED)if(!"spoons-hawkshaw".equals(row[0])&&!"spoons-opera".equals(row[0]))records.put(proof(row[2]));
+        for(String[] row:NAMED)if(!"spoons-hawkshaw".equals(row[0])&&!"spoons-opera".equals(row[0]))records.put(proof(row[2]));
         assertEquals(12,calculate(records).values.get("spoons-grand-tour"),0);
         JSONArray alternatives=new JSONArray();
-        for(String[] row:PubAchievements.NAMED)if(!"spoons-rochester-castle".equals(row[0])&&!"spoons-pavilion".equals(row[0]))alternatives.put(proof(row[2]));
+        for(String[] row:NAMED)if(!"spoons-rochester-castle".equals(row[0])&&!"spoons-pavilion".equals(row[0]))alternatives.put(proof(row[2]));
         assertEquals(12,calculate(alternatives).values.get("spoons-grand-tour"),0);
     }
     @Test public void allFourNationsAndFourStageVenuesAreRequired() throws Exception {

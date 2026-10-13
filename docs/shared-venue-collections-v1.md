@@ -1,69 +1,89 @@
-# Shared venue collections — 0.25.195 (241)
+# Shared venue collections — 0.25.196
 
-This delivery combines the visit-flow slice of #77 and #82. Motorway Service
-Stations and UK Wetherspoons use one collection-scoped ledger, stop detector,
-manual/review/history dialogs and searchable lazy progress component.
+Services and Wetherspoons share the visit ledger, stationary-stop detection,
+manual check-in, uncertainty review, history/removal, map/clusters/Legend,
+searchable grouped progress, catalogue updates and achievement interpreter.
+Existing Services and pub facades remain compatibility/migration entry points;
+new comparable venue collections do not need those adapters.
 
-## Visit qualification
+## Registration and future reuse
 
-The shared detector requires at least four accurate stationary samples over
-three minutes, with no gap above 90 seconds. Moving, inaccurate, missing or
-repeated timestamps do not manufacture dwell. Service-site points on either
-carriageway retain their previous qualification policy. An individual pub is
-automatic only when a supported map-premises arrival names the unique nearby
-reviewed pub, has sufficient dwell, and is not a curated/shared-site identity.
-Generic nearby stops become review proposals. Airport, station or holiday-park
-presence alone does not earn a pub. Manual check-in for either collection needs
-a fresh genuine accurate device fix supporting the named venue and explicit
-confirmation. A manual visit never manufactures a journey.
+`collections/venue-collections-v1.json` is the reviewed source of truth. A
+collection defines stable ID, labels/copy, pin colour/symbol, bundled asset and
+revision, catalogue format/identity pattern, grouping, conservative qualification
+policy and achievement list. Run `python3 scripts/generate_venue_collections.py`
+after editing it; both Android workflows reject a stale compiled registry.
 
-Automatic evaluation happens when original captured journey evidence is saved,
-with streamed historical reevaluation on an installed collection's first scan
-or a changed archive. It does not run a second tracker or request map data for
-each collection. Pending visits are offered on the foreground map/progress
-screen and remain available through Manual check. Closing defers; rejecting is
-persistent. Collection removal retains history while hiding the collection.
+No new live brand is registered. A restaurant fixture verifies the same catalogue
+projection, goal interpreter and card metadata; the earlier framework fixture
+verifies named native stop qualification without copied capture/UI code.
 
-## Storage and compatibility
+Shared goal measures are distinct supported history, selected-venue count, any
+selected venue, catalogue percentage and satisfied groups (one or more eligible
+venues per group). Goals select stable members or reviewed metadata. The 48
+Services and 21 Wetherspoons achievement IDs, targets, levels, labels and sourced
+eligibility are retained. Independent regression fixtures retain expected named
+pub/site IDs. Definitions/calculators no longer duplicate production lists in
+collection-specific Java classes. Last orders, Pub crawl and full-county/national
+pub completion are absent until their reference data/rules are ready.
 
-`roadprints_venue_visits_v1` separates each collection's records/revision. Original
-pub proofs migrate once, including dates and rejection markers. Legacy Services
-journey links and verified Timeline sets migrate without invented visit dates.
-Existing store/UI class names are compatibility adapters. Saved backup routes
-remain valid and the normal backup includes the new ledger. Delete-all clears
-both collections' history while preserving access. Reconciliation is generation
-guarded against deletion/restoration and respects JourneyStore-first lock order.
+Services retain their site-point policy; named pub premises need supported
+arrival/dwell identity. Fresh genuine manual location and named confirmation are
+available for both. Shared/approximate or explicitly confirmation-required sites
+are reviewed. Stationary samples still require four accurate fixes over at least
+three minutes, bounded gaps/drift and low speed. Catalogue display points alone
+are insufficient for automatic premises credit. Policy is compiled with the app;
+a silent data release cannot change thresholds, access or achievement rules.
 
-Native recalculation invalidates unsupported derived records while preserving
-rejections. Source Timeline changes/removal recalculate qualifying proofs;
-catalogue removal alone retains historical evidence. Automatic, Timeline and
-manual proofs for the same venue/session share one displayed history entry,
-while retaining each original evidence record. Unique venue totals count once.
-Removing an incorrect session suppresses its derived sources so rematching or
-repeat imports cannot immediately re-award it. Native proofs participate in the
-existing sourced pub achievements and durable celebration delivery.
+## Compatible data formats and updates
 
-## Repeatable definition
+`services_v1` keeps the deployed `services` rows and multiple site points.
+`reviewed_map_v1` keeps the reviewed UK venue release envelope/projection. Each
+collection has isolated state, revision, next-check preference and atomic cache.
+The previous Wetherspoons cache and preference names remain valid on upgrade.
+Both use the same bounded HTTPS manifest/payload reader, integrity validation,
+monotonic revisions, offline fallback and retry/success cadence. The Services
+baseline publication packages the existing deployed data; it is not a new
+operating-status survey. Unknown operator metadata remains unknown.
 
-`VenueCollection.Definition` supplies identity, labels, a catalogue source,
-name-normalisation and qualification policy. The shared engine accepts a
-non-production restaurant fixture without copied screens or capture code.
-Progress offers name/town/postcode search and All/Visited/Remaining filters,
-with lazy county/town or region/road groups. Both maps/history expose manual
-check-in; related journeys are available where evidence actually has one.
+Publish a compatible reviewed catalogue with:
 
-The existing silent Wetherspoons updater is preserved unchanged in cadence and
-publication contract. Full generic publication/schema support and conversion
-of collection-specific achievement definitions/calculators to a declarative
-configuration are subsequent #77 slices; this release does not claim those
-parts are complete. Adding a third live collection still requires its reviewed
-catalogue/definition and achievement adapter. Network/rail/airport semantics
-remain separate work.
+```sh
+python3 scripts/publish_venue_catalogue.py --collection services --catalogue /path/to/approved-services.json --revision 2026101302 --directory collections/published/services
+```
 
-## Remaining pub content
+The same command accepts another registered collection ID. Reviewed pub releases
+retain their existing map approval contract; the original publisher is retained
+for compatibility. Published files are immutable, manifests cannot redirect to
+other collection data, and data changes cannot manufacture visit evidence.
+Reviewed replacements preserve stable IDs; removed pins do not erase supported
+historical proofs. Source correction/removal still recalculates evidence and
+protects rejected sessions. Missing legacy dates remain unavailable.
 
-No held/future venue is activated and no certified national/county completion
-target is introduced. Held-status/coverage reconciliation and deferred full-
-county, Last orders and Pub crawl content remain in #82. Purchase integration
-stays deferred in #75. Field acceptance is outside the development backlog;
-this document describes implemented behaviour, not proven real-world reliability.
+## Wetherspoons status reconciliation
+
+Revision 2026101301 contains **813** reviewed locations. Fresh operator pages on
+13 October 2026 explicitly show Court of Requests and Bottle of Sack open;
+previous held decisions were replaced with dated reviews retaining their pinned
+OSM IDs/positions and historic counties. Art Picture House remains temporarily
+closed; Benjamin Franklin remains future. No advertised date auto-activates them.
+
+Sources:
+- https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/
+- https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/
+- https://www.jdwetherspoon.com/pubs/the-art-picture-house-bury/
+
+The 813-map baseline remains explicitly partial: `coverage_complete=false`,
+`completion_target=null`. It is not a certified active UK/county denominator.
+Historical former-pub/trading-date evidence and a Pub crawl rule still belong to
+#82. This release completes #77's shared infrastructure and #116/#117; it does
+not mark those deferred #82 content requirements delivered.
+
+## Verification
+
+The combined release must pass Android tests, lint and stable signing before
+merge. Regression checks include isolated Services updates/offline cache,
+cross-collection manifest rejection, existing achievement/earned-proof retention,
+fixture reuse and reopening holds. Local checks: shared registry generation,
+20 Wetherspoons catalogue tests, four shared publisher tests and four Services
+metadata tests. Actual Android CI totals are recorded in the release note.

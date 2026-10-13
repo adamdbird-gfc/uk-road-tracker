@@ -157,7 +157,7 @@ final class VenueCatalogueUpdates {
             double lat=v.getDouble("lat"),lon=v.getDouble("lon");
             if(!Double.isFinite(lat)||!Double.isFinite(lon)||lat<49||lat>61||lon< -9||lon>2)
                 throw new IllegalArgumentException("Venue is outside UK coordinate bounds");
-            if(id.startsWith("spoons-curated-") && (!Boolean.TRUE.equals(v.opt("confirmation_required"))
+            if((!definition.confirmationIdPrefix.isEmpty()&&id.startsWith(definition.confirmationIdPrefix)) && (!Boolean.TRUE.equals(v.opt("confirmation_required"))
                     || v.getString("location_label").isEmpty() || v.getString("attribution").isEmpty()))
                 throw new IllegalArgumentException("Curated venue labels are required");
             JSONArray names=v.getJSONArray("osm_aliases");
@@ -177,7 +177,7 @@ final class VenueCatalogueUpdates {
         HashSet<String> ids=new HashSet<>();
         for(int i=0;i<rows.length();i++){
             JSONObject v=rows.getJSONObject(i);String id=v.getString("id");
-            if(!id.matches(definition.identityPattern)||!ids.add(id)||v.getString("name").isEmpty()||v.getString("road").isEmpty()||v.getString("country").isEmpty()||v.getString("operator_group").isEmpty())throw new IllegalArgumentException("Invalid site identity");
+            if(!id.matches(definition.identityPattern)||!ids.add(id)||v.getString("name").isEmpty()||v.getString("road").isEmpty()||v.getString("country").isEmpty())throw new IllegalArgumentException("Invalid site identity");
             position(v);JSONArray points=v.getJSONArray("points");if(points.length()==0||points.length()>100)throw new IllegalArgumentException("Invalid site positions");for(int n=0;n<points.length();n++)position(points.getJSONObject(n));
         }
     }

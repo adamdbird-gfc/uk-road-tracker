@@ -617,7 +617,8 @@
         },
         "parent_fallback": "Other UK venues",
         "child_field": "road"
-      }
+      },
+      "confirmation_id_prefix": ""
     },
     {
       "id": "wetherspoons",
@@ -1205,7 +1206,8 @@
         "parent_field": "county.name",
         "parent_fallback": "Other UK venues",
         "child_field": "town"
-      }
+      },
+      "confirmation_id_prefix": "spoons-curated-"
     }
   ]
 }

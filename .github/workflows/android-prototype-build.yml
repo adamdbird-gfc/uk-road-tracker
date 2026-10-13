@@ -7,10 +7,18 @@ on:
       - fix/onboarding-start-tracking
     paths:
       - "android-prototype/**"
+      - "collections/venue-collections-v1.json"
+      - "scripts/generate_venue_collections.py"
+      - "scripts/publish_venue_catalogue.py"
+      - "scripts/test_venue_catalogue.py"
       - ".github/workflows/android-prototype-build.yml"
   pull_request:
     paths:
       - "android-prototype/**"
+      - "collections/venue-collections-v1.json"
+      - "scripts/generate_venue_collections.py"
+      - "scripts/publish_venue_catalogue.py"
+      - "scripts/test_venue_catalogue.py"
       - ".github/workflows/android-prototype-build.yml"
   workflow_dispatch:
     inputs:
@@ -51,7 +59,9 @@ jobs:
           test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
 
       - name: Verify declarative venue registry
-        run: python3 scripts/generate_venue_collections.py --check
+        run: |
+          python3 scripts/generate_venue_collections.py --check
+          python3 -m unittest discover -s scripts -p test_venue_catalogue.py
 
       - name: Package pinned offline historic county reference
         run: bash android-prototype/scripts/prepare_county_reference.sh

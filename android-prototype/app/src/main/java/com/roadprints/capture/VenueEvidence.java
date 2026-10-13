@@ -22,10 +22,11 @@ final class VenueEvidence {
         if(name.isEmpty())return "";
         for(int i=0;i<nearby.length();i++){
             JSONObject venue=nearby.optJSONObject(i);
-            if(venue==null||venue.optBoolean("confirmation_required")||venue.optString("id").startsWith("spoons-curated-"))continue;
+            if(venue==null||requiresConfirmation(definition,venue))continue;
             if(name.equals(identityName(definition,venue.optString("name")))){if(!id.isEmpty())return "";id=venue.optString("id");}
         }return id;
     }
+    private static boolean requiresConfirmation(VenueCollection.Definition definition,JSONObject venue){return venue.optBoolean("confirmation_required")||(!definition.confirmationIdPrefix.isEmpty()&&venue.optString("id").startsWith(definition.confirmationIdPrefix))||"Approximate building location".equals(venue.optString("location_label"));}
     private static String identityName(VenueCollection.Definition definition,String name){
         String value=Normalizer.normalize(name,Normalizer.Form.NFKD).toLowerCase(Locale.ROOT).replaceAll("\\p{M}","");
         if(!definition.brandPattern.isEmpty())value=value.replaceAll(definition.brandPattern,"");
@@ -51,23 +52,24 @@ final class VenueEvidence {
         for(VenueStopDetector.Stop observed:VenueStopDetector.stops(samples,venues)){
             String id=observed.id;JSONObject venue=VenueVisitStore.find(venues,id);if(venue==null)continue;
             long at=observed.first;JSONObject evidence=null;
-            boolean automatic=definition.siteStop;
+            if(VenueCollection.distance(venue,observed.lat,observed.lng)>definition.radius)continue;
+            boolean automatic=definition.siteStop&&!requiresConfirmation(definition,venue);
             if(stops!=null)for(int i=0;i<stops.length();i++){
                 JSONObject stop=stops.optJSONObject(i);if(stop==null||!"arrival".equals(stop.optString("role")))continue;
                 double accuracy=stop.optDouble("accuracy_m",Double.NaN);
                 if(!Double.isFinite(accuracy)||accuracy<=0||accuracy>50||stop.optLong("dwell_seconds")<180
                         ||"rejected".equals(stop.optString("classification"))
-                        ||VenueCollection.distance(venue,stop.optDouble("latitude"),stop.optDouble("longitude"))>125)continue;
+                        ||VenueCollection.distance(venue,stop.optDouble("latitude"),stop.optDouble("longitude"))>definition.radius)continue;
                 evidence=stop;
                 // A uniquely named supported premises stop supplies identity; broad/shared sites require review.
                 JSONArray nearby=new JSONArray();
                 for(int j=0;j<venues.length();j++){
-                    JSONObject candidate=venues.optJSONObject(j);if(candidate!=null&&VenueCollection.distance(candidate,stop.optDouble("latitude"),stop.optDouble("longitude"))<=125)nearby.put(candidate);
+                    JSONObject candidate=venues.optJSONObject(j);if(candidate!=null&&VenueCollection.distance(candidate,stop.optDouble("latitude"),stop.optDouble("longitude"))<=definition.radius)nearby.put(candidate);
                 }
                 JSONObject named=new JSONObject().put("place_name",stop.optString("name"));
                 boolean identity=id.equals(namedMatch(definition,named,nearby));
                 automatic|=identity&&("supported".equals(stop.optString("classification"))||"confirmed".equals(stop.optString("classification")))
-                        &&!venue.optBoolean("confirmation_required")&&!venue.optString("id").startsWith("spoons-curated-")&&!"Approximate building location".equals(venue.optString("location_label"))
+                        &&!requiresConfirmation(definition,venue)
                         &&"map_footprint_and_dwell".equals(stop.optString("source"));
             }
             // Unknown nearby GPS stops are review proposals, never automatic pub credit.
