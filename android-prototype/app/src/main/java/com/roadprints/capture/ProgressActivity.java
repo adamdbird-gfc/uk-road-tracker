@@ -590,7 +590,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
-        for(String collection:CollectionAccessStore.installed(this))addProgressJump(row,CollectionAccessStore.name(collection),collection);
+        for(String collection:CollectionAccessStore.installed(this))addProgressJump(row,VenueCollection.definition(collection).shortName,collection);
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;

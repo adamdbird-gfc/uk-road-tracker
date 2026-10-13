@@ -21,7 +21,6 @@ final class ServiceStationStore {
     private static final java.util.List<Runnable> CALLBACKS=new java.util.ArrayList<>();
     private static boolean backfillRunning;
     private static long generation;
-    private static volatile JSONArray catalogue;
     private ServiceStationStore() {}
     static boolean unlocked(Context context) { return prefs(context).getBoolean("service_stations_unlocked",false); }
     static void unlockForTesting(Context context) {

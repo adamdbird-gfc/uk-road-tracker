@@ -184,22 +184,22 @@
     {
       "id": "spoons-osm-w1465394526",
       "name": "The Court of Requests",
-      "status": "temporary_closure_reopening_evidence_conflict",
-      "reviewed_at": "2026-10-12",
+      "status": "reviewed_current_open",
+      "reviewed_at": "2026-10-13",
       "advertised_reopening": "2026-10-10",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-court-of-requests-oldbury/",
-      "basis": "Earlier operator retrieval has temporary notice; later retrieval lacks notice but actual reopening not confirmed. Recheck before full catalogue release; keep held meanwhile.",
-      "map_enabled": false
+      "basis": "Fresh current operator page explicitly reports open. Conflict resolved by operating-status evidence, not the advertised date. Existing OSM identity and position retained; informational map approval only.",
+      "map_enabled": true
     },
     {
       "id": "spoons-osm-w98286602",
       "name": "The Bottle of Sack",
-      "status": "temporary_closure_reopening_evidence_conflict",
-      "reviewed_at": "2026-10-12",
+      "status": "reviewed_current_open",
+      "reviewed_at": "2026-10-13",
       "advertised_reopening": "2026-10-05",
       "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bottle-of-sack-sutton-coldfield/",
-      "basis": "Earlier operator retrieval has temporary notice; later retrieval lacks notice but actual reopening not confirmed. Recheck before full catalogue release; keep held meanwhile.",
-      "map_enabled": false
+      "basis": "Fresh current operator page explicitly reports open. Conflict resolved by operating-status evidence, not the advertised date. Existing OSM identity and position retained; informational map approval only.",
+      "map_enabled": true
     }
   ]
 }

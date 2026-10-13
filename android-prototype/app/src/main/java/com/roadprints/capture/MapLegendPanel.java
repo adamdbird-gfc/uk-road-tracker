@@ -46,10 +46,11 @@ final class MapLegendPanel {
             TextView manage=text(activity,"Manage collections",15,0xFFF7C450,true);manage.setMinHeight(dp(activity,48));manage.setGravity(Gravity.CENTER_VERTICAL);
             manage.setOnClickListener(v->activity.startActivity(new Intent(activity,CollectionsActivity.class)));body.addView(manage);
             body.addView(text(activity,"COLLECTION PINS",14,0xFF67D5CC,true));
-            pin(activity,body,"Service station · not visited",0xFF74829A,"•");
-            pin(activity,body,"Wetherspoons pub · not visited",0xFF238F89,"W");
-            pin(activity,body,"Service station · visited",0xFFF7C450,"•");
-            pin(activity,body,"Wetherspoons pub · visited",0xFFF7C450,"W");
+            for(VenueCollection.Definition collection:VenueCollection.all()){
+                String symbol=collection.pinLabel.isEmpty()?"•":collection.pinLabel;
+                pin(activity,body,collection.shortName+" · not visited",collection.pinColor,symbol);
+                pin(activity,body,collection.shortName+" · visited",0xFFF7C450,symbol);
+            }
             pin(activity,body,"Numbered cluster · nearby venues",0xFF238F89,"3");
             body.addView(text(activity,"Gold marks a visited venue. A gold cluster contains at least one visited venue. Tap a cluster to zoom or choose a venue.",12,0xFFB9C5D8,false));
         }

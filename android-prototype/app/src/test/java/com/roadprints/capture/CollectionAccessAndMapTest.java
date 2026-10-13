@@ -37,7 +37,7 @@ public class CollectionAccessAndMapTest {
         assertTrue(CollectionAccessStore.entitled(app,CollectionAccessStore.SPOONS));
         assertTrue(CollectionAccessStore.installed(app,CollectionAccessStore.SPOONS));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
-        assertEquals(811,CollectionMapCatalog.spoons(app).length());
+        assertEquals(813,CollectionMapCatalog.spoons(app).length());
         assertEquals("UK Wetherspoons Collection",CollectionAccessStore.name(CollectionAccessStore.SPOONS));
     }
     @Test public void selectionPersistsAndUninstalledCollectionCannotBeSelected() {
@@ -75,7 +75,7 @@ public class CollectionAccessAndMapTest {
         JSONArray pins=CollectionMapCatalog.spoons(app);
         java.util.Set<String> actual=new java.util.HashSet<>();
         for(int i=0;i<pins.length();i++)actual.add(pins.getJSONObject(i).getString("id"));
-        assertEquals(811,actual.size());
+        assertEquals(813,actual.size());
         assertTrue(actual.containsAll(java.util.Arrays.asList("spoons-osm-n528965858","spoons-osm-w310891787",
                 "spoons-osm-w103691610","spoons-osm-w30110330")));
         assertFalse(actual.contains("spoons-osm-w262652847"));
@@ -91,7 +91,7 @@ public class CollectionAccessAndMapTest {
     @Test public void nationwideAssetLoadsAboveOldLimitAndOversizedAssetIsRejected() throws Exception {
         try(java.io.InputStream input=app.getAssets().open("collections/uk-wetherspoons-map-v1.json")) {
             assertTrue(input.available()>65536);
-            assertEquals(811,CollectionMapCatalog.approvedVenues(CollectionMapCatalog.readCatalogue(input)).length());
+            assertEquals(813,CollectionMapCatalog.approvedVenues(CollectionMapCatalog.readCatalogue(input)).length());
         }
         byte[] oversized=new byte[CollectionMapCatalog.MAX_CATALOGUE_BYTES+1];
         assertEquals(0,CollectionMapCatalog.readCatalogue(new java.io.ByteArrayInputStream(oversized)).length());

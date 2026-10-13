@@ -900,6 +900,8 @@ public class MapActivity extends Activity {
         addCardLabel(content,CollectionAccessStore.name(collection).toUpperCase(java.util.Locale.ROOT));addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
         addCardBody(content,visited?"Visited":"Not visited");
+        if(!pub.optString("location_label").isEmpty())addCardBody(content,pub.optString("location_label"));
+        if(!pub.optString("attribution").isEmpty())addCardBody(content,pub.optString("attribution"));
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
         TextView detail=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);

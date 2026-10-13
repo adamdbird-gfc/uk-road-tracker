@@ -147,10 +147,12 @@ public class ServiceStationCollectionTest {
         assertEquals(0,ServiceStationAchievements.calculate(catalogue,visited,false).values.get("service-percent-100"),0);
     }
     @Test public void catalogueExpansionPreservesEarnedMilestonesWhileEvidenceDeletionRevokesThem() throws Exception {
-        java.lang.reflect.Field field=ServiceStationStore.class.getDeclaredField("catalogue");field.setAccessible(true);
-        Object original=field.get(null);JSONArray sites=new JSONArray();
+        ServiceStationStore.stations(app);
+        VenueCatalogueUpdates store=VenueCatalogueUpdates.forCollection(VenueCollection.definition("services"));
+        java.lang.reflect.Field field=VenueCatalogueUpdates.class.getDeclaredField("pins");field.setAccessible(true);
+        Object original=field.get(store);JSONArray sites=new JSONArray();
         for(int i=0;i<4;i++)sites.put(station("old"+i,-2+i*.1,52));
-        field.set(null,sites);
+        field.set(store,sites);
         try {
             ServiceStationStore.recordConfirmedTimelineVisits(app,new JSONArray().put(new JSONObject().put("id","old-visit").put("lat",52).put("lng",-2)));
             ServiceStationStore.unlockForTesting(app);drain();
@@ -161,7 +163,7 @@ public class ServiceStationCollectionTest {
             assertTrue(goals.display.get("service-percent-25").contains("retained"));
             TimelineVisitStore.clear(app);ServiceStationStore.recordConfirmedTimelineVisits(app,new JSONArray());drain();
             assertEquals(0,ServiceStationStore.achievementSnapshot(app).values.get("service-percent-25"),0);
-        } finally {field.set(null,original);}
+        } finally {field.set(store,original);}
     }
     @Test public void catalogueHasGoalsForEveryRoadAndAllNamedStops() throws Exception {
         JSONArray catalogue=ServiceStationStore.stations(app);Set<String> roads=new HashSet<>(),all=new HashSet<>();

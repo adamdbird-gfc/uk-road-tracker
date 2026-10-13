@@ -37,6 +37,9 @@ jobs:
         with:
           gradle-version: "8.10"
 
+      - name: Verify declarative venue registry
+        run: python3 scripts/generate_venue_collections.py --check
+
       - name: Verify service catalogue metadata rules
         run: python3 scripts/test_service_collection_metadata.py
 

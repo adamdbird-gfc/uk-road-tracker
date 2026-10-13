@@ -50,6 +50,9 @@ jobs:
           test -f "$ANDROID_HOME/build-tools/35.0.0/apksigner"
           test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
 
+      - name: Verify declarative venue registry
+        run: python3 scripts/generate_venue_collections.py --check
+
       - name: Package pinned offline historic county reference
         run: bash android-prototype/scripts/prepare_county_reference.sh
 

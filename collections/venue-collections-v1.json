@@ -608,7 +608,16 @@
           "unit": "nations visited"
         }
       ],
-      "identity_pattern": "msa:.+"
+      "identity_pattern": "msa:.+",
+      "grouping": {
+        "parent_field": "region",
+        "parent_labels": {
+          "GB": "Great Britain",
+          "NI": "Northern Ireland"
+        },
+        "parent_fallback": "Other UK venues",
+        "child_field": "road"
+      }
     },
     {
       "id": "wetherspoons",
@@ -621,7 +630,7 @@
       "brand_pattern": "(j\\s*d\\s*)?wetherspoons?",
       "catalogue_asset": "collections/uk-wetherspoons-map-v1.json",
       "catalogue_format": "reviewed_map_v1",
-      "bundled_revision": 2026101202,
+      "bundled_revision": 2026101301,
       "pin_label": "W",
       "pin_color": "#238F89",
       "achievement_type": "pub-visit",
@@ -1190,7 +1199,13 @@
           "unit": "areas"
         }
       ],
-      "identity_pattern": "spoons-(osm-[nwr][0-9]+|curated-[a-z0-9-]+)"
+      "identity_pattern": "spoons-(osm-[nwr][0-9]+|curated-[a-z0-9-]+)",
+      "short_name": "Wetherspoons",
+      "grouping": {
+        "parent_field": "county.name",
+        "parent_fallback": "Other UK venues",
+        "child_field": "town"
+      }
     }
   ]
 }

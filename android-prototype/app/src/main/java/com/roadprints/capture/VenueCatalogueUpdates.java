@@ -82,7 +82,7 @@ final class VenueCatalogueUpdates {
                         .putLong("next_check",System.currentTimeMillis()+DAY_MS).apply();
             }catch(Exception unavailable){ /* Keep the last validated map and retry after an hour. */ }
             finally { synchronized(LOCK){inFlight=false;} }
-            if(changed && onChanged!=null)new Handler(Looper.getMainLooper()).post(onChanged);
+            if(changed)VenueVisitStore.ensureHistory(app,definition.id,onChanged);
         });
     }
     static boolean due(long now,long next){return next<=now || next>now+DAY_MS;}
@@ -119,12 +119,12 @@ final class VenueCatalogueUpdates {
                 || !m.getString("sha256").matches("[0-9a-f]{64}")
                 || m.getInt("bytes")<2 || m.getInt("bytes")>CollectionMapCatalog.MAX_CATALOGUE_BYTES
                 || m.getString("catalogue_version").isEmpty())
-            throw new IllegalArgumentException("Unsupported pub manifest");
+            throw new IllegalArgumentException("Unsupported venue manifest");
     }
     JSONObject validatePayload(JSONObject manifest,byte[] bytes) throws Exception {
         validateManifest(manifest);
         if(bytes.length!=manifest.getInt("bytes") || !sha256(bytes).equals(manifest.getString("sha256")))
-            throw new IllegalArgumentException("Pub catalogue integrity check failed");
+            throw new IllegalArgumentException("Venue catalogue integrity check failed");
         JSONObject root=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
         if("services_v1".equals(definition.catalogueFormat)){
             validateServices(root,manifest);return root;
@@ -138,10 +138,10 @@ final class VenueCatalogueUpdates {
                 || !root.has("completion_target") || root.opt("completion_target")!=JSONObject.NULL
                 || !manifest.getString("catalogue_version").equals(root.getString("catalogue_version"))
                 || root.getString("attribution").isEmpty())
-            throw new IllegalArgumentException("Unsupported pub catalogue");
+            throw new IllegalArgumentException("Unsupported venue catalogue");
         JSONArray venues=root.getJSONArray("venues");
         if(venues.length()>5000 || root.getJSONObject("review_summary").getInt("map_venues")!=venues.length())
-            throw new IllegalArgumentException("Pub count does not match review");
+            throw new IllegalArgumentException("Venue count does not match review");
         HashSet<String> ids=new HashSet<>(),aliases=new HashSet<>();
         LocalDate today=LocalDate.now(ZoneOffset.UTC);
         for(int i=0;i<venues.length();i++){
@@ -153,18 +153,18 @@ final class VenueCatalogueUpdates {
                     || v.getString("name").trim().isEmpty() || v.getString("name").length()>200
                     || v.getString("town").length()>200
                     || LocalDate.parse(v.getString("map_reviewed_at")).isAfter(today))
-                throw new IllegalArgumentException("Unreviewed or duplicate pub");
+                throw new IllegalArgumentException("Unreviewed or duplicate venue");
             double lat=v.getDouble("lat"),lon=v.getDouble("lon");
             if(!Double.isFinite(lat)||!Double.isFinite(lon)||lat<49||lat>61||lon< -9||lon>2)
-                throw new IllegalArgumentException("Pub is outside UK coordinate bounds");
+                throw new IllegalArgumentException("Venue is outside UK coordinate bounds");
             if(id.startsWith("spoons-curated-") && (!Boolean.TRUE.equals(v.opt("confirmation_required"))
                     || v.getString("location_label").isEmpty() || v.getString("attribution").isEmpty()))
-                throw new IllegalArgumentException("Curated pub labels are required");
+                throw new IllegalArgumentException("Curated venue labels are required");
             JSONArray names=v.getJSONArray("osm_aliases");
             for(int j=0;j<names.length();j++){
                 String alias=names.getString(j);
                 if(!alias.matches("(node|way|relation)/[0-9]+")||!aliases.add(alias))
-                    throw new IllegalArgumentException("Duplicate pub source identity");
+                    throw new IllegalArgumentException("Duplicate venue source identity");
             }
         }
         if(CollectionMapCatalog.approvedVenues(root,definition).length()!=venues.length())
@@ -190,13 +190,13 @@ final class VenueCatalogueUpdates {
     }
     private byte[] download(String filename,int limit) throws Exception {
         if(!filename.equals("manifest-v1.json")&&!filename.matches("catalogue-[0-9]{10}\\.json"))
-            throw new IllegalArgumentException("Unsupported pub file");
+            throw new IllegalArgumentException("Unsupported venue file");
         HttpURLConnection connection=(HttpURLConnection)new URL(BASE_URL+definition.id+"/"+filename).openConnection();
         connection.setConnectTimeout(5000);connection.setReadTimeout(10000);
         connection.setInstanceFollowRedirects(false);
         try{
             if(connection.getResponseCode()!=200 || connection.getContentLengthLong()>limit)
-                throw new java.io.IOException("Pub release unavailable");
+                throw new java.io.IOException("Venue release unavailable");
             try(InputStream input=connection.getInputStream()){return readBounded(input,limit);}
         }finally{connection.disconnect();}
     }
@@ -204,7 +204,7 @@ final class VenueCatalogueUpdates {
         ByteArrayOutputStream output=new ByteArrayOutputStream();
         byte[] buffer=new byte[8192];int count;
         while((count=input.read(buffer))!=-1){
-            if(output.size()+count>limit)throw new java.io.IOException("Pub file exceeds limit");
+            if(output.size()+count>limit)throw new java.io.IOException("Venue file exceeds limit");
             output.write(buffer,0,count);
         }
         return output.toByteArray();

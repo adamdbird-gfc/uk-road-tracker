@@ -57,9 +57,8 @@ final class VenueProgressPanel {
         for(int i=0;i<pubs.length();i++){
             JSONObject pub=pubs.optJSONObject(i);if(pub==null)continue;
             currentIds.add(pub.optString("id"));if(visited.contains(pub.optString("id")))count++;
-            JSONObject county=pub.optJSONObject("county");
-            String countyName=VenueCollection.definition(collection).siteStop?("NI".equals(pub.optString("region"))?"Northern Ireland":"Great Britain"):county==null?"Other UK venues":county.optString("name","Other UK venues");
-            String town=VenueCollection.definition(collection).siteStop?pub.optString("road"):pub.optString("town");if(town.isEmpty())town="Other locations";
+            VenueCollection.Definition definition=VenueCollection.definition(collection);
+            String countyName=VenueCollection.group(definition,pub,true),town=VenueCollection.group(definition,pub,false);
             groups.computeIfAbsent(countyName,key->new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
                     .computeIfAbsent(town,key->new ArrayList<>()).add(pub);
         }
