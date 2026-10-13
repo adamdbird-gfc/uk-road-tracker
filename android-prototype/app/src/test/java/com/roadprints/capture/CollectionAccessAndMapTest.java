@@ -84,8 +84,8 @@ public class CollectionAccessAndMapTest {
         assertTrue(actual.contains("spoons-curated-belle-vue-manchester-airport"));
         assertFalse(actual.contains("spoons-osm-w507289751"));
         assertFalse(actual.contains("spoons-osm-w38325241"));
-        assertFalse(actual.contains("spoons-osm-w1465394526"));
-        assertFalse(actual.contains("spoons-osm-w98286602"));
+        assertTrue(actual.contains("spoons-osm-w1465394526"));
+        assertTrue(actual.contains("spoons-osm-w98286602"));
         assertTrue(app.getSharedPreferences("roadprints_collections_v1",0).getAll().isEmpty());
     }
     @Test public void nationwideAssetLoadsAboveOldLimitAndOversizedAssetIsRejected() throws Exception {

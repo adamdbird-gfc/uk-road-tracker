@@ -26,7 +26,7 @@ public class VenueConfigurationTest {
         assertEquals(48,services);assertEquals(21,pubs);
         JSONArray catalogue=ServiceStationStore.stations(app);Set<String> all=new HashSet<>();for(int i=0;i<catalogue.length();i++)all.add(catalogue.getJSONObject(i).getString("id"));
         VenueAchievements.Snapshot goals=VenueAchievements.calculate(VenueCollection.definition("services"),catalogue,all,true,Collections.emptyMap());
-        for(int i=0;i<VenueCollection.definition("services").goals.length();i++){JSONObject g=VenueCollection.definition("services").goals.getJSONObject(i);assertEquals(g.getString("id"),g.getDouble("target"),goals.values.get(g.getString("id")),0);}
+        for(int i=0;i<VenueCollection.definition("services").goals.length();i++){JSONObject g=VenueCollection.definition("services").goals.getJSONObject(i);assertEquals(g.getString("id"),"percent".equals(g.getString("measure"))?100:g.getDouble("target"),goals.values.get(g.getString("id")),0);}
     }
     @Test public void newRestaurantConfigurationUsesExistingGoalAndCatalogueProjection()throws Exception{
         JSONObject row=new JSONObject(VenueCollectionConfig.read().getJSONArray("collections").getJSONObject(1).toString());
