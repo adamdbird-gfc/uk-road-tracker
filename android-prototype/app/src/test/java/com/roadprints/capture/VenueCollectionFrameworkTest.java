@@ -24,7 +24,9 @@ public class VenueCollectionFrameworkTest {
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
         app.getSharedPreferences("roadprints_collections_v1",0).edit().putBoolean("service_stations_unlocked",true).putBoolean("automatic_visits_v2_migration",true).putBoolean("confirmed_timeline_only_v1",true).commit();
         CollectionAccessStore.installForTesting(app,CollectionAccessStore.SERVICES);
-        pub=CollectionMapCatalog.spoons(app).getJSONObject(0);service=ServiceStationStore.stations(app).getJSONObject(0);
+        JSONArray pubs=CollectionMapCatalog.spoons(app);
+        for(int i=0;i<pubs.length();i++)if("The Robert Pocock".equals(pubs.getJSONObject(i).optString("name")))pub=pubs.getJSONObject(i);
+        assertNotNull(pub);service=ServiceStationStore.stations(app).getJSONObject(0);
     }
     private Location fix(JSONObject row)throws Exception{
         JSONObject point=row.optJSONArray("points")==null?row:row.getJSONArray("points").getJSONObject(0);
