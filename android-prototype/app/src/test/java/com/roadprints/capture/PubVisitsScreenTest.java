@@ -92,6 +92,31 @@ public class PubVisitsScreenTest {
         assertEquals(PubTimelineImportActivity.class.getName(),started.getComponent().getClassName());
         controller.destroy();
     }
+    @Test public void sharedSearchShowsMatchingVenuesAndKeepsCollectionTotals() throws Exception {
+        ActivityController<Activity> controller=Robolectric.buildActivity(Activity.class).create();Activity activity=controller.get();
+        for(String collection:new String[]{CollectionAccessStore.SPOONS,CollectionAccessStore.SERVICES}){
+            CollectionAccessStore.installForTesting(app,collection);
+            JSONArray catalogue=VenueCollection.catalogue(app,collection);JSONObject venue=catalogue.getJSONObject(0);
+            LinearLayout panel=new LinearLayout(activity);Set<String> expanded=new HashSet<>();
+            VenueProgressPanel.populate(activity,collection,panel,expanded,()->{});
+            TextView total=panel.findViewWithTag("venue_total:"+collection);String before=total.getText().toString();
+            android.widget.EditText search=panel.findViewWithTag("venue_search:"+collection);
+            search.setText(venue.getString("name"));
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(250));
+            assertNotNull(panel.findViewWithTag("pub-row:"+venue.getString("id")));
+            assertEquals(before,total.getText().toString());assertTrue(expanded.isEmpty());
+            LinearLayout results=panel.findViewWithTag("venue_results:"+collection);
+            assertNull(results.findViewWithTag("pub_manual_check"));assertNull(results.findViewWithTag("pub_timeline_import"));
+            panel.findViewWithTag("venue_filter:"+collection+":Visited").performClick();
+            assertTrue(panel.findViewWithTag("venue_filter:"+collection+":Visited").isSelected());
+            assertFalse(panel.findViewWithTag("venue_filter:"+collection+":All").isSelected());
+            search.setText("no-such-venue-xyz");
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(250));
+            assertNotNull(find(results,"No matching venues. Try another search or filter."));
+            assertEquals(before,total.getText().toString());
+        }
+        controller.destroy();
+    }
     @Test public void legacyPubLinkRoutesToProgressAndPreservesCheckinTarget(){
         Intent intent=new Intent(app,PubVisitsActivity.class).putExtra("pub_id","selected-pub");
         ActivityController<PubVisitsActivity> controller=Robolectric.buildActivity(PubVisitsActivity.class,intent).create();

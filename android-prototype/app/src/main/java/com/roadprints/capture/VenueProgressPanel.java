@@ -37,12 +37,39 @@ final class VenueProgressPanel {
             pubs.put(row);
         }
         if(controls){
-            android.widget.EditText search=new android.widget.EditText(activity);search.setSingleLine(true);search.setHint("Search name, town or postcode");search.setTextColor(Color.WHITE);search.setHintTextColor(MUTED);search.setTag("venue_search:"+collection);panel.addView(search);
+            VenueCollection.Definition definition=VenueCollection.definition(collection);
+            LinearLayout data=new LinearLayout(activity);data.setOrientation(LinearLayout.VERTICAL);
+            data.setTag("venue_data:"+collection);data.setPadding(dp(activity,12),dp(activity,8),dp(activity,12),dp(activity,8));
+            data.setBackground(background(activity,0xFF142B5C,0xFF355184));
+            data.addView(text(activity,"YOUR COLLECTION",11,TEAL,true));
+            int totalVisited=0;for(int i=0;i<all.length();i++)if(completed.contains(all.optJSONObject(i).optString("id")))totalVisited++;
+            TextView total=text(activity,totalVisited+" of "+all.length()+" mapped "+definition.plural+" visited",16,Color.WHITE,true);
+            total.setTag("venue_total:"+collection);data.addView(total);
+            data.addView(text(activity,"Visits check in automatically. Open a venue to check in manually, or review uncertain visits below.",12,MUTED,false));
+            LinearLayout actions=new LinearLayout(activity);
+            Button manual=button(activity,"Manual check"),importButton=button(activity,"Import from Timeline");
+            manual.setTag("pub_manual_check");importButton.setTag("pub_timeline_import");
+            addCompactButton(activity,actions,manual,0);addCompactButton(activity,actions,importButton,8);
+            data.addView(actions);panel.addView(data);
+            manual.setOnClickListener(v->VenueVisitUi.reviewNative(activity,collection,changed));
+            importButton.setOnClickListener(v->PubVisitUi.importTimeline(activity));
+
+            TextView searchLabel=text(activity,"FIND A "+definition.singular.toUpperCase(java.util.Locale.ROOT),11,TEAL,true);
+            searchLabel.setPadding(0,dp(activity,16),0,dp(activity,6));panel.addView(searchLabel);
+            android.widget.EditText search=new android.widget.EditText(activity);search.setSingleLine(true);
+            search.setHint(CollectionAccessStore.SPOONS.equals(collection)?"Search name, town or postcode":"Search name, road or postcode");
+            search.setTextSize(14);search.setTextColor(0xFF0B1C50);search.setHintTextColor(0xFF506080);
+            search.setBackground(background(activity,Color.WHITE,TEAL));search.setPadding(dp(activity,12),dp(activity,10),dp(activity,12),dp(activity,10));
+            search.setMinHeight(dp(activity,48));search.setTag("venue_search:"+collection);
+            search.setContentDescription(search.getHint());panel.addView(search,new LinearLayout.LayoutParams(-1,-2));
             LinearLayout filters=new LinearLayout(activity),results=new LinearLayout(activity);results.setOrientation(LinearLayout.VERTICAL);
-            String[] selected={"All"};
+            results.setTag("venue_results:"+collection);
+            String[] selected={"All"};List<Button> choices=new ArrayList<>();
             for(String label:new String[]{"All","Visited","Remaining"}){
-                Button choice=button(activity,label);filters.addView(choice,new LinearLayout.LayoutParams(0,-2,1));
-                choice.setOnClickListener(v->{selected[0]=label;results.removeAllViews();populateFiltered(activity,collection,results,expanded,changed,search.getText().toString().trim(),label,false);});
+                Button choice=button(activity,label);choice.setTag("venue_filter:"+collection+":"+label);choices.add(choice);
+                addCompactButton(activity,filters,choice,choices.size()==1?0:8);styleFilter(activity,choice,"All".equals(label));
+                choice.setOnClickListener(v->{selected[0]=label;for(Button item:choices)styleFilter(activity,item,label.contentEquals(item.getText()));
+                    results.removeAllViews();populateFiltered(activity,collection,results,expanded,changed,search.getText().toString().trim(),label,false);});
             }
             panel.addView(filters);panel.addView(results);
             android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());Runnable[] refresh={null};
@@ -51,33 +78,35 @@ final class VenueProgressPanel {
             }public void afterTextChanged(android.text.Editable e){}});
             populateFiltered(activity,collection,results,expanded,changed,"","All",false);return;
         }
-        Set<String> visited=VenueCollection.completed(activity,collection),currentIds=new HashSet<>();
+        Set<String> visited=completed;
         Map<String,Map<String,List<JSONObject>>> groups=new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         int count=0;
         for(int i=0;i<pubs.length();i++){
             JSONObject pub=pubs.optJSONObject(i);if(pub==null)continue;
-            currentIds.add(pub.optString("id"));if(visited.contains(pub.optString("id")))count++;
+            if(visited.contains(pub.optString("id")))count++;
             VenueCollection.Definition definition=VenueCollection.definition(collection);
             String countyName=VenueCollection.group(definition,pub,true),town=VenueCollection.group(definition,pub,false);
             groups.computeIfAbsent(countyName,key->new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
                     .computeIfAbsent(town,key->new ArrayList<>()).add(pub);
         }
-        panel.addView(text(activity,count+" of "+pubs.length()+" mapped "+VenueCollection.definition(collection).plural+" visited",16,Color.WHITE,true));
-        panel.addView(text(activity,"Supported visits check in automatically. Manual check-in is available from each venue. Uncertain visits need your confirmation.",12,MUTED,false));
-        Button manual=button(activity,"Manual check"),importButton=button(activity,"Import from Timeline");
-        manual.setTag("pub_manual_check");importButton.setTag("pub_timeline_import");
-        panel.addView(manual);panel.addView(importButton);
-        manual.setOnClickListener(v->VenueVisitUi.reviewNative(activity,collection,changed));
-        importButton.setOnClickListener(v->PubVisitUi.importTimeline(activity));
+        TextView matches=text(activity,pubs.length()+" "+VenueCollection.definition(collection).plural+" shown · "+count+" visited",12,MUTED,false);
+        matches.setTag("venue_matches:"+collection);matches.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);panel.addView(matches);
+        if(pubs.length()==0)panel.addView(text(activity,"No matching venues. Try another search or filter.",14,Color.WHITE,false));
+        // Show matching venues immediately while searching; keep normal browsing lazy.
+        Set<String> visibleExpanded=query.isEmpty()?expanded:new HashSet<>(expanded);
+        if(!query.isEmpty())for(Map.Entry<String,Map<String,List<JSONObject>>> group:groups.entrySet()){
+            String key=(CollectionAccessStore.SPOONS.equals(collection)?"pub-county:":collection+"-group:")+group.getKey();
+            visibleExpanded.add(key);for(String town:group.getValue().keySet())visibleExpanded.add(key+":town:"+town);
+        }
         for(Map.Entry<String,Map<String,List<JSONObject>>> county:groups.entrySet()){
             int total=0,done=0;
             for(List<JSONObject> town:county.getValue().values())for(JSONObject pub:town){total++;if(visited.contains(pub.optString("id")))done++;}
             final String key=(CollectionAccessStore.SPOONS.equals(collection)?"pub-county:":collection+"-group:")+county.getKey();
-            accordion(activity,panel,county.getKey(),done+" of "+total+" visited",key,expanded,body->{
+            accordion(activity,panel,county.getKey(),done+" of "+total+" visited",key,visibleExpanded,body->{
                 for(Map.Entry<String,List<JSONObject>> town:county.getValue().entrySet()){
                     int seen=0;for(JSONObject pub:town.getValue())if(visited.contains(pub.optString("id")))seen++;
                     String townKey=key+":town:"+town.getKey();
-                    accordion(activity,body,town.getKey(),seen+" of "+town.getValue().size()+" visited",townKey,expanded,rows->{
+                    accordion(activity,body,town.getKey(),seen+" of "+town.getValue().size()+" visited",townKey,visibleExpanded,rows->{
                         town.getValue().sort(Comparator.comparing(pub->pub.optString("name"),String.CASE_INSENSITIVE_ORDER));
                         for(JSONObject pub:town.getValue())addPubRow(activity,collection,rows,pub,visited,changed);
                     });
@@ -125,10 +154,23 @@ final class VenueProgressPanel {
         header.setContentDescription(title+", "+summary+", collapsed");
         if(expanded.contains(key))toggle.run();
     }
+    private static GradientDrawable background(Activity activity,int colour,int border){
+        GradientDrawable bg=new GradientDrawable();bg.setColor(colour);bg.setCornerRadius(dp(activity,8));bg.setStroke(dp(activity,1),border);return bg;
+    }
+    private static void addCompactButton(Activity activity,LinearLayout row,Button button,int gap){
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(0,dp(activity,48),1);
+        params.setMargins(dp(activity,gap),dp(activity,8),0,dp(activity,4));row.addView(button,params);
+    }
+    private static void styleFilter(Activity activity,Button button,boolean selected){
+        button.setSelected(selected);button.setTextColor(selected?0xFF0B1C50:Color.WHITE);
+        button.setTypeface(null,selected?Typeface.BOLD:Typeface.NORMAL);
+        button.setBackground(background(activity,selected?GOLD:0xFF142B5C,selected?GOLD:0xFF57709C));
+        button.setContentDescription(button.getText()+(selected?", selected":", not selected"));
+    }
     private static Button button(Activity activity,String title){
-        Button button=new Button(activity);button.setText(title);button.setAllCaps(false);button.setTextSize(14);button.setTextColor(0xFF0B1C50);
-        button.setMinHeight(dp(activity,48));GradientDrawable bg=new GradientDrawable();bg.setColor(GOLD);bg.setCornerRadius(dp(activity,12));button.setBackground(bg);
-        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.topMargin=dp(activity,10);params.bottomMargin=dp(activity,5);button.setLayoutParams(params);return button;
+        Button button=new Button(activity);button.setText(title);button.setAllCaps(false);button.setTextSize(12);button.setTextColor(TEAL);
+        button.setMinHeight(0);button.setMinimumHeight(0);button.setMinWidth(0);button.setMinimumWidth(0);
+        button.setPadding(dp(activity,6),0,dp(activity,6),0);button.setBackground(background(activity,0xFF142B5C,0xFF57709C));return button;
     }
     private static TextView text(Activity activity,String title,int size,int colour,boolean bold){
         TextView result=new TextView(activity);result.setText(title);result.setTextSize(size);result.setTextColor(colour);result.setPadding(0,dp(activity,4),0,dp(activity,4));
