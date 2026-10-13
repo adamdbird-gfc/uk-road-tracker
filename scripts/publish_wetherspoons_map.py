@@ -6,18 +6,19 @@ import json
 import re
 from datetime import date
 from pathlib import Path
+from venue_approval import validate_approval
 
 MAX_BYTES = 2 * 1024 * 1024
 
 
 def validate(data):
     required = {"schema_version": 1, "collection_id": "wetherspoons", "scope": "UK",
-                "release_status": "approved", "approval_scope": "map_only_partial_beta",
-                "ready_for_app": True, "coverage_complete": False, "visit_enabled": False,
-                "completion_target": None}
+                "release_status": "approved",
+                "ready_for_app": True, "visit_enabled": False}
     if any(k not in data or data[k] != value or type(data[k]) is not type(value)
            for k, value in required.items()):
         raise ValueError("Only reviewed map releases can be published")
+    validate_approval(data)
     if not data.get("catalogue_version") or not data.get("attribution"):
         raise ValueError("Version and attribution are required")
     venues = data["venues"]

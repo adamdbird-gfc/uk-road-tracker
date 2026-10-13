@@ -23,7 +23,7 @@ public class VenueConfigurationTest {
             if("services".equals(d.collectionId))services++;
             if("wetherspoons".equals(d.collectionId))pubs++;
         }
-        assertEquals(48,services);assertEquals(21,pubs);
+        assertEquals(48,services);assertEquals(116,pubs);
         JSONArray catalogue=ServiceStationStore.stations(app);Set<String> all=new HashSet<>();for(int i=0;i<catalogue.length();i++)all.add(catalogue.getJSONObject(i).getString("id"));
         VenueAchievements.Snapshot goals=VenueAchievements.calculate(VenueCollection.definition("services"),catalogue,all,true,Collections.emptyMap());
         for(int i=0;i<VenueCollection.definition("services").goals.length();i++){JSONObject g=VenueCollection.definition("services").goals.getJSONObject(i);assertEquals(g.getString("id"),"percent".equals(g.getString("measure"))?100:g.getDouble("target"),goals.values.get(g.getString("id")),0);}
@@ -33,7 +33,7 @@ public class VenueConfigurationTest {
         row.put("id","fixture").put("name","Fixture restaurants").put("singular","restaurant").put("plural","restaurants").put("identity_pattern","fixture-[a-z]+").put("achievement_type","venue-visit").put("pin_label","F");
         row.put("achievements",new JSONArray().put(new JSONObject().put("id","fixture-first").put("title","First restaurant").put("description","Visit a restaurant.").put("detail","Visit a restaurant.").put("measure","distinct_history").put("target",1)));
         VenueCollection.Definition definition=new VenueCollection.Definition(row);
-        JSONObject root=new JSONObject().put("collection_id","fixture").put("scope","UK").put("ready_for_app",true).put("release_status","approved").put("approval_scope","map_only_partial_beta").put("visit_enabled",false).put("completion_target",JSONObject.NULL);
+        JSONObject root=new JSONObject().put("collection_id","fixture").put("scope","UK").put("ready_for_app",true).put("release_status","approved").put("approval_scope","map_only_partial_beta").put("coverage_complete",false).put("visit_enabled",false).put("completion_target",JSONObject.NULL);
         root.put("venues",new JSONArray().put(new JSONObject().put("id","fixture-one").put("name","Fixture restaurant").put("town","Town").put("status","active").put("operating_status","reviewed_current").put("visit_enabled",false).put("map_reviewed_at","2026-10-13").put("lat",51.4).put("lon",.3)));
         JSONArray pins=CollectionMapCatalog.approvedVenues(root,definition);assertEquals(1,pins.length());
         VenueAchievements.Snapshot goals=VenueAchievements.calculate(definition,pins,Collections.singleton("fixture-one"),true,Collections.emptyMap());assertEquals(1,goals.values.get("fixture-first"),0);

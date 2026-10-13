@@ -94,6 +94,7 @@ final class VenueVisitStore {
                 JSONObject proof=records.optJSONObject(existing.next());if(proof==null)continue;
                 JSONObject pub=find(pubs,proof.optString("venue_id"));if(pub==null)continue;
                 JSONObject county=pub.optJSONObject("county");
+                if(proof.optString("county_code").isEmpty()&&county!=null){proof.put("county_code",county.optString("code"));changed=true;}
                 if(proof.optString("nation").isEmpty()&&county!=null){proof.put("nation",county.optString("nation"));changed=true;}
                 if(proof.optString("town").isEmpty()&&!pub.optString("town").isEmpty()){proof.put("town",pub.optString("town"));changed=true;}
             }
@@ -111,8 +112,14 @@ final class VenueVisitStore {
                 String key=keys.next();JSONObject proof=records.optJSONObject(key);if(!key.startsWith("timeline:")||proof==null||proof.optBoolean("dismissed"))continue;
                 JSONObject source=sources.get(proof.optString("source_visit_id"));
                 if(source==null||!PubVisitEvidence.validVisit(source,now)){invalid.add(key);continue;}
-                JSONObject venue=find(pubs,proof.optString("venue_id"));if(venue==null)continue;
-                JSONArray nearby=VenueEvidence.candidates(collection,source,pubs,now);
+                JSONObject venue=find(pubs,proof.optString("venue_id"));JSONArray eligible=pubs;
+                if(venue==null){
+                    venue=VenueCompletion.archived(context,collection,proof.optString("venue_id"));
+                    if(venue==null)continue;
+                    if(!VenueCompletion.before(venue,source.optString("start"))){invalid.add(key);continue;}
+                    eligible=new JSONArray(pubs.toString()).put(venue);
+                }
+                JSONArray nearby=VenueEvidence.candidates(collection,source,eligible,now);
                 if(find(nearby,proof.optString("venue_id"))==null
                         ||("named_timeline_visit".equals(proof.optString("source"))&&!proof.optString("venue_id").equals(VenueEvidence.namedMatch(collection,source,nearby))))invalid.add(key);
             }
@@ -211,7 +218,7 @@ final class VenueVisitStore {
     }
     private static JSONObject proof(String collection,JSONObject pub,String source,String at) throws Exception {
         return new JSONObject().put("collection_id",collection).put("venue_id",pub.getString("id")).put("name",pub.getString("name"))
-                .put("town",pub.optString("town")).put("nation",pub.optJSONObject("county")==null?"":pub.optJSONObject("county").optString("nation")).put("source",source).put("visited_at",at);
+                .put("town",pub.optString("town")).put("county_code",pub.optJSONObject("county")==null?"":pub.optJSONObject("county").optString("code")).put("nation",pub.optJSONObject("county")==null?"":pub.optJSONObject("county").optString("nation")).put("source",source).put("visited_at",at);
     }
     static JSONObject find(JSONArray pubs,String id){
         if(id==null||id.isEmpty())return null;
@@ -226,6 +233,7 @@ final class VenueVisitStore {
             throw new IllegalStateException("Install this collection first");
     }
     static synchronized void clear(Context context,String collection){
+        VenueCompletion.clear(context,collection);
         generation++;
         context.getSharedPreferences(PREFS,0).edit().remove(collection+":records").remove(collection+":revision").remove(collection+":native_scan_revision").putBoolean(collection+":migrated",true).commit();
     }
@@ -271,13 +279,21 @@ final class VenueVisitStore {
             String key=keys.next();JSONObject proof=records.optJSONObject(key);
             if(proof!=null&&id.equals(proof.optString("journey_id"))&&!proof.optBoolean("dismissed"))records.remove(key);
         }
-        JSONArray outcomes=VenueEvidence.nativeVisits(collection,journey,VenueCollection.catalogue(context,collection));
+        JSONArray candidates=VenueCollection.catalogue(context,collection);boolean copied=false;
+        java.util.Iterator<String> previousKeys=old.keys();
+        while(previousKeys.hasNext()){
+            JSONObject previous=old.optJSONObject(previousKeys.next());if(previous==null||!id.equals(previous.optString("journey_id"))||!VenueCompletion.supported(previous))continue;
+            String venueId=previous.optString("venue_id");JSONObject archived=VenueCompletion.archived(context,collection,venueId);
+            if(archived!=null&&VenueCompletion.before(archived,previous.optString("visited_at"))&&find(candidates,venueId)==null){if(!copied){candidates=new JSONArray(candidates.toString());copied=true;}candidates.put(archived);}
+        }
+        JSONArray outcomes=VenueEvidence.nativeVisits(collection,journey,candidates);
         for(int i=0;i<outcomes.length();i++){
             JSONObject outcome=outcomes.getJSONObject(i);String key="native:"+id+":"+outcome.getString("stop_key");
             if(records.has(key))continue;
             JSONObject previous=old.optJSONObject(key);
             if(previous!=null&&"confirmed_native_stop".equals(previous.optString("source"))){records.put(key,previous);continue;}
             JSONObject venue=outcome.getJSONObject("venue");
+            if(venue.has("permanently_closed_at")&&!VenueCompletion.before(venue,outcome.getString("visited_at")))continue;
             JSONObject record=proof(collection,venue,outcome.getBoolean("automatic")?"native_stop":"pending_native_stop",outcome.getString("visited_at"))
                     .put("journey_id",id).put("stop_key",outcome.getString("stop_key"))
                     .put("pending",!outcome.getBoolean("automatic")).put("evidence",outcome.getJSONObject("evidence"));

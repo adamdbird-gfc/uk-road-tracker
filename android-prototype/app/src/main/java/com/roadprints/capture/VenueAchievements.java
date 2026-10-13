@@ -23,14 +23,16 @@ final class VenueAchievements {
                 visited.add(id);if(!proof.optString("nation").isEmpty())nations.put(id,proof.optString("nation"));
             }
         }
-        return calculate(collection,VenueCollection.catalogue(context,collection.id),visited,CollectionAccessStore.installed(context,collection.id),nations);
+        Snapshot out=calculate(collection,VenueCollection.catalogue(context,collection.id),visited,CollectionAccessStore.installed(context,collection.id),nations);
+        try{Snapshot completion=VenueCompletion.calculate(context,collection,VenueCatalogueUpdates.forCollection(collection).root(context),VenueVisitStore.records(context,collection.id),CollectionAccessStore.installed(context,collection.id));out.values.putAll(completion.values);out.lists.putAll(completion.lists);out.display.putAll(completion.display);}catch(Exception unavailable){throw new IllegalStateException("Completion catalogue unavailable",unavailable);}
+        return out;
     }
     static void definitions(VenueCollection.Definition collection,List<AchievementStore.Definition> out){
         JSONArray goals=collection.goals;
         for(int i=0;i<goals.length();i++){
             JSONObject g=goals.optJSONObject(i);
             AchievementStore.Definition d=new AchievementStore.Definition(g.optString("id"),collection.achievementIcon,g.optString("title"),g.optString("description"),g.optString("detail"),collection.achievementType,g.optDouble("target"),null,0,0,0);
-            d.collectionId=collection.id;d.unit=g.optString("unit","qualifying visits");
+            d.venueRule=g;d.collectionId=collection.id;d.unit=g.optString("unit","qualifying visits");
             JSONArray levels=g.optJSONArray("levels"),titles=g.optJSONArray("level_titles");
             if(levels!=null){d.levels=new double[levels.length()];d.levelTitles=new String[levels.length()];for(int n=0;n<levels.length();n++){d.levels[n]=levels.optDouble(n);d.levelTitles[n]=titles.optString(n);}}
             out.add(d);
@@ -45,6 +47,7 @@ final class VenueAchievements {
         for(String id:visited)if(!current.contains(id))try{history.add(new JSONObject().put("id",id).put("nation",retainedNations.getOrDefault(id,"")));}catch(Exception invalid){throw new IllegalStateException(invalid);}
         for(int i=0;i<collection.goals.length();i++){
             JSONObject goal=collection.goals.optJSONObject(i);String id=goal.optString("id"),measure=goal.optString("measure");
+            if(VenueCompletion.special(goal)){out.values.put(id,0.0);out.lists.put(id,Collections.emptyList());continue;}
             List<String> rows=new ArrayList<>();Set<String> proof=new HashSet<>();double value;
             List<JSONObject> group=members(goal,all);int count=count(group,visited,proof);
             if("groups".equals(measure)){

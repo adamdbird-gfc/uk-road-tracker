@@ -6,14 +6,14 @@ import org.json.JSONObject;
 final class VenueCollection {
     static final class Definition {
         interface CatalogueSource {JSONArray load(Context context)throws Exception;}
-        final String id,name,shortName,singular,plural,brandPattern,confirmationIdPrefix,identityPattern,description,catalogueAsset,catalogueFormat,pinLabel,achievementType,achievementIcon; final int pinColor; final long bundledRevision; final JSONArray goals; final JSONObject grouping; final double radius; final boolean siteStop;
+        final String id,name,shortName,singular,plural,brandPattern,lifecycleStartedAt,confirmationIdPrefix,identityPattern,description,catalogueAsset,catalogueFormat,pinLabel,achievementType,achievementIcon; final int pinColor; final long bundledRevision; final JSONArray goals; final JSONObject grouping; final double radius; final boolean siteStop;
         final CatalogueSource source;
         Definition(String id,String name,String singular,String plural,double radius,boolean siteStop,String brandPattern,CatalogueSource source){
-            this.id=id;this.name=name;this.shortName=name;this.singular=singular;this.plural=plural;this.radius=radius;this.siteStop=siteStop;this.brandPattern=brandPattern;this.source=source;this.confirmationIdPrefix="";this.identityPattern="[a-zA-Z0-9:-]+";this.description="";this.catalogueAsset="";this.catalogueFormat="reviewed_map_v1";this.pinLabel="";this.pinColor=0xFF238F89;this.achievementType="venue-visit";this.achievementIcon="";this.bundledRevision=1;this.goals=new JSONArray();this.grouping=new JSONObject();
+            this.id=id;this.name=name;this.shortName=name;this.singular=singular;this.plural=plural;this.radius=radius;this.siteStop=siteStop;this.brandPattern=brandPattern;this.source=source;this.lifecycleStartedAt="";this.confirmationIdPrefix="";this.identityPattern="[a-zA-Z0-9:-]+";this.description="";this.catalogueAsset="";this.catalogueFormat="reviewed_map_v1";this.pinLabel="";this.pinColor=0xFF238F89;this.achievementType="venue-visit";this.achievementIcon="";this.bundledRevision=1;this.goals=new JSONArray();this.grouping=new JSONObject();
         }
         Definition(JSONObject row){
             id=row.optString("id");name=row.optString("name");shortName=row.optString("short_name",name);singular=row.optString("singular");plural=row.optString("plural");
-            radius=row.optDouble("radius");siteStop=row.optBoolean("site_stop");brandPattern=row.optString("brand_pattern");description=row.optString("description");confirmationIdPrefix=row.optString("confirmation_id_prefix");identityPattern=row.optString("identity_pattern");
+            radius=row.optDouble("radius");siteStop=row.optBoolean("site_stop");brandPattern=row.optString("brand_pattern");description=row.optString("description");lifecycleStartedAt=row.optString("lifecycle_started_at");confirmationIdPrefix=row.optString("confirmation_id_prefix");identityPattern=row.optString("identity_pattern");
             catalogueAsset=row.optString("catalogue_asset");catalogueFormat=row.optString("catalogue_format");bundledRevision=row.optLong("bundled_revision");
             pinLabel=row.optString("pin_label");pinColor=android.graphics.Color.parseColor(row.optString("pin_color"));achievementType=row.optString("achievement_type");achievementIcon=row.optString("achievement_icon");goals=row.optJSONArray("achievements");grouping=row.optJSONObject("grouping");
             source=context->CollectionMapCatalog.venues(context,this);
