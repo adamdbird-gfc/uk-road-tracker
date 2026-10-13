@@ -24,6 +24,13 @@ import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.ActivityTransition;
 import com.google.android.gms.location.ActivityTransitionRequest;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.Priority;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -79,6 +86,20 @@ public class CaptureService extends Service {
 
     private LocationManager locationManager;
     private ActivityRecognitionClient activityClient;
+    private FusedLocationProviderClient fusedClient;
+    private boolean serviceDestroyed;
+    private long lastLocationCallbackAt;
+    private final LocationCallback fusedCallback = new LocationCallback() {
+        @Override public void onLocationResult(LocationResult result) {
+            if (serviceDestroyed || (!isArmed(CaptureService.this) && !isActive(CaptureService.this))) return;
+            Location location = result.getLastLocation();
+            if (location != null) locationListener.onLocationChanged(location);
+        }
+        @Override public void onLocationAvailability(LocationAvailability availability) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "fused_location_availability",
+                    "available=" + availability.isLocationAvailable());
+        }
+    };
     private PendingIntent activityPendingIntent;
     private final List<Location> points = new ArrayList<>();
     private final List<Location> candidatePoints = new ArrayList<>();
@@ -139,11 +160,9 @@ public class CaptureService extends Service {
                     && android.os.SystemClock.elapsedRealtime()-lastReliableSampleAt>90_000L) {
                 MovementDiagnostics.recordEvent(CaptureService.this,"sampling_refresh_after_silence",
                         "No recent accurate fix; refreshing subscriptions. Missing travel remains uncredited.");
+                recordSamplingState("watchdog");
                 try {
-                    locationManager.removeUpdates(locationListener);
-                    diagnosticUpdatesRegistered=false;
-                    if(isActive(CaptureService.this))requestCaptureLocationUpdates();
-                    else refreshDiagnosticLocationUpdates();
+                    refreshSamplingSubscriptions();
                 } catch(SecurityException error) {
                     broadcastUpdate("Location access is needed to resume tracking.");
                 }
@@ -188,7 +207,9 @@ public class CaptureService extends Service {
         }
     };
     private final Runnable candidateTimeout = () -> {
-        if (candidateMode != null) cancelStartCandidate("Movement was too short to save as a journey.");
+        if (candidateMode != null) cancelStartCandidate(candidatePoints.size() < 2
+                ? "Journey could not be confirmed: insufficient location updates."
+                : "Movement was too short to save as a journey.");
     };
     private final Runnable candidateStillTimeout = () -> {
         if (candidateMode != null && candidateStationarySince != 0
@@ -200,6 +221,7 @@ public class CaptureService extends Service {
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            lastLocationCallbackAt = android.os.SystemClock.elapsedRealtime();
             if(location.hasAccuracy() && location.getAccuracy()<=50
                     && Math.abs(System.currentTimeMillis()-location.getTime())<=60_000L)
                 lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
@@ -283,6 +305,7 @@ public class CaptureService extends Service {
         checkpointFile = new AtomicFile(new File(getFilesDir(), "roadprints_active_capture.json"));
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
+        fusedClient = LocationServices.getFusedLocationProviderClient(this);
         createNotificationChannel();
         handler.postDelayed(samplingWatchdog,60_000L);
         contextCache=new ContextMapCache(this);
@@ -893,7 +916,7 @@ public class CaptureService extends Service {
         candidateMovementLast = null;
         candidateMovementMetres = 0f;
         candidatePoints.clear();
-        if (!isActive(this)) locationManager.removeUpdates(locationListener);
+        if (!isActive(this)) removeLocationUpdates();
         if (message != null && isArmed(this)) {
             MovementDiagnostics.recordEvent(this, "journey_candidate_rejected", message);
             broadcastUpdate(message);
@@ -1065,7 +1088,7 @@ public class CaptureService extends Service {
         captureFinishing = true;
         captureDiscarded = false;
         handler.removeCallbacks(checkpointCapture);
-        locationManager.removeUpdates(locationListener);
+        removeLocationUpdates();
 
         // Snapshot the small live-capture state quickly on the service thread.
         // JourneyStore.save is synchronized with archive reads, so serializing and
@@ -1362,6 +1385,63 @@ public class CaptureService extends Service {
     }
 
     @SuppressLint("MissingPermission")
+    private void refreshSamplingSubscriptions() {
+        removeLocationUpdates();
+        diagnosticUpdatesRegistered = false;
+        if (isActive(this)) requestCaptureLocationUpdates();
+        else if (candidateMode != null) requestLocationUpdatesForMode(candidateMode, true);
+        else refreshDiagnosticLocationUpdates();
+    }
+
+    private void removeLocationUpdates() {
+        locationManager.removeUpdates(locationListener);
+        if (fusedClient != null) fusedClient.removeLocationUpdates(fusedCallback)
+                .addOnFailureListener(error -> MovementDiagnostics.recordEvent(this,
+                        "fused_location_remove_failed", error.getClass().getSimpleName()));
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestFusedUpdates(long interval) {
+        if (fusedClient == null) return;
+        LocationRequest request = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
+                .setMinUpdateIntervalMillis(interval).setMinUpdateDistanceMeters(0f)
+                .setMaxUpdateDelayMillis(0L).setMaxUpdateAgeMillis(0L)
+                .setWaitForAccurateLocation(false).build();
+        try {
+            fusedClient.requestLocationUpdates(request, fusedCallback, Looper.getMainLooper())
+                    .addOnSuccessListener(unused -> MovementDiagnostics.recordEvent(this,
+                            "fused_location_subscribed", "interval_ms=" + interval))
+                    .addOnFailureListener(error -> MovementDiagnostics.recordEvent(this,
+                            "fused_location_subscription_failed", error.getClass().getSimpleName()));
+        } catch (RuntimeException error) {
+            MovementDiagnostics.recordEvent(this, "fused_location_subscription_failed",
+                    error.getClass().getSimpleName());
+        }
+    }
+
+    private void recordSamplingState(String reason) {
+        if (!MovementDiagnostics.isRunning(this)) return;
+        android.os.PowerManager power = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+        long now = android.os.SystemClock.elapsedRealtime();
+        String detail = "reason=" + reason + "; version=" + BuildConfig.VERSION_NAME
+                + "; active=" + isActive(this) + "; candidate=" + candidateMode
+                + "; callback_age_ms=" + (lastLocationCallbackAt == 0 ? "none" : now-lastLocationCallbackAt)
+                + "; accurate_fix_age_ms=" + (now-lastReliableSampleAt)
+                + "; gps_enabled=" + locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                + "; network_enabled=" + locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                + "; fine_permission=" + (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                + "; background_permission=" + (Build.VERSION.SDK_INT < 29 ||
+                    checkSelfPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                + "; screen_interactive=" + (power != null && power.isInteractive())
+                + "; power_save=" + (power != null && power.isPowerSaveMode())
+                + "; device_idle=" + (power != null && power.isDeviceIdleMode())
+                + "; battery_exempt=" + (power != null && power.isIgnoringBatteryOptimizations(getPackageName()));
+        MovementDiagnostics.recordEvent(this, "sampling_state", detail);
+    }
+
+    @SuppressLint("MissingPermission")
     private void requestLocationUpdatesForMode(String requestedMode, boolean candidate) {
         boolean road = roadMode(requestedMode);
         long interval = candidate ? 5_000L : (road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS);
@@ -1372,6 +1452,8 @@ public class CaptureService extends Service {
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                     15_000L, 0f, locationListener);
+        requestFusedUpdates(interval);
+        recordSamplingState(candidate ? "candidate_subscription" : "capture_subscription");
         diagnosticUpdatesRegistered = false;
     }
 
@@ -1384,7 +1466,7 @@ public class CaptureService extends Service {
             handler.removeCallbacks(diagnosticWindowExpiry);
             if (!isArmed(this)
                     && !isActive(this) && candidateMode == null && diagnosticUpdatesRegistered) {
-                locationManager.removeUpdates(locationListener);
+                removeLocationUpdates();
                 diagnosticUpdatesRegistered = false;
             }
         }
@@ -1397,6 +1479,8 @@ public class CaptureService extends Service {
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                     30_000L, 10f, locationListener);
+            requestFusedUpdates(30_000L);
+            recordSamplingState("armed_subscription");
             diagnosticUpdatesRegistered = true;
             handler.removeCallbacks(diagnosticWindowExpiry);
             if (MovementDiagnostics.isRunning(this)) handler.postDelayed(diagnosticWindowExpiry,
@@ -1723,16 +1807,17 @@ public class CaptureService extends Service {
 
     @Override
     public void onDestroy() {
+        serviceDestroyed = true;
+        MovementDiagnostics.recordEvent(this, "capture_service_destroyed", "active=" + isActive(this));
         removeActivityUpdates();
         handler.removeCallbacks(samplingWatchdog);
         handler.removeCallbacks(checkpointCapture);
         handler.removeCallbacks(diagnosticWindowExpiry);
         clearPendingActivityMode();
-        if (isActive(this)) {
-            try {
-                locationManager.removeUpdates(locationListener);
-            } catch (Exception ignored) {}
-        }
+        handler.removeCallbacks(candidateTimeout);
+        handler.removeCallbacks(candidateStillTimeout);
+        handler.removeCallbacks(finishIfStill);
+        try { removeLocationUpdates(); } catch (Exception ignored) {}
         captureIo.shutdown();
         if(contextCache!=null)contextCache.close();
         super.onDestroy();
