@@ -45,6 +45,10 @@ final class VenueCatalogueUpdates {
     interface Transport { byte[] get(String filename,int limit) throws Exception; }
     long revision(){synchronized(LOCK){return revision;}}
 
+    JSONArray pins(Context context)throws Exception{
+        synchronized(LOCK){if(pins!=null)return pins;}
+        return pins(context,bundled(context));
+    }
     JSONArray pins(Context context,JSONObject bundled){
         synchronized(LOCK){
             if(current==null){

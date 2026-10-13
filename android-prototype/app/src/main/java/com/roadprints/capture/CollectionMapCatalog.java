@@ -59,7 +59,7 @@ final class CollectionMapCatalog {
     }
     static JSONArray venues(Context context,VenueCollection.Definition definition){
         VenueCatalogueUpdates store=VenueCatalogueUpdates.forCollection(definition);
-        try{return store.pins(context,store.bundled(context));}catch(Exception unavailable){throw new IllegalStateException("Offline catalogue unavailable",unavailable);}
+        try{return store.pins(context);}catch(Exception unavailable){throw new IllegalStateException("Offline catalogue unavailable",unavailable);}
     }
     static JSONArray spoons(Context context){return venues(context,VenueCollection.definition("wetherspoons"));}
 }
