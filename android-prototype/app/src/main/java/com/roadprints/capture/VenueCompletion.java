@@ -58,9 +58,17 @@ final class VenueCompletion {
                     String venue=old.optString(n);retained&=visits.contains(venue);
                     if("county_percent".equals(measure))retained&=g.optString("county_code").equals(historicCounty.get(venue));
                 }
-                if(value>=100&&certified){try{saved.put(id,new JSONArray(new TreeSet<>(proof)));}catch(Exception invalid){throw new IllegalStateException(invalid);}}
+                if("group_percent".equals(measure)){
+                    JSONArray previousGroups=saved.optJSONArray(id+":groups");
+                    if(previousGroups!=null)for(int n=0;n<previousGroups.length();n++){
+                        boolean covered=false;String code=previousGroups.optString(n);
+                        if(old!=null)for(int v=0;v<old.length();v++)covered|=visits.contains(old.optString(v))&&code.equals(historicCounty.get(old.optString(v)));
+                        retained&=covered;
+                    }
+                }
+                if(value>=100&&certified){try{saved.put(id,new JSONArray(new TreeSet<>(proof)));if("group_percent".equals(measure))saved.put(id+":groups",new JSONArray(new TreeSet<>(counties.keySet())));}catch(Exception invalid){throw new IllegalStateException(invalid);}}
                 else if(retained){value=100;out.display.put(id,out.display.get(id)+" · earned completion retained");}
-                else saved.remove(id);
+                else {saved.remove(id);saved.remove(id+":groups");}
             }
             out.values.put(id,enabled?value:0.0);out.lists.put(id,rows);out.proofs.put(id,proof);
         }

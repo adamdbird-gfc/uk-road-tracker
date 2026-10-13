@@ -39,6 +39,12 @@ public class VenueCompletionTest {
         venues.put(venue("fixture-kent-c","KNT","Kent"));certificate();assertEquals(100,calculate(p).values.get("spoons-county-knt"),0);assertTrue(calculate(p).display.get("spoons-county-knt").contains("retained"));
         assertEquals(100.0/3,calculate(new JSONArray().put(p.getJSONObject(0))).values.get("spoons-county-knt"),1e-8);
     }
+    @Test public void correctedCountyAttributionRevokesUnsupportedRetainedPubCrawl()throws Exception{
+        JSONArray p=new JSONArray().put(proof("fixture-kent-a",Instant.now().toString()).put("county_code","KNT")).put(proof("fixture-surrey",Instant.now().toString()));
+        assertEquals(100,calculate(p).values.get("spoons-pub-crawl"),0);
+        venues.getJSONObject(0).put("county",new JSONObject().put("code","SUR").put("name","Surrey").put("nation","England"));certificate();
+        assertEquals(50,calculate(p).values.get("spoons-pub-crawl"),0);
+    }
     @Test public void partialCatalogueCannotAwardCompletionAndAccessDoesNotManufactureCredit()throws Exception{
         JSONArray p=new JSONArray();for(int i=0;i<venues.length();i++)p.put(proof(venues.getJSONObject(i).getString("id"),Instant.now().toString()));
         root.put("approval_scope","map_only_partial_beta").put("coverage_complete",false).put("completion_target",JSONObject.NULL);
