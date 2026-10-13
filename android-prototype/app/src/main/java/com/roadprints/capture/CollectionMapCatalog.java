@@ -36,6 +36,7 @@ final class CollectionMapCatalog {
                 pin.put("name",row.optString("name"));pin.put("postcode",row.optString("postcode"));pin.put("town",row.optString("town"));
                 pin.put("county",row.optJSONObject("county"));
                 pin.put("lat",lat);pin.put("lng",lng);
+                pin.put("confirmation_required",row.optBoolean("confirmation_required"));
                 pin.put("location_label",row.optString("location_label","Reviewed map location"));
                 pin.put("attribution",row.optString("attribution","© OpenStreetMap contributors · ODbL 1.0"));
                 result.put(pin);}

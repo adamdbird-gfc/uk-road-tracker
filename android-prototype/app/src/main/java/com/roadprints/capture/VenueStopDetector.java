@@ -24,6 +24,7 @@ final class VenueStopDetector {
             else {count++;worst=Math.max(worst,accuracy);}
             previous=time;
             if(!id.isEmpty()&&count>=4&&time-first>=180000&&!added){out.add(new Stop(id,first,time,lat0,lng0,worst));added=true;}
+            else if(added)out.set(out.size()-1,new Stop(id,first,time,lat0,lng0,worst));
         }return out;
     }
 }

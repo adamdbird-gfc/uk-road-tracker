@@ -182,7 +182,7 @@ public class MapActivity extends Activity {
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
         applyCollectionLayer();
-        PubVisitStore.ensureHistory(this,()->{
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{
             if(active&&!isFinishing()&&!isDestroyed())applyCollectionLayer();
         });
         CollectionCatalogueUpdates.refreshIfDue(this,()->{

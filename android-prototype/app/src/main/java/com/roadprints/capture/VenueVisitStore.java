@@ -19,7 +19,7 @@ final class VenueVisitStore {
     private static JSONObject read(Context context,String collection){
         migrate(context,collection);
         try{return new JSONObject(context.getSharedPreferences(PREFS,0).getString(collection+":records","{}"));}
-        catch(Exception invalid){return new JSONObject();}
+        catch(Exception invalid){throw new IllegalStateException("Visit history could not be read",invalid);}
     }
     private static void write(Context context,String collection,JSONObject records){
         android.content.SharedPreferences p=context.getSharedPreferences(PREFS,0);
@@ -47,7 +47,11 @@ final class VenueVisitStore {
     }
     private static long time(JSONObject record){try{return Instant.parse(record.optString("visited_at")).toEpochMilli();}catch(Exception absent){return 0;}}
     private static boolean sameSession(JSONObject a,JSONObject b){
-        long one=time(a),two=time(b);return one>0&&two>0&&Math.abs(one-two)<900000&&a.optString("venue_id").equals(b.optString("venue_id"));
+        long one=time(a),two=time(b);
+        if(one<=0||two<=0||!a.optString("venue_id").equals(b.optString("venue_id")))return false;
+        JSONObject ae=a.optJSONObject("evidence"),be=b.optJSONObject("evidence");
+        long oneEnd=ae==null?one:Math.max(one,ae.optLong("to_ms",one)),twoEnd=be==null?two:Math.max(two,be.optLong("to_ms",two));
+        return one<=twoEnd+900000&&two<=oneEnd+900000;
     }
     private static JSONArray groupSessions(JSONArray rows){
         JSONArray out=new JSONArray();
@@ -97,6 +101,24 @@ final class VenueVisitStore {
         }
         JSONArray visits=TimelineVisitStore.all(context);JSONObject additions=new JSONObject();
         long now=System.currentTimeMillis();
+        // Reconcile changed/deleted source visits, retaining historical venue IDs across catalogue removals.
+        java.util.Map<String,JSONObject> sources=new java.util.HashMap<>();
+        for(int i=0;i<visits.length();i++){JSONObject visit=visits.optJSONObject(i);if(visit!=null)sources.put(visit.optString("id"),visit);}
+        synchronized(VenueVisitStore.class){
+            if(epoch!=generation||replacingHistory)return 0;
+            records=read(context,collection);java.util.List<String> invalid=new java.util.ArrayList<>();java.util.Iterator<String> keys=records.keys();
+            while(keys.hasNext()){
+                String key=keys.next();JSONObject proof=records.optJSONObject(key);if(!key.startsWith("timeline:")||proof==null||proof.optBoolean("dismissed"))continue;
+                JSONObject source=sources.get(proof.optString("source_visit_id"));
+                if(source==null||!PubVisitEvidence.validVisit(source,now)){invalid.add(key);continue;}
+                JSONObject venue=find(pubs,proof.optString("venue_id"));if(venue==null)continue;
+                JSONArray nearby=VenueEvidence.candidates(collection,source,pubs,now);
+                if(find(nearby,proof.optString("venue_id"))==null
+                        ||("named_timeline_visit".equals(proof.optString("source"))&&!proof.optString("venue_id").equals(VenueEvidence.namedMatch(collection,source,nearby))))invalid.add(key);
+            }
+            for(String key:invalid)records.remove(key);
+            if(!invalid.isEmpty())write(context,collection,records);
+        }
         for(int i=0;i<visits.length();i++){
             JSONObject visit=visits.optJSONObject(i);
             if(visit==null)continue;

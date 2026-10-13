@@ -272,6 +272,10 @@ final class VenueVisitUi {
         catch(Exception invalid){return "Date unavailable";}
     }
     static String source(JSONObject record){
+        JSONArray evidence=record.optJSONArray("evidence_records");
+        if(evidence!=null&&evidence.length()>1)return "Supported visit · "+evidence.length()+" evidence records";
+        if("legacy_journey_visit".equals(record.optString("source")))return "Existing Roadprints visit";
+        if("legacy_timeline_visit".equals(record.optString("source")))return "Existing Timeline visit";
         if("native_stop".equals(record.optString("source")))return "Automatic Roadprints visit";
         if("confirmed_native_stop".equals(record.optString("source")))return "Confirmed Roadprints visit";
         return "confirmed_live_checkin".equals(record.optString("source"))?"Live check-in":

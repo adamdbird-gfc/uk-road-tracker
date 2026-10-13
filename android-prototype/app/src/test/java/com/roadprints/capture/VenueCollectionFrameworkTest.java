@@ -101,7 +101,8 @@ public class VenueCollectionFrameworkTest {
     }
     @Test public void definitionFixtureUsesSharedQualificationWithoutCopiedUi()throws Exception{
         JSONObject fixture=new JSONObject().put("id","fixture-restaurant").put("name","Fixture restaurant").put("lat",51.4).put("lng",.3);
-        assertEquals(1,VenueStopDetector.stops(capture(fixture,false,0).getJSONArray("raw_capture_samples"),new JSONArray().put(fixture)).size());
+        VenueCollection.Definition definition=new VenueCollection.Definition("fixture","Fixture restaurants","restaurant","restaurants",125,false,"",context->new JSONArray().put(fixture));
+        assertTrue(VenueEvidence.nativeVisits(definition,capture(fixture,true,0),definition.source.load(app)).getJSONObject(0).getBoolean("automatic"));
         assertEquals(0,VenueStopDetector.stops(capture(fixture,false,10).getJSONArray("raw_capture_samples"),new JSONArray().put(fixture)).size());
     }
 }

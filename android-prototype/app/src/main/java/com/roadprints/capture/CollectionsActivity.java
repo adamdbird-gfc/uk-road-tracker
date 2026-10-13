@@ -46,7 +46,7 @@ public class CollectionsActivity extends Activity {
         body=new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(18),dp(4),dp(18),dp(18));
         scroll.addView(body); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         View nav=bottomNavigation(); root.addView(GrowingStatusControl.create(this)); root.addView(nav); setContentView(root); applyInsets(root,header,nav); render();
-        PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())render();});
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{if(!isFinishing()&&!isDestroyed())render();});
     }
 
     private void render() {
