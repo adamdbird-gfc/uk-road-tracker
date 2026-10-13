@@ -52,12 +52,7 @@ public class CollectionsActivity extends Activity {
     private void render() {
         body.removeAllViews();
         summary.setText("Choose the collections you want to explore. Beta access is free.");
-        addCollection(CollectionAccessStore.SERVICES,
-                "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
-                R.drawable.ic_roadprints_fuel);
-        addCollection(CollectionAccessStore.SPOONS,
-                "Collect Wetherspoons pubs across the UK. Supported visits check in automatically; review uncertain stops or check in manually.",
-                R.drawable.ic_nav_collections);
+        for(VenueCollection.Definition collection:VenueCollection.all())addCollection(collection.id,collection.description,collection.siteStop?R.drawable.ic_roadprints_fuel:R.drawable.ic_nav_collections);
     }
 
     private void addCollection(String id,String copy,int drawable) {
@@ -74,7 +69,7 @@ public class CollectionsActivity extends Activity {
         if(!installed) {
             addAction(card,"Install for beta testing",()->{
                 CollectionAccessStore.installForTesting(this,id);render();
-                if(CollectionAccessStore.SPOONS.equals(id))PubVisitStore.ensureHistory(this,()->{
+                VenueVisitStore.ensureHistory(this,id,()->{
                     if(!isFinishing()&&!isDestroyed())render();
                 });
                 if(CollectionAccessStore.SERVICES.equals(id)){VenueVisitStore.ensureHistory(this,id,null);ServiceStationStore.ensureHistoricalVisits(this,()->{
@@ -93,8 +88,8 @@ public class CollectionsActivity extends Activity {
                 });
                 addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","services"));finish();});
             }
-            if(CollectionAccessStore.SPOONS.equals(id))
-                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","wetherspoons"));finish();});
+            if(!CollectionAccessStore.SERVICES.equals(id))
+                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section",id));finish();});
             TextView remove=text("Remove collection",14,0xFFFF8A8A,false);remove.setGravity(Gravity.CENTER);remove.setPadding(dp(12),dp(14),dp(12),dp(8));
             remove.setOnClickListener(v->RoadprintsDialog.show(this,"Remove "+CollectionAccessStore.name(id)+"?",
                     "The collection will be hidden from your map and progress. Your existing visits will be kept.",null,

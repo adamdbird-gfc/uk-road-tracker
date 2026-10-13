@@ -30,21 +30,7 @@ final class ServiceStationAchievements {
     };
     private ServiceStationAchievements() {}
     static String roadId(String road) { return "service-road-"+road.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
-    static void definitions(List<AchievementStore.Definition> out) {
-        add(out,"service-first-stop","First Stop","Visit your first motorway service area.",1);
-        int[] targets={25,50,75,100};
-        String[] titles={"Services · Quarter Collected","Services · Halfway There","Services · Three Quarters",
-                "Completed It, Mate: Services"};
-        for(int i=0;i<targets.length;i++) add(out,"service-percent-"+targets[i],titles[i],
-                "Visit "+targets[i]+"% of the service stations in the collection.",targets[i]);
-        for(String road:ROADS) add(out,roadId(road),"All Services on "+roadLabel(road),
-                "Visit every service station on "+roadLabel(road)+" in the collection.",100);
-        for(String[] item:SPECIAL) add(out,item[0],item[1],"Stop at "+item[2]+" Services.",1);
-        for(String[] item:OPERATORS) add(out,item[0],item[1],"Visit every "+item[2]+" service station in the collection.",100);
-        add(out,"service-farm-to-motorway","Farm to Motorway","Visit Tebay, Gloucester and Cairn Lodge.",3);
-        add(out,"service-three-nations","Three Nations, One Collection",
-                "Visit at least one service station in England, Scotland and Wales.",3);
-    }
+    static void definitions(List<AchievementStore.Definition> out) {VenueAchievements.definitions(VenueCollection.definition("services"),out);}
     static String groupRoad(JSONObject station) { return ("NI".equals(station.optString("region"))?"NI:":"")+station.optString("road"); }
     private static String roadLabel(String road) { return road.startsWith("NI:")?road.substring(3)+" (Northern Ireland)":road; }
     private static void add(List<AchievementStore.Definition> out,String id,String title,String copy,double target) {
@@ -58,69 +44,7 @@ final class ServiceStationAchievements {
         final Map<String,String> display=new LinkedHashMap<>();
     }
     static Snapshot calculate(JSONArray catalogue,Set<String> visited,boolean unlocked) {
-        Snapshot result=new Snapshot();
-        List<JSONObject> all=new ArrayList<>();
-        for(int i=0;i<catalogue.length();i++) {
-            JSONObject station=catalogue.optJSONObject(i);
-            if(station!=null&&!station.optString("id","").isEmpty())all.add(station);
-        }
-        all.sort((a,b)->a.optString("name").compareToIgnoreCase(b.optString("name")));
-        int count=count(all,visited);
-        goal(result,"service-first-stop",all,visited,unlocked,count>=1?1:0);
-        for(int target:new int[]{25,50,75,100})goal(result,"service-percent-"+target,all,visited,unlocked,percent(all,visited));
-        for(String road:ROADS) {
-            List<JSONObject> group=new ArrayList<>();
-            for(JSONObject station:all)if(road.equals(groupRoad(station)))group.add(station);
-            goal(result,roadId(road),group,visited,unlocked,percent(group,visited));
-        }
-        for(String[] item:OPERATORS) {
-            List<JSONObject> group=new ArrayList<>();
-            for(JSONObject station:all)if(item[2].equals(station.optString("operator_group")))group.add(station);
-            goal(result,item[0],group,visited,unlocked,percent(group,visited));
-        }
-        for(String[] item:SPECIAL) {
-            List<JSONObject> group=new ArrayList<>();
-            for(JSONObject station:all)if(item[3].equals(station.optString("id")))group.add(station);
-            goal(result,item[0],group,visited,unlocked,count(group,visited)>0?1:0);
-        }
-        List<JSONObject> farms=new ArrayList<>();
-        for(JSONObject station:all) {
-            String id=station.optString("id");
-            if(id.equals("msa:westmorland tebay:54.451:-2.6088")
-                    ||id.equals("msa:westmorland gloucester:51.8191:-2.226")
-                    ||id.equals("msa:cairn lodge:55.5838:-3.8233"))farms.add(station);
-        }
-        goal(result,"service-farm-to-motorway",farms,visited,unlocked,count(farms,visited));
-        List<String> nations=new ArrayList<>();int nationsVisited=0;Set<String> nationProof=new java.util.HashSet<>();
-        for(String country:new String[]{"England","Scotland","Wales"}) {
-            boolean seen=false;
-            for(JSONObject station:all)if(country.equals(station.optString("country"))&&visited.contains(station.optString("id"))) {
-                if(!seen)nationProof.add(station.optString("id"));seen=true;
-            }
-            if(seen)nationsVisited++;
-            nations.add((seen?"✓ ":"○ ")+country);
-        }
-        result.values.put("service-three-nations",unlocked?(double)nationsVisited:0.0);
-        result.lists.put("service-three-nations",nations);
-        result.proofs.put("service-three-nations",nationProof);
-        result.display.put("service-three-nations",nationsVisited+" / 3 nations visited");
-        return result;
-    }
-    private static void goal(Snapshot result,String id,List<JSONObject> stations,Set<String> visited,boolean unlocked,double value) {
-        result.values.put(id,unlocked?value:0.0);
-        List<String> list=new ArrayList<>();
-        for(JSONObject station:stations) list.add((visited.contains(station.optString("id"))?"✓ ":"○ ")+station.optString("name")+" · "+station.optString("road"));
-        result.lists.put(id,list);
-        Set<String> proof=new java.util.HashSet<>();
-        for(JSONObject station:stations)if(visited.contains(station.optString("id")))proof.add(station.optString("id"));
-        result.proofs.put(id,proof);
-        result.display.put(id,count(stations,visited)+" / "+stations.size()+" service stations visited"
-                +(stations.isEmpty()?"":" · "+String.format(java.util.Locale.UK,"%.1f%%",percent(stations,visited))));
-    }
-    private static int count(List<JSONObject> stations,Set<String> visited) {
-        int count=0;for(JSONObject station:stations)if(visited.contains(station.optString("id")))count++;return count;
-    }
-    private static double percent(List<JSONObject> stations,Set<String> visited) {
-        return stations.isEmpty()?0:100.0*count(stations,visited)/stations.size();
+        VenueAchievements.Snapshot shared=VenueAchievements.calculate(VenueCollection.definition("services"),catalogue,visited,unlocked,java.util.Collections.emptyMap());
+        Snapshot result=new Snapshot();result.values.putAll(shared.values);result.lists.putAll(shared.lists);result.proofs.putAll(shared.proofs);result.display.putAll(shared.display);return result;
     }
 }

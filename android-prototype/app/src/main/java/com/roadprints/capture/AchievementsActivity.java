@@ -193,7 +193,7 @@ public class AchievementsActivity extends Activity {
     }
 
     private static long collectionEvidenceRevision(android.content.Context context){
-        return 31L*ServiceStationStore.revision(context)+1009L*PubVisitStore.revision(context)+CollectionAccessStore.revision(context)+CollectionCatalogueUpdates.revision();
+        long revision=CollectionAccessStore.revision(context);for(VenueCollection.Definition collection:VenueCollection.all())revision=31L*revision+VenueCollection.revision(context,collection.id)+VenueCatalogueUpdates.forCollection(collection).revision();return revision;
     }
 
     private boolean pubBackfillRequested;
@@ -386,9 +386,7 @@ public class AchievementsActivity extends Activity {
         List<AchievementStore.Progress> visible=new ArrayList<>();
         int unlockedCount=0;
         for(AchievementStore.Progress item:snapshot.achievements) {
-            boolean service="service-station".equals(item.definition.type);
-            if(service&&!showServices) continue;
-            if("pub-visit".equals(item.definition.type)&&!CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS))continue;
+            if(!item.definition.collectionId.isEmpty()&&!collectionVisible(item.definition.collectionId))continue;
             visible.add(item);
             if(item.unlocked) unlockedCount++;
         }
@@ -425,16 +423,9 @@ public class AchievementsActivity extends Activity {
                 addRoadCompletionSection(visible,"A-road completion","completion-aroad-");
             }
         }
-        if(showServices) {
-            String label=CollectionAccessStore.name(CollectionAccessStore.SERVICES);
-            View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
-            for(AchievementStore.Progress item:visible)
-                if("service-station".equals(item.definition.type)) content.addView(achievementCard(item));
-        }
-        if(CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)){
-            String label=CollectionAccessStore.name(CollectionAccessStore.SPOONS);
-            View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
-            for(AchievementStore.Progress item:visible)if("pub-visit".equals(item.definition.type))content.addView(achievementCard(item));
+        for(VenueCollection.Definition collection:VenueCollection.all())if(collectionVisible(collection.id)){
+            String label=collection.name;View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
+            for(AchievementStore.Progress item:visible)if(collection.id.equals(item.definition.collectionId))content.addView(achievementCard(item));
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
@@ -470,8 +461,9 @@ public class AchievementsActivity extends Activity {
         }
     }
 
+    private boolean collectionVisible(String id){return CollectionAccessStore.SERVICES.equals(id)?ServiceStationStore.unlocked(this):CollectionAccessStore.installed(this,id);}
     private static String achievementGroup(AchievementStore.Definition definition) {
-        if("service-station".equals(definition.type)||"pub-visit".equals(definition.type)) return "Collections";
+        if(!definition.collectionId.isEmpty()) return "Collections";
         if("town-exploration".equals(definition.type))return "Town exploration";
         if("app-use".equals(definition.type)||"repeat-journey".equals(definition.type)||"cycling-journey".equals(definition.type))return "App milestones";
         if("distance".equals(definition.type)||"long-journey".equals(definition.type))return "Distance";

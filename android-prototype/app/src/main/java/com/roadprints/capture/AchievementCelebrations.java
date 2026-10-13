@@ -24,7 +24,7 @@ final class AchievementCelebrations {
             AchievementStore.Definition d=progress.definition;
             if(!progress.unlocked||progress.level<=seen.optInt(d.id))continue;
             if("service-station".equals(d.type)&&!ServiceStationStore.unlocked(context))continue;
-            if("pub-visit".equals(d.type)&&!CollectionAccessStore.installed(context,CollectionAccessStore.SPOONS))continue;
+            if(!d.collectionId.isEmpty()&&!CollectionAccessStore.SERVICES.equals(d.collectionId)&&!CollectionAccessStore.installed(context,d.collectionId))continue;
             out.add(new Event(d,progress.level));
         }
         return out;

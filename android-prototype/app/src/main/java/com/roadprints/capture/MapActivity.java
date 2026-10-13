@@ -260,16 +260,14 @@ public class MapActivity extends Activity {
         boolean townMap=getIntent().hasExtra("settlement_code");
         if(townMap)return;
         double[] camera=mapView.cameraState();
-        JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
-                :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
-        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?ServiceStationStore.completed(this):
-                CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
+        JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
+        Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
         VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
                 showServiceStationCard(venue,ServiceStationStore.completed(this).contains(venue.optString("id")));
-            else if(CollectionAccessStore.SPOONS.equals(CollectionAccessStore.selected(this)))showPubCard(venue);
+            else if(CollectionAccessStore.known(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
     }
@@ -896,16 +894,17 @@ public class MapActivity extends Activity {
 
     private void showPubCard(JSONObject pub) {
         if(pub==null||isFinishing())return;
-        boolean visited=PubVisitStore.completed(this).contains(pub.optString("id"));
+        String collection=CollectionAccessStore.selected(this);
+        boolean visited=VenueCollection.completed(this,collection).contains(pub.optString("id"));
         LinearLayout content=cardContainer();
-        addCardLabel(content,"WETHERSPOONS");addCardTitle(content,pub.optString("name","Pub"));
+        addCardLabel(content,CollectionAccessStore.name(collection).toUpperCase(java.util.Locale.ROOT));addCardTitle(content,pub.optString("name","Pub"));
         if(!pub.optString("town").isEmpty())addCardBody(content,pub.optString("town"));
         addCardBody(content,visited?"Visited":"Not visited");
         AlertDialog popup=new AlertDialog.Builder(this).setView(content).create();
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
         TextView detail=cardAction(visited?"VISIT DETAILS":"CHECK IN",true);
-        detail.setOnClickListener(v->{popup.dismiss();if(visited)PubVisitUi.details(this,pub,this::applyCollectionLayer);
-            else PubVisitUi.live(this,pub,this::applyCollectionLayer,null);});
+        detail.setOnClickListener(v->{popup.dismiss();if(visited)VenueVisitUi.details(this,collection,pub,this::applyCollectionLayer);
+            else VenueVisitUi.live(this,collection,pub,this::applyCollectionLayer,null);});
         TextView close=cardAction("CLOSE",false);close.setOnClickListener(v->popup.dismiss());
         actions.addView(detail);content.addView(actions);RoadprintsDialog.placeClose(content,close);
         popup.setOnShowListener(dialog->{if(popup.getWindow()!=null)popup.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));});

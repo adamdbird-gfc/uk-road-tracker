@@ -28,7 +28,7 @@ final class ServiceStationStore {
         prefs(context).edit().putBoolean("service_stations_unlocked",true).apply();bumpRevision(context);
         ensureHistoricalVisits(context,null);
     }
-    static long revision(Context context) { return prefs(context).getLong(REVISION,0)+VenueVisitStore.revision(context,CollectionAccessStore.SERVICES); }
+    static long revision(Context context) { return prefs(context).getLong(REVISION,0)+VenueVisitStore.revision(context,CollectionAccessStore.SERVICES)+VenueCatalogueUpdates.forCollection(VenueCollection.definition("services")).revision(); }
     private static void bumpRevision(Context context) {
         synchronized(STATE_LOCK) { prefs(context).edit().putLong(REVISION,prefs(context).getLong(REVISION,0)+1).apply(); }
     }
@@ -38,14 +38,7 @@ final class ServiceStationStore {
         ensureMigration(context);return VenueVisitStore.completed(context,CollectionAccessStore.SERVICES);
     }
     static JSONArray stations(Context context) throws Exception {
-        JSONArray cached=catalogue;if(cached!=null)return cached;
-        try(InputStream input=context.getAssets().open("uk-motorway-services-v1.json")) {
-            java.io.ByteArrayOutputStream output=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[8192];int n;
-            while((n=input.read(buffer))!=-1)output.write(buffer,0,n);
-            JSONArray result=new JSONObject(new String(output.toByteArray(),StandardCharsets.UTF_8)).optJSONArray("services");
-            if(result==null)throw new IllegalStateException("Service station catalogue has no services");
-            catalogue=result;return result;
-        }
+        return CollectionMapCatalog.venues(context,VenueCollection.definition("services"));
     }
     static int recordJourney(Context context,JSONObject journey) {
         ensureMigration(context);

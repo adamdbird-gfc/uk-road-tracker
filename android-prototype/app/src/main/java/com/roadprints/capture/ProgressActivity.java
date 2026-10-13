@@ -572,11 +572,9 @@ public class ProgressActivity extends Activity {
         addMotorwayCoveragePanel(parent, stats);
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
-        if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addServiceStationPanel(parent);
-        if (CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)) {
-            LinearLayout panel=statisticsPanel("Wetherspoons");panel.setTag("progress:wetherspoons");
-            PubProgressPanel.populate(this,panel,expandedRoadCategories,this::refreshPubProgress);
-            parent.addView(panel);
+        for(String collection:CollectionAccessStore.installed(this)){
+            LinearLayout panel=statisticsPanel(CollectionAccessStore.name(collection));panel.setTag("progress:"+collection);
+            VenueProgressPanel.populate(this,collection,panel,expandedRoadCategories,this::refreshPubProgress);parent.addView(panel);
         }
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
@@ -592,8 +590,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
-        if (CollectionAccessStore.installed(this,CollectionAccessStore.SERVICES)) addProgressJump(row, "Motorway Service Stations", "services");
-        if (CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)) addProgressJump(row, "Wetherspoons", "wetherspoons");
+        for(String collection:CollectionAccessStore.installed(this))addProgressJump(row,CollectionAccessStore.name(collection),collection);
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;
@@ -636,7 +633,7 @@ public class ProgressActivity extends Activity {
         String active = "statistics";
         if (statisticsScroll != null && statisticsContent != null) {
             int threshold = statisticsScroll.getScrollY() + dp(28);
-            for (String section : new String[] {"statistics", "road_discovery", "motorways", "a_roads", "services", "wetherspoons"}) {
+            for (String section : progressSections()) {
                 View target = findProgressSection(section);
                 if (target != null && target.getTop() <= threshold) active = section;
             }
@@ -654,6 +651,7 @@ public class ProgressActivity extends Activity {
         }
     }
 
+    private String[] progressSections(){java.util.List<String> sections=new java.util.ArrayList<>(java.util.Arrays.asList("statistics","road_discovery","motorways","a_roads"));sections.addAll(CollectionAccessStore.installed(this));return sections.toArray(new String[0]);}
     private void addServiceStationPanel(LinearLayout parent){
         LinearLayout panel=statisticsPanel(CollectionAccessStore.name(CollectionAccessStore.SERVICES));
         VenueProgressPanel.populate(this,CollectionAccessStore.SERVICES,panel,expandedRoadCategories,this::refreshPubProgress);

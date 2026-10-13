@@ -1062,7 +1062,7 @@ public class RoutePreviewView extends View {
             float x = cluster.x();
             float y = cluster.y();
             boolean visited = cluster.visited > 0;
-            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.SPOONS.equals(collectionKind)?0xFF238F89:0xFF74829A);
+            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.known(collectionKind)?VenueCollection.definition(collectionKind).pinColor:0xFF74829A);
             if (cluster.venues.size() > 1) {
                 float radius = dp(14);
                 canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
@@ -1076,8 +1076,8 @@ public class RoutePreviewView extends View {
                 canvas.drawCircle(x, y, singleRadius + dp(2), serviceStationOutlinePaint);
                 canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
                 markerPaint.setColor(Color.WHITE);
-                if(CollectionAccessStore.SPOONS.equals(collectionKind)) {
-                    markerTextPaint.setColor(Color.WHITE);canvas.drawText("W",x,
+                if(CollectionAccessStore.known(collectionKind)&&!VenueCollection.definition(collectionKind).pinLabel.isEmpty()) {
+                    markerTextPaint.setColor(Color.WHITE);canvas.drawText(VenueCollection.definition(collectionKind).pinLabel,x,
                             y-(markerTextPaint.ascent()+markerTextPaint.descent())/2,markerTextPaint);
                 } else canvas.drawCircle(x,y,dp(2.5f),markerPaint);
             }
