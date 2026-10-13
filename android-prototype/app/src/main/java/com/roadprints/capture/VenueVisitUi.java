@@ -136,6 +136,7 @@ final class VenueVisitUi {
         body.addView(text(activity,pub.optString("location_label","Reviewed map location"),13,MUTED,false));
         if(!pub.optString("attribution").isEmpty())body.addView(text(activity,pub.optString("attribution"),12,MUTED,false));
         JSONArray proofs=VenueVisitStore.records(activity,collection),related=new JSONArray();int count=0;
+        if(VenueCollection.definition(collection).siteStop&&VenueCollection.completed(activity,collection).contains(pub.optString("id"))&&proofs.length()==0)body.addView(text(activity,"Existing supported visit · date unavailable",15,Color.WHITE,false));
         AlertDialog[] holder={null};
         for(int i=0;i<proofs.length();i++){
             JSONObject proof=proofs.optJSONObject(i);

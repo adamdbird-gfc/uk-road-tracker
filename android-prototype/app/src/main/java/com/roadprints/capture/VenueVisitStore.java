@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-/** Durable pub-specific proofs; catalogue refreshes never erase accepted visits. */
+/** Collection-scoped durable visit proofs, shared by all venue collections. */
 final class VenueVisitStore {
     static final String PREFS="roadprints_venue_visits_v1";
     private static long generation;
@@ -49,10 +49,23 @@ final class VenueVisitStore {
         Context app=context.getApplicationContext();
         if(!CollectionAccessStore.installed(app,collection))return;
         ScreenDataLoader.execute(()->{
-            try{reconcile(app,collection,VenueCollection.catalogue(app,collection));}
+            try{reconcile(app,collection,VenueCollection.catalogue(app,collection));ensureNativeHistory(app,collection);}
             catch(Exception error){android.util.Log.w("Roadprints","Pub history reconciliation failed",error);}
             if(callback!=null)new android.os.Handler(android.os.Looper.getMainLooper()).post(callback);
         });
+    }
+    private static void ensureNativeHistory(Context context,String collection)throws Exception{
+        long revision=JourneyStore.dataRevision(context),epoch;
+        synchronized(VenueVisitStore.class){
+            if(replacingHistory)return;epoch=generation;
+            if(context.getSharedPreferences(PREFS,0).getLong(collection+":native_scan_revision",-1)==revision)return;
+        }
+        JourneyStore.forEachServiceStationEvidence(context,journey->{
+            synchronized(VenueVisitStore.class){if(epoch==generation&&!replacingHistory)recordJourney(context,collection,journey);}
+        });
+        long currentRevision=JourneyStore.dataRevision(context);
+        synchronized(VenueVisitStore.class){if(epoch==generation&&currentRevision==revision)
+            context.getSharedPreferences(PREFS,0).edit().putLong(collection+":native_scan_revision",revision).apply();}
     }
     static int reconcile(Context context,String collection,JSONArray pubs) throws Exception {
         if(!CollectionAccessStore.installed(context,collection))return 0;
@@ -135,7 +148,7 @@ final class VenueVisitStore {
         requireInstalled(context,collection);
         JSONObject records=read(context,collection);
         if(!records.has(key))return;
-        if(key.startsWith("timeline:")||key.startsWith("native:"))records.put(key,new JSONObject().put("dismissed",true));
+        if(key.startsWith("timeline:")||key.startsWith("native:")||key.startsWith("legacy-"))records.put(key,new JSONObject().put("dismissed",true).put("journey_id",records.optJSONObject(key).optString("journey_id")).put("venue_id",records.optJSONObject(key).optString("venue_id")));
         else if(key.startsWith("live:"))records.remove(key);
         else throw new IllegalArgumentException("Unsupported visit record");
         write(context,collection,records);
@@ -172,7 +185,7 @@ final class VenueVisitStore {
     }
     static synchronized void clear(Context context,String collection){
         generation++;
-        context.getSharedPreferences(PREFS,0).edit().remove(collection+":records").remove(collection+":revision").putBoolean(collection+":migrated",true).commit();
+        context.getSharedPreferences(PREFS,0).edit().remove(collection+":records").remove(collection+":revision").remove(collection+":native_scan_revision").putBoolean(collection+":migrated",true).commit();
     }
 
     private static void migrate(Context context,String collection){
@@ -188,6 +201,22 @@ final class VenueVisitStore {
                 record.put("collection_id",collection);
             }
         }catch(Exception invalid){throw new IllegalStateException("Existing visit history could not be migrated",invalid);}
+        if(CollectionAccessStore.SERVICES.equals(collection))try{
+            android.content.SharedPreferences legacy=context.getSharedPreferences("roadprints_collections_v1",0);
+            JSONObject links=new JSONObject(legacy.getString("service_station_detected_journey_visits_v2","{}"));
+            java.util.Iterator<String> journeys=links.keys();
+            while(journeys.hasNext()){
+                String id=journeys.next();JSONArray ids=links.optJSONArray(id);if(ids==null)continue;
+                for(int i=0;i<ids.length();i++){
+                    String venue=ids.optString(i);JSONObject row=find(VenueCollection.catalogue(context,collection),venue);
+                    if(row!=null)records.put("legacy-native:"+id+":"+venue,proof(collection,row,"legacy_journey_visit","").put("journey_id",id));
+                }
+            }
+            if(legacy.getBoolean("confirmed_timeline_only_v1",false))for(String venue:legacy.getStringSet("service_station_automatic",java.util.Collections.emptySet())){
+                JSONObject row=find(VenueCollection.catalogue(context,collection),venue);
+                if(row!=null)records.put("legacy-timeline:"+venue,proof(collection,row,"legacy_timeline_visit",""));
+            }
+        }catch(Exception invalid){throw new IllegalStateException("Existing Services history could not be migrated",invalid);}
         if(!prefs.edit().putString(collection+":records",records.toString())
                 .putBoolean(collection+":migrated",true).commit())throw new IllegalStateException("Visit migration could not be saved");
     }
@@ -198,7 +227,7 @@ final class VenueVisitStore {
         java.util.Iterator<String> keys=old.keys();
         while(keys.hasNext()){
             String key=keys.next();JSONObject proof=records.optJSONObject(key);
-            if(key.startsWith("native:"+id+":")&&proof!=null&&!proof.optBoolean("dismissed"))records.remove(key);
+            if(proof!=null&&id.equals(proof.optString("journey_id"))&&!proof.optBoolean("dismissed"))records.remove(key);
         }
         JSONArray outcomes=VenueEvidence.nativeVisits(collection,journey,VenueCollection.catalogue(context,collection));
         for(int i=0;i<outcomes.length();i++){
@@ -215,6 +244,7 @@ final class VenueVisitStore {
         if(!old.toString().equals(records.toString()))write(context,collection,records);
     }
     static synchronized void forgetJourney(Context context,String id){
+        generation++;
         for(VenueCollection.Definition definition:VenueCollection.all()){
             String collection=definition.id;JSONObject records=read(context,collection);boolean changed=false;
             java.util.List<String> remove=new java.util.ArrayList<>();java.util.Iterator<String> keys=records.keys();
@@ -246,12 +276,64 @@ final class VenueVisitStore {
                 requireInstalled(context,collection);JSONObject records=read(context,collection),record=records.optJSONObject(key);
                 if(epoch!=generation||record==null||!record.optBoolean("pending"))throw new IllegalArgumentException("Visit evidence changed");
                 if(confirmed)record.put("pending",false).put("source","confirmed_native_stop").put("confirmed_at",Instant.now().toString());
-                else records.put(key,new JSONObject().put("dismissed",true).put("journey_id",journeyId));
+                else records.put(key,new JSONObject().put("dismissed",true).put("journey_id",journeyId).put("venue_id",record.optString("venue_id")));
                 write(context,collection,records);
             }
         }
     }
 
+    static synchronized JSONObject serviceLinks(Context context){
+        JSONObject out=new JSONObject();JSONArray rows=records(context,CollectionAccessStore.SERVICES);
+        try{for(int i=0;i<rows.length();i++){
+            JSONObject row=rows.getJSONObject(i);String id=row.optString("journey_id");if(id.isEmpty())continue;
+            JSONArray ids=out.optJSONArray(id);if(ids==null){ids=new JSONArray();out.put(id,ids);}
+            boolean exists=false;for(int j=0;j<ids.length();j++)exists|=row.optString("venue_id").equals(ids.optString(j));
+            if(!exists)ids.put(row.optString("venue_id"));
+        }}catch(Exception invalid){throw new IllegalStateException(invalid);}return out;
+    }
+    static synchronized boolean replaceServiceJourney(Context context,String journeyId,Set<String> ids){
+        if(journeyId==null||journeyId.isEmpty())return false;
+        String collection=CollectionAccessStore.SERVICES;JSONObject records=read(context,collection),before;
+        try{
+            before=new JSONObject(records.toString());java.util.Iterator<String> keys=before.keys();Set<String> kept=new HashSet<>();
+            while(keys.hasNext()){
+                String key=keys.next();JSONObject row=records.optJSONObject(key);
+                if(row==null||!journeyId.equals(row.optString("journey_id")))continue;
+                String venue=row.optString("venue_id");
+                if(!venue.isEmpty()&&ids.contains(venue))kept.add(venue);
+                else if(!row.optBoolean("dismissed"))records.remove(key);
+            }
+            for(String id:ids)if(!kept.contains(id)){
+                String key="legacy-native:"+journeyId+":"+id;
+                if(records.has(key))continue;
+                JSONObject row=find(VenueCollection.catalogue(context,collection),id);
+                // Synthetic/legacy unknown identities retain the ID without inventing venue metadata.
+                if(row==null)row=new JSONObject().put("id",id).put("name",id);
+                records.put(key,proof(collection,row,"legacy_journey_visit","").put("journey_id",journeyId));
+            }
+            if(before.toString().equals(records.toString()))return false;
+            write(context,collection,records);return true;
+        }catch(Exception invalid){throw new IllegalStateException(invalid);}
+    }
+    static synchronized boolean replaceAllServiceJourneys(Context context,JSONObject links){
+        JSONObject before=serviceLinks(context);java.util.Set<String> journeys=new HashSet<>();
+        java.util.Iterator<String> keys=before.keys();while(keys.hasNext())journeys.add(keys.next());
+        keys=links.keys();while(keys.hasNext())journeys.add(keys.next());boolean changed=false;
+        for(String journey:journeys){Set<String> ids=new HashSet<>();JSONArray rows=links.optJSONArray(journey);if(rows!=null)for(int i=0;i<rows.length();i++)ids.add(rows.optString(i));
+            changed|=replaceServiceJourney(context,journey,ids);
+        }return changed;
+    }
+    static synchronized void replaceServiceTimeline(Context context,Set<String> ids){
+        String collection=CollectionAccessStore.SERVICES;JSONObject records=read(context,collection);
+        try{
+            JSONObject old=new JSONObject(records.toString());java.util.Iterator<String> keys=old.keys();
+            while(keys.hasNext()){String key=keys.next();JSONObject row=records.optJSONObject(key);
+                if(key.startsWith("legacy-timeline:")&&row!=null&&!row.optBoolean("dismissed")&&!ids.contains(row.optString("venue_id")))records.remove(key);}
+            for(String id:ids){String key="legacy-timeline:"+id;if(records.has(key))continue;
+                JSONObject venue=find(VenueCollection.catalogue(context,collection),id);if(venue!=null)records.put(key,proof(collection,venue,"legacy_timeline_visit",""));}
+            if(!old.toString().equals(records.toString()))write(context,collection,records);
+        }catch(Exception invalid){throw new IllegalStateException(invalid);}
+    }
     static synchronized void beginHistoryReplacement(){generation++;replacingHistory=true;}
     static synchronized void endHistoryReplacement(){generation++;replacingHistory=false;}
 }

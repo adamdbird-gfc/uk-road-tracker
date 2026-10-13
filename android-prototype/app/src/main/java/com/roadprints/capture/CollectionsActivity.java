@@ -56,7 +56,7 @@ public class CollectionsActivity extends Activity {
                 "Collect motorway service areas across Great Britain and Northern Ireland. Your supported visits include existing history.",
                 R.drawable.ic_roadprints_fuel);
         addCollection(CollectionAccessStore.SPOONS,
-                "Collect the Wetherspoons pubs you visit across the UK. Confirm visits using Timeline history or a location-checked check-in.",
+                "Collect Wetherspoons pubs across the UK. Supported visits check in automatically; review uncertain stops or check in manually.",
                 R.drawable.ic_nav_collections);
     }
 
@@ -77,9 +77,9 @@ public class CollectionsActivity extends Activity {
                 if(CollectionAccessStore.SPOONS.equals(id))PubVisitStore.ensureHistory(this,()->{
                     if(!isFinishing()&&!isDestroyed())render();
                 });
-                if(CollectionAccessStore.SERVICES.equals(id))ServiceStationStore.ensureHistoricalVisits(this,()->{
+                if(CollectionAccessStore.SERVICES.equals(id)){VenueVisitStore.ensureHistory(this,id,null);ServiceStationStore.ensureHistoricalVisits(this,()->{
                     if(!isFinishing()&&!isDestroyed())render();
-                });
+                });}
             });
         } else {
             TextView status=text("Installed · beta access",13,TEAL,true);status.setPadding(0,0,0,dp(12));card.addView(status);
@@ -91,7 +91,7 @@ public class CollectionsActivity extends Activity {
                 if(!ServiceStationStore.historicalBackfillComplete(this))ServiceStationStore.ensureHistoricalVisits(this,()->{
                     if(!isFinishing()&&!isDestroyed())render();
                 });
-                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class));finish();});
+                addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","services"));finish();});
             }
             if(CollectionAccessStore.SPOONS.equals(id))
                 addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","wetherspoons"));finish();});

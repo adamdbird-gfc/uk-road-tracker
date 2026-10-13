@@ -288,13 +288,13 @@ public class MapActivity extends Activity {
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVenues
                 :CollectionAccessStore.SPOONS.equals(selected)?CollectionMapCatalog.spoons(this):new JSONArray();
-        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?collectionServiceVisits:
+        Set<String> visited=CollectionAccessStore.SERVICES.equals(selected)?ServiceStationStore.completed(this):
                 CollectionAccessStore.SPOONS.equals(selected)?PubVisitStore.completed(this):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
         VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
-                showServiceStationCard(venue,collectionServiceVisits.contains(venue.optString("id")));
+                showServiceStationCard(venue,ServiceStationStore.completed(this).contains(venue.optString("id")));
             else if(CollectionAccessStore.SPOONS.equals(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);

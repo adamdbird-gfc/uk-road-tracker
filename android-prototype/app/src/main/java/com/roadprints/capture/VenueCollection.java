@@ -24,8 +24,8 @@ final class VenueCollection {
     static double distance(JSONObject venue,double lat,double lng){return ServiceStationEvidence.distance(venue,lat,lng);}
     static java.util.Set<String> completed(Context context,String id){
         java.util.Set<String> ids=VenueVisitStore.completed(context,id);
-        if(definition(id).siteStop){ids.addAll(ServiceStationStore.automatic(context));ids.addAll(ServiceStationVisitStore.stationIds(context));}
+        if(definition(id).siteStop)return ServiceStationStore.completed(context);
         return ids;
     }
-    static long revision(Context context,String id){return VenueVisitStore.revision(context,id)+(definition(id).siteStop?ServiceStationStore.revision(context):0);}
+    static long revision(Context context,String id){return definition(id).siteStop?ServiceStationStore.revision(context):VenueVisitStore.revision(context,id);}
 }

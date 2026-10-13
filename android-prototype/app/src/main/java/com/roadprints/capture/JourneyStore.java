@@ -351,7 +351,7 @@ public final class JourneyStore {
                 while(reader.hasNext()) {
                     String key=reader.nextName();
                     if("journey_id".equals(key)||"source".equals(key)||"raw_capture_samples".equals(key)
-                            ||"capture_route_samples".equals(key))journey.put(key,readEvidenceValue(reader));
+                            ||"capture_route_samples".equals(key)||"stops".equals(key))journey.put(key,readEvidenceValue(reader));
                     else reader.skipValue();
                 }
                 reader.endObject();

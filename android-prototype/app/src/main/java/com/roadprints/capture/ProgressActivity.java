@@ -168,7 +168,7 @@ public class ProgressActivity extends Activity {
             JSONObject pub=PubVisitStore.find(CollectionMapCatalog.spoons(this),checkinId);
             if(pub!=null)PubVisitUi.live(this,pub,this::refreshPubProgress,null);
         }
-        PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())refreshPubProgress();});
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{if(!isFinishing()&&!isDestroyed()){refreshPubProgress();VenueVisitUi.offerPending(this,this::refreshPubProgress);}});
         String requestedSection=getIntent().getStringExtra("progress_section");
         if(requestedSection!=null){
             getIntent().removeExtra("progress_section");
@@ -654,63 +654,10 @@ public class ProgressActivity extends Activity {
         }
     }
 
-    private void addServiceStationPanel(LinearLayout parent) {
-        LinearLayout panel=statisticsPanel("Motorway Service Stations");
-        try {
-            JSONArray stations=ServiceStationStore.stations(this);
-            Set<String> completed=ServiceStationStore.completed(this);
-            Set<String> automatic=ServiceStationStore.automatic(this);
-            int visited=0;
-            for(int i=0;i<stations.length();i++) {
-                JSONObject station=stations.optJSONObject(i);
-                if(station!=null&&completed.contains(station.optString("id",""))) visited++;
-            }
-            TextView count=new TextView(this);
-            count.setText(visited+" of "+stations.length()+" service stations collected");
-            count.setTextColor(Color.WHITE);count.setTextSize(16);
-            count.setTypeface(null,android.graphics.Typeface.BOLD);panel.addView(count);
-            TextView note=new TextView(this);
-            note.setText("Supported visits check in automatically. You can also check in manually. Either carriageway counts once.");
-            note.setTextColor(MUTED);note.setTextSize(12);note.setPadding(0,dp(5),0,dp(9));panel.addView(note);
-            addServiceStationRegion(panel,stations,"GB",completed,automatic);
-            addServiceStationRegion(panel,stations,"NI",completed,automatic);
-        } catch(Exception error) {
-            TextView message=new TextView(this);message.setText("Service station data could not be loaded.");
-            message.setTextColor(MUTED);panel.addView(message);
-        }
+    private void addServiceStationPanel(LinearLayout parent){
+        LinearLayout panel=statisticsPanel(CollectionAccessStore.name(CollectionAccessStore.SERVICES));
+        VenueProgressPanel.populate(this,CollectionAccessStore.SERVICES,panel,expandedRoadCategories,this::refreshPubProgress);
         parent.addView(panel);
-    }
-
-    private void addServiceStationRegion(LinearLayout panel,JSONArray stations,String region,
-                                         Set<String> completed,Set<String> automatic) {
-        List<JSONObject> values=new ArrayList<>();
-        for(int i=0;i<stations.length();i++) {
-            JSONObject station=stations.optJSONObject(i);
-            if(station!=null&&region.equals(station.optString("region","GB"))) values.add(station);
-        }
-        values.sort(Comparator.comparing((JSONObject item)->item.optString("road",""),String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(item->item.optString("name",""),String.CASE_INSENSITIVE_ORDER));
-        TextView regionTitle=new TextView(this);
-        regionTitle.setText(region.equals("NI")?"NORTHERN IRELAND":"GREAT BRITAIN");
-        regionTitle.setTextColor(GOLD);regionTitle.setTextSize(11);
-        regionTitle.setTypeface(null,android.graphics.Typeface.BOLD);regionTitle.setPadding(0,dp(12),0,dp(4));
-        panel.addView(regionTitle);
-        String previousRoad="";
-        for(JSONObject station:values) {
-            String road=station.optString("road","Other motorway");
-            if(!road.equals(previousRoad)) {
-                TextView roadTitle=new TextView(this);roadTitle.setText(road);roadTitle.setTextColor(TEAL);
-                roadTitle.setTextSize(14);roadTitle.setTypeface(null,android.graphics.Typeface.BOLD);
-                roadTitle.setPadding(dp(4),dp(7),0,dp(2));panel.addView(roadTitle);previousRoad=road;
-            }
-            String id=station.optString("id","");
-            TextView item=new TextView(this);
-            item.setOnClickListener(v->VenueVisitUi.details(this,CollectionAccessStore.SERVICES,station,this::refreshPubProgress));
-            item.setText((completed.contains(id)?"✓ ":"○ ")+station.optString("name","Service area")
-                    +(automatic.contains(id)?" · Timeline visit":completed.contains(id)?" · Roadprints visit":""));
-            item.setTextColor(completed.contains(id)?GOLD:MUTED);item.setTextSize(13);
-            item.setPadding(dp(4),dp(8),0,dp(8));panel.addView(item);
-        }
     }
 
     private LinearLayout statisticsPanel(String titleText) {
