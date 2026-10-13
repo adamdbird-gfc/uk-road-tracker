@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - 'scripts/*wetherspoons_map.py'
+      - 'scripts/test_wetherspoons_completion.py'
+      - 'scripts/venue_approval.py'
+      - 'collections/wetherspoons-coverage-review-v1.json'
       - 'collections/published/wetherspoons/**'
       - 'collections/wetherspoons-map-reviews-v1.json'
       - 'collections/wetherspoons-supplemental-map-reviews-v1.json'
@@ -10,6 +13,9 @@ on:
   pull_request:
     paths:
       - 'scripts/*wetherspoons_map.py'
+      - 'scripts/test_wetherspoons_completion.py'
+      - 'scripts/venue_approval.py'
+      - 'collections/wetherspoons-coverage-review-v1.json'
       - 'collections/published/wetherspoons/**'
       - 'collections/wetherspoons-map-reviews-v1.json'
       - 'collections/wetherspoons-supplemental-map-reviews-v1.json'
@@ -23,6 +29,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 -m unittest discover -s scripts -p 'test_*wetherspoons_map.py' -v
+
+      - run: python3 -m unittest discover -s scripts -p test_wetherspoons_completion.py -v
 
       - run: python3 scripts/publish_wetherspoons_map.py --verify --directory collections/published/wetherspoons
 

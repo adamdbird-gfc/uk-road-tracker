@@ -26,7 +26,7 @@ final class VenueCompletion {
         Map<String,List<JSONObject>> counties=new TreeMap<>();Map<String,String> names=new HashMap<>(),historicCounty=new HashMap<>();
         List<JSONObject> active=new ArrayList<>();
         for(int i=0;i<venues.length();i++){JSONObject v=venues.optJSONObject(i);if(v==null)continue;active.add(v);JSONObject c=v.optJSONObject("county");if(c!=null){String code=c.optString("code");counties.computeIfAbsent(code,k->new ArrayList<>()).add(v);names.put(code,c.optString("name"));historicCounty.put(v.optString("id"),code);}}
-        for(int i=0;i<records.length();i++){JSONObject p=records.optJSONObject(i);if(p!=null&&!p.optString("county_code").isEmpty())historicCounty.put(p.optString("venue_id",p.optString("pub_id")),p.optString("county_code"));}
+        for(int i=0;i<records.length();i++){JSONObject p=records.optJSONObject(i);if(p!=null&&!p.optString("county_code").isEmpty())historicCounty.putIfAbsent(p.optString("venue_id",p.optString("pub_id")),p.optString("county_code"));}
         JSONArray lifecycle=root.optJSONArray("lifecycle");if(lifecycle==null)lifecycle=new JSONArray();
         for(int i=0;i<lifecycle.length();i++){JSONObject v=lifecycle.optJSONObject(i);JSONObject c=v==null?null:v.optJSONObject("county");if(c!=null)historicCounty.put(v.optString("id"),c.optString("code"));}
         android.content.SharedPreferences prefs=context.getSharedPreferences("roadprints_achievements_v1",0);String key=collection.id+":completion_proofs_v1";JSONObject saved;
@@ -54,7 +54,10 @@ final class VenueCompletion {
             if(!"future_closure".equals(measure)&&!certified){value=0;out.display.put(id,"Completion awaits a verified active catalogue");}
             if(enabled&&!"future_closure".equals(measure)){
                 JSONArray old=saved.optJSONArray(id);boolean retained=old!=null&&old.length()>0;
-                if(old!=null)for(int n=0;n<old.length();n++)retained&=visits.contains(old.optString(n));
+                if(old!=null)for(int n=0;n<old.length();n++){
+                    String venue=old.optString(n);retained&=visits.contains(venue);
+                    if("county_percent".equals(measure))retained&=g.optString("county_code").equals(historicCounty.get(venue));
+                }
                 if(value>=100&&certified){try{saved.put(id,new JSONArray(new TreeSet<>(proof)));}catch(Exception invalid){throw new IllegalStateException(invalid);}}
                 else if(retained){value=100;out.display.put(id,out.display.get(id)+" · earned completion retained");}
                 else saved.remove(id);
