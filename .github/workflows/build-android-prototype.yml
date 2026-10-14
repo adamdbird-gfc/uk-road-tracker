@@ -118,7 +118,7 @@ jobs:
 
   firebase:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.firebase_upload
+    if: inputs.firebase_upload
     runs-on: ubuntu-latest
     permissions:
       contents: read

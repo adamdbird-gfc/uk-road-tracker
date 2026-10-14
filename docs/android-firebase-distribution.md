@@ -65,3 +65,17 @@ and commit. Local callers must verify their APK before uploading; CI does so fir
 
 References: [Firebase CLI APK distribution](https://firebase.google.com/docs/app-distribution/android/distribute-cli),
 [App Distribution IAM role](https://docs.cloud.google.com/iam/docs/roles-permissions/firebaseappdistro).
+
+## Assistant-requested ready-slice releases
+
+The assistant can request one release by adding a new immutable JSON file at
+.github/release-requests/android/<version>.json on fix/onboarding-start-tracking.
+The request pins an ancestral source SHA, matching version name/code and an
+explicit Firebase upload boolean. A new request alone triggers signed packaging;
+ordinary app commits and source checks do not. The same verified signing/testing
+and Firebase upload workflow is reused. Manual packaging remains available.
+
+One version has one request file. Editing/reusing an existing file is rejected;
+retry failed jobs through their original run. Requests contain public release
+metadata only, never credentials or tester identities. Each source pin is checked
+against the requested version before any signing key is consumed.
