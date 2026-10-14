@@ -388,7 +388,7 @@ public class JourneyListActivity extends Activity {
             ImageView icon = new ImageView(this);
             icon.setImageResource(iconResources[index]);
             icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             icon.setColorFilter(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8,
                     android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon, new LinearLayout.LayoutParams(

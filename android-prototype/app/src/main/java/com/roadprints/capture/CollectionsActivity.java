@@ -120,7 +120,7 @@ public class CollectionsActivity extends Activity {
         String[] labels={"Map","Journeys","Progress","Achievements","Collections"};
         for(int index=0;index<labels.length;index++){
             final int target=index;LinearLayout item=new LinearLayout(this);item.setOrientation(LinearLayout.VERTICAL);item.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);item.setPadding(0,dp(4),0,0);
-            ImageView icon=new ImageView(this);icon.setImageResource(icons[index]);icon.setColorFilter(index==4?GOLD:MUTED,android.graphics.PorterDuff.Mode.SRC_IN);item.addView(icon,new LinearLayout.LayoutParams(-1,dp(32)));
+            ImageView icon=new ImageView(this);icon.setImageResource(icons[index]);icon.setScaleType(ImageView.ScaleType.FIT_CENTER);icon.setColorFilter(index==4?GOLD:MUTED,android.graphics.PorterDuff.Mode.SRC_IN);item.addView(icon,new LinearLayout.LayoutParams(-1,dp(32)));
             TextView label=text(labels[index],10,index==4?GOLD:MUTED,false);label.setGravity(Gravity.CENTER);label.setMaxLines(1);item.addView(label,new LinearLayout.LayoutParams(-1,dp(24)));
             if(index!=4)item.setOnClickListener(v->navigate(target));nav.addView(item,new LinearLayout.LayoutParams(0,dp(68),1));
         }return nav;
