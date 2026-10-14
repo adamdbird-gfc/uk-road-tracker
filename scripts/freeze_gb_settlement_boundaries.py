@@ -3,6 +3,7 @@
 import argparse
 import gzip
 import hashlib
+import http.client
 import json
 import re
 import time
@@ -31,7 +32,7 @@ def query(url, params):
             if 'error' in result:
                 raise ValueError('Source query error: ' + repr(result['error']))
             return result, raw
-        except (OSError, ValueError):
+        except (OSError, ValueError, http.client.HTTPException):
             if attempt == 2:
                 raise
             time.sleep(2 * (attempt + 1))
