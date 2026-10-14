@@ -6,6 +6,9 @@ on:
       preview_deploy:
         type: boolean
         default: false
+      live_deploy:
+        type: boolean
+        default: false
       source_ref:
         type: string
         default: ''
@@ -18,8 +21,13 @@ on:
       - 'collections/published/**'
       - 'collections/venue-collections-v1.json'
       - '.github/workflows/firebase-reference-data.yml'
+      - '.github/workflows/publish-reference-data.yml'
   workflow_dispatch:
     inputs:
+      live_deploy:
+        description: Publish and verify permanent public reference data
+        type: boolean
+        default: false
       preview_deploy:
         description: Deploy the validated data to a seven-day Firebase preview
         type: boolean
@@ -30,7 +38,7 @@ permissions:
 
 concurrency:
   group: reference-data-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   stage:
@@ -54,7 +62,14 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate and stage public files
+        env:
+          PREVIEW_REQUESTED: ${{ inputs.preview_deploy }}
+          LIVE_REQUESTED: ${{ inputs.live_deploy }}
         run: |
+          if [ "$PREVIEW_REQUESTED" = true ] && [ "$LIVE_REQUESTED" = true ]; then
+            echo 'Select either preview or live deployment.' >&2
+            exit 1
+          fi
           python -m unittest discover -s scripts -p test_firebase_reference_data.py -v
           python -m unittest discover -s scripts -p test_firebase_hosted_verification.py -v
           python scripts/stage_firebase_reference_data.py --settlements-root reference-source
@@ -68,19 +83,20 @@ jobs:
             hosting-stage-report.json
             reference-data-sources.txt
           retention-days: 3
-      - name: Set up Node for preview deployment
-        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+      - name: Set up Node for deployment
+        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
         uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Install Firebase CLI
-        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
         run: npm install --global firebase-tools@15.33.0
-      - name: Deploy isolated preview
-        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+      - name: Deploy and verify reference data
+        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
         env:
           FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
           ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+          LIVE_REQUESTED: ${{ inputs.live_deploy }}
         shell: bash
         run: |
           set -euo pipefail
@@ -103,15 +119,22 @@ jobs:
           PY
           unset FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON
           firebase target:apply hosting reference-data "$ROADPRINTS_DATA_HOSTING_SITE" --project roadprints-822cc --non-interactive
-          firebase hosting:channel:deploy data-migration --only reference-data --expires 7d --project roadprints-822cc --non-interactive --json > preview-deployment.json
+          if [ "$LIVE_REQUESTED" = true ]; then
+            firebase deploy --only hosting:reference-data --project roadprints-822cc --non-interactive --json > hosting-deployment.json
+          else
+            firebase hosting:channel:deploy data-migration --only reference-data --expires 7d --project roadprints-822cc --non-interactive --json > hosting-deployment.json
+          fi
           python - <<'PY'
-          import json, subprocess
-          result = json.load(open('preview-deployment.json'))
+          import json, os, subprocess
+          result = json.load(open('hosting-deployment.json'))
           if result.get('status') != 'success':
-              raise SystemExit('Preview deployment did not succeed.')
-          sites = result.get('result', {})
-          if len(sites) != 1:
-              raise SystemExit('Expected exactly one reference-data preview.')
-          url = next(iter(sites.values()))['url']
+              raise SystemExit('Hosting deployment did not succeed.')
+          if os.environ['LIVE_REQUESTED'] == 'true':
+              url = 'https://' + os.environ['ROADPRINTS_DATA_HOSTING_SITE'] + '.web.app'
+          else:
+              sites = result.get('result', {})
+              if len(sites) != 1:
+                  raise SystemExit('Expected exactly one reference-data preview.')
+              url = next(iter(sites.values()))['url']
           subprocess.run(['python', 'scripts/verify_firebase_reference_data.py', '--url', url], check=True)
           PY

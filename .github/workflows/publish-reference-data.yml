@@ -1,0 +1,60 @@
+name: Publish Firebase reference data
+
+on:
+  push:
+    branches: [main, fix/onboarding-start-tracking]
+    paths:
+      - 'collections/published/**'
+      - 'collections/venue-collections-v1.json'
+      - 'settlement-inventories-v1/**'
+      - 'settlement-inventory-manifest-v1.json'
+      - 'firebase.json'
+      - '.github/workflows/publish-reference-data.yml'
+  workflow_run:
+    workflows: ['Build settlement inventory batch', 'Build settlement inventories']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One public site, one writer across both source branches. Queued jobs read the
+# current source heads, so intermediate commits need not be published separately.
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Skip queue runs that published no new files
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          QUEUE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = workflow_run ]; then
+            [[ "$QUEUE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+            if git diff --quiet "$QUEUE_HEAD_SHA" HEAD -- settlement-inventories-v1 settlement-inventory-manifest-v1.json; then
+              echo 'publish=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+  publish:
+    needs: changes
+    if: needs.changes.outputs.publish == 'true'
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/firebase-reference-data.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: fix/onboarding-start-tracking
+      live_deploy: true
+    secrets: inherit
