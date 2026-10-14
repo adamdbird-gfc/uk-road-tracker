@@ -104,3 +104,22 @@ References:
 - https://firebase.google.com/docs/hosting/full-config
 - https://firebase.google.com/docs/hosting/test-preview-deploy
 - https://firebase.google.com/docs/cli#deploy_targets
+
+## Preview verification and default-branch entry points
+
+The hosted-file verifier checks every staged asset byte count/hash, JSON/GeoJSON
+content type, mutable versus immutable cache policy and nosniff header. It rejects
+redirects, unexpected HTML and source/configuration paths returning anything other
+than HTTP 404. Eight verifier tests cover those failure cases. Preview deployment
+captures the CLI JSON result and runs this verifier before reporting success.
+
+Both manual workflows support reusable calls with an explicit source ref. Default
+main entry points delegate to the current release branch; packaging cannot build
+main's old Android app. The Hosting entry point stages current release collections
+plus latest main settlement publication. Existing automatic Android checks on the
+release branch remain in place. The main queue keeps its schedule, with short
+artifact retention and its unsupported download-artifact input removed.
+
+Next external prerequisite is account access to Firebase project roadprints-822cc,
+then inspection of the Hosting site and deployment permissions. No preview/live
+Hosting success is asserted by local/CI tests alone.

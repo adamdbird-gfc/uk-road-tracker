@@ -1,6 +1,14 @@
 name: Package Roadprints test APK
 
 on:
+  workflow_call:
+    inputs:
+      firebase_upload:
+        type: boolean
+        default: false
+      source_ref:
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       firebase_upload:
@@ -27,6 +35,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref || github.ref }}
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -115,6 +125,8 @@ jobs:
     steps:
       - name: Check out verified source
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref || github.ref }}
 
       - name: Download verified signed APK
         uses: actions/download-artifact@v4
