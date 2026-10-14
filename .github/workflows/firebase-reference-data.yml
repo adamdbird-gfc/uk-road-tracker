@@ -72,6 +72,7 @@ jobs:
           fi
           python -m unittest discover -s scripts -p test_firebase_reference_data.py -v
           python -m unittest discover -s scripts -p test_firebase_hosted_verification.py -v
+          python -m unittest discover -s scripts -p test_protect_firebase_reference_data.py -v
           python scripts/stage_firebase_reference_data.py --settlements-root reference-source
           git rev-parse HEAD > reference-data-sources.txt
           git -C reference-source rev-parse HEAD >> reference-data-sources.txt
@@ -120,6 +121,7 @@ jobs:
           unset FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON
           firebase target:apply hosting reference-data "$ROADPRINTS_DATA_HOSTING_SITE" --project roadprints-822cc --non-interactive
           if [ "$LIVE_REQUESTED" = true ]; then
+            python scripts/protect_firebase_reference_data.py
             firebase deploy --only hosting:reference-data --project roadprints-822cc --non-interactive --json > hosting-deployment.json
           else
             firebase hosting:channel:deploy data-migration --only reference-data --expires 7d --project roadprints-822cc --non-interactive --json > hosting-deployment.json
