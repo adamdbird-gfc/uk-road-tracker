@@ -1,0 +1,53 @@
+name: Reconcile published settlement inventories
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - settlement-inventory-manifest-v1.json
+      - scripts/reconcile_published_settlement_inventories.py
+      - .github/workflows/reconcile-settlement-inventories.yml
+  pull_request:
+    paths:
+      - settlement-inventory-manifest-v1.json
+      - scripts/*settlement_inventor*.py
+      - .github/workflows/*settlement*.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reconcile-settlement-inventories
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test publication validation
+        run: python -m unittest discover -s scripts -p test_reconcile_published_settlement_inventories.py
+      - name: Validate existing published inventories
+        run: |
+          PYTHONPATH=scripts python -c "from reconcile_published_settlement_inventories import published_inventories; print('Validated inventories:', len(published_inventories('.')))"
+  reconcile:
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test publication validation
+        run: python -m unittest discover -s scripts -p test_reconcile_published_settlement_inventories.py
+      - name: Install database client
+        run: python -m pip install 'psycopg[binary]'
+      - name: Reconcile existing inventories and verify Chester
+        env:
+          DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
+        run: python scripts/reconcile_published_settlement_inventories.py

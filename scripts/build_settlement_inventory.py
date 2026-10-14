@@ -15,7 +15,7 @@ def get_json(url, params):
 def build(identifier):
     # The queue uses stable ONS codes. Names remain supported for the manual
     # workflow and for local diagnostics.
-    is_code=bool(__import__('re').fullmatch(r'[EW]\d{8}', identifier))
+    is_code=bool(__import__('re').fullmatch(r'[EWK]\d{8}', identifier))
     where=f"BUA22CD='{identifier}'" if is_code else f"BUA22NM='{identifier.replace("'","''")}'"
     ons=get_json(ONS,{"where":where,"outFields":"BUA22CD,BUA22NM","returnGeometry":"true","f":"geojson"})
     features=ons.get("features",[])

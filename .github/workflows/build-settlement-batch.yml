@@ -164,7 +164,7 @@ jobs:
           manifest = json.loads(manifest_path.read_text())
           entries = {item["code"]: item for item in manifest.get("inventories", [])}
           generated = []
-          for path in Path("settlement-inventories-v1").glob("[EW][0-9]*.json"):
+          for path in Path("settlement-inventories-v1").glob("[EWK][0-9]*.json"):
               if path.name.endswith("-boundary.geojson"):
                   continue
               data = json.loads(path.read_text())
