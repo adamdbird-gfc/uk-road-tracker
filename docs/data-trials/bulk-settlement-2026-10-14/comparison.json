@@ -1,0 +1,117 @@
+{
+  "generated_at": "2026-10-14T18:08:08.360633+00:00",
+  "source_commit": "42742ac878d035e6dc80b7cb510249f3ab92aa47",
+  "status": "trial_only_not_published",
+  "rules": {
+    "highways": [
+      "living_street",
+      "residential",
+      "tertiary",
+      "unclassified"
+    ],
+    "identity": "exact stripped distinct road names",
+    "geometry": "way intersects unchanged saved settlement boundary"
+  },
+  "sources": [
+    {
+      "region": "kent",
+      "url": "https://download.geofabrik.de/europe/united-kingdom/england/kent-latest.osm.pbf",
+      "bytes": 53925846,
+      "sha256": "ef994e2210ca8ee6c29187403e099f6f12a4457178b04840eda952ab0c52c6c0",
+      "md5": "5f41f9d916205ce2a0a66544f8f19c7c",
+      "download_seconds": 36.941,
+      "osm_timestamp": "2026-10-13T20:21:31Z",
+      "processing_seconds": 3.592
+    },
+    {
+      "region": "cheshire",
+      "url": "https://download.geofabrik.de/europe/united-kingdom/england/cheshire-latest.osm.pbf",
+      "bytes": 38487035,
+      "sha256": "eb12fb3de45ae4125bed3e9246930dc7bf7fd58989ffb952522e3da3ef6f88be",
+      "md5": "4bef33c721758673bdd74c2c436d1440",
+      "download_seconds": 36.147,
+      "osm_timestamp": "2026-10-13T20:21:31Z",
+      "processing_seconds": 2.764
+    },
+    {
+      "region": "wales",
+      "url": "https://download.geofabrik.de/europe/united-kingdom/wales-latest.osm.pbf",
+      "bytes": 149135471,
+      "sha256": "5d72280ce2b52ef20670af83d69855093070f93569b06ee055ed45db4e9be0a9",
+      "md5": "fff0dc0a5d9d48d9f42eba9686d54143",
+      "download_seconds": 44.104,
+      "osm_timestamp": "2026-10-13T20:21:31Z",
+      "processing_seconds": 9.758
+    }
+  ],
+  "comparisons": [
+    {
+      "code": "E63005058",
+      "name": "Gravesend",
+      "baseline_count": 488,
+      "candidate_count": 488,
+      "unchanged_names": 488,
+      "added": [],
+      "removed": [],
+      "boundary_coverage_fraction": 0.9999999999999999,
+      "boundary_sha256": "e09a95f5bffbe1fec1220e23d584b20c3e6d175aedabf4d0ee9e3d1a51db17c1",
+      "baseline_sha256": "631304ccda8d214543c5935d96a0816e9bc8a24e8291851bf21e88d4fd92ea2c",
+      "candidate_bytes": 7990,
+      "candidate_sha256": "faf9cb90e8ab1832e953de994b75527da7cba03e0cfc3eb70e5918d3999807cd"
+    },
+    {
+      "code": "W45000596",
+      "name": "Cardiff",
+      "baseline_count": 3313,
+      "candidate_count": 3315,
+      "unchanged_names": 3312,
+      "added": [
+        "Ash Place",
+        "Clas Isan",
+        "Hazel Place"
+      ],
+      "removed": [
+        "Clas ISan"
+      ],
+      "boundary_coverage_fraction": 0.9999999999999962,
+      "boundary_sha256": "0b3734adef8edc0935c7084ee7a206c1558e30c1c5e3cb4e982158c4150d1f87",
+      "baseline_sha256": "b3c9d17c16c345f6a6fd04fef7598b6a45b145f3b8eaebad3feb08ed01397341",
+      "candidate_bytes": 55069,
+      "candidate_sha256": "4cef4e02b082f0c49646a3c3e09250b8ac016b30f59253dbc43bd7c595f84231"
+    },
+    {
+      "code": "K08000001",
+      "name": "Chester",
+      "baseline_count": 1239,
+      "candidate_count": 1240,
+      "unchanged_names": 1239,
+      "added": [
+        "Bachelors Court"
+      ],
+      "removed": [],
+      "boundary_coverage_fraction": 1.0000000000000018,
+      "boundary_sha256": "d54d539ab134295ed7c868dc50d70b4c816dc78495f7684a4523e4131ec72bf0",
+      "baseline_sha256": "930e16daf28ca5f144bf8346f455701622c53e632bf267145159014a1137274c",
+      "candidate_bytes": 20123,
+      "candidate_sha256": "65693c1d91835498426b14ca1e5f3eae7e10ba7ffca3938fb25964f4c819cda9"
+    }
+  ],
+  "total_seconds_including_hashing": 16.315,
+  "peak_process_rss_kib": 705812,
+  "qualifying_way_visits": 155283,
+  "catalogue_count": 8545,
+  "catalogue_prefix_counts": {
+    "E": 7091,
+    "K": 10,
+    "S": 822,
+    "W": 622
+  },
+  "output_bytes": 83182,
+  "limitations": [
+    "Not a UK-wide performance or coverage benchmark",
+    "Different snapshot dates; name differences require review",
+    "Published app inventories and queue are unchanged",
+    "Region polygons are approximate extraction coverage checks",
+    "Existing catalogue coverage must be assessed for all four nations"
+  ]
+}
