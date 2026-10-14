@@ -1,0 +1,102 @@
+{
+  "status": "valid_candidate_not_published",
+  "count": 8545,
+  "repairs": [
+    {
+      "code": "E63000153",
+      "name": "Stanley (County Durham)",
+      "reason": "Nested shells[-1.7048173442067 54.8543459973562]",
+      "method": "union_valid_polygon_components",
+      "component_count": 12,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.0006588476535720104,
+      "union_footprint_area": 0.0006586726946342648,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63001804",
+      "name": "Crewe",
+      "reason": "Nested shells[-2.41248006693009 53.0939822939952]",
+      "method": "union_valid_polygon_components",
+      "component_count": 31,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.00254051972051455,
+      "union_footprint_area": 0.0025399324620894205,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63003073",
+      "name": "Bewdley",
+      "reason": "Nested shells[-2.34107019424017 52.3700922761393]",
+      "method": "union_valid_polygon_components",
+      "component_count": 10,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.000335352796136564,
+      "union_footprint_area": 0.0003352702698702217,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63004612",
+      "name": "Nailsworth",
+      "reason": "Nested shells[-2.23113960620385 51.7077376454414]",
+      "method": "union_valid_polygon_components",
+      "component_count": 10,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.00032743811441234065,
+      "union_footprint_area": 0.00032621818482076023,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63004882",
+      "name": "Hillingdon",
+      "reason": "Nested shells[-0.498784357465064 51.6091318811636]",
+      "method": "union_valid_polygon_components",
+      "component_count": 73,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.009998366722871965,
+      "union_footprint_area": 0.009997555411471935,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63005221",
+      "name": "Weybridge",
+      "reason": "Nested shells[-0.462876698939229 51.3784631282566]",
+      "method": "union_valid_polygon_components",
+      "component_count": 14,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.0005706611333549659,
+      "union_footprint_area": 0.0005699345873583264,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63006544",
+      "name": "Hightown (New Forest)",
+      "reason": "Nested shells[-1.77130043606299 50.8377705173225]",
+      "method": "union_valid_polygon_components",
+      "component_count": 9,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.00011494834168036316,
+      "union_footprint_area": 0.00011478870804698202,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    },
+    {
+      "code": "E63006826",
+      "name": "Dawlish",
+      "reason": "Nested shells[-3.4641720121091 50.5999232249943]",
+      "method": "union_valid_polygon_components",
+      "component_count": 6,
+      "bounds_unchanged": true,
+      "original_component_area_sum": 0.0004143984346136852,
+      "union_footprint_area": 0.0004139220537760365,
+      "note": "Original summed area double-counted overlaps; component union preserves membership"
+    }
+  ],
+  "source_sha256": "999ff8f10c9703b887b631371713d3324a20d057473ba6c34f13e8fca11a1853",
+  "candidate_sha256": "372556eb0e043775ad9fa4e9c3c4428d6c0d21255a4fa587ba0d39016ecc8c39",
+  "candidate_compressed_bytes": 75366163,
+  "limitations": [
+    "Candidate only; no live geometry changed",
+    "Repair removes overlaps between already valid polygon components",
+    "Named-road inventory comparison remains required before publication"
+  ]
+}
