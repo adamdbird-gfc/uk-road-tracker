@@ -46,7 +46,8 @@ def build(root, app, work, request):
     if supplier_md5 != request['osm_md5']:
         raise ValueError('Reviewed OSM snapshot is no longer the latest extract')
     run('freeze_gb_settlement_boundaries.py', '--root', root, '--output', work / 'boundaries')
-    boundary = work / 'valid-boundaries.geojson.gz'
+    # Gzip embeds this basename; retain the reviewed archive's exact header too.
+    boundary = work / 'roadprints-gb-boundaries-2022-valid-candidate.geojson.gz'
     run('normalise_gb_boundary_snapshot.py', '--source', work / 'boundaries/boundaries.geojson.gz', '--output', boundary)
     checked_hash(boundary, request['boundary_sha256'])
     run('download_bulk_settlement_trial.py', '--regions', 'great-britain', '--output', work / 'source')
