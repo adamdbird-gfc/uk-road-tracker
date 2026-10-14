@@ -1,8 +1,9 @@
-name: Android prototype build
+name: Android checks
 
 on:
   push:
     branches:
+      - main
       - codex/matching-coordinator
       - fix/onboarding-start-tracking
     paths:
@@ -12,6 +13,8 @@ on:
       - "scripts/publish_venue_catalogue.py"
       - "scripts/test_venue_catalogue.py"
       - ".github/workflows/android-prototype-build.yml"
+      - ".github/workflows/build-android-prototype.yml"
+      - "scripts/upload_android_firebase.sh"
   pull_request:
     paths:
       - "android-prototype/**"
@@ -20,15 +23,15 @@ on:
       - "scripts/publish_venue_catalogue.py"
       - "scripts/test_venue_catalogue.py"
       - ".github/workflows/android-prototype-build.yml"
-  workflow_dispatch:
-    inputs:
-      firebase_upload:
-        description: Upload the verified signed APK to Firebase App Distribution
-        type: boolean
-        default: false
+      - ".github/workflows/build-android-prototype.yml"
+      - "scripts/upload_android_firebase.sh"
 
 permissions:
   contents: read
+
+concurrency:
+  group: android-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-debug-apk:
@@ -36,10 +39,6 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
-      ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
-      ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
-      ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -50,13 +49,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Verify preinstalled Android SDK
-        run: |
-          test -x "$ANDROID_HOME/platform-tools/adb"
-          test -d "$ANDROID_HOME/platforms/android-35"
-          test -d "$ANDROID_HOME/build-tools/35.0.0"
-          test -f "$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          test -f "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10"
 
       - name: Verify declarative venue registry
         run: |
@@ -66,83 +62,19 @@ jobs:
       - name: Package pinned offline historic county reference
         run: bash android-prototype/scripts/prepare_county_reference.sh
 
-      - name: Prepare stable debug signing key
-        run: |
-          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64" || { echo "Stable Roadprints signing key is not configured." >&2; exit 1; }
-          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD" || { echo "Stable signing store password is not configured." >&2; exit 1; }
-          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS" || { echo "Stable signing key alias is not configured." >&2; exit 1; }
-          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD" || { echo "Stable signing key password is not configured." >&2; exit 1; }
-          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
-          echo "ROADPRINTS_DEBUG_KEYSTORE=$RUNNER_TEMP/roadprints-debug.keystore" >> "$GITHUB_ENV"
+      - name: Check service catalogue metadata
+        run: python3 scripts/test_service_collection_metadata.py
 
-      - name: Build, test and verify signed APK
-        run: |
-          gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose android-prototype/app/build/outputs/apk/debug/app-debug.apk
-          mkdir -p roadprints-output
-          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk roadprints-output/app-debug.apk
+      - name: Run unit tests and lint
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:lintDebug
 
-      - name: Upload signed APK
+      - name: Upload failed-check reports
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: roadprints-android-debug-${{ github.sha }}
-          path: roadprints-output/
-          if-no-files-found: error
-          retention-days: 7
-
-  firebase:
-    needs: build-debug-apk
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.firebase_upload) ||
-      (github.event_name == 'push' && vars.ROADPRINTS_FIREBASE_UPLOAD == 'true' &&
-      (github.ref == 'refs/heads/fix/onboarding-start-tracking' || github.ref == 'refs/heads/main'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Check out verified source
-        uses: actions/checkout@v6
-
-      - name: Download verified signed APK
-        uses: actions/download-artifact@v4
-        with:
-          name: roadprints-android-debug-${{ github.sha }}
-          path: verified-apk
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install Firebase CLI
-        run: npm install --global firebase-tools@15.33.0
-
-      - name: Upload APK to Firebase App Distribution
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-firebase-credentials.json"
-          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
-          python3 - <<'PY'
-          import json, os, pathlib
-          raw = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON', '')
-          if not raw:
-              raise SystemExit('Configure the FIREBASE_SERVICE_ACCOUNT_JSON repository Actions secret first. See docs/android-firebase-distribution.md.')
-          try:
-              credentials = json.loads(raw)
-          except ValueError:
-              raise SystemExit('FIREBASE_SERVICE_ACCOUNT_JSON must contain valid service-account JSON.')
-          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc' or not credentials.get('private_key') or not credentials.get('client_email'):
-              raise SystemExit('Expected a service-account key for roadprints-822cc, not google-services.json.')
-          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-          path.touch(mode=0o600, exist_ok=False)
-          path.write_text(raw)
-          PY
-          unset FIREBASE_SERVICE_ACCOUNT_JSON
-          bash scripts/upload_android_firebase.sh verified-apk/app-debug.apk
-
-      - name: Remove deployment credential
-        if: always()
-        run: rm -f "$RUNNER_TEMP/roadprints-firebase-credentials.json"
+          name: android-check-reports-${{ github.sha }}
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 3

@@ -126,6 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: settlement-inventory-${{ matrix.settlement }}
+          retention-days: 3
           path: |
             settlement-inventories-v1/*.json
             settlement-inventories-v1/*.geojson

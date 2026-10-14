@@ -1,11 +1,12 @@
 # Roadprints Firebase APK uploads
 
-The **Android prototype build** workflow (`android-prototype-build.yml`) on the
-latest `fix/onboarding-start-tracking` branch can upload its signed,
-verified APK to Firebase App Distribution via Firebase CLI 15.33.0.
-The Firebase job depends on the build job, so unit tests, lint and APK signature
-verification must succeed first. GitHub release publication continues separately.
-No Android version change is needed for this deployment setup.
+The **Package Roadprints test APK** workflow (`build-android-prototype.yml`)
+packages a signed APK only when manually requested for a complete delivery slice.
+The separate **Android checks** workflow runs unit tests and lint for development
+changes and pull requests, without uploading APKs or distributing releases.
+Packaging repeats those checks and verifies the stable APK signature before an
+optional Firebase App Distribution upload. It does not create GitHub releases.
+Failed-check reports expire after three days; signed APK artifacts after seven.
 
 ## One-time account setup
 
@@ -22,21 +23,16 @@ No Android version change is needed for this deployment setup.
    entire downloaded service-account JSON. Add it directly to GitHub; do not commit
    it or paste it into a chat. The Android `google-services.json` is app configuration
    and cannot authenticate a deployment.
-5. To enable automatic uploads, add a repository **Actions variable** named
-   **ROADPRINTS_FIREBASE_UPLOAD** with value **true**. This enables uploads for builds
-   on `fix/onboarding-start-tracking` and `main` for **Android prototype build**.
-   The older **Build Android capture prototype** workflow also supports uploads
-   on `feat/firebase-beta-measurement` and `main`. Other branches can use the manual
-   option below. Leave the variable unset to use manual uploads only.
+5. The existing `ROADPRINTS_FIREBASE_UPLOAD` variable is no longer used. Uploads
+   require the manual checkbox below; no push or pull request distributes a release.
 
 ## Deploy from GitHub
 
-Run **Android prototype build**, select `fix/onboarding-start-tracking`
-(or another branch containing this workflow), and tick
-**Upload the verified APK to Firebase App Distribution**.
-The Firebase job will print the release links after a successful upload.
-When the automatic-upload variable is enabled, supported branch builds upload
-without selecting that checkbox.
+Run **Package Roadprints test APK**, select `fix/onboarding-start-tracking`
+(or the reviewed delivery branch containing this workflow), and tick
+**Upload the verified APK to Firebase App Distribution** when the slice is ready.
+Leave the checkbox off to create a signed artifact without uploading it.
+The Firebase job prints release links after a successful upload.
 
 Uploads do not automatically invite or notify testers. Open the uploaded release
 in Firebase and select the testers or group when you are ready to share it.

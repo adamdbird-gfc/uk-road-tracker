@@ -1,0 +1,94 @@
+name: Stage Firebase reference data
+
+on:
+  pull_request:
+    paths:
+      - 'firebase.json'
+      - 'scripts/*firebase_reference_data.py'
+      - 'scripts/publish_venue_catalogue.py'
+      - 'collections/published/**'
+      - 'collections/venue-collections-v1.json'
+      - '.github/workflows/firebase-reference-data.yml'
+  workflow_dispatch:
+    inputs:
+      preview_deploy:
+        description: Deploy the validated data to a seven-day Firebase preview
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reference-data-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # App/venue code lives on the release branch; the queue publishes inventory
+      # updates on main. Preserve both sources rather than using stale branch data.
+      - name: Check out current settlement publication
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: reference-source
+          sparse-checkout: |
+            settlement-inventory-manifest-v1.json
+            settlement-inventories-v1
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate and stage public files
+        run: |
+          python -m unittest discover -s scripts -p test_firebase_reference_data.py -v
+          python scripts/stage_firebase_reference_data.py --settlements-root reference-source
+          git rev-parse HEAD > reference-data-sources.txt
+          git -C reference-source rev-parse HEAD >> reference-data-sources.txt
+      - name: Retain staging verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-data-${{ github.sha }}
+          path: |
+            hosting-stage-report.json
+            reference-data-sources.txt
+          retention-days: 3
+      - name: Set up Node for preview deployment
+        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Firebase CLI
+        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+        run: npm install --global firebase-tools@15.33.0
+      - name: Deploy isolated preview
+        if: github.event_name == 'workflow_dispatch' && inputs.preview_deploy
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-hosting.json"
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          python - <<'PY'
+          import json, os, pathlib, re
+          site = os.environ.get('ROADPRINTS_DATA_HOSTING_SITE', '')
+          if not re.fullmatch(r'[a-z0-9][a-z0-9-]{3,61}[a-z0-9]', site):
+              raise SystemExit('Set ROADPRINTS_DATA_HOSTING_SITE to the verified dedicated Hosting site ID.')
+          raw = os.environ.get('FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON', '')
+          if not raw:
+              raise SystemExit('Set FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON; App Distribution access alone is insufficient.')
+          credentials = json.loads(raw)
+          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc' or not credentials.get('private_key') or not credentials.get('client_email'):
+              raise SystemExit('Expected a Hosting service-account key for roadprints-822cc.')
+          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+          path.touch(mode=0o600, exist_ok=False)
+          path.write_text(raw)
+          PY
+          unset FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON
+          firebase target:apply hosting reference-data "$ROADPRINTS_DATA_HOSTING_SITE" --project roadprints-822cc --non-interactive
+          firebase hosting:channel:deploy data-migration --only reference-data --expires 7d --project roadprints-822cc --non-interactive

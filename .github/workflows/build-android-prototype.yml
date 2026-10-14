@@ -1,4 +1,4 @@
-name: Build Android capture prototype
+name: Package Roadprints test APK
 
 on:
   workflow_dispatch:
@@ -7,15 +7,13 @@ on:
         description: Upload the verified APK to Firebase App Distribution
         type: boolean
         default: false
-  push:
-    paths:
-      - "android-prototype/**"
-      - "collections/venue-collections-v1.json"
-      - "scripts/generate_venue_collections.py"
-      - "scripts/publish_venue_catalogue.py"
-      - "scripts/test_venue_catalogue.py"
-      - ".github/workflows/build-android-prototype.yml"
-      - "scripts/upload_android_firebase.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roadprints-package-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -92,7 +90,7 @@ jobs:
             android-prototype/app/build/test-results/
             android-prototype/app/build/intermediates/lint_intermediate_text_report/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Print lint errors
         if: failure()
@@ -106,14 +104,11 @@ jobs:
           name: roadprints-capture-prototype-debug
           path: android-prototype/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
 
   firebase:
     needs: build
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.firebase_upload) ||
-      (vars.ROADPRINTS_FIREBASE_UPLOAD == 'true' &&
-      (github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture' || github.ref == 'refs/heads/fix/onboarding-start-tracking' || github.ref == 'refs/heads/main'))
+    if: github.event_name == 'workflow_dispatch' && inputs.firebase_upload
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -164,64 +159,3 @@ jobs:
       - name: Remove deployment credential
         if: always()
         run: rm -f "$RUNNER_TEMP/roadprints-firebase-credentials.json"
-
-  publish:
-    needs: build
-    if: github.ref == 'refs/heads/feat/cycling-matcher' || github.ref == 'refs/heads/feat/firebase-beta-measurement' || github.ref == 'refs/heads/feat/contextual-journey-capture'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out verified source
-        uses: actions/checkout@v6
-
-      - name: Download verified signed APK
-        uses: actions/download-artifact@v4
-        with:
-          name: roadprints-capture-prototype-debug
-          path: verified-apk
-
-      - name: Publish versioned APK download
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          version=$(python3 -c 'import re,pathlib; print(re.search(r"versionName = \"([^\"]+)\"", pathlib.Path("android-prototype/app/build.gradle.kts").read_text()).group(1))')
-          tag="android-$version"
-          cp verified-apk/app-debug.apk "$RUNNER_TEMP/roadprints-$version.apk"
-          if [ "$GITHUB_REF_NAME" = "feat/contextual-journey-capture" ]; then
-            cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
-          Contextual departure, travel, pause and arrival capture.
-          Uses asynchronous cached public building, parking, road, rail and outdoor map evidence.
-          Station dwell, rail departure and walking-away boundaries tolerate missing Android activity callbacks.
-          Preserves uncertain mixed-mode travel for review and checkpoints pending context transitions.
-          Includes sustained walk/run transitions and existing evidence-based service-station visits.
-          Android tests, lint and stable APK signature verification run before publication.
-          NOTES
-          elif [ "$GITHUB_REF_NAME" = "feat/firebase-beta-measurement" ]; then
-            cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
-          Signed Roadprints Android beta measurement update.
-          Adds Firebase Analytics, Crashlytics and Performance Monitoring.
-          Usage analytics and diagnostics are separate opt-in choices in Utilities.
-          Advertising collection is disabled. Custom events exclude GPS routes and journey names.
-          Includes capture, matching and import outcomes, screen views and loading timings.
-          Adds a non-fatal diagnostic test button and internal tester cohort setting.
-          Preserves the 0.25.170 drive-stop fixes, cycling and existing achievements.
-          Android tests, lint and stable APK signature verification run before publication.
-          NOTES
-          else
-          cat > "$RUNNER_TEMP/android-release-notes.md" <<'NOTES'
-          Signed Roadprints Android cycling matcher test update.
-          Cycling uses a dedicated bicycle matching profile for Timeline imports and capture.
-          Supports automatic matching, retries, matched map display and cycling distance.
-          Preserves GPS bends when reducing dense recordings. Original traces remain saved.
-          Road and A-road completion credit is deferred until physical segment attribution is verified.
-          Includes the existing achievements and map loading improvements.
-          Android tests, lint and APK signature verification run before publication.
-          NOTES
-          fi
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists."
-          else
-            gh release create "$tag" "$RUNNER_TEMP/roadprints-$version.apk" --target "$GITHUB_SHA" --title "Roadprints $version" --notes-file "$RUNNER_TEMP/android-release-notes.md" --prerelease --latest=false
-          fi
