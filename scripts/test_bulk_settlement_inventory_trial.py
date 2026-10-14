@@ -3,9 +3,16 @@ import unittest
 from pathlib import Path
 from shapely.geometry import box
 from bulk_settlement_inventory_trial import RoadAccumulator, read_poly, run
+from scottish_bulk_settlement_trial import run as run_scottish
 
 
 class BulkRuleTests(unittest.TestCase):
+    def test_scottish_trial_rejects_missing_selected_boundaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / 'boundaries.geojson').write_text('{"features": []}')
+            with self.assertRaises(ValueError):
+                run_scottish(directory, Path(directory) / 'candidates')
+
     def test_trial_cannot_overwrite_published_data(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(ValueError):

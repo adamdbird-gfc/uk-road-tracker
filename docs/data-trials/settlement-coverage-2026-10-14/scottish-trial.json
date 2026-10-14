@@ -1,0 +1,47 @@
+{
+  "status": "new_candidates_only_not_published",
+  "source": {
+    "region": "scotland",
+    "url": "https://download.geofabrik.de/europe/united-kingdom/scotland-latest.osm.pbf",
+    "bytes": 327473479,
+    "sha256": "4a226b18921b54ca657a26f588ef9a1f4cd2ab1cb1c3f90901db28302b4ea82c",
+    "md5": "c1fdba95f6b79b4ee86294dde07ecedd",
+    "download_seconds": 56.832,
+    "osm_timestamp": "2026-10-13T20:21:31Z"
+  },
+  "boundary_source": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/BUA_2022_GB/FeatureServer/0/query",
+  "boundary_sha256": "5127189443ca94714a57f7a76937d2339898650f5b28c1d59338b56f64206714",
+  "results": [
+    {
+      "code": "S45000308",
+      "name": "Edinburgh",
+      "count": 4217,
+      "candidate_bytes": 76949,
+      "candidate_sha256": "2ab33f1d3e5a6dc6db95dec72ec5447c758dfefb3c82c472186e5a5aa0aaa420",
+      "boundary_coverage_fraction": 0.9999999999999981
+    },
+    {
+      "code": "S45000364",
+      "name": "Glasgow",
+      "count": 6088,
+      "candidate_bytes": 106360,
+      "candidate_sha256": "ff039d936ea75de30827d430a32c7db0241042dbd0df07c93a43c70eaead1000",
+      "boundary_coverage_fraction": 1.0000000000000002
+    },
+    {
+      "code": "S45000635",
+      "name": "Pitlochry",
+      "count": 78,
+      "candidate_bytes": 1452,
+      "candidate_sha256": "4e9cd972966bdb84033209df622e2c292de79d0739c32c7040da4004484caa27",
+      "boundary_coverage_fraction": 0.9999999999999994
+    }
+  ],
+  "processing_seconds_including_hashing": 26.332,
+  "peak_process_rss_kib": 1181776,
+  "limitations": [
+    "No published Scottish inventories exist for before/after comparison",
+    "Approximate extraction coverage only; road counts need acceptance checks",
+    "No production database, Hosting or Android changes"
+  ]
+}

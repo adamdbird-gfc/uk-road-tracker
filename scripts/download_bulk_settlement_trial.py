@@ -10,7 +10,8 @@ from pathlib import Path
 
 REGIONS = {'kent': 'europe/united-kingdom/england/kent',
            'cheshire': 'europe/united-kingdom/england/cheshire',
-           'wales': 'europe/united-kingdom/wales'}
+           'wales': 'europe/united-kingdom/wales',
+           'scotland': 'europe/united-kingdom/scotland'}
 
 
 def download(root, item):
@@ -41,8 +42,11 @@ def download(root, item):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--regions', nargs='+', choices=REGIONS,
+                        default=['kent', 'cheshire', 'wales'])
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=3) as pool:
-        results = list(pool.map(lambda item: download(args.output, item), REGIONS.items()))
+        selected = [(name, REGIONS[name]) for name in dict.fromkeys(args.regions)]
+        results = list(pool.map(lambda item: download(args.output, item), selected))
     (args.output / 'downloads.json').write_text(json.dumps(results, indent=2) + '\n')
