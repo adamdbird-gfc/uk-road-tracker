@@ -34,7 +34,7 @@ final class RoadprintsNavigation {
             ImageView icon = new ImageView(activity);
             icon.setImageResource(icons[index]);
             icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             icon.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon, new LinearLayout.LayoutParams(-1, dp(activity, 32)));
             TextView label = new TextView(activity);

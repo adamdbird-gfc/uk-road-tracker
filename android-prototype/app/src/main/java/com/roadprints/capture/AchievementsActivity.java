@@ -831,7 +831,7 @@ public class AchievementsActivity extends Activity {
             ImageView icon=new ImageView(this);
             icon.setImageResource(icons[index]);
             icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             icon.setColorFilter(index==3?GOLD:MUTED,android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon,new LinearLayout.LayoutParams(-1,dp(32)));
             TextView label=text(labels[index],10,index==3?GOLD:MUTED,false);
