@@ -1,8 +1,11 @@
 import tempfile
+import http.client
+import json
 import unittest
+from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-from freeze_gb_settlement_boundaries import freeze, validate_page
+from freeze_gb_settlement_boundaries import freeze, validate_page, query
 from normalise_gb_boundary_snapshot import normalise
 from shapely.geometry import MultiPolygon, box, mapping, shape
 
@@ -14,6 +17,16 @@ def feature(identifier=1, code='S45000364'):
 
 
 class BoundarySnapshotTests(unittest.TestCase):
+    def test_interrupted_response_retries_without_accepting_partial_bytes(self):
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.side_effect = [http.client.IncompleteRead(b'{', 20), b'{"ok": true}']
+        with patch('freeze_gb_settlement_boundaries.urllib.request.urlopen', return_value=response) as request, patch('freeze_gb_settlement_boundaries.time.sleep'):
+            result, raw = query('https://example.test/query', {'f': 'json'})
+        self.assertEqual(result, {'ok': True})
+        self.assertEqual(json.loads(raw), result)
+        self.assertEqual(request.call_count, 2)
+
     def test_nested_components_preserve_membership_without_creating_hole(self):
         outer = box(-4, 55, -3, 56)
         inner = box(-3.8, 55.2, -3.2, 55.8)
