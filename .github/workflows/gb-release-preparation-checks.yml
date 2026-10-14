@@ -1,0 +1,25 @@
+name: GB additive release preparation checks
+
+on:
+  pull_request:
+    paths:
+      - scripts/*prepare_gb_settlement_release.py
+      - .github/workflows/gb-release-preparation-checks.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/*prepare_gb_settlement_release.py
+      - .github/workflows/gb-release-preparation-checks.yml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s scripts -p test_prepare_gb_settlement_release.py

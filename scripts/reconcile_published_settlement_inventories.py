@@ -14,7 +14,7 @@ def published_inventories(root):
         if entry.get('status') != 'available':
             continue
         code = entry['code']
-        if not re.fullmatch(r'[EWK][0-9]{8}', code):
+        if not re.fullmatch(r'[EWSK][0-9]{8}', code):
             raise ValueError('Unsupported inventory code: ' + code)
         data = json.loads((root / 'settlement-inventories-v1' / (code + '.json')).read_text())
         if (data['code'] != code or type(data['count']) is not int

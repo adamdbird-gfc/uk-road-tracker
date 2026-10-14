@@ -24,6 +24,18 @@ class PublishedInventoryTests(unittest.TestCase):
         self.write()
         self.assertEqual(published_inventories(self.root)[0]['code'], 'K08000001')
 
+    def test_scottish_inventory_is_supported(self):
+        self.write(code='S45000364')
+        self.assertEqual(published_inventories(self.root)[0]['code'], 'S45000364')
+
+    def test_zero_eligible_inventory_remains_a_valid_known_count(self):
+        self.write(count=0, manifest_count=0)
+        path = self.root / 'settlement-inventories-v1/K08000001.json'
+        data = json.loads(path.read_text())
+        data['roads'] = []
+        path.write_text(json.dumps(data))
+        self.assertEqual(published_inventories(self.root)[0]['count'], 0)
+
     def test_manifest_mismatch_refuses_reconciliation(self):
         self.write(manifest_count=2)
         with self.assertRaises(ValueError):
