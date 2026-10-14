@@ -1,0 +1,97 @@
+name: Verify reviewed GB settlement preview
+
+on:
+  pull_request:
+    paths:
+      - '.github/gb-preview/**'
+      - '.github/workflows/gb-reviewed-preview.yml'
+      - 'scripts/*reviewed_gb_preview.py'
+      - 'scripts/verify_gb_preview.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/gb-preview/request.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s scripts -p test_build_reviewed_gb_preview.py
+  preview:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check out reviewed collection and Hosting code
+        uses: actions/checkout@v6
+        with:
+          ref: '143530f24bb3bb6abd9e7ce1b6b3560fd1af27eb'
+          path: app-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned extraction tools
+        run: python -m pip install osmium==4.3.1 shapely==2.2.0
+      - name: Reproduce reviewed GB public files
+        run: python scripts/build_reviewed_gb_preview.py --app app-source --work "$RUNNER_TEMP/gb-preview"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install existing Firebase CLI version
+        run: npm install --global firebase-tools@15.33.0
+      - name: Deploy expiring preview and verify every file
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-hosting.json"
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          python - <<'PY'
+          import json, os, pathlib
+          if os.environ['ROADPRINTS_DATA_HOSTING_SITE'] != 'roadprints-data-822cc':
+              raise SystemExit('Expected the dedicated reference-data Hosting site.')
+          raw = os.environ['FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON']
+          credentials = json.loads(raw)
+          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc':
+              raise SystemExit('Expected the existing Roadprints Hosting credential.')
+          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+          path.touch(mode=0o600, exist_ok=False)
+          path.write_text(raw)
+          PY
+          unset FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON
+          cd app-source
+          firebase target:apply hosting reference-data "$ROADPRINTS_DATA_HOSTING_SITE" --project roadprints-822cc --non-interactive
+          firebase hosting:channel:deploy gb-reviewed-20261014 --only reference-data --expires 1d --project roadprints-822cc --non-interactive --json > hosting-deployment.json
+          cd ..
+          python - <<'PY'
+          import json, subprocess
+          result = json.load(open('app-source/hosting-deployment.json'))
+          sites = result.get('result', {})
+          if result.get('status') != 'success' or len(sites) != 1:
+              raise SystemExit('Expected exactly one successful public-data preview.')
+          url = next(iter(sites.values()))['url']
+          subprocess.run(['python', 'scripts/verify_gb_preview.py', '--app', 'app-source', '--url', url], check=True)
+          PY
+      - name: Retain public preview evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviewed-gb-preview
+          retention-days: 3
+          path: |
+            app-source/hosting-stage-report.json
+            app-source/gb-preview-verification.json
