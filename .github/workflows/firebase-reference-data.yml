@@ -1,0 +1,20 @@
+name: Stage Firebase reference data
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_deploy:
+        description: Deploy and verify the public data on a seven-day Firebase preview
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  stage-current-data:
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/firebase-reference-data.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: fix/onboarding-start-tracking
+      preview_deploy: ${{ inputs.preview_deploy }}
+    secrets: inherit

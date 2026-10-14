@@ -1,49 +1,20 @@
-name: Build Android capture prototype
+name: Package Roadprints test APK
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "android-prototype/**"
-      - ".github/workflows/build-android-prototype.yml"
+    inputs:
+      firebase_upload:
+        description: Upload the verified signed APK to Firebase App Distribution
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: "8.10"
-
-      - name: Prepare stable debug signing key
-        if: ${{ env.ROADPRINTS_DEBUG_KEYSTORE_B64 != '' }}
-        run: |
-          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/roadprints-debug.keystore"
-
-      - name: Build debug APK
-        run: |
-          if [ -f "$RUNNER_TEMP/roadprints-debug.keystore" ]; then
-            export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
-          fi
-          gradle --no-daemon -p android-prototype assembleDebug
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: roadprints-capture-prototype-debug
-          path: android-prototype/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
+  package-current-app:
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: fix/onboarding-start-tracking
+      firebase_upload: ${{ inputs.firebase_upload }}
+    secrets: inherit

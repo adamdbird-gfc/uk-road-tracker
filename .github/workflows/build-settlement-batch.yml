@@ -126,6 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: settlement-inventory-${{ matrix.settlement }}
+          retention-days: 3
           path: |
             settlement-inventories-v1/*.json
             settlement-inventories-v1/*.geojson
@@ -151,7 +152,6 @@ jobs:
           pattern: settlement-inventory-*
           merge-multiple: true
           path: settlement-inventories-v1
-          if-no-artifacts: warn
       - name: Refresh shared inventory manifest and database status
         run: |
           python - <<'PY'
