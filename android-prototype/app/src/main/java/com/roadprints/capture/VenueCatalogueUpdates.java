@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 final class VenueCatalogueUpdates {
     static final long DAY_MS=24L*60*60*1000, RETRY_MS=60L*60*1000;
     static final int MANIFEST_LIMIT=32*1024;
-    private static final String BASE_URL="https://raw.githubusercontent.com/adamdbird-gfc/uk-road-tracker/refs/heads/fix/onboarding-start-tracking/collections/published/";
+    private static final String BASE_URL=PublicReferenceData.BASE_URL+"collections/published/";
     private static final java.util.Map<String,VenueCatalogueUpdates> STORES=new java.util.HashMap<>();
     private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
     final VenueCollection.Definition definition;

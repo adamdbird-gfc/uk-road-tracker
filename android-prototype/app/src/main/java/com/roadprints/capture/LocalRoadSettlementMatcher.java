@@ -138,7 +138,7 @@ final class LocalRoadSettlementMatcher {
         } catch (Exception ignored) {
             // The published public boundary files provide a read-only fallback.
         }
-        return request("GET", "https://adamdbird-gfc.github.io/uk-road-tracker/"
+        return request("GET", PublicReferenceData.BASE_URL
                 + "settlement-inventories-v1/" + code + "-boundary.geojson", null);
     }
 
