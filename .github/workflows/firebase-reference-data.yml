@@ -3,6 +3,10 @@ name: Stage Firebase reference data
 on:
   workflow_dispatch:
     inputs:
+      live_deploy:
+        description: Publish and verify permanent public reference data
+        type: boolean
+        default: false
       preview_deploy:
         description: Deploy and verify the public data on a seven-day Firebase preview
         type: boolean
@@ -17,4 +21,5 @@ jobs:
     with:
       source_ref: fix/onboarding-start-tracking
       preview_deploy: ${{ inputs.preview_deploy }}
+      live_deploy: ${{ inputs.live_deploy }}
     secrets: inherit
