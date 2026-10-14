@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "target": "reference-data",
+    "public": "hosting-public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {"source": "**/*.json", "headers": [{"key": "Content-Type", "value": "application/json; charset=utf-8"}, {"key": "Cache-Control", "value": "public, max-age=300"}]},
+      {"source": "**/*.geojson", "headers": [{"key": "Content-Type", "value": "application/geo+json; charset=utf-8"}, {"key": "Cache-Control", "value": "public, max-age=300"}]},
+      {"source": "collections/published/**/catalogue-*.json", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+      {"source": "**", "headers": [{"key": "X-Content-Type-Options", "value": "nosniff"}]}
+    ]
+  }
+}
