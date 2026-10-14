@@ -1,0 +1,25 @@
+name: Android release request checks
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/*android_release_request.py'
+      - '.github/workflows/android-release-request*.yml'
+  push:
+    branches: [fix/onboarding-start-tracking]
+    paths:
+      - 'scripts/*android_release_request.py'
+      - '.github/workflows/android-release-request*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s scripts -p test_android_release_request.py -v

@@ -1,0 +1,34 @@
+name: Requested signed Android release
+
+on:
+  push:
+    branches: [fix/onboarding-start-tracking]
+    paths: ['.github/release-requests/android/*.json']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-release-requests
+  cancel-in-progress: false
+
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.request.outputs.source_sha }}
+      firebase_upload: ${{ steps.request.outputs.firebase_upload }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Validate immutable pinned release request
+        id: request
+        run: python3 scripts/validate_android_release_request.py >> "$GITHUB_OUTPUT"
+  package:
+    needs: request
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: ${{ needs.request.outputs.source_sha }}
+      firebase_upload: ${{ fromJSON(needs.request.outputs.firebase_upload) }}
+    secrets: inherit
