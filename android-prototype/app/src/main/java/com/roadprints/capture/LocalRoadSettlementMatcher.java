@@ -127,123 +127,101 @@ final class LocalRoadSettlementMatcher {
                     .edit().putString(code, Integer.toString(count)).apply();
             AchievementStore.advanceEvidenceRevision(context);
         }
-        return count;
+        return …3389 tokens truncated…    || !m.getString("sha256").matches("[0-9a-f]{64}")
+                || m.getInt("bytes")<2 || m.getInt("bytes")>CollectionMapCatalog.MAX_CATALOGUE_BYTES
+                || m.getString("catalogue_version").isEmpty())
+            throw new IllegalArgumentException("Unsupported venue manifest");
     }
-
-    static JSONObject boundary(String code) throws Exception {
-        try {
-            JSONObject response = request("GET", API + "/settlement-boundaries/" + code, null);
-            JSONObject boundary = response.optJSONObject("boundary");
-            if (boundary != null) return boundary;
-        } catch (Exception ignored) {
-            // The published public boundary files provide a read-only fallback.
+    JSONObject validatePayload(JSONObject manifest,byte[] bytes) throws Exception {
+        validateManifest(manifest);
+        if(bytes.length!=manifest.getInt("bytes") || !sha256(bytes).equals(manifest.getString("sha256")))
+            throw new IllegalArgumentException("Venue catalogue integrity check failed");
+        JSONObject root=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
+        if("services_v1".equals(definition.catalogueFormat)){
+            validateServices(root,manifest);return root;
         }
-        return request("GET", "https://adamdbird-gfc.github.io/uk-road-tracker/"
-                + "settlement-inventories-v1/" + code + "-boundary.geojson", null);
-    }
-
-    private static boolean needsMetadata(List<Settlement> settlements) {
-        for (Settlement settlement : settlements) {
-            if (settlement.county.isEmpty() && settlement.region.isEmpty()
-                    && settlement.nation.isEmpty()) return true;
-        }
-        return false;
-    }
-
-    static void hydrateMetadata(List<Settlement> settlements) {
-        if (settlements.isEmpty()) return;
-        Map<String, Settlement> byName = new LinkedHashMap<>();
-        for (Settlement settlement : settlements)
-            byName.put(settlement.name.toLowerCase(java.util.Locale.ROOT), settlement);
-        List<Settlement> unique = new ArrayList<>(byName.values());
-        Map<String, Settlement> metadataByName = new LinkedHashMap<>();
-        // Keep requests comfortably small while reducing thousands of per-road
-        // metadata calls to a handful of catalogue lookups.
-        for (int start = 0; start < unique.size(); start += 100) {
-            JSONArray names = new JSONArray();
-            for (int index = start; index < Math.min(start + 100, unique.size()); index++)
-                names.put(unique.get(index).name);
-            try {
-                JSONObject response = request("POST", API + "/settlement-metadata",
-                        new JSONObject().put("names", names));
-                for (Settlement metadata : decode(response.optJSONArray("settlements")))
-                    metadataByName.put(metadata.name.toLowerCase(java.util.Locale.ROOT), metadata);
-            } catch (Exception ignored) {
-                // Fall back to region or nation when catalogue metadata is unavailable.
+        if(root.getInt("schema_version")!=1 || !definition.id.equals(root.getString("collection_id"))
+                || !"UK".equals(root.getString("scope")) || !"approved".equals(root.getString("release_status"))
+                || !Boolean.TRUE.equals(root.opt("ready_for_app"))
+                || !Boolean.FALSE.equals(root.opt("visit_enabled"))
+                || !manifest.getString("catalogue_version").equals(root.getString("catalogue_version"))
+                || root.getString("attribution").isEmpty())
+            throw new IllegalArgumentException("Unsupported venue catalogue");
+        VenueCatalogueApproval.validate(root);
+        if("reviewed_uk_completion_v1".equals(root.optString("approval_scope"))&&!definition.lifecycleStartedAt.equals(root.optString("lifecycle_started_at")))throw new IllegalArgumentException("Catalogue cannot change lifecycle epoch");
+        JSONArray venues=root.getJSONArray("venues");
+        if(venues.length()>5000 || root.getJSONObject("review_summary").getInt("map_venues")!=venues.length())
+            throw new IllegalArgumentException("Venue count does not match review");
+        HashSet<String> ids=new HashSet<>(),aliases=new HashSet<>();
+        LocalDate today=LocalDate.now(ZoneOffset.UTC);
+        for(int i=0;i<venues.length();i++){
+            JSONObject v=venues.getJSONObject(i);
+            String id=v.getString("id");
+            if(!id.matches(definition.identityPattern) || id.length()>200 || !ids.add(id)
+                    || !"active".equals(v.getString("status")) || !"reviewed_current".equals(v.getString("operating_status"))
+                    || !Boolean.FALSE.equals(v.opt("visit_enabled"))
+                    || v.getString("name").trim().isEmpty() || v.getString("name").length()>200
+                    || v.getString("town").length()>200
+                    || LocalDate.parse(v.getString("map_reviewed_at")).isAfter(today))
+                throw new IllegalArgumentException("Unreviewed or duplicate venue");
+            double lat=v.getDouble("lat"),lon=v.getDouble("lon");
+            if(!Double.isFinite(lat)||!Double.isFinite(lon)||lat<49||lat>61||lon< -9||lon>2)
+                throw new IllegalArgumentException("Venue is outside UK coordinate bounds");
+            if((!definition.confirmationIdPrefix.isEmpty()&&id.startsWith(definition.confirmationIdPrefix)) && (!Boolean.TRUE.equals(v.opt("confirmation_required"))
+                    || v.getString("location_label").isEmpty() || v.getString("attribution").isEmpty()))
+                throw new IllegalArgumentException("Curated venue labels are required");
+            JSONArray names=v.getJSONArray("osm_aliases");
+            for(int j=0;j<names.length();j++){
+                String alias=names.getString(j);
+                if(!alias.matches("(node|way|relation)/[0-9]+")||!aliases.add(alias))
+                    throw new IllegalArgumentException("Duplicate venue source identity");
             }
         }
-        for (Settlement settlement : settlements) {
-            Settlement metadata = metadataByName.get(settlement.name.toLowerCase(java.util.Locale.ROOT));
-            if (metadata == null) continue;
-            settlement.county = metadata.county;
-            settlement.region = metadata.region;
-            settlement.nation = metadata.nation;
+        if(CollectionMapCatalog.approvedVenues(root,definition).length()!=venues.length())
+            throw new IllegalArgumentException("Pub map projection rejected");
+        return root;
+    }
+    private void validateServices(JSONObject root,JSONObject manifest)throws Exception{
+        if(root.getInt("schema_version")!=1||!definition.id.equals(root.getString("collection_id"))||!"approved".equals(root.getString("release_status"))||!"UK".equals(root.getString("scope"))||!manifest.getString("catalogue_version").equals(root.getString("catalogue_version"))||root.getString("attribution").isEmpty())throw new IllegalArgumentException("Unsupported site catalogue");
+        JSONArray rows=root.getJSONArray("services");if(rows.length()==0||rows.length()>5000)throw new IllegalArgumentException("Invalid site count");
+        HashSet<String> ids=new HashSet<>();
+        for(int i=0;i<rows.length();i++){
+            JSONObject v=rows.getJSONObject(i);String id=v.getString("id");
+            if(!id.matches(definition.identityPattern)||!ids.add(id)||v.getString("name").isEmpty()||v.getString("road").isEmpty()||v.getString("country").isEmpty())throw new IllegalArgumentException("Invalid site identity");
+            position(v);JSONArray points=v.getJSONArray("points");if(points.length()==0||points.length()>100)throw new IllegalArgumentException("Invalid site positions");for(int n=0;n<points.length();n++)position(points.getJSONObject(n));
         }
     }
-
-    static void saveCached(Context context, String roadId, List<JSONObject> geometries,
-                           List<Settlement> settlements) throws Exception {
-        String cacheKey = roadId + ":" + Integer.toHexString(geometries.toString().hashCode());
-        save(context, cacheKey, settlements);
+    private static void position(JSONObject v)throws Exception{double lat=v.getDouble("lat"),lng=v.getDouble("lng");if(!Double.isFinite(lat)||!Double.isFinite(lng)||lat<49||lat>61||lng< -9||lng>2)throw new IllegalArgumentException("Invalid UK site position");}
+    static String sha256(byte[] bytes) throws Exception {
+        byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder hex=new StringBuilder();
+        for(byte b:digest)hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
+        return hex.toString();
     }
-
-    private static void save(Context context, String cacheKey, List<Settlement> settlements)
-            throws Exception {
-        JSONArray values = new JSONArray();
-        for (Settlement settlement : settlements) {
-            values.put(new JSONObject().put("code", settlement.code)
-                    .put("name", settlement.name).put("county", settlement.county)
-                    .put("region", settlement.region).put("nation", settlement.nation)
-                    .put("historic_county_codes", new JSONArray(settlement.historicCountyCodes))
-                    .put("historic_county_version", settlement.historicCountyVersion));
+    private byte[] download(String filename,int limit) throws Exception {
+        if(!filename.equals("manifest-v1.json")&&!filename.matches("catalogue-[0-9]{10}\\.json"))
+            throw new IllegalArgumentException("Unsupported venue file");
+        HttpURLConnection connection=(HttpURLConnection)new URL(BASE_URL+definition.id+"/"+filename).openConnection();
+        connection.setConnectTimeout(5000);connection.setReadTimeout(10000);
+        connection.setInstanceFollowRedirects(false);
+        try{
+            if(connection.getResponseCode()!=200 || connection.getContentLengthLong()>limit)
+                throw new java.io.IOException("Venue release unavailable");
+            try(InputStream input=connection.getInputStream()){return readBounded(input,limit);}
+        }finally{connection.disconnect();}
+    }
+    static byte[] readBounded(InputStream input,int limit) throws Exception {
+        ByteArrayOutputStream output=new ByteArrayOutputStream();
+        byte[] buffer=new byte[8192];int count;
+        while((count=input.read(buffer))!=-1){
+            if(output.size()+count>limit)throw new java.io.IOException("Venue file exceeds limit");
+            output.write(buffer,0,count);
         }
-        context.getSharedPreferences(CACHE, Context.MODE_PRIVATE).edit()
-                .putString(cacheKey, new JSONObject().put("settlements", values).toString()).apply();
+        return output.toByteArray();
     }
-
-    private static List<Settlement> decode(JSONArray array) {
-        List<Settlement> output = new ArrayList<>();
-        if (array == null) return output;
-        for (int index = 0; index < array.length(); index++) {
-            JSONObject row = array.optJSONObject(index);
-            if (row == null || row.optString("name").isEmpty()) continue;
-            output.add(new Settlement(row.optString("code", ""), row.optString("name"),
-                    row.optString("county", ""), row.optString("region", ""),
-                    row.optString("nation", "")));
-        }
-        return output;
+    private AtomicFile cache(Context context){
+        return new AtomicFile(new File(context.getFilesDir(),definition.id+"-map-cache-v1.json"));
     }
-
-    private static JSONObject request(String method, String endpoint, JSONObject body)
-            throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(12000);
-        connection.setReadTimeout(25000);
-        connection.setRequestProperty("Accept", "application/json");
-        if (body != null) {
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json");
-            try (OutputStream output = connection.getOutputStream()) {
-                output.write(body.toString().getBytes(StandardCharsets.UTF_8));
-            }
-        }
-        int status = connection.getResponseCode();
-        InputStream stream = status >= 200 && status < 300
-                ? connection.getInputStream() : connection.getErrorStream();
-        StringBuilder text = new StringBuilder();
-        if (stream != null) try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) text.append(line);
-        }
-        connection.disconnect();
-        if (status < 200 || status >= 300) throw new HttpFailure(status, text.toString());
-        return new JSONObject(text.toString());
-    }
-
-    private static final class HttpFailure extends Exception {
-        final int status;
-        HttpFailure(int status, String message) { super(message); this.status = status; }
-    }
+    void resetForTests(){synchronized(LOCK){current=null;pins=null;revision=definition.bundledRevision;}}
 }
+
