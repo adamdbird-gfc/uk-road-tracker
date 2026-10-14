@@ -11,7 +11,8 @@ from pathlib import Path
 REGIONS = {'kent': 'europe/united-kingdom/england/kent',
            'cheshire': 'europe/united-kingdom/england/cheshire',
            'wales': 'europe/united-kingdom/wales',
-           'scotland': 'europe/united-kingdom/scotland'}
+           'scotland': 'europe/united-kingdom/scotland',
+           'great-britain': 'europe/great-britain'}
 
 
 def download(root, item):

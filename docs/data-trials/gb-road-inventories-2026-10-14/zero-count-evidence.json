@@ -1,0 +1,124 @@
+[
+  {
+    "code": "E63005021",
+    "name": "Wallend",
+    "way_class_counts": {
+      "secondary named": 1,
+      "service unnamed": 185,
+      "unclassified unnamed": 2,
+      "track unnamed": 10,
+      "footway unnamed": 3,
+      "primary named": 2,
+      "path unnamed": 2,
+      "track named": 1
+    },
+    "named_ways": [
+      [
+        "primary",
+        "Grain Road"
+      ],
+      [
+        "secondary",
+        "Grain Road"
+      ],
+      [
+        "track",
+        "Port Victoria Road"
+      ]
+    ]
+  },
+  {
+    "code": "E63006323",
+    "name": "Dungeness",
+    "way_class_counts": {
+      "track unnamed": 5,
+      "service unnamed": 47,
+      "service named": 23,
+      "unclassified unnamed": 3,
+      "footway unnamed": 5,
+      "path unnamed": 1
+    },
+    "named_ways": [
+      [
+        "service",
+        "Admin Building Road"
+      ],
+      [
+        "service",
+        "Approach Road South"
+      ],
+      [
+        "service",
+        "East Service Road"
+      ],
+      [
+        "service",
+        "East Tank Farm Road"
+      ],
+      [
+        "service",
+        "North Aux Boiler House Road"
+      ],
+      [
+        "service",
+        "North Contractor's Road"
+      ],
+      [
+        "service",
+        "Outfall Avenue"
+      ],
+      [
+        "service",
+        "Reactor One Road"
+      ],
+      [
+        "service",
+        "Reactor Two Road"
+      ],
+      [
+        "service",
+        "Reservoir Avenue"
+      ],
+      [
+        "service",
+        "Scaffold Street"
+      ],
+      [
+        "service",
+        "South Turbine Hall Road"
+      ],
+      [
+        "service",
+        "Stores Road"
+      ],
+      [
+        "service",
+        "Street East"
+      ],
+      [
+        "service",
+        "Street West"
+      ],
+      [
+        "service",
+        "Switch House Avenue"
+      ],
+      [
+        "service",
+        "Tank Farm Street"
+      ],
+      [
+        "service",
+        "Transformer Avenue"
+      ],
+      [
+        "service",
+        "Turbine Hall Avenue"
+      ],
+      [
+        "service",
+        "West Tank Farm Road"
+      ]
+    ]
+  }
+]
