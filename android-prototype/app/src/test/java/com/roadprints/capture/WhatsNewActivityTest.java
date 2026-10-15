@@ -98,6 +98,7 @@ public class WhatsNewActivityTest {
         AlertDialog dialog = ShadowAlertDialog.getLatestAlertDialog();
         assertTrue(dialog.isShowing());
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         assertEquals("adamdbird@gmail.com", clipboard.getPrimaryClip().getItemAt(0).getText().toString());
     }
 
