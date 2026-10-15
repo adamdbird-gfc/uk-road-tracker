@@ -14,7 +14,7 @@ from bulk_settlement_inventory_trial import HIGHWAYS, RoadAccumulator, SnapshotH
 DEFAULT_CODES = ['N11000151', 'N11000243', 'N11000537']
 
 
-def generate(boundary_dir, source_dir, output, codes=None):
+def generate(boundary_dir, source_dir, output, codes=None, handler_factory=SnapshotHandler):
     started = time.monotonic()
     boundary_dir, source_dir, output = map(Path, (boundary_dir, source_dir, output))
     if any(part in ('settlement-inventories-v1', 'hosting-public') for part in output.resolve().parts):
@@ -55,7 +55,7 @@ def generate(boundary_dir, source_dir, output, codes=None):
     accumulator = RoadAccumulator(geometries)
     process_started = time.monotonic()
     try:
-        SnapshotHandler(accumulator).apply_file(str(pbf), locations=True, idx='sparse_file_array,' + str(index.resolve()))
+        handler_factory(accumulator).apply_file(str(pbf), locations=True, idx='sparse_file_array,' + str(index.resolve()))
         processing_seconds = time.monotonic() - process_started
         index_bytes = index.stat().st_size if index.exists() else 0
     finally:
