@@ -1,0 +1,64 @@
+name: Preview integrated UK settlement data
+on:
+  pull_request:
+    paths:
+      - 'scripts/*ni*integration*.py'
+      - 'scripts/*ni*reference*.py'
+      - 'scripts/rebuild_ni_preview_inputs.py'
+      - '.github/ni-preview/**'
+      - '.github/workflows/ni-reference-preview.yml'
+  push:
+    branches: [main]
+    paths: ['.github/ni-preview/request.json']
+permissions:
+  contents: read
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/checkout@v6
+        with:
+          ref: '143530f24bb3bb6abd9e7ce1b6b3560fd1af27eb'
+          path: app-source
+          sparse-checkout: scripts/verify_firebase_reference_data.py
+          sparse-checkout-cone-mode: false
+      - run: python -m pip install -r scripts/requirements-ni-settlement-trial.txt
+      - run: python -m unittest discover -s scripts -p 'test_ni*integration*.py' -v
+        env: {PYTHONPATH: app-source/scripts}
+  preview:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/checkout@v6
+        with:
+          ref: '143530f24bb3bb6abd9e7ce1b6b3560fd1af27eb'
+          path: app-source
+          sparse-checkout: scripts/verify_firebase_reference_data.py
+          sparse-checkout-cone-mode: false
+      - run: python -m pip install -r scripts/requirements-ni-settlement-trial.txt 'google-auth==2.40.3' 'requests==2.32.5'
+      - name: Reproduce and hash-check reviewed NI additions only
+        run: python scripts/rebuild_ni_preview_inputs.py --work "$RUNNER_TEMP/ni-preview"
+      - name: Clone live version, add NI, release and verify expiring preview
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+          PYTHONPATH: app-source/scripts
+        run: python scripts/preview_ni_reference_data.py --report "$RUNNER_TEMP/ni-preview/additions-report.json" --public "$RUNNER_TEMP/ni-preview/public"
+      - name: Retain public preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrated-ni-preview-evidence
+          retention-days: 3
+          path: ni-preview-evidence/
