@@ -50,3 +50,11 @@ county ZIP changed in October; this extension does not update county boundaries.
 Official settlement names/codes are retained, and county metadata remains
 separate from administrative labels. The index ships with the next APK; this
 data preparation does not itself publish the NI reference dataset.
+
+
+The Android build downloads the exact pinned `boundaries.bin` from Firebase Hosting
+under `build-references/historic-counties/<data_sha256>/boundaries.bin`. It validates
+SHA-256 against `catalogue.json` before atomically installing the file. The build
+never replaces `settlements.bin`, which includes the current GB and NI membership.
+The upstream county packaging script remains available for deliberate reference
+updates; routine builds no longer download a historical GitHub release APK.
