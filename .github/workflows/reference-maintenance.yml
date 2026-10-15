@@ -44,3 +44,5 @@ jobs:
           name: reference-maintenance-evidence
           retention-days: 7
           path: maintenance-evidence/
+
+# Bounded CDN propagation checks precede cleanup.

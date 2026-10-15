@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 import zipfile
 
@@ -32,10 +33,15 @@ class Publisher(Hosting):
 
 
 def served(url):
-    response = requests.get(url + '/' + ASSET, timeout=90)
-    response.raise_for_status()
-    if digest(response.content) != DIGEST:
-        raise ValueError('Hosted county reference checksum mismatch')
+    for attempt in range(12):
+        response = requests.get(url + '/' + ASSET, timeout=90)
+        if response.status_code == 200 and digest(response.content) == DIGEST:
+            return
+        # A newly released preview/live version can take a few seconds to reach
+        # the CDN. Never promote until actual serving bytes pass the checksum.
+        if attempt < 11:
+            time.sleep(5)
+    raise ValueError('Hosted county reference did not serve the pinned bytes')
 
 
 def main():
