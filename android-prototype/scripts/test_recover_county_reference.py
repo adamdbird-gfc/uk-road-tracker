@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 import unittest
 import zipfile
-from recover_county_reference import recover
+from recover_county_reference import recover, recover_boundary_file
 
 
 class RecoveryTest(unittest.TestCase):
@@ -21,6 +21,22 @@ class RecoveryTest(unittest.TestCase):
         self.original = json.dumps(self.catalogue, indent=2)
         (self.assets / 'catalogue.json').write_text(self.original)
         (self.assets / 'boundaries.bin').write_bytes(b'existing')
+
+    def test_firebase_reference_preserves_catalogue_and_settlement_membership(self):
+        (self.assets / 'settlements.bin').write_bytes(b'current NI and GB memberships')
+        source = self.root / 'download.bin'
+        source.write_bytes(self.data)
+        recover_boundary_file(source, self.assets)
+        self.assertEqual(self.data, (self.assets / 'boundaries.bin').read_bytes())
+        self.assertEqual(self.original, (self.assets / 'catalogue.json').read_text())
+        self.assertEqual(b'current NI and GB memberships', (self.assets / 'settlements.bin').read_bytes())
+
+    def test_corrupt_firebase_reference_keeps_existing_boundary(self):
+        source = self.root / 'download.bin'
+        source.write_bytes(b'corrupt download')
+        with self.assertRaisesRegex(ValueError, 'checksum'):
+            recover_boundary_file(source, self.assets)
+        self.assertEqual(b'existing', (self.assets / 'boundaries.bin').read_bytes())
 
     def apk(self, catalogue=None, data=None):
         apk = self.root / 'previous.apk'
