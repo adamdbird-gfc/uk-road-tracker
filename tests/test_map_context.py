@@ -59,7 +59,38 @@ class ContextValidationTests(unittest.TestCase):
     def test_postpass_query_is_fixed_bounded_and_excludes_personal_tags(self):
         query=context.postpass_query(context.tile_bounds(5158,5))
         self.assertIn("LIMIT 10001",query);self.assertIn("ST_MakeEnvelope",query)
-        self.assertNotIn("name",query);self.assertNotIn("addr:",query)
+        self.assertIn("key='name' AND",query);self.assertNotIn("addr:",query)
+
+    def test_site_identity_and_public_name_survive_but_addresses_do_not(self):
+        ring=[{"lat":51,"lon":0},{"lat":51,"lon":.01},{"lat":51.01,"lon":.01},{"lat":51,"lon":0}]
+        result=context.clean_document({"elements":[{"id":9,"geometry":ring,"tags":{"amenity":"school","name":"Test school","addr:housenumber":"99"}}]})
+        self.assertEqual(result[0]["tags"],{"amenity":"school","name":"Test school"})
+
+    def test_relation_fragments_join_into_whole_campus_and_keep_holes(self):
+        ring=[{"lat":51,"lon":0},{"lat":51,"lon":.01},{"lat":51.01,"lon":.01},{"lat":51.01,"lon":0},{"lat":51,"lon":0}]
+        hole=[{"lat":51.002,"lon":.002},{"lat":51.002,"lon":.003},{"lat":51.003,"lon":.003},{"lat":51.002,"lon":.002}]
+        relation={"type":"relation","id":7,"tags":{"amenity":"university","name":"Campus"},"members":[
+            {"type":"way","role":"outer","geometry":ring[:3]},
+            {"type":"way","role":"outer","geometry":list(reversed(ring[2:]))},
+            {"type":"way","role":"inner","geometry":hole}]}
+        result=context.clean_overpass({"elements":[relation]})
+        self.assertEqual(len(result),1)
+        self.assertEqual(result[0]["geometry"][0],result[0]["geometry"][-1])
+        self.assertEqual(result[0]["holes"],[hole])
+        relation["members"].pop(1)
+        self.assertEqual(context.clean_overpass({"elements":[relation]}),[])
+
+    def test_site_polygons_are_not_clipped_to_tile_edges(self):
+        query=context.postpass_query(context.tile_bounds(5144,18))
+        self.assertIn("THEN geom ELSE",query)
+        self.assertIn("'school','college','university','hospital'",query)
+
+    def test_old_feature_cache_is_refreshed_without_changing_request_budgets(self):
+        from unittest.mock import Mock
+        cursor=Mock(); cursor.fetchone.return_value=({"schema_version":1},1000)
+        self.assertIsNone(context.read_area(cursor,"v1:test",1001))
+        cursor.fetchone.return_value=({"feature_revision":2},1000)
+        self.assertEqual(context.read_area(cursor,"v1:test",1001),{"feature_revision":2})
 
 
 @unittest.skipUnless(os.getenv("TEST_CONTEXT_DATABASE_URL"),"Requires isolated PostgreSQL test service")
