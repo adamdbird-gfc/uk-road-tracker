@@ -28,7 +28,7 @@ public class HistoricSettlementCountiesTest {
         HistoricCountyCatalog counties = new HistoricCountyCatalog(app);
         HistoricSettlementCounties reference = new HistoricSettlementCounties(app);
         assertEquals(counties.version, reference.version);
-        assertEquals(8545, reference.settlements.size());
+        assertEquals(9072, reference.settlements.size());
         java.util.Set<String> codes = new HashSet<>();
         for (HistoricCountyCatalog.County county : counties.counties) codes.add(county.code);
         for (HistoricSettlementCounties.Membership row : reference.settlements.values()) {
@@ -46,6 +46,16 @@ public class HistoricSettlementCountiesTest {
         assertEquals("Lancashire", HistoricSettlementCounties.displayGroup(mapped("E63001069", "Rochdale")));
         assertEquals("Glamorgan", HistoricSettlementCounties.displayGroup(mapped("W45000596", "Cardiff")));
         assertEquals("Midlothian", HistoricSettlementCounties.displayGroup(mapped("S45000308", "Edinburgh")));
+    }
+
+    @Test public void northernIrelandUsesStableIdsAndRetainsCrossCountyMemberships() throws Exception {
+        LocalRoadSettlementMatcher.Settlement belfast=mapped("N11000151","BELFAST CITY");
+        assertEquals(Arrays.asList("ANM","DWN"),belfast.historicCountyCodes);
+        assertEquals("Antrim",HistoricSettlementCounties.displayGroup(belfast));
+        assertEquals("Londonderry",HistoricSettlementCounties.displayGroup(mapped("N11000243","DERRY CITY")));
+        assertEquals(Arrays.asList("ARH","DWN"),mapped("N11000537","NEWRY").historicCountyCodes);
+        HistoricSettlementCounties reference=new HistoricSettlementCounties(app);
+        assertEquals(527,reference.settlements.keySet().stream().filter(c->c.startsWith("N11")).count());
     }
 
     @Test public void sameNameInDifferentPlacesUsesCodesRatherThanNameAliases() throws Exception {
@@ -95,7 +105,7 @@ public class HistoricSettlementCountiesTest {
                 LocalRoadSettlementMatcher.cached(app, "old-road", geometry).get(0).historicCountyCodes);
     }
 
-    @Test public void unknownCodesAndUnrepresentedNorthernIrelandAreExplicitRatherThanGuessed() throws Exception {
+    @Test public void unknownCodesRemainExplicitRatherThanGuessed() throws Exception {
         LocalRoadSettlementMatcher.Settlement unknown = new LocalRoadSettlementMatcher.Settlement(
                 "N00000001", "Blackpool", "Lancashire", "", "Northern Ireland");
         HistoricSettlementCounties.align(app, Arrays.asList(unknown));
@@ -104,3 +114,4 @@ public class HistoricSettlementCountiesTest {
         assertEquals("Lancashire", unknown.county);
     }
 }
+

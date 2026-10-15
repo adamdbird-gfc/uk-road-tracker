@@ -157,4 +157,26 @@ public class TownAchievementsTest {
         TownAchievementEvidence e=new TownAchievementEvidence();e.collect(app,c);
         assertEquals(1,e.towns.get("a").roads.size());assertEquals(0,e.unresolvedRoads);
     }
+    @Test public void reviewedNorthernIrelandOverlapWaysCreditEveryIntersectedSettlement() throws Exception {
+        JSONObject fixtures;
+        try(java.io.InputStream input=getClass().getClassLoader().getResourceAsStream("ni-overlap-credit-fixtures.json")) {
+            assertNotNull(input);
+            fixtures=new JSONObject(new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
+        }
+        JSONArray cases=fixtures.getJSONArray("cases");assertEquals(8,cases.length());
+        for(int i=0;i<cases.length();i++) {
+            JSONObject test=cases.getJSONObject(i),g=test.getJSONObject("geometry");
+            String name=test.getString("name"),roadId="name:"+name.toLowerCase(java.util.Locale.ROOT);
+            JSONArray codes=test.getJSONArray("intersected_settlement_codes");
+            java.util.List<LocalRoadSettlementMatcher.Settlement> matches=new ArrayList<>();
+            for(int j=0;j<codes.length();j++)matches.add(new LocalRoadSettlementMatcher.Settlement(codes.getString(j),codes.getString(j)));
+            CoreAchievementEvidence core=new CoreAchievementEvidence();core.add(journey("ni-overlap-"+i,"driving",name,g));
+            AchievementStore.recordRoadSettlements(app,roadId,Collections.singletonList(g),matches);
+            TownAchievementEvidence evidence=new TownAchievementEvidence();evidence.collect(app,core);
+            assertEquals(codes.length(),evidence.towns.size());
+            assertTrue(evidence.towns.containsKey(test.getString("code")));
+            for(int j=0;j<codes.length();j++)assertTrue(evidence.towns.get(codes.getString(j)).roads.contains(roadId));
+        }
+    }
 }
+

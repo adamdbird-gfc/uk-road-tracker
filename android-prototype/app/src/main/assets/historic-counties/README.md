@@ -37,3 +37,16 @@ pins the same county source hash/version and separately records settlement
 source hashes. It does not award travel achievements or change town identity.
 See `docs/settlement-historic-county-alignment.md` for scope, attribution and
 rebuild instructions, including the outstanding NI settlement source gap.
+
+
+## Northern Ireland settlement index extension
+
+The prepared index now contains 9,072 settlement IDs: the existing 8,545 GB
+memberships unchanged, plus 527 NISRA SDL15 NI identities. Twelve NI settlements
+span historic county boundaries. NI additions use the exact already-pinned
+County Collector binary asset (coordinates rounded to 1e-6 degrees), retaining
+holes and islands. Its data hash is stored separately in the index. The upstream
+county ZIP changed in October; this extension does not update county boundaries.
+Official settlement names/codes are retained, and county metadata remains
+separate from administrative labels. The index ships with the next APK; this
+data preparation does not itself publish the NI reference dataset.
