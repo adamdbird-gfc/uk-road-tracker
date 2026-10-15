@@ -12,9 +12,12 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / 'tests/fixtures/ncn-route1'
 
 
-def load_reference():
-    metadata = json.loads((FIXTURE / 'source.json').read_text())
-    raw = (FIXTURE / 'reference.geojson').read_bytes()
+def load_reference(name='ncn-route1'):
+    if name not in {'ncn-route1', 'ncn-ni-route9', 'ncn-wales-route8', 'ncn-scotland-route7'}:
+        raise ValueError('Unknown bounded trial fixture')
+    fixture = ROOT / 'tests/fixtures' / name
+    metadata = json.loads((fixture / 'source.json').read_text())
+    raw = (fixture / 'reference.geojson').read_bytes()
     if hashlib.sha256(raw).hexdigest() != metadata['fixture_sha256']:
         raise ValueError('Trial fixture checksum changed')
     origin_lng, origin_lat = metadata['projection_origin']

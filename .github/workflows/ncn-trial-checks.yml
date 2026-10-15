@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/ncn_trial/**'
-      - 'tests/fixtures/ncn-route1/**'
+      - 'tests/fixtures/ncn-*/**'
       - 'requirements-ncn-trial.txt'
       - '.github/workflows/ncn-trial-checks.yml'
 permissions:
@@ -20,5 +20,5 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install -r requirements-ncn-trial.txt
-      - run: python -m unittest scripts.ncn_trial.test_coverage -v
+      - run: python -m unittest scripts.ncn_trial.test_coverage scripts.ncn_trial.test_review scripts.ncn_trial.test_regions scripts.ncn_trial.test_matched_context -v
       - run: python -m scripts.ncn_trial.run --output "$RUNNER_TEMP/ncn-route1"
