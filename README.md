@@ -1,3 +1,5 @@
+> **15 October 2026:** The interactive web prototype is retired. Its public HTML pages now show a retirement notice. Android development continues; legacy reference-data URLs remain available during compatibility retirement.
+
 # UK Road Tracker — POC 4 map fix
 
 This build keeps the successful Timeline diagnostic parser and focuses on map reliability.
