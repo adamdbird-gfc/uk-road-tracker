@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "releases": [
+    {
+      "version_name": "0.25.201",
+      "version_code": 247,
+      "release_date": "2026-10-15",
+      "since": "0.25.200",
+      "changes": [
+        {
+          "title": "Clearer navigation",
+          "description": "The icons along the bottom of the app now share the larger size you see in Collections, making it easier to move between screens."
+        },
+        {
+          "title": "More places to explore",
+          "description": "Road totals and settlement boundaries are now available for 9,072 places across England, Scotland, Wales and Northern Ireland. Your existing road names and progress are preserved."
+        },
+        {
+          "title": "Northern Ireland county progress",
+          "description": "Northern Ireland's settlements are now linked to their historic counties, so they can contribute to your county progress."
+        },
+        {
+          "title": "Keep up with What's new",
+          "description": "Open What's new in Utilities to see what each update brings. You can also contact Roadprints to report an issue or suggest a feature."
+        }
+      ]
+    }
+  ]
+}

@@ -35,6 +35,7 @@
         <activity android:name=".MeasurementSettingsActivity" android:exported="false" />
         <activity android:name=".ProgressActivity" android:exported="false" />
         <activity android:name=".UtilitiesActivity" android:exported="false" />
+        <activity android:name=".WhatsNewActivity" android:exported="false" />
         <activity android:name=".PermissionsActivity" android:exported="false" />
         <activity android:name=".DataManagementActivity" android:exported="false" />
         <activity android:name=".TrackingSettingsActivity" android:exported="false" />
