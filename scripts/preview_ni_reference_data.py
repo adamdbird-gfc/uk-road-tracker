@@ -89,7 +89,9 @@ def run(args):
     session=AuthorizedSession(Credentials.from_service_account_info(credentials,scopes=['https://www.googleapis.com/auth/firebase.hosting']))
     hosting=Hosting(session);live=hosting.request('GET',f'sites/{SITE}/channels/live');source=version_name(live['release']['version']['name'])
     before=hosting.files(source)
-    if set(before)!=set(expected_old):raise ValueError('Live dataset differs from reviewed GB file coverage')
+    if set(before)!=set(expected_old):
+        missing=sorted(set(expected_old)-set(before));extra=sorted(set(before)-set(expected_old))
+        raise ValueError('Live dataset differs from reviewed GB file coverage: '+json.dumps({'actual':len(before),'expected':len(expected_old),'missing_sample':missing[:12],'extra_sample':extra[:12]}))
     source_config=hosting.request('GET',source).get('config',{})
     fetch=Fetcher();verify('https://'+SITE+'.web.app',{'schema_version':1,'files':[expected_old[MANIFEST]]},fetch=fetch)
     args.work.mkdir(parents=True,exist_ok=True)
