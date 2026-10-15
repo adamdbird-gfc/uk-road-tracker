@@ -27,11 +27,22 @@ notes=${2:-}
 if [ -z "$notes" ]; then
   notes=$(mktemp)
   trap 'rm -f "$notes"' EXIT
-  {
-    printf 'Roadprints %s\n\n' "$version"
-    printf 'Signed Android beta build. Unit tests, lint and signature verification passed in CI.\n'
-    git -C "$repo_dir" log -1 --format='Change: %s%nCommit: %H'
-  } > "$notes"
+  python3 - "$repo_dir" "$version" > "$notes" <<'PY'
+import datetime, json, pathlib, sys
+root, version = pathlib.Path(sys.argv[1]), sys.argv[2]
+document = json.loads((root / 'android-prototype/app/src/main/assets/release-notes.json').read_text())
+matches = [release for release in document['releases'] if release['version_name'] == version]
+if len(matches) != 1:
+    raise SystemExit('Expected release notes for the version being uploaded.')
+release = matches[0]
+date = datetime.date.fromisoformat(release['release_date'])
+print(f"Roadprints {version} — {date.day} {date:%B %Y}\n")
+if release.get('since'):
+    print(f"Changes since {release['since']}\n")
+for change in release['changes']:
+    print(f"{change['title']}\n{change['description']}\n")
+print('Spotted an issue, or would like to suggest a new feature? Contact Roadprints: adamdbird@gmail.com')
+PY
 fi
 test -f "$notes" || { echo "Release notes not found: $notes" >&2; exit 1; }
 
