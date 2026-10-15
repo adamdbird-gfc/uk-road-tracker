@@ -1647,6 +1647,10 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(() -> {
             try {
                 List<JSONObject> rows = JourneyListActivity.preloadSummaries(getApplicationContext(), revision);
+                if (JourneyStore.dataRevision(getApplicationContext()) != revision) {
+                    mainHandler.post(() -> { if (generation == recapGeneration) { recapLoading = false; if (active) refreshRecap(); } });
+                    return;
+                }
                 List<JSONObject> collected = ReturnRecapStore.collect(getApplicationContext(), rows, observedAt);
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != recapGeneration) return;
@@ -1698,15 +1702,18 @@ public class MapActivity extends Activity {
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
         titleRow.addView(recapText("Welcome back", 18, Color.WHITE, true),
                 new LinearLayout.LayoutParams(0, -2, 1));
+        final Set<String> shownIds = recapIds();
         TextView dismiss = recapText("DISMISS", 11, GOLD, true);
         dismiss.setPadding(dp(8), dp(12), dp(8), dp(12));
         dismiss.setContentDescription("Dismiss new journey recap");
         dismiss.setOnClickListener(view -> {
-            ReturnRecapStore.dismiss(this, recapIds());
+            ReturnRecapStore.dismiss(this, shownIds);
             recapGeneration++;
             recapLoading = false;
-            recapJourneys.clear();
+            recapRevision = Long.MIN_VALUE;
+            recapJourneys.removeIf(journey -> shownIds.contains(journey.optString("journey_id")));
             renderRecap();
+            if (active) refreshRecap();
         });
         titleRow.addView(dismiss);
         card.addView(titleRow);
