@@ -75,13 +75,8 @@ public class JourneyListActivity extends Activity {
     private volatile RailStationCatalog placeStationCatalog;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final String[] FILTER_LABELS = {
-            "All transport", "Driving", "On foot", "Bus",
-            "Train", "Cycling", "Flight", "Ferry", "Unknown"
-    };
-    private static final String[] FILTER_VALUES = {
-            "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
-    };
+    private static final String[] FILTER_LABELS = JourneyFilters.FILTER_LABELS;
+    private static final String[] FILTER_VALUES = JourneyFilters.FILTER_VALUES;
 
     private LinearLayout journeyList;
     private ScrollView journeyScroll;
@@ -96,8 +91,8 @@ public class JourneyListActivity extends Activity {
     private String activeJourneyStatusFilter = "all";
     private JourneyDateFilter activeDateFilter = JourneyDateFilter.all();
     private TextView filterSummary;
-    private static final String[] STATUS_VALUES = {"all", "matched", "ready", "matching", "failed", "no_match"};
-    private static final String[] STATUS_LABELS = {"All statuses", "Matched", "Ready to match", "Matching", "Needs retry", "No matching needed"};
+    private static final String[] STATUS_VALUES = JourneyFilters.STATUS_VALUES;
+    private static final String[] STATUS_LABELS = JourneyFilters.STATUS_LABELS;
     private Set<String> recapJourneyIds = Collections.emptySet();
     private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
@@ -1206,7 +1201,7 @@ public class JourneyListActivity extends Activity {
                 break;
             }
         }
-        if (!matchedTransport && isUnknownMode(currentMode)) {
+        if (!matchedTransport && JourneyFilters.isUnknownMode(currentMode)) {
             transport.setSelection(transportModes.length - 1);
         }
         final String[] savedTitle = {titleInput.getText().toString().trim()};
