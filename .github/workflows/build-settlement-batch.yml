@@ -1,7 +1,6 @@
 name: Build settlement inventory batch
 on:
-  schedule:
-    - cron: "17,47 * * * *"
+  # GB inventories are prebuilt; use explicit requests for exceptional rebuilds.
   workflow_dispatch:
     inputs:
       settlements:
