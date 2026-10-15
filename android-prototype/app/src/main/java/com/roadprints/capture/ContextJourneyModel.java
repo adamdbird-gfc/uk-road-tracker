@@ -35,7 +35,7 @@ final class ContextJourneyModel {
             }
             pauseContext=context;
             clearProposal();
-            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=60000)
+            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=(context.site?120000:60000))
                 return new Decision(Math.max(1,pauseIndex),null,"arrival_"+context.kind);
             return null;
         }

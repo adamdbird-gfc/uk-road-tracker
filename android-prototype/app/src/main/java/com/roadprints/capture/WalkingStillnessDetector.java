@@ -25,6 +25,12 @@ final class WalkingStillnessDetector {
                 && point.time-latest.time<=60_000L
                 && FootTraceValidator.metres(anchor,point)<=35+anchor.accuracy+point.accuracy)
             return;
+        // Fused and GPS providers can disagree on speed within the same tight
+        // cluster. Fresh repeated quiet fixes outweigh isolated pedestrian spikes.
+        // Do not refresh latest here: sustained movement still expires the dwell.
+        if (!road && point.speed>.8 && point.speed<2.5 && anchor!=null && latest!=null && observations>=3
+                && point.time-latest.time<=30_000L
+                && FootTraceValidator.metres(anchor,point)<=20+anchor.accuracy+point.accuracy) return;
         if (point.speed>.8) {
             anchor=point; latest=point; observations=1; confirmed=false; movement=0; return;
         }
