@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "channel": "uk-ni-reviewed-20261015",
+  "additions_report_sha256": "8721b48b05b791bdca92b18a65b4da8acb5d72234b078a5e08207a8b6b78c6e0",
+  "action": "clone_verified_live_files_and_add_ni_to_preview_only",
+  "attempt": 1
+}
