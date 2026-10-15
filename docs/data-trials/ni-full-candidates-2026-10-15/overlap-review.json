@@ -1,0 +1,274 @@
+{
+  "status": "reviewed_candidates_pending_app_integration",
+  "boundary_policy": "Keep official NISRA geometries and the unchanged GB non-exclusive way-intersection rule; do not assign exclusive ownership from these overlaps",
+  "overlaps": [
+    {
+      "codes": [
+        "N11000151",
+        "N11000447"
+      ],
+      "area_square_metres": 17896.77536963006,
+      "eligible_named_ways": [
+        {
+          "way_id": 38321416,
+          "name": "Brooke Park",
+          "highway": "residential"
+        },
+        {
+          "way_id": 38321507,
+          "name": "Arlington Drive",
+          "highway": "residential"
+        },
+        {
+          "way_id": 38321519,
+          "name": "Oakhurst Avenue",
+          "highway": "residential"
+        },
+        {
+          "way_id": 157149552,
+          "name": "St Annes Road",
+          "highway": "residential"
+        },
+        {
+          "way_id": 157151643,
+          "name": "Glendale",
+          "highway": "residential"
+        },
+        {
+          "way_id": 157151674,
+          "name": "Dunmurry Lodge",
+          "highway": "residential"
+        },
+        {
+          "way_id": 324292748,
+          "name": "Blacks Road",
+          "highway": "unclassified"
+        },
+        {
+          "way_id": 324292750,
+          "name": "Blacks Road",
+          "highway": "unclassified"
+        },
+        {
+          "way_id": 1499924054,
+          "name": "Blacks Road",
+          "highway": "unclassified"
+        },
+        {
+          "way_id": 1499924066,
+          "name": "Blacks Road",
+          "highway": "unclassified"
+        }
+      ],
+      "excluded_named_ways": [
+        {
+          "way_id": 41647820,
+          "name": "Blacks Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 41647821,
+          "name": "Blacks Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 157149554,
+          "name": "St Annes Road",
+          "highway": "service"
+        },
+        {
+          "way_id": 486468076,
+          "name": "Blacks Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 679120934,
+          "name": "Blacks Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 1324394125,
+          "name": "Stewartstown Road",
+          "highway": "secondary"
+        }
+      ]
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000162"
+      ],
+      "area_square_metres": 7385.669227111,
+      "eligible_named_ways": [
+        {
+          "way_id": 9514866,
+          "name": "Reaville Park",
+          "highway": "residential"
+        },
+        {
+          "way_id": 15089951,
+          "name": "Prince Regent Road",
+          "highway": "unclassified"
+        },
+        {
+          "way_id": 19268674,
+          "name": "Orby Street",
+          "highway": "residential"
+        },
+        {
+          "way_id": 19323054,
+          "name": "Galwally Avenue",
+          "highway": "residential"
+        },
+        {
+          "way_id": 26191958,
+          "name": "Cregagh Road",
+          "highway": "tertiary"
+        },
+        {
+          "way_id": 75536975,
+          "name": "Abbey Road",
+          "highway": "residential"
+        },
+        {
+          "way_id": 337797568,
+          "name": "Church Road",
+          "highway": "residential"
+        },
+        {
+          "way_id": 337797569,
+          "name": "Church Road",
+          "highway": "residential"
+        },
+        {
+          "way_id": 1352111409,
+          "name": "Cregagh Road",
+          "highway": "tertiary"
+        },
+        {
+          "way_id": 1395591126,
+          "name": "Glen Road",
+          "highway": "tertiary"
+        },
+        {
+          "way_id": 1488078628,
+          "name": "Bells Bridge Roundabout",
+          "highway": "tertiary"
+        }
+      ],
+      "excluded_named_ways": [
+        {
+          "way_id": 376267299,
+          "name": "Castlereagh Road",
+          "highway": "primary"
+        },
+        {
+          "way_id": 660746797,
+          "name": "Ormeau Road",
+          "highway": "primary"
+        },
+        {
+          "way_id": 850529335,
+          "name": "Upper Newtownards Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 850529337,
+          "name": "Comber Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 1347127784,
+          "name": "Marshwiggle Way",
+          "highway": "cycleway"
+        },
+        {
+          "way_id": 1395591127,
+          "name": "Knock Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 1395591128,
+          "name": "Knock Road",
+          "highway": "trunk"
+        },
+        {
+          "way_id": 1395591130,
+          "name": "Knock Road",
+          "highway": "trunk"
+        }
+      ]
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000571"
+      ],
+      "area_square_metres": 52.76804775259261,
+      "eligible_named_ways": [],
+      "excluded_named_ways": []
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000559"
+      ],
+      "area_square_metres": 27.00545580608862,
+      "eligible_named_ways": [],
+      "excluded_named_ways": []
+    }
+  ],
+  "overlap_removal_sensitivity": [
+    {
+      "code": "N11000151",
+      "candidate_count": 3594,
+      "count_without_any_source_overlap": 3588,
+      "names_relying_on_source_overlap": [
+        "Arlington Drive",
+        "Church Road",
+        "Dunmurry Lodge",
+        "Glen Road",
+        "Glendale",
+        "Oakhurst Avenue"
+      ]
+    },
+    {
+      "code": "N11000162",
+      "candidate_count": 746,
+      "count_without_any_source_overlap": 745,
+      "names_relying_on_source_overlap": [
+        "Galwally Avenue"
+      ]
+    },
+    {
+      "code": "N11000447",
+      "candidate_count": 357,
+      "count_without_any_source_overlap": 356,
+      "names_relying_on_source_overlap": [
+        "St Annes Road"
+      ]
+    },
+    {
+      "code": "N11000559",
+      "candidate_count": 917,
+      "count_without_any_source_overlap": 917,
+      "names_relying_on_source_overlap": []
+    },
+    {
+      "code": "N11000571",
+      "candidate_count": 4,
+      "count_without_any_source_overlap": 4,
+      "names_relying_on_source_overlap": []
+    }
+  ],
+  "zero_count_review": {
+    "count": 12,
+    "eligible_named_ways_found": 0,
+    "conclusion": "Zero named eligible local roads under the current rules; these settlements do contain roads"
+  },
+  "before_publication": [
+    "Verify app coverage credits the eight overlap-dependent settlement/name memberships",
+    "Review the one numeric-prefix OSM road name as source-quality evidence without silently changing counting rules",
+    "Complete N-code support, settlement metadata and historic county mapping, then stage coordinated publication"
+  ]
+}

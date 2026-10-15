@@ -1,0 +1,262 @@
+{
+  "status": "all_ni_candidates_only_not_published",
+  "source": {
+    "url": "https://download.geofabrik.de/europe/ireland-and-northern-ireland-261014.osm.pbf",
+    "file": "ireland-and-northern-ireland-261014.osm.pbf",
+    "bytes": 415543841,
+    "md5": "16663ccb36bb439d840550df7ebb4889",
+    "sha256": "a41a12f0f8cfbb0f6457da662d51aaf91218ed69f1619b0b99c4dcf624925285",
+    "supplier_md5_verified": true,
+    "poly_sha256": "fc56ea18191a8d272ae491fc14281ddc01ac9835d77e2cded56fb6d1829f0fe8",
+    "download_seconds": 104.408
+  },
+  "osm_timestamp": "2026-10-14T20:21:12Z",
+  "boundary_geojson_sha256": "2320848e0ccfe9f13e4c0c2b25ae047d5217ceff10d27ee3d74ac07badb344c0",
+  "rules": {
+    "highways": [
+      "living_street",
+      "residential",
+      "tertiary",
+      "unclassified"
+    ],
+    "names": "exact stripped distinct road names",
+    "membership": "eligible OSM way intersects settlement polygon; same as GB"
+  },
+  "osm_processing_seconds": 79.819,
+  "total_seconds_including_hashing": 80.778,
+  "peak_rss_kib": 1136036,
+  "node_index_bytes": 855638816,
+  "qualifying_ways_in_extract": 146081,
+  "inventory_file_bytes": 398615,
+  "limitations": [
+    "New NI candidates; no previous live NI inventories for comparison",
+    "Official boundaries retained; overlap sensitivity and name-quality flags need acceptance review",
+    "Road counts cover the existing eligible named local-road classes only",
+    "NI code support, aliases, historic counties and app compatibility require integration review",
+    "No Firebase deployment, Postgres registration or APK build"
+  ],
+  "scope": "all_source_settlements",
+  "settlement_count": 527,
+  "road_name_entries_across_settlements": 19682,
+  "saved_trial_files_compared": 3,
+  "zero_count_settlements": [
+    {
+      "code": "N11000056",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 7,
+      "excluded_named_ways": 0,
+      "excluded_unnamed_ways": 14,
+      "highway_way_counts": {
+        "footway": 4,
+        "pedestrian": 3,
+        "residential": 7,
+        "service": 7
+      },
+      "excluded_named_samples": {},
+      "numeric_prefix_names_for_review": [],
+      "name": "BROOMHILL"
+    },
+    {
+      "code": "N11000067",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 9,
+      "excluded_named_ways": 0,
+      "excluded_unnamed_ways": 5,
+      "highway_way_counts": {
+        "residential": 9,
+        "service": 5
+      },
+      "excluded_named_samples": {},
+      "numeric_prefix_names_for_review": [],
+      "name": "EDENAVEYS"
+    },
+    {
+      "code": "N11000155",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 1,
+      "excluded_unnamed_ways": 1,
+      "highway_way_counts": {
+        "primary": 1,
+        "service": 1
+      },
+      "excluded_named_samples": {
+        "primary": [
+          "Belfast Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "KNOCKNAGULLIAGH"
+    },
+    {
+      "code": "N11000167",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 1,
+      "excluded_unnamed_ways": 5,
+      "highway_way_counts": {
+        "secondary": 1,
+        "service": 5
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Priestland Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "BALLYTOBER"
+    },
+    {
+      "code": "N11000172",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 7,
+      "excluded_named_ways": 1,
+      "excluded_unnamed_ways": 33,
+      "highway_way_counts": {
+        "footway": 5,
+        "residential": 6,
+        "secondary": 2,
+        "service": 27,
+        "unclassified": 1
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Ardreagh Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "CLAREHILL"
+    },
+    {
+      "code": "N11000175",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 1,
+      "excluded_unnamed_ways": 11,
+      "highway_way_counts": {
+        "footway": 1,
+        "secondary": 1,
+        "service": 9,
+        "track": 1
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Drumagarner Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "DRUMAGARNER"
+    },
+    {
+      "code": "N11000177",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 3,
+      "excluded_unnamed_ways": 38,
+      "highway_way_counts": {
+        "primary": 2,
+        "secondary": 1,
+        "service": 38
+      },
+      "excluded_named_samples": {
+        "primary": [
+          "Agivey Road",
+          "Glenkeen Road"
+        ],
+        "secondary": [
+          "Glenkeen Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "GLENKEEN"
+    },
+    {
+      "code": "N11000196",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 1,
+      "excluded_named_ways": 0,
+      "excluded_unnamed_ways": 7,
+      "highway_way_counts": {
+        "service": 7,
+        "unclassified": 1
+      },
+      "excluded_named_samples": {},
+      "numeric_prefix_names_for_review": [],
+      "name": "DRAPERSFIELD"
+    },
+    {
+      "code": "N11000221",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 8,
+      "excluded_named_ways": 1,
+      "excluded_unnamed_ways": 6,
+      "highway_way_counts": {
+        "residential": 8,
+        "secondary": 1,
+        "service": 6
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Derrymore Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "DERRYMORE"
+    },
+    {
+      "code": "N11000313",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 2,
+      "excluded_unnamed_ways": 6,
+      "highway_way_counts": {
+        "secondary": 2,
+        "service": 5,
+        "track": 1
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Derrylee Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "DERRYLEE"
+    },
+    {
+      "code": "N11000396",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 0,
+      "excluded_named_ways": 0,
+      "excluded_unnamed_ways": 6,
+      "highway_way_counts": {
+        "service": 6
+      },
+      "excluded_named_samples": {},
+      "numeric_prefix_names_for_review": [],
+      "name": "ARDGARVAN"
+    },
+    {
+      "code": "N11000556",
+      "eligible_named_ways": 0,
+      "eligible_unnamed_ways": 3,
+      "excluded_named_ways": 4,
+      "excluded_unnamed_ways": 19,
+      "highway_way_counts": {
+        "residential": 2,
+        "secondary": 4,
+        "service": 18,
+        "track": 1,
+        "unclassified": 1
+      },
+      "excluded_named_samples": {
+        "secondary": [
+          "Hillhead Road"
+        ]
+      },
+      "numeric_prefix_names_for_review": [],
+      "name": "HILLHEAD"
+    }
+  ],
+  "candidate_manifest_sha256": "8d288f135f11a469b23443349ee7b4e704a62d8a2ef5c2ee50c9b49a23a53a28",
+  "complete_evidence_sha256": "6d427400b678e2254e7ca6127849b2f44b35cf1d2f9d874c3b2c06184ccd3e3a"
+}
