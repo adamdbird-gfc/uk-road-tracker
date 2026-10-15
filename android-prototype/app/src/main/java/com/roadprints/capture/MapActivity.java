@@ -58,6 +58,11 @@ public class MapActivity extends Activity {
     private Map<String, Double> roadPercentages = new HashMap<>();
     private List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
     private RoutePreviewView mapView;
+    private JourneyFilters mapFilters = JourneyFilters.all();
+    private TextView mapFilterSummary;
+    private View mapFilterControls;
+    private int filterDialogGeneration;
+    private static final String FILTER_PREFS = "roadprints_map_journey_filters";
     private long displayedMapRevision = Long.MIN_VALUE;
     private double savedCameraLongitude, savedCameraLatitude, savedCameraZoom;
     private boolean hasSavedCamera;
@@ -81,6 +86,9 @@ public class MapActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        android.content.SharedPreferences selection = getSharedPreferences(FILTER_PREFS, MODE_PRIVATE);
+        mapFilters = new JourneyFilters(selection.getInt("mode", 0), selection.getString("status", "all"),
+                JourneyDateFilter.restore(selection.getString("date", "all"), selection.getString("from", null), selection.getString("to", null)));
         getWindow().getDecorView().post(()->ContextConsent.maybeExplain(this));
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
@@ -166,6 +174,7 @@ public class MapActivity extends Activity {
         legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
         FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
         legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
+        if (!getIntent().hasExtra("settlement_code")) addMapFilters();
         mapView.setMapLayersFromPreferences();
         showMapLoading(false);
 
@@ -307,9 +316,12 @@ public class MapActivity extends Activity {
             return;
         }
         final long revision = mapDataRevision();
+        final JourneyFilters selection = mapFilters;
+        final java.time.LocalDate today = java.time.LocalDate.now();
+        final java.time.ZoneId zone = java.time.ZoneId.systemDefault();
         MapRoutes cached = null;
         synchronized (MAP_CACHE_LOCK) {
-            if (processMapCacheRevision == revision) cached = processMapCache;
+            if (selection.isAll() && processMapCacheRevision == revision) cached = processMapCache;
             else {
                 processMapCache = null;
                 processMapCacheRevision = revision;
@@ -324,15 +336,15 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(() -> {
             MapRoutes mapRoutes;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
-                JSONObject saved = PersistentScreenCache.read(getApplicationContext(),
-                        "map-routes", revision);
+                JSONObject saved = selection.isAll() ? PersistentScreenCache.read(getApplicationContext(),
+                        "map-routes", revision) : null;
                 mapRoutes = saved == null ? null : mapRoutesFromCache(saved);
                 if (mapRoutes == null) {
-                    mapRoutes = readMapRoutes();
+                    mapRoutes = readMapRoutes(selection, today, zone);
                     Runtime cacheRuntime = Runtime.getRuntime();
                     long cacheHeadroom = cacheRuntime.maxMemory()
                             - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
-                    if (mapRoutes.retainedPoints <= 180000
+                    if (selection.isAll() && mapRoutes.retainedPoints <= 180000
                             && cacheHeadroom >= 96L * 1024L * 1024L
                             && mapDataRevision() == revision) {
                         PersistentScreenCache.write(getApplicationContext(), "map-routes",
@@ -354,7 +366,7 @@ public class MapActivity extends Activity {
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
                     - (runtime.totalMemory() - runtime.freeMemory());
-            if (currentRevision == revision && freeHeadroom >= 64L * 1024L * 1024L) {
+            if (selection.isAll() && generation == mapLoadGeneration && currentRevision == revision && freeHeadroom >= 64L * 1024L * 1024L) {
                 synchronized (MAP_CACHE_LOCK) {
                     processMapCache = mapRoutes;
                     processMapCacheRevision = revision;
@@ -379,7 +391,7 @@ public class MapActivity extends Activity {
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
-                    ? "Recorded journeys will appear here."
+                    ? (mapFilters.isAll() ? "Recorded journeys will appear here." : "No mapped journeys match these filters. Try another selection or Reset.")
                     : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
                             mapRoutes.matchedJourneys,
                             mapRoutes.simplified ? " · map simplified for performance." : "."));
@@ -596,7 +608,7 @@ public class MapActivity extends Activity {
                 + ServiceStationStore.revision(getApplicationContext());
     }
 
-    private MapRoutes readMapRoutes() throws Exception {
+    private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
         MapRoutes output = new MapRoutes();
         if (ServiceStationStore.unlocked(getApplicationContext())) {
             output.serviceStations = ServiceStationStore.stations(getApplicationContext());
@@ -606,6 +618,7 @@ public class MapActivity extends Activity {
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
         JourneyStore.forEach(getApplicationContext(), journey -> {
+            if (!selection.matches(journey, today, zone)) return;
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
             String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
             boolean roadJourney = "driving".equals(mode) || "bus".equals(mode);
@@ -655,18 +668,18 @@ public class MapActivity extends Activity {
         for (MotorwayProgressCalculator.Road road : summary.roads) {
             if (!road.referenceAvailable) continue;
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
-            appendCanonicalSections(output, road.incompleteMapSections, false);
+            if (selection.isAll()) appendCanonicalSections(output, road.incompleteMapSections, false);
             appendCanonicalSections(output, road.coveredMapSections, true);
-            addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
+            if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
         ARoadProgressCalculator.Summary aSummary = aRoadCalculator.finish();
         for (ARoadProgressCalculator.Road road : aSummary.roads) {
             if (!road.referenceAvailable) continue;
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
-            appendARoadSections(output, road.incompleteMapSections, false);
+            if (selection.isAll()) appendARoadSections(output, road.incompleteMapSections, false);
             appendARoadSections(output, road.coveredMapSections, true);
-            addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
+            if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
         return output;
@@ -1250,6 +1263,7 @@ public class MapActivity extends Activity {
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
+        final JourneyFilters selection = mapFilters;
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();
         ScreenDataLoader.execute(() -> {
@@ -1264,10 +1278,11 @@ public class MapActivity extends Activity {
             List<RoadFeatureMatch> candidates = new ArrayList<>();
             try {
                 JourneyStore.forEach(getApplicationContext(), journey -> {
+                    if (!selection.matches(journey, java.time.LocalDate.now(), java.time.ZoneId.systemDefault())) return;
                     if (!"complete".equals(journey.optString("processing_status", ""))) return;
                     String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
                     if (!(mode.equals("driving") || mode.equals("bus") || mode.equals("walking")
-                            || mode.equals("running") || mode.equals("pedestrian"))) return;
+                            || mode.equals("running") || mode.equals("pedestrian") || MatchingCoordinator.isCycle(mode))) return;
                     JSONObject result = journey.optJSONObject("processing_result");
                     JSONArray features = roadFeaturesForTap(result);
                     if (features == null) return;
@@ -1579,6 +1594,92 @@ public class MapActivity extends Activity {
         parent.addView(number);
     }
 
+    private void addMapFilters() {
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(10), dp(8), dp(10), dp(8));
+        panel.setBackground(roundRect(0xF50B1C50, dp(14)));
+        panel.setElevation(dp(4));
+        LinearLayout row = new LinearLayout(this);
+        TextView filter = mapFilterButton("☷ FILTER JOURNEYS", "Filter map journeys");
+        android.graphics.drawable.Drawable icon = getDrawable(R.drawable.ic_roadprints_filter).mutate();
+        icon.setTint(Color.WHITE); icon.setBounds(0, 0, dp(20), dp(20));
+        filter.setText("FILTER JOURNEYS");
+        filter.setCompoundDrawablesRelative(icon, null, null, null);
+        filter.setCompoundDrawablePadding(dp(6));
+        filter.setTag("map_filters_open");
+        filter.setOnClickListener(v -> showMapFilters());
+        LinearLayout.LayoutParams open = new LinearLayout.LayoutParams(0, dp(48), 1);
+        open.rightMargin = dp(8);
+        row.addView(filter, open);
+        TextView reset = mapFilterButton("RESET", "Reset map journey filters");
+        reset.setTextColor(GOLD);
+        reset.setBackground(roundRect(NAVY, dp(10)));
+        reset.setTag("map_filters_reset");
+        reset.setOnClickListener(v -> applyMapFilters(JourneyFilters.all()));
+        row.addView(reset, new LinearLayout.LayoutParams(dp(76), dp(48)));
+        panel.addView(row);
+        mapFilterSummary = new TextView(this);
+        mapFilterSummary.setTextColor(0xFF67D5CC);
+        mapFilterSummary.setTextSize(12);
+        mapFilterSummary.setPadding(dp(2), dp(6), dp(2), 0);
+        mapFilterSummary.setText(mapFilters.summary());
+        panel.addView(mapFilterSummary);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
+        params.setMargins(dp(12), dp(12), dp(12), 0);
+        mapFrame.addView(panel, params);
+        mapFilterControls = panel;
+        panel.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> { if (b-t != ob-ot) renderRecap(); });
+    }
+
+    private TextView mapFilterButton(String label, String description) {
+        TextView button = new TextView(this);
+        button.setText(label); button.setTextSize(12); button.setTextColor(Color.WHITE);
+        button.setTypeface(null, Typeface.BOLD); button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(8), 0, dp(8), 0);
+        button.setBackground(roundRect(0xFF233B78, dp(10)));
+        button.setContentDescription(description); button.setFocusable(true);
+        button.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override public void onInitializeAccessibilityNodeInfo(View host, android.view.accessibility.AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(android.widget.Button.class.getName());
+            }
+        });
+        return button;
+    }
+
+    private void showMapFilters() {
+        final int generation = ++filterDialogGeneration;
+        ScreenDataLoader.execute(() -> {
+            try {
+                List<JSONObject> archive = JourneyListActivity.preloadSummaries(getApplicationContext(), JourneyStore.dataRevision(getApplicationContext()));
+                mainHandler.post(() -> {
+                    if (!active || isFinishing() || generation != filterDialogGeneration) return;
+                    new JourneyFilterPanel(this, archive, mapFilters, true, this::applyMapFilters).show();
+                });
+            } catch (Exception error) {
+                mainHandler.post(() -> { if (active) android.widget.Toast.makeText(this, "Journey filters could not be loaded. Please try again.", android.widget.Toast.LENGTH_LONG).show(); });
+            }
+        });
+    }
+
+    private void applyMapFilters(JourneyFilters selection) {
+        mapFilters = selection;
+        getSharedPreferences(FILTER_PREFS, MODE_PRIVATE).edit().putInt("mode", selection.mode)
+                .putString("status", selection.status).putString("date", selection.date.preset)
+                .putString("from", selection.date.from == null ? null : selection.date.from.toString())
+                .putString("to", selection.date.to == null ? null : selection.date.to.toString()).apply();
+        mapFilterSummary.setText(selection.summary());
+        filterDialogGeneration++;
+        roadSummaryRequestId++;
+        if (roadDialog != null) roadDialog.dismiss();
+        stopReplay(false);
+        mapLoadGeneration++;
+        displayedMapRevision = Long.MIN_VALUE;
+        loadingMapRevision = Long.MIN_VALUE;
+        refreshMap();
+    }
+
     private void addZoomControls(FrameLayout mapFrame, RoutePreviewView map) {
         LinearLayout controls = new LinearLayout(this);
         controls.setOrientation(LinearLayout.VERTICAL);
@@ -1738,7 +1839,7 @@ public class MapActivity extends Activity {
         }
         card.addView(actions);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
-        params.setMargins(dp(12), dp(12), dp(70), 0);
+        params.setMargins(dp(12), dp(12) + (mapFilterControls == null ? 0 : mapFilterControls.getHeight()), dp(70), 0);
         mapFrame.addView(card, params);
         recapCard = card;
     }
