@@ -4,7 +4,7 @@ from unittest.mock import patch
 from shapely.geometry import Point
 import stage_ni_reference_additions as staging
 from prepare_ni_integration import decode_county
-from preview_ni_reference_data import Hosting,preservation_check,version_name,SITE,MANIFEST
+from preview_ni_reference_data import Hosting,preservation_check,source_coverage_check,version_name,SITE,MANIFEST
 
 
 def uint(value):
@@ -40,6 +40,12 @@ class CountyDecodingTests(unittest.TestCase):
 
 
 class HostingSafetyTests(unittest.TestCase):
+    def test_only_firebase_managed_extras_are_permitted(self):
+        expected={'gb.json':'a',MANIFEST:'m'}
+        source_coverage_check(expected,expected)
+        source_coverage_check({**expected,'__/firebase/init.js':'b','__/firebase/init.json':'c'},expected)
+        for before in [{'gb.json':'a'},{**expected,'unexpected.json':'x'}]:
+            with self.assertRaises(ValueError):source_coverage_check(before,expected)
     def test_only_additions_and_manifest_may_change(self):
         before={'gb.json':'a',MANIFEST:'old'};added={'ni.json':'b',MANIFEST:'new'}
         preservation_check(before,dict(before,**added),added)

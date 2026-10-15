@@ -21,6 +21,12 @@ def version_name(name):
     return name
 
 
+def source_coverage_check(before,expected):
+    missing=sorted(set(expected)-set(before));extra=sorted(set(before)-set(expected))
+    if missing or not set(extra)<={'__/firebase/init.js','__/firebase/init.json'}:
+        raise ValueError('Live dataset differs from reviewed GB file coverage: '+json.dumps({'actual':len(before),'expected':len(expected),'missing_sample':missing[:12],'extra_sample':extra[:12]}))
+
+
 def preservation_check(before,after,added):
     if set(after)!=(set(before)|set(added)):raise ValueError('Preview file coverage changed unexpectedly')
     for path,h in before.items():
@@ -89,9 +95,7 @@ def run(args):
     session=AuthorizedSession(Credentials.from_service_account_info(credentials,scopes=['https://www.googleapis.com/auth/firebase.hosting']))
     hosting=Hosting(session);live=hosting.request('GET',f'sites/{SITE}/channels/live');source=version_name(live['release']['version']['name'])
     before=hosting.files(source)
-    if set(before)!=set(expected_old):
-        missing=sorted(set(expected_old)-set(before));extra=sorted(set(before)-set(expected_old))
-        raise ValueError('Live dataset differs from reviewed GB file coverage: '+json.dumps({'actual':len(before),'expected':len(expected_old),'missing_sample':missing[:12],'extra_sample':extra[:12]}))
+    source_coverage_check(before,expected_old)
     source_config=hosting.request('GET',source).get('config',{})
     fetch=Fetcher();verify('https://'+SITE+'.web.app',{'schema_version':1,'files':[expected_old[MANIFEST]]},fetch=fetch)
     args.work.mkdir(parents=True,exist_ok=True)
@@ -121,7 +125,7 @@ def run(args):
     if not url.startswith('https://'+SITE+'--'+CHANNEL+'-') or urlsplit(url).hostname is None or not url.endswith('.web.app'):
         raise ValueError('Unexpected preview origin')
     result={'status':'deployed_pending_serving_checks','url':url,'source_live_version':source,'preview_version':target,
-        'gb_and_collection_files_preserved':len(before)-1,'total_files':len(after),'total_settlements':9072,
+        'gb_and_collection_files_preserved':len(expected_old)-1,'firebase_managed_files_preserved':len(before)-len(expected_old),'total_files':len(after),'total_settlements':9072,
         'new_files':1054,'replaced_manifests':1,'additions_report_sha256':EXPECTED_REPORT,
         'source_file_hashes_sha256':sha(json.dumps(before,sort_keys=True).encode()),
         'preview_file_hashes_sha256':sha(json.dumps(after,sort_keys=True).encode()),
