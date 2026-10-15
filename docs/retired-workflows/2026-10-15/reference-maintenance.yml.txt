@@ -1,0 +1,48 @@
+name: Migrate county reference and clean obsolete CI outputs
+on:
+  push:
+    branches: [infra/reference-maintenance]
+    paths: ['.github/workflows/reference-maintenance.yml']
+permissions:
+  contents: read
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/checkout@v6
+        with:
+          ref: '27e0fd444fbf773036f681d65fc99760e0e4ec11'
+          path: app-source
+          sparse-checkout: android-prototype/app/src/main/assets/historic-counties/catalogue.json
+          sparse-checkout-cone-mode: false
+      - run: python -m pip install 'google-auth==2.40.3' 'requests==2.32.5'
+      - name: Fetch existing pinned source while repository is public
+        run: curl --fail --silent --show-error --location --retry 2 --max-time 180 https://github.com/adamdbird-gfc/uk-road-tracker/releases/download/android-0.25.167/roadprints-0.25.167.apk -o pinned.apk
+      - name: Add and verify Firebase build reference
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+        run: python scripts/publish_county_build_reference.py
+      - name: Remove superseded artifacts after successful Firebase verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/cleanup_obsolete_artifacts.py
+      - name: Retain maintenance receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-maintenance-evidence
+          retention-days: 7
+          path: maintenance-evidence/
+
+# Bounded CDN propagation checks precede cleanup.
