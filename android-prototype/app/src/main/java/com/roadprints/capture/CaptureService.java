@@ -139,6 +139,10 @@ public class CaptureService extends Service {
     private ContextJourneyModel contextModel=new ContextJourneyModel();
     private String contextReason;
     private JSONObject departurePlace;
+    private final List<Location> visitPoints = new ArrayList<>();
+    private String visitPointStopId = "", visitActivityHint;
+    private long lastVisitDiagnosticAt, lastVisitBufferSave;
+
     private String currentActivity = "unknown";
     private long currentActivityAtMs;
     private String stationEvidenceReason, stationEvidenceCode;
@@ -230,6 +234,7 @@ public class CaptureService extends Service {
                 return;
             }
             if (!isActive(CaptureService.this)) {
+                if (observePlaceVisit(location)) return;
                 if (candidateMode != null) {
                     MovementDiagnostics.recordLocation(CaptureService.this, location, "walk_candidate");
                     collectCandidateLocation(location);
@@ -421,6 +426,8 @@ public class CaptureService extends Service {
 
     private void disarmTracking() {
         MovementDiagnostics.recordEvent(this, "tracking_disarmed", "Automatic tracking disabled.");
+        visitPoints.clear();visitPointStopId="";
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().remove("visit_buffer").apply();
         cancelStartCandidate(null);
         nextCaptureMode = null;
         clearPendingActivityMode();
@@ -497,6 +504,12 @@ public class CaptureService extends Service {
         }
 
         String detectedMode = modeForActivity(activityType);
+        if (!isActive(this) && activeVisit() != null) {
+            visitActivityHint=detectedMode;
+            clearCandidateStillness();
+            broadcastUpdate("At a place; checking for departure or sustained activity...");
+            return;
+        }
         if (activityType == DetectedActivity.IN_VEHICLE && roadMode(mode)) detectedMode = mode;
         if (activityType == DetectedActivity.IN_VEHICLE && "cycling".equals(mode)) detectedMode = mode;
         boolean gpsQuiet=isActive(this) && mode != null && automaticCapture && gpsStillness;
@@ -583,6 +596,104 @@ public class CaptureService extends Service {
         prepareStationSplit(boundary, boundary, confirmedMode);
         finishCapture();
         broadcastUpdate("Activity change confirmed; saving this journey leg...");
+    }
+
+    private JSONObject activeVisit() {
+        JSONObject stop=PlaceAnchorStore.last(this);
+        if (!isArmed(this) || !PlaceVisitEvidence.eligible(stop)
+                || stop.optString("id").equals(getSharedPreferences(STATE_PREFS, MODE_PRIVATE)
+                    .getString("departed_visit_id", ""))) return null;
+        return stop;
+    }
+
+    private boolean observePlaceVisit(Location location) {
+        JSONObject stop=activeVisit();
+        if (stop==null) {visitPoints.clear();visitPointStopId="";return false;}
+        requestContext(location);
+        MovementDiagnostics.recordLocation(this, location, "at_place_checking_activity");
+        if(location==null || !location.hasAccuracy() || location.getAccuracy()>35
+                || Math.abs(System.currentTimeMillis()-location.getTime())>60_000L)return true;
+        if(!stop.optString("id").equals(visitPointStopId)) {
+            visitPoints.clear();visitPointStopId=stop.optString("id");
+            restoreVisitBuffer(visitPointStopId);
+        }
+        // A later successful lookup may refine an estimated stop without claiming
+        // a named place when the map provider was unavailable at arrival.
+        if(stop.optJSONArray("site_geometry")==null && contextCache!=null) {
+            ContextMap.Evidence map=contextCache.evidence(stop.optDouble("latitude"),stop.optDouble("longitude"),
+                    (float)stop.optDouble("accuracy_m",25));
+            if(map.destination && map.geometry!=null && map.geometry.length()<=2000) {
+                try {
+                    JSONObject boundary=new JSONObject().put("geometry",map.geometry).put("holes",map.holes);
+                    if(boundary.toString().length()<=100_000) {
+                        stop.put("site_geometry",map.geometry);
+                        if(map.holes!=null)stop.put("site_holes",map.holes);
+                    }
+                } catch(org.json.JSONException ignored) {}
+            }
+        }
+        if(!visitPoints.isEmpty()) {
+            long last=visitPoints.get(visitPoints.size()-1).getTime();
+            if(location.getTime()<=last || location.getTime()-last<3_000L)return true;
+            if(location.getTime()-last>120_000L)visitPoints.clear();
+        }
+        visitPoints.add(new Location(location));
+        while(visitPoints.size()>360 || visitPoints.size()>1
+                && location.getTime()-visitPoints.get(0).getTime()>1_200_000L)visitPoints.remove(0);
+        List<FootTraceValidator.Sample> samples=new ArrayList<>();
+        for(int i=0;i<visitPoints.size();i++)samples.add(footSample(visitPoints.get(i),i));
+        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,visitActivityHint);
+        if(decision==null) {
+            persistVisitBuffer(stop.optString("id"));
+            if(System.currentTimeMillis()-lastVisitDiagnosticAt>=60_000L) {
+                MovementDiagnostics.recordEvent(this,"place_visit_continues",
+                        "boundary="+(stop.optJSONArray("site_geometry")==null?"estimated":"mapped")
+                        +"; buffered_samples="+visitPoints.size());
+                lastVisitDiagnosticAt=System.currentTimeMillis();
+            }
+            return true;
+        }
+        List<Location> seed=new ArrayList<>(visitPoints.subList(decision.startIndex,visitPoints.size()));
+        try {departurePlace=PlaceBoundaryEvidence.departure(stop,footSample(seed.get(0),0));}
+        catch(org.json.JSONException ignored) {departurePlace=null;}
+        cancelStartCandidate(null);
+        automaticCapture=true;
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("departed_visit_id",stop.optString("id"))
+                .remove("visit_buffer").apply();
+        visitPoints.clear();visitActivityHint=null;
+        MovementDiagnostics.recordEvent(this,"place_visit_departure",decision.reason+"; mode="+decision.mode);
+        activateCapture(decision.mode,Instant.ofEpochMilli(seed.get(0).getTime()).toString(),seed);
+        return true;
+    }
+
+    private void restoreVisitBuffer(String stopId) {
+        try {
+            JSONObject saved=new JSONObject(getSharedPreferences(STATE_PREFS,MODE_PRIVATE).getString("visit_buffer",""));
+            JSONArray rows=saved.getJSONArray("samples");
+            if(!stopId.equals(saved.optString("stop_id")) || rows.length()>360
+                    || System.currentTimeMillis()-saved.optLong("saved_at")>1_200_000L)return;
+            for(int i=0;i<rows.length();i++) {
+                JSONArray row=rows.getJSONArray(i);
+                Location p=new Location("visit_checkpoint");p.setLongitude(row.getDouble(0));p.setLatitude(row.getDouble(1));
+                p.setAccuracy((float)row.getDouble(2));p.setTime(row.getLong(3));
+                if(row.optDouble(4,-1)>=0)p.setSpeed((float)row.getDouble(4));
+                visitPoints.add(p);
+            }
+        } catch(Exception invalid) {visitPoints.clear();}
+    }
+
+    private void persistVisitBuffer(String stopId) {
+        if(System.currentTimeMillis()-lastVisitBufferSave<30_000L)return;
+        lastVisitBufferSave=System.currentTimeMillis();
+        try {
+            String snapshot=new JSONObject().put("stop_id",stopId).put("saved_at",System.currentTimeMillis())
+                    .put("samples",sampleCoordinates(visitPoints)).toString();
+            captureIo.execute(()->{
+                JSONObject current=PlaceAnchorStore.last(this);
+                if(!isActive(this) && current!=null && stopId.equals(current.optString("id")))
+                    getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("visit_buffer",snapshot).apply();
+            });
+        } catch(Exception ignored) { /* Missing checkpoint never becomes movement evidence. */ }
     }
 
     private void considerArmedMovement(Location location) {

@@ -59,6 +59,7 @@ final class CaptureMovementEvidence {
 
     static boolean confirmsMode(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
         int fixes = 0, moving = 0;
+        boolean running="running".equals(proposed);
         FootTraceValidator.Sample first = null, previous = null, last = null;
         double path = 0;
         boolean foot = "walking".equals(proposed) || "running".equals(proposed);
@@ -69,18 +70,18 @@ final class CaptureMovementEvidence {
                     || p.time - previous.time > 60_000L)) {
                 fixes = 0; moving = 0; path = 0; first = null;
             }
-            if (foot && p.speed >= 5) return false;
+            if (foot && p.speed >= (running?6:5)) return false;
             if (first == null) first = p;
             if (previous != null && fixes > 0)
                 path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
                         (float)previous.accuracy, (float)p.accuracy);
-            if (foot ? p.speed >= .5 && p.speed <= 3.5
+            if (running ? p.speed >= 2.2 && p.speed <= 6 : foot ? p.speed >= .5 && p.speed <= 3.5
                     : cycle ? p.speed >= .8 && p.speed <= 12 : p.speed >= 6) moving++;
             fixes++; previous = p; last = p;
         }
         return first != null && last != null && now - last.time <= 60_000L
-                && last.time - first.time >= 20_000L && fixes >= 3 && moving >= 3
-                && path >= (foot ? 30 : 60);
+                && last.time - first.time >= (running?60_000L:20_000L) && fixes >= 3 && moving >= (running?5:3)
+                && (!running || moving*10>=fixes*7) && path >= (running?100:foot?30:60);
     }
 
     /** A long break is a recording boundary, not evidence of a routable connection. */

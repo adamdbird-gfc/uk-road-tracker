@@ -8,12 +8,15 @@ final class ContextMap {
     static final class Evidence {
         boolean available, rail, road, outdoor, destination, parking, routeAmbiguous;
         String name = "", kind = "unknown", featureId = "";
+        boolean site;
+        JSONArray geometry, holes;
     }
     static Evidence at(JSONArray features, double lat, double lon, float accuracy) {
         Evidence result = new Evidence();
         if (features == null || !Float.isFinite(accuracy) || accuracy <= 0 || accuracy > 50) return result;
         result.available = true;
         double roadDistance = Double.POSITIVE_INFINITY;
+        double selectedArea = Double.POSITIVE_INFINITY;
         for (int i=0;i<features.length();i++) {
             JSONObject f=features.optJSONObject(i); if(f==null)continue;
             JSONObject tags=f.optJSONObject("tags"); if(tags==null)continue;
@@ -37,10 +40,17 @@ final class ContextMap {
                 if (tags.has("leisure") || tags.has("natural")) result.outdoor=true;
                 boolean parking="parking".equals(tags.optString("amenity"));
                 boolean building=tags.has("building") && !"no".equals(tags.optString("building"));
-                // The entire accuracy circle must fit in the mapped footprint.
-                if ((building || parking) && distance>accuracy) {
-                    result.destination=true; result.parking=parking;
-                    result.kind=parking?"parking":("house".equals(tags.optString("building"))
+                String amenity=tags.optString("amenity");
+                boolean site="school".equals(amenity)||"college".equals(amenity)||"university".equals(amenity)
+                        ||"hospital".equals(amenity)||"mall".equals(tags.optString("shop"));
+                double area=area(geometry);
+                // Prefer the encompassing site to an individual building, then the
+                // smallest eligible footprint. Feature order must not change identity.
+                if ((building || parking || site) && distance>accuracy
+                        && (!result.destination || site&&!result.site || site==result.site&&area<selectedArea)) {
+                    result.destination=true; result.parking=parking; result.site=site; selectedArea=area;
+                    result.geometry=geometry;result.holes=holes;
+                    result.kind=site?("mall".equals(tags.optString("shop"))?"shopping_centre":amenity):parking?"parking":("house".equals(tags.optString("building"))
                             || "residential".equals(tags.optString("building"))?"residential":"building");
                     result.name=tags.optString("name",result.kind);
                     result.featureId=f.optLong("id",0)>0?"osm:"+("relation".equals(f.optString("type"))?"relation":"way")+":"+f.optLong("id"):"";
@@ -49,8 +59,17 @@ final class ContextMap {
         }
         result.road=roadDistance<=Math.max(15,accuracy);
         result.routeAmbiguous=result.road && roadDistance+accuracy>15;
-        if(result.road && roadDistance<=accuracy)result.destination=false;
+        if(result.road && roadDistance<=accuracy && !result.site)result.destination=false;
         return result;
+    }
+    private static double area(JSONArray ring) {
+        double sum=0;
+        for(int i=1;i<ring.length();i++) {
+            JSONObject a=ring.optJSONObject(i-1),b=ring.optJSONObject(i);
+            if(a==null||b==null)return Double.POSITIVE_INFINITY;
+            sum+=a.optDouble("lon")*b.optDouble("lat")-b.optDouble("lon")*a.optDouble("lat");
+        }
+        return Math.abs(sum);
     }
     static double distance(JSONArray geometry,double lat,double lon) {
         double best=Double.POSITIVE_INFINITY;
