@@ -1,85 +1,25 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Walking and running matcher test · Roadprints</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260831-gravesend-proof" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Roadprints — web prototype retired</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b1c50; color: #fff; }
+    main { max-width: 38rem; margin: 1.5rem; padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid #46649e; border-radius: 1rem; background: #10275d; }
+    p { font-size: 1.125rem; line-height: 1.6; color: #d3dced; }
+    .brand { color: #67d5cc; font-weight: 700; letter-spacing: .08em; }
+    h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.2; }
+  </style>
 </head>
 <body>
   <main>
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Temporary test feature</p>
-        <h1>Bounded coverage test</h1>
-        <p class="lede">Test whether historic driving, walking and running can create one accurate, measurable coverage map in a small Gravesend area.</p>
-      </div>
-      <div class="privacy">Nothing tested here is saved or added to your motorway progress.</div>
-    </header>
-
-    <section class="card">
-      <div class="section-heading">
-        <h2>1. Choose Timeline JSON</h2>
-        <a class="text-button" href="index.html">Back to Roadprints</a>
-      </div>
-      <p class="muted">The test selects the first 20 walking or running activities that enter the fixed Gravesend test area and contain at least two recorded Timeline path points. Activities containing only start and end locations are excluded.</p>
-      <label class="file-button" for="testTimelineFile">Choose Timeline JSON</label>
-      <input id="testTimelineFile" type="file" accept="application/json,.json" />
-      <div id="testFileStatus" class="muted map-status" role="status" aria-live="polite">No file selected.</div>
-    </section>
-
-    <section id="testResults" class="card hidden">
-      <h2>2. Match the sample</h2>
-      <div class="test-summary">
-        <div><strong id="testFound">0</strong><span>usable activities found</span></div>
-        <div><strong id="testSample">0</strong><span>included in test</span></div>
-        <div><strong id="testMatched">0</strong><span>pedestrian matches</span></div>
-      </div>
-      <div class="actions">
-        <button id="matchTestActivities" type="button">Compare both matchers</button>
-        <button id="clearTestResults" class="secondary" type="button">Clear test</button>
-      </div>
-      <progress id="testProgress" value="0" max="20"></progress>
-      <div id="testProgressText" class="muted map-status" aria-live="polite">Ready to test.</div>
-      <div id="testActivityList" class="test-activity-list"></div>
-    </section>
-
-    <section id="testMapCard" class="card hidden">
-      <h2>3. Compare the result</h2>
-      <p class="muted">Grey shows Google Timeline’s recorded trace. Green shows the existing driving matcher and blue shows the pedestrian matcher. The comparison should reveal detours caused by vehicle-only restrictions.</p>
-      <div class="test-legend"><span>Raw Timeline trace</span><span class="matched">Driving match</span><span class="walking">Pedestrian match</span></div>
-      <div id="testMap" aria-label="Walking and running road-matching test map"></div>
-    </section>
-
-    <section id="coverageProofCard" class="card">
-      <p class="eyebrow">Bounded feasibility proof</p>
-      <h2>4. Gravesend combined coverage</h2>
-      <p class="muted">This provisional experiment compares saved driving matches and the pedestrian matches above against every eligible OpenStreetMap road or path in a small Gravesend test area. Shared sections count once overall.</p>
-      <div class="coverage-proof-stats">
-        <div><strong id="coverageNetworkMiles">…</strong><span>eligible network miles</span></div>
-        <div><strong id="coverageUniqueMiles">…</strong><span>unique miles covered</span></div>
-        <div><strong id="coveragePercent">…</strong><span>area completed</span></div>
-        <div><strong id="coverageDrivingMiles">…</strong><span>miles driven</span></div>
-        <div><strong id="coverageFootMiles">…</strong><span>miles on foot</span></div>
-        <div><strong id="coverageSharedMiles">…</strong><span>miles by both modes</span></div>
-      </div>
-      <div id="coverageProofStatus" class="muted map-status" role="status" aria-live="polite">Loading the Gravesend network and saved driving evidence…</div>
-      <div class="test-legend coverage-proof-legend">
-        <span class="network">Eligible network</span>
-        <span class="combined">Completed by any mode</span>
-        <span class="driven">Driven</span>
-        <span class="walking">On foot</span>
-      </div>
-      <div id="coverageMap" aria-label="Combined multimodal Gravesend coverage map"></div>
-      <details class="technical-details">
-        <summary>About this provisional calculation</summary>
-        <p id="coverageProofDetails">The denominator and matching tolerances are experimental and apply only to the displayed Gravesend boundary.</p>
-      </details>
-    </section>
+    <p class="brand">ROADPRINTS</p>
+    <h1>The web prototype has retired</h1>
+    <p>Roadprints has moved on to the Android app. Invited beta testers can get the latest version through Firebase.</p>
+    <p>The old web tracking and import tools are no longer available here.</p>
   </main>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="walk-run-test.js?v=20260831-gravesend-proof"></script>
 </body>
 </html>
