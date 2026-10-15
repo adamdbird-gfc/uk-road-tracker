@@ -604,8 +604,15 @@ public class MapActivity extends Activity {
     }
 
     private long mapDataRevision() {
-        return 31L * JourneyStore.dataRevision(getApplicationContext())
+        long revision = 31L * JourneyStore.dataRevision(getApplicationContext())
                 + ServiceStationStore.revision(getApplicationContext());
+        // Relative date selections must refresh at local midnight even without a new journey.
+        String preset = mapFilters.date.preset;
+        if (!getIntent().hasExtra("settlement_code") && ("today".equals(preset)
+                || "week".equals(preset) || "month".equals(preset))) {
+            revision = 31L * revision + java.time.LocalDate.now().toEpochDay();
+        }
+        return revision;
     }
 
     private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
