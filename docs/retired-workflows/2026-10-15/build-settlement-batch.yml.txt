@@ -1,7 +1,6 @@
 name: Build settlement inventory batch
 on:
-  schedule:
-    - cron: "17,47 * * * *"
+  # GB inventories are prebuilt; use explicit requests for exceptional rebuilds.
   workflow_dispatch:
     inputs:
       settlements:
@@ -152,7 +151,6 @@ jobs:
           pattern: settlement-inventory-*
           merge-multiple: true
           path: settlement-inventories-v1
-          if-no-artifacts: warn
       - name: Refresh shared inventory manifest and database status
         run: |
           python - <<'PY'
@@ -165,7 +163,7 @@ jobs:
           manifest = json.loads(manifest_path.read_text())
           entries = {item["code"]: item for item in manifest.get("inventories", [])}
           generated = []
-          for path in Path("settlement-inventories-v1").glob("[EW][0-9]*.json"):
+          for path in Path("settlement-inventories-v1").glob("[EWSK][0-9]*.json"):
               if path.name.endswith("-boundary.geojson"):
                   continue
               data = json.loads(path.read_text())
