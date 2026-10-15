@@ -45,9 +45,14 @@ candidate for a targeted review; it is not independent ground truth for choosing
 between parallel routes. Do not award a whole matched section from an isolated
 endpoint near the network, or repeatedly ask about the same unsupported import.
 
-The next product/data gate is a bounded review flow showing supported candidate
-sections with their evidence limitations, plus a genuine timed on-foot/cycling
-trace and verified competing-path context. Map colours and review placement
-remain for discussion with Adam. Marker permissions and verse mapping are a
-separate achievement gate. #163, #164 and map filters #166 remain coordinated
-release work; no separate trial APK is needed.
+The agreed product behaviour now assesses historical/bulk imports automatically
+on collection activation (or when later imported while active), with no review
+queue. Supported path associations can qualify even without raw timed samples;
+this diagnostic adapter deliberately remains unable to award that credit itself.
+Only new recordings made with the collection active are eligible for targeted
+ambiguity review. See `ncn-section-review-proposal.md` for the current agreement.
+
+Reliable path/reference association, historical route/access semantics and genuine
+on-foot/cycling trace validation remain integration gates. Marker permissions and
+verse mapping are separate. #163/#164, map filters #166 and visibility fixes #167
+remain coordinated release work; no separate trial APK is needed.

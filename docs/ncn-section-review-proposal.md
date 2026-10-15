@@ -1,80 +1,67 @@
-# NCN section review: interaction proposal
+# NCN activation and review behaviour
 
-15 October 2026. Proposed interaction for discussion with Adam, not an agreed
-map palette or a shipped screen. Builds on the agreed section-level confirmation
-rules in #79 and the evidence experiments in #165. No APK or runtime wiring.
+Agreed with Adam, 15 October 2026. This replaces the earlier proposal to review
+sparse historical imports. The review design is supported for new recordings;
+it must not create a bulk-import or historical near-miss queue. The wider NCN
+map palette and final device layout remain open design/integration work.
 
-## Entry and scope
+## Activation
 
-Show a review action on the relevant journey and within NCN progress. Selecting
-it opens the bounded uncertain section, not a request to redraw an entire trip.
-Keep the original recording and already supported sections. Preserve the user's
-camera when they leave the review. No arrival-time modal or interruption during
-an active journey is proposed. Core accurate mapping remains available without
-the collection; NCN-specific review belongs to the enabled collection.
+Assess existing history only when the NCN collection is activated. Start a
+resumable background assessment with visible counts of journeys assessed. Core
+tracking/navigation remain usable. Assess stored matched paths first; do not
+send every historical journey through a fresh GPS matcher unnecessarily.
 
-## Two evidence cases
+Credit supported cycling/on-foot NCN matches automatically. Missing raw point
+accuracy/timestamps does not, by itself, disqualify an imported path with a
+reliable reference association. Proximity alone, a reconstructed line or an
+isolated crossing does not establish that association. Driving never qualifies.
 
-### Plausible alternatives with adequate recorded evidence
+Retain per-journey, per-mode, versioned evidence and deduplicate physical coverage.
+A corrected journey replaces its prior contribution; deleting one journey keeps
+coverage still supported by another. A reference refresh needs reconciliation,
+not silent transfer to a new nearby route.
 
-Show the recorded fixes, the provisional match and only verified, supported
-alternatives. Ask which path was used, using source-backed names where possible.
-The options may be the NCN path, the road alongside and Not sure; they are not
-fixed choices to offer in every location. If the road itself is an eligible NCN
-route, it can qualify too. Never classify a pavement as ineligible solely because
-it is absent from one route relation.
+## Existing history and bulk imports
 
-Show a preview of the selected section before Save. Save corrects only that
-window and recomputes supported core/collection coverage. Keep the mode and unique
-physical overlap rules. Reprocessing retains the explicit decision. Changes to
-source identity, geometry, evidence or eligibility require reconciliation.
+- Existing history is assessed at activation, including earlier native recordings.
+- Bulk/Timeline imports added while active are assessed automatically too.
+- Supported sections count. Unsupported/ambiguous sections do not count.
+- Do not generate a review queue, repeated prompts or hundreds of pending user
+  actions from these assessments. An import arriving recently is still an import.
+- Repeating activation or importing an unchanged revision must not repeat work or
+  inflate unique coverage. Resume unfinished work after interruption.
 
-### Sparse historical import without supported alternative paths
+## Newly recorded journeys
 
-The attached in-conversation design explores this case first. Show the stored
-locations separately from the reconstructed route. Explain the limited evidence
-in plain language. Highlight only the candidate overlap, not the whole route.
-Do not attach an evidence percentage or a confidence claim to the inferred path.
+For a native journey recorded with NCN active, use the agreed section review only
+when the actual evidence supports plausible alternatives. Show a bounded map
+comparison and the original recorded fixes; offer the supported NCN path/road
+alternatives and Not sure. A road may itself carry the NCN and qualify.
 
-Proposed choices:
+Save changes only the supported uncertain window, recomputes relevant coverage
+and retains the recording. Dismissal/Not sure leaves it uncredited and does not
+prompt repeatedly. Keep the explicit decision with source/evidence versions so
+reprocessing cannot overwrite it. A changed reference requires reconciliation.
+Do not infer that a parallel pavement is ineligible solely from its absence in
+one route relation. Source membership and activity access remain necessary.
 
-- I used the highlighted section: retain this as the user's recollection, linked
-  to the candidate/reference/evidence snapshot. It does not independently verify
-  membership, access, historic route validity or a different matched path. Keep
-  the contribution pending until those checks support it.
-- I took a different route: exclude this candidate from NCN credit. Keep the
-  original journey and do not snap it to an unspecified alternative road.
-- Not sure: keep the candidate pending/uncredited; suppress repeat prompts. The
-  user can revisit it from the journey. Dismissal has the same credit result.
+## Development contract and production integration
 
-A recollection is distinct from a verified path correction. Do not pass it into
-the existing controlled confirmation model as though candidate validation had
-already succeeded. Review records need an explicit evidence/decision kind.
+`scripts/ncn_trial/activation.py` exercises activation, ingestion origins,
+bounded batches, checkpoint restore, pause/reactivation, revision replacement,
+deletions, failures and review eligibility. Its assessor is a required input:
+this queue does not create verified matched-path evidence from proximity.
 
-## Result and editing
+The tests use invented journey identities and controlled reference evidence,
+including a 700-row historical ambiguity case and an interrupted 101-row batch.
+They are development correctness checks, not Android performance measurements or
+positive field acceptance. There are no production background jobs, app screens,
+Firestore/Render writes or APK changes in this Python contract slice.
 
-Before Save, changing a selection is a preview; closing discards the draft.
-After Save, show a brief result and Change my response. Update only the candidate
-window. Leave the rest of the trip and its existing achievements/coverage intact,
-except where a supported correction actually changes their qualifying evidence.
-An explicit exclusion removes this candidate's prior contribution if one exists.
-Reference refreshes must not silently promote old recollections to completion.
-
-The screen should show Pending, Confirmed or Excluded in words, alongside line
-styles and labels. Colour alone must not convey status. Proposed highlights in
-the design are for discussion and do not settle the wider NCN map palette.
-
-## Before runtime integration
-
-- Agree the two cases and wording with Adam; especially whether retaining a
-  recollection while pending is clear enough for a historical import.
-- Establish supported historical source/path associations and activity access.
-- Validate a genuine timed cycling/on-foot trace with verified alternative context.
-- Add the explicit review record kind and section-level persistence/correction
-  wiring; keep sparse recollections out of the verified-confirmation path.
-- Check accessible labels, large text, map line overlap and return behaviour on
-  the combined beta. Coordinate #163, #164 and map filters #166. No separate APK.
-
-Personal traces used for the in-conversation preview remain outside this public
-repository. The preview is local-only interaction design and cannot alter app
-journeys or collection progress.
+Android integration still needs the persisted per-journey ledger, reliable
+matched-path/reference association, activation UI, background scheduling and
+version migrations. Use bounded work and retries; never report Ready while work
+has failed. Reconcile a complete archive snapshot on activation/reactivation so
+changes made while disabled are respected. Coordinate #163/#164, map filters
+#166 and visibility fixes #167 for the later combined ready-slice beta.
