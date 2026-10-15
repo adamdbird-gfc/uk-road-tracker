@@ -89,11 +89,11 @@ public class JourneyFiltersTest {
     @Test public void unavailableModesAndStatusesAreAbsentButOnFootGroupsRunning() throws Exception {
         JourneyListActivity screen=activity();
         set(screen,"journeys",java.util.Arrays.asList(archiveRow("drive","driving","complete"),archiveRow("run","running","pending"),archiveRow("train","train","complete")));
-        assertEquals(java.util.Arrays.asList(0,1,2,4),call(screen,"availableTransportOptions",new Class[]{}));
-        assertEquals(java.util.Arrays.asList(0,1,2,5),call(screen,"availableStatusOptions",new Class[]{}));
+        assertEquals(java.util.Arrays.asList(0,1,2,4),call(call(screen,"journeyFilterPanel",new Class[]{}),"availableTransportOptions",new Class[]{}));
+        assertEquals(java.util.Arrays.asList(0,1,2,5),call(call(screen,"journeyFilterPanel",new Class[]{}),"availableStatusOptions",new Class[]{}));
         set(screen,"recapJourneyIds",new java.util.HashSet<>(java.util.Arrays.asList("train")));
-        assertEquals(java.util.Arrays.asList(0,4),call(screen,"availableTransportOptions",new Class[]{}));
-        assertEquals(java.util.Arrays.asList(0,5),call(screen,"availableStatusOptions",new Class[]{})); screen.finish();
+        assertEquals(java.util.Arrays.asList(0,4),call(call(screen,"journeyFilterPanel",new Class[]{}),"availableTransportOptions",new Class[]{}));
+        assertEquals(java.util.Arrays.asList(0,5),call(call(screen,"journeyFilterPanel",new Class[]{}),"availableStatusOptions",new Class[]{})); screen.finish();
     }
     @Test public void compactDropdownPositionMapsToOriginalTransportValue() throws Exception {
         JourneyListActivity screen=activity();set(screen,"activeFilter",0);set(screen,"activeJourneyStatusFilter","all");set(screen,"activeDateFilter",JourneyDateFilter.all());
@@ -108,12 +108,12 @@ public class JourneyFiltersTest {
         JourneyListActivity screen=activity();set(screen,"activeDateFilter",JourneyDateFilter.all());
         JSONObject old=archiveRow("old","train","complete").put("started_at","2020-01-15T12:00:00Z");
         set(screen,"journeys",java.util.Arrays.asList(old));
-        assertEquals(java.util.Arrays.asList(0,4),call(screen,"availableDateOptions",new Class[]{}));
-        assertEquals(LocalDate.of(2020,1,15),call(screen,"latestJourneyDate",new Class[]{}));screen.finish();
+        assertEquals(java.util.Arrays.asList(0,4),call(call(screen,"journeyFilterPanel",new Class[]{}),"availableDateOptions",new Class[]{}));
+        assertEquals(LocalDate.of(2020,1,15),call(call(screen,"journeyFilterPanel",new Class[]{}),"latestJourneyDate",new Class[]{}));screen.finish();
     }
     @Test public void calendarUsesBrandAccentAndReturnsChosenDate() throws Exception {
         JourneyListActivity screen=activity();java.util.concurrent.atomic.AtomicReference<LocalDate> picked=new java.util.concurrent.atomic.AtomicReference<>();
-        call(screen,"pickFilterDate",new Class[]{LocalDate.class,java.util.function.Consumer.class},LocalDate.of(2026,10,5),(java.util.function.Consumer<LocalDate>)picked::set);
+        call(call(screen,"journeyFilterPanel",new Class[]{}),"pickFilterDate",new Class[]{LocalDate.class,java.util.function.Consumer.class},LocalDate.of(2026,10,5),(java.util.function.Consumer<LocalDate>)picked::set);
         android.app.DatePickerDialog dialog=(android.app.DatePickerDialog)ShadowAlertDialog.getLatestAlertDialog();
         android.util.TypedValue accent=new android.util.TypedValue();dialog.getContext().getTheme().resolveAttribute(android.R.attr.colorAccent,accent,true);
         assertEquals(0xFFF7C450,accent.data);
