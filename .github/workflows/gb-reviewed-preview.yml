@@ -7,6 +7,7 @@ on:
       - '.github/workflows/gb-reviewed-preview.yml'
       - 'scripts/*reviewed_gb_preview.py'
       - 'scripts/verify_gb_preview.py'
+      - 'scripts/test_verify_gb_preview.py'
   push:
     branches: [main]
     paths:
@@ -28,6 +29,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s scripts -p test_build_reviewed_gb_preview.py
+      - run: python -m unittest discover -s scripts -p test_verify_gb_preview.py
   preview:
     needs: test
     if: github.event_name == 'push'
@@ -88,6 +90,7 @@ jobs:
           subprocess.run(['python', 'scripts/verify_gb_preview.py', '--app', 'app-source', '--url', url], check=True)
           PY
       - name: Retain public preview evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reviewed-gb-preview
@@ -95,3 +98,4 @@ jobs:
           path: |
             app-source/hosting-stage-report.json
             app-source/gb-preview-verification.json
+            app-source/gb-preview-progress.json
