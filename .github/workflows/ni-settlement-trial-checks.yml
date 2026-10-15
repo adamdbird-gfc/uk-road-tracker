@@ -1,0 +1,19 @@
+name: Northern Ireland settlement trial checks
+on:
+  pull_request:
+    paths:
+      - 'scripts/*ni*boundar*.py'
+      - 'scripts/*ni*settlement*trial*'
+      - '.github/workflows/ni-settlement-trial-checks.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r scripts/requirements-ni-settlement-trial.txt
+      - run: python -m unittest discover -s scripts -p test_ni_settlement_trial.py -v
