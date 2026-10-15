@@ -92,6 +92,20 @@ public class JourneyListActivity extends Activity {
     private List<JSONObject> journeys;
     private int journeyCardLimit = INITIAL_JOURNEY_CARDS;
     private int refreshGeneration;
+    private boolean listActive;
+    private long displayedJourneyRevision = Long.MIN_VALUE;
+    private long loadingJourneyRevision = Long.MIN_VALUE;
+    private final Runnable observeJourneyChanges = new Runnable() {
+        @Override public void run() {
+            if (!listActive) return;
+            long revision = JourneyStore.dataRevision(getApplicationContext());
+            if (displayedJourneyRevision != revision && loadingJourneyRevision != revision) {
+                savedJourneyScrollY = journeyScroll == null ? 0 : journeyScroll.getScrollY();
+                refreshJourneysAsync();
+            }
+            mainHandler.postDelayed(this, 3000);
+        }
+    };
     private int activeFilter = 0;
     private String activeJourneyStatusFilter = "all";
     private JourneyDateFilter activeDateFilter = JourneyDateFilter.all();
@@ -127,11 +141,16 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        listActive = true;
         refreshJourneysAsync();
+        mainHandler.removeCallbacks(observeJourneyChanges);
+        mainHandler.postDelayed(observeJourneyChanges, 3000);
     }
 
     @Override
     protected void onPause() {
+        listActive = false;
+        mainHandler.removeCallbacks(observeJourneyChanges);
         if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
         savedJourneyCardLimit = journeyCardLimit;
         savedJourneyFilter = activeFilter;
@@ -142,6 +161,8 @@ public class JourneyListActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        listActive = false;
+        mainHandler.removeCallbacks(observeJourneyChanges);
         refreshGeneration++;
         processor.shutdownNow();
         super.onDestroy();
@@ -494,9 +515,11 @@ public class JourneyListActivity extends Activity {
 
     private void refreshJourneysAsync() {
         if (journeyList == null) return;
-        final int generation = ++refreshGeneration;
         final android.content.Context appContext = getApplicationContext();
         final long initialRevision = JourneyStore.dataRevision(appContext);
+        if (loadingJourneyRevision == initialRevision) return;
+        final int generation = ++refreshGeneration;
+        loadingJourneyRevision = initialRevision;
         List<JSONObject> cached = null;
         synchronized (SUMMARY_CACHE_LOCK) {
             if (processJourneySummaries != null && processJourneyRevision == initialRevision) {
@@ -505,6 +528,8 @@ public class JourneyListActivity extends Activity {
         }
         if (cached != null) {
             journeys = cached;
+            displayedJourneyRevision = initialRevision;
+            loadingJourneyRevision = Long.MIN_VALUE;
             if (launchGrowingAfterLoad) {
                 launchGrowingAfterLoad = false;
                 startBatchMatch();
@@ -526,12 +551,14 @@ public class JourneyListActivity extends Activity {
                 }else{
                     loaded=JourneyStore.allSummaries(appContext);
                     JSONArray compact=new JSONArray();for(JSONObject row:loaded)compact.put(row);
-                    PersistentScreenCache.write(appContext,"journey-summaries",initialRevision,
-                            new JSONObject().put("rows",compact));
+                    if (JourneyStore.dataRevision(appContext) == initialRevision)
+                        PersistentScreenCache.write(appContext,"journey-summaries",initialRevision,
+                                new JSONObject().put("rows",compact));
                 }
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != refreshGeneration) return;
+                    loadingJourneyRevision = Long.MIN_VALUE;
                     journeyList.removeAllViews();
                     TextView failure = new TextView(this);
                     failure.setText("Journeys could not be loaded. Return and try again.");
@@ -550,6 +577,12 @@ public class JourneyListActivity extends Activity {
             }
             mainHandler.post(() -> {
                 if (isFinishing() || generation != refreshGeneration) return;
+                loadingJourneyRevision = Long.MIN_VALUE;
+                if (JourneyStore.dataRevision(appContext) != initialRevision) {
+                    if (listActive) refreshJourneysAsync();
+                    return;
+                }
+                displayedJourneyRevision = initialRevision;
                 journeys = loaded;
                 if (launchGrowingAfterLoad) {
                     launchGrowingAfterLoad = false;
