@@ -85,7 +85,7 @@ def preserved_state(cursor):
         'roads': "SELECT i.* FROM settlement_inventory_roads i JOIN settlements s ON s.id=i.settlement_id LEFT JOIN reference_sources r ON r.id=s.source_id WHERE r.source_key IS DISTINCT FROM %s",
         'sources': 'SELECT * FROM reference_sources WHERE source_key <> %s',
         'loads': 'SELECT l.* FROM reference_data_loads l JOIN reference_sources r ON r.id=l.source_id WHERE r.source_key <> %s',
-        'road_references': 'SELECT * FROM road_references WHERE %s IS NOT NULL',
+        'road_references': 'SELECT * FROM road_references WHERE %s::text IS NOT NULL',
     }
     result = {}
     for key, query in queries.items():
@@ -105,14 +105,14 @@ def register(connection, metadata, boundaries, counts, write=False):
             c.execute('LOCK TABLE reference_sources,settlements,settlement_aliases,settlement_boundaries,settlement_inventories,settlement_inventory_roads,reference_data_loads,road_references IN SHARE ROW EXCLUSIVE MODE')
         c.execute('''SELECT s.external_code,i.status,i.road_count FROM settlements s
                      LEFT JOIN settlement_inventories i ON i.settlement_id=s.id
-                     WHERE s.is_active AND s.external_code NOT LIKE 'N%' ORDER BY s.external_code''')
+                     WHERE s.is_active AND left(s.external_code,1)<>'N' ORDER BY s.external_code''')
         rows = c.fetchall()
         check_database(rows, gb)
         if any(status != 'ready' for _, status, _ in rows):
             raise ValueError('GB reference baseline is not fully ready')
         c.execute('''SELECT s.external_code,r.source_key FROM settlements s
                      LEFT JOIN reference_sources r ON r.id=s.source_id
-                     WHERE s.external_code LIKE 'N%' OR r.source_key=%s''', (SOURCE,))
+                     WHERE left(s.external_code,1)='N' OR r.source_key=%s''', (SOURCE,))
         seen = set()
         for code, source in c.fetchall():
             if code not in ni or source != SOURCE or code in seen:
