@@ -34,7 +34,8 @@ No point times, accuracy or extra observations are fabricated. Sparse Timeline
 imports can therefore supply matched-path evidence without creating review tasks.
 
 This compatibility reader is restricted to the known preloaded pedestrian matcher
-contract. External-router/cycling results, unknown ways, crossings and parallel
+contract. Relabelling a pedestrian match as cycling cannot supply bicycle routing provenance.
+External-router/cycling results, unknown ways, crossings and parallel
 routes do not gain credit through it. Existing user edits are respected. Repeats
 and multiple journeys are deduplicated by the existing ledger.
 
@@ -53,7 +54,7 @@ Timeline evidence contributes, remains prompt-free and is reused after unchanged
 reactivation. Test controls reject crossings, parallel paths, identity/hash edits,
 unsupported provenance, source changes, removed geometry and driving.
 
-95 local NCN tests passed, including 15 saved-path checks. Backend companion tests
+96 local NCN tests passed, including 16 saved-path checks. Backend companion tests
 exercise the actual graph response and partial-way spans, with no extra coordinate
 payload. Local backend checks skip only database-service integrations; CI provides
 Postgres for those checks.

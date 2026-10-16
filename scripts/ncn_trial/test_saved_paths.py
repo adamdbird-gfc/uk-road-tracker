@@ -104,3 +104,8 @@ class SavedPathTests(unittest.TestCase):
         self.value['journey']['processing_result']['matched_path_evidence']['references'][0]['source_feature_id']='43'
         self.assertEqual(0,self.metres())
         self.assertIn('invalid_or_changed_path_evidence',self.assess()[1]['reasons'])
+
+    def test_relabelling_a_pedestrian_match_as_cycling_does_not_supply_cycle_provenance(self):
+        self.value['journey']['mode']='cycling'
+        self.assertEqual(0,self.metres())
+        self.assertIn('unsupported_mode_matcher_pair',self.assess()[1]['reasons'])

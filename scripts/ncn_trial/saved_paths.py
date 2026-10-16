@@ -22,7 +22,7 @@ class KnownPath:
     coordinates: tuple
     section_keys: tuple
     reference_version: str
-    modes: tuple = ('on_foot', 'cycling')
+    modes: tuple = ('on_foot',)
 
 
 def fixture_paths(reference):
@@ -61,6 +61,8 @@ def assess_saved_paths(export, reference, metadata, known_paths):
     result = journey.get('processing_result') or {}
     if journey.get('processing_status') != 'complete':
         reasons.append('match_not_complete');return finish()
+    if canonical != 'on_foot':
+        reasons.append('unsupported_mode_matcher_pair');return finish()
     if result.get('matcher') != 'preloaded_pedestrian_network_v4':
         reasons.append('unsupported_match_provenance');return finish()
     project = projector(metadata)
