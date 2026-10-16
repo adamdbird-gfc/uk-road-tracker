@@ -13,7 +13,7 @@ final class VenueEvidence {
         double lat=visit.optDouble("lat"),lng=visit.optDouble("lng");
         for(int i=0;i<venues.length();i++){
             JSONObject venue=venues.optJSONObject(i);if(venue==null)continue;
-            if(VenueCollection.distance(venue,lat,lng)<=VenueCollection.radius(collection,venue))out.put(venue);
+            if(VenueCollection.supports(venue,lat,lng,0,VenueCollection.radius(collection,venue)))out.put(venue);
         }return out;
     }
     static String namedMatch(String collection,JSONObject visit,JSONArray nearby){return namedMatch(VenueCollection.definition(collection),visit,nearby);}
@@ -38,8 +38,8 @@ final class VenueEvidence {
         if(age<0||age>60_000_000_000L)return "The location is too old. Please try again.";
         if(LocationCompat.isMock(fix))return "A genuine device location is required.";
         if(!fix.hasAccuracy()||!Float.isFinite(fix.getAccuracy())||fix.getAccuracy()<=0||fix.getAccuracy()>50)return "Location accuracy is insufficient. Please try again when the signal improves.";
-        if(VenueCollection.distance(venue,fix.getLatitude(),fix.getLongitude())+fix.getAccuracy()>VenueCollection.radius(collection,venue))
-            return "Your location does not support a visit here. Move closer and try again.";
+        if(!VenueCollection.supports(venue,fix.getLatitude(),fix.getLongitude(),fix.getAccuracy(),VenueCollection.radius(collection,venue)))
+            return ServiceSiteBoundary.present(venue)?"Your location could not be verified inside this services site. Check the selected services and try again when the signal improves.":"Your location does not support a visit here. Move closer and try again.";
         return "";
     }
     static JSONArray nativeVisits(String collection,JSONObject journey,JSONArray venues)throws Exception{return nativeVisits(VenueCollection.definition(collection),journey,venues);}
@@ -52,19 +52,19 @@ final class VenueEvidence {
         for(VenueStopDetector.Stop observed:VenueStopDetector.stops(samples,venues)){
             String id=observed.id;JSONObject venue=VenueVisitStore.find(venues,id);if(venue==null)continue;
             long at=observed.first;JSONObject evidence=null;
-            if(VenueCollection.distance(venue,observed.lat,observed.lng)>definition.radius)continue;
+            if(!VenueCollection.supports(venue,observed.lat,observed.lng,0,definition.radius))continue;
             boolean automatic=definition.siteStop&&!requiresConfirmation(definition,venue);
             if(stops!=null)for(int i=0;i<stops.length();i++){
                 JSONObject stop=stops.optJSONObject(i);if(stop==null||!"arrival".equals(stop.optString("role")))continue;
                 double accuracy=stop.optDouble("accuracy_m",Double.NaN);
                 if(!Double.isFinite(accuracy)||accuracy<=0||accuracy>50||stop.optLong("dwell_seconds")<180
                         ||"rejected".equals(stop.optString("classification"))
-                        ||VenueCollection.distance(venue,stop.optDouble("latitude"),stop.optDouble("longitude"))>definition.radius)continue;
+                        ||!VenueCollection.supports(venue,stop.optDouble("latitude"),stop.optDouble("longitude"),0,definition.radius))continue;
                 evidence=stop;
                 // A uniquely named supported premises stop supplies identity; broad/shared sites require review.
                 JSONArray nearby=new JSONArray();
                 for(int j=0;j<venues.length();j++){
-                    JSONObject candidate=venues.optJSONObject(j);if(candidate!=null&&VenueCollection.distance(candidate,stop.optDouble("latitude"),stop.optDouble("longitude"))<=definition.radius)nearby.put(candidate);
+                    JSONObject candidate=venues.optJSONObject(j);if(candidate!=null&&VenueCollection.supports(candidate,stop.optDouble("latitude"),stop.optDouble("longitude"),0,definition.radius))nearby.put(candidate);
                 }
                 JSONObject named=new JSONObject().put("place_name",stop.optString("name"));
                 boolean identity=id.equals(namedMatch(definition,named,nearby));

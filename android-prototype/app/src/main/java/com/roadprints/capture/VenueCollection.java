@@ -37,6 +37,9 @@ final class VenueCollection {
         return label.isEmpty()?(parent&&rule!=null?rule.optString("parent_fallback","Other UK venues"):"Other locations"):label;
     }
     static double radius(String id,JSONObject venue){return !definition(id).siteStop&&"Approximate building location".equals(venue.optString("location_label"))?300:definition(id).radius;}
+    static boolean supports(JSONObject venue,double lat,double lng,double accuracy,double radius){
+        return ServiceSiteBoundary.present(venue)?ServiceSiteBoundary.supports(venue,lat,lng,accuracy):distance(venue,lat,lng)+accuracy<=radius;
+    }
     static double distance(JSONObject venue,double lat,double lng){return ServiceStationEvidence.distance(venue,lat,lng);}
     static java.util.Set<String> completed(Context context,String id){
         java.util.Set<String> ids=VenueVisitStore.completed(context,id);

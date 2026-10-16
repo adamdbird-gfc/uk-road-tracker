@@ -62,6 +62,11 @@ jobs:
       - name: Package pinned offline historic county reference
         run: bash android-prototype/scripts/prepare_county_reference.sh
 
+      - name: Verify pinned service footprints
+        run: |
+          python3 -m pip install shapely==2.2.0
+          python3 -m unittest discover -s scripts -p test_service_site_boundaries.py
+
       - name: Check service catalogue metadata
         run: python3 scripts/test_service_collection_metadata.py
 

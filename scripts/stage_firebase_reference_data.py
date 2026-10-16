@@ -37,7 +37,10 @@ def stage(root, settlements_root, output):
         revision = manifest["revision"]
         filename = manifest["filename"]
         if (manifest["schema_version"] != 1 or manifest["collection_id"] != collection
-                or not definition["bundled_revision"] <= revision <= 9999999999
+                # Hosting can retain a release older than a newly bundled app.
+                # Clients choose their newer bundle; staging must preserve the
+                # existing immutable release for older installed clients.
+                or type(revision) is not int or not 1 <= revision <= 9999999999
                 or filename != f"catalogue-{revision}.json"
                 or not 2 <= manifest["bytes"] <= 2 * 1024 * 1024):
             raise ValueError("Unsupported catalogue manifest")
