@@ -170,3 +170,44 @@ Owner extent checks:
 
 The separately maintained 25-route checklist records these source discoveries
 and unresolved extents. No copied owner GPX or prose is shipped as app data.
+
+
+## Heron composite extent review — 16 October 2026
+
+Heron's mapped source relation 21894 supplies 20,104.57m. Its two open
+endpoints are exact existing nodes 33130417 and 33129969 in NCN1 relation
+13512082. Selecting the 4,694.15m connection within that independently mapped
+relation yields 24,798.72m of unique physical edges, consistent with Explore
+Kent's published 24.8km circuit. The owner map corroborates the main trail plus
+NCN1 closure; its historical main-route label is regional18. Geometry comes
+only from OSM, not digitisation of the published map.
+
+The explicit composite contains 1,242 unique physical edges, one connected
+component, zero degree-one endpoints and two branch nodes. It records source
+hashes, versions and exact vertex spans. Only selected edges of the connecting
+ways are included. Physical coverage is deduplicated across source memberships.
+This resolves the source composition; it does not yet approve activity access,
+directional/alternative branch completion policy, or runtime matching. The
+artifact therefore retains completion_ready=false.
+
+Viking remains unresolved: RCN15 includes linework beyond the promoted Thanet
+circuit and a nested pedestrian-area relation. The owner map confirms an inland
+closure as well as the coast. A bounded inland probe identifies NCN1 relation
+75880 (Dover to Canterbury), a further source lead rather than proof of Viking
+membership. Neither the whole RCN15 nor an arbitrary geographic crop is accepted.
+
+A reusable span-composition helper and six regression tests enforce source-way
+membership, exact partial spans, shared-edge deduplication, coordinate consistency
+and disconnected-node preservation. All 125 local NCN tests pass. This is reference
+data preparation; no app deployment, database migration or user progress change.
+
+Sources reviewed:
+- https://explorekent.org/activities/heron-cycle-trail-the-hoo-peninsula/
+- https://explorekent.org/wp-content/uploads/2015/03/the-heron-trail-higham-to-upnor-on-the-hoo-peninsula.pdf
+- https://explorekent.org/activities/viking-coastal-trail/
+- https://explorekent.org/wp-content/uploads/2015/03/Viking-Coastal-Trail.pdf
+- https://api.openstreetmap.org/api/0.6/relation/21894/full.json
+- https://api.openstreetmap.org/api/0.6/relation/13512082/full.json
+
+OSM geometry © OpenStreetMap contributors, ODbL 1.0. Owner PDFs are reviewed
+references and are not redistributed in the data package.
