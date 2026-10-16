@@ -1,9 +1,9 @@
 name: Shared context and walking outcomes regression
 on:
   push:
-    paths: ["api.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
+    paths: ["api.py", "database.py", "matched_path_evidence.py", "cycling_path_evidence.py", "pedestrian_matching.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
   pull_request:
-    paths: ["api.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
+    paths: ["api.py", "database.py", "matched_path_evidence.py", "cycling_path_evidence.py", "pedestrian_matching.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
 jobs:
   test:
     runs-on: ubuntu-latest
