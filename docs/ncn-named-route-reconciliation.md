@@ -769,3 +769,12 @@ These support exact source-span matching, not full-route completion. Details and
 mode/extent policy are in [ncn-confirmed-source-spans.md](ncn-confirmed-source-spans.md).
 All 233 local checks pass. Production publication and Android integration remain
 pending; reviewed Route177 logical alternatives are retained separately.
+
+## Fixed captured-inventory totals — 16 October 2026
+
+[ncn-inventory-completion.md](ncn-inventory-completion.md) records the next pass:
+48 fixed source-inventory plans, 3,999 eligible ways and 10 reviewed two-gate
+roundabout groups. Unresolved mileage stays in the denominator. Closing and
+repeated source edges are now accounted for correctly. All 247 local checks pass.
+These totals cover the captured member inventories; all published-route readiness
+flags remain false and Android integration is still pending.

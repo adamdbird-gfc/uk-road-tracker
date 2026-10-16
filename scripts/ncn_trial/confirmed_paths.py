@@ -23,6 +23,7 @@ from .network_geometry import metric_projector,extract_geometry
 from .network_reconciliation import way_geometry
 from .numbered_reconciliation import non_uk_namespace
 from .saved_paths import KnownPath
+from .roundabout_policy import review_roundabouts
 
 
 def eligible_modes(tags):
@@ -69,6 +70,35 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         for wid,chains in paths.items():roles[wid].extend(chains)
         representation=extract_geometry(provider_by_id[identity],original)
         for w in representation['ways']:providers[w['way_id']].append(w)
+    current_ways={wid:index['way',wid] for wid in member_ids if ('way',wid) in index}
+    roundabouts=review_roundabouts(current_ways)
+    reviewed_ring_ids={w for group in roundabouts['reviewed'] for w in group['way_ids']}
+
+    def edge_ok(points):
+        edge=LineString([metric(c) for c in points])
+        if edge.length<=1e-8:return False
+        hits=[good[int(i)] for i in good_tree.query(edge.buffer(10))]
+        excluded=[bad[int(i)] for i in bad_tree.query(edge.buffer(10))]
+        return (edge.difference(unary_union([p.buffer(10) for p in hits])).length<=1e-5
+                and edge.intersection(unary_union([p.buffer(10) for p in excluded])).length<=1e-5)
+
+    # An explicitly tagged two-gate ring may use either source-backed arc when
+    # one complete arc corresponds to the official main extent. Never bridge
+    # missing nodes or infer an outside way from its coordinates.
+    alternative_ids=set()
+    for group in roundabouts['reviewed']:
+        if group['policy']!='either_two_gate_arc':continue
+        try:
+            if any(all(edge_ok([[index['node',n]['lon'],index['node',n]['lat']]
+                    for n in current_ways[step['way_id']]['nodes'][step['edge_index']:step['edge_index']+2]])
+                    for step in branch) for branch in group['branches']):
+                no_exclusion=True
+                for wid in group['way_ids']:
+                    line=LineString([metric([index['node',n]['lon'],index['node',n]['lat']]) for n in current_ways[wid]['nodes']])
+                    excluded=[bad[int(i)] for i in bad_tree.query(line.buffer(10))]
+                    if line.intersection(unary_union([p.buffer(10) for p in excluded])).length>1e-5:no_exclusion=False
+                if no_exclusion:alternative_ids.update(group['way_ids'])
+        except KeyError:continue
     accepted=[];held=[]
     for wid in sorted(member_ids):
         way=index.get(('way',wid));reason=None
@@ -77,7 +107,7 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         nodes=way['nodes'];coords=[[index['node',n]['lon'],index['node',n]['lat']] for n in nodes]
         if len(coords)<2:held.append({'way_id':wid,'reason':'missing_current_source_nodes'});continue
         line=LineString([metric(c) for c in coords]);tags=way.get('tags',{});modes=eligible_modes(tags)
-        if nodes[0]==nodes[-1] or tags.get('junction') in ('roundabout','circular'):
+        if (nodes[0]==nodes[-1] or tags.get('junction') in ('roundabout','circular')) and wid not in reviewed_ring_ids:
             reason='logical_branch_policy_required'
         elif any(role.lower() in ('alternative','alternate','excursion','link') for chain in roles[wid] for _,role in chain):
             reason='logical_branch_policy_required'
@@ -85,18 +115,22 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         elif not providers[wid]:reason='provider_geometry_missing_or_conflicting'
         elif any(line.hausdorff_distance(way_geometry(w,metric))>.03 for w in providers[wid]):
             reason='current_geometry_differs_from_assessed_provider'
-        else:
-            hits=[good[int(i)] for i in good_tree.query(line.buffer(10))]
-            excluded=[bad[int(i)] for i in bad_tree.query(line.buffer(10))]
-            if line.difference(unary_union([part.buffer(10) for part in hits])).length>1e-5:
-                reason='source_way_not_wholly_in_published_open_main_extent'
-            elif line.intersection(unary_union([part.buffer(10) for part in excluded])).length>1e-5:
-                reason='ambiguous_nonqualifying_official_extent'
         if reason:held.append({'way_id':wid,'reason':reason});continue
+        qualifying=[wid in alternative_ids or edge_ok(coords[i:i+2]) for i in range(len(nodes)-1)]
+        spans=[];start=None
+        for i,ok in enumerate(qualifying+[False]):
+            if ok and start is None:start=i
+            if not ok and start is not None:spans.append([start,i]);start=None
+        rejected=[i for i,ok in enumerate(qualifying) if not ok]
+        if rejected:held.append({'way_id':wid,'reason':'unresolved_official_extent_edges','edge_indices':rejected,
+                                 'partly_accepted':bool(spans)})
+        if not spans:continue
         accepted.append({'way_id':wid,'version':way.get('version'),'node_ids':nodes,'coordinates':coords,
-                         'modes':modes,'membership_chains':roles[wid]})
+                         'modes':modes,'membership_chains':roles[wid],'selected_spans':spans,
+                         'roundabout_alternative':wid in alternative_ids})
     audit={'route_key':key,'source_relations':roots,'accepted_way_count':len(accepted),
-        'held_way_count':len(held),'held':held,'held_reason_counts':dict(Counter(r['reason'] for r in held)),
+        'held_way_count':len(held),'partial_way_count':sum(len(w['selected_spans'])!=1 or w['selected_spans'][0]!=[0,len(w['node_ids'])-1] for w in accepted),
+        'roundabout_review':roundabouts,'held':held,'held_reason_counts':dict(Counter(r['reason'] for r in held)),
         'whole_route_completion_ready':False,'accepted_source_node_geometry_verified':bool(accepted),
         'scope':'explicit_member_source_spans_only_not_full_official_route',
         'mode_policy':'Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.'}
@@ -106,16 +140,25 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         'route_key':key,'scope':audit['scope'],'whole_route_completion_ready':False}
     version='numbered-source-spans:'+digest(metadata)
     scope=key+':eligible-source-spans'
-    reference=TrialReference(version,[Section(str(w['way_id']),LineString([physical(c) for c in w['coordinates']]),(scope,)) for w in accepted])
-    paths=tuple(KnownPath(str(w['way_id']),tuple(map(tuple,w['coordinates'])),(str(w['way_id']),),version,
-        w['modes'],'exact_source_spans',tuple(w['node_ids'])) for w in accepted)
+    sections=[];paths=[];published=[]
+    for w in accepted:
+        keys=[]
+        for low,high in w['selected_spans']:
+            key=str(w['way_id']) if low==0 and high==len(w['node_ids'])-1 else f"{w['way_id']}:{low}:{high}"
+            keys.append(key);points=w['coordinates'][low:high+1]
+            sections.append(Section(key,LineString([physical(c) for c in points]),(scope,)))
+            published.append({'key':key,'coordinates':points,'routes':[scope],'way_id':w['way_id'],
+                              'from_vertex':low,'to_vertex':high})
+        paths.append(KnownPath(str(w['way_id']),tuple(map(tuple,w['coordinates'])),tuple(keys),version,
+                     w['modes'],'exact_source_spans',tuple(w['node_ids'])))
+    reference=TrialReference(version,sections)
+    paths=tuple(paths)
     provenance={'attribution':'OpenStreetMap contributors; official extent Walk Wheel Cycle Trust',
         'licence':'ODbL 1.0; official extent OGL 3.0 with original source attribution',
         'source_snapshot_sha256':metadata['source_snapshot_sha256'],
         'membership_evidence_sha256':metadata['membership_evidence_sha256']}
     raw=build_bundle(paths,reference,origin,provenance)
-    payload={'metadata':metadata,'reference_version':version,'sections':[{'key':str(w['way_id']),
-        'coordinates':w['coordinates'],'routes':[scope]} for w in accepted]}
+    payload={'metadata':metadata,'reference_version':version,'sections':published}
     return (raw,payload,bundle_metrics(raw)),audit
 
 

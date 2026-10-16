@@ -79,21 +79,28 @@ class TrialReference:
                     continue
                 identity = tuple((round(x, 6), round(y, 6)) for x, y in (first, second))
                 self.edges.setdefault(identity, {'line': line, 'routes': set()})
-        section_buffers = [s.line.buffer(1e-6) for s in sections]
-        section_tree = STRtree(section_buffers)
-        for identity, edge in self.edges.items():
-            line = edge['line']
-            for index in sorted(int(i) for i in section_tree.query(line)):
-                section = sections[index]
-                if not section_buffers[index].covers(line):
-                    continue
-                first = section.line.project(Point(line.coords[0]))
-                last = section.line.project(Point(line.coords[-1]))
-                if abs(abs(last - first) - line.length) > 1e-4:
-                    continue
-                self.mapping[section.key].append((identity, first, last))
-                if section.eligible:
-                    edge['routes'].update(section.routes)
+        # Keep cumulative source positions: projecting onto a closed/repeated
+        # line selects the first occurrence and can lose its closing edge.
+        source_segments=[];segment_buffers=[]
+        for section in sections:
+            offset=0.0
+            for first,last in zip(section.line.coords,list(section.line.coords)[1:]):
+                segment=LineString([first,last])
+                if segment.length>1e-7:
+                    source_segments.append((section,segment,offset))
+                    segment_buffers.append(segment.buffer(1e-6))
+                offset+=segment.length
+        segment_tree=STRtree(segment_buffers)
+        for identity,edge in self.edges.items():
+            line=edge['line']
+            for index in sorted(int(i) for i in segment_tree.query(line)):
+                section,segment,offset=source_segments[index]
+                if not segment_buffers[index].covers(line):continue
+                first=offset+segment.project(Point(line.coords[0]))
+                last=offset+segment.project(Point(line.coords[-1]))
+                if abs(abs(last-first)-line.length)>1e-4:continue
+                self.mapping[section.key].append((identity,first,last))
+                if section.eligible:edge['routes'].update(section.routes)
         if any(not self.mapping[s.key] for s in sections):
             raise ValueError('Reference cannot be expressed on physical edge basis')
 

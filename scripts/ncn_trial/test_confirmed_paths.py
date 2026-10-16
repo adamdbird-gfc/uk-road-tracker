@@ -99,3 +99,23 @@ class ConfirmedPathsTests(unittest.TestCase):
         for p in json.loads(result[0])['paths']:
             self.assertEqual(len(p['osm_node_ids']),len(p['coordinates']))
             self.assertEqual(p['target_geometry'],'exact_source_spans')
+
+    def test_partial_way_keeps_source_identity_and_clips_to_vertex_span(self):
+        values=inputs();values[5]['features'][0]['geometry']['coordinates'][-1][0]=.00045
+        result,audit=build_candidate(*values)
+        self.assertIsNotNone(result);self.assertEqual(audit['partial_way_count'],1)
+        self.assertEqual(result[1]['sections'][0]['from_vertex'],0)
+        self.assertEqual(result[1]['sections'][0]['to_vertex'],1)
+        self.assertEqual(len(json.loads(result[0])['paths'][0]['osm_node_ids']),3)
+        self.assertTrue(audit['held'][0]['partly_accepted'])
+
+    def test_unsupported_middle_edges_do_not_bridge_supported_runs(self):
+        values=inputs()
+        for i in range(5):values[3]['node',i+1]={'type':'node','id':i+1,'lon':i*.0005,'lat':0}
+        values[3]['way',42]['nodes']=[1,2,3,4,5]
+        one=values[5]['features'][0];one['geometry']['coordinates']=[[0,0],[.0005,0]]
+        two=deepcopy(one);two['properties']['FID']=2;two['geometry']['coordinates']=[[.0015,0],[.002,0]]
+        values[5]['features'].append(two)
+        values[7][1]['route']['ways'][0]['geometry']['coordinates'][-1][0]=222.63898158654715
+        result,audit=build_candidate(*values)
+        self.assertEqual([(s['from_vertex'],s['to_vertex']) for s in result[1]['sections']],[(0,1),(3,4)])
