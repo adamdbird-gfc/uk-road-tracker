@@ -74,7 +74,7 @@ public class ServiceSiteBoundaryTest {
         }
         Path p=Path.of("android-prototype/app/src/main/assets/uk-motorway-services-v1.json");
         if(!Files.exists(p))p=Path.of("src/main/assets/uk-motorway-services-v1.json");
-        return new JSONObject(Files.readString(p)).getJSONArray("services");
+        return new JSONObject(new String(Files.readAllBytes(p),java.nio.charset.StandardCharsets.UTF_8)).getJSONArray("services");
     }
     @Test public void warwickMainBuildingQualifiesOnlyOnNorthboundSide()throws Exception {
         JSONArray sites=catalogue();JSONObject north=null,south=null;
