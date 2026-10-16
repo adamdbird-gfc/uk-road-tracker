@@ -13,7 +13,7 @@ def _public(element):
     return {k:element[k] for k in ('type','id','version','tags','nodes','members','lat','lon') if k in element}
 
 
-def extract_route(snapshots, root_id):
+def _source_index(snapshots):
     index, hashes = {}, []
     for raw in snapshots:
         value=json.loads(raw)
@@ -24,9 +24,13 @@ def extract_route(snapshots, root_id):
             if key in index and _public(index[key]) != _public(element):
                 raise ValueError('Conflicting source element versions; refresh snapshots')
             index[key]=element
+    return index, hashes
+
+
+def _route_members(index, root_id):
     root=index.get(('relation',root_id))
     if root is None:raise ValueError('Root route relation missing')
-    missing=set();cycles=set();unsupported=set();roles=defaultdict(list);relations=set();ways={}
+    missing=set();cycles=set();unsupported=set();empty=set();roles=defaultdict(list);relations=set();way_ids=set()
 
     def visit(identity, ancestry=(), inherited=()):
         if identity in ancestry:
@@ -38,18 +42,26 @@ def extract_route(snapshots, root_id):
             if identity == root_id:raise ValueError('Unsupported root route relation')
             unsupported.add(identity);return
         relations.add(identity)
-        for member in relation['members']:
+        if not relation.get('members'):empty.add(identity)
+        for member in relation.get('members',[]):
             role=str(member.get('role','')).strip()
             chain=inherited+((identity,role),)
             key=(member['type'],member['ref'])
             if member['type']=='relation':visit(member['ref'],ancestry+(identity,),chain)
             elif member['type']=='way':
-                way=index.get(key)
-                if way is None:missing.add(key);continue
-                ways[way['id']]=way
-                roles[way['id']].append(chain)
+                way_ids.add(member['ref'])
+                roles[member['ref']].append(chain)
             # Guideposts and marker nodes are not route edges.
     visit(root_id)
+    return missing,cycles,unsupported,empty,roles,relations,way_ids
+
+
+def extract_route(snapshots, root_id):
+    index,hashes=_source_index(snapshots)
+    missing,cycles,unsupported,empty,roles,relations,way_ids=_route_members(index,root_id)
+    root=index['relation',root_id]
+    ways={identity:index['way',identity] for identity in way_ids if ('way',identity) in index}
+    missing.update(('way',identity) for identity in way_ids if ('way',identity) not in index)
     graph=defaultdict(set);edges=set();features=[]
     for identity,way in sorted(ways.items()):
         absent={('node',n) for n in way['nodes'] if ('node',n) not in index}
@@ -92,6 +104,37 @@ def extract_route(snapshots, root_id):
              'branch_node_count':sum(len(v)>2 for v in graph.values()),
              'missing_members':[{'type':kind,'id':identity} for kind,identity in sorted(missing)],
              'cyclic_relation_ids':sorted(cycles),'unsupported_relation_ids':sorted(unsupported),
-             'member_geometry_complete':bool(features) and not missing and not cycles and not unsupported,
+             'empty_relation_ids':sorted(empty),
+             'member_geometry_complete':bool(features) and not missing and not cycles and not unsupported and not empty,
              'completion_ready':False,'activity_access_verified':False,'current_ncn_membership_verified':False}
     return summary,features
+
+
+def extract_memberships(snapshots, root_id):
+    """Read explicit hierarchical way identities without claiming their geometry."""
+    index,hashes=_source_index(snapshots)
+    return _memberships_from_index(index,hashes,root_id)
+
+
+def _memberships_from_index(index, hashes, root_id):
+    missing,cycles,unsupported,empty,roles,relations,way_ids=_route_members(index,root_id)
+    root=index['relation',root_id]
+    return {'schema_version':1,'relation_id':root_id,'tags':root.get('tags',{}),
+            'source_sha256':sorted(set(hashes)),
+            'source_relations':[{'id':identity,'version':index['relation',identity].get('version'),
+                                 'timestamp':index['relation',identity].get('timestamp')}
+                                for identity in sorted(relations)],
+            'ways':[{'way_id':identity,'membership_chains':roles[identity]} for identity in sorted(way_ids)],
+            'missing_relations':[identity for kind,identity in sorted(missing) if kind=='relation'],
+            'cyclic_relation_ids':sorted(cycles),'unsupported_relation_ids':sorted(unsupported),
+            'empty_relation_ids':sorted(empty),
+            'member_lists_complete':bool(way_ids) and not missing and not cycles and not unsupported and not empty,
+            'way_geometry_verified':False,'official_gis_association_approved':False,
+            'completion_ready':False}
+
+
+def extract_membership_catalogue(snapshots, root_ids):
+    """Reuse one validated index across a bounded national root census."""
+    if len(set(root_ids)) != len(root_ids):raise ValueError('Distinct root identities required')
+    index,hashes=_source_index(snapshots)
+    return [_memberships_from_index(index,hashes,identity) for identity in sorted(root_ids)]

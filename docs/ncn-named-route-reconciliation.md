@@ -460,3 +460,83 @@ achievements beta gate. The bounded cycle proof is not national completion-ready
 
 OSRM annotation contract: https://project-osrm.org/docs/v5.24.0/api/#annotation-object
 Public geometry attribution remains OpenStreetMap contributors, ODbL 1.0.
+
+
+## National discovery and member-ID census — 16 October 2026
+
+This is a source-discovery and membership-identity inventory, not a production
+network release or a verified physical crosswalk to the published GIS.
+
+| Measure | Result |
+| --- | ---: |
+| Published numbered keys (227 NCN + 26 RCN) | 253 |
+| Keys with same-number, same-network source candidates | 240 |
+| Keys with explicit UK namespace/operator metadata | 205 |
+| Distinct candidate way IDs | 77,313 |
+| Distinct way IDs under UK-metadata-anchored profiles | 65,694 |
+| Root profiles checked against current OSM | 408 |
+| Current OSM relation records including children | 603 |
+| Geographic discovery queries | 221 |
+
+Counts of keys are presence/candidate counts, not percentages of network distance,
+full-route completeness or app-supported coverage. A short source profile can
+supply a candidate number without defining the entire promoted route. Candidate
+roots overlap, so way identities are unioned rather than summed.
+
+The geographic queries cover the published snapshot's bounds, including adjacent
+areas of Ireland and France. Their 5,202 top-level catalogue objects include local
+and neighbouring-country routes; they are not 5,202 UK NCN routes. Three dense
+cells still reach the configured response cap. The pass therefore does not claim
+exhaustive discovery. Numeric global searches for 323, 601 and 689 are also capped;
+absence from these results is not evidence of absence from OSM.
+
+The source index keeps original relation tags, versions, timestamps and membership
+role paths. The inventory contains way identities; source geometry and node chains
+are not part of this extract. Member-list completeness is explicitly separate from geometry,
+access, country scope and correspondence with official GIS. No extra Postgres
+rows, personal journeys, Firebase publication or APK are involved.
+
+Foreign searches cannot fill UK gaps merely by sharing a number: the returned
+source NCN410 explicitly belongs to US:US. The unanchored global candidate named
+Part of Bay Cycleway is a lead for 700, not an approved full-route substitute.
+The source for 820 is classified lcn and cannot silently become NCN820. Likewise,
+LCN89 records do not substitute for published RCN89. The reconciliation retains
+these disagreements instead of overwriting source classifications.
+
+Thirteen keys remain unresolved at this stage:
+NCN207, 253, 274, 323, 410, 422, 524, 601, 689, 700, 776, 820; RCN89.
+Thirty-five candidate keys have no explicit UK namespace/operator marker. That is
+missing metadata, not a claim that those routes are outside the UK; Lôn Las Cymru
+is one example already examined separately in the named-route assessment.
+
+Three fetched profiles expose structural issues. RCN15 contains the previously
+identified Broadstairs Seafront area relation, the global/locally classified
+LCN+89 search lead contains another area relation, and Route1 includes an empty
+link relation for Erith station. The extractor now flags empty relations even
+when the OSM response omits the members field. Area perimeters never become route
+mileage. Current source member lists otherwise remain useful as bounded facts.
+
+The new code comprises adaptive capped-response discovery, reusable batch
+membership extraction and semantic numbered-route lead reconciliation. Sixteen
+regressions cover truncation, budgets, source errors/conflicts, unsupported object
+types, role-path preservation, empty/missing/cyclic/area children, foreign-number
+collisions, explicit network classification and no automatic physical approval.
+All 175 trial checks pass locally (170 NCN suite plus five shared collector tests).
+
+Reproduction: load the current-relations files listed in
+current-members-fetch-manifest.json, pass their bytes and seed_relation_ids to
+scripts.ncn_trial.catalogue_extract.extract_membership_catalogue, then pass the
+published numbered inventory, extracted profiles and geographically discovered
+root IDs to scripts.ncn_trial.numbered_reconciliation.numbered_candidates.
+Raw discovery responses, request URLs, hashes and provider status observations
+are retained. The comparison is reproducible without querying a live database.
+
+Next: resolve the held UK/numbered-source leads and establish the physical
+source-to-official-GIS correspondence. Only then can nationwide saved-path links
+become eligible for the activation consumer. Existing bounded walking/cycling
+trial coverage remains unchanged; map/progress/achievements integration is pending.
+
+Sources: Waymarked Trails cycling API (https://cycling.waymarkedtrails.org/api/v1),
+OpenStreetMap API (https://api.openstreetmap.org/api/0.6), and the previously pinned
+National Cycle Network Public GIS snapshot. Geometry/membership source attribution:
+© OpenStreetMap contributors, ODbL 1.0. No Waymarked Trails server code is included.
