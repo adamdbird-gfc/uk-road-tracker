@@ -32,10 +32,48 @@ retain this additive field without an APK solely for metadata preservation.
 No schema migration, additional reference ingestion or personal-data storage is
 introduced. The existing bounded read query joins source metadata. No deployment
 is requested by this PR; coordinate it with the existing backend boundaries work.
-Fallback walking routers and the independent cycling router do not gain identity
-from this change and must not manufacture it from the new pedestrian contract.
+Fallback walking routers do not gain pedestrian identity from this change.
+Cycling uses the separate graph-node contract described below, rather than
+borrowing the pedestrian matcher identity.
 
 The matching NCN development branch uses the identical `matched_path_evidence.py`
 helper for contract/hash checks. Preserve that single implementation when the
 branches are integrated. Its fixture associations are bounded, not a nationwide
 OSM-to-NCN lookup or historical source catalogue.
+
+
+## Bicycle graph node evidence
+
+The dedicated bicycle router now requests OSM node annotations in its existing
+Match calls. Cycling responses identify their matcher as `osrm_bicycle_v1` and
+include `cycling_path_evidence`. Returned geometry, cycling geometry attribution,
+road-completion exclusions and distances are unchanged. Missing annotations never
+turn an otherwise valid match into an error.
+
+Each evidence feature binds the matching geometry checksum to uniquely aligned
+leg spans, the annotated OSM node chains and the router data version when supplied.
+Node count is not assumed to equal geometry vertex count. Step geometry must align
+uniquely and exactly with the route overview; absent, discontinuous or ambiguous
+legs are held. Consecutive duplicate graph IDs can be preserved as observations
+but cannot establish a travelled edge by themselves. Integral numeric IDs are
+normalised without accepting booleans, fractions, zero or unsafe JSON integers.
+Public metadata is checksummed for edit detection; this is not authentication.
+
+No extra coordinates are duplicated in the evidence field, no additional router
+requests are introduced, and no server-side personal records or database schema
+are added. Existing Android code saves the entire response in processing_result.
+Historic cycling results without this contract remain usable as journeys but do
+not gain source identity; a future rematch may supply it. No bulk review queue is
+introduced. This change is prepared for the combined release, not deployed here.
+
+The NCN trial resolves ordered graph node chains against explicitly sourced way
+node chains before checking rounded geometry. Unknown chains or multiple source
+candidates remain uncredited without a nearby-path fallback. Its source registry
+is still bounded and does not certify historic membership or present access.
+
+Validation: 80 backend tests locally, with the five PostgreSQL integration tests
+skipped locally and exercised by the existing CI database service. Two API checks
+cover bicycle-only annotation requests and response retention. Five collector
+checks cover alignment, missing/bad IDs, ambiguous loops and partial responses.
+
+API reference: https://project-osrm.org/docs/v5.24.0/api/#annotation-object

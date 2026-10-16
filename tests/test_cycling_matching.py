@@ -6,6 +6,31 @@ import httpx
 import api
 
 class CyclingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_annotations_are_requested_only_from_bicycle_graph(self):
+        client=types.SimpleNamespace()
+        response=types.SimpleNamespace(json=lambda:{'code':'Ok'})
+        points=[api.Point(lat=51,lng=0),api.Point(lat=51.001,lng=0)]
+        with patch.object(api,'router_get',AsyncMock(return_value=response)) as get:
+            await api.request_match(client,points,10,api.CYCLE_OSRM_BASE_URL)
+            self.assertEqual('nodes',get.call_args.args[2]['annotations'])
+            await api.request_match(client,points,10,api.FOOT_OSRM_BASE_URL)
+            self.assertEqual('false',get.call_args.args[2]['annotations'])
+
+    async def test_endpoint_retains_node_identity_against_returned_geometry(self):
+        coords=[[0,51],[.001,51]]
+        async def response(client,chunk,radius,base):
+            return types.SimpleNamespace(status_code=200,headers={},text=''),{
+                'code':'Ok','tracepoints':[{'matchings_index':0,'waypoint_index':i,'location':p} for i,p in enumerate(coords)],
+                'matchings':[{'distance':70,'geometry':{'type':'LineString','coordinates':coords},
+                              'legs':[{'distance':70,'annotation':{'nodes':[101,102]},
+                                       'steps':[{'geometry':{'type':'LineString','coordinates':coords}}]}]}]}
+        payload=api.MatchRequest(points=[api.Point(lat=y,lng=x) for x,y in coords])
+        with patch.object(api,'request_match',response):
+            result=await api.match_cycling_activity(payload)
+        self.assertEqual('osrm_bicycle_v1',result['matcher'])
+        self.assertEqual('available',result['cycling_path_evidence']['status'])
+        self.assertEqual([101,102],result['cycling_path_evidence']['features'][0]['legs'][0]['osm_nodes'])
+        self.assertEqual([],result['road_geojson']['features'])
     async def test_endpoint_uses_bicycle_graph_and_holds_back_unverified_road_credit(self):
         payload=api.MatchRequest(points=[api.Point(lat=51.44,lng=.37),api.Point(lat=51.441,lng=.371)])
         result={"road_geojson":{"type":"FeatureCollection","features":[{"properties":{"road_ref":"A2"}}]},"motorway_geojson":{"features":[]},"a_road_geojson":{"features":[]}}
