@@ -540,3 +540,44 @@ Sources: Waymarked Trails cycling API (https://cycling.waymarkedtrails.org/api/v
 OpenStreetMap API (https://api.openstreetmap.org/api/0.6), and the previously pinned
 National Cycle Network Public GIS snapshot. Geometry/membership source attribution:
 © OpenStreetMap contributors, ODbL 1.0. No Waymarked Trails server code is included.
+
+## Bidirectional physical pilot: NCN177 — 16 October 2026
+
+The first route-scoped national crosswalk pilot compares current OSM relation
+3671326 with the pinned official NCN177 geometry. It retains the source's explicit
+network/ref, requires the official snapshot checksum and uses one local approximate
+metric projection. Different route numbers are reported as nearby competing
+sections and cannot fill gaps for the selected number. Physical lengths are
+unions, so overlapping source ways and duplicate linework are not summed.
+
+| Diagnostic | Result |
+| --- | ---: |
+| Source ways, complete member geometry | 66 |
+| Source physical union | 13.124 km |
+| Official NCN177 sections | 33 |
+| Official physical union | 15.147 km |
+| Source within 3m / 10m / 25m of official route | 70.3% / 98.2% / 99.5% |
+| Official route within 3m / 10m / 25m of source | 60.8% / 85.1% / 95.8% |
+
+These are corridor diagnostics, not matched progress, positional accuracy claims,
+or a completion denominator. In particular, widening tolerance to 25m conceals
+much of the discrepancy and cannot justify an identity association across nearby
+parallel paths. At 10m, approximately 2.252 km of official geometry is outside the
+source corridor. FID7345 (964m) and FID6680 (882m, about 870m outside) account for
+most of that gap; both are published open, traffic-free Main Route sections.
+Their cause remains unresolved: no source edits, substitutions or approvals have
+been made. Conversely about 233m of the source lies outside the official corridor.
+
+The source geometry is complete for its relation but does not establish complete
+correspondence to the official route. No association is approved, no access is
+inferred, and no app coverage changes. This validates why the next stage needs
+both directional measurements and explicit review of disagreeing extents.
+
+Reproduce using scripts.ncn_trial.physical_crosswalk, the existing pinned network,
+and https://api.openstreetmap.org/api/0.6/relation/3671326/full.json. The fetched
+source SHA256 is 3a6babac34ec236112fa55293db3b39937687287a6a84802f618e6203cb56fc0;
+a later live response may differ and should be treated as a new snapshot. The
+comparison output records source and network hashes, relation version/timestamp,
+projection origin, per-way candidates and per-official-section corridor lengths.
+Six additional regressions cover partial routes, different-number collisions,
+parallel paths, physical union, duplicate identities and missing/invalid geometry.
