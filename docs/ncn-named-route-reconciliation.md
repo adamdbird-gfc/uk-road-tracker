@@ -760,3 +760,12 @@ candidates, 79 extent differences, 60 offset-sensitive cases, 23 partial-geometr
 keys, 30 scope-review keys and 13 missing-source keys. These are diagnostic states,
 not national progress approval. All 224 local checks pass. Explicit reviewed
 Route177 alternatives are preserved; no database or app deployment has occurred.
+
+## First current node-backed source-span catalogues — 16 October 2026
+
+The 48 strongest national candidates now have current full OSM identity snapshots.
+47 keys produce bounded catalogues for 3,778 distinct ways; 469 ways remain held.
+These support exact source-span matching, not full-route completion. Details and
+mode/extent policy are in [ncn-confirmed-source-spans.md](ncn-confirmed-source-spans.md).
+All 233 local checks pass. Production publication and Android integration remain
+pending; reviewed Route177 logical alternatives are retained separately.
