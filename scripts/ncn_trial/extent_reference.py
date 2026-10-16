@@ -41,7 +41,9 @@ def build_extent_reference(candidates, sources, network_raw, expected_network_sh
             entry['routes'].add(scope)
             if wid in ways and source_geometry_digest(ways[wid]['coordinates']) != source_geometry_digest(coordinates):
                 raise ValueError('Source way changed between named extents')
-            way = ways.setdefault(wid, {'coordinates': coordinates, 'sections': set()})
+            if wid in ways and ways[wid]['nodes'] != tuple(node_ids):
+                raise ValueError('Source node chain changed between named extents')
+            way = ways.setdefault(wid, {'coordinates': coordinates, 'nodes': tuple(node_ids), 'sections': set()})
             way['sections'].add(key)
     points = [p for section in sections.values() for p in section['coordinates']]
     origin = [(min(p[0] for p in points)+max(p[0] for p in points))/2,
@@ -49,6 +51,7 @@ def build_extent_reference(candidates, sources, network_raw, expected_network_sh
     metadata = {'projection_origin': origin, 'national_reference_sha256': expected_network_sha256,
                 'extent_sha256_by_scope': bindings,
                 'scope': 'selected_named_extents_not_official_network_membership',
+                'association_contract': 'osm-way-spans-and-cycle-node-chains-v2',
                 'completion_ready': False}
     version = 'named-extents:' + digest(metadata)
     project = projector(metadata)
@@ -56,6 +59,6 @@ def build_extent_reference(candidates, sources, network_raw, expected_network_sh
                                                  tuple(sorted(entry['routes'])))
                                          for key, entry in sorted(sections.items())])
     paths = tuple(KnownPath(wid, entry['coordinates'], tuple(sorted(entry['sections'])), version,
-                            ('on_foot',), 'exact_source_spans')
+                            ('on_foot', 'cycling'), 'exact_source_spans', entry['nodes'])
                   for wid, entry in sorted(ways.items()))
     return reference, metadata, paths

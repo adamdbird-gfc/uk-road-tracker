@@ -32,7 +32,8 @@ class AssociationBundleTests(unittest.TestCase):
         self.assertEqual(3, bundle_metrics(self.raw)['paths'])
         self.assertLess(bundle_metrics(self.raw)['gzip_bytes'], len(self.raw))
         legacy=json.loads(self.raw)
-        for row in legacy['paths']:row.pop('target_geometry')
+        for row in legacy['paths']:
+            row.pop('target_geometry');row.pop('osm_node_ids')
         self.assertEqual(tuple(sorted(self.paths,key=lambda p:p.way_id)),
                          self.read(legacy,pin=digest(legacy)))
 

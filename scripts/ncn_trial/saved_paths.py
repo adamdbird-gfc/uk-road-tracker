@@ -24,6 +24,7 @@ class KnownPath:
     reference_version: str
     modes: tuple = ('on_foot',)
     target_geometry: str = 'reviewed_reference'
+    osm_node_ids: tuple = ()
 
 
 def fixture_paths(reference):
@@ -63,7 +64,8 @@ def assess_saved_paths(export, reference, metadata, known_paths):
     if journey.get('processing_status') != 'complete':
         reasons.append('match_not_complete');return finish()
     if canonical != 'on_foot':
-        reasons.append('unsupported_mode_matcher_pair');return finish()
+        from .cycling_saved_paths import assess_cycling_paths
+        return assess_cycling_paths(export, reference, metadata, known_paths)
     if result.get('matcher') != 'preloaded_pedestrian_network_v4':
         reasons.append('unsupported_match_provenance');return finish()
     project = projector(metadata)
@@ -142,29 +144,36 @@ def assess_saved_paths(export, reference, metadata, known_paths):
         except (ValueError,TypeError):continue
         # Strict identity of the traversed physical edge, not a 3/8/15m search.
         if line.length <= .01 or not geometries[key].buffer(.03).covers(line):continue
-        for target in paths[key].section_keys:
-            section=reference.sections.get(target)
-            if section is None or not section.eligible:continue
-            if paths[key].target_geometry == 'exact_source_spans':
-                # Source identity is already established above. Clip only to
-                # selected source geometry, with micron-scale numeric tolerance.
-                # This is not the 3m GIS reconciliation corridor below.
-                clipped=line.intersection(section.line.buffer(1e-6,cap_style=2))
-                pieces=[clipped] if clipped.geom_type=='LineString' else list(getattr(clipped,'geoms',()))
-            elif paths[key].target_geometry == 'reviewed_reference':
-                pieces=[line]
-            else:
-                reasons.append('unsupported_target_geometry');continue
-            for piece in pieces:
-                if piece.geom_type!='LineString' or piece.length<=.01:continue
-                count=max(2,math.ceil(piece.length/2))
-                samples=[piece.interpolate(i/count,normalized=True) for i in range(count+1)]
-                if any(p.distance(section.line)>3 for p in samples):continue
-                positions=[section.line.project(p) for p in samples]
-                deltas=[b-a for a,b in zip(positions,positions[1:])]
-                if not (all(d>=0 for d in deltas) or all(d<=0 for d in deltas)):continue
-                covered=abs(positions[-1]-positions[0])
-                if not .9*piece.length <= covered <= 1.1*piece.length+.1:continue
-                intervals.append((target,min(positions[0],positions[-1]),max(positions[0],positions[-1])))
+        intervals.extend(credit_source_line(paths[key], line, reference))
     reasons.append('snapshot_path_association' if intervals else 'no_supported_path_association')
     return finish(intervals,method)
+
+
+def credit_source_line(path, line, reference):
+    """Map already identified physical travel to its explicitly bound targets."""
+    intervals = []
+    for target in path.section_keys:
+        section=reference.sections.get(target)
+        if section is None or not section.eligible:continue
+        if path.target_geometry == 'exact_source_spans':
+            # Source identity is already established above. Clip only to
+            # selected source geometry, with micron-scale numeric tolerance.
+            # This is not the 3m GIS reconciliation corridor below.
+            clipped=line.intersection(section.line.buffer(1e-6,cap_style=2))
+            pieces=[clipped] if clipped.geom_type=='LineString' else list(getattr(clipped,'geoms',()))
+        elif path.target_geometry == 'reviewed_reference':
+            pieces=[line]
+        else:
+            continue
+        for piece in pieces:
+            if piece.geom_type!='LineString' or piece.length<=.01:continue
+            count=max(2,math.ceil(piece.length/2))
+            samples=[piece.interpolate(i/count,normalized=True) for i in range(count+1)]
+            if any(p.distance(section.line)>3 for p in samples):continue
+            positions=[section.line.project(p) for p in samples]
+            deltas=[b-a for a,b in zip(positions,positions[1:])]
+            if not (all(d>=0 for d in deltas) or all(d<=0 for d in deltas)):continue
+            covered=abs(positions[-1]-positions[0])
+            if not .9*piece.length <= covered <= 1.1*piece.length+.1:continue
+            intervals.append((target,min(positions[0],positions[-1]),max(positions[0],positions[-1])))
+    return intervals

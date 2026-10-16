@@ -28,7 +28,7 @@ def build_bundle(paths, reference, projection_origin, provenance):
         rows.append({'way_id': path.way_id, 'coordinates': path.coordinates,
                      'source_geometry_sha256': source_geometry_digest(path.coordinates),
                      'section_keys': path.section_keys, 'modes': path.modes,
-                     'target_geometry': path.target_geometry})
+                     'target_geometry': path.target_geometry, 'osm_node_ids': path.osm_node_ids})
     payload = {'schema_version': 1, 'reference_version': reference.version,
                'reference_sha256': reference_digest(reference),
                'projection_origin': list(projection_origin),
@@ -78,6 +78,10 @@ def read_bundle(raw, reference, projection_origin, expected_sha256):
                 raise ValueError('Source geometry mismatch')
             sections, modes = row['section_keys'], row['modes']
             target_geometry = row.get('target_geometry', 'reviewed_reference')
+            node_ids = row.get('osm_node_ids', [])
+            if not isinstance(node_ids, list) or (node_ids and len(node_ids) != len(coordinates)) \
+                    or any(type(n) is not int or n <= 0 or n >= 2**53 for n in node_ids):
+                raise ValueError('Source node chain must align with source coordinates')
             if target_geometry not in ('reviewed_reference', 'exact_source_spans'):
                 raise ValueError('Unsupported target geometry contract')
             if not isinstance(sections, list) or not sections or any(not isinstance(s, str) for s in sections) \
@@ -92,7 +96,7 @@ def read_bundle(raw, reference, projection_origin, expected_sha256):
                 if any(not source_line.buffer(1e-6).covers(reference.sections[s].line) for s in sections):
                     raise ValueError('Exact source target is outside source way geometry')
             paths.append(KnownPath(key, tuple(tuple(p) for p in coordinates), tuple(sections),
-                                   reference.version, tuple(modes), target_geometry))
+                                   reference.version, tuple(modes), target_geometry, tuple(node_ids)))
         return tuple(paths)
     except (KeyError, TypeError, IndexError, AttributeError) as error:
         raise ValueError('Malformed association bundle') from error

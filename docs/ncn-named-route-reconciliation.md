@@ -395,3 +395,68 @@ uncompressed national snapshot bytes and its independently pinned SHA-256. The
 outputs are `TrialReference`, metadata and exact-span `KnownPath` associations;
 existing bundle readers and `assess_saved_paths` consume them. Source way and
 extent hashes are in the assessment manifests. No network fetch is required.
+
+
+## Bicycle provenance capture and saved-node replay — 16 October 2026
+
+Cycling now has its own bounded source-identity path. The backend preparation in
+PR #168 requests node annotations only from the dedicated bicycle graph, labels
+responses `osrm_bicycle_v1`, and adds `cycling_path_evidence`. Returned geometry,
+normal journey distance and exclusion from ordinary road-completion attribution
+remain unchanged. The request count and database schema are unchanged.
+
+The shared collector records node chains against uniquely aligned leg spans in
+existing overview geometry, with geometry/content checksums and data version
+when supplied. Annotation count is never assumed to equal vertex count. Missing
+annotations, discontinuous steps or repeated overview occurrences are held while
+usable journey geometry remains available. It stores no duplicate coordinates.
+The live probes did not supply data_version; no historic snapshot is invented.
+
+The NCN registry's v2 contract includes the independently sourced OSM node chain
+alongside each full source way and selected-span targets. Both walking and cycling
+are supported in this bounded trial. Its reference version changes with the new
+contract. Old walking-only bundle files are retained as historical evidence;
+production release manifests would pin the intended version rather than mixing
+registry/reference generations.
+
+Cycling assessment requires the bicycle matcher contract and a unique ordered
+node chain in exactly one registered source way. Unknown chains and chains shared
+by multiple ways stay uncredited; geometry never selects between them. Only after
+identity is resolved is geometry checked within 0.12m for observed six-decimal
+router-coordinate quantisation, projected onto the identified source subchain,
+and clipped to the selected named extent. This is not a nearest-path search.
+Removed global geometry edges remain removed. Repeated activities/chunks union
+on the physical basis; walking and cycling totals stay separate and their combined
+coverage deduplicates the same physical travel.
+
+Live tests sent only public OSM coordinates as synthetic observations. With the
+backend request options, the Viking bicycle-router probe credits 500.434m against
+both named variants and 500.434m once in combined unique coverage. The Heron probe
+retains four uniquely aligned legs, holds three unaligned legs and credits only
+0.954m after node identity checks; other chains remain unknown/ambiguous. These
+are source/contract trials, not evidence that a person actually cycled the routes
+or that the full network has been reconciled.
+
+The v2 265-way associations compress to 53,011 bytes and the reference to 63,630
+bytes. No Postgres reference rows or personal journey records are added. Existing
+Android code retains the full matching response in processing_result, so no APK
+is needed solely to preserve the new metadata when the backend is released.
+Older cycling results lacking node evidence remain intact but earn no trial NCN
+credit through a geometry-only fallback; a rematch may supply the missing evidence.
+There is no new bulk confirmation queue. Current access tags do not prove what
+happened within a recorded cycling activity or automatically reclassify segments.
+
+Validation: 154 NCN suite tests plus five shared collector tests pass (159 total).
+The added cycling checks cover partial spans, edits/missing evidence, absent or
+changed source chains, ambiguous ways, removals, driving exclusion, reverse travel,
+bounded quantisation, separate mode totals/combined union and bulk activation
+without a review queue. Backend #168 has 80 checks: 75 pass locally with five
+Postgres integration checks deferred to CI; both backend workflows are green.
+No production deployment or APK is made in this step.
+
+Still outstanding: nationwide identity reconciliation, explicit logical alternative
+credit bindings, Android collection activation and the agreed map/progress/initial
+achievements beta gate. The bounded cycle proof is not national completion-ready.
+
+OSRM annotation contract: https://project-osrm.org/docs/v5.24.0/api/#annotation-object
+Public geometry attribution remains OpenStreetMap contributors, ODbL 1.0.

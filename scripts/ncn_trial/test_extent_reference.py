@@ -16,7 +16,10 @@ from .test_extent_composition import source, selection
 
 class ExtentReferenceTests(unittest.TestCase):
     def setUp(self):
-        self.raw = source(1,42,[0,1,2])
+        value = json.loads(source(1,42,[1,2,3]))
+        for element in value['elements']:
+            if element['type']=='node': element['lon']=(element['id']-1)*.001
+        self.raw = json.dumps(value).encode()
         self.coordinates = [[0,0],[.001,0],[.002,0]]
         self.extent = compose_extent({1:self.raw}, [selection(1,42,1,2)])
         self.network = b'pinned public reference test fixture'
