@@ -7,6 +7,7 @@ from collections import defaultdict
 import hashlib
 import json
 import math
+from pathlib import Path
 from matched_path_evidence import source_geometry_digest
 
 
@@ -70,3 +71,35 @@ def compose_extent(sources, selections):
             'connected_components':components,'degree_one_endpoint_count':sum(len(v)==1 for v in graph.values()),
             'branch_node_count':sum(len(v)>2 for v in graph.values()),
             'completion_ready':False,'activity_access_verified':False,'routing_instruction':False}
+
+
+def compose_manifest(manifest_path):
+    """Replay an explicit selection against checksum-pinned local OSM sources."""
+    manifest_path = Path(manifest_path)
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get('schema_version') != 1:
+        raise ValueError('Unsupported extent manifest version')
+    sources = {}
+    for binding in manifest['sources']:
+        relation = binding['relation_id']
+        if type(relation) is not int or relation in sources:
+            raise ValueError('Distinct integer source relation identities required')
+        raw = (manifest_path.parent / binding['file']).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != binding['sha256']:
+            raise ValueError('Source checksum mismatch; refresh and review selections')
+        sources[relation] = raw
+    return compose_extent(sources, manifest['selected_spans'])
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--manifest', required=True, type=Path)
+    parser.add_argument('--output', required=True, type=Path)
+    args = parser.parse_args()
+    result = compose_manifest(args.manifest)
+    args.output.write_text(json.dumps(result, indent=2) + '\n')
+
+
+if __name__ == '__main__':
+    main()

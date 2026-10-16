@@ -211,3 +211,62 @@ Sources reviewed:
 
 OSM geometry © OpenStreetMap contributors, ODbL 1.0. Owner PDFs are reviewed
 references and are not redistributed in the data package.
+
+
+## Viking: distinguish the circuit from the coastal itinerary — 16 October 2026
+
+Two published scopes have been reconciled separately. Explore Kent describes a
+Thanet circuit; the network operator describes a shorter Cliffsend–Reculver
+coastal itinerary. The whole RCN15 relation is neither scope. Explicit selections
+from its existing line members now isolate both candidates, using exact junction
+nodes at Reculver (28479614) and Cliffsend (29783125), without clipping geometry
+or inventing connectors. This supersedes the earlier unresolved extent finding.
+
+| Candidate | Selected source ways | Unique physical linework | Topology |
+| --- | ---: | ---: | --- |
+| Thanet circuit | 197 | 51.137 km | One component, no loose endpoints |
+| Coastal itinerary | 143 | 34.046 km | One component, two endpoints |
+
+These inventory lengths include parallel physical paths. Taking one chain per
+shared-endpoint group gives 50.478–50.535 km for the circuit, and 33.435–33.479 km
+for the coast. These are undirected length diagnostics, not routing instructions
+or approved completion denominators. The coast agrees closely with the operator's
+33.4km description. Five candidate alternative groups in the circuit (three on
+the coast) require access and credit-policy checks; topology alone does not make
+paths interchangeable. In particular, a roundabout or alternate promenade must
+not accidentally force users to cover every physical branch for completion.
+
+The Explore Kent page's embedded map attributes describe a third scope,
+Sandwich–Reculver, unlike its circuit text/PDF. This discrepancy is recorded;
+embedded map coordinates are not reused. Both candidates use OSM geometry only.
+The Broadstairs Seafront multipolygon remains excluded, not converted into route
+mileage. The selected linework is connected without its perimeter; this does not
+approve all pedestrian-area interpretations or walking/cycling access.
+
+Each candidate now has a checksum-pinned replay manifest with exact source-way
+vertex spans, a compiled physical-edge inventory and a separate scope review.
+The composition CLI refuses changed source bytes before producing output. Source
+snapshots and diagnostic chain identities are retained in the assessment package.
+Neither variant is completion-ready or changes user progress. The next steps are
+alternative/access policy, reference identity reconciliation, then app integration.
+128 local NCN tests pass, including pinned-source replay, source-change refusal,
+and exclusion of nested pedestrian-area boundaries.
+
+Replay from a source checkout (after extracting the assessment package):
+
+```sh
+python -m scripts.ncn_trial.extent_composition --manifest /path/to/viking-thanet-circuit-manifest.json --output /tmp/viking-extent.json
+```
+
+The manifest resolves its source JSON relative to itself and checks its SHA-256.
+The separate review records the owner evidence; the CLI reproduces physical
+selections and does not infer route membership, access or alternative policy.
+
+Sources:
+- https://explorekent.org/activities/viking-coastal-trail/
+- https://explorekent.org/wp-content/uploads/2015/03/Viking-Coastal-Trail.pdf
+- https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/viking-coastal-trail/
+- https://api.openstreetmap.org/api/0.6/relation/8824/full.json
+
+Geometry © OpenStreetMap contributors, ODbL 1.0. Owner maps are corroborating
+references and are not redistributed or digitised into the candidates.
