@@ -581,3 +581,56 @@ comparison output records source and network hashes, relation version/timestamp,
 projection origin, per-way candidates and per-official-section corridor lengths.
 Six additional regressions cover partial routes, different-number collisions,
 parallel paths, physical union, duplicate identities and missing/invalid geometry.
+
+### Investigation outcome: parallel northern/southern alignments
+
+A bounded current OSM map extract covering 0.453,51.395–0.484,51.401 resolves the
+nature of the two largest discrepancies. These sections are at the Watling Street
+approach to Strood, not evidence that the entire Route177 source is incomplete.
+
+| Official feature | Nearby cycleway matching its northern alignment | Relation3671326 uses |
+| --- | --- | --- |
+| FID7345 | way44332298 | southern ways94920359 and adjoining cycleways |
+| FID6680 | ways1302385780 and1251416153 | southern way62216492 and adjoining cycleways |
+
+All four named northern ways in the public fixture (three cycleways plus separate
+footway1460076188) are absent from the fetched NCN177 relation's members. At 10m,
+the member alignment represents less than 1% of these two official sections;
+the three northern cycleways represent more than 94%. Thus this is not simply
+missing physical paths in OSM. It is an explicit alignment disagreement between
+the official GIS and the route relation. The northern footway and cycleway are
+separate mapped objects yet both fit FID7345's 10m corridor over 94% of its length.
+Neither proximity nor their shared corridor can distinguish activity identities.
+
+Disposition: **alignment disagreement explained; source-to-official association
+held**. The southern relation membership remains a source fact; the northern
+published line remains an official reference fact. Neither replaces the other.
+We have not established that both sides carry NCN signs, a directional route
+policy, or that one source is outdated. No OSM edits are made, no northern ways
+are silently inserted into the relation, and the southern alignment receives no
+credit for these official extents. Walking on the separate northern footway is
+also not automatically treated as cycling on its neighbouring cycleway.
+
+The route custodian's Route177 page corroborates a signed mixed on-road and
+traffic-free route along Watling Street but does not specify these individual
+side-of-road alignments. It also describes two separate open sections, so the
+local 13.124km source /15.147km GIS figures must not be presented as a verified
+whole promoted-route length (the page lists18.7km).
+https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-177/
+
+Reproducible evidence is pinned in tests/fixtures/ncn-177-discrepancy/public-snapshot.json:
+official geometries, all66 current relation source ways with node IDs/coordinates,
+relation version/member list, three northern cycleways and the distinct footway.
+The bounded area response SHA256 is
+4f95ac2d3ed8775dab5445c226c151100eda39a3f7e7d254ab9d45a9ede022fc.
+This fixture contains public map evidence only, no user journeys or personal GPS.
+Four real-data regressions preserve the disagreement and prohibit a misleading
+claim that nearby linework establishes relation membership or association approval.
+All185 checks pass locally (180 NCN +5 shared collector), including existing
+walking/cycling source identity, clipping, repeated coverage and driving exclusions.
+
+Next: retain the hold while reviewing extent-specific independent evidence, and
+continue the same bidirectional audit on the remaining numbered inventory. The
+result is a classified, reproducible exception, not a reason to increase tolerance
+or block all other route reconciliation. Whole-route completion remains unavailable
+until route scope and these held associations are resolved.
