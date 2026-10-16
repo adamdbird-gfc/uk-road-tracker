@@ -65,3 +65,11 @@ version migrations. Use bounded work and retries; never report Ready while work
 has failed. Reconcile a complete archive snapshot on activation/reactivation so
 changes made while disabled are respected. Coordinate #163/#164, map filters
 #166 and visibility fixes #167 for the later combined ready-slice beta.
+
+## Saved-path bridge — 16 October 2026
+
+The activation assessor can now consume the bounded saved-path identity trial.
+See `ncn-saved-path-association.md`: it supports exact legacy pedestrian reference
+geometry and the new backend span contract, without raw-GPS fabrication or whole-
+way credit. Wider source associations, cycling provenance and Android wiring
+remain necessary before collection activation can ship.
