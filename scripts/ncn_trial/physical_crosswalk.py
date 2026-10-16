@@ -9,6 +9,22 @@ from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 
+class _Corridors:
+    """Clip against local indexed corridors rather than whole-country buffers."""
+    def __init__(self, lines):
+        self.lines=tuple(lines)
+        self.tree=STRtree(self.lines)
+
+    def near_length(self,line,radius):
+        nearby=[self.lines[int(i)] for i in self.tree.query(line.buffer(radius))]
+        if not nearby:return 0.0
+        return line.intersection(unary_union([part.buffer(radius) for part in nearby])).length
+
+    def union_near_length(self,linework,radius):
+        parts=[linework] if linework.geom_type=='LineString' else linework.geoms
+        return sum(self.near_length(part,radius) for part in parts)
+
+
 def compare_route(ways, sections, route_type, route_no, radii=(3, 10, 25)):
     if route_type not in ('NCN', 'RCN') or type(route_no) is not int or route_no <= 0:
         raise ValueError('Explicit positive numbered NCN/RCN key required')
@@ -42,12 +58,12 @@ def compare_route(ways, sections, route_type, route_no, radii=(3, 10, 25)):
                 str(r): w['line'].intersection(unary_union([s['line'].buffer(r) for s in nearby
                     if s['route_type'] == route_type and s['route_no'] == route_no])).length
                 for r in radii}, 'association_approved': False})
-    source_corridors = {r: source.buffer(r) for r in radii}
-    official_corridors = {r: official.buffer(r) for r in radii}
+    source_corridors = _Corridors([w['line'] for w in ways])
+    official_corridors = _Corridors([s['line'] for s in same])
     sensitivity = {}
     for r in radii:
-        source_near = source.intersection(official_corridors[r]).length
-        official_near = official.intersection(source_corridors[r]).length
+        source_near = official_corridors.union_near_length(source,r)
+        official_near = source_corridors.union_near_length(official,r)
         sensitivity[str(r)] = {'source_near_official_m': source_near,
             'source_outside_official_m': max(0, source.length-source_near),
             'official_near_source_m': official_near,
@@ -60,7 +76,7 @@ def compare_route(ways, sections, route_type, route_no, radii=(3, 10, 25)):
         'source_way_count': len(ways), 'official_section_count': len(same),
         'corridor_sensitivity': sensitivity, 'ways': records,
         'official_sections': [{'key': s['key'], 'length_m': s['line'].length,
-            'near_source_m_by_radius': {str(r): s['line'].intersection(source_corridors[r]).length for r in radii}}
+            'near_source_m_by_radius': {str(r): source_corridors.near_length(s['line'],r) for r in radii}}
             for s in same],
         'association_approved': False, 'completion_ready': False,
         'access_verified': False,

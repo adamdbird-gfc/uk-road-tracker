@@ -58,6 +58,9 @@ def prepare_sources(profiles, providers):
 
 
 def reconcile(network, inventory, profiles, source_leads, providers, output=None, progress=None):
+    code_hash=hashlib.sha256(b''.join((Path(__file__).parent/name).read_bytes() for name in
+        ('network_reconciliation.py','network_geometry.py','physical_crosswalk.py'))).hexdigest()
+    network_hash=hashlib.sha256(json.dumps(network,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     extracted,errors,global_conflicts=prepare_sources(profiles,providers)
     lead_index={r['official_route_key']:r for r in source_leads['routes']}
     official={r['id']:[] for r in inventory['routes']};all_sections=[]
@@ -76,6 +79,18 @@ def reconcile(network, inventory, profiles, source_leads, providers, output=None
         ways={w['way_id']:w for p in present for w in p['ways'] if w['way_id'] not in global_conflicts}
         complete=bool(relations) and all(r in extracted and extracted[r]['provider_geometry_complete'] and extracted[r]['member_lists_complete'] for r in relations)
         complete=complete and not any(w['way_id'] in global_conflicts for p in present for w in p['ways'])
+        fingerprint=hashlib.sha256(json.dumps({'code':code_hash,'network':network_hash,'lead':lead,
+            'ways':[ways[i] for i in sorted(ways)],'complete':complete,
+            'profiles':[{k:v for k,v in p.items() if k!='ways'} for p in present],
+            'errors':{str(r):errors[r] for r in relations if r in errors}},sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        destination=Path(output)/(key.replace(':','-')+'.json.gz') if output else None
+        if destination and destination.exists():
+            try:cached=json.loads(gzip.decompress(destination.read_bytes()))
+            except (OSError,EOFError,ValueError):cached={}
+            if cached.get('input_fingerprint')==fingerprint:
+                rows.append(cached['row'])
+                if progress:progress(key,cached['row']['state']+' (cached)',len(rows))
+                continue
         report=None;failure=None
         if ways and targets:
             try:
@@ -106,8 +121,10 @@ def reconcile(network, inventory, profiles, source_leads, providers, output=None
             row['alternative_or_offset_review_needed']=offset['25']['official_fraction']-offset['3']['official_fraction']>.2
             row['reference_extent_gap_m_10m']=offset['10']['official_without_source_m']
         if output:
-            detailed={**row,'comparison':report,'policy':'Explicit alternatives may share logical coverage; unique continuations remain required. Diagnostic corridors alone never approve a binding.'}
-            (Path(output)/(key.replace(':','-')+'.json.gz')).write_bytes(gzip.compress(json.dumps(detailed,separators=(',',':')).encode(),mtime=0))
+            detailed={**row,'row':row,'input_fingerprint':fingerprint,'comparison':report,'policy':'Explicit alternatives may share logical coverage; unique continuations remain required. Diagnostic corridors alone never approve a binding.'}
+            temporary=destination.with_suffix('.tmp')
+            temporary.write_bytes(gzip.compress(json.dumps(detailed,separators=(',',':')).encode(),mtime=0))
+            temporary.replace(destination)
         rows.append(row)
         if progress:progress(key,state,len(rows))
     return {'purpose':'national_physical_correspondence_diagnostics_not_progress',

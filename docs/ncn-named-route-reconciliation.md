@@ -749,3 +749,14 @@ Next implementation boundary: generalize these explicit alternative bindings
 across the nationwide route inventory, retain unreviewed gaps, then connect the
 versioned consumer to Android activation, map/progress and initial achievements.
 This trial has not yet satisfied the agreed app beta gate.
+
+## Nationwide physical pass completed — 16 October 2026
+
+The next national checkpoint is recorded in
+[ncn-national-physical-reconciliation.md](ncn-national-physical-reconciliation.md).
+All 305 source detail downloads and all 253 numbered-key reports are complete,
+without request, parse or comparison failures. There are 48 close bidirectional
+candidates, 79 extent differences, 60 offset-sensitive cases, 23 partial-geometry
+keys, 30 scope-review keys and 13 missing-source keys. These are diagnostic states,
+not national progress approval. All 224 local checks pass. Explicit reviewed
+Route177 alternatives are preserved; no database or app deployment has occurred.

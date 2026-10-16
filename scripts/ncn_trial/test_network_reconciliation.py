@@ -57,4 +57,20 @@ class NetworkReconciliationTests(unittest.TestCase):
         with self.assertRaises(ValueError):project([180,0])
 
 
+
+    def test_resume_reuses_only_unchanged_route_inputs(self):
+        import tempfile
+        from unittest.mock import patch
+        from .physical_crosswalk import compare_route
+        with tempfile.TemporaryDirectory() as folder:
+            first=reconcile(*fixture(),output=folder)
+            with patch('scripts.ncn_trial.network_reconciliation.compare_route',wraps=compare_route) as compare:
+                second=reconcile(*fixture(),output=folder)
+                self.assertEqual(compare.call_count,0)
+                self.assertEqual(first,second)
+            changed=list(fixture());changed[0]['features'][0]['properties']['OpenStatus']='Closed'
+            with patch('scripts.ncn_trial.network_reconciliation.compare_route',wraps=compare_route) as compare:
+                reconcile(*changed,output=folder)
+                self.assertEqual(compare.call_count,1)
+
 if __name__=='__main__':unittest.main()
