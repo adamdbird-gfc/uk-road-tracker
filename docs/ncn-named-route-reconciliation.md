@@ -270,3 +270,65 @@ Sources:
 
 Geometry © OpenStreetMap contributors, ODbL 1.0. Owner maps are corroborating
 references and are not redistributed or digitised into the candidates.
+
+
+## Kent access evidence and completion contract — 16 October 2026
+
+The selected-span access audit is now complete as an evidence inventory, not a
+certification of present or historic rights. It replays exact source hashes,
+geometry and spans before inspecting only selected ways/nodes. No journey data
+or application routing is changed. All observations preserve their source tags.
+
+| Scope | Source ways | Explicit positive foot tags | Foot not explicit | Foot context | Positive bicycle tags | Bicycle not explicit | Dismount tags |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Heron circuit | 68 | 10 | 58 | 0 | 11 | 57 | 0 |
+| Viking Thanet circuit | 197 | 77 | 119 | 1 | 69 | 123 | 5 |
+| Viking coastal itinerary | 143 | 71 | 71 | 1 | 64 | 74 | 5 |
+
+Viking has four ways with general private access but explicit permissive bicycle
+tags. Three also have permissive foot tags; way 4711579 lacks that specific foot
+override and remains context-dependent. More specific mode tags are retained;
+motor-vehicle restrictions are not applied to pedestrians/cyclists. Missing tags
+do not establish prohibition or permission, and gates/bollards are observations,
+not automatic route closures. OSM's dismount value is kept distinct from bicycle
+permission and from foot prohibition. Five ways have that value; way 482774859
+has a cycling condition. No conditional expression is evaluated.
+
+The council's current coast guidance refers to local signage. The single mapped
+seasonal condition cannot be treated as a complete coast-wide calendar rule or
+historic compliance test. A current map tag does not establish what happened on
+a past journey. Access evidence must remain separate from confirmed path identity;
+a cycling activity does not prove riding every metre, and a dismount tag does not
+prove that the user walked a particular segment. Preserve recorded mode and raw
+journey evidence rather than inventing segment-mode changes or deleting journeys.
+
+Heron exposes a further accounting trap: the same two junction nodes join a
+24.331km circuit core and two local branches of 263.26m and 204.83m. Automatically
+calling every same-endpoint path interchangeable would let a tiny branch replace
+the entire circuit. The core is mandatory in the proposed completion partition;
+only the two explicitly reviewed local branches are alternative candidates.
+Viking's five candidate alternative groups remain explicitly enumerated. No
+alternative mapping is approved merely from topology.
+
+Completion implementation contract: a reviewed alternative may satisfy its local
+logical section without requiring every branch. Keep that logical target separate
+from actual unique physical distance. Count supported walking/cycling saved paths,
+exclude driving, and union shared segments for combined progress. Current access
+metadata must not silently erase historical evidence. Bulk history remains an
+automatic activation task without a confirmation queue; targeted confirmation is
+reserved for genuinely ambiguous new recorded path identity. This contract is
+documented for implementation; no runtime credit rule is changed in this commit.
+
+137 NCN tests pass. Nine added checks cover mode-specific overrides, motor/vehicle
+inheritance, absent tags, dismount and conditional preservation, selected-node
+bounds, barriers, tampered extents, source-tag refresh and directional member-role
+preservation without inferring pedestrian prohibition. Next: reconcile selected
+source identities against the versioned NCN reference and exercise saved-path
+matching. Route-section credit bindings and app integration remain unimplemented;
+this evidence pass is not an additional APK or database deployment.
+
+Sources:
+- https://wiki.openstreetmap.org/wiki/Key:access
+- https://wiki.openstreetmap.org/wiki/Tag:bicycle=dismount
+- https://wiki.openstreetmap.org/wiki/Conditional_restrictions
+- https://www.thanet.gov.uk/info-pages/thanet-beaches-and-coast-public-space-protection-order-pspo-2024/
