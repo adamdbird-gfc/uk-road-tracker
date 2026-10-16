@@ -689,3 +689,63 @@ GPS accuracy have been fabricated.
 All198 checks pass locally (193 NCN +5 shared collector). Application integration,
 activation cache/version migration for this logical model and national inventory
 bindings remain pending. Nothing is deployed and no user progress is changed.
+
+## Full disputed-feature spans and activation checkpoint — 16 October 2026
+
+The previous common-interior fixture is superseded by explicit end-to-end source
+chains across both disputed official features. The policy remains permissive for
+both reviewed sides, with no invented connection beyond a mapped source endpoint.
+
+| Logical section | Canonical length | Eligible alternatives |
+| --- | ---: | --- |
+| Full FID7345 | 964.408m | Connected northern cycling chain /northern pedestrian chain /southern shared chain |
+| Shared FID6680 extent | 673.313m | Northern shared cycleway /southern shared cycleway |
+| Remaining FID6680 northern extension | 209.391m | Northern shared cycleway only |
+
+Together these account for 1,847.113m, the full physical lengths of these two
+published features. This is still NCN:177:reviewed-pilot, not the full Route177 or
+the intervening published features. Travelling the southern route alone cannot
+complete the northern extension. The southern terminal node248536946 meets A2
+road ways23158220,23158221 and106179151; those roads are retained as context only,
+not silently promoted into NCN links by adjacency. The northern terminal is the
+observed node11632889922, approximately1.018m from the official feature endpoint.
+This terminal is an explicit reviewed endpoint correspondence; no coordinates
+are extrapolated and no metre of synthetic connecting path is created.
+
+The public fixture now retains the additional northern crossing/connector ways
+and the separate pedestrian approaches. build_route177_alternatives enumerates
+signed way chains, verifies identical shared node IDs and coordinates, clips the
+fixed reviewed endpoint crossings and persists physical/logical anchors. Even two
+identical coordinates with different node IDs cannot manufacture a chain join.
+Physical anchors from reverse ways are clamped only for floating-point roundoff.
+Branch distance is normalized locally to its canonical section length; it never
+changes the physical travel summary. The27 bindings reference21 distinct physical
+ways. Adjacent source spans cover each logical itinerary continuously without
+logical overlaps or gaps. The explicit mode registry avoids assuming pedestrian
+access to cycleway44332298: walking uses footway1460076188 and its separate mapped
+approaches instead. No national membership claims are rewritten by this policy.
+
+ActivationTrial now accepts an explicitly identified accounting factory. Its
+default physical ledger behavior and existing callers remain unchanged. The
+Route177 factory supplies AlternativeLedger, retaining on-activation historical
+assessment, bounded batching, activity replacement and correction/deletion rules.
+Checkpoint records retain an accounting key as well as the reference version;
+old physical-only checkpoints remain readable with the default ledger, while an
+alternative checkpoint cannot silently restore into that ledger. The manifest
+hash versions the reference, so a policy/binding change rejects the stale
+checkpoint and requires a fresh archive assessment. Deactivation/reactivation of
+unchanged history retains completed rows without reassessing or generating a
+bulk-review queue. There are no production scheduler, APK or database changes.
+
+Validation: all210 local checks pass (205 NCN +5 shared collector). New coverage
+includes deterministic manifest regeneration, real-node join integrity, canonical
+interval continuity, missing eastern-tail protection, full multiway walking and
+cycling alternatives, paused checkpoint resume, retrospective activation with
+zero prompts, archive deletion, mode correction, stale policy re-assessment and
+rejection of a mismatched checkpoint accounting model. Real-map tests continue to
+use synthetic saved matcher outputs, not claimed live trips.
+
+Next implementation boundary: generalize these explicit alternative bindings
+across the nationwide route inventory, retain unreviewed gaps, then connect the
+versioned consumer to Android activation, map/progress and initial achievements.
+This trial has not yet satisfied the agreed app beta gate.

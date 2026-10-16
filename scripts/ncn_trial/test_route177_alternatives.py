@@ -33,26 +33,39 @@ class Route177AlternativesTests(unittest.TestCase):
         self.ledger.put(identity,assessment.evidence)
         return value
 
-    def test_both_cycle_alignments_complete_same_bounded_section_once(self):
-        for way in [44332298,94920359]:
-            self.add(str(way),way,'cycling')
+    def travel(self,label,mode):
+        itinerary=next(i for i in self.manifest['itineraries'] if i['key']==label)
+        for way in itinerary['way_ids']:self.add(label+':'+way,int(way),mode)
+
+    def test_both_cycle_alignments_complete_same_section_once(self):
+        for label in ['west-north-cycle','west-south']:
+            self.travel(label,'cycling')
             section=next(v for k,v in self.ledger.summary()['logical_sections'].items() if '7345' in k)
             self.assertAlmostEqual(section['completed_fraction'],1,places=6)
         s=self.ledger.summary()
         self.assertGreater(s['physical_distance']['cycling_m'],section['cycling_m'])
 
     def test_distinct_northern_footway_and_southern_cycleway_share_completion(self):
-        self.add('foot',1460076188,'walking');self.add('cycle',94920359,'cycling')
+        self.travel('west-north-foot','walking');self.travel('west-south','cycling')
         section=next(v for k,v in self.ledger.summary()['logical_sections'].items() if '7345' in k)
         self.assertAlmostEqual(section['on_foot_m'],section['length_m'],places=6)
         self.assertAlmostEqual(section['cycling_m'],section['length_m'],places=6)
         self.assertAlmostEqual(section['combined_m'],section['length_m'],places=6)
 
-    def test_second_section_qualifies_via_either_alignment(self):
-        for way in [1302385780,62216492]:
-            self.add('journey',way,'cycling')
-            section=next(v for k,v in self.ledger.summary()['logical_sections'].items() if '6680' in k)
+    def test_second_shared_section_qualifies_via_either_alignment(self):
+        for label in ['east-north-shared','east-south-shared']:
+            self.travel(label,'cycling')
+            section=next(v for k,v in self.ledger.summary()['logical_sections'].items() if 'shared-reviewed' in k)
             self.assertAlmostEqual(section['completed_fraction'],1,places=6)
+
+    def test_shorter_southern_path_does_not_complete_northern_extension(self):
+        self.travel('west-south','cycling');self.travel('east-south-shared','cycling')
+        summary=self.ledger.summary()
+        tail=next(v for k,v in summary['logical_sections'].items() if 'north-extension' in k)
+        self.assertEqual(tail['combined_m'],0)
+        self.assertLess(summary['logical_routes']['NCN:177:reviewed-pilot']['completed_fraction'],.95)
+        self.travel('east-north-extension','cycling')
+        self.assertAlmostEqual(self.ledger.summary()['logical_routes']['NCN:177:reviewed-pilot']['completed_fraction'],1,places=6)
 
     def test_footway_does_not_become_cycling_and_driving_cannot_qualify(self):
         self.add('foot-cycle',1460076188,'cycling')
@@ -74,3 +87,8 @@ class Route177AlternativesTests(unittest.TestCase):
             section=next(v for k,v in ledger.summary()['logical_sections'].items() if '7345' in k)
             self.assertGreater(section['combined_m'],0)
             self.assertLess(section['completed_fraction'],.1)
+
+    def test_deleted_multiway_journeys_rebuild(self):
+        self.travel('west-south','cycling')
+        for identity in list(self.ledger.activities):self.ledger.remove(identity)
+        self.assertEqual(sum(s['combined_m'] for s in self.ledger.summary()['logical_sections'].values()),0)

@@ -31,3 +31,12 @@ def load_trial(folder=None):
         tuple(sorted(allowed)),'exact_source_spans',tuple(ways[key]['node_ids'])) for key,allowed in modes.items()]
     logical=[LogicalSection(s['key'],s['length_m'],tuple(s['routes'])) for s in manifest['logical_sections']]
     return AlternativeLedger(reference,logical,bindings),data,paths,manifest
+
+
+def activation_trial(folder=None):
+    """Assess only on activation; logical policy is pinned into reference.version."""
+    from .activation import ActivationTrial
+    ledger,data,paths,manifest=load_trial(folder)
+    def factory(reference):
+        return AlternativeLedger(reference,tuple(ledger.logical.values()),ledger.bindings)
+    return ActivationTrial(ledger.reference,ledger_factory=factory,accounting_key="alternative-spans-v1"),data,paths,manifest

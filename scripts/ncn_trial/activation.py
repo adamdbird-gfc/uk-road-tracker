@@ -30,8 +30,14 @@ class Assessment:
 
 
 class ActivationTrial:
-    def __init__(self, reference):
+    def __init__(self, reference, *, ledger_factory=TrialLedger, accounting_key=None):
+        if accounting_key is None and ledger_factory is not TrialLedger:
+            raise ValueError('Custom ledger requires an explicit accounting key')
+        self.accounting_key = accounting_key or 'physical-v1'
+        if not isinstance(self.accounting_key,str) or not self.accounting_key.strip():
+            raise ValueError('Stable accounting key required')
         self.reference = reference
+        self.ledger_factory = ledger_factory
         self.active = False
         self.activated_at_ms = None
         self.rows = {}
@@ -117,7 +123,7 @@ class ActivationTrial:
                         or result.evidence.mode != MODES.get(record.mode, record.mode):
                     raise ValueError('Assessor returned mismatched reference or mode evidence')
                 # Validate bounds/identities before committing any result.
-                validation = TrialLedger(self.reference)
+                validation = self.ledger_factory(self.reference)
                 validation.put(key, result.evidence)
                 validation.summary()
             except Exception:
@@ -141,7 +147,7 @@ class ActivationTrial:
                     row['state'] = 'queued'
 
     def summary(self):
-        ledger = TrialLedger(self.reference)
+        ledger = self.ledger_factory(self.reference)
         for key, row in self.rows.items():
             if row['state'] == 'assessed' and row['evidence']:
                 ledger.put(key, Evidence(**row['evidence']))
@@ -161,15 +167,18 @@ class ActivationTrial:
 
     def export(self):
         return json.dumps({'schema_version': 1, 'reference_version': self.reference.version,
+                           'accounting_key': self.accounting_key,
                            'active': self.active, 'activated_at_ms': self.activated_at_ms, 'rows': self.rows},
                           sort_keys=True, allow_nan=False)
 
     @classmethod
-    def restore(cls, reference, raw):
+    def restore(cls, reference, raw, *, ledger_factory=TrialLedger, accounting_key=None):
         value = json.loads(raw)
         if value.get('schema_version') != 1 or value.get('reference_version') != reference.version:
             raise ValueError('Checkpoint/reference migration requires reconciliation')
-        trial = cls(reference)
+        trial = cls(reference, ledger_factory=ledger_factory, accounting_key=accounting_key)
+        if value.get('accounting_key','physical-v1') != trial.accounting_key:
+            raise ValueError('Checkpoint accounting migration requires reconciliation')
         trial.active = value['active']
         trial.activated_at_ms = value['activated_at_ms']
         trial.rows = value['rows']
