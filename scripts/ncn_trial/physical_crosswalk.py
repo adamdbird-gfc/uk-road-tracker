@@ -42,10 +42,12 @@ def compare_route(ways, sections, route_type, route_no, radii=(3, 10, 25)):
                 str(r): w['line'].intersection(unary_union([s['line'].buffer(r) for s in nearby
                     if s['route_type'] == route_type and s['route_no'] == route_no])).length
                 for r in radii}, 'association_approved': False})
+    source_corridors = {r: source.buffer(r) for r in radii}
+    official_corridors = {r: official.buffer(r) for r in radii}
     sensitivity = {}
     for r in radii:
-        source_near = source.intersection(official.buffer(r)).length
-        official_near = official.intersection(source.buffer(r)).length
+        source_near = source.intersection(official_corridors[r]).length
+        official_near = official.intersection(source_corridors[r]).length
         sensitivity[str(r)] = {'source_near_official_m': source_near,
             'source_outside_official_m': max(0, source.length-source_near),
             'official_near_source_m': official_near,
@@ -58,7 +60,7 @@ def compare_route(ways, sections, route_type, route_no, radii=(3, 10, 25)):
         'source_way_count': len(ways), 'official_section_count': len(same),
         'corridor_sensitivity': sensitivity, 'ways': records,
         'official_sections': [{'key': s['key'], 'length_m': s['line'].length,
-            'near_source_m_by_radius': {str(r): s['line'].intersection(source.buffer(r)).length for r in radii}}
+            'near_source_m_by_radius': {str(r): s['line'].intersection(source_corridors[r]).length for r in radii}}
             for s in same],
         'association_approved': False, 'completion_ready': False,
         'access_verified': False,
