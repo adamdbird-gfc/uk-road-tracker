@@ -332,3 +332,66 @@ Sources:
 - https://wiki.openstreetmap.org/wiki/Tag:bicycle=dismount
 - https://wiki.openstreetmap.org/wiki/Conditional_restrictions
 - https://www.thanet.gov.uk/info-pages/thanet-beaches-and-coast-public-space-protection-order-pspo-2024/
+
+
+## Snapshot-bound named extents and saved-path matching — 16 October 2026
+
+The three selected candidates (Heron circuit, Viking Thanet circuit and Viking
+coastal itinerary) now compile into a portable walking-trial reference: 265
+source ways, 371 selected-span sections and 2,990 unique physical edges. The
+association JSON compresses to 40,770 bytes, and its projected reference geometry
+to 63,571 bytes. Neither is deployed. No Postgres storage or migration is added.
+
+The reference version binds the exact selected extents, projection and pinned
+national snapshot SHA-256. This is contextual version binding, not an inferred
+OSM-to-official-FID association. Named-extent sections remain a distinct scope;
+full itineraries outside the national snapshot are not silently added to official
+network totals. Existing 10m geometric screening remains diagnostic only. The
+selected-extent screen finds most Heron linework near open NCN, Viking's coast
+near the regional layer, and much of Viking's inland circuit outside the mapped
+corridors. These observations never supply membership or journey credit.
+
+`build_extent_reference` replays each selected extent against source hashes,
+creates exact source-span target geometry, retains full source-way hashes for
+saved-result identity checks and deduplicates shared physical linework. Its
+walking-only associations round-trip through the portable bundle reader. The
+reader verifies that exact-span targets actually lie on the declared source
+way. Legacy association rows retain their existing reviewed-reference contract.
+
+The saved-path assessor now distinguishes reviewed GIS targets from exact
+selected source spans. For the latter, it clips already identified travelled
+geometry to the selected extent, using only micron-scale numerical tolerance.
+A long matched source edge crossing an extent boundary earns only the travelled
+part inside it. The existing 3m GIS correspondence check is not used as a named
+membership search. Unmatched, parallel, removed or unsupported-mode segments
+earn nothing. Walking results cannot acquire cycling provenance by relabelling.
+
+Eight new regression checks exercise boundary clipping, exact legacy-way
+compatibility without raw GPS, nearby parallel paths, user removals, overlapping
+named scopes, portable round-trip, wrong source targets, changed snapshot/extent
+and driving/cycling exclusions. Existing reader checks also cover invalid target
+contracts and older rows without the new field. All 145 NCN tests pass.
+
+Public-source synthetic replays recover 4.181m of a partial Heron source edge in
+either direction; a 7.764m Viking edge credits both named variants while remaining
+7.764m in combined unique distance. A duplicate activity adds no distance. Removed
+edges, nearby parallel geometry, driving and a cycling label on pedestrian output
+all yield zero. These are manufactured diagnostic inputs on actual public source
+geometry, not claimed real trips or access certification.
+
+The three available private exports yield zero Heron/Viking credit. They are
+negative controls only. The existing bounded Route 1 registry still gives
+19.092m of combined unique coverage. No private coordinates or journey records
+are included in this public assessment, only aggregate regression results.
+
+The trial reference's physical distance is not yet a logical route-completion
+denominator: alternate sections still need explicit credit bindings. Cycling
+matcher provenance, nationwide source reconciliation, Android activation, map,
+progress and achievements remain outstanding before the agreed beta gate.
+
+Reproduction API: `scripts.ncn_trial.extent_reference.build_extent_reference`
+takes `(scope, extent)` pairs, raw OSM snapshots keyed by relation ID, the
+uncompressed national snapshot bytes and its independently pinned SHA-256. The
+outputs are `TrialReference`, metadata and exact-span `KnownPath` associations;
+existing bundle readers and `assess_saved_paths` consume them. Source way and
+extent hashes are in the assessment manifests. No network fetch is required.

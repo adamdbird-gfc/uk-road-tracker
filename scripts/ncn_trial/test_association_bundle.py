@@ -31,6 +31,10 @@ class AssociationBundleTests(unittest.TestCase):
         self.assertEqual(self.raw, build_bundle(reversed(self.paths), self.ref, self.origin, self.provenance))
         self.assertEqual(3, bundle_metrics(self.raw)['paths'])
         self.assertLess(bundle_metrics(self.raw)['gzip_bytes'], len(self.raw))
+        legacy=json.loads(self.raw)
+        for row in legacy['paths']:row.pop('target_geometry')
+        self.assertEqual(tuple(sorted(self.paths,key=lambda p:p.way_id)),
+                         self.read(legacy,pin=digest(legacy)))
 
     def test_truncated_or_altered_download_is_rejected(self):
         with self.assertRaises(ValueError):read_bundle(self.raw[:-20], self.ref, self.origin, self.pin)
@@ -51,6 +55,7 @@ class AssociationBundleTests(unittest.TestCase):
             lambda p:p['paths'][0].update(modes=['driving']),
             lambda p:p['paths'][0].update(way_id='0'),
             lambda p:p['paths'][0].update(source_geometry_sha256='0'*64),
+            lambda p:p['paths'][0].update(target_geometry='proximity'),
             lambda p:p.update(schema_version=True),
             lambda p:p['provenance'].update(membership_evidence_sha256=''),
         ):

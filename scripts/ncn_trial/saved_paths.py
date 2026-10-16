@@ -23,6 +23,7 @@ class KnownPath:
     section_keys: tuple
     reference_version: str
     modes: tuple = ('on_foot',)
+    target_geometry: str = 'reviewed_reference'
 
 
 def fixture_paths(reference):
@@ -144,14 +145,26 @@ def assess_saved_paths(export, reference, metadata, known_paths):
         for target in paths[key].section_keys:
             section=reference.sections.get(target)
             if section is None or not section.eligible:continue
-            count=max(2,math.ceil(line.length/2))
-            samples=[line.interpolate(i/count,normalized=True) for i in range(count+1)]
-            if any(p.distance(section.line)>3 for p in samples):continue
-            positions=[section.line.project(p) for p in samples]
-            deltas=[b-a for a,b in zip(positions,positions[1:])]
-            if not (all(d>=0 for d in deltas) or all(d<=0 for d in deltas)):continue
-            covered=abs(positions[-1]-positions[0])
-            if not .9*line.length <= covered <= 1.1*line.length+.1:continue
-            intervals.append((target,min(positions[0],positions[-1]),max(positions[0],positions[-1])))
+            if paths[key].target_geometry == 'exact_source_spans':
+                # Source identity is already established above. Clip only to
+                # selected source geometry, with micron-scale numeric tolerance.
+                # This is not the 3m GIS reconciliation corridor below.
+                clipped=line.intersection(section.line.buffer(1e-6,cap_style=2))
+                pieces=[clipped] if clipped.geom_type=='LineString' else list(getattr(clipped,'geoms',()))
+            elif paths[key].target_geometry == 'reviewed_reference':
+                pieces=[line]
+            else:
+                reasons.append('unsupported_target_geometry');continue
+            for piece in pieces:
+                if piece.geom_type!='LineString' or piece.length<=.01:continue
+                count=max(2,math.ceil(piece.length/2))
+                samples=[piece.interpolate(i/count,normalized=True) for i in range(count+1)]
+                if any(p.distance(section.line)>3 for p in samples):continue
+                positions=[section.line.project(p) for p in samples]
+                deltas=[b-a for a,b in zip(positions,positions[1:])]
+                if not (all(d>=0 for d in deltas) or all(d<=0 for d in deltas)):continue
+                covered=abs(positions[-1]-positions[0])
+                if not .9*piece.length <= covered <= 1.1*piece.length+.1:continue
+                intervals.append((target,min(positions[0],positions[-1]),max(positions[0],positions[-1])))
     reasons.append('snapshot_path_association' if intervals else 'no_supported_path_association')
     return finish(intervals,method)

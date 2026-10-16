@@ -8,6 +8,7 @@ import math
 
 from shapely.geometry import LineString, Point
 from shapely.ops import unary_union
+from shapely.strtree import STRtree
 
 MODES = {'cycling': 'cycling', 'bicycle': 'cycling', 'walking': 'on_foot',
          'running': 'on_foot', 'pedestrian': 'on_foot', 'on_foot': 'on_foot'}
@@ -78,10 +79,13 @@ class TrialReference:
                     continue
                 identity = tuple((round(x, 6), round(y, 6)) for x, y in (first, second))
                 self.edges.setdefault(identity, {'line': line, 'routes': set()})
+        section_buffers = [s.line.buffer(1e-6) for s in sections]
+        section_tree = STRtree(section_buffers)
         for identity, edge in self.edges.items():
             line = edge['line']
-            for section in sections:
-                if not section.line.buffer(1e-6).covers(line):
+            for index in sorted(int(i) for i in section_tree.query(line)):
+                section = sections[index]
+                if not section_buffers[index].covers(line):
                     continue
                 first = section.line.project(Point(line.coords[0]))
                 last = section.line.project(Point(line.coords[-1]))

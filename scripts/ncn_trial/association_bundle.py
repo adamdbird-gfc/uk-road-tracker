@@ -9,6 +9,8 @@ import json
 
 from matched_path_evidence import digest, source_geometry_digest
 from .saved_paths import KnownPath
+from .journey_replay import projector
+from shapely.geometry import LineString
 
 
 def reference_digest(reference):
@@ -25,7 +27,8 @@ def build_bundle(paths, reference, projection_origin, provenance):
             raise ValueError('Reference reconciliation required')
         rows.append({'way_id': path.way_id, 'coordinates': path.coordinates,
                      'source_geometry_sha256': source_geometry_digest(path.coordinates),
-                     'section_keys': path.section_keys, 'modes': path.modes})
+                     'section_keys': path.section_keys, 'modes': path.modes,
+                     'target_geometry': path.target_geometry})
     payload = {'schema_version': 1, 'reference_version': reference.version,
                'reference_sha256': reference_digest(reference),
                'projection_origin': list(projection_origin),
@@ -74,14 +77,22 @@ def read_bundle(raw, reference, projection_origin, expected_sha256):
                     or any(len(p) != 2 for p in coordinates):
                 raise ValueError('Source geometry mismatch')
             sections, modes = row['section_keys'], row['modes']
+            target_geometry = row.get('target_geometry', 'reviewed_reference')
+            if target_geometry not in ('reviewed_reference', 'exact_source_spans'):
+                raise ValueError('Unsupported target geometry contract')
             if not isinstance(sections, list) or not sections or any(not isinstance(s, str) for s in sections) \
                     or len(set(sections)) != len(sections) or any(s not in reference.sections for s in sections):
                 raise ValueError('Known distinct target sections required')
             if not isinstance(modes, list) or not modes or any(m not in ('on_foot', 'cycling') for m in modes) \
                     or len(set(modes)) != len(modes):
                 raise ValueError('Explicit supported activity modes required')
+            if target_geometry == 'exact_source_spans':
+                project = projector({'projection_origin': projection_origin})
+                source_line = LineString([project(p) for p in coordinates])
+                if any(not source_line.buffer(1e-6).covers(reference.sections[s].line) for s in sections):
+                    raise ValueError('Exact source target is outside source way geometry')
             paths.append(KnownPath(key, tuple(tuple(p) for p in coordinates), tuple(sections),
-                                   reference.version, tuple(modes)))
+                                   reference.version, tuple(modes), target_geometry))
         return tuple(paths)
     except (KeyError, TypeError, IndexError, AttributeError) as error:
         raise ValueError('Malformed association bundle') from error
