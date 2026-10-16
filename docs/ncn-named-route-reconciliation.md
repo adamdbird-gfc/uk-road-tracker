@@ -131,3 +131,42 @@ Owner cross-checks:
 Next: resolve mode-specific extent and topology flags, validate source-way links,
 and grow the named catalogue beyond these targeted cases. The existing broad
 beta gate (map, progress, achievements and reliable mode matching) is unchanged.
+
+## Kent checklist pass and pedestrian-area safeguard
+
+Three more source records have been recovered: Heron Trail (relation 21894,
+60 unique ways), Darent Valley Path (146747, 211 ways), and RCN15 Kent (8824,
+352 line ways plus an unsupported pedestrian-area relation). These extend the
+research to 12 source profiles associated with 11 named-route leads, not 11
+approved completion assets. RCN15's Viking association remains extent-unresolved.
+
+- Heron: 98.0% of the mapped line geometry is within a 10m corridor of open NCN
+  geometry. Its extent still needs reconciliation with the promoted circuit.
+- Darent Valley Path: only 20 way IDs overlap the 79 unique way IDs of NCN125;
+  the walking relation contains 211 ways. Do not award the whole path from a
+  shorter numbered route. The mapped geometry is 4.6% near open NCN at 10m.
+- Viking: the owner identifies the trail with RCN15, but the recovered OSM record
+  extends much further south than the advertised Thanet itinerary and measures
+  roughly 88km of linework. Its entire extent must not be aliased to Viking.
+  Screening reports 61.4% near regional reference and 1.2% near open NCN; those
+  remain geometric diagnostics, not membership or completion totals.
+- Sheerness Way: a current owner page is located; a bounded map probe found
+  NCN174 but no separately named route. This is unresolved discovery, not proof
+  that no mapped source exists. Do not substitute the whole of NCN174 for it.
+
+The RCN15 route contains relation 12366413, a pedestrian multipolygon for
+Broadstairs Seafront. The extractor now reports unsupported nested relations
+and retains valid line members instead of crashing or treating an area perimeter
+as route mileage. The candidate is explicitly geometry-incomplete. Comparison
+reports carry source completeness and issues forward without approving links.
+A dedicated regression check proves an area boundary contributes no route edges.
+119 local NCN tests pass. No runtime, production progress or deployment changes.
+
+Owner extent checks:
+- https://explorekent.org/activities/heron-cycle-trail-the-hoo-peninsula/
+- https://explorekent.org/activities/viking-coastal-trail/
+- https://explorekent.org/activities/sheerness-way-cycle-ships-and-chips/
+- https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-125/
+
+The separately maintained 25-route checklist records these source discoveries
+and unresolved extents. No copied owner GPX or prose is shipped as app data.

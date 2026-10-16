@@ -84,7 +84,11 @@ def reconcile(network, ways, catalogue):
         aggregate = screen.screen(unary_union(projected))
         records = [{'osm_way':f['properties']['osm_way'], **screen.screen(line)} for f,line in zip(entries,projected)]
         reports.append({'relation_id':relation, 'name':candidate['name'], 'projection_origin':origin,
-                        'aggregate':aggregate, 'ways':records, 'completion_ready':False})
+                        'aggregate':aggregate, 'ways':records,
+                        'source_geometry_complete':candidate.get('member_geometry_complete'),
+                        'unsupported_relation_ids':candidate.get('unsupported_relation_ids',[]),
+                        'source_issues':candidate.get('source_issues',[]),
+                        'completion_ready':False})
     return {'purpose':'geometric_triage_only_not_progress_or_verified_NCN_membership',
             'measurement':'local equirectangular metric projection; approximate, not published route distances',
             'corridor_precedence':['open_ncn','nonqualifying_ncn','regional','link','unclassified','outside_reference_corridors'],

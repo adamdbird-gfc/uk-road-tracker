@@ -26,7 +26,7 @@ def extract_route(snapshots, root_id):
             index[key]=element
     root=index.get(('relation',root_id))
     if root is None:raise ValueError('Root route relation missing')
-    missing=set();cycles=set();roles=defaultdict(list);relations=set();ways={}
+    missing=set();cycles=set();unsupported=set();roles=defaultdict(list);relations=set();ways={}
 
     def visit(identity, ancestry=(), inherited=()):
         if identity in ancestry:
@@ -35,7 +35,8 @@ def extract_route(snapshots, root_id):
         if relation is None:missing.add(('relation',identity));return
         tags=relation.get('tags',{})
         if tags.get('type') not in ('route','superroute') or tags.get('route') not in ('bicycle','foot','hiking'):
-            raise ValueError('Unsupported route relation')
+            if identity == root_id:raise ValueError('Unsupported root route relation')
+            unsupported.add(identity);return
         relations.add(identity)
         for member in relation['members']:
             role=str(member.get('role','')).strip()
@@ -90,6 +91,7 @@ def extract_route(snapshots, root_id):
              'degree_one_endpoint_coordinates':[[index[('node',n)]['lon'],index[('node',n)]['lat']] for n in ends],
              'branch_node_count':sum(len(v)>2 for v in graph.values()),
              'missing_members':[{'type':kind,'id':identity} for kind,identity in sorted(missing)],
-             'cyclic_relation_ids':sorted(cycles),'member_geometry_complete':bool(features) and not missing and not cycles,
+             'cyclic_relation_ids':sorted(cycles),'unsupported_relation_ids':sorted(unsupported),
+             'member_geometry_complete':bool(features) and not missing and not cycles and not unsupported,
              'completion_ready':False,'activity_access_verified':False,'current_ncn_membership_verified':False}
     return summary,features

@@ -72,3 +72,15 @@ class CatalogueExtractTests(unittest.TestCase):
         self.root['members']=[member('way',10)]
         self.nodes[1]['lon']=float('nan')
         with self.assertRaises(ValueError):extract_route([encoded([self.root,self.way]+self.nodes)],100)
+
+    def test_pedestrian_area_perimeter_is_not_promoted_to_route_edges(self):
+        area={'type':'relation','id':200,'tags':{'type':'multipolygon','highway':'pedestrian'},
+              'members':[member('way',11,'outer')]}
+        boundary={'type':'way','id':11,'nodes':[3,4,5,3]}
+        nodes=[{'type':'node','id':4,'lon':.004,'lat':0},{'type':'node','id':5,'lon':.004,'lat':.001}]
+        self.root['members'].append(member('relation',200))
+        summary,features=extract_route([encoded([self.root,self.way,area,boundary]+self.nodes+nodes)],100)
+        self.assertEqual([200],summary['unsupported_relation_ids'])
+        self.assertFalse(summary['member_geometry_complete'])
+        self.assertEqual([10],[f['properties']['osm_way'] for f in features])
+        self.assertEqual(2,summary['unique_node_edges'])
