@@ -79,3 +79,55 @@ been copied into app assets.
 Next: review source-way correspondences, define full-itinerary versus NCN-only
 named-route targets, then expand discovery regionally. National correspondence,
 cycling provenance and Android runtime integration remain outstanding.
+
+## Wales/NI expansion and nested catalogue extraction
+
+The bounded source catalogue now contains nine source profiles for eight named
+route extents, with examples in all four UK nations. This is not a complete UK
+named-route inventory. Added sources and approximate geometric screening:
+
+| Source profile | Unique ways | Components | Near open NCN at 10m |
+| --- | ---: | ---: | ---: |
+| Taff Trail (hiking relation 3000677) | 338 | 6 | 66.9% |
+| Lôn Las Cymru (parent 5487294 and all three children) | 1260 | 3 | 97.1% |
+| Lagan Towpath (hiking relation 1116068) | 76 | 3 | 95.4% |
+| Comber Greenway (bicycle relation 8604523) | 47 | 1 | 87.8% |
+| Comber Greenway (foot relation 3018630) | 41 | 1 | 98.7% |
+
+The Comber source profiles share exactly 41 way identities; six further ways
+appear only in the bicycle profile. This does not prove those six ways prohibit
+walking. Do not collapse the profiles into one denominator or infer permissions
+from their names. The Taff walking relation shares 222 ways with Lôn Las South,
+while 116 do not share that identity; the southern cycle route covers a larger
+extent, so these are not equivalent itineraries. The source topology and mode
+access need investigation before a Taff or Lagan completion card can ship.
+
+All direct member geometry has been recovered for these source profiles. That
+means no missing source way/node, not proof of a gap-free real-world route.
+Lôn Las Cymru's three child relations (5487292 North, 5487291 Central, 5487293
+South) have been expanded without assuming they connect. Its combined graph
+has three components. Taff has six; Lagan three. No gap is bridged by proximity.
+The southern Caledonia candidate remains only a section of that named itinerary.
+
+`catalogue_extract.extract_route` reads bounded JSON source snapshots, recursively
+preserves relation membership and role chains, and deduplicates physical way
+geometry without losing repeated memberships. It rejects conflicting source
+element versions, preserves explicit public mode/access tags and route type,
+flags missing relations/ways/nodes and cycles, excludes guideposts from edge
+counts, and never turns a missing midpoint into a new straight edge. An empty
+route is not complete. No mode permission or current NCN membership is inferred.
+It emits candidates only; completion_ready remains false.
+
+118 local NCN checks now pass, including eight extraction checks. CI includes
+the extraction suite. Source snapshots and diagnostic outputs are retained in
+the separate assessment; no personal journeys or national geometry are added to
+Postgres, and no APK or Firebase release is made.
+
+Owner cross-checks:
+- https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/taff-trail-cardiff-to-brecon/
+- https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/belfast-to-lisburn-lagan-towpath-route-9/
+- https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/comber-greenway-route-99/
+
+Next: resolve mode-specific extent and topology flags, validate source-way links,
+and grow the named catalogue beyond these targeted cases. The existing broad
+beta gate (map, progress, achievements and reliable mode matching) is unchanged.
