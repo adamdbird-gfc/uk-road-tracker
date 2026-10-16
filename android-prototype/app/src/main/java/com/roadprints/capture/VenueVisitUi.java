@@ -217,7 +217,7 @@ final class VenueVisitUi {
                         android.location.Location fix=task.getResult();
                         String problem=VenueEvidence.liveProblem(collection,pub,fix,SystemClock.elapsedRealtimeNanos());
                         if(!problem.isEmpty()){
-                            if(fix!=null&&fix.hasAccuracy())problem+="\nReported distance: "+DistanceUnits.format(activity,VenueCollection.distance(pub,fix.getLatitude(),fix.getLongitude()))+" · accuracy: "+Math.round(fix.getAccuracy())+" m.";
+                            if(fix!=null&&fix.hasAccuracy())problem+="\nReported distance to catalogue pin: "+Math.round(VenueCollection.distance(pub,fix.getLatitude(),fix.getLongitude()))+" m"+" · accuracy: "+Math.round(fix.getAccuracy())+" m.";
                             status.setText(problem);return;
                         }
                         status.setText("Location checked. Confirm the named visit to save it.");

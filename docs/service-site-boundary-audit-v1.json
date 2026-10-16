@@ -1,0 +1,1157 @@
+{
+  "policy_version": 1,
+  "source_date": "2026-10-16",
+  "attribution": "© OpenStreetMap contributors · ODbL 1.0",
+  "sites": [
+    {
+      "id": "msa:annandale water:55.2198:-3.4097",
+      "name": "Annandale Water Services",
+      "boundary_parts": 1,
+      "area_m2": 160826,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:61407090"
+      ]
+    },
+    {
+      "id": "msa:applegreen temple patrick m2:54.6944:-6.0179",
+      "name": "Applegreen Temple Patrick Services Northbound M2",
+      "boundary_parts": 1,
+      "area_m2": 17305,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:338113933"
+      ]
+    },
+    {
+      "id": "msa:burton in kendal:54.1783:-2.7345",
+      "name": "Burton-in-Kendal Services",
+      "boundary_parts": 1,
+      "area_m2": 42642,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61386539"
+      ]
+    },
+    {
+      "id": "msa:burtonwood:53.4176:-2.6385",
+      "name": "Burtonwood Services",
+      "boundary_parts": 1,
+      "area_m2": 64710,
+      "main_road_exclusions": 7,
+      "source_ids": [
+        "osm:way:61459213"
+      ]
+    },
+    {
+      "id": "msa:cairn lodge:55.5838:-3.8233",
+      "name": "Cairn Lodge",
+      "boundary_parts": 1,
+      "area_m2": 36968,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61383364"
+      ]
+    },
+    {
+      "id": "msa:charnock richard:53.6312:-2.6916",
+      "name": "Charnock Richard Services",
+      "boundary_parts": 2,
+      "area_m2": 95646,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61458957"
+      ]
+    },
+    {
+      "id": "msa:cobham:51.3051:-0.4078",
+      "name": "Cobham Services",
+      "boundary_parts": 1,
+      "area_m2": 132870,
+      "main_road_exclusions": 12,
+      "source_ids": [
+        "osm:way:381250063"
+      ]
+    },
+    {
+      "id": "msa:coneygarth:54.3121:-1.5688",
+      "name": "Coneygarth Services",
+      "boundary_parts": 1,
+      "area_m2": 58118,
+      "main_road_exclusions": 12,
+      "source_ids": [
+        "osm:way:548627299"
+      ]
+    },
+    {
+      "id": "msa:corley:52.4714:-1.5467",
+      "name": "Corley services",
+      "boundary_parts": 2,
+      "area_m2": 141619,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:191577718",
+        "osm:way:200408977",
+        "osm:relation:16312147"
+      ]
+    },
+    {
+      "id": "msa:crewe:53.0694:-2.3366",
+      "name": "Crewe Services",
+      "boundary_parts": 1,
+      "area_m2": 20295,
+      "main_road_exclusions": 23,
+      "source_ids": [
+        "osm:way:297873536"
+      ]
+    },
+    {
+      "id": "msa:durham:54.7286:-1.5232",
+      "name": "Durham Services",
+      "boundary_parts": 1,
+      "area_m2": 41112,
+      "main_road_exclusions": 41,
+      "source_ids": [
+        "osm:way:61096004"
+      ]
+    },
+    {
+      "id": "msa:earlsfield:53.4284:-2.8262",
+      "name": "Earlsfield Services",
+      "boundary_parts": 1,
+      "area_m2": 7987,
+      "main_road_exclusions": 27,
+      "source_ids": [
+        "osm:way:1106326652"
+      ]
+    },
+    {
+      "id": "msa:extramsa baldock:52.0143:-0.2021",
+      "name": "ExtraMSA Baldock Services",
+      "boundary_parts": 1,
+      "area_m2": 49756,
+      "main_road_exclusions": 15,
+      "source_ids": [
+        "osm:way:61374769"
+      ]
+    },
+    {
+      "id": "msa:extramsa blackburn with darwen:53.7133:-2.4773",
+      "name": "ExtraMSA Blackburn with Darwen Services",
+      "boundary_parts": 1,
+      "area_m2": 34345,
+      "main_road_exclusions": 35,
+      "source_ids": [
+        "osm:way:61389897"
+      ]
+    },
+    {
+      "id": "msa:extramsa cullompton:50.8628:-3.3844",
+      "name": "ExtraMSA Cullompton Services",
+      "boundary_parts": 1,
+      "area_m2": 17210,
+      "main_road_exclusions": 12,
+      "source_ids": [
+        "osm:way:61381846"
+      ]
+    },
+    {
+      "id": "msa:golden fleece:54.8571:-2.875",
+      "name": "Golden Fleece Service Station",
+      "boundary_parts": 1,
+      "area_m2": 23656,
+      "main_road_exclusions": 22,
+      "source_ids": [
+        "osm:way:872692209"
+      ]
+    },
+    {
+      "id": "msa:heart of scotland:55.8638:-3.7591",
+      "name": "Heart of Scotland Services",
+      "boundary_parts": 2,
+      "area_m2": 97794,
+      "main_road_exclusions": 5,
+      "source_ids": [
+        "osm:way:61453726"
+      ]
+    },
+    {
+      "id": "msa:high brough moor:54.4314:-1.6681",
+      "name": "High Brough Moor Services",
+      "boundary_parts": 1,
+      "area_m2": 3248,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:1071112396"
+      ]
+    },
+    {
+      "id": "msa:hollin bank:53.8308:-2.2281",
+      "name": "Hollin Bank Service Station",
+      "boundary_parts": 1,
+      "area_m2": 1209,
+      "main_road_exclusions": 19,
+      "source_ids": [
+        "osm:way:1258403553"
+      ]
+    },
+    {
+      "id": "msa:hopwood park:52.3639:-1.9476",
+      "name": "Hopwood Park Services",
+      "boundary_parts": 1,
+      "area_m2": 87617,
+      "main_road_exclusions": 20,
+      "source_ids": [
+        "osm:way:61471433"
+      ]
+    },
+    {
+      "id": "msa:j38 truckstop:54.438:-2.5942",
+      "name": "J38 Truckstop",
+      "boundary_parts": 1,
+      "area_m2": 31727,
+      "main_road_exclusions": 19,
+      "source_ids": [
+        "osm:way:61374194"
+      ]
+    },
+    {
+      "id": "msa:keele:52.9936:-2.2895",
+      "name": "Keele Services",
+      "boundary_parts": 2,
+      "area_m2": 87917,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:way:61460582"
+      ]
+    },
+    {
+      "id": "msa:killington lake:54.3142:-2.6357",
+      "name": "Killington Lake Services",
+      "boundary_parts": 1,
+      "area_m2": 33620,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61385266"
+      ]
+    },
+    {
+      "id": "msa:knutsford:53.301:-2.4015",
+      "name": "Knutsford Services Northbound",
+      "boundary_parts": 2,
+      "area_m2": 49683,
+      "main_road_exclusions": 22,
+      "source_ids": [
+        "osm:way:61460377",
+        "osm:way:672921890"
+      ]
+    },
+    {
+      "id": "msa:lancaster:53.9612:-2.7588",
+      "name": "Lancaster Services",
+      "boundary_parts": 2,
+      "area_m2": 105591,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61389851"
+      ]
+    },
+    {
+      "id": "msa:leicester forest:52.6191:-1.2056",
+      "name": "Leicester Forest East Services",
+      "boundary_parts": 2,
+      "area_m2": 71133,
+      "main_road_exclusions": 7,
+      "source_ids": [
+        "osm:relation:21108636"
+      ]
+    },
+    {
+      "id": "msa:lisburn:54.5257:-6.0034",
+      "name": "Lisburn Services",
+      "boundary_parts": 2,
+      "area_m2": 42944,
+      "main_road_exclusions": 5,
+      "source_ids": [
+        "osm:way:414849517",
+        "osm:way:427012583"
+      ]
+    },
+    {
+      "id": "msa:london gateway:51.6327:-0.2666",
+      "name": "London Gateway Services",
+      "boundary_parts": 1,
+      "area_m2": 167627,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:61402235"
+      ]
+    },
+    {
+      "id": "msa:lymm:53.3584:-2.5038",
+      "name": "Lymm Services",
+      "boundary_parts": 1,
+      "area_m2": 89056,
+      "main_road_exclusions": 30,
+      "source_ids": [
+        "osm:way:61459849"
+      ]
+    },
+    {
+      "id": "msa:m40 warwick:52.2174:-1.504",
+      "name": "M40 Warwick Services Northbound",
+      "boundary_parts": 1,
+      "area_m2": 73366,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61403826"
+      ]
+    },
+    {
+      "id": "msa:markfield travellodge only:52.6958:-1.296",
+      "name": "Markfield Services - Travelodge ONLY",
+      "boundary_parts": 1,
+      "area_m2": 27447,
+      "main_road_exclusions": 30,
+      "source_ids": [
+        "osm:way:61094096"
+      ]
+    },
+    {
+      "id": "msa:moto barton truckstop:54.4662:-1.6638",
+      "name": "Moto Barton Truckstop",
+      "boundary_parts": 1,
+      "area_m2": 40056,
+      "main_road_exclusions": 12,
+      "source_ids": [
+        "osm:way:61095943"
+      ]
+    },
+    {
+      "id": "msa:moto birch:53.568:-2.2314",
+      "name": "Moto Birch Services",
+      "boundary_parts": 2,
+      "area_m2": 125762,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61459309",
+        "osm:way:1303490745"
+      ]
+    },
+    {
+      "id": "msa:moto blyth:53.3878:-1.0608",
+      "name": "Moto Blyth Services",
+      "boundary_parts": 1,
+      "area_m2": 48479,
+      "main_road_exclusions": 33,
+      "source_ids": [
+        "osm:way:61094746"
+      ]
+    },
+    {
+      "id": "msa:moto bridgwater:51.1049:-2.995",
+      "name": "Moto Bridgwater Services",
+      "boundary_parts": 1,
+      "area_m2": 14808,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:way:61729925"
+      ]
+    },
+    {
+      "id": "msa:moto cardiff:51.5084:-3.308",
+      "name": "Moto Cardiff West Services",
+      "boundary_parts": 1,
+      "area_m2": 52462,
+      "main_road_exclusions": 28,
+      "source_ids": [
+        "osm:way:61395452"
+      ]
+    },
+    {
+      "id": "msa:moto chieveley:51.4493:-1.3101",
+      "name": "Moto Chieveley Services",
+      "boundary_parts": 1,
+      "area_m2": 58442,
+      "main_road_exclusions": 33,
+      "source_ids": [
+        "osm:way:61396542"
+      ]
+    },
+    {
+      "id": "msa:moto doncaster:53.5917:-0.9916",
+      "name": "Moto Doncaster (North) Services",
+      "boundary_parts": 1,
+      "area_m2": 62598,
+      "main_road_exclusions": 22,
+      "source_ids": [
+        "osm:way:61390551"
+      ]
+    },
+    {
+      "id": "msa:moto donington park:52.8211:-1.3084",
+      "name": "Moto Donington Park Services",
+      "boundary_parts": 1,
+      "area_m2": 159655,
+      "main_road_exclusions": 28,
+      "source_ids": [
+        "osm:way:61094302"
+      ]
+    },
+    {
+      "id": "msa:moto exeter:50.7157:-3.4643",
+      "name": "Moto Exeter Services",
+      "boundary_parts": 1,
+      "area_m2": 81912,
+      "main_road_exclusions": 27,
+      "source_ids": [
+        "osm:way:61724187"
+      ]
+    },
+    {
+      "id": "msa:moto ferrybridge:53.6979:-1.2657",
+      "name": "Moto Ferrybridge Services",
+      "boundary_parts": 1,
+      "area_m2": 43217,
+      "main_road_exclusions": 49,
+      "source_ids": [
+        "osm:way:61094857"
+      ]
+    },
+    {
+      "id": "msa:moto frankley:52.4291:-2.018",
+      "name": "Moto Frankley Services",
+      "boundary_parts": 2,
+      "area_m2": 78747,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:63997423",
+        "osm:way:147115775"
+      ]
+    },
+    {
+      "id": "msa:moto heston:51.4884:-0.3921",
+      "name": "Moto Heston Eastbound",
+      "boundary_parts": 2,
+      "area_m2": 84718,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:61402311",
+        "osm:way:165302356"
+      ]
+    },
+    {
+      "id": "msa:moto hilton park:52.6435:-2.0564",
+      "name": "Moto Hilton Park Services",
+      "boundary_parts": 2,
+      "area_m2": 86303,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61460699",
+        "osm:way:197528362"
+      ]
+    },
+    {
+      "id": "msa:moto kinross:56.2097:-3.4396",
+      "name": "Moto Kinross Services",
+      "boundary_parts": 1,
+      "area_m2": 38149,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61453852"
+      ]
+    },
+    {
+      "id": "msa:moto leeming bar:54.2988:-1.5664",
+      "name": "Moto Leeming Bar Services",
+      "boundary_parts": 1,
+      "area_m2": 31429,
+      "main_road_exclusions": 15,
+      "source_ids": [
+        "osm:way:104121751"
+      ]
+    },
+    {
+      "id": "msa:moto leigh delamere:51.5108:-2.1584",
+      "name": "Moto Leigh Delamere Eastbound",
+      "boundary_parts": 2,
+      "area_m2": 132061,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:63124749",
+        "osm:way:167816582"
+      ]
+    },
+    {
+      "id": "msa:moto medway:51.3411:0.6077",
+      "name": "Moto Medway Services",
+      "boundary_parts": 2,
+      "area_m2": 68076,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:31066900"
+      ]
+    },
+    {
+      "id": "msa:moto pease pottage:51.0841:-0.1988",
+      "name": "Moto Pease Pottage Services",
+      "boundary_parts": 1,
+      "area_m2": 20674,
+      "main_road_exclusions": 36,
+      "source_ids": [
+        "osm:way:61375289"
+      ]
+    },
+    {
+      "id": "msa:moto reading:51.4244:-1.0346",
+      "name": "Moto Reading Eastbound",
+      "boundary_parts": 2,
+      "area_m2": 254718,
+      "main_road_exclusions": 3,
+      "source_ids": [
+        "osm:way:28904663",
+        "osm:way:1411181966"
+      ]
+    },
+    {
+      "id": "msa:moto sawtry:52.4273:-0.2707",
+      "name": "Moto Sawtry",
+      "boundary_parts": 1,
+      "area_m2": 25750,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:386343032"
+      ]
+    },
+    {
+      "id": "msa:moto scotch corner:54.444:-1.6666",
+      "name": "Moto Scotch Corner Services",
+      "boundary_parts": 1,
+      "area_m2": 31857,
+      "main_road_exclusions": 37,
+      "source_ids": [
+        "osm:way:61095903"
+      ]
+    },
+    {
+      "id": "msa:moto severn view:51.6036:-2.6202",
+      "name": "Moto Severn View Services",
+      "boundary_parts": 1,
+      "area_m2": 30663,
+      "main_road_exclusions": 23,
+      "source_ids": [
+        "osm:way:61390756"
+      ]
+    },
+    {
+      "id": "msa:moto southwaite:54.7987:-2.8708",
+      "name": "Moto Southwaite Northbound Services",
+      "boundary_parts": 2,
+      "area_m2": 142905,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61384308",
+        "osm:way:1303162549"
+      ]
+    },
+    {
+      "id": "msa:moto stafford:52.8854:-2.1721",
+      "name": "Moto Stafford North Services",
+      "boundary_parts": 1,
+      "area_m2": 197935,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:61460635"
+      ]
+    },
+    {
+      "id": "msa:moto stirling:56.0762:-3.9222",
+      "name": "Moto Stirling Services",
+      "boundary_parts": 1,
+      "area_m2": 28133,
+      "main_road_exclusions": 23,
+      "source_ids": [
+        "osm:way:61453813"
+      ]
+    },
+    {
+      "id": "msa:moto swansea:51.6785:-3.9954",
+      "name": "Moto Swansea West Services",
+      "boundary_parts": 1,
+      "area_m2": 45959,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:61395725"
+      ]
+    },
+    {
+      "id": "msa:moto thurrock:51.492:0.2712",
+      "name": "Moto Thurrock Services",
+      "boundary_parts": 1,
+      "area_m2": 83409,
+      "main_road_exclusions": 28,
+      "source_ids": [
+        "osm:way:61374892"
+      ]
+    },
+    {
+      "id": "msa:moto tiverton:50.9164:-3.3551",
+      "name": "Moto Tiverton Services",
+      "boundary_parts": 1,
+      "area_m2": 19713,
+      "main_road_exclusions": 32,
+      "source_ids": [
+        "osm:way:61381780"
+      ]
+    },
+    {
+      "id": "msa:moto washington:54.8895:-1.5591",
+      "name": "Moto Washington Services Northbound",
+      "boundary_parts": 2,
+      "area_m2": 43947,
+      "main_road_exclusions": 9,
+      "source_ids": [
+        "osm:way:61096080",
+        "osm:way:1340838691"
+      ]
+    },
+    {
+      "id": "msa:moto wetherby:53.946:-1.3699",
+      "name": "Moto Wetherby Services",
+      "boundary_parts": 1,
+      "area_m2": 68054,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:978690524"
+      ]
+    },
+    {
+      "id": "msa:moto winchester:51.1185:-1.255",
+      "name": "Moto Winchester Services",
+      "boundary_parts": 2,
+      "area_m2": 97029,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:61376557",
+        "osm:way:1303496668"
+      ]
+    },
+    {
+      "id": "msa:moto woolley edge:53.6214:-1.5483",
+      "name": "Moto Woolley Edge Services",
+      "boundary_parts": 2,
+      "area_m2": 126532,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61390494"
+      ]
+    },
+    {
+      "id": "msa:newport pagnell:52.0827:-0.7495",
+      "name": "Newport Pagnell Services",
+      "boundary_parts": 2,
+      "area_m2": 87347,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:relation:16251148"
+      ]
+    },
+    {
+      "id": "msa:northampton:52.2094:-0.9437",
+      "name": "Northampton Services",
+      "boundary_parts": 2,
+      "area_m2": 51054,
+      "main_road_exclusions": 59,
+      "source_ids": [
+        "osm:way:61092092",
+        "osm:way:123905289"
+      ]
+    },
+    {
+      "id": "msa:old meadow:53.5139:-2.9103",
+      "name": "Old Meadow Services",
+      "boundary_parts": 1,
+      "area_m2": 18762,
+      "main_road_exclusions": 3,
+      "source_ids": [
+        "osm:way:1109749689"
+      ]
+    },
+    {
+      "id": "msa:pace sawtry:52.4093:-0.2633",
+      "name": "Pace Sawtry Service Station",
+      "boundary_parts": 1,
+      "area_m2": 13998,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:1470854737"
+      ]
+    },
+    {
+      "id": "msa:peterborough:52.5314:-0.3215",
+      "name": "Peterborough Services",
+      "boundary_parts": 1,
+      "area_m2": 101241,
+      "main_road_exclusions": 29,
+      "source_ids": [
+        "osm:way:1303632357"
+      ]
+    },
+    {
+      "id": "msa:pont abraham:51.747:-4.0654",
+      "name": "Pont Abraham Services",
+      "boundary_parts": 1,
+      "area_m2": 35183,
+      "main_road_exclusions": 29,
+      "source_ids": [
+        "osm:way:61395785"
+      ]
+    },
+    {
+      "id": "msa:rivington:53.6:-2.574",
+      "name": "Rivington Services",
+      "boundary_parts": 2,
+      "area_m2": 117555,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:61389765"
+      ]
+    },
+    {
+      "id": "msa:roadchef bothwell:55.8138:-4.0619",
+      "name": "RoadChef Bothwell Services",
+      "boundary_parts": 1,
+      "area_m2": 74109,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:61407655"
+      ]
+    },
+    {
+      "id": "msa:roadchef chester:53.2689:-2.8033",
+      "name": "RoadChef Chester Services",
+      "boundary_parts": 1,
+      "area_m2": 99360,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61460091"
+      ]
+    },
+    {
+      "id": "msa:roadchef clacket lane:51.2722:0.0389",
+      "name": "RoadChef Clacket Lane Services",
+      "boundary_parts": 2,
+      "area_m2": 109682,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:16536764",
+        "osm:way:1325498601"
+      ]
+    },
+    {
+      "id": "msa:roadchef hamilton:55.7874:-4.0354",
+      "name": "RoadChef Hamilton Services",
+      "boundary_parts": 1,
+      "area_m2": 101942,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:way:61407226"
+      ]
+    },
+    {
+      "id": "msa:roadchef magor:51.5879:-2.8365",
+      "name": "Roadchef Magor Services",
+      "boundary_parts": 1,
+      "area_m2": 59167,
+      "main_road_exclusions": 9,
+      "source_ids": [
+        "osm:way:61381956"
+      ]
+    },
+    {
+      "id": "msa:roadchef maidstone:51.2661:0.6148",
+      "name": "RoadChef Maidstone Services",
+      "boundary_parts": 1,
+      "area_m2": 94654,
+      "main_road_exclusions": 14,
+      "source_ids": [
+        "osm:way:39487861"
+      ]
+    },
+    {
+      "id": "msa:norton-canes:52.6643:-1.9688",
+      "name": "RoadChef Norton Canes Services",
+      "boundary_parts": 1,
+      "area_m2": 127598,
+      "main_road_exclusions": 18,
+      "source_ids": [
+        "osm:way:61460820"
+      ]
+    },
+    {
+      "id": "msa:roadchef sandbach:53.1392:-2.3365",
+      "name": "RoadChef Sandbach Services",
+      "boundary_parts": 2,
+      "area_m2": 46552,
+      "main_road_exclusions": 14,
+      "source_ids": [
+        "osm:way:61460414",
+        "osm:way:778292301"
+      ]
+    },
+    {
+      "id": "msa:roadchef sedgemoor:51.2688:-2.9198",
+      "name": "RoadChef Sedgemoor Services (Southbound)",
+      "boundary_parts": 1,
+      "area_m2": 70640,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:64003195"
+      ]
+    },
+    {
+      "id": "msa:roadchef stafford:52.8728:-2.1618",
+      "name": "RoadChef Stafford South Services",
+      "boundary_parts": 1,
+      "area_m2": 144998,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61460651"
+      ]
+    },
+    {
+      "id": "msa:roadchef strensham:52.0616:-2.1491",
+      "name": "RoadChef Strensham Services (Northbound)",
+      "boundary_parts": 2,
+      "area_m2": 165581,
+      "main_road_exclusions": 5,
+      "source_ids": [
+        "osm:way:95598140",
+        "osm:way:95894702"
+      ]
+    },
+    {
+      "id": "msa:roadchef taunton deane:50.9768:-3.1465",
+      "name": "RoadChef Taunton Deane Services (Northbound)",
+      "boundary_parts": 2,
+      "area_m2": 136904,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:way:64003274",
+        "osm:way:123314514"
+      ]
+    },
+    {
+      "id": "msa:rotherham:53.3981:-1.3525",
+      "name": "Rotherham Services",
+      "boundary_parts": 2,
+      "area_m2": 68264,
+      "main_road_exclusions": 35,
+      "source_ids": [
+        "osm:way:164653251"
+      ]
+    },
+    {
+      "id": "msa:rownhams:50.9574:-1.4485",
+      "name": "Rownhams Services",
+      "boundary_parts": 2,
+      "area_m2": 86391,
+      "main_road_exclusions": 7,
+      "source_ids": [
+        "osm:way:61376755",
+        "osm:way:1325490908"
+      ]
+    },
+    {
+      "id": "msa:rugby:52.4101:-1.2487",
+      "name": "Rugby Services",
+      "boundary_parts": 1,
+      "area_m2": 94809,
+      "main_road_exclusions": 29,
+      "source_ids": [
+        "osm:way:840486856"
+      ]
+    },
+    {
+      "id": "msa:skelton lake:53.7732:-1.4715",
+      "name": "Skelton Lake Service Station",
+      "boundary_parts": 1,
+      "area_m2": 96830,
+      "main_road_exclusions": 26,
+      "source_ids": [
+        "osm:way:704817026"
+      ]
+    },
+    {
+      "id": "msa:mimms:51.6886:-0.2239",
+      "name": "South Mimms Services",
+      "boundary_parts": 1,
+      "area_m2": 176599,
+      "main_road_exclusions": 46,
+      "source_ids": [
+        "osm:way:44952017"
+      ]
+    },
+    {
+      "id": "msa:stop24 folkestone:51.0949:1.0446",
+      "name": "Stop24 Folkestone Services",
+      "boundary_parts": 1,
+      "area_m2": 82000,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61375075",
+        "osm:way:67305982"
+      ]
+    },
+    {
+      "id": "msa:tabley hill:53.3101:-2.4171",
+      "name": "Tabley Hill Service Station",
+      "boundary_parts": 1,
+      "area_m2": 896,
+      "main_road_exclusions": 37,
+      "source_ids": [
+        "osm:way:1008811502"
+      ]
+    },
+    {
+      "id": "msa:tamworth:52.6065:-1.6405",
+      "name": "Tamworth Services",
+      "boundary_parts": 1,
+      "area_m2": 91130,
+      "main_road_exclusions": 32,
+      "source_ids": [
+        "osm:way:61461264"
+      ]
+    },
+    {
+      "id": "msa:telford:52.6773:-2.401",
+      "name": "Telford Services",
+      "boundary_parts": 1,
+      "area_m2": 27288,
+      "main_road_exclusions": 22,
+      "source_ids": [
+        "osm:way:61460753"
+      ]
+    },
+    {
+      "id": "msa:tibshelf:53.1377:-1.3306",
+      "name": "Tibshelf Services Northbound",
+      "boundary_parts": 2,
+      "area_m2": 147638,
+      "main_road_exclusions": 6,
+      "source_ids": [
+        "osm:way:61094444",
+        "osm:way:1325489127"
+      ]
+    },
+    {
+      "id": "msa:toddington:51.9477:-0.5021",
+      "name": "Toddington Services (Northbound)",
+      "boundary_parts": 2,
+      "area_m2": 107666,
+      "main_road_exclusions": 5,
+      "source_ids": [
+        "osm:way:123717502",
+        "osm:way:123717503"
+      ]
+    },
+    {
+      "id": "msa:todhills rest area:54.9512:-2.9789",
+      "name": "Todhills Southbound",
+      "boundary_parts": 1,
+      "area_m2": 12659,
+      "main_road_exclusions": 3,
+      "source_ids": [
+        "osm:way:61383210"
+      ]
+    },
+    {
+      "id": "msa:trowell:52.9622:-1.2677",
+      "name": "Trowell Services",
+      "boundary_parts": 2,
+      "area_m2": 82714,
+      "main_road_exclusions": 4,
+      "source_ids": [
+        "osm:way:61094336"
+      ]
+    },
+    {
+      "id": "msa:warwick m40:52.2188:-1.5033",
+      "name": "Warwick Services Southbound M40",
+      "boundary_parts": 1,
+      "area_m2": 94146,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:93202420"
+      ]
+    },
+    {
+      "id": "msa:watford gap:52.3071:-1.122",
+      "name": "Watford Gap Services Northbound",
+      "boundary_parts": 2,
+      "area_m2": 60166,
+      "main_road_exclusions": 16,
+      "source_ids": [
+        "osm:way:123905387",
+        "osm:way:140798200"
+      ]
+    },
+    {
+      "id": "msa:welcome break abington:55.5066:-3.6953",
+      "name": "Welcome Break Abington Services",
+      "boundary_parts": 1,
+      "area_m2": 86440,
+      "main_road_exclusions": 17,
+      "source_ids": [
+        "osm:way:61407175"
+      ]
+    },
+    {
+      "id": "msa:welcome break birchanger green:51.8706:0.1951",
+      "name": "Welcome Break Birchanger Green Services",
+      "boundary_parts": 1,
+      "area_m2": 113112,
+      "main_road_exclusions": 51,
+      "source_ids": [
+        "osm:way:61402467"
+      ]
+    },
+    {
+      "id": "msa:welcome break cardiff gate:51.5394:-3.1299",
+      "name": "Welcome Break Cardiff Gate Services",
+      "boundary_parts": 1,
+      "area_m2": 22623,
+      "main_road_exclusions": 10,
+      "source_ids": [
+        "osm:way:61394820"
+      ]
+    },
+    {
+      "id": "msa:welcome break fleet:51.2958:-0.8576",
+      "name": "Welcome Break Fleet Services",
+      "boundary_parts": 2,
+      "area_m2": 162165,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:32806558",
+        "osm:way:1388660433"
+      ]
+    },
+    {
+      "id": "msa:welcome break gordano:51.4769:-2.708",
+      "name": "Welcome Break Gordano Services",
+      "boundary_parts": 1,
+      "area_m2": 90811,
+      "main_road_exclusions": 5,
+      "source_ids": [
+        "osm:way:64002602"
+      ]
+    },
+    {
+      "id": "msa:welcome break gretna green:55.0083:-3.0857",
+      "name": "Welcome Break Gretna Green Services",
+      "boundary_parts": 1,
+      "area_m2": 108511,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61383496"
+      ]
+    },
+    {
+      "id": "msa:welcome break hartshead moor:53.7134:-1.7455",
+      "name": "Welcome Break Hartshead Moor",
+      "boundary_parts": 2,
+      "area_m2": 130436,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61459355"
+      ]
+    },
+    {
+      "id": "msa:welcome break membury:51.4822:-1.5572",
+      "name": "Welcome Break Membury Services",
+      "boundary_parts": 2,
+      "area_m2": 155081,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:63119108"
+      ]
+    },
+    {
+      "id": "msa:welcome break michaelwood:51.6567:-2.4295",
+      "name": "Welcome Break Michaelwood Services",
+      "boundary_parts": 2,
+      "area_m2": 83725,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:64002098",
+        "osm:way:123307593"
+      ]
+    },
+    {
+      "id": "msa:welcome break oxford:51.7382:-1.098",
+      "name": "Welcome Break Oxford Services",
+      "boundary_parts": 1,
+      "area_m2": 110220,
+      "main_road_exclusions": 47,
+      "source_ids": [
+        "osm:way:61403494"
+      ]
+    },
+    {
+      "id": "msa:welcome break sarn park:51.5348:-3.5776",
+      "name": "Welcome Break Sarn Park Services",
+      "boundary_parts": 1,
+      "area_m2": 69166,
+      "main_road_exclusions": 8,
+      "source_ids": [
+        "osm:way:61395582"
+      ]
+    },
+    {
+      "id": "msa:welcome break sedgemoor:51.2692:-2.9228",
+      "name": "Welcome Break Sedgemoor (North) Services",
+      "boundary_parts": 1,
+      "area_m2": 72176,
+      "main_road_exclusions": 3,
+      "source_ids": [
+        "osm:way:64003198"
+      ]
+    },
+    {
+      "id": "msa:welcome break woodall:53.3153:-1.2821",
+      "name": "Welcome Break Woodall Services Northbound",
+      "boundary_parts": 2,
+      "area_m2": 94954,
+      "main_road_exclusions": 7,
+      "source_ids": [
+        "osm:way:577950836",
+        "osm:way:577950839"
+      ]
+    },
+    {
+      "id": "msa:westmorland gloucester:51.8191:-2.226",
+      "name": "Westmorland Gloucester Services",
+      "boundary_parts": 2,
+      "area_m2": 104400,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:223944268",
+        "osm:way:314032264"
+      ]
+    },
+    {
+      "id": "msa:westmorland tebay:54.451:-2.6088",
+      "name": "Westmorland Tebay Services",
+      "boundary_parts": 2,
+      "area_m2": 231544,
+      "main_road_exclusions": 2,
+      "source_ids": [
+        "osm:way:61374246",
+        "osm:way:61374245"
+      ]
+    }
+  ],
+  "catalogue_sites": 112,
+  "sites_with_boundaries": 112
+}
