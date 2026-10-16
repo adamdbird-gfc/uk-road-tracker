@@ -63,3 +63,38 @@ Next: expand and validate source-way/NCN associations beyond this bounded fixtur
 add an equivalent evidence route for cycling, and integrate the versioned reader,
 ledger and resumable assessment into Android activation. The full NCN collection
 is not yet implemented or ready for a beta APK.
+
+## Portable association bundle (16 October follow-up)
+
+`python -m scripts.ncn_trial.association_bundle --output <temporary-directory>`
+builds a deterministic gzip bundle and release-manifest candidate for the three
+reviewed public Route 1 associations. No journey data, Postgres writes or Firebase
+publication is involved. This is a development format, not an Android downloader.
+
+The reader binds all rows to the reference version, reference geometry, section
+eligibility/routes and projection origin, checks source-way geometry integrity,
+rejects duplicate IDs/unknown sections/unsupported modes, and returns no partial
+registry on failure. A regional bundle with zero associations is valid. Closed
+sections may remain referenced: the existing assessor still excludes them.
+
+The separately supplied canonical content digest detects altered downloads; it is
+not a signature or independent verification of NCN membership. Production must
+pin manifests through a trusted release channel. A reviewed public membership
+source is still required before adding associations: the builder does not infer
+links from nearby lines. Changing versions requires reconciliation rather than
+silently carrying personal totals forward. OSM attribution and membership/source
+checksums travel with the bundle; the separate NCN geometry retains its own
+licence obligations.
+
+The three-way candidate measures 2,219 JSON bytes / 975 gzip bytes. This is not a
+nationwide size estimate. The format currently repeats source-way coordinates to
+support exact legacy geometry identification; compact indexing and regional
+partitioning remain implementation work before nationwide/mobile rollout. The
+existing metric TrialReference is bounded development infrastructure, not a
+national-scale spatial index.
+
+102 NCN tests pass, including six bundle checks covering actual activation through
+the serialized reader, deterministic output, corrupt downloads, stale reference
+geometry/version/projection, invalid rows and empty/closed reference cases.
+Android integration, cycling provenance and nationwide membership expansion remain
+outstanding; no APK or production data deployment is part of this step.
