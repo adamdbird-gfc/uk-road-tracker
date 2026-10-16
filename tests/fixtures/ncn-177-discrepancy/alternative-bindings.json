@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "fixture_sha256": "d828aefa501ff90877335e2dac91e93a307e4a25d61694eccb8eb5e1f9b98eb1",
+  "policy": "Both explicitly identified alignments qualify as alternatives; footway and cycleway modes stay separate.",
+  "scope": "Bounded common interiors only. Endpoint joins and remainder of Route177 are outside this pilot.",
+  "logical_sections": [
+    {
+      "key": "NCN177:FID7345:common-interior",
+      "length_m": 556.7462216158299,
+      "routes": [
+        "NCN:177:reviewed-pilot"
+      ],
+      "official_fid": 7345,
+      "longitude_anchors": [
+        0.461,
+        0.469
+      ]
+    },
+    {
+      "key": "NCN177:FID6680:common-interior",
+      "length_m": 646.8142731368841,
+      "routes": [
+        "NCN:177:reviewed-pilot"
+      ],
+      "official_fid": 6680,
+      "longitude_anchors": [
+        0.4704,
+        0.4795
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "physical_key": "44332298",
+      "physical_start": 332.48551762642677,
+      "physical_end": 889.9743781767536,
+      "logical_key": "NCN177:FID7345:common-interior",
+      "logical_start": 0,
+      "logical_end": 556.7462216158299,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "a015b275dd65039cd69957fcff50fc58a6f6d7126536f1ab4d76d37da0b14b4a"
+    },
+    {
+      "physical_key": "1460076188",
+      "physical_start": 331.9630297886082,
+      "physical_end": 889.615181921947,
+      "logical_key": "NCN177:FID7345:common-interior",
+      "logical_start": 0,
+      "logical_end": 556.7462216158299,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "af293effd5601c5f30e7f559ae39bdf71f43918563c8c652c694157078b72021"
+    },
+    {
+      "physical_key": "94920359",
+      "physical_start": 28.33618904609287,
+      "physical_end": 586.4771809888111,
+      "logical_key": "NCN177:FID7345:common-interior",
+      "logical_start": 556.7462216158299,
+      "logical_end": 0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "9708d03a9286e3dba2cf9214703beb6960b6a3bf25c71bdc5a93a5a992f530cf"
+    },
+    {
+      "physical_key": "1302385780",
+      "physical_start": 77.15185077467338,
+      "physical_end": 723.7861876275573,
+      "logical_key": "NCN177:FID6680:common-interior",
+      "logical_start": 0,
+      "logical_end": 646.8142731368841,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "d9287a54f478286b75d17c765cdfeb3742517d0a12af96f3949dc6c2816a6dcc"
+    },
+    {
+      "physical_key": "62216492",
+      "physical_start": 16.786733635232682,
+      "physical_end": 664.7724480053708,
+      "logical_key": "NCN177:FID6680:common-interior",
+      "logical_start": 646.8142731368841,
+      "logical_end": 0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "e620e6eb1ffa1eb35036e1a1b00e1d241eb71cfe428a9d5ad9167b688fa425a9"
+    }
+  ],
+  "production_ready": false
+}
