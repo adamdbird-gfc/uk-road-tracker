@@ -1,0 +1,13 @@
+# Pedestrian place stays
+
+Automatic walking/running capture now corroborates movement using a bounded recent trajectory rather than summing GPS wobble or trusting an isolated speed reading. Several fixes spanning at least 20 seconds must establish progress beyond their uncertainty and a coherent short path. Looking at short windows preserves laps and walks that return near their start; there is no venue-wide prohibition on recording exercise.
+
+An isolated speed spike no longer cancels pedestrian dwell. Several fresh low-speed fixes still need five minutes to establish arrival. Missing or inaccurate GPS alone is not a stop. The existing road/rail pause policy remains responsible for waiting on a route. Live distance pauses during corroborated dwell; raw observations remain available for saving, collection evidence and diagnostics.
+
+Near a previous stop, a new pedestrian candidate additionally needs repeated coherent movement over 40 seconds. The original candidate fixes are retained so confirmation does not move the route's start forward. A rejected stationary capture can preserve its supported arrival without creating a journey. This keeps automatic tracking armed for genuine departure.
+
+Capture preparation version 3 removes corroborated stays from the derived pedestrian route, including stays followed by departure. It retains original arrival/departure observations, checks movement before ending a stay and does not infer a connection across missing evidence. Existing route/gap validation still applies. `stationary_points` reports removed stay observations; `stationary_tail_points` retains its suffix meaning. Untimed and manually drawn geometry is unchanged. Saved journeys are not automatically rewritten; retry prepares their existing displayed route and available evidence.
+
+The local private replay of the supplied ground recording establishes dwell near the beginning of the recording. Cleanup alone does not fully repair that already recorded journey, so it must not be advertised as recovered mileage or automatically credited. The important live behaviour is ending the capture at corroborated arrival and preventing repeated drift starts. Real-device checks remain necessary for arrival, a slow walk away, a short loop, running laps, intermittent signal and return to a vehicle.
+
+Synthetic JVM regressions cover noisy venue stays with speed spikes, slow walking, running laps, lunch loops, departure retention, stale/duplicate/inaccurate fixes and sampling gaps. Android service tests cover the stop timer surviving a single outside fix. No private GPS exports or real user coordinates are included in committed fixtures. APK packaging and distribution remain a separate release step.

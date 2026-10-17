@@ -39,6 +39,11 @@ final class CaptureMovementEvidence {
     }
     static boolean hasJourneyMovement(List<FootTraceValidator.Sample> samples, String mode) {
         if (samples.size() < 3) return false;
+        if("walking".equals(mode)||"running".equals(mode)){
+            PedestrianMotionWindow window=new PedestrianMotionWindow();
+            for(FootTraceValidator.Sample p:samples){window.accept(p);if(window.moving())return true;}
+            return false;
+        }
         FootTraceValidator.Sample origin = null, previous = null;
         double path = 0, extent = 0;
         long first = 0, last = 0;

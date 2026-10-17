@@ -107,7 +107,8 @@ final class WalkingJourneyPreparation {
                 .put("removed_gps_points",result.removed).put("station_tail_points",stationEnd>=1?samples.size()-stationEnd-1:0)
                 .put("evidence_source",saved!=null?"saved_capture_samples":recovered?"local_movement_log":"coordinates_only")
                 .put("validated_gps_distance_m",result.distance)
-                .put("capture_preparation_version",2).put("rejected_fixes",capture==null?0:capture.rejectedFixes)
+                .put("capture_preparation_version",3).put("rejected_fixes",capture==null?0:capture.rejectedFixes)
+                .put("stationary_points",capture==null?0:capture.stationaryPoints)
                 .put("vehicle_tail_points",vehicleTailPoints)
                 .put("stationary_tail_points",capture==null?0:capture.stationaryTail);
         if(stationEnd>=1) prepared.details.put("station_arrival_time_utc",
