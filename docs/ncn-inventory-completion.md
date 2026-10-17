@@ -70,3 +70,7 @@ national candidate groups still need reconciliation. Android activation,
 map/progress presentation and initial achievements remain integration work.
 This checkpoint changes no production database, Firebase release or APK and does
 not yet satisfy the agreed app beta gate.
+
+The following day's [official scope review](ncn-official-scope-review.md) locates
+exceptions for all 48 plans and identifies eight strongest integration candidates.
+It keeps scope diagnostics separate from progress eligibility and readiness.
