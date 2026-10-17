@@ -264,7 +264,7 @@ public class CaptureService extends Service {
             if (automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
                 observeWalkingStillness(observation);
             if (trusted) {
-                if (lastPoint != null) distanceMetres += lastPoint.distanceTo(observation);
+                if (lastPoint != null && !gpsStillness) distanceMetres += lastPoint.distanceTo(observation);
                 lastPoint = observation;
                 clearStillnessIfMovementContinues(observation);
             }
@@ -662,6 +662,9 @@ public class CaptureService extends Service {
     }
 
     private void clearStillnessIfMovementContinues(Location location) {
+        // Pedestrian departure is decided by the recent trajectory in
+        // observeWalkingStillness, not by one fix outside the accuracy circle.
+        if(gpsStillness && ("walking".equals(mode)||"running".equals(mode)))return;
         if (stationarySince == 0 || stationaryAnchor == null
                 || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f) {
@@ -823,7 +826,7 @@ public class CaptureService extends Service {
                 || location.getAccuracy() > 50f || location.getTime() <= 0
                 || Math.abs(System.currentTimeMillis()-location.getTime()) > 120_000L
                 || (candidateMovementLast != null && location.getTime() <= candidateMovementLast.getTime())) return;
-        if ("walking".equals(candidateMode) && candidateMovementLast != null
+        if (("walking".equals(candidateMode)||"running".equals(candidateMode)) && candidateMovementLast != null
                 && !FootTraceValidator.plausible(footSample(candidateMovementLast, 0), footSample(location, 1))) {
             candidatePoints.add(new Location(location));
             return;
@@ -856,7 +859,7 @@ public class CaptureService extends Service {
         }
         float fromOrigin = candidateOrigin.distanceTo(location);
         float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
-        boolean walking = "walking".equals(candidateMode);
+        boolean walking = "walking".equals(candidateMode)||"running".equals(candidateMode);
         MovementDiagnostics.recordEvent(this, "journey_candidate_sample",
                 "mode=" + candidateMode
                         + "; elapsed_ms=" + (System.currentTimeMillis() - candidateStartedAtMs)
@@ -874,6 +877,8 @@ public class CaptureService extends Service {
         List<FootTraceValidator.Sample> startEvidence = new ArrayList<>();
         for (int i = 0; i < candidatePoints.size(); i++) startEvidence.add(footSample(candidatePoints.get(i), i));
         if (!CaptureMovementEvidence.hasJourneyMovement(startEvidence, candidateMode)) return;
+        if(walking && departureAnchor!=null && fromStop<=75+location.getAccuracy()
+                && !PedestrianMotionWindow.sustainedDeparture(startEvidence))return;
         String confirmedMode = candidateMode;
         String confirmedStart = candidateStartedAt;
         MovementDiagnostics.recordEvent(this, "journey_candidate_confirmed",
@@ -1192,8 +1197,9 @@ public class CaptureService extends Service {
                     journey.put("capture_validation", new JSONObject().put("version", 1)
                             .put("resolved", validated.resolved)
                             .put("timing_available", validated.timed).put("removed_gps_points", validated.removed)
-                            .put("validated_points", cleaned.size()).put("capture_preparation_version",2)
-                            .put("rejected_fixes",prepared.rejectedFixes).put("stationary_tail_points",prepared.stationaryTail));
+                            .put("validated_points", cleaned.size()).put("capture_preparation_version",3)
+                            .put("rejected_fixes",prepared.rejectedFixes).put("stationary_tail_points",prepared.stationaryTail)
+                            .put("stationary_points",prepared.stationaryPoints));
                     journey.put("distance_source", validated.resolved && validated.timed ? "validated_gps" : "gps_unverified");
                 }
                 JSONArray routeSamples = sampleCoordinates(routePoints);
@@ -1231,6 +1237,9 @@ public class CaptureService extends Service {
                 }
                 if (savedAutomatic && !CaptureMovementEvidence.hasJourneyMovement(movementEvidence, persistedMode)) {
                     discarded = true;
+                    // A false start can still establish a real stay. Preserve
+                    // its origin evidence without creating a phantom journey.
+                    if(arrivalPlace!=null)PlaceAnchorStore.record(getApplicationContext(),journey);
                     MovementDiagnostics.recordEvent(getApplicationContext(), "capture_rejected_no_movement",
                             "Mode: " + savedMode + "; cleaned recording did not establish a journey.");
                     // Save any pending handoff before retiring the rejected leg, too.
