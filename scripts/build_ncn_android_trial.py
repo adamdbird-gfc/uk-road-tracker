@@ -51,7 +51,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--plans',type=Path,required=True)
     parser.add_argument('--trial-root',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);a=parser.parse_args()
     payload=build(a.plans,a.trial_root);raw=json.dumps(payload,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
-    a.output.mkdir(parents=True,exist_ok=True);(a.output/'ncn-trial.json.gz').write_bytes(gzip.compress(raw,mtime=0))
+    a.output.mkdir(parents=True,exist_ok=True);(a.output/'ncn-trial.bin').write_bytes(gzip.compress(raw,mtime=0))
     (a.output/'ncn-trial-manifest.json').write_text(json.dumps({'schema_version':1,'sha256':hashlib.sha256(raw).hexdigest(),
         'scope':payload['scope'],'route_keys':KEYS,'whole_published_route_ready':False},indent=2)+'\n')
     print('Compiled',len(payload['routes']),'inventories',len(payload['paths']),'source-way associations;',len(raw),'JSON bytes')

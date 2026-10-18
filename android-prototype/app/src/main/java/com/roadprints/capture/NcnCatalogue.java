@@ -64,7 +64,7 @@ final class NcnCatalogue {
     }
     static NcnCatalogue load(Context context) throws Exception {
         JSONObject manifest=new JSONObject(new String(read(context.getAssets().open("ncn-trial/ncn-trial-manifest.json")),StandardCharsets.UTF_8));
-        try(InputStream in=new GZIPInputStream(context.getAssets().open("ncn-trial/ncn-trial.json.gz"))){return new NcnCatalogue(read(in),manifest);}
+        try(InputStream in=new GZIPInputStream(context.getAssets().open("ncn-trial/ncn-trial.bin"))){return new NcnCatalogue(read(in),manifest);}
     }
     static byte[] read(InputStream input) throws Exception {
         try(InputStream in=input;ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buffer=new byte[8192];int n;while((n=in.read(buffer))!=-1){if(out.size()+n>12_000_000)throw new IllegalArgumentException("NCN input too large");out.write(buffer,0,n);}return out.toByteArray();}

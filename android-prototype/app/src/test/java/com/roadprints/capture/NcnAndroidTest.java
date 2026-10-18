@@ -66,7 +66,7 @@ public class NcnAndroidTest {
         ledger.remove("one");ledger.remove("two");ledger.remove("cycle");assertEquals(0,ledger.metres("NCN:344","combined"),0);
     }
     @Test public void corruptedDownloadOrPublishedScopeCannotLoad() throws Exception {
-        byte[] raw;try(GZIPInputStream in=new GZIPInputStream(app().getAssets().open("ncn-trial/ncn-trial.json.gz"))){raw=NcnCatalogue.read(in);}
+        byte[] raw;try(GZIPInputStream in=new GZIPInputStream(app().getAssets().open("ncn-trial/ncn-trial.bin"))){raw=NcnCatalogue.read(in);}
         JSONObject manifest=new JSONObject(new String(NcnCatalogue.read(app().getAssets().open("ncn-trial/ncn-trial-manifest.json")),StandardCharsets.UTF_8));
         byte[] edited=raw.clone();edited[edited.length/2]^=1;try{new NcnCatalogue(edited,manifest);fail();}catch(IllegalArgumentException expected){}
         JSONObject root=new JSONObject(new String(raw,StandardCharsets.UTF_8));root.put("whole_published_route_ready",true);edited=root.toString().getBytes(StandardCharsets.UTF_8);manifest.put("sha256",NcnJson.hash(edited));try{new NcnCatalogue(edited,manifest);fail();}catch(IllegalArgumentException expected){}
@@ -87,8 +87,8 @@ public class NcnAndroidTest {
         app.getSharedPreferences("roadprints_ncn_internal_trial_v1",0).edit().putBoolean("enabled",true).commit();
         java.lang.reflect.Method assess=NcnProgressStore.class.getDeclaredMethod("assess",Context.class);assess.setAccessible(true);
         NcnProgressStore.Snapshot first=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertTrue(first.ledger.metres("NCN:344","combined")>0);
-        File directory=new File(app.getFilesDir(),"ncn-trial/"+first.catalogue.version);File cache=new File(directory,NcnJson.hash("foot".getBytes(StandardCharsets.UTF_8))+".json");byte[] checkpoint=Files.readAllBytes(cache.toPath());
-        NcnProgressStore.Snapshot resumed=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertArrayEquals(checkpoint,Files.readAllBytes(cache.toPath()));assertEquals(first.ledger.metres("NCN:344","combined"),resumed.ledger.metres("NCN:344","combined"),.001);
+        File directory=new File(app.getFilesDir(),"ncn-trial/"+first.catalogue.version);File cache=new File(directory,NcnJson.hash("foot".getBytes(StandardCharsets.UTF_8))+".json");byte[] checkpoint=Files.readAllBytes(cache.toPath());assertTrue(cache.setLastModified(1000000L));
+        NcnProgressStore.Snapshot resumed=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertArrayEquals(checkpoint,Files.readAllBytes(cache.toPath()));assertEquals(1000000L,cache.lastModified());assertEquals(first.ledger.metres("NCN:344","combined"),resumed.ledger.metres("NCN:344","combined"),.001);
         assertTrue(archive.delete());NcnProgressStore.Snapshot deleted=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertEquals(0,deleted.ledger.metres("NCN:344","combined"),0);assertFalse(cache.exists());
     }
 }
