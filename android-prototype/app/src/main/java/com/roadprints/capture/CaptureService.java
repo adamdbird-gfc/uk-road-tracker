@@ -1189,6 +1189,7 @@ public class CaptureService extends Service {
                     for (int i = 0; i < routePoints.size(); i++) evidence.add(footSample(routePoints.get(i), i));
                     WalkingCaptureEvidence.Result prepared=WalkingCaptureEvidence.prepare(evidence);
                     FootTraceValidator.Result validated = prepared.route;
+                    WalkingArrivalTiming.apply(journey,WalkingArrivalTiming.candidate(evidence,prepared));
                     journey.put("original_distance_meters", routeDistanceMetres(routePoints));
                     List<Location> cleaned = new ArrayList<>();
                     for (FootTraceValidator.Sample point : validated.samples) cleaned.add(routePoints.get(point.index));

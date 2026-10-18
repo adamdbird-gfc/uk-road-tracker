@@ -432,6 +432,7 @@ public final class MatchingCoordinator {
                     JSONObject stages=stored.optJSONObject(key);if(stages==null)stages=new JSONObject();
                     stages.put("foot_matching","complete");stored.put(key,stages);
                 }
+                if(walking!=null && walking.validated)WalkingArrivalTiming.apply(stored,walking.arrival);
                 stored.remove("error_summary");stored.put("processing_completed_at",Instant.now().toString());
                 JourneyStore.save(app,stored);
             }
@@ -517,6 +518,7 @@ public final class MatchingCoordinator {
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
             if (!stored.has("raw_capture_samples") && walking.recoveredSamples.length() > 0)
                 stored.put("raw_capture_samples", walking.recoveredSamples);
+            WalkingArrivalTiming.apply(stored,walking.arrival);
             stored.put("walking_validation", walking.details);
             stored.put("matched_walking_distance_meters",result.getDouble("matched_distance_m"));
             if(!walkingPartial) {

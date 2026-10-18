@@ -111,4 +111,37 @@ public class WalkingMatchingIntegrationTest {
         assertEquals(coordinates.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
         assertTrue(stored.getString("error_summary").contains("moving GPS gap"));
     }
+    private JSONObject longIndoorStay()throws Exception{
+        JSONArray samples=new JSONArray(),coords=new JSONArray();
+        for(int i=0;i<189;i++){
+            double metres=i<9?i*20:160+i%3*3;long time=i<9?100000+i*20000:280000+(i-9)*10000L;
+            coords.put(new JSONArray().put(metres/111195).put(0));
+            samples.put(new JSONArray().put(metres/111195).put(0).put(20).put(time).put(i<9?1:i%7==0?2:.2));
+        }
+        return walk().put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords))
+                .put("raw_capture_samples",samples).put("capture_route_samples",samples)
+                .put("started_at",java.time.Instant.ofEpochMilli(100000).toString())
+                .put("ended_at",java.time.Instant.ofEpochMilli(samples.getJSONArray(188).getLong(3)).toString());
+    }
+    @Test public void successfulRematchRepairsOldArrivalTimeAndRepeatedRematchesKeepTheOriginal()throws Exception{
+        JSONObject j=longIndoorStay();String original=j.getString("ended_at"),raw=j.getJSONArray("raw_capture_samples").toString();
+        JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->result(180));coordinator.rematch("walk");await();
+        assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");String corrected=stored.getString("ended_at");
+        assertTrue(java.time.Instant.parse(corrected).toEpochMilli()<700000);
+        assertEquals(original,stored.getString("original_ended_at"));
+        assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+        coordinator.rematch("walk");await();
+        stored=JourneyStore.get(app,"walk");assertEquals(corrected,stored.getString("ended_at"));
+        assertEquals(original,stored.getString("original_ended_at"));
+    }
+    @Test public void failedRematchCannotChangeOldArrivalTime()throws Exception{
+        JSONObject j=longIndoorStay();String original=j.getString("ended_at");JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{throw new IllegalStateException("HTTP 503: unavailable");});
+        coordinator.rematch("walk");await();assertEquals(1,coordinator.snapshot().failed);
+        JSONObject stored=JourneyStore.get(app,"walk");assertEquals(original,stored.getString("ended_at"));
+        assertFalse(stored.has("original_ended_at"));
+    }
+
 }
