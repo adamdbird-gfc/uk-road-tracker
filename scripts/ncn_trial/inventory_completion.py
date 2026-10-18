@@ -19,6 +19,24 @@ from .journey_replay import projector
 from .roundabout_policy import review_roundabouts
 
 
+def inventory_ways(index, roots):
+    """Never label a partial current hierarchy as a complete denominator."""
+    source_ids=set()
+    for identity in roots:
+        members=_route_members(index,identity)
+        if any(members[:4]):
+            raise ValueError('Current source member inventory incomplete; recapture hierarchy')
+        source_ids.update(members[-1])
+    if not source_ids:raise ValueError('Nonempty current source inventory required')
+    ways={}
+    for wid in source_ids:
+        way=index.get(('way',wid))
+        if way is None or len(way.get('nodes',[]))<2 or any(('node',n) not in index for n in way['nodes']):
+            raise ValueError('Complete current source way/node inventory required')
+        ways[wid]={**way,'node_records':[index['node',n] for n in way['nodes']]}
+    return ways
+
+
 def build_plan(key,ways,eligible_sections,paths,metadata):
     scope=key+':source-inventory'
     metadata={**metadata,'scope':scope,'inventory_basis':'all_current_member_source_ways','whole_published_route_ready':False}
@@ -139,18 +157,26 @@ def main():
     import argparse
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--research-root',type=Path,required=True);parser.add_argument('--catalogues',type=Path,required=True)
+    parser.add_argument('--sources',type=Path,help='Explicit complete source-capture directory')
     parser.add_argument('--output',type=Path,required=True);a=parser.parse_args();root=a.research_root
-    fetch=json.loads((root/'confirmed-sources/fetch-manifest.json').read_bytes());raws=[]
-    for record in fetch['sources']:
-        raw=gzip.decompress((root/'confirmed-sources'/record['file']).read_bytes())
-        if hashlib.sha256(raw).hexdigest()!=record['sha256']:raise ValueError('Source snapshot changed')
-        raws.append(raw)
+    source_root=a.sources or root/'confirmed-sources'
+    capture_raw=(source_root/'fetch-manifest.json').read_bytes()
+    fetch=json.loads(capture_raw);raws=[]
+    from .confirmed_paths import selected_routes
+    report=json.loads((root/'physical-national/summary.json').read_bytes())
+    selected_routes(report,fetch)
+    from .source_capture import verified_sources
+    raws=verified_sources(source_root,fetch)
     index,hashes=_source_index(raws)
     leads={r['official_route_key']:r for r in json.loads((root/'physical-national/summary.json').read_bytes())['routes']}
     audits=json.loads((a.catalogues/'summary.json').read_bytes());rows=[];a.output.mkdir(exist_ok=True,parents=True)
+    if {r['route_key'] for r in audits['routes']}!=set(fetch['routes']) or len(audits['routes'])!=len(fetch['routes']):
+        raise ValueError('Catalogue assessment scope differs from captured source scope')
+    if audits.get('source_capture_sha256',hashlib.sha256(capture_raw).hexdigest())!=hashlib.sha256(capture_raw).hexdigest():
+        raise ValueError('Catalogue assessment uses a different source capture')
+    (a.output/'summary.json').unlink(missing_ok=True)
     for audit in audits['routes']:
-        key=audit['route_key'];source_ids=set().union(*[_route_members(index,rid)[-1] for rid in leads[key]['candidate_relation_ids']])
-        ways={wid:{**index['way',wid],'node_records':[index['node',n] for n in index['way',wid]['nodes']]} for wid in source_ids}
+        key=audit['route_key'];ways=inventory_ways(index,leads[key]['candidate_relation_ids']);source_ids=set(ways)
         folder=a.catalogues/key.replace(':','-');paths=();eligible=[]
         if (folder/'reference.json.gz').exists():
             reference=json.loads(gzip.decompress((folder/'reference.json.gz').read_bytes()));meta=reference['metadata'];eligible=reference['sections']
@@ -159,7 +185,9 @@ def main():
             paths=read_bundle(raw,ref,meta['projection_origin'],digest(p));provenance=p['provenance']
         else:
             coords=[(n['lon'],n['lat']) for w in ways.values() for n in w['node_records']]
-            meta={'projection_origin':[(min(x for x,y in coords)+max(x for x,y in coords))/2,(min(y for x,y in coords)+max(y for x,y in coords))/2]}
+            meta={'projection_origin':[(min(x for x,y in coords)+max(x for x,y in coords))/2,(min(y for x,y in coords)+max(y for x,y in coords))/2],
+                'source_snapshot_sha256':digest(sorted(hashes))}
+            if audits.get('official_sha256'):meta['national_reference_sha256']=audits['official_sha256']
             provenance={'attribution':'OpenStreetMap contributors','licence':'ODbL 1.0','source_snapshot_sha256':digest(hashes),'membership_evidence_sha256':digest(sorted(source_ids))}
         ledger,paths,plan=build_plan(key,ways,eligible,paths,meta)
         raw=build_bundle(paths,ledger.reference,meta['projection_origin'],provenance)
@@ -175,7 +203,11 @@ def main():
             'source_inventory_length_m':plan['source_inventory_length_m'],'canonical_inventory_length_m':plan['canonical_inventory_length_m'],
             'roundabout_group_count':len(plan['roundabout_groups']),'unmapped_inventory_m':plan['unmapped_inventory_m'],
             'maximum_supported_coverage_m':plan['maximum_supported_coverage_m'],'whole_published_route_ready':False})
-    (a.output/'summary.json').write_text(json.dumps({'routes':rows,'whole_published_route_ready':False},indent=2)+'\n')
+        print(key,'inventory plan verified;',len(paths),'bound ways;',round(plan['unmapped_inventory_m'],2),'unsupported metres retained',flush=True)
+    temporary=a.output/'summary.json.tmp'
+    temporary.write_text(json.dumps({'routes':rows,'whole_published_route_ready':False,
+        'source_capture_sha256':hashlib.sha256(capture_raw).hexdigest()},indent=2)+'\n')
+    temporary.replace(a.output/'summary.json')
     print('plans',len(rows),'two-gate groups',sum(r['roundabout_group_count'] for r in rows),flush=True)
 
 

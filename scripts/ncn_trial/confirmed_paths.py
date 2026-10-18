@@ -26,6 +26,15 @@ from .saved_paths import KnownPath
 from .roundabout_policy import review_roundabouts
 
 
+class SourceMembershipChanged(ValueError):
+    def __init__(self, identity, previous, current, root):
+        super().__init__('Source membership changed; reassess extent')
+        self.details = {'relation_id': identity, 'current_version': root.get('version'),
+                        'current_timestamp': root.get('timestamp'),
+                        'added_way_ids': sorted(current - previous),
+                        'removed_way_ids': sorted(previous - current)}
+
+
 def eligible_modes(tags):
     if tags.get('highway') in (None,'construction','proposed','motorway','motorway_link'):
         return ()
@@ -40,6 +49,26 @@ def eligible_modes(tags):
         kind=evidence['static_kind']
         if kind=='positive_tag' or (kind=='not_explicitly_tagged' and tags['highway'] in defaults[mode]):modes.append(mode)
     return tuple(modes)
+
+
+def selected_routes(report, fetch):
+    """Keep capture scope explicit; selection never changes span admission."""
+    if not fetch.get('complete') or fetch.get('errors'):
+        raise ValueError('Complete pinned source capture required')
+    keys = fetch.get('routes', [])
+    rows = {r['official_route_key']: r for r in report['routes']}
+    if not keys or len(set(keys)) != len(keys) or not set(keys) <= rows.keys():
+        raise ValueError('Captured route scope missing or duplicated')
+    from .source_capture import STATES
+    selected = [rows[key] for key in sorted(keys)]
+    if any(r['state'] not in STATES or not r['source_geometry_complete']
+           or not r['uk_metadata_anchor'] or r.get('comparison_error') for r in selected):
+        raise ValueError('Unsupported route review scope')
+    expected = {i for r in selected for i in r['candidate_relation_ids']}
+    if expected != set(fetch['seed_relation_ids']):
+        raise ValueError('Captured source roots differ from selected route scope')
+    # New captures pin the triage inputs as well as source response bytes.
+    return selected
 
 
 def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network_hash,provider_by_id):
@@ -64,7 +93,8 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         missing,cycles,unsupported,empty,paths,relations,ways=_route_members(index,identity)
         if missing or cycles or unsupported or empty:raise ValueError('Current member structure incomplete')
         original=profiles[identity]
-        if ways!={w['way_id'] for w in original['ways']}:raise ValueError('Source membership changed; reassess extent')
+        previous={w['way_id'] for w in original['ways']}
+        if ways!=previous:raise SourceMembershipChanged(identity,previous,ways,root)
         roots.append({'id':identity,'version':root.get('version'),'timestamp':root.get('timestamp')})
         member_ids.update(ways)
         for wid,chains in paths.items():roles[wid].extend(chains)
@@ -169,39 +199,56 @@ def main():
     parser.add_argument('--network',type=Path,required=True)
     parser.add_argument('--expected-network-sha256',required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--sources',type=Path,help='Explicit complete source-capture directory')
     a=parser.parse_args();network_raw=gzip.decompress(a.network.read_bytes())
     if hashlib.sha256(network_raw).hexdigest()!=a.expected_network_sha256:raise ValueError('Official source checksum changed')
     network=json.loads(network_raw);root=a.research_root
-    fetch=json.loads((root/'confirmed-sources/fetch-manifest.json').read_bytes())
-    raws=[]
-    for source in fetch['sources']:
-        raw=gzip.decompress((root/'confirmed-sources'/source['file']).read_bytes())
-        if hashlib.sha256(raw).hexdigest()!=source['sha256']:raise ValueError('OSM source checksum changed')
-        raws.append(raw)
+    source_root=a.sources or root/'confirmed-sources'
+    fetch=json.loads((source_root/'fetch-manifest.json').read_bytes())
+    report_raw=(root/'physical-national/summary.json').read_bytes()
+    profile_raw=gzip.decompress((root/'numeric-route-membership-profiles.json.gz').read_bytes())
+    if 'inputs' in fetch and fetch['inputs']!={'physical_report_sha256':hashlib.sha256(report_raw).hexdigest(),
+        'membership_profiles_sha256':hashlib.sha256(profile_raw).hexdigest()}:
+        raise ValueError('Source capture triage inputs changed')
+    report=json.loads(report_raw);selected=selected_routes(report,fetch)
+    from .source_capture import verified_sources
+    raws=verified_sources(source_root,fetch)
     index,hashes=_source_index(raws)
-    profiles={p['relation_id']:p for p in json.load(gzip.open(root/'numeric-route-membership-profiles.json.gz'))['profiles']}
-    report=json.loads((root/'physical-national/summary.json').read_bytes());provider={}
+    profiles={p['relation_id']:p for p in json.loads(profile_raw)['profiles']};provider={}
     for source in json.loads((root/'national-geometry/fetch-manifest.json').read_bytes())['sources']:
         raw=gzip.decompress((root/'national-geometry'/source['file']).read_bytes())
         if hashlib.sha256(raw).hexdigest()!=source['sha256']:raise ValueError('Provider source checksum changed')
         provider[source['relation_id']]=json.loads(raw)
     a.output.mkdir(exist_ok=True,parents=True);audits=[];identities=set()
-    for row in report['routes']:
-        if row['state']!='close_bidirectional_correspondence_candidate':continue
+    # A failed rebuild must not leave an earlier successful batch marker.
+    (a.output/'summary.json').unlink(missing_ok=True)
+    for row in selected:
         key=row['official_route_key'];result=None
         try:result,audit=build_candidate(key,row['candidate_relation_ids'],profiles,index,hashes,network,a.expected_network_sha256,provider)
-        except ValueError as e:audit={'route_key':key,'accepted_way_count':0,'route_hold':str(e),'whole_route_completion_ready':False}
+        except ValueError as e:
+            audit={'route_key':key,'accepted_way_count':0,'route_hold':str(e),'whole_route_completion_ready':False}
+            if isinstance(e,SourceMembershipChanged):audit['source_membership_change']=e.details
+        audit['source_review_state']=row['state']
+        folder=a.output/key.replace(':','-')
+        # A rerun that now holds a route must not leave an earlier catalogue.
+        if result is None and folder.exists():
+            for name in ('reference.json.gz','associations.json.gz'):
+                (folder/name).unlink(missing_ok=True)
         if result:
             raw,payload,metrics=result;folder=a.output/key.replace(':','-');folder.mkdir(exist_ok=True)
             (folder/'associations.json.gz').write_bytes(gzip.compress(raw,mtime=0))
             (folder/'reference.json.gz').write_bytes(gzip.compress(json.dumps(payload,separators=(',',':')).encode(),mtime=0))
             audit['transport']=metrics;identities.update(int(p['way_id']) for p in json.loads(raw)['paths'])
         audits.append(audit);print(key,audit['accepted_way_count'],'accepted',audit.get('held_way_count',0),'held',audit.get('route_hold',''),flush=True)
-    summary={'scope':'First48 close candidate keys; bounded source-span trial catalogues, not whole-route completion',
+    summary={'scope':'Explicit captured candidate keys; bounded source-span trial catalogues, not whole-route completion',
+        'official_sha256':a.expected_network_sha256,
+        'source_capture_sha256':hashlib.sha256((source_root/'fetch-manifest.json').read_bytes()).hexdigest(),
+        'selected_states':sorted({r['state'] for r in selected}),
         'route_keys_assessed':len(audits),'route_keys_with_catalogues':sum(x['accepted_way_count']>0 for x in audits),
         'distinct_accepted_way_ids':len(identities),'routes':audits,'source_fetch_complete':fetch['complete'],
         'whole_route_completion_ready':False,'app_publication_ready':False}
-    (a.output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+    temporary=a.output/'summary.json.tmp';temporary.write_text(json.dumps(summary,indent=2)+'\n')
+    temporary.replace(a.output/'summary.json')
 
 
 if __name__=='__main__':main()
