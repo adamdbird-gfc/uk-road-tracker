@@ -1,6 +1,7 @@
 # National NCN source reconciliation — 18 October 2026
 
 Follow-up: [the six membership holds have been reconciled](ncn-membership-review.md).
+Follow-up: [the six zero-association inventories now have explicit dispositions](ncn-zero-association-determination.md).
 The figures below preserve the initial national assessment checkpoint.
 
 This extends the captured node-backed source assessment beyond the original 48
