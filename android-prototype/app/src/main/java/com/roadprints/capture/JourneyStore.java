@@ -750,6 +750,7 @@ public final class JourneyStore {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         preferences.edit().putLong(DATA_REVISION,
                 preferences.getLong(DATA_REVISION, 0L) + 1L).apply();
+        NcnProgressStore.changed(context);
     }
 
     private static JSONObject read(File file) {

@@ -8,25 +8,28 @@ import java.util.Locale;
 
 /** Small navigation contract: identities only, never archive geometry or journey arrays. */
 final class RoadDetailSelection {
-    static final String MOTORWAY="motorway", A_ROAD="a_road", B_ROAD="b_road", LOCAL="local";
+    static final String MOTORWAY="motorway", A_ROAD="a_road", B_ROAD="b_road", LOCAL="local", NCN="ncn";
     final String kind, label, region, settlementCode, settlementName;
+    String ncnMode="combined";
     RoadDetailSelection(String kind, String label, String region, String code, String name) {
-        if (!(MOTORWAY.equals(kind)||A_ROAD.equals(kind)||B_ROAD.equals(kind)||LOCAL.equals(kind))
+        if (!(MOTORWAY.equals(kind)||A_ROAD.equals(kind)||B_ROAD.equals(kind)||LOCAL.equals(kind)||NCN.equals(kind))
                 || label==null || label.trim().isEmpty()) throw new IllegalArgumentException("Road identity required");
         this.kind=kind; this.label=label.trim(); this.region=region==null?"":region;
         settlementCode=code==null?"":code; settlementName=name==null?"":name;
         if (LOCAL.equals(kind) && settlementCode.isEmpty()) throw new IllegalArgumentException("Local road needs its settlement");
     }
-    String title() { return label+("NI".equals(region)?" · NI":"")+(settlementName.isEmpty()?"":" · "+settlementName); }
+    String title() { if(NCN.equals(kind))return "National Cycle Route "+label.replace("NCN:","");return label+("NI".equals(region)?" · NI":"")+(settlementName.isEmpty()?"":" · "+settlementName); }
     Intent intent(Context context, boolean journeys) {
         return new Intent(context,RoadDetailActivity.class).putExtra("road_kind",kind).putExtra("road_label",label)
                 .putExtra("road_region",region).putExtra("road_settlement",settlementCode)
-                .putExtra("road_settlement_name",settlementName).putExtra("road_journeys",journeys);
+                .putExtra("road_settlement_name",settlementName).putExtra("road_journeys",journeys).putExtra("ncn_mode",ncnMode);
     }
     static RoadDetailSelection from(Intent intent) {
-        return new RoadDetailSelection(intent.getStringExtra("road_kind"),intent.getStringExtra("road_label"),
+        RoadDetailSelection value=new RoadDetailSelection(intent.getStringExtra("road_kind"),intent.getStringExtra("road_label"),
                 intent.getStringExtra("road_region"),intent.getStringExtra("road_settlement"),intent.getStringExtra("road_settlement_name"));
+        String mode=intent.getStringExtra("ncn_mode");if("on_foot".equals(mode)||"cycling".equals(mode))value.ncnMode=mode;return value;
     }
+
     static String normalizeRef(String value) {
         String ref=value.trim().replaceAll("\\s+","").toUpperCase(Locale.ROOT);
         return ref.equals("M6T")||ref.equals("M6TOLL")?"M6 Toll":ref;

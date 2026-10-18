@@ -29,12 +29,13 @@ final class RoadDetailModel {
     }
     final List<JSONArray> covered=new ArrayList<>(), remaining=new ArrayList<>();
     final List<Entry> journeys=new ArrayList<>();
-    boolean fullReference, mapLimited;
+    boolean fullReference, mapLimited, ncn;
     private JSONObject boundary;
     double referenceMetres, uniqueMetres, percent=Double.NaN;
     private static final int MAX_MAP_EDGES=60_000;
 
     static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative) throws Exception {
+        if(RoadDetailSelection.NCN.equals(selection.kind))return NcnProgressStore.detail(context,selection.label,selection.ncnMode);
         JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
         RoadDetailModel output=new RoadDetailModel();output.boundary=boundary;
@@ -69,6 +70,7 @@ final class RoadDetailModel {
         return output;
     }
     List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) {
+        if(ncn){List<Entry> related=new ArrayList<>();for(Entry e:journeys)if(e.near(latitude,longitude))related.add(e);return related;}
         Set<String> ids=new HashSet<>();for(Entry e:journeys)ids.add(e.id);
         List<Entry> related=new ArrayList<>();
         JourneyStore.forEach(context,journey->{

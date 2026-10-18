@@ -33,6 +33,7 @@
         <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
         <meta-data android:name="firebase_performance_collection_enabled" android:value="false" />
         <activity android:name=".MeasurementSettingsActivity" android:exported="false" />
+        <activity android:name=".NcnTrialActivity" android:exported="false" />
         <activity android:name=".RoadDetailActivity" android:exported="false" />
         <activity android:name=".ProgressActivity" android:exported="false" />
         <activity android:name=".UtilitiesActivity" android:exported="false" />

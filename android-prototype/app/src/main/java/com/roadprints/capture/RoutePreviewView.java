@@ -503,6 +503,13 @@ public class RoutePreviewView extends View {
         invalidate();
     }
 
+    /** Dedicated NCN paints on this child view; never changes global road-layer preferences. */
+    public void setNcnCoverageSegments(List<JSONArray> remaining, List<JSONArray> travelled) {
+        motorwayIncompletePaint.setColor(0xFFF18B24);
+        motorwayPaint.setColor(0xFF8D55C7);
+        setMotorwayCoverageSegments(remaining, travelled);
+    }
+
     public void setMotorwayCoverageSegments(List<JSONArray> incomplete, List<JSONArray> covered) {
         replaceSegments(incompleteMotorwaySegments, incomplete);
         replaceSegments(coveredMotorwaySegments, covered);
