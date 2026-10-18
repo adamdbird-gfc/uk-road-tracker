@@ -662,9 +662,9 @@ public class CaptureService extends Service {
     }
 
     private void clearStillnessIfMovementContinues(Location location) {
-        // Pedestrian departure is decided by the recent trajectory in
-        // observeWalkingStillness, not by one fix outside the accuracy circle.
-        if(gpsStillness && ("walking".equals(mode)||"running".equals(mode)))return;
+        // The corroborated GPS detector owns departure for every mode. A
+        // single fix rejected by that detector must not reset its deadline.
+        if(gpsStillness && walkingStillness.quiet(System.currentTimeMillis()))return;
         if (stationarySince == 0 || stationaryAnchor == null
                 || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f) {

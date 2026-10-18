@@ -212,20 +212,22 @@ public class RoutePreviewView extends View {
         float routeFraction = Math.min(1, discoveryFraction / .65f);
         int total = 0;
         for (DiscoveryReplay.Section section : discoveryReplay.routes) total += section.points.length();
-        float remaining = total * routeFraction;
-        for (DiscoveryReplay.Section section : discoveryReplay.routes) {
-            float fraction = Math.min(1, Math.max(0, remaining / section.points.length()));
-            drawReplaySection(canvas, section, fraction, false);
-            remaining -= section.points.length();
+        for(int pass=0;pass<2;pass++){
+            float remaining = total * routeFraction;
+            for (DiscoveryReplay.Section section : discoveryReplay.routes) {
+                float fraction = Math.min(1, Math.max(0, remaining / section.points.length()));
+                drawReplaySection(canvas, section, fraction, false,pass==0);
+                remaining -= section.points.length();
+            }
         }
         if (discoveryFraction > .65f) {
             float fraction = Math.min(1, (discoveryFraction - .65f) / .35f);
-            for (DiscoveryReplay.Section section : discoveryReplay.discoveries)
-                drawReplaySection(canvas, section, fraction, true);
+            for(int pass=0;pass<2;pass++)for (DiscoveryReplay.Section section : discoveryReplay.discoveries)
+                drawReplaySection(canvas, section, fraction, true,pass==0);
         }
     }
 
-    private void drawReplaySection(Canvas canvas, DiscoveryReplay.Section section, float fraction, boolean fresh) {
+    private void drawReplaySection(Canvas canvas, DiscoveryReplay.Section section, float fraction, boolean fresh,boolean halo) {
         if (fraction <= 0) return;
         Path path = new Path();
         for (int i = 0; i < section.points.length(); i++) {
@@ -240,13 +242,10 @@ public class RoutePreviewView extends View {
         replayPaint.setStyle(Paint.Style.STROKE);
         replayPaint.setStrokeCap(Paint.Cap.ROUND);
         replayPaint.setStrokeJoin(Paint.Join.ROUND);
-        replayPaint.setColor(Color.WHITE);
-        replayPaint.setStrokeWidth(dp(fresh ? 11 : 9));
+        replayPaint.setColor(halo?Color.WHITE:fresh?0xFFF7C450:section.color);
+        replayPaint.setStrokeWidth(dp(halo?(fresh?11:9):(fresh?8:5)));
         canvas.drawPath(visible, replayPaint);
-        replayPaint.setColor(fresh ? 0xFFF7C450 : section.color);
-        replayPaint.setStrokeWidth(dp(fresh ? 8 : 5));
-        canvas.drawPath(visible, replayPaint);
-        if (!fresh && fraction < 1) {
+        if (!halo && !fresh && fraction < 1) {
             float[] head = new float[2];
             measure.getPosTan(measure.getLength() * fraction, head, null);
             replayPaint.setStyle(Paint.Style.FILL); replayPaint.setColor(0xFFF7C450);
@@ -600,14 +599,17 @@ public class RoutePreviewView extends View {
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
             if (travelVisible && hasMatchedRoute) {
                 if (routeEditMode) {
+                    for(JSONArray extension:routeExtensions)drawRoute(canvas,extension,routeHaloPaint,null);
                     drawEditableRoutes(canvas);
                     for (JSONArray extension : routeExtensions) {
-                        drawRoute(canvas, extension, routePaint,
-                                flatRoadMapStyle ? null : routeHaloPaint);
+                        drawRoute(canvas, extension, routePaint,null);
                     }
-                } else for (JSONArray segment : matchedSegments) {
-                    drawRoute(canvas, segment, routePaint,
-                            flatRoadMapStyle ? null : routeHaloPaint);
+                } else {
+                    // Paint every outline before any centreline. A later
+                    // section's round white cap must not cut the preceding line.
+                    if(!flatRoadMapStyle)for(JSONArray segment:matchedSegments)
+                        drawRoute(canvas,segment,routeHaloPaint,null);
+                    for(JSONArray segment:matchedSegments)drawRoute(canvas,segment,routePaint,null);
                 }
             } else if (travelVisible && hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint,
@@ -864,6 +866,8 @@ public class RoutePreviewView extends View {
     }
 
     private void drawEditableRoutes(Canvas canvas) {
+        List<Path> activePaths=new ArrayList<>(),selectedPaths=new ArrayList<>(),removedPaths=new ArrayList<>();
+        List<float[]> selectedMarkers=new ArrayList<>();
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             Path activePath = new Path();
@@ -880,8 +884,7 @@ public class RoutePreviewView extends View {
                     boolean selected = selectedRouteEdges.contains(edgeIndex);
                     if (removed || selected) {
                         if (hasActivePath) {
-                            canvas.drawPath(activePath, routeHaloPaint);
-                            canvas.drawPath(activePath, routePaint);
+                            activePaths.add(activePath);
                             activePath = new Path();
                             hasActivePath = false;
                         }
@@ -889,14 +892,10 @@ public class RoutePreviewView extends View {
                         edge.moveTo(x1, y1);
                         edge.lineTo(x2, y2);
                         if (selected) {
-                            canvas.drawPath(edge, routeHaloPaint);
-                            canvas.drawPath(edge, selectedRoutePaint);
-                            float markerRadius = dp(5);
-                            markerPaint.setColor(Color.rgb(218, 55, 55));
-                            canvas.drawCircle((x1 + x2) / 2f, (y1 + y2) / 2f,
-                                    markerRadius, markerPaint);
+                            selectedPaths.add(edge);
+                            selectedMarkers.add(new float[]{(x1+x2)/2f,(y1+y2)/2f});
                         } else if (restoreRouteMode) {
-                            canvas.drawPath(edge, removedRoutePaint);
+                            removedPaths.add(edge);
                         }
                     } else {
                         if (!hasActivePath) {
@@ -907,18 +906,23 @@ public class RoutePreviewView extends View {
                     }
                 } catch (Exception ignored) {
                     if (hasActivePath) {
-                        canvas.drawPath(activePath, routeHaloPaint);
-                        canvas.drawPath(activePath, routePaint);
+                        activePaths.add(activePath);
                         activePath = new Path();
                         hasActivePath = false;
                     }
                 }
             }
             if (hasActivePath) {
-                canvas.drawPath(activePath, routeHaloPaint);
-                canvas.drawPath(activePath, routePaint);
+                activePaths.add(activePath);
             }
         }
+        for(Path path:activePaths)canvas.drawPath(path,routeHaloPaint);
+        for(Path path:selectedPaths)canvas.drawPath(path,routeHaloPaint);
+        for(Path path:activePaths)canvas.drawPath(path,routePaint);
+        for(Path path:selectedPaths)canvas.drawPath(path,selectedRoutePaint);
+        for(Path path:removedPaths)canvas.drawPath(path,removedRoutePaint);
+        markerPaint.setColor(Color.rgb(218,55,55));
+        for(float[] marker:selectedMarkers)canvas.drawCircle(marker[0],marker[1],dp(5),markerPaint);
     }
 
     private void tapNearestRouteEdge(float tapX, float tapY) {

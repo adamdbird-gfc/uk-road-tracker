@@ -7,6 +7,7 @@ public class ContextJourneyModelTest {
     private ContextMap.Evidence context(String kind) {
         ContextMap.Evidence e=new ContextMap.Evidence();e.available=true;
         e.road="road".equals(kind);e.rail="rail".equals(kind);e.outdoor="park".equals(kind);
+        e.throughRoad=e.road;
         e.destination="building".equals(kind)||"parking".equals(kind);e.kind=kind;return e;
     }
     private ContextJourneyModel.Decision fix(ContextJourneyModel m,String mode,int i,long t,double metres,float speed,String kind,boolean station) {
@@ -25,6 +26,11 @@ public class ContextJourneyModelTest {
         assertTrue(m.holdPause("unknown",1800000,context("rail")));
         ContextMap.Evidence uncertain=context("road");uncertain.routeAmbiguous=true;
         assertFalse(m.holdPause("driving",1800000,uncertain));
+    }
+    @Test public void parkingOnAResidentialRoadDoesNotHoldDwellOpenIndefinitely(){
+        ContextMap.Evidence residential=context("road");residential.throughRoad=false;
+        assertFalse(new ContextJourneyModel().holdPause("driving",300000,residential));
+        assertTrue(new ContextJourneyModel().holdPause("driving",300000,context("road")));
     }
     @Test public void buildingArrivalUsesStartOfDwell() {
         ContextJourneyModel m=new ContextJourneyModel();fix(m,"driving",0,1000,-200,10,"road",false);

@@ -54,4 +54,16 @@ public class ContextMapTest {
         ContextMap.Evidence e=ContextMap.at(features,51.5,-.1+25/scale,3);
         assertTrue(e.destination);assertTrue(e.routeAmbiguous);
     }
+    @Test public void onlyAccuratelyLocatedThroughRoadsHoldTrafficQueues() throws Exception {
+        JSONArray g=new JSONArray().put(new JSONObject().put("lat",51.499).put("lon",-.1))
+                .put(new JSONObject().put("lat",51.501).put("lon",-.1));
+        JSONObject tags=new JSONObject().put("highway","primary");
+        JSONArray f=new JSONArray().put(new JSONObject().put("tags",tags).put("geometry",g));
+        assertTrue(ContextMap.at(f,51.5,-.1,5).throughRoad);
+        assertFalse(ContextMap.at(f,51.5,-.1,40).throughRoad);
+        tags.put("highway","residential");
+        assertTrue(ContextMap.at(f,51.5,-.1,5).road);
+        assertFalse(ContextMap.at(f,51.5,-.1,5).throughRoad);
+    }
+
 }
