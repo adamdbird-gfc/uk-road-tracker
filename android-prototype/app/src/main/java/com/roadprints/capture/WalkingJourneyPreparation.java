@@ -18,6 +18,7 @@ final class WalkingJourneyPreparation {
         final JSONArray validatedSamples=new JSONArray();
         JSONObject quality;
         double distance;
+        WalkingArrivalTiming.Candidate arrival;
     }
     static Prepared prepare(Context context, JSONObject journey) throws Exception {
         JSONArray coords=journey.getJSONObject("route_geometry").getJSONArray("coordinates");
@@ -96,6 +97,8 @@ final class WalkingJourneyPreparation {
                 "This walking recording contains a GPS gap that cannot be validated. Your original recording is preserved.");
         Prepared prepared=new Prepared(); prepared.validated=nativeWalk && result.timed;
         prepared.distance=result.distance;
+        prepared.arrival=prepared.validated?WalkingArrivalTiming.fromRaw(saved,leg):null;
+        if(saved==null)prepared.arrival=WalkingArrivalTiming.candidate(leg,capture);
         for(FootTraceValidator.Sample point:result.samples) prepared.points.put(new JSONObject().put("lng",point.lon).put("lat",point.lat));
         for(FootTraceValidator.Sample point:result.samples) prepared.validatedSamples.put(sampleJson(point));
         prepared.quality=CaptureQualityValidator.inspect(prepared.validatedSamples,true);
