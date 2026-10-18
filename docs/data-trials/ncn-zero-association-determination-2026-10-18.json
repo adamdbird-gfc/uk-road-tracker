@@ -1,0 +1,1930 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-18",
+  "purpose": "Disposition of six zero-association source inventories; report only",
+  "official_snapshot_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2",
+  "catalogue_audit_sha256": "3d6031a61fedff3e05a8a34db57438d5a0270fc65e8fe6ee07f0ae55c10b8b8b",
+  "field_metadata_sha256": "2f962e7f731dc1a72c0ce79acf90a3f248eedb921d2b17fe8d05b6f388e42e94",
+  "routes": [
+    {
+      "route_key": "NCN:228",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 5649.324723293566,
+      "unmapped_inventory_m": 5649.324723293566,
+      "official_feature_count": 15,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "Alternative Route",
+          "status": "Open",
+          "description": "TrafficFree",
+          "union_m": 2593.570873640897,
+          "feature_count": 8
+        },
+        {
+          "category": "Alternative Route",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 3011.5300388970945,
+          "feature_count": 7
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 5605.1009125379915,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 1235.0696431466795,
+            "source_without_official_m": 1247.599158449623
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 47.08946423622608,
+            "source_without_official_m": 41.926819307093965
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 0.0,
+            "source_without_official_m": 0.0
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 1239517,
+          "version": 28,
+          "timestamp": "2024-12-19T21:58:02Z"
+        }
+      ],
+      "held_way_count": 35,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 35
+      },
+      "inputs": {
+        "plan_sha256": "c5f21f8d367d6a604994828394128fe1e472835121a2d3c3b9f9a93617120cd8",
+        "association_sha256": "2cc6a6a8fd11dafaa9911822a82b8a7b581773c8f29565469d94c45a2d445dbf"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 3038,
+          "SegmentID": 217,
+          "GlobalID": "4f3f6d77-d761-4b25-8dc9-6487e62b2dab"
+        },
+        {
+          "FID": 6749,
+          "SegmentID": 26445,
+          "GlobalID": "bb42c4c7-28bb-4a86-bd02-976183d33c95"
+        },
+        {
+          "FID": 6957,
+          "SegmentID": 19891,
+          "GlobalID": "a3d2ae8f-17d6-4dff-a371-70bd8544c610"
+        },
+        {
+          "FID": 6996,
+          "SegmentID": 24394,
+          "GlobalID": "44597028-cd41-42bf-be7e-359fdded40a1"
+        },
+        {
+          "FID": 6997,
+          "SegmentID": 27010,
+          "GlobalID": "360abcbc-ac9a-4e47-a396-9f25d9b8b021"
+        },
+        {
+          "FID": 11443,
+          "SegmentID": 27011,
+          "GlobalID": "649be552-ce05-452c-867f-493c8ac8618a"
+        },
+        {
+          "FID": 11779,
+          "SegmentID": 32768,
+          "GlobalID": "9b99e698-356f-480e-bdda-9b5ffabf3f78"
+        },
+        {
+          "FID": 14852,
+          "SegmentID": 7889,
+          "GlobalID": "6f7b8b35-f61f-4f6f-a42d-411bed7d927f"
+        },
+        {
+          "FID": 15209,
+          "SegmentID": 10583,
+          "GlobalID": "76df953e-509a-4fa0-8355-fae340e27162"
+        },
+        {
+          "FID": 24915,
+          "SegmentID": 53731,
+          "GlobalID": "4b327ad8-5d91-4db7-b07f-4f15740c27ae"
+        },
+        {
+          "FID": 26380,
+          "SegmentID": 33480,
+          "GlobalID": "cedfab76-5e56-40e9-ac99-0f05a39fac3d"
+        },
+        {
+          "FID": 29253,
+          "SegmentID": 28455,
+          "GlobalID": "8f12368e-c880-46a7-95e4-a5414559e5f0"
+        },
+        {
+          "FID": 30388,
+          "SegmentID": 24395,
+          "GlobalID": "8dbab25c-8e02-4a9e-9334-eaa75c87a214"
+        },
+        {
+          "FID": 30389,
+          "SegmentID": 27012,
+          "GlobalID": "ce3f83aa-1375-46d8-8e6d-9a7cd7fd0061"
+        },
+        {
+          "FID": 37111,
+          "SegmentID": 36041,
+          "GlobalID": "b202c738-241f-48b2-b934-25b0ca179bb7"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "retain_numbered_alternative_pending_policy",
+      "next_evidence": "Review the numbered alternative as its own scope; establish any parent/shared physical bindings and completion rule, then rerun node, extent and mode checks. Do not silently relabel as Main Route."
+    },
+    {
+      "route_key": "NCN:626",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 6635.21067916126,
+      "unmapped_inventory_m": 6635.21067916126,
+      "official_feature_count": 1,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "Temporary Diversion",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 80.97648969220486,
+          "feature_count": 1
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 80.97648969220486,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 77.65747010324553,
+            "source_without_official_m": 6628.702916695558
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 60.0283910902467,
+            "source_without_official_m": 6594.570537832851
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 18.977530861016735,
+            "source_without_official_m": 6524.023790957477
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 9300597,
+          "version": 16,
+          "timestamp": "2025-12-16T16:22:01Z"
+        }
+      ],
+      "held_way_count": 32,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 31,
+        "mode_policy_unresolved_or_restricted": 1
+      },
+      "inputs": {
+        "plan_sha256": "a5485966364f785b4f3f87eae542dde1a5c8191f1715279ddede5c6d1514d684",
+        "association_sha256": "6a33cd4463f3a2e6e94457e3870c81a06ef1b18db0d464aa0f8c771279a54dba",
+        "source_relation_response_sha256": "31be6550d0c5ce9cfcd02389381ace6daebfce32eca61eec43fe788b466fb7a7"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 671,
+          "SegmentID": 51850,
+          "GlobalID": "2f33dee0-ef9c-4b7f-b452-c8817abd8cf5"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "retain_ncn_reference_geometry_gap",
+      "next_evidence": "Acquire authoritative open-section geometry for the two published disconnected sections; preserve proposed gaps, verify source identity and access, and reassess the current restricted way. The 81m diversion is not the full route.",
+      "restricted_source_way": {
+        "way_id": 359405104,
+        "source_version": 12,
+        "source_timestamp": "2025-01-03T17:08:59Z",
+        "tags": {
+          "access": "no",
+          "bicycle": "yes",
+          "bridge": "yes",
+          "check_date": "2023-04-16",
+          "construction": "bridge",
+          "foot": "designated",
+          "highway": "construction",
+          "note": "Bridge damaged and closed off. Still closed Apr 2023.",
+          "segregated": "no",
+          "surface": "wood"
+        },
+        "current_status_independently_verified": false
+      }
+    },
+    {
+      "route_key": "RCN:11",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 51992.997916710716,
+      "unmapped_inventory_m": 51992.997916710716,
+      "official_feature_count": 20,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 23156.08446064957,
+          "feature_count": 20
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 23156.08446064957,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 4145.367774019363,
+            "source_without_official_m": 32955.06125754948
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 21.268461505490603,
+            "source_without_official_m": 28781.534158580485
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 0.0,
+            "source_without_official_m": 28781.534158580485
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 21898,
+          "version": 36,
+          "timestamp": "2025-12-01T15:03:17Z"
+        },
+        {
+          "id": 1186347,
+          "version": 27,
+          "timestamp": "2026-05-31T21:15:32Z"
+        },
+        {
+          "id": 11343901,
+          "version": 5,
+          "timestamp": "2026-02-11T21:34:53Z"
+        }
+      ],
+      "held_way_count": 105,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 101,
+        "mode_policy_unresolved_or_restricted": 3,
+        "logical_branch_policy_required": 1
+      },
+      "inputs": {
+        "plan_sha256": "829d65c7d6331bae8e33821e3c9a4448caaed7fee7f0a7d39176e04ecacc346c",
+        "association_sha256": "e1e367a0a681cf92b56800608dec18d3be057acc6a53c44dd626df3924242e8c"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 2916,
+          "SegmentID": 49854,
+          "GlobalID": "8d016da0-c89b-4ad3-b682-a4e9993ba4cb"
+        },
+        {
+          "FID": 2917,
+          "SegmentID": 51486,
+          "GlobalID": "69d5fb7e-4ea2-441e-a7da-b2175d4997e2"
+        },
+        {
+          "FID": 4632,
+          "SegmentID": 49848,
+          "GlobalID": "6c1223f1-3cb9-41e2-bc64-4389a942c4a2"
+        },
+        {
+          "FID": 4633,
+          "SegmentID": 51078,
+          "GlobalID": "974ebef9-6aa5-479a-b19d-9b0cc36ead03"
+        },
+        {
+          "FID": 9190,
+          "SegmentID": 49849,
+          "GlobalID": "790264de-a18d-45f5-a853-5d3ef48971de"
+        },
+        {
+          "FID": 9737,
+          "SegmentID": 49716,
+          "GlobalID": "ac4fb0e3-3281-4474-894c-783721c0e0bb"
+        },
+        {
+          "FID": 9903,
+          "SegmentID": 49853,
+          "GlobalID": "43731448-55c6-428c-b05f-5aa117c844e5"
+        },
+        {
+          "FID": 10533,
+          "SegmentID": 50689,
+          "GlobalID": "c743f32b-de3b-48ce-97f6-3352bc8e9b02"
+        },
+        {
+          "FID": 13427,
+          "SegmentID": 49019,
+          "GlobalID": "3f318cfc-86a2-44fb-8809-124246848c9a"
+        },
+        {
+          "FID": 21442,
+          "SegmentID": 49020,
+          "GlobalID": "5853c23d-1e74-4962-8cb9-0511cde0f438"
+        },
+        {
+          "FID": 21443,
+          "SegmentID": 51080,
+          "GlobalID": "66f950f2-48da-4c22-a470-473be41c7964"
+        },
+        {
+          "FID": 21528,
+          "SegmentID": 49847,
+          "GlobalID": "93733e61-3224-4ca3-990b-6470b6597d46"
+        },
+        {
+          "FID": 22449,
+          "SegmentID": 49021,
+          "GlobalID": "3e22d04d-c288-4bfd-be8e-72b97b792260"
+        },
+        {
+          "FID": 22450,
+          "SegmentID": 51223,
+          "GlobalID": "6c8666d8-ef3d-47a6-a4cf-aecbd3384c46"
+        },
+        {
+          "FID": 24216,
+          "SegmentID": 49942,
+          "GlobalID": "b3d4417c-1b81-4f7e-90e3-c626a629ac96"
+        },
+        {
+          "FID": 25102,
+          "SegmentID": 49850,
+          "GlobalID": "8ab3b311-a172-4765-959d-06c6902024dc"
+        },
+        {
+          "FID": 25103,
+          "SegmentID": 49851,
+          "GlobalID": "60b43d62-23c1-4b0e-bee2-0c731b1d2d43"
+        },
+        {
+          "FID": 28733,
+          "SegmentID": 51079,
+          "GlobalID": "5461be70-79cb-46fb-9087-3b30507dffef"
+        },
+        {
+          "FID": 31181,
+          "SegmentID": 49717,
+          "GlobalID": "09c8b50d-373f-4334-ab66-0f2a32749cf6"
+        },
+        {
+          "FID": 31182,
+          "SegmentID": 49852,
+          "GlobalID": "89c7a474-9829-4290-8870-1328d9e68ddb"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "defer_regional_inventory",
+      "next_evidence": "Obtain maintained regional authority geometry and explicit category/status evidence, resolve extent/access/branch exceptions, or obtain explicit evidence of NCN redesignation. N/A is not Main Route and null status is not Open."
+    },
+    {
+      "route_key": "RCN:17",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 39528.37244421821,
+      "unmapped_inventory_m": 39528.37244421821,
+      "official_feature_count": 65,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 30234.313173848288,
+          "feature_count": 64
+        },
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "TrafficFree",
+          "union_m": 57.274283402106896,
+          "feature_count": 1
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 30291.587457250396,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 5502.7796309016185,
+            "source_without_official_m": 14773.428346544193
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 28.082316295752136,
+            "source_without_official_m": 9311.973284585718
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 0.0,
+            "source_without_official_m": 9296.427217239294
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 8811,
+          "version": 68,
+          "timestamp": "2026-10-09T17:58:53Z"
+        }
+      ],
+      "held_way_count": 130,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 121,
+        "logical_branch_policy_required": 9
+      },
+      "inputs": {
+        "plan_sha256": "d05877ab5db84cd7cd8445a198f2b41f5f9433f22690e6201a2db72a370918a5",
+        "association_sha256": "0f4f8c7beba39ac4c71d1c3f93c03a2670b5aa62d4f580fec9eca3c5f8338a6a"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 44,
+          "SegmentID": 48306,
+          "GlobalID": "175a9318-05d8-4548-a400-aa032366aaad"
+        },
+        {
+          "FID": 1176,
+          "SegmentID": 48287,
+          "GlobalID": "85c85f8b-9422-4eae-815f-22d5b02ce421"
+        },
+        {
+          "FID": 1600,
+          "SegmentID": 48294,
+          "GlobalID": "319e00de-3a77-479e-8cb8-4610021ad91b"
+        },
+        {
+          "FID": 1601,
+          "SegmentID": 48295,
+          "GlobalID": "1f8f818a-3a1c-4cf0-8af1-6d862569c83f"
+        },
+        {
+          "FID": 1602,
+          "SegmentID": 48296,
+          "GlobalID": "d4d527e1-f9b0-4ae4-a109-531d08938fab"
+        },
+        {
+          "FID": 2552,
+          "SegmentID": 50266,
+          "GlobalID": "dd011c22-c65b-4087-823a-6427617d54d5"
+        },
+        {
+          "FID": 2950,
+          "SegmentID": 48317,
+          "GlobalID": "21f403dd-e358-4efd-bf46-1ae1ee5e651b"
+        },
+        {
+          "FID": 2951,
+          "SegmentID": 50260,
+          "GlobalID": "1cfef705-7371-4470-8f98-459bc7627a48"
+        },
+        {
+          "FID": 5255,
+          "SegmentID": 50244,
+          "GlobalID": "71af839e-d402-464f-ab60-1dc9f6d33520"
+        },
+        {
+          "FID": 6278,
+          "SegmentID": 49278,
+          "GlobalID": "f74c675e-1651-4d21-9aa0-fc2a52e66a90"
+        },
+        {
+          "FID": 7077,
+          "SegmentID": 50248,
+          "GlobalID": "e36af1aa-dfa9-47d4-ab8a-6df4730e8dce"
+        },
+        {
+          "FID": 7086,
+          "SegmentID": 48311,
+          "GlobalID": "dee387f8-746a-4f27-bee5-f8097ad9510d"
+        },
+        {
+          "FID": 7087,
+          "SegmentID": 50240,
+          "GlobalID": "63212610-33ac-4881-b2b6-57a3bac6354b"
+        },
+        {
+          "FID": 8105,
+          "SegmentID": 48290,
+          "GlobalID": "61f85f82-4e26-47cf-97b4-412265da43c1"
+        },
+        {
+          "FID": 8106,
+          "SegmentID": 48288,
+          "GlobalID": "b8808624-f94e-4b0e-8700-b2141507a5cc"
+        },
+        {
+          "FID": 11129,
+          "SegmentID": 48293,
+          "GlobalID": "5dd1316d-b871-4350-a56a-f7e4a4405023"
+        },
+        {
+          "FID": 12043,
+          "SegmentID": 50257,
+          "GlobalID": "30815e54-890e-4860-a0c8-d88501964691"
+        },
+        {
+          "FID": 12181,
+          "SegmentID": 48316,
+          "GlobalID": "31ec27f6-2728-4547-82ab-4618dad1d65a"
+        },
+        {
+          "FID": 12182,
+          "SegmentID": 50267,
+          "GlobalID": "f75525a4-0ef6-40d3-93d6-ea8af5bf9533"
+        },
+        {
+          "FID": 12301,
+          "SegmentID": 49275,
+          "GlobalID": "34d13797-6789-48f8-be04-d3cfcb07f8d0"
+        },
+        {
+          "FID": 12302,
+          "SegmentID": 50250,
+          "GlobalID": "0d10f7ab-7e1d-4bfb-8920-7f0ab8a27113"
+        },
+        {
+          "FID": 12980,
+          "SegmentID": 49134,
+          "GlobalID": "53707b2a-2fa0-41dd-a2b3-1f76cc7a2da5"
+        },
+        {
+          "FID": 14481,
+          "SegmentID": 48313,
+          "GlobalID": "7d3de608-d67d-49e6-9749-eb7a16af2602"
+        },
+        {
+          "FID": 14566,
+          "SegmentID": 49135,
+          "GlobalID": "272078ff-fac0-4567-a932-4dd52964f9b4"
+        },
+        {
+          "FID": 15069,
+          "SegmentID": 49195,
+          "GlobalID": "81ad573c-8ef4-4bdd-8bc4-ebc8ce331737"
+        },
+        {
+          "FID": 15070,
+          "SegmentID": 50245,
+          "GlobalID": "7f14769e-187b-4f5d-b75b-140b62c253fd"
+        },
+        {
+          "FID": 15932,
+          "SegmentID": 50246,
+          "GlobalID": "d190c384-69c6-43bd-8167-070a98dd7a3d"
+        },
+        {
+          "FID": 18130,
+          "SegmentID": 49133,
+          "GlobalID": "8bb5f41d-39ab-4d8a-a403-1b4a5648119f"
+        },
+        {
+          "FID": 18131,
+          "SegmentID": 49779,
+          "GlobalID": "2a80d7f1-91ee-40e2-838d-2cb61f17596c"
+        },
+        {
+          "FID": 19323,
+          "SegmentID": 49276,
+          "GlobalID": "f6971e8d-32b3-4b4e-aeba-7ab4c6e5d4ad"
+        },
+        {
+          "FID": 19437,
+          "SegmentID": 50258,
+          "GlobalID": "67e1bf42-a862-4286-8b1a-ef24b4d48643"
+        },
+        {
+          "FID": 20083,
+          "SegmentID": 50253,
+          "GlobalID": "caf6d47c-cc58-49e4-bce1-5968cbb86602"
+        },
+        {
+          "FID": 20179,
+          "SegmentID": 49784,
+          "GlobalID": "e7766b7c-ee87-4505-9d89-95127a95b012"
+        },
+        {
+          "FID": 20290,
+          "SegmentID": 50241,
+          "GlobalID": "19c785a9-8a31-49db-9ae8-29012e2e60d0"
+        },
+        {
+          "FID": 20291,
+          "SegmentID": 48555,
+          "GlobalID": "8cd5b177-b743-48a1-b1ad-faae738aa7a7"
+        },
+        {
+          "FID": 20380,
+          "SegmentID": 50256,
+          "GlobalID": "2659dbb3-2261-4d67-b19e-76d75d1c2cc1"
+        },
+        {
+          "FID": 20796,
+          "SegmentID": 49277,
+          "GlobalID": "083d7567-1ed8-476e-94be-d61e51b7e4b0"
+        },
+        {
+          "FID": 21237,
+          "SegmentID": 50254,
+          "GlobalID": "d3603587-e5e1-4b8b-9725-1886bdd85207"
+        },
+        {
+          "FID": 21363,
+          "SegmentID": 50265,
+          "GlobalID": "160b1f16-f1df-428f-8743-298093b0c634"
+        },
+        {
+          "FID": 21373,
+          "SegmentID": 48299,
+          "GlobalID": "4201cdfe-2050-4835-a912-9231ff1f9cf9"
+        },
+        {
+          "FID": 21542,
+          "SegmentID": 50268,
+          "GlobalID": "8da71ce8-14c5-4428-bedb-bcceecfcb0af"
+        },
+        {
+          "FID": 21543,
+          "SegmentID": 48307,
+          "GlobalID": "2178108d-6658-4258-9314-a37f76592560"
+        },
+        {
+          "FID": 21685,
+          "SegmentID": 48300,
+          "GlobalID": "2395836b-e93f-4994-a765-effbf63d1f0f"
+        },
+        {
+          "FID": 21686,
+          "SegmentID": 50247,
+          "GlobalID": "cb7feb6f-3be3-4f0a-af7a-b3bd108b4304"
+        },
+        {
+          "FID": 21693,
+          "SegmentID": 48314,
+          "GlobalID": "e002ae29-7c56-49f2-ac91-d888e5f68a39"
+        },
+        {
+          "FID": 21812,
+          "SegmentID": 50237,
+          "GlobalID": "cea3971c-b104-47e9-b9f5-4351902579a4"
+        },
+        {
+          "FID": 23105,
+          "SegmentID": 56171,
+          "GlobalID": "3ca81617-571d-42cc-a9c9-6da2857d9256"
+        },
+        {
+          "FID": 25282,
+          "SegmentID": 50239,
+          "GlobalID": "7cb4bcc5-7cbb-451d-b0c8-5ba1140bf74a"
+        },
+        {
+          "FID": 26680,
+          "SegmentID": 50242,
+          "GlobalID": "ac8aaad8-40b3-438b-bac8-15fc0ee98488"
+        },
+        {
+          "FID": 26963,
+          "SegmentID": 48304,
+          "GlobalID": "a0aa1455-e8cb-476e-aea4-6aaf6a9af32c"
+        },
+        {
+          "FID": 27255,
+          "SegmentID": 49778,
+          "GlobalID": "73ce6d1b-9ea9-43fc-849b-0dea16657a49"
+        },
+        {
+          "FID": 27290,
+          "SegmentID": 49777,
+          "GlobalID": "f60001cc-d1d1-47c2-8389-162fb86c70e1"
+        },
+        {
+          "FID": 28080,
+          "SegmentID": 48378,
+          "GlobalID": "3974d227-7df1-4931-b627-0752e958f72a"
+        },
+        {
+          "FID": 29045,
+          "SegmentID": 48312,
+          "GlobalID": "56c907bf-4b59-49ba-8dac-c8063e7f9cb1"
+        },
+        {
+          "FID": 29046,
+          "SegmentID": 49198,
+          "GlobalID": "bfcc7b8f-fb45-47d9-8c5c-edd65bd2a2ce"
+        },
+        {
+          "FID": 29783,
+          "SegmentID": 50249,
+          "GlobalID": "a09d41dc-2484-4756-b939-fe7703d000fb"
+        },
+        {
+          "FID": 30552,
+          "SegmentID": 49197,
+          "GlobalID": "54b5bc09-bea5-44fb-b993-2dc41854fa87"
+        },
+        {
+          "FID": 30597,
+          "SegmentID": 48297,
+          "GlobalID": "874f7ad2-59dd-42bb-a094-90a43c192c43"
+        },
+        {
+          "FID": 30598,
+          "SegmentID": 48377,
+          "GlobalID": "b7a71a48-077f-49bd-8ce3-14e59c6e275e"
+        },
+        {
+          "FID": 31076,
+          "SegmentID": 50251,
+          "GlobalID": "d7f73386-bee8-48c3-b8ad-e41c7fc40a3c"
+        },
+        {
+          "FID": 31962,
+          "SegmentID": 48326,
+          "GlobalID": "dbc146bd-9df2-4176-97d5-aa853d8f7eec"
+        },
+        {
+          "FID": 32508,
+          "SegmentID": 49200,
+          "GlobalID": "0a231271-862d-4755-87f9-0c7456cd1fcb"
+        },
+        {
+          "FID": 32518,
+          "SegmentID": 50238,
+          "GlobalID": "61ad4e1e-8882-4ecc-8204-19371f73feab"
+        },
+        {
+          "FID": 34958,
+          "SegmentID": 48310,
+          "GlobalID": "d73e7f9e-c441-4835-86aa-531b539bf9f7"
+        },
+        {
+          "FID": 35285,
+          "SegmentID": 48302,
+          "GlobalID": "1a06254f-6443-4a4b-b299-547b757eb98d"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "defer_regional_inventory",
+      "next_evidence": "Obtain maintained regional authority geometry and explicit category/status evidence, resolve extent/access/branch exceptions, or obtain explicit evidence of NCN redesignation. N/A is not Main Route and null status is not Open."
+    },
+    {
+      "route_key": "RCN:71",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 121050.8990167502,
+      "unmapped_inventory_m": 121050.8990167502,
+      "official_feature_count": 67,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 36764.789516660414,
+          "feature_count": 45
+        },
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "TrafficFree",
+          "union_m": 8637.44622069435,
+          "feature_count": 22
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 45402.235737354764,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 5356.189922938638,
+            "source_without_official_m": 80966.37313054308
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 333.79882207674655,
+            "source_without_official_m": 75850.64566093519
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 157.00098939383545,
+            "source_without_official_m": 75533.00174101871
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 60197,
+          "version": 186,
+          "timestamp": "2026-06-04T22:08:09Z"
+        },
+        {
+          "id": 12295615,
+          "version": 25,
+          "timestamp": "2026-03-08T11:08:59Z"
+        }
+      ],
+      "held_way_count": 477,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 477
+      },
+      "inputs": {
+        "plan_sha256": "c828a82c220d2e97f124997e2622a52b16b9c289bd250b9111ad8451f0ec9629",
+        "association_sha256": "503a89124e8c358f5b7272205add5afbbeb829bfc7611753a617546e5c2574ce"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 45,
+          "SegmentID": 10322,
+          "GlobalID": "7a803e19-3f5d-4754-9045-4938a1848c3a"
+        },
+        {
+          "FID": 793,
+          "SegmentID": 9970,
+          "GlobalID": "9c3a6f12-532c-4383-bee0-48ca582fedc0"
+        },
+        {
+          "FID": 1530,
+          "SegmentID": 10324,
+          "GlobalID": "cabdbe34-04ee-4bf5-9f48-48089906dc33"
+        },
+        {
+          "FID": 1990,
+          "SegmentID": 35469,
+          "GlobalID": "27a7591e-2f7d-417b-927f-6536fb363c83"
+        },
+        {
+          "FID": 2028,
+          "SegmentID": 42779,
+          "GlobalID": "83fa1650-ee88-4df8-b117-9594f42d0438"
+        },
+        {
+          "FID": 2053,
+          "SegmentID": 39023,
+          "GlobalID": "10ce7717-ce54-4d82-b297-a6486397589c"
+        },
+        {
+          "FID": 2094,
+          "SegmentID": 13335,
+          "GlobalID": "72a38058-7f3a-4e2c-913e-6f9383e17dc9"
+        },
+        {
+          "FID": 2625,
+          "SegmentID": 39403,
+          "GlobalID": "6ad39265-e4b4-4d34-9ffe-a0f67cc3cb3b"
+        },
+        {
+          "FID": 3294,
+          "SegmentID": 39021,
+          "GlobalID": "d3f1e023-76ac-4ae7-b034-3a68a7c5ad00"
+        },
+        {
+          "FID": 4667,
+          "SegmentID": 39022,
+          "GlobalID": "561b759a-07f2-436c-a7f4-ab52200d24cc"
+        },
+        {
+          "FID": 4911,
+          "SegmentID": 39019,
+          "GlobalID": "ab899c5b-ec9f-46f6-9ab9-0b11b5639756"
+        },
+        {
+          "FID": 4978,
+          "SegmentID": 39020,
+          "GlobalID": "6e3fd293-8d30-4498-8be9-61f1ae2ee7d5"
+        },
+        {
+          "FID": 5599,
+          "SegmentID": 42780,
+          "GlobalID": "166b661c-70b0-41f8-9763-a8b4b60941d5"
+        },
+        {
+          "FID": 5850,
+          "SegmentID": 20620,
+          "GlobalID": "ca41655c-d139-4609-a755-ba36f6921faa"
+        },
+        {
+          "FID": 6152,
+          "SegmentID": 17884,
+          "GlobalID": "5f4f7cb3-64e2-43fe-aa9c-a7613a1a9435"
+        },
+        {
+          "FID": 7827,
+          "SegmentID": 10326,
+          "GlobalID": "2a9be341-2bca-4461-8c8d-f887bad24f74"
+        },
+        {
+          "FID": 8480,
+          "SegmentID": 12507,
+          "GlobalID": "ac93d7fe-eff9-4ee3-9538-167fdb4b9eee"
+        },
+        {
+          "FID": 8481,
+          "SegmentID": 22727,
+          "GlobalID": "983e5d60-9b85-4a12-bf42-e151c8abddc0"
+        },
+        {
+          "FID": 9233,
+          "SegmentID": 11161,
+          "GlobalID": "8de6e4ca-36ea-4ad5-af7a-998549e39886"
+        },
+        {
+          "FID": 9361,
+          "SegmentID": 24104,
+          "GlobalID": "7d2e0866-0400-4f35-afab-605a32284381"
+        },
+        {
+          "FID": 9362,
+          "SegmentID": 12510,
+          "GlobalID": "bd5f4170-532f-49b8-97f1-e085ffc6984c"
+        },
+        {
+          "FID": 9625,
+          "SegmentID": 7511,
+          "GlobalID": "84d856c0-ea5e-4226-bed8-5cc6331e0c0a"
+        },
+        {
+          "FID": 9658,
+          "SegmentID": 22917,
+          "GlobalID": "f4d248db-9548-49b8-9240-8e516dffce62"
+        },
+        {
+          "FID": 11369,
+          "SegmentID": 25021,
+          "GlobalID": "f71d05eb-b034-4e08-bc7d-16f63867d89f"
+        },
+        {
+          "FID": 12513,
+          "SegmentID": 10327,
+          "GlobalID": "6e55537a-547c-4c91-8735-b151ff950153"
+        },
+        {
+          "FID": 14428,
+          "SegmentID": 1391,
+          "GlobalID": "02bd27da-e44e-4c4a-9e35-64f2589bebd6"
+        },
+        {
+          "FID": 14681,
+          "SegmentID": 40182,
+          "GlobalID": "ccb3d296-098b-4b6c-ab7b-2a764068a3c6"
+        },
+        {
+          "FID": 14772,
+          "SegmentID": 11159,
+          "GlobalID": "f2345bd2-4b53-426a-9603-5e627998f36f"
+        },
+        {
+          "FID": 14773,
+          "SegmentID": 16179,
+          "GlobalID": "4b9e0c32-cfda-4fe6-873b-d5039de58956"
+        },
+        {
+          "FID": 17063,
+          "SegmentID": 11160,
+          "GlobalID": "5c7e0687-6077-43d2-89b9-e02fd7e8dc06"
+        },
+        {
+          "FID": 18195,
+          "SegmentID": 37046,
+          "GlobalID": "c46094ad-c74c-4322-a9d9-5a1d302a7704"
+        },
+        {
+          "FID": 19019,
+          "SegmentID": 17078,
+          "GlobalID": "ae8d6674-c408-456c-bb51-4fbcfd0304a1"
+        },
+        {
+          "FID": 21345,
+          "SegmentID": 10325,
+          "GlobalID": "990bbbc1-1b66-4beb-a73a-511660a8c9fd"
+        },
+        {
+          "FID": 21437,
+          "SegmentID": 30338,
+          "GlobalID": "bec1d118-bbea-41e0-944f-d53ed54e7165"
+        },
+        {
+          "FID": 21540,
+          "SegmentID": 10328,
+          "GlobalID": "6e3bddeb-a96d-4ebf-8da8-fad892919543"
+        },
+        {
+          "FID": 21541,
+          "SegmentID": 39018,
+          "GlobalID": "f033051b-de1e-47cd-b741-db5fd17a0202"
+        },
+        {
+          "FID": 21926,
+          "SegmentID": 17075,
+          "GlobalID": "0a390405-c0ca-4ed3-87f5-80ffb386dcd6"
+        },
+        {
+          "FID": 22029,
+          "SegmentID": 52520,
+          "GlobalID": "4ba5bbc3-5057-4ce7-b5df-bf38fdab0f4f"
+        },
+        {
+          "FID": 22070,
+          "SegmentID": 5368,
+          "GlobalID": "3695a652-cc21-4c0e-b114-a3724e961e3a"
+        },
+        {
+          "FID": 22188,
+          "SegmentID": 30412,
+          "GlobalID": "781bcfdf-47d5-44bf-87fc-c571858d02cc"
+        },
+        {
+          "FID": 22929,
+          "SegmentID": 10329,
+          "GlobalID": "6b3824a3-d2c0-4e19-a1a0-33bd49cc13e5"
+        },
+        {
+          "FID": 23604,
+          "SegmentID": 29186,
+          "GlobalID": "9648180b-3f22-4de0-b6a8-65d613b5edcc"
+        },
+        {
+          "FID": 25440,
+          "SegmentID": 18154,
+          "GlobalID": "e5544abe-5a49-4b96-9636-41fe9a2fcbc9"
+        },
+        {
+          "FID": 25441,
+          "SegmentID": 35365,
+          "GlobalID": "2a6c74fc-c9ea-4345-b89c-640e570c8fcd"
+        },
+        {
+          "FID": 25502,
+          "SegmentID": 32292,
+          "GlobalID": "0af6cea1-d6b2-4505-9485-456804dc1e86"
+        },
+        {
+          "FID": 25503,
+          "SegmentID": 37608,
+          "GlobalID": "154b1dd5-7c2a-4072-85ee-97983a05e342"
+        },
+        {
+          "FID": 25726,
+          "SegmentID": 10323,
+          "GlobalID": "b0371e04-cbd8-484a-9d97-39678f1dfaa8"
+        },
+        {
+          "FID": 27978,
+          "SegmentID": 36135,
+          "GlobalID": "5f48f324-b7fb-4814-a984-617e9e95dc33"
+        },
+        {
+          "FID": 28048,
+          "SegmentID": 5313,
+          "GlobalID": "c52c6ea0-46ce-4c94-b9c6-0e508b1fda90"
+        },
+        {
+          "FID": 28907,
+          "SegmentID": 37047,
+          "GlobalID": "7f5e56ab-d9f5-4026-b576-a73848f44ab2"
+        },
+        {
+          "FID": 29366,
+          "SegmentID": 29187,
+          "GlobalID": "3de0574e-e726-478c-837d-5eac9b3f0aa5"
+        },
+        {
+          "FID": 29445,
+          "SegmentID": 20330,
+          "GlobalID": "73737187-1552-4ada-889e-00d410f358f4"
+        },
+        {
+          "FID": 29856,
+          "SegmentID": 12509,
+          "GlobalID": "f6392cd5-9ee6-4ee8-9b1d-7ea80306814d"
+        },
+        {
+          "FID": 29879,
+          "SegmentID": 38815,
+          "GlobalID": "bbaf3d9e-371e-42a9-a34c-7984174951d0"
+        },
+        {
+          "FID": 29880,
+          "SegmentID": 43574,
+          "GlobalID": "bf392156-de90-4fd0-abde-6c8398c6270b"
+        },
+        {
+          "FID": 30101,
+          "SegmentID": 39404,
+          "GlobalID": "a561251e-3f46-475a-80b8-23badcf97be7"
+        },
+        {
+          "FID": 32032,
+          "SegmentID": 12562,
+          "GlobalID": "3d5b65df-e974-4933-bdd0-11c6cd890457"
+        },
+        {
+          "FID": 32928,
+          "SegmentID": 18348,
+          "GlobalID": "a29f0671-427a-440e-9d89-b0db12334209"
+        },
+        {
+          "FID": 33477,
+          "SegmentID": 13336,
+          "GlobalID": "4b72ea44-7d45-40fd-9276-beb80ebbcec4"
+        },
+        {
+          "FID": 33478,
+          "SegmentID": 31686,
+          "GlobalID": "5345e302-70c0-45f0-9588-81278c58de35"
+        },
+        {
+          "FID": 33652,
+          "SegmentID": 32510,
+          "GlobalID": "6801a4e5-a21b-474e-9e2d-f748c04c2d2e"
+        },
+        {
+          "FID": 34266,
+          "SegmentID": 17079,
+          "GlobalID": "6f5628ba-b30f-49e5-b19e-21578d81663c"
+        },
+        {
+          "FID": 34727,
+          "SegmentID": 43575,
+          "GlobalID": "1aede721-b3ba-4bcc-a23d-d687cdbda65f"
+        },
+        {
+          "FID": 35091,
+          "SegmentID": 5138,
+          "GlobalID": "fb712c0e-139e-40c8-b0d0-5b49a7377ec4"
+        },
+        {
+          "FID": 35525,
+          "SegmentID": 425,
+          "GlobalID": "eaefc3fc-a22b-4943-b2d0-f73844516d07"
+        },
+        {
+          "FID": 35962,
+          "SegmentID": 32511,
+          "GlobalID": "fc8ee24a-924d-40b2-9e29-d2aa8642c602"
+        },
+        {
+          "FID": 35963,
+          "SegmentID": 40181,
+          "GlobalID": "3772e32e-91d1-416f-b295-cbb657338ca9"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "defer_regional_inventory",
+      "next_evidence": "Obtain maintained regional authority geometry and explicit category/status evidence, resolve extent/access/branch exceptions, or obtain explicit evidence of NCN redesignation. N/A is not Main Route and null status is not Open."
+    },
+    {
+      "route_key": "RCN:82",
+      "supported_way_count": 0,
+      "canonical_inventory_length_m": 58831.77893050474,
+      "unmapped_inventory_m": 58831.77893050474,
+      "official_feature_count": 124,
+      "official_qualifying_open_main_m": 0,
+      "official_groups": [
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "OnRoad",
+          "union_m": 6383.0195061177,
+          "feature_count": 36
+        },
+        {
+          "category": "N/A",
+          "status": "Open",
+          "description": "TrafficFree",
+          "union_m": 27464.42847305329,
+          "feature_count": 86
+        },
+        {
+          "category": "Main Route",
+          "status": null,
+          "description": "TrafficFree",
+          "union_m": 543.9371984994168,
+          "feature_count": 2
+        }
+      ],
+      "all_open_categories_diagnostics_only": {
+        "official_union_m": 33847.447979170975,
+        "radii": [
+          {
+            "radius_m": 3,
+            "official_without_source_m": 7503.113206260215,
+            "source_without_official_m": 32498.74553163195
+          },
+          {
+            "radius_m": 10,
+            "official_without_source_m": 3029.760436874422,
+            "source_without_official_m": 27636.432208991846
+          },
+          {
+            "radius_m": 25,
+            "official_without_source_m": 2239.237039352511,
+            "source_without_official_m": 26359.928183904285
+          }
+        ]
+      },
+      "source_relations": [
+        {
+          "id": 21901,
+          "version": 53,
+          "timestamp": "2026-10-06T14:14:53Z"
+        },
+        {
+          "id": 67723,
+          "version": 86,
+          "timestamp": "2026-04-07T16:10:18Z"
+        },
+        {
+          "id": 7077421,
+          "version": 9,
+          "timestamp": "2025-12-06T12:46:00Z"
+        }
+      ],
+      "held_way_count": 233,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 11,
+        "unresolved_official_extent_edges": 219,
+        "mode_policy_unresolved_or_restricted": 2,
+        "current_geometry_differs_from_assessed_provider": 1
+      },
+      "inputs": {
+        "plan_sha256": "41569df409d9d0ddc02b21d63bbfa82d2336f4fb0978f5d464622795a3130670",
+        "association_sha256": "2b95b93ce49eb310b76fa628d68dbaade411642d47142e2f6ba21dc075f6857e"
+      },
+      "official_feature_ids": [
+        {
+          "FID": 877,
+          "SegmentID": 8650,
+          "GlobalID": "898a9e6f-5820-4a9e-a9b3-934ccd1e19c7"
+        },
+        {
+          "FID": 2052,
+          "SegmentID": 17858,
+          "GlobalID": "91fb021d-0ef0-4295-a124-c56ab6af51c2"
+        },
+        {
+          "FID": 2340,
+          "SegmentID": 11695,
+          "GlobalID": "78509565-b5cb-4c9a-a4fb-7cf2e3d6143a"
+        },
+        {
+          "FID": 2341,
+          "SegmentID": 8760,
+          "GlobalID": "5a6a26ea-3958-43c5-9ceb-17489d30a756"
+        },
+        {
+          "FID": 2386,
+          "SegmentID": 8949,
+          "GlobalID": "17f9b4a9-758c-4eaf-bc95-003d488a0e57"
+        },
+        {
+          "FID": 2404,
+          "SegmentID": 19362,
+          "GlobalID": "0e6df834-1adf-4113-bc2d-f885c723d9d7"
+        },
+        {
+          "FID": 2433,
+          "SegmentID": 32483,
+          "GlobalID": "a665b4d6-926a-4f78-8178-a8e04231e0fc"
+        },
+        {
+          "FID": 3245,
+          "SegmentID": 29415,
+          "GlobalID": "91a9b039-4f38-461c-8de0-628232aa0b61"
+        },
+        {
+          "FID": 3972,
+          "SegmentID": 11291,
+          "GlobalID": "dc24162d-b8f7-4512-9cb1-21079f8b0c7d"
+        },
+        {
+          "FID": 4840,
+          "SegmentID": 27256,
+          "GlobalID": "b7341019-8ed9-4044-8c7b-9ac00e1df9a6"
+        },
+        {
+          "FID": 5217,
+          "SegmentID": 15957,
+          "GlobalID": "cd250e33-6bac-4526-8a74-9ed5b74afd8b"
+        },
+        {
+          "FID": 5818,
+          "SegmentID": 24094,
+          "GlobalID": "9b95ab37-e5e4-4289-adf7-b8e605c53e04"
+        },
+        {
+          "FID": 5951,
+          "SegmentID": 57120,
+          "GlobalID": "f2c8b47e-1436-4500-a4d7-e3612270a553"
+        },
+        {
+          "FID": 5966,
+          "SegmentID": 2986,
+          "GlobalID": "539f96ca-5c9e-4c23-b068-3d31a44620c5"
+        },
+        {
+          "FID": 6155,
+          "SegmentID": 24361,
+          "GlobalID": "a2021833-e109-4126-8844-ac8369ff4816"
+        },
+        {
+          "FID": 6473,
+          "SegmentID": 235,
+          "GlobalID": "49e2c867-c314-4676-a109-f9848992d36e"
+        },
+        {
+          "FID": 6492,
+          "SegmentID": 8654,
+          "GlobalID": "af9057bb-035a-4353-adc0-00f65f7478c1"
+        },
+        {
+          "FID": 6537,
+          "SegmentID": 13084,
+          "GlobalID": "29a09081-6186-430c-ba0d-b39076e12739"
+        },
+        {
+          "FID": 7037,
+          "SegmentID": 7424,
+          "GlobalID": "ee79dc82-b9d1-40a8-9e72-ca4fd90ea966"
+        },
+        {
+          "FID": 7404,
+          "SegmentID": 12264,
+          "GlobalID": "0cbedd87-cd19-48d9-a132-f239f37bc5a7"
+        },
+        {
+          "FID": 7448,
+          "SegmentID": 8764,
+          "GlobalID": "aaf54ec8-05e6-4043-99ba-25ee47efddad"
+        },
+        {
+          "FID": 8306,
+          "SegmentID": 52075,
+          "GlobalID": "0db31f10-e0dc-4e4a-8cb3-7dd6824699a7"
+        },
+        {
+          "FID": 8382,
+          "SegmentID": 3224,
+          "GlobalID": "533ddac8-83f9-487b-86ac-6160ab96db2a"
+        },
+        {
+          "FID": 8410,
+          "SegmentID": 28010,
+          "GlobalID": "d408cc50-21b8-479e-9898-ba4e1cd4e8d9"
+        },
+        {
+          "FID": 8753,
+          "SegmentID": 9426,
+          "GlobalID": "d28bd988-f48f-4e2d-8319-17589b822364"
+        },
+        {
+          "FID": 8882,
+          "SegmentID": 43410,
+          "GlobalID": "ac13c41a-e902-4a33-b94e-2f3baf3c5429"
+        },
+        {
+          "FID": 9060,
+          "SegmentID": 23325,
+          "GlobalID": "e83d7ba1-a1e5-4ce3-b94d-67a3f373fc0d"
+        },
+        {
+          "FID": 9792,
+          "SegmentID": 30974,
+          "GlobalID": "9960cdd2-0bc3-4212-8c13-30b343aad40e"
+        },
+        {
+          "FID": 10710,
+          "SegmentID": 2341,
+          "GlobalID": "605209c4-5fb6-4f30-b6c0-54693fc7a6a9"
+        },
+        {
+          "FID": 11208,
+          "SegmentID": 19364,
+          "GlobalID": "58b250c3-bed8-4380-b455-18c6e019d7c7"
+        },
+        {
+          "FID": 11524,
+          "SegmentID": 27333,
+          "GlobalID": "6c89d782-6e5d-406e-b315-08e2363f09ae"
+        },
+        {
+          "FID": 11639,
+          "SegmentID": 18896,
+          "GlobalID": "3016596f-65b4-46a5-ae67-ac8290d36304"
+        },
+        {
+          "FID": 11640,
+          "SegmentID": 9174,
+          "GlobalID": "b1ff5c47-5897-466b-95d8-d77af67b6553"
+        },
+        {
+          "FID": 11756,
+          "SegmentID": 2738,
+          "GlobalID": "a7582617-b140-4b86-b7c0-57bfea7bf45b"
+        },
+        {
+          "FID": 12033,
+          "SegmentID": 2408,
+          "GlobalID": "8290c5c2-3c6d-4490-bea1-6ec1faea686c"
+        },
+        {
+          "FID": 12644,
+          "SegmentID": 20238,
+          "GlobalID": "5d6b9b5b-f508-4d99-899c-5d84aa3b2b69"
+        },
+        {
+          "FID": 12645,
+          "SegmentID": 20978,
+          "GlobalID": "d35c33f2-5309-4888-9982-8205bb214e12"
+        },
+        {
+          "FID": 13085,
+          "SegmentID": 11292,
+          "GlobalID": "5c38bc26-8259-4f05-9951-18803c064751"
+        },
+        {
+          "FID": 13107,
+          "SegmentID": 37172,
+          "GlobalID": "00b3fe28-0632-44dc-8f8e-33e3ea0096f9"
+        },
+        {
+          "FID": 13889,
+          "SegmentID": 19363,
+          "GlobalID": "2edefe37-0284-4a0d-a380-6fb3c0287de5"
+        },
+        {
+          "FID": 14319,
+          "SegmentID": 14586,
+          "GlobalID": "5efb6d66-bd46-4082-b1e9-81f60ce99c4b"
+        },
+        {
+          "FID": 14327,
+          "SegmentID": 42964,
+          "GlobalID": "bd72fb6b-4394-4c2d-ae87-11c5d6900506"
+        },
+        {
+          "FID": 14545,
+          "SegmentID": 11376,
+          "GlobalID": "06b07357-c2f0-4379-bd39-297f542e59b4"
+        },
+        {
+          "FID": 15497,
+          "SegmentID": 18690,
+          "GlobalID": "06e3dc60-0a25-4019-b4fd-f0102e3a8b92"
+        },
+        {
+          "FID": 15553,
+          "SegmentID": 20977,
+          "GlobalID": "9af9969e-e6f0-40ea-9e2a-bf71df4c95df"
+        },
+        {
+          "FID": 15886,
+          "SegmentID": 15450,
+          "GlobalID": "66d92d46-438e-43c5-970f-cd1c2866386d"
+        },
+        {
+          "FID": 16233,
+          "SegmentID": 14785,
+          "GlobalID": "57d0b92b-fc6c-4be5-82b4-f40fed6fdcf7"
+        },
+        {
+          "FID": 16260,
+          "SegmentID": 6827,
+          "GlobalID": "d92a6b6c-1b37-4abe-8260-cdc8e0de6268"
+        },
+        {
+          "FID": 16892,
+          "SegmentID": 8568,
+          "GlobalID": "8721bbf6-22b1-4b22-b6a6-9f293cc010b4"
+        },
+        {
+          "FID": 16896,
+          "SegmentID": 8765,
+          "GlobalID": "8d65957a-04dc-4423-97e1-36184087b9b1"
+        },
+        {
+          "FID": 16974,
+          "SegmentID": 24053,
+          "GlobalID": "273b7082-5181-4578-af49-acb67c0dfc16"
+        },
+        {
+          "FID": 16977,
+          "SegmentID": 8762,
+          "GlobalID": "5f24acae-7a21-4e2a-ad36-43e16a8f664e"
+        },
+        {
+          "FID": 17331,
+          "SegmentID": 8763,
+          "GlobalID": "d96f2726-7728-4a22-b48a-e9cab76f3634"
+        },
+        {
+          "FID": 17819,
+          "SegmentID": 8906,
+          "GlobalID": "be20ad5f-e07f-4e69-9eb2-46acc7900498"
+        },
+        {
+          "FID": 17877,
+          "SegmentID": 8653,
+          "GlobalID": "cf7b39b9-59e0-4a82-ac09-f4eda97cf2e5"
+        },
+        {
+          "FID": 18345,
+          "SegmentID": 12445,
+          "GlobalID": "dd47a32d-b4ba-4e0e-be4d-0ef40385f1a6"
+        },
+        {
+          "FID": 18427,
+          "SegmentID": 42118,
+          "GlobalID": "984fd345-7d4c-4bf2-ba3f-4b01ffa08f0f"
+        },
+        {
+          "FID": 18971,
+          "SegmentID": 11186,
+          "GlobalID": "6085d6ef-8bb6-45dd-9bea-e25fb98476a8"
+        },
+        {
+          "FID": 19311,
+          "SegmentID": 36513,
+          "GlobalID": "c55a77fa-74f1-455e-add4-4aece13d7e82"
+        },
+        {
+          "FID": 19312,
+          "SegmentID": 19365,
+          "GlobalID": "d38771bb-4784-4408-831a-7d6f855faf5f"
+        },
+        {
+          "FID": 19899,
+          "SegmentID": 41008,
+          "GlobalID": "578ff112-8b93-4e8d-885d-42deb149605c"
+        },
+        {
+          "FID": 19926,
+          "SegmentID": 18601,
+          "GlobalID": "de13084d-2fc9-4dcf-acc1-d1a01c51e400"
+        },
+        {
+          "FID": 20570,
+          "SegmentID": 4421,
+          "GlobalID": "ba7c16a2-ba60-4586-96eb-53441c0999b4"
+        },
+        {
+          "FID": 20682,
+          "SegmentID": 8567,
+          "GlobalID": "300218c7-b38d-45c0-b329-fd975270b800"
+        },
+        {
+          "FID": 21046,
+          "SegmentID": 21184,
+          "GlobalID": "9d34e135-fa0b-4fb9-9891-0d63e888f386"
+        },
+        {
+          "FID": 21047,
+          "SegmentID": 34120,
+          "GlobalID": "a9246d38-b68f-4279-9f4b-4325f8bc72cc"
+        },
+        {
+          "FID": 21208,
+          "SegmentID": 5948,
+          "GlobalID": "ebab8563-24f6-4f03-a3a3-20573dd15db7"
+        },
+        {
+          "FID": 21360,
+          "SegmentID": 35204,
+          "GlobalID": "13826b28-2b12-47f7-8164-43893be1d1ba"
+        },
+        {
+          "FID": 21484,
+          "SegmentID": 991,
+          "GlobalID": "b276812e-fba9-44e1-861a-971006c63126"
+        },
+        {
+          "FID": 21896,
+          "SegmentID": 35180,
+          "GlobalID": "e188e24d-6441-4654-8744-6593302fdeae"
+        },
+        {
+          "FID": 22240,
+          "SegmentID": 6990,
+          "GlobalID": "06b61369-0188-46dc-85b0-2c16e4d2d902"
+        },
+        {
+          "FID": 22380,
+          "SegmentID": 11696,
+          "GlobalID": "e816e93c-4af0-417f-a03a-54dacb5182a8"
+        },
+        {
+          "FID": 22427,
+          "SegmentID": 2409,
+          "GlobalID": "5fcd9467-9e2f-431c-8584-2b7f2a4d353e"
+        },
+        {
+          "FID": 22785,
+          "SegmentID": 31923,
+          "GlobalID": "149cb521-38de-4c98-9203-088c833c963e"
+        },
+        {
+          "FID": 23234,
+          "SegmentID": 35181,
+          "GlobalID": "6401d7ef-a1f6-4494-b271-4a155879e49c"
+        },
+        {
+          "FID": 23676,
+          "SegmentID": 16718,
+          "GlobalID": "5e45aacb-43f6-4274-9a0c-1e1cf4f0d946"
+        },
+        {
+          "FID": 23697,
+          "SegmentID": 771,
+          "GlobalID": "dafee496-21d3-4de5-b511-fccab7a7c4fc"
+        },
+        {
+          "FID": 23983,
+          "SegmentID": 10527,
+          "GlobalID": "6ed8224b-7252-4e46-bdc8-220780ddc79b"
+        },
+        {
+          "FID": 24274,
+          "SegmentID": 35833,
+          "GlobalID": "3f913314-b067-4bf3-9ca2-a23ea99a17b8"
+        },
+        {
+          "FID": 25013,
+          "SegmentID": 7558,
+          "GlobalID": "385b76e9-00e5-47bc-8083-6c5b437dcb15"
+        },
+        {
+          "FID": 25231,
+          "SegmentID": 30309,
+          "GlobalID": "c891d3d9-78f2-410e-862f-5492c5fc43ce"
+        },
+        {
+          "FID": 25232,
+          "SegmentID": 35764,
+          "GlobalID": "0f34d9e1-5924-4b47-bb06-e49e84a1277d"
+        },
+        {
+          "FID": 25848,
+          "SegmentID": 20803,
+          "GlobalID": "527445e5-bf8f-4eb9-96da-942003c0ca56"
+        },
+        {
+          "FID": 25849,
+          "SegmentID": 35203,
+          "GlobalID": "1d2b7383-f876-4e9a-b3fe-da39ae89c214"
+        },
+        {
+          "FID": 26403,
+          "SegmentID": 16983,
+          "GlobalID": "cf0c9ab2-ec9f-45a3-a468-f0028ac91576"
+        },
+        {
+          "FID": 26407,
+          "SegmentID": 22594,
+          "GlobalID": "ba3bd592-a392-4fc4-9fc4-66d0ce620062"
+        },
+        {
+          "FID": 26408,
+          "SegmentID": 22666,
+          "GlobalID": "644f67a0-ca90-4d58-967e-645c5aa0d704"
+        },
+        {
+          "FID": 26458,
+          "SegmentID": 19369,
+          "GlobalID": "495efee9-3f1a-4274-8485-d1db89a03453"
+        },
+        {
+          "FID": 26955,
+          "SegmentID": 11806,
+          "GlobalID": "72d00872-d4c7-4677-be97-509e632a242b"
+        },
+        {
+          "FID": 27124,
+          "SegmentID": 5107,
+          "GlobalID": "5db58046-fa58-4584-9651-05040d5f2c76"
+        },
+        {
+          "FID": 27152,
+          "SegmentID": 7425,
+          "GlobalID": "119cba87-25e5-4713-81c1-6bee57d9fdac"
+        },
+        {
+          "FID": 27945,
+          "SegmentID": 40632,
+          "GlobalID": "bc2e8bb8-5b7c-47e3-b2e7-7325502cea1c"
+        },
+        {
+          "FID": 28002,
+          "SegmentID": 37173,
+          "GlobalID": "736674e2-468e-4d45-9694-43ea8e226d32"
+        },
+        {
+          "FID": 28385,
+          "SegmentID": 26303,
+          "GlobalID": "9bbe31af-8667-48eb-8cbd-c22de1d94d23"
+        },
+        {
+          "FID": 28457,
+          "SegmentID": 35034,
+          "GlobalID": "c6c35c74-8581-4ec4-8a3f-79a4eb975e7d"
+        },
+        {
+          "FID": 28742,
+          "SegmentID": 780,
+          "GlobalID": "517cd581-ffdf-439a-a261-55e5b82f0633"
+        },
+        {
+          "FID": 28795,
+          "SegmentID": 37882,
+          "GlobalID": "63d30ff0-3bfa-4b9f-a416-c35340766491"
+        },
+        {
+          "FID": 29287,
+          "SegmentID": 8566,
+          "GlobalID": "99f7b6c1-0282-4460-ad2c-0408b0a3e6e8"
+        },
+        {
+          "FID": 29380,
+          "SegmentID": 43243,
+          "GlobalID": "2cd3c9c1-172f-45f9-8854-3c1653bcf122"
+        },
+        {
+          "FID": 29588,
+          "SegmentID": 24403,
+          "GlobalID": "3878c4d0-014a-4e81-b7d4-f4da34e4c186"
+        },
+        {
+          "FID": 29673,
+          "SegmentID": 21191,
+          "GlobalID": "1a2f4b8f-773a-4f3f-a301-688cf22d14fd"
+        },
+        {
+          "FID": 29896,
+          "SegmentID": 43409,
+          "GlobalID": "55a7d99a-3acb-4aad-b77d-248e2b12ff28"
+        },
+        {
+          "FID": 30094,
+          "SegmentID": 21890,
+          "GlobalID": "c8357f87-be0f-4677-98e9-b310769dc7b6"
+        },
+        {
+          "FID": 30377,
+          "SegmentID": 8772,
+          "GlobalID": "c492b14f-ee6c-44db-8ef0-69b14ff58649"
+        },
+        {
+          "FID": 31682,
+          "SegmentID": 53865,
+          "GlobalID": "dc80d82e-1c0c-4c20-a7eb-691bb4190dba"
+        },
+        {
+          "FID": 32284,
+          "SegmentID": 6360,
+          "GlobalID": "c67480ed-2c47-479e-a1f4-fa03ada5dcb7"
+        },
+        {
+          "FID": 32483,
+          "SegmentID": 35913,
+          "GlobalID": "78dfdf82-00f7-41ca-baff-f3081779f3e5"
+        },
+        {
+          "FID": 32743,
+          "SegmentID": 21608,
+          "GlobalID": "32ad9227-30c9-4d07-9618-4f1850047431"
+        },
+        {
+          "FID": 32914,
+          "SegmentID": 12208,
+          "GlobalID": "d91163c7-e1ab-4f8c-80f8-2c90daf36b08"
+        },
+        {
+          "FID": 33540,
+          "SegmentID": 2410,
+          "GlobalID": "96439f25-0bca-47aa-b840-d14c960a32a3"
+        },
+        {
+          "FID": 34036,
+          "SegmentID": 37628,
+          "GlobalID": "ff40e98d-ca73-4485-96c7-f774278f83a9"
+        },
+        {
+          "FID": 34655,
+          "SegmentID": 11697,
+          "GlobalID": "017ddc8e-aff8-4647-bdba-3a6c57211284"
+        },
+        {
+          "FID": 35595,
+          "SegmentID": 43281,
+          "GlobalID": "280280c2-c334-407f-8f4c-297fd7412b8b"
+        },
+        {
+          "FID": 35763,
+          "SegmentID": 30879,
+          "GlobalID": "823b3506-fe3c-4f7c-8509-182f4179ffaf"
+        },
+        {
+          "FID": 35872,
+          "SegmentID": 3235,
+          "GlobalID": "4fc1a223-8671-4d10-aad6-41ead4d4315b"
+        },
+        {
+          "FID": 35873,
+          "SegmentID": 10798,
+          "GlobalID": "c875e63f-849b-4e90-b53f-9d09861499fc"
+        },
+        {
+          "FID": 36064,
+          "SegmentID": 4112,
+          "GlobalID": "8c0771b9-f18e-4083-9703-3f1481244594"
+        },
+        {
+          "FID": 36185,
+          "SegmentID": 447,
+          "GlobalID": "2f5af584-cf2b-4fd9-a2bc-ef4bef888ed0"
+        },
+        {
+          "FID": 36283,
+          "SegmentID": 28046,
+          "GlobalID": "84704b30-095b-42d3-a10f-b949160901c7"
+        },
+        {
+          "FID": 36350,
+          "SegmentID": 24362,
+          "GlobalID": "87705156-65bb-46c0-8f4b-36e1aa0a0b2f"
+        },
+        {
+          "FID": 36818,
+          "SegmentID": 7364,
+          "GlobalID": "b39bfe13-0054-4b10-b83f-5b24b8444667"
+        },
+        {
+          "FID": 37000,
+          "SegmentID": 39121,
+          "GlobalID": "71f9a7f0-244d-457d-a4e7-4f200e7f144b"
+        },
+        {
+          "FID": 37074,
+          "SegmentID": 24363,
+          "GlobalID": "850cbbdb-3cca-4439-9970-e78fc394dbba"
+        },
+        {
+          "FID": 37075,
+          "SegmentID": 24055,
+          "GlobalID": "fcd9a42f-6d36-4628-a409-251467a4d0f6"
+        }
+      ],
+      "eligibility_changed": false,
+      "whole_published_route_ready": false,
+      "disposition": "defer_regional_inventory",
+      "next_evidence": "Obtain maintained regional authority geometry and explicit category/status evidence, resolve extent/access/branch exceptions, or obtain explicit evidence of NCN redesignation. N/A is not Main Route and null status is not Open."
+    }
+  ],
+  "unchanged": {
+    "supported_catalogues": 181,
+    "distinct_supported_ways": 43043,
+    "existing_inventory_totals_preserved": true,
+    "android_internal_trial_route_count": 8
+  },
+  "caveats": [
+    "Missing qualifying classification does not establish physical closure or declassification.",
+    "Open-category corridor metrics grant no eligibility; lengths use local projection and can overlap.",
+    "Determinations are against the pinned snapshot, supplemented by publisher pages; no fresh full network capture.",
+    "RCN90 and all other previously supported inventories are outside this six-key review."
+  ],
+  "sources": [
+    {
+      "url": "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0?f=pjson",
+      "finding": "Field description distinguishes NCN from RCN and states regional network is not maintained/updated by Sustrans."
+    },
+    {
+      "url": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-626/",
+      "finding": "Publisher explicitly lists NCN626 with two disconnected open sections and proposed connections; page headline distance is not a validated denominator."
+    },
+    {
+      "url": "https://shop.walkwheelcycletrust.org.uk/products/central-sussex-and-south-surrey-cycle-map-7",
+      "finding": "Map description lists National Route 228, Faygate to Crawley. Map edition May 2021; corroborates identity, not current detailed geometry or category."
+    }
+  ]
+}
