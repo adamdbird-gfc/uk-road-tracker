@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /** Public map evidence. A POI name alone never establishes arrival. */
 final class ContextMap {
     static final class Evidence {
-        boolean available, rail, road, outdoor, destination, parking, routeAmbiguous;
+        boolean available, rail, road, outdoor, destination, parking, routeAmbiguous, throughRoad;
         String name = "", kind = "unknown", featureId = "";
     }
     static Evidence at(JSONArray features, double lat, double lon, float accuracy) {
@@ -14,6 +14,7 @@ final class ContextMap {
         if (features == null || !Float.isFinite(accuracy) || accuracy <= 0 || accuracy > 50) return result;
         result.available = true;
         double roadDistance = Double.POSITIVE_INFINITY;
+        double throughRoadDistance=Double.POSITIVE_INFINITY;
         for (int i=0;i<features.length();i++) {
             JSONObject f=features.optJSONObject(i); if(f==null)continue;
             JSONObject tags=f.optJSONObject("tags"); if(tags==null)continue;
@@ -29,6 +30,8 @@ final class ContextMap {
                 inHole|=inside(ring,lat,lon);distance=Math.min(distance,distance(ring,lat,lon));
             }
             String highway=tags.optString("highway"), railway=tags.optString("railway");
+            if(highway.matches("(motorway|trunk|primary|secondary)(_link)?"))
+                throughRoadDistance=Math.min(throughRoadDistance,distance);
             if ("rail".equals(railway) && distance<=Math.max(15,accuracy)) result.rail=true;
             if (!highway.isEmpty() && !"footway".equals(highway) && !"path".equals(highway)
                     && !"steps".equals(highway) && !"pedestrian".equals(highway)
@@ -49,6 +52,7 @@ final class ContextMap {
         }
         result.road=roadDistance<=Math.max(15,accuracy);
         result.routeAmbiguous=result.road && roadDistance+accuracy>15;
+        result.throughRoad=result.road&&throughRoadDistance+accuracy<=15;
         if(result.road && roadDistance<=accuracy)result.destination=false;
         return result;
     }

@@ -319,8 +319,14 @@ public final class MatchingCoordinator {
         List<JSONArray> roadRequests = new ArrayList<>();
         int submittedRoadPoints = 0;
         if (road != null) for (JSONArray section : road.sections) {
-            JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
-            roadRequests.add(sampled); submittedRoadPoints += sampled.length();
+            if(capturedDrive){
+                for(JSONArray request:DrivingJourneyPreparation.requests(section,MAX_MATCH_REQUEST_POINTS)){
+                    roadRequests.add(request);submittedRoadPoints+=request.length();
+                }
+            }else{
+                JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
+                roadRequests.add(sampled); submittedRoadPoints += sampled.length();
+            }
         }
         String endpointPath = endpointForMode(mode);
         JSONObject attempt = new JSONObject()
