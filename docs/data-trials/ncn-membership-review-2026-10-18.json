@@ -1,0 +1,833 @@
+{
+  "schema_version": 1,
+  "scope": "Reconciled membership overlay over the 187-key assessment",
+  "baseline_commit": "67b02de6ed2ab76e3eefb18fc6278bac748ccd07",
+  "baseline_artifact_sha256": "59affd0f2456ede05f3bc5e7fb6a7e2a4c587d4f1de1e2c36a7047eb42613588",
+  "counts": {
+    "assessed_keys": 187,
+    "supported_catalogues_before": 175,
+    "supported_catalogues_after": 181,
+    "distinct_supported_ways_before": 37793,
+    "distinct_supported_ways_after": 43043,
+    "new_distinct_supported_ways": 5250,
+    "shared_supported_way_ids": 47,
+    "membership_holds_resolved": 6,
+    "other_route_keys_still_requiring_source_work": 66,
+    "zero_association_inventories_remaining": 6,
+    "prior_inventory_files_preserved": 562
+  },
+  "inputs": {
+    "source_capture_sha256": "61c779242af7d704a2d4adb5ed25835122e800278534f9fac2490e6b94af5a47",
+    "official_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2",
+    "previous_provider_capture_sha256": "ee9df032b5f36e04b051d1976cb4a5a7d3eba39ee3224f36ce720fffdb39bc3b",
+    "refreshed_provider_capture_sha256": "99ce41b6bd173fd123c94d8f531344986707dae4cc2fdafe580f28a5bec8698f",
+    "prior_catalogue_summary_sha256": "3d6031a61fedff3e05a8a34db57438d5a0270fc65e8fe6ee07f0ae55c10b8b8b"
+  },
+  "whole_published_route_ready": false,
+  "old_journey_evidence_transferred": false,
+  "routes": [
+    {
+      "route_key": "NCN:196",
+      "relations": [
+        {
+          "relation_id": 2519659,
+          "added_way_ids": [
+            1569402908
+          ],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "1edf742636ab2a5dc39af56903375c9660056511342c872e4dfb6f87559f743c",
+          "current_profile_sha256": "d440f2537002d52dbe93ed4183ae086b9bb41e8d3cd57e9bb03230ac342bf192",
+          "previous_source_relations": [
+            {
+              "id": 2519659,
+              "version": 58,
+              "timestamp": "2026-05-19T08:51:44Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 2519659,
+              "version": 59,
+              "timestamp": "2026-10-18T11:24:18Z"
+            }
+          ],
+          "previous_provider_sha256": "844f9710e89c8e086998ca3d988be440263f344fb9628f476727e401d36c6c96",
+          "refreshed_provider_sha256": "7c8e8d02c0f61bf71f9ae7f724e3b71cd66bf11add45b883b48f2b8e8b8ed0bb",
+          "current_source_way_count": 132,
+          "provider_node_maximum_drift_m": 0.003817403674553755,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 0.0,
+          "refreshed_geometry_outside_previous_m": 0.0,
+          "geometry_review": "same_linework_at_representation_tolerance",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 40000.49043751507,
+      "canonical_inventory_length_m": 40000.49043751507,
+      "previous_unmapped_inventory_m": 40000.49043751507,
+      "unmapped_inventory_m": 7406.595571455891,
+      "maximum_supported_coverage_m": {
+        "on_foot": 32593.89486605918,
+        "cycling": 32593.89486605918,
+        "combined": 32593.89486605918
+      },
+      "prior_plan_sha256": "941f2013011c3c9bb4316947496ad2162d43c94fbd4bb41d70b8487efab3a0d4",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:196",
+        "source_relations": [
+          {
+            "id": 2519659,
+            "version": 59,
+            "timestamp": "2026-10-18T11:24:18Z"
+          }
+        ],
+        "accepted_way_count": 95,
+        "held_way_count": 39,
+        "partial_way_count": 2,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 39
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1569402908,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    },
+    {
+      "route_key": "NCN:20",
+      "relations": [
+        {
+          "relation_id": 12179,
+          "added_way_ids": [
+            1569101100
+          ],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "4ead80b4b0e9c17639e86cc7f665c6e92c280d2c61e3fcb7d1e0179c634a7e5f",
+          "current_profile_sha256": "39851cc464eb745485f9b50b5a2d4f57401561e03727b415958365c830ba1426",
+          "previous_source_relations": [
+            {
+              "id": 12179,
+              "version": 344,
+              "timestamp": "2024-01-16T11:08:41Z"
+            },
+            {
+              "id": 9649613,
+              "version": 7,
+              "timestamp": "2023-09-10T12:15:19Z"
+            },
+            {
+              "id": 10482848,
+              "version": 3,
+              "timestamp": "2023-09-10T13:44:54Z"
+            },
+            {
+              "id": 11507779,
+              "version": 42,
+              "timestamp": "2026-06-08T21:14:40Z"
+            },
+            {
+              "id": 11507780,
+              "version": 69,
+              "timestamp": "2026-04-10T21:28:49Z"
+            },
+            {
+              "id": 11507781,
+              "version": 5,
+              "timestamp": "2025-01-07T04:17:44Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 12179,
+              "version": 344,
+              "timestamp": "2024-01-16T11:08:41Z"
+            },
+            {
+              "id": 9649613,
+              "version": 7,
+              "timestamp": "2023-09-10T12:15:19Z"
+            },
+            {
+              "id": 10482848,
+              "version": 3,
+              "timestamp": "2023-09-10T13:44:54Z"
+            },
+            {
+              "id": 11507779,
+              "version": 42,
+              "timestamp": "2026-06-08T21:14:40Z"
+            },
+            {
+              "id": 11507780,
+              "version": 70,
+              "timestamp": "2026-10-17T11:59:18Z"
+            },
+            {
+              "id": 11507781,
+              "version": 5,
+              "timestamp": "2025-01-07T04:17:44Z"
+            }
+          ],
+          "previous_provider_sha256": "bbf05a6ccef1ee325ad45228e14dabe5667d55505db23e03de981934db56c95d",
+          "refreshed_provider_sha256": "4f297e6d8ffb372e542bfe06e82c14b9357cb207ec4fbe20d11875bb843b3376",
+          "current_source_way_count": 567,
+          "provider_node_maximum_drift_m": 0.004339778021554438,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 73.27218582264459,
+          "refreshed_geometry_outside_previous_m": 74.60596170408022,
+          "geometry_review": "geometry_changed_requires_current_extent_assessment",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 47105.01271603634,
+      "canonical_inventory_length_m": 47105.01271603634,
+      "previous_unmapped_inventory_m": 47105.01271603634,
+      "unmapped_inventory_m": 6633.318328085494,
+      "maximum_supported_coverage_m": {
+        "on_foot": 39023.09406463756,
+        "cycling": 40465.29808127065,
+        "combined": 40471.69438795085
+      },
+      "prior_plan_sha256": "d6c224fd366cb96a02c9fa923baea23f94125d4fb15af6b8e9d480361a1ac2aa",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:20",
+        "source_relations": [
+          {
+            "id": 12179,
+            "version": 344,
+            "timestamp": "2024-01-16T11:08:41Z"
+          }
+        ],
+        "accepted_way_count": 464,
+        "held_way_count": 136,
+        "partial_way_count": 33,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 90,
+          "mode_policy_unresolved_or_restricted": 46
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1569101100,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    },
+    {
+      "route_key": "NCN:22",
+      "relations": [
+        {
+          "relation_id": 67578,
+          "added_way_ids": [
+            1569104786
+          ],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "cafc561feae0839c3654b5060179f2718346c5d9200e8c182f059dfa42e60dd4",
+          "current_profile_sha256": "fa91d3f61859053f514949e4264202e73159e633e14c2047d47fd8c2e5c12839",
+          "previous_source_relations": [
+            {
+              "id": 67578,
+              "version": 525,
+              "timestamp": "2026-09-02T02:28:44Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 67578,
+              "version": 526,
+              "timestamp": "2026-10-17T12:31:14Z"
+            }
+          ],
+          "previous_provider_sha256": "6ed55d5247c8c4bf8eebd79d3d8143025fb4fa00baf64e5d22a384b6459ea4bc",
+          "refreshed_provider_sha256": "b15e362e7b73154d84ad9fa5f35891a3cdec100367811b9fd37507d3d643df9c",
+          "current_source_way_count": 956,
+          "provider_node_maximum_drift_m": 0.004408753691842566,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 0.0,
+          "refreshed_geometry_outside_previous_m": 0.0,
+          "geometry_review": "same_linework_at_representation_tolerance",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 166016.65365656503,
+      "canonical_inventory_length_m": 165910.4901851769,
+      "previous_unmapped_inventory_m": 165910.4901851769,
+      "unmapped_inventory_m": 16980.27737748067,
+      "maximum_supported_coverage_m": {
+        "on_foot": 147780.5618883649,
+        "cycling": 148716.80764239462,
+        "combined": 148930.21280769623
+      },
+      "prior_plan_sha256": "7c6c6175d1d25eeac6053434d9b908e60194d393727450fd09561964257ea6f4",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:22",
+        "source_relations": [
+          {
+            "id": 67578,
+            "version": 526,
+            "timestamp": "2026-10-17T12:31:14Z"
+          }
+        ],
+        "accepted_way_count": 879,
+        "held_way_count": 146,
+        "partial_way_count": 69,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 140,
+          "mode_policy_unresolved_or_restricted": 6
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1569104786,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    },
+    {
+      "route_key": "NCN:517",
+      "relations": [
+        {
+          "relation_id": 9622407,
+          "added_way_ids": [
+            1569161679
+          ],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "e4d537f09108c68b14bd90fab59bf13daacb7f6d7425171fd1fdde4844da1408",
+          "current_profile_sha256": "6db48e031def52e91b8effc186ec3fe3354aeb9b0158de7288b0f7b76a5ffc95",
+          "previous_source_relations": [
+            {
+              "id": 9622407,
+              "version": 21,
+              "timestamp": "2025-10-09T05:31:26Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 9622407,
+              "version": 22,
+              "timestamp": "2026-10-17T15:30:37Z"
+            }
+          ],
+          "previous_provider_sha256": "f3ae0ed03227ee6685980c1a4bc5571626ef568ca0bf7eed81cbce2e279843ad",
+          "refreshed_provider_sha256": "c47864092b94d2fb6966a6ac1073984eb1c749d169532a95bce41df9f5b13e42",
+          "current_source_way_count": 108,
+          "provider_node_maximum_drift_m": 0.004002217015321903,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 0.0,
+          "refreshed_geometry_outside_previous_m": 0.0,
+          "geometry_review": "same_linework_at_representation_tolerance",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 21685.12321650141,
+      "canonical_inventory_length_m": 21685.12321650141,
+      "previous_unmapped_inventory_m": 21685.12321650141,
+      "unmapped_inventory_m": 6013.130186718485,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14199.946058840995,
+        "cycling": 15588.830493514464,
+        "combined": 15671.993029782927
+      },
+      "prior_plan_sha256": "4b3826212de76e5a13e0b7c08007adf091e281b662353ffc804747e2dd2470a9",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:517",
+        "source_relations": [
+          {
+            "id": 9622407,
+            "version": 22,
+            "timestamp": "2026-10-17T15:30:37Z"
+          }
+        ],
+        "accepted_way_count": 72,
+        "held_way_count": 37,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 37
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1569161679,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    },
+    {
+      "route_key": "NCN:5",
+      "relations": [
+        {
+          "relation_id": 123318,
+          "added_way_ids": [
+            1569083382,
+            1569088365,
+            1569089207
+          ],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "9ab735ca55c99dd1186382e3c70e819b6fbe147351a91fd8a76725ffd5eafd28",
+          "current_profile_sha256": "e110154e3348ff932fcbb2d4869879a54e005fb3d90f1fb1f4eec8b3926b79e0",
+          "previous_source_relations": [
+            {
+              "id": 123318,
+              "version": 992,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 359098,
+              "version": 305,
+              "timestamp": "2026-10-04T14:35:11Z"
+            },
+            {
+              "id": 9466687,
+              "version": 7,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 9467183,
+              "version": 5,
+              "timestamp": "2023-09-10T12:52:11Z"
+            },
+            {
+              "id": 19284283,
+              "version": 4,
+              "timestamp": "2026-10-04T14:35:11Z"
+            },
+            {
+              "id": 19284284,
+              "version": 35,
+              "timestamp": "2026-09-22T11:25:36Z"
+            },
+            {
+              "id": 19284285,
+              "version": 11,
+              "timestamp": "2026-09-14T16:08:50Z"
+            },
+            {
+              "id": 19284286,
+              "version": 4,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 19284287,
+              "version": 4,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 19284288,
+              "version": 43,
+              "timestamp": "2026-09-15T15:49:40Z"
+            },
+            {
+              "id": 19900943,
+              "version": 1,
+              "timestamp": "2025-11-30T11:13:50Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 123318,
+              "version": 992,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 359098,
+              "version": 305,
+              "timestamp": "2026-10-04T14:35:11Z"
+            },
+            {
+              "id": 9466687,
+              "version": 7,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 9467183,
+              "version": 5,
+              "timestamp": "2023-09-10T12:52:11Z"
+            },
+            {
+              "id": 19284283,
+              "version": 4,
+              "timestamp": "2026-10-04T14:35:11Z"
+            },
+            {
+              "id": 19284284,
+              "version": 35,
+              "timestamp": "2026-09-22T11:25:36Z"
+            },
+            {
+              "id": 19284285,
+              "version": 11,
+              "timestamp": "2026-09-14T16:08:50Z"
+            },
+            {
+              "id": 19284286,
+              "version": 4,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 19284287,
+              "version": 4,
+              "timestamp": "2025-11-30T11:13:50Z"
+            },
+            {
+              "id": 19284288,
+              "version": 46,
+              "timestamp": "2026-10-17T10:25:43Z"
+            },
+            {
+              "id": 19900943,
+              "version": 1,
+              "timestamp": "2025-11-30T11:13:50Z"
+            }
+          ],
+          "previous_provider_sha256": "789d893494ad9cc463f0b07ebbb2fa12fbb32bc8a7069250f428321e20dfa1fb",
+          "refreshed_provider_sha256": "b9e95b0215ae631d1638570312309a530d2407a72b793b3ce6b0a969026f6abb",
+          "current_source_way_count": 2612,
+          "provider_node_maximum_drift_m": 0.004444466539682324,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 138.02791773460262,
+          "refreshed_geometry_outside_previous_m": 138.0167807035117,
+          "geometry_review": "geometry_changed_requires_current_extent_assessment",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        },
+        {
+          "relation_id": 192912,
+          "added_way_ids": [],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "23c3d2aa551393e9e778a0c631abceb6b6107fc06a01b44e20df0bf88bb06145",
+          "current_profile_sha256": "5526a7d9b4bafd7d7311921792528c879afed622f8f51055e3f2b616c1ca6509",
+          "previous_source_relations": [
+            {
+              "id": 192912,
+              "version": 23,
+              "timestamp": "2024-09-05T09:39:16Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 192912,
+              "version": 23,
+              "timestamp": "2024-09-05T09:39:16Z"
+            }
+          ],
+          "previous_provider_sha256": "ebdb234b2482dd91276482b2f89552d4ea330393e69f79f73b739d3513208342",
+          "refreshed_provider_sha256": "f35d17538aeb0d9e4ed1b1c3f5b6adc4e4084c479dcca0ab3d60f57d74a3deca",
+          "current_source_way_count": 56,
+          "provider_node_maximum_drift_m": 0.004057295819637157,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 0.0,
+          "refreshed_geometry_outside_previous_m": 0.0,
+          "geometry_review": "same_linework_at_representation_tolerance",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        },
+        {
+          "relation_id": 13685224,
+          "added_way_ids": [],
+          "removed_way_ids": [],
+          "previous_profile_sha256": "3ebc7d14554bfeb6a16e15590db277eefa1c952d4aa8d878b262fca1cb57121d",
+          "current_profile_sha256": "8e9858f817b9e01229e2ee82fc327279aef8d4420eeded22fb0ee26ab1a54f79",
+          "previous_source_relations": [
+            {
+              "id": 13685224,
+              "version": 5,
+              "timestamp": "2025-07-27T11:26:48Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 13685224,
+              "version": 5,
+              "timestamp": "2025-07-27T11:26:48Z"
+            }
+          ],
+          "previous_provider_sha256": "05d355e5bcc035fe32841e3577c45e2c937867ffb7c4560a582a50289d751343",
+          "refreshed_provider_sha256": "05d355e5bcc035fe32841e3577c45e2c937867ffb7c4560a582a50289d751343",
+          "current_source_way_count": 48,
+          "provider_node_maximum_drift_m": 0.004231414939728482,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 0.0,
+          "refreshed_geometry_outside_previous_m": 0.0,
+          "geometry_review": "same_linework_at_representation_tolerance",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 621299.3358383927,
+      "canonical_inventory_length_m": 621106.6152785639,
+      "previous_unmapped_inventory_m": 621106.6152785639,
+      "unmapped_inventory_m": 71396.43849088578,
+      "maximum_supported_coverage_m": {
+        "on_foot": 527623.3410527745,
+        "cycling": 548073.9108477596,
+        "combined": 549710.1767876782
+      },
+      "prior_plan_sha256": "40de242acf22eaf3a27dcfd16ceefe720d7594f7fe99e241e83496dbf3c5bc73",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:5",
+        "source_relations": [
+          {
+            "id": 123318,
+            "version": 992,
+            "timestamp": "2025-11-30T11:13:50Z"
+          },
+          {
+            "id": 192912,
+            "version": 23,
+            "timestamp": "2024-09-05T09:39:16Z"
+          },
+          {
+            "id": 13685224,
+            "version": 5,
+            "timestamp": "2025-07-27T11:26:48Z"
+          }
+        ],
+        "accepted_way_count": 2344,
+        "held_way_count": 533,
+        "partial_way_count": 161,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 448,
+          "mode_policy_unresolved_or_restricted": 11,
+          "logical_branch_policy_required": 74
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1569083382,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        },
+        {
+          "way_id": 1569088365,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        },
+        {
+          "way_id": 1569089207,
+          "status": "supported",
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "remaining_hold": null
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    },
+    {
+      "route_key": "NCN:51",
+      "relations": [
+        {
+          "relation_id": 15020,
+          "added_way_ids": [
+            1306529955,
+            1306529956,
+            1306529957
+          ],
+          "removed_way_ids": [
+            4342660,
+            1134019543
+          ],
+          "previous_profile_sha256": "7b0db026a1e06aaeecb78475aea0ef40374ac29bb055afbc5ccdce0fcde03b34",
+          "current_profile_sha256": "abdcc3e40a88b949cc69769891946ed7a8b79a462d2ae15be3d573dff7a60fdd",
+          "previous_source_relations": [
+            {
+              "id": 15020,
+              "version": 1604,
+              "timestamp": "2026-10-09T16:39:49Z"
+            },
+            {
+              "id": 3018207,
+              "version": 16,
+              "timestamp": "2025-07-22T17:39:58Z"
+            }
+          ],
+          "current_source_relations": [
+            {
+              "id": 15020,
+              "version": 1605,
+              "timestamp": "2026-10-16T18:53:18Z"
+            },
+            {
+              "id": 3018207,
+              "version": 16,
+              "timestamp": "2025-07-22T17:39:58Z"
+            }
+          ],
+          "previous_provider_sha256": "40c36f51194b4376b3a84cbee96331afba64810ecd8dacccb15c5158a24d37ed",
+          "refreshed_provider_sha256": "9b35272e9ada4024ade35e086ef69031f555c076b987f94cfa45773f9380bf7c",
+          "current_source_way_count": 1831,
+          "provider_node_maximum_drift_m": 0.004384386235791234,
+          "representation_tolerance_m": 0.03,
+          "previous_geometry_outside_refreshed_m": 586.4927523657645,
+          "refreshed_geometry_outside_previous_m": 548.9713906509284,
+          "geometry_review": "geometry_changed_requires_current_extent_assessment",
+          "membership_baseline_reconciled": true,
+          "old_journey_evidence_transferred": false,
+          "whole_published_route_ready": false
+        }
+      ],
+      "membership_hold_resolved": true,
+      "source_inventory_length_m": 382227.6047644036,
+      "canonical_inventory_length_m": 382155.79152165196,
+      "previous_unmapped_inventory_m": 382155.79152165196,
+      "unmapped_inventory_m": 90873.05207936012,
+      "maximum_supported_coverage_m": {
+        "on_foot": 279523.22980084823,
+        "cycling": 290329.88626181067,
+        "combined": 291282.73944229184
+      },
+      "prior_plan_sha256": "f6a5146030b17a7494fd909a513f11ea768b66191bff94280bb858fa42f03f5c",
+      "whole_published_route_ready": false,
+      "catalogue_audit": {
+        "route_key": "NCN:51",
+        "source_relations": [
+          {
+            "id": 15020,
+            "version": 1605,
+            "timestamp": "2026-10-16T18:53:18Z"
+          }
+        ],
+        "accepted_way_count": 1399,
+        "held_way_count": 523,
+        "partial_way_count": 91,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 465,
+          "mode_policy_unresolved_or_restricted": 14,
+          "logical_branch_policy_required": 44
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification."
+      },
+      "added_way_assessments": [
+        {
+          "way_id": 1306529955,
+          "status": "held",
+          "modes": [],
+          "remaining_hold": {
+            "way_id": 1306529955,
+            "reason": "mode_policy_unresolved_or_restricted"
+          }
+        },
+        {
+          "way_id": 1306529956,
+          "status": "held",
+          "modes": [],
+          "remaining_hold": {
+            "way_id": 1306529956,
+            "reason": "mode_policy_unresolved_or_restricted"
+          }
+        },
+        {
+          "way_id": 1306529957,
+          "status": "held",
+          "modes": [],
+          "remaining_hold": {
+            "way_id": 1306529957,
+            "reason": "mode_policy_unresolved_or_restricted"
+          }
+        }
+      ],
+      "removed_way_ids_excluded_from_registry": true
+    }
+  ],
+  "validation": {
+    "ncn_tests_passed": 271,
+    "shared_cycling_evidence_tests_passed": 5,
+    "fixed_plan_and_scope_reports_validated": 6,
+    "guarded_overlay_reads_passed": 6,
+    "denominators_preserved": true,
+    "original_inventory_files_preserved": 562
+  },
+  "supporting_access_notice": {
+    "route_key": "NCN:51",
+    "way_ids": [
+      1306529955,
+      1306529956,
+      1306529957
+    ],
+    "captured_highway_tag": "construction",
+    "url": "https://www.hs2.org.uk/work-items/notice-of-closure-of-steeple-claydon-to-twyford-road-6-january-2026-to-november-2026/",
+    "published_estimated_end_date": "2026-11-30",
+    "page_last_updated": "2025-12-05",
+    "reviewed_at_utc": "2026-10-18T16:16:09.335971+00:00",
+    "date_automatically_grants_access": false
+  }
+}
