@@ -59,9 +59,9 @@ public class NcnAndroidTest {
     }
     @Test public void repeatsModesCorrectionsAndDeletionUseIntervalUnions() throws Exception {
         NcnCatalogue c=NcnCatalogue.load(app());NcnMatcher matcher=new NcnMatcher(c);NcnLedger ledger=new NcnLedger(c);
-        JSONObject foot=matcher.assess(journey(0)),cycle=matcher.assess(journey(1));double f=total(c,foot),b=total(c,cycle);
+        JSONObject foot=matcher.assess(journey(0)),cycle=matcher.assess(journey(1));double f=total(c,foot);
         ledger.put("one",foot);ledger.put("two",foot);assertEquals(f,ledger.metres("NCN:344","on_foot"),.001);
-        ledger.put("cycle",cycle);assertEquals(b,ledger.metres("NCN:344","combined"),.001);
+        ledger.put("cycle",cycle);assertEquals(golden().getDouble("expected_combined_metres"),ledger.metres("NCN:344","combined"),.001);
         ledger.put("cycle",foot);assertEquals(0,ledger.metres("NCN:344","cycling"),0);assertEquals(f,ledger.metres("NCN:344","combined"),.001);
         ledger.remove("one");ledger.remove("two");ledger.remove("cycle");assertEquals(0,ledger.metres("NCN:344","combined"),0);
     }
