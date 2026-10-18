@@ -4,8 +4,12 @@ import java.time.Instant;
 import java.util.*;
 import org.json.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 import static org.junit.Assert.*;
 
+@RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class WalkingArrivalTimingTest {
     private FootTraceValidator.Sample point(double x,long time,double speed,int index){
         return new FootTraceValidator.Sample(x/111195,0,20,time,speed,index);
