@@ -71,10 +71,18 @@ def selected_routes(report, fetch):
     return selected
 
 
-def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network_hash,provider_by_id):
+def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network_hash,provider_by_id,
+                    *, numbered_alternative_review=None, expected_review_sha256=None):
     kind,number=key.split(':');number=int(number)
     official=[f for f in network['features'] if f['properties'].get('RouteType')==kind and f['properties'].get('RouteNo')==number]
     if not official:raise ValueError('Official numbered extent missing')
+    reviewed_features=set()
+    if numbered_alternative_review is not None or expected_review_sha256 is not None:
+        from .numbered_alternative_review import validate_review
+        if numbered_alternative_review is None or expected_review_sha256 is None:
+            raise ValueError('Review bytes and independent checksum required together')
+        reviewed_features=validate_review(numbered_alternative_review,expected_review_sha256,
+            key,official,network_hash,profile_ids,index)
     bounds=unary_union([LineString(f['geometry']['coordinates']) if f['geometry']['type']=='LineString' else
         MultiLineString(f['geometry']['coordinates']) for f in official]).bounds
     origin=[(bounds[0]+bounds[2])/2,(bounds[1]+bounds[3])/2];metric=metric_projector(origin)
@@ -82,7 +90,7 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
     good=[];bad=[]
     for f in official:
         p=f['properties'];g=f['geometry'];parts=[g['coordinates']] if g['type']=='LineString' else g['coordinates']
-        target=good if p.get('OpenStatus')=='Open' and p.get('Desc_') in ('TrafficFree','OnRoad') and p.get('RouteCat')=='Main Route' else bad
+        target=good if p.get('OpenStatus')=='Open' and p.get('Desc_') in ('TrafficFree','OnRoad') and (p.get('RouteCat')=='Main Route' or p.get('FID') in reviewed_features) else bad
         target.extend(LineString([metric(c) for c in part]) for part in parts)
     good_tree=STRtree(good);bad_tree=STRtree(bad)
     member_ids=set();roles=defaultdict(list);providers=defaultdict(list);roots=[]
@@ -164,10 +172,16 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         'whole_route_completion_ready':False,'accepted_source_node_geometry_verified':bool(accepted),
         'scope':'explicit_member_source_spans_only_not_full_official_route',
         'mode_policy':'Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.'}
+    if reviewed_features:
+        audit['numbered_alternative_review_sha256']=expected_review_sha256
+        audit['reviewed_official_feature_ids']=sorted(reviewed_features)
+        audit['cross_route_credit']=False
     if not accepted:return None,audit
     metadata={'projection_origin':origin,'national_reference_sha256':network_hash,
         'source_snapshot_sha256':digest(sorted(source_hashes)),'membership_evidence_sha256':digest(accepted),
         'route_key':key,'scope':audit['scope'],'whole_route_completion_ready':False}
+    if reviewed_features:
+        metadata['numbered_alternative_review_sha256']=expected_review_sha256
     version='numbered-source-spans:'+digest(metadata)
     scope=key+':eligible-source-spans'
     sections=[];paths=[];published=[]
