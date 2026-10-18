@@ -183,6 +183,7 @@ def main():
         for name, value in [('report.json.gz', report), ('exceptions.geojson.gz', features)]:
             (out / name).write_bytes(gzip.compress(json.dumps(value, separators=(',', ':')).encode(), mtime=0))
         rows.append(report)
+        print(plan['route_key'], 'scope reviewed', flush=True)
     if not rows:
         raise ValueError('No inventory plans supplied')
     summary = {'schema_version': 1, 'routes_assessed': len(rows), 'diagnostic_only': True,
