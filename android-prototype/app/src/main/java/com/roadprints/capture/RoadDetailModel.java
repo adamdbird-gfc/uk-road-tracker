@@ -14,6 +14,7 @@ final class RoadDetailModel {
     static final class Entry {
         final String id,title,date;
         final List<JSONArray> lines=new ArrayList<>();
+        boolean contributes;
         Entry(JSONObject journey) {
             id=journey.optString("journey_id");title=journey.optString("title",journey.optString("name","Journey"));
             date=journey.optString("started_at");
@@ -37,15 +38,15 @@ final class RoadDetailModel {
         JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
         RoadDetailModel output=new RoadDetailModel();output.boundary=boundary;
-        MotorwayProgressCalculator motorway=RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
-        ARoadProgressCalculator aRoad=RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
+        MotorwayProgressCalculator motorway=!cumulative&&RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
+        ARoadProgressCalculator aRoad=!cumulative&&RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
         Set<String> refs=Collections.singleton(RoadDetailSelection.normalizeRef(selection.label));
         JourneyStore.forEach(context,journey->{
             if(!"complete".equals(journey.optString("processing_status")))return;
             if(motorway!=null)motorway.addJourney(journey,refs);
             if(aRoad!=null)aRoad.addJourney(journey,refs);
             Entry entry=collect(journey,selection,boundary,cumulative);
-            if(!entry.lines.isEmpty()) {
+            if(entry.contributes||!entry.lines.isEmpty()) {
                 output.journeys.add(entry);
                 for(JSONArray line:entry.lines) {
                     if(output.covered.size()<MAX_MAP_EDGES)output.covered.add(line);else output.mapLimited=true;
@@ -99,6 +100,9 @@ final class RoadDetailModel {
             for(int i=0;i<features.length();i++) {
                 JSONObject feature=features.optJSONObject(i);
                 if(!selection.matches(feature)||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                // Cumulative calculators count retained feature contributions even if
+                // their geometry cannot be displayed. Do not lose those journeys.
+                if(cumulative&&canonical!=null){entry.contributes=true;return entry;}
                 JSONObject geometry=feature.optJSONObject("geometry");
                 if(geometry==null||!seen.add(geometry.toString()))continue;
                 entry.lines.addAll(RoadDetailGeometry.lines(geometry,boundary));

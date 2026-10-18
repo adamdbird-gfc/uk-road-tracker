@@ -73,7 +73,7 @@ public final class RoadDetailActivity extends Activity {
         }
         TextView legend=text(model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled"
                 :"Recorded sections · tap a line to see journeys",13);body.addView(legend);
-        RoutePreviewView map=new RoutePreviewView(this,null,java.util.Collections.emptyList(),true);
+        RoutePreviewView map=RoutePreviewView.overview(this);
         if(model.fullReference&&RoadDetailSelection.MOTORWAY.equals(selection.kind))map.setMotorwayCoverageSegments(model.remaining,model.covered);
         else if(model.fullReference)map.setARoadCoverageSegments(model.remaining,model.covered);
         else map.setRouteData(null,model.covered);

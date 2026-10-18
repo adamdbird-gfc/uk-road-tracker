@@ -86,10 +86,13 @@ public class RoadDetailTest {
     @Test public void cumulativeJourneysRequireTheSameCanonicalEvidenceAndMode() throws Exception {
         RoadDetailSelection road=new RoadDetailSelection(RoadDetailSelection.A_ROAD,"A1","GB","","");
         JSONObject trip=journey(feature("A1","","GB"),"driving");
-        assertTrue(RoadDetailModel.collect(trip,road,null,true).lines.isEmpty());
+        assertFalse(RoadDetailModel.collect(trip,road,null,true).contributes);
         JSONObject result=trip.getJSONObject("processing_result");result.put("a_road_geojson",result.getJSONObject("road_geojson"));
-        assertFalse(RoadDetailModel.collect(trip,road,null,true).lines.isEmpty());
-        trip.put("mode","walking");assertTrue(RoadDetailModel.collect(trip,road,null,true).lines.isEmpty());
+        assertTrue(RoadDetailModel.collect(trip,road,null,true).contributes);
+        trip.getJSONObject("processing_result").getJSONObject("a_road_geojson").getJSONArray("features").getJSONObject(0).remove("geometry");
+        assertTrue(RoadDetailModel.collect(trip,road,null,true).contributes);
+        trip.getJSONObject("processing_result").getJSONObject("a_road_geojson").getJSONArray("features").getJSONObject(0).put("geometry",line(-2,2));
+        trip.put("mode","walking");assertFalse(RoadDetailModel.collect(trip,road,null,true).contributes);
         assertFalse(RoadDetailModel.collect(trip,road,null,false).lines.isEmpty());
     }
     @Test public void duplicateFeatureCollectionsProduceOneSetOfSegments() throws Exception {
