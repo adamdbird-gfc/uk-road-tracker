@@ -52,7 +52,7 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         matcher=AsyncMock(return_value={"status":"ok"})
         scope=dict(MatchRequest=object,match_payload=matcher,OSRM_BASE_URL="road",OSRM_CHUNK_SIZE=8)
         exec(compile(ast.Module(body=[endpoint],type_ignores=[]),"api.py","exec"),scope)
-        for recovery,size in [(True,48),(False,8)]:
+        for recovery,size in [(True,10),(False,8)]:
             await scope['match_journey'](types.SimpleNamespace(road_recovery=recovery))
             self.assertEqual(size,matcher.call_args.kwargs['chunk_size'])
 
@@ -65,11 +65,28 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
                                legs=[dict(distance=100,steps=[]) for _ in range(n-1)])])
         self.api['request_match']=request
         points=[types.SimpleNamespace(lat=51,lng=i*.001) for i in range(97)]
-        result=await self.api['match_payload'](types.SimpleNamespace(points=points),'unused',True,road_recovery=True,chunk_size=48)
-        self.assertEqual(3,result['chunks_used'])
+        result=await self.api['match_payload'](types.SimpleNamespace(points=points),'unused',True,road_recovery=True,chunk_size=10)
+        self.assertEqual(11,result['chunks_used'])
         self.assertEqual(97,result['matched_tracepoints'])
         self.assertEqual(9600,result['matched_distance_m'])
         self.assertEqual([],result['failed_sections'])
+    async def test_provider_coordinate_limit_recovers_all_observations_without_distance_inflation(self):
+        async def request(client,points,radius,base_url):
+            n=len(points)
+            if n>10:
+                return types.SimpleNamespace(status_code=400,text="Too many trace coordinates"),dict(code="TooBig",message="Too many trace coordinates")
+            return types.SimpleNamespace(status_code=200),dict(code='Ok',
+                tracepoints=[dict(location=[p.lng,p.lat],matchings_index=0,waypoint_index=i) for i,p in enumerate(points)],
+                matchings=[dict(distance=(n-1)*100,geometry=dict(type='LineString',coordinates=[[p.lng,p.lat] for p in points]),
+                               legs=[dict(distance=100,steps=[]) for _ in range(n-1)])])
+        self.api['request_match']=request
+        points=[types.SimpleNamespace(lat=51,lng=i*.001) for i in range(48)]
+        result=await self.api['match_payload'](types.SimpleNamespace(points=points),'unused',True,road_recovery=True,chunk_size=48)
+        self.assertEqual(48,result['matched_tracepoints'])
+        self.assertEqual(4700,result['matched_distance_m'])
+        self.assertTrue(result['matched_distance_is_deduplicated'])
+        self.assertEqual([],result['failed_sections'])
+
     def setUp(self):
         self.api = load_functions()
         self.calls = []
