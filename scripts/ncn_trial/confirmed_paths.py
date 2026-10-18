@@ -72,10 +72,22 @@ def selected_routes(report, fetch):
 
 
 def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network_hash,provider_by_id,
-                    *, numbered_alternative_review=None, expected_review_sha256=None):
+                    *, numbered_alternative_review=None, expected_review_sha256=None,
+                    source_identity_review=None, expected_identity_review_sha256=None):
     kind,number=key.split(':');number=int(number)
     official=[f for f in network['features'] if f['properties'].get('RouteType')==kind and f['properties'].get('RouteNo')==number]
     if not official:raise ValueError('Official numbered extent missing')
+    source_kind,source_number=kind,number
+    identity_features=None;identity_edges=None
+    if source_identity_review is not None or expected_identity_review_sha256 is not None:
+        from .source_identity_review import validate_review
+        if source_identity_review is None or expected_identity_review_sha256 is None:
+            raise ValueError('Source identity review bytes and independent checksum required together')
+        if numbered_alternative_review is not None or expected_review_sha256 is not None:
+            raise ValueError('Source identity and alternative reviews require separate assessments')
+        source_kind,source_number,identity_features,identity_edges=validate_review(
+            source_identity_review,expected_identity_review_sha256,key,official,network_hash,
+            profile_ids,index,source_hashes,provider_by_id)
     reviewed_features=set()
     if numbered_alternative_review is not None or expected_review_sha256 is not None:
         from .numbered_alternative_review import validate_review
@@ -90,13 +102,13 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
     good=[];bad=[]
     for f in official:
         p=f['properties'];g=f['geometry'];parts=[g['coordinates']] if g['type']=='LineString' else g['coordinates']
-        target=good if p.get('OpenStatus')=='Open' and p.get('Desc_') in ('TrafficFree','OnRoad') and (p.get('RouteCat')=='Main Route' or p.get('FID') in reviewed_features) else bad
+        target=good if p.get('OpenStatus')=='Open' and p.get('Desc_') in ('TrafficFree','OnRoad') and (p.get('RouteCat')=='Main Route' or p.get('FID') in reviewed_features) and (identity_features is None or p.get('FID') in identity_features) else bad
         target.extend(LineString([metric(c) for c in part]) for part in parts)
     good_tree=STRtree(good);bad_tree=STRtree(bad)
     member_ids=set();roles=defaultdict(list);providers=defaultdict(list);roots=[]
     for identity in profile_ids:
         root=index.get(('relation',identity));tags=root.get('tags',{}) if root else {}
-        if tags.get('network')!=kind.lower() or tags.get('ref')!=str(number) or non_uk_namespace(tags):
+        if tags.get('network')!=source_kind.lower() or tags.get('ref')!=str(source_number) or non_uk_namespace(tags):
             raise ValueError('Current source classification/scope differs')
         missing,cycles,unsupported,empty,paths,relations,ways=_route_members(index,identity)
         if missing or cycles or unsupported or empty:raise ValueError('Current member structure incomplete')
@@ -154,7 +166,8 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         elif any(line.hausdorff_distance(way_geometry(w,metric))>.03 for w in providers[wid]):
             reason='current_geometry_differs_from_assessed_provider'
         if reason:held.append({'way_id':wid,'reason':reason});continue
-        qualifying=[wid in alternative_ids or edge_ok(coords[i:i+2]) for i in range(len(nodes)-1)]
+        qualifying=[(identity_edges is None or (wid,i) in identity_edges) and
+                    (wid in alternative_ids or edge_ok(coords[i:i+2])) for i in range(len(nodes)-1)]
         spans=[];start=None
         for i,ok in enumerate(qualifying+[False]):
             if ok and start is None:start=i
@@ -176,12 +189,19 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         audit['numbered_alternative_review_sha256']=expected_review_sha256
         audit['reviewed_official_feature_ids']=sorted(reviewed_features)
         audit['cross_route_credit']=False
+    if identity_edges is not None:
+        audit.update(source_identity_review_sha256=expected_identity_review_sha256,
+            recorded_source_route_key=f'{source_kind}:{source_number}',target_route_key=key,
+            route_alias=False,old_journey_evidence_transferred=False)
     if not accepted:return None,audit
     metadata={'projection_origin':origin,'national_reference_sha256':network_hash,
         'source_snapshot_sha256':digest(sorted(source_hashes)),'membership_evidence_sha256':digest(accepted),
         'route_key':key,'scope':audit['scope'],'whole_route_completion_ready':False}
     if reviewed_features:
         metadata['numbered_alternative_review_sha256']=expected_review_sha256
+    if identity_edges is not None:
+        metadata['source_identity_review_sha256']=expected_identity_review_sha256
+        metadata['recorded_source_route_key']=f'{source_kind}:{source_number}'
     version='numbered-source-spans:'+digest(metadata)
     scope=key+':eligible-source-spans'
     sections=[];paths=[];published=[]

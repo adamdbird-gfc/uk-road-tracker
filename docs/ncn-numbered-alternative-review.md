@@ -1,5 +1,7 @@
 # NCN228 admission and NCN626/601 identity review — 18 October 2026
 
+Follow-up: [NCN601 now has an explicitly reviewed open-section catalogue](ncn601-open-sections.md). The findings below preserve the earlier checkpoint.
+
 NCN228 now has a reviewed, bounded catalogue under its own official number.
 It does not substitute for NCN20, NCN21 or another route. NCN626 remains held,
 with its investigation redirected to a source-numbering conflict with NCN601.
