@@ -1,6 +1,8 @@
 """Pin a bounded source-label correction to exact officially open target spans.
 
-Source labels and historical inventories are preserved. This review does not
+Source labels and historical inventories are preserved. Explicit partial-provider
+reviews may retain the same source/target label while admitting only verified
+spans. This review does not
 alias routes or transfer old journey evidence. It authorises only listed source
 edges, and every ordinary geometry, access and branch gate still applies.
 """
@@ -17,6 +19,13 @@ from .catalogue_extract import _route_members
 from .numbered_reconciliation import uk_metadata_anchor, non_uk_namespace
 
 
+def policy_matches_source(review, key):
+    policy=review.get('policy')
+    same=review.get('source_route_key')==key
+    return ((policy=='reviewed_source_edges_to_official_open_target' and not same)
+            or (policy=='partial_provider_verified_spans_only' and same))
+
+
 def validate_review(raw, expected_sha256, key, official, network_sha256,
                     roots, index, source_hashes, providers):
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
@@ -25,8 +34,7 @@ def validate_review(raw, expected_sha256, key, official, network_sha256,
     source = r.get('source_route_key', '').split(':')
     if (r.get('schema_version') != 1 or r.get('target_route_key') != key
             or not key.startswith('NCN:') or len(source) != 2 or source[0] != 'NCN'
-            or not source[1].isdecimal() or r['source_route_key'] == key
-            or r.get('policy') != 'reviewed_source_edges_to_official_open_target'
+            or not source[1].isdecimal() or not policy_matches_source(r,key)
             or r.get('route_alias') is not False
             or r.get('old_journey_evidence_transferred') is not False
             or r.get('whole_published_route_ready') is not False
@@ -118,6 +126,7 @@ def read_catalogue(folder, expected_manifest_sha256):
             or review.get('route_alias') is not False
             or review.get('old_journey_evidence_transferred') is not False
             or review.get('whole_published_route_ready') is not False
+            or not policy_matches_source(review,key)
             or extent.get('completion_binding_ready') is not False
             or extent.get('basis') != 'official_open_main_only'
             or payload['reference_version'] != 'numbered-source-spans:'+digest(metadata)):

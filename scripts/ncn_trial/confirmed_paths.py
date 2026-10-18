@@ -51,6 +51,12 @@ def eligible_modes(tags):
     return tuple(modes)
 
 
+def non_open_membership(chain,index):
+    blocked={'proposed','planned','construction','closed','disused','abandoned'}
+    return any(any(str(index.get(('relation',rid),{}).get('tags',{}).get(field,'')).lower() in blocked
+                   for field in ('state','status')) for rid,role in chain)
+
+
 def selected_routes(report, fetch):
     """Keep capture scope explicit; selection never changes span admission."""
     if not fetch.get('complete') or fetch.get('errors'):
@@ -157,7 +163,9 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         nodes=way['nodes'];coords=[[index['node',n]['lon'],index['node',n]['lat']] for n in nodes]
         if len(coords)<2:held.append({'way_id':wid,'reason':'missing_current_source_nodes'});continue
         line=LineString([metric(c) for c in coords]);tags=way.get('tags',{});modes=eligible_modes(tags)
-        if (nodes[0]==nodes[-1] or tags.get('junction') in ('roundabout','circular')) and wid not in reviewed_ring_ids:
+        if roles[wid] and all(non_open_membership(chain,index) for chain in roles[wid]):
+            reason='proposed_or_closed_source_membership'
+        elif (nodes[0]==nodes[-1] or tags.get('junction') in ('roundabout','circular')) and wid not in reviewed_ring_ids:
             reason='logical_branch_policy_required'
         elif any(role.lower() in ('alternative','alternate','excursion','link') for chain in roles[wid] for _,role in chain):
             reason='logical_branch_policy_required'

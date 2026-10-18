@@ -1,5 +1,7 @@
 # NCN601: verified open sections — 18 October 2026
 
+Follow-up: [five partial-geometry cases now have reviewed open spans](ncn-partial-geometry-batch1.md). Figures below retain the preceding checkpoint.
+
 NCN601 now has a bounded catalogue of verified open source spans. It represents
 the captured open sections around Oldham and Ashton, not the proposed complete
 Greater Manchester orbital route. The original source relation still records
