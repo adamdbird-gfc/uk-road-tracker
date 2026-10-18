@@ -1,5 +1,7 @@
 # Determination of six zero-association inventories — 18 October 2026
 
+Follow-up: [NCN228 now has a reviewed catalogue and the NCN626 investigation has identified NCN601 linework](ncn-numbered-alternative-review.md). The original dispositions below are preserved as a dated checkpoint.
+
 Retain NCN228 as a numbered alternative awaiting an explicit completion rule;
 retain NCN626 as an NCN route with insufficient official reference geometry.
 Defer RCN11, 17, 71 and 82 from activation pending maintained regional evidence.
