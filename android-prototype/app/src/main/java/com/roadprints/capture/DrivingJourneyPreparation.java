@@ -64,7 +64,10 @@ final class DrivingJourneyPreparation {
         double accuracy=p.optDouble(2,Double.NaN),nearbyAccuracy=Math.max(a.optDouble(2),b.optDouble(2));
         if(time<=start||time>=end||end-start>30_000L||!Double.isFinite(accuracy)||accuracy<=nearbyAccuracy*2)return false;
         FootTraceValidator.Sample fix=timed(p),from=timed(a),to=timed(b);
-        return FootTraceValidator.plausible(from,to)
+        double seconds=(end-start)/1000.0;
+        double plausibleDistance=Math.max(15,Math.max(from.speed,to.speed)*1.5)*seconds
+                +from.accuracy+to.accuracy;
+        return FootTraceValidator.metres(from,to)<=plausibleDistance
                 &&FootTraceValidator.segmentGap(fix,from,to)>accuracy+nearbyAccuracy;
     }
     private static boolean measuredVehicleFix(JSONArray p){
