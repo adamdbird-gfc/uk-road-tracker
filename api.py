@@ -606,7 +606,8 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
     return await match_payload(payload, OSRM_BASE_URL, include_motorways=True,
-                               road_recovery=payload.road_recovery)
+                               road_recovery=payload.road_recovery,
+                               chunk_size=48 if payload.road_recovery else OSRM_CHUNK_SIZE)
 
 @app.get("/map-context/v1/{lat_cell}/{lon_cell}")
 def map_context_area(lat_cell: int, lon_cell: int):

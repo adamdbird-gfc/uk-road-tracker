@@ -44,6 +44,32 @@ def load_functions():
 
 
 class RecoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_captured_drive_endpoint_uses_longer_context_without_changing_browser_policy(self):
+        from unittest.mock import AsyncMock
+        tree=ast.parse((pathlib.Path(__file__).resolve().parents[1]/"api.py").read_text())
+        endpoint=next(n for n in tree.body if isinstance(n,ast.AsyncFunctionDef) and n.name=="match_journey")
+        endpoint.decorator_list=[]
+        matcher=AsyncMock(return_value={"status":"ok"})
+        scope=dict(MatchRequest=object,match_payload=matcher,OSRM_BASE_URL="road",OSRM_CHUNK_SIZE=8)
+        exec(compile(ast.Module(body=[endpoint],type_ignores=[]),"api.py","exec"),scope)
+        for recovery,size in [(True,48),(False,8)]:
+            await scope['match_journey'](types.SimpleNamespace(road_recovery=recovery))
+            self.assertEqual(size,matcher.call_args.kwargs['chunk_size'])
+
+    async def test_longer_native_context_keeps_complete_point_and_distance_accounting(self):
+        async def request(client,points,radius,base_url):
+            n=len(points)
+            return types.SimpleNamespace(status_code=200),dict(code='Ok',
+                tracepoints=[dict(location=[p.lng,p.lat],matchings_index=0,waypoint_index=i) for i,p in enumerate(points)],
+                matchings=[dict(distance=(n-1)*100,geometry=dict(type='LineString',coordinates=[[p.lng,p.lat] for p in points]),
+                               legs=[dict(distance=100,steps=[]) for _ in range(n-1)])])
+        self.api['request_match']=request
+        points=[types.SimpleNamespace(lat=51,lng=i*.001) for i in range(97)]
+        result=await self.api['match_payload'](types.SimpleNamespace(points=points),'unused',True,road_recovery=True,chunk_size=48)
+        self.assertEqual(3,result['chunks_used'])
+        self.assertEqual(97,result['matched_tracepoints'])
+        self.assertEqual(9600,result['matched_distance_m'])
+        self.assertEqual([],result['failed_sections'])
     def setUp(self):
         self.api = load_functions()
         self.calls = []
