@@ -1,5 +1,8 @@
 # National NCN source reconciliation — 18 October 2026
 
+Follow-up: [the six membership holds have been reconciled](ncn-membership-review.md).
+The figures below preserve the initial national assessment checkpoint.
+
 This extends the captured node-backed source assessment beyond the original 48
 close-correspondence candidates. The same conservative source-span checks apply
 to the offset-sensitive and differing-extent queues. Selecting a review queue
