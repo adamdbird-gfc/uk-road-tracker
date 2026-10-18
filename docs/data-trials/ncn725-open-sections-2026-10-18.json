@@ -1,0 +1,1936 @@
+{
+  "schema_version": 1,
+  "route_keys": [
+    "NCN:725"
+  ],
+  "scope": "Explicit partial-provider open-span review; not full-route certification",
+  "capture_sha256": "0873c9a41e620dc52f121c62ea88826ec192119bced1cec5d9de05bd85422a7d",
+  "official_sha256": "5e61d9f5909af21b80bc417b011aa35da58d272aa664dbeb1151ba13cb0b122c",
+  "physical_report_sha256": "6e9bf5dacc65fd8946d73e1a48cab022b91022468b7f01fbad68b0f3d98fe196",
+  "membership_profiles_sha256": "a4b695a2632a81a5cf801d4c8a586308723b2e3807a80ed58932ac4964414048",
+  "existing_registry_sha256": "72f480c0e48ba6c993708aeed8ecbcf85e1aa6c81e9ff967bcea31ca64e25b05",
+  "routes": [
+    {
+      "route_key": "NCN:725",
+      "status": "supported_open_spans",
+      "current_source_way_count": 285,
+      "membership_changes": {
+        "2530039": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 2530039,
+          "version": 62,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "fixme": "validator says \"alternative\" is not valid relationship - can someone with more knowledge review this?",
+            "name": "Great North Cycleway",
+            "network": "ncn",
+            "ref": "725",
+            "route": "bicycle",
+            "type": "superroute"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "2530039": {
+          "relation_id": 2530039,
+          "expected_way_count": 285,
+          "provider_base_records": 181,
+          "missing_way_ids": [
+            2543333,
+            11018592,
+            25200527,
+            27363418,
+            27363419,
+            27711914,
+            34596703,
+            36120516,
+            37989280,
+            37989281,
+            39644458,
+            40944169,
+            62251469,
+            67888562,
+            109765124,
+            178876831,
+            338498120,
+            373096852,
+            373096854,
+            373096855,
+            431678295,
+            449880196,
+            451081200,
+            455476281,
+            471469750,
+            503434875,
+            520815665,
+            525676295,
+            675851437,
+            675851439,
+            675851445,
+            675885464,
+            746492947,
+            746492948,
+            746492956,
+            746492958,
+            755540280,
+            785716494,
+            796667710,
+            887871739,
+            887871740,
+            891205684,
+            891315857,
+            910061545,
+            910061546,
+            910618718,
+            915180721,
+            915180730,
+            915180731,
+            956982233,
+            957114426,
+            957114427,
+            970851571,
+            970851572,
+            970851573,
+            970851574,
+            970851575,
+            970851576,
+            970851577,
+            970851578,
+            970851579,
+            970851580,
+            970851581,
+            970851582,
+            1007148093,
+            1015665800,
+            1070998071,
+            1070998101,
+            1070998205,
+            1070998235,
+            1070998245,
+            1070998252,
+            1090844388,
+            1126977249,
+            1126977250,
+            1134271557,
+            1162471474,
+            1162471481,
+            1162471482,
+            1301627146,
+            1302042318,
+            1302053903,
+            1302053904,
+            1302089035,
+            1302096477,
+            1302096480,
+            1302096481,
+            1302096482,
+            1302096483,
+            1302100795,
+            1302100796,
+            1302110092,
+            1302110093,
+            1302129822,
+            1302129823,
+            1302142269,
+            1302143785,
+            1302143786,
+            1302143787,
+            1302143788,
+            1302143792,
+            1320127974,
+            1548474321,
+            1549344332
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 2530039,
+          "state": null
+        },
+        {
+          "id": 12081767,
+          "state": "proposed"
+        },
+        {
+          "id": 12081768,
+          "state": null
+        },
+        {
+          "id": 12082799,
+          "state": "proposed"
+        },
+        {
+          "id": 12082800,
+          "state": "proposed"
+        },
+        {
+          "id": 12082802,
+          "state": "proposed"
+        },
+        {
+          "id": 12082803,
+          "state": "proposed"
+        }
+      ],
+      "official_open_feature_count": 48,
+      "official_nonqualifying_feature_count": 1,
+      "official_open_union_m": 14988.691482065697,
+      "supported_source_union_m": 14978.88672470543,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 14140.278418379103,
+        "cycling": 14956.100096842121
+      },
+      "official_open_without_supported_source_at_10m_m": 934.8694625262478,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "catalogue_audit": {
+        "route_key": "NCN:725",
+        "source_relations": [
+          {
+            "id": 2530039,
+            "version": 62,
+            "timestamp": "2026-02-21T12:01:24Z"
+          }
+        ],
+        "accepted_way_count": 158,
+        "held_way_count": 143,
+        "partial_way_count": 16,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": []
+        },
+        "held": [
+          {
+            "way_id": 2543333,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 4609521,
+            "reason": "mode_policy_unresolved_or_restricted"
+          },
+          {
+            "way_id": 11018592,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 25200527,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 27363418,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 27363419,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 27711914,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 34596703,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 36120516,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 37989280,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 37989281,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 39644458,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 40944169,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 62251469,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 67888562,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 109765124,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 178876831,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 186793919,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              1,
+              2
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 187831769,
+            "reason": "mode_policy_unresolved_or_restricted"
+          },
+          {
+            "way_id": 338498120,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 368197436,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              3,
+              4
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 368197438,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 373096852,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 373096854,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 373096855,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 431678295,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 449880196,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 451081200,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 455476281,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 471469750,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 473753725,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              7
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 503434875,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 520815665,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 525676295,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 582294973,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 675851437,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 675851439,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 675851445,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 675885464,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 746492947,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 746492948,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 746492956,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 746492958,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 755540280,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 759038876,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 759038880,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 759050716,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 759050717,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 785716494,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 796667710,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 837865880,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 851903293,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 871980331,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 887871739,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 887871740,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 887880298,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 887893805,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 891205684,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 891315857,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 892480163,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 910061545,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 910061546,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 910618718,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 915180721,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 915180730,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 915180731,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 922779557,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 956982233,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 957114426,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 957114427,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970756579,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 970756580,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 970756587,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 970756588,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 970851571,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851572,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851573,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851574,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851575,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851576,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851577,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851578,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851579,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851580,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851581,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 970851582,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1007148093,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1015665800,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1038721865,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 1070998071,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1070998101,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1070998205,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1070998235,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1070998245,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1070998252,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1090844388,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1126977249,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1126977250,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1134271557,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1162471474,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1162471481,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1162471482,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1236167777,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 1236167778,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1301627146,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302042318,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302053903,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302053904,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302089035,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302096477,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302096480,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302096481,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302096482,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302096483,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302100795,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302100796,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302110092,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302110093,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302129822,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302129823,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302142269,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302143785,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302143786,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302143787,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302143788,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1302143792,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1315301908,
+            "reason": "mode_policy_unresolved_or_restricted"
+          },
+          {
+            "way_id": 1320127974,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1320415867,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415872,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415873,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415875,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415878,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415881,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415883,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415886,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415887,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415891,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415895,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1320415896,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1363575996,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              19,
+              20,
+              21
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 1548474321,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 1549344332,
+            "reason": "proposed_or_closed_source_membership"
+          }
+        ],
+        "held_reason_counts": {
+          "proposed_or_closed_source_membership": 104,
+          "mode_policy_unresolved_or_restricted": 3,
+          "unresolved_official_extent_edges": 36
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "82a4de8f11763d8e0f73043509e5970564e467001cddd87697193e560d8849c8",
+        "recorded_source_route_key": "NCN:725",
+        "target_route_key": "NCN:725",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:725",
+        "target_route_key": "NCN:725",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "5e61d9f5909af21b80bc417b011aa35da58d272aa664dbeb1151ba13cb0b122c",
+        "official_features_sha256": "5ca987a69d4925a52b5c3b78b8a903988f96e73d08d54767718d1c24ca3e914a",
+        "approved_open_features_sha256": "cc0cd4ee709fc9666f5ae7600e78b31b0cb9953dd4f56c9aeb34f6699be04af6",
+        "source_snapshot_sha256": "f250e51a2f984a511c40c7d68c1d77678b647dde94bbfcf805e242afd21d0677",
+        "provider_sha256": "ea26ae517a74e1ba86ae74926cb037007a41765a9cede6548f3e541d4a259d20",
+        "source_relations_sha256": "0b16836884954572820bbe812bd4fde58b12e822581cf85d144c414b178e07a4",
+        "source_relation_ids": [
+          2530039
+        ],
+        "approved_official_feature_ids": [
+          165,
+          2457,
+          3863,
+          4248,
+          4687,
+          4810,
+          4811,
+          5564,
+          5573,
+          5574,
+          6485,
+          6711,
+          7459,
+          8620,
+          10904,
+          11128,
+          11583,
+          11972,
+          11984,
+          12024,
+          12025,
+          13067,
+          14021,
+          14315,
+          14529,
+          16053,
+          19148,
+          19974,
+          20101,
+          20594,
+          21453,
+          21487,
+          21488,
+          23585,
+          23920,
+          24220,
+          27042,
+          28226,
+          28931,
+          31202,
+          32456,
+          32457,
+          34850,
+          34876,
+          35709,
+          35710,
+          36778,
+          36788
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 2543336,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 30089470,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 30558587,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 59812145,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 59812165,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 60151681,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 88875082,
+            "from_vertex": 0,
+            "to_vertex": 17
+          },
+          {
+            "way_id": 118389173,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 132958093,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 132958094,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 177647004,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 186793919,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 186793920,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 187831767,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 187831768,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 187831770,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 193230710,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 217571062,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 217571063,
+            "from_vertex": 0,
+            "to_vertex": 25
+          },
+          {
+            "way_id": 217571064,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 219662485,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 223711348,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 330863487,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 368197436,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 368197436,
+            "from_vertex": 5,
+            "to_vertex": 23
+          },
+          {
+            "way_id": 368197438,
+            "from_vertex": 1,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 368197447,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 368197448,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 368197452,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 383327666,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 400886690,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 400886692,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 442077376,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 473753723,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 473753725,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 473753730,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 499923048,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 578619363,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 578619366,
+            "from_vertex": 0,
+            "to_vertex": 18
+          },
+          {
+            "way_id": 578619369,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 578619371,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 592200945,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 592200949,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 592336479,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 644892556,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 683110018,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 686611463,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 688145937,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 759038868,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 759038871,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 759038874,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 759038875,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 759038876,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 759038876,
+            "from_vertex": 7,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 759038877,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 759038878,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 759038879,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 759038880,
+            "from_vertex": 1,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 759038882,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 759050715,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 759050718,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 759050719,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 759050720,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 759050721,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 775628200,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 822148719,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 836366207,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 836366208,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 836366209,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 837859810,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 837865880,
+            "from_vertex": 1,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 837865881,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 851903293,
+            "from_vertex": 1,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 851912863,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 851912864,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 871980331,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 871980331,
+            "from_vertex": 7,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 871980332,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 871980336,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 871980337,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 874231035,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 879894566,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 879894567,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 879894568,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 879894569,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 879894570,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 879894571,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 879894572,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 887713731,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 887713732,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 887871742,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 887871743,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 887880301,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 887880303,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 887893802,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 887893805,
+            "from_vertex": 2,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 887893809,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 892480163,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 892480163,
+            "from_vertex": 7,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 898110285,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 906251192,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 922523385,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 922780008,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 922780009,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 922780010,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 922837610,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 922837611,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 922840278,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 922840279,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 922840282,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 922840283,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 928686786,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 970634886,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 970634887,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 970756580,
+            "from_vertex": 1,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 970756583,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 970756584,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 970756585,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 970756586,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 970756588,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1029869978,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1029869980,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1033375620,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1038721863,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 1038721864,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1038721865,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 1038721865,
+            "from_vertex": 13,
+            "to_vertex": 16
+          },
+          {
+            "way_id": 1044253071,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1044254202,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1070847327,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 1070847328,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1070847329,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1122969352,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1122969353,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1123881071,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1123881073,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1236165485,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1236167777,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1263467840,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1263467841,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1315301924,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1320415897,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1320490386,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1320490388,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1339060224,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1340874785,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1340874786,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1363575986,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1363575987,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 1363575988,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 1363575989,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1363575990,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 1363575991,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 1363575992,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 1363575996,
+            "from_vertex": 0,
+            "to_vertex": 19
+          },
+          {
+            "way_id": 1363575996,
+            "from_vertex": 22,
+            "to_vertex": 39
+          },
+          {
+            "way_id": 1363575997,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 1363575998,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1363575999,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 1364018961,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1436923519,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1462826002,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1499837375,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 1499837376,
+            "from_vertex": 0,
+            "to_vertex": 2
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/2530039/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+%3D+725&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "72f480c0e48ba6c993708aeed8ecbcf85e1aa6c81e9ff967bcea31ca64e25b05",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "4729d285638df7edb9fb715901e0b9454845d1529da1757cfa39d98d7cb131db"
+    }
+  ],
+  "previous_supported_catalogues": 188,
+  "supported_catalogues": 189,
+  "previous_distinct_supported_ways": 43457,
+  "distinct_supported_ways": 43615,
+  "new_distinct_supported_ways": 158,
+  "shared_existing_way_ids": [],
+  "whole_published_route_ready": false,
+  "app_release": false,
+  "android_internal_trial_route_count": 8
+}

@@ -93,7 +93,23 @@ def load_capture(folder,expected_sha):
     return manifest,values
 
 
-def assess(research,capture,capture_sha,network_sha,report_sha,profiles_sha,existing,existing_sha,keys,output):
+def registry_checkpoint(folders, expected_sha, expected_ways, expected_catalogues, new_keys=()):
+    if (type(expected_ways) is not int or expected_ways <= 0
+            or type(expected_catalogues) is not int or expected_catalogues <= 0):
+        raise ValueError('Explicit positive registry checkpoint counts required')
+    registry, registry_sha = existing_registry(folders)
+    keys = [p.parent.name for folder in folders
+            for p in Path(folder).glob('[NR]CN-*/associations.json.gz')]
+    if (registry_sha != expected_sha or len(registry) != expected_ways
+            or len(keys) != expected_catalogues or len(set(keys)) != len(keys)):
+        raise ValueError('Pinned existing catalogue registry changed or duplicated')
+    if set(keys) & {key.replace(':','-') for key in new_keys}:
+        raise ValueError('Selected route already exists in the registry checkpoint')
+    return registry
+
+
+def assess(research,capture,capture_sha,network_sha,report_sha,profiles_sha,existing,existing_sha,keys,output,
+           *, expected_existing_way_count=43103, previous_supported_catalogues=183):
     research=Path(research);output=Path(output)
     rraw=(research/'physical-national/summary.json').read_bytes()
     praw=gzip.decompress((research/'numeric-route-membership-profiles.json.gz').read_bytes())
@@ -101,9 +117,7 @@ def assess(research,capture,capture_sha,network_sha,report_sha,profiles_sha,exis
         raise ValueError('Pinned original triage inputs changed')
     previous={p['relation_id']:p for p in json.loads(praw)['profiles']}
     rows=select_cases(json.loads(rraw),previous,keys)
-    registry,registry_sha=existing_registry(existing)
-    if registry_sha!=existing_sha or len(registry)!=43103:
-        raise ValueError('Existing 183-catalogue source registry changed')
+    registry=registry_checkpoint(existing,existing_sha,expected_existing_way_count,previous_supported_catalogues,keys)
     manifest,values=load_capture(capture,capture_sha)
     if set(manifest['route_keys'])!=set(keys) or len(manifest['route_keys'])!=len(keys):
         raise ValueError('Captured route scope differs')
@@ -200,7 +214,7 @@ def assess(research,capture,capture_sha,network_sha,report_sha,profiles_sha,exis
     summary={'schema_version':1,'route_keys':sorted(keys),'scope':'Explicit partial-provider open-span review; not full-route certification',
         'capture_sha256':capture_sha,'official_sha256':network_sha,'physical_report_sha256':report_sha,
         'membership_profiles_sha256':profiles_sha,'existing_registry_sha256':existing_sha,'routes':result_rows,
-        'previous_supported_catalogues':183,'supported_catalogues':183+sum(r['status']=='supported_open_spans'for r in result_rows),
+        'previous_supported_catalogues':previous_supported_catalogues,'supported_catalogues':previous_supported_catalogues+sum(r['status']=='supported_open_spans'for r in result_rows),
         'previous_distinct_supported_ways':len(registry),'distinct_supported_ways':len(registry.keys()|admitted),
         'new_distinct_supported_ways':len(admitted-registry.keys()),'shared_existing_way_ids':sorted(admitted&registry.keys()),
         'whole_published_route_ready':False,'app_release':False,'android_internal_trial_route_count':8}
@@ -213,8 +227,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('research','capture','output'):p.add_argument('--'+name,type=Path,required=True)
     for name in ('capture-sha','network-sha','report-sha','profiles-sha','existing-sha'):p.add_argument('--'+name,required=True)
+    p.add_argument('--expected-existing-way-count',type=int,default=43103)
+    p.add_argument('--previous-supported-catalogues',type=int,default=183)
     p.add_argument('--existing',nargs='+',type=Path,required=True);p.add_argument('--route-keys',nargs='+',required=True)
-    a=p.parse_args();s=assess(a.research,a.capture,a.capture_sha,a.network_sha,a.report_sha,a.profiles_sha,a.existing,a.existing_sha,a.route_keys,a.output)
+    a=p.parse_args();s=assess(a.research,a.capture,a.capture_sha,a.network_sha,a.report_sha,a.profiles_sha,a.existing,a.existing_sha,a.route_keys,a.output,
+        expected_existing_way_count=a.expected_existing_way_count,previous_supported_catalogues=a.previous_supported_catalogues)
     print(json.dumps({k:v for k,v in s.items()if k!='routes'},indent=2))
 
 
