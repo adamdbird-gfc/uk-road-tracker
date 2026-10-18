@@ -31,6 +31,7 @@ public class DebugActivity extends Activity {
         LinearLayout brand=RoadprintsHeader.create(this);brand.setPadding(0,0,0,dp(22));root.addView(brand);root.addView(text("UTILITIES",13,0xFF67D5CC,true));root.addView(text("Debug",32,Color.WHITE,true));
         TextView info=text(available?"Review the report before copying. It stays on this device until you choose to copy it.":"No reports have been saved on this device yet. Reports stay on this device and are not sent automatically.",15,MUTED,false);info.setPadding(0,dp(12),0,dp(12));root.addView(info);
         TextView details=text(available?report:"If a journey match fails or Roadprints crashes, diagnostic details will appear here.",13,MUTED,false);details.setTextIsSelectable(true);root.addView(details);
+        root.addView(action("NCN INTEGRATION TRIAL",0xFF29437F,Color.WHITE,()->startActivity(new Intent(this,NcnTrialActivity.class))));
         root.addView(text("Movement diagnostics",21,Color.WHITE,true));
         TextView movementStatus=text(MovementDiagnostics.status(this),14,MUTED,false);
         movementStatus.setPadding(0,dp(8),0,dp(6));

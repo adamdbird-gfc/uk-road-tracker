@@ -1,0 +1,235 @@
+{
+  "scope": "synthetic saved matcher outputs, not real trips",
+  "route": "NCN:344",
+  "cases": [
+    {
+      "name": "walking",
+      "journey": {
+        "journey_id": "foot",
+        "title": "Synthetic NCN walking proof",
+        "started_at": "2026-10-18T07:00:00Z",
+        "mode": "walking",
+        "processing_status": "complete",
+        "processing_result": {
+          "matcher": "preloaded_pedestrian_network_v4",
+          "geojson": {
+            "features": [
+              {
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates": [
+                    [
+                      -3.3122863,
+                      50.9732019
+                    ],
+                    [
+                      -3.3122228,
+                      50.9731586
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          "matched_path_evidence": {
+            "schema_version": 1,
+            "status": "available",
+            "geometry_feature_index": 0,
+            "geometry_sha256": "42d476c9fca3c865654dea9d0c1eace13d37d8f5022cf7a3e0ec7d06ef00c06e",
+            "references": [
+              {
+                "source_key": "osm_geofabrik_test",
+                "source_version": "2026-10-16",
+                "source_feature_id": "1001899502",
+                "reference_kind": "path",
+                "source_geometry_sha256": "8404983692cb0cea2bd2f78116bf4cc83c6f9fe85c9afaeb0620df7aa40e2adf",
+                "tags": {
+                  "foot": "yes",
+                  "name": "L\u00f4n Las \u2013 trial"
+                },
+                "content_sha256": "c0e3f8d7c05e7f288f3d35d141b1aa66071ee0f41f1f4c802bef77822b12844a"
+              }
+            ],
+            "spans": [
+              [
+                0,
+                1,
+                0
+              ]
+            ],
+            "span_format": [
+              "from_vertex",
+              "to_vertex_inclusive",
+              "reference_index"
+            ]
+          }
+        }
+      },
+      "expected_metres": 6.552931207021972
+    },
+    {
+      "name": "cycling",
+      "journey": {
+        "journey_id": "cycle",
+        "title": "Synthetic NCN bicycle proof",
+        "started_at": "2026-10-18T07:00:00Z",
+        "mode": "cycling",
+        "processing_status": "complete",
+        "processing_result": {
+          "matcher": "osrm_bicycle_v1",
+          "matching_mode": "cycling",
+          "geojson": {
+            "features": [
+              {
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates": [
+                    [
+                      -3.312286,
+                      50.973202
+                    ],
+                    [
+                      -3.312223,
+                      50.973159
+                    ],
+                    [
+                      -3.312052,
+                      50.973047
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          "cycling_path_evidence": {
+            "schema_version": 1,
+            "provider": "osrm",
+            "router_graph": "bicycle",
+            "status": "available",
+            "features": [
+              {
+                "geometry_feature_index": 0,
+                "legs": [
+                  {
+                    "leg_index": 0,
+                    "from_vertex": 0,
+                    "to_vertex": 2,
+                    "osm_nodes": [
+                      3854479579,
+                      45595802,
+                      3854479578
+                    ]
+                  }
+                ],
+                "held_legs": [],
+                "data_version": null,
+                "geometry_sha256": "0080b977d06c872ba2907e6be4ba9fe1d5a54ed3413ad70f02a840b9ff2c9752",
+                "status": "available",
+                "content_sha256": "a3694b93fd02491ada6b0da2336bce69c6bc71983d65d2c7b520a4e3b5be3502"
+              }
+            ]
+          }
+        }
+      },
+      "expected_metres": 23.76758867306834
+    },
+    {
+      "name": "legacy",
+      "journey": {
+        "journey_id": "foot",
+        "title": "Synthetic NCN walking proof",
+        "started_at": "2026-10-18T07:00:00Z",
+        "mode": "walking",
+        "processing_status": "complete",
+        "processing_result": {
+          "matcher": "preloaded_pedestrian_network_v4",
+          "geojson": {
+            "features": [
+              {
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates": [
+                    [
+                      -3.3122863,
+                      50.9732019
+                    ],
+                    [
+                      -3.3122228,
+                      50.9731586
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          "road_geojson": {
+            "features": [
+              {
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates": [
+                    [
+                      -3.3122863,
+                      50.9732019
+                    ],
+                    [
+                      -3.3122228,
+                      50.9731586
+                    ],
+                    [
+                      -3.3120524,
+                      50.9730469
+                    ]
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "expected_metres": 6.552931207021972
+    }
+  ],
+  "geometry_hash_vectors": [
+    {
+      "coordinates": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          -1
+        ]
+      ],
+      "sha256": "ad816f5590be272101d15c324e35b949a6e9884895585e0b3d67bc725797205e"
+    },
+    {
+      "coordinates": [
+        [
+          1e-06,
+          -1e-06
+        ],
+        [
+          1e-05,
+          -1e-05
+        ]
+      ],
+      "sha256": "cfbbb0ce428c0afcd713f09b939053ed8c7f0eb7832e7e8a51f3b087d43eca11"
+    },
+    {
+      "coordinates": [
+        [
+          0.0001,
+          1.5
+        ],
+        [
+          -4.22,
+          55.9
+        ]
+      ],
+      "sha256": "144c52d03d7c6cd575a72216824286197dd6b04ef2e115177717e00f94b589c2"
+    }
+  ],
+  "expected_combined_metres": 23.77366420612166
+}

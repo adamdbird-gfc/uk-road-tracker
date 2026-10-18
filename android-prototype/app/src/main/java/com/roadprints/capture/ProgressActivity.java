@@ -236,9 +236,9 @@ public class ProgressActivity extends Activity {
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
         synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
-        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()))) {
+        if (cached != null && (loadedStats != cached || renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()+1000003L*NcnProgressStore.revision(this)))) {
             loadedStats = cached; renderStatistics(statisticsContent, cached); restoreProgressScroll();
-        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()))) {
+        } else if (loadedStats != null && (renderedKilometres != useKilometres || renderedServiceRevision != (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()+1000003L*NcnProgressStore.revision(this)))) {
             renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
         if (cached != null && cachedRevision == revision) {
@@ -557,7 +557,7 @@ public class ProgressActivity extends Activity {
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
         parent.removeAllViews();
         renderedKilometres = useKilometres;
-        renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision());
+        renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision()+1000003L*NcnProgressStore.revision(this));
         renderingPendingStats = stats.pending;
         addCollectiveStatistics(parent, stats);
         renderingPendingStats = false;
@@ -574,6 +574,7 @@ public class ProgressActivity extends Activity {
         addMotorwayCoveragePanel(parent, stats);
         addARoadAggregatePanel(parent, stats);
         addARoadCoveragePanel(parent, stats);
+        NcnProgressUi.add(this,parent);
         for(String collection:CollectionAccessStore.installed(this)){
             LinearLayout panel=statisticsPanel(CollectionAccessStore.name(collection));panel.setTag("progress:"+collection);
             VenueProgressPanel.populate(this,collection,panel,expandedRoadCategories,this::refreshPubProgress);parent.addView(panel);
@@ -592,6 +593,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Road discovery", "road_discovery");
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
+        if(NcnProgressStore.enabled(this))addProgressJump(row,"NCN trial","ncn_trial");
         for(String collection:CollectionAccessStore.installed(this))addProgressJump(row,VenueCollection.definition(collection).shortName,collection);
         scroll.addView(row);
         setActiveProgressJump("statistics");

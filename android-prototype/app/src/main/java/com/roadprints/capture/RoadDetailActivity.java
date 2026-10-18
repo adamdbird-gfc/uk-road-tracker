@@ -32,6 +32,13 @@ public final class RoadDetailActivity extends Activity {
         TextView title=text(selection.title(),22);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         TextView close=action("CLOSE",this::finish);header.addView(close);root.addView(header);
         status=text("Loading your road…",14);status.setPadding(0,dp(12),0,dp(12));root.addView(status);
+        if(RoadDetailSelection.NCN.equals(selection.kind)) {
+            LinearLayout modes=new LinearLayout(this);
+            for(String mode:new String[]{"combined","on_foot","cycling"}) {
+                String label=mode.equals("combined")?"Both":mode.equals("on_foot")?"On foot":"Cycling";
+                modes.addView(action(label,()->{selection.ncnMode=mode;getIntent().putExtra("ncn_mode",mode);loadedRevision=Long.MIN_VALUE;load();}),new LinearLayout.LayoutParams(0,-2,1));
+            }root.addView(modes);
+        }
         body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
         root.setOnApplyWindowInsetsListener((v,insets)->{
@@ -40,7 +47,7 @@ public final class RoadDetailActivity extends Activity {
         });
     }
     @Override protected void onResume() {
-        super.onResume();if(selection!=null&&loadedRevision!=JourneyStore.dataRevision(this))load();
+        super.onResume();if(selection!=null&&loadedRevision!=JourneyStore.dataRevision(this))load();else if(model!=null)status.setText(cumulative?model.journeys.size()+" contributing journeys · newest first":summary());
     }
     private void load() {
         int request=++generation;long revision=JourneyStore.dataRevision(this);
@@ -56,7 +63,7 @@ public final class RoadDetailActivity extends Activity {
             } catch(Exception failure) {
                 runOnUiThread(()->{
                     if(isFinishing()||isDestroyed()||request!=generation)return;
-                    status.setText("This road could not be loaded. Tap to retry.");status.setOnClickListener(v->load());
+                    status.setText(RoadDetailSelection.NCN.equals(selection.kind)?"NCN progress is updating or unavailable. Tap to retry.":"This road could not be loaded. Tap to retry.");status.setOnClickListener(v->load());
                 });
             }
         });
@@ -71,10 +78,11 @@ public final class RoadDetailActivity extends Activity {
         if(model.covered.isEmpty()&&model.remaining.isEmpty()) {
             body.addView(text("No retained mapped sections are available for this road.",15));return;
         }
-        TextView legend=text(model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled"
+        TextView legend=text(model.ncn?"Orange: network · Purple: travelled":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled"
                 :"Recorded sections · tap a line to see journeys",13);body.addView(legend);
         RoutePreviewView map=RoutePreviewView.overview(this);
-        if(model.fullReference&&RoadDetailSelection.MOTORWAY.equals(selection.kind))map.setMotorwayCoverageSegments(model.remaining,model.covered);
+        if(model.ncn)map.setNcnCoverageSegments(model.remaining,model.covered);
+        else if(model.fullReference&&RoadDetailSelection.MOTORWAY.equals(selection.kind))map.setMotorwayCoverageSegments(model.remaining,model.covered);
         else if(model.fullReference)map.setARoadCoverageSegments(model.remaining,model.covered);
         else map.setRouteData(null,model.covered);
         map.setContentDescription("Map of "+selection.title()+". Tap a road section to view its journeys.");
@@ -98,6 +106,7 @@ public final class RoadDetailActivity extends Activity {
         }));
     }
     private String summary() {
+        if(model.ncn)return "Internal source inventory · "+selection.ncnMode.replace("on_foot","on foot")+" · "+DistanceUnits.format(this,model.uniqueMetres)+" / "+DistanceUnits.format(this,model.referenceMetres)+String.format(java.util.Locale.UK," · %.1f%%",model.percent);
         return model.fullReference?DistanceUnits.format(this,model.uniqueMetres)+" travelled of "
                 +DistanceUnits.format(this,model.referenceMetres)+String.format(java.util.Locale.UK," · %.1f%%",model.percent)
                 :"Recorded sections only · full road coverage unavailable";
