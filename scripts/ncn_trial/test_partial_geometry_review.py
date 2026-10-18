@@ -8,7 +8,7 @@ import unittest
 
 from matched_path_evidence import digest
 from .confirmed_paths import build_candidate, selected_routes
-from .partial_geometry_review import select_cases, load_capture, fingerprint, existing_registry
+from .partial_geometry_review import select_cases, load_capture, fingerprint, existing_registry, registry_checkpoint
 from .source_identity_review import policy_matches_source
 from .test_confirmed_paths import inputs
 
@@ -116,6 +116,18 @@ class PartialGeometryReviewTests(unittest.TestCase):
             with self.assertRaises(ValueError):load_capture(root,write())
             m['sources'][0]['relation_id']=1;(root/'optional').write_bytes(b'changed')
             with self.assertRaises(ValueError):load_capture(root,write())
+
+    def test_registry_checkpoint_requires_exact_counts_hash_and_distinct_catalogues(self):
+        with TemporaryDirectory() as directory:
+            root=Path(directory);folder=root/'NCN-725';folder.mkdir()
+            row={'way_id':'42','osm_node_ids':[1,2],'coordinates':[[0,0],[.001,0]]}
+            (folder/'associations.json.gz').write_bytes(gzip.compress(json.dumps({'paths':[row]}).encode()))
+            registry, pin=existing_registry([root])
+            self.assertEqual(registry_checkpoint([root],pin,1,1),registry)
+            for wrong_pin,ways,catalogues in [('0'*64,1,1),(pin,2,1),(pin,1,2),(pin,True,1),(pin,1,0)]:
+                with self.assertRaises(ValueError):registry_checkpoint([root],wrong_pin,ways,catalogues)
+            with self.assertRaises(ValueError):registry_checkpoint([root,root],pin,1,2)
+            with self.assertRaises(ValueError):registry_checkpoint([root],pin,1,1,['NCN:725'])
 
 
 if __name__=='__main__':unittest.main()
