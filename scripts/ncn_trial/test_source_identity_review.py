@@ -21,6 +21,7 @@ def setup():
         'policy':'reviewed_source_edges_to_official_open_target','route_alias':False,
         'old_journey_evidence_transferred':False,'whole_published_route_ready':False,
         'official_network_sha256':values[6],'official_features_sha256':digest(values[5]['features']),
+        'approved_open_features_sha256':digest(values[5]['features']),
         'source_snapshot_sha256':digest(sorted(values[4])), 'provider_sha256':digest(values[7]),
         'source_relations_sha256':digest([values[3]['relation',1]]),
         'source_relation_ids':[1],'approved_official_feature_ids':[1],
@@ -163,6 +164,15 @@ class SourceIdentityReviewTests(unittest.TestCase):
                 (root/'manifest.json').write_bytes(changed_raw)
                 (root/'open-extent.json').write_bytes(bad)
                 with self.assertRaises(ValueError):read_catalogue(root,hashlib.sha256(changed_raw).hexdigest())
+            shortened=deepcopy(extent)
+            shortened['features'][0]['geometry']['coordinates'][-1][0]=.0005
+            shortened['canonical_open_union_m']=length/2
+            bad=json.dumps(shortened).encode()
+            changed={**m,'open_extent_sha256':hashlib.sha256(bad).hexdigest()}
+            changed_raw=json.dumps(changed).encode()
+            (root/'manifest.json').write_bytes(changed_raw)
+            (root/'open-extent.json').write_bytes(bad)
+            with self.assertRaises(ValueError):read_catalogue(root,hashlib.sha256(changed_raw).hexdigest())
             (root/'manifest.json').write_bytes(mraw)
             (root/'open-extent.json').write_bytes(files['open-extent.json']+b' ')
             with self.assertRaises(ValueError):read_catalogue(root,pin)

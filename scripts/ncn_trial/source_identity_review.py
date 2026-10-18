@@ -66,6 +66,8 @@ def validate_review(raw, expected_sha256, key, official, network_sha256,
                 or p.get('RouteCat') != 'Main Route' or p.get('OpenStatus') != 'Open'
                 or p.get('Desc_') not in ('OnRoad', 'TrafficFree')):
             raise ValueError('Only explicitly open target main features may be reviewed')
+    if r.get('approved_open_features_sha256') != digest([f for f in official if f['properties']['FID'] in ids]):
+        raise ValueError('Exact reviewed open geometry required')
     spans = r.get('approved_source_spans', [])
     edges = set()
     for span in spans:
@@ -121,7 +123,8 @@ def read_catalogue(folder, expected_manifest_sha256):
             or payload['reference_version'] != 'numbered-source-spans:'+digest(metadata)):
         raise ValueError('Reviewed source catalogue identity differs')
     if ({f['properties'].get('FID') for f in extent['features']} != set(review['approved_official_feature_ids'])
-            or len(extent['features']) != len(review['approved_official_feature_ids'])):
+            or len(extent['features']) != len(review['approved_official_feature_ids'])
+            or digest(extent['features']) != review.get('approved_open_features_sha256')):
         raise ValueError('Published open extent differs from the reviewed features')
     for feature in extent['features']:
         p = feature['properties']

@@ -164,13 +164,13 @@
     "accepted_source_node_geometry_verified": true,
     "scope": "explicit_member_source_spans_only_not_full_official_route",
     "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
-    "source_identity_review_sha256": "8245be40e1fa30a6ebbbc457006e7bcb32633a6f32878a2033e906afc9ba1417",
+    "source_identity_review_sha256": "06c98008aaac15c292428316f5e1314618a122f54fdb0996c55332fcf74ebfb5",
     "recorded_source_route_key": "NCN:626",
     "target_route_key": "NCN:601",
     "route_alias": false,
     "old_journey_evidence_transferred": false
   },
-  "catalogue_manifest_sha256": "6367cba23d30fcc7f47e93c5cca355606893a370a585938439faee63de98d80e",
+  "catalogue_manifest_sha256": "8c420eadd4442555e50a4903041f2d56f92ee48a50c948f7a4717e54f60ff1d2",
   "identity_review": {
     "schema_version": 1,
     "source_route_key": "NCN:626",
@@ -181,6 +181,7 @@
     "whole_published_route_ready": false,
     "official_network_sha256": "2d3c08be764a56fbdd7463148e5b18fdda9b023c85467ffec2b83cca61ede3ea",
     "official_features_sha256": "b962f4bc733f785c6e51943d87f59a0abb1b3a8f94db42e276c31cd21446e637",
+    "approved_open_features_sha256": "8aa7bdd22a6f618b7fdce06ae12fb2523a76384d6af58b5a8d04ad1a22ee5394",
     "source_snapshot_sha256": "847afcc532ab4c680dff85fcdd04d5f8cc9f799443a551f4ed7252939d4b33f5",
     "provider_sha256": "cddf7c67af406b4d3b9486808045babe50cf3279d6ca766a298074e35ff634ce",
     "source_relations_sha256": "db1fe35189353fbb65b931d5fdb9ab7d746dd921c381657d59d188f3a32ba2ab",
