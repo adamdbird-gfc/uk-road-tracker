@@ -144,4 +144,53 @@ public class WalkingMatchingIntegrationTest {
         assertFalse(stored.has("original_ended_at"));
     }
 
+    @Test public void completedOldMatchIsRepreparedAndDriftRemovedUsingCurrentLogic()throws Exception{
+        JSONObject j=longIndoorStay().put("processing_status","complete")
+                .put("processing_result",result(500))
+                .put("walking_validation",new JSONObject().put("version",1)
+                        .put("capture_preparation_version",1).put("stationary_points",0));
+        String geometry=j.getJSONObject("route_geometry").toString();
+        String raw=j.getJSONArray("raw_capture_samples").toString();
+        String originalEnd=j.getString("ended_at");
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{
+            assertTrue(foot);calls.incrementAndGet();
+            assertTrue(payload.getJSONArray("points").length()<20);
+            return result(180);
+        });
+        coordinator.rematch("walk");await();
+        assertEquals(1,calls.get());assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals("complete",stored.getString("processing_status"));
+        assertEquals(3,stored.getJSONObject("walking_validation").getInt("capture_preparation_version"));
+        assertTrue(stored.getJSONObject("walking_validation").getInt("stationary_points")>100);
+        assertEquals(180,stored.getDouble("distance_meters"),0d);
+        assertEquals(180,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),0d);
+        assertEquals(originalEnd,stored.getString("original_ended_at"));
+        assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+        assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
+        coordinator.rematch("walk");await();
+        assertEquals(2,calls.get());
+        assertEquals(raw,JourneyStore.get(app,"walk").getJSONArray("raw_capture_samples").toString());
+    }
+
+    @Test public void failedUpgradeRematchRetainsPreviousMapDistanceAndRawRecording()throws Exception{
+        JSONObject j=longIndoorStay().put("processing_status","complete").put("processing_result",result(190));
+        String previous=j.getJSONObject("processing_result").toString();
+        String geometry=j.getJSONObject("route_geometry").toString();
+        String raw=j.getJSONArray("raw_capture_samples").toString();
+        String ended=j.getString("ended_at");double distance=j.getDouble("distance_meters");
+        JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{throw new IllegalStateException("HTTP 503: unavailable");});
+        coordinator.rematch("walk");await();
+        assertEquals(1,coordinator.snapshot().failed);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals("failed",stored.getString("processing_status"));
+        assertEquals(previous,stored.getJSONObject("processing_result").toString());
+        assertEquals(distance,stored.getDouble("distance_meters"),0d);
+        assertEquals(ended,stored.getString("ended_at"));
+        assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
+        assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+    }
+
 }
