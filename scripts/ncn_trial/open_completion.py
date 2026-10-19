@@ -124,6 +124,17 @@ def build_completion(folder, expected_manifest_sha256):
     """Consume a trusted reviewed catalogue; preserve every open target edge."""
     folder = Path(folder)
     source, metadata, paths, extent = read_catalogue(folder, expected_manifest_sha256)
+    provenance = json.loads(gzip.decompress((folder/'associations.json.gz').read_bytes()))['provenance']
+    return build_verified_completion(source,metadata,paths,extent,expected_manifest_sha256,provenance)
+
+
+def build_verified_completion(source,metadata,paths,extent,input_sha256,provenance,deferred_way_ids=()):
+    """Internal compiler boundary: callers must validate admitted inputs first.
+
+    Existing either-arc source contracts are not reinterpreted as ordinary
+    publisher edges. Their source spans and nearby target edges stay unbound
+    until an explicit open-target alternative correspondence is established.
+    """
     key = extent['route_key']; scope = key+':captured-open-main'
     project = projector(metadata); lines = []
     for feature in extent['features']:
@@ -140,13 +151,24 @@ def build_completion(folder, expected_manifest_sha256):
                 # Full precision; never coalesce distinct nearby paths.
                 edges['open-edge:'+digest((a, z))] = line
     logical, bindings, diagnostics = bind_edges(source, paths, sorted(edges.items()), scope)
+    deferred=sorted(set(str(w)for w in deferred_way_ids)&{p.way_id for p in paths})
+    if deferred:
+        blocked={key for p in paths if p.way_id in deferred for key in p.section_keys}
+        corridor=unary_union([source.sections[k].line for k in blocked]).buffer(POLICY['maximum_offset_m'])
+        blocked_targets={k for k,line in edges.items()if line.intersects(corridor)}
+        removed=[b for b in bindings if b.physical_key in blocked or b.logical_key in blocked_targets]
+        bindings=[b for b in bindings if b.physical_key not in blocked and b.logical_key not in blocked_targets]
+        diagnostics.update(deferred_alternative_source_section_count=len(blocked),
+            deferred_alternative_target_edge_count=len(blocked_targets),
+            deferred_alternative_binding_count=len(removed))
+        diagnostics['unbound_source_occurrence_m']+=sum(b.physical_end-b.physical_start for b in removed)
     target_length = sum(s.length_m for s in logical)
     if abs(target_length-extent['canonical_open_union_m']) > 1e-5:
         raise ValueError('Complete open target denominator changed')
     physical = [{'key': s.key, 'coordinates': list(s.line.coords), 'routes': list(s.routes)}
                 for s in sorted(source.sections.values(), key=lambda s:s.key)]
     payload = {'schema_version': 1, 'route_key': key, 'scope': scope, 'policy': POLICY,
-        'catalogue_manifest_sha256': expected_manifest_sha256,
+        'catalogue_manifest_sha256': input_sha256,
         'source_reference_version': source.version, 'projection_origin': metadata['projection_origin'],
         'physical_sections_metric': physical,
         'logical_sections': [{'key':s.key,'length_m':s.length_m,'routes':list(s.routes)} for s in logical],
@@ -154,6 +176,9 @@ def build_completion(folder, expected_manifest_sha256):
         'canonical_open_length_m': target_length,
         'unbound_open_target_retained': True, 'whole_published_route_ready': False,
         'android_activation_ready': False, 'diagnostics': diagnostics}
+    if deferred:
+        payload['deferred_alternative_way_ids']=deferred
+        payload['source_alternative_policy_preserved_separately']=True
     capacity = {}
     for mode in ('on_foot', 'cycling', 'combined'):
         intervals = {}
@@ -167,7 +192,6 @@ def build_completion(folder, expected_manifest_sha256):
     reference = TrialReference(payload['reference_version'], list(source.sections.values()))
     ledger = InventoryLedger(reference, logical, bindings)
     new_paths = tuple(replace(p, reference_version=reference.version) for p in paths)
-    provenance = json.loads(gzip.decompress((folder/'associations.json.gz').read_bytes()))['provenance']
     bundle = build_bundle(new_paths, reference, metadata['projection_origin'], provenance)
     return ledger, bundle, payload
 
