@@ -1,1 +1,7 @@
-{"action":"verify-existing-access","revision":3}
+{
+  "action": "publish",
+  "revision": 4,
+  "drive_file_id": "1S9WjK0KUQX-XjUclgO92uter9Wvl3gbX",
+  "promote": true,
+  "package_beta": true
+}
