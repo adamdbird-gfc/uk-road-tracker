@@ -3,3 +3,6 @@
 /reference-source/
 /hosting-stage-report.json
 **/__pycache__/
+
+# Regenerable SQLite build intermediate; only pinned compressed shards ship.
+/android-prototype/app/src/main/assets/ncn-national/*.db*

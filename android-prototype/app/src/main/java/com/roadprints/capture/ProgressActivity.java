@@ -582,6 +582,7 @@ public class ProgressActivity extends Activity {
             LinearLayout panel=statisticsPanel(CollectionAccessStore.name(collection));panel.setTag("progress:"+collection);
             VenueProgressPanel.populate(this,collection,panel,expandedRoadCategories,this::refreshPubProgress);parent.addView(panel);
         }
+        NcnProgressUi.add(this,parent);
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
 
@@ -597,6 +598,7 @@ public class ProgressActivity extends Activity {
         addProgressJump(row, "Motorways", "motorways");
         addProgressJump(row, "A Roads", "a_roads");
         for(String collection:CollectionAccessStore.installed(this))addProgressJump(row,VenueCollection.definition(collection).shortName,collection);
+        addProgressJump(row,"National Cycle Network","ncn");
         scroll.addView(row);
         setActiveProgressJump("statistics");
         return scroll;

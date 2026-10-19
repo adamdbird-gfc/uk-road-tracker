@@ -2,6 +2,21 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## In progress — coordinated national NCN integration
+
+Active branch `integration/ncn-national-beta`, based on **0.25.206's released
+lineage `7bc10f4a`**. The user's coordinated development brief authorises NCN
+resumption and one verified beta. See [integration details, PR disposition,
+accounting policy and evidence limitations](ncn-national-integration.md).
+
+The existing shared road UI is preserved; national NCN uses indexed immutable
+reference data, conservative source evidence, separate physical-network union,
+mode filters and shared route/journey navigation. All 322 existing NCN Python
+tests pass. Android checks and catalogue readback are pending; **no APK is yet
+claimed ready**. #193 achievements remain excluded. Named identities are absent
+from the source checkpoint; NCN228 open-target assessment and 34 identities stay
+held explicitly rather than receiving unsupported completion claims.
+
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
 **Released 0.25.206 (252)** on 19 October 2026. [Install corrective 206](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0hi0t0j0s2d18). PR [#205](https://github.com/adamdbird-gfc/uk-road-tracker/pull/205), based directly on 205's application/release ancestry `04c4287a8a20b1cb9a40ce2993bd7e4a15df4fb9`. **205 failed real-device acceptance** (repeated initial-map timeout, incorrect chart track, B2008 UK-wide view); its prior automated green result did not prove those behaviours. This corrective slice supersedes the broader refinement brief. No NCN or unrelated UI development.

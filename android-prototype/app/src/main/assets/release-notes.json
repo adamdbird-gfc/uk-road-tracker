@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.207",
+      "version_code": 253,
+      "release_date": "2026-10-19",
+      "since": "0.25.206",
+      "changes": [
+        {
+          "title": "National Cycle Network beta",
+          "description": "Enable NCN in Collections to assess saved walking, running and cycling evidence. Browse supported open sections, mode-specific unique progress, focused route maps and eligible contributing journeys. Driving never earns NCN credit."
+        },
+        {
+          "title": "Shared Progress maps",
+          "description": "Motorway and A-road white tracks, road fitting, zoom controls and retained journey cards continue from the corrective beta. NCN maps use purple completed and grey dashed remaining geometry."
+        },
+        {
+          "title": "Conservative evidence handling",
+          "description": "34 held identities and deferred alternatives remain explicit. NCN228 is a preserved alternative inventory without an open-route completion percentage. No independently verified Named route records are present in this checkpoint."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.206",
       "version_code": 252,
       "release_date": "2026-10-19",
@@ -109,7 +129,7 @@
         },
         {
           "title": "Beta testing requirements",
-          "description": "Please test overnight home/school stays, venue running laps, walk–drive–walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
         }
       ]
     },

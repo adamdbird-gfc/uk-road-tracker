@@ -64,6 +64,17 @@ public class RoutePreviewView extends View {
     private Set<Integer> removedRouteEdges = Collections.emptySet();
     private Set<Integer> selectedRouteEdges = Collections.emptySet();
     private boolean restoreRouteMode;
+    private java.util.List<NcnMapOverlay.Line> ncnOverlay;
+    private java.util.function.Consumer<java.util.Set<String>> ncnTap;
+    private final Paint ncnCompleted=new Paint(Paint.ANTI_ALIAS_FLAG),ncnRemaining=new Paint(Paint.ANTI_ALIAS_FLAG);
+    private void ncnPaints(){for(Paint p:new Paint[]{ncnCompleted,ncnRemaining}){p.setStyle(Paint.Style.STROKE);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeWidth(dp(4));}ncnCompleted.setColor(0xFF8D55C7);ncnRemaining.setColor(0xFF7E8795);ncnRemaining.setPathEffect(new android.graphics.DashPathEffect(new float[]{dp(8),dp(6)},0));}
+    void setNcnOverlay(java.util.List<NcnMapOverlay.Line> lines,java.util.function.Consumer<java.util.Set<String>> tap){ncnOverlay=lines;ncnTap=tap;ncnPaints();invalidate();}
+    void setNcnCoverageSegments(List<JSONArray> remaining,List<JSONArray> travelled){ncnPaints();motorwayIncompletePaint.setColor(0xFF7E8795);motorwayIncompletePaint.setPathEffect(new android.graphics.DashPathEffect(new float[]{dp(8),dp(6)},0));motorwayPaint.setColor(0xFF8D55C7);setMotorwayCoverageSegments(remaining,travelled);}
+    private void drawNcn(Canvas canvas){if(ncnOverlay==null)return;for(NcnMapOverlay.Line line:ncnOverlay){float left=screenX(line.west),right=screenX(line.east),top=screenY(line.north),bottom=screenY(line.south);if(right<0||left>getWidth()||bottom<0||top>getHeight())continue;drawRoute(canvas,line.points,line.completed?ncnCompleted:ncnRemaining,null);}}
+    private boolean tapNcn(float x,float y){if(ncnOverlay==null||ncnTap==null)return false;float nearest=dp(24);java.util.Set<String> routes=new java.util.LinkedHashSet<>();
+        for(NcnMapOverlay.Line line:ncnOverlay)for(int i=1;i<line.points.length();i++){float distance=editableEdgeDistance(line.points,i,x,y);if(distance<nearest-1){nearest=distance;routes.clear();routes.add(line.route);}else if(distance<=nearest+1)routes.add(line.route);}
+        if(routes.isEmpty())return false;ncnTap.accept(routes);return true;
+    }
     private boolean correctionDrawMode;
     private final List<JSONArray> correctionTrace = new ArrayList<>();
     private JSONArray activeCorrectionTrace;
@@ -457,6 +468,7 @@ public class RoutePreviewView extends View {
                         tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
+                if (tapNcn(event.getX(),event.getY()))return true;
                 if (tapServiceStation(event.getX(), event.getY())) return true;
                 return tapMapRoad(event.getX(), event.getY());
             }
@@ -592,8 +604,8 @@ public class RoutePreviewView extends View {
         boolean hasTiles = drawTiles(canvas);
 
         // Composite the existing road overlays as one layer so overlaps also stay at 50%.
-        int roadsLayer = discoveryReplay == null ? -1
-                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), 128);
+        int roadsLayer = discoveryReplay == null && ncnOverlay==null ? -1
+                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), ncnOverlay==null?128:65);
         if (coordinatesValid) {
             if(boundaryVisible) for (JSONArray ring : settlementBoundaryRings)
                 drawRoute(canvas, ring, settlementBoundaryPaint, null);
@@ -646,11 +658,12 @@ public class RoutePreviewView extends View {
                             Color.rgb(190, 55, 55), "E");
             }
         } else if (discoveryReplay == null) {
-            if (showEmptyMessage) { if (!overviewLoading) drawEmptyMessage(canvas); }
+            if (showEmptyMessage) { if (!overviewLoading && ncnOverlay==null) drawEmptyMessage(canvas); }
             else drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
         if (roadsLayer >= 0) canvas.restoreToCount(roadsLayer);
+        drawNcn(canvas);
         drawServiceStations(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);

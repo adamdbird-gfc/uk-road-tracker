@@ -1,0 +1,33 @@
+{
+  "licence": "Open Database Licence 1.0",
+  "licence_url": "https://www.openstreetmap.org/copyright",
+  "attribution": "OpenStreetMap contributors",
+  "fixture_sha256": "5c42b2eb8a9abe80d551c3a13b29eb2c2f93e9249654e6cf0191cfc4dc3e47fb",
+  "overpass_context_sha256": "0604fc8a9022cc559983eb4d26a5312268f75896a3334a227b2ee0c0a245e26c",
+  "timestamp": "2026-10-15T17:41:20Z",
+  "memberships": [
+    {
+      "osm_way": 85488624,
+      "relation": 13512082,
+      "relation_member_count": 673,
+      "query_url": "https://api.openstreetmap.org/api/0.6/way/85488624/relations.json",
+      "response_sha256": "e5c16caa9156bc5c4a5435e98a107cd2eaebc4c4b485d81018dcd16240ff8035"
+    },
+    {
+      "osm_way": 554498838,
+      "relation": 13512082,
+      "relation_member_count": 673,
+      "query_url": "https://api.openstreetmap.org/api/0.6/way/554498838/relations.json",
+      "response_sha256": "36c3133aad1f8a3427c6e7fede1d706517fa36bb44f43df17043c88ea44d040c"
+    },
+    {
+      "osm_way": 4973301,
+      "relation": 13512082,
+      "relation_member_count": 673,
+      "query_url": "https://api.openstreetmap.org/api/0.6/way/4973301/relations.json",
+      "response_sha256": "a6d71a0497a68488c9f3ccc39936f45570c7229837030e0db0ca1920865da507"
+    }
+  ],
+  "observations_are_synthetic": true,
+  "field_validation": false
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "nation": "Wales",
+  "route": 8,
+  "source_item": "5defd254e78745bfb12d0456abc1bcf1",
+  "source_url": "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0",
+  "source_snapshot_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2",
+  "source_edit_ms": 1791677222552,
+  "fixture_sha256": "68adff8703cff0bda9df115bb396c94f3a7a4731c07f1666057a04e19f721e74",
+  "bounds": [
+    -3.23,
+    51.47,
+    -3.15,
+    51.53
+  ],
+  "features": 19,
+  "projection_origin": [
+    -3.19,
+    51.5
+  ],
+  "licence": "OGL 3.0; NI OSM contributions under ODbL where applicable",
+  "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+  "attribution": "Walk Wheel Cycle Trust (formerly Sustrans) National Cycle Network data contains Ordnance Survey data (Crown copyright and database rights 2018). The dataset contains OpenStreetMap contributions in Northern Ireland, under ODbL.",
+  "osm_licence_url": "https://www.openstreetmap.org/copyright",
+  "synthetic_observations": true
+}

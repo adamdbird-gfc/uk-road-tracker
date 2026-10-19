@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "sha256": "5fcb0e052b2abeaa264a57a0f657781be677d9325790d8f5dade5b897f311e64",
+  "scope": "internal-eight-source-inventory-trial",
+  "route_keys": [
+    "NCN:167",
+    "NCN:270",
+    "NCN:344",
+    "NCN:426",
+    "NCN:440",
+    "NCN:476",
+    "NCN:548",
+    "NCN:755"
+  ],
+  "whole_published_route_ready": false
+}

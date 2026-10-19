@@ -49,6 +49,9 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Verify indexed national NCN asset
+        run: python3 scripts/test_ncn_national.py
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
