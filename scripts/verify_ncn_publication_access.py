@@ -21,6 +21,10 @@ def main():
     # no local key download, account replacement or new Firebase project.
     out=Path('ncn-publication-evidence');out.mkdir(exist_ok=True)
     result={'status':'existing_hosting_authentication_verified','project':'roadprints-822cc','site':SITE,'source_version':source,'files':len(files),'original_county_asset_present':True,'identity_sha256':hashlib.sha256(identity['client_email'].encode()).hexdigest(),'credential_source':'GitHub Actions secret FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON'}
+    storage=AuthorizedSession(Credentials.from_service_account_info(identity,scopes=['https://www.googleapis.com/auth/cloud-platform']))
+    permission=storage.get('https://storage.googleapis.com/storage/v1/b/roadprints-822cc.firebasestorage.app/iam/testPermissions',params=[('permissions','storage.objects.create'),('permissions','storage.objects.get'),('permissions','storage.objects.delete')],timeout=30)
+    result['existing_bucket_permission_http']=permission.status_code
+    result['existing_bucket_permissions']=permission.json().get('permissions',[]) if permission.status_code==200 else []
     (out/'access.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))
 
 if __name__=='__main__':main()
