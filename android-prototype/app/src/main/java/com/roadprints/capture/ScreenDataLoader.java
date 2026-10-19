@@ -18,6 +18,13 @@ final class ScreenDataLoader {
     });
     static java.util.concurrent.Future<?> interactive(Runnable task) { return INTERACTIVE.submit(task); }
 
+    // User map refreshes must not queue behind history, recap or Progress scans.
+    private static final ExecutorService MAP = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "roadprints-map-data");
+        thread.setPriority(Thread.NORM_PRIORITY - 1);return thread;
+    });
+    static java.util.concurrent.Future<?> map(Runnable task) { return MAP.submit(task); }
+
     private ScreenDataLoader() {}
 
     static void execute(Runnable task) {

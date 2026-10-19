@@ -45,13 +45,13 @@ public final class RoadDetailActivity extends Activity {
     static Loader loader=DEFAULT_LOADER;
 
     @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);getWindow().setStatusBarColor(0xFF0B1C50);getWindow().setNavigationBarColor(0xFF10275D);
+        super.onCreate(state);androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(),false);getWindow().setStatusBarColor(0xFF0B1C50);getWindow().setNavigationBarColor(0xFF10275D);
         try{selection=RoadDetailSelection.from(getIntent());}catch(IllegalArgumentException invalid){finish();return;}
         cumulative=getIntent().getBooleanExtra("road_journeys",false);
-        root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(0xFF0B1C50);root.setPadding(dp(16),dp(12),dp(16),dp(12));
+        root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(0xFF0B1C50);root.setPadding(dp(16),dp(6),dp(16),dp(12));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
         header.addView(text(selection.title(),22),new LinearLayout.LayoutParams(0,-2,1));
-        header.addView(RoadprintsDialog.closeControl(this,this::finish));root.addView(header);
+        header.addView(RoadprintsDialog.closeControl(this,this::finish));root.addView(header,new LinearLayout.LayoutParams(-1,-2));
         stats=new LinearLayout(this);stats.setOrientation(LinearLayout.VERTICAL);stats.setPadding(dp(12),dp(10),dp(12),dp(12));
         stats.setBackground(JourneyCardHeader.background(this,0xFF233B78,0xFF46649E,14));root.addView(stats);
         status=text("Loading your road…",14);status.setTag("road_statistics");stats.addView(status);
@@ -59,7 +59,7 @@ public final class RoadDetailActivity extends Activity {
         for(int i=0;i<2;i++){View line=new View(this);line.setBackgroundColor(0xFF46649E);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(i==0?-1:dp(150),dp(10));lp.topMargin=dp(8);skeleton.addView(line,lp);}stats.addView(skeleton);
         progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(1000);progress.setTag("road_completion_graph");
         int colour=RoadDetailSelection.MOTORWAY.equals(selection.kind)?MapLayerPreferences.Layer.MOTORWAYS.color:MapLayerPreferences.Layer.A_ROADS.color;
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(colour));progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFDB5656));progress.setVisibility(View.GONE);
+        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(colour));progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));progress.setVisibility(View.GONE);
         stats.addView(progress,new LinearLayout.LayoutParams(-1,dp(12)));
         legend=text("",12);stats.addView(legend);
         sectionStatus=text("",13);sectionStatus.setVisibility(View.GONE);root.addView(sectionStatus);
@@ -74,10 +74,14 @@ public final class RoadDetailActivity extends Activity {
         retry=action("RETRY",this::load);retry.setVisibility(View.GONE);panel.addView(retry);
         loadingPanel=panel;mapFrame.addView(panel,new FrameLayout.LayoutParams(-2,-2,Gravity.CENTER));
         journeyAction=action("Preparing contributing journeys…",()->showJourneys(model.journeys,null));journeyAction.setEnabled(false);root.addView(journeyAction);
+        journeyAction.setGravity(Gravity.CENTER);journeyAction.setTextColor(0xFF0B1C50);
+        journeyAction.setBackground(JourneyCardHeader.background(this,0xFFF7C450,0xFFF7C450,14));
+        LinearLayout.LayoutParams actionParams=new LinearLayout.LayoutParams(-1,-2);actionParams.topMargin=dp(10);root.removeView(journeyAction);root.addView(journeyAction,actionParams);
+        if(!cumulative&&!RoadDetailSelection.MOTORWAY.equals(selection.kind)&&!RoadDetailSelection.A_ROAD.equals(selection.kind))stats.setVisibility(View.GONE);
         setContentView(root);
         root.setOnApplyWindowInsetsListener((v,insets)->{
-            root.setPadding(dp(16)+insets.getSystemWindowInsetLeft(),dp(12)+insets.getSystemWindowInsetTop(),dp(16)+insets.getSystemWindowInsetRight(),dp(12)+insets.getSystemWindowInsetBottom());return insets;
-        });
+            root.setPadding(dp(16)+insets.getSystemWindowInsetLeft(),dp(6)+insets.getSystemWindowInsetTop(),dp(16)+insets.getSystemWindowInsetRight(),dp(12)+insets.getSystemWindowInsetBottom());return insets;
+        });root.requestApplyInsets();
     }
     @Override protected void onResume(){super.onResume();if(selection!=null&&!loading&&loadedRevision!=JourneyStore.dataRevision(this))load();else if(model!=null)showStatistics();}
     private void load() {
@@ -115,9 +119,14 @@ public final class RoadDetailActivity extends Activity {
     }
     private void showStatistics(){
         skeleton.setVisibility(View.GONE);
-        legend.setText(cumulative?"":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled":"Tap a recorded section to inspect its journeys");
+        stats.setVisibility(cumulative||model.fullReference?View.VISIBLE:View.GONE);
+        legend.setText(cumulative?"":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled":"");
         if(cumulative){status.setText(model.journeys.size()+" contributing journeys · newest first");progress.setVisibility(View.GONE);return;}
-        if(model.fullReference){status.setText(String.format(java.util.Locale.UK,"WHOLE ROAD · %.1f%%\n%s travelled / %s total",model.percent,DistanceUnits.format(this,model.uniqueMetres),DistanceUnits.format(this,model.referenceMetres)));
+        if(model.fullReference){
+            String value=String.format(java.util.Locale.UK,"%.1f%%",model.percent);
+            android.text.SpannableStringBuilder label=new android.text.SpannableStringBuilder(value+"  WHOLE ROAD\n"+DistanceUnits.format(this,model.uniqueMetres)+" travelled  /  "+DistanceUnits.format(this,model.referenceMetres)+" total");
+            label.setSpan(new android.text.style.AbsoluteSizeSpan(28,true),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            label.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);status.setText(label);
             progress.setProgress((int)Math.round(model.percent*10));progress.setContentDescription(String.format(java.util.Locale.UK,"Whole road %.1f percent complete",model.percent));progress.setVisibility(View.VISIBLE);
         }else{status.setText("RECORDED SECTIONS\nFull-road distance and completion unavailable");progress.setVisibility(View.GONE);}
     }
@@ -126,7 +135,7 @@ public final class RoadDetailActivity extends Activity {
         if(model.fullReference&&RoadDetailSelection.MOTORWAY.equals(selection.kind))map.setMotorwayCoverageSegments(model.remaining,model.covered);
         else if(model.fullReference)map.setARoadCoverageSegments(model.remaining,model.covered);
         else map.setRouteData(null,model.covered);
-        map.setContentDescription("Map of "+selection.title()+". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Pinch or use zoom buttons. Tap a section for journeys.");
+        map.setContentDescription("Map of "+selection.title()+(model.fullReference?". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Tap a section for journeys.":". Recorded sections. Use View Journeys for contributing journeys.")+" Pinch or use zoom buttons.");
         geometryShown=true;
         if(model.covered.isEmpty()&&model.remaining.isEmpty()){sectionStatus.setText("No retained mapped sections are available for this road.");sectionStatus.setVisibility(View.VISIBLE);}
     }
@@ -134,7 +143,7 @@ public final class RoadDetailActivity extends Activity {
         status.setOnClickListener(null);
         if(cumulative){showStatistics();body.removeAllViews();body.addView(journeyList(model.journeys),new FrameLayout.LayoutParams(-1,-1));journeyAction.setVisibility(View.GONE);return;}
         if(!geometryShown)showGeometry();else showStatistics();loadingPanel.setVisibility(View.GONE);
-        journeyAction.setText("VIEW JOURNEYS · "+model.journeys.size());journeyAction.setEnabled(true);map.setMapRoadTapListener(this::inspectSection);
+        journeyAction.setText("VIEW JOURNEYS · "+model.journeys.size());journeyAction.setEnabled(true);map.setMapRoadTapListener(model.fullReference?this::inspectSection:null);
     }
     private void inspectSection(double latitude,double longitude){
         cancelPending();final int request=++generation;loading=true;

@@ -125,4 +125,27 @@ public class BetaUiRefinementTest {
         RoadDetailActivity first=road(true).get();assertSame(ready,get(first,"model"));assertFalse((Boolean)get(first,"loading"));
         RoadDetailActivity second=road(true).get();assertSame(ready,get(second,"model"));assertEquals(View.VISIBLE,((View)get(second,"zoom")).getVisibility());
     }
+    @Test public void focusedCompletionTrackIsWhiteAndCoverageValuesAreUnchanged()throws Exception{
+        RoadDetailModel ready=model();RoadDetailActivity.loader=(c,s,all)->ready;RoadDetailActivity screen=road(true).get();drain();
+        ProgressBar graph=(ProgressBar)get(screen,"progress");assertEquals(0xFFFFFFFF,graph.getProgressBackgroundTintList().getDefaultColor());
+        assertEquals(376,graph.getProgress());assertEquals(3760,ready.uniqueMetres,.001);assertEquals(10000,ready.referenceMetres,.001);
+    }
+    @Test public void bAndLocalMapsHideUnsupportedStatisticsAndKeepJourneyAction()throws Exception{
+        for(String kind:new String[]{RoadDetailSelection.B_ROAD,RoadDetailSelection.LOCAL}){
+            RoadDetailModel ready=model();ready.fullReference=false;RoadDetailActivity.loader=(c,s,all)->ready;
+            RoadDetailSelection selected=new RoadDetailSelection(kind,"Test road","GB","town","");
+            ActivityController<RoadDetailActivity> c=Robolectric.buildActivity(RoadDetailActivity.class,selected.intent(app,false)).create().start().resume();screens.add(c);drain();
+            RoadDetailActivity screen=c.get();assertEquals(View.GONE,((View)get(screen,"stats")).getVisibility());
+            assertEquals(View.VISIBLE,((View)get(screen,"zoom")).getVisibility());assertTrue(((View)get(screen,"journeyAction")).isEnabled());
+            assertNull(get(get(screen,"map"),"mapRoadTapListener"));assertFalse(((View)get(screen,"map")).getContentDescription().toString().contains("Tap a section"));
+            ((View)get(screen,"journeyAction")).performClick();assertNotNull(((android.app.AlertDialog)get(screen,"journeyDialog")).getWindow().getDecorView().findViewWithTag("road_journey_one"));
+        }
+    }
+    @Test public void aRoadUsesGreenGraphWithWhiteTrackAndSectionInteraction()throws Exception{
+        RoadDetailModel ready=model();RoadDetailActivity.loader=(c,s,all)->ready;
+        RoadDetailSelection selected=new RoadDetailSelection(RoadDetailSelection.A_ROAD,"A1","GB","","");
+        ActivityController<RoadDetailActivity> c=Robolectric.buildActivity(RoadDetailActivity.class,selected.intent(app,false)).create().start().resume();screens.add(c);drain();
+        ProgressBar graph=(ProgressBar)get(c.get(),"progress");assertEquals(MapLayerPreferences.Layer.A_ROADS.color,graph.getProgressTintList().getDefaultColor());
+        assertEquals(0xFFFFFFFF,graph.getProgressBackgroundTintList().getDefaultColor());assertNotNull(get(get(c.get(),"map"),"mapRoadTapListener"));
+    }
 }

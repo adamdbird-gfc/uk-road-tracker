@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.205",
+      "version_code": 251,
+      "release_date": "2026-10-19",
+      "since": "0.25.204",
+      "changes": [
+        {
+          "title": "Recoverable map filters",
+          "description": "Apply filters without losing the previous map. Cancel, Reset, timeout and Retry prevent a trapped loading screen; map work runs independently of background history scans."
+        },
+        {
+          "title": "Clearer focused road maps",
+          "description": "Brighter white progress tracks with blue motorway or green A-road completion, clearer distances, balanced headers and a prominent contributing-journeys action. B/local maps focus on recorded sections and journey lists."
+        },
+        {
+          "title": "Beta 1 continuity",
+          "description": "Welcome-back overlay and prepared-map dismissal retained. Existing journeys, tracking, matching, achievements, collections and independent A1/A1(M) coverage preserved."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.204",
       "version_code": 250,
       "release_date": "2026-10-19",
@@ -69,7 +89,7 @@
         },
         {
           "title": "Beta testing requirements",
-          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+          "description": "Please test overnight home/school stays, venue running laps, walk–drive–walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
         }
       ]
     },
