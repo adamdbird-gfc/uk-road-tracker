@@ -37,6 +37,75 @@ def build(values, review):
 
 
 class SourceIdentityReviewTests(unittest.TestCase):
+    def scope_setup(self):
+        values, review=setup()
+        number='137'
+        for tags in (values[3]['relation',1]['tags'], values[2][1]['tags'], values[7][1]['tags']):
+            tags.pop('cycle_network',None);tags.pop('operator',None)
+            tags.update(network='ncn',ref=number)
+        review.update(source_route_key='NCN:137',
+            policy='official_uk_spans_scope_review',
+            uk_scope_basis='exact_source_spans_on_pinned_official_uk_open_extent',
+            source_relations_sha256=digest([values[3]['relation',1]]),provider_sha256=digest(values[7]))
+        return values,review
+
+    def test_explicit_span_scope_can_resolve_missing_metadata_without_relaxing_default(self):
+        values,review=self.scope_setup()
+        self.assertIsNotNone(build(values,review)[0])
+        review.pop('uk_scope_basis')
+        with self.assertRaises(ValueError):build(values,review)
+
+    def test_scope_review_cannot_approve_an_edge_outside_official_open_geometry(self):
+        values,review=self.scope_setup()
+        values[5]['features'][0]['geometry']['coordinates']=[[0,0],[.0005,0]]
+        review['official_features_sha256']=digest(values[5]['features'])
+        review['approved_open_features_sha256']=digest(values[5]['features'])
+        with self.assertRaisesRegex(ValueError,'outside approved'):build(values,review)
+
+    def test_span_scope_never_overrides_an_explicit_foreign_namespace(self):
+        values,review=self.scope_setup()
+        values[3]['relation',1]['tags']['cycle_network']='US:US'
+        review['source_relations_sha256']=digest([values[3]['relation',1]])
+        with self.assertRaises(ValueError):build(values,review)
+
+    def test_regional_scope_preserves_regional_identity_and_cannot_alias_national(self):
+        values,review=self.scope_setup();values[0]='RCN:137'
+        values[5]['features'][0]['properties']['RouteType']='RCN'
+        for tags in (values[3]['relation',1]['tags'],values[2][1]['tags'],values[7][1]['tags']):tags['network']='rcn'
+        review.update(source_route_key='RCN:137',target_route_key='RCN:137',
+            official_features_sha256=digest(values[5]['features']),approved_open_features_sha256=digest(values[5]['features']),
+            source_relations_sha256=digest([values[3]['relation',1]]),provider_sha256=digest(values[7]))
+        self.assertEqual(build(values,review)[1]['recorded_source_route_key'],'RCN:137')
+        review['target_route_key']='NCN:137';values[0]='NCN:137'
+        with self.assertRaises(ValueError):build(values,review)
+
+    def empty_setup(self):
+        values,review=setup()
+        tags={'network':'ncn','ref':'626','route':'bicycle','type':'route'}
+        values[3]['relation',2]={'type':'relation','id':2,'version':1,'timestamp':'2020-01-01T00:00:00Z','tags':tags}
+        values[3]['relation',1]['members'].append({'type':'relation','ref':2,'role':'link'})
+        review['source_relations_sha256']=digest([values[3]['relation',1]])
+        xml='<osm><relation id="2" version="1" timestamp="2020-01-01T00:00:00Z">'+''.join(f'<tag k="{k}" v="{v}"/>'for k,v in tags.items())+'</relation></osm>'
+        review['approved_empty_relation_ids']=[2]
+        review['empty_relation_evidence']=[{'relation_id':2,'url':'https://api.openstreetmap.org/api/0.6/relation/2','xml':xml,'sha256':hashlib.sha256(xml.encode()).hexdigest()}]
+        return values,review
+
+    def test_independently_confirmed_empty_child_adds_no_ways_and_default_stays_strict(self):
+        values,review=self.empty_setup()
+        self.assertEqual(build(values,review)[1]['accepted_way_count'],1)
+        review.pop('approved_empty_relation_ids');review.pop('empty_relation_evidence')
+        with self.assertRaises(ValueError):build(values,review)
+
+    def test_empty_child_review_cannot_hide_missing_or_nonempty_members(self):
+        values,review=self.empty_setup()
+        review['empty_relation_evidence'][0]['xml']=review['empty_relation_evidence'][0]['xml'].replace('</relation>','<member type="way" ref="99" role=""/></relation>')
+        review['empty_relation_evidence'][0]['sha256']=hashlib.sha256(review['empty_relation_evidence'][0]['xml'].encode()).hexdigest()
+        with self.assertRaises(ValueError):build(values,review)
+        values,review=self.empty_setup();values[3]['relation',2]['members']=[{'type':'way','ref':99,'role':''}]
+        with self.assertRaises(ValueError):build(values,review)
+        values,review=self.empty_setup();values[3].pop(('relation',2))
+        with self.assertRaises((ValueError,KeyError)):build(values,review)
+
     def test_default_rejects_mislabelling_and_review_preserves_original_source(self):
         values, review = setup()
         with self.assertRaises(ValueError):build_candidate(*values)
