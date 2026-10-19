@@ -2,7 +2,33 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest session checkpoint — Beta 1 / Beta 2 split
+## Latest delivery — Beta 1 stabilisation (#201)
+
+**Released 0.25.203 (249)** on 19 October 2026. [Install update](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/6odqoda2eki6g). PR [#202](https://github.com/adamdbird-gfc/uk-road-tracker/pull/202) contains only the five reported Beta 1 repairs and targeted tests. Its code starts directly at installed source `5c8deea0a6237f484a865994e7148d51af4f1627`; no NCN or unrelated backlog feature was integrated. Existing journey archives, tracking state, collection ledgers, application ID and signing identity are preserved; no destructive migration or rematch was added.
+
+### Exact changes
+
+- **Map filter/readiness:** filter opening previously queued summary I/O behind archive-heavy screen work with no immediate UI response. It now opens synchronously with the complete set of filter choices, without an archive scan. Filter/reset, legend, zoom and recap controls stay hidden until road geometry is ready; map touch actions are blocked while loading. Failures retain retry and keep dependent controls hidden.
+- **Celebrations:** the explicit action was silently gated by unrelated snapshot revision checks. It now reads the durable pending queue even while evidence refresh is queued. Repeated taps reuse the existing dialog; Next/explicit Close acknowledges only the presented milestone. Pause/system cancellation retains unacknowledged events. Automatic presentation retains its freshness gates.
+- **Focused roads:** road detail previously shared the long-running background screen queue and had no finite deadline. A separate single interactive lane now loads streamed retained road evidence, with cancellation, generation checks, explicit errors/retry and a **30-second deadline**, including section-to-journey lookup. Revision changes yield retry rather than an endless reload loop. Existing canonical covered/remaining geometry and contributing journeys remain; the actual bundled GB M2 reference is exercised in regression tests.
+- **Map loading:** `JourneyStore.forEachMapEvidence` streams displayed matched GeoJSON, motorway/A-road/cycling features, titles, filters and corrections without materialising raw capture arrays or upgrading every archive record. Legacy edge corrections retain their full-evidence fallback. Long summary scans no longer hold the global store monitor during disk I/O. Collection visits refresh pins independently instead of invalidating unchanged road geometry. Existing display budgets are unchanged. Location-free `RoadprintsTiming` logs separate queue, preparation, rendering and reused revisits.
+- **Tab persistence:** `RoadprintsNavigation` reorders existing primary activities instead of finishing tabs or clearing those above Map. Child screens still close appropriately. Loaded views, map camera, Progress scroll and expensive process results survive ordinary tab switches; unchanged Progress avoids repeated enrichment setup and resumes its status ticker. Progress jump intents still reach retained screens.
+
+### Commits and verification
+
+- Repair commits: `585651dbceaf81390f3da27aff4b8a3163f4d3ae`, `d6834a76212c1172b526b990d3c9ccda6795fbc0`, and final exact tested/packaged source **`720d49921936c3ba590917ac4e5ae41dae444907`**. The middle commit reconciles only already-released documentation/request ancestry and navigation/deadline tests; no additional app features were imported.
+- PR #202 merged to `fix/onboarding-start-tracking` as `200ece081a1df48c16d784bc455dc31cf54d804b`. Immutable release request **`709ecda50d2ed481531f41ca27915013881626e7`** pins the exact tested source and explicitly shares with existing Firebase testers.
+- [Android checks 39272662958](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39272662958): complete unit suite and lint passed. [Packaging/distribution 39273170015](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39273170015) repeated **617 tests; zero failures/errors/skips**, lint and stable-key APK signature verification, then uploaded and distributed Firebase release **`6odqoda2eki6g`** successfully. One APK request only.
+- Ten new regressions cover actual View clicks, stale-snapshot celebrations, cancellation/duplicate retention, blocked-worker isolation, finite timeout/failure/retry, real M2 covered/remaining geometry and contributing journeys, retained navigation, and exact displayed-geometry/correction fidelity. The synthetic raw-heavy record test verifies more than tenfold smaller projected JSON while retaining the original archive and all displayed geometry. Four inherited UI assertions were updated to the requested readiness/navigation behaviour; no production guard was removed to satisfy them.
+- Local release-request tests: 9 passed; existing-tester discovery tests: 3 passed. Workspace has no Android SDK/Gradle/JDK compiler; full Android validation ran in Actions. Signed APK artifact [12196930985](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39273170015/artifacts/12196930985), verification reports [12196780946](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39273170015/artifacts/12196780946).
+
+### Remaining acceptance and limits
+
+Keep **#201 open for device acceptance**, along with #188/#194. No connected Pixel/Samsung was available: actual phone taps and before/after first-load/revisit timings are not claimed from JVM tests. Check filter readiness/apply/reset, both pending celebrations, M2 travelled/remaining strokes and section journeys, then Map → Progress → other tabs → return with camera/scroll retained. Verify upgrade over the existing installation without clearing data. Android may reclaim stopped activities/processes under memory pressure; recreation can rebuild derived results using existing caches/snapshots. B/local full-reference limitations and router availability are unchanged. Exceptionally slow/continually changing archives now offer retry after the bounded road deadline.
+
+The coding and one-APK delivery slice is complete; the next step is testing this build, not another backlog/NCN integration session. The Work app's displayed execution/usage timer is not exposed to the agent; only wall-clock elapsed time can be reported.
+
+## Previous delivery — Beta 1 / Beta 2 split
 
 The user has authorised **Beta 1: core reliability, existing collection fixes and interactive Progress**, followed by **Beta 2: NCN collection and subsequent fixes**. This supersedes the earlier no-build hold, but packaging/distribution must wait for green integrated checks.
 
