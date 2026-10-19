@@ -7,7 +7,11 @@ on:
     inputs:
       asset_url:
         description: HTTPS location of the prepared catalogue.db.gz (must match committed manifest)
-        required: true
+        required: false
+        type: string
+      drive_file_id:
+        description: Prepared private catalogue shared with the existing Hosting service account (alternative to asset_url)
+        required: false
         type: string
       promote:
         description: Promote the verified preview to live
@@ -44,7 +48,7 @@ jobs:
           if action not in ('verify-existing-access','publish'):raise ValueError('Unknown publication action')
           with open(os.environ['GITHUB_OUTPUT'],'a') as target:target.write('action='+action+'\n')
           PYTHON
-      - name: Verify the original Hosting service-account credential and live assets
+      - name: Check Drive API availability for the existing deployment identity
         env:
           FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
           ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
@@ -77,12 +81,20 @@ jobs:
           request=event['inputs'] if os.environ['GITHUB_EVENT_NAME']=='workflow_dispatch' else json.load(open('.github/ncn-reference/request.json'))
           def flag(key):return str(request.get(key,False)).lower()=='true'
           if flag('package_beta') and not flag('promote'):raise ValueError('Beta packaging requires verified live publication')
+          if bool(request.get('drive_file_id'))==bool(request.get('asset_url')):raise ValueError('Provide exactly one prepared input: Drive file ID or HTTPS URL')
           with open(os.environ['GITHUB_OUTPUT'],'a')as target:
               for key in ('promote','package_beta'):target.write(key+'='+str(flag(key)).lower()+'\n')
+              target.write('transport='+('drive' if request.get('drive_file_id') else 'https')+'\n')
           PYTHON
       - name: Test publication invariants
         run: python -m unittest discover -s scripts -p test_ncn_reference.py -v
+      - name: Download privately shared prepared catalogue with the existing identity
+        if: steps.controls.outputs.transport == 'drive'
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+        run: python scripts/download_ncn_drive_reference.py
       - name: Obtain prepared asset and check its pinned bytes
+        if: steps.controls.outputs.transport == 'https'
         run: |
           python - <<'PY'
           import json,os,sys,urllib.request

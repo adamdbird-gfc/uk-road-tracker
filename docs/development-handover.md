@@ -51,6 +51,18 @@ See the integration document for exact original transport/authentication and
 publication/rollback instructions. Full national tests and real-device acceptance
 remain pending.
 
+**Latest concrete handoff gate:** private Google Drive transport is prepared for
+Adam Bird's connected `adamdbird@googlemail.com` account and reader-only sharing
+with `roadprints-hosting@roadprints-822cc.iam.gserviceaccount.com`. Probe run
+39328900628 returns **403: Drive API disabled**; owner must click **Enable** at
+`https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=138967660563`.
+Automatic approval review also blocked the Drive upload pending explicit approval
+for that account/payload. **Nothing was uploaded or shared.** Stop transport retries.
+After owner approval/API activation, upload the preserved `catalogue.db.gz`, share
+reader access only to that identity, set the publication request `drive_file_id`,
+then verify Hosting, execute both national classes/full suite and package one beta.
+No manual file upload is needed if the connector action is approved.
+
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
 **Released 0.25.206 (252)** on 19 October 2026. [Install corrective 206](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0hi0t0j0s2d18). PR [#205](https://github.com/adamdbird-gfc/uk-road-tracker/pull/205), based directly on 205's application/release ancestry `04c4287a8a20b1cb9a40ce2993bd7e4a15df4fb9`. **205 failed real-device acceptance** (repeated initial-map timeout, incorrect chart track, B2008 UK-wide view); its prior automated green result did not prove those behaviours. This corrective slice supersedes the broader refinement brief. No NCN or unrelated UI development.
