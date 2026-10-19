@@ -661,7 +661,7 @@ public class AchievementsActivity extends Activity {
         card.setOnClickListener(view -> { });
 
         TextView close=RoadprintsDialog.closeControl(this,()->closeCelebrations());close.setBackground(roundRect(NAVY,NAVY,dp(12)));
-        LinearLayout closeRow=new LinearLayout(this);closeRow.setGravity(Gravity.END);closeRow.addView(close);card.addView(closeRow);
+        LinearLayout closeRow=new LinearLayout(this);closeRow.setGravity(Gravity.END);closeRow.addView(close);card.addView(closeRow,new LinearLayout.LayoutParams(-1,-2));
         celebrationIcon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_star,0xFF0B1C50,"Achievement unlocked");
         celebrationIcon.setPadding(dp(16),dp(16),dp(16),dp(16));
         celebrationIcon.setBackground(roundRect(0xFFF2B544,0xFFF2B544,dp(40)));

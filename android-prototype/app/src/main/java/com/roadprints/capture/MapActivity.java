@@ -61,7 +61,7 @@ public class MapActivity extends Activity {
     private JourneyFilters mapFilters = JourneyFilters.all();
     private TextView mapFilterSummary;
     private View mapFilterControls, zoomControls;
-    private boolean mapReady;
+    private boolean mapReady, recapVisible;
     private android.app.AlertDialog filterDialog;
     private int filterDialogGeneration;
     private static final String FILTER_PREFS = "roadprints_map_journey_filters";
@@ -306,9 +306,14 @@ public class MapActivity extends Activity {
     }
 
     private void setMapReady(boolean ready) {
-        mapReady = ready;
-        for (View control : new View[]{legendButton, mapFilterControls, zoomControls, recapCard})
-            if (control != null) control.setVisibility(ready ? View.VISIBLE : View.GONE);
+        mapReady=ready;updateMapControls();
+        if(recapCard!=null)recapCard.setVisibility(ready?View.VISIBLE:View.GONE);
+    }
+    private void updateMapControls() {
+        boolean interactive=mapReady&&!recapVisible;
+        for(View control:new View[]{legendButton,mapFilterControls,zoomControls})
+            if(control!=null)control.setVisibility(interactive?View.VISIBLE:View.GONE);
+        if(mapView!=null)mapView.setOverviewLoading(!interactive);
     }
 
     private void refreshMap() {
@@ -1673,7 +1678,7 @@ public class MapActivity extends Activity {
     }
 
     private void showMapFilters() {
-        if (!active || !mapReady || (filterDialog != null && filterDialog.isShowing())) return;
+        if (!active || !mapReady || recapVisible || (filterDialog != null && filterDialog.isShowing())) return;
         filterDialog = new JourneyFilterPanel(this, null, mapFilters, true, this::applyMapFilters).show();
     }
 
@@ -1694,39 +1699,8 @@ public class MapActivity extends Activity {
         refreshMap();
     }
 
-    private void addZoomControls(FrameLayout mapFrame, RoutePreviewView map) {
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.VERTICAL);
-        controls.setGravity(Gravity.CENTER);
-        controls.addView(zoomButton("+", "Zoom in", map::zoomIn));
-        View gap = new View(this);
-        controls.addView(gap, new LinearLayout.LayoutParams(1, dp(8)));
-        controls.addView(zoomButton("−", "Zoom out", map::zoomOut));
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                dp(48), LinearLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.END | Gravity.CENTER_VERTICAL);
-        params.setMargins(0, 0, dp(12), 0);
-        mapFrame.addView(controls, params);
-        zoomControls = controls;
-        controls.setVisibility(mapReady ? View.VISIBLE : View.GONE);
-    }
-
-    private TextView zoomButton(String label, String description, Runnable action) {
-        TextView button = new TextView(this);
-        button.setText(label);
-        button.setTextSize(27);
-        button.setTypeface(null, Typeface.BOLD);
-        button.setTextColor(0xFF10275D);
-        button.setGravity(Gravity.CENTER);
-        button.setContentDescription(description);
-        button.setBackground(roundRect(Color.WHITE, dp(8)));
-        button.setElevation(dp(4));
-        button.setClickable(true);
-        button.setFocusable(true);
-        button.setOnClickListener(v -> action.run());
-        button.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
-        return button;
+    private void addZoomControls(FrameLayout frame, RoutePreviewView map) {
+        zoomControls=MapZoomControls.add(frame,map);updateMapControls();
     }
 
     private GradientDrawable roundRect(int color, int radius) {
@@ -1811,6 +1785,7 @@ public class MapActivity extends Activity {
         if (mapFrame == null || replayMessage != null) return;
         if (recapCard != null) mapFrame.removeView(recapCard);
         recapCard = null;
+        recapVisible=false;updateMapControls();
         if (recapJourneys.isEmpty()) return;
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -1824,15 +1799,7 @@ public class MapActivity extends Activity {
         TextView dismiss = recapText("DISMISS", 11, GOLD, true);
         dismiss.setPadding(dp(8), dp(12), dp(8), dp(12));
         dismiss.setContentDescription("Dismiss new journey recap");
-        dismiss.setOnClickListener(view -> {
-            ReturnRecapStore.dismiss(this, shownIds);
-            recapGeneration++;
-            recapLoading = false;
-            recapRevision = Long.MIN_VALUE;
-            recapJourneys.removeIf(journey -> shownIds.contains(journey.optString("journey_id")));
-            renderRecap();
-            if (active) refreshRecap();
-        });
+        dismiss.setOnClickListener(view -> dismissRecap(shownIds));
         titleRow.addView(dismiss);
         card.addView(titleRow);
         int complete = 0, failed = 0;
@@ -1852,20 +1819,36 @@ public class MapActivity extends Activity {
         LinearLayout actions = new LinearLayout(this);
         TextView journeys = recapText("VIEW NEW JOURNEYS", 12, Color.WHITE, true);
         journeys.setPadding(0, dp(14), dp(8), dp(10));
-        journeys.setOnClickListener(view -> startActivity(new Intent(this, JourneyListActivity.class)
-                .putStringArrayListExtra("recap_journey_ids", new ArrayList<>(recapIds()))));
+        journeys.setOnClickListener(view -> {
+            ArrayList<String> ids=new ArrayList<>(shownIds);dismissRecap(shownIds);
+            startActivity(new Intent(this,JourneyListActivity.class).putStringArrayListExtra("recap_journey_ids",ids));
+        });
         actions.addView(journeys, new LinearLayout.LayoutParams(0, -2, 1));
         if (complete > 0) {
             TextView replay = recapText("SEE WHAT’S NEW", 12, GOLD, true);
             replay.setPadding(dp(8), dp(14), 0, dp(10));
-            replay.setOnClickListener(view -> startReplay(recapIds()));
+            replay.setOnClickListener(view -> {dismissRecap(shownIds);startReplay(shownIds);});
             actions.addView(replay);
         }
         card.addView(actions);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
-        params.setMargins(dp(12), dp(12) + (mapFilterControls == null ? 0 : mapFilterControls.getHeight()), dp(70), 0);
-        mapFrame.addView(card, params);
-        recapCard = card;
+        FrameLayout overlay=new FrameLayout(this);overlay.setTag("welcome_back_overlay");overlay.setBackgroundColor(0x66000000);
+        overlay.setClickable(true);overlay.setFocusable(true);overlay.setElevation(dp(12));
+        ScrollView scroll=new ScrollView(this){
+            @Override protected void onMeasure(int w,int h){super.onMeasure(w,View.MeasureSpec.makeMeasureSpec(Math.max(dp(120),(int)(View.MeasureSpec.getSize(h)*.72)),View.MeasureSpec.AT_MOST));}
+        };
+        scroll.addView(card);
+        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(-1,-2,Gravity.TOP);
+        params.setMargins(dp(12),dp(12),dp(12),dp(12));overlay.addView(scroll,params);
+        mapFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));recapCard=overlay;
+        recapVisible=true;updateMapControls();
+    }
+    private void dismissRecap(Set<String> shownIds) {
+        ReturnRecapStore.dismiss(this,shownIds);recapGeneration++;recapLoading=false;recapRevision=Long.MIN_VALUE;
+        recapJourneys.removeIf(journey->shownIds.contains(journey.optString("journey_id")));renderRecap();
+        if(active)refreshRecap();
+    }
+    @Override public void onBackPressed(){
+        if(recapVisible){dismissRecap(recapIds());return;}super.onBackPressed();
     }
 
     private void startReplay(Set<String> ids) {
@@ -1880,7 +1863,7 @@ public class MapActivity extends Activity {
 
     /** Reuse already displayed overview geometry; no disk read or archive scan on Play. */
     static ReplayContext cachedReplayContext(Context context) {
-        long revision=31L*JourneyStore.dataRevision(context)+ServiceStationStore.revision(context);
+        long revision=31L*JourneyStore.dataRevision(context)+201L;
         synchronized(MAP_CACHE_LOCK) {
             if(processMapCache==null||processMapCacheRevision!=revision)return null;
             ReplayContext result=new ReplayContext();

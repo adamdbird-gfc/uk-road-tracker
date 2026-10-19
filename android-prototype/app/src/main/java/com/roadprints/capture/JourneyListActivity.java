@@ -796,36 +796,8 @@ public class JourneyListActivity extends Activity {
         double metres = journey.optDouble("distance_meters", 0);
         int points = pointCount(journey);
 
-        LinearLayout details = new LinearLayout(this);
-        details.setOrientation(LinearLayout.VERTICAL);
-        details.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-
-        TextView label = new TextView(this);
-        label.setText(displayMode(mode).toUpperCase() + "  •  "
-                + displayTime(journey.optString("started_at")).toUpperCase());
-        label.setTextSize(12);
-        label.setTypeface(null, android.graphics.Typeface.BOLD);
-        label.setTextColor(0xFF67D5CC);
-
-        TextView heading = new TextView(this);
-        String savedTitle = journey.optString("title", "");
-        JSONObject source = journey.optJSONObject("source");
-        boolean imported = source != null
-                && "timeline_import".equals(source.optString("type"));
-        heading.setText(savedTitle.length() > 0 ? savedTitle
-                : imported ? "Imported journey" : "Captured journey");
-        heading.setTextSize(23);
-        heading.setTypeface(null, android.graphics.Typeface.BOLD);
-        heading.setTextColor(Color.WHITE);
-        heading.setPadding(0, 8, 0, 0);
-
-        TextView summary = new TextView(this);
-        summary.setText(String.format("%s  •  %s  •  %d GPS points",
-                DistanceUnits.format(this, metres), journeyDuration(journey), points));
-        summary.setTextSize(16);
-        summary.setTextColor(0xFFD3DCED);
-        summary.setPadding(0, 4, 0, 0);
+        JourneyCardHeader shared=new JourneyCardHeader(this,journey);
+        LinearLayout details=shared.details;
 
         TextView evidence = new TextView(this);
         String statusText = journeyStatusText(journey, points);
@@ -838,9 +810,6 @@ public class JourneyListActivity extends Activity {
                 ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
-        details.addView(label);
-        details.addView(heading);
-        details.addView(summary);
         details.addView(evidence);
 
         List<String> newRoads = newRoadHighlights.get(journey.optString("journey_id", ""));
@@ -868,13 +837,7 @@ public class JourneyListActivity extends Activity {
         cardContent.setGravity(Gravity.TOP);
         cardContent.addView(details);
 
-        ImageView modeIcon = RoadprintsIcons.image(this, RoadprintsIcons.transport(mode), 0xFF67D5CC, displayMode(mode));
-        modeIcon.setPadding(dp(8), dp(8), dp(8), dp(8));
-        modeIcon.setContentDescription(displayMode(mode));
-        modeIcon.setBackground(roundRect(0xFF304B88, 0xFF8EA7D4, dp(12)));
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(44), dp(44));
-        iconParams.setMargins(dp(12), dp(2), 0, 0);
-        cardContent.addView(modeIcon, iconParams);
+        cardContent.addView(shared.icon);
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
@@ -1889,9 +1852,9 @@ public class JourneyListActivity extends Activity {
     }
 
 
-    private String displayMode(String value) {
+    static String displayMode(String value) {
         if ("driving".equals(value)) return "Driving";
-        if (isFootMode(value)) return "On foot";
+        if (JourneyFilters.isFootMode(value)) return "On foot";
         if ("cycling".equals(value)) return "Cycling";
         if ("bus".equals(value)) return "Bus";
         if ("train".equals(value)) return "Train";
@@ -1900,7 +1863,7 @@ public class JourneyListActivity extends Activity {
         return "Unknown";
     }
 
-    private String displayTime(String value) {
+    static String displayTime(String value) {
         try {
             return DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
                     .withZone(ZoneId.systemDefault())
@@ -1910,7 +1873,7 @@ public class JourneyListActivity extends Activity {
         }
     }
 
-    private String journeyDuration(JSONObject journey) {
+    static String journeyDuration(JSONObject journey) {
         try {
             long seconds = Math.max(0, Duration.between(
                     Instant.parse(journey.optString("started_at")),

@@ -13,11 +13,14 @@ import java.util.Set;
 final class RoadDetailModel {
     static final class Entry {
         final String id,title,date;
+        final JSONObject summary=new JSONObject();
         final List<JSONArray> lines=new ArrayList<>();
         boolean contributes;
         Entry(JSONObject journey) {
             id=journey.optString("journey_id");title=journey.optString("title",journey.optString("name","Journey"));
             date=journey.optString("started_at");
+            for(String key:new String[]{"journey_id","title","name","mode","started_at","ended_at","distance_meters","gps_point_count","_route_point_count","source"})
+                if(journey.has(key))try{summary.put(key,journey.opt(key));}catch(org.json.JSONException invalid){throw new IllegalArgumentException(invalid);}
         }
         boolean near(double latitude,double longitude) {
             for(JSONArray line:lines) try {
@@ -35,6 +38,9 @@ final class RoadDetailModel {
     private static final int MAX_MAP_EDGES=60_000;
 
     static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative) throws Exception {
+        return load(context,selection,cumulative,null);
+    }
+    static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative,java.util.function.Consumer<RoadDetailModel> geometryReady) throws Exception {
         JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
         RoadDetailModel output=new RoadDetailModel();output.boundary=boundary;
@@ -65,6 +71,7 @@ final class RoadDetailModel {
             if(!road.ref.equals(selection.label)||(!selection.region.isEmpty()&&!selection.region.equals(road.region)))continue;
             if(road.referenceAvailable)output.setReference(road.totalKm*1000,road.uniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);
         }
+        if(geometryReady!=null&&!cumulative)geometryReady.accept(output.geometryPreview());
         output.journeys.sort((a,b)->b.date.compareTo(a.date));
         return output;
     }
@@ -77,6 +84,29 @@ final class RoadDetailModel {
             if(entry.near(latitude,longitude)){entry.lines.clear();related.add(entry);}
         });
         related.sort((a,b)->b.date.compareTo(a.date));return related;
+    }
+    RoadDetailModel geometryPreview() {
+        RoadDetailModel preview=new RoadDetailModel();preview.covered.addAll(covered);preview.remaining.addAll(remaining);
+        preview.fullReference=fullReference;preview.mapLimited=mapLimited;preview.referenceMetres=referenceMetres;
+        preview.uniqueMetres=uniqueMetres;preview.percent=percent;return preview;
+    }
+    static final class Section {
+        final double latitude,longitude,metres;final boolean travelled;
+        Section(double lat,double lon,double metres,boolean travelled){latitude=lat;longitude=lon;this.metres=metres;this.travelled=travelled;}
+    }
+    /** Display statistics for the nearest rendered edge, never a new coverage calculation. */
+    Section sectionAt(double latitude,double longitude) {
+        Section best=null;double nearest=Double.POSITIVE_INFINITY;
+        for(boolean travelled:new boolean[]{true,false})for(JSONArray line:travelled?covered:remaining)for(int i=1;i<line.length();i++) {
+            JSONArray a=line.optJSONArray(i-1),b=line.optJSONArray(i);if(!RoadDetailGeometry.valid(a)||!RoadDetailGeometry.valid(b))continue;
+            double scale=Math.cos(Math.toRadians(latitude))*111195,sy=111195;
+            double ax=(a.optDouble(0)-longitude)*scale,ay=(a.optDouble(1)-latitude)*sy;
+            double bx=(b.optDouble(0)-longitude)*scale,by=(b.optDouble(1)-latitude)*sy,dx=bx-ax,dy=by-ay;
+            double t=dx*dx+dy*dy==0?0:Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy)));
+            double distance=Math.hypot(ax+t*dx,ay+t*dy);
+            if(distance<nearest){nearest=distance;best=new Section((a.optDouble(1)+b.optDouble(1))/2,(a.optDouble(0)+b.optDouble(0))/2,Math.hypot(dx,dy),travelled);}
+        }
+        return best;
     }
     private void setReference(double total,double travelled,double completion,List<JSONArray> yes,List<JSONArray> no) {
         // The selection always carries a region for numbered roads. Never merge GB/NI totals.

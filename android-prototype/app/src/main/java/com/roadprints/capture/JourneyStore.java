@@ -405,6 +405,7 @@ public final class JourneyStore {
                     } else if ("journey_id".equals(key) || "mode".equals(key)
                             || "processing_status".equals(key) || "started_at".equals(key)
                             || "title".equals(key) || "name".equals(key) || "gps_point_count".equals(key)
+                            || "ended_at".equals(key) || "distance_meters".equals(key)
                             || "source".equals(key) || "capture_quality".equals(key) || "walking_outcome".equals(key)
                             || "journey_corrections".equals(key)) journey.put(key, readEvidenceValue(reader));
                     else reader.skipValue();
