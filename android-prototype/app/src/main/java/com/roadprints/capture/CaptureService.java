@@ -556,8 +556,9 @@ public class CaptureService extends Service {
         }
         List<FootTraceValidator.Sample> modeEvidence = new ArrayList<>();
         for (int i = 0; i < points.size(); i++) modeEvidence.add(footSample(points.get(i), i));
-        if (!CaptureMovementEvidence.confirmsMode(modeEvidence, confirmedMode,
-                pendingActivitySince, System.currentTimeMillis())) {
+        int confirmedBoundary = CaptureMovementEvidence.modeChangeStart(modeEvidence, confirmedMode,
+                pendingActivitySince, System.currentTimeMillis());
+        if (confirmedBoundary < 0) {
             if (System.currentTimeMillis() - pendingActivitySince < 120_000L) {
                 handler.postDelayed(confirmActivityModeChange, 10_000L);
             } else {
@@ -566,7 +567,6 @@ public class CaptureService extends Service {
             }
             return;
         }
-        long confirmedSince = pendingActivitySince;
         clearPendingActivityMode();
         if (promoteProvisionalDepartureMode(confirmedMode))return;
         if (points.size() < 2) {
@@ -575,12 +575,11 @@ public class CaptureService extends Service {
         }
         // IN_VEHICLE cannot distinguish trains from road vehicles. Save that leg
         // as Unknown so it can be classified in Journeys without road matching.
-        nextCaptureMode = confirmedMode;
-        int boundary = Math.max(1, points.size()-1);
-        for (int i = 1; i < points.size(); i++) {
-            if (points.get(i).getTime() >= confirmedSince) { boundary = i; break; }
-        }
+        int boundary = Math.max(1, confirmedBoundary);
         prepareStationSplit(boundary, boundary, confirmedMode);
+        MovementDiagnostics.recordEvent(this, "mode_change_confirmed",
+                "mode=" + confirmedMode + "; boundary_index=" + boundary
+                        + "; boundary_time_ms=" + points.get(boundary).getTime());
         finishCapture();
         broadcastUpdate("Activity change confirmed; saving this journey leg...");
     }

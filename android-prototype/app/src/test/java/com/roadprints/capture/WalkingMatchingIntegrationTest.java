@@ -144,4 +144,88 @@ public class WalkingMatchingIntegrationTest {
         assertFalse(stored.has("original_ended_at"));
     }
 
+    @Test public void completedOldMatchIsRepreparedAndDriftRemovedUsingCurrentLogic()throws Exception{
+        JSONObject j=longIndoorStay().put("processing_status","complete")
+                .put("processing_result",result(500))
+                .put("walking_validation",new JSONObject().put("version",1)
+                        .put("capture_preparation_version",1).put("stationary_points",0));
+        String geometry=j.getJSONObject("route_geometry").toString();
+        String raw=j.getJSONArray("raw_capture_samples").toString();
+        String originalEnd=j.getString("ended_at");
+        // The historical displayed match itself contains the stationary tail.
+        j.getJSONObject("processing_result").getJSONObject("geojson").getJSONArray("features")
+                .getJSONObject(0).getJSONObject("geometry")
+                .put("coordinates",j.getJSONObject("route_geometry").getJSONArray("coordinates"));
+        String oldMap=j.getJSONObject("processing_result").getJSONObject("geojson").toString();
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{
+            assertEquals("/match-walking",foot);calls.incrementAndGet();
+            assertTrue(payload.getJSONArray("points").length()<20);
+            return result(180);
+        });
+        coordinator.rematch("walk");await();
+        assertEquals(1,calls.get());assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals("complete",stored.getString("processing_status"));
+        assertEquals(3,stored.getJSONObject("walking_validation").getInt("capture_preparation_version"));
+        assertTrue(stored.getJSONObject("walking_validation").getInt("stationary_points")>100);
+        assertEquals(180,stored.getDouble("distance_meters"),0d);
+        assertEquals(180,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),0d);
+        assertNotEquals(oldMap,stored.getJSONObject("processing_result").getJSONObject("geojson").toString());
+        assertEquals(result(180).getJSONObject("geojson").toString(),
+                stored.getJSONObject("processing_result").getJSONObject("geojson").toString());
+        assertEquals(originalEnd,stored.getString("original_ended_at"));
+        assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+        assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
+        coordinator.rematch("walk");await();
+        assertEquals(2,calls.get());
+        assertEquals(raw,JourneyStore.get(app,"walk").getJSONArray("raw_capture_samples").toString());
+    }
+
+    @Test public void failedUpgradeRematchRetainsPreviousMapDistanceAndRawRecording()throws Exception{
+        JSONObject j=longIndoorStay().put("processing_status","complete").put("processing_result",result(190));
+        String previous=j.getJSONObject("processing_result").toString();
+        String geometry=j.getJSONObject("route_geometry").toString();
+        String raw=j.getJSONArray("raw_capture_samples").toString();
+        String ended=j.getString("ended_at");double distance=j.getDouble("distance_meters");
+        JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(foot,payload)->{throw new IllegalStateException("HTTP 503: unavailable");});
+        coordinator.rematch("walk");await();
+        assertEquals(1,coordinator.snapshot().failed);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals("failed",stored.getString("processing_status"));
+        assertEquals(previous,stored.getJSONObject("processing_result").toString());
+        assertEquals(distance,stored.getDouble("distance_meters"),0d);
+        assertEquals(ended,stored.getString("ended_at"));
+        assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
+        assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+    }
+
+    @Test public void completedCapturedDriveUsesCurrentPreparationAndFreshMatcherResult()throws Exception{
+        JSONArray coords=new JSONArray("[[0,0],[0.001,0],[0.002,0],[0.003,0]]"),samples=new JSONArray();
+        for(int i=0;i<coords.length();i++)samples.put(new JSONArray().put(coords.getJSONArray(i).getDouble(0))
+                .put(0).put(5).put(100000+i*10000).put(11));
+        JSONObject j=walk().put("mode","driving").put("processing_status","complete")
+                .put("processing_result",result(500)).put("raw_capture_samples",samples)
+                .put("capture_route_samples",samples).put("road_preparation",new JSONObject().put("version",1))
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords));
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{
+            assertEquals("/match",endpoint);assertTrue(payload.getBoolean("road_recovery"));
+            assertEquals(4,payload.getJSONArray("points").length());calls.incrementAndGet();
+            JSONObject matched=result(330).put("input_points",4).put("matched_tracepoints",4)
+                    .put("matched_distance_is_deduplicated",true).put("failed_sections",new JSONArray());
+            matched.getJSONObject("geojson").getJSONArray("features").getJSONObject(0)
+                    .getJSONObject("geometry").put("coordinates",coords);
+            return matched;
+        });
+        coordinator.rematch("walk");await();
+        assertEquals(1,calls.get());assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals(2,stored.getJSONObject("road_preparation").getInt("version"));
+        assertEquals(330,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),0d);
+        assertEquals(coords.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+        assertEquals(samples.toString(),stored.getJSONArray("raw_capture_samples").toString());
+    }
+
 }
