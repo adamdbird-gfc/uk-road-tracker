@@ -63,7 +63,7 @@ REFERENCE_MATCH_LOCK = asyncio.Lock()
 foot_next_request_at = 0.0
 foot_cooldown_until = 0.0
 
-app = FastAPI(title="UK Road Tracker API", version="0.11.0")
+app = FastAPI(title="UK Road Tracker API", version="0.12.0")
 PLACE_NAME_CACHE = {}
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://adamdbird-gfc.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin.strip()]
 
@@ -431,7 +431,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "database": database_state}
+    return {"status": "ok", "version": "0.12.0", "source_commit": os.getenv("RENDER_GIT_COMMIT", ""), "road_capture_window_points": 10, "map_context_feature_revision": 2, "matched_path_evidence_version": 1, "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
