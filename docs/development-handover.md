@@ -2,6 +2,12 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## In progress — Beta 1 UI refinement
+
+The user reports initial real-device functional acceptance of 0.25.203 (249). PR [#203](https://github.com/adamdbird-gfc/uk-road-tracker/pull/203), branch `ui/beta1-refinement`, prepares **0.25.204 (250)** directly above that working release. Current source: `bed7ef24bacb0d57b5caed676fde492563372510`. It adds the discovery overlay, shared end-aligned Close/zoom controls, immediate/progressive focused maps, whole-road graphs, labelled selected-section details and shared contribution-card formatting; 13 new UI tests cover these paths. A1/A1(M), coverage calculators, matching, tracking and collection ledgers are unchanged.
+
+[Android checks 39280220062](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39280220062) are **queued awaiting a GitHub runner**, not passed. Earlier candidates were superseded during review before validation completed. Do not merge or request an APK until this exact source passes unit tests and lint. No 0.25.204 APK/release request/distribution exists yet. Next action: await this run, address any test/lint failure, then merge #203 and use the existing immutable pinned-release workflow for one Firebase build. Public local-road snapshots expire after five minutes because boundary responses have no revision token; numbered-road snapshots use saved-journey revision and exact road identity. Cache lookup performs no network I/O.
+
 ## Latest delivery — Beta 1 stabilisation (#201)
 
 **Released 0.25.203 (249)** on 19 October 2026. [Install update](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/6odqoda2eki6g). PR [#202](https://github.com/adamdbird-gfc/uk-road-tracker/pull/202) contains only the five reported Beta 1 repairs and targeted tests. Its code starts directly at installed source `5c8deea0a6237f484a865994e7148d51af4f1627`; no NCN or unrelated backlog feature was integrated. Existing journey archives, tracking state, collection ledgers, application ID and signing identity are preserved; no destructive migration or rematch was added.
