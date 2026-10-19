@@ -152,6 +152,11 @@ public class WalkingMatchingIntegrationTest {
         String geometry=j.getJSONObject("route_geometry").toString();
         String raw=j.getJSONArray("raw_capture_samples").toString();
         String originalEnd=j.getString("ended_at");
+        // The historical displayed match itself contains the stationary tail.
+        j.getJSONObject("processing_result").getJSONObject("geojson").getJSONArray("features")
+                .getJSONObject(0).getJSONObject("geometry")
+                .put("coordinates",j.getJSONObject("route_geometry").getJSONArray("coordinates"));
+        String oldMap=j.getJSONObject("processing_result").getJSONObject("geojson").toString();
         JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
         coordinator=new MatchingCoordinator(app,(foot,payload)->{
             assertEquals("/match-walking",foot);calls.incrementAndGet();
@@ -166,6 +171,9 @@ public class WalkingMatchingIntegrationTest {
         assertTrue(stored.getJSONObject("walking_validation").getInt("stationary_points")>100);
         assertEquals(180,stored.getDouble("distance_meters"),0d);
         assertEquals(180,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),0d);
+        assertNotEquals(oldMap,stored.getJSONObject("processing_result").getJSONObject("geojson").toString());
+        assertEquals(result(180).getJSONObject("geojson").toString(),
+                stored.getJSONObject("processing_result").getJSONObject("geojson").toString());
         assertEquals(originalEnd,stored.getString("original_ended_at"));
         assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
         assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
