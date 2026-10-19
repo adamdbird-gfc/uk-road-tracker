@@ -46,6 +46,15 @@ public class Beta206PresentationTest {
     }
     @Test public void m20AndA12ActualFullReferencesFitBothRemainingAndCoveredGeometry()throws Exception{
         JourneyStore.deleteAll(app);
+        // A-road references are loaded lazily when retained evidence names that road.
+        for(String ref:new String[]{"M20","A12"}){
+            org.json.JSONObject feature=new org.json.JSONObject().put("type","Feature")
+                .put("properties",new org.json.JSONObject().put("road_ref",ref).put("road_region","GB"))
+                .put("geometry",new org.json.JSONObject().put("type","LineString").put("coordinates",new JSONArray("[[0.6,51.3],[0.601,51.301]]")));
+            org.json.JSONObject geo=new org.json.JSONObject().put("type","FeatureCollection").put("features",new JSONArray().put(feature));
+            JourneyStore.save(app,new org.json.JSONObject().put("journey_id",ref).put("mode","driving").put("processing_status","complete")
+                .put("started_at","2026-10-19T10:00:00Z").put("processing_result",new org.json.JSONObject().put(ref.startsWith("M")?"motorway_geojson":"a_road_geojson",geo)));
+        }
         for(RoadDetailSelection selection:Arrays.asList(new RoadDetailSelection(RoadDetailSelection.MOTORWAY,"M20","GB","",""),new RoadDetailSelection(RoadDetailSelection.A_ROAD,"A12","GB","",""))){
             RoadDetailModel model=RoadDetailModel.load(app,selection,false);assertTrue(selection.label,model.fullReference);
             List<JSONArray> geometry=new ArrayList<>(model.covered);geometry.addAll(model.remaining);assertFalse(geometry.isEmpty());
