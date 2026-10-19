@@ -2,6 +2,16 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Latest session checkpoint — 19 October 2026
+
+- **Status:** reliability work is committed in open, unmerged [PR #196](https://github.com/adamdbird-gfc/uk-road-tracker/pull/196), branch `fix/capture-mode-transition-evidence`, based on #182. No APK was built or Firebase deployment triggered. Until integration, use this branch's handover for these session findings; the default-branch copy may be older.
+- **Implemented:** GPS-supported mode-change boundaries retain continuous recorded geometry, with one shared endpoint; stops, gaps and stale movement cannot supply pooled transition evidence. Existing motorway matching, route rendering, arrival and duration fixes remain in their reviewed dependency branches.
+- **Saved history:** explicit **Rematch Journey** reprocesses completed walking/driving journeys with current preparation and fresh matching. Supported pedestrian drift is excluded from the derived map/distance; original recording evidence is retained. Failed rematches preserve the previous result. No automatic archive-wide repair or historical re-segmentation is implemented.
+- **Verification:** 34 local JVM tests passed. Full Android unit tests/lint passed in [run 39249993064](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39249993064); the subsequent three saved-remapping regressions also passed with the full suite/lint in [run 39252410302](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39252410302) at `e3a752fd30edfca79456a64608efdbb639efb8ac`. Later handover changes are documentation only.
+- **Tracking:** issues [#194](https://github.com/adamdbird-gfc/uk-road-tracker/issues/194), [#188](https://github.com/adamdbird-gfc/uk-road-tracker/issues/188) and [#195](https://github.com/adamdbird-gfc/uk-road-tracker/issues/195) contain the findings and validation. Overnight drift remains open; passing branch tests do not establish integrated or real-device acceptance.
+- **Next:** reconcile #163's place-visit guard with #170 → #174 → #182 → #196, then test overnight residence drift followed by genuine departure, venue exercise/laps and arrival-to-car transitions. Integrate backend #164/#173 separately and verify complete journeys. NCN adapter work remains pending while tracking reliability is prioritised.
+- **Release hold:** no APK packaging, Firebase deployment or blind merging. Coordinate a single beta release after agreed fixes/features are integrated and verified.
+
 ## Start every ChatGPT / Work development session here
 
 1. Read this document and [release integration issue #194](https://github.com/adamdbird-gfc/uk-road-tracker/issues/194) before modifying code or proposing a build.
