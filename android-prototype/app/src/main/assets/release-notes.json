@@ -2,6 +2,30 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.204",
+      "version_code": 250,
+      "release_date": "2026-10-19",
+      "since": "0.25.203",
+      "changes": [
+        {
+          "title": "A clearer welcome back",
+          "description": "New journey discoveries appear over the prepared map. Dismiss or open their actions to reveal the map controls without another map load."
+        },
+        {
+          "title": "Focused road maps",
+          "description": "See a loading map container and statistics placeholders, then road coverage and a graphical whole-road summary. Focused maps now share the main map zoom buttons and retain bounded retry handling."
+        },
+        {
+          "title": "Consistent road and journey details",
+          "description": "Whole-road and selected-section statistics are clearly labelled. Contributing journeys share the main journey typography, transport badges, local dates and available details. Close controls align with their content edges."
+        },
+        {
+          "title": "Existing road identities retained",
+          "description": "A1 and A1(M) keep their independent coverage and mileage. Tracking, matching and collections remain as in the working stabilisation release. Please verify these UI changes on your device."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.203",
       "version_code": 249,
       "release_date": "2026-10-19",

@@ -92,9 +92,9 @@ final class RoadprintsDialog {
     }
     static TextView closeControl(Context context,Runnable action){
         Button close=new Button(context);close.setAllCaps(false);close.setBackground(background(context,Color.TRANSPARENT,12,false));close.setText("CLOSE");close.setTextSize(13);close.setTypeface(null,Typeface.BOLD);
-        close.setTextColor(0xFFF7C450);close.setGravity(Gravity.CENTER);close.setContentDescription("Close");
+        close.setTextColor(0xFFF7C450);close.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);close.setContentDescription("Close");
         close.setTag("roadprints_dialog_close");close.setMinHeight(dp(context,48));close.setMinWidth(dp(context,64));
-        close.setPadding(dp(context,8),0,dp(context,8),0);close.setClickable(true);close.setFocusable(true);
+        close.setPadding(dp(context,8),0,0,0);close.setMinimumWidth(dp(context,64));close.setClickable(true);close.setFocusable(true);
         if(action!=null)close.setOnClickListener(v->action.run());return close;
     }
     /** Move an existing close handler into a consistent top-right card header. */
@@ -102,7 +102,7 @@ final class RoadprintsDialog {
         if(close.getParent() instanceof ViewGroup)((ViewGroup)close.getParent()).removeView(close);
         close.setText("CLOSE");close.setTextSize(13);close.setTypeface(null,Typeface.BOLD);close.setTextColor(0xFFF7C450);
         close.setTag("roadprints_dialog_close");close.setContentDescription("Close");close.setMinHeight(dp(card.getContext(),48));
-        close.setMinWidth(dp(card.getContext(),64));close.setPadding(dp(card.getContext(),8),0,dp(card.getContext(),8),0);
+        close.setMinWidth(dp(card.getContext(),64));close.setPadding(dp(card.getContext(),8),0,0,0);close.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
         LinearLayout header=new LinearLayout(card.getContext());header.setGravity(Gravity.CENTER_VERTICAL);
         if(card.getChildCount()>0){View first=card.getChildAt(0);card.removeView(first);header.addView(first,new LinearLayout.LayoutParams(0,-2,1));}
         else header.addView(new View(card.getContext()),new LinearLayout.LayoutParams(0,0,1));
@@ -116,7 +116,7 @@ final class RoadprintsDialog {
         @Override public AlertDialog create(){
             final AlertDialog[] holder={null};
             if(caption!=null){
-                LinearLayout header=new LinearLayout(getContext());header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(dp(getContext(),20),dp(getContext(),8),dp(getContext(),12),0);
+                LinearLayout header=new LinearLayout(getContext());header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(dp(getContext(),20),dp(getContext(),8),dp(getContext(),20),0);
                 TextView title=new TextView(getContext());title.setText(caption);title.setTextColor(Color.WHITE);title.setTextSize(20);title.setTypeface(null,Typeface.BOLD);
                 header.addView(title,new LinearLayout.LayoutParams(0,-2,1));header.addView(closeControl(getContext(),()->holder[0].dismiss()));setCustomTitle(header);
             }
