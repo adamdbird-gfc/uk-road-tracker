@@ -3,9 +3,13 @@ package com.roadprints.capture;
 import java.util.*;
 import org.json.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 import static org.junit.Assert.*;
 
 /** Invented relative geometry; exercise the combined visit/continuity policies. */
+@RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class PlaceVisitReliabilityTest {
     private FootTraceValidator.Sample p(double x,double y,long seconds,double speed,int index) {
         return new FootTraceValidator.Sample(x/111195,y/111195,5,1000+seconds*1000,speed,index);
