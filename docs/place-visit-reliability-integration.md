@@ -1,0 +1,36 @@
+# Place-visit reliability integration — 19 October 2026
+
+## Scope and ancestry
+
+PR [#197](https://github.com/adamdbird-gfc/uk-road-tracker/pull/197), dedicated branch `fix/place-visit-reliability-integration`, is stacked on PR #196 at `e0817029ed5f4fcc7f3f30603bb40256e1624cf2`. This inherits #170 → #174 → #182 → #196, including saved-journey remapping regressions. PR #163's single change `26bd7d6fe8ecc7f8da73ffd6b4bb33549e04be9d` is reconciled explicitly; its common ancestor with the reliability stack is `741b9b06cf2f42a80c2b4c0f25d7eef04b8b78ec`. No unrelated branches are merged. #163's patch is adapted here; do not merge its full older files over this stack independently.
+
+Conflicts were resolved in CaptureMovementEvidence, ContextMap and ContextMapTest. Keep #196's index-returning, fresh continuous mode support; add #163's running-speed/duration requirements without restoring callback-time boundaries. Keep #174's through-road queue protection alongside site preference and courtyard holes. The #163 isolated-pedestrian-speed exception is redundant with #170's trajectory detector and is not reinstated. Its original regression remains passing.
+
+## Behaviour
+
+- Reuse #163's bounded place-visit gate, persisted site footprint/holes, activity hints and local candidate buffer. Supported arrivals and estimated offline stays remain armed; false activity labels do not bypass measured departure.
+- Reuse WalkingStillnessDetector to establish a stationary idle stay before a first saved arrival. Five minutes of fresh measured quiet can create a local stop anchor without creating an archived journey. Known rail and accurately located through-road queues keep their existing policy. This does not infer an idle stay from missing GPS.
+- Retain the earliest compatible movement before a venue boundary crossing. Departure uses the current continuous run rather than replaying old qualifying activity. Stops, stale/future fixes, incompatible speeds and sampling gaps cannot pool old votes.
+- Fast vehicle departure uses vehicle support, including inside a large site, instead of the former walking-only gate. Unclassified vehicles remain Unknown until existing road/rail/user confirmation resolves transport. A recent supported short walk to a vehicle is retained as a separate leg through the existing shared-endpoint handoff.
+- Sustained running, cycling and walking can start inside a site. Closed loops use maximum extent and adjusted path, not final displacement. Running requires measured running speeds; an Android label alone does not qualify.
+- Venue activity accepts 30–60-second sampling and up to 90 seconds between supporting exercise observations; no GPS sampling frequency is increased. The retained visit buffer stays capped at 360 points / 20 minutes; checkpoints are bounded, tied to stop identity, chronological and rejected when expired or future-dated.
+- Site arrival uses two minutes of mapped low-speed dwell; smaller supported buildings retain one minute and generic GPS arrival retains five minutes. Arrival/end boundaries remain measured dwell onset, with confirmation observations preserved. Context checkpoint v4 retains site policy and reads previous v1–v3 checkpoints.
+- Raw recordings, existing drift preparation, route-stroke order, driving request coverage and saved historical remapping remain inherited. No automatic archive migration or historical re-segmentation is introduced.
+
+## Service-station interaction
+
+Reviewed PR #169 at `34a96fbf7434f3a76c04cddc3dcdc42017b0392d`. It changes service-site visit qualification and catalogue delivery, not this CaptureService visit gate. A capture place anchor is explicitly not a confirmed collection visit: no service visit, achievement or catalogue change is introduced. Actual #169 ServiceStationEvidence / VenueStopDetector / VenueVisitStore code reads timed saved raw observations and requires three-minute dwell, bounded gaps and enough qualifying fixes. Preserve those independent checks, carriageway exclusions and saved Warwick evidence when integrating it later. A contextual trip end at one or two minutes can leave too little saved dwell for that separate collection rule; validating or retaining subsequent visit evidence is an outstanding #169 integration gate, not an automatic award from a place anchor. Campus context cannot override an accurately located through-road queue. Backend #164 is still needed to deliver full mapped sites; offline estimated stays remain supported before deployment.
+
+## Validation
+
+66 local JVM model tests pass over current production Java: visit/departure, site selection, arrival/checkpoint, #196 mode boundaries and movement tests. Existing JSON model-only tests are run locally with their Android runner annotations removed from temporary copies; their assertions and production classes are unchanged. Full Android unit tests and lint passed at `ad3db3e8e5cfc0a3124d4aa4816c1addaede27bf` in [Actions run 39256415474](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39256415474), including all 11 new service scenarios and inherited historical remapping regressions. Seven additional integration-model tests and the 12 reused #163 visit regressions are included. The initial test-harness run was corrected to use Android JSON and a deterministic UTC evidence clock. Production defaults to Clock.systemUTC; Android monotonic scheduling/watchdog time and sampling rates are unchanged.
+
+New service regressions cover 12 hours of home drift with false running labels followed by a sparse morning walk; an eight-hour school stay; establishing an idle anchor without a saved journey; stale/poor fixes; 60-second-sampled campus running; cycling and vehicle departure; visit-buffer resume/expiry; measured arrival; and shared-endpoint geometry in both mode directions. Additional pure model tests cover the inside-campus walk-to-car handoff, older outside movement followed by a stop, gaps and closed loops. All fixtures use invented relative coordinates, not private exports.
+
+## Limitations and next slice
+
+These are controlled regression results, not field acceptance. Require device checks on the Pixel and battery-optimised Samsung with the screen locked: residence/school stay overnight, ordinary short departure, campus parkrun loops, poor or missing GPS, a car parked within a large venue, and activity/GPS callback delays. Low-quality or missing speed/timing cannot establish travel; sparse unsupported gaps are not reconstructed. Thresholds remain conservative development policy. Incidental versus purposeful movement within a venue can remain ambiguous.
+
+Next bounded reliability slice: lifecycle recovery of the combined tracker through process death, subscription loss and save/handoff interruption under battery restrictions. Then integrate backend #164/#173 and verify complete driving journeys and map continuity. Full #169 services integration (including post-trip-end dwell evidence), NCN and wider UI branches remain separately coordinated. Keep #188 open until real-device acceptance; branch-level regressions alone do not establish that every reported recording is repaired.
+
+No version bump, APK packaging, Firebase deployment, reference publication or unrelated merge.
