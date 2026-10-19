@@ -37,7 +37,7 @@ Current main `f8882d9fbe24498abe60063d82a730f90a232f46` supplies the existing ba
 
 Local backend: 83 tests, 78 passed and five database-dependent tests skipped pending PostgreSQL CI. Android complete unit tests/lint and combined backend/PostgreSQL CI are required before any release request. This document will record the exact validated source and release run after completion.
 
-New regressions cover early contextual arrival versus full service dwell, traffic/exercise/gap rejection, bounded arrival evidence, history scans/rematching/deletion, process restoration, sampling gaps, interrupted save/handoff replay and all four supported road-detail entry/close paths. Inherited regressions cover overnight drift, school/work stays, venue laps, both mode transitions, matching geometry and rematch failure retention. The pinned Warwick synthetic fixture tests saved-journey recognition against #169's real catalogue; private recordings must never enter Git history.
+New regressions cover early contextual arrival versus full service dwell, traffic/exercise/gap rejection, bounded arrival evidence, history scans/rematching/deletion, process restoration, sampling gaps, interrupted save/handoff replay and all four supported road-detail entry/close paths. Inherited regressions cover overnight drift, school/work stays, venue laps, both mode transitions, matching geometry and rematch failure retention. The pinned Warwick synthetic fixture tests saved-journey recognition against #169's real catalogue. Private original Warwick replay is recorded separately below; recordings never enter Git history.
 
 ## Pixel / Samsung targeted beta checklist
 
@@ -56,3 +56,14 @@ Passing automated checks does not establish real-device acceptance. Samsung batt
 ## Beta 2 next slice
 
 Keep #172 separate from Beta 1. Reconcile its shared Progress adapter with this integration, then adapt the #165 → #175–#187 national source stack: open sections only, source-way overlaps/alternatives, unique physical coverage, mode filtering, correction/deletion-aware history and bounded storage. Validate before any NCN catalogue publication or APK.
+
+## Verified checkpoint before packaging
+
+- Android complete unit suite and lint: green at `5c8deea0a6237f484a865994e7148d51af4f1627`, [run 39259997616](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39259997616). The preceding run had one incorrect moving-gap test fixture (111 m displacement below the deliberate 300 m driving threshold); corrected to a genuine >2 km moving gap. All 607 tests pass after that correction.
+- Backend/PostgreSQL: green [run 39259997954](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39259997954); separate backend delivery #199 passed [run 39260168551](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39260168551) and merged as `b1926f004bfde1b8d38046016b9aa553b2931cca`. Live `/health` confirms that exact source, API 0.12.0, ten-point captured-road windows, place-feature revision 2, source-evidence version 1 and database ready. No new migration files were introduced by #164/#168/#173.
+- Private replay of the original 16 October saved recording: 3,091 raw observations recover **Warwick Northbound only** using the production service detector and bundled mapped grounds. No coordinates, timestamps or private recording fixture were committed. The different 18 October drive has no samples in either Warwick footprint and correctly receives no Warwick credit.
+- Local delivery checks: nine immutable-release-request tests, three existing-tester discovery tests, nine service metadata/footprint tests, four venue-registry tests and seven Firebase staging tests pass. Version prepared: **0.25.202 (248)**, upgrade over 0.25.201 (247), with offline release notes. Schema-2 request sharing is explicit and default-off; old requests remain upload-only.
+
+APK packaging / Firebase status: not requested yet. Request only one immutable release after final live-route verification. Source PRs and their branches are retained.
+
+Live replay of private driving coordinates was blocked by automatic approval review: checking an export does not explicitly authorise sending its GPS trace to the external matcher. No private live-rematch result is claimed. Offline production preparation of the 18 October drive aligns all 424 route observations and retains 179 non-redundant points in one bounded request; full backend geometry/accounting regressions run with deterministic router responses. Real-device and explicitly authorised private live replay remain separate acceptance evidence.
