@@ -132,6 +132,38 @@ push-triggered pattern. Never put signed/query URLs in that request; manual
 dispatch reads those inputs without printing them. No publication, full national execution or APK success is
 claimed until that input is available and the serving/build gates pass.
 
+### Private Drive handoff — concrete permission gate (19 October)
+
+The available GitHub connector can download existing artifacts but cannot upload
+new release assets/workflow artifacts from this workspace. The original APK source
+does not contain the prepared national catalogue. No large binary was uploaded to Git.
+
+The connected Google Drive account is Adam Bird's `adamdbird@googlemail.com`.
+A private file shared as **reader** only with the existing deployment identity
+`roadprints-hosting@roadprints-822cc.iam.gserviceaccount.com` can supply Actions
+without public staging. `download_ncn_drive_reference.py` uses the same secret,
+requests a Drive read-only token, checks the file size and streamed SHA-256, then
+hands the verified gzip to the unchanged Hosting publisher. No new cloud identity,
+project, public share or replacement credential. Requests accept a non-secret
+`drive_file_id` instead of `asset_url`. Optional beta packaging remains gated on
+verified live publication and runs the complete Android suite.
+
+[Probe run 39328900628](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39328900628)
+confirmed **HTTP 403: Google Drive API is disabled** in project `138967660563`
+(`roadprints-822cc`). The exact activation link supplied by Google is
+`https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=138967660563`.
+The owner must open it, confirm Roadprints, and click **Enable**.
+
+Automatic approval review separately rejected the attempted private Drive upload:
+explicit approval for this payload in that Drive account was missing. **No file
+was uploaded; no Drive file ID or share exists.** Do not retry via a workaround.
+Ask Adam to authorise uploading `catalogue.db.gz` temporarily to that account and
+grant reader access only to the named existing deployment identity. Once approved,
+the connector can perform the upload/share, so Adam need not manually upload a file.
+The preserved bundle remains unchanged. Stop additional transport experiments
+until these two gates are resolved. No publication, national test execution or
+APK build occurred in this handoff slice.
+
 Original remote checkpoint `integration/ncn-national-beta` at
 `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a` preserves the first 71 confirmed parts.
 Additional confirmed object receipts remain in the local upload checkpoint (79
