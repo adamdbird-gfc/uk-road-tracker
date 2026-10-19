@@ -54,14 +54,26 @@ public class MapActivity extends Activity {
     private MapLoadingView loadingCard;
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private int mapLoadGeneration;
+    private volatile int mapLoadGeneration;
     private Map<String, Double> roadPercentages = new HashMap<>();
     private List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
     private RoutePreviewView mapView;
     private JourneyFilters mapFilters = JourneyFilters.all();
     private TextView mapFilterSummary;
     private View mapFilterControls, zoomControls;
-    private boolean mapReady, recapVisible;
+    private boolean mapReady, recapVisible, mapLoadFailed, hasDisplayedMap;
+    private JourneyFilters displayedFilters = JourneyFilters.all();
+    private java.util.concurrent.Future<?> mapPending;
+    private Runnable mapDeadline;
+    private long mapStartedAt;
+    private View mapRecovery;
+    static final long MAP_TIMEOUT_MS = 30_000;
+    interface MapRouteLoader {
+        MapRoutes load(MapActivity screen, JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception;
+    }
+    static MapRouteLoader mapRouteLoader = MapActivity::readMapRoutes;
+    private static String filterKey(JourneyFilters f) {return f.mode+"|"+f.status+"|"+f.date.preset+"|"+f.date.from+"|"+f.date.to;}
+    private boolean sameFilters(JourneyFilters a, JourneyFilters b) {return filterKey(a).equals(filterKey(b));}
     private android.app.AlertDialog filterDialog;
     private int filterDialogGeneration;
     private static final String FILTER_PREFS = "roadprints_map_journey_filters";
@@ -249,6 +261,7 @@ public class MapActivity extends Activity {
     @Override
     protected void onDestroy() {
         mainHandler.removeCallbacks(observeChanges);
+        cancelMapWork();
         hideMapLoading();
         mapLoadGeneration++;
         recapGeneration++;
@@ -288,16 +301,45 @@ public class MapActivity extends Activity {
     private void showMapLoading(boolean updating) {
         hideMapLoading();
         setMapReady(false);
-        if (mapView != null) mapView.setOverviewLoading(true);
-        mapSubtitle.setText(updating ? "Adding your latest journeys…" : "Bringing your roads into view…");
+        mapSubtitle.setText(updating ? "Updating your map…" : "Bringing your roads into view…");
         loadingCard = new MapLoadingView(this, updating);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         params.setMargins(dp(16), dp(16), dp(16), dp(32));
         mapFrame.addView(loadingCard, params);
         if (active) loadingCard.start();
+        if (updating) showMapRecovery(false);
+    }
+
+    private void cancelMapWork() {
+        if(mapDeadline!=null)mainHandler.removeCallbacks(mapDeadline);
+        if(mapPending!=null){mapPending.cancel(true);mapPending=null;}
+        loadingMapRevision=Long.MIN_VALUE;
+    }
+    private void showMapRecovery(boolean failed) {
+        if(mapRecovery!=null)mapFrame.removeView(mapRecovery);
+        LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER);row.setPadding(dp(12),dp(6),dp(12),dp(6));
+        row.setBackground(roundRect(0xFF0B1C50,12));row.setTag("map_load_recovery");
+        if(failed){TextView retry=mapFilterButton("RETRY","Retry loading map journeys");retry.setTag("map_load_retry");retry.setOnClickListener(v->{mapLoadFailed=false;refreshMap();});row.addView(retry);}
+        if(hasDisplayedMap){TextView cancel=mapFilterButton("CANCEL","Cancel map refresh and keep previous results");cancel.setTag("map_load_cancel");cancel.setOnClickListener(v->cancelMapRefresh());row.addView(cancel);}
+        TextView reset=mapFilterButton("RESET","Reset map journey filters");reset.setTag("map_load_reset");reset.setOnClickListener(v->applyMapFilters(JourneyFilters.all()));row.addView(reset);
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.CENTER_HORIZONTAL);lp.topMargin=dp(12);mapFrame.addView(row,lp);mapRecovery=row;updateMapControls();
+    }
+    private void cancelMapRefresh() {
+        mapLoadGeneration++;cancelMapWork();mapLoadFailed=false;hideMapLoading();
+        mapFilters=displayedFilters;persistMapFilters();mapFilterSummary.setText(mapFilters.summary());
+        mapSubtitle.setOnClickListener(null);mapSubtitle.setText("Map refresh cancelled. Previous results retained.");setMapReady(hasDisplayedMap);
+        android.util.Log.i("RoadprintsTiming","map_outcome=cancelled total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
+    }
+    private void mapFailure(int request,String message) {
+        if(request!=mapLoadGeneration||isFinishing()||isDestroyed())return;
+        mapLoadGeneration++;cancelMapWork();hideMapLoading();mapLoadFailed=true;
+        mapSubtitle.setText(message);mapSubtitle.setOnClickListener(v->{mapLoadFailed=false;refreshMap();});
+        setMapReady(false);showMapRecovery(true);
+        android.util.Log.i("RoadprintsTiming","map_outcome=failure total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
     }
 
     private void hideMapLoading() {
+        if(mapRecovery!=null){mapFrame.removeView(mapRecovery);mapRecovery=null;}
         if (loadingCard != null) {
             loadingCard.stop();
             mapFrame.removeView(loadingCard);
@@ -307,22 +349,24 @@ public class MapActivity extends Activity {
 
     private void setMapReady(boolean ready) {
         mapReady=ready;updateMapControls();
-        if(recapCard!=null)recapCard.setVisibility(ready?View.VISIBLE:View.GONE);
+        if(recapCard!=null)recapCard.setVisibility(ready||hasDisplayedMap?View.VISIBLE:View.GONE);
     }
     private void updateMapControls() {
         boolean interactive=mapReady&&!recapVisible;
         for(View control:new View[]{legendButton,mapFilterControls,zoomControls})
             if(control!=null)control.setVisibility(interactive?View.VISIBLE:View.GONE);
-        if(mapView!=null)mapView.setOverviewLoading(!interactive);
+        if(mapView!=null)mapView.setOverviewLoading(recapVisible||(!interactive&&!hasDisplayedMap));
+        if(mapRecovery!=null)mapRecovery.setVisibility(recapVisible?View.GONE:View.VISIBLE);
     }
 
     private void refreshMap() {
         String settlementCode = getIntent().getStringExtra("settlement_code");
-        if (mapView != null && displayedMapRevision == mapDataRevision()) {
+        if (mapView != null && displayedMapRevision == mapDataRevision() && sameFilters(mapFilters,displayedFilters)) {
+            if(hasDisplayedMap){hideMapLoading();setMapReady(true);}
             android.util.Log.i("RoadprintsTiming", "map_revisit=reused");return;
         }
         final long requestedRevision = mapDataRevision();
-        if (loadingMapRevision == requestedRevision) return;
+        if (loadingMapRevision != Long.MIN_VALUE || mapLoadFailed) return;
         saveMapCamera();
         final int generation = ++mapLoadGeneration;
         if (settlementCode != null && !settlementCode.isEmpty()) {
@@ -343,14 +387,16 @@ public class MapActivity extends Activity {
                 processMapCacheRevision = revision;
             }
         }
+        loadingMapRevision = revision;
         if (cached != null) {
             displayMapRoutes(cached, generation);
             return;
         }
-        loadingMapRevision = revision;
-        showMapLoading(displayedMapRevision != Long.MIN_VALUE);
-        final long queuedAt = android.os.SystemClock.elapsedRealtime();
-        ScreenDataLoader.execute(() -> {
+        showMapLoading(hasDisplayedMap);
+        mapDeadline=()->mapFailure(generation,"Loading took too long. Retry or Reset your filters.");
+        mainHandler.postDelayed(mapDeadline,MAP_TIMEOUT_MS);
+        final long queuedAt = android.os.SystemClock.elapsedRealtime();mapStartedAt=queuedAt;
+        mapPending=ScreenDataLoader.map(() -> {
             android.util.Log.i("RoadprintsTiming", "map_queue_ms="+(android.os.SystemClock.elapsedRealtime()-queuedAt));
             MapRoutes mapRoutes;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
@@ -358,7 +404,8 @@ public class MapActivity extends Activity {
                         "map-routes", revision) : null;
                 mapRoutes = saved == null ? null : mapRoutesFromCache(saved);
                 if (mapRoutes == null) {
-                    mapRoutes = readMapRoutes(selection, today, zone);
+                    mapRoutes = mapRouteLoader.load(this,selection, today, zone);
+                    if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
                     Runtime cacheRuntime = Runtime.getRuntime();
                     long cacheHeadroom = cacheRuntime.maxMemory()
                             - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
@@ -371,14 +418,7 @@ public class MapActivity extends Activity {
                 }
                 android.util.Log.i("RoadprintsTiming", "map_prepare_ms="+measurement.duration());
             } catch (Exception error) {
-                mainHandler.post(() -> {
-                    if (isFinishing() || generation != mapLoadGeneration) return;
-                    hideMapLoading();
-                    if (mapView != null) mapView.setOverviewLoading(true);
-                    mapSubtitle.setText("Your roads could not be loaded. Tap here to try again.");
-                    mapSubtitle.setOnClickListener(view -> refreshMap());
-                    loadingMapRevision = Long.MIN_VALUE;
-                });
+                mainHandler.post(() -> mapFailure(generation,"Your roads could not be loaded. Retry or Reset your filters."));
                 return;
             }
             long currentRevision = mapDataRevision();
@@ -404,7 +444,8 @@ public class MapActivity extends Activity {
 
     private void displayMapRoutes(MapRoutes mapRoutes, int generation) {
         mainHandler.post(() -> {
-            if (isFinishing() || generation != mapLoadGeneration) return;
+            if (isFinishing() || isDestroyed() || generation != mapLoadGeneration) return;
+            try {
             long renderStarted = android.os.SystemClock.elapsedRealtime();
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
@@ -445,8 +486,10 @@ public class MapActivity extends Activity {
             }
             mapView = map;
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
-            loadingMapRevision = Long.MIN_VALUE;
+            displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;
+            cancelMapWork();
             setMapReady(true);
+            android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
             android.util.Log.i("RoadprintsTiming", "map_render_ms="+(android.os.SystemClock.elapsedRealtime()-renderStarted));
             renderRecap();
             String replay = getIntent().getStringExtra("replay_journey_id");
@@ -454,6 +497,7 @@ public class MapActivity extends Activity {
                 getIntent().removeExtra("replay_journey_id");
                 startReplay(new HashSet<>(java.util.Collections.singleton(replay)));
             }
+            }catch(Exception error){mapFailure(generation,"Map display failed. Retry or Reset your filters.");}
         });
     }
     private void refreshSettlementMap(int generation, String code, String name,
@@ -1292,6 +1336,7 @@ public class MapActivity extends Activity {
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
+        if(!mapReady||recapVisible)return; // Panning can continue; summaries require the committed selection.
         final JourneyFilters selection = mapFilters;
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();
@@ -1684,19 +1729,23 @@ public class MapActivity extends Activity {
 
     private void applyMapFilters(JourneyFilters selection) {
         mapFilters = selection;
-        getSharedPreferences(FILTER_PREFS, MODE_PRIVATE).edit().putInt("mode", selection.mode)
-                .putString("status", selection.status).putString("date", selection.date.preset)
-                .putString("from", selection.date.from == null ? null : selection.date.from.toString())
-                .putString("to", selection.date.to == null ? null : selection.date.to.toString()).apply();
+        persistMapFilters();
         mapFilterSummary.setText(selection.summary());
         filterDialogGeneration++;
         roadSummaryRequestId++;
         if (roadDialog != null) roadDialog.dismiss();
         stopReplay(false);
         mapLoadGeneration++;
-        displayedMapRevision = Long.MIN_VALUE;
-        loadingMapRevision = Long.MIN_VALUE;
+        cancelMapWork();mapLoadFailed=false;
+        android.util.Log.i("RoadprintsTiming","map_filter_apply selection="+filterKey(selection));
         refreshMap();
+    }
+
+    private void persistMapFilters() {
+        getSharedPreferences(FILTER_PREFS, MODE_PRIVATE).edit().putInt("mode", mapFilters.mode)
+                .putString("status", mapFilters.status).putString("date", mapFilters.date.preset)
+                .putString("from", mapFilters.date.from == null ? null : mapFilters.date.from.toString())
+                .putString("to", mapFilters.date.to == null ? null : mapFilters.date.to.toString()).apply();
     }
 
     private void addZoomControls(FrameLayout frame, RoutePreviewView map) {
@@ -1781,7 +1830,7 @@ public class MapActivity extends Activity {
     }
 
     private void renderRecap() {
-        if (!mapReady) { if (recapCard != null) recapCard.setVisibility(View.GONE); return; }
+        if (!mapReady&&!hasDisplayedMap) { if (recapCard != null) recapCard.setVisibility(View.GONE); return; }
         if (mapFrame == null || replayMessage != null) return;
         if (recapCard != null) mapFrame.removeView(recapCard);
         recapCard = null;
@@ -2034,7 +2083,7 @@ public class MapActivity extends Activity {
         }
     }
 
-    private static final class MapRoutes {
+    static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
         final List<JSONArray> motorwaySections = new ArrayList<>();
         final List<JSONArray> incompleteMotorwaySections = new ArrayList<>();

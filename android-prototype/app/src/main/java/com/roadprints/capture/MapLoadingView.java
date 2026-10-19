@@ -57,7 +57,7 @@ final class MapLoadingView extends LinearLayout {
         title.setAccessibilityLiveRegion(ACCESSIBILITY_LIVE_REGION_POLITE);
         titleRow.addView(title, new LayoutParams(0, -2, 1));
         addView(titleRow);
-        TextView message = text(updating ? "Adding new journeys to your map. You can keep exploring."
+        TextView message = text(updating ? "Updating your map. Previous results remain visible; Cancel or Reset is available above."
                 : "Loading the roads you’ve travelled. A little road knowledge for the journey…", 13, 0xFFD3DCED, false);
         message.setPadding(0, dp(10), 0, dp(16));
         addView(message);

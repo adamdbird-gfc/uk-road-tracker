@@ -74,6 +74,6 @@ public class MapLoadingNavigationTest {
         MapLoadingView card = new MapLoadingView(RuntimeEnvironment.getApplication(), true);
         LinearLayout title = (LinearLayout) card.getChildAt(0);
         assertEquals("Growing your Roadprints", ((TextView) title.getChildAt(1)).getText().toString());
-        assertTrue(((TextView) card.getChildAt(1)).getText().toString().contains("keep exploring"));
+        assertTrue(((TextView) card.getChildAt(1)).getText().toString().contains("Previous results remain visible"));
     }
 }

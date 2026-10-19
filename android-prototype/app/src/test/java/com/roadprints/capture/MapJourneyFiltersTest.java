@@ -92,4 +92,17 @@ public class MapJourneyFiltersTest {
         assertEquals(0,RuntimeEnvironment.getApplication().getSharedPreferences("roadprints_map_journey_filters",0).getInt("mode",-1));
         screen.finish();
     }
+    @Test public void repeatedFootWeekEmptyAndResetPreserveSavedJourneyEvidence()throws Exception{
+        android.content.Context context=RuntimeEnvironment.getApplication();JourneyStore.deleteAll(context);
+        JourneyStore.save(context,row("walk","walking"));JourneyStore.save(context,row("drive","driving"));
+        JourneyStore.save(context,row("old","walking").put("started_at","2026-06-01T12:00:00Z"));
+        String walk=JourneyStore.get(context,"walk").toString(),drive=JourneyStore.get(context,"drive").toString(),old=JourneyStore.get(context,"old").toString();
+        MapActivity screen=Robolectric.buildActivity(MapActivity.class).create().get();
+        JourneyFilters[] choices={new JourneyFilters(2,"all",JourneyDateFilter.all()),new JourneyFilters(0,"all",new JourneyDateFilter("week",null,null)),new JourneyFilters(2,"all",new JourneyDateFilter("week",null,null)),new JourneyFilters(5,"all",JourneyDateFilter.all()),JourneyFilters.all()};
+        int[] counts={2,2,1,0,3};
+        for(int repeat=0;repeat<2;repeat++)for(int n=0;n<choices.length;n++){
+            Object map=call(screen,"readMapRoutes",new Class[]{JourneyFilters.class,LocalDate.class,ZoneId.class},choices[n],DAY,ZONE);assertEquals(counts[n],field(map,"matchedJourneys"));
+        }
+        assertEquals(walk,JourneyStore.get(context,"walk").toString());assertEquals(drive,JourneyStore.get(context,"drive").toString());assertEquals(old,JourneyStore.get(context,"old").toString());screen.finish();
+    }
 }
