@@ -1,0 +1,8 @@
+{
+  "schema_version": 2,
+  "version_name": "0.25.206",
+  "version_code": 252,
+  "source_sha": "452258f655e23a1cdd3dcddebcd037b0cdb5ac28",
+  "firebase_upload": true,
+  "distribute_existing_testers": true
+}
