@@ -37,6 +37,16 @@ class ReleaseRequestTest(unittest.TestCase):
         self.assertEqual(changed_request(self.repo), self.path)
         self.assertEqual(validate(self.repo, self.path)['source_sha'], self.sha)
 
+    def test_explicit_existing_tester_distribution(self):
+        self.data.update(schema_version=2,distribute_existing_testers=True)
+        self.request()
+        self.assertTrue(validate(self.repo,self.path)['distribute_existing_testers'])
+
+    def test_distribution_requires_upload_and_boolean(self):
+        self.data.update(schema_version=2,distribute_existing_testers=True,firebase_upload=False)
+        self.request()
+        with self.assertRaises(ValueError):validate(self.repo,self.path)
+
     def test_mismatched_version_rejected(self):
         self.data['version_code'] = 245
         self.request()

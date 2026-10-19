@@ -21,7 +21,7 @@ public class CaptureRecoveryIntegrationTest {
     private CaptureService service;
     private long start;
     @Before public void setup()throws Exception {
-        service=Robolectric.buildService(CaptureService.class).get();start=System.currentTimeMillis()-60000;
+        service=Robolectric.buildService(CaptureService.class).get();start=System.currentTimeMillis()-900000;
         service.getSharedPreferences("roadprints_capture_state",0).edit().clear().putBoolean("active",true).commit();
         Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions("android.permission.ACCESS_FINE_LOCATION");
         field("locationManager").set(service,service.getSystemService(Context.LOCATION_SERVICE));
@@ -60,7 +60,7 @@ public class CaptureRecoveryIntegrationTest {
         assertTrue(CaptureService.isActive(service));
     }
     @Test public void samplingGapIsPreservedAsUnresolvedEvidenceRatherThanInventingGeometry()throws Exception {
-        JSONObject state=snapshot("gap",0,3);state.getJSONArray("points").getJSONArray(3).put(3,start+600000);
+        JSONObject state=snapshot("gap",0,3);state.getJSONArray("points").getJSONArray(3).put(0,.02).put(3,start+600000);
         restore(state);assertEquals(4,points().size());assertEquals(start+600000,points().get(3).getTime());
         JSONObject quality=CaptureQualityValidator.inspect(state.getJSONArray("points"),false);
         assertFalse(quality.optBoolean("resolved"));

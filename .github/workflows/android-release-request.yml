@@ -18,6 +18,7 @@ jobs:
     outputs:
       source_sha: ${{ steps.request.outputs.source_sha }}
       firebase_upload: ${{ steps.request.outputs.firebase_upload }}
+      distribute_existing_testers: ${{ steps.request.outputs.distribute_existing_testers }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,4 +32,5 @@ jobs:
     with:
       source_ref: ${{ needs.request.outputs.source_sha }}
       firebase_upload: ${{ fromJSON(needs.request.outputs.firebase_upload) }}
+      distribute_existing_testers: ${{ fromJSON(needs.request.outputs.distribute_existing_testers) }}
     secrets: inherit
