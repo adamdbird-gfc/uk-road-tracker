@@ -49,11 +49,6 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Download and verify pinned external NCN test reference
-        run: |
-          python3 scripts/prepare_ncn_reference.py
-          NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
@@ -75,8 +70,16 @@ jobs:
       - name: Check service catalogue metadata
         run: python3 scripts/test_service_collection_metadata.py
 
-      - name: Run unit tests and lint
-        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:lintDebug
+      - name: Compile Android and lint independently of reference publication
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:compileDebugJavaWithJavac :app:lintDebug
+
+      - name: Download and verify pinned external NCN test reference
+        run: |
+          python3 scripts/prepare_ncn_reference.py
+          NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
+
+      - name: Run integrated unit tests with verified external reference
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest
 
       - name: Upload failed-check reports
         if: failure()
