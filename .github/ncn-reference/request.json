@@ -1,7 +1,5 @@
 {
-  "action": "publish",
-  "revision": 4,
-  "drive_file_id": "1S9WjK0KUQX-XjUclgO92uter9Wvl3gbX",
-  "promote": true,
-  "package_beta": true
+  "action": "package-existing",
+  "revision": 5,
+  "published_database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093"
 }
