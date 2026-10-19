@@ -10,10 +10,12 @@ import gzip
 import hashlib
 import json
 import math
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from shapely.geometry import LineString
+from shapely.geometry import LineString, shape
 from shapely.ops import unary_union
+from shapely.strtree import STRtree
 from matched_path_evidence import digest
 from .catalogue_extract import _route_members
 from .numbered_reconciliation import uk_metadata_anchor, non_uk_namespace
@@ -23,7 +25,8 @@ def policy_matches_source(review, key):
     policy=review.get('policy')
     same=review.get('source_route_key')==key
     return ((policy=='reviewed_source_edges_to_official_open_target' and not same)
-            or (policy=='partial_provider_verified_spans_only' and same))
+            or (policy in ('partial_provider_verified_spans_only',
+                           'official_uk_spans_scope_review') and same))
 
 
 def validate_review(raw, expected_sha256, key, official, network_sha256,
@@ -32,8 +35,12 @@ def validate_review(raw, expected_sha256, key, official, network_sha256,
         raise ValueError('Source identity review checksum differs')
     r = json.loads(raw)
     source = r.get('source_route_key', '').split(':')
+    regional_scope=(key.startswith('RCN:') and r.get('policy')=='official_uk_spans_scope_review'
+                    and r.get('source_route_key')==key)
     if (r.get('schema_version') != 1 or r.get('target_route_key') != key
-            or not key.startswith('NCN:') or len(source) != 2 or source[0] != 'NCN'
+            or (not key.startswith('NCN:') and not regional_scope)
+            or len(source) != 2 or source[0] not in ('NCN','RCN')
+            or (source[0]=='RCN' and not regional_scope)
             or not source[1].isdecimal() or not policy_matches_source(r,key)
             or r.get('route_alias') is not False
             or r.get('old_journey_evidence_transferred') is not False
@@ -46,19 +53,52 @@ def validate_review(raw, expected_sha256, key, official, network_sha256,
             or not roots or len(set(roots)) != len(roots)
             or not r.get('identity_evidence_urls')):
         raise ValueError('Explicit pinned source-to-target identity review required')
+    spatial_scope = r.get('uk_scope_basis') == 'exact_source_spans_on_pinned_official_uk_open_extent'
+    if r.get('policy') == 'official_uk_spans_scope_review' and not spatial_scope:
+        raise ValueError('Explicit UK span-scope evidence required')
+    permitted_empty=r.get('approved_empty_relation_ids',[])
+    if (not isinstance(permitted_empty,list) or any(type(i)is not int for i in permitted_empty)
+            or len(set(permitted_empty))!=len(permitted_empty)
+            or any(index.get(('relation',i),{}).get('members',[])!=[] for i in permitted_empty)):
+        raise ValueError('Only explicitly captured empty relations may be reviewed')
+    empty_evidence=r.get('empty_relation_evidence',[])
+    if (len(empty_evidence)!=len(permitted_empty)
+            or {e.get('relation_id')for e in empty_evidence}!=set(permitted_empty)):
+        raise ValueError('Independent empty-relation evidence required')
+    for evidence in empty_evidence:
+        rid=evidence['relation_id'];text=evidence.get('xml','');original=index['relation',rid]
+        if (not isinstance(text,str)or len(text)>20_000 or '<!DOCTYPE' in text
+                or hashlib.sha256(text.encode()).hexdigest()!=evidence.get('sha256')
+                or evidence.get('url')!=f'https://api.openstreetmap.org/api/0.6/relation/{rid}'):
+            raise ValueError('Pinned empty-relation XML receipt required')
+        try:
+            xml=ET.fromstring(text);relations=xml.findall('relation')
+            if (xml.tag!='osm'or len(relations)!=1 or len(xml)!=1
+                    or relations[0].get('id')!=str(rid)
+                    or relations[0].get('version')!=str(original.get('version'))
+                    or relations[0].get('timestamp')!=original.get('timestamp')
+                    or any(c.tag!='tag'for c in relations[0])
+                    or {t.get('k'):t.get('v')for t in relations[0].findall('tag')}!=original.get('tags',{})):
+                raise ValueError('XML does not confirm the captured relation is empty')
+        except ET.ParseError as error:
+            raise ValueError('Incomplete empty-relation XML')from error
+    observed_empty=set()
     records = []
     members = set()
     for rid in roots:
         root = index.get(('relation', rid), {})
         tags = root.get('tags', {})
-        if (not uk_metadata_anchor(tags) or non_uk_namespace(tags)
-                or tags.get('network') != 'ncn' or tags.get('ref') != source[1]):
+        if ((not uk_metadata_anchor(tags) and not spatial_scope) or non_uk_namespace(tags)
+                or tags.get('network') != source[0].lower() or tags.get('ref') != source[1]):
             raise ValueError('Reviewed original UK source classification differs')
         structure = _route_members(index, rid)
-        if any(structure[:4]):
+        observed_empty.update(structure[3])
+        if any(structure[:3]) or set(structure[3])-set(permitted_empty):
             raise ValueError('Reviewed source membership is incomplete')
         members.update(structure[-1])
         records.append(root)
+    if observed_empty!=set(permitted_empty):
+        raise ValueError('Empty-relation review differs from observed hierarchy')
     if r.get('source_relations_sha256') != digest(records):
         raise ValueError('Reviewed source relation versions differ')
     ids = r.get('approved_official_feature_ids', [])
@@ -89,6 +129,25 @@ def validate_review(raw, expected_sha256, key, official, network_sha256,
         edges.update(selected)
     if not edges:
         raise ValueError('Nonempty explicit source spans required')
+    if spatial_scope:
+        # A new explicit scope review can replace missing operator metadata only
+        # for exact edges on the publisher's UK Open Main linework. It never
+        # declares the entire source relation British or aliases route labels.
+        from .network_geometry import metric_projector
+        bounds = unary_union([shape(f['geometry']) for f in official]).bounds
+        metric = metric_projector([(bounds[0]+bounds[2])/2,(bounds[1]+bounds[3])/2])
+        def lines(feature):
+            g=feature['geometry'];parts=[g['coordinates']] if g['type']=='LineString' else g['coordinates']
+            return [LineString([metric(c) for c in part]) for part in parts]
+        allowed = STRtree([line for f in official if f['properties']['FID'] in ids for line in lines(f)])
+        excluded = STRtree([line for f in official if f['properties']['FID'] not in ids for line in lines(f)])
+        for wid, edge_index in edges:
+            nodes=index['way',wid]['nodes'][edge_index:edge_index+2]
+            line=LineString([metric([index['node',n]['lon'],index['node',n]['lat']]) for n in nodes])
+            good=unary_union([allowed.geometries[int(i)].buffer(10)for i in allowed.query(line.buffer(10))])
+            bad=unary_union([excluded.geometries[int(i)].buffer(10)for i in excluded.query(line.buffer(10))])
+            if line.difference(good).length > 1e-5 or line.intersection(bad).length > 1e-5:
+                raise ValueError('Reviewed UK source edge lies outside approved open main extent')
     return source[0], int(source[1]), set(ids), edges
 
 

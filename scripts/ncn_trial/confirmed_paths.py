@@ -85,6 +85,7 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
     if not official:raise ValueError('Official numbered extent missing')
     source_kind,source_number=kind,number
     identity_features=None;identity_edges=None
+    permitted_empty=set()
     if source_identity_review is not None or expected_identity_review_sha256 is not None:
         from .source_identity_review import validate_review
         if source_identity_review is None or expected_identity_review_sha256 is None:
@@ -94,6 +95,7 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         source_kind,source_number,identity_features,identity_edges=validate_review(
             source_identity_review,expected_identity_review_sha256,key,official,network_hash,
             profile_ids,index,source_hashes,provider_by_id)
+        permitted_empty=set(json.loads(source_identity_review).get('approved_empty_relation_ids',[]))
     reviewed_features=set()
     if numbered_alternative_review is not None or expected_review_sha256 is not None:
         from .numbered_alternative_review import validate_review
@@ -117,7 +119,7 @@ def build_candidate(key,profile_ids,profiles,index,source_hashes,network,network
         if tags.get('network')!=source_kind.lower() or tags.get('ref')!=str(source_number) or non_uk_namespace(tags):
             raise ValueError('Current source classification/scope differs')
         missing,cycles,unsupported,empty,paths,relations,ways=_route_members(index,identity)
-        if missing or cycles or unsupported or empty:raise ValueError('Current member structure incomplete')
+        if missing or cycles or unsupported or set(empty)-permitted_empty:raise ValueError('Current member structure incomplete')
         original=profiles[identity]
         previous={w['way_id'] for w in original['ways']}
         if ways!=previous:raise SourceMembershipChanged(identity,previous,ways,root)
