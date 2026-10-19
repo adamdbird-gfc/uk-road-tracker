@@ -10,7 +10,9 @@ On failed rematching the attempt/status/error changes, but the prior matched res
 
 ## Regression coverage
 
-WalkingMatchingIntegrationTest verifies repeated rematching, current preparation of an already-completed old-version match with a prolonged stationary tail, replacement of the derived map/distance, preserved original route/raw observations and corrected arrival, and a failed upgrade rematch retaining the previous result. Existing tests cover moving gaps and inflated responses. PR #196 adds these guards alongside the mode-boundary reliability work. Full Android tests/lint run through PR checks; no APK packaging or Firebase deployment is required for these tests.
+WalkingMatchingIntegrationTest verifies repeated rematching, current preparation of an already-completed old-version match with a prolonged stationary tail, replacement of the drift-containing derived map/distance, preserved original route/raw observations and corrected arrival, and a failed upgrade rematch retaining the previous result. A third new regression verifies a completed captured drive uses current preparation and a fresh matcher result. Existing tests cover moving gaps and inflated responses. PR #196 adds these guards alongside the mode-boundary reliability work.
+
+Full Android unit tests and lint passed at `e3a752fd30edfca79456a64608efdbb639efb8ac` in [Actions run 39252410302](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39252410302). No APK packaging or Firebase deployment occurred. No runtime code change was required for this existing remapping capability.
 
 ## Remaining product work
 
