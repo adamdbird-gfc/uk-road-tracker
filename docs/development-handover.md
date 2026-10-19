@@ -13,8 +13,11 @@ The existing shared road UI is preserved; national NCN uses indexed immutable
 reference data, conservative source evidence, separate physical-network union,
 mode filters and shared route/journey navigation. All 322 existing NCN Python
 tests pass. National database readback and five Firebase publication invariant
-tests pass; Java syntax parses. Android compilation/unit tests/lint and Firebase
-preview serving remain pending; **no APK is ready**. #193 achievements remain excluded. Named identities are absent
+tests pass. Android compilation, lint and the offline regression suite passed at
+`c810937e` in [run 39325561947](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39325561947).
+The serving gate returned **HTTP 404** for the unpublished catalogue, leaving
+`NcnNationalTest`/`NcnUiTest` unexecuted and the overall check failed. Firebase
+preview/live verification and full-suite acceptance remain pending; **no APK is ready**. #193 achievements remain excluded. Named identities are absent
 from the source checkpoint; NCN228 open-target assessment and 34 identities stay
 held explicitly rather than receiving unsupported completion claims.
 

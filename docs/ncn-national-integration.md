@@ -149,10 +149,10 @@ stable archive revision/activation epoch. Explicit Retry resumes failed work.
 | National database readback | Passed: identity/source counts, 34 holds, 218 measurable routes, all 335,007 measured target mappings, 333,497 unique network edges. |
 | 5 external-reference/publisher invariant tests | Passed: manifest bounds, monotonic rollback, preservation, config rules, corruption. |
 | Android Java syntax and Python compilation; git whitespace | Passed; syntax parsing is not Java type compilation. |
-| Android compilation | Passed in CI run 39325156149. |
-| Lint / offline Robolectric regressions | First lint run found four orientation constants; fixed and rerun pending. Offline regressions can execute even while publication is unavailable. |
-| National Robolectric tests | Pending: CI needs the published immutable reference. |
-| Firebase preview serving/integrity/rollback and project capacity | Not verified; blocked on authenticated publication/payload transport. |
+| Android compilation | Passed at `c810937e` in CI run [39325561947](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39325561947). |
+| Lint / offline Robolectric regressions | Passed in run 39325561947 after correcting four orientation constants. Includes existing app regressions, trial eligibility/union tests, NCN geometry and new offline/corrupt-cache tests. |
+| National Robolectric tests | `NcnNationalTest` and `NcnUiTest` compiled but excluded from the offline run; not executed. The immutable reference download returned HTTP 404. |
+| Firebase preview serving/integrity/rollback and project capacity | Not verified; blocked on authenticated publication/payload transport. Run 39325561947 explicitly fails the serving gate (HTTP 404); the overall check is not green. |
 | APK 0.25.207 (253) | Version reserved in source only; no successful build or distribution yet. |
 | Real-device acceptance | Not performed. |
 
@@ -160,7 +160,10 @@ The existing Android checks/package workflows download the immutable NCN pin int
 an ignored CI directory via `prepare_ncn_reference.py`, verify hashes/SQLite,
 export `NCN_TEST_DATABASE` for Robolectric and run national readback. The payload
 is **not** copied into APK assets. Missing/corrupt reference makes checks fail
-explicitly. After publication, run integrated unit tests/lint, then one coordinated
+explicitly. Compilation/lint run before that gate; on serving failure, the
+`ncnOfflineChecks=true` property runs every offline regression while excluding
+only the two national-data classes. Packaging never uses that property and must
+pass the complete suite. After publication, run integrated unit tests/lint, then one coordinated
 APK through the existing pinned release-request/Firebase App Distribution flow.
 
 Device acceptance must cover all 33 checks in the development brief. Checks 1–10
