@@ -13,7 +13,7 @@ final class PlaceBoundaryEvidence {
         boolean station=stationCode!=null&&!stationCode.isEmpty();
         boolean mapped=map!=null&&map.destination;
         String id=journeyId+":arrival";
-        return new JSONObject().put("id",id).put("journey_id",journeyId).put("role","arrival")
+        JSONObject result = new JSONObject().put("id",id).put("journey_id",journeyId).put("role","arrival")
                 .put("place_id",station?"rail:"+stationCode:mapped&&!map.featureId.isEmpty()?map.featureId:id)
                 .put("name",station?"Station "+stationCode:mapped?map.name:"Estimated stop")
                 .put("kind",station?"station":mapped?map.kind:"estimated")
@@ -25,6 +25,14 @@ final class PlaceBoundaryEvidence {
                 .put("confidence",mapped||station?"medium":"low").put("visit_status","stopped")
                 .put("source",station?"offline_station_catalog":mapped?"map_footprint_and_dwell":"gps_dwell")
                 .put("reason",reason==null?"arrival_dwell":reason).put("boundary_at",Instant.ofEpochMilli(anchor.time).toString());
+        if(mapped && !station && map.geometry!=null && map.geometry.length()<=2000) {
+            JSONObject boundary=new JSONObject().put("geometry",map.geometry).put("holes",map.holes);
+            if(boundary.toString().length()<=100_000) {
+                result.put("site_geometry",new JSONArray(map.geometry.toString()));
+                if(map.holes!=null)result.put("site_holes",new JSONArray(map.holes.toString()));
+            }
+        }
+        return result;
     }
 
     /** Locate departure in new observations; never prepend the old arrival fix. */

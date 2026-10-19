@@ -70,6 +70,7 @@ final class CaptureMovementEvidence {
      * Android's callback time is a search bound, not a measured leg boundary. */
     static int modeChangeStart(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
         int fixes = 0;
+        boolean running="running".equals(proposed);
         FootTraceValidator.Sample first = null, previous = null, last = null;
         double path = 0;
         boolean foot = "walking".equals(proposed) || "running".equals(proposed);
@@ -81,7 +82,7 @@ final class CaptureMovementEvidence {
                     || p.time - previous.time > 60_000L)) {
                 fixes = 0; path = 0; first = null;
             }
-            boolean moving = Double.isFinite(p.speed) && (foot ? p.speed >= .5 && p.speed <= 3.5
+            boolean moving = Double.isFinite(p.speed) && (running ? p.speed >= 2.2 && p.speed <= 6 : foot ? p.speed >= .5 && p.speed <= 3.5
                     : cycle ? p.speed >= .8 && p.speed <= 12 : p.speed >= 6);
             if (!moving) {
                 fixes = 0; path = 0; first = null; previous = p; last = null;
@@ -94,8 +95,8 @@ final class CaptureMovementEvidence {
             fixes++; previous = p; last = p;
         }
         return first != null && last != null && now - last.time <= 60_000L
-                && last.time - first.time >= 20_000L && fixes >= 3
-                && path >= (foot ? 30 : 60) ? first.index : -1;
+                && last.time - first.time >= (running ? 60_000L : 20_000L) && fixes >= (running ? 5 : 3)
+                && path >= (running ? 100 : foot ? 30 : 60) ? first.index : -1;
     }
 
     /** A long break is a recording boundary, not evidence of a routable connection. */

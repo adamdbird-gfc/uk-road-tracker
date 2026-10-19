@@ -30,7 +30,7 @@ final class ContextMapCache {
     static boolean enabled(Context context) {
         return context.getSharedPreferences("roadprints_capture_state",Context.MODE_PRIVATE).getBoolean("public_map_context",false);
     }
-    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v2");budget=new ContextRequestBudget(app);}
+    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v3");budget=new ContextRequestBudget(app);}
     ContextMap.Evidence evidence(double lat,double lon,float accuracy) {
         return ContextMap.at(enabled(app)&&covers(lat,lon)?features:null,lat,lon,accuracy);
     }
