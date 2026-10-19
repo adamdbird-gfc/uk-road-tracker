@@ -35,7 +35,7 @@ This is a synthetic/code-confirmed segmentation defect, not a claim that it caus
 ## Validation
 
 - 34 local JVM tests passed: CaptureModeBoundaryTest (11 new), CaptureMovementEvidenceTest, PedestrianPlaceStayTest and FootTraceValidatorTest, compiled from production Java using Eclipse ECJ 3.37 / Java 17 with JUnit 4.13.2.
-- New Android service-handoff test verifies every original edge is retained across the measured split, with one shared endpoint and copied continuation samples. Full Robolectric tests/lint are delegated to the existing PR checks; local Android SDK/Gradle are unavailable.
+- New Android service-handoff test verifies every original edge is retained across the measured split, with one shared endpoint and copied continuation samples. Full Android unit tests and lint passed for PR #196 code checkpoint `726339649c824d1a69812cbf2f17ca54ffe282a7` in [Actions run 39249993064](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39249993064). Local Android SDK/Gradle are unavailable; the full runtime checks were performed in CI.
 - Fixtures use invented relative geometry, with no private exports.
 - No version change, release request, APK packaging, Firebase publication or deployment.
 
