@@ -16,8 +16,7 @@ final class ServiceStationEvidence {
         if (source == null || !"android_activity_capture".equals(source.optString("type")))
             return new HashSet<>();
         // Raw samples include stationary tails removed from the displayed journey route.
-        JSONArray samples = journey.optJSONArray("raw_capture_samples");
-        if (samples == null) samples = journey.optJSONArray("capture_route_samples");
+        JSONArray samples = ArrivalDwellEvidence.samples(journey);
         return stops(samples, stations);
     }
 
@@ -33,6 +32,14 @@ final class ServiceStationEvidence {
         for (int i = 0; i < stations.length(); i++) {
             JSONObject station = stations.optJSONObject(i);
             if (station == null) continue;
+            if (ServiceSiteBoundary.present(station)) {
+                if (ServiceSiteBoundary.supports(station,lat,lng,0)) {
+                    // Overlapping sites require review; never choose one by catalogue ordering.
+                    if (nearest != null && ServiceSiteBoundary.present(nearest)) return null;
+                    nearest=station; closest=0;
+                }
+                continue;
+            }
             double distance = distance(station, lat, lng);
             if (distance <= closest) { nearest = station; closest = distance; }
         }

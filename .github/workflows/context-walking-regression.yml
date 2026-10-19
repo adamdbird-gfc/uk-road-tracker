@@ -1,0 +1,28 @@
+name: Shared context and walking outcomes regression
+on:
+  push:
+    paths: ["api.py", "database.py", "matched_path_evidence.py", "cycling_path_evidence.py", "pedestrian_matching.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
+  pull_request:
+    paths: ["api.py", "database.py", "matched_path_evidence.py", "cycling_path_evidence.py", "pedestrian_matching.py", "map_context.py", "migrations/00*_context*.sql", "tests/test_*.py", ".github/workflows/context-walking-regression.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: context-test
+          POSTGRES_DB: context_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_CONTEXT_DATABASE_URL: postgresql://postgres:context-test@localhost:5432/context_test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m py_compile api.py map_context.py
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v

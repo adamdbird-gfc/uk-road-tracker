@@ -1,0 +1,134 @@
+{
+  "status": "candidates_only_not_published",
+  "source_url": "https://www.nisra.gov.uk/files/nisra/publications/SDL15-ESRI_format.zip",
+  "source_sha256": "fa880d3effb0e05923a7a27d2ae44191394737a926af0b61ed1e88c30f4b107c",
+  "source_bytes": 2544708,
+  "settlement_count": 527,
+  "unique_codes": 527,
+  "source_crs": "EPSG:29902",
+  "target_crs": "EPSG:4326",
+  "coordinate_operation": "Inverse of Irish Grid + TM65 to WGS 84 (2) + axis order change (2D)",
+  "operation_accuracy_metres": 1.0,
+  "candidate_geojson_bytes": 11476250,
+  "candidate_gzip_bytes": 4380051,
+  "candidate_geojson_sha256": "2320848e0ccfe9f13e4c0c2b25ae047d5217ceff10d27ee3d74ac07badb344c0",
+  "candidate_gzip_sha256": "b764c6c3b6c28a2f5133b7358308f418bb00f7f89d08621622dedaaf01fdca10",
+  "repairs": [
+    {
+      "code": "N11000023",
+      "name": "BALLYHALBERT",
+      "reason": "Ring Self-intersection[364074.07025 364235.018249998]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 1.0944777497817202e-15,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000039",
+      "name": "MILLISLE",
+      "reason": "Ring Self-intersection[359640.47 376776.5205]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 2.962930083675128e-15,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000040",
+      "name": "NEWTOWNARDS",
+      "reason": "Ring Self-intersection[350309.9565 376138.028999999]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 1.807414412099071e-15,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000242",
+      "name": "CULMORE",
+      "reason": "Ring Self-intersection[247255.06975 422867.216]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 4.350271162427966e-16,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000295",
+      "name": "THE SPA",
+      "reason": "Ring Self-intersection[336361.8355 349681.58675]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 7.731015559395234e-16,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000478",
+      "name": "MAGHERAFELT",
+      "reason": "Ring Self-intersection[290704.65625 389938.264]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 2.156884319588796e-15,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000534",
+      "name": "MEIGH",
+      "reason": "Ring Self-intersection[305236.55025 320712.304]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 1.1161631564601294e-16,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000546",
+      "name": "BALLYCLARE",
+      "reason": "Ring Self-intersection[327908.108 389761.430250002]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 1.1281276906293987e-15,
+      "hausdorff_distance_metres": 0.0
+    },
+    {
+      "code": "N11000555",
+      "name": "DOAGH",
+      "reason": "Ring Self-intersection[326403.56675 389631.693]",
+      "method": "GEOS make_valid",
+      "relative_area_change": 3.9296284689960113e-16,
+      "hausdorff_distance_metres": 0.0
+    }
+  ],
+  "overlaps_over_one_square_metre": [
+    {
+      "codes": [
+        "N11000151",
+        "N11000447"
+      ],
+      "area_square_metres": 17896.77536963006
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000162"
+      ],
+      "area_square_metres": 7385.669227111
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000571"
+      ],
+      "area_square_metres": 52.76804775259261
+    },
+    {
+      "codes": [
+        "N11000151",
+        "N11000559"
+      ],
+      "area_square_metres": 27.00545580608862
+    }
+  ],
+  "software": {
+    "shapely": "2.2.0",
+    "pyproj": "3.7.2",
+    "pyshp": "2.3.1"
+  },
+  "licence_metadata": "UK Open Government Licence (OGL), as listed by OpenDataNI",
+  "attribution": "Northern Ireland Statistics and Research Agency: Settlement Development Limits 2015",
+  "licence_source": "https://admin.opendatani.gov.uk/dataset/settlement-development-limits-2015",
+  "limitations": [
+    "Statistical settlement limits from the 2015 review; not a current developed-land survey",
+    "Coverage follows the official settlement inclusion thresholds",
+    "Names retained verbatim; aliases and historic county alignment need integration review",
+    "No Firebase, Postgres or app changes"
+  ]
+}

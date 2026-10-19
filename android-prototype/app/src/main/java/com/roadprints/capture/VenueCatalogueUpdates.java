@@ -182,6 +182,7 @@ final class VenueCatalogueUpdates {
         for(int i=0;i<rows.length();i++){
             JSONObject v=rows.getJSONObject(i);String id=v.getString("id");
             if(!id.matches(definition.identityPattern)||!ids.add(id)||v.getString("name").isEmpty()||v.getString("road").isEmpty()||v.getString("country").isEmpty())throw new IllegalArgumentException("Invalid site identity");
+            if(v.has("site_boundary")&&!ServiceSiteBoundary.valid(v.optJSONObject("site_boundary")))throw new IllegalArgumentException("Invalid service footprint");
             position(v);JSONArray points=v.getJSONArray("points");if(points.length()==0||points.length()>100)throw new IllegalArgumentException("Invalid site positions");for(int n=0;n<points.length();n++)position(points.getJSONObject(n));
         }
     }

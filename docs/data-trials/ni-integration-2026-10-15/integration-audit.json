@@ -1,0 +1,28 @@
+{
+  "status": "prepared_only",
+  "gb_memberships_preserved": 8545,
+  "ni_memberships": 527,
+  "total_memberships": 9072,
+  "ni_spanning_counties": 12,
+  "primary_county_counts": {
+    "ANM": 107,
+    "ARH": 70,
+    "DWN": 149,
+    "FRM": 34,
+    "LDR": 79,
+    "TYN": 88
+  },
+  "county_asset_sha256": "b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850",
+  "county_original_source_sha256": "cd18088629a9391617978535f7ba5f912f61399dc7eb4f7ba8636454e2b38fa6",
+  "prior_index_sha256": "b6520809a303eb27f0ce4acd8b39a8361d3ac08f225340e8695492ef38735ff7",
+  "merged_index_sha256": "e11a33674113879cbfe4b2570d8e9ae4c391b81971753b3eab6e39cf87418be5",
+  "metadata_sha256": "bb2502bbaacb0571dc8d75c098e390b79240e598e50e4f43ba4b69fe2bd826d2",
+  "merged_index_bytes": 29081,
+  "coordinate_precision_degrees": 1e-06,
+  "notes": [
+    "Original GB memberships unchanged",
+    "NI uses exact already-pinned client boundary geometry; no upstream county update",
+    "NI administrative county/region remain null; historic memberships are separate",
+    "Only official source names are added as aliases; no inferred or ambiguous place-name aliases"
+  ]
+}

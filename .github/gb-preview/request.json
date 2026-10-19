@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "osm_url": "https://download.geofabrik.de/europe/great-britain-latest.osm.pbf",
+  "osm_md5": "75e6b6d51d8c497d4cfedafb9a0f12bb",
+  "osm_sha256": "2d9232f250b01e7192c40241b47ef2879abf6279ffdd238957245aca77e75fd5",
+  "boundary_sha256": "372556eb0e043775ad9fa4e9c3c4428d6c0d21255a4fa587ba0d39016ecc8c39",
+  "hosting_stage_report_sha256": "33401ac0431acc84e79f35a95e70ce27cd8557c913dbe8d050a38fba6fe83015",
+  "recovered_inventory_sha256": {
+    "E63004860": "45e2cf33d13823cf3123785d72d1fa8a97a71b3342dd23aed93ea00c68131f18",
+    "E63004894": "6c72d73f3fb54934db21ef7dfd0ee529f34e4911797c44425c937206cd4795f0",
+    "E63004965": "e43a88761df92b760ebb185f79806295fad83d45961b78ac16bff8da2b1a786c",
+    "E63004986": "4d27758a4afe2a1699983179a2c8fbf6f5b92903b650dfa5b0c33ac8a676c44c",
+    "E63005014": "9c8bbf847b3cbfa03c175eedd10e3d30148ec26f97dc624d7fb83a736451d000"
+  },
+  "attempt": 3
+}

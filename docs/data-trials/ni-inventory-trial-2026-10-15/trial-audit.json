@@ -1,0 +1,65 @@
+{
+  "status": "trial_only_not_published",
+  "source": {
+    "url": "https://download.geofabrik.de/europe/ireland-and-northern-ireland-261014.osm.pbf",
+    "file": "ireland-and-northern-ireland-261014.osm.pbf",
+    "bytes": 415543841,
+    "md5": "16663ccb36bb439d840550df7ebb4889",
+    "sha256": "a41a12f0f8cfbb0f6457da662d51aaf91218ed69f1619b0b99c4dcf624925285",
+    "supplier_md5_verified": true,
+    "poly_sha256": "fc56ea18191a8d272ae491fc14281ddc01ac9835d77e2cded56fb6d1829f0fe8",
+    "download_seconds": 104.408
+  },
+  "osm_timestamp": "2026-10-14T20:21:12Z",
+  "boundary_geojson_sha256": "2320848e0ccfe9f13e4c0c2b25ae047d5217ceff10d27ee3d74ac07badb344c0",
+  "rules": {
+    "highways": [
+      "living_street",
+      "residential",
+      "tertiary",
+      "unclassified"
+    ],
+    "names": "exact stripped distinct road names",
+    "membership": "eligible OSM way intersects settlement polygon; same as GB"
+  },
+  "inventories": [
+    {
+      "code": "N11000151",
+      "name": "BELFAST CITY",
+      "candidate_count": 3594,
+      "bytes": 63369,
+      "sha256": "e0b126b951ee33618c1557e591583db7d2e4d2d8884cecce62e9ca338c2de25e",
+      "boundary_coverage_fraction": 1.0000000000000024
+    },
+    {
+      "code": "N11000243",
+      "name": "DERRY CITY",
+      "candidate_count": 769,
+      "bytes": 12976,
+      "sha256": "aa25d75d61bb594e5b5ccdc473152a8888466c2d9c65ead767d5249dcefb2149",
+      "boundary_coverage_fraction": 0.9999999999999991
+    },
+    {
+      "code": "N11000537",
+      "name": "NEWRY",
+      "candidate_count": 352,
+      "bytes": 5928,
+      "sha256": "1739170467e2b8b257badb6b77aa3e729d6feb5c9355d06eabade924f93cc0ed",
+      "boundary_coverage_fraction": 0.9999999999999961
+    }
+  ],
+  "osm_processing_seconds": 32.424,
+  "total_seconds_including_hashing": 32.954,
+  "peak_rss_kib": 1122048,
+  "node_index_bytes": 855638816,
+  "qualifying_ways_in_extract": 146081,
+  "inventory_file_bytes": 82273,
+  "limitations": [
+    "New candidate counts; there are no saved NI inventories to compare against",
+    "Not a full 527-settlement capacity or quality benchmark",
+    "Four source boundary overlaps require review before wider acceptance",
+    "Irish extract includes Republic of Ireland; only selected NI polygons contribute",
+    "NI code, catalogue, aliases, historic county and app compatibility need integration review",
+    "No Firebase deployment, Postgres registration or APK build"
+  ]
+}

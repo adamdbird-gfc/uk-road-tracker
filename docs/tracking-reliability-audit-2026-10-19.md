@@ -1,3 +1,7 @@
+# Beta split integration update
+
+See [Beta 1 disposition and validation](beta-1-integration.md). The user has now authorised a non-NCN Beta 1 after green integrated checks; earlier release holds below are historical. PR #197 reconciles #163 with #170/#174/#182/#196. Beta 1 includes backend #164/#168/#173, venues #169, map/history #166/#167 and Progress #171. NCN remains Beta 2.
+
 # Tracking reliability audit — 19 October 2026
 
 Reviewed the default-branch development handover, issue #194, all 29 open PR summaries, and file-level changes for every Android/backend reliability dependency and the older #1/#6–#8 candidates. The implementation base is #182 at `13084738b802a1e5c5815daaaced43e8d370232e`; it includes #174 and #170, but not the separate place-visit branch #163. No branch has been merged or deployed by this session. The new defect is tracked in #195.

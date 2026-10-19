@@ -2,13 +2,15 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest session checkpoint — 19 October 2026
+## Latest session checkpoint — Beta 1 / Beta 2 split
 
-- **Active slice:** open, unmerged [PR #197](https://github.com/adamdbird-gfc/uk-road-tracker/pull/197), branch `fix/place-visit-reliability-integration`, stacked on #196 at `e0817029`. It reconciles #163's place-visit gate onto #170 → #174 → #182 → #196. See [integration decisions, tests and limits](place-visit-reliability-integration.md).
-- **Implemented:** bounded idle/place stays, earliest supported departure points, sparse venue exercise, fast vehicle departure and recent walk-to-car handoff; retained GPS mode boundaries, arrival onset and raw evidence. Site checkpoint v4 remains backward compatible. A place stop does not grant a service-station visit.
-- **Verification:** 66 local model tests pass. Full Android unit tests and lint passed at `ad3db3e8` in [run 39256415474](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39256415474), including all 11 new service scenarios and inherited remapping checks. Earlier #196 Android tests/lint and the three historical remapping regressions passed; preserve [saved remapping behaviour](saved-journey-remapping.md).
-- **Open work:** field acceptance for overnight home/school drift, genuine sparse departures and venue exercise remains. Do not close #188 based only on synthetic tests. Next bounded slice: process-death, sampling-loss and interrupted-handoff recovery of the combined tracker under battery restrictions; then backend #164/#173 integration and complete-route verification. #169 also needs explicit verification that its three-minute service dwell remains supported after a contextual trip ends earlier; place anchors alone must not grant visits.
-- **Release hold:** all this work remains unmerged/unreleased. No APK packaging, Firebase deployment, reference-data publication or unrelated merge. NCN and service-station #169 integration remain separate coordinated work.
+The user has authorised **Beta 1: core reliability, existing collection fixes and interactive Progress**, followed by **Beta 2: NCN collection and subsequent fixes**. This supersedes the earlier no-build hold, but packaging/distribution must wait for green integrated checks.
+
+Active integration: `integration/beta-1-core`, based on PR #197 at `3dcf99b55925800c4e1417b90f932d3d56c8da11`. See [exact PR disposition, integration work, validation and device checklist](beta-1-integration.md). #163 is already reconciled in #197; no duplicate merge. #164/#168/#173, #169, #166/#171 and #167 are included. #172 and all NCN research/data PRs #165/#175–#187 are deferred. Original branches remain intact.
+
+The combined slice adds independent post-arrival dwell observations for venue collections, replayable interrupted save/leg handoffs, armed checkpoint recovery, null-intent tracking resumption and atomic journey replacement. Existing saved rematching and raw evidence are preserved. Automated Android/backend checks, immutable release source, version, APK and Firebase status are still pending and must be recorded here before declaring release completion. No NCN data publication is authorised as part of Beta 1.
+
+Prior #197 verification: full Android tests/lint passed at `ad3db3e8` in [run 39256415474](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39256415474). That branch-level result does not validate the new combined integration. Keep #188/#194 open for device acceptance.
 
 ## Start every ChatGPT / Work development session here
 
@@ -43,10 +45,10 @@ Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for iss
 ## Release readiness gates
 
 - Review merge dependency graph and overlapping files; explicitly choose include/defer/superseded for each PR.
-- Integrate and validate full NCN source-way/provenance adapter, open-only exclusions, shared physical coverage, route alternatives, and bounded memory/storage.
+- For Beta 2 only: integrate and validate the full NCN source-way/provenance adapter, open-only exclusions, shared physical coverage, route alternatives and bounded memory/storage.
 - Test service-station genuine visits vs drive-through; place-aware trip end/start; walking duration; continuous motorway geometry; saved journey edits/deletions; NCN mode filtering, charts, route maps and contributing journeys.
 - Check CI, licences/source provenance, versioned catalogue delivery, migrations, rollback and Firebase staging.
-- Perform real-device beta acceptance before release; do not interpret passing branch-level unit tests as proof of an integrated APK.
+- Distribute Beta 1 only after green integrated automated checks, with explicit outstanding device scenarios. Real-device acceptance is a separate gate; do not claim it from automated tests.
 
 ## Session handover discipline
 

@@ -445,10 +445,12 @@ public class ProgressActivity extends Activity {
                 String label = roadLabel(ref, name);
                 if (label == null) continue;
                 String category = roadCategory(label);
+                String region = RoadDetailSelection.region(feature);
                 String id = category.equals("Local roads") && !label.matches(".*[0-9].*")
-                        ? "name:" + label.toLowerCase(Locale.ROOT) : "ref:" + label;
+                        ? "name:" + label.toLowerCase(Locale.ROOT) : "ref:" + region + ":" + label;
                 RoadDiscoveryItem road = stats.discoveredRoads.computeIfAbsent(id,
                         ignored -> new RoadDiscoveryItem(id, label, category));
+                road.region = region;
                 JSONObject geometry = feature.optJSONObject("geometry");
                 if (geometry != null && "Local roads".equals(category)) {
                     String geometryKey = geometryEvidenceKey(geometry);
@@ -968,14 +970,14 @@ public class ProgressActivity extends Activity {
                 String.CASE_INSENSITIVE_ORDER));
         String townKey = "town:" + town.settlement.code;
         if (expandedRoadCategories.contains(townKey)) {
-            addRoadDiscoveryRows(roadRows, townRoads);
+            addRoadDiscoveryRows(roadRows, townRoads, town.settlement);
             roadRows.setVisibility(View.VISIBLE);
         }
         header.setClickable(true);
         header.setOnClickListener(v -> {
             if (v == viewMap) return;
             boolean open = roadRows.getVisibility() != View.VISIBLE;
-            if (open && roadRows.getChildCount() == 0) addRoadDiscoveryRows(roadRows, townRoads);
+            if (open && roadRows.getChildCount() == 0) addRoadDiscoveryRows(roadRows, townRoads, town.settlement);
             roadRows.setVisibility(open ? View.VISIBLE : View.GONE);
             if (open) expandedRoadCategories.add(townKey);
             else expandedRoadCategories.remove(townKey);
@@ -1368,7 +1370,20 @@ public class ProgressActivity extends Activity {
         }
     }
 
+    private void roadDetail(View view, RoadDetailSelection road, boolean journeys) {
+        view.setClickable(true);
+        view.setFocusable(true);
+        view.setMinimumHeight(dp(48));
+        view.setContentDescription(road.title() + (journeys ? ": view contributing journeys" : ": view road map"));
+        view.setOnClickListener(v -> startActivity(road.intent(this, journeys)));
+    }
+
     private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads) {
+        addRoadDiscoveryRows(rows, roads, null);
+    }
+
+    private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads,
+                                      LocalRoadSettlementMatcher.Settlement settlement) {
         int rowIndex = 0;
         for (RoadDiscoveryItem road : roads) {
                 LinearLayout row = new LinearLayout(this);
@@ -1378,7 +1393,7 @@ public class ProgressActivity extends Activity {
                 row.setBackgroundColor(rowIndex++ % 2 == 0
                         ? 0xFF263F75 : 0xFF1B3267);
                 TextView roadName = new TextView(this);
-                roadName.setText(road.label);
+                roadName.setText(road.label + ("NI".equals(road.region) && !"Local roads".equals(road.category) ? " · NI" : ""));
                 roadName.setTextSize(14);
                 roadName.setTypeface(null, android.graphics.Typeface.BOLD);
                 roadName.setTextColor(Color.WHITE);
@@ -1391,6 +1406,14 @@ public class ProgressActivity extends Activity {
                 status.setTextColor(MUTED);
                 status.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
                 row.addView(status);
+                String kind = "Motorways".equals(road.category) ? RoadDetailSelection.MOTORWAY
+                        : "A roads".equals(road.category) ? RoadDetailSelection.A_ROAD
+                        : "B roads".equals(road.category) ? RoadDetailSelection.B_ROAD : RoadDetailSelection.LOCAL;
+                if (!RoadDetailSelection.LOCAL.equals(kind) || settlement != null) {
+                    roadDetail(row, new RoadDetailSelection(kind, road.label,
+                            RoadDetailSelection.LOCAL.equals(kind) ? "" : road.region,
+                            settlement == null ? "" : settlement.code, settlement == null ? "" : settlement.name), false);
+                }
                 rows.addView(row);
                 View divider = new View(this);
                 divider.setBackgroundColor(0x334C6798);
@@ -1442,6 +1465,7 @@ public class ProgressActivity extends Activity {
             value.setTypeface(null, android.graphics.Typeface.BOLD);
             value.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
             row.addView(value, new LinearLayout.LayoutParams(dp(84), -2));
+            roadDetail(row, new RoadDetailSelection(RoadDetailSelection.MOTORWAY, road.ref, road.region, "", ""), true);
             panel.addView(row);
             TextView meta = new TextView(this);
             meta.setText(road.journeyIds.size() + " matched journey"
@@ -1449,6 +1473,7 @@ public class ProgressActivity extends Activity {
             meta.setTextColor(MUTED);
             meta.setTextSize(11);
             meta.setPadding(dp(88), 0, 0, dp(5));
+            roadDetail(meta, new RoadDetailSelection(RoadDetailSelection.MOTORWAY, road.ref, road.region, "", ""), true);
             panel.addView(meta);
         }
         parent.addView(panel);
@@ -1499,6 +1524,7 @@ public class ProgressActivity extends Activity {
             value.setTypeface(null, android.graphics.Typeface.BOLD);
             value.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
             row.addView(value, new LinearLayout.LayoutParams(dp(55), -2));
+            roadDetail(row, new RoadDetailSelection(RoadDetailSelection.MOTORWAY, road.ref, road.region, "", ""), false);
             panel.addView(row);
             TextView meta = new TextView(this);
             String label = Double.isFinite(percent)
@@ -1510,6 +1536,7 @@ public class ProgressActivity extends Activity {
             meta.setTextColor(MUTED);
             meta.setTextSize(11);
             meta.setPadding(dp(88), 0, 0, dp(4));
+            roadDetail(meta, new RoadDetailSelection(RoadDetailSelection.MOTORWAY, road.ref, road.region, "", ""), false);
             panel.addView(meta);
         }
         parent.addView(panel);
@@ -1542,8 +1569,8 @@ public class ProgressActivity extends Activity {
             LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(6),0,dp(2));
             row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
             View bar=motorwayBar(road.matchedMetres/maximum, 0xFF25834A);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
-            TextView value=new TextView(this);value.setText(formatMiles(road.matchedMetres));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(84),-2));panel.addView(row);
-            TextView meta=new TextView(this);meta.setText(road.journeyIds.size()+" matched journey"+(road.journeyIds.size()==1?"":"s")+" contributed");meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(5));panel.addView(meta);
+            TextView value=new TextView(this);value.setText(formatMiles(road.matchedMetres));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(84),-2));roadDetail(row,new RoadDetailSelection(RoadDetailSelection.A_ROAD,road.ref,road.region,"",""),true);panel.addView(row);
+            TextView meta=new TextView(this);meta.setText(road.journeyIds.size()+" matched journey"+(road.journeyIds.size()==1?"":"s")+" contributed");meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(5));roadDetail(meta,new RoadDetailSelection(RoadDetailSelection.A_ROAD,road.ref,road.region,"",""),true);panel.addView(meta);
         }
         parent.addView(panel);
     }
@@ -1557,8 +1584,8 @@ public class ProgressActivity extends Activity {
         for(ARoadProgressCalculator.Road road:summary.roads){double pct=road.percent();if(!Double.isFinite(pct)||pct<1)continue;
             LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(2));row.addView(aRoadBadge(road.region.equals("NI")?road.ref+" · NI":road.ref),new LinearLayout.LayoutParams(dp(78),dp(32)));
             View bar=motorwayBar(pct/100, 0xFF25834A);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(12),1);bp.setMargins(dp(9),0,dp(9),0);row.addView(bar,bp);
-            TextView value=new TextView(this);value.setText(String.format(Locale.UK,"%.1f%%",pct));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(55),-2));panel.addView(row);
-            TextView meta=new TextView(this);meta.setText(String.format(Locale.UK,"%s estimated unique · %s reference",formatMiles(road.uniqueKm()*1000),formatMiles(road.totalKm*1000)));meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(4));panel.addView(meta);
+            TextView value=new TextView(this);value.setText(String.format(Locale.UK,"%.1f%%",pct));value.setTextColor(Color.WHITE);value.setTextSize(14);value.setTypeface(null,android.graphics.Typeface.BOLD);value.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);row.addView(value,new LinearLayout.LayoutParams(dp(55),-2));roadDetail(row,new RoadDetailSelection(RoadDetailSelection.A_ROAD,road.ref,road.region,"",""),false);panel.addView(row);
+            TextView meta=new TextView(this);meta.setText(String.format(Locale.UK,"%s estimated unique · %s reference",formatMiles(road.uniqueKm()*1000),formatMiles(road.totalKm*1000)));meta.setTextColor(MUTED);meta.setTextSize(11);meta.setPadding(dp(88),0,0,dp(4));roadDetail(meta,new RoadDetailSelection(RoadDetailSelection.A_ROAD,road.ref,road.region,"",""),false);panel.addView(meta);
         }parent.addView(panel);
     }
 
@@ -1862,6 +1889,7 @@ public class ProgressActivity extends Activity {
         final String id;
         final String label;
         final String category;
+        String region = "";
         final Set<String> journeyIds = new HashSet<>();
         final List<JSONObject> geometryEvidence = new ArrayList<>();
         final Set<String> geometryEvidenceKeys = new HashSet<>();

@@ -52,6 +52,7 @@ let onboardingMode = null;
 let undeterminedJourneys = [];
 let classifiedJourneys = [];
 let initialArchiveHydrationComplete = false;
+const IMPORT_COORDINATOR_SESSION_KEY = 'roadprints-import-coordinator-session-v1';
 const refinedCoverageByRef = new Map();
 const persistedCoverageByRef = new Map();
 const persistedARoadCoverageByRef = new Map();
@@ -80,7 +81,10 @@ let achievementCelebrationIndex = 0;
 const removedSegmentEvidence = new Map();
 const canonicalRemovalEvidenceByRef = new Map();
 let localSaveTimer = null;
-let localProgressDeletionRunning = false;
+const LOCAL_DATA_RESET_KEY = window.RoadprintsLocalDataReset.RESET_KEY;
+let localDataResetActive = localStorage.getItem(LOCAL_DATA_RESET_KEY) === 'pending';
+let localProgressDeletionRunning = localDataResetActive;
+let localDataResetPromise = null;
 const canonicalRequestedRefs = new Set();
 let refinementRoadRef = null;
 let refinementEditMode = null;
@@ -239,6 +243,8 @@ const allowLocation = document.getElementById('allowLocation');
 const skipLocation = document.getElementById('skipLocation');
 const startFromToday = document.getElementById('startFromToday');
 const continueToWebMap = document.getElementById('continueToWebMap');
+const importTimelineFromStart = document.getElementById('importTimelineFromStart');
+const backgroundDataNotice = document.getElementById('backgroundDataNotice');
 const locationSetupStatus = document.getElementById('locationSetupStatus');
 const savedProgressLoading = document.getElementById('savedProgressLoading');
 const dataSourceCard = document.getElementById('dataSourceCard');
@@ -467,6 +473,14 @@ function shouldShowDataDashboard() {
   return onboardingMode==='data' || onboardingMode==='saved';
 }
 
+function hasDeletableLocalData() {
+  return hasSavedLocalProgress() || persistedAchievements.size>0 ||
+    undeterminedJourneys.length>0 || classifiedJourneys.length>0 ||
+    [LOCAL_PROGRESS_KEY,UNDETERMINED_JOURNEYS_KEY,CLASSIFIED_JOURNEYS_KEY,
+      IMPORT_COORDINATOR_SESSION_KEY,'roadprints:service-station-manual-visits:v1']
+      .some(key=>Boolean(localStorage.getItem(key)));
+}
+
 function updateDataDeletionControls() {
   const hasRoadData=
     persistedMapJourneys.size>0 ||
@@ -477,20 +491,18 @@ function updateDataDeletionControls() {
   const hasStoredProgress=Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
   clearRoadData.disabled=!hasRoadData;
   clearFootData.disabled=!hasFootData;
-  clearImportedData.disabled=!hasRoadData && !hasFootData && !hasStoredProgress;
+  clearImportedData.disabled=!hasDeletableLocalData();
 }
 
 function updateLocalProgressNotice() {
+  if (localDataResetActive) return;
   const roadCount=localProgressRoadCount();
   const journeyCount=localProgressJourneyCount();
   const resumableRoads=pendingRoadImportCandidates().length;
   const hasProgress=hasSavedLocalProgress();
   const hasStoredProgress=Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
-  const hasSavedDataEvidence=hasProgress || hasStoredProgress;
   updateDataDeletionControls();
   localProgressNotice?.classList.toggle('hidden',!hasProgress);
-  deleteDataAction?.classList.toggle('hidden',!hasSavedDataEvidence);
-  deleteDataAction?.style.setProperty('display',hasSavedDataEvidence ? 'flex' : 'none','important');
   const recoveryNeeded=needsJourneyArchiveRecovery();
   const dataAction=document.getElementById('hasDataSource');
   if (dataAction) {
@@ -500,7 +512,7 @@ function updateLocalProgressNotice() {
   if (!initialArchiveHydrationComplete) return;
   if (hasProgress) {
     [onboardingWelcome,onboardingLocation,onboardingDataChoice,onboardingBackground].forEach(step=>step?.classList.add('hidden'));
-  } else if (!onboardingCard?.classList.contains('hidden') && !dataSourceCard?.classList.contains('hidden')) {
+  } else if (!onboardingCard?.classList.contains('hidden')) {
     const onboardingComplete=localStorage.getItem('roadprints:onboarding-complete-v1')==='true';
     showOnboardingStep(onboardingComplete ? onboardingBackground : onboardingWelcome);
   }
@@ -526,6 +538,7 @@ function openMapArchiveDatabase() {
     }
     const request=indexedDB.open(MAP_ARCHIVE_DB_NAME,MAP_ARCHIVE_DB_VERSION);
     request.onerror=()=>reject(request.error || new Error('Saved map storage could not be opened.'));
+    request.onblocked=()=>reject(new Error('Close other Roadprints tabs and retry deleting your data.'));
     request.onupgradeneeded=()=>{
       const database=request.result;
       if (!database.objectStoreNames.contains(MAP_ARCHIVE_STORE_NAME)) {
@@ -552,8 +565,10 @@ function openMapArchiveDatabase() {
 }
 
 async function mapArchiveOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(MAP_ARCHIVE_STORE_NAME,mode);
       const store=transaction.objectStore(MAP_ARCHIVE_STORE_NAME);
@@ -568,8 +583,10 @@ async function mapArchiveOperation(mode,operation) {
 }
 
 async function footArchiveOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(FOOT_ACTIVITY_STORE_NAME,mode);
       const store=transaction.objectStore(FOOT_ACTIVITY_STORE_NAME);
@@ -582,8 +599,10 @@ async function footArchiveOperation(mode,operation) {
 }
 
 async function canonicalRoadArchiveOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(CANONICAL_ROAD_STORE_NAME,mode);
       const store=transaction.objectStore(CANONICAL_ROAD_STORE_NAME);
@@ -596,8 +615,10 @@ async function canonicalRoadArchiveOperation(mode,operation) {
 }
 
 async function canonicalARoadArchiveOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(CANONICAL_A_ROAD_STORE_NAME,mode);
       const store=transaction.objectStore(CANONICAL_A_ROAD_STORE_NAME);
@@ -610,8 +631,10 @@ async function canonicalARoadArchiveOperation(mode,operation) {
 }
 
 async function roadDiscoveryArchiveOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(ROAD_DISCOVERY_STORE_NAME,mode);
       const store=transaction.objectStore(ROAD_DISCOVERY_STORE_NAME);
@@ -788,8 +811,10 @@ async function clearRoadArchive() {
 }
 
 async function pendingRoadImportOperation(mode,operation) {
+  if (mode==='readwrite' && localDataResetActive) return;
   const database=await openMapArchiveDatabase();
   try {
+    if (mode==='readwrite' && localDataResetActive) return;
     return await new Promise((resolve,reject)=>{
       const transaction=database.transaction(PENDING_ROAD_IMPORT_STORE_NAME,mode);
       const store=transaction.objectStore(PENDING_ROAD_IMPORT_STORE_NAME);
@@ -843,6 +868,7 @@ async function loadPendingRoadImport() {
 }
 
 function resumeSavedRoadImport() {
+  if (localDataResetActive) return;
   if (easyImportRunning) return;
   const pending=pendingRoadImportCandidates({includeFailed:true});
   if (!pending.length) return;
@@ -965,9 +991,11 @@ async function loadFootActivityArchive() {
 }
 
 async function saveFootActivities(activities) {
+  if (localDataResetActive) return;
   activities=activities.filter(activity=>!excludedJourneyIds.has(journeyIdentity(activity)));
   const database=await openMapArchiveDatabase();
   try {
+    if (localDataResetActive) return;
     await new Promise((resolve,reject)=>{
       const transaction=database.transaction(FOOT_ACTIVITY_STORE_NAME,'readwrite');
       const store=transaction.objectStore(FOOT_ACTIVITY_STORE_NAME);
@@ -983,6 +1011,7 @@ async function saveFootActivities(activities) {
       transaction.oncomplete=resolve;
       transaction.onerror=()=>reject(transaction.error || new Error('Could not save on-foot activities.'));
     });
+    if (localDataResetActive) return;
     for (const activity of activities) {
       const record=compactFootActivity(activity), prior=persistedFootActivities.get(record.id);
       const title=record.title.trim() ? record.title : String(prior?.title || '');
@@ -1042,6 +1071,7 @@ async function migrateStoredBusJourneysToRoadQueue() {
 }
 
 function saveUndeterminedJourneys() {
+  if (localDataResetActive) return;
   try {
     localStorage.setItem(UNDETERMINED_JOURNEYS_KEY,JSON.stringify(undeterminedJourneys));
     localStorage.setItem(CLASSIFIED_JOURNEYS_KEY,JSON.stringify(classifiedJourneys));
@@ -1509,34 +1539,60 @@ async function clearFootDataOnly() {
 }
 
 async function clearLocalProgress() {
-  if (!window.confirm('Delete all Roadprints progress, driving journeys and walking/running data from this device?')) return;
+  if (!localDataResetActive && !window.confirm('Delete all Roadprints progress and journeys from this device?')) return;
+  return completeLocalDataReset();
+}
+
+function stopWorkForLocalDataReset() {
+  localDataResetActive=true;
   localProgressDeletionRunning=true;
+  trackingSessionId++;
+  easyImportRunning=false;
+  easyImportPaused=false;
+  footMatching=false;
+  footMatchingPaused=false;
+  canonicalARoadWorkerEpoch++;
   clearTimeout(localSaveTimer);
   localSaveTimer=null;
-  localStorage.removeItem(LOCAL_PROGRESS_KEY);
-  persistedConfirmedTimelineVisits.clear();
-  localStorage.removeItem('roadprints:service-station-ledger:v1');
-  window.dispatchEvent(new Event('roadprints:confirmed-visits-updated'));
-  localStorage.removeItem('roadprints:collection-entitlements:v1');
-  window.dispatchEvent(new CustomEvent('roadprints:collection-entitlement-change',{detail:{collection:'service-stations',unlocked:false}}));
-  resetRoadProgressState({clearExclusions:true});
-  localProgressNotice.classList.add('hidden');
+  clearTimeout(mapGeometryRefreshTimer);
+  mapGeometryRefreshTimer=null;
+  Object.assign(importSession,{active:false,mapReady:false,statusOpen:false,roadComplete:false,footComplete:true});
+  clearImportedData.disabled=true;
+  clearImportedData.textContent='Deleting saved data…';
+}
 
-  try {
-    await clearMapArchive();
-  } catch (err) {
-    console.warn('Saved map journeys could not be deleted:',err);
-    window.alert('The saved map journeys could not be deleted. Please try again.');
-  } finally {
-    localStorage.removeItem(LOCAL_PROGRESS_KEY);
-    localProgressDeletionRunning=false;
-  }
+window.addEventListener('storage',event=>{
+  if (event.key!==LOCAL_DATA_RESET_KEY) return;
+  if (event.newValue==='pending') stopWorkForLocalDataReset();
+  else if (event.newValue===null && localDataResetActive) window.location.reload();
+});
 
-  resetTrackingSession();
-  onboardingMode=null;
-  dataSourceCard.classList.add('hidden');
-  onboardingCard.classList.remove('hidden');
-  updateLocalProgressNotice();
+function completeLocalDataReset() {
+  if (localDataResetPromise) return localDataResetPromise;
+  localDataResetPromise=window.RoadprintsLocalDataReset.reset({
+    storage:localStorage,
+    stopWork:stopWorkForLocalDataReset,
+    whenReady:()=>Promise.allSettled([
+      mapArchiveReadyPromise,footArchiveReadyPromise,roadDiscoveryArchiveReadyPromise,
+      pendingRoadImportReadyPromise,pendingRoadImportSaveChain
+    ]),
+    openArchive:openMapArchiveDatabase,
+    reload:()=>window.location.reload()
+  }).catch(error=>{
+    console.warn('Saved data reset could not be completed:',error);
+    document.querySelector('main')?.classList.remove('archive-hydrating');
+    screenController.showOnboarding();
+    screenController.setLoading(false);
+    showOnboardingStep(onboardingWelcome);
+    deleteDataAction.classList.remove('hidden');
+    deleteDataAction.style.setProperty('display','flex','important');
+    clearRoadData.disabled=true;
+    clearFootData.disabled=true;
+    clearImportedData.disabled=false;
+    clearImportedData.textContent='Retry deleting all saved data';
+    window.alert('Deletion has not finished. '+(error.message || 'Please retry deleting all saved data.'));
+  }).finally(()=>{localDataResetPromise=null;});
+  return localDataResetPromise;
 }
 
 function motorwayRefSort(a, b) {
@@ -1665,6 +1721,10 @@ function requestWebLocation() {
 }
 
 async function openFreshRoadprint() {
+  if (localDataResetActive) {
+    showOnboardingDataNotice('Your saved-data reset is still finishing. Retry “Delete all saved data” before continuing.');
+    return;
+  }
   localStorage.setItem('roadprints:onboarding-complete-v1','true');
   onboardingMode='fresh';
   document.querySelector('main')?.classList.remove('onboarding-active');
@@ -1675,14 +1735,36 @@ async function openFreshRoadprint() {
   mapTitle.textContent='Your Roadprint';
   mapIntro.textContent='Roadprints will grow as you travel. This web preview saves your progress on this device.';
   mapRenderingRequested=true;
-  activateRoadprintsScreen('map');
   try {
-    await ensureLeaflet();
+    activateRoadprintsScreen('map');
+  } catch (error) {
+    console.warn('Roadprint screen navigation could not be completed:',error);
+  }
+  // Keep the map shell and its navigation usable even if an optional status
+  // widget throws while the screen changes.
+  const shell=document.querySelector('main');
+  const nav=document.getElementById('appNavigation');
+  shell?.classList.remove('onboarding-active');
+  shell?.classList.add('app-ready');
+  if (shell) shell.dataset.activeScreen='map';
+  nav?.classList.remove('hidden');
+  screenController.current='map';
+  mapStatus.className='muted map-status';
+  mapStatus.textContent='Loading your map…';
+  try {
+    const leafletReady=await ensureLeaflet();
+    if (!leafletReady) {
+      mapStatus.className='error map-status';
+      mapStatus.textContent='The map could not load on this connection. Use the bottom tabs to move around, or tap the Roadprints logo to return to the start.';
+      return;
+    }
     initMap();
     renderMap();
     requestAnimationFrame(()=>map?.invalidateSize(true));
   } catch (error) {
     console.warn('The empty Roadprint map could not be opened:',error);
+    mapStatus.className='error map-status';
+    mapStatus.textContent='The map could not be opened. Use the bottom tabs to move around, or tap the Roadprints logo to return to the start.';
   }
 }
 async function showSavedProgress() {
@@ -1748,21 +1830,50 @@ async function showSavedProgress() {
   }
 }
 async function showDataSourceChoice() {
-  if (easyImportRunning || footMatching) {
-    returnToOnboarding();
+  const notice=document.getElementById('onboardingDataNotice');
+  [notice,backgroundDataNotice].forEach(target=>{
+    if (!target) return;
+    target.textContent='';
+    target.classList.add('hidden');
+  });
+  if (localDataResetActive) {
+    showOnboardingDataNotice('Your saved-data reset is still finishing. Retry “Delete all saved data” before importing.');
     return;
   }
-  resetTrackingSession();
+  if (easyImportRunning || footMatching) {
+    showOnboardingDataNotice('A Timeline match is already running. Let it finish before starting another import.');
+    return;
+  }
   onboardingMode = 'data';
-  screenController.showImport();
-  closeSavedProgress.classList.add('hidden');
+  // Reveal the file chooser before resetting transient import UI, so a
+  // recoverable cleanup error cannot leave this button appearing inert.
+  document.querySelector('main')?.classList.remove('app-ready','processing-active','onboarding-active');
+  document.getElementById('appNavigation')?.classList.add('hidden');
   onboardingCard.classList.add('hidden');
-  // Destructive data controls belong to the saved-data splash, not the import
-  // workflow. Keep them out of sight while a source file is being chosen.
+  closeSavedProgress.classList.add('hidden');
   deleteDataAction?.classList.add('hidden');
+  deleteDataAction?.style.setProperty('display','none','important');
   dataSourceCard.classList.remove('hidden');
   mapTitle.textContent = '4. Preview';
   mapIntro.textContent = 'The cumulative credited-road layer shows each matched geometry segment once. Use the map layer control to compare credited roads, matched journeys and raw Timeline traces.';
+  try {
+    resetTrackingSession();
+    screenController.showImport();
+    dataSourceCard.classList.remove('hidden');
+  } catch (error) {
+    console.warn('Timeline import screen cleanup failed:',error);
+    fileStatus.className='error import-file-status';
+    fileStatus.textContent='The import screen opened, but some previous preview data could not be cleared. You can still choose your Timeline JSON file.';
+  }
+}
+
+function showOnboardingDataNotice(message) {
+  const notice=onboardingBackground && !onboardingBackground.classList.contains('hidden')
+    ? backgroundDataNotice
+    : document.getElementById('onboardingDataNotice');
+  if (!notice) { window.alert(message); return; }
+  notice.textContent=message;
+  notice.classList.remove('hidden');
 }
 
 function returnToOnboarding() {
@@ -1793,6 +1904,7 @@ allowLocation?.addEventListener('click',requestWebLocation);
 skipLocation?.addEventListener('click',continueToDataChoice);
 startFromToday?.addEventListener('click',()=>showOnboardingStep(onboardingBackground));
 continueToWebMap?.addEventListener('click',openFreshRoadprint);
+importTimelineFromStart?.addEventListener('click',showDataSourceChoice);
 
 document.getElementById('hasDataSource').addEventListener('click', showDataSourceChoice);
 document.getElementById('importMoreData')?.addEventListener('click', showDataSourceChoice);
@@ -1836,6 +1948,9 @@ mapCorrectionUndo.addEventListener('click',()=>{
   mapCorrectionUndo.disabled=!mapCorrectionUndoStack.length;
   renderMap({deferCalculations:true});
 });
+if (localDataResetActive) {
+  setTimeout(()=>void completeLocalDataReset(),0);
+} else {
 loadUndeterminedJourneys();
 loadLocalProgress();
 loadFootPlaceNames();
@@ -1860,6 +1975,8 @@ Promise.race([
   try { updateLocalProgressNotice(); }
   catch (error) { console.warn('Saved progress notice could not be refreshed:',error); }
 });
+}
+
 unitMiles.classList.toggle('active',distanceUnit==='miles');
 unitKm.classList.toggle('active',distanceUnit==='km');
 unitMiles.setAttribute('aria-pressed',String(distanceUnit==='miles'));
@@ -2186,10 +2303,10 @@ async function timelineFileHash(text) {
   return `fallback-${text.length}-${(hash >>> 0).toString(16)}`;
 }
 
-const IMPORT_COORDINATOR_SESSION_KEY = 'roadprints-import-coordinator-session-v1';
 let importCoordinatorStatus = 'Import summary saved on this device. Your Timeline file and journeys are not uploaded.';
 
 function saveImportCoordinatorSession(fileName, sourceFileHash, summary) {
+  if (localDataResetActive) return;
   try {
     localStorage.setItem(IMPORT_COORDINATOR_SESSION_KEY, JSON.stringify({
       version: 1,
@@ -2444,6 +2561,7 @@ function loadFootPlaceNames() {
 }
 
 function saveFootPlaceNames() {
+  if (localDataResetActive) return;
   try { localStorage.setItem(FOOT_PLACE_NAMES_KEY,JSON.stringify(Object.fromEntries(footPlaceNames))); } catch (err) {}
 }
 
@@ -3238,12 +3356,14 @@ function renderAchievements() {
 }
 
 async function startNextFootBatch() {
-  if (footMatching) return;
+  if (localDataResetActive || footMatching) return;
+  const sessionId=trackingSessionId;
   const candidates=footBatches.flatMap(batch=>batch.activities.map(activity=>({batch,activity})))
     .filter(({activity})=>!activity.matchedGeoJson && !activity.matchError)
     .sort((a,b)=>Date.parse(b.activity.end || b.activity.start || '')-Date.parse(a.activity.end || a.activity.start || ''));
   if (!candidates.length) return;
   await showFootMap();
+  if (sessionId!==trackingSessionId || localDataResetActive) return;
   footMatching=true;
   updateImportStatusButton();
   // Honour an import-wide pause even if this queue starts moments later.
@@ -3259,6 +3379,7 @@ async function startNextFootBatch() {
     try {
       const response=await fetch(`${API_BASE_URL}/match-walking`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:activity.points})});
       const data=await response.json().catch(()=>({}));
+      if (sessionId!==trackingSessionId || localDataResetActive) return;
       if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
       activity.matchedGeoJson=data.geojson;
       activity.roadGeoJson=data.road_geojson || {type:'FeatureCollection',features:[]};
@@ -3275,6 +3396,7 @@ async function startNextFootBatch() {
         appendLiveImportGeometry(activity,{color:'#7642a8',weight:4,opacity:.86});
       }
     } catch (err) {
+      if (sessionId!==trackingSessionId || localDataResetActive) return;
       activity.matchError=err.message || String(err);
       if (/temporarily rate-limited|too many requests|HTTP 429/i.test(activity.matchError)) {
         activity.matchError='Walking route matching is temporarily limited by its shared provider. Retry the remaining routes a little later.';
@@ -3285,6 +3407,7 @@ async function startNextFootBatch() {
       consecutiveFailures++;
       if (consecutiveFailures>=8) footMatchingError=`Walking matching stopped after ${consecutiveFailures} consecutive failures: ${activity.matchError}`;
     } finally {
+      if (sessionId!==trackingSessionId || localDataResetActive) return;
       footMatchingProgress.completed++;
       setImportReadiness('foot','working',`${footMatchingProgress.completed.toLocaleString()} / ${footMatchingProgress.total.toLocaleString()} walking and running journeys matched`);
       renderFootQueue();
@@ -3303,12 +3426,13 @@ async function startNextFootBatch() {
   };
 
   const worker=async()=>{
-    while (true) {
+    while (sessionId===trackingSessionId && !localDataResetActive) {
       if (footMatchingError) return;
-      while (footMatchingPaused) {
+      while (footMatchingPaused && sessionId===trackingSessionId && !localDataResetActive) {
         renderFootQueue();
         await new Promise(resolve=>setTimeout(resolve,250));
       }
+      if (sessionId!==trackingSessionId || localDataResetActive) return;
       const candidate=candidates[cursor++];
       if (!candidate) return;
       await processCandidate(candidate);
@@ -3326,6 +3450,7 @@ async function startNextFootBatch() {
   } catch (err) {
     footMatchingError=err.message || String(err);
   } finally {
+    if (sessionId!==trackingSessionId || localDataResetActive) return;
     if (footMatchingProgress) {
       const footFailed=Number(footMatchingProgress.failed || 0);
       const footDetail=footMatchingError
@@ -3558,6 +3683,7 @@ function updateImportNavigationFromCoordinator() {
   const hasSavedJourneys=persistedMapJourneys.size>0 || persistedFootActivities.size>0;
   const hasSavedRoadProgress=hasSavedJourneys || persistedCoverageByRef.size>0 || persistedARoadCoverageByRef.size>0 || pendingRoadImportCandidates().length>0;
   const ready=[];
+  if (!importSession.active && !hasSavedRoadProgress) ready.push('map','journeys','progress','achievements','collections');
   if (importSession.mapReady || hasSavedRoadProgress) ready.push('map','journeys');
   if (importSession.roadComplete || hasSavedRoadProgress) ready.push('progress','achievements','collections');
   setImportNavigationAvailability(ready);
@@ -3631,6 +3757,7 @@ async function requestRoadMatchWithRetry(journey,sessionId){
 }
 
 async function startEasyImport() {
+  if (localDataResetActive) return;
   const sessionId = trackingSessionId;
   const importStartedAt=Date.now();
   if (easyImportRunning) return;
@@ -6834,8 +6961,8 @@ const screenController={
       button.classList.remove('active');
       button.setAttribute('aria-current','false');
     });
-    const hasSplashData=hasSavedLocalProgress() || Boolean(localStorage.getItem(LOCAL_PROGRESS_KEY));
-    deleteDataAction?.style.setProperty('display',hasSplashData ? 'flex' : 'none','important');
+    deleteDataAction?.classList.remove('hidden');
+    deleteDataAction?.style.setProperty('display','flex','important');
     updateImportStatusButton();
   },
   setLoading(active){

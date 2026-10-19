@@ -16,11 +16,10 @@ final class ReturnRecapStore {
 
     static synchronized List<JSONObject> collect(Context context, List<JSONObject> summaries, long now) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        if (!prefs.contains("visited_at")) {
-            prefs.edit().putLong("visited_at", now).apply();
-            return new ArrayList<>(); // Upgrading must not recap the existing archive.
-        }
+        boolean baseline = !prefs.contains("known_recordings");
+        boolean legacy = prefs.contains("visited_at");
         long previous = prefs.getLong("visited_at", now);
+        Set<String> known = new HashSet<>(prefs.getStringSet("known_recordings", new HashSet<>()));
         Set<String> pending = new HashSet<>(prefs.getStringSet("pending", new HashSet<>()));
         List<JSONObject> result = new ArrayList<>();
         Set<String> present = new HashSet<>();
@@ -28,12 +27,18 @@ final class ReturnRecapStore {
             if (!isRecording(journey)) continue;
             String id = journey.optString("journey_id");
             long ended = time(journey.optString("ended_at"));
-            if (!id.isEmpty() && (pending.contains(id) || (ended > previous && ended <= now))) {
-                present.add(id);
-                result.add(journey);
-            }
+            if (id.isEmpty() || ended == Long.MIN_VALUE || ended > now) continue;
+            // Completion time can precede an early app visit: saving happens
+            // asynchronously. Discover newly archived IDs, not a moving time window.
+            boolean fresh = baseline ? legacy && ended > previous : !known.contains(id);
+            if (fresh) pending.add(id);
+            known.add(id);
+            present.add(id);
+            if (pending.contains(id)) result.add(journey);
         }
-        prefs.edit().putLong("visited_at", now).putStringSet("pending", present).apply();
+        pending.retainAll(present);
+        prefs.edit().putLong("visited_at", now).putStringSet("known_recordings", known)
+                .putStringSet("pending", pending).apply();
         return result;
     }
 

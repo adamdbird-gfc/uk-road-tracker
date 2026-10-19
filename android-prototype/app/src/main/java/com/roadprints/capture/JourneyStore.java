@@ -56,12 +56,11 @@ public final class JourneyStore {
             ensureSharedFields(journey);
             output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
             output.flush();
-            if (target.exists() && !target.delete()) {
-                throw new IllegalStateException("Could not replace journey archive");
-            }
-            if (!temporary.renameTo(target)) {
-                throw new IllegalStateException("Could not commit journey archive");
-            }
+            // Same-filesystem atomic replacement keeps the committed journey intact
+            // if writing or replacing its successor is interrupted.
+            java.nio.file.Files.move(temporary.toPath(),target.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             bumpDataRevision(context);
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
@@ -71,6 +70,14 @@ public final class JourneyStore {
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey locally", error);
         }
+    }
+
+    /** Add bounded post-arrival observations without changing route, timing or raw recording. */
+    static synchronized void appendArrivalDwell(Context context,JSONObject stop,JSONArray observations) throws Exception {
+        String id=stop.optString("journey_id");
+        JSONObject journey=get(context,id);
+        if(journey==null)return; // Never resurrect deleted history.
+        if(ArrivalDwellEvidence.append(journey,stop,observations))save(context,journey);
     }
 
     public static synchronized int count(Context context) {
@@ -351,7 +358,7 @@ public final class JourneyStore {
                 while(reader.hasNext()) {
                     String key=reader.nextName();
                     if("journey_id".equals(key)||"source".equals(key)||"raw_capture_samples".equals(key)
-                            ||"capture_route_samples".equals(key)||"stops".equals(key))journey.put(key,readEvidenceValue(reader));
+                            ||"capture_route_samples".equals(key)||"arrival_dwell_samples".equals(key)||"stops".equals(key))journey.put(key,readEvidenceValue(reader));
                     else reader.skipValue();
                 }
                 reader.endObject();
