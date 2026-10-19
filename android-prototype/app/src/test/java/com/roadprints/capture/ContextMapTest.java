@@ -66,4 +66,32 @@ public class ContextMapTest {
         assertFalse(ContextMap.at(f,51.5,-.1,5).throughRoad);
     }
 
+    @Test public void campusIdentityWinsOverIndividualBuildingsInEitherFeatureOrder() throws Exception {
+        JSONObject school=new JSONObject().put("id",42).put("tags",new JSONObject().put("amenity","school").put("name","Test school"))
+                .put("geometry",rectangle(300));
+        JSONObject room=building(30).put("id",43);
+        for(JSONArray features:new JSONArray[]{new JSONArray().put(room).put(school),new JSONArray().put(school).put(room)}) {
+            ContextMap.Evidence e=ContextMap.at(features,51.5,-.1,5);
+            assertTrue(e.site);assertEquals("school",e.kind);assertEquals("Test school",e.name);assertEquals("osm:way:42",e.featureId);
+        }
+    }
+    @Test public void mallAndUniversityBoundariesNeedMoreThanAName() throws Exception {
+        for(String amenity:new String[]{"college","university","hospital"}) {
+            JSONObject site=new JSONObject().put("tags",new JSONObject().put("amenity",amenity)).put("geometry",rectangle(300));
+            assertTrue(ContextMap.at(new JSONArray().put(site),51.5,-.1,5).site);
+            assertFalse(ContextMap.at(new JSONArray().put(site),51.51,-.1,5).site);
+        }
+        JSONObject mall=new JSONObject().put("tags",new JSONObject().put("shop","mall")).put("geometry",rectangle(300));
+        assertEquals("shopping_centre",ContextMap.at(new JSONArray().put(mall),51.5,-.1,5).kind);
+    }
+    @Test public void campusBoundaryDoesNotTurnAThroughRoadQueueIntoArrival() throws Exception {
+        JSONObject campus=new JSONObject().put("tags",new JSONObject().put("amenity","university")).put("geometry",rectangle(300));
+        JSONArray line=new JSONArray().put(new JSONObject().put("lat",51.499).put("lon",-.1))
+                .put(new JSONObject().put("lat",51.501).put("lon",-.1));
+        for(String road:new String[]{"primary","residential"}) {
+            JSONObject way=new JSONObject().put("tags",new JSONObject().put("highway",road)).put("geometry",line);
+            ContextMap.Evidence e=ContextMap.at(new JSONArray().put(campus).put(way),51.5,-.1,5);
+            assertTrue(e.site);assertEquals("residential".equals(road),e.destination);
+        }
+    }
 }
