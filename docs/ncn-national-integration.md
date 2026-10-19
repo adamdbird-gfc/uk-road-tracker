@@ -81,12 +81,56 @@ The local payload has been checked, **not published**:
   SHA-256 `91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91`.
 - Prepared bundle: `roadprints-ncn-firebase-publication-2026-10-19.zip`.
 
-This session has neither Firebase credentials nor an authorised route to deliver
-that local payload to the existing credentialed Actions runner. The Firebase
-plugin is available but unconnected. Firebase's file-size limit accommodates this
-payload; actual project quota/billing and serving headers still require the
-credentialed publication/preview check. **Do not claim publication or package a
-beta whose initial reference URL has not passed that check.**
+### Proven original authentication and current environment difference
+
+Original successful county migration: [run 38740224136](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/38740224136),
+source `f43a8686`, `.github/workflows/reference-maintenance.yml`. That Actions
+runner downloaded the existing public `android-0.25.167` APK from GitHub Releases,
+extracted the exact pinned county binary, then `publish_county_build_reference.py`
+used `FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON` and `ROADPRINTS_DATA_HOSTING_SITE`.
+`google.oauth2.service_account.Credentials` + `AuthorizedSession` minted the
+Hosting OAuth token inside Actions; the private key never entered this workspace.
+The publisher cloned live Hosting, uploaded gzip transport content by hash,
+verified preview/live serving and preserved every existing reference file.
+
+The original full reference-data workflow stages allowlisted venue/settlement
+files from repository checkouts and deploys with Firebase CLI. It writes that
+same service-account secret to a private runner temporary file, sets
+`GOOGLE_APPLICATION_CREDENTIALS`, and deploys target `reference-data` on project
+`roadprints-822cc`. Both are the existing deployment identity, with different
+payload sources. App Distribution's separate identity is not a Hosting substitute.
+
+**Existing authentication is available and works.** [Run 39327313703](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327313703)
+and [run 39327496695](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327496695)
+verified that same Hosting secret from Actions, live version
+`sites/roadprints-data-822cc/versions/ffae619efea48f69`, all **18,155 files**, and
+the original county asset. The identity fingerprint is
+`f48e6d9f244a2987bbe9696a7093492f5f4efcaebfe9c2d04d85cab0dd23dd6d`.
+No key, bearer token, new account/project or new authentication design was exported.
+Verification script/workflow are preserved on `infra/ncn-publication`.
+
+The **payload transport** remains unavailable: the prepared NCN file is local
+and saved in ChatGPT, while the original runner obtained bytes from repository
+checkouts/an existing APK. A private ChatGPT file link is not an Actions-readable
+source. The configured Storage bucket `roadprints-822cc.firebasestorage.app`
+returned **HTTP 404** to the existing identity's permission query; it is not a
+verified staging bucket and no bucket/IAM changes were made. Existing map assets
+are on Hosting, which is available. Do not ask for a new Firebase connection.
+
+**Minimum missing action:** supply an authorised HTTPS download location for
+`catalogue.db.gz` from the preserved publication bundle (it must match the manifest
+pins). The existing NCN workflow consumes that URL and uses the proven Hosting
+secret; it does not need a replacement credential. It reads the URL from the event
+file rather than printing it in environment logs. Optional `package_beta=true`
+with `promote=true` then calls the established signed packaging/distribution
+workflow, pinned to the selected source SHA, which runs the complete Android
+suite including the two national classes. For catalogue-only updates leave
+`package_beta=false`. A small push request on `infra/ncn-publication` can use
+`{"action":"publish","asset_url":"<public HTTPS URL>","promote":true,"package_beta":true}`
+in `.github/ncn-reference/request.json`, following the original migration's
+push-triggered pattern. Never put signed/query URLs in that request; manual
+dispatch reads those inputs without printing them. No publication, full national execution or APK success is
+claimed until that input is available and the serving/build gates pass.
 
 Original remote checkpoint `integration/ncn-national-beta` at
 `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a` preserves the first 71 confirmed parts.

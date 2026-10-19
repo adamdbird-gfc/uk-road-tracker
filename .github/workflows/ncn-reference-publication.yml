@@ -13,6 +13,10 @@ on:
         description: Promote the verified preview to live
         default: false
         type: boolean
+      package_beta:
+        description: After verified live publication, run all Android tests and package/distribute one beta
+        default: false
+        type: boolean
 permissions:
   contents: read
 concurrency:
@@ -23,11 +27,23 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      action: ${{ steps.request.outputs.action }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install google-auth==2.40.3 requests==2.32.5
+      - name: Read publication request action
+        id: request
+        run: |
+          python - <<'PYTHON'
+          import json,os
+          request=json.load(open('.github/ncn-reference/request.json'))
+          action=request['action']
+          if action not in ('verify-existing-access','publish'):raise ValueError('Unknown publication action')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as target:target.write('action='+action+'\n')
+          PYTHON
       - name: Verify the original Hosting service-account credential and live assets
         env:
           FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
@@ -39,7 +55,11 @@ jobs:
           path: ncn-publication-evidence/access.json
           retention-days: 7
   publish:
-    if: github.event_name == 'workflow_dispatch'
+    needs: verify-existing-access
+    if: always() && (github.event_name == 'workflow_dispatch' || (needs.verify-existing-access.result == 'success' && needs.verify-existing-access.outputs.action == 'publish'))
+    outputs:
+      package_beta: ${{ steps.controls.outputs.package_beta }}
+      promote: ${{ steps.controls.outputs.promote }}
 
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -48,11 +68,21 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install google-auth==2.40.3 requests==2.32.5
+      - name: Read requested release controls
+        id: controls
+        run: |
+          python - <<'PYTHON'
+          import json,os
+          event=json.load(open(os.environ['GITHUB_EVENT_PATH']))
+          request=event['inputs'] if os.environ['GITHUB_EVENT_NAME']=='workflow_dispatch' else json.load(open('.github/ncn-reference/request.json'))
+          def flag(key):return str(request.get(key,False)).lower()=='true'
+          if flag('package_beta') and not flag('promote'):raise ValueError('Beta packaging requires verified live publication')
+          with open(os.environ['GITHUB_OUTPUT'],'a')as target:
+              for key in ('promote','package_beta'):target.write(key+'='+str(flag(key)).lower()+'\n')
+          PYTHON
       - name: Test publication invariants
         run: python -m unittest discover -s scripts -p test_ncn_reference.py -v
       - name: Obtain prepared asset and check its pinned bytes
-        env:
-          NCN_ASSET_URL: ${{ inputs.asset_url }}
         run: |
           python - <<'PY'
           import json,os,sys,urllib.request
@@ -61,7 +91,11 @@ jobs:
           sys.path.insert(0,'scripts')
           from ncn_reference import validate,sha_file
           m=validate(json.loads(Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text()))
-          url=os.environ['NCN_ASSET_URL']
+          # Read the dispatch input without echoing a possible signed URL in step env logs.
+          event=json.load(open(os.environ['GITHUB_EVENT_PATH']))
+          request=event['inputs'] if os.environ['GITHUB_EVENT_NAME']=='workflow_dispatch' else json.load(open('.github/ncn-reference/request.json'))
+          url=request['asset_url']
+          if os.environ['GITHUB_EVENT_NAME']=='push' and urlsplit(url).query:raise ValueError('Use manual dispatch for signed URLs; never commit them')
           p=urlsplit(url)
           if p.scheme!='https' or not p.hostname or p.username or p.password:raise ValueError('Expected HTTPS asset location')
           with urllib.request.urlopen(url,timeout=90)as source,open('catalogue.db.gz','wb')as target:
@@ -77,7 +111,7 @@ jobs:
         env:
           FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
           ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
-          NCN_PROMOTE: ${{ inputs.promote }}
+          NCN_PROMOTE: ${{ steps.controls.outputs.promote }}
         run: |
           args=()
           if [[ "$NCN_PROMOTE" == "true" ]]; then args+=(--promote); fi
@@ -90,3 +124,12 @@ jobs:
           path: ncn-publication-evidence/publication.json
           if-no-files-found: warn
           retention-days: 30
+  beta:
+    needs: publish
+    if: needs.publish.outputs.promote == 'true' && needs.publish.outputs.package_beta == 'true'
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: ${{ github.sha }}
+      firebase_upload: true
+      distribute_existing_testers: true
+    secrets: inherit
