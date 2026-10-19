@@ -2,7 +2,48 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest delivery — Beta 1 UI refinement (#201)
+## Latest delivery — Final Beta 1 filter recovery and road UI (#201)
+
+**Released 0.25.205 (251)** on 19 October 2026. [Install 205](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0gmijfgpa0mgo). Based directly on the delivered 0.25.204 app/release ancestry (`f17f2f171b584931e56e5c4a0208b839f15561af`); PR [#204](https://github.com/adamdbird-gfc/uk-road-tracker/pull/204). No NCN implementation, unrelated PR merge, tracking/matching/rematching change, collection change, coverage-calculator change or data migration.
+
+### Filter failure mechanism and repairs
+
+The old in-session refresh submitted map preparation to the unbounded serial archive screen worker used by history, recap and Progress. Applying filters invalidated ready state and hid every recovery control, without cancellation or a finite deadline. Revision observation could supersede pending scans while those scans continued in the queue. Startup restoration used the same date/mode predicates but began with a new queue. The blocked-history regression reproduces this queue-starvation mechanism; the precise backlog and timing on the user's phone remain device evidence to collect, rather than a remotely observed thread trace.
+
+- Main-map preparation now uses one separate cancellable serial worker, preserving the streamed evidence projection and existing geometry budgets/calculators. A pending request is not superseded by background revision observation. Filter changes cancel the old request; generation checks reject stale results. The captured request revision is published, allowing a later relevant-data refresh instead of marking stale results current.
+- The last rendered map and camera remain visible and pannable while filtering. Filter-dependent road-summary taps wait for committed results. Normal filter/legend controls stay hidden until ready; a separate **Cancel/Reset** row remains available during an update. Cancel restores the last successfully displayed filter selection and its saved preferences; Reset can immediately reuse the already displayed All view.
+- A **30-second deadline** resolves slow/blocked loads to an explicit error with **Retry/Reset**, including initial restored-filter loading. Failure retains the requested selection for Retry and suppresses the automatic observer retry loop. Rendering exceptions use the same recovery path. Pause/resume retains the request; destruction cancels it.
+- Retained-map identity includes the filter selection as well as journey/day revision. Queue, preparation, rendering and total success/cancel/failure times are logged under `RoadprintsTiming`, with filter choices but no coordinates. No date-window/mode matching rule or permanent progress value changed.
+
+### Focused UI and preserved welcome overlay
+
+- Motorway/A-road completion cards use a **white untravelled graph track**, blue/green completion, prominent percentage and travelled/total distances. Map strokes remain blue/red and green/red. A1 and A1(M) remain independently attributed and measured.
+- Edge-to-edge safe-area handling replaces double top insets; header width and balanced padding keep Close at the content edge. Existing spinners, skeletons, zoom, fit, cancellation/deadline and progressive geometry remain. The counted contributing-journeys action is prominent and retains shared Journey card formatting/navigation/pagination.
+- B/local screens omit unsupported statistics cards and show **Recorded sections** with the map, zoom and counted whole-road journey action. **B/local section tapping is deferred and disabled in this release**: instructions/accessibility no longer promise it. Motorway/A-road section selection remains.
+- The existing eligible Welcome back overlay, counts/status/actions and prepared-map dismissal remain. During a background refresh it still blocks map touches and hides map controls/recovery controls beneath it; dismissal exposes the current recovery row without reloading geometry.
+
+### Exact provenance and validation
+
+Implementation `8bc3d2b207fbf761fbf0b87cac57b963698c4202`; overlay/evidence refinement `ca3600775fa8c2b0d39cf26543b865b57ed82536`; exact final tested/packaged source **`e85a74ec9c9e6221223986d0a9ae3465a0de4a1c`**. PR #204 merged as `d9a3473175735c1440a037bdeac8335903100ca0`; one immutable pinned release request `a41d253a119c23ec5ccf71d167cf9749dacd142c`. The merge commit skips a redundant push check after successful exact-source PR checks; packaging repeats the required checks before assembly/distribution..
+
+[Android checks 39301868730](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39301868730) passed unit tests and lint. [Signed packaging/Firebase 39302469538](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39302469538) passed **646 tests; zero failures/errors/skips**, lint and stable-key APK signature verification, then uploaded release **`0gmijfgpa0mgo`** and distributed it to existing testers. [Signed APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39302469538/artifacts/12211894019); [verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39302469538/artifacts/12212318780). Only one APK request/build was made..
+
+Sixteen targeted regressions added: eleven filter lifecycle/recovery/summary-gating tests; repeated real route assembly for foot/date/combined/empty/All with unchanged saved-journey evidence; white-track/unchanged-values, A-road colour/selection and B/local map/action tests; and welcome-overlay touch/recovery gating while updating. Existing actual M2 geometry, A1/A1(M) identity, archive projection, navigation, achievement, collection and capture tests remain in the complete suite. One obsolete loading-copy assertion now checks the displayed recovery guidance.
+
+### Device acceptance and limits
+
+Beta 1 is **ready for device acceptance**, not claimed accepted from JVM tests. Install over 204 without clearing data. Verify On foot, Last 7 days, combined On foot + Last 7 days, no results, repeated Reset/Apply, Cancel, tab switches/return, saved-filter restart and failure/timeout Retry/Reset. Capture `RoadprintsTiming` queue/prepare/render/total lines on Pixel and Samsung, especially the original archive. Check M2/A-road card legibility/gestures/section journeys, B/local recorded maps/count/actions, saved-journey navigation, Welcome back dismissal, safe areas/small screens and retained scroll/camera; smoke-test capture, rematching, achievements and collections on the upgrade.
+
+No connected device/emulator was available for this task. For performance comparison, use queue/prepare/total times for uncached filter loads and render/revisit logs for retained views; the cache-hit path has no preparation stage. B/local full reference distances/completion and section tapping remain unavailable. Existing two-road derived cache limits/local-boundary five-minute TTL and Android process-reclamation limits remain. The UI deadline bounds user waiting but cannot forcibly terminate an uninterruptible underlying operation; stale publication is blocked and recovery stays available. This does not erase or rematch any journey.
+
+Code-review follow-up outside the focused road-detail path: a legacy settlement-overview child may recompute on return when the saved main-map selection is non-All, because its retained-selection field is not published by the separate settlement renderer. No journey/coverage loss is involved; verify and align that identity in a later small state-preservation follow-up. Main Map tab retention and the focused RoadDetail cache are covered here.
+
+### NCN resumption handover — implementation remains paused
+
+After this APK passes device acceptance, start app integration from this released source and the latest `fix/onboarding-start-tracking` descendant, preserving the filter recovery and shared UI. Read epic **#79**, implementation/geometry issues **#190–#194** and the existing catalogue/data PRs **#175–#187**; reuse their existing work instead of regenerating/auditing it in this slice. Reconcile the deferred **#172** trial adapter against already-integrated road-detail code; do not blindly restore its older #171 UI base. Next NCN work is the national open-way/source-provenance adapter, shared-way union, alternatives and mode filters described in those issues. Confirm current NCN issue/PR state at that future session; this release has not approved or published NCN data.
+
+
+## Previous delivery — Beta 1 UI refinement (#201)
 
 **Released 0.25.204 (250)** on 19 October 2026. [Install the UI update](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/6g411l4k07r7o). Built directly above the real-device-tested 0.25.203 stabilisation release. PR [#203](https://github.com/adamdbird-gfc/uk-road-tracker/pull/203) is limited to the six requested UI refinements. Existing map-filter, celebration, road-geometry and retained-tab fixes are preserved. No NCN, tracking, rematching, collection or coverage-calculation change was included; A1 and A1(M) retain independent identities and mileage.
 
