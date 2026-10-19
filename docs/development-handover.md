@@ -2,7 +2,37 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest delivery — Final Beta 1 filter recovery and road UI (#201)
+## Latest delivery — Urgent Beta 1 corrective release (#201)
+
+**Released 0.25.206 (252)** on 19 October 2026. [Install corrective 206](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0hi0t0j0s2d18). PR [#205](https://github.com/adamdbird-gfc/uk-road-tracker/pull/205), based directly on 205's application/release ancestry `04c4287a8a20b1cb9a40ce2993bd7e4a15df4fb9`. **205 failed real-device acceptance** (repeated initial-map timeout, incorrect chart track, B2008 UK-wide view); its prior automated green result did not prove those behaviours. This corrective slice supersedes the broader refinement brief. No NCN or unrelated UI development.
+
+### Exact defects and minimal corrections
+
+- **Initial-map timeout/recovery:** `8bc3d2b207fbf761fbf0b87cac57b963698c4202` added a hard 30-second budget over the whole cold load. Existing optional map-cache JSON serialization/fsync also occurred before geometry publication. A valid rebuild could therefore be cancelled before it became usable, and Retry restarted the same work. Preparation now has a **120-second bounded budget**; usable geometry is published before optional cache work, which runs on the existing background screen queue. Successful publication no longer cancels/interrupts its worker. Retry and failure-Reset force fresh preparation and bypass derived caches; malformed cache data falls back to archive preparation. Existing selected-filter persistence, retained geometry/Cancel/Reset and generation protection remain.
+- **Contradictory Ready footer:** the bottom control reflected matching activity independently of the map. A map-local status override now displays **Loading map / Map needs retry / Map ready** from the actual map transition. Active matching detail remains available; other screens retain their previous matching status behaviour.
+- **Progress charts:** `086435977337dfd77b3777be484aa37645ebd355` introduced a themed Android ProgressBar for focused cards, and 205 merely tinted its background white. That did not reproduce the Progress screen's actual white weighted track. Both screens now share **RoadCompletionBar**, extracted from the existing Progress implementation: opaque rounded white track, **#005EB8 motorway blue / #25834A A-road green**, same percentage weights. Percentages and travelled/reference distance calculations are untouched; map red/blue/green strokes are untouched.
+- **Camera fit:** the older `5a2c43651` setRouteData path marked fitting pending without applying a fit if layout had already happened. The asynchronous focused-road UI exposed that path for B/local sections. Focused screens now explicitly fit **covered plus remaining geometry** once per geometry publication, immediately or at the first valid layout. B/local roads supply recorded sections only. Finite short/single-point results receive useful bounded zoom; malformed/empty bounds do not replace a valid camera. Secondary journey metadata and later redraw/layout do not repeatedly overwrite manual zoom.
+
+The exact original phone runtime/stack was not available. The 30-second cancellation boundary and late-geometry fit defect are deterministically reproduced in regressions; the cold-load runtime on the full device archive still needs acceptance timing.
+
+### Provenance and checks
+
+Production implementation `a63263c311f5202f8c975afcf6221c5b2f2e29fc`; exact final tested/packaged source **`452258f655e23a1cdd3dcddebcd037b0cdb5ac28`** (adds retained evidence to trigger the actual lazily loaded A12 reference in its test). PR #205 merged as `44781c8902e44c413c4a47559477dababe698dee`; immutable release request `1a4d5bcc5edc8c2078df8d8803148dd5eb25126b` pins that exact source. One signed APK request/build; the merge commit skips redundant push checks after successful PR checks..
+
+[Android checks 39306947451](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39306947451) passed unit tests/lint. [Signed packaging/Firebase 39307530852](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39307530852) passed **656 tests; zero failures/errors/skips**, lint and stable-key APK signature verification, then uploaded and distributed Firebase release **`0hi0t0j0s2d18`** successfully to existing testers. [APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39307530852/artifacts/12213684912); [verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39307530852/artifacts/12215275175)..
+
+Ten new focused regressions: valid cold All loading beyond the old cutoff; footer/error/retry consistency; failure-Reset clearing filters; publication while optional cache work is blocked; forced warm Retry even when the displayed revision matches; **native rendered white/blue/green pixels**; late B2008-style geometry; local geometry before layout; short/single/malformed geometry; actual bundled **M20/A12** complete reference fitting. Existing main-map cold/warm/filter/reset/retry/cancel/tab/restart, data-preservation, road/achievement/collection/capture tests remain. Old tint-only assertions now check the shared component and unchanged numerical progress.
+
+### Device acceptance and limits
+
+Install over 205 without clearing data. Verify cold All map loading (allow a large cold rebuild to finish), warm return/restart, foot/date/combined filters, no-result filters, Reset, Retry after error and tab switching. The footer must follow the same map state. Record RoadprintsTiming queue/prepare/render/outcome durations; cache serialization no longer gates readiness. Check **M20 and A12** chart track/colours/values and full-route initial fit; **B2008 and one local road** recorded-section fit, zoom/pan, journey navigation and manual camera retention while metadata arrives. Check the prepared-map welcome overlay still dismisses without reload.
+
+**Ready for real-device acceptance, not yet device-accepted.** There is no attached phone/emulator; native JVM rendering and actual bundled-reference tests do not prove Android 16/17 behaviour on the original archive. A truly stalled or exceptionally slow request still errors after 120 seconds with recovery controls; uninterruptible work cannot be forcibly terminated. Existing B/local full-road metrics and section-tap limitations and the documented legacy settlement-return recomputation limitation are unchanged. No journey archive, tracking state, matching/rematching, collection, achievement or permanent coverage data is migrated/deleted. A1 and A1(M) remain separate.
+
+NCN remains paused. After this APK passes acceptance, use this released application lineage and the existing #79/#190–#194/PR #172 and catalogue-data handover below; no NCN audit, implementation or publication occurred here.
+
+
+## Previous delivery — 205 failed device acceptance (#201)
 
 **Released 0.25.205 (251)** on 19 October 2026. [Install 205](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0gmijfgpa0mgo). Based directly on the delivered 0.25.204 app/release ancestry (`f17f2f171b584931e56e5c4a0208b839f15561af`); PR [#204](https://github.com/adamdbird-gfc/uk-road-tracker/pull/204). No NCN implementation, unrelated PR merge, tracking/matching/rematching change, collection change, coverage-calculator change or data migration.
 
