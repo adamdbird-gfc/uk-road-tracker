@@ -1,5 +1,8 @@
 name: Publish versioned NCN reference
 on:
+  push:
+    branches: [infra/ncn-publication]
+    paths: ['.github/ncn-reference/request.json']
   workflow_dispatch:
     inputs:
       asset_url:
@@ -16,7 +19,28 @@ concurrency:
   group: firebase-reference-publication
   cancel-in-progress: false
 jobs:
+  verify-existing-access:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install google-auth==2.40.3 requests==2.32.5
+      - name: Verify the original Hosting service-account credential and live assets
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+        run: python scripts/verify_ncn_publication_access.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ncn-existing-publication-access
+          path: ncn-publication-evidence/access.json
+          retention-days: 7
   publish:
+    if: github.event_name == 'workflow_dispatch'
+
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
