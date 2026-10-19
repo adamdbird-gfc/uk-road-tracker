@@ -1336,6 +1336,7 @@ public class MapActivity extends Activity {
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
+        if(!mapReady||recapVisible)return; // Panning can continue; summaries require the committed selection.
         final JourneyFilters selection = mapFilters;
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();

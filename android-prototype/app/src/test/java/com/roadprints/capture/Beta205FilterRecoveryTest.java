@@ -90,4 +90,9 @@ public class Beta205FilterRecoveryTest {
         MapActivity first=ready();MapActivity.mapRouteLoader=(a,f,d,z)->routes(2);apply(first,selection(2,"week"));drain();screens.get(0).destroy();screens.clear();
         MapActivity restored=create();JourneyFilters saved=(JourneyFilters)get(restored,"mapFilters");assertEquals(2,saved.mode);assertEquals("week",saved.date.preset);call(restored,"refreshMap",new Class[]{});drain();assertTrue((Boolean)get(restored,"mapReady"));
     }
+    @Test public void previousGeometryCanPanButCannotOpenSummaryForPendingFilters()throws Exception{
+        MapActivity s=ready();CountDownLatch entered=blockedLoader();apply(s,selection(2,"week"));assertTrue(entered.await(3,TimeUnit.SECONDS));
+        call(s,"loadRoadSummaryAt",new Class[]{double.class,double.class},51.44,.37);assertNull(get(s,"roadDialog"));
+        assertFalse((Boolean)get(get(s,"mapView"),"overviewLoading"));
+    }
 }
