@@ -20,6 +20,13 @@ public final class RoadDetailActivity extends Activity {
     private long loadedRevision=Long.MIN_VALUE;
     private RoadDetailModel model;
     private android.app.AlertDialog journeyDialog;
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    static final long LOAD_TIMEOUT_MS = 30_000;
+    private java.util.concurrent.Future<?> pending;
+    private boolean loading;
+    private Runnable timeout;
+    interface Loader { RoadDetailModel load(android.content.Context context, RoadDetailSelection selection, boolean cumulative) throws Exception; }
+    static Loader loader = RoadDetailModel::load;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -40,26 +47,48 @@ public final class RoadDetailActivity extends Activity {
         });
     }
     @Override protected void onResume() {
-        super.onResume();if(selection!=null&&loadedRevision!=JourneyStore.dataRevision(this))load();
+        super.onResume();if(selection!=null&&!loading&&loadedRevision!=JourneyStore.dataRevision(this))load();
+        else if(model!=null)status.setText(summary());
     }
     private void load() {
+        cancelPending();
         int request=++generation;long revision=JourneyStore.dataRevision(this);
-        status.setText("Loading your road…");body.removeAllViews();
-        ScreenDataLoader.execute(()->{
+        loading=true;
+        status.setText("Loading your road…");status.setOnClickListener(null);body.removeAllViews();
+        long started=android.os.SystemClock.elapsedRealtime();
+        timeout=()->{
+            if(request!=generation || !loading)return;
+            generation++;cancelPending();showFailure("Loading took too long. Tap to retry.");
+        };
+        handler.postDelayed(timeout,LOAD_TIMEOUT_MS);
+        pending=ScreenDataLoader.interactive(()->{
             try {
-                RoadDetailModel result=RoadDetailModel.load(getApplicationContext(),selection,cumulative);
+                RoadDetailModel result=loader.load(getApplicationContext(),selection,cumulative);
                 runOnUiThread(()->{
                     if(isFinishing()||isDestroyed()||request!=generation)return;
-                    if(revision!=JourneyStore.dataRevision(this)){load();return;}
+                    cancelPending();
+                    if(revision!=JourneyStore.dataRevision(this)){showFailure("Journey data changed. Tap to retry.");return;}
                     model=result;loadedRevision=revision;show();
+                    android.util.Log.i("RoadprintsTiming","road_detail_ready_ms="+(android.os.SystemClock.elapsedRealtime()-started));
                 });
             } catch(Exception failure) {
                 runOnUiThread(()->{
                     if(isFinishing()||isDestroyed()||request!=generation)return;
-                    status.setText("This road could not be loaded. Tap to retry.");status.setOnClickListener(v->load());
+                    cancelPending();
+                    android.util.Log.w("Roadprints","Road detail failed",failure);
+                    showFailure("This road could not be loaded. Tap to retry.");
                 });
             }
         });
+    }
+    private void showFailure(String message) {
+        status.setText(message);status.setOnClickListener(v->load());
+        body.removeAllViews();body.addView(action("RETRY",this::load));
+    }
+    private void cancelPending() {
+        loading=false;
+        if(timeout!=null)handler.removeCallbacks(timeout);
+        if(pending!=null){pending.cancel(true);pending=null;}
     }
     private void show() {
         status.setOnClickListener(null);
@@ -81,14 +110,18 @@ public final class RoadDetailActivity extends Activity {
         map.setMapRoadTapListener((latitude,longitude)->{
             final int request=++generation;
             status.setText("Finding journeys on this section…");
-            ScreenDataLoader.execute(()->{
-                List<RoadDetailModel.Entry> related=model.journeysAt(getApplicationContext(),selection,latitude,longitude);
-                runOnUiThread(()->{
-                    if(isFinishing()||isDestroyed()||request!=generation)return;
-                    status.setText(summary());
-                    journeyDialog=RoadprintsDialog.show(this,selection.title(),related.isEmpty()?"No retained journeys on this section.":"Journeys on this section",
-                            journeyList(related),"CLOSE",null,null,null);
-                });
+            pending=ScreenDataLoader.interactive(()->{
+                try {
+                    List<RoadDetailModel.Entry> related=model.journeysAt(getApplicationContext(),selection,latitude,longitude);
+                    runOnUiThread(()->{
+                        if(isFinishing()||isDestroyed()||request!=generation)return;
+                        status.setText(summary());
+                        journeyDialog=RoadprintsDialog.show(this,selection.title(),related.isEmpty()?"No retained journeys on this section.":"Journeys on this section",
+                                journeyList(related),"CLOSE",null,null,null);
+                    });
+                } catch(Exception failure) {
+                    runOnUiThread(()->{if(request==generation)status.setText("Journeys unavailable. Tap a road section to retry.");});
+                }
             });
         });
         body.addView(map,new LinearLayout.LayoutParams(-1,0,1));
@@ -132,6 +165,6 @@ public final class RoadDetailActivity extends Activity {
     private TextView action(String label,Runnable click) {TextView v=text(label,14);v.setPadding(dp(12),dp(14),dp(12),dp(14));v.setTextColor(0xFFF7C450);
         v.setClickable(true);v.setFocusable(true);v.setMinHeight(dp(48));v.setOnClickListener(w->click.run());return v;}
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
-    @Override protected void onPause(){generation++;if(journeyDialog!=null)journeyDialog.dismiss();super.onPause();}
-    @Override protected void onDestroy(){generation++;super.onDestroy();}
+    @Override protected void onPause(){generation++;cancelPending();if(journeyDialog!=null)journeyDialog.dismiss();super.onPause();}
+    @Override protected void onDestroy(){generation++;cancelPending();handler.removeCallbacksAndMessages(null);super.onDestroy();}
 }

@@ -408,7 +408,14 @@ public class AchievementsActivity extends Activity {
         celebrationsAction.setPadding(dp(12),dp(12),dp(12),dp(12));celebrationsAction.setBackground(roundRect(GOLD,GOLD,dp(12)));
         celebrationsAction.setTag("achievement_celebrations_action");
         LinearLayout.LayoutParams celebrationParams=new LinearLayout.LayoutParams(-1,-2);celebrationParams.topMargin=dp(12);overview.addView(celebrationsAction,celebrationParams);
-        celebrationsAction.setOnClickListener(v->{celebrationsDeferred=false;maybeShowPendingCelebrations();});updateCelebrationAction();
+        celebrationsAction.setOnClickListener(v->{
+            celebrationsDeferred=false;
+            if (celebrationHostResumed && !isFinishing() && !isDestroyed()
+                    && (celebrationDialog==null || !celebrationDialog.isShowing())) {
+                showCelebrations(AchievementCelebrations.pending(this));
+                updateCelebrationAction();
+            }
+        });updateCelebrationAction();
         content.addView(overview);
         groupAnchors.put("Overview",overview);
         String[] groups={"App milestones","Distance","Road discovery","Town exploration","Landmarks","Crossings"};
@@ -712,7 +719,7 @@ public class AchievementsActivity extends Activity {
         celebrationDialog.setContentView(overlay);
         celebrationDialog.setCancelable(true);
         celebrationDialog.setCanceledOnTouchOutside(false);
-        celebrationDialog.setOnCancelListener(dialog -> closeCelebrations());
+        celebrationDialog.setOnCancelListener(dialog -> { celebrationsDeferred=true; clearCelebrationQueue(); });
         celebrationDialog.setOnDismissListener(dialog -> clearCelebrationQueue());
         celebrationPrevious.setTag("achievement_celebration_previous");
         celebrationNext.setTag("achievement_celebration_next");

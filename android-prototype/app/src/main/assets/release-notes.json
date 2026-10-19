@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.203",
+      "version_code": 249,
+      "release_date": "2026-10-19",
+      "since": "0.25.202",
+      "changes": [
+        {
+          "title": "Beta 1 stabilisation",
+          "description": "Journey filters open immediately and map controls wait until road loading finishes. Pending achievement celebrations can be opened while progress refreshes."
+        },
+        {
+          "title": "Road maps and faster return visits",
+          "description": "Focused road maps load independently of background history and offer retry on failure or timeout. Tabs retain their screens, map position and progress scroll. Map loading streams only the evidence needed for display, preserving saved journeys and corrections."
+        },
+        {
+          "title": "Device checks still needed",
+          "description": "Please check map filters, pending celebrations, M2 coverage and contributing journeys, then switch tabs and return. Pixel and Samsung first-load timings still need real-device verification. No NCN changes are included."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.202",
       "version_code": 248,
       "release_date": "2026-10-19",

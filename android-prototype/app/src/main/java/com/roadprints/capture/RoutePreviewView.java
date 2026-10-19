@@ -1441,7 +1441,7 @@ public class RoutePreviewView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!interactive) return false;
+        if (!interactive || overviewLoading) return false;
         if (routeEditMode && correctionDrawMode) {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 pressedZoomControl = zoomControlAt(event.getX(), event.getY());

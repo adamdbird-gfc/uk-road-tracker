@@ -11,6 +11,13 @@ final class ScreenDataLoader {
         return thread;
     });
 
+    private static final ExecutorService INTERACTIVE = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "roadprints-road-detail");
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
+        return thread;
+    });
+    static java.util.concurrent.Future<?> interactive(Runnable task) { return INTERACTIVE.submit(task); }
+
     private ScreenDataLoader() {}
 
     static void execute(Runnable task) {

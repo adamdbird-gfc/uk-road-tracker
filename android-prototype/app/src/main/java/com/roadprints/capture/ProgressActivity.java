@@ -159,6 +159,8 @@ public class ProgressActivity extends Activity {
         loadStatistics();
     }
 
+    @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent);setIntent(intent); }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -242,8 +244,9 @@ public class ProgressActivity extends Activity {
             renderStatistics(statisticsContent, loadedStats); restoreProgressScroll();
         }
         if (cached != null && cachedRevision == revision) {
+            boolean newlyLoaded = loadedRevision != revision;
             loadedRevision = revision; refreshStatus.setVisibility(View.GONE);
-            enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation);
+            if (newlyLoaded) { enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation); }
             return;
         }
         refreshStatus.setText(loadedStats == null || loadedStats.pending ? "Preparing your progress…" : "Updating progress · previous figures remain available");

@@ -59,13 +59,11 @@ final class RoadprintsNavigation {
 
     static void openDestination(Activity activity, Class<?> destination) {
         Intent intent = new Intent(activity, destination);
-        if (destination == MapActivity.class) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        }
+        // Reorder one instance of each tab instead of destroying the tabs above Map.
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         activity.startActivity(intent);
         // Keep the overview and its decoded tiles alive beneath the other tabs.
-        if (!(activity instanceof MapActivity)
-                || activity.getIntent().hasExtra("settlement_code")) activity.finish();
+        if (activity.getIntent().hasExtra("settlement_code")) activity.finish();
     }
 
     private static int dp(Activity activity, int value) {
