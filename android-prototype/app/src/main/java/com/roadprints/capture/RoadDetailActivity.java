@@ -19,7 +19,7 @@ public final class RoadDetailActivity extends Activity {
     private FrameLayout body,mapFrame;
     private RoutePreviewView map;
     private View zoom,loadingPanel;
-    private TextView status,loadingLabel,journeyAction,sectionStatus,retry,legend;
+    private TextView status,loadingLabel,journeyAction,sectionStatus,retry,legend,recordedLabel;
     private ProgressBar progress;
     private RoadDetailSelection selection;
     private boolean cumulative,geometryShown;
@@ -63,6 +63,7 @@ public final class RoadDetailActivity extends Activity {
         stats.addView(progress,new LinearLayout.LayoutParams(-1,dp(12)));
         legend=text("",12);stats.addView(legend);
         sectionStatus=text("",13);sectionStatus.setVisibility(View.GONE);root.addView(sectionStatus);
+        recordedLabel=text("RECORDED SECTIONS",12);recordedLabel.setTextColor(0xFF67D5CC);recordedLabel.setPadding(0,dp(6),0,dp(6));recordedLabel.setVisibility(View.GONE);root.addView(recordedLabel);
         body=new FrameLayout(this);root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         mapFrame=new FrameLayout(this);mapFrame.setTag("road_map_container");body.addView(mapFrame,new FrameLayout.LayoutParams(-1,-1));
         map=RoutePreviewView.overview(this);map.setFlatRoadMapStyle(true);map.setOverviewLoading(true);mapFrame.addView(map,new FrameLayout.LayoutParams(-1,-1));
@@ -77,7 +78,7 @@ public final class RoadDetailActivity extends Activity {
         journeyAction.setGravity(Gravity.CENTER);journeyAction.setTextColor(0xFF0B1C50);
         journeyAction.setBackground(JourneyCardHeader.background(this,0xFFF7C450,0xFFF7C450,14));
         LinearLayout.LayoutParams actionParams=new LinearLayout.LayoutParams(-1,-2);actionParams.topMargin=dp(10);root.removeView(journeyAction);root.addView(journeyAction,actionParams);
-        if(!cumulative&&!RoadDetailSelection.MOTORWAY.equals(selection.kind)&&!RoadDetailSelection.A_ROAD.equals(selection.kind))stats.setVisibility(View.GONE);
+        if(!cumulative&&!RoadDetailSelection.MOTORWAY.equals(selection.kind)&&!RoadDetailSelection.A_ROAD.equals(selection.kind)){stats.setVisibility(View.GONE);recordedLabel.setVisibility(View.VISIBLE);}
         setContentView(root);
         root.setOnApplyWindowInsetsListener((v,insets)->{
             root.setPadding(dp(16)+insets.getSystemWindowInsetLeft(),dp(6)+insets.getSystemWindowInsetTop(),dp(16)+insets.getSystemWindowInsetRight(),dp(12)+insets.getSystemWindowInsetBottom());return insets;
@@ -120,6 +121,7 @@ public final class RoadDetailActivity extends Activity {
     private void showStatistics(){
         skeleton.setVisibility(View.GONE);
         stats.setVisibility(cumulative||model.fullReference?View.VISIBLE:View.GONE);
+        recordedLabel.setVisibility(!cumulative&&!model.fullReference?View.VISIBLE:View.GONE);
         legend.setText(cumulative?"":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled":"");
         if(cumulative){status.setText(model.journeys.size()+" contributing journeys · newest first");progress.setVisibility(View.GONE);return;}
         if(model.fullReference){

@@ -301,8 +301,7 @@ public class MapActivity extends Activity {
     private void showMapLoading(boolean updating) {
         hideMapLoading();
         setMapReady(false);
-        if (mapView != null) mapView.setOverviewLoading(!updating);
-        mapSubtitle.setText(updating ? "Adding your latest journeys…" : "Bringing your roads into view…");
+        mapSubtitle.setText(updating ? "Updating your map…" : "Bringing your roads into view…");
         loadingCard = new MapLoadingView(this, updating);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         params.setMargins(dp(16), dp(16), dp(16), dp(32));

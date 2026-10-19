@@ -148,4 +148,12 @@ public class BetaUiRefinementTest {
         ProgressBar graph=(ProgressBar)get(c.get(),"progress");assertEquals(MapLayerPreferences.Layer.A_ROADS.color,graph.getProgressTintList().getDefaultColor());
         assertEquals(0xFFFFFFFF,graph.getProgressBackgroundTintList().getDefaultColor());assertNotNull(get(get(c.get(),"map"),"mapRoadTapListener"));
     }
+    @Test public void welcomeOverlayStillBlocksMapDuringBackgroundRefreshAndDismissalExposesRecovery()throws Exception{
+        MapActivity screen=recap();set(screen,"hasDisplayedMap",true);Object map=get(screen,"mapView");Object generation=get(screen,"mapLoadGeneration");
+        call(screen,"showMapLoading",new Class[]{boolean.class},true);
+        assertEquals(View.VISIBLE,screen.getWindow().getDecorView().findViewWithTag("welcome_back_overlay").getVisibility());
+        assertTrue((Boolean)get(map,"overviewLoading"));assertEquals(View.GONE,((View)get(screen,"mapFilterControls")).getVisibility());
+        text(screen.getWindow().getDecorView(),"DISMISS").performClick();assertEquals(View.VISIBLE,screen.getWindow().getDecorView().findViewWithTag("map_load_reset").getVisibility());
+        assertSame(map,get(screen,"mapView"));assertEquals(generation,get(screen,"mapLoadGeneration"));assertFalse((Boolean)get(map,"overviewLoading"));
+    }
 }
