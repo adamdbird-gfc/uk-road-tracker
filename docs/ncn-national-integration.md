@@ -145,11 +145,13 @@ stable archive revision/activation epoch. Explicit Retry resumes failed work.
 
 | Checks | Status |
 |---|---|
-| 322 inherited Python NCN tests | Passed before Firebase-only delivery changes. |
+| 322 inherited Python NCN tests | Passed again after Firebase delivery changes. |
 | National database readback | Passed: identity/source counts, 34 holds, 218 measurable routes, all 335,007 measured target mappings, 333,497 unique network edges. |
 | 5 external-reference/publisher invariant tests | Passed: manifest bounds, monotonic rollback, preservation, config rules, corruption. |
 | Android Java syntax and Python compilation; git whitespace | Passed; syntax parsing is not Java type compilation. |
-| Android/Robolectric unit tests and lint (including new offline/cache tests) | Not run: no local JDK compiler/Android SDK/Gradle; CI needs the published reference. |
+| Android compilation | Passed in CI run 39325156149. |
+| Lint / offline Robolectric regressions | First lint run found four orientation constants; fixed and rerun pending. Offline regressions can execute even while publication is unavailable. |
+| National Robolectric tests | Pending: CI needs the published immutable reference. |
 | Firebase preview serving/integrity/rollback and project capacity | Not verified; blocked on authenticated publication/payload transport. |
 | APK 0.25.207 (253) | Version reserved in source only; no successful build or distribution yet. |
 | Real-device acceptance | Not performed. |

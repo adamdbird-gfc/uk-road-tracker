@@ -64,6 +64,9 @@ final class NcnCatalogueFiles {
         }
         File active=new File(dir,"active.json");if(active.exists()){JSONObject previous=null;try{previous=readManifest(active);validate(previous);}catch(Exception corrupt){/* Do not preserve a broken pointer over the last good rollback. */}if(previous!=null&&!previous.optString("sha256").equals(manifest.getString("sha256")))write(new File(dir,"previous.json"),previous);}
         write(active,manifest);
+        java.util.Set<String> keep=new java.util.HashSet<>();keep.add(manifest.getString("sha256")+".db");
+        try{keep.add(readManifest(new File(dir,"previous.json")).getString("sha256")+".db");}catch(Exception absent){/* First installation has no prior generation. */}
+        File[] generations=dir.listFiles();if(generations!=null)for(File generation:generations)if(generation.getName().matches("[a-f0-9]{64}\\.db")&&!keep.contains(generation.getName()))generation.delete();
     }
     static void write(File target,JSONObject m)throws Exception{AtomicFile file=new AtomicFile(target);FileOutputStream out=null;try{out=file.startWrite();out.write(m.toString().getBytes(StandardCharsets.UTF_8));file.finishWrite(out);}catch(Exception e){if(out!=null)file.failWrite(out);throw e;}}
     static synchronized void refreshIfDue(Context context){

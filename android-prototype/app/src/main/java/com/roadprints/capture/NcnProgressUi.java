@@ -13,7 +13,7 @@ final class NcnProgressUi {
     static final int RED=0xFFBF2834,PURPLE=0xFF8D55C7;
     static String label(String mode){return mode.equals("cycling")?"Cycling":mode.equals("on_foot")?"Walking & running":"Combined";}
     static void add(Activity activity,LinearLayout parent){
-        LinearLayout panel=new LinearLayout(activity);panel.setOrientation(1);panel.setPadding(dp(activity,18),dp(activity,18),dp(activity,18),dp(activity,18));panel.setTag("progress:ncn");parent.addView(panel);
+        LinearLayout panel=new LinearLayout(activity);panel.setOrientation(android.widget.LinearLayout.VERTICAL);panel.setPadding(dp(activity,18),dp(activity,18),dp(activity,18),dp(activity,18));panel.setTag("progress:ncn");parent.addView(panel);
         final Object[] rendered={null};final boolean[] renderedEnabled={NcnProgressStore.enabled(activity)};final String[] activityMode={""};final TextView[] statusView={null};
         Runnable update=new Runnable(){public void run(){
             if(activity.isFinishing()||activity.isDestroyed()||!panel.isAttachedToWindow())return;
@@ -39,14 +39,14 @@ final class NcnProgressUi {
             android.content.SharedPreferences prefs=a.getSharedPreferences("ncn_ui",0);search.setText(prefs.getString("search",""));
             List<View> rows=new ArrayList<>();List<String> terms=new ArrayList<>();Map<String,LinearLayout> groups=new LinkedHashMap<>();
             for(String group:new String[]{"national","regional","named"}){
-                LinearLayout entries=new LinearLayout(a);entries.setOrientation(1);groups.put(group,entries);boolean open=prefs.getBoolean(group,group.equals("national"));
+                LinearLayout entries=new LinearLayout(a);entries.setOrientation(android.widget.LinearLayout.VERTICAL);groups.put(group,entries);boolean open=prefs.getBoolean(group,group.equals("national"));
                 TextView heading=action(a,(open?"▾ ":"▸ ")+group.substring(0,1).toUpperCase(Locale.UK)+group.substring(1)+" routes",()->{});
                 heading.setOnClickListener(v->{boolean next=entries.getVisibility()!=View.VISIBLE;entries.setVisibility(next?View.VISIBLE:View.GONE);prefs.edit().putBoolean(group,next).apply();heading.setText((next?"▾ ":"▸ ")+group.substring(0,1).toUpperCase(Locale.UK)+group.substring(1)+" routes");});panel.addView(heading);panel.addView(entries);entries.setVisibility(open?View.VISIBLE:View.GONE);
                 List<String> keys=new ArrayList<>();for(String key:s.catalogue.routes.keySet())if(group.equals(s.catalogue.routes.get(key).optString("group")))keys.add(key);
                 keys.sort((x,y)->{try{return Integer.compare(Integer.parseInt(x.split(":")[1]),Integer.parseInt(y.split(":")[1]));}catch(Exception e){return x.compareTo(y);}});
                 if(keys.isEmpty())entries.addView(text(a,"No independently verified "+group+" identities in this checkpoint.",13,0xFFB9C5D8));
                 for(String key:keys){org.json.JSONObject route=s.catalogue.routes.get(key);double length=route.getDouble("length_m"),covered=s.ledger.metres(key,mode);boolean measurable=route.optBoolean("measurable",true);
-                    LinearLayout row=new LinearLayout(a);row.setOrientation(1);row.setPadding(0,dp(a,12),0,dp(a,12));entries.addView(row);
+                    LinearLayout row=new LinearLayout(a);row.setOrientation(android.widget.LinearLayout.VERTICAL);row.setPadding(0,dp(a,12),0,dp(a,12));entries.addView(row);
                     row.addView(text(a,route.optString("name",key)+(measurable?String.format(Locale.UK," · %.1f%%",100*covered/length):" · assessment held"),17,Color.WHITE));
                     row.addView(text(a,measurable?DistanceUnits.format(a,covered)+" / "+DistanceUnits.format(a,length)+" · VIEW MAP":"Preserved alternative inventory · VIEW MAP",13,Color.WHITE));
                     if(measurable)row.addView(new RoadCompletionBar(a,covered/length,RED),new LinearLayout.LayoutParams(-1,dp(a,8)));
@@ -55,7 +55,7 @@ final class NcnProgressUi {
             }
             Runnable filter=()->{String q=search.getText().toString().trim().toLowerCase(Locale.UK);prefs.edit().putString("search",q).apply();if(q.isEmpty())for(Map.Entry<String,LinearLayout> group:groups.entrySet())group.getValue().setVisibility(prefs.getBoolean(group.getKey(),group.getKey().equals("national"))?View.VISIBLE:View.GONE);for(int i=0;i<rows.size();i++){View row=rows.get(i);row.setVisibility(q.isEmpty()||terms.get(i).contains(q)?View.VISIBLE:View.GONE);if(!q.isEmpty()&&row.getVisibility()==View.VISIBLE)((View)row.getParent()).setVisibility(View.VISIBLE);}};
             search.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence v,int st,int count,int after){}public void onTextChanged(CharSequence v,int st,int before,int count){filter.run();}public void afterTextChanged(android.text.Editable e){}});filter.run();
-            panel.addView(text(a,"219 supported identities · 34 evidence holds excluded. Open reference gaps remain in totals. Deferred alternatives earn no inferred credit. Purple on maps; red signpost progress bars.",12,0xFFB9C5D8));panel.addView(text(a,s.catalogue.attribution,11,0xFFB9C5D8));
+            panel.addView(text(a,s.catalogue.routes.size()+" supported identities · "+s.catalogue.heldCount+" evidence holds excluded. Open reference gaps remain in totals. Deferred alternatives earn no inferred credit. Purple on maps; red signpost progress bars.",12,0xFFB9C5D8));panel.addView(text(a,s.catalogue.attribution,11,0xFFB9C5D8));
         }catch(Exception e){panel.addView(text(a,"NCN progress unavailable. Retry assessment.",14,Color.WHITE));}
     }
     static void open(Activity a,String route){RoadDetailSelection selection=new RoadDetailSelection(RoadDetailSelection.NCN,route,"","","");selection.ncnMode=NcnProgressStore.mode(a);a.startActivity(selection.intent(a,false));}
