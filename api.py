@@ -12,6 +12,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
 from map_context import shared_area, ContextUnavailable
 from database import (
     database_state,
@@ -214,7 +215,7 @@ async def request_match(client, points, radius, base_url):
         "overview": "full",
         "geometries": "geojson",
         "steps": "true",
-        "annotations": "false",
+        "annotations": "nodes" if base_url == CYCLE_OSRM_BASE_URL else "false",
         "tidy": "true",
         "gaps": "split",
         "radiuses": radiuses,
@@ -605,8 +606,11 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
+    # The public driving router accepts ten trace coordinates; larger windows
+    # trigger TooBig and recursive retries before any useful match.
     return await match_payload(payload, OSRM_BASE_URL, include_motorways=True,
-                               road_recovery=payload.road_recovery)
+                               road_recovery=payload.road_recovery,
+                               chunk_size=10 if payload.road_recovery else OSRM_CHUNK_SIZE)
 
 @app.get("/map-context/v1/{lat_cell}/{lon_cell}")
 def map_context_area(lat_cell: int, lon_cell: int):
@@ -695,6 +699,7 @@ async def match_cycling_activity(payload: MatchRequest):
     result["cycling_geojson"] = result["road_geojson"]
     result["road_geojson"] = {"type": "FeatureCollection", "features": []}
     result["matching_mode"] = "cycling"
+    result["matcher"] = "osrm_bicycle_v1"
     result["coverage_attribution"] = "cycle_geometry_only"
     return result
 
@@ -719,6 +724,7 @@ async def match_payload(
     overlap = 1 if road_recovery or disjoint_chunks else OSRM_CHUNK_OVERLAP
     chunks = chunk_points(payload.points, chunk_size, overlap)
     features = []
+    cycling_source_features = []
     motorway_features = []
     a_road_features = []
     road_features = []
@@ -766,6 +772,9 @@ async def match_payload(
                     if geometry:
                         distance = float(matching.get("distance") or 0.0)
                         matched_distance_m += distance
+                        if base_url == CYCLE_OSRM_BASE_URL:
+                            cycling_source_features.append(cycling_feature_evidence(
+                                matching, len(features), data.get("data_version")))
                         features.append({
                             "type": "Feature",
                             "properties": {
@@ -853,7 +862,7 @@ async def match_payload(
                 road_distance_complete = False
             previous_end = max(previous_end, end)
 
-    return {
+    result = {
         "status": "ok",
         "input_points": len(payload.points),
         "chunks_used": len(chunks),
@@ -871,3 +880,6 @@ async def match_payload(
         "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
+    if base_url == CYCLE_OSRM_BASE_URL:
+        result["cycling_path_evidence"] = cycling_evidence(cycling_source_features)
+    return result

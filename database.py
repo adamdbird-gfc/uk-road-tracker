@@ -10,6 +10,7 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
+from matched_path_evidence import build_matched_path_evidence, public_way_reference
 from pedestrian_matching import PedestrianEdgeCandidates, PedestrianGraphPaths, compress_pedestrian_graph, match_reference_trajectory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -561,10 +562,12 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
                 cursor.execute("SET LOCAL statement_timeout = 5000")
                 cursor.execute(
                     """
-                    SELECT source_feature_id, segment_kind, tags,
-                           ST_AsGeoJSON(geometry)
-                    FROM pedestrian_reference_segments
-                    WHERE geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    SELECT source.source_key, source.source_version,
+                           segment.source_feature_id, segment.segment_kind, segment.tags,
+                           ST_AsGeoJSON(segment.geometry)
+                    FROM pedestrian_reference_segments AS segment
+                    JOIN reference_sources AS source ON source.id = segment.source_id
+                    WHERE segment.geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
                     LIMIT 50001
                     """,
                     (west, south, east, north),
@@ -595,7 +598,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     vertices: dict[tuple[int, int], list[float]] = {}
     adjacency: dict[tuple[int, int], list[tuple[tuple[int, int], float, str]]] = {}
     features: dict[str, dict] = {}
-    for feature_id, kind, tags, geometry_json in rows:
+    for source_key, source_version, source_feature_id, kind, tags, geometry_json in rows:
+        feature_id = json.dumps([source_key, str(source_feature_id)], separators=(",", ":"))
         if time.monotonic() >= deadline:
             logger.warning("pedestrian reference graph preparation exceeded 20 seconds")
             return None
@@ -604,6 +608,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         if len(coords) < 2:
             continue
         features[feature_id] = {
+            "matched_reference": public_way_reference(source_key, source_version,
+                source_feature_id, kind, tags, coords),
             "type": "Feature",
             "properties": {
                 "road_ref": (tags or {}).get("ref", ""),
@@ -710,6 +716,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     return {
         "status": "ok",
         "matcher": "preloaded_pedestrian_network_v4",
+        "matched_path_evidence": build_matched_path_evidence(coordinates, used_feature_ids, features),
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),
@@ -720,7 +727,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "a_road_geojson": {"type": "FeatureCollection", "features": []},
         "road_geojson": {
             "type": "FeatureCollection",
-            "features": [features[feature_id] for feature_id in unique_feature_ids if feature_id in features],
+            "features": [{key: value for key, value in features[feature_id].items() if key != "matched_reference"}
+                         for feature_id in unique_feature_ids if feature_id in features],
         },
         "other_road_distance_m": 0.0,
     }
