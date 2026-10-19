@@ -39,7 +39,7 @@ GB/NI and reference aliases, clipped crossings and holes, same-name roads,
 corrections, unfinished journeys, duplicate collections and cumulative evidence.
 
 The NCN consumer still needs its own route selection and verified inventory
-adapter. Its orange/purple rendering and activation totals must use the NCN
+adapter. Its red-chart/purple-completed-map rendering and activation totals must use the NCN
 ledger; they must not inherit motorway proximity-based coverage calculations.
 The shared child-map/journey-list interaction is established here; this does not
 claim that the NCN Android integration or the collection beta gate is complete.

@@ -180,6 +180,7 @@ public class ProgressActivity extends Activity {
         useKilometres = DistanceUnits.usesKilometres(this);
         mainHandler.removeCallbacks(revisionTicker); mainHandler.postDelayed(revisionTicker, 3000);
         if (hasResumed) {
+            if (loadedStats != null && !loadedStats.pending) startLocalRoadProgressTicker(loadedStats);
             loadStatistics();
         } else {
             hasResumed = true;

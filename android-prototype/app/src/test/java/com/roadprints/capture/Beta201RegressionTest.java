@@ -132,9 +132,19 @@ public class Beta201RegressionTest {
                 .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",line))
                 .put("gps_samples",new JSONArray().put(new JSONObject().put("private_raw",true))).put("processing_result",result)
                 .put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("ref:A2")));
+        JSONArray raw=new JSONArray();for(int i=0;i<5000;i++)raw.put(new JSONObject().put("private_raw",true).put("sequence",i));
+        journey.put("gps_samples",raw);
         JourneyStore.save(app,journey);long revision=JourneyStore.dataRevision(app);
-        List<JSONObject> read=new ArrayList<>();JourneyStore.forEachMapEvidence(app,()->false,read::add);
+        long baselineStart=System.nanoTime();final int[] fullBytes={0};
+        JourneyStore.forEach(app,row->fullBytes[0]+=row.toString().length());
+        long baselineNanos=System.nanoTime()-baselineStart;
+        List<JSONObject> read=new ArrayList<>();long streamedStart=System.nanoTime();
+        JourneyStore.forEachMapEvidence(app,()->false,read::add);
+        long streamedNanos=System.nanoTime()-streamedStart;
         assertEquals(1,read.size());JSONObject compact=read.get(0);
+        assertTrue("Raw capture must not dominate map heap",compact.toString().length()*10<fullBytes[0]);
+        System.out.println("Beta201 synthetic full_read_ms="+baselineNanos/1_000_000.0+" streamed_ms="+streamedNanos/1_000_000.0
+                +" full_json_chars="+fullBytes[0]+" streamed_json_chars="+compact.toString().length());
         assertFalse(compact.has("gps_samples"));assertFalse(compact.has("route_geometry"));assertEquals(2,JourneyFilters.pointCount(compact));
         assertEquals(result.toString(),compact.getJSONObject("processing_result").toString());
         assertEquals("Retained title",compact.getString("title"));assertTrue(JourneyFilters.matchesJourneyStatusFilter(compact,"matched"));

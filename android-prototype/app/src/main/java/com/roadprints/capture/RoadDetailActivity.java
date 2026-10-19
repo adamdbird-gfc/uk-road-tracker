@@ -108,19 +108,26 @@ public final class RoadDetailActivity extends Activity {
         else map.setRouteData(null,model.covered);
         map.setContentDescription("Map of "+selection.title()+". Tap a road section to view its journeys.");
         map.setMapRoadTapListener((latitude,longitude)->{
+            cancelPending();
             final int request=++generation;
+            loading=true;
+            timeout=()->{
+                if(request!=generation || !loading)return;
+                generation++;cancelPending();status.setText("Journey lookup took too long. Tap a road section to retry.");
+            };
+            handler.postDelayed(timeout,LOAD_TIMEOUT_MS);
             status.setText("Finding journeys on this section…");
             pending=ScreenDataLoader.interactive(()->{
                 try {
                     List<RoadDetailModel.Entry> related=model.journeysAt(getApplicationContext(),selection,latitude,longitude);
                     runOnUiThread(()->{
                         if(isFinishing()||isDestroyed()||request!=generation)return;
-                        status.setText(summary());
+                        cancelPending();status.setText(summary());
                         journeyDialog=RoadprintsDialog.show(this,selection.title(),related.isEmpty()?"No retained journeys on this section.":"Journeys on this section",
                                 journeyList(related),"CLOSE",null,null,null);
                     });
                 } catch(Exception failure) {
-                    runOnUiThread(()->{if(request==generation)status.setText("Journeys unavailable. Tap a road section to retry.");});
+                    runOnUiThread(()->{if(request==generation){cancelPending();status.setText("Journeys unavailable. Tap a road section to retry.");}});
                 }
             });
         });

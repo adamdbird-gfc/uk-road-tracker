@@ -63,7 +63,9 @@ final class RoadprintsNavigation {
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         activity.startActivity(intent);
         // Keep the overview and its decoded tiles alive beneath the other tabs.
-        if (activity.getIntent().hasExtra("settlement_code")) activity.finish();
+        if (!(activity instanceof MapActivity || activity instanceof ProgressActivity
+                || activity instanceof JourneyListActivity || activity instanceof AchievementsActivity
+                || activity instanceof CollectionsActivity) || activity.getIntent().hasExtra("settlement_code")) activity.finish();
     }
 
     private static int dp(Activity activity, int value) {
