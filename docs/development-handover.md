@@ -30,14 +30,26 @@ fallback and weekly updates independent of APK versions. The clone/add publisher
 preserves all live settlement/collection assets. See the integration document for
 exact hashes, workflow, rollback and validation limitations.
 
-**Blocker:** no Firebase credentials or authorised local-payload transport into the
-existing authenticated Actions publisher. Prepared publication bundle is preserved;
-no more national GitHub binary uploads. Original remote checkpoint
-`2ee1031218665ea50acd98fb38c7c3e4ae25ba6a` and its first 71 confirmed parts remain
-intact (79 total confirmed object receipts recorded locally). The new branch has
-no national binary ancestry. Version **0.25.207 (253)** is reserved, not built.
-After authenticated preview/live publication, run integrated Android checks and
-the established pinned release request; do not distribute before those pass.
+**Publication authentication verified:** the original Hosting secret works in
+Actions. Runs [39327313703](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327313703)
+and [39327496695](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327496695)
+confirm the existing identity, live Hosting version and 18,155 preserved files.
+Original successful migration run: 38740224136 (`f43a8686`); its input was an
+existing GitHub Release APK, while full deployments staged repository files.
+No new Firebase login, project, account or key is needed.
+
+**Actual blocker is input transport:** the prepared NCN payload is local/saved in
+ChatGPT, not available to the Actions runner. The configured Storage bucket's
+permission endpoint returned HTTP 404; no bucket or IAM setup was introduced.
+Minimum missing input is an authorised HTTPS location for the prepared
+`catalogue.db.gz`. `infra/ncn-publication` preserves a working credential check
+and extends publication to optional full-test/signed-beta packaging after verified
+live serving. The main implementation remains draft PR #207. No more national
+GitHub binary uploads. Checkpoint `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a`
+and its 71 confirmed parts remain intact. **0.25.207 (253) is reserved, not built.**
+See the integration document for exact original transport/authentication and
+publication/rollback instructions. Full national tests and real-device acceptance
+remain pending.
 
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
