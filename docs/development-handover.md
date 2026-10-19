@@ -2,7 +2,34 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest delivery — Beta 1 stabilisation (#201)
+## Latest delivery — Beta 1 UI refinement (#201)
+
+**Released 0.25.204 (250)** on 19 October 2026. [Install the UI update](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/6g411l4k07r7o). Built directly above the real-device-tested 0.25.203 stabilisation release. PR [#203](https://github.com/adamdbird-gfc/uk-road-tracker/pull/203) is limited to the six requested UI refinements. Existing map-filter, celebration, road-geometry and retained-tab fixes are preserved. No NCN, tracking, rematching, collection or coverage-calculation change was included; A1 and A1(M) retain independent identities and mileage.
+
+### Exact changes
+
+- **Welcome back:** the eligible discovery recap now overlays the prepared map with part of the map visible. Map controls and touch interactions remain unavailable until both map readiness and recap dismissal. Close, Back and navigation actions acknowledge only the displayed journey IDs, reveal the same prepared map and retain existing eligibility/count/distance/matching/action rules.
+- **Close controls:** the shared Close control aligns visible text with the right content inset, retains a minimum 48dp touch height and is used in focused roads and shared dialogs. Focused-road safe-area padding and the achievement Close row are handled explicitly.
+- **Progressive focused maps:** the map container appears immediately, with a spinner over the map and skeleton road statistics. Geometry and whole-road statistics appear before final contributing-journey metadata; the map stays visible during section lookups. Existing 30-second deadline, explicit failure/retry, generation checks and cancellation remain. A two-road bounded derived cache reuses unchanged journey revisions without any network I/O during cache lookup.
+- **Zoom:** main and focused maps share the existing-style plus/minus controls, retaining initial road fitting, pinch, pan and section selection.
+- **Road statistics:** a whole-road completion graph displays travelled/total distance and percentage using existing motorway blue/red and A-road green/red conventions. Selected mapped-section distance, travelled/remaining status and saved-journey frequency are separately labelled. B/local roads without a complete reference explicitly say whole-road completion is unavailable; no inferred coverage is awarded.
+- **Contributing journeys:** the main Journeys and focused-road lists share date/time, mode badge and available distance/duration/GPS metadata formatting. Whole-road and section lists open the corresponding saved journey and load 30 visible cards per page without changing attribution.
+
+### Commits and verification
+
+Implementation commits: `086435977337dfd77b3777be484aa37645ebd355`, `ea0600e16a25010459fbdc11d6a7990e221794bd`, and the final cache-freshness correction below. Exact tested/packaged source **`bed7ef24bacb0d57b5caed676fde492563372510`**; PR #203 merged as `1a4dc2ceca87dc607c1a744bd32283bd96f2aa73`. One immutable release request `5804c64d4ad6895c06afa5dc6a08ffeef42357c0` pins that source and requests existing-tester distribution.
+
+[Android checks 39280220062](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39280220062) passed unit tests and lint. [Packaging/distribution 39292861263](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39292861263) passed **630 tests; zero failures/errors/skips**, lint and stable-key APK signature verification, then uploaded and distributed Firebase release **`6g411l4k07r7o`** to existing testers successfully. Signed APK artifact [12206082307](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39292861263/artifacts/12206082307); verification reports [12207465039](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39292861263/artifacts/12207465039). GitHub previously reported the run queued during its Actions/Pages service incident; after recovery it exposes successful execution. The old queued checkpoint is superseded.
+
+Thirteen new regression tests exercise recap dismissal/Back/navigation and captured IDs; map readiness and prepared-map reuse; shared Close positioning/action; immediate loading/skeleton/error-compatible UI; progressive geometry ahead of metadata; completion graph; shared contribution cards and saved-journey navigation; zoom; bounded pagination; separate section details; road/revision cache invalidation, eviction and unchanged reopening. Existing stabilisation regressions remain in the full suite.
+
+### Acceptance and known limits
+
+Keep #201 open for real-device UI acceptance. Install over 0.25.203 without clearing data; check recap dismissal/navigation and readiness, close alignment/safe areas, M2/A-road fit/zoom/section details, contribution navigation/long lists, small-screen layout and Map/Progress revisit state. JVM tests do not substitute for Pixel/Samsung rendering and gesture acceptance.
+
+Numbered-road cache entries depend on exact road identity and saved-journey revision; local-road snapshots expire after five minutes because public boundary responses expose no revision token. At most two derived snapshots are retained; unusually large models are not cached (50,000 map points or 5,000 journeys). Android process reclamation can rebuild derived state. Selected-section distance describes the nearest rendered edge; frequency is explicitly the number of contributing saved journeys near it, not a count of passes within a journey. Existing B/local reference limitations and unavailable-router behaviour remain unchanged. The Work execution/usage timer is not exposed to the agent; reported elapsed time is wall clock.
+
+## Previous delivery — Beta 1 stabilisation (#201)
 
 **Released 0.25.203 (249)** on 19 October 2026. [Install update](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/6odqoda2eki6g). PR [#202](https://github.com/adamdbird-gfc/uk-road-tracker/pull/202) contains only the five reported Beta 1 repairs and targeted tests. Its code starts directly at installed source `5c8deea0a6237f484a865994e7148d51af4f1627`; no NCN or unrelated backlog feature was integrated. Existing journey archives, tracking state, collection ledgers, application ID and signing identity are preserved; no destructive migration or rematch was added.
 
