@@ -24,7 +24,7 @@ public class Beta205FilterRecoveryTest {
     @Before public void setup(){app=RuntimeEnvironment.getApplication();previous=MapActivity.mapRouteLoader;MapActivity.clearProcessMapCache();
         app.getSharedPreferences("roadprints_map_journey_filters",0).edit().clear().commit();
         new java.io.File(app.getFilesDir(),"screen-cache/map-routes.json").delete();}
-    @After public void cleanup()throws Exception{for(CountDownLatch l:releases)l.countDown();for(ActivityController<MapActivity> c:screens)c.destroy();ScreenDataLoader.map(()->{}).get(5,TimeUnit.SECONDS);MapActivity.mapRouteLoader=previous;MapActivity.clearProcessMapCache();}
+    @After public void cleanup()throws Exception{for(CountDownLatch l:releases)l.countDown();for(ActivityController<MapActivity> c:screens)c.destroy();ScreenDataLoader.map(()->{}).get(5,TimeUnit.SECONDS);CountDownLatch settled=new CountDownLatch(1);ScreenDataLoader.execute(settled::countDown);assertTrue(settled.await(5,TimeUnit.SECONDS));MapActivity.mapRouteLoader=previous;MapActivity.clearProcessMapCache();}
     static Object get(Object o,String n)throws Exception{Field f=o.getClass().getDeclaredField(n);f.setAccessible(true);return f.get(o);}
     static void set(Object o,String n,Object v)throws Exception{Field f=o.getClass().getDeclaredField(n);f.setAccessible(true);f.set(o,v);}
     static Object call(Object o,String n,Class<?>[] types,Object...args)throws Exception{Method m=o.getClass().getDeclaredMethod(n,types);m.setAccessible(true);return m.invoke(o,args);}
@@ -94,5 +94,34 @@ public class Beta205FilterRecoveryTest {
         MapActivity s=ready();CountDownLatch entered=blockedLoader();apply(s,selection(2,"week"));assertTrue(entered.await(3,TimeUnit.SECONDS));
         call(s,"loadRoadSummaryAt",new Class[]{double.class,double.class},51.44,.37);assertNull(get(s,"roadDialog"));
         assertFalse((Boolean)get(get(s,"mapView"),"overviewLoading"));
+    }
+    @Test public void validColdAllMapCanFinishAfterOldThirtySecondCutoff()throws Exception{
+        MapActivity s=create();CountDownLatch entered=blockedLoader();call(s,"refreshMap",new Class[]{});assertTrue(entered.await(3,TimeUnit.SECONDS));
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(45));assertFalse((Boolean)get(s,"mapLoadFailed"));
+        GrowingStatusControl status=(GrowingStatusControl)get(s,"mapStatus");status.render(MatchingCoordinator.get(app).snapshot());assertTrue(status.getText().toString().contains("Loading map"));
+        releases.get(0).countDown();drain();assertTrue((Boolean)get(s,"mapReady"));assertTrue(status.getText().toString().contains("Map ready"));
+    }
+    @Test public void errorAndRetryFooterFollowTheActualMapState()throws Exception{
+        MapActivity s=create();MapActivity.mapRouteLoader=(a,f,d,z)->{throw new java.io.IOException("test");};call(s,"refreshMap",new Class[]{});drain();
+        GrowingStatusControl status=(GrowingStatusControl)get(s,"mapStatus");status.render(MatchingCoordinator.get(app).snapshot());assertTrue(status.getText().toString().contains("needs retry"));assertFalse(status.getText().toString().contains("Ready"));
+        CountDownLatch entered=blockedLoader();tagged(s,"map_load_retry").performClick();assertTrue(entered.await(3,TimeUnit.SECONDS));assertTrue(status.getText().toString().contains("Loading map"));
+        releases.get(0).countDown();drain();assertTrue(status.getText().toString().contains("Map ready"));
+    }
+    @Test public void failedResetClearsFiltersBypassesCachedDataAndLoadsDefaultMap()throws Exception{
+        MapActivity s=create();MapActivity.mapRouteLoader=(a,f,d,z)->routes(1);apply(s,selection(2,"week"));drain();
+        call(s,"mapFailure",new Class[]{int.class,String.class},get(s,"mapLoadGeneration"),"test failure");
+        final java.util.concurrent.atomic.AtomicInteger calls=new java.util.concurrent.atomic.AtomicInteger();
+        MapActivity.mapRouteLoader=(a,f,d,z)->{assertTrue(f.isAll());calls.incrementAndGet();return routes(4);};
+        tagged(s,"map_load_reset").performClick();drain();assertEquals(1,calls.get());assertTrue(((JourneyFilters)get(s,"mapFilters")).isAll());assertTrue((Boolean)get(s,"mapReady"));
+    }
+    @Test public void mapPublishesEvenWhileOptionalDiskCacheWorkerIsBlocked()throws Exception{
+        MapActivity s=create();CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);releases.add(release);
+        ScreenDataLoader.execute(()->{entered.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});assertTrue(entered.await(3,TimeUnit.SECONDS));
+        MapActivity.mapRouteLoader=(a,f,d,z)->routes(2);call(s,"refreshMap",new Class[]{});drain();assertTrue((Boolean)get(s,"mapReady"));assertNull(get(s,"loadingCard"));
+    }
+    @Test public void retryForcesFreshPreparationEvenIfLastSuccessfulRevisionStillMatches()throws Exception{
+        MapActivity s=ready();call(s,"mapFailure",new Class[]{int.class,String.class},get(s,"mapLoadGeneration"),"test failure");
+        final java.util.concurrent.atomic.AtomicInteger calls=new java.util.concurrent.atomic.AtomicInteger();MapActivity.mapRouteLoader=(a,f,d,z)->{calls.incrementAndGet();return routes(5);};
+        tagged(s,"map_load_retry").performClick();drain();assertEquals(1,calls.get());assertTrue((Boolean)get(s,"mapReady"));
     }
 }

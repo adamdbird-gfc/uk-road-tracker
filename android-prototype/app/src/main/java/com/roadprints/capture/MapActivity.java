@@ -52,6 +52,8 @@ public class MapActivity extends Activity {
     private JSONArray collectionServiceVenues=new JSONArray();
     private Set<String> collectionServiceVisits=java.util.Collections.emptySet();
     private MapLoadingView loadingCard;
+    private GrowingStatusControl mapStatus;
+    private boolean skipDiskMapCache,forceMapReload;
     private FrameLayout mapFrame;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private volatile int mapLoadGeneration;
@@ -67,7 +69,7 @@ public class MapActivity extends Activity {
     private Runnable mapDeadline;
     private long mapStartedAt;
     private View mapRecovery;
-    static final long MAP_TIMEOUT_MS = 30_000;
+    static final long MAP_TIMEOUT_MS = 120_000; // Cold archive/reference preparation can legitimately exceed 30 seconds.
     interface MapRouteLoader {
         MapRoutes load(MapActivity screen, JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception;
     }
@@ -193,7 +195,9 @@ public class MapActivity extends Activity {
         showMapLoading(false);
 
         View bottomNavigation = buildBottomNavigation();
-        root.addView(GrowingStatusControl.create(this));
+        mapStatus=(GrowingStatusControl)GrowingStatusControl.create(this);
+        root.addView(mapStatus);
+        mapStatus.setScreenStatus("Loading map…");
         root.addView(bottomNavigation);
         setContentView(root);
         applySystemBarInsets(root, heading, bottomNavigation);
@@ -319,13 +323,20 @@ public class MapActivity extends Activity {
         if(mapRecovery!=null)mapFrame.removeView(mapRecovery);
         LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER);row.setPadding(dp(12),dp(6),dp(12),dp(6));
         row.setBackground(roundRect(0xFF0B1C50,12));row.setTag("map_load_recovery");
-        if(failed){TextView retry=mapFilterButton("RETRY","Retry loading map journeys");retry.setTag("map_load_retry");retry.setOnClickListener(v->{mapLoadFailed=false;refreshMap();});row.addView(retry);}
+        if(failed){TextView retry=mapFilterButton("RETRY","Retry loading map journeys");retry.setTag("map_load_retry");retry.setOnClickListener(v->retryMap());row.addView(retry);}
         if(hasDisplayedMap){TextView cancel=mapFilterButton("CANCEL","Cancel map refresh and keep previous results");cancel.setTag("map_load_cancel");cancel.setOnClickListener(v->cancelMapRefresh());row.addView(cancel);}
         TextView reset=mapFilterButton("RESET","Reset map journey filters");reset.setTag("map_load_reset");reset.setOnClickListener(v->applyMapFilters(JourneyFilters.all()));row.addView(reset);
         FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.CENTER_HORIZONTAL);lp.topMargin=dp(12);mapFrame.addView(row,lp);mapRecovery=row;updateMapControls();
     }
+    private void retryMap() {
+        mapLoadFailed=false;skipDiskMapCache=true;forceMapReload=true;clearProcessMapCache();refreshMap();
+    }
+    private void completeMapWork() {
+        if(mapDeadline!=null)mainHandler.removeCallbacks(mapDeadline);
+        mapPending=null;loadingMapRevision=Long.MIN_VALUE;
+    }
     private void cancelMapRefresh() {
-        mapLoadGeneration++;cancelMapWork();mapLoadFailed=false;hideMapLoading();
+        mapLoadGeneration++;cancelMapWork();mapLoadFailed=false;forceMapReload=false;hideMapLoading();
         mapFilters=displayedFilters;persistMapFilters();mapFilterSummary.setText(mapFilters.summary());
         mapSubtitle.setOnClickListener(null);mapSubtitle.setText("Map refresh cancelled. Previous results retained.");setMapReady(hasDisplayedMap);
         android.util.Log.i("RoadprintsTiming","map_outcome=cancelled total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
@@ -333,7 +344,7 @@ public class MapActivity extends Activity {
     private void mapFailure(int request,String message) {
         if(request!=mapLoadGeneration||isFinishing()||isDestroyed())return;
         mapLoadGeneration++;cancelMapWork();hideMapLoading();mapLoadFailed=true;
-        mapSubtitle.setText(message);mapSubtitle.setOnClickListener(v->{mapLoadFailed=false;refreshMap();});
+        mapSubtitle.setText(message);mapSubtitle.setOnClickListener(v->retryMap());
         setMapReady(false);showMapRecovery(true);
         android.util.Log.i("RoadprintsTiming","map_outcome=failure total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
     }
@@ -348,7 +359,9 @@ public class MapActivity extends Activity {
     }
 
     private void setMapReady(boolean ready) {
-        mapReady=ready;updateMapControls();
+        mapReady=ready;
+        if(mapStatus!=null)mapStatus.setScreenStatus(ready?"Map ready":mapLoadFailed?"Map needs retry":"Loading map…");
+        updateMapControls();
         if(recapCard!=null)recapCard.setVisibility(ready||hasDisplayedMap?View.VISIBLE:View.GONE);
     }
     private void updateMapControls() {
@@ -361,7 +374,7 @@ public class MapActivity extends Activity {
 
     private void refreshMap() {
         String settlementCode = getIntent().getStringExtra("settlement_code");
-        if (mapView != null && displayedMapRevision == mapDataRevision() && sameFilters(mapFilters,displayedFilters)) {
+        if (!forceMapReload && mapView != null && displayedMapRevision == mapDataRevision() && sameFilters(mapFilters,displayedFilters)) {
             if(hasDisplayedMap){hideMapLoading();setMapReady(true);}
             android.util.Log.i("RoadprintsTiming", "map_revisit=reused");return;
         }
@@ -387,11 +400,13 @@ public class MapActivity extends Activity {
                 processMapCacheRevision = revision;
             }
         }
+        mapStartedAt=android.os.SystemClock.elapsedRealtime();
         loadingMapRevision = revision;
         if (cached != null) {
             displayMapRoutes(cached, generation);
             return;
         }
+        mapLoadFailed=false;
         showMapLoading(hasDisplayedMap);
         mapDeadline=()->mapFailure(generation,"Loading took too long. Retry or Reset your filters.");
         mainHandler.postDelayed(mapDeadline,MAP_TIMEOUT_MS);
@@ -400,21 +415,14 @@ public class MapActivity extends Activity {
             android.util.Log.i("RoadprintsTiming", "map_queue_ms="+(android.os.SystemClock.elapsedRealtime()-queuedAt));
             MapRoutes mapRoutes;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
-                JSONObject saved = selection.isAll() ? PersistentScreenCache.read(getApplicationContext(),
+                JSONObject saved = selection.isAll()&&!skipDiskMapCache ? PersistentScreenCache.read(getApplicationContext(),
                         "map-routes", revision) : null;
-                mapRoutes = saved == null ? null : mapRoutesFromCache(saved);
+                try {mapRoutes = saved == null ? null : mapRoutesFromCache(saved);}
+                catch(Exception malformedCache){mapRoutes=null;}
                 if (mapRoutes == null) {
                     mapRoutes = mapRouteLoader.load(this,selection, today, zone);
                     if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
-                    Runtime cacheRuntime = Runtime.getRuntime();
-                    long cacheHeadroom = cacheRuntime.maxMemory()
-                            - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
-                    if (selection.isAll() && mapRoutes.retainedPoints <= 180000
-                            && cacheHeadroom >= 96L * 1024L * 1024L
-                            && mapDataRevision() == revision) {
-                        PersistentScreenCache.write(getApplicationContext(), "map-routes",
-                                revision, mapRoutesToCache(mapRoutes));
-                    }
+
                 }
                 android.util.Log.i("RoadprintsTiming", "map_prepare_ms="+measurement.duration());
             } catch (Exception error) {
@@ -432,6 +440,15 @@ public class MapActivity extends Activity {
                 }
             }
             displayMapRoutes(mapRoutes, generation);
+            // Publish usable geometry before optional JSON serialization/fsync. Cache work
+            // must not hold the interactive map lane or delay the readiness transition.
+            final MapRoutes prepared=mapRoutes;
+            if(selection.isAll()&&prepared.retainedPoints<=180000&&freeHeadroom>=96L*1024L*1024L)
+                ScreenDataLoader.execute(()->{
+                    if(generation!=mapLoadGeneration||mapDataRevision()!=revision)return;
+                    try{PersistentScreenCache.write(getApplicationContext(),"map-routes",revision,mapRoutesToCache(prepared));}
+                    catch(Exception ignored){android.util.Log.w("RoadprintsTiming","map_cache_write=skipped");}
+                });
         });
     }
 
@@ -486,8 +503,8 @@ public class MapActivity extends Activity {
             }
             mapView = map;
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
-            displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;
-            cancelMapWork();
+            displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;skipDiskMapCache=false;forceMapReload=false;
+            completeMapWork();
             setMapReady(true);
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
             android.util.Log.i("RoadprintsTiming", "map_render_ms="+(android.os.SystemClock.elapsedRealtime()-renderStarted));
@@ -1728,6 +1745,7 @@ public class MapActivity extends Activity {
     }
 
     private void applyMapFilters(JourneyFilters selection) {
+        if(mapLoadFailed){skipDiskMapCache=true;forceMapReload=true;clearProcessMapCache();}
         mapFilters = selection;
         persistMapFilters();
         mapFilterSummary.setText(selection.summary());

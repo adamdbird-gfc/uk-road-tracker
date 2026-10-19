@@ -1647,15 +1647,7 @@ public class ProgressActivity extends Activity {
     }
 
     private View motorwayBar(double fraction, int fillColor) {
-        LinearLayout track = new LinearLayout(this);
-        track.setBackground(roundRect(Color.WHITE, dp(20)));
-        View fill = new View(this);
-        fill.setBackground(roundRect(fillColor, dp(20)));
-        int width = Math.max(0, Math.min(100, (int) Math.round(fraction * 100)));
-        track.addView(fill, new LinearLayout.LayoutParams(0, -1, width));
-        if (width < 100) track.addView(new View(this),
-                new LinearLayout.LayoutParams(0, -1, Math.max(1, 100 - width)));
-        return track;
+        return new RoadCompletionBar(this,fraction,fillColor);
     }
 
     private void addCollectiveStatistics(LinearLayout parent, DistanceStats stats) {

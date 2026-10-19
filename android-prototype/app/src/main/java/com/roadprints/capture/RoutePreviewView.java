@@ -103,6 +103,7 @@ public class RoutePreviewView extends View {
     private double lastTouchY;
     private boolean coordinatesValid;
     private boolean routeFitPending;
+    private List<JSONArray> focusedFitGeometry;
     private boolean flatRoadMapStyle;
 
     public RoutePreviewView(Context context, JSONArray coordinates) {
@@ -730,6 +731,17 @@ public class RoutePreviewView extends View {
         zoomAt(control > 0 ? 1.5 : 1.0 / 1.5, x, y);
     }
 
+    /** Fit newly supplied focused geometry now or after layout, once per geometry publication. */
+    void fitRoadGeometry(List<JSONArray> geometry) {
+        focusedFitGeometry=new ArrayList<>();
+        if(geometry!=null)for(JSONArray line:geometry){if(line==null)continue;JSONArray valid=new JSONArray();
+            for(int i=0;i<line.length();i++){JSONArray p=line.optJSONArray(i);if(p!=null&&Double.isFinite(p.optDouble(0,Double.NaN))&&Double.isFinite(p.optDouble(1,Double.NaN)))valid.put(p);}
+            if(valid.length()>0)focusedFitGeometry.add(valid);
+        }
+        if(focusedFitGeometry.isEmpty())return;
+        routeFitPending=true;fitRouteIfReady();invalidate();
+    }
+
     private void fitRouteIfReady() {
         if (!routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
         double minX = Double.MAX_VALUE;
@@ -741,7 +753,8 @@ public class RoutePreviewView extends View {
             // roads may continue far beyond town limits and must not zoom out
             // the map just to include those off-screen ends.
             List<JSONArray> fitRoutes = new ArrayList<>();
-            if (!settlementBoundaryRings.isEmpty()) {
+            if(focusedFitGeometry!=null)fitRoutes.addAll(focusedFitGeometry);
+            else if (!settlementBoundaryRings.isEmpty()) {
                 fitRoutes.addAll(settlementBoundaryRings);
             } else {
                 fitRoutes.addAll(matchedSegments);
@@ -764,7 +777,7 @@ public class RoutePreviewView extends View {
                     maxY = Math.max(maxY, latitudeToUnitY(lat));
                 }
             }
-            if (settlementBoundaryRings.isEmpty()) {
+            if (focusedFitGeometry==null&&settlementBoundaryRings.isEmpty()) {
                 for (int i = 0; i < serviceStations.length(); i++) {
                     org.json.JSONObject station = serviceStations.optJSONObject(i);
                     if (station == null) continue;
@@ -777,6 +790,7 @@ public class RoutePreviewView extends View {
                     maxY = Math.max(maxY, latitudeToUnitY(lat));
                 }
             }
+            if(minX==Double.MAX_VALUE)return;
             double spanX = Math.max(0.000001, maxX - minX);
             double spanY = Math.max(0.000001, maxY - minY);
             double availableWidth = Math.max(1, getWidth() - dp(72));

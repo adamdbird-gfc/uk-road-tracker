@@ -81,7 +81,7 @@ public class BetaUiRefinementTest {
         RoadDetailActivity screen=road(true).get();assertTrue(geometry.await(3,TimeUnit.SECONDS));Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertTrue((Boolean)get(screen,"geometryShown"));assertEquals(View.GONE,((View)get(screen,"loadingPanel")).getVisibility());
         assertEquals(View.GONE,((View)get(screen,"skeleton")).getVisibility());assertFalse(((View)get(screen,"journeyAction")).isEnabled());
-        assertEquals(376,((ProgressBar)get(screen,"progress")).getProgress());
+        assertEquals(.376,((RoadCompletionBar)get(screen,"progress")).fraction(),.00001);
         release.countDown();drain();assertTrue(((View)get(screen,"journeyAction")).isEnabled());assertTrue(((TextView)get(screen,"status")).getText().toString().contains("WHOLE ROAD"));
     }
     @Test public void contributionCardsUseSharedMetadataAndOpenSavedJourney()throws Exception{
@@ -127,8 +127,8 @@ public class BetaUiRefinementTest {
     }
     @Test public void focusedCompletionTrackIsWhiteAndCoverageValuesAreUnchanged()throws Exception{
         RoadDetailModel ready=model();RoadDetailActivity.loader=(c,s,all)->ready;RoadDetailActivity screen=road(true).get();drain();
-        ProgressBar graph=(ProgressBar)get(screen,"progress");assertEquals(0xFFFFFFFF,graph.getProgressBackgroundTintList().getDefaultColor());
-        assertEquals(376,graph.getProgress());assertEquals(3760,ready.uniqueMetres,.001);assertEquals(10000,ready.referenceMetres,.001);
+        RoadCompletionBar graph=(RoadCompletionBar)get(screen,"progress");assertEquals(0xFFFFFFFF,((android.graphics.drawable.GradientDrawable)graph.getBackground()).getColor().getDefaultColor());
+        assertEquals(.376,graph.fraction(),.00001);assertEquals(3760,ready.uniqueMetres,.001);assertEquals(10000,ready.referenceMetres,.001);
     }
     @Test public void bAndLocalMapsHideUnsupportedStatisticsAndKeepJourneyAction()throws Exception{
         for(String kind:new String[]{RoadDetailSelection.B_ROAD,RoadDetailSelection.LOCAL}){
@@ -145,8 +145,8 @@ public class BetaUiRefinementTest {
         RoadDetailModel ready=model();RoadDetailActivity.loader=(c,s,all)->ready;
         RoadDetailSelection selected=new RoadDetailSelection(RoadDetailSelection.A_ROAD,"A1","GB","","");
         ActivityController<RoadDetailActivity> c=Robolectric.buildActivity(RoadDetailActivity.class,selected.intent(app,false)).create().start().resume();screens.add(c);drain();
-        ProgressBar graph=(ProgressBar)get(c.get(),"progress");assertEquals(MapLayerPreferences.Layer.A_ROADS.color,graph.getProgressTintList().getDefaultColor());
-        assertEquals(0xFFFFFFFF,graph.getProgressBackgroundTintList().getDefaultColor());assertNotNull(get(get(c.get(),"map"),"mapRoadTapListener"));
+        RoadCompletionBar graph=(RoadCompletionBar)get(c.get(),"progress");assertEquals(RoadCompletionBar.A_ROAD,graph.fillColor());
+        assertEquals(0xFFFFFFFF,((android.graphics.drawable.GradientDrawable)graph.getBackground()).getColor().getDefaultColor());assertNotNull(get(get(c.get(),"map"),"mapRoadTapListener"));
     }
     @Test public void welcomeOverlayStillBlocksMapDuringBackgroundRefreshAndDismissalExposesRecovery()throws Exception{
         MapActivity screen=recap();set(screen,"hasDisplayedMap",true);Object map=get(screen,"mapView");Object generation=get(screen,"mapLoadGeneration");
