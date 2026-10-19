@@ -41,7 +41,7 @@ final class RoadDetailModel {
         MotorwayProgressCalculator motorway=!cumulative&&RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
         ARoadProgressCalculator aRoad=!cumulative&&RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
         Set<String> refs=Collections.singleton(RoadDetailSelection.normalizeRef(selection.label));
-        JourneyStore.forEach(context,journey->{
+        JourneyStore.forEachRoadEvidence(context,Thread.currentThread()::isInterrupted,journey->{
             if(!"complete".equals(journey.optString("processing_status")))return;
             if(motorway!=null)motorway.addJourney(journey,refs);
             if(aRoad!=null)aRoad.addJourney(journey,refs);
@@ -68,10 +68,10 @@ final class RoadDetailModel {
         output.journeys.sort((a,b)->b.date.compareTo(a.date));
         return output;
     }
-    List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) {
+    List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) throws Exception {
         Set<String> ids=new HashSet<>();for(Entry e:journeys)ids.add(e.id);
         List<Entry> related=new ArrayList<>();
-        JourneyStore.forEach(context,journey->{
+        JourneyStore.forEachRoadEvidence(context,Thread.currentThread()::isInterrupted,journey->{
             if(!ids.contains(journey.optString("journey_id")))return;
             Entry entry=collect(journey,selection,boundary,false);
             if(entry.near(latitude,longitude)){entry.lines.clear();related.add(entry);}

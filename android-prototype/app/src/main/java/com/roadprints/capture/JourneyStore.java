@@ -116,7 +116,7 @@ public final class JourneyStore {
      * GeoJSON can be large, so the list screen must not retain every result in
      * memory just to display titles, dates and processing states.
      */
-    public static synchronized List<JSONObject> allSummaries(Context context) {
+    public static List<JSONObject> allSummaries(Context context) {
         migrateLegacy(context);
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
@@ -370,6 +370,16 @@ public final class JourneyStore {
     /** Replay reads road evidence without allocating raw capture arrays or matched GPS traces. */
     static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
+        forEachRoadEvidence(context, cancelled, visitor, false);
+    }
+
+    static void forEachMapEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                   JourneyVisitor visitor) throws Exception {
+        forEachRoadEvidence(context, cancelled, visitor, true);
+    }
+
+    private static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor, boolean map) throws Exception {
         migrateLegacy(context);
         for (File file : archiveFiles(context)) {
             if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
@@ -385,12 +395,17 @@ public final class JourneyStore {
                         while (reader.hasNext()) {
                             String field = reader.nextName();
                             if ("road_geojson".equals(field) || "motorway_geojson".equals(field)
-                                    || "a_road_geojson".equals(field)) result.put(field, readEvidenceValue(reader));
+                                    || "a_road_geojson".equals(field) || "cycling_geojson".equals(field)
+                                    || (map && "geojson".equals(field))) result.put(field, readEvidenceValue(reader));
                             else reader.skipValue();
                         }
                         reader.endObject(); journey.put(key, result);
+                    } else if ("route_geometry".equals(key)) {
+                        journey.put("_route_point_count", readRouteGeometry(reader));
                     } else if ("journey_id".equals(key) || "mode".equals(key)
                             || "processing_status".equals(key) || "started_at".equals(key)
+                            || "title".equals(key) || "name".equals(key) || "gps_point_count".equals(key)
+                            || "source".equals(key) || "capture_quality".equals(key) || "walking_outcome".equals(key)
                             || "journey_corrections".equals(key)) journey.put(key, readEvidenceValue(reader));
                     else reader.skipValue();
                 }

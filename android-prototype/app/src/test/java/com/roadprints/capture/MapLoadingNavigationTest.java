@@ -29,7 +29,7 @@ public class MapLoadingNavigationTest {
         Activity journeys = Robolectric.buildActivity(Activity.class).create().get();
         RoadprintsNavigation.openDestination(journeys, MapActivity.class);
         Intent returning = Shadows.shadowOf(journeys).getNextStartedActivity();
-        assertEquals(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP,
+        assertEquals(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP,
                 returning.getFlags());
         assertTrue(journeys.isFinishing());
     }
@@ -42,11 +42,11 @@ public class MapLoadingNavigationTest {
         assertTrue(map.isFinishing());
     }
 
-    @Test public void otherTabChangesStillFinishPreviousTab() {
+    @Test public void childScreenReturnsToRetainedTabAndFinishes() {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         RoadprintsNavigation.openDestination(activity, AchievementsActivity.class);
         assertTrue(activity.isFinishing());
-        assertEquals(0, Shadows.shadowOf(activity).getNextStartedActivity().getFlags());
+        assertEquals(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP, Shadows.shadowOf(activity).getNextStartedActivity().getFlags());
     }
 
     @Test public void loadingHasIndeterminateSpinnerAndRotatesOnlyWhileVisible() {

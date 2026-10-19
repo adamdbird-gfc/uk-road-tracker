@@ -59,7 +59,7 @@ public class LateJourneyRecapTest {
         JSONObject out=row("out",2000),back=row("back",3000);
         ReturnRecapStore.collect(app,Arrays.asList(out,back),4000);
         org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class).create();
-        MapActivity screen=controller.get();set(screen,"recapJourneys",new ArrayList<>(Arrays.asList(out)));call(screen,"renderRecap");
+        MapActivity screen=controller.get();set(screen,"mapReady",true);set(screen,"recapJourneys",new ArrayList<>(Arrays.asList(out)));call(screen,"renderRecap");
         View dismiss=find(screen.getWindow().getDecorView(),"DISMISS");assertNotNull(dismiss);
         set(screen,"recapJourneys",new ArrayList<>(Arrays.asList(out,back))); // New data arrived after card was made.
         dismiss.performClick();

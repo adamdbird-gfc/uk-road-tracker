@@ -2,6 +2,18 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Active stabilisation — issue #201
+
+Branch `fix/beta1-201-stabilisation` starts exactly at installed Beta 1 source `5c8deea0a6237f484a865994e7148d51af4f1627`. Version prepared: **0.25.203 (249)**. Only #201 repairs and targeted regression tests are included; NCN and tracking/collection storage changes remain outside this patch.
+
+- Filter opens synchronously with all filter choices; it no longer queues an archive scan behind background screen work. Filter, legend, zoom and recap actions remain hidden during geometry loading; map touch interactions are blocked while loading.
+- Explicit celebration action reads durable pending unlocks even while unrelated evidence recalculation is pending. Pause/system cancellation retains unseen events; explicit Next/Close acknowledges only presented milestones, preserving existing duplicate prevention.
+- Focused road maps use a separate single interactive lane, streamed retained road evidence, cancellation/stale-result protection and a 30-second error/retry deadline. Repeated journey revisions produce a retry state rather than an endless reload loop. Existing motorway/A-road reference and B/local limitations are retained.
+- Main map now streams retained matched geometry, motorway/A-road/cycling evidence and corrections without allocating raw capture arrays. Legacy edge corrections still use the full original evidence. Collection visits no longer invalidate unchanged road geometry. Local `RoadprintsTiming` logs distinguish queue, preparation, render and reused revisits without recording locations.
+- Tab navigation reorders existing activities instead of finishing Progress/Journeys/Achievements/Collections or clearing tabs above Map. Unchanged Progress skips repeated enrichment setup; existing camera/scroll/cache state survives ordinary tab changes. Android can still reclaim stopped activities under memory pressure; existing snapshots/camera/scroll restoration remain in use.
+
+Validation and Firebase release are **pending**, not yet delivered. New tests exercise actual filter/celebration clicks, blocked-worker isolation, road timeout/failure/retry, actual bundled M2 coverage/contributing journeys, streamed geometry/correction retention and navigation flags. Full Android unit tests and lint run in GitHub Actions because this workspace has no Android SDK/Gradle/JDK compiler. Pixel/Samsung taps and timings are separate device acceptance and cannot be claimed from JVM checks.
+
 ## Latest session checkpoint — Beta 1 / Beta 2 split
 
 The user has authorised **Beta 1: core reliability, existing collection fixes and interactive Progress**, followed by **Beta 2: NCN collection and subsequent fixes**. This supersedes the earlier no-build hold, but packaging/distribution must wait for green integrated checks.

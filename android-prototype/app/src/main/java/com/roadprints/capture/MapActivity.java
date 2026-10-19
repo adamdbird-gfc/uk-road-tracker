@@ -60,7 +60,9 @@ public class MapActivity extends Activity {
     private RoutePreviewView mapView;
     private JourneyFilters mapFilters = JourneyFilters.all();
     private TextView mapFilterSummary;
-    private View mapFilterControls;
+    private View mapFilterControls, zoomControls;
+    private boolean mapReady;
+    private android.app.AlertDialog filterDialog;
     private int filterDialogGeneration;
     private static final String FILTER_PREFS = "roadprints_map_journey_filters";
     private long displayedMapRevision = Long.MIN_VALUE;
@@ -189,6 +191,7 @@ public class MapActivity extends Activity {
     protected void onResume() {
         super.onResume();
         active = true;
+        if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
         applyCollectionLayer();
@@ -209,6 +212,7 @@ public class MapActivity extends Activity {
     @Override
     protected void onPause() {
         active = false;
+        if (filterDialog != null) filterDialog.dismiss();
         if (loadingCard != null) loadingCard.stop();
         mainHandler.removeCallbacks(observeChanges);
         if (replayPreparing) stopReplay(false);
@@ -283,7 +287,7 @@ public class MapActivity extends Activity {
 
     private void showMapLoading(boolean updating) {
         hideMapLoading();
-        if (legendButton != null) legendButton.setVisibility(View.GONE);
+        setMapReady(false);
         if (mapView != null) mapView.setOverviewLoading(true);
         mapSubtitle.setText(updating ? "Adding your latest journeys…" : "Bringing your roads into view…");
         loadingCard = new MapLoadingView(this, updating);
@@ -299,12 +303,19 @@ public class MapActivity extends Activity {
             mapFrame.removeView(loadingCard);
             loadingCard = null;
         }
-        if (legendButton != null) legendButton.setVisibility(View.VISIBLE);
+    }
+
+    private void setMapReady(boolean ready) {
+        mapReady = ready;
+        for (View control : new View[]{legendButton, mapFilterControls, zoomControls, recapCard})
+            if (control != null) control.setVisibility(ready ? View.VISIBLE : View.GONE);
     }
 
     private void refreshMap() {
         String settlementCode = getIntent().getStringExtra("settlement_code");
-        if (mapView != null && displayedMapRevision == mapDataRevision()) return;
+        if (mapView != null && displayedMapRevision == mapDataRevision()) {
+            android.util.Log.i("RoadprintsTiming", "map_revisit=reused");return;
+        }
         final long requestedRevision = mapDataRevision();
         if (loadingMapRevision == requestedRevision) return;
         saveMapCamera();
@@ -333,7 +344,9 @@ public class MapActivity extends Activity {
         }
         loadingMapRevision = revision;
         showMapLoading(displayedMapRevision != Long.MIN_VALUE);
+        final long queuedAt = android.os.SystemClock.elapsedRealtime();
         ScreenDataLoader.execute(() -> {
+            android.util.Log.i("RoadprintsTiming", "map_queue_ms="+(android.os.SystemClock.elapsedRealtime()-queuedAt));
             MapRoutes mapRoutes;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
                 JSONObject saved = selection.isAll() ? PersistentScreenCache.read(getApplicationContext(),
@@ -351,6 +364,7 @@ public class MapActivity extends Activity {
                                 revision, mapRoutesToCache(mapRoutes));
                     }
                 }
+                android.util.Log.i("RoadprintsTiming", "map_prepare_ms="+measurement.duration());
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != mapLoadGeneration) return;
@@ -386,6 +400,7 @@ public class MapActivity extends Activity {
     private void displayMapRoutes(MapRoutes mapRoutes, int generation) {
         mainHandler.post(() -> {
             if (isFinishing() || generation != mapLoadGeneration) return;
+            long renderStarted = android.os.SystemClock.elapsedRealtime();
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
@@ -426,6 +441,8 @@ public class MapActivity extends Activity {
             mapView = map;
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
             loadingMapRevision = Long.MIN_VALUE;
+            setMapReady(true);
+            android.util.Log.i("RoadprintsTiming", "map_render_ms="+(android.os.SystemClock.elapsedRealtime()-renderStarted));
             renderRecap();
             String replay = getIntent().getStringExtra("replay_journey_id");
             if (replay != null) {
@@ -503,6 +520,7 @@ public class MapActivity extends Activity {
                 mapFrame.addView(map, new FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
                 addZoomControls(mapFrame, map);
+                setMapReady(resultFailure == null);
                 if (resultFailure != null) mapSubtitle.setText(resultFailure);
             });
         });
@@ -604,8 +622,7 @@ public class MapActivity extends Activity {
     }
 
     private long mapDataRevision() {
-        long revision = 31L * JourneyStore.dataRevision(getApplicationContext())
-                + ServiceStationStore.revision(getApplicationContext());
+        long revision = 31L * JourneyStore.dataRevision(getApplicationContext()) + 201L;
         // Relative date selections must refresh at local midnight even without a new journey.
         String preset = mapFilters.date.preset;
         if (!getIntent().hasExtra("settlement_code") && ("today".equals(preset)
@@ -624,7 +641,7 @@ public class MapActivity extends Activity {
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
-        JourneyStore.forEach(getApplicationContext(), journey -> {
+        JourneyStore.forEachMapEvidence(getApplicationContext(), () -> isDestroyed() || Thread.currentThread().isInterrupted(), journey -> {
             if (!selection.matches(journey, today, zone)) return;
             if (!"complete".equals(journey.optString("processing_status", ""))) return;
             String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
@@ -1656,18 +1673,8 @@ public class MapActivity extends Activity {
     }
 
     private void showMapFilters() {
-        final int generation = ++filterDialogGeneration;
-        ScreenDataLoader.execute(() -> {
-            try {
-                List<JSONObject> archive = JourneyListActivity.preloadSummaries(getApplicationContext(), JourneyStore.dataRevision(getApplicationContext()));
-                mainHandler.post(() -> {
-                    if (!active || isFinishing() || generation != filterDialogGeneration) return;
-                    new JourneyFilterPanel(this, archive, mapFilters, true, this::applyMapFilters).show();
-                });
-            } catch (Exception error) {
-                mainHandler.post(() -> { if (active) android.widget.Toast.makeText(this, "Journey filters could not be loaded. Please try again.", android.widget.Toast.LENGTH_LONG).show(); });
-            }
-        });
+        if (!active || !mapReady || (filterDialog != null && filterDialog.isShowing())) return;
+        filterDialog = new JourneyFilterPanel(this, null, mapFilters, true, this::applyMapFilters).show();
     }
 
     private void applyMapFilters(JourneyFilters selection) {
@@ -1701,6 +1708,8 @@ public class MapActivity extends Activity {
                 Gravity.END | Gravity.CENTER_VERTICAL);
         params.setMargins(0, 0, dp(12), 0);
         mapFrame.addView(controls, params);
+        zoomControls = controls;
+        controls.setVisibility(mapReady ? View.VISIBLE : View.GONE);
     }
 
     private TextView zoomButton(String label, String description, Runnable action) {
@@ -1798,6 +1807,7 @@ public class MapActivity extends Activity {
     }
 
     private void renderRecap() {
+        if (!mapReady) { if (recapCard != null) recapCard.setVisibility(View.GONE); return; }
         if (mapFrame == null || replayMessage != null) return;
         if (recapCard != null) mapFrame.removeView(recapCard);
         recapCard = null;

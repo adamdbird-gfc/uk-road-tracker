@@ -41,7 +41,7 @@ final class JourneyFilterPanel {
         catch (Exception ignored) { return Long.MIN_VALUE; }
     }
     private int dp(float value) { return Math.round(value * activity.getResources().getDisplayMetrics().density); }
-    void show() {
+    AlertDialog show() {
         final int[] mode = {activeFilter};
         final String[] status = {activeJourneyStatusFilter};
         final JourneyDateFilter[] date = {activeDateFilter};
@@ -68,7 +68,7 @@ final class JourneyFilterPanel {
                 if ( matchesFilter(journey, mode[0]) && matchesJourneyStatusFilter(journey, status[0])
                         && date[0].matches(journey, java.time.LocalDate.now(), ZoneId.systemDefault())) total++;
             }
-            apply.setText(String.format(java.util.Locale.UK, map ? "APPLY TO MAP · %,d JOURNEYS" : "SHOW %,d JOURNEYS", total));
+            apply.setText(journeys == null ? "APPLY TO MAP" : String.format(java.util.Locale.UK, map ? "APPLY TO MAP · %,d JOURNEYS" : "SHOW %,d JOURNEYS", total));
             apply.setEnabled(date[0].valid());
             error.setText(date[0].valid() ? "" : "Choose an end date on or after the start date.");
             error.setVisibility(date[0].valid() ? View.GONE : View.VISIBLE);
@@ -121,6 +121,7 @@ final class JourneyFilterPanel {
         rangeLabels.run(); update.run(); dialog.show();
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         dialog.getWindow().setLayout((int)(activity.getResources().getDisplayMetrics().widthPixels * .94), (int)(activity.getResources().getDisplayMetrics().heightPixels * .82));
+        return dialog;
     }
 
     private void addFilterHeading(LinearLayout parent, String label) {
@@ -136,6 +137,7 @@ final class JourneyFilterPanel {
 
     private List<Integer> availableTransportOptions() {
         List<Integer> available = new ArrayList<>(); available.add(0);
+        if (journeys == null) { for (int i=1;i<FILTER_VALUES.length;i++) available.add(i); return available; }
         if (journeys != null) for (int i = 1; i < FILTER_VALUES.length; i++) {
             for (JSONObject journey : journeys) if (matchesFilter(journey, i)) { available.add(i); break; }
         }
@@ -144,6 +146,7 @@ final class JourneyFilterPanel {
 
     private List<Integer> availableStatusOptions() {
         List<Integer> available = new ArrayList<>(); available.add(0);
+        if (journeys == null) { for (int i=1;i<STATUS_VALUES.length;i++) available.add(i); return available; }
         if (journeys != null) for (int i = 1; i < STATUS_VALUES.length; i++) {
             for (JSONObject journey : journeys) if (matchesJourneyStatusFilter(journey, STATUS_VALUES[i])) { available.add(i); break; }
         }
@@ -153,6 +156,7 @@ final class JourneyFilterPanel {
     private List<Integer> availableDateOptions() {
         List<Integer> available = new ArrayList<>(); available.add(0);
         java.time.LocalDate today = java.time.LocalDate.now(); ZoneId zone = ZoneId.systemDefault();
+        if (journeys == null) { for (int i=1;i<JourneyDateFilter.VALUES.length;i++) available.add(i); return available; }
         if (journeys != null) for (int i = 1; i < JourneyDateFilter.VALUES.length - 1; i++) {
             JourneyDateFilter candidate = new JourneyDateFilter(JourneyDateFilter.VALUES[i], null, null);
             for (JSONObject journey : journeys) if (candidate.matches(journey, today, zone)) { available.add(i); break; }

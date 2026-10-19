@@ -214,6 +214,25 @@ public class AchievementsAvailabilityTest {
         assertTrue(celebration(screen).isShowing());controllers.get(0).pause().stop();
         assertEquals(2,AchievementCelebrations.pending(app).size());
     }
+    @Test public void explicitCelebrateTapWorksWhileEvidenceRefreshIsQueuedAndDoesNotDuplicate() throws Exception {
+        recogniseTwo();cache();field("processSnapshotRevision").setLong(null,Long.MIN_VALUE);
+        AchievementsActivity screen=screen();controllers.get(0).start().resume();
+        assertEquals(1,jobs.size());assertNull(celebration(screen));
+        View action=screen.getWindow().getDecorView().findViewWithTag("achievement_celebrations_action");
+        action.performClick();android.app.Dialog dialog=celebration(screen);assertTrue(dialog.isShowing());
+        action.performClick();assertSame(dialog,celebration(screen));assertEquals(2,AchievementCelebrations.pending(app).size());
+        controllers.get(0).pause().stop();assertEquals(2,AchievementCelebrations.pending(app).size());
+        controllers.get(0).start().resume();action.performClick();assertTrue(dialog.isShowing());
+        dialog.getWindow().getDecorView().findViewWithTag("achievement_celebration_continue").performClick();
+        dialog.getWindow().getDecorView().findViewWithTag("achievement_celebration_continue").performClick();
+        assertTrue(AchievementCelebrations.pending(app).isEmpty());assertFalse(dialog.isShowing());
+    }
+    @Test public void systemCancelRetainsUnacknowledgedUnlocks() throws Exception {
+        recogniseTwo();cache();AchievementsActivity screen=screen();controllers.get(0).start().resume();
+        celebration(screen).cancel();assertEquals(2,AchievementCelebrations.pending(app).size());
+        screen.getWindow().getDecorView().findViewWithTag("achievement_celebrations_action").performClick();
+        assertTrue(celebration(screen).isShowing());
+    }
     @Test public void collectionHeadingsAndJumpLabelsMatchCollectionNames() throws Exception {
         ServiceStationStore.unlockForTesting(app);CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);
         cache();AchievementsActivity screen=screen();
