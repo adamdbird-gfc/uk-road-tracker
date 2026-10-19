@@ -62,8 +62,8 @@ public class ServiceStationCollectionTest {
         throw new AssertionError("Gloucester missing");
     }
     private JSONObject gloucesterCapture(String id) throws Exception {
-        JSONObject point=gloucester().getJSONArray("points").getJSONObject(0);
-        return capture(id,samples(point.getDouble("lng"),point.getDouble("lat"),10,60_000,0));
+        // Gloucester Northbound main building (OSM way 288191060), rather than the old area centroid near the M5.
+        return capture(id,samples(-2.2286448,51.8202821,10,60_000,0));
     }
     @Test public void sustainedAccurateStopCountsButDrivingPastDoesNot() throws Exception {
         JSONArray stations=new JSONArray().put(station("one",-2,52));

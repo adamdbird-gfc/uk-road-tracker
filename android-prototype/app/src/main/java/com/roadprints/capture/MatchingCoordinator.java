@@ -319,8 +319,14 @@ public final class MatchingCoordinator {
         List<JSONArray> roadRequests = new ArrayList<>();
         int submittedRoadPoints = 0;
         if (road != null) for (JSONArray section : road.sections) {
-            JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
-            roadRequests.add(sampled); submittedRoadPoints += sampled.length();
+            if(capturedDrive){
+                for(JSONArray request:DrivingJourneyPreparation.requests(section,MAX_MATCH_REQUEST_POINTS)){
+                    roadRequests.add(request);submittedRoadPoints+=request.length();
+                }
+            }else{
+                JSONArray sampled = sampleMatchPoints(section, MAX_MATCH_REQUEST_POINTS);
+                roadRequests.add(sampled); submittedRoadPoints += sampled.length();
+            }
         }
         String endpointPath = endpointForMode(mode);
         JSONObject attempt = new JSONObject()
@@ -426,6 +432,7 @@ public final class MatchingCoordinator {
                     JSONObject stages=stored.optJSONObject(key);if(stages==null)stages=new JSONObject();
                     stages.put("foot_matching","complete");stored.put(key,stages);
                 }
+                if(walking!=null && walking.validated)WalkingArrivalTiming.apply(stored,walking.arrival);
                 stored.remove("error_summary");stored.put("processing_completed_at",Instant.now().toString());
                 JourneyStore.save(app,stored);
             }
@@ -511,6 +518,7 @@ public final class MatchingCoordinator {
                 stored.put("original_distance_meters", stored.optDouble("distance_meters", 0));
             if (!stored.has("raw_capture_samples") && walking.recoveredSamples.length() > 0)
                 stored.put("raw_capture_samples", walking.recoveredSamples);
+            WalkingArrivalTiming.apply(stored,walking.arrival);
             stored.put("walking_validation", walking.details);
             stored.put("matched_walking_distance_meters",result.getDouble("matched_distance_m"));
             if(!walkingPartial) {

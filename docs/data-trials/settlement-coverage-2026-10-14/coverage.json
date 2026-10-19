@@ -1,0 +1,30 @@
+{
+  "source_commit": "31596cef96539f9043a04c151f82af581621693e",
+  "scope": "Saved repository reference files, not a live database boundary audit",
+  "by_code_prefix": {
+    "E": {
+      "catalogue": 7091,
+      "saved_boundaries": 119,
+      "available_inventories": 119
+    },
+    "W": {
+      "catalogue": 622,
+      "saved_boundaries": 1,
+      "available_inventories": 1
+    },
+    "S": {
+      "catalogue": 822,
+      "saved_boundaries": 0,
+      "available_inventories": 0
+    },
+    "K": {
+      "catalogue": 10,
+      "saved_boundaries": 1,
+      "available_inventories": 1
+    }
+  },
+  "catalogue_total": 8545,
+  "saved_boundary_total": 121,
+  "missing_saved_boundaries": 8424,
+  "northern_ireland_catalogue_entries": 0
+}

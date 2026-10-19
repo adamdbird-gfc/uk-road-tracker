@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "collection_id": "wetherspoons",
+  "display_name": "UK Wetherspoons Collection",
+  "venues": [
+    {
+      "id": "spoons-osm-w619162940",
+      "osm_aliases": [
+        "node/1123932873",
+        "way/619162940"
+      ],
+      "review": {
+        "date": "2026-10-11",
+        "source": "OpenStreetMap snapshot d2acb64b1b60",
+        "reason": "Matching Old Manor names; node inside pub footprint. Explicit identity alias, not operating-status verification."
+      }
+    },
+    {
+      "id": "spoons-osm-w1323980995",
+      "osm_aliases": [
+        "node/14271292401",
+        "way/1323980995"
+      ],
+      "review": {
+        "date": "2026-10-11",
+        "source": "OpenStreetMap snapshot d2acb64b1b60",
+        "reason": "Matching Chiltern names; node inside pub footprint. Explicit identity alias, not operating-status verification."
+      }
+    },
+    {
+      "id": "spoons-osm-w1426862050",
+      "osm_aliases": [
+        "node/471052253",
+        "way/1426862050"
+      ],
+      "review": {
+        "date": "2026-10-11",
+        "source": "OpenStreetMap snapshot d2acb64b1b60",
+        "reason": "Matching City and County names; node inside pub footprint. Explicit identity alias, not operating-status verification."
+      }
+    }
+  ]
+}

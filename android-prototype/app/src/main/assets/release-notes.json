@@ -2,6 +2,34 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.202",
+      "version_code": 248,
+      "release_date": "2026-10-19",
+      "since": "0.25.201",
+      "changes": [
+        {
+          "title": "Beta 1: journey reliability",
+          "description": "Improved stationary drift protection, arrival and departure timing, walking/driving boundaries and interrupted recording recovery. Existing journeys remain explicitly rematchable with their raw recordings preserved."
+        },
+        {
+          "title": "Continuous driving routes",
+          "description": "Longer verified matching context improves motorway and local-road matching while preserving route continuity and disclosing unsupported GPS gaps."
+        },
+        {
+          "title": "Service-station visits",
+          "description": "Mapped service grounds and timed dwell evidence distinguish genuine visits from passing traffic. Saved recordings with sufficient evidence can recover previously missed visits."
+        },
+        {
+          "title": "Interactive road Progress",
+          "description": "Open focused motorway, A-road, B-road and local-road views where supported, with contributing journeys. Map filters and late-saved journey refresh are also included."
+        },
+        {
+          "title": "Beta testing requirements",
+          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.201",
       "version_code": 247,
       "release_date": "2026-10-15",

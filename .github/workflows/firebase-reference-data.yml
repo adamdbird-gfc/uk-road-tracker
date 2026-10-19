@@ -1,27 +1,6 @@
 name: Stage Firebase reference data
 
 on:
-  workflow_call:
-    inputs:
-      preview_deploy:
-        type: boolean
-        default: false
-      live_deploy:
-        type: boolean
-        default: false
-      source_ref:
-        type: string
-        default: ''
-  pull_request:
-    paths:
-      - 'firebase.json'
-      - 'scripts/*firebase_reference_data.py'
-      - 'scripts/*firebase_hosted_verification.py'
-      - 'scripts/publish_venue_catalogue.py'
-      - 'collections/published/**'
-      - 'collections/venue-collections-v1.json'
-      - '.github/workflows/firebase-reference-data.yml'
-      - '.github/workflows/publish-reference-data.yml'
   workflow_dispatch:
     inputs:
       live_deploy:
@@ -29,117 +8,18 @@ on:
         type: boolean
         default: false
       preview_deploy:
-        description: Deploy the validated data to a seven-day Firebase preview
+        description: Deploy and verify the public data on a seven-day Firebase preview
         type: boolean
         default: false
 
 permissions:
   contents: read
 
-concurrency:
-  group: reference-data-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  stage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.source_ref || github.ref }}
-      # App/venue code lives on the release branch; the queue publishes inventory
-      # updates on main. Preserve both sources rather than using stale branch data.
-      - name: Check out current settlement publication
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: reference-source
-          sparse-checkout: |
-            settlement-inventory-manifest-v1.json
-            settlement-inventories-v1
-          sparse-checkout-cone-mode: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Validate and stage public files
-        env:
-          PREVIEW_REQUESTED: ${{ inputs.preview_deploy }}
-          LIVE_REQUESTED: ${{ inputs.live_deploy }}
-        run: |
-          if [ "$PREVIEW_REQUESTED" = true ] && [ "$LIVE_REQUESTED" = true ]; then
-            echo 'Select either preview or live deployment.' >&2
-            exit 1
-          fi
-          python -m unittest discover -s scripts -p test_firebase_reference_data.py -v
-          python -m unittest discover -s scripts -p test_firebase_hosted_verification.py -v
-          python -m unittest discover -s scripts -p test_protect_firebase_reference_data.py -v
-          python -m unittest discover -s scripts -p test_preserve_county_build_reference.py -v
-          python scripts/stage_firebase_reference_data.py --settlements-root reference-source
-          git rev-parse HEAD > reference-data-sources.txt
-          git -C reference-source rev-parse HEAD >> reference-data-sources.txt
-      - name: Retain staging verification
-        uses: actions/upload-artifact@v4
-        with:
-          name: reference-data-${{ github.sha }}
-          path: |
-            hosting-stage-report.json
-            reference-data-sources.txt
-          retention-days: 3
-      - name: Set up Node for deployment
-        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Install Firebase CLI
-        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
-        run: npm install --global firebase-tools@15.33.0
-      - name: Deploy and verify reference data
-        if: github.event_name != 'pull_request' && (inputs.preview_deploy || inputs.live_deploy)
-        env:
-          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
-          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
-          LIVE_REQUESTED: ${{ inputs.live_deploy }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-hosting.json"
-          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
-          python - <<'PY'
-          import json, os, pathlib, re
-          site = os.environ.get('ROADPRINTS_DATA_HOSTING_SITE', '')
-          if not re.fullmatch(r'[a-z0-9][a-z0-9-]{3,61}[a-z0-9]', site):
-              raise SystemExit('Set ROADPRINTS_DATA_HOSTING_SITE to the verified dedicated Hosting site ID.')
-          raw = os.environ.get('FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON', '')
-          if not raw:
-              raise SystemExit('Set FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON; App Distribution access alone is insufficient.')
-          credentials = json.loads(raw)
-          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc' or not credentials.get('private_key') or not credentials.get('client_email'):
-              raise SystemExit('Expected a Hosting service-account key for roadprints-822cc.')
-          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-          path.touch(mode=0o600, exist_ok=False)
-          path.write_text(raw)
-          PY
-          unset FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON
-          python scripts/preserve_county_build_reference.py
-          firebase target:apply hosting reference-data "$ROADPRINTS_DATA_HOSTING_SITE" --project roadprints-822cc --non-interactive
-          if [ "$LIVE_REQUESTED" = true ]; then
-            python scripts/protect_firebase_reference_data.py
-            firebase deploy --only hosting:reference-data --project roadprints-822cc --non-interactive --json > hosting-deployment.json
-          else
-            firebase hosting:channel:deploy data-migration --only reference-data --expires 7d --project roadprints-822cc --non-interactive --json > hosting-deployment.json
-          fi
-          python - <<'PY'
-          import json, os, subprocess
-          result = json.load(open('hosting-deployment.json'))
-          if result.get('status') != 'success':
-              raise SystemExit('Hosting deployment did not succeed.')
-          if os.environ['LIVE_REQUESTED'] == 'true':
-              url = 'https://' + os.environ['ROADPRINTS_DATA_HOSTING_SITE'] + '.web.app'
-          else:
-              sites = result.get('result', {})
-              if len(sites) != 1:
-                  raise SystemExit('Expected exactly one reference-data preview.')
-              url = next(iter(sites.values()))['url']
-          subprocess.run(['python', 'scripts/verify_firebase_reference_data.py', '--url', url], check=True)
-          subprocess.run(['python', 'scripts/preserve_county_build_reference.py', '--verify', url], check=True)
-          PY
+  stage-current-data:
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/firebase-reference-data.yml@fix/onboarding-start-tracking
+    with:
+      source_ref: fix/onboarding-start-tracking
+      preview_deploy: ${{ inputs.preview_deploy }}
+      live_deploy: ${{ inputs.live_deploy }}
+    secrets: inherit

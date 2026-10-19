@@ -30,17 +30,63 @@ final class DrivingJourneyPreparation {
                 throw new IllegalStateException("Driving capture timing does not align with its route. The original recording is preserved.");
             previous=time;
         }
+        JSONArray filtered=new JSONArray(),uncorroborated=new JSONArray();
+        java.util.List<Integer> originalIndices=new java.util.ArrayList<>();
+        for(int i=0;i<points.length();i++){
+            if(unsupportedInteriorFix(samples,i))uncorroborated.put(i);
+            else {filtered.put(points.get(i));originalIndices.add(i);}
+        }
         JSONArray retained=new JSONArray(), omitted=new JSONArray();
-        retained.put(points.get(0));
-        for(int i=1;i<points.length()-1;i++) {
-            JSONObject before=retained.getJSONObject(retained.length()-1), point=points.getJSONObject(i), after=points.getJSONObject(i+1);
-            if (redundant(before,point,after)) omitted.put(i);
+        retained.put(filtered.get(0));
+        for(int i=1;i<filtered.length()-1;i++) {
+            JSONObject before=retained.getJSONObject(retained.length()-1), point=filtered.getJSONObject(i), after=filtered.getJSONObject(i+1);
+            if (redundant(before,point,after)) omitted.put(originalIndices.get(i));
             else retained.put(point);
         }
-        retained.put(points.get(points.length()-1));
-        out.sections.add(retained); out.changed=omitted.length()>0;
-        out.details.put("version",1).put("evidence_status","android_capture_available")
+        retained.put(filtered.get(filtered.length()-1));
+        out.sections.add(retained); out.changed=omitted.length()>0||uncorroborated.length()>0;
+        out.details.put("version",2).put("evidence_status","android_capture_available")
+                .put("uncorroborated_fix_indices",uncorroborated)
                 .put("redundant_point_indices",omitted).put("original_geometry_preserved",true);
+        return out;
+    }
+
+    private static boolean unsupportedInteriorFix(JSONArray samples,int index){
+        if(index<=0||index>=samples.length()-1)return false;
+        JSONArray p=samples.optJSONArray(index);
+        if(p==null||p.optDouble(4,-1)>=0)return false;
+        int before=index-1,after=index+1;
+        while(before>=0&&!measuredVehicleFix(samples.optJSONArray(before)))before--;
+        while(after<samples.length()&&!measuredVehicleFix(samples.optJSONArray(after)))after++;
+        if(before<0||after>=samples.length())return false;
+        JSONArray a=samples.optJSONArray(before),b=samples.optJSONArray(after);
+        long time=p.optLong(3),start=a.optLong(3),end=b.optLong(3);
+        double accuracy=p.optDouble(2,Double.NaN),nearbyAccuracy=Math.max(a.optDouble(2),b.optDouble(2));
+        if(time<=start||time>=end||end-start>30_000L||!Double.isFinite(accuracy)||accuracy<=nearbyAccuracy*2)return false;
+        FootTraceValidator.Sample fix=timed(p),from=timed(a),to=timed(b);
+        double seconds=(end-start)/1000.0;
+        double plausibleDistance=Math.max(15,Math.max(from.speed,to.speed)*1.5)*seconds
+                +from.accuracy+to.accuracy;
+        return FootTraceValidator.metres(from,to)<=plausibleDistance
+                &&FootTraceValidator.segmentGap(fix,from,to)>accuracy+nearbyAccuracy;
+    }
+    private static boolean measuredVehicleFix(JSONArray p){
+        return p!=null&&p.optDouble(2,-1)>0&&p.optDouble(2,100)<=25
+                &&Double.isFinite(p.optDouble(4,Double.NaN))&&p.optDouble(4,-1)>=3;
+    }
+    private static FootTraceValidator.Sample timed(JSONArray p){
+        return new FootTraceValidator.Sample(p.optDouble(0),p.optDouble(1),p.optDouble(2),p.optLong(3),p.optDouble(4,-1),0);
+    }
+    /** Keep all prepared captured-road observations across bounded requests. */
+    static java.util.List<JSONArray> requests(JSONArray points,int limit)throws Exception{
+        if(limit<2)throw new IllegalArgumentException("At least two points per request");
+        java.util.List<JSONArray> out=new java.util.ArrayList<>();
+        for(int start=0;start<points.length()-1;start+=limit-1){
+            JSONArray section=new JSONArray();
+            for(int i=start;i<Math.min(points.length(),start+limit);i++)section.put(points.get(i));
+            out.add(section);
+            if(start+limit>=points.length())break;
+        }
         return out;
     }
 

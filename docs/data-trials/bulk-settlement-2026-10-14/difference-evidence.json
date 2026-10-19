@@ -1,0 +1,58 @@
+[
+  {
+    "settlement": "K08000001",
+    "way_id": 1553401402,
+    "name": "Bachelors Court",
+    "highway": "residential",
+    "osm_object_timestamp": "2026-08-29 12:50:09+00:00",
+    "bounds": [
+      -2.8654225,
+      53.1844859,
+      -2.8651379,
+      53.1848971
+    ],
+    "inside_boundary": true
+  },
+  {
+    "settlement": "W45000596",
+    "way_id": 22919299,
+    "name": "Hazel Place",
+    "highway": "residential",
+    "osm_object_timestamp": "2026-09-26 14:48:53+00:00",
+    "bounds": [
+      -3.2474131,
+      51.4936487,
+      -3.2464393,
+      51.4945492
+    ],
+    "inside_boundary": true
+  },
+  {
+    "settlement": "W45000596",
+    "way_id": 24319614,
+    "name": "Clas Isan",
+    "highway": "residential",
+    "osm_object_timestamp": "2026-10-04 13:51:32+00:00",
+    "bounds": [
+      -3.2070636,
+      51.5111012,
+      -3.206833,
+      51.5115459
+    ],
+    "inside_boundary": true
+  },
+  {
+    "settlement": "W45000596",
+    "way_id": 444279122,
+    "name": "Ash Place",
+    "highway": "residential",
+    "osm_object_timestamp": "2026-09-26 14:49:50+00:00",
+    "bounds": [
+      -3.2471287,
+      51.4938896,
+      -3.2465332,
+      51.494318
+    ],
+    "inside_boundary": true
+  }
+]

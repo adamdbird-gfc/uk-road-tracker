@@ -113,6 +113,11 @@
       "count": 288
     },
     {
+      "code": "E63001350",
+      "status": "available",
+      "count": 839
+    },
+    {
       "code": "E63001362",
       "status": "available",
       "count": 1120
@@ -126,6 +131,11 @@
       "code": "E63001424",
       "status": "available",
       "count": 5252
+    },
+    {
+      "code": "E63001434",
+      "status": "available",
+      "count": 199
     },
     {
       "code": "E63001543",
@@ -586,6 +596,11 @@
       "code": "E63006440",
       "status": "available",
       "count": 41
+    },
+    {
+      "code": "K08000001",
+      "status": "available",
+      "count": 1239
     },
     {
       "code": "W45000596",

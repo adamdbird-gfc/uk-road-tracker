@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload only. Tester invitations/distribution are managed in the Firebase console.
+# Upload only by default. Explicit opt-in shares with existing project testers.
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -26,6 +26,7 @@ version=$(tail -n 1 <<< "$metadata")
 notes=${2:-}
 if [ -z "$notes" ]; then
   notes=$(mktemp)
+  generated_notes=true
   trap 'rm -f "$notes"' EXIT
   python3 - "$repo_dir" "$version" > "$notes" <<'PY'
 import datetime, json, pathlib, sys
@@ -46,7 +47,17 @@ PY
 fi
 test -f "$notes" || { echo "Release notes not found: $notes" >&2; exit 1; }
 
-firebase appdistribution:distribute "$apk" \
+tester_file=""
+cleanup() { if [ -n "$tester_file" ]; then rm -f "$tester_file"; fi; if [ "${generated_notes:-false}" = true ]; then rm -f "$notes"; fi; }
+trap cleanup EXIT
+args=()
+if [ "${ROADPRINTS_DISTRIBUTE_EXISTING_TESTERS:-false}" = true ]; then
+  tester_file=$(mktemp)
+  chmod 600 "$tester_file"
+  python3 "$repo_dir/scripts/firebase_existing_testers.py" "$repo_dir/android-prototype/app/google-services.json" > "$tester_file"
+  args+=(--testers-file "$tester_file")
+fi
+firebase appdistribution:distribute "$apk" "${args[@]}" \
   --app "$app_id" \
   --project roadprints-822cc \
   --release-notes-file "$notes" \

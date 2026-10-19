@@ -73,16 +73,21 @@ final class VenueVisitStore {
     }
     private static void ensureNativeHistory(Context context,String collection)throws Exception{
         long revision=JourneyStore.dataRevision(context),epoch;
+        long catalogueRevision=VenueCatalogueUpdates.forCollection(VenueCollection.definition(collection)).revision();
         synchronized(VenueVisitStore.class){
             if(replacingHistory)return;epoch=generation;
-            if(context.getSharedPreferences(PREFS,0).getLong(collection+":native_scan_revision",-1)==revision)return;
+            if(context.getSharedPreferences(PREFS,0).getLong(collection+":native_scan_revision",-1)==revision
+                    &&context.getSharedPreferences(PREFS,0).getInt(collection+":native_evidence_version",0)==2
+                    &&context.getSharedPreferences(PREFS,0).getLong(collection+":native_catalogue_revision",-1)==catalogueRevision)return;
         }
         JourneyStore.forEachServiceStationEvidence(context,journey->{
             synchronized(VenueVisitStore.class){if(epoch==generation&&!replacingHistory)try{recordJourney(context,collection,journey);}catch(Exception invalid){throw new IllegalStateException("Saved visit evidence could not be evaluated",invalid);}}
         });
         long currentRevision=JourneyStore.dataRevision(context);
-        synchronized(VenueVisitStore.class){if(epoch==generation&&currentRevision==revision)
-            context.getSharedPreferences(PREFS,0).edit().putLong(collection+":native_scan_revision",revision).apply();}
+        synchronized(VenueVisitStore.class){if(epoch==generation&&currentRevision==revision
+                &&VenueCatalogueUpdates.forCollection(VenueCollection.definition(collection)).revision()==catalogueRevision)
+            context.getSharedPreferences(PREFS,0).edit().putLong(collection+":native_scan_revision",revision).putInt(collection+":native_evidence_version",2)
+                    .putLong(collection+":native_catalogue_revision",catalogueRevision).apply();}
     }
     static int reconcile(Context context,String collection,JSONArray pubs) throws Exception {
         if(!CollectionAccessStore.installed(context,collection))return 0;

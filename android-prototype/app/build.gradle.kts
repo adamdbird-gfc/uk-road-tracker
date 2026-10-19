@@ -15,8 +15,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 247
-        versionName = "0.25.201"
+        versionCode = 248
+        versionName = "0.25.202"
     }
 }
 
@@ -27,6 +27,7 @@ dependencies {
     implementation("com.google.firebase:firebase-perf")
     implementation("androidx.core:core:1.15.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
     testImplementation("org.robolectric:robolectric:4.14.1")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 }

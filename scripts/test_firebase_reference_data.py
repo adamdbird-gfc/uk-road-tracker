@@ -42,6 +42,18 @@ class ReferenceStagingTest(unittest.TestCase):
             stage(self.root, self.root, self.out)
         self.assertFalse(self.out.exists())
 
+    def test_older_hosted_release_survives_newer_app_bundle(self):
+        path = self.root / "collections/venue-collections-v1.json"
+        registry = json.loads(path.read_text())
+        for definition in registry["collections"]:
+            definition["bundled_revision"] = 9999999999
+        path.write_text(json.dumps(registry))
+        report = stage(self.root, self.root, self.out)
+        self.assertTrue(report["files"])
+        source = self.root / "collections/published/services/manifest-v1.json"
+        staged = self.out / "collections/published/services/manifest-v1.json"
+        self.assertEqual(source.read_bytes(), staged.read_bytes())
+
     def test_missing_inventory_aborts_before_output(self):
         (self.root / "settlement-inventories-v1/E63000001.json").unlink()
         with self.assertRaisesRegex(ValueError, "Missing"):

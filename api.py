@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import os
 import re
 import time
@@ -11,6 +12,8 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
+from map_context import shared_area, ContextUnavailable
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -26,6 +29,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 OSRM_BASE_URL = os.getenv("OSRM_BASE_URL", "https://router.project-osrm.org")
+CYCLE_OSRM_BASE_URL = os.getenv("CYCLE_OSRM_BASE_URL", "https://routing.openstreetmap.de/routed-bike")
+CYCLE_REQUEST_LOCK = asyncio.Lock()
+cycle_next_request_at = 0.0
+cycle_cooldown_until = 0.0
+
 FOOT_OSRM_BASE_URL = os.getenv("FOOT_OSRM_BASE_URL", "https://routing.openstreetmap.de/routed-foot")
 # Timeline traces can be sparse.  Eight points is deliberately conservative:
 # it keeps each public-OSRM Match request geographically coherent and avoids a
@@ -48,8 +56,12 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 MAX_MATCH_POINTS = int(os.getenv("MAX_MATCH_POINTS", "500"))
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
 RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
-RATE_LIMITED_PATHS = {"/match", "/match-walking", "/settlements-for-geometry", "/import-coordinator"}
+RATE_LIMITED_PATHS = {"/match", "/match-walking", "/match-cycling", "/settlements-for-geometry", "/import-coordinator"}
 request_windows = defaultdict(deque)
+FOOT_REQUEST_LOCK = asyncio.Lock()
+REFERENCE_MATCH_LOCK = asyncio.Lock()
+foot_next_request_at = 0.0
+foot_cooldown_until = 0.0
 
 app = FastAPI(title="UK Road Tracker API", version="0.11.0")
 PLACE_NAME_CACHE = {}
@@ -69,6 +81,9 @@ class Point(BaseModel):
 
 class MatchRequest(BaseModel):
     points: List[Point] = Field(min_length=2, max_length=MAX_MATCH_POINTS)
+    # Opt-in for Android; legacy browser requests retain their existing policy.
+    road_recovery: bool = False
+    walking_recovery: bool = False
 
 class SettlementGeometryRequest(BaseModel):
     geometry: dict[str, Any]
@@ -84,14 +99,14 @@ class SettlementInventoryRequest(BaseModel):
 class SettlementMetadataRequest(BaseModel):
     names: List[str] = Field(min_length=1, max_length=500)
 
-def chunk_points(points):
-    if len(points) <= OSRM_CHUNK_SIZE:
+def chunk_points(points, chunk_size=OSRM_CHUNK_SIZE, overlap=OSRM_CHUNK_OVERLAP):
+    if len(points) <= chunk_size:
         return [points]
     chunks = []
-    step = max(1, OSRM_CHUNK_SIZE - OSRM_CHUNK_OVERLAP)
+    step = max(1, chunk_size - overlap)
     start = 0
     while start < len(points):
-        end = min(len(points), start + OSRM_CHUNK_SIZE)
+        end = min(len(points), start + chunk_size)
         chunk = points[start:end]
         if len(chunk) >= 2:
             chunks.append(chunk)
@@ -141,6 +156,53 @@ def a_road_region(geometry):
         return "GB"
     return "NI" if -8.5 <= lng <= -5.0 and 53.8 <= lat <= 55.5 else "GB"
 
+async def router_get(client, url, params, base_url):
+    """Pace the shared foot router across all journeys and respect a 429."""
+    global foot_next_request_at, foot_cooldown_until
+    global cycle_next_request_at, cycle_cooldown_until
+    if base_url == CYCLE_OSRM_BASE_URL:
+        async with CYCLE_REQUEST_LOCK:
+            now = time.monotonic()
+            if now < cycle_cooldown_until:
+                raise HTTPException(status_code=503, detail="The cycling router is rate-limiting requests. Retry this journey later.",
+                                    headers={"Retry-After": str(max(1, int(cycle_cooldown_until - now + 1)))})
+            await asyncio.sleep(max(0.0, cycle_next_request_at - now))
+            try:
+                response = await client.get(url, params=params)
+            finally:
+                cycle_next_request_at = time.monotonic() + 1.05
+            if response.status_code == 429:
+                try:
+                    cooldown = max(1, min(3600, int(response.headers.get("Retry-After", "120"))))
+                except (ValueError, TypeError):
+                    cooldown = 120
+                cycle_cooldown_until = time.monotonic() + cooldown
+            return response
+    if base_url != FOOT_OSRM_BASE_URL:
+        return await client.get(url, params=params)
+    async with FOOT_REQUEST_LOCK:
+        now = time.monotonic()
+        if now < foot_cooldown_until:
+            remaining = max(1, int(foot_cooldown_until - now + 1))
+            raise HTTPException(
+                status_code=503,
+                detail="The pedestrian router is rate-limiting requests. Retry this journey later.",
+                headers={"Retry-After": str(remaining)},
+            )
+        await asyncio.sleep(max(0.0, foot_next_request_at - now))
+        try:
+            response = await client.get(url, params=params)
+        finally:
+            foot_next_request_at = time.monotonic() + 1.05
+        if response.status_code == 429:
+            try:
+                cooldown = max(1, min(3600, int(response.headers.get("Retry-After", "120"))))
+            except (ValueError, TypeError):
+                cooldown = 120
+            foot_cooldown_until = time.monotonic() + cooldown
+        return response
+
+
 async def request_match(client, points, radius, base_url):
     coordinates = ";".join(f"{p.lng:.7f},{p.lat:.7f}" for p in points)
     radiuses = ";".join(str(radius) for _ in points)
@@ -153,7 +215,7 @@ async def request_match(client, points, radius, base_url):
         "overview": "full",
         "geometries": "geojson",
         "steps": "true",
-        "annotations": "false",
+        "annotations": "nodes" if base_url == CYCLE_OSRM_BASE_URL else "false",
         "tidy": "true",
         "gaps": "split",
         "radiuses": radiuses,
@@ -161,7 +223,7 @@ async def request_match(client, points, radius, base_url):
     last_error = None
     for attempt in range(3):
         try:
-            response = await client.get(url, params=params)
+            response = await router_get(client, url, params, base_url)
             try:
                 data = response.json()
             except ValueError:
@@ -180,6 +242,18 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         if attempt_index and polite_delay_seconds:
             await asyncio.sleep(polite_delay_seconds)
         response, data = await request_match(client, points, radius, base_url)
+        if response.status_code == 429:
+            # This is a service-wide limit, not a bad GPS section. Splitting the
+            # section would amplify the limit and make the next retry less likely.
+            raise HTTPException(
+                status_code=503,
+                detail=("The cycling router" if base_url == CYCLE_OSRM_BASE_URL else "The pedestrian router") + " is rate-limiting requests. Retry this journey later.",
+                headers={"Retry-After": response.headers.get("Retry-After", "120")},
+            )
+        if response.status_code >= 500:
+            raise HTTPException(status_code=502, detail="The router is temporarily unavailable. Retry later.")
+        if data.get("code") not in {"Ok", "NoMatch", "NoSegment", "TooBig"}:
+            raise HTTPException(status_code=502, detail="The router returned an invalid response. Retry later.")
         if response.status_code == 200 and data.get("code") == "Ok":
             return data, radius
         code = data.get("code", f"HTTP {response.status_code}")
@@ -195,6 +269,50 @@ async def osrm_match_chunk(client, points, chunk_index, base_url, polite_delay_s
         detail=f"Chunk {chunk_index + 1}: {last_error or 'No usable road match was found.'}",
     )
 
+def matched_road_legs(data, point_offset):
+    """Identify observed legs so overlapping match chunks cannot inflate miles."""
+    legs = []
+    complete = True
+    for matching_index, matching in enumerate(data.get("matchings") or []):
+        route_legs = matching.get("legs") or []
+        waypoints = sorted(
+            (point["waypoint_index"], index)
+            for index, point in enumerate(data.get("tracepoints") or [])
+            if point and point.get("matchings_index") == matching_index
+            and isinstance(point.get("waypoint_index"), int)
+        )
+        if not route_legs or [w for w, _ in waypoints] != list(range(len(route_legs) + 1)):
+            complete = False
+            continue
+        for index, leg in enumerate(route_legs):
+            distance = leg.get("distance")
+            if not isinstance(distance, (int, float)) or not math.isfinite(distance) or distance < 0:
+                complete = False
+                continue
+            legs.append({"start_point_index": point_offset + waypoints[index][1],
+                         "end_point_index": point_offset + waypoints[index + 1][1],
+                         "distance_m": distance})
+    return legs, complete
+
+
+def supported_road_recovery_snap(points, tracepoints, maximum_metres=60):
+    if len(tracepoints) != len(points):
+        return False
+    for point, snapped in zip(points, tracepoints):
+        if not snapped or not snapped.get("location") or len(snapped["location"]) != 2:
+            return False
+        lng, lat = snapped["location"]
+        if not all(math.isfinite(value) for value in (lng, lat)):
+            return False
+        lat1, lat2 = math.radians(point.lat), math.radians(lat)
+        dlat, dlng = lat2 - lat1, math.radians(lng - point.lng)
+        h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng / 2) ** 2
+        distance = 6371008.8 * 2 * math.asin(min(1, math.sqrt(h)))
+        if distance > maximum_metres:
+            return False
+    return True
+
+
 async def match_chunk_resiliently(
     client,
     points,
@@ -203,6 +321,8 @@ async def match_chunk_resiliently(
     polite_delay_seconds=0.0,
     radius_attempts=RADIUS_ATTEMPTS,
     retry_no_match=False,
+    road_recovery=False,
+    point_offset=0,
 ):
     """Match a chunk without allowing one sparse portion to discard a journey.
 
@@ -216,10 +336,43 @@ async def match_chunk_resiliently(
             client, points, chunk_index, base_url, polite_delay_seconds,
             radius_attempts, retry_no_match,
         )
+        data["matched_point_indices"] = [
+            index for index, point in enumerate(data.get("tracepoints") or [])
+            if point is not None and index < len(points)
+        ]
+        if road_recovery:
+            data["road_distance_legs"], data["road_distance_complete"] = matched_road_legs(data, point_offset)
         return data, radius, []
     except HTTPException as exc:
-        if exc.status_code != 422 or len(points) <= 2:
-            return {"matchings": [], "tracepoints": []}, None, [{"points": len(points), "detail": str(exc.detail)}]
+        if exc.status_code != 422:
+            raise
+        if len(points) <= 2:
+            if road_recovery and "NoMatch" in str(exc.detail):
+                try:
+                    # Retry only the irreducible failed portion, through Match.
+                    # Walking tolerance and browser requests remain unchanged.
+                    recovered, radius = await osrm_match_chunk(
+                        client, points, chunk_index, base_url, polite_delay_seconds,
+                        [40, 60], True,
+                    )
+                    tracepoints = recovered.get("tracepoints") or []
+                    if supported_road_recovery_snap(points, tracepoints):
+                        recovered["matched_point_indices"] = list(range(len(points)))
+                        recovered["road_distance_legs"], recovered["road_distance_complete"] = matched_road_legs(recovered, point_offset)
+                        recovered["road_recovery"] = [{
+                            "start_point_index": point_offset,
+                            "end_point_index": point_offset + len(points) - 1,
+                            "radius_m": radius,
+                        }]
+                        return recovered, radius, []
+                except HTTPException as recovery_error:
+                    if recovery_error.status_code != 422:
+                        raise
+            return {"matchings": [], "tracepoints": []}, None, [{
+                "points": len(points), "detail": str(exc.detail),
+                "start_point_index": point_offset,
+                "end_point_index": point_offset + len(points) - 1,
+            }]
 
         # Use a one-point overlap so splitting a trace never leaves a lone
         # coordinate.  The overlap is harmless because downstream coverage is
@@ -229,20 +382,25 @@ async def match_chunk_resiliently(
         right = points[midpoint:]
         left_data, left_radius, left_failures = await match_chunk_resiliently(
             client, left, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match,
+            radius_attempts, retry_no_match, road_recovery, point_offset,
         )
         right_data, right_radius, right_failures = await match_chunk_resiliently(
             client, right, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match,
+            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint,
         )
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),
             "tracepoints": (left_data.get("tracepoints") or []) + (right_data.get("tracepoints") or []),
+            "matched_point_indices": sorted(set(left_data.get("matched_point_indices") or [])
+                | {midpoint + index for index in right_data.get("matched_point_indices") or []}),
+            "road_recovery": (left_data.get("road_recovery") or []) + (right_data.get("road_recovery") or []),
+            "road_distance_legs": (left_data.get("road_distance_legs") or []) + (right_data.get("road_distance_legs") or []),
+            "road_distance_complete": left_data.get("road_distance_complete", True) and right_data.get("road_distance_complete", True),
         }, left_radius or right_radius, left_failures + right_failures
 
 @app.middleware("http")
 async def request_guard(request: Request, call_next):
-    if request.url.path in RATE_LIMITED_PATHS:
+    if request.url.path in RATE_LIMITED_PATHS or request.url.path.startswith("/map-context/v1/"):
         client = request.client.host if request.client else "unknown"
         now = time.monotonic()
         window = request_windows[client]
@@ -273,7 +431,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -448,63 +606,102 @@ async def settlements_for_geometry(payload: SettlementGeometryRequest):
 
 @app.post("/match")
 async def match_journey(payload: MatchRequest):
-    return await match_payload(payload, OSRM_BASE_URL, include_motorways=True)
+    # The public driving router accepts ten trace coordinates; larger windows
+    # trigger TooBig and recursive retries before any useful match.
+    return await match_payload(payload, OSRM_BASE_URL, include_motorways=True,
+                               road_recovery=payload.road_recovery,
+                               chunk_size=10 if payload.road_recovery else OSRM_CHUNK_SIZE)
+
+@app.get("/map-context/v1/{lat_cell}/{lon_cell}")
+def map_context_area(lat_cell: int, lon_cell: int):
+    try:
+        document = shared_area(os.getenv("DATABASE_URL"), lat_cell, lon_cell)
+        return JSONResponse(document, headers={"Cache-Control": "public, max-age=3600"})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ContextUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Map context temporarily unavailable; recording can continue.",
+                            headers={"Retry-After": str(exc.retry_after)}) from exc
+
+
+def recorded_walking_result(point_count):
+    return {"status": "recorded", "walking_outcome": "insufficient_detail" if point_count <= 3 else "no_route_found",
+            "input_points": point_count, "matched_tracepoints": 0,
+            "matched_point_indices": [], "unmatched_point_indices": list(range(point_count)),
+            "geojson": {"type": "FeatureCollection", "features": []},
+            "road_geojson": {"type": "FeatureCollection", "features": []}}
+
 
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
+    if payload.walking_recovery and len(payload.points) <= 2:
+        return recorded_walking_result(len(payload.points))
     # The preloaded shared public reference is used first. The request is
     # read-only and transient: no Timeline route data is retained by Postgres.
-    reference_match = match_pedestrian_reference(
-        [{"lat": point.lat, "lng": point.lng} for point in payload.points]
-    )
+    try:
+        await asyncio.wait_for(REFERENCE_MATCH_LOCK.acquire(), timeout=5.0)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(
+            status_code=503, detail="Walking matcher is busy. Retry this journey shortly.",
+            headers={"Retry-After": "30"},
+        ) from exc
+    try:
+        reference_match = await asyncio.to_thread(
+            match_pedestrian_reference,
+            [{"lat": point.lat, "lng": point.lng} for point in payload.points],
+        )
+    finally:
+        REFERENCE_MATCH_LOCK.release()
     if reference_match:
         return reference_match
     # Other areas retain the established pedestrian-router path until their
     # equivalent public reference catalogue is loaded and verified.
-    return await match_payload(
-        payload,
-        FOOT_OSRM_BASE_URL,
-        include_motorways=False,
-        polite_delay_seconds=1.05,
-        radius_attempts=FOOT_RADIUS_ATTEMPTS,
-        retry_no_match=True,
-    )
-
-@app.get("/diagnostics/foot-router")
-async def foot_router_diagnostic():
-    """Temporary connectivity check for the third-party pedestrian router."""
-    url = f"{FOOT_OSRM_BASE_URL.rstrip('/')}/nearest/v1/driving/0.3700,51.4400"
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(url, params={"number": 1})
-        return {"reachable": True, "status": response.status_code}
-    except httpx.HTTPError as exc:
+        return await asyncio.wait_for(match_payload(
+            payload,
+            FOOT_OSRM_BASE_URL,
+            include_motorways=False,
+            polite_delay_seconds=1.05,
+            radius_attempts=FOOT_RADIUS_ATTEMPTS,
+            retry_no_match=True,
+            deduplicate_distance=payload.walking_recovery,
+            disjoint_chunks=payload.walking_recovery,
+        ), timeout=55.0)
+    except HTTPException as exc:
+        if payload.walking_recovery and exc.status_code == 422 and (
+                "NoMatch" in str(exc.detail) or str(exc.detail) == "The matcher returned no route geometry."):
+            return recorded_walking_result(len(payload.points))
+        raise
+    except asyncio.TimeoutError as exc:
         raise HTTPException(
-            status_code=502,
-            detail=f"Foot-router connection failed: {exc.__class__.__name__}: {exc}",
+            status_code=504,
+            detail="Walking matching exceeded its time limit. Your saved GPS route can be retried later.",
         ) from exc
 
-@app.get("/diagnostics/foot-router-match")
-async def foot_router_match_diagnostic():
-    """Temporary end-to-end test of the same OSRM Match endpoint used by walks."""
-    points = [
-        Point(lat=51.4400, lng=0.3700),
-        Point(lat=51.4405, lng=0.3710),
-    ]
+@app.post("/match-cycling")
+async def match_cycling_activity(payload: MatchRequest):
+    # A separate graph is essential: a profile name in the URL cannot turn
+    # the car or pedestrian graph into a bicycle network.
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            response, data = await request_match(client, points, 45, FOOT_OSRM_BASE_URL)
-        return {
-            "reachable": True,
-            "status": response.status_code,
-            "matcher_code": data.get("code"),
-            "matcher_message": data.get("message"),
-        }
-    except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Foot-router match failed: {exc.__class__.__name__}: {exc}",
-        ) from exc
+        result = await asyncio.wait_for(match_payload(
+            payload, CYCLE_OSRM_BASE_URL, include_motorways=False,
+            radius_attempts=[20, 10, 5], retry_no_match=True,
+            chunk_size=8, deduplicate_distance=True,
+        ), timeout=55.0)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=504, detail="Cycling matching exceeded its time limit. Your saved GPS route can be retried later.") from exc
+    except HTTPException as exc:
+        if exc.status_code == 502:
+            raise HTTPException(status_code=502, detail="The cycling matcher could not be reached. Your saved GPS route can be retried later.") from exc
+        raise
+    # OSRM steps omit access/highway tags. Preserve their geometry for future
+    # cycle exploration, without treating a path's name/ref as road completion.
+    result["cycling_geojson"] = result["road_geojson"]
+    result["road_geojson"] = {"type": "FeatureCollection", "features": []}
+    result["matching_mode"] = "cycling"
+    result["matcher"] = "osrm_bicycle_v1"
+    result["coverage_attribution"] = "cycle_geometry_only"
+    return result
 
 async def match_payload(
     payload: MatchRequest,
@@ -513,20 +710,32 @@ async def match_payload(
     polite_delay_seconds: float = 0.0,
     radius_attempts=RADIUS_ATTEMPTS,
     retry_no_match: bool = False,
+    road_recovery: bool = False,
+    chunk_size: int = OSRM_CHUNK_SIZE,
+    deduplicate_distance: bool = False,
+    disjoint_chunks: bool = False,
 ):
     if len(payload.points) < 2:
         raise HTTPException(status_code=400, detail="At least two coordinates are required.")
 
-    chunks = chunk_points(payload.points)
+    # Share a waypoint, never a travelled interval, for captured-road recovery.
+    # Dropped waypoints otherwise give overlapping chunks differently bounded
+    # legs whose distances cannot safely be deduplicated.
+    overlap = 1 if road_recovery or disjoint_chunks else OSRM_CHUNK_OVERLAP
+    chunks = chunk_points(payload.points, chunk_size, overlap)
     features = []
+    cycling_source_features = []
     motorway_features = []
     a_road_features = []
     road_features = []
     other_road_distance_m = 0.0
     matched_distance_m = 0.0
-    matched_tracepoints = 0
+    matched_input_indices = set()
     tracepoints_seen = 0
     failed_sections = []
+    recovered_sections = []
+    road_distance_legs = {}
+    road_distance_complete = True
 
     try:
         async with httpx.AsyncClient(
@@ -536,6 +745,7 @@ async def match_payload(
             for chunk_index, chunk in enumerate(chunks):
                 if chunk_index and polite_delay_seconds:
                     await asyncio.sleep(polite_delay_seconds)
+                chunk_start = chunk_index * max(1, chunk_size - overlap)
                 data, radius_used, chunk_failures = await match_chunk_resiliently(
                     client,
                     chunk,
@@ -544,14 +754,27 @@ async def match_payload(
                     polite_delay_seconds,
                     radius_attempts,
                     retry_no_match,
+                    road_recovery,
+                    chunk_start,
                 )
                 failed_sections.extend(chunk_failures)
+                recovered_sections.extend(data.get("road_recovery") or [])
+                if deduplicate_distance:
+                    data["road_distance_legs"], data["road_distance_complete"] = matched_road_legs(data, chunk_start)
+                if road_recovery or deduplicate_distance:
+                    road_distance_complete = road_distance_complete and data.get("road_distance_complete", True)
+                    for leg in data.get("road_distance_legs") or []:
+                        key = (leg["start_point_index"], leg["end_point_index"])
+                        road_distance_legs.setdefault(key, leg["distance_m"])
 
                 for matching_index, matching in enumerate(data.get("matchings") or []):
                     geometry = matching.get("geometry")
                     if geometry:
                         distance = float(matching.get("distance") or 0.0)
                         matched_distance_m += distance
+                        if base_url == CYCLE_OSRM_BASE_URL:
+                            cycling_source_features.append(cycling_feature_evidence(
+                                matching, len(features), data.get("data_version")))
                         features.append({
                             "type": "Feature",
                             "properties": {
@@ -617,7 +840,11 @@ async def match_payload(
                                 other_road_distance_m += float(step.get("distance") or 0.0)
 
                 tracepoints = data.get("tracepoints") or []
-                matched_tracepoints += sum(tp is not None for tp in tracepoints)
+                chunk_start = chunk_index * max(1, chunk_size - overlap)
+                matched_input_indices.update(
+                    chunk_start + index for index in data.get("matched_point_indices") or []
+                    if chunk_start + index < len(payload.points)
+                )
                 tracepoints_seen += len(tracepoints) + sum(failure["points"] for failure in chunk_failures)
 
     except httpx.HTTPError as exc:
@@ -626,17 +853,33 @@ async def match_payload(
     if not features:
         raise HTTPException(status_code=422, detail="The matcher returned no route geometry.")
 
-    return {
+    if road_recovery or deduplicate_distance:
+        previous_end = -1
+        for start, end in sorted(road_distance_legs):
+            # A dropped waypoint can produce differently bounded overlapping
+            # legs. Do not claim a verified distance unless overlap is exact.
+            if start < previous_end:
+                road_distance_complete = False
+            previous_end = max(previous_end, end)
+
+    result = {
         "status": "ok",
         "input_points": len(payload.points),
         "chunks_used": len(chunks),
         "points_sent_to_matcher": tracepoints_seen,
-        "matched_tracepoints": matched_tracepoints,
+        "matched_tracepoints": len(matched_input_indices),
+        "matched_point_indices": sorted(matched_input_indices),
+        "unmatched_point_indices": sorted(set(range(len(payload.points))) - matched_input_indices),
+        "road_recovery": recovered_sections,
         "failed_sections": failed_sections,
-        "matched_distance_m": round(matched_distance_m, 1),
+        "matched_distance_m": round(sum(road_distance_legs.values()) if (road_recovery or deduplicate_distance) and road_distance_complete else matched_distance_m, 1),
+        "matched_distance_is_deduplicated": bool((road_recovery or deduplicate_distance) and road_distance_complete and road_distance_legs),
         "geojson": {"type": "FeatureCollection", "features": features},
         "motorway_geojson": {"type": "FeatureCollection", "features": motorway_features},
         "a_road_geojson": {"type": "FeatureCollection", "features": a_road_features},
         "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
+    if base_url == CYCLE_OSRM_BASE_URL:
+        result["cycling_path_evidence"] = cycling_evidence(cycling_source_features)
+    return result

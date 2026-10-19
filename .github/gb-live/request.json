@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "preview_channel": "gb-reviewed-20261014",
+  "report_sha256": "33401ac0431acc84e79f35a95e70ce27cd8557c913dbe8d050a38fba6fe83015",
+  "action": "promote_verified_version_then_register_reference_counts"
+}

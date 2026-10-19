@@ -1,0 +1,44 @@
+[
+  {
+    "code": "E63003709",
+    "name": "Haverhill",
+    "saved_properties": {
+      "code": "E63003709",
+      "name": "Haverhill"
+    },
+    "saved_bytes": 40152,
+    "snapshot_bytes": 62694,
+    "saved_valid": true,
+    "snapshot_valid": true,
+    "relative_symmetric_difference": 3.4474826017014076e-07,
+    "bounds_same": true
+  },
+  {
+    "code": "E63005058",
+    "name": "Gravesend",
+    "saved_properties": {
+      "code": "E63005058",
+      "name": "Gravesend"
+    },
+    "saved_bytes": 26846,
+    "snapshot_bytes": 47577,
+    "saved_valid": true,
+    "snapshot_valid": true,
+    "relative_symmetric_difference": 3.858537236577182e-07,
+    "bounds_same": true
+  },
+  {
+    "code": "E63005204",
+    "name": "Gillingham (Medway)",
+    "saved_properties": {
+      "code": "E63005204",
+      "name": "Gillingham (Medway)"
+    },
+    "saved_bytes": 74230,
+    "snapshot_bytes": 121972,
+    "saved_valid": true,
+    "snapshot_valid": true,
+    "relative_symmetric_difference": 1.9203965591849493e-07,
+    "bounds_same": true
+  }
+]

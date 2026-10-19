@@ -94,6 +94,26 @@ public class WalkingCaptureServiceTest {
     @Test public void gpsStartsTheStopTimerAndLateWalkingCallbacksDoNotClearIt() throws Exception {
         gpsStop("walking",DetectedActivity.WALKING);
     }
+    @Test public void pedestrianSpeedSpikeAndOneOutsideFixCannotCancelCorroboratedGpsDwell() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear()
+                .putBoolean("armed",true).putBoolean("active",true).apply();
+        field("mode").set(service,"walking");field("automaticCapture").setBoolean(service,true);
+        @SuppressWarnings("unchecked") List<Location> points=(List<Location>)field("points").get(service);
+        Method observe=CaptureService.class.getDeclaredMethod("observeWalkingStillness",Location.class);observe.setAccessible(true);
+        Method clear=CaptureService.class.getDeclaredMethod("clearStillnessIfMovementContinues",Location.class);clear.setAccessible(true);
+        long now=System.currentTimeMillis();
+        for(int i=0;i<13;i++){
+            Location fix=p(i%3*10,now-360000+i*30000);fix.setAccuracy(25);
+            points.add(fix);observe.invoke(service,fix);
+        }
+        long began=field("stationarySince").getLong(service);assertTrue(began>0);
+        Location spike=p(100,now+5000);spike.setAccuracy(25);spike.setSpeed(2);
+        points.add(spike);observe.invoke(service,spike);clear.invoke(service,spike);
+        assertEquals(began,field("stationarySince").getLong(service));
+        assertTrue(field("gpsStillness").getBoolean(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
+    }
     @Test public void drivingGpsArrivalSurvivesLateVehicleCallbacksAndResetsOnDeparture() throws Exception {
         gpsStop("driving",DetectedActivity.IN_VEHICLE);
     }
@@ -153,6 +173,24 @@ public class WalkingCaptureServiceTest {
             assertNull(field("nextCaptureMode").get(service));assertEquals(7,points.size());
             service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
         }
+    }
+
+    @Test public void rejectedDrivingGpsSpikeCannotRestartArrivalTimer() throws Exception {
+        CaptureService service=Robolectric.buildService(CaptureService.class).get();
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear()
+                .putBoolean("armed",true).putBoolean("active",true).apply();
+        field("mode").set(service,"driving");field("automaticCapture").setBoolean(service,true);
+        @SuppressWarnings("unchecked") List<Location> points=(List<Location>)field("points").get(service);
+        Method observe=CaptureService.class.getDeclaredMethod("observeWalkingStillness",Location.class);observe.setAccessible(true);
+        Method clear=CaptureService.class.getDeclaredMethod("clearStillnessIfMovementContinues",Location.class);clear.setAccessible(true);
+        long now=System.currentTimeMillis();
+        for(int i=0;i<=12;i++) {Location fix=p(i%3,now-360000+i*30000);points.add(fix);observe.invoke(service,fix);}
+        long began=field("stationarySince").getLong(service);assertTrue(began>0);
+        Location spike=p(1000,now+5000);spike.setAccuracy(35);
+        points.add(spike);observe.invoke(service,spike);clear.invoke(service,spike);
+        assertEquals(began,field("stationarySince").getLong(service));
+        assertTrue(field("gpsStillness").getBoolean(service));
+        service.getSharedPreferences("roadprints_capture_state",0).edit().clear().apply();
     }
     private void gpsStop(String mode,int activity) throws Exception {
         CaptureService service=Robolectric.buildService(CaptureService.class).get();

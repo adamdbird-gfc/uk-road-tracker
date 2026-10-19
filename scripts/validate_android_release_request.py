@@ -16,8 +16,12 @@ def validate(repo, request_path):
     if not re.fullmatch(r'\.github/release-requests/android/[0-9]+\.[0-9]+\.[0-9]+\.json', request_path):
         raise ValueError('Unsupported release request path')
     data = json.loads((Path(repo) / request_path).read_text())
-    if (set(data) != {'schema_version', 'version_name', 'version_code', 'source_sha', 'firebase_upload'}
-            or data['schema_version'] != 1 or not isinstance(data['version_name'], str)
+    fields={'schema_version', 'version_name', 'version_code', 'source_sha', 'firebase_upload'}
+    if data.get('schema_version')==2: fields.add('distribute_existing_testers')
+    if (set(data) != fields
+            or data['schema_version'] not in (1,2)
+            or data.get('schema_version')==2 and (type(data.get('distribute_existing_testers')) is not bool
+                or data['distribute_existing_testers'] and not data.get('firebase_upload')) or not isinstance(data['version_name'], str)
             or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', data['version_name'])
             or type(data['version_code']) is not int or data['version_code'] <= 0
             or not isinstance(data['source_sha'], str) or not re.fullmatch(r'[0-9a-f]{40}', data['source_sha'])
@@ -51,4 +55,5 @@ if __name__ == '__main__':
     data = validate(args.repo, changed_request(args.repo))
     print('source_sha=' + data['source_sha'])
     print('firebase_upload=' + str(data['firebase_upload']).lower())
+    print('distribute_existing_testers=' + str(data.get('distribute_existing_testers',False)).lower())
     print('version_name=' + data['version_name'])

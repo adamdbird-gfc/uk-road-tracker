@@ -1,0 +1,72 @@
+name: Publish verified NI reference data
+on:
+  pull_request:
+    paths:
+      - '.github/ni-live/**'
+      - '.github/workflows/ni-reviewed-live.yml'
+      - 'scripts/*release_reviewed_ni.py'
+  push:
+    branches: [main]
+    paths: ['.github/ni-live/request.json']
+permissions:
+  contents: read
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/checkout@v6
+        with:
+          ref: '143530f24bb3bb6abd9e7ce1b6b3560fd1af27eb'
+          path: app-source
+          sparse-checkout: scripts/verify_firebase_reference_data.py
+          sparse-checkout-cone-mode: false
+      - run: python -m pip install 'psycopg[binary]==3.2.10'
+      - run: python -m unittest discover -s scripts -p test_release_reviewed_ni.py -v
+        env:
+          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/test
+          PYTHONPATH: app-source/scripts
+  publish:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/checkout@v6
+        with:
+          ref: '143530f24bb3bb6abd9e7ce1b6b3560fd1af27eb'
+          path: app-source
+          sparse-checkout: scripts/verify_firebase_reference_data.py
+          sparse-checkout-cone-mode: false
+      - run: python -m pip install 'psycopg[binary]==3.2.10' 'google-auth==2.40.3' 'requests==2.32.5'
+      - name: Promote verified NI version, verify live, register NI references atomically
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+          DATABASE_URL: ${{ secrets.REFERENCE_INGEST_DATABASE_URL }}
+          PYTHONPATH: app-source/scripts
+        run: python scripts/release_reviewed_ni.py
+      - name: Retain public NI publication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ni-live-public-verification
+          retention-days: 7
+          path: ni-live-evidence/

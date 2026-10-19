@@ -9,6 +9,30 @@ import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28)
 public class DrivingJourneyPreparationTest {
+    @Test public void poorUnmeasuredInteriorFixCannotPullTwoAccurateGpsFixesOntoAnotherRoad()throws Exception{
+        for(int speed:new int[]{11,33}) {
+            double span=speed*18;
+            JSONArray points=new JSONArray().put(point(0,0)).put(point(span/2,200)).put(point(span,0));
+            JSONObject j=journey(points);JSONArray samples=j.getJSONArray("capture_route_samples");
+            samples.getJSONArray(0).put(4,speed);samples.getJSONArray(1).put(4,-1).put(2,40);samples.getJSONArray(2).put(4,speed);
+            TimelineRoadPreparation.Prepared p=DrivingJourneyPreparation.prepare(j,points);
+            assertEquals(2,p.sections.get(0).length());assertEquals(1,p.details.getJSONArray("uncorroborated_fix_indices").getInt(0));
+            assertEquals(3,j.getJSONArray("capture_route_samples").length());
+            samples.getJSONArray(1).put(4,speed); // A measured turn must be retained.
+            assertEquals(3,DrivingJourneyPreparation.prepare(j,points).sections.get(0).length());
+        }
+    }
+
+    @Test public void longCaptureRequestsRetainEveryFixAndShareOnlyOneBoundary()throws Exception{
+        JSONArray points=new JSONArray();for(int i=0;i<1201;i++)points.put(point(i*20,0));
+        java.util.List<JSONArray> sections=DrivingJourneyPreparation.requests(points,500);
+        assertEquals(3,sections.size());int next=0;
+        for(JSONArray section:sections){assertTrue(section.length()<=500);
+            for(int i=0;i<section.length();i++)assertEquals(points.getJSONObject(next+i).toString(),section.getJSONObject(i).toString());
+            next+=section.length()-1;
+        }
+        assertEquals(1200,next);
+    }
     private JSONObject point(double x,double y) throws Exception {
         return new JSONObject().put("lng",x/111195).put("lat",y/111195);
     }

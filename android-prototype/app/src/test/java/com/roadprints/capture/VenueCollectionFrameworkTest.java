@@ -107,4 +107,34 @@ public class VenueCollectionFrameworkTest {
         assertTrue(VenueEvidence.nativeVisits(definition,capture(fixture,true,0),definition.source.load(app)).getJSONObject(0).getBoolean("automatic"));
         assertEquals(0,VenueStopDetector.stops(capture(fixture,false,10).getJSONArray("raw_capture_samples"),new JSONArray().put(fixture)).size());
     }
+    @Test public void warwickFootprintSupportsLiveCheckinAndNativeReplayBeyondOldRadius()throws Exception{
+        JSONObject north=VenueVisitStore.find(ServiceStationStore.stations(app),"msa:m40 warwick:52.2174:-1.504");
+        JSONObject south=VenueVisitStore.find(ServiceStationStore.stations(app),"msa:warwick m40:52.2188:-1.5033");
+        Location location=new Location("gps");location.setLatitude(52.2165186);location.setLongitude(-1.5053546);
+        location.setAccuracy(3);location.setTime(System.currentTimeMillis());location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+        assertTrue(ServiceStationEvidence.distance(north,location.getLatitude(),location.getLongitude())>125);
+        assertEquals("",VenueEvidence.liveProblem("services",north,location,SystemClock.elapsedRealtimeNanos()));
+        assertFalse(VenueEvidence.liveProblem("services",south,location,SystemClock.elapsedRealtimeNanos()).isEmpty());
+        VenueVisitStore.confirmLive(app,"services",north.getString("id"),location,true);
+        java.io.InputStream input=getClass().getResourceAsStream("/warwick-services-synthetic-stop.json");assertNotNull(input);
+        JSONArray samples=new JSONArray(new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
+        JSONObject journey=new JSONObject().put("journey_id","warwick-regression").put("source",new JSONObject().put("type","android_activity_capture"))
+                .put("raw_capture_samples",samples);
+        JSONArray outcomes=VenueEvidence.nativeVisits("services",journey,ServiceStationStore.stations(app));
+        assertEquals(1,outcomes.length());assertTrue(outcomes.getJSONObject(0).getBoolean("automatic"));
+        assertEquals(north.getString("id"),outcomes.getJSONObject(0).getJSONObject("venue").getString("id"));
+        VenueVisitStore.recordJourney(app,"services",journey);VenueVisitStore.recordJourney(app,"services",journey);
+        assertEquals(1,VenueVisitStore.completed(app,"services").size());
+    }
+    @Test public void changedEvidencePolicyRescansSavedJourneyWithoutJourneyEdits()throws Exception{
+        JSONObject journey=capture(service,false,0).put("mode","driving").put("started_at","2026-10-16T10:00:00Z").put("ended_at","2026-10-16T10:10:00Z");
+        JourneyStore.save(app,journey);
+        app.getSharedPreferences(VenueVisitStore.PREFS,0).edit().putString("services:records","{}")
+                .putLong("services:native_scan_revision",JourneyStore.dataRevision(app)).putInt("services:native_evidence_version",1).commit();
+        java.lang.reflect.Method scan=VenueVisitStore.class.getDeclaredMethod("ensureNativeHistory",Context.class,String.class);scan.setAccessible(true);
+        scan.invoke(null,app,"services");
+        assertTrue(VenueVisitStore.completed(app,"services").contains(service.getString("id")));
+        assertEquals(2,app.getSharedPreferences(VenueVisitStore.PREFS,0).getInt("services:native_evidence_version",0));
+    }
+
 }

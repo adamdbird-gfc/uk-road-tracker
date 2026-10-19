@@ -79,3 +79,7 @@ One version has one request file. Editing/reusing an existing file is rejected;
 retry failed jobs through their original run. Requests contain public release
 metadata only, never credentials or tester identities. Each source pin is checked
 against the requested version before any signing key is consumed.
+
+## Beta 1 existing-tester sharing
+
+Schema-version 2 release requests explicitly add `distribute_existing_testers` (boolean). It requires `firebase_upload: true`. The reusable workflow also exposes this separate, default-off input. When enabled, the helper reads existing project testers with the App Distribution API, writes a private temporary tester file, and shares the verified APK with those identities through Firebase CLI. It does not create a new tester list in Git or log tester email addresses. Empty, failed or malformed tester lookups fail before upload rather than claiming distribution. Existing schema-version 1 requests remain upload-only.

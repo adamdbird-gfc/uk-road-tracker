@@ -136,7 +136,7 @@ def apply_reviewed_reference(service,reference):
     if existing:
         # Names and OSM centroids can change. Keep the collection identity for the same source site.
         service["id"]=existing["id"]
-        for key in ("road","region","road_match_distance_m"):
+        for key in ("road","region","road_match_distance_m","site_boundary","site_boundary_source_ids","site_boundary_policy_version"):
             if key in existing: service[key]=existing[key]
     if not service.get("road") or not service.get("region"):
         raise ValueError("New service area needs a reviewed motorway/region assignment: "+service["name"])

@@ -20,6 +20,7 @@ final class WalkingStartEvidence {
             }
         }
         return FootTraceValidator.metres(first,last)-first.accuracy-last.accuracy>=50
+                && PedestrianMotionWindow.confirmed(samples)
                 && CaptureStartGate.shouldConfirmStart("walking",last.time-first.time,(float)movement,false,0);
     }
 }

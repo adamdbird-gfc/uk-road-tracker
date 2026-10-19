@@ -1,0 +1,1249 @@
+{
+  "status": "candidates_only_not_published",
+  "source": {
+    "region": "great-britain",
+    "url": "https://download.geofabrik.de/europe/great-britain-latest.osm.pbf",
+    "bytes": 2186375537,
+    "sha256": "2d9232f250b01e7192c40241b47ef2879abf6279ffdd238957245aca77e75fd5",
+    "md5": "75e6b6d51d8c497d4cfedafb9a0f12bb",
+    "download_seconds": 214.549,
+    "osm_timestamp": "2026-10-13T20:21:31Z"
+  },
+  "boundary_snapshot_sha256": "372556eb0e043775ad9fa4e9c3c4428d6c0d21255a4fa587ba0d39016ecc8c39",
+  "settlement_count": 8545,
+  "total_distinct_names_across_settlements": 748429,
+  "inventory_file_bytes": 13249631,
+  "existing_inventories_exact_matches": 95,
+  "existing_inventory_differences": [
+    {
+      "code": "E63000498",
+      "name": "Dalton-in-Furness",
+      "baseline_count": 139,
+      "candidate_count": 141,
+      "unchanged": 139,
+      "added": [
+        "Acorn Bank",
+        "Skeldene Close"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63000792",
+      "name": "Blackpool",
+      "baseline_count": 1991,
+      "candidate_count": 1993,
+      "unchanged": 1990,
+      "added": [
+        "Sidford Court",
+        "Sir Ken Dodd Avenue",
+        "The Pavilions"
+      ],
+      "removed": [
+        "Adelaide Street West"
+      ]
+    },
+    {
+      "code": "E63001274",
+      "name": "Salford",
+      "baseline_count": 1292,
+      "candidate_count": 1291,
+      "unchanged": 1290,
+      "added": [
+        "Daffodil Street"
+      ],
+      "removed": [
+        "Daffolid Street",
+        "Redclyffe Mews"
+      ]
+    },
+    {
+      "code": "E63001295",
+      "name": "Manchester",
+      "baseline_count": 5252,
+      "candidate_count": 5252,
+      "unchanged": 5251,
+      "added": [
+        "Lazonby Walk"
+      ],
+      "removed": [
+        "Everleigh Drive"
+      ]
+    },
+    {
+      "code": "E63001374",
+      "name": "Liverpool",
+      "baseline_count": 5757,
+      "candidate_count": 5758,
+      "unchanged": 5757,
+      "added": [
+        "Cuerden Street"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63001424",
+      "name": "Sheffield",
+      "baseline_count": 5252,
+      "candidate_count": 5256,
+      "unchanged": 5251,
+      "added": [
+        "Carriage Spring Drive",
+        "Cart Spring Close",
+        "Speeton Road",
+        "St Wilfrid's Road",
+        "Tyne Close"
+      ],
+      "removed": [
+        "Saint Wilfrid's Road"
+      ]
+    },
+    {
+      "code": "E63001804",
+      "name": "Crewe",
+      "baseline_count": 915,
+      "candidate_count": 927,
+      "unchanged": 915,
+      "added": [
+        "Anzac Drive",
+        "Archer Drive",
+        "Bramble Close",
+        "Clive Road",
+        "Entwisle Way",
+        "Lodge Way",
+        "Pavilion Close",
+        "Percival Drive",
+        "Stokes Avenue",
+        "Thornberry Close",
+        "Washington Drive",
+        "Wren Drive"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63001992",
+      "name": "Nottingham",
+      "baseline_count": 3030,
+      "candidate_count": 3031,
+      "unchanged": 3030,
+      "added": [
+        "Burling Street"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63002078",
+      "name": "Derby",
+      "baseline_count": 3430,
+      "candidate_count": 3430,
+      "unchanged": 3422,
+      "added": [
+        "St Albans Road",
+        "St Clare's Close",
+        "St Cuthbert's Road",
+        "St David's Close",
+        "St Marks Road",
+        "St Quentin Close",
+        "St Swithin's Close",
+        "St Wystan's Road"
+      ],
+      "removed": [
+        "Saint Albans Road",
+        "Saint Clare's Close",
+        "Saint Cuthbert's Road",
+        "Saint David's Close",
+        "Saint Marks Road",
+        "Saint Quentin Close",
+        "Saint Swithin's Close",
+        "Saint Wystan's Road"
+      ]
+    },
+    {
+      "code": "E63002622",
+      "name": "Leicester",
+      "baseline_count": 3370,
+      "candidate_count": 3369,
+      "unchanged": 3367,
+      "added": [
+        "Asplin Road",
+        "Causeway Lane"
+      ],
+      "removed": [
+        "Asplin road",
+        "Kepwick road",
+        "Short Street"
+      ]
+    },
+    {
+      "code": "E63002644",
+      "name": "Tamworth",
+      "baseline_count": 909,
+      "candidate_count": 911,
+      "unchanged": 909,
+      "added": [
+        "Fitzwilliam Place",
+        "Meryton Grove"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63002901",
+      "name": "Market Harborough",
+      "baseline_count": 371,
+      "candidate_count": 370,
+      "unchanged": 370,
+      "added": [],
+      "removed": [
+        "Moseley Avenu"
+      ]
+    },
+    {
+      "code": "E63003443",
+      "name": "Cambridge (Cambridge)",
+      "baseline_count": 1369,
+      "candidate_count": 1374,
+      "unchanged": 1368,
+      "added": [
+        "Fell Road",
+        "Franklin Gardens",
+        "Galapagos Road",
+        "Perutz Way",
+        "Tahiti Road",
+        "Wedgewood Avenue"
+      ],
+      "removed": [
+        "Ashworth Park"
+      ]
+    },
+    {
+      "code": "E63004104",
+      "name": "Colchester",
+      "baseline_count": 1470,
+      "candidate_count": 1470,
+      "unchanged": 1468,
+      "added": [
+        "Hythe Quay",
+        "Saint David's Close"
+      ],
+      "removed": [
+        "Belmont Place",
+        "Saint Davids Close"
+      ]
+    },
+    {
+      "code": "E63004158",
+      "name": "Burton End",
+      "baseline_count": 36,
+      "candidate_count": 33,
+      "unchanged": 33,
+      "added": [],
+      "removed": [
+        "Molehill Green Roundabout",
+        "Terminal Road North",
+        "Terminal Road South"
+      ]
+    },
+    {
+      "code": "E63004191",
+      "name": "Bishop's Stortford",
+      "baseline_count": 563,
+      "candidate_count": 563,
+      "unchanged": 562,
+      "added": [
+        "Hampton Way"
+      ],
+      "removed": [
+        "The Bourne"
+      ]
+    },
+    {
+      "code": "E63004679",
+      "name": "Enfield",
+      "baseline_count": 1957,
+      "candidate_count": 1956,
+      "unchanged": 1955,
+      "added": [
+        "Bulls Cross"
+      ],
+      "removed": [
+        "Bull's Cross",
+        "St Stephen's Road"
+      ]
+    },
+    {
+      "code": "E63004858",
+      "name": "Camden",
+      "baseline_count": 1123,
+      "candidate_count": 1122,
+      "unchanged": 1121,
+      "added": [
+        "Powis Place"
+      ],
+      "removed": [
+        "Regent's Park Road Bridge",
+        "Southampton Bridge"
+      ]
+    },
+    {
+      "code": "E63004906",
+      "name": "City and County of the City of London",
+      "baseline_count": 291,
+      "candidate_count": 291,
+      "unchanged": 290,
+      "added": [
+        "Haydon Street"
+      ],
+      "removed": [
+        "New London Street"
+      ]
+    },
+    {
+      "code": "E63004916",
+      "name": "City of Westminster",
+      "baseline_count": 1349,
+      "candidate_count": 1353,
+      "unchanged": 1348,
+      "added": [
+        "Chesham Close",
+        "Eaton Terrace Mews",
+        "Lyall Mews",
+        "Portland Mews",
+        "Station  Yard"
+      ],
+      "removed": [
+        "Belgrave Square"
+      ]
+    },
+    {
+      "code": "E63004944",
+      "name": "Hammersmith and Fulham",
+      "baseline_count": 845,
+      "candidate_count": 845,
+      "unchanged": 839,
+      "added": [
+        "Bolander Grove",
+        "Epirus Mews",
+        "Lillie Square",
+        "Makers Yard",
+        "Potters Road",
+        "Rainsborough Square"
+      ],
+      "removed": [
+        "Brompton Park Crescent",
+        "Chestnut Alley",
+        "Harwood Mews",
+        "Palace Mews",
+        "Saint Maur Road",
+        "Wheatsheaf Terrace"
+      ]
+    },
+    {
+      "code": "E63005063",
+      "name": "Lambeth",
+      "baseline_count": 1394,
+      "candidate_count": 1406,
+      "unchanged": 1394,
+      "added": [
+        "Burdett Street",
+        "China Walk",
+        "Doon Street",
+        "Greenham Close",
+        "Ingram Close",
+        "Johanna Street",
+        "Leake Street",
+        "McAuley Close",
+        "Morton Place",
+        "Newnham Terrace",
+        "Sidford Place",
+        "Tanswell Street"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63005073",
+      "name": "Richmond upon Thames",
+      "baseline_count": 1369,
+      "candidate_count": 1371,
+      "unchanged": 1369,
+      "added": [
+        "Castelnau",
+        "Lonsdale Road"
+      ],
+      "removed": []
+    },
+    {
+      "code": "E63005164",
+      "name": "Kingston upon Thames",
+      "baseline_count": 1090,
+      "candidate_count": 1089,
+      "unchanged": 1089,
+      "added": [],
+      "removed": [
+        "Little Dell"
+      ]
+    },
+    {
+      "code": "K08000001",
+      "name": "Chester",
+      "baseline_count": 1239,
+      "candidate_count": 1240,
+      "unchanged": 1239,
+      "added": [
+        "Bachelors Court"
+      ],
+      "removed": []
+    },
+    {
+      "code": "W45000596",
+      "name": "Cardiff",
+      "baseline_count": 3313,
+      "candidate_count": 3315,
+      "unchanged": 3312,
+      "added": [
+        "Ash Place",
+        "Clas Isan",
+        "Hazel Place"
+      ],
+      "removed": [
+        "Clas ISan"
+      ]
+    }
+  ],
+  "zero_named_road_settlements": [
+    {
+      "code": "E63000012",
+      "name": "Brunton"
+    },
+    {
+      "code": "E63000028",
+      "name": "South Broomhill"
+    },
+    {
+      "code": "E63000030",
+      "name": "West Thirston"
+    },
+    {
+      "code": "E63000036",
+      "name": "Woodhorn"
+    },
+    {
+      "code": "E63000043",
+      "name": "Bomarsund"
+    },
+    {
+      "code": "E63000052",
+      "name": "Ogle"
+    },
+    {
+      "code": "E63000086",
+      "name": "Newton Hall"
+    },
+    {
+      "code": "E63000107",
+      "name": "Harker"
+    },
+    {
+      "code": "E63000110",
+      "name": "Oldwall"
+    },
+    {
+      "code": "E63000182",
+      "name": "Mellguards"
+    },
+    {
+      "code": "E63000185",
+      "name": "Hetton le Hill"
+    },
+    {
+      "code": "E63000219",
+      "name": "Eastgate"
+    },
+    {
+      "code": "E63000220",
+      "name": "Howbeck"
+    },
+    {
+      "code": "E63000233",
+      "name": "Redmain"
+    },
+    {
+      "code": "E63000297",
+      "name": "Grangetown"
+    },
+    {
+      "code": "E63000299",
+      "name": "Hilton (Eden)"
+    },
+    {
+      "code": "E63000305",
+      "name": "Lazenby"
+    },
+    {
+      "code": "E63000373",
+      "name": "Sneatonthorpe"
+    },
+    {
+      "code": "E63000376",
+      "name": "Sellafield"
+    },
+    {
+      "code": "E63000461",
+      "name": "Flixton Ings"
+    },
+    {
+      "code": "E63000574",
+      "name": "Stodday"
+    },
+    {
+      "code": "E63000684",
+      "name": "Routh"
+    },
+    {
+      "code": "E63000769",
+      "name": "Weeton"
+    },
+    {
+      "code": "E63000816",
+      "name": "Ribby"
+    },
+    {
+      "code": "E63000862",
+      "name": "Bottom of Hutton"
+    },
+    {
+      "code": "E63000997",
+      "name": "Ulnes Walton"
+    },
+    {
+      "code": "E63001515",
+      "name": "Darfoulds"
+    },
+    {
+      "code": "E63001563",
+      "name": "Nether Alderley"
+    },
+    {
+      "code": "E63001581",
+      "name": "Tunstead"
+    },
+    {
+      "code": "E63001627",
+      "name": "High Marnham"
+    },
+    {
+      "code": "E63001782",
+      "name": "Harlow Wood"
+    },
+    {
+      "code": "E63001816",
+      "name": "Radway Green"
+    },
+    {
+      "code": "E63001985",
+      "name": "West Willoughby"
+    },
+    {
+      "code": "E63002008",
+      "name": "Morley (Erewash)"
+    },
+    {
+      "code": "E63002017",
+      "name": "Scrane End"
+    },
+    {
+      "code": "E63002103",
+      "name": "Tetchill"
+    },
+    {
+      "code": "E63002125",
+      "name": "Cold Norton (Stafford)"
+    },
+    {
+      "code": "E63002140",
+      "name": "Chipnall"
+    },
+    {
+      "code": "E63002185",
+      "name": "Rednal"
+    },
+    {
+      "code": "E63002200",
+      "name": "Foremark"
+    },
+    {
+      "code": "E63002201",
+      "name": "Sleap"
+    },
+    {
+      "code": "E63002232",
+      "name": "Newchurch (East Staffordshire)"
+    },
+    {
+      "code": "E63002290",
+      "name": "Walford"
+    },
+    {
+      "code": "E63002343",
+      "name": "Thringstone"
+    },
+    {
+      "code": "E63002354",
+      "name": "Clipsham"
+    },
+    {
+      "code": "E63002533",
+      "name": "Battram"
+    },
+    {
+      "code": "E63002657",
+      "name": "Snailbeach"
+    },
+    {
+      "code": "E63002658",
+      "name": "Acton Burnell"
+    },
+    {
+      "code": "E63002676",
+      "name": "Great Stretton"
+    },
+    {
+      "code": "E63002725",
+      "name": "West Dereham"
+    },
+    {
+      "code": "E63002792",
+      "name": "Easthope"
+    },
+    {
+      "code": "E63002852",
+      "name": "Quatford"
+    },
+    {
+      "code": "E63002879",
+      "name": "Tibenham"
+    },
+    {
+      "code": "E63002940",
+      "name": "Wardy Hill"
+    },
+    {
+      "code": "E63002984",
+      "name": "Stretton under Fosse"
+    },
+    {
+      "code": "E63003029",
+      "name": "Brington"
+    },
+    {
+      "code": "E63003061",
+      "name": "Fakenham Magna"
+    },
+    {
+      "code": "E63003071",
+      "name": "Bedstone"
+    },
+    {
+      "code": "E63003169",
+      "name": "Chittering"
+    },
+    {
+      "code": "E63003201",
+      "name": "Bordesley"
+    },
+    {
+      "code": "E63003270",
+      "name": "East Perry"
+    },
+    {
+      "code": "E63003294",
+      "name": "Boxworth"
+    },
+    {
+      "code": "E63003299",
+      "name": "Long Buckby Wharf"
+    },
+    {
+      "code": "E63003310",
+      "name": "Lucton"
+    },
+    {
+      "code": "E63003333",
+      "name": "Sizewell"
+    },
+    {
+      "code": "E63003367",
+      "name": "Holt (Malvern Hills)"
+    },
+    {
+      "code": "E63003504",
+      "name": "Stoneton"
+    },
+    {
+      "code": "E63003575",
+      "name": "Upper Wolverton"
+    },
+    {
+      "code": "E63003683",
+      "name": "Wellington Marsh"
+    },
+    {
+      "code": "E63003746",
+      "name": "Besford"
+    },
+    {
+      "code": "E63003849",
+      "name": "Woolverstone"
+    },
+    {
+      "code": "E63003860",
+      "name": "Whitfield (Buckinghamshire)"
+    },
+    {
+      "code": "E63003886",
+      "name": "Dadford"
+    },
+    {
+      "code": "E63003893",
+      "name": "Hinton-in-the-Hedges"
+    },
+    {
+      "code": "E63003910",
+      "name": "Queenhill"
+    },
+    {
+      "code": "E63003948",
+      "name": "Barford St John"
+    },
+    {
+      "code": "E63003989",
+      "name": "Boyton End"
+    },
+    {
+      "code": "E63004010",
+      "name": "Newton Purcell"
+    },
+    {
+      "code": "E63004046",
+      "name": "Pontrilas"
+    },
+    {
+      "code": "E63004073",
+      "name": "Chalton"
+    },
+    {
+      "code": "E63004085",
+      "name": "Twyford (Buckinghamshire)"
+    },
+    {
+      "code": "E63004088",
+      "name": "Gagingwell"
+    },
+    {
+      "code": "E63004131",
+      "name": "Rush Green"
+    },
+    {
+      "code": "E63004278",
+      "name": "Westcott (Buckinghamshire)"
+    },
+    {
+      "code": "E63004288",
+      "name": "Fleet Marston"
+    },
+    {
+      "code": "E63004403",
+      "name": "Rendcomb"
+    },
+    {
+      "code": "E63004465",
+      "name": "Hardwick (West Oxfordshire)"
+    },
+    {
+      "code": "E63004620",
+      "name": "Clapton"
+    },
+    {
+      "code": "E63004662",
+      "name": "Frilford"
+    },
+    {
+      "code": "E63004676",
+      "name": "Rodmarton"
+    },
+    {
+      "code": "E63004709",
+      "name": "Oldbury Naite"
+    },
+    {
+      "code": "E63004718",
+      "name": "Beverston"
+    },
+    {
+      "code": "E63004942",
+      "name": "Leigh Delamere"
+    },
+    {
+      "code": "E63004991",
+      "name": "Touchen-end"
+    },
+    {
+      "code": "E63005021",
+      "name": "Wallend"
+    },
+    {
+      "code": "E63005111",
+      "name": "Lackham"
+    },
+    {
+      "code": "E63005244",
+      "name": "Newton St Loe"
+    },
+    {
+      "code": "E63005264",
+      "name": "Horris Hill"
+    },
+    {
+      "code": "E63005298",
+      "name": "Woodham"
+    },
+    {
+      "code": "E63005780",
+      "name": "Grafham"
+    },
+    {
+      "code": "E63005895",
+      "name": "Idmiston"
+    },
+    {
+      "code": "E63005905",
+      "name": "Pecking Mill"
+    },
+    {
+      "code": "E63005958",
+      "name": "Worth Abbey"
+    },
+    {
+      "code": "E63005959",
+      "name": "The Platt"
+    },
+    {
+      "code": "E63006056",
+      "name": "Wheatsheaf Common"
+    },
+    {
+      "code": "E63006193",
+      "name": "Buck's Cross"
+    },
+    {
+      "code": "E63006203",
+      "name": "Higher Coombe"
+    },
+    {
+      "code": "E63006214",
+      "name": "North Heath"
+    },
+    {
+      "code": "E63006223",
+      "name": "Chilton Cantelo"
+    },
+    {
+      "code": "E63006252",
+      "name": "Vinehall Street"
+    },
+    {
+      "code": "E63006323",
+      "name": "Dungeness"
+    },
+    {
+      "code": "E63006332",
+      "name": "Ower (Copythorne)"
+    },
+    {
+      "code": "E63006357",
+      "name": "Barcombe Mills"
+    },
+    {
+      "code": "E63006425",
+      "name": "Leweston"
+    },
+    {
+      "code": "E63006460",
+      "name": "Smeatharpe"
+    },
+    {
+      "code": "E63006506",
+      "name": "Bryanston"
+    },
+    {
+      "code": "E63006585",
+      "name": "Ower (Fawley)"
+    },
+    {
+      "code": "E63006587",
+      "name": "Beaulieu"
+    },
+    {
+      "code": "E63006608",
+      "name": "Matchams"
+    },
+    {
+      "code": "E63006708",
+      "name": "Great Thorness"
+    },
+    {
+      "code": "E63006778",
+      "name": "Trewassa"
+    },
+    {
+      "code": "E63006829",
+      "name": "Haytor Vale"
+    },
+    {
+      "code": "E63006840",
+      "name": "Venterdon"
+    },
+    {
+      "code": "E63006843",
+      "name": "Teigngrace"
+    },
+    {
+      "code": "E63006859",
+      "name": "St Ervan"
+    },
+    {
+      "code": "E63006863",
+      "name": "Harrowbarrow"
+    },
+    {
+      "code": "E63006894",
+      "name": "Doublebois"
+    },
+    {
+      "code": "E63006896",
+      "name": "Carloggas"
+    },
+    {
+      "code": "E63006943",
+      "name": "Trethosa"
+    },
+    {
+      "code": "E63006953",
+      "name": "Polkerris"
+    },
+    {
+      "code": "E63006957",
+      "name": "Par"
+    },
+    {
+      "code": "E63006960",
+      "name": "Trevellas"
+    },
+    {
+      "code": "E63006994",
+      "name": "Cambrose"
+    },
+    {
+      "code": "E63007014",
+      "name": "Bissoe"
+    },
+    {
+      "code": "E63007040",
+      "name": "Harcourt"
+    },
+    {
+      "code": "E63007069",
+      "name": "Kelynack"
+    },
+    {
+      "code": "E63007082",
+      "name": "Rose-in-the-bush"
+    },
+    {
+      "code": "E63007087",
+      "name": "Mullion Cove"
+    },
+    {
+      "code": "S45000010",
+      "name": "Achduchil"
+    },
+    {
+      "code": "S45000057",
+      "name": "Balado"
+    },
+    {
+      "code": "S45000077",
+      "name": "Barry (Angus)"
+    },
+    {
+      "code": "S45000085",
+      "name": "Benderloch"
+    },
+    {
+      "code": "S45000086",
+      "name": "Bieldside"
+    },
+    {
+      "code": "S45000112",
+      "name": "Bowershall"
+    },
+    {
+      "code": "S45000114",
+      "name": "Boyndie"
+    },
+    {
+      "code": "S45000132",
+      "name": "Broxburn (East Lothian)"
+    },
+    {
+      "code": "S45000137",
+      "name": "Buldoo"
+    },
+    {
+      "code": "S45000169",
+      "name": "Catfirth"
+    },
+    {
+      "code": "S45000177",
+      "name": "Charlesfield"
+    },
+    {
+      "code": "S45000185",
+      "name": "Cliasmol"
+    },
+    {
+      "code": "S45000213",
+      "name": "Creca"
+    },
+    {
+      "code": "S45000228",
+      "name": "Crossroads"
+    },
+    {
+      "code": "S45000254",
+      "name": "Denhead"
+    },
+    {
+      "code": "S45000260",
+      "name": "Dipple"
+    },
+    {
+      "code": "S45000275",
+      "name": "Duffus"
+    },
+    {
+      "code": "S45000327",
+      "name": "Fendom"
+    },
+    {
+      "code": "S45000337",
+      "name": "Fogo"
+    },
+    {
+      "code": "S45000339",
+      "name": "Fordoun"
+    },
+    {
+      "code": "S45000367",
+      "name": "Glenalmond"
+    },
+    {
+      "code": "S45000370",
+      "name": "Glenegedale"
+    },
+    {
+      "code": "S45000381",
+      "name": "Grange"
+    },
+    {
+      "code": "S45000384",
+      "name": "Graven"
+    },
+    {
+      "code": "S45000392",
+      "name": "Hackness"
+    },
+    {
+      "code": "S45000398",
+      "name": "Hardmuir"
+    },
+    {
+      "code": "S45000419",
+      "name": "Innerwick"
+    },
+    {
+      "code": "S45000428",
+      "name": "Inverugie"
+    },
+    {
+      "code": "S45000487",
+      "name": "Landerberry"
+    },
+    {
+      "code": "S45000498",
+      "name": "Leitholm"
+    },
+    {
+      "code": "S45000520",
+      "name": "Lochhill"
+    },
+    {
+      "code": "S45000552",
+      "name": "Millbrex"
+    },
+    {
+      "code": "S45000591",
+      "name": "New Mains"
+    },
+    {
+      "code": "S45000607",
+      "name": "Nigg Ferry"
+    },
+    {
+      "code": "S45000621",
+      "name": "Upper Bayble"
+    },
+    {
+      "code": "S45000622",
+      "name": "Padanaram"
+    },
+    {
+      "code": "S45000666",
+      "name": "Redcloak"
+    },
+    {
+      "code": "S45000672",
+      "name": "Rosebank"
+    },
+    {
+      "code": "S45000726",
+      "name": "Steelend"
+    },
+    {
+      "code": "S45000735",
+      "name": "Stoneykirk"
+    },
+    {
+      "code": "S45000737",
+      "name": "Stracathro"
+    },
+    {
+      "code": "S45000770",
+      "name": "Throsk"
+    },
+    {
+      "code": "S45000791",
+      "name": "Uddington"
+    },
+    {
+      "code": "S45000798",
+      "name": "Waterside"
+    },
+    {
+      "code": "S45000801",
+      "name": "Weisdale"
+    },
+    {
+      "code": "W45000002",
+      "name": "Tregele"
+    },
+    {
+      "code": "W45000041",
+      "name": "Greenfield (Flintshire)"
+    },
+    {
+      "code": "W45000056",
+      "name": "Llanfairyneubwll"
+    },
+    {
+      "code": "W45000058",
+      "name": "Henryd"
+    },
+    {
+      "code": "W45000128",
+      "name": "Dinas Dinlle"
+    },
+    {
+      "code": "W45000137",
+      "name": "Llandwrog"
+    },
+    {
+      "code": "W45000155",
+      "name": "Tal-y-waenydd"
+    },
+    {
+      "code": "W45000178",
+      "name": "Gellilydan"
+    },
+    {
+      "code": "W45000181",
+      "name": "Hafan y Mor"
+    },
+    {
+      "code": "W45000207",
+      "name": "Pantperthog"
+    },
+    {
+      "code": "W45000261",
+      "name": "Dre-fach"
+    },
+    {
+      "code": "W45000291",
+      "name": "Maenclochog"
+    },
+    {
+      "code": "W45000294",
+      "name": "Brawdy"
+    },
+    {
+      "code": "W45000362",
+      "name": "Onllwyn"
+    },
+    {
+      "code": "W45000364",
+      "name": "Llanarth (Monmouthshire)"
+    },
+    {
+      "code": "W45000367",
+      "name": "Cwmgwili"
+    },
+    {
+      "code": "W45000372",
+      "name": "Robeston West"
+    },
+    {
+      "code": "W45000389",
+      "name": "Dale"
+    },
+    {
+      "code": "W45000529",
+      "name": "Canisland"
+    },
+    {
+      "code": "W45000559",
+      "name": "Llandevenny"
+    },
+    {
+      "code": "W45000574",
+      "name": "Eglwys Nunydd"
+    },
+    {
+      "code": "W45000585",
+      "name": "Mwyndy"
+    },
+    {
+      "code": "W45000622",
+      "name": "West Aberthaw"
+    }
+  ],
+  "incomplete_extraction_coverage": [],
+  "osm_processing_seconds": 275.157,
+  "total_seconds": 288.265,
+  "peak_rss_kib": 4865632,
+  "node_index_bytes": 3758099952,
+  "qualifying_ways": 1560527,
+  "limitations": [
+    "GB only; Northern Ireland unresolved",
+    "No automatic publication or Postgres changes",
+    "Zero counts and existing-name differences require review",
+    "Approximate extraction coverage check only; full road/path coverage is outside these rules"
+  ]
+}

@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import time
 import urllib.parse
 import urllib.request
 import logging
@@ -9,6 +10,8 @@ from pathlib import Path
 import psycopg
 
 from pedestrian_reference import load_configured_pedestrian_references
+from matched_path_evidence import build_matched_path_evidence, public_way_reference
+from pedestrian_matching import PedestrianEdgeCandidates, PedestrianGraphPaths, compress_pedestrian_graph, match_reference_trajectory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
@@ -544,6 +547,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     except (KeyError, TypeError, ValueError):
         return None
 
+    deadline = time.monotonic() + 20.0
+
     # Build a compact, route-local graph from the prepared public reference.
     # A generous margin allows a sensible detour around parks, one-way streets
     # or barriers without loading the whole county into application memory.
@@ -552,24 +557,31 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     south = min(point[1] for point in trace) - 0.006
     north = max(point[1] for point in trace) + 0.006
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
+        with psycopg.connect(DATABASE_URL, connect_timeout=5) as connection:
             with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL statement_timeout = 5000")
                 cursor.execute(
                     """
-                    SELECT source_feature_id, segment_kind, tags,
-                           ST_AsGeoJSON(geometry)
-                    FROM pedestrian_reference_segments
-                    WHERE geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    SELECT source.source_key, source.source_version,
+                           segment.source_feature_id, segment.segment_kind, segment.tags,
+                           ST_AsGeoJSON(segment.geometry)
+                    FROM pedestrian_reference_segments AS segment
+                    JOIN reference_sources AS source ON source.id = segment.source_id
+                    WHERE segment.geometry && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                    LIMIT 50001
                     """,
                     (west, south, east, north),
                 )
                 rows = cursor.fetchall()
-    except Exception:
+    except Exception as exc:
+        logger.warning("pedestrian reference query unavailable: %s", exc.__class__.__name__)
+        return None
+    if len(rows) > 50000:
+        logger.warning("pedestrian reference graph exceeds 50000-segment limit")
         return None
     if not rows:
         return None
 
-    from heapq import heappop, heappush
     from math import asin, cos, radians, sin, sqrt
 
     def vertex_key(coord: list[float] | tuple[float, float]) -> tuple[int, int]:
@@ -586,12 +598,18 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     vertices: dict[tuple[int, int], list[float]] = {}
     adjacency: dict[tuple[int, int], list[tuple[tuple[int, int], float, str]]] = {}
     features: dict[str, dict] = {}
-    for feature_id, kind, tags, geometry_json in rows:
+    for source_key, source_version, source_feature_id, kind, tags, geometry_json in rows:
+        feature_id = json.dumps([source_key, str(source_feature_id)], separators=(",", ":"))
+        if time.monotonic() >= deadline:
+            logger.warning("pedestrian reference graph preparation exceeded 20 seconds")
+            return None
         geometry = json.loads(geometry_json)
         coords = geometry.get("coordinates") or []
         if len(coords) < 2:
             continue
         features[feature_id] = {
+            "matched_reference": public_way_reference(source_key, source_version,
+                source_feature_id, kind, tags, coords),
             "type": "Feature",
             "properties": {
                 "road_ref": (tags or {}).get("ref", ""),
@@ -614,67 +632,70 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     if not vertices:
         return None
 
-    def nearest_vertex(point):
-        # The route-local graph keeps this direct scan small and avoids adding
-        # a second personal-location index to shared storage.
-        nearest = None
-        nearest_distance = float("inf")
-        for key, candidate in vertices.items():
-            distance = length_metres(point, candidate)
-            if distance < nearest_distance:
-                nearest, nearest_distance = key, distance
-        return nearest, nearest_distance
+    # Reduce dense GPS sampling while preserving sharp changes of direction.
+    # Connecting every individual fix to its nearest vertex can make the line
+    # oscillate between adjacent streets when GPS accuracy wanders at a junction.
+    sampled_trace = [trace[0]]
+    accumulated = 0.0
+    for index in range(1, len(trace) - 1):
+        before, point, after = trace[index - 1], trace[index], trace[index + 1]
+        accumulated += length_metres(before, point)
+        latitude_scale = cos(radians(point[1]))
+        incoming = ((point[0] - before[0]) * latitude_scale, point[1] - before[1])
+        outgoing = ((after[0] - point[0]) * latitude_scale, after[1] - point[1])
+        incoming_norm = (incoming[0] ** 2 + incoming[1] ** 2) ** 0.5
+        outgoing_norm = (outgoing[0] ** 2 + outgoing[1] ** 2) ** 0.5
+        turn = 0.0
+        if incoming_norm > 0 and outgoing_norm > 0:
+            dot = (incoming[0] * outgoing[0] + incoming[1] * outgoing[1]) / (incoming_norm * outgoing_norm)
+            turn = 1.0 - max(-1.0, min(1.0, dot))
+        if accumulated >= 25.0 or (
+            accumulated >= 8.0
+            and incoming_norm > 0.00002
+            and outgoing_norm > 0.00002
+            and turn > 0.35
+        ):
+            sampled_trace.append(point)
+            accumulated = 0.0
+    sampled_trace.append(trace[-1])
 
-    snapped_vertices = []
-    for point in trace:
-        key, distance = nearest_vertex(point)
-        if key is None or distance > 120:
-            return None
-        snapped_vertices.append(key)
+    # Snap along edges rather than pulling dense fixes to side-road vertices.
+    # Splits preserve the reference graph's actual connectivity.
+    try:
+        vertex_index = PedestrianEdgeCandidates(sampled_trace, vertices, adjacency,
+                                                length_metres, deadline)
+    except TimeoutError:
+        logger.warning("pedestrian reference projection exceeded 20 seconds")
+        return None
 
-    def shortest_path(start_key, end_key):
-        if start_key == end_key:
-            return [start_key], []
-        distances = {start_key: 0.0}
-        previous = {}
-        queue = [(0.0, start_key)]
-        visited = 0
-        while queue and visited < 150_000:
-            current_distance, current = heappop(queue)
-            if current_distance != distances.get(current):
-                continue
-            if current == end_key:
-                break
-            visited += 1
-            for neighbour, cost, feature_id in adjacency.get(current, []):
-                candidate = current_distance + cost
-                if candidate < distances.get(neighbour, float("inf")):
-                    distances[neighbour] = candidate
-                    previous[neighbour] = (current, feature_id)
-                    heappush(queue, (candidate, neighbour))
-        if end_key not in previous:
+    retained_vertices = set()
+    for point in sampled_trace:
+        if time.monotonic() >= deadline:
             return None
-        path = [end_key]
-        feature_ids = []
-        current = end_key
-        while current != start_key:
-            prior, feature_id = previous[current]
-            path.append(prior)
-            feature_ids.append(feature_id)
-            current = prior
-        path.reverse()
-        feature_ids.reverse()
-        return path, feature_ids
+        retained_vertices.update(key for key, _ in vertex_index.nearest(point, length_metres, count=24))
+    search_graph = compress_pedestrian_graph(adjacency, retained_vertices, deadline)
+    shortest_paths_to_targets = PedestrianGraphPaths(search_graph, deadline)
 
-    route_keys = [snapped_vertices[0]]
-    used_feature_ids = []
-    for start_key, end_key in zip(snapped_vertices, snapped_vertices[1:]):
-        result = shortest_path(start_key, end_key)
-        if result is None:
-            return None
-        path, feature_ids = result
-        route_keys.extend(path[1:])
-        used_feature_ids.extend(feature_ids)
+    diagnostics = {}
+    route_result = match_reference_trajectory(
+        sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
+        deadline, diagnostics,
+    )
+    diagnostics.update(searches=shortest_paths_to_targets.searches,
+                       cache_hits=shortest_paths_to_targets.cache_hits,
+                       settled_nodes=shortest_paths_to_targets.settled_nodes,
+                       search_vertices=len(search_graph))
+    if not route_result:
+        logger.warning("pedestrian reference found no connected trace path: samples=%s segments=%s elapsed_limit=%s",
+                       len(sampled_trace), len(rows), time.monotonic() >= deadline)
+        logger.warning("pedestrian reference transition failure: %s", diagnostics)
+        return None
+    route_keys, used_feature_ids = route_result
+    logger.info("pedestrian reference matched: samples=%s segments=%s candidate_count=%s",
+                len(sampled_trace), len(rows), diagnostics.get('candidate_count'))
+    logger.info("pedestrian reference search work: searches=%s cache_hits=%s settled_nodes=%s",
+                shortest_paths_to_targets.searches, shortest_paths_to_targets.cache_hits,
+                shortest_paths_to_targets.settled_nodes)
 
     coordinates = [vertices[key] for key in route_keys]
     if len(coordinates) < 2:
@@ -687,14 +708,15 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "type": "Feature",
         "properties": {
             "reference_area": "preloaded_public_network",
-            "matcher": "preloaded_pedestrian_network_v3",
+            "matcher": "preloaded_pedestrian_network_v4",
             "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
     return {
         "status": "ok",
-        "matcher": "preloaded_pedestrian_network_v3",
+        "matcher": "preloaded_pedestrian_network_v4",
+        "matched_path_evidence": build_matched_path_evidence(coordinates, used_feature_ids, features),
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),
@@ -705,7 +727,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "a_road_geojson": {"type": "FeatureCollection", "features": []},
         "road_geojson": {
             "type": "FeatureCollection",
-            "features": [features[feature_id] for feature_id in unique_feature_ids if feature_id in features],
+            "features": [{key: value for key, value in features[feature_id].items() if key != "matched_reference"}
+                         for feature_id in unique_feature_ids if feature_id in features],
         },
         "other_road_distance_m": 0.0,
     }

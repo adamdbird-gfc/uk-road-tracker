@@ -35,7 +35,7 @@ final class ContextJourneyModel {
             }
             pauseContext=context;
             clearProposal();
-            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=60000)
+            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=(context.site?120000:60000))
                 return new Decision(Math.max(1,pauseIndex),null,"arrival_"+context.kind);
             return null;
         }
@@ -43,7 +43,7 @@ final class ContextJourneyModel {
             // A new departure confirms the preceding stay. Ordinary road/rail
             // pauses remain one journey; unknown places require a longer dwell.
             long dwell=time-pauseSince;
-            if(!atStation && !"train".equals(mode) && dwell>=60000 && pauseContext.destination) {
+            if(!atStation && !"train".equals(mode) && dwell>=(pauseContext.site?120000:60000) && pauseContext.destination) {
                 Decision d=new Decision(Math.max(1,pauseIndex),mode,"departure_after_place_stay");pauseSince=0;clearProposal();return d;
             }
             pauseSince=0;pauseIndex=-1;
@@ -75,20 +75,23 @@ final class ContextJourneyModel {
     }
     boolean holdPause(String mode,long dwell,ContextMap.Evidence context) {
         return "train".equals(mode) || (!context.destination && (context.rail
-                || context.road&&!context.routeAmbiguous
-                || (context.road||context.outdoor)&&dwell<900000));
+                || context.road&&context.throughRoad&&!context.routeAmbiguous
+                || ((context.road&&!context.available)||context.outdoor)&&dwell<900000));
     }
     private void clearProposal(){proposal="";proposalSince=0;proposalIndex=-1;proposalSamples=0;path=0;}
     String[] checkpoint() {
-        return new String[]{"2",String.valueOf(lastTime),String.valueOf(lastLat),String.valueOf(lastLon),String.valueOf(lastAccuracy),
+        return new String[]{"4",String.valueOf(lastTime),String.valueOf(lastLat),String.valueOf(lastLon),String.valueOf(lastAccuracy),
                 String.valueOf(pauseSince),String.valueOf(pauseIndex),String.valueOf(anchorLat),String.valueOf(anchorLon),
                 proposal,String.valueOf(proposalSince),String.valueOf(proposalIndex),String.valueOf(proposalSamples),String.valueOf(path),
                 pauseContext.kind,String.valueOf(pauseContext.destination),String.valueOf(pauseContext.road),String.valueOf(pauseContext.rail),String.valueOf(pauseContext.outdoor),
-                String.valueOf(proposalLat),String.valueOf(proposalLon),String.valueOf(proposalAccuracy)};
+                String.valueOf(proposalLat),String.valueOf(proposalLon),String.valueOf(proposalAccuracy),String.valueOf(pauseContext.throughRoad),String.valueOf(pauseContext.site)};
     }
     void restore(String[] state,int pointCount) {
         boolean old=state.length==19&&"1".equals(state[0]);
-        if(!old && (state.length!=22||!"2".equals(state[0])))return;
+        boolean v2=state.length==22&&"2".equals(state[0]);
+        boolean v3=state.length==23&&"3".equals(state[0]);
+        boolean v4=state.length==24&&"4".equals(state[0]);
+        if(!old&&!v2&&!v3&&!v4)return;
         try {
             if(Integer.parseInt(state[6])>=pointCount||Integer.parseInt(state[11])>=pointCount)return;
             lastTime=Long.parseLong(state[1]);lastLat=Double.parseDouble(state[2]);lastLon=Double.parseDouble(state[3]);lastAccuracy=Float.parseFloat(state[4]);
@@ -98,6 +101,8 @@ final class ContextJourneyModel {
             pauseContext.rail=Boolean.parseBoolean(state[17]);pauseContext.outdoor=Boolean.parseBoolean(state[18]);
             if(old)clearProposal(); // An old checkpoint lacks the transition origin.
             else {proposalLat=Double.parseDouble(state[19]);proposalLon=Double.parseDouble(state[20]);proposalAccuracy=Float.parseFloat(state[21]);}
+            pauseContext.throughRoad=(v3||v4)&&Boolean.parseBoolean(state[22]);
+            pauseContext.site=v4&&Boolean.parseBoolean(state[23]);
         } catch(RuntimeException ignored){lastTime=0;pauseSince=0;clearProposal();}
     }
 }
