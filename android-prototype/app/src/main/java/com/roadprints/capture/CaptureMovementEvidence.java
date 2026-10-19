@@ -63,29 +63,39 @@ final class CaptureMovementEvidence {
     }
 
     static boolean confirmsMode(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
-        int fixes = 0, moving = 0;
+        return modeChangeStart(samples, proposed, since, now) >= 0;
+    }
+
+    /** Original index of the fresh, continuous run supporting the proposed mode.
+     * Android's callback time is a search bound, not a measured leg boundary. */
+    static int modeChangeStart(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
+        int fixes = 0;
         FootTraceValidator.Sample first = null, previous = null, last = null;
         double path = 0;
         boolean foot = "walking".equals(proposed) || "running".equals(proposed);
         boolean cycle = "cycling".equals(proposed);
         for (FootTraceValidator.Sample p : samples) {
-            if (p.time < since || !WalkingStillnessDetector.usable(p) || p.accuracy > 25) continue;
-            if (previous != null && (!CaptureQualityValidator.reliable(previous, p, false)
+            if (p.time < since || p.time > now || !WalkingStillnessDetector.usable(p) || p.accuracy > 25) continue;
+            if (previous != null && p.time <= previous.time) continue;
+            if (previous != null && (!CaptureQualityValidator.reliable(previous, p, foot)
                     || p.time - previous.time > 60_000L)) {
-                fixes = 0; moving = 0; path = 0; first = null;
+                fixes = 0; path = 0; first = null;
             }
-            if (foot && p.speed >= 5) return false;
+            boolean moving = Double.isFinite(p.speed) && (foot ? p.speed >= .5 && p.speed <= 3.5
+                    : cycle ? p.speed >= .8 && p.speed <= 12 : p.speed >= 6);
+            if (!moving) {
+                fixes = 0; path = 0; first = null; previous = p; last = null;
+                continue;
+            }
             if (first == null) first = p;
             if (previous != null && fixes > 0)
                 path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
                         (float)previous.accuracy, (float)p.accuracy);
-            if (foot ? p.speed >= .5 && p.speed <= 3.5
-                    : cycle ? p.speed >= .8 && p.speed <= 12 : p.speed >= 6) moving++;
             fixes++; previous = p; last = p;
         }
         return first != null && last != null && now - last.time <= 60_000L
-                && last.time - first.time >= 20_000L && fixes >= 3 && moving >= 3
-                && path >= (foot ? 30 : 60);
+                && last.time - first.time >= 20_000L && fixes >= 3
+                && path >= (foot ? 30 : 60) ? first.index : -1;
     }
 
     /** A long break is a recording boundary, not evidence of a routable connection. */
