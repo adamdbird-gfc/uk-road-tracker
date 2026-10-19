@@ -20,7 +20,7 @@ public final class RoadDetailActivity extends Activity {
     private RoutePreviewView map;
     private View zoom,loadingPanel;
     private TextView status,loadingLabel,journeyAction,sectionStatus,retry,legend,recordedLabel;
-    private ProgressBar progress;
+    private RoadCompletionBar progress;
     private RoadDetailSelection selection;
     private boolean cumulative,geometryShown;
     private int generation;
@@ -57,9 +57,8 @@ public final class RoadDetailActivity extends Activity {
         status=text("Loading your road…",14);status.setTag("road_statistics");stats.addView(status);
         skeleton=new LinearLayout(this);skeleton.setOrientation(LinearLayout.VERTICAL);skeleton.setTag("road_stats_skeleton");skeleton.setContentDescription("Road statistics loading");
         for(int i=0;i<2;i++){View line=new View(this);line.setBackgroundColor(0xFF46649E);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(i==0?-1:dp(150),dp(10));lp.topMargin=dp(8);skeleton.addView(line,lp);}stats.addView(skeleton);
-        progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(1000);progress.setTag("road_completion_graph");
-        int colour=RoadDetailSelection.MOTORWAY.equals(selection.kind)?MapLayerPreferences.Layer.MOTORWAYS.color:MapLayerPreferences.Layer.A_ROADS.color;
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(colour));progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));progress.setVisibility(View.GONE);
+        int colour=RoadDetailSelection.MOTORWAY.equals(selection.kind)?RoadCompletionBar.MOTORWAY:RoadCompletionBar.A_ROAD;
+        progress=new RoadCompletionBar(this,0,colour);progress.setTag("road_completion_graph");progress.setVisibility(View.GONE);
         stats.addView(progress,new LinearLayout.LayoutParams(-1,dp(12)));
         legend=text("",12);stats.addView(legend);
         sectionStatus=text("",13);sectionStatus.setVisibility(View.GONE);root.addView(sectionStatus);
@@ -129,7 +128,7 @@ public final class RoadDetailActivity extends Activity {
             android.text.SpannableStringBuilder label=new android.text.SpannableStringBuilder(value+"  WHOLE ROAD\n"+DistanceUnits.format(this,model.uniqueMetres)+" travelled  /  "+DistanceUnits.format(this,model.referenceMetres)+" total");
             label.setSpan(new android.text.style.AbsoluteSizeSpan(28,true),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             label.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);status.setText(label);
-            progress.setProgress((int)Math.round(model.percent*10));progress.setContentDescription(String.format(java.util.Locale.UK,"Whole road %.1f percent complete",model.percent));progress.setVisibility(View.VISIBLE);
+            progress.setFraction(model.percent/100);progress.setContentDescription(String.format(java.util.Locale.UK,"Whole road %.1f percent complete",model.percent));progress.setVisibility(View.VISIBLE);
         }else{status.setText("RECORDED SECTIONS\nFull-road distance and completion unavailable");progress.setVisibility(View.GONE);}
     }
     private void showGeometry(){
@@ -138,6 +137,8 @@ public final class RoadDetailActivity extends Activity {
         else if(model.fullReference)map.setARoadCoverageSegments(model.remaining,model.covered);
         else map.setRouteData(null,model.covered);
         map.setContentDescription("Map of "+selection.title()+(model.fullReference?". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Tap a section for journeys.":". Recorded sections. Use View Journeys for contributing journeys.")+" Pinch or use zoom buttons.");
+        java.util.List<org.json.JSONArray> fit=new java.util.ArrayList<>(model.covered);fit.addAll(model.remaining);
+        map.fitRoadGeometry(fit);
         geometryShown=true;
         if(model.covered.isEmpty()&&model.remaining.isEmpty()){sectionStatus.setText("No retained mapped sections are available for this road.");sectionStatus.setVisibility(View.VISIBLE);}
     }

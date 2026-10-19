@@ -15,6 +15,7 @@ public final class GrowingStatusControl extends TextView {
     private final Activity activity;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private ValueAnimator resize;
+    private String screenStatus;
     private int targetHeight;
     private final Runnable refresh=new Runnable() {
         @Override public void run() {
@@ -44,6 +45,8 @@ public final class GrowingStatusControl extends TextView {
         super.onDetachedFromWindow();
     }
 
+    void setScreenStatus(String status) {screenStatus=status;render(MatchingCoordinator.get(activity).snapshot());}
+
     void render(MatchingCoordinator.Snapshot snapshot) {
         boolean active=snapshot.isGrowing()||snapshot.state==MatchingCoordinator.State.ERROR
                 ||(snapshot.state==MatchingCoordinator.State.COMPLETE&&snapshot.failed>0);
@@ -57,6 +60,7 @@ public final class GrowingStatusControl extends TextView {
             case COMPLETE: label=snapshot.failed>0?"Retry · "+snapshot.failed+" unmatched":"✓ Ready";break;
             default: label="✓ Ready";
         }
+        if(screenStatus!=null)label=screenStatus+(active?" · "+label:"");
         setText(label+(active?" · View activity ›":""));
         setContentDescription(label+(active?". Open activity details":""));
         setClickable(active);setFocusable(active);

@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.206",
+      "version_code": 252,
+      "release_date": "2026-10-19",
+      "since": "0.25.205",
+      "changes": [
+        {
+          "title": "Map loading correction",
+          "description": "Allow large cold maps to finish, publish geometry before optional cache writes, bypass cached results on Retry/Reset after a failure, and show consistent map readiness in the footer."
+        },
+        {
+          "title": "Matching Progress charts",
+          "description": "Focused motorway and A-road cards now share the actual white-track Progress component, with existing blue/green fills and unchanged values."
+        },
+        {
+          "title": "Focused-road camera fit",
+          "description": "Fit full motorway/A-road geometry or recorded B/local sections when geometry and viewport are ready. Preserve manual zoom during secondary loading."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.205",
       "version_code": 251,
       "release_date": "2026-10-19",
