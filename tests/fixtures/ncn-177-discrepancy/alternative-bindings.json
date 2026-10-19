@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "fixture_sha256": "4221f330c67d83fe297c84c76d6f119ffba33341b429b50543b993fb64980e16",
+  "policy": "Both reviewed alignments qualify over equivalent extents. Eastern northern continuation remains separately required.",
+  "scope": "Two complete official features only; this is not the complete NCN177 denominator or the intervening official features.",
+  "logical_sections": [
+    {
+      "key": "NCN177:FID7345:full-reviewed",
+      "length_m": 964.4084973231588,
+      "routes": [
+        "NCN:177:reviewed-pilot"
+      ],
+      "official_fid": 7345
+    },
+    {
+      "key": "NCN177:FID6680:shared-reviewed",
+      "length_m": 673.3132401978181,
+      "routes": [
+        "NCN:177:reviewed-pilot"
+      ],
+      "official_fid": 6680
+    },
+    {
+      "key": "NCN177:FID6680:north-extension",
+      "length_m": 209.3914708311146,
+      "routes": [
+        "NCN:177:reviewed-pilot"
+      ],
+      "official_fid": 6680
+    }
+  ],
+  "bindings": [
+    {
+      "physical_key": "1460076195",
+      "physical_start": 1.5405265764493443,
+      "physical_end": 2.8495066269300087,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 0,
+      "logical_end": 1.3131741750846568,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "3093ba3e6dd42b1c87c1f20387e6ce2c25b1e2c369ed72587a81c091eb1fb9e0"
+    },
+    {
+      "physical_key": "1460076194",
+      "physical_start": 0,
+      "physical_end": 14.61732016261513,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 1.3131741750846568,
+      "logical_end": 15.9773299347098,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "9b364b8cdcc421d842832165d3d5cc8ffe244b1869dd0812e109df0c56b717fd"
+    },
+    {
+      "physical_key": "1460076193",
+      "physical_start": 0,
+      "physical_end": 2.2460873040039395,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 15.9773299347098,
+      "logical_end": 18.230613964149683,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "b76d58f406dac86b6bdb901dbc89d4aeaacbaff51d02ae519ea00506cdc848d4"
+    },
+    {
+      "physical_key": "1460076192",
+      "physical_start": 0,
+      "physical_end": 16.879763471546493,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 18.230613964149683,
+      "logical_end": 35.16446216468773,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "fbc345923d6b183206e04371ab609ee9922cb84ef6b2993d587fdebb70795179"
+    },
+    {
+      "physical_key": "1460076196",
+      "physical_start": 0,
+      "physical_end": 9.841256902691518,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 35.16446216468773,
+      "logical_end": 45.03725160119795,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "b16d8b988cbb2b1d32cbf0a22c4448cd959fe1643a6a710f455cf10539235fec"
+    },
+    {
+      "physical_key": "1460076197",
+      "physical_start": 0,
+      "physical_end": 4.264000542430117,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 45.03725160119795,
+      "logical_end": 49.31491449820702,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "1eae78608f65767b2a38e069f1105b24b342aefb3c0fc362f7f6b7355c99a370"
+    },
+    {
+      "physical_key": "44332298",
+      "physical_start": 0,
+      "physical_end": 895.9077031418377,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 49.31491449820702,
+      "logical_end": 948.0932103120064,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "a015b275dd65039cd69957fcff50fc58a6f6d7126536f1ab4d76d37da0b14b4a"
+    },
+    {
+      "physical_key": "1460076199",
+      "physical_start": 0,
+      "physical_end": 1.4129250898002965,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 948.0932103120064,
+      "logical_end": 949.5106625784282,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "4345f44c3eb27c0e6bb943bcbaca97311a46345e1d65de30568193fd4803be03"
+    },
+    {
+      "physical_key": "1302385781",
+      "physical_start": 0,
+      "physical_end": 14.85025280439504,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 949.5106625784282,
+      "logical_end": 964.4084973231588,
+      "modes": [
+        "cycling"
+      ],
+      "source_geometry_sha256": "c08f64825cfd132c77b30c3ec1e623c11f2a9bd3192fb6940264963976e8491b"
+    },
+    {
+      "physical_key": "1460076195",
+      "physical_start": 1.5405265764493443,
+      "physical_end": 2.8495066269300087,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 0,
+      "logical_end": 1.316266622914121,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "3093ba3e6dd42b1c87c1f20387e6ce2c25b1e2c369ed72587a81c091eb1fb9e0"
+    },
+    {
+      "physical_key": "1460076187",
+      "physical_start": 0,
+      "physical_end": 13.29551190552066,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 14.685789366494452,
+      "logical_end": 1.316266622914121,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "be7e2bf036126b2cdeb26b6d8177550744f59450b73d2b81e01592bc166b855a"
+    },
+    {
+      "physical_key": "1460076193",
+      "physical_start": 0,
+      "physical_end": 2.2460873040039395,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 14.685789366494452,
+      "logical_end": 16.944379747093397,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "b76d58f406dac86b6bdb901dbc89d4aeaacbaff51d02ae519ea00506cdc848d4"
+    },
+    {
+      "physical_key": "1460076192",
+      "physical_start": 0,
+      "physical_end": 16.879763471546497,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 16.944379747093397,
+      "logical_end": 33.91810616265106,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "fbc345923d6b183206e04371ab609ee9922cb84ef6b2993d587fdebb70795179"
+    },
+    {
+      "physical_key": "1460076189",
+      "physical_start": 0,
+      "physical_end": 9.062368853662122,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 43.03092162705157,
+      "logical_end": 33.91810616265106,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "a1a2cf836f570c6994f12ddc2a4e60f5cd27e342155f66e96d89af8fb8c9764b"
+    },
+    {
+      "physical_key": "1460076197",
+      "physical_start": 0,
+      "physical_end": 4.264000542430117,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 43.03092162705157,
+      "logical_end": 47.31865816820627,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "1eae78608f65767b2a38e069f1105b24b342aefb3c0fc362f7f6b7355c99a370"
+    },
+    {
+      "physical_key": "1460076188",
+      "physical_start": 0,
+      "physical_end": 897.162771802001,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 47.31865816820627,
+      "logical_end": 949.4755790551651,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "af293effd5601c5f30e7f559ae39bdf71f43918563c8c652c694157078b72021"
+    },
+    {
+      "physical_key": "1302385781",
+      "physical_start": 0,
+      "physical_end": 14.85025280439504,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 949.4755790551651,
+      "logical_end": 964.4084973231588,
+      "modes": [
+        "on_foot"
+      ],
+      "source_geometry_sha256": "c08f64825cfd132c77b30c3ec1e623c11f2a9bd3192fb6940264963976e8491b"
+    },
+    {
+      "physical_key": "62216493",
+      "physical_start": 2.084119581343502,
+      "physical_end": 54.911500800969996,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 0,
+      "logical_end": 54.072866414512504,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "6e3de54dbc42c6e12b107c9168d09e538939034b3203444b0451e78d43f61875"
+    },
+    {
+      "physical_key": "1417748876",
+      "physical_start": 0,
+      "physical_end": 56.84763868561487,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 112.26077392876388,
+      "logical_end": 54.072866414512504,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "eabb715ac279418f501134535245d315ab73100e6b638d31cb9557c3c54b61e7"
+    },
+    {
+      "physical_key": "1417748877",
+      "physical_start": 0,
+      "physical_end": 227.93881632257091,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 345.573591659607,
+      "logical_end": 112.26077392876388,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "57d512d1250023280a2b89fb1adce6f2ba4f774b7ad2b0fc1307bb04f598fd52"
+    },
+    {
+      "physical_key": "1417748878",
+      "physical_start": 2.1316282072803006e-14,
+      "physical_end": 18.845741240515984,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 364.8636496760035,
+      "logical_end": 345.573591659607,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "df18f444309b384118c24785abca644f6534f7b8336f5c8839e35f3014e5e4ba"
+    },
+    {
+      "physical_key": "94920359",
+      "physical_start": 13.284526661069435,
+      "physical_end": 599.0197821610196,
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "logical_start": 964.4084973231588,
+      "logical_end": 364.8636496760035,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "9708d03a9286e3dba2cf9214703beb6960b6a3bf25c71bdc5a93a5a992f530cf"
+    },
+    {
+      "physical_key": "1302385780",
+      "physical_start": 61.34794453723116,
+      "physical_end": 734.464415065923,
+      "logical_key": "NCN177:FID6680:shared-reviewed",
+      "logical_start": 0,
+      "logical_end": 673.3132401978181,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "d9287a54f478286b75d17c765cdfeb3742517d0a12af96f3949dc6c2816a6dcc"
+    },
+    {
+      "physical_key": "62216492",
+      "physical_start": 0,
+      "physical_end": 680.5537418173881,
+      "logical_key": "NCN177:FID6680:shared-reviewed",
+      "logical_start": 673.3132401978181,
+      "logical_end": 0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "e620e6eb1ffa1eb35036e1a1b00e1d241eb71cfe428a9d5ad9167b688fa425a9"
+    },
+    {
+      "physical_key": "1302385780",
+      "physical_start": 734.464415065923,
+      "physical_end": 878.0578634836413,
+      "logical_key": "NCN177:FID6680:north-extension",
+      "logical_start": 0,
+      "logical_end": 143.5022351595666,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "d9287a54f478286b75d17c765cdfeb3742517d0a12af96f3949dc6c2816a6dcc"
+    },
+    {
+      "physical_key": "1251416153",
+      "physical_start": 0,
+      "physical_end": 60.624719271336744,
+      "logical_key": "NCN177:FID6680:north-extension",
+      "logical_start": 204.08844446940995,
+      "logical_end": 143.5022351595666,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "476d38a3760a0e96352311d3fe46f7c468ea5e8e6fb82c4033562d2a2e9b8b6c"
+    },
+    {
+      "physical_key": "1547229428",
+      "physical_start": 0,
+      "physical_end": 5.306397084898971,
+      "logical_key": "NCN177:FID6680:north-extension",
+      "logical_start": 209.39147083111448,
+      "logical_end": 204.08844446940995,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "source_geometry_sha256": "a379d1583a0b0c8e089f3f35da8bc56f5542a857aae1bd38a7612d6e068f90f0"
+    }
+  ],
+  "itineraries": [
+    {
+      "key": "west-north-cycle",
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "way_ids": [
+        "1460076195",
+        "1460076194",
+        "1460076193",
+        "1460076192",
+        "1460076196",
+        "1460076197",
+        "44332298",
+        "1460076199",
+        "1302385781"
+      ],
+      "modes": [
+        "cycling"
+      ],
+      "signed_source_chain": [
+        1460076195,
+        1460076194,
+        1460076193,
+        1460076192,
+        1460076196,
+        1460076197,
+        44332298,
+        1460076199,
+        1302385781
+      ],
+      "source_path_length_m": 961.3282894698009,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    },
+    {
+      "key": "west-north-foot",
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "way_ids": [
+        "1460076195",
+        "1460076187",
+        "1460076193",
+        "1460076192",
+        "1460076189",
+        "1460076197",
+        "1460076188",
+        "1302385781"
+      ],
+      "modes": [
+        "on_foot"
+      ],
+      "signed_source_chain": [
+        1460076195,
+        -1460076187,
+        1460076193,
+        1460076192,
+        -1460076189,
+        1460076197,
+        1460076188,
+        1302385781
+      ],
+      "source_path_length_m": 959.06973673404,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    },
+    {
+      "key": "west-south",
+      "logical_key": "NCN177:FID7345:full-reviewed",
+      "way_ids": [
+        "62216493",
+        "1417748876",
+        "1417748877",
+        "1417748878",
+        "94920359"
+      ],
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "signed_source_chain": [
+        62216493,
+        -1417748876,
+        -1417748877,
+        -1417748878,
+        -94920359
+      ],
+      "source_path_length_m": 942.1948329682785,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    },
+    {
+      "key": "east-north-shared",
+      "logical_key": "NCN177:FID6680:shared-reviewed",
+      "way_ids": [
+        "1302385780"
+      ],
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "signed_source_chain": [
+        1302385780,
+        -1251416153,
+        -1547229428
+      ],
+      "source_path_length_m": 673.1164705286919,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    },
+    {
+      "key": "east-south-shared",
+      "logical_key": "NCN177:FID6680:shared-reviewed",
+      "way_ids": [
+        "62216492"
+      ],
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "signed_source_chain": [
+        -62216492
+      ],
+      "source_path_length_m": 680.5537418173881,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    },
+    {
+      "key": "east-north-extension",
+      "logical_key": "NCN177:FID6680:north-extension",
+      "way_ids": [
+        "1302385780",
+        "1251416153",
+        "1547229428"
+      ],
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "signed_source_chain": [
+        1302385780,
+        -1251416153,
+        -1547229428
+      ],
+      "source_path_length_m": 209.52456477395413,
+      "endpoint_policy": "Fixed source crossings; eastern terminal uses observed mapped node, not extrapolated geometry."
+    }
+  ],
+  "eastern_north_terminal_node": 11632889922,
+  "eastern_south_terminal_node": 248536946,
+  "eastern_terminal_offset_m": 1.0183098016103955,
+  "production_ready": false
+}

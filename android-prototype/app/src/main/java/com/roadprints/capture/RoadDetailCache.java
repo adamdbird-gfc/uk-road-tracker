@@ -13,7 +13,7 @@ final class RoadDetailCache {
     static String key(Context context,RoadDetailSelection s,boolean cumulative,long revision) {
         // Bundled numbered-road references are immutable within a build. Public
         // town boundaries have no revision token, so local snapshots expire after five minutes.
-        return s.kind+"|"+s.label+"|"+s.region+"|"+s.settlementCode+"|"+cumulative+"|"+revision;
+        return (RoadDetailSelection.NCN.equals(s.kind)?"ncn:"+s.ncnMode+":"+NcnProgressStore.revision(context):s.kind)+"|"+s.label+"|"+s.region+"|"+s.settlementCode+"|"+cumulative+"|"+revision;
     }
     static synchronized RoadDetailModel get(String key){
         Cached saved=models.get(key);if(saved==null)return null;

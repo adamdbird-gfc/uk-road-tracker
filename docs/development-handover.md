@@ -2,6 +2,40 @@
 
 Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## In progress — coordinated national NCN integration
+
+Active branch `integration/ncn-firebase-beta`, based on **0.25.206's released
+lineage `7bc10f4a`**. The user's coordinated development brief authorises NCN
+resumption and one verified beta. See [integration details, PR disposition,
+accounting policy and evidence limitations](ncn-national-integration.md).
+
+The existing shared road UI is preserved; national NCN uses indexed immutable
+reference data, conservative source evidence, separate physical-network union,
+mode filters and shared route/journey navigation. All 322 existing NCN Python
+tests pass. National database readback and five Firebase publication invariant
+tests pass; Java syntax parses. Android compilation/unit tests/lint and Firebase
+preview serving remain pending; **no APK is ready**. #193 achievements remain excluded. Named identities are absent
+from the source checkpoint; NCN228 open-target assessment and 34 identities stay
+held explicitly rather than receiving unsupported completion claims.
+
+Architecture correction: large national binaries stay outside GitHub. The existing
+Firebase **Hosting** reference origin is `roadprints-data-822cc.web.app` (project
+`roadprints-822cc`; Storage bucket `roadprints-822cc.firebasestorage.app`). NCN now
+uses a small versioned manifest, immutable streamed download, compressed/decoded
+SHA-256 verification, resumable partials, atomic offline cache with prior-generation
+fallback and weekly updates independent of APK versions. The clone/add publisher
+preserves all live settlement/collection assets. See the integration document for
+exact hashes, workflow, rollback and validation limitations.
+
+**Blocker:** no Firebase credentials or authorised local-payload transport into the
+existing authenticated Actions publisher. Prepared publication bundle is preserved;
+no more national GitHub binary uploads. Original remote checkpoint
+`2ee1031218665ea50acd98fb38c7c3e4ae25ba6a` and its first 71 confirmed parts remain
+intact (79 total confirmed object receipts recorded locally). The new branch has
+no national binary ancestry. Version **0.25.207 (253)** is reserved, not built.
+After authenticated preview/live publication, run integrated Android checks and
+the established pinned release request; do not distribute before those pass.
+
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
 **Released 0.25.206 (252)** on 19 October 2026. [Install corrective 206](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0hi0t0j0s2d18). PR [#205](https://github.com/adamdbird-gfc/uk-road-tracker/pull/205), based directly on 205's application/release ancestry `04c4287a8a20b1cb9a40ce2993bd7e4a15df4fb9`. **205 failed real-device acceptance** (repeated initial-map timeout, incorrect chart track, B2008 UK-wide view); its prior automated green result did not prove those behaviours. This corrective slice supersedes the broader refinement brief. No NCN or unrelated UI development.

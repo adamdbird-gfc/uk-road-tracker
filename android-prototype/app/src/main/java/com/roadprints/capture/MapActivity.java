@@ -84,6 +84,7 @@ public class MapActivity extends Activity {
     private boolean hasSavedCamera;
     private long loadingMapRevision = Long.MIN_VALUE;
     private boolean recapLoading, replayPreparing, active;
+    private Object ncnSnapshot;private String ncnMode;
     private int recapGeneration;
     private View recapCard;
     private TextView replayMessage;
@@ -95,6 +96,7 @@ public class MapActivity extends Activity {
             if (!active || getIntent().hasExtra("settlement_code")) return;
             if (!replayPreparing && replayMessage == null && displayedMapRevision != mapDataRevision()) refreshMap();
             refreshRecap();
+            if(CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(MapActivity.this))&&(ncnSnapshot!=NcnProgressStore.current()||!java.util.Objects.equals(ncnMode,NcnProgressStore.mode(MapActivity.this)))){ncnSnapshot=NcnProgressStore.current();ncnMode=NcnProgressStore.mode(MapActivity.this);NcnMapOverlay.apply(MapActivity.this,mapView);}
             mainHandler.postDelayed(this, 3000);
         }
     };
@@ -293,6 +295,7 @@ public class MapActivity extends Activity {
         JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
         Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
         mapView.setCollectionVenues(selected,pins,visited);
+        NcnMapOverlay.apply(this,mapView);
         VenueVisitUi.offerPending(this,this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))

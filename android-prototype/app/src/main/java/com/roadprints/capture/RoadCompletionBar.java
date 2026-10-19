@@ -17,7 +17,7 @@ final class RoadCompletionBar extends LinearLayout {
     }
     void setFraction(double value){
         fraction=Double.isFinite(value)?Math.max(0,Math.min(1,value)):0;removeAllViews();
-        int width=(int)Math.round(fraction*100);
+        float width=(float)(fraction*100);
         View fill=new View(getContext());fill.setBackground(shape(fillColor));fill.setTag("road_progress_fill");
         addView(fill,new LayoutParams(0,-1,width));
         if(width<100)addView(new View(getContext()),new LayoutParams(0,-1,100-width));

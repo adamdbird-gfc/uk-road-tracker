@@ -52,6 +52,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Download and verify pinned external NCN test reference
+        run: |
+          python3 scripts/prepare_ncn_reference.py
+          NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:

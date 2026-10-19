@@ -3,3 +3,8 @@
 /reference-source/
 /hosting-stage-report.json
 **/__pycache__/
+
+# National reference payloads are external. Only the small pinned manifest ships.
+/android-prototype/app/src/main/assets/ncn-national/*
+!/android-prototype/app/src/main/assets/ncn-national/manifest.json
+.cache/ncn/

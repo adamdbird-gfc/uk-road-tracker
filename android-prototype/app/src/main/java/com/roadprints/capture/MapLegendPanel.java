@@ -49,13 +49,18 @@ final class MapLegendPanel {
         if(!townMap){
             body.addView(text(activity,"COLLECTIONS ON THE MAP",14,0xFF67D5CC,true));
             RadioGroup group=new RadioGroup(activity);String selected=CollectionAccessStore.selected(activity);
-            java.util.List<String> ids=new java.util.ArrayList<>();ids.add(CollectionAccessStore.NONE);ids.addAll(CollectionAccessStore.installed(activity));
+            java.util.List<String> ids=new java.util.ArrayList<>();ids.add(CollectionAccessStore.NONE);ids.addAll(CollectionAccessStore.installed(activity));if(NcnProgressStore.enabled(activity))ids.add(CollectionAccessStore.NCN);
             for(String id:ids){
                 RadioButton option=new RadioButton(activity);option.setId(View.generateViewId());option.setText(CollectionAccessStore.NONE.equals(id)?"No collection":CollectionAccessStore.name(id));
                 option.setTextColor(Color.WHITE);option.setMinHeight(dp(activity,48));option.setTag("map_collection:"+id);
                 option.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));group.addView(option);if(id.equals(selected))group.check(option.getId());
                 option.setOnClickListener(v->{CollectionAccessStore.select(activity,id);changed.run();});
             }body.addView(group);
+            if(NcnProgressStore.enabled(activity)){
+                body.addView(text(activity,"NCN: Purple completed · Grey dashed verified-open remaining",14,0xFFCFB5F2,true));
+                RadioGroup activities=new RadioGroup(activity);
+                for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}body.addView(activities);
+            }
             TextView manage=text(activity,"Manage collections",15,0xFFF7C450,true);manage.setMinHeight(dp(activity,48));manage.setGravity(Gravity.CENTER_VERTICAL);
             manage.setOnClickListener(v->activity.startActivity(new Intent(activity,CollectionsActivity.class)));body.addView(manage);
             body.addView(text(activity,"COLLECTION PINS",14,0xFF67D5CC,true));

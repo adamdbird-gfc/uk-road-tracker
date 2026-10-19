@@ -32,7 +32,7 @@ final class RoadDetailModel {
     }
     final List<JSONArray> covered=new ArrayList<>(), remaining=new ArrayList<>();
     final List<Entry> journeys=new ArrayList<>();
-    boolean fullReference, mapLimited;
+    boolean fullReference, mapLimited, ncn;
     private JSONObject boundary;
     double referenceMetres, uniqueMetres, percent=Double.NaN;
     private static final int MAX_MAP_EDGES=60_000;
@@ -41,6 +41,7 @@ final class RoadDetailModel {
         return load(context,selection,cumulative,null);
     }
     static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative,java.util.function.Consumer<RoadDetailModel> geometryReady) throws Exception {
+        if(RoadDetailSelection.NCN.equals(selection.kind))return NcnProgressStore.detail(context,selection.label,selection.ncnMode,geometryReady);
         JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
         RoadDetailModel output=new RoadDetailModel();output.boundary=boundary;
@@ -76,6 +77,7 @@ final class RoadDetailModel {
         return output;
     }
     List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) throws Exception {
+        if(ncn){List<Entry> related=new ArrayList<>();Section selected=sectionAt(latitude,longitude);if(selected==null||!selected.travelled)return related;for(Entry e:journeys)for(JSONArray line:e.lines)if(NcnGeometry.overlaps(line,selected.line)){related.add(e);break;}return related;}
         Set<String> ids=new HashSet<>();for(Entry e:journeys)ids.add(e.id);
         List<Entry> related=new ArrayList<>();
         JourneyStore.forEachRoadEvidence(context,Thread.currentThread()::isInterrupted,journey->{
@@ -87,12 +89,13 @@ final class RoadDetailModel {
     }
     RoadDetailModel geometryPreview() {
         RoadDetailModel preview=new RoadDetailModel();preview.covered.addAll(covered);preview.remaining.addAll(remaining);
-        preview.fullReference=fullReference;preview.mapLimited=mapLimited;preview.referenceMetres=referenceMetres;
+        preview.ncn=ncn;preview.fullReference=fullReference;preview.mapLimited=mapLimited;preview.referenceMetres=referenceMetres;
         preview.uniqueMetres=uniqueMetres;preview.percent=percent;return preview;
     }
     static final class Section {
-        final double latitude,longitude,metres;final boolean travelled;
-        Section(double lat,double lon,double metres,boolean travelled){latitude=lat;longitude=lon;this.metres=metres;this.travelled=travelled;}
+        final double latitude,longitude,metres;final boolean travelled;final JSONArray line;
+        Section(double lat,double lon,double metres,boolean travelled){this(lat,lon,metres,travelled,null);}
+        Section(double lat,double lon,double metres,boolean travelled,JSONArray line){latitude=lat;longitude=lon;this.metres=metres;this.travelled=travelled;this.line=line;}
     }
     /** Display statistics for the nearest rendered edge, never a new coverage calculation. */
     Section sectionAt(double latitude,double longitude) {
@@ -104,7 +107,7 @@ final class RoadDetailModel {
             double bx=(b.optDouble(0)-longitude)*scale,by=(b.optDouble(1)-latitude)*sy,dx=bx-ax,dy=by-ay;
             double t=dx*dx+dy*dy==0?0:Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy)));
             double distance=Math.hypot(ax+t*dx,ay+t*dy);
-            if(distance<nearest){nearest=distance;best=new Section((a.optDouble(1)+b.optDouble(1))/2,(a.optDouble(0)+b.optDouble(0))/2,Math.hypot(dx,dy),travelled);}
+            if(distance<nearest){nearest=distance;best=new Section((a.optDouble(1)+b.optDouble(1))/2,(a.optDouble(0)+b.optDouble(0))/2,Math.hypot(dx,dy),travelled,new JSONArray().put(a).put(b));}
         }
         return best;
     }
