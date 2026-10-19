@@ -93,7 +93,8 @@ public class BetaUiRefinementTest {
     }
     @Test public void focusedMapSharesWorkingZoomButtonsWithoutReplacingGeometry()throws Exception{
         RoadDetailActivity.loader=(c,s,all)->model();RoadDetailActivity screen=road(true).get();drain();
-        RoutePreviewView map=(RoutePreviewView)get(screen,"map");map.layout(0,0,320,450);double before=map.cameraState()[2];
+        RoutePreviewView map=(RoutePreviewView)get(screen,"map");map.layout(0,0,320,450);
+        assertEquals(.484,map.cameraState()[0],.001);map.restoreCameraState(.484,51.37,12);double before=map.cameraState()[2];
         View controls=(View)get(screen,"zoom");text(controls,"+").performClick();assertTrue(map.cameraState()[2]>before);
         text(controls,"−").performClick();assertEquals(before,map.cameraState()[2],.001);assertSame(map,get(screen,"map"));
     }
