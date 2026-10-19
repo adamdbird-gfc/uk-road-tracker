@@ -154,7 +154,7 @@ public class WalkingMatchingIntegrationTest {
         String originalEnd=j.getString("ended_at");
         JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
         coordinator=new MatchingCoordinator(app,(foot,payload)->{
-            assertTrue(foot);calls.incrementAndGet();
+            assertEquals("/match-walking",foot);calls.incrementAndGet();
             assertTrue(payload.getJSONArray("points").length()<20);
             return result(180);
         });
@@ -191,6 +191,33 @@ public class WalkingMatchingIntegrationTest {
         assertEquals(ended,stored.getString("ended_at"));
         assertEquals(geometry,stored.getJSONObject("route_geometry").toString());
         assertEquals(raw,stored.getJSONArray("raw_capture_samples").toString());
+    }
+
+    @Test public void completedCapturedDriveUsesCurrentPreparationAndFreshMatcherResult()throws Exception{
+        JSONArray coords=new JSONArray("[[0,0],[0.001,0],[0.002,0],[0.003,0]]"),samples=new JSONArray();
+        for(int i=0;i<coords.length();i++)samples.put(new JSONArray().put(coords.getJSONArray(i).getDouble(0))
+                .put(0).put(5).put(100000+i*10000).put(11));
+        JSONObject j=walk().put("mode","driving").put("processing_status","complete")
+                .put("processing_result",result(500)).put("raw_capture_samples",samples)
+                .put("capture_route_samples",samples).put("road_preparation",new JSONObject().put("version",1))
+                .put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords));
+        JourneyStore.save(app,j);AtomicInteger calls=new AtomicInteger();
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{
+            assertEquals("/match",endpoint);assertTrue(payload.getBoolean("road_recovery"));
+            assertEquals(4,payload.getJSONArray("points").length());calls.incrementAndGet();
+            JSONObject matched=result(330).put("input_points",4).put("matched_tracepoints",4)
+                    .put("matched_distance_is_deduplicated",true).put("failed_sections",new JSONArray());
+            matched.getJSONObject("geojson").getJSONArray("features").getJSONObject(0)
+                    .getJSONObject("geometry").put("coordinates",coords);
+            return matched;
+        });
+        coordinator.rematch("walk");await();
+        assertEquals(1,calls.get());assertEquals(1,coordinator.snapshot().matched);
+        JSONObject stored=JourneyStore.get(app,"walk");
+        assertEquals(2,stored.getJSONObject("road_preparation").getInt("version"));
+        assertEquals(330,stored.getJSONObject("processing_result").getDouble("matched_distance_m"),0d);
+        assertEquals(coords.toString(),stored.getJSONObject("route_geometry").getJSONArray("coordinates").toString());
+        assertEquals(samples.toString(),stored.getJSONArray("raw_capture_samples").toString());
     }
 
 }
