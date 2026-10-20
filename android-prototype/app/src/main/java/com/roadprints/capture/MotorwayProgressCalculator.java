@@ -28,6 +28,7 @@ import java.util.TreeMap;
 
 /** Derives motorway mileage and canonical section coverage from saved matched journeys. */
 final class MotorwayProgressCalculator {
+    private static long spatialKey(long x,long y){return (x<<32)^(y&0xffffffffL);}
     private static final double EARTH_RADIUS_M = 6_371_000.0;
     private static final double MERCATOR_RADIUS_M = 6_378_137.0;
     private static final double REFERENCE_SAMPLE_M = 100.0;
@@ -132,14 +133,24 @@ final class MotorwayProgressCalculator {
 
     private static final class Reference {
         final List<Anchor> anchors = new ArrayList<>();
-        final Map<String, List<Anchor>> grid = new HashMap<>();
+        final android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
         final Map<String, List<Anchor>> dedupeGrid = new HashMap<>();
         double totalKm;
+        private String signature;
+        String signature() {
+            if(signature==null) {
+                StringBuilder text=new StringBuilder().append(totalKm).append('|');
+                for(Anchor a:anchors)text.append(a.lng).append(',').append(a.lat).append(';');
+                signature=NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8));
+            }
+            return signature;
+        }
 
         void add(Anchor anchor) {
             anchors.add(anchor);
-            grid.computeIfAbsent(gridKey(anchor.x, anchor.y, GRID_CELL_M), k -> new ArrayList<>())
-                    .add(anchor);
+            long key=spatialKey((long)Math.floor(anchor.x/GRID_CELL_M),(long)Math.floor(anchor.y/GRID_CELL_M));
+            List<Anchor> bucket=grid.get(key);
+            if(bucket==null){bucket=new ArrayList<>();grid.put(key,bucket);}bucket.add(anchor);
             dedupeGrid.computeIfAbsent(gridKey(anchor.x, anchor.y, DEDUPE_CELL_M),
                     k -> new ArrayList<>()).add(anchor);
         }
@@ -158,11 +169,13 @@ final class MotorwayProgressCalculator {
         Integer nearest(double lng, double lat) {
             double[] projected = mercator(lng, lat);
             Anchor best = null;
-            double bestDistance = MATCH_RADIUS_M;
-            for (String key : neighbours(projected[0], projected[1], GRID_CELL_M)) {
-                for (Anchor anchor : grid.getOrDefault(key, Collections.emptyList())) {
-                    double distance = Math.hypot(projected[0] - anchor.x,
-                            projected[1] - anchor.y);
+            double bestDistance = MATCH_RADIUS_M*MATCH_RADIUS_M;
+            long gx=(long)Math.floor(projected[0]/GRID_CELL_M),gy=(long)Math.floor(projected[1]/GRID_CELL_M);
+            for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++) {
+                List<Anchor> bucket=grid.get(spatialKey(x,y));if(bucket==null)continue;
+                for (Anchor anchor : bucket) {
+                    double dx=projected[0]-anchor.x,dy=projected[1]-anchor.y;
+                    double distance=dx*dx+dy*dy;
                     if (distance < bestDistance) {
                         best = anchor;
                         bestDistance = distance;
@@ -174,7 +187,7 @@ final class MotorwayProgressCalculator {
     }
 
     private final Context context;
-    private final Map<String, Road> roads = new TreeMap<>();
+    private Map<String, Road> roads = new TreeMap<>();
     private final Map<String, Reference> references = new HashMap<>();
     private final Map<String, List<double[]>> pendingSegments = new HashMap<>();
     private final Map<String, JSONObject> assetRoads = new HashMap<>();
@@ -240,6 +253,47 @@ final class MotorwayProgressCalculator {
         }
     }
 
+
+    /** Compact, per-journey contribution; reference grids are shared within this worker. */
+    JSONArray contribution(JSONObject journey) throws Exception {
+        Map<String,Road> previous=roads;roads=new TreeMap<>();
+        try {
+            addJourney(journey);JSONArray rows=new JSONArray();
+            for(Road road:roads.values()) {
+                Reference reference=references.get(road.id);String signature=reference==null?"missing":reference.signature();
+                JSONArray indices=new JSONArray();for(int index:road.coveredSections)indices.put(index);
+                rows.put(new JSONObject().put("id",road.id).put("ref",road.ref).put("region",road.region)
+                        .put("metres",road.matchedMetres).put("indices",indices).put("reference",signature));
+            }
+            return rows;
+        } finally {roads=previous;}
+    }
+
+    /** Validate every reference before merging anything, so a failed cache hit is atomic. */
+    boolean accepts(JSONArray rows) throws Exception {
+        for(int i=0;i<rows.length();i++) {
+            JSONObject row=rows.getJSONObject(i);
+            Road probe=new Road(row.getString("id"),row.getString("ref"),row.getString("region"));
+            Reference reference=referenceFor(row.getString("id"),probe);
+            String signature=reference==null?"missing":reference.signature();
+            int count=reference==null?0:reference.anchors.size();
+            if(!signature.equals(row.getString("reference")))return false;
+            JSONArray indices=row.getJSONArray("indices");
+            for(int j=0;j<indices.length();j++)if(indices.getInt(j)<0||indices.getInt(j)>=count)return false;
+        }
+        return true;
+    }
+    void addContribution(String journeyId,JSONArray rows) throws Exception {
+        for(int i=0;i<rows.length();i++) {
+            JSONObject row=rows.getJSONObject(i);String id=row.getString("id");
+            Road road=roads.get(id);
+            if(road==null){road=new Road(id,row.getString("ref"),row.getString("region"));roads.put(id,road);}
+            referenceFor(id,road);
+            road.matchedMetres+=row.getDouble("metres");
+            if(!journeyId.isEmpty())road.journeyIds.add(journeyId);
+            JSONArray indices=row.getJSONArray("indices");for(int j=0;j<indices.length();j++)road.coveredSections.add(indices.getInt(j));
+        }
+    }
     /** Canonical edges gained since a prior coverage snapshot; never changes credit. */
     Map<String, List<JSONArray>> newlyCoveredSections(Map<String, Set<Integer>> previous) {
         Map<String, List<JSONArray>> result = new TreeMap<>();
@@ -701,5 +755,6 @@ final class MotorwayProgressCalculator {
         return 2 * EARTH_RADIUS_M * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     }
 }
+
 
 

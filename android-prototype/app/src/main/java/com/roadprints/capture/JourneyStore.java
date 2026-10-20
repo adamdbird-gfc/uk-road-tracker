@@ -56,7 +56,13 @@ public final class JourneyStore {
         try (FileOutputStream output = new FileOutputStream(temporary)) {
             PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
             ensureSharedFields(journey);
-            output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
+            byte[] encoded=journey.toString().getBytes(StandardCharsets.UTF_8);
+            SharedPreferences contentHashes=context.getSharedPreferences("roadprints_journey_content",0);
+            String contentHash=NcnJson.hash(encoded);
+            if(!newRecording&&contentHash.equals(contentHashes.getString(id,""))) {
+                temporary.delete();return; // No new evidence, metadata, revision or observer work.
+            }
+            output.write(encoded);
             output.flush();
             // A replacement has a distinct stable token even for equal-size writes in one millisecond.
             java.nio.file.Files.setLastModifiedTime(temporary.toPath(), java.nio.file.attribute.FileTime.fromMillis(
@@ -66,8 +72,15 @@ public final class JourneyStore {
             java.nio.file.Files.move(temporary.toPath(),target.toPath(),
                     java.nio.file.StandardCopyOption.ATOMIC_MOVE,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            contentHashes.edit().putString(id,contentHash).apply();
             if (newRecording) ReturnRecapStore.record(context, journey);
-            bumpDataRevision(context);
+            String ncnHash=ncnEvidenceHash(journey);
+            SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
+            boolean ncnChanged=newRecording||!ncnHash.equals(inputs.getString(id,""));
+            inputs.edit().putString(id,ncnHash).apply();
+            context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
+                    .putString(id,new RoadDetailModel.Entry(journey).summary.toString()).apply();
+            bumpDataRevision(context,ncnChanged);
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
             try { ServiceStationStore.recordJourney(context,journey);
@@ -398,7 +411,16 @@ public final class JourneyStore {
             String token=fileToken(file);
             JSONObject cached=map?JourneyProjectionCache.read(context,file,"map-v1"):null;
             if(cached!=null){visitor.visit(cached);continue;}
-            JSONObject journey = new JSONObject();
+            JSONObject journey=mapEvidence(context,file,map);
+            if (journey != null) {
+                if(map)JourneyProjectionCache.enqueue(context,file,token,"map-v1",journey);
+                visitor.visit(journey);
+            }
+        }
+    }
+
+    static JSONObject mapEvidence(Context context,File file,boolean map) throws Exception {
+        JSONObject journey = new JSONObject();
             try (JsonReader reader = new JsonReader(new InputStreamReader(
                     new FileInputStream(file), StandardCharsets.UTF_8))) {
                 reader.beginObject();
@@ -432,11 +454,7 @@ public final class JourneyStore {
             // Legacy edge-only corrections need the original trace to identify removed roads.
             if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
                 journey = upgrade(context, read(file));
-            if (journey != null) {
-                if(map)JourneyProjectionCache.enqueue(context,file,token,"map-v1",journey);
-                visitor.visit(journey);
-            }
-        }
+        return journey;
     }
 
     /** Stable metadata token for committed atomic replacements; no geometry decoding. */
@@ -833,10 +851,29 @@ public final class JourneyStore {
         return result;
     }
 
-    private static void bumpDataRevision(Context context) {
+    static long ncnDataRevision(Context context) {
+        SharedPreferences preferences=context.getSharedPreferences(PREFS,0);
+        return preferences.getLong("ncn_evidence_revision",preferences.getLong(DATA_REVISION,0));
+    }
+    static String ncnEvidenceHash(JSONObject journey) throws org.json.JSONException {
+        JSONObject evidence=new JSONObject();
+        for(String key:new String[]{"journey_id","mode","processing_status","journey_corrections"})
+            if(journey.has(key))evidence.put(key,journey.opt(key));
+        JSONObject source=journey.optJSONObject("processing_result");
+        if(source!=null) {
+            JSONObject result=new JSONObject();
+            for(String key:new String[]{"geojson","road_geojson","matcher","matching_mode","matched_path_evidence","cycling_path_evidence"})
+                if(source.has(key))result.put(key,source.opt(key));
+            evidence.put("processing_result",result);
+        }
+        return NcnJson.digest(evidence);
+    }
+    private static void bumpDataRevision(Context context) {bumpDataRevision(context,true);}
+    private static void bumpDataRevision(Context context,boolean ncnChanged) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        preferences.edit().putLong(DATA_REVISION,
-                preferences.getLong(DATA_REVISION, 0L) + 1L).apply();
+        long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
+        preferences.edit().putLong(DATA_REVISION,archive+1)
+                .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
         NcnProgressStore.changed(context);
     }
 
@@ -874,3 +911,4 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+

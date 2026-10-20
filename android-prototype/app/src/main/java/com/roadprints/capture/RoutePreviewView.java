@@ -116,6 +116,7 @@ public class RoutePreviewView extends View {
     private double lastTouchY;
     private boolean coordinatesValid;
     private boolean routeFitPending;
+    private boolean overviewUpdate;
     private List<JSONArray> focusedFitGeometry;
     private boolean flatRoadMapStyle;
 
@@ -761,8 +762,14 @@ public class RoutePreviewView extends View {
         routeFitPending=true;fitRouteIfReady();invalidate();
     }
 
+    void beginOverviewUpdate(){overviewUpdate=true;}
+    void endOverviewUpdate(boolean fit){
+        overviewUpdate=false;
+        if(fit)fitRouteIfReady();else routeFitPending=false;
+        invalidate();
+    }
     private void fitRouteIfReady() {
-        if (!routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
+        if (overviewUpdate || !routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
         double minX = Double.MAX_VALUE;
         double maxX = -Double.MAX_VALUE;
         double minY = Double.MAX_VALUE;
@@ -1549,6 +1556,7 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
 
 
 

@@ -15,8 +15,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 257
-        versionName = "0.25.211"
+        versionCode = 258
+        versionName = "0.25.212"
     }
 }
 
@@ -53,3 +53,4 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
         exclude("**/NcnNationalTest*", "**/NcnUiTest*")
     }
 }
+

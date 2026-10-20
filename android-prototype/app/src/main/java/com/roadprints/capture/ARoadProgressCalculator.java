@@ -21,6 +21,7 @@ import java.util.TreeMap;
 
 /** Canonical coverage for the discovered A roads, using the POC v5 references. */
 final class ARoadProgressCalculator {
+    private static long spatialKey(long x,long y){return (x<<32)^(y&0xffffffffL);}
     private static final double EARTH_RADIUS_M = 6_371_000.0;
     private static final double MATCH_RADIUS_M = 100.0;
     private static final double GRID_M = 250.0;
@@ -36,9 +37,9 @@ final class ARoadProgressCalculator {
         final Set<Integer> covered = new HashSet<>();
         final List<JSONArray> coveredMapSections = new ArrayList<>();
         final List<JSONArray> incompleteMapSections = new ArrayList<>();
-        final List<Anchor> anchors = new ArrayList<>();
+        List<Anchor> anchors = new ArrayList<>();
         int referenceSections;
-        final Map<String, List<Anchor>> grid = new HashMap<>();
+        android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
         double matchedMetres, totalKm;
         boolean referenceAvailable;
         Road(String id, String ref, String region) { this.id=id; this.ref=ref; this.region=region; }
@@ -61,9 +62,18 @@ final class ARoadProgressCalculator {
     private final Context context;
     private final boolean includeMapSections;
     private Summary completedSummary;
-    private final Map<String,Road> roads=new TreeMap<>();
+    private Map<String,Road> roads=new TreeMap<>();
     private final Map<String,JSONObject> index=new HashMap<>();
     private final Set<String> failed=new HashSet<>();
+    private final Map<String,Road> referenceTemplates=new HashMap<>();
+    private final Map<String,String> referenceSignatures=new HashMap<>();
+    private String signature(Road road) {
+        return referenceSignatures.computeIfAbsent(road.id,id->{
+            StringBuilder text=new StringBuilder().append(road.totalKm).append('|');
+            for(Anchor a:road.anchors)text.append(a.lng).append(',').append(a.lat).append(',').append(a.component).append(';');
+            return NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8));
+        });
+    }
     ARoadProgressCalculator(Context context) { this(context,true); }
     ARoadProgressCalculator(Context context, boolean includeMapSections) {
         this.context=context.getApplicationContext(); this.includeMapSections=includeMapSections; loadIndex();
@@ -97,6 +107,47 @@ final class ARoadProgressCalculator {
             if(!jid.isEmpty()) road.journeyIds.add(jid);
             ensureReference(road);
             if(road.referenceAvailable) matchFeature(road,feature.optJSONObject("geometry"));
+        }
+    }
+
+    /** Compact, per-journey contribution; reference grids are shared within this worker. */
+    JSONArray contribution(JSONObject journey) throws Exception {
+        Map<String,Road> previous=roads;roads=new TreeMap<>();
+        try {
+            addJourney(journey);JSONArray rows=new JSONArray();
+            for(Road road:roads.values()) {
+                String signature=road.referenceAvailable?signature(road):"missing";
+                JSONArray indices=new JSONArray();for(int index:road.covered)indices.put(index);
+                rows.put(new JSONObject().put("id",road.id).put("ref",road.ref).put("region",road.region)
+                        .put("metres",road.matchedMetres).put("indices",indices).put("reference",signature));
+            }
+            return rows;
+        } finally {roads=previous;}
+    }
+
+    /** Validate every reference before merging anything, so a failed cache hit is atomic. */
+    boolean accepts(JSONArray rows) throws Exception {
+        for(int i=0;i<rows.length();i++) {
+            JSONObject row=rows.getJSONObject(i);
+            Road probe=new Road(row.getString("id"),row.getString("ref"),row.getString("region"));
+            ensureReference(probe);
+            String signature=probe.referenceAvailable?signature(probe):"missing";
+            int count=probe.anchors.size();
+            if(!signature.equals(row.getString("reference")))return false;
+            JSONArray indices=row.getJSONArray("indices");
+            for(int j=0;j<indices.length();j++)if(indices.getInt(j)<0||indices.getInt(j)>=count)return false;
+        }
+        return true;
+    }
+    void addContribution(String journeyId,JSONArray rows) throws Exception {
+        for(int i=0;i<rows.length();i++) {
+            JSONObject row=rows.getJSONObject(i);String id=row.getString("id");
+            Road road=roads.get(id);
+            if(road==null){road=new Road(id,row.getString("ref"),row.getString("region"));roads.put(id,road);}
+            ensureReference(road);
+            road.matchedMetres+=row.getDouble("metres");
+            if(!journeyId.isEmpty())road.journeyIds.add(journeyId);
+            JSONArray indices=row.getJSONArray("indices");for(int j=0;j<indices.length();j++)road.covered.add(indices.getInt(j));
         }
     }
     /** Uses the same canonical edge coverage rule as the Progress map. */
@@ -153,6 +204,11 @@ final class ARoadProgressCalculator {
     }
     private void ensureReference(Road road) {
         if(road.referenceAvailable||failed.contains(road.id))return;
+        Road template=referenceTemplates.get(road.id);
+        if(template!=null){
+            road.anchors=template.anchors;road.grid=template.grid;
+            road.totalKm=template.totalKm;road.referenceSections=template.referenceSections;road.referenceAvailable=true;return;
+        }
         JSONObject entry=index.get(road.id); String file=entry==null?null:entry.optString("file",null);
         if(file==null){failed.add(road.id);return;}
         try(InputStream in=context.getAssets().open(file);
@@ -177,7 +233,7 @@ final class ARoadProgressCalculator {
                     data.optDouble("total_km",entry.optDouble("total_km",0)));
             road.referenceSections=road.anchors.size();
             road.referenceAvailable=road.referenceSections>0&&road.totalKm>0;
-            if(!road.referenceAvailable)failed.add(road.id);
+            if(!road.referenceAvailable)failed.add(road.id);else referenceTemplates.put(road.id,road);
         }catch(Exception ignored){failed.add(road.id);}
     }
     private void sampleReferencePath(Road road,List<double[]> points,int component) {
@@ -192,7 +248,7 @@ final class ARoadProgressCalculator {
         double[] last=points.get(points.size()-1); Anchor tail=road.anchors.isEmpty()?null:road.anchors.get(road.anchors.size()-1);
         if(tail==null||distance(tail.lng,tail.lat,last[0],last[1])>2)addAnchor(road,last,component);
     }
-    private void addAnchor(Road road,double[] p,int component){Anchor a=new Anchor(road.anchors.size(),p[0],p[1],component);road.anchors.add(a);road.grid.computeIfAbsent(gridKey(a.x,a.y),k->new ArrayList<>()).add(a);}
+    private void addAnchor(Road road,double[] p,int component){Anchor a=new Anchor(road.anchors.size(),p[0],p[1],component);road.anchors.add(a);long key=spatialKey((long)Math.floor(a.x/GRID_M),(long)Math.floor(a.y/GRID_M));List<Anchor> bucket=road.grid.get(key);if(bucket==null){bucket=new ArrayList<>();road.grid.put(key,bucket);}bucket.add(a);}
     private void matchFeature(Road road,JSONObject geometry){
         if(geometry==null)return;JSONArray coords=geometry.optJSONArray("coordinates");if(coords==null)return;
         String type=geometry.optString("type","");
@@ -206,8 +262,8 @@ final class ARoadProgressCalculator {
             for(int j=0;j<=n;j++){double f=j/(double)n;Anchor near=nearest(road,lng1+(lng2-lng1)*f,lat1+(lat2-lat1)*f);if(near!=null)road.covered.add(near.id);}
         }
     }
-    private Anchor nearest(Road road,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
-        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++)for(Anchor a:road.grid.getOrDefault(x+","+y,Collections.emptyList())){double d=Math.hypot(xy[0]-a.x,xy[1]-a.y);if(d<bd){best=a;bd=d;}}return best;}
+    private Anchor nearest(Road road,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M*MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
+        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++){List<Anchor> bucket=road.grid.get(spatialKey(x,y));if(bucket==null)continue;for(Anchor a:bucket){double dx=xy[0]-a.x,dy=xy[1]-a.y,d=dx*dx+dy*dy;if(d<bd){best=a;bd=d;}}}return best;}
     private void buildMapSections(Road road){JSONArray current=null;Boolean covered=null;Anchor prev=null;
         for(Anchor a:road.anchors){if(prev==null){prev=a;continue;}if(a.component!=prev.component||distance(prev.lng,prev.lat,a.lng,a.lat)>250){addSection(road,current,covered);current=null;covered=null;prev=a;continue;}
             boolean next=road.covered.contains(prev.id)||road.covered.contains(a.id);
@@ -222,4 +278,5 @@ final class ARoadProgressCalculator {
     private static double[] mercator(double lng,double lat){double x=6378137*Math.toRadians(lng),y=6378137*Math.log(Math.tan(Math.PI/4+Math.toRadians(Math.max(-85,Math.min(85,lat)))/2));return new double[]{x,y};}
     private static double distance(double lng1,double lat1,double lng2,double lat2){double a=Math.toRadians(lat1),b=Math.toRadians(lat2),dl=Math.toRadians(lng2-lng1),dp=b-a;double h=Math.sin(dp/2)*Math.sin(dp/2)+Math.cos(a)*Math.cos(b)*Math.sin(dl/2)*Math.sin(dl/2);return 2*EARTH_RADIUS_M*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
 }
+
 

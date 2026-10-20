@@ -88,10 +88,11 @@ public class ARoadProgressCalculatorTest {
         assertEquals(2000,detail.matchedMetres,0.001);
         assertEquals(2,detail.journeyIds.size());
         assertTrue(detail.referenceSections>0);
-        assertTrue(detail.anchors.isEmpty());assertTrue(detail.grid.isEmpty());
-        assertTrue(visible.anchors.isEmpty());assertTrue(visible.grid.isEmpty());
+        assertTrue(detail.anchors.isEmpty());assertTrue(detail.grid.size()==0);
+        assertTrue(visible.anchors.isEmpty());assertTrue(visible.grid.size()==0);
         assertTrue(detail.coveredMapSections.isEmpty());assertTrue(detail.incompleteMapSections.isEmpty());
         assertFalse(visible.coveredMapSections.isEmpty());
         assertSame(counted,stats.finish());assertSame(mapped,map.finish());
     }
 }
+
