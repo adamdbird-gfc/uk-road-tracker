@@ -15,6 +15,8 @@ final class NcnCatalogueFiles {
     static final String MANIFEST="collections/published/ncn/manifest-v2.json";
     private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
     private static boolean updating;
+    // Download/verification may take minutes. UI scheduling must never acquire this lock.
+    static final Object INSTALL_LOCK=new Object();
     private static final java.util.Set<String> verified=java.util.concurrent.ConcurrentHashMap.newKeySet();
     static final class Installed {final File file;final JSONObject manifest;Installed(File f,JSONObject m){file=f;manifest=m;}}
     static File directory(Context c){File d=new File(c.getFilesDir(),"ncn-reference-v2");if(!d.isDirectory()&&!d.mkdirs())throw new IllegalStateException("NCN cache unavailable");return d;}
@@ -42,7 +44,12 @@ final class NcnCatalogueFiles {
         HttpURLConnection http=(HttpURLConnection)new URL(PublicReferenceData.BASE_URL+path).openConnection();http.setInstanceFollowRedirects(false);http.setConnectTimeout(30_000);http.setReadTimeout(45_000);http.setRequestProperty("Accept-Encoding","identity");return http;
     }
     static String digest(File file)throws Exception{MessageDigest hash=MessageDigest.getInstance("SHA-256");try(InputStream in=new FileInputStream(file)){byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)hash.update(b,0,n);}StringBuilder out=new StringBuilder();for(byte b:hash.digest())out.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return out.toString();}
-    static synchronized void install(Context c,JSONObject manifest)throws Exception{
+    static void install(Context c,JSONObject manifest)throws Exception{
+        long started=android.os.SystemClock.elapsedRealtime();
+        synchronized(INSTALL_LOCK){installLocked(c,manifest);}
+        android.util.Log.i("RoadprintsTiming","ncn_install ms="+(android.os.SystemClock.elapsedRealtime()-started));
+    }
+    private static void installLocked(Context c,JSONObject manifest)throws Exception{
         validate(manifest);File dir=directory(c),database=new File(dir,manifest.getString("sha256")+".db");
         if(!database.exists()||database.length()!=manifest.getLong("database_bytes")||!digest(database).equals(manifest.getString("sha256"))){
             File download=new File(dir,manifest.getString("compressed_sha256")+".part");long offset=download.exists()?download.length():0;if(offset>manifest.getLong("compressed_bytes")){download.delete();offset=0;}

@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 final class NcnProgressStore {
     private static final int ASSESSMENT_VERSION=2;
     private static final String PREFS="roadprints_ncn_national_v2";
-    private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
+    private static final ExecutorService WORKER=Executors.newSingleThreadExecutor(task->{Thread t=new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);task.run();},"roadprints-ncn-assessment");return t;});
     private static boolean running;
     private static long failedRevision=Long.MIN_VALUE;
     private static final java.util.concurrent.atomic.AtomicBoolean changeQueued=new java.util.concurrent.atomic.AtomicBoolean();
@@ -44,7 +44,9 @@ final class NcnProgressStore {
         WORKER.execute(()->{
             boolean retry=false;
             try {
-                Snapshot result=assess(app);
+                long started=android.os.SystemClock.elapsedRealtime();
+                Snapshot result=assess(app,()->!enabled(app)||app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch);
+                android.util.Log.i("RoadprintsTiming","ncn_assessment ms="+(android.os.SystemClock.elapsedRealtime()-started)+" journeys="+result.metadata.size());
                 synchronized(NcnProgressStore.class) {
                 if(enabled(app)&&app.getSharedPreferences(PREFS,0).getLong("epoch",0)==epoch&&result.archiveRevision==JourneyStore.dataRevision(app)) {
                     snapshot=result;status="Ready · verified-open NCN sections";
@@ -65,14 +67,15 @@ final class NcnProgressStore {
         if(!enabled(context)||!changeQueued.compareAndSet(false,true))return;
         Context app=context.getApplicationContext();WORKER.execute(()->{changeQueued.set(false);ensure(app);});
     }
-    private static Snapshot assess(Context app) throws Exception {
+    private static Snapshot assess(Context app) throws Exception {return assess(app,()->!enabled(app));}
+    private static Snapshot assess(Context app,java.util.function.BooleanSupplier cancelled) throws Exception {
         NcnCatalogue catalogue=NcnCatalogue.load(app);long revision=JourneyStore.dataRevision(app);
         NcnMatcher matcher=new NcnMatcher(catalogue);NcnLedger ledger=new NcnLedger(catalogue);
         java.util.Map<String,JSONObject> metadata=new java.util.LinkedHashMap<>();
         File directory=new File(app.getFilesDir(),"ncn-national-assessments/"+catalogue.version);if(!directory.isDirectory()&&!directory.mkdirs())throw new java.io.IOException("Cannot create assessment cache");
         Set<String> live=new HashSet<>();int[] checked={0};Exception[] failed={null};
-        JourneyStore.forEachNcnEvidence(app,()->!enabled(app)||Thread.currentThread().isInterrupted(),journey->{
-            if(failed[0]!=null||!enabled(app)||Thread.currentThread().isInterrupted())return;
+        JourneyStore.forEachNcnEvidence(app,()->cancelled.getAsBoolean()||Thread.currentThread().isInterrupted(),journey->{
+            if(failed[0]!=null||cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())return;
             try {
                 String id=journey.optString("journey_id");if(id.isEmpty())return;
                 String fingerprint=NcnJson.hash(journey.toString().getBytes(StandardCharsets.UTF_8));
@@ -84,10 +87,11 @@ final class NcnProgressStore {
             }catch(Exception error){failed[0]=error;}
         });
         if(failed[0]!=null)throw failed[0];
+        if(cancelled.getAsBoolean())throw new java.util.concurrent.CancellationException();
         // Deleted journeys are absent from the newly assembled ledger; stale cache rows cannot contribute.
         if(revision==JourneyStore.dataRevision(app)) {File[] files=directory.listFiles();if(files!=null)for(File file:files)if(file.getName().endsWith(".json")&&!live.contains(file.getName()))new AtomicFile(file).delete();}
         // Build interval unions on this worker before a UI ever receives the snapshot.
-        for(String route:catalogue.routes.keySet())ledger.metres(route,"combined");
+        for(String route:catalogue.routes.keySet()){if(cancelled.getAsBoolean())throw new java.util.concurrent.CancellationException();ledger.metres(route,"combined");}
         return new Snapshot(catalogue,ledger,revision,metadata);
     }
     private static void write(AtomicFile file,JSONObject value) throws Exception {
