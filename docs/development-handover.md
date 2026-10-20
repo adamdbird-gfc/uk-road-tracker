@@ -1,6 +1,24 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Current Android development entrypoint — 20 October 2026
+
+The latest owner-only APK is **0.25.210 (256)** from
+[PR #210](https://github.com/adamdbird-gfc/uk-road-tracker/pull/210), stacked on
+#209 and the national NCN #207 lineage. **Use
+[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-ncn-responsiveness/docs/development-handover.md)
+before Android work.** The application on main is not this unmerged development
+APK; do not resume from its older 206 instructions below.
+
+Exact signed source `c6f092d9800695bcca6e0839c54fe30f8603ab7c`;
+[successful private run 39396622144](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396622144).
+689 Android tests passed, no failures/errors/skips; lint and stable signing pass.
+NCN responsiveness/checkpoint fixes and core route/network achievements are
+included. **No Firebase upload, tester release or notification.** Owner device
+ANR/performance acceptance remains pending; Kent/Millennium disc/poem awards remain
+held for evidence. See #193/#194/#201 and the linked detailed handover for artifact,
+checksum, timings and acceptance. Do not build another APK just to resume.
 
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
