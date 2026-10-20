@@ -71,7 +71,9 @@ final class NcnProgressUi {
                 if(keys.isEmpty())group.entries.addView(text(a,"No independently verified "+id+" identities in this checkpoint.",13,0xFFB9C5D8));
                 for(String key:keys){RouteRow row=new RouteRow(a,key,snapshot.catalogue.routes.get(key));group.rows.add(row);rows.add(row);group.entries.addView(row.view);}
             }
+            boolean[] modeFailed={false};
             Runnable filter=()->{
+                if(modeFailed[0]){for(Group group:groups){group.heading.setVisibility(View.GONE);group.entries.setVisibility(View.GONE);}matches.setText("NCN progress could not refresh. Select an activity to retry.");return;}
                 String query=search.getText().toString().trim();prefs.edit().putString("search",query).apply();String q=normalise(query);int count=0;
                 for(Group group:groups){int found=0;for(RouteRow row:group.rows){boolean visible=q.isEmpty()||row.term.contains(q);row.view.setVisibility(visible?View.VISIBLE:View.GONE);if(visible)found++;}count+=found;
                     boolean show=q.isEmpty()||found>0;group.heading.setVisibility(show?View.VISIBLE:View.GONE);
@@ -79,7 +81,7 @@ final class NcnProgressUi {
                     group.entries.setVisibility(show&&open?View.VISIBLE:View.GONE);group.heading.setText((open?"▾ ":"▸ ")+group.title);
                     group.heading.setContentDescription(group.title+", "+found+" matching routes, "+(open?"expanded":"collapsed"));
                 }
-                matches.setText(count==0?"No matching routes. Try another search or clear your search.":count+" routes shown · "+label(NcnProgressStore.mode(a)));
+                matches.setText(count==0?"No matching routes. Try another search or clear your search.":count+(count==1?" route shown · ":" routes shown · ")+label(NcnProgressStore.mode(a)));
             };
             for(Group group:groups)group.heading.setOnClickListener(v->{
                 boolean next=group.entries.getVisibility()!=View.VISIBLE;
@@ -89,8 +91,12 @@ final class NcnProgressUi {
             Runnable refreshMode=()->{
                 String mode=NcnProgressStore.mode(a);renderedMode[0]=mode;
                 for(Map.Entry<String,Button> choice:choices.entrySet())VenueProgressPanel.styleFilter(a,choice.getValue(),choice.getKey().equals(mode));
-                summary.bind("NCN network",snapshot.ledger.networkMetres(mode),snapshot.catalogue.networkLength,"Unique verified-open network · "+label(mode));
-                for(RouteRow row:rows)row.bind(a,snapshot,mode);filter.run();
+                try{
+                    double done=snapshot.ledger.networkMetres(mode);
+                    for(RouteRow row:rows)row.bind(a,snapshot,mode);
+                    summary.bind("NCN network",done,snapshot.catalogue.networkLength,"Unique verified-open network · "+label(mode));summary.setVisibility(View.VISIBLE);modeFailed[0]=false;
+                }catch(Exception failure){summary.setVisibility(View.GONE);modeFailed[0]=true;}
+                filter.run();
             };
             for(String mode:new String[]{"combined","cycling","on_foot"}){
                 Button choice=VenueProgressPanel.button(a,label(mode));choice.setTag("ncn_mode:"+mode);choices.put(mode,choice);
@@ -116,7 +122,7 @@ final class NcnProgressUi {
             meta=text(a,"",11,0xFFB9C5D8);meta.setPadding(dp(a,88),0,0,dp(a,4));view.addView(meta);
             view.setFocusable(true);view.setOnClickListener(v->open(a,key));
         }
-        void bind(Activity a,NcnProgressStore.Snapshot snapshot,String mode){
+        void bind(Activity a,NcnProgressStore.Snapshot snapshot,String mode)throws Exception{
             double length=route.optDouble("length_m"),covered=snapshot.ledger.metres(key,mode);boolean measurable=route.optBoolean("measurable",true);
             percent.setText(measurable?String.format(Locale.UK,"%.1f%%",length>0?100*covered/length:0):"Held");
             bar.setVisibility(measurable?View.VISIBLE:View.INVISIBLE);bar.setFraction(measurable&&length>0?covered/length:0);

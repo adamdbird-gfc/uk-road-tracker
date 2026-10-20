@@ -41,7 +41,7 @@ public class NcnUiTest {
    float density=a.getResources().getDisplayMetrics().density;assertEquals(Math.round(78*density),badge.getLayoutParams().width);assertEquals(Math.round(32*density),badge.getLayoutParams().height);
    View compact=root.findViewWithTag("ncn_route:NCN:344");compact.measure(View.MeasureSpec.makeMeasureSpec(Math.round(320*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));assertTrue("Compact row should fit within 104dp at standard text size",compact.getMeasuredHeight()<=Math.round(104*density));
    search.setText("NCN:344");assertEquals(View.VISIBLE,root.findViewWithTag("ncn_group:national").getVisibility());assertEquals(View.GONE,root.findViewWithTag("ncn_group:regional").getVisibility());
-   assertTrue(((TextView)root.findViewWithTag("ncn_matches")).getText().toString().startsWith("1 routes shown"));
+   assertTrue(((TextView)root.findViewWithTag("ncn_matches")).getText().toString().startsWith("1 route shown"));
    for(String mode:new String[]{"cycling","on_foot","combined"}){
     root.findViewWithTag("ncn_mode:"+mode).performClick();assertEquals(mode,NcnProgressStore.mode(a));assertSame(search,root.findViewWithTag("ncn_search"));assertEquals("NCN:344",search.getText().toString());
     assertTrue(root.findViewWithTag("ncn_mode:"+mode).isSelected());
