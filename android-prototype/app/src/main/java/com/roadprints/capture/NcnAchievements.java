@@ -30,7 +30,8 @@ final class NcnAchievements {
     static double percent(double done,double total){
         if(!Double.isFinite(done)||!Double.isFinite(total)||done<=0||total<=0)return 0;
         // Only absorb floating-point arithmetic noise, never a rounded display percentage.
-        if(Math.abs(total-done)<=Math.max(1e-7,total*1e-12))return 100;
+        for(double threshold:new double[]{25,50,75,100})
+            if(Math.abs(total*threshold/100-done)<=Math.max(1e-7,total*1e-12))return threshold;
         return Math.min(100,100*done/total);
     }
     private static void add(JSONArray rows,JSONObject history,String id,String name,double value,boolean first,double done,double total)throws Exception{

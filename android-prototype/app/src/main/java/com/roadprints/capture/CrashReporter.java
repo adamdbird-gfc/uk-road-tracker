@@ -337,6 +337,7 @@ public final class CrashReporter {
     }
 
     public static void clear(Context context) {
+        PerformanceDiagnostics.clear(context);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .remove(REPORTS).remove(MATCH_REPORTS).putBoolean(NOTIFICATION_ACTIVE, false).commit();
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -353,7 +354,8 @@ public final class CrashReporter {
     private static void notifyIfDiagnosticReportsAvailable(Context context) {
         try {
             Context app = context.getApplicationContext();
-            if (!hasReports(app)) return;
+            // Routine performance timings are available on request, without debug notifications.
+            if (getReports(app).isEmpty() && getMatchFailureReports(app).isEmpty()) return;
             SharedPreferences preferences = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             if (preferences.getBoolean(NOTIFICATION_ACTIVE, false)) return;
             NotificationManager manager = (NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -10,6 +10,7 @@ public class NcnAchievementThresholdTest {
         assertEquals(0,NcnAchievements.percent(Double.NaN,100),0);
         assertEquals(0,NcnAchievements.percent(1,0),0);
         assertEquals(100,NcnAchievements.percent(100-1e-11,100),0);
+        for(double done:new double[]{1.23456,12345.6789,1.0/3})assertEquals(25,NcnAchievements.percent(done,done*4),0);
         assertTrue(NcnAchievements.percent(99.999,100)<100);
     }
 }

@@ -83,7 +83,7 @@ from active awards while their historical dates remain. A route identity change
 must be explicitly reviewed rather than inferred from its name. The network award
 always describes the currently supported verified-open catalogue, not every NCN
 route ever published. No milestone rounds a displayed 99.999% up to completion;
-only numerical arithmetic noise is absorbed (at most 1e-12 of reference length).
+only numerical arithmetic noise is absorbed (maximum of 1e-7 metres or 1e-12 of reference length at each threshold).
 
 The Achievements screen reuses its existing cards, collapsed route-family list,
 jump menu and celebration modal. NCN state invalidates the existing achievement

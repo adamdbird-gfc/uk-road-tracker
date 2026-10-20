@@ -56,5 +56,6 @@ final class PerformanceDiagnostics {
         if(combined.length()>16000)combined=combined.substring(0,16000);
         p.edit().putString("recent",combined).apply();
     }
+    static void clear(Context context){context.getSharedPreferences(PREFS,0).edit().clear().apply();}
     static String report(Context context){return context.getSharedPreferences(PREFS,0).getString("recent","");}
 }
