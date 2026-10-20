@@ -18,7 +18,7 @@ on:
         default: false
         type: boolean
       package_beta:
-        description: After verified live publication, run all Android tests and package/distribute one beta
+        description: After verified live publication, run all Android tests and retain a private development APK
         default: false
         type: boolean
 permissions:
@@ -139,9 +139,9 @@ jobs:
   beta:
     needs: [verify-existing-access, publish]
     if: always() && ((needs.publish.result == 'success' && needs.publish.outputs.promote == 'true' && needs.publish.outputs.package_beta == 'true') || (needs.verify-existing-access.result == 'success' && needs.verify-existing-access.outputs.action == 'package-existing'))
-    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@dda0aecc71a5e40ff501a32831b43440d559ebb4
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
     with:
       source_ref: ${{ github.sha }}
-      firebase_upload: true
-      distribute_existing_testers: true
+      firebase_upload: false
+      distribute_existing_testers: false
     secrets: inherit

@@ -31,6 +31,6 @@ jobs:
     uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
     with:
       source_ref: ${{ needs.request.outputs.source_sha }}
-      firebase_upload: ${{ fromJSON(needs.request.outputs.firebase_upload) }}
-      distribute_existing_testers: ${{ fromJSON(needs.request.outputs.distribute_existing_testers) }}
+      firebase_upload: false
+      distribute_existing_testers: false
     secrets: inherit

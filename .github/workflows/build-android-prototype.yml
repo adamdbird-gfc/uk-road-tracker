@@ -1,4 +1,4 @@
-name: Package Roadprints test APK
+name: Package private Roadprints development APK
 
 on:
   workflow_call:
@@ -13,16 +13,6 @@ on:
         type: string
         default: ''
   workflow_dispatch:
-    inputs:
-      firebase_upload:
-        description: Upload the verified APK to Firebase App Distribution
-        type: boolean
-        default: false
-
-      distribute_existing_testers:
-        description: Share with the existing Firebase project testers
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -41,6 +31,12 @@ jobs:
       ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
 
     steps:
+      - name: Reject obsolete distribution flags
+        if: inputs.firebase_upload || inputs.distribute_existing_testers
+        run: |
+          echo "::error::Packaging is development-only. Use the manually authorised artifact promotion workflow."
+          exit 1
+
       - name: Check out repository
         uses: actions/checkout@v6
         with:
@@ -54,6 +50,7 @@ jobs:
 
       - name: Download and verify pinned external NCN test reference
         run: |
+          python3 -m unittest discover -s scripts -p test_android_distribution_controls.py -v
           python3 scripts/prepare_ncn_reference.py
           NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
 
@@ -91,7 +88,10 @@ jobs:
       - name: Verify APK signature and report test totals
         run: |
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
-          "$signer" verify --verbose --print-certs android-prototype/app/build/outputs/apk/debug/app-debug.apk
+          "$signer" verify --verbose --print-certs android-prototype/app/build/outputs/apk/debug/app-debug.apk | tee "$RUNNER_TEMP/apk-certificate.txt"
+          grep -Fq '5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031' "$RUNNER_TEMP/apk-certificate.txt"
+          sha256sum android-prototype/app/build/outputs/apk/debug/app-debug.apk | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Private development APK · source $GITHUB_SHA · no Firebase upload or tester notifications" >> "$GITHUB_STEP_SUMMARY"
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
           totals = {key: 0 for key in ("tests", "failures", "errors", "skipped")}
@@ -128,64 +128,3 @@ jobs:
           path: android-prototype/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
-
-  firebase:
-    needs: build
-    if: inputs.firebase_upload
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Check out verified source
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.source_ref || github.ref }}
-
-      - name: Download verified signed APK
-        uses: actions/download-artifact@v4
-        with:
-          name: roadprints-capture-prototype-debug
-          path: verified-apk
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install Firebase CLI
-        run: npm install --global firebase-tools@15.33.0
-
-      - name: Install existing-tester API authentication
-        if: inputs.distribute_existing_testers
-        run: python3 -m pip install google-auth==2.40.3 requests==2.32.5
-
-      - name: Upload APK to Firebase App Distribution
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          ROADPRINTS_DISTRIBUTE_EXISTING_TESTERS: ${{ inputs.distribute_existing_testers }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/roadprints-firebase-credentials.json"
-          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
-          python3 - <<'PY'
-          import json, os, pathlib
-          raw = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON', '')
-          if not raw:
-              raise SystemExit('Configure the FIREBASE_SERVICE_ACCOUNT_JSON repository Actions secret first. See docs/android-firebase-distribution.md.')
-          try:
-              credentials = json.loads(raw)
-          except ValueError:
-              raise SystemExit('FIREBASE_SERVICE_ACCOUNT_JSON must contain valid service-account JSON.')
-          if credentials.get('type') != 'service_account' or credentials.get('project_id') != 'roadprints-822cc' or not credentials.get('private_key') or not credentials.get('client_email'):
-              raise SystemExit('Expected a service-account key for roadprints-822cc, not google-services.json.')
-          path = pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-          path.touch(mode=0o600, exist_ok=False)
-          path.write_text(raw)
-          PY
-          unset FIREBASE_SERVICE_ACCOUNT_JSON
-          bash scripts/upload_android_firebase.sh verified-apk/app-debug.apk
-
-      - name: Remove deployment credential
-        if: always()
-        run: rm -f "$RUNNER_TEMP/roadprints-firebase-credentials.json"
