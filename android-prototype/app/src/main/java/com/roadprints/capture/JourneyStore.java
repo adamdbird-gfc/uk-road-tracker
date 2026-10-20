@@ -79,7 +79,7 @@ public final class JourneyStore {
             boolean ncnChanged=newRecording||!ncnHash.equals(inputs.getString(id,""));
             inputs.edit().putString(id,ncnHash).apply();
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
-                    .putString(id,new RoadDetailModel.Entry(journey).summary.toString()).apply();
+                    .putString(id,ncnMetadata(journey).toString()).apply();
             bumpDataRevision(context,ncnChanged);
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
@@ -854,6 +854,12 @@ public final class JourneyStore {
     static long ncnDataRevision(Context context) {
         SharedPreferences preferences=context.getSharedPreferences(PREFS,0);
         return preferences.getLong("ncn_evidence_revision",preferences.getLong(DATA_REVISION,0));
+    }
+    private static JSONObject ncnMetadata(JSONObject journey) throws org.json.JSONException {
+        JSONObject metadata=new JSONObject();
+        for(String key:new String[]{"journey_id","title","name","mode","started_at","ended_at","distance_meters","gps_point_count","_route_point_count"})
+            metadata.put(key,journey.has(key)?journey.opt(key):JSONObject.NULL);
+        return metadata;
     }
     static String ncnEvidenceHash(JSONObject journey) throws org.json.JSONException {
         JSONObject evidence=new JSONObject();

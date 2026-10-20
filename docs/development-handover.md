@@ -25,7 +25,9 @@ See [root causes, cache/rule maintenance, measurements and acceptance](map-perfo
 Initial implementation: compile/lint passed; all eight new functional tests
 passed in [run 39508236450](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39508236450).
 Its only failure was missing 212 release notes, now corrected. Latest integrated
-checks remain pending after recovery/benchmark refinements.
+[checks 39508974518](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39508974518)
+passed all 710 tests, compilation and lint. Final packaging repeats the complete
+gate, including compact metadata and Android CursorWindow size safeguards.
 Initial runner benchmark (synthetic 1,547 driving journeys, real M2/A2 geometry):
 first preparation 1,483.73 ms; warm 418.03 ms; one addition 268.47 ms; completion
 unchanged. These are **JVM preparation, not Pixel app startup**, and will be

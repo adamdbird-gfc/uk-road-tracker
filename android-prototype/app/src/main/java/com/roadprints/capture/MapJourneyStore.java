@@ -17,7 +17,7 @@ final class MapJourneyStore implements AutoCloseable {
     final Context context;
     private SQLiteDatabase db;
     private final boolean bypass;
-    int reused,rebuilt,sourceReads,legacyReads,writes;
+    int reused,rebuilt,sourceReads,legacyReads,writes,oversized;
     MapJourneyStore(Context context) {this(context,false);}
     MapJourneyStore(Context context,boolean bypass) {
         this.bypass=bypass;
@@ -72,8 +72,10 @@ final class MapJourneyStore implements AutoCloseable {
     private static JSONObject header(JSONObject journey) throws Exception {
         JSONObject value=new JSONObject();
         for(String key:new String[]{"journey_id","mode","processing_status","started_at","ended_at",
-                "gps_point_count","_route_point_count","source","capture_quality","walking_outcome"})
+                "gps_point_count","_route_point_count","capture_quality","walking_outcome"})
             if(journey.has(key))value.put(key,journey.opt(key));
+        JSONObject source=journey.optJSONObject("source");
+        if(source!=null)value.put("source",new JSONObject().put("type",source.optString("type")));
         value.put("_has_stored_match",JourneyFilters.hasStoredMatch(journey));
         return value;
     }
@@ -85,7 +87,9 @@ final class MapJourneyStore implements AutoCloseable {
         row.put("header",head);row.put("header_sha",NcnJson.hash(head));
         if(prepared!=null) {
             byte[] bytes=prepared.toString().getBytes(StandardCharsets.UTF_8);
-            if(bytes.length<=32*1024*1024){row.put("payload",bytes);row.put("payload_sha",NcnJson.hash(bytes));}
+            // Keep rows below Android's CursorWindow limit; larger originals remain fully usable.
+            if(bytes.length<=1024*1024){row.put("payload",bytes);row.put("payload_sha",NcnJson.hash(bytes));}
+            else oversized++;
         }
         db.insertWithOnConflict("entries",null,row,SQLiteDatabase.CONFLICT_REPLACE);
         // Small transactions allow interrupted first-use materialisation to resume.

@@ -29,6 +29,9 @@ lines, and compact per-journey motorway/A-road covered-index contributions.
 Checksums cover the encoded bytes, not a fresh serialisation. File replacement
 tokens identify changed sources. Unchanged records require no archive/provenance
 decode or spatial rematch; filters select compact headers before reading payloads.
+Large payloads above 1 MiB retain a compact header but rebuild from original
+evidence instead of risking Android CursorWindow overflow; oversized counts are
+explicit in diagnostics. This is a derived-cache bound, not discarded coverage.
 Each row is atomic, short transactions checkpoint first-use progress, and cancelled
 runs retain only complete valid rows. Source changes, malformed rows, explicit
 Retry, and actual reference mismatches rebuild from the authoritative original

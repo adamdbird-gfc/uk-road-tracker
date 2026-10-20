@@ -122,6 +122,15 @@ public class MapPerformanceTest {
             assertEquals(1,store.rebuilt);assertEquals(1,store.reused);
         }
     }
+    @Test public void largePreparedRecordAvoidsCursorWindowOverflowWithoutDroppingOriginal() throws Exception {
+        JourneyStore.save(app,trip("large"));char[] text=new char[1100*1024];Arrays.fill(text,'x');
+        JSONObject prepared=emptyPrepared().put("roads",new JSONArray().put(new JSONObject().put("fixture",new String(text))));
+        for(int pass=0;pass<2;pass++)try(MapJourneyStore store=new MapJourneyStore(app)){
+            store.forEach(()->false,r->{assertEquals(text.length,r.prepared(raw->prepared).getJSONArray("roads").getJSONObject(0).getString("fixture").length());});
+            assertEquals(1,store.rebuilt);assertEquals(1,store.oversized);
+        }
+        assertNotNull(JourneyStore.get(app,"large"));
+    }
     @Test public void metadataAndDwellDoNotInvalidateNcnAndDuplicateSavesDoNotBumpArchive() throws Exception {
         JSONObject trip=trip("metadata");JourneyStore.save(app,trip);
         long archive=JourneyStore.dataRevision(app),ncn=JourneyStore.ncnDataRevision(app);
@@ -171,6 +180,31 @@ public class MapPerformanceTest {
         Method method=MapActivity.class.getDeclaredMethod("readMapRoutes",JourneyFilters.class,LocalDate.class,ZoneId.class);method.setAccessible(true);
         return (MapActivity.MapRoutes)method.invoke(screen,filter,LocalDate.now(),ZoneId.systemDefault());
     }
+    private JSONObject legacySnapshot(File file,long revision) throws Exception {
+        try(InputStream in=new java.util.zip.GZIPInputStream(new FileInputStream(file));ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            byte[] buffer=new byte[8192];int count;while((count=in.read(buffer))!=-1)out.write(buffer,0,count);
+            JSONObject root=new JSONObject(out.toString("UTF-8"));
+            if(root.getLong("revision")!=revision)return null;
+            JSONObject payload=root.getJSONObject("data");
+            return NcnJson.hash(payload.toString().getBytes(StandardCharsets.UTF_8)).equals(root.getString("sha256"))?payload:null;
+        }
+    }
+    private void snapshotBenchmark(MapActivity screen,MapActivity.MapRoutes routes) throws Exception {
+        Method serialise=MapActivity.class.getDeclaredMethod("mapRoutesToCache",MapActivity.MapRoutes.class);serialise.setAccessible(true);
+        JSONObject data=(JSONObject)serialise.invoke(screen,routes);
+        byte[] bytes=data.toString().getBytes(StandardCharsets.UTF_8);
+        File old=new File(app.getCacheDir(),"legacy-map-benchmark.gz");
+        JSONObject wrapper=new JSONObject().put("format",1).put("revision",987).put("data",data).put("sha256",NcnJson.hash(bytes));
+        try(OutputStream out=new java.util.zip.GZIPOutputStream(new FileOutputStream(old))){out.write(wrapper.toString().getBytes(StandardCharsets.UTF_8));}
+        MapSnapshotCache.write(app,987,data);
+        long start=System.nanoTime();JSONObject before=legacySnapshot(old,987);long oldHit=System.nanoTime()-start;
+        start=System.nanoTime();JSONObject after=MapSnapshotCache.read(app,987);long newHit=System.nanoTime()-start;
+        assertNotNull(after);assertEquals(before.toString(),after.toString());
+        start=System.nanoTime();assertNull(legacySnapshot(old,988));long oldMiss=System.nanoTime()-start;
+        start=System.nanoTime();assertNull(MapSnapshotCache.read(app,988));long newMiss=System.nanoTime()-start;
+        System.out.println("MAP_CACHE_BENCHMARK identical_payload_bytes="+bytes.length+" legacy_hit_ms="+oldHit/1e6+" current_hit_ms="+newHit/1e6
+            +" legacy_stale_ms="+oldMiss/1e6+" current_stale_ms="+newMiss/1e6);
+    }
     @Test public void drivingHistory1547ColdWarmAdditionFiltersAndCoverageRemainConsistent() throws Exception {
         JSONObject template=trip("bench");
         JSONArray raw=new JSONArray();for(int i=0;i<512;i++)raw.put(new JSONArray().put(.37).put(51.44).put(i));
@@ -186,6 +220,7 @@ public class MapPerformanceTest {
             start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;stageLogs("warm");
             assertEquals(1547,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
             assertEquals(cold.roadPercentages,warm.roadPercentages);
+            snapshotBenchmark(controller.get(),warm);
             assertEquals(cold.coveredMotorwaySections.toString(),warm.coveredMotorwaySections.toString());
             assertEquals(cold.coveredARoadSections.toString(),warm.coveredARoadSections.toString());
             MapActivity.MapRoutes filtered=read(controller.get(),new JourneyFilters(2,"all",JourneyDateFilter.all()));

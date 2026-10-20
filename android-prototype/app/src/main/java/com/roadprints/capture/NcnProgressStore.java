@@ -85,7 +85,12 @@ final class NcnProgressStore {
         android.content.SharedPreferences updates=app.getSharedPreferences("roadprints_ncn_metadata",0);
         for(String id:metadata.keySet()) {
             String row=updates.getString(id,null);
-            if(row!=null)try{metadata.put(id,new JSONObject(row));}catch(Exception invalid){/* retain prior metadata */}
+            if(row!=null)try{
+                JSONObject updated=new JSONObject(metadata.get(id).toString()),fields=new JSONObject(row);
+                java.util.Iterator<String> keys=fields.keys();
+                while(keys.hasNext()){String key=keys.next();if(fields.isNull(key))updated.remove(key);else updated.put(key,fields.get(key));}
+                metadata.put(id,updated);
+            }catch(Exception invalid){/* retain prior metadata */}
         }
         return new Snapshot(previous.catalogue,previous.ledger,JourneyStore.dataRevision(app),metadata,0,previous.evidenceRevision);
     }

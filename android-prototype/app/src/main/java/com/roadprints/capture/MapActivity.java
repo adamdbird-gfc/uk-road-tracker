@@ -779,7 +779,7 @@ public class MapActivity extends Activity {
             work[2]+=System.nanoTime()-geometryStarted;
         });
         PerformanceDiagnostics.timing("map_records",0,"reused="+records.reused+" rebuilt="+records.rebuilt
-                +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads);
+                +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized);
         }
         long evidenceDuration=System.nanoTime()-evidenceStarted;
         PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
