@@ -823,6 +823,8 @@ public final class JourneyStore {
         }
     }
 
+    static void prepareArchive(Context context) { migrateLegacy(context); }
+
     static List<File> archiveFiles(Context context) {
         File[] files = context.getFilesDir().listFiles((directory, name) ->
                 name.startsWith(PREFIX) && name.endsWith(SUFFIX));

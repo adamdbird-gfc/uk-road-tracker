@@ -106,6 +106,16 @@ public class HistoryStabilisationTest {
         } finally {controller.destroy();}
         assertEquals(1,ReturnRecapStore.pending(app).size());
     }
+    @Test public void olderSummaryCannotEraseARacingCaptureAndMigratedInboxNeedsNoArchiveScan() throws Exception {
+        ReturnRecapStore.collect(app,Collections.emptyList(),Long.MAX_VALUE);
+        JourneyStore.save(app,journey("racing"));
+        ReturnRecapStore.collect(app,Collections.emptyList(),Long.MAX_VALUE);
+        assertEquals(1,ReturnRecapStore.pending(app).size());
+        ReturnRecapStore.inboxReady(app,true);assertTrue(ReturnRecapStore.inboxReady(app));
+        ReturnRecapStore.dismiss(app,new HashSet<>(Arrays.asList("racing")));
+        assertTrue(ReturnRecapStore.pending(app).isEmpty());
+    }
+
     @Test public void equalSizeRapidSavesHaveDifferentTokensAndInvalidateProjections() throws Exception {
         JourneyStore.save(app,journey("token").put("title","aaaa"));
         File source=new File(app.getFilesDir(),"journey_token.json");

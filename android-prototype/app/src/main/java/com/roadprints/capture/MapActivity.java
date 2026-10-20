@@ -1843,6 +1843,13 @@ public class MapActivity extends Activity {
         recapIo.execute(() -> {
             try {
                 List<JSONObject> inbox = ReturnRecapStore.pending(getApplicationContext());
+                if (ReturnRecapStore.inboxReady(getApplicationContext())) {
+                    mainHandler.post(() -> {
+                        if (isFinishing() || generation != recapGeneration) return;
+                        recapLoading=false;recapRevision=revision;recapJourneys=inbox;renderRecap();
+                    });
+                    return;
+                }
                 mainHandler.post(() -> {
                     if (!active || isFinishing() || generation != recapGeneration || inbox.isEmpty()) return;
                     recapJourneys = inbox;
@@ -1854,6 +1861,7 @@ public class MapActivity extends Activity {
                     return;
                 }
                 List<JSONObject> collected = ReturnRecapStore.collect(getApplicationContext(), rows, observedAt);
+                ReturnRecapStore.inboxReady(getApplicationContext(),true);
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != recapGeneration) return;
                     recapLoading = false;

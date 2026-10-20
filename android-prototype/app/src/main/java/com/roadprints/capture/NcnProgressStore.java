@@ -114,6 +114,7 @@ final class NcnProgressStore {
     }
     private static Snapshot assess(Context app) throws Exception {return assess(app,()->!enabled(app));}
     private static Snapshot assess(Context app,java.util.function.BooleanSupplier cancelled) throws Exception {
+        JourneyStore.prepareArchive(app);
         NcnCatalogue catalogue=NcnCatalogue.load(app);long revision=JourneyStore.dataRevision(app);
         NcnMatcher matcher=new NcnMatcher(catalogue);NcnLedger ledger=new NcnLedger(catalogue);
         java.util.Map<String,JSONObject> metadata=new java.util.LinkedHashMap<>();

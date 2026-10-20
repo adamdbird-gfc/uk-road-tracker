@@ -37,7 +37,8 @@ final class ReturnRecapStore {
             present.add(id);
             if (pending.contains(id)) result.add(journey);
         }
-        pending.retainAll(present);
+        // A capture may enqueue after the summary snapshot was read. Never erase
+        // an unseen pending ID merely because this older snapshot lacks it.
         prefs.edit().putLong("visited_at", now).putStringSet("known_recordings", known)
                 .putStringSet("pending", pending).apply();
         return result;
@@ -56,16 +57,30 @@ final class ReturnRecapStore {
         PerformanceDiagnostics.timing("new_journeys_created", 0, "pending=" + pending.size());
     }
 
+    static boolean inboxReady(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("inbox_migrated",false);
+    }
+    static void inboxReady(Context context, boolean ready) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("inbox_migrated",ready).apply();
+    }
+
     /** Read just the durable inbox before any optional historical discovery scan. */
     static synchronized List<JSONObject> pending(Context context) throws Exception {
         List<JSONObject> rows = new ArrayList<>();
-        for (String id : context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .getStringSet("pending", new HashSet<>())) {
-            if (id.contains("/") || id.contains("\\\\")) continue;
-            JSONObject row = JourneyStore.readSummary(new java.io.File(context.getFilesDir(), "journey_" + id + ".json"));
-            if (row != null) rows.add(row);
+        SharedPreferences prefs=context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Set<String> pending=new HashSet<>(prefs.getStringSet("pending",new HashSet<>()));
+        Set<String> stale=new HashSet<>();
+        for (String id : pending) {
+            if (id.contains("/") || id.indexOf((char)92)>=0) {stale.add(id);continue;}
+            java.io.File source=new java.io.File(context.getFilesDir(), "journey_" + id + ".json");
+            if(!source.isFile()){stale.add(id);continue;}
+            try {
+                JSONObject row = JourneyStore.readSummary(source);
+                if (row != null && isRecording(row)) rows.add(row);
+            } catch(Exception unavailable) { /* One interrupted read must not hide other pending recordings. */ }
         }
-        rows.sort((a,b) -> b.optString("ended_at").compareTo(a.optString("ended_at")));
+        if(!stale.isEmpty()){pending.removeAll(stale);prefs.edit().putStringSet("pending",pending).apply();}
+        rows.sort((left,right) -> right.optString("ended_at").compareTo(left.optString("ended_at")));
         return rows;
     }
 
