@@ -61,7 +61,7 @@ final class NcnAchievements {
                 double value=row.getDouble("value"),target=AchievementStore.nextTarget(d,value);int level=row.getInt("level");
                 AchievementStore.Progress p=new AchievementStore.Progress(d,value,(int)Math.min(target,value),(int)target,level>0,
                     first?(level>0?"First qualifying NCN discovery recognised":"Discover a verified-open NCN section"):
-                    String.format(Locale.UK,"%.1f%% · %s / %s verified-open · next %.0f%%",value,DistanceUnits.format(context,row.getDouble("done")),DistanceUnits.format(context,row.getDouble("total")),target),null);
+                    String.format(Locale.UK,"%.1f%% · %s / %s verified-open",value,DistanceUnits.format(context,row.getDouble("done")),DistanceUnits.format(context,row.getDouble("total")))+(level==4?" · complete":String.format(Locale.UK," · next %.0f%%",target)),null);
                 p.level=level;
                 List<String> milestones=new ArrayList<>();JSONObject dates=history==null?null:history.optJSONObject(d.id);
                 for(int n=1;n<=(first?1:4);n++)if(dates!=null&&dates.has(""+n))milestones.add(AchievementStore.titleFor(d,n)+" · recognised "+new java.text.SimpleDateFormat("d MMM yyyy",Locale.UK).format(new Date(dates.getLong(""+n)))+(n>level?" · previous milestone":""));

@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.210",
+      "version_code": 256,
+      "release_date": "2026-10-20",
+      "since": "0.25.209",
+      "changes": [
+        {
+          "title": "NCN responsiveness",
+          "description": "Catalogue installation no longer blocks UI polling. Unchanged NCN history restores from a validated checkpoint; stale map work stops early."
+        },
+        {
+          "title": "National Cycle Network achievements",
+          "description": "First discovery and combined 25%, 50%, 75% and complete milestones for supported verified-open routes and the unique physical network. Walking, running and cycling qualify."
+        },
+        {
+          "title": "Private owner testing",
+          "description": "This development build adds local performance diagnostics and retains the established map and Progress layout."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.209",
       "version_code": 255,
       "release_date": "2026-10-20",
@@ -169,7 +189,7 @@
         },
         {
           "title": "Beta testing requirements",
-          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+          "description": "Please test overnight home/school stays, venue running laps, walk–drive–walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
         }
       ]
     },

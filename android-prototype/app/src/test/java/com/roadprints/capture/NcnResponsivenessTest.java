@@ -47,6 +47,22 @@ public class NcnResponsivenessTest {
             synchronized(NcnCatalogueFiles.INSTALL_LOCK){worker.submit(()->NcnProgressStore.ensure(app)).get(1,TimeUnit.SECONDS);}
         } finally {snapshot.set(null,previous);failure.setLong(null,previousFailure);running.setBoolean(null,previousRunning);app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();worker.shutdownNow();}
     }
+    @Test public void repeatedProgressTotalsMatchFormerFullScan()throws Exception{
+        NcnCatalogue c=trial();NcnLedger ledger=new NcnLedger(c);
+        JSONObject golden=new JSONObject(new String(NcnCatalogue.read(getClass().getResourceAsStream("/ncn-android-golden.json")),java.nio.charset.StandardCharsets.UTF_8));
+        for(int i=0;i<2;i++)ledger.put("trip"+i,new NcnMatcher(c).assess(golden.getJSONArray("cases").getJSONObject(i).getJSONObject("journey")));
+        ledger.metres("NCN:344","combined");
+        java.lang.reflect.Field field=NcnLedger.class.getDeclaredField("index");field.setAccessible(true);
+        @SuppressWarnings("unchecked") java.util.Map<String,java.util.Map<String,java.util.List<double[]>>> index=(java.util.Map<String,java.util.Map<String,java.util.List<double[]>>>)field.get(ledger);
+        double before=0,after=0;long started=System.nanoTime();
+        for(int repeat=0;repeat<1000;repeat++)for(String mode:new String[]{"combined","on_foot","cycling"})for(String route:c.routes.keySet())
+            for(java.util.Map.Entry<String,java.util.List<double[]>> entry:index.getOrDefault(mode,java.util.Collections.emptyMap()).entrySet())if(entry.getKey().startsWith(route+"/"))for(double[] span:entry.getValue())before+=span[1]-span[0];
+        long scan=System.nanoTime()-started;started=System.nanoTime();
+        for(int repeat=0;repeat<1000;repeat++)for(String mode:new String[]{"combined","on_foot","cycling"})for(String route:c.routes.keySet())after+=ledger.metres(route,mode);
+        long cached=System.nanoTime()-started;
+        assertEquals(before,after,.001);
+        System.out.println("NCN repeated totals benchmark: routes="+c.routes.size()+" repeats=1000 former_scan_ms="+scan/1_000_000.0+" cached_ms="+cached/1_000_000.0);
+    }
     private NcnCatalogue trial() throws Exception {
         byte[] raw=NcnCatalogue.read(new java.util.zip.GZIPInputStream(RuntimeEnvironment.getApplication().getAssets().open("ncn-trial/ncn-trial.bin")));
         return new NcnCatalogue(raw,new JSONObject().put("sha256",NcnJson.hash(raw)));

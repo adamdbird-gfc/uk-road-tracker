@@ -1,7 +1,7 @@
 name: Private Android development APK
 on:
   push:
-    branches: [fix/ncn-ui-private-development]
+    branches: [fix/ncn-ui-private-development, fix/android-ncn-responsiveness]
     paths: ['.github/development-request.json']
   workflow_dispatch:
 permissions:
