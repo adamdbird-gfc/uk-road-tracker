@@ -4,25 +4,32 @@ Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for iss
 
 ## Current Android development entrypoint — 20 October 2026
 
-The latest owner-only APK is **0.25.211 (257)** in
-[PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), stacked on
-#210/#209 and national NCN #207. **Use
-[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-history-stabilisation/docs/development-handover.md)
+Latest owner-only APK: **0.25.212 (258)**,
+[PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212), stacked on
+#211/#210/#209 and national NCN #207. **Use
+[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-map-contributions/docs/development-handover.md)
 before Android work.** Main's older application is not this unmerged private APK.
 
-Exact signed source `290d29c1c506a7b7f2a821abd4452e0e5739dd74`;
-[successful private run 39503115073](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073);
-[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12302947068).
-701 Android tests passed, no failures/errors/skips; lint, reference verification
-and stable signing pass. NCN now reuses per-journey evidence and unions repeated
-source spans; capture review uses a durable map-independent inbox; map projections
-and compressed snapshots are cached off the initial presentation path.
-**No Firebase upload, tester release or notification.** Phone performance,
-automatic capture review lifecycle and exact 192-count reconciliation remain
-owner device acceptance, not proven by CI. The 10-second Pixel map target is
-unverified. Keep #201/#194 open and broader NCN features paused. See the linked
-handover for root causes, checksum, reports, synthetic source-read evidence and
-manual acceptance. Do not build another APK merely to resume.
+Exact signed source `5d5febdf35f8ac451565b110fbab1e7531fa8116`;
+[successful private build 39509571145](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305051296).
+711 tests passed, no failures/errors/skips; lint, national reference verification,
+distribution controls and stable signing passed. Downloaded APK checksum verified.
+
+**211 device findings:** New Journeys FIXED; NCN incremental ~1.5–2 s; Map still
+46–62 s (19–38 s evidence, 21–22 s coverage). 212 reuses compact map geometry and
+reference-validated coverage contributions, rejects stale snapshots before
+inflation, batches fitting and preserves NCN ledgers across irrelevant saves.
+Exact-source synthetic M2/A2 1,547-driving preparation: **896.48 ms first,
+120.55 ms warm, 84.33 ms after one addition**; unchanged completion, source reads
+1,547 / 0 / 1. These are runner preparation timings, not phone startup.
+
+**Pixel acceptance and 10-second target remain unverified.** First-use compaction
+and oversized-record fallback can still cost source processing. Keep #201/#194
+open; preserve verified New Journeys behaviour; broader NCN remains paused.
+**No Firebase upload, tester release/notification or Play publication.**
+See the linked handover for complete causes, stage metrics, artifact hash and
+device checklist. Do not build another APK merely to resume.
 
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
