@@ -10,7 +10,12 @@ import java.util.TreeSet;
 /** Python-compatible canonical evidence hashes; not a source of membership. */
 final class NcnJson {
     static String hash(byte[] bytes) {
-        try {byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);StringBuilder out=new StringBuilder();for(byte b:digest)out.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return out.toString();}
+        try {
+            byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);
+            char[] alphabet="0123456789abcdef".toCharArray(),hex=new char[digest.length*2];
+            for(int i=0;i<digest.length;i++){int value=digest[i]&255;hex[i*2]=alphabet[value>>>4];hex[i*2+1]=alphabet[value&15];}
+            return new String(hex);
+        }
         catch(Exception e){throw new IllegalStateException(e);}
     }
     static String digest(Object value) {return hash(canonical(value).getBytes(StandardCharsets.UTF_8));}
@@ -64,3 +69,4 @@ final class NcnJson {
         JSONObject copy=new JSONObject(object.toString());String expected=copy.getString("content_sha256");copy.remove("content_sha256");return digest(copy).equals(expected);
     }
 }
+

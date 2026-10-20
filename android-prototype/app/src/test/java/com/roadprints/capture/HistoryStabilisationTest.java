@@ -133,7 +133,7 @@ public class HistoryStabilisationTest {
         MapSnapshotCache.write(app,123,data);
         assertEquals(large.length,MapSnapshotCache.read(app,123).getString("fixture").length());
         assertNull(MapSnapshotCache.read(app,124));
-        File file=new File(app.getFilesDir(),"screen-cache/map-routes.gz");
+        File file=new File(app.getFilesDir(),"screen-cache/map-routes.bin");
         java.nio.file.Files.write(file.toPath(),new byte[]{1,2,3});
         assertNull(MapSnapshotCache.read(app,123));
     }
@@ -231,3 +231,4 @@ public class HistoryStabilisationTest {
         return null;
     }
 }
+
