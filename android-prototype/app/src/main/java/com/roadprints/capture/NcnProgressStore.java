@@ -56,10 +56,10 @@ final class NcnProgressStore {
                 PerformanceDiagnostics.timing("ncn_achievements",android.os.SystemClock.elapsedRealtime()-awardStarted,"");
                 synchronized(NcnProgressStore.class) {
                 if(enabled(app)&&app.getSharedPreferences(PREFS,0).getLong("epoch",0)==epoch&&result.archiveRevision==JourneyStore.dataRevision(app)) {
-                    NcnAchievements.publish(app,awards);
+                    boolean awardsChanged=NcnAchievements.publish(app,awards);
                     snapshot=result;status="Ready · verified-open NCN sections";
                     if(!restored)WORKER.execute(()->{if(snapshot==completed)try{checkpoint(app,completed);}catch(Exception cacheFailure){android.util.Log.w("RoadprintsTiming","ncn_snapshot_write=skipped");}});
-                    app.getSharedPreferences(PREFS,0).edit().putLong("revision",revision(app)+1).apply();
+                    if(!restored||awardsChanged)app.getSharedPreferences(PREFS,0).edit().putLong("revision",revision(app)+1).apply();
                 }else retry=enabled(app);
                 }
             }catch(Exception failure){synchronized(NcnProgressStore.class){if(app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch)retry=enabled(app);else{failedRevision=JourneyStore.dataRevision(app);android.util.Log.w("RoadprintsTiming","NCN assessment failed: "+failure.getClass().getSimpleName());status="NCN catalogue or assessment could not finish. Tap Retry to resume.";}}}

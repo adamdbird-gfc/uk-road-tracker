@@ -68,7 +68,7 @@ public class NcnNationalTest {
             assertFalse(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.equals("ncn-network")));
             ledger.put("repeat",proof);JSONObject repeated=NcnAchievements.prepare(snapshot,awards);
             assertEquals(awards.getJSONObject("history").toString(),repeated.getJSONObject("history").toString());
-            NcnAchievements.publish(app,repeated);assertEquals(25,ncnRow(app,"ncn-network").value,1e-9);
+            assertFalse("Unchanged restoration must not invalidate achievement caches",NcnAchievements.publish(app,repeated));assertEquals(25,ncnRow(app,"ncn-network").value,1e-9);
             c.networkLength=network;c.routes.get("NCN:344").put("length_m",route);
             JSONObject full=NcnAchievements.prepare(snapshot,repeated);NcnAchievements.publish(app,full);assertEquals(4,ncnRow(app,"ncn-network").level);assertEquals(4,ncnRow(app,"ncn-route:NCN:344").level);
             assertTrue(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.equals("ncn-network")&&e.level==4));

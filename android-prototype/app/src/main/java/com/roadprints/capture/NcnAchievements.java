@@ -43,7 +43,11 @@ final class NcnAchievements {
     }
     static JSONObject state(Context context){try{return new JSONObject(context.getSharedPreferences(PREFS,0).getString("state","{}"));}catch(Exception absent){return new JSONObject();}}
     // Called only after stable-revision validation, while publishing the associated snapshot.
-    static void publish(Context context,JSONObject state){context.getSharedPreferences(PREFS,0).edit().putString("state",state.toString()).apply();}
+    static boolean publish(Context context,JSONObject state){
+        android.content.SharedPreferences prefs=context.getSharedPreferences(PREFS,0);String encoded=state.toString();
+        if(encoded.equals(prefs.getString("state","{}")))return false;
+        prefs.edit().putString("state",encoded).apply();return true;
+    }
     static synchronized List<AchievementStore.Progress> rows(Context context){
         String encoded=context.getSharedPreferences(PREFS,0).getString("state","{}");
         boolean km=DistanceUnits.usesKilometres(context);
