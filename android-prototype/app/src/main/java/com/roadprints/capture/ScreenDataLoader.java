@@ -25,6 +25,12 @@ final class ScreenDataLoader {
     });
     static java.util.concurrent.Future<?> map(Runnable task) { return MAP.submit(task); }
 
+    private static final java.util.concurrent.ThreadPoolExecutor CACHE=new java.util.concurrent.ThreadPoolExecutor(
+            1,1,0L,java.util.concurrent.TimeUnit.MILLISECONDS,new java.util.concurrent.ArrayBlockingQueue<>(1),
+            task->new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);task.run();},"roadprints-map-cache"),
+            new java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy());
+    static void cache(Runnable task) { CACHE.execute(task); }
+
     private ScreenDataLoader() {}
 
     static void execute(Runnable task) {

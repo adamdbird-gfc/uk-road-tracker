@@ -2,7 +2,115 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest private development delivery — responsiveness and NCN achievements
+## P0 history and journey-review stabilisation — 20 October 2026
+
+Private development **0.25.211 (257)** in `fix/android-history-stabilisation`,
+[PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), based on
+210's documented head `6c0deacedd0e560a73229ab6b289fdff2fccf441`.
+This supersedes 210's performance acceptance: the owner's real archive still
+reports 68–141 s assessment and 37–55 s initial Map. No device acceptance claimed.
+
+**Private APK delivered:** exact tested/signed source
+`290d29c1c506a7b7f2a821abd4452e0e5739dd74`.
+[Successful private run 39503115073](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12302947068);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12303056971).
+**701 Android tests passed, zero failures/errors/skips**, lint and pinned national
+reference checks passed, stable APK v2 certificate verified
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+APK SHA-256:
+`7e6f035c0a3936237e08304af256594da47bfd3c893648c2db4afc69b0ca04e3`.
+Separate [exact-source Android checks 39503121191](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503121191)
+also passed. The successful package has only `development / build`, no Firebase
+upload/distribution job. One coordinated signed APK was built.
+
+Download while signed in to GitHub, extract the artifact ZIP and install
+`app-debug.apk` over the existing app without clearing data. Artifact retention
+ends 27 October; reports expire 23 October. No device/emulator was attached.
+
+| Performance evidence | Before | Candidate result |
+| --- | --- | --- |
+| Owner Pixel: NCN assessment | 68–141 s | Requires owner device timing |
+| Owner Pixel: initial Map | 37–55 s | Requires owner device timing; 10 s target unverified |
+| Synthetic 1,546-journey NCN source decodes | Every fallback scans 1,546 sources | Cold 1,546; unchanged 0; one addition 1 |
+| Existing data/coverage correctness | Baseline golden expectations | Full original suite and 12 new stabilisation tests passed |
+
+The synthetic test records `HISTORY_BENCHMARK` cold/warm Map preparation, NCN
+assessment and single-addition elapsed times in its XML `system-out` in the
+reports artifact. Those runner times are not Pixel startup measurements; they
+have not been independently transcribed in this handover. No claim of phone
+speed or ANR-free acceptance is made from these tests. Actual phone critical-path
+attribution, exact 192-count reconciliation and capture/restart acceptance remain
+outstanding. Keep #201/#194/PR #211 open; broader NCN work remains paused.
+
+- **NCN:** every JourneyStore save bumps the global archive revision (including
+  matching/status/dwell updates with unchanged journey count). That rejects the
+  aggregate checkpoint. The previous fallback streamed and hashed all 1,546
+  source files even on per-journey assessment-cache hits. Ledger construction
+  also queried/decompressed the same source way for each repeated activity span.
+  Assessment now validates per-file atomic-replacement tokens and checksummed
+  compact assessment/metadata rows; only missing/changed/rule-invalidated evidence
+  is decoded. Repeated source spans are unioned by way/mode before catalogue
+  lookup. New ledgers exclude deleted IDs; individual journey assessments remain
+  available for attribution. Catalogue/rule changes still force applicable
+  reassessment. Existing single-worker/running guard and queued change coalescing
+  remain. Atomic aggregate persistence completes on that worker before a newer
+  request can overtake it. Changed revisions/cancellation cannot publish stale
+  results; failed optional caches fall back to original evidence.
+- **Review:** the recap was gated on `mapReady || hasDisplayedMap` and queued on
+  the shared screen-data executor. New capture IDs are now persisted at their
+  first committed save, with a dedicated inbox reader/presenter independent of
+  Map and NCN. The existing Welcome back / VIEW NEW JOURNEYS flow, explicit
+  Dismiss/Back/navigation acknowledgement and saved-journey editor remain.
+  An acknowledgement set prevents a later historical discovery scan re-enqueuing
+  a journey already dismissed from the fast inbox. Presentation alone never
+  acknowledges. Imports/rematches are not new captures.
+- **Map:** whole-archive revision invalidation previously rebuilt every source
+  projection and all coverage. The shared disk cache rejected map payloads over
+  12 MiB; optional cache work also queues behind other screens. Per-source
+  checksummed map/summary projections now survive unrelated additions. Complete
+  Map snapshots use atomic compressed storage with a 48 MiB decoded bound;
+  original compatible small snapshots remain readable. Rendering, eligibility,
+  geometry budgets, filters, recovery/Retry/Reset and retained UI state remain.
+  Archive revision polling no longer acquires the archive-save monitor, avoiding
+  foreground waits behind serialization, venue checks and capture awards.
+  Exact Pixel bottleneck proportions still require the new stage diagnostics.
+
+Diagnostics: assessment trigger, coalesced requests, restored result, full versus
+incremental source reads, matches/reuse and aggregate miss reason; map reference
+initialisation/cache/evidence/filter/coverage/geometry/finalisation/render/total;
+review creation/presentation/acknowledgement. Existing foreground stall stacks
+remain. No coordinates or personal journey IDs are logged.
+
+Visibility rules are unchanged: only complete driving/bus/on-foot/cycling
+journeys with matched geometry are counted by the main map. Train/plane/ferry,
+unknown, unprocessed and empty-geometry journeys can explain the gap; **192
+cannot be reconciled exactly without the phone archive**. `map_filter` now
+reports disjoint aggregate exclusion counts. Do not force all history onto Map.
+
+Initial implementation checks passed in [run 39502451966](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39502451966):
+compile, lint, pinned reference verification and all 699 Android tests.
+Final packaging also validates bounded background projection/snapshot writers and
+cancellation-resume regressions added after final diff review. Optional cache
+creation cannot gate first-map publication; saturation skips only disposable
+projection warm-up, while snapshots retain the newest queued request. Added tests cover incremental
+addition/edit/delete, stale/corrupt/rule-invalid caches, restart checkpoint,
+durable pending review/interrupted presentation, blocked Map/shared queue,
+rapid same-size replacements, large compressed Map snapshots, revision monitor
+contention, and a 1,546-journey synthetic cold/warm/addition workload.
+Synthetic JVM measurements are not Pixel startup measurements.
+Required owner checks: install over 210 without clearing data; cold/warm/offline
+restart; repeated Map/Journeys/Progress/Achievements navigation; single/multiple
+captures foreground/background; interrupted review and restart; filters,
+Cancel/Reset/Retry; unchanged completion, attribution and celebrations.
+**Aim for a usable Pixel map within 10 s; this remains a measurement target.**
+
+Private artifact-only packaging completed after green checks. No Firebase upload,
+distribution, tester notification, Google Play release or catalogue publication.
+The session has no local execution host/device; GitHub Actions performs compile,
+lint, tests and signing. Do not close #201/#194 from CI alone.
+
+## Previous private development delivery — responsiveness and NCN achievements
 
 **Private development 0.25.210 (256)** is ready for owner testing, in
 [PR #210](https://github.com/adamdbird-gfc/uk-road-tracker/pull/210), stacked on
