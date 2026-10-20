@@ -4,21 +4,25 @@ Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for iss
 
 ## Current Android development entrypoint — 20 October 2026
 
-The latest owner-only APK is **0.25.210 (256)** from
-[PR #210](https://github.com/adamdbird-gfc/uk-road-tracker/pull/210), stacked on
-#209 and the national NCN #207 lineage. **Use
-[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-ncn-responsiveness/docs/development-handover.md)
-before Android work.** The application on main is not this unmerged development
-APK; do not resume from its older 206 instructions below.
+The latest owner-only APK is **0.25.211 (257)** in
+[PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), stacked on
+#210/#209 and national NCN #207. **Use
+[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-history-stabilisation/docs/development-handover.md)
+before Android work.** Main's older application is not this unmerged private APK.
 
-Exact signed source `c6f092d9800695bcca6e0839c54fe30f8603ab7c`;
-[successful private run 39396622144](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396622144).
-689 Android tests passed, no failures/errors/skips; lint and stable signing pass.
-NCN responsiveness/checkpoint fixes and core route/network achievements are
-included. **No Firebase upload, tester release or notification.** Owner device
-ANR/performance acceptance remains pending; Kent/Millennium disc/poem awards remain
-held for evidence. See #193/#194/#201 and the linked detailed handover for artifact,
-checksum, timings and acceptance. Do not build another APK just to resume.
+Exact signed source `290d29c1c506a7b7f2a821abd4452e0e5739dd74`;
+[successful private run 39503115073](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12302947068).
+701 Android tests passed, no failures/errors/skips; lint, reference verification
+and stable signing pass. NCN now reuses per-journey evidence and unions repeated
+source spans; capture review uses a durable map-independent inbox; map projections
+and compressed snapshots are cached off the initial presentation path.
+**No Firebase upload, tester release or notification.** Phone performance,
+automatic capture review lifecycle and exact 192-count reconciliation remain
+owner device acceptance, not proven by CI. The 10-second Pixel map target is
+unverified. Keep #201/#194 open and broader NCN features paused. See the linked
+handover for root causes, checksum, reports, synthetic source-read evidence and
+manual acceptance. Do not build another APK merely to resume.
 
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 
