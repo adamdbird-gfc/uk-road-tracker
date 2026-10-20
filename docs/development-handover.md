@@ -4,11 +4,44 @@ Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for iss
 
 ## P0 history and journey-review stabilisation — 20 October 2026
 
-Candidate **0.25.211 (257)** in `fix/android-history-stabilisation`,
+Private development **0.25.211 (257)** in `fix/android-history-stabilisation`,
 [PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), based on
 210's documented head `6c0deacedd0e560a73229ab6b289fdff2fccf441`.
 This supersedes 210's performance acceptance: the owner's real archive still
 reports 68–141 s assessment and 37–55 s initial Map. No device acceptance claimed.
+
+**Private APK delivered:** exact tested/signed source
+`290d29c1c506a7b7f2a821abd4452e0e5739dd74`.
+[Successful private run 39503115073](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12302947068);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503115073/artifacts/12303056971).
+**701 Android tests passed, zero failures/errors/skips**, lint and pinned national
+reference checks passed, stable APK v2 certificate verified
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+APK SHA-256:
+`7e6f035c0a3936237e08304af256594da47bfd3c893648c2db4afc69b0ca04e3`.
+Separate [exact-source Android checks 39503121191](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39503121191)
+also passed. The successful package has only `development / build`, no Firebase
+upload/distribution job. One coordinated signed APK was built.
+
+Download while signed in to GitHub, extract the artifact ZIP and install
+`app-debug.apk` over the existing app without clearing data. Artifact retention
+ends 27 October; reports expire 23 October. No device/emulator was attached.
+
+| Performance evidence | Before | Candidate result |
+| --- | --- | --- |
+| Owner Pixel: NCN assessment | 68–141 s | Requires owner device timing |
+| Owner Pixel: initial Map | 37–55 s | Requires owner device timing; 10 s target unverified |
+| Synthetic 1,546-journey NCN source decodes | Every fallback scans 1,546 sources | Cold 1,546; unchanged 0; one addition 1 |
+| Existing data/coverage correctness | Baseline golden expectations | Full original suite and 12 new stabilisation tests passed |
+
+The synthetic test records `HISTORY_BENCHMARK` cold/warm Map preparation, NCN
+assessment and single-addition elapsed times in its XML `system-out` in the
+reports artifact. Those runner times are not Pixel startup measurements; they
+have not been independently transcribed in this handover. No claim of phone
+speed or ANR-free acceptance is made from these tests. Actual phone critical-path
+attribution, exact 192-count reconciliation and capture/restart acceptance remain
+outstanding. Keep #201/#194/PR #211 open; broader NCN work remains paused.
 
 - **NCN:** every JourneyStore save bumps the global archive revision (including
   matching/status/dwell updates with unchanged journey count). That rejects the
@@ -72,7 +105,7 @@ captures foreground/background; interrupted review and restart; filters,
 Cancel/Reset/Retry; unchanged completion, attribution and celebrations.
 **Aim for a usable Pixel map within 10 s; this remains a measurement target.**
 
-Private artifact-only packaging after green checks. No Firebase upload,
+Private artifact-only packaging completed after green checks. No Firebase upload,
 distribution, tester notification, Google Play release or catalogue publication.
 The session has no local execution host/device; GitHub Actions performs compile,
 lint, tests and signing. Do not close #201/#194 from CI alone.
