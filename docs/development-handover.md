@@ -4,7 +4,7 @@ Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for iss
 
 ## Current P0 map performance candidate — 20 October 2026
 
-Private **0.25.212 (258)**, [PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212),
+Delivered private **0.25.212 (258)**, [PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212),
 `fix/android-map-contributions`, based on 211's documented head
 `692526f285c3495a578f0cb29e3239f929c920b2`.
 **Owner acceptance update:** 211's New Journeys flow is FIXED/device-verified;
@@ -20,6 +20,64 @@ snapshot headers reject stale revisions before inflation and avoid checksum
 re-serialisation. Main-map publication batches camera fitting. NCN evidence and
 metadata revision handling are separated; identical saves do not bump revisions.
 **New Journeys presentation/acknowledgement code is unchanged.**
+
+**Delivered private 0.25.212 (258).** Exact signed/tested source
+`5d5febdf35f8ac451565b110fbab1e7531fa8116`;
+[successful private packaging 39509571145](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305051296);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305161122).
+**711 Android tests passed; zero failures/errors/skips.** Lint, pinned national
+reference verification, distribution controls and stable v2 signing passed.
+[Independent exact-source checks 39509577110](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509577110)
+also passed. APK downloaded and independently SHA-256 verified:
+`b0b40ea84ba636406eab4a2903361aa64bc5a5b98de65667f96b7dadb386d39f`, **36,567,523 bytes**.
+Established signing certificate:
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+One signed APK, no Firebase upload/distribution/notification or Play publication.
+
+### Exact-source automated measurements
+
+Synthetic 1,547 driving journeys using real bundled M2/A2 geometry, **not the
+owner's Pixel archive**. These are preparation timings, not Android startup/frame
+measurements. Cold means the first compact-record materialisation on the runner;
+warm reopens the persisted store; addition reuses those records.
+
+| Runner stage | First materialisation | Warm reopen | One addition |
+| --- | --- | --- | --- |
+| Total preparation | 896.48 ms | 120.55 ms | 84.33 ms |
+| map_evidence | 781 ms | 95 ms | 58 ms |
+| map_coverage_add | 82 ms | 8 ms | 6 ms |
+| map_coverage_finish | 1 ms | 1 ms | 1 ms |
+| map_geometry | 7 ms | <1 ms | <1 ms |
+| Original source reads | 1,547 | 0 | 1 |
+| Records rebuilt | 1,547 | 0 | 1 |
+| Prior records reused | 0 | 1,547 | 1,547 |
+
+Completion percentages, covered canonical indices and displayed sections remain
+identical in these tests. New source/row/reference invalidation, deletion,
+corruption, interrupted preparation, forced Retry, oversized-row fallback,
+metadata-only NCN restoration, duplicate saves and transport defaults passed.
+
+Controlled whole-map snapshot comparison, identical **760,597-byte** payload:
+
+| Runner operation | Legacy gzip-wrapper algorithm | New header/payload algorithm |
+| --- | --- | --- |
+| Valid snapshot read | 33.46 ms | 22.49 ms |
+| Stale snapshot rejection | 12.76 ms | 0.114 ms |
+
+These single-run measurements demonstrate the mechanisms; do not extrapolate
+their ratios to a real phone. Full report XML and workflow logs retain raw values.
+
+**Outstanding device measurements:** 212 Pixel map_total/map_render/map_slow_frame,
+NCN assessment/metadata-refresh latency, first upgrade compaction, subsequent
+process-cold/warm/addition and memory/ANR behaviour. 211 owner baselines remain
+46–62 s total, 19–38 s evidence, 21–22 s coverage, 3,691 ms cache, 599 ms render and
+455 ms slow frame. The 10-second Pixel target is **unverified**.
+First-use or cache-evicted original evidence must still be read. Entries above
+1 MiB safely rebuild instead of overflowing CursorWindow; `oversized` diagnostics
+make that performance limit visible. No original Pixel dataset or emulator
+measurements are claimed. Keep #201/#194/PR #212 open for owner acceptance.
+
 
 See [root causes, cache/rule maintenance, measurements and acceptance](map-performance-stabilisation.md).
 Initial implementation: compile/lint passed; all eight new functional tests
@@ -41,7 +99,7 @@ Counts from 211 reconcile 1,547 = 1,355 shown + 192 unprocessed, without establi
 that every unprocessed journey is train/flight. New aggregate mode/status counts
 verify that classification without changing visibility.
 
-One private APK after green checks. No Firebase upload/tester distribution,
+One private APK delivered after green checks. No Firebase upload/tester distribution,
 notification, Play publication, catalogue change or unrelated NCN features.
 Keep #201/#194 and the PR open for owner performance acceptance.
 

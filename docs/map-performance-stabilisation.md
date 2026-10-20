@@ -85,9 +85,68 @@ through the actual-anchor fingerprints. The new whole-map binary envelope is
 separate from the row cache. All caches remain disposable; raw GPS and saved
 journeys are neither migrated nor deleted.
 
+**Delivered private 0.25.212 (258).** Exact signed/tested source
+`5d5febdf35f8ac451565b110fbab1e7531fa8116`;
+[successful private packaging 39509571145](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305051296);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305161122).
+**711 Android tests passed; zero failures/errors/skips.** Lint, pinned national
+reference verification, distribution controls and stable v2 signing passed.
+[Independent exact-source checks 39509577110](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509577110)
+also passed. APK downloaded and independently SHA-256 verified:
+`b0b40ea84ba636406eab4a2903361aa64bc5a5b98de65667f96b7dadb386d39f`, **36,567,523 bytes**.
+Established signing certificate:
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+One signed APK, no Firebase upload/distribution/notification or Play publication.
+
+### Exact-source automated measurements
+
+Synthetic 1,547 driving journeys using real bundled M2/A2 geometry, **not the
+owner's Pixel archive**. These are preparation timings, not Android startup/frame
+measurements. Cold means the first compact-record materialisation on the runner;
+warm reopens the persisted store; addition reuses those records.
+
+| Runner stage | First materialisation | Warm reopen | One addition |
+| --- | --- | --- | --- |
+| Total preparation | 896.48 ms | 120.55 ms | 84.33 ms |
+| map_evidence | 781 ms | 95 ms | 58 ms |
+| map_coverage_add | 82 ms | 8 ms | 6 ms |
+| map_coverage_finish | 1 ms | 1 ms | 1 ms |
+| map_geometry | 7 ms | <1 ms | <1 ms |
+| Original source reads | 1,547 | 0 | 1 |
+| Records rebuilt | 1,547 | 0 | 1 |
+| Prior records reused | 0 | 1,547 | 1,547 |
+
+Completion percentages, covered canonical indices and displayed sections remain
+identical in these tests. New source/row/reference invalidation, deletion,
+corruption, interrupted preparation, forced Retry, oversized-row fallback,
+metadata-only NCN restoration, duplicate saves and transport defaults passed.
+
+Controlled whole-map snapshot comparison, identical **760,597-byte** payload:
+
+| Runner operation | Legacy gzip-wrapper algorithm | New header/payload algorithm |
+| --- | --- | --- |
+| Valid snapshot read | 33.46 ms | 22.49 ms |
+| Stale snapshot rejection | 12.76 ms | 0.114 ms |
+
+These single-run measurements demonstrate the mechanisms; do not extrapolate
+their ratios to a real phone. Full report XML and workflow logs retain raw values.
+
+**Outstanding device measurements:** 212 Pixel map_total/map_render/map_slow_frame,
+NCN assessment/metadata-refresh latency, first upgrade compaction, subsequent
+process-cold/warm/addition and memory/ANR behaviour. 211 owner baselines remain
+46–62 s total, 19–38 s evidence, 21–22 s coverage, 3,691 ms cache, 599 ms render and
+455 ms slow frame. The 10-second Pixel target is **unverified**.
+First-use or cache-evicted original evidence must still be read. Entries above
+1 MiB safely rebuild instead of overflowing CursorWindow; `oversized` diagnostics
+make that performance limit visible. No original Pixel dataset or emulator
+measurements are claimed. Keep #201/#194/PR #212 open for owner acceptance.
+
+
 ## Verification and remaining device acceptance
 
-Candidate checks pending. New regressions use real bundled M2/A2 reference
+Final packaged-source checks passed: 711 tests, zero failures/errors/skips, lint,
+reference verification and stable signing. New regressions use real bundled M2/A2 reference
 geometry with a 1,547-driving-journey history, comparing cold/warm/addition
 preparation and unchanged coverage. They also cover cache reopen, edits/deletes,
 corruption, interrupted materialisation, changed-reference rejection, forced
