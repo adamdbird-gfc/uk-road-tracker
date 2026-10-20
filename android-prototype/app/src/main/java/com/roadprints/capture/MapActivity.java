@@ -97,6 +97,7 @@ public class MapActivity extends Activity {
             if (!replayPreparing && replayMessage == null && displayedMapRevision != mapDataRevision()) refreshMap();
             refreshRecap();
             if(CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(MapActivity.this))&&(ncnSnapshot!=NcnProgressStore.current()||!java.util.Objects.equals(ncnMode,NcnProgressStore.mode(MapActivity.this)))){ncnSnapshot=NcnProgressStore.current();ncnMode=NcnProgressStore.mode(MapActivity.this);NcnMapOverlay.apply(MapActivity.this,mapView);}
+            updateMapStatus();
             mainHandler.postDelayed(this, 3000);
         }
     };
@@ -363,9 +364,16 @@ public class MapActivity extends Activity {
 
     private void setMapReady(boolean ready) {
         mapReady=ready;
-        if(mapStatus!=null)mapStatus.setScreenStatus(ready?"Map ready":mapLoadFailed?"Map needs retry":"Loading map…");
+        updateMapStatus();
         updateMapControls();
         if(recapCard!=null)recapCard.setVisibility(ready||hasDisplayedMap?View.VISIBLE:View.GONE);
+    }
+    private void updateMapStatus(){
+        if(mapStatus==null)return;
+        String state=mapReady?"Map ready":mapLoadFailed?"Map needs retry":"Loading map…";
+        if(mapReady&&mapView!=null&&CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(this))&&mapView.ncnLoadingStatus!=null)
+            state="assessment".equals(mapView.ncnLoadingStatus)?NcnProgressStore.status():mapView.ncnLoadingStatus;
+        mapStatus.setScreenStatus(state);
     }
     private void updateMapControls() {
         boolean interactive=mapReady&&!recapVisible;
@@ -510,7 +518,8 @@ public class MapActivity extends Activity {
             completeMapWork();
             setMapReady(true);
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
-            android.util.Log.i("RoadprintsTiming", "map_render_ms="+(android.os.SystemClock.elapsedRealtime()-renderStarted));
+            PerformanceDiagnostics.timing("map_render",android.os.SystemClock.elapsedRealtime()-renderStarted,"");
+            PerformanceDiagnostics.timing("map_total",android.os.SystemClock.elapsedRealtime()-mapStartedAt,"");
             renderRecap();
             String replay = getIntent().getStringExtra("replay_journey_id");
             if (replay != null) {

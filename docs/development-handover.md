@@ -2,6 +2,77 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Latest private development delivery — responsiveness and NCN achievements
+
+**Private development 0.25.210 (256)** is ready for owner testing, in
+[PR #210](https://github.com/adamdbird-gfc/uk-road-tracker/pull/210), stacked on
+209's `fix/ncn-ui-private-development` lineage. No Firebase upload, tester
+distribution or notifications. No approval for wider promotion.
+
+Exact signed APK source: **`c6f092d9800695bcca6e0839c54fe30f8603ab7c`**;
+application implementation `64582b750803c465ec33487f68bf971cdba00f62`.
+[Successful private packaging 39396622144](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396622144),
+[APK artifact 12252785264](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396622144/artifacts/12252785264),
+[reports 12251754332](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396622144/artifacts/12251754332).
+One signed APK: **36,550,759 bytes**, SHA-256
+`9dbe9dd6ac72d57510bbe62e0bb9b67d3261cb0704c17518052f42652b0e7bfb`.
+Downloaded bytes independently match; binary manifest confirms
+`com.roadprints.capture / 0.25.210`. The established v2 signing certificate
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`
+passed the workflow's fail-closed verification. Install over the existing app
+without clearing data.
+
+**Responsiveness:** separate NCN installation and UI scheduling monitors;
+background-priority assessment/overlay workers; cached route/network totals;
+superseded overlay cancellation and activation-epoch cancellation; validated
+derived checkpoint restoration on unchanged process restart. Selected NCN map
+preparation/failure has an explicit footer status. Core map, archive, matching,
+catalogue and established 209 Progress design remain. Bounded local timings,
+heap/slow-frame samples and foreground main-thread stall stacks are included in
+Debug; routine timings do not trigger debug notifications.
+
+**Achievements:** first eligible discovery; combined 25/50/75/100 families for
+each measurable route and the unique physical network. Full-route completion is
+the 100% family level. Walking/running and cycling only, including history;
+driving/unknown excluded. No additional archive scan or database query for
+awards. Persisted recognition dates, current-level correction/deletion and the
+existing celebration carousel/seen-level acknowledgement are reused. NCN228 and
+source holds remain excluded. Kent/Millennium discoveries and poem/disc/theme
+unlocks remain explicitly held for independent location/disc evidence; no
+coordinates, artwork or verse associations are fabricated.
+
+**Verification:** full packaging repeated **689 Android tests, zero failures,
+errors or skips**, lint zero errors, national reference verification and stable
+signing. Downloaded XML independently confirms totals. All **322 Python NCN
+tests**, five reference-control tests and four distribution-control tests pass.
+Separate final source checks
+[39396145306](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396145306)
+and exact request checks
+[39396628007](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39396628007)
+also pass. Initial new-test failures identified the compressed fixture and a real
+floating-point threshold-boundary defect; both were corrected, no tests excluded.
+A dependency-resolution failure was retried as a failed check job only.
+
+| Automated runner workload | Before | After |
+| --- | --- | --- |
+| Eight-route ledger, three modes, 1,000 repeats (24,000 total reads) | Full scans: 15.160 ms | Cached totals: 6.193 ms |
+| Refresh scheduling while the installer monitor is deliberately held | Old implementation waits for the long installation's class monitor | 0.363 ms; simulated installer still blocked |
+
+These are synthetic/JVM timings, **not phone cold-load or frame-rate results**.
+The monitor dependency is verified from released code and contention tests;
+the original device ANR stack and full archive are unavailable. No actual
+Pixel/Samsung ANR-free acceptance or before/after phone timings are claimed.
+The owner must test cold/warm/offline restart, Map and retained tab returns,
+filters/Reset/Retry, continuous routes, road/NCN details, search/activity controls,
+historical unlocks and celebration acknowledgement. Capture Debug after any
+stall. Keep #201/#194 and this draft open for device acceptance. Changed archives
+still stream for fingerprint validation; optional derived checkpoints above
+32 MB fall back to resumable assessment without discarding evidence.
+
+See [implementation, migration and acceptance detail](ncn-performance-and-achievements.md).
+Later documentation-only commits do not alter the signed APK. Do not rebuild
+merely to resume this handover; next step is owner device acceptance.
+
 ## Latest private development delivery — NCN badge and collection-control consistency
 
 **Private development 0.25.209 (255)**, based on installed 0.25.208 (254).

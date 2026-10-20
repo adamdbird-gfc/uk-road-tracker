@@ -8,6 +8,7 @@ public class RoadprintsApplication extends Application {
         super.onCreate();
         BetaMeasurement.install(this);
         CrashReporter.install(this);
+        PerformanceDiagnostics.install(this);
     }
 
     @Override public void onTrimMemory(int level) {

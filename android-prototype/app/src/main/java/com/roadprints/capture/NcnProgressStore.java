@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 final class NcnProgressStore {
     private static final int ASSESSMENT_VERSION=2;
     private static final String PREFS="roadprints_ncn_national_v2";
-    private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
+    private static final ExecutorService WORKER=Executors.newSingleThreadExecutor(task->{Thread t=new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);task.run();},"roadprints-ncn-assessment");return t;});
     private static boolean running;
     private static long failedRevision=Long.MIN_VALUE;
     private static final java.util.concurrent.atomic.AtomicBoolean changeQueued=new java.util.concurrent.atomic.AtomicBoolean();
@@ -44,11 +44,22 @@ final class NcnProgressStore {
         WORKER.execute(()->{
             boolean retry=false;
             try {
-                Snapshot result=assess(app);
+                long started=android.os.SystemClock.elapsedRealtime();
+                java.util.function.BooleanSupplier cancelled=()->!enabled(app)||app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch;
+                Snapshot result=restore(app);
+                boolean restored=result!=null;
+                if(result==null)result=assess(app,cancelled);
+                final Snapshot completed=result;
+                PerformanceDiagnostics.timing("ncn_assessment",android.os.SystemClock.elapsedRealtime()-started,"journeys="+result.metadata.size()+" restored="+restored);
+                long awardStarted=android.os.SystemClock.elapsedRealtime();
+                org.json.JSONObject awards=NcnAchievements.prepare(result,NcnAchievements.state(app));
+                PerformanceDiagnostics.timing("ncn_achievements",android.os.SystemClock.elapsedRealtime()-awardStarted,"");
                 synchronized(NcnProgressStore.class) {
                 if(enabled(app)&&app.getSharedPreferences(PREFS,0).getLong("epoch",0)==epoch&&result.archiveRevision==JourneyStore.dataRevision(app)) {
+                    boolean awardsChanged=NcnAchievements.publish(app,awards);
                     snapshot=result;status="Ready · verified-open NCN sections";
-                    app.getSharedPreferences(PREFS,0).edit().putLong("revision",revision(app)+1).commit();
+                    if(!restored)WORKER.execute(()->{if(snapshot==completed)try{checkpoint(app,completed);}catch(Exception cacheFailure){android.util.Log.w("RoadprintsTiming","ncn_snapshot_write=skipped");}});
+                    if(!restored||awardsChanged)app.getSharedPreferences(PREFS,0).edit().putLong("revision",revision(app)+1).apply();
                 }else retry=enabled(app);
                 }
             }catch(Exception failure){synchronized(NcnProgressStore.class){if(app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch)retry=enabled(app);else{failedRevision=JourneyStore.dataRevision(app);android.util.Log.w("RoadprintsTiming","NCN assessment failed: "+failure.getClass().getSimpleName());status="NCN catalogue or assessment could not finish. Tap Retry to resume.";}}}
@@ -65,14 +76,36 @@ final class NcnProgressStore {
         if(!enabled(context)||!changeQueued.compareAndSet(false,true))return;
         Context app=context.getApplicationContext();WORKER.execute(()->{changeQueued.set(false);ensure(app);});
     }
-    private static Snapshot assess(Context app) throws Exception {
+    static Snapshot restore(Context app) {
+        try {
+            NcnCatalogue catalogue=NcnCatalogue.load(app);
+            JSONObject root=new JSONObject(new String(NcnCatalogue.read(new AtomicFile(new File(app.getFilesDir(),"ncn-derived-snapshot.json")).openRead()),StandardCharsets.UTF_8));
+            long revision=JourneyStore.dataRevision(app);
+            if(root.getInt("assessment_version")!=ASSESSMENT_VERSION||!root.getString("catalogue").equals(catalogue.version)||root.getLong("revision")!=revision)return null;
+            JSONObject payload=root.getJSONObject("payload");
+            if(!NcnJson.hash(payload.toString().getBytes(StandardCharsets.UTF_8)).equals(root.getString("sha256")))return null;
+            NcnLedger ledger=new NcnLedger(catalogue);java.util.Map<String,JSONObject> metadata=new java.util.LinkedHashMap<>();
+            JSONArray rows=payload.getJSONArray("rows");
+            for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);String id=row.getString("id");ledger.put(id,row.getJSONObject("assessment"));metadata.put(id,row.getJSONObject("metadata"));}
+            ledger.networkMetres("combined");
+            return new Snapshot(catalogue,ledger,revision,metadata);
+        }catch(Exception unavailable){return null;}
+    }
+    static void checkpoint(Context app,Snapshot value)throws Exception{
+        JSONArray rows=new JSONArray();for(String id:value.ledger.activities.keySet())rows.put(new JSONObject().put("id",id).put("assessment",value.ledger.activities.get(id)).put("metadata",value.metadata.get(id)));
+        JSONObject payload=new JSONObject().put("rows",rows);byte[] bytes=payload.toString().getBytes(StandardCharsets.UTF_8);
+        if(bytes.length>32_000_000)return; // Optional acceleration only; retain the complete in-memory ledger.
+        write(new AtomicFile(new File(app.getFilesDir(),"ncn-derived-snapshot.json")),new JSONObject().put("assessment_version",ASSESSMENT_VERSION).put("catalogue",value.catalogue.version).put("revision",value.archiveRevision).put("payload",payload).put("sha256",NcnJson.hash(bytes)));
+    }
+    private static Snapshot assess(Context app) throws Exception {return assess(app,()->!enabled(app));}
+    private static Snapshot assess(Context app,java.util.function.BooleanSupplier cancelled) throws Exception {
         NcnCatalogue catalogue=NcnCatalogue.load(app);long revision=JourneyStore.dataRevision(app);
         NcnMatcher matcher=new NcnMatcher(catalogue);NcnLedger ledger=new NcnLedger(catalogue);
         java.util.Map<String,JSONObject> metadata=new java.util.LinkedHashMap<>();
         File directory=new File(app.getFilesDir(),"ncn-national-assessments/"+catalogue.version);if(!directory.isDirectory()&&!directory.mkdirs())throw new java.io.IOException("Cannot create assessment cache");
         Set<String> live=new HashSet<>();int[] checked={0};Exception[] failed={null};
-        JourneyStore.forEachNcnEvidence(app,()->!enabled(app)||Thread.currentThread().isInterrupted(),journey->{
-            if(failed[0]!=null||!enabled(app)||Thread.currentThread().isInterrupted())return;
+        JourneyStore.forEachNcnEvidence(app,()->cancelled.getAsBoolean()||Thread.currentThread().isInterrupted(),journey->{
+            if(failed[0]!=null||cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())return;
             try {
                 String id=journey.optString("journey_id");if(id.isEmpty())return;
                 String fingerprint=NcnJson.hash(journey.toString().getBytes(StandardCharsets.UTF_8));
@@ -84,10 +117,11 @@ final class NcnProgressStore {
             }catch(Exception error){failed[0]=error;}
         });
         if(failed[0]!=null)throw failed[0];
+        if(cancelled.getAsBoolean())throw new java.util.concurrent.CancellationException();
         // Deleted journeys are absent from the newly assembled ledger; stale cache rows cannot contribute.
         if(revision==JourneyStore.dataRevision(app)) {File[] files=directory.listFiles();if(files!=null)for(File file:files)if(file.getName().endsWith(".json")&&!live.contains(file.getName()))new AtomicFile(file).delete();}
         // Build interval unions on this worker before a UI ever receives the snapshot.
-        for(String route:catalogue.routes.keySet())ledger.metres(route,"combined");
+        for(String route:catalogue.routes.keySet()){if(cancelled.getAsBoolean())throw new java.util.concurrent.CancellationException();ledger.metres(route,"combined");}
         return new Snapshot(catalogue,ledger,revision,metadata);
     }
     private static void write(AtomicFile file,JSONObject value) throws Exception {

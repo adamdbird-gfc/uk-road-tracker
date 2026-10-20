@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.209",
-  "version_code": 255,
-  "reason": "Compact route badges and shared NCN collection search/filter controls; private artifact only",
-  "revision": 4
+  "version_name": "0.25.210",
+  "version_code": 256,
+  "reason": "NCN responsiveness, validated restart checkpoints and eligible route/network achievements; private owner artifact only, no Firebase upload or tester notification",
+  "revision": 5
 }

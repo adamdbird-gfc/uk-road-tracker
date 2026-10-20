@@ -14,6 +14,7 @@ final class NcnLedger {
     NcnLedger(NcnCatalogue catalogue){this.catalogue=catalogue;}
     void remove(String id){activities.remove(id);index=null;}
     private Map<String,Map<String,List<double[]>>> index;
+    private final Map<String,Double> totals=new HashMap<>();
     private final Map<String,List<double[]>> sourceIndex=new HashMap<>();
     void put(String id,JSONObject assessment){activities.put(id,assessment);index=null;}
     private void prepare() throws Exception {
@@ -52,15 +53,21 @@ final class NcnLedger {
         }
         for(Map<String,List<double[]>> values:built.values())for(String key:new ArrayList<>(values.keySet()))values.put(key,merge(values.get(key)));
         for(String key:sourceIndex.keySet())sourceIndex.put(key,merge(sourceIndex.get(key)));
+        totals.clear();
+        for(Map.Entry<String,Map<String,List<double[]>>> mode:built.entrySet())for(Map.Entry<String,List<double[]>> entry:mode.getValue().entrySet()){
+            String key=entry.getKey();String owner=key.startsWith("network/")?"network":key.substring(0,key.indexOf('/'));
+            double length=0;for(double[] span:entry.getValue())length+=span[1]-span[0];
+            String id=mode.getKey()+"/"+owner;totals.put(id,totals.getOrDefault(id,0.0)+length);
+        }
         index=built;
     }
     private static void add(Map<String,Map<String,List<double[]>>> index,String mode,String key,double[] span){index.computeIfAbsent(mode,k->new HashMap<>()).computeIfAbsent(key,k->new ArrayList<>()).add(span);}
-    double networkMetres(String mode)throws Exception{prepare();double total=0;for(Map.Entry<String,List<double[]>> e:index.getOrDefault(mode,java.util.Collections.emptyMap()).entrySet())if(e.getKey().startsWith("network/"))for(double[] span:e.getValue())total+=span[1]-span[0];return total;}
+    double networkMetres(String mode)throws Exception{prepare();return totals.getOrDefault(mode+"/network",0.0);}
     List<double[]> covered(String route,String target,String mode) throws Exception {
         prepare();return index.getOrDefault(mode,java.util.Collections.emptyMap()).getOrDefault(route+"/"+target,java.util.Collections.emptyList());
     }
     double metres(String route,String mode) throws Exception {
-        prepare();double total=0;for(Map.Entry<String,List<double[]>> e:index.getOrDefault(mode,java.util.Collections.emptyMap()).entrySet())if(e.getKey().startsWith(route+"/"))for(double[] span:e.getValue())total+=span[1]-span[0];return total;
+        prepare();return totals.getOrDefault(mode+"/"+route,0.0);
     }
     List<double[]> source(NcnCatalogue.Path path,String mode,JSONObject onlyActivity) throws Exception {
         if(onlyActivity==null){prepare();return sourceIndex.getOrDefault(mode+"/"+path.route+"/"+path.way,java.util.Collections.emptyList());}
