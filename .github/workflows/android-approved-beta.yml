@@ -47,11 +47,13 @@ jobs:
           path: approved-source
       - name: Verify established APK signature and application identity
         run: |
+          set -euo pipefail
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
           "$signer" verify --print-certs approved-apk/app-debug.apk | tee certificate.txt
           grep -Fq '5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031' certificate.txt
           aapt=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)
-          "$aapt" dump badging approved-apk/app-debug.apk | head -n 1 | grep -F "name='com.roadprints.capture'"
+          "$aapt" dump badging approved-apk/app-debug.apk > badging.txt
+          head -n 1 badging.txt | grep -F "name='com.roadprints.capture'"
       - uses: actions/setup-node@v4
         with: {node-version: '24'}
       - run: npm install --global firebase-tools@15.33.0
