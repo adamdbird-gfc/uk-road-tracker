@@ -2,24 +2,66 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## In progress — NCN row, badge and collection-control consistency
+## Latest private development delivery — NCN badge and collection-control consistency
 
-Private corrective 0.25.209 (255), based on 0.25.208 (254) / PR #209. Reuses the
-78 × 32 dp road identifier badge in compact NCN rows and focused M/A/NCN summaries
-(blue/green/purple with white text). Main focused-map headings remain unchanged.
-NCN reuses the venue collection white/jade search field and selected/unselected
-48dp buttons. Search covers all groups, gives explicit empty results, restores
-browsing expansion on Clear and preserves query/mode on return. Activity changes
-update existing values/controls without rebuilding the search input. Remaining
-orange geometry, catalogue bytes, matching and coverage algorithms are untouched.
+**Private development 0.25.209 (255)**, based on installed 0.25.208 (254).
+Exact tested/signed APK source `a6335f7e1cf9e3ab481f10abf797bb4b0bf60d3a`;
+[successful private build 39387092291](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39387092291).
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39387092291/artifacts/12247688870);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39387092291/artifacts/12247484583).
+APK: **36,534,079 bytes**, SHA-256
+`88fc05feb9d50b00b7acfaeb31c94d64bcdac6209014c70eb0a13ddf2e5cb2f0`.
+Downloaded bytes independently match that checksum. Binary manifest independently
+confirms `com.roadprints.capture`, version 0.25.209, code 255. Established v2
+signing certificate verifies unchanged:
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+Install over the existing app without clearing data.
 
-Full national-data tests/lint/signed private packaging requested; no ready APK
-claimed until success. Existing approval-only beta distribution safeguards remain.
-No Firebase tester upload or notification is authorised for this correction.
-New regression checks cover compact badges, focused colours, combined search and
-all activity modes, group restoration, empty results, keyboard dismissal and
-return-state persistence. Real-device visual/keyboard/list performance review is
-still required; automated tests alone do not establish device acceptance.
+Changes in [PR #209](https://github.com/adamdbird-gfc/uk-road-tracker/pull/209):
+
+- Reuses a 78 × 32 dp rounded road identifier in compact NCN Progress rows:
+  purple/white badge, adjacent 12dp white-track bar and percentage, reference
+  distances and visible VIEW MAP affordance on a minimum 64dp row touch target.
+  Focused summaries use the same badge in motorway blue, A-road green or NCN
+  purple; their main screen heading remains unchanged.
+- Reuses the venue collection white/jade search field and 48dp selected/unselected
+  activity buttons. Search spans groups and names/number identities, including
+  colon/space variants; empty results are explicit. Clear restores browsing group
+  expansion. Activity changes preserve the input and update existing summary/rows
+  without rebuilding controls. Search/group/mode state survives route navigation.
+  Search/Done, Clear, activity selection and onward navigation dismiss input.
+- No matching, eligibility, catalogue, accounting, cache, map geometry or existing
+  blue/green/purple/orange rendering algorithms changed. B/local recorded-only
+  presentation, journey counts and map controls are preserved.
+
+**Validation:** 684 Android tests passed, zero failures/errors/skips; lint zero
+errors, stable signature verification, four distribution-control Python tests
+passed. Downloaded reports XML independently confirms totals. NcnNationalTest
+(two), NcnUiTest (two), NcnPresentationTest (five), existing venue framework (11)
+and Progress availability (six) checks passed. New tests cover compact dimensions,
+white badge text/colours, mode-specific/physical network values with a retained
+query, cross-group search, empty/clear behaviour, expansion restoration, keyboard
+dismissal, return state and unchanged catalogue keys/denominator. The initial
+compile attempt identified missing callback exception handling and produced no
+APK artifact; it was corrected before the successful full gate, without exclusions.
+
+Separate Android checks run 39387101041 initially hit Maven Central HTTP 429 while
+resolving dependencies. Only that failed check job was retried; no APK rebuild.
+Its merge tree is identical to the successfully packaged source. The single retry passed compilation, lint, verified reference preparation and the
+full integrated unit suite. No additional APK was built or distributed.
+
+**Private only:** successful packaging contains only `development / build` and
+no Firebase upload/distribution job. Existing testers were not targeted/notified.
+Approval-only artifact promotion safeguards remain; no approval to promote 209
+has been given. Catalogue serving was reused and checksum-verified, not regenerated
+or republished. The original catalogue objects and all user history are preserved.
+
+**Device acceptance pending:** compare M20/A12/NCN/RCN compact rows and focused
+M/A/NCN badges; test A627(M)/A1(M), narrow/large-font layout, combined search/mode
+changes, clear/empty/group restoration, keyboard dismissal, return position and
+long-list scrolling. See [review checklist](ncn-ui-private-acceptance.md). Source/JVM
+checks do not establish real-device visual, keyboard or performance acceptance.
+Later documentation-only commits do not change the tested APK.
 
 ## Previous private development delivery — NCN UI corrective APK
 

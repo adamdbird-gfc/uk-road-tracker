@@ -39,8 +39,8 @@ select historical definitions to distribute. Anyone with authority to change
 workflows/secrets remains able to change policy; this is not a substitute for
 GitHub repository access controls. No new Firebase credentials are introduced.
 
-This corrective 0.25.208 (254) is **development only**; no approval to promote it
-has been given. Existing testers must receive neither a release nor notifications.
+Corrective 0.25.208 (254) and 0.25.209 (255) are **development only**; no approval
+to promote either artifact has been given. Existing testers must receive neither a release nor notifications.
 
 ## Safeguard verification — 20 October
 

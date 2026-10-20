@@ -1,9 +1,42 @@
-# NCN corrective development acceptance — 0.25.208 (254)
+# NCN corrective development acceptance — 0.25.209 (255)
 
 Baseline: installed 0.25.207 (253), exact source
 `02ddf96aba6c403e2e88eab0d764feb61ef27ec4`.
 The national reference manifest/data, route evidence rules, assessment ledger and
 journey/matching calculations are unchanged. This build is private review only.
+
+## Follow-up consistency review — 0.25.209 (255)
+
+Based on the installed private 0.25.208 (254), not a new catalogue. Verify:
+
+- Compare M20/A12 Progress rows with NCN and RCN rows: identical 78 × 32 dp rounded
+  identifier box footprint, white text, bar/percentage alignment and compact spacing.
+  NCN is purple, motorway blue, A-road green. VIEW MAP remains visible and the
+  entire NCN row is a touch target of at least 64dp.
+- Open representative motorway, A-road and NCN maps: the summary identifier uses
+  the same badge; the main heading, percentage, distances, map fit/zoom and journey
+  actions remain. Check A627(M), A12, A1(M), M20 and NCN344 where available.
+- Compare NCN search and filter controls to Services/Spoons: white search field,
+  jade outline/label, gold selected activity and navy outlined unselected buttons.
+- Search route number, NCN/RCN identity with/without colon or spaces, and displayed
+  name. Matching routes should appear across collapsed groups; a query with no
+  matches must show the empty state without stale visible groups.
+- Keep a query while switching Combined/Cycling/Walking & running. Check the
+  selected state and values; the text field must remain stable. The eligible
+  reference catalogue/denominator does not change with activity.
+- Expand/collapse groups while browsing, then search and Clear. Clear restores
+  browsing expansion preferences and all routes. Search-time expansion must not
+  silently overwrite the saved browsing preference.
+- Dismiss the keyboard with Search/Done, Clear, activity selection and route-map
+  navigation; return from a route map should preserve query/activity/group state.
+- Scroll the full list on device, including a narrow display and larger text.
+  Automated compact-height checks are at standard text scale, not device proof.
+
+The full Android suite includes combined national-data search/mode/clear/empty/
+return-state checks, shared badge colour/dimension checks and existing collection
+regressions. Real-device keyboard behaviour, pixel alignment, large-font layout
+and scrolling performance remain owner acceptance work. No Firebase tester release
+is authorised by this checklist.
 
 ## Changes and automated coverage
 
