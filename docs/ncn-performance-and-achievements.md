@@ -115,3 +115,9 @@ and NCN focused maps, search/mode/group state, offline catalogue/restart, first 
 historical milestones, duplicate-safe celebrations and corrected/deleted journeys.
 Capture Debug diagnostics after any stall. Wider Firebase promotion is unapproved;
 packaging must remain signed-artifact-only with the established application key.
+
+## Final delivery evidence
+
+Private packaging run 39396622144 passed 689 Android tests with zero failures, errors or skips, lint and established signing. Exact source c6f092d9800695bcca6e0839c54fe30f8603ab7c. Downloaded APK SHA-256: 9dbe9dd6ac72d57510bbe62e0bb9b67d3261cb0704c17518052f42652b0e7bfb; 36,550,759 bytes. No Firebase job.
+
+Final runner benchmark: former full scans 15.159680 ms; cached totals 6.192671 ms (8 routes, 3 modes, 1,000 repeats). UI refresh scheduling completed in 0.362613 ms while the separate installer monitor remained blocked. These are JVM measurements only; real-device loading, memory/GC and ANR acceptance remain outstanding.
