@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.212",
+      "version_code": 258,
+      "release_date": "2026-10-20",
+      "since": "0.25.211",
+      "changes": [
+        {
+          "title": "Faster map preparation",
+          "description": "Unchanged journeys reuse compact map geometry and road coverage contributions. Newly changed journeys rebuild only their own records."
+        },
+        {
+          "title": "Retained NCN assessment",
+          "description": "Duplicate saves and metadata-only updates no longer require NCN evidence reassessment. Existing New Journeys review is preserved."
+        },
+        {
+          "title": "Responsive map loading",
+          "description": "Stale map snapshots are rejected before decoding, and map publication avoids repeated camera fitting. Private owner testing only."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.211",
       "version_code": 257,
       "release_date": "2026-10-20",
@@ -209,7 +229,7 @@
         },
         {
           "title": "Beta testing requirements",
-          "description": "Please test overnight home/school stays, venue running laps, walk–drive–walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
         }
       ]
     },

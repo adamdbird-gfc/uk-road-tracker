@@ -16,8 +16,11 @@ final class MapJourneyStore implements AutoCloseable {
     interface Visitor { void visit(Record record) throws Exception; }
     final Context context;
     private SQLiteDatabase db;
+    private final boolean bypass;
     int reused,rebuilt,sourceReads,legacyReads,writes;
-    MapJourneyStore(Context context) {
+    MapJourneyStore(Context context) {this(context,false);}
+    MapJourneyStore(Context context,boolean bypass) {
+        this.bypass=bypass;
         this.context=context.getApplicationContext();
         File file=new File(context.getCacheDir(),"map-journeys-v1.db");
         try {open(file);}
@@ -40,7 +43,7 @@ final class MapJourneyStore implements AutoCloseable {
         }
         JSONObject raw() throws Exception {
             if(original==null) {
-                original=JourneyProjectionCache.read(context,source,"map-v1");
+                original=bypass?null:JourneyProjectionCache.read(context,source,"map-v1");
                 if(original!=null)legacyReads++;
                 else {original=JourneyStore.mapEvidence(context,source,true);sourceReads++;}
             }
@@ -93,7 +96,7 @@ final class MapJourneyStore implements AutoCloseable {
         for(File source:JourneyStore.archiveFiles(context)) {
             if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
             String token=JourneyStore.fileToken(source);JSONObject head=null;
-            try(Cursor cursor=db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
+            if(!bypass)try(Cursor cursor=db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
                     new String[]{source.getName(),token,Integer.toString(FORMAT)})) {
                 if(cursor.moveToFirst()) {
                     byte[] bytes=cursor.getBlob(0);
@@ -102,7 +105,7 @@ final class MapJourneyStore implements AutoCloseable {
             } catch(org.json.JSONException corrupt) {head=null;}
             JSONObject raw=null;
             if(head==null) {
-                raw=JourneyProjectionCache.read(context,source,"map-v1");
+                raw=bypass?null:JourneyProjectionCache.read(context,source,"map-v1");
                 if(raw!=null)legacyReads++;
                 else {raw=JourneyStore.mapEvidence(context,source,true);sourceReads++;}
                 if(raw==null)continue;

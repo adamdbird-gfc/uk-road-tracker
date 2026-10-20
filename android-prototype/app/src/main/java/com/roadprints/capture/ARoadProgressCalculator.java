@@ -262,8 +262,8 @@ final class ARoadProgressCalculator {
             for(int j=0;j<=n;j++){double f=j/(double)n;Anchor near=nearest(road,lng1+(lng2-lng1)*f,lat1+(lat2-lat1)*f);if(near!=null)road.covered.add(near.id);}
         }
     }
-    private Anchor nearest(Road road,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M*MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
-        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++){List<Anchor> bucket=road.grid.get(spatialKey(x,y));if(bucket==null)continue;for(Anchor a:bucket){double dx=xy[0]-a.x,dy=xy[1]-a.y,d=dx*dx+dy*dy;if(d<bd){best=a;bd=d;}}}return best;}
+    private Anchor nearest(Road road,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
+        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++){List<Anchor> bucket=road.grid.get(spatialKey(x,y));if(bucket==null)continue;for(Anchor a:bucket){double d=Math.hypot(xy[0]-a.x,xy[1]-a.y);if(d<bd){best=a;bd=d;}}}return best;}
     private void buildMapSections(Road road){JSONArray current=null;Boolean covered=null;Anchor prev=null;
         for(Anchor a:road.anchors){if(prev==null){prev=a;continue;}if(a.component!=prev.component||distance(prev.lng,prev.lat,a.lng,a.lat)>250){addSection(road,current,covered);current=null;covered=null;prev=a;continue;}
             boolean next=road.covered.contains(prev.id)||road.covered.contains(a.id);

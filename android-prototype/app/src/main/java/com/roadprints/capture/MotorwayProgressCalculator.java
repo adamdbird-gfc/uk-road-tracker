@@ -169,13 +169,12 @@ final class MotorwayProgressCalculator {
         Integer nearest(double lng, double lat) {
             double[] projected = mercator(lng, lat);
             Anchor best = null;
-            double bestDistance = MATCH_RADIUS_M*MATCH_RADIUS_M;
+            double bestDistance = MATCH_RADIUS_M;
             long gx=(long)Math.floor(projected[0]/GRID_CELL_M),gy=(long)Math.floor(projected[1]/GRID_CELL_M);
             for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++) {
                 List<Anchor> bucket=grid.get(spatialKey(x,y));if(bucket==null)continue;
                 for (Anchor anchor : bucket) {
-                    double dx=projected[0]-anchor.x,dy=projected[1]-anchor.y;
-                    double distance=dx*dx+dy*dy;
+                    double distance=Math.hypot(projected[0]-anchor.x,projected[1]-anchor.y);
                     if (distance < bestDistance) {
                         best = anchor;
                         bestDistance = distance;

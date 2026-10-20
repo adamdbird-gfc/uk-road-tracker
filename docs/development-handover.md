@@ -2,7 +2,48 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## P0 history and journey-review stabilisation — 20 October 2026
+## Current P0 map performance candidate — 20 October 2026
+
+Private **0.25.212 (258)**, [PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212),
+`fix/android-map-contributions`, based on 211's documented head
+`692526f285c3495a578f0cb29e3239f929c920b2`.
+**Owner acceptance update:** 211's New Journeys flow is FIXED/device-verified;
+incremental NCN assessment is typically 1.5–2 s. Main Map still takes 46–62 s,
+including 19–38 s evidence and 21–22 s coverage addition.
+
+212 caches compact per-source filter headers, prepared display geometry and exact
+motorway/A-road covered-index contributions. Reuse validates actual reference
+anchor fingerprints. Source changes, deletion, corruption and explicit Retry
+remain correct. Cold spatial matching avoids neighbour-string allocations while
+preserving the original sampling, radius and nearest/tie calculations. New binary
+snapshot headers reject stale revisions before inflation and avoid checksum
+re-serialisation. Main-map publication batches camera fitting. NCN evidence and
+metadata revision handling are separated; identical saves do not bump revisions.
+**New Journeys presentation/acknowledgement code is unchanged.**
+
+See [root causes, cache/rule maintenance, measurements and acceptance](map-performance-stabilisation.md).
+Initial implementation: compile/lint passed; all eight new functional tests
+passed in [run 39508236450](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39508236450).
+Its only failure was missing 212 release notes, now corrected. Latest integrated
+checks remain pending after recovery/benchmark refinements.
+Initial runner benchmark (synthetic 1,547 driving journeys, real M2/A2 geometry):
+first preparation 1,483.73 ms; warm 418.03 ms; one addition 268.47 ms; completion
+unchanged. These are **JVM preparation, not Pixel app startup**, and will be
+superseded by exact packaged-source results.
+
+First-use compaction still requires old source evidence and matching; normal
+subsequent restarts/changes reuse records. Cache eviction can require rebuilding.
+Actual Pixel cold/warm/addition and frame/ANR acceptance remains outstanding;
+the 10-second target is unverified. Do not hide incomplete layers to claim it.
+Counts from 211 reconcile 1,547 = 1,355 shown + 192 unprocessed, without establishing
+that every unprocessed journey is train/flight. New aggregate mode/status counts
+verify that classification without changing visibility.
+
+One private APK after green checks. No Firebase upload/tester distribution,
+notification, Play publication, catalogue change or unrelated NCN features.
+Keep #201/#194 and the PR open for owner performance acceptance.
+
+## Previous P0 history and journey-review stabilisation — 20 October 2026
 
 Private development **0.25.211 (257)** in `fix/android-history-stabilisation`,
 [PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), based on

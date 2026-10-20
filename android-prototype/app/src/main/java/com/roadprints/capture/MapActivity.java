@@ -723,20 +723,20 @@ public class MapActivity extends Activity {
             output.serviceStations = ServiceStationStore.stations(getApplicationContext());
             output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
         }
-        long initialiseStarted=android.os.SystemClock.elapsedRealtime();
+        long initialiseStarted=System.nanoTime();
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
-        PerformanceDiagnostics.timing("map_reference_init",android.os.SystemClock.elapsedRealtime()-initialiseStarted,"");
-        long evidenceStarted=android.os.SystemClock.elapsedRealtime();
+        PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
+        long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
-        try(MapJourneyStore records=new MapJourneyStore(getApplicationContext())) {
+        try(MapJourneyStore records=new MapJourneyStore(getApplicationContext(),skipDiskMapCache)) {
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
             counts[0]++;
-            long filterStarted=android.os.SystemClock.elapsedRealtime();
+            long filterStarted=System.nanoTime();
             boolean selected=selection.matches(journey,today,zone);
-            work[0]+=android.os.SystemClock.elapsedRealtime()-filterStarted;
+            work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
             if (!"complete".equals(journey.optString("processing_status", ""))) {
                 counts[2]++;
@@ -750,43 +750,43 @@ public class MapActivity extends Activity {
             String mode=journey.optString("mode","").trim().toLowerCase(java.util.Locale.ROOT);
             if(!JourneyFilters.isRoadMode(mode)&&!JourneyFilters.isFootMode(mode)&&!MatchingCoordinator.isCycle(mode)){counts[3]++;return;}
             MapJourneyStore.Factory factory=raw->{
-                long start=android.os.SystemClock.elapsedRealtime();
+                long start=System.nanoTime();
                 JSONObject prepared=new JSONObject().put("motorway",motorwayCalculator.contribution(raw))
                         .put("a_road",aRoadCalculator.contribution(raw));
-                work[1]+=android.os.SystemClock.elapsedRealtime()-start;
-                start=android.os.SystemClock.elapsedRealtime();
+                work[1]+=System.nanoTime()-start;
+                start=System.nanoTime();
                 prepared.put("roads",preparedLines(matchedSegments(raw)))
                         .put("motorways",preparedLines(motorwaySegments(raw)));
-                work[2]+=android.os.SystemClock.elapsedRealtime()-start;
+                work[2]+=System.nanoTime()-start;
                 return prepared;
             };
             JSONObject prepared=record.prepared(factory);
-            long coverageStarted=android.os.SystemClock.elapsedRealtime();
+            long coverageStarted=System.nanoTime();
             if(!motorwayCalculator.accepts(prepared.getJSONArray("motorway"))||!aRoadCalculator.accepts(prepared.getJSONArray("a_road"))) {
-                work[1]+=android.os.SystemClock.elapsedRealtime()-coverageStarted;
+                work[1]+=System.nanoTime()-coverageStarted;
                 prepared=record.rebuild(factory);
-                coverageStarted=android.os.SystemClock.elapsedRealtime();
+                coverageStarted=System.nanoTime();
             }
             motorwayCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("motorway"));
             aRoadCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("a_road"));
-            work[1]+=android.os.SystemClock.elapsedRealtime()-coverageStarted;
-            long geometryStarted=android.os.SystemClock.elapsedRealtime();
+            work[1]+=System.nanoTime()-coverageStarted;
+            long geometryStarted=System.nanoTime();
             JSONArray matched=prepared.getJSONArray("roads"),motorways=prepared.getJSONArray("motorways");
             if(matched.length()==0&&motorways.length()==0){counts[4]++;return;}
             appendPreparedLines(output,matched,false);
             appendPreparedLines(output,motorways,true);
             output.matchedJourneys++;counts[5]++;
-            work[2]+=android.os.SystemClock.elapsedRealtime()-geometryStarted;
+            work[2]+=System.nanoTime()-geometryStarted;
         });
         PerformanceDiagnostics.timing("map_records",0,"reused="+records.reused+" rebuilt="+records.rebuilt
                 +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads);
         }
-        long evidenceDuration=android.os.SystemClock.elapsedRealtime()-evidenceStarted;
-        PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2]),"compact_records_or_archive");
-        PerformanceDiagnostics.timing("map_filter",work[0],"total="+counts[0]+" filtered="+counts[1]+" unprocessed="+counts[2]+" hidden_mode="+counts[3]+" no_geometry="+counts[4]+" shown="+counts[5]+" unprocessed_train="+unprocessedModes[0]+" unprocessed_plane="+unprocessedModes[1]+" unprocessed_unknown="+unprocessedModes[2]+" unprocessed_other="+unprocessedModes[3]);
-        PerformanceDiagnostics.timing("map_coverage_add",work[1],"");
-        PerformanceDiagnostics.timing("map_geometry",work[2],"");
-        long finishStarted=android.os.SystemClock.elapsedRealtime();
+        long evidenceDuration=System.nanoTime()-evidenceStarted;
+        PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
+        PerformanceDiagnostics.timing("map_filter",work[0]/1_000_000,"total="+counts[0]+" filtered="+counts[1]+" unprocessed="+counts[2]+" hidden_mode="+counts[3]+" no_geometry="+counts[4]+" shown="+counts[5]+" unprocessed_train="+unprocessedModes[0]+" unprocessed_plane="+unprocessedModes[1]+" unprocessed_unknown="+unprocessedModes[2]+" unprocessed_other="+unprocessedModes[3]);
+        PerformanceDiagnostics.timing("map_coverage_add",work[1]/1_000_000,"");
+        PerformanceDiagnostics.timing("map_geometry",work[2]/1_000_000,"");
+        long finishStarted=System.nanoTime();
         MotorwayProgressCalculator.Summary summary = motorwayCalculator.finish();
         for (MotorwayProgressCalculator.Road road : summary.roads) {
             if (!road.referenceAvailable) continue;
@@ -805,7 +805,7 @@ public class MapActivity extends Activity {
             if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
-        PerformanceDiagnostics.timing("map_coverage_finish",android.os.SystemClock.elapsedRealtime()-finishStarted,"");
+        PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,"");
         return output;
     }
 

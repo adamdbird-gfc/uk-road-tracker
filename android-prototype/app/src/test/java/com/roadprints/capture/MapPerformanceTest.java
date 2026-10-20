@@ -90,6 +90,10 @@ public class MapPerformanceTest {
             store.forEach(()->false,r->r.prepared(raw->emptyPrepared()));
             assertEquals(pass==0?2:0,store.rebuilt);assertEquals(pass==0?0:2,store.reused);
         }
+        try(MapJourneyStore forced=new MapJourneyStore(app,true)){
+            forced.forEach(()->false,r->r.prepared(raw->emptyPrepared()));
+            assertEquals(2,forced.rebuilt);assertEquals(2,forced.sourceReads);
+        }
         JourneyStore.updateTitle(app,"one","A title edit");
         try(MapJourneyStore store=new MapJourneyStore(app)){
             store.forEach(()->false,r->r.prepared(raw->emptyPrepared()));
@@ -150,6 +154,19 @@ public class MapPerformanceTest {
         try(RandomAccessFile raw=new RandomAccessFile(file,"rw")){raw.setLength(12);}
         assertNull(MapSnapshotCache.read(app,124));assertNull(MapSnapshotCache.read(app,123));
     }
+    @Test public void unprocessedTrainAndPlaneKeepTheirExistingVisibility() throws Exception {
+        JSONObject driving=trip("driving");JourneyStore.save(app,driving);
+        JourneyStore.save(app,new JSONObject(driving.toString()).put("journey_id","train").put("mode","train").put("processing_status","not_required"));
+        JourneyStore.save(app,new JSONObject(driving.toString()).put("journey_id","flight").put("mode","plane").put("processing_status","not_required"));
+        org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class).create();
+        try {assertEquals(1,read(controller.get(),JourneyFilters.all()).matchedJourneys);assertEquals(3,JourneyStore.count(app));}
+        finally {controller.destroy();}
+    }
+    private void stageLogs(String label) {
+        for(org.robolectric.shadows.ShadowLog.LogItem item:org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming"))
+            if(item.msg.startsWith("map_"))System.out.println("MAP_STAGE "+label+" "+item.msg);
+        org.robolectric.shadows.ShadowLog.clear();
+    }
     private MapActivity.MapRoutes read(MapActivity screen,JourneyFilters filter) throws Exception {
         Method method=MapActivity.class.getDeclaredMethod("readMapRoutes",JourneyFilters.class,LocalDate.class,ZoneId.class);method.setAccessible(true);
         return (MapActivity.MapRoutes)method.invoke(screen,filter,LocalDate.now(),ZoneId.systemDefault());
@@ -164,8 +181,9 @@ public class MapPerformanceTest {
         }
         org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class).create();
         try {
-            long start=System.nanoTime();MapActivity.MapRoutes cold=read(controller.get(),JourneyFilters.all());long coldTime=System.nanoTime()-start;
-            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;
+            org.robolectric.shadows.ShadowLog.clear();
+            long start=System.nanoTime();MapActivity.MapRoutes cold=read(controller.get(),JourneyFilters.all());long coldTime=System.nanoTime()-start;stageLogs("cold");
+            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;stageLogs("warm");
             assertEquals(1547,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
             assertEquals(cold.roadPercentages,warm.roadPercentages);
             assertEquals(cold.coveredMotorwaySections.toString(),warm.coveredMotorwaySections.toString());
@@ -173,7 +191,7 @@ public class MapPerformanceTest {
             MapActivity.MapRoutes filtered=read(controller.get(),new JourneyFilters(2,"all",JourneyDateFilter.all()));
             assertEquals(0,filtered.matchedJourneys);
             JourneyStore.save(app,new JSONObject(template.toString()).put("journey_id","new-driving"));
-            start=System.nanoTime();MapActivity.MapRoutes added=read(controller.get(),JourneyFilters.all());long addTime=System.nanoTime()-start;
+            start=System.nanoTime();MapActivity.MapRoutes added=read(controller.get(),JourneyFilters.all());long addTime=System.nanoTime()-start;stageLogs("add_one");
             assertEquals(1548,added.matchedJourneys);assertEquals(cold.roadPercentages,added.roadPercentages);
             System.out.println("MAP_DRIVING_BENCHMARK synthetic=1547 cold_prepare_ms="+coldTime/1e6+" warm_prepare_ms="+warmTime/1e6+" add_one_prepare_ms="+addTime/1e6+" completion=identical");
         } finally {controller.destroy();}
