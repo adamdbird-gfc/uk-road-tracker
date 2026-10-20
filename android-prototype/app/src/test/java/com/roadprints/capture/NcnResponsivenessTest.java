@@ -48,7 +48,7 @@ public class NcnResponsivenessTest {
         } finally {snapshot.set(null,previous);failure.setLong(null,previousFailure);running.setBoolean(null,previousRunning);app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();worker.shutdownNow();}
     }
     private NcnCatalogue trial() throws Exception {
-        byte[] raw=NcnCatalogue.read(RuntimeEnvironment.getApplication().getAssets().open("ncn-trial/ncn-trial.bin"));
+        byte[] raw=NcnCatalogue.read(new java.util.zip.GZIPInputStream(RuntimeEnvironment.getApplication().getAssets().open("ncn-trial/ncn-trial.bin")));
         return new NcnCatalogue(raw,new JSONObject().put("sha256",NcnJson.hash(raw)));
     }
 }

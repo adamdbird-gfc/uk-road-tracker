@@ -65,6 +65,7 @@ public class RoutePreviewView extends View {
     private Set<Integer> selectedRouteEdges = Collections.emptySet();
     private boolean restoreRouteMode;
     private java.util.List<NcnMapOverlay.Line> ncnOverlay;
+    private long lastSlowFrameReport;
     private java.util.function.Consumer<java.util.Set<String>> ncnTap;
     private final Paint ncnCompleted=new Paint(Paint.ANTI_ALIAS_FLAG),ncnRemaining=new Paint(Paint.ANTI_ALIAS_FLAG);
     private void ncnPaints(){for(Paint p:new Paint[]{ncnCompleted,ncnRemaining}){p.setStyle(Paint.Style.STROKE);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeWidth(dp(3));p.setStrokeJoin(Paint.Join.ROUND);}ncnCompleted.setColor(0xFF8D55C7);ncnRemaining.setColor(NcnProgressUi.ORANGE);ncnRemaining.setPathEffect(null);}
@@ -599,6 +600,7 @@ public class RoutePreviewView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        long frameStarted=android.os.SystemClock.elapsedRealtime();
         super.onDraw(canvas);
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
@@ -675,6 +677,9 @@ public class RoutePreviewView extends View {
             if (correctionDrawMode) drawCorrectionModeHint(canvas);
             drawZoomControls(canvas);
         }
+        long frameMs=android.os.SystemClock.elapsedRealtime()-frameStarted;
+        if(frameMs>=100&&frameStarted-lastSlowFrameReport>=5000){lastSlowFrameReport=frameStarted;
+            PerformanceDiagnostics.timing("map_slow_frame",frameMs,"ncn_lines="+(ncnOverlay==null?0:ncnOverlay.size())+" heap_mb="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));}
     }
 
     public void setMapLayersFromPreferences(){

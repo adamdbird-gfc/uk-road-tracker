@@ -248,6 +248,8 @@ public final class CrashReporter {
     public static String getDiagnosticReports(Context context) {
         String crashes = getReports(context);
         String matches = getMatchFailureReports(context);
+        String performance=PerformanceDiagnostics.report(context);
+        if(!performance.isEmpty())matches+=(matches.isEmpty()?"":"\n\n")+"Performance diagnostics (local timings and foreground stalls)\n"+performance;
         if (crashes.isEmpty()) return matches;
         if (matches.isEmpty()) return crashes;
         return crashes + "\n\n========== Journey match failures ==========" + "\n\n" + matches;

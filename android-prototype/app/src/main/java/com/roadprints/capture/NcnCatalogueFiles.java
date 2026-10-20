@@ -47,7 +47,7 @@ final class NcnCatalogueFiles {
     static void install(Context c,JSONObject manifest)throws Exception{
         long started=android.os.SystemClock.elapsedRealtime();
         synchronized(INSTALL_LOCK){installLocked(c,manifest);}
-        android.util.Log.i("RoadprintsTiming","ncn_install ms="+(android.os.SystemClock.elapsedRealtime()-started));
+        PerformanceDiagnostics.timing("ncn_install",android.os.SystemClock.elapsedRealtime()-started,"");
     }
     private static void installLocked(Context c,JSONObject manifest)throws Exception{
         validate(manifest);File dir=directory(c),database=new File(dir,manifest.getString("sha256")+".db");

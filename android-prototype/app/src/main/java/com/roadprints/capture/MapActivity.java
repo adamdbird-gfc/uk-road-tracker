@@ -510,7 +510,8 @@ public class MapActivity extends Activity {
             completeMapWork();
             setMapReady(true);
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
-            android.util.Log.i("RoadprintsTiming", "map_render_ms="+(android.os.SystemClock.elapsedRealtime()-renderStarted));
+            PerformanceDiagnostics.timing("map_render",android.os.SystemClock.elapsedRealtime()-renderStarted,"");
+            PerformanceDiagnostics.timing("map_total",android.os.SystemClock.elapsedRealtime()-mapStartedAt,"");
             renderRecap();
             String replay = getIntent().getStringExtra("replay_journey_id");
             if (replay != null) {

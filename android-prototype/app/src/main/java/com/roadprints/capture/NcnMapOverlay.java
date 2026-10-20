@@ -34,7 +34,7 @@ final class NcnMapOverlay {
                     }
                 }prepared=s;preparedMode=mode;cached=lines;
             }
-            android.util.Log.i("RoadprintsTiming","ncn_overlay ms="+(android.os.SystemClock.elapsedRealtime()-started)+" lines="+lines.size());
+            PerformanceDiagnostics.timing("ncn_overlay",android.os.SystemClock.elapsedRealtime()-started,"lines="+lines.size());
             final List<Line> ready=lines;a.runOnUiThread(()->{if(request==generation.get()&&!a.isFinishing()&&!a.isDestroyed()&&CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(a))&&s==NcnProgressStore.current()&&mode.equals(NcnProgressStore.mode(a)))map.setNcnOverlay(ready,routes->choose(a,routes));});
         }catch(java.util.concurrent.CancellationException cancelled){/* A newer selection owns publication. */}catch(Exception e){a.runOnUiThread(()->{if(request==generation.get()&&!a.isDestroyed())android.widget.Toast.makeText(a,"NCN overlay unavailable. Retry from Legend or Progress.",android.widget.Toast.LENGTH_LONG).show();});}});
     }

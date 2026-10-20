@@ -46,7 +46,7 @@ final class NcnProgressStore {
             try {
                 long started=android.os.SystemClock.elapsedRealtime();
                 Snapshot result=assess(app,()->!enabled(app)||app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch);
-                android.util.Log.i("RoadprintsTiming","ncn_assessment ms="+(android.os.SystemClock.elapsedRealtime()-started)+" journeys="+result.metadata.size());
+                PerformanceDiagnostics.timing("ncn_assessment",android.os.SystemClock.elapsedRealtime()-started,"journeys="+result.metadata.size());
                 synchronized(NcnProgressStore.class) {
                 if(enabled(app)&&app.getSharedPreferences(PREFS,0).getLong("epoch",0)==epoch&&result.archiveRevision==JourneyStore.dataRevision(app)) {
                     snapshot=result;status="Ready · verified-open NCN sections";
