@@ -19,7 +19,7 @@ import java.util.Set;
 /** Local, evidence-based achievement definitions and durable unlock state. */
 final class AchievementStore {
     private static final String PREFS = "roadprints_achievements_v1";
-    static final int CATALOGUE_VERSION=9;
+    static final int CATALOGUE_VERSION=10;
     private static final double MILE=1609.344;
     private static final String HIGH_STREETS = "high_street_settlements";
     private static final double EARTH_METRES_PER_DEGREE = 111_320.0;
@@ -100,6 +100,7 @@ final class AchievementStore {
             progress.level=state==null?(earned?1:0):state.optInt("level",earned?1:0);
             rows.add(progress);
         }
+        rows.addAll(NcnAchievements.rows(context));
         return new Snapshot(rows,Collections.emptyList(),Long.MIN_VALUE);
     }
 
@@ -268,6 +269,7 @@ final class AchievementStore {
             progress.milestones=milestoneDates;output.add(progress);
         }
         preferences.edit().putString("unlocked",unlocked.toString()).putString("level_history",history.toString()).apply();
+        output.addAll(NcnAchievements.rows(app));
         return new Snapshot(output,newly,revision);
     }
     static synchronized void clearLegacyServiceUnlocks(Context context) {

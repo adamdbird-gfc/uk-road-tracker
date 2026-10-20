@@ -193,11 +193,12 @@ public class AchievementsActivity extends Activity {
     }
 
     private static long collectionEvidenceRevision(android.content.Context context){
-        long revision=CollectionAccessStore.revision(context);for(VenueCollection.Definition collection:VenueCollection.all())revision=31L*revision+VenueCollection.revision(context,collection.id)+VenueCatalogueUpdates.forCollection(collection).revision();return revision;
+        long revision=31L*CollectionAccessStore.revision(context)+NcnProgressStore.revision(context);for(VenueCollection.Definition collection:VenueCollection.all())revision=31L*revision+VenueCollection.revision(context,collection.id)+VenueCatalogueUpdates.forCollection(collection).revision();return revision;
     }
 
     private boolean pubBackfillRequested;
     private void loadAchievements() {
+        NcnProgressStore.ensure(this);
         if(!pubBackfillRequested&&CollectionAccessStore.installed(this,CollectionAccessStore.SPOONS)){
             pubBackfillRequested=true;PubVisitStore.ensureHistory(this,()->{if(!isFinishing()&&!isDestroyed())loadAchievements();});
         }
@@ -385,7 +386,10 @@ public class AchievementsActivity extends Activity {
         boolean showServices=ServiceStationStore.unlocked(this);
         List<AchievementStore.Progress> visible=new ArrayList<>();
         int unlockedCount=0;
-        for(AchievementStore.Progress item:snapshot.achievements) {
+        List<AchievementStore.Progress> currentRows=new ArrayList<>();
+        for(AchievementStore.Progress item:snapshot.achievements)if(!CollectionAccessStore.NCN.equals(item.definition.collectionId))currentRows.add(item);
+        currentRows.addAll(NcnAchievements.rows(this));
+        for(AchievementStore.Progress item:currentRows) {
             if(!item.definition.collectionId.isEmpty()&&!collectionVisible(item.definition.collectionId))continue;
             if(!item.unlocked&&!VenueCompletion.available(this,item.definition))continue;
             visible.add(item);
@@ -435,6 +439,12 @@ public class AchievementsActivity extends Activity {
             String label=collection.name;View anchor=sectionHeading(label);content.addView(anchor);groupAnchors.put(label,anchor);
             for(AchievementStore.Progress item:visible)if(collection.id.equals(item.definition.collectionId)&&!item.definition.id.startsWith("spoons-county-"))content.addView(achievementCard(item));
             if("wetherspoons".equals(collection.id))addRoadCompletionSection(visible,"County completion","spoons-county-");
+        }
+        if(NcnProgressStore.enabled(this)){
+            View anchor=sectionHeading("National Cycle Network");content.addView(anchor);groupAnchors.put("National Cycle Network",anchor);
+            for(AchievementStore.Progress item:visible)if(CollectionAccessStore.NCN.equals(item.definition.collectionId)&&!item.definition.id.startsWith("ncn-route:"))content.addView(achievementCard(item));
+            addRoadCompletionSection(visible,"NCN route completion","ncn-route:");
+            content.addView(text("Walking/running and cycling only. Unique verified-open coverage; 100% completes all supported open sections, including disconnected sections. Millennium Time Trail discoveries remain on hold pending verified locations and disc evidence.",12,MUTED,false));
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));

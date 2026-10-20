@@ -15,9 +15,10 @@ final class NcnMapOverlay {
     private static NcnProgressStore.Snapshot prepared;private static String preparedMode;private static List<Line> cached;
     static void apply(Activity a,RoutePreviewView map){
         long request=generation.incrementAndGet();WORKER.getQueue().clear();
-        if(!CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(a))){map.setNcnOverlay(null,null);return;}
+        if(!CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(a))){map.ncnLoadingStatus=null;map.setNcnOverlay(null,null);return;}
         NcnProgressStore.ensure(a);NcnProgressStore.Snapshot s=NcnProgressStore.current();String mode=NcnProgressStore.mode(a);
-        if(s==null){map.setNcnOverlay(java.util.Collections.emptyList(),routes->choose(a,routes));return;}
+        if(s==null){map.ncnLoadingStatus="assessment";map.setNcnOverlay(java.util.Collections.emptyList(),routes->choose(a,routes));return;}
+        map.ncnLoadingStatus="Loading NCN map…";
         WORKER.execute(()->{long started=android.os.SystemClock.elapsedRealtime();try{
             List<Line> lines;
             if(prepared==s&&mode.equals(preparedMode)&&cached!=null)lines=cached;
@@ -35,8 +36,8 @@ final class NcnMapOverlay {
                 }prepared=s;preparedMode=mode;cached=lines;
             }
             PerformanceDiagnostics.timing("ncn_overlay",android.os.SystemClock.elapsedRealtime()-started,"lines="+lines.size());
-            final List<Line> ready=lines;a.runOnUiThread(()->{if(request==generation.get()&&!a.isFinishing()&&!a.isDestroyed()&&CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(a))&&s==NcnProgressStore.current()&&mode.equals(NcnProgressStore.mode(a)))map.setNcnOverlay(ready,routes->choose(a,routes));});
-        }catch(java.util.concurrent.CancellationException cancelled){/* A newer selection owns publication. */}catch(Exception e){a.runOnUiThread(()->{if(request==generation.get()&&!a.isDestroyed())android.widget.Toast.makeText(a,"NCN overlay unavailable. Retry from Legend or Progress.",android.widget.Toast.LENGTH_LONG).show();});}});
+            final List<Line> ready=lines;a.runOnUiThread(()->{if(request==generation.get()&&!a.isFinishing()&&!a.isDestroyed()&&CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(a))&&s==NcnProgressStore.current()&&mode.equals(NcnProgressStore.mode(a))){map.setNcnOverlay(ready,routes->choose(a,routes));map.ncnLoadingStatus=null;}});
+        }catch(java.util.concurrent.CancellationException cancelled){/* A newer selection owns publication. */}catch(Exception e){a.runOnUiThread(()->{if(request==generation.get()&&!a.isDestroyed()){map.ncnLoadingStatus="NCN map needs retry";android.widget.Toast.makeText(a,"NCN overlay unavailable. Retry from Legend or Progress.",android.widget.Toast.LENGTH_LONG).show();}});}});
     }
     private static void choose(Activity a,Set<String> routes){
         LinearChoices.show(a,routes);

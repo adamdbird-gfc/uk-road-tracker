@@ -66,6 +66,7 @@ public class RoutePreviewView extends View {
     private boolean restoreRouteMode;
     private java.util.List<NcnMapOverlay.Line> ncnOverlay;
     private long lastSlowFrameReport;
+    String ncnLoadingStatus;
     private java.util.function.Consumer<java.util.Set<String>> ncnTap;
     private final Paint ncnCompleted=new Paint(Paint.ANTI_ALIAS_FLAG),ncnRemaining=new Paint(Paint.ANTI_ALIAS_FLAG);
     private void ncnPaints(){for(Paint p:new Paint[]{ncnCompleted,ncnRemaining}){p.setStyle(Paint.Style.STROKE);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeWidth(dp(3));p.setStrokeJoin(Paint.Join.ROUND);}ncnCompleted.setColor(0xFF8D55C7);ncnRemaining.setColor(NcnProgressUi.ORANGE);ncnRemaining.setPathEffect(null);}

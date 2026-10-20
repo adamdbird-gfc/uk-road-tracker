@@ -41,9 +41,47 @@ public class NcnNationalTest {
         Context app=app();app.getSharedPreferences("roadprints_journeys_v1",0).edit().putBoolean("journeys_migrated_to_archive",true).commit();app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
         JSONObject trip=golden().getJSONArray("cases").getJSONObject(0).getJSONObject("journey");File archive=new File(app.getFilesDir(),"journey_foot.json");Files.write(archive.toPath(),trip.toString().getBytes(StandardCharsets.UTF_8));
         java.lang.reflect.Method assess=NcnProgressStore.class.getDeclaredMethod("assess",Context.class);assess.setAccessible(true);NcnProgressStore.Snapshot first=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertTrue(first.ledger.metres("NCN:344","combined")>0);
+        NcnProgressStore.checkpoint(app,first);NcnProgressStore.Snapshot restored=NcnProgressStore.restore(app);assertNotNull(restored);assertEquals(first.ledger.networkMetres("combined"),restored.ledger.networkMetres("combined"),1e-9);
+        long savedRevision=JourneyStore.dataRevision(app);app.getSharedPreferences("roadprints_journeys_v1",0).edit().putLong("journey_archive_revision",savedRevision+1).commit();assertNull(NcnProgressStore.restore(app));
+        app.getSharedPreferences("roadprints_journeys_v1",0).edit().putLong("journey_archive_revision",savedRevision).commit();
+        Files.write(new File(app.getFilesDir(),"ncn-derived-snapshot.json").toPath(),"broken checkpoint".getBytes(StandardCharsets.UTF_8));assertNull(NcnProgressStore.restore(app));
         File cache=new File(app.getFilesDir(),"ncn-national-assessments/"+first.catalogue.version+"/"+NcnJson.hash("foot".getBytes(StandardCharsets.UTF_8))+".json");byte[] checkpoint=Files.readAllBytes(cache.toPath());cache.setLastModified(1000000);
         NcnProgressStore.Snapshot resumed=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertArrayEquals(checkpoint,Files.readAllBytes(cache.toPath()));assertEquals(1000000,cache.lastModified());assertEquals(first.ledger.networkMetres("combined"),resumed.ledger.networkMetres("combined"),.00001);
         assertTrue(archive.delete());NcnProgressStore.Snapshot deleted=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertEquals(0,deleted.ledger.networkMetres("combined"),0);assertFalse(cache.exists());
         NcnProgressStore.mode(app,"cycling");RoadDetailSelection selection=new RoadDetailSelection(RoadDetailSelection.NCN,"RCN:90","","","");selection.ncnMode=NcnProgressStore.mode(app);assertEquals("cycling",RoadDetailSelection.from(selection.intent(app,false)).ncnMode);assertFalse(selection.intent(app,false).hasExtra("journey_ids"));app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();
     }
+    @Test public void achievementsUseEligiblePhysicalUnionAndDurableCelebrations()throws Exception{
+        Context app=app();app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
+        try{
+            NcnCatalogue c=NcnCatalogue.load(app());NcnLedger ledger=new NcnLedger(c);
+            JSONObject trip=golden().getJSONArray("cases").getJSONObject(0).getJSONObject("journey");
+            JSONObject proof=new NcnMatcher(c).assess(trip);ledger.put("foot",proof);
+            double network=ledger.networkMetres("combined"),route=ledger.metres("NCN:344","combined");assertTrue(network>0);assertTrue(route>0);
+            c.networkLength=network*4;c.routes.get("NCN:344").put("length_m",route*4);
+            NcnProgressStore.Snapshot snapshot=new NcnProgressStore.Snapshot(c,ledger,7,new java.util.LinkedHashMap<>());
+            JSONObject awards=NcnAchievements.prepare(snapshot,new JSONObject());NcnAchievements.publish(app,awards);
+            AchievementStore.Progress first=ncnRow(app,"ncn-first"),whole=ncnRow(app,"ncn-network"),local=ncnRow(app,"ncn-route:NCN:344");
+            assertTrue(first.unlocked);assertEquals(1,whole.level);assertEquals(1,local.level);
+            assertEquals(25,whole.value,1e-9);assertFalse(NcnAchievements.rows(app).stream().anyMatch(p->p.definition.id.equals("ncn-route:NCN:228")));
+            assertTrue(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.equals("ncn-network")));
+            AchievementCelebrations.Event event=new AchievementCelebrations.Event(whole.definition,1);AchievementCelebrations.acknowledge(app,event);
+            assertFalse(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.equals("ncn-network")));
+            ledger.put("repeat",proof);JSONObject repeated=NcnAchievements.prepare(snapshot,awards);
+            assertEquals(awards.getJSONObject("history").toString(),repeated.getJSONObject("history").toString());
+            NcnAchievements.publish(app,repeated);assertEquals(25,ncnRow(app,"ncn-network").value,1e-9);
+            c.networkLength=network;c.routes.get("NCN:344").put("length_m",route);
+            JSONObject full=NcnAchievements.prepare(snapshot,repeated);NcnAchievements.publish(app,full);assertEquals(4,ncnRow(app,"ncn-network").level);assertEquals(4,ncnRow(app,"ncn-route:NCN:344").level);
+            assertTrue(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.equals("ncn-network")&&e.level==4));
+            ledger.remove("repeat");trip.put("mode","driving");ledger.put("foot",new NcnMatcher(c).assess(trip));
+            JSONObject corrected=NcnAchievements.prepare(snapshot,full);NcnAchievements.publish(app,corrected);assertFalse(ncnRow(app,"ncn-first").unlocked);assertEquals(0,ncnRow(app,"ncn-network").level);
+            assertEquals(full.getJSONObject("history").toString(),corrected.getJSONObject("history").toString());
+            assertFalse(AchievementCelebrations.pending(app).stream().anyMatch(e->e.definition.id.startsWith("ncn-")));
+            ledger.remove("foot");NcnAchievements.publish(app,NcnAchievements.prepare(snapshot,corrected));assertEquals(0,ncnRow(app,"ncn-network").value,0);
+            // Durable rows can be reconstructed after process-cache eviction, without a catalogue read.
+            java.lang.reflect.Field cache=NcnAchievements.class.getDeclaredField("cachedEncoding");cache.setAccessible(true);cache.set(null,null);
+            assertEquals(0,ncnRow(app,"ncn-network").level);
+        }finally{app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();}
+    }
+    private AchievementStore.Progress ncnRow(Context c,String id){return NcnAchievements.rows(c).stream().filter(p->p.definition.id.equals(id)).findFirst().orElseThrow(()->new AssertionError(id));}
+
 }
