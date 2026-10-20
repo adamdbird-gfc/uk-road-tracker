@@ -2,15 +2,34 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## In progress — private NCN UI corrective development APK
+## Latest private development delivery — NCN UI corrective APK
 
 20 October device feedback authorises UI refinement and **private artifact-only**
 packaging. Version 0.25.208 (254), based on installed NCN beta 0.25.207 (253),
 keeps the published national catalogue and all assessment rules unchanged.
 Achievement alignment, bicycle collection cards/removal confirmation, shared
 coverage dashboard, purple NCN Progress cards/jump tracking and solid orange
-remaining NCN map lines are implemented. Automated/device status will be recorded
-when packaging completes. No real-device acceptance of these refinements yet.
+remaining NCN map lines are implemented. **Private APK built successfully** from exact source
+`27236e1b143f5225aa964a67b4f27e43122cdae6`,
+[run 39382924243](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39382924243).
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39382924243/artifacts/12246766274);
+[reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39382924243/artifacts/12246157765).
+682 Android tests passed, zero failures/errors/skips; lint zero errors. Both national
+data classes and new celebration/collection/paint/summary/jump regressions passed.
+Four Python distribution-control tests passed. APK v2 signature verifies against
+existing certificate `5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`;
+package remains `com.roadprints.capture`.
+APK: 36,533,787 bytes; SHA-256
+`31e40a81174d2c362a919a3815b2bf3debf5ad93029a73c88efd56904341e7f0`.
+Downloaded artifact bytes independently matched the build checksum; reports XML
+confirmed all test totals and zero lint errors. **No Firebase upload/distribution
+job exists in the successful run; existing testers were not targeted or notified.**
+The first attempt stopped at two assertions (old summary text and missing test
+fixture target), produced no APK artifact and was corrected without bypassing tests.
+[PR #209](https://github.com/adamdbird-gfc/uk-road-tracker/pull/209) retains the work;
+#208 tracks distribution controls. No real-device acceptance of these refinements
+yet; see [owner review checklist](ncn-ui-private-acceptance.md). Later docs/workflow
+hardening commits do not represent another APK build or change the tested app.
 
 **Distribution policy supersedes all older automatic release instructions below:**
 Do not distribute development APKs to existing Firebase testers. Packaging retains
