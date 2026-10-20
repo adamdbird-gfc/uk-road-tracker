@@ -12,6 +12,15 @@ import java.util.zip.GZIPOutputStream;
 /** Rebuildable per-file projections: a changed journey never invalidates its neighbours. */
 final class JourneyProjectionCache {
     private static final int MAX_BYTES=32*1024*1024;
+    // Optional warm-up must never delay initial geometry or retain an unbounded history.
+    static final java.util.concurrent.ThreadPoolExecutor WRITER=new java.util.concurrent.ThreadPoolExecutor(
+            1,1,0L,java.util.concurrent.TimeUnit.MILLISECONDS,new java.util.concurrent.ArrayBlockingQueue<>(4),
+            task->new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);task.run();},"roadprints-projection-cache"),
+            new java.util.concurrent.ThreadPoolExecutor.DiscardPolicy());
+    static void enqueue(Context c,File source,String token,String kind,JSONObject data) {
+        Context app=c.getApplicationContext();
+        WRITER.execute(()->write(app,source,token,kind,data));
+    }
     private JourneyProjectionCache() {}
     private static File file(Context c, File source, String kind) {
         return new File(new File(c.getCacheDir(),"journey-projections/"+kind),

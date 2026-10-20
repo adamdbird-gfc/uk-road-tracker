@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.210",
-  "version_code": 256,
-  "reason": "NCN responsiveness, validated restart checkpoints and eligible route/network achievements; private owner artifact only, no Firebase upload or tester notification",
-  "revision": 5
+  "version_name": "0.25.211",
+  "version_code": 257,
+  "reason": "P0 NCN per-journey evidence reuse, durable map-independent New Journeys review and cached nonblocking map preparation; private owner artifact only",
+  "revision": 6
 }

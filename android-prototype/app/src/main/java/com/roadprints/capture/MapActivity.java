@@ -460,7 +460,7 @@ public class MapActivity extends Activity {
             // must not hold the interactive map lane or delay the readiness transition.
             final MapRoutes prepared=mapRoutes;
             if(selection.isAll()&&prepared.retainedPoints<=180000&&freeHeadroom>=96L*1024L*1024L)
-                ScreenDataLoader.execute(()->{
+                ScreenDataLoader.cache(()->{
                     if(generation!=mapLoadGeneration||mapDataRevision()!=revision)return;
                     try{PersistentScreenCache.write(getApplicationContext(),"map-routes",revision,mapRoutesToCache(prepared));}
                     catch(Exception ignored){android.util.Log.w("RoadprintsTiming","map_cache_write=skipped");}

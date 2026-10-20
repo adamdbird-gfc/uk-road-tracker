@@ -433,7 +433,7 @@ public final class JourneyStore {
             if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
                 journey = upgrade(context, read(file));
             if (journey != null) {
-                if(map)JourneyProjectionCache.write(context,file,token,"map-v1",journey);
+                if(map)JourneyProjectionCache.enqueue(context,file,token,"map-v1",journey);
                 visitor.visit(journey);
             }
         }

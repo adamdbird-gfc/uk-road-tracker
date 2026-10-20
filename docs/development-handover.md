@@ -55,7 +55,12 @@ unknown, unprocessed and empty-geometry journeys can explain the gap; **192
 cannot be reconciled exactly without the phone archive**. `map_filter` now
 reports disjoint aggregate exclusion counts. Do not force all history onto Map.
 
-Validation is pending on this candidate. Added tests cover incremental
+Initial implementation checks passed in [run 39502451966](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39502451966):
+compile, lint, pinned reference verification and all 699 Android tests.
+Final packaging also validates bounded background projection/snapshot writers and
+cancellation-resume regressions added after final diff review. Optional cache
+creation cannot gate first-map publication; saturation skips only disposable
+projection warm-up, while snapshots retain the newest queued request. Added tests cover incremental
 addition/edit/delete, stale/corrupt/rule-invalid caches, restart checkpoint,
 durable pending review/interrupted presentation, blocked Map/shared queue,
 rapid same-size replacements, large compressed Map snapshots, revision monitor

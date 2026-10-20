@@ -164,6 +164,31 @@ public class HistoryStabilisationTest {
         }
     }
 
+    @Test public void mapEvidenceDoesNotWaitForOptionalProjectionWrites() throws Exception {
+        java.util.concurrent.CountDownLatch release=new java.util.concurrent.CountDownLatch(1),blocked=new java.util.concurrent.CountDownLatch(1);
+        JourneyProjectionCache.WRITER.execute(()->{blocked.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+        assertTrue(blocked.await(3,java.util.concurrent.TimeUnit.SECONDS));
+        JourneyStore.save(app,journey("optional-write"));
+        try {
+            int[] seen={0};
+            JourneyStore.forEachMapEvidence(app,()->false,row->seen[0]++);
+            assertEquals(1,seen[0]);assertEquals(1,release.getCount());
+        } finally {release.countDown();}
+        JourneyProjectionCache.WRITER.submit(()->{}).get(10,java.util.concurrent.TimeUnit.SECONDS);
+    }
+
+    @Test public void cancellationResumesFromCompletedRowsWithoutPartialCredit() throws Exception {
+        JourneyStore.save(app,journey("cancel-one"));JourneyStore.save(app,journey("cancel-two"));
+        Method method=NcnProgressStore.class.getDeclaredMethod("assess",Context.class,BooleanSupplier.class);
+        method.setAccessible(true);java.util.concurrent.atomic.AtomicInteger checks=new java.util.concurrent.atomic.AtomicInteger();
+        try {
+            method.invoke(null,app,(BooleanSupplier)()->checks.incrementAndGet()>1);fail("Expected cancellation");
+        } catch(InvocationTargetException cancelled) {assertTrue(cancelled.getCause() instanceof java.util.concurrent.CancellationException);}
+        NcnProgressStore.Snapshot resumed=assess();
+        assertEquals(2,resumed.metadata.size());assertEquals(1,resumed.evidenceReads);
+        assertTrue(resumed.ledger.metres("NCN:344","combined")>0);
+    }
+
     @Test public void representativeHistoryReportsColdWarmAndSingleAdditionWork() throws Exception {
         JSONObject template=journey("benchmark");
         JSONArray raw=new JSONArray();
