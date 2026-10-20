@@ -586,12 +586,15 @@ public class ProgressActivity extends Activity {
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
     }
 
+    private HorizontalScrollView jumpScroll;
+    private String activeJump="";
     private HorizontalScrollView buildProgressJumpMenu() {
         HorizontalScrollView scroll = new HorizontalScrollView(this);
+        jumpScroll=scroll;scroll.setClipToPadding(false);scroll.setPadding(dp(2),0,dp(2),0);
         scroll.setHorizontalScrollBarEnabled(false);
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(2), 0, dp(4));
+        row.setPadding(dp(2), dp(2), dp(10), dp(4));
         progressJumpChips.clear();
         addProgressJump(row, "Statistics", "statistics");
         addProgressJump(row, "Road discovery", "road_discovery");
@@ -610,7 +613,7 @@ public class ProgressActivity extends Activity {
 
     private void addProgressJump(LinearLayout row, String label, String section) {
         TextView chip = new TextView(this);
-        chip.setText(label);
+        chip.setText(label);chip.setMinHeight(dp(48));
         chip.setTextSize(12);
         chip.setTypeface(null, android.graphics.Typeface.BOLD);
         chip.setGravity(Gravity.CENTER);
@@ -622,7 +625,8 @@ public class ProgressActivity extends Activity {
         chip.setOnClickListener(v -> {
             View target = findProgressSection(section);
             if (target != null && statisticsScroll != null) {
-                statisticsScroll.smoothScrollTo(0, Math.max(0, target.getTop() - dp(8)));
+                statisticsScroll.scrollTo(0, Math.max(0, target.getTop() - dp(8)));
+                setActiveProgressJump(section);
             }
         });
     }
@@ -643,23 +647,25 @@ public class ProgressActivity extends Activity {
             int threshold = statisticsScroll.getScrollY() + dp(28);
             for (String section : progressSections()) {
                 View target = findProgressSection(section);
-                if (target != null && target.getTop() <= threshold) active = section;
+                if (target != null && (target.getTop() <= threshold || statisticsScroll.getScrollY()>0 && statisticsScroll.getScrollY()+statisticsScroll.getHeight()>=statisticsContent.getHeight()-dp(8))) active = section;
             }
         }
         setActiveProgressJump(active);
     }
 
     private void setActiveProgressJump(String active) {
+        boolean changed=!active.equals(activeJump);activeJump=active;
         for (Map.Entry<String, TextView> entry : progressJumpChips.entrySet()) {
             boolean selected = entry.getKey().equals(active);
             TextView chip = entry.getValue();
             chip.setTextColor(selected ? NAVY : Color.WHITE);
             chip.setBackground(roundRect(selected ? GOLD : CARD, dp(18)));
             chip.setSelected(selected);
+            if(selected&&changed&&jumpScroll!=null)chip.post(()->{int left=chip.getLeft()-dp(8),right=chip.getRight()+dp(8);int x=jumpScroll.getScrollX();if(left<x)jumpScroll.smoothScrollTo(Math.max(0,left),0);else if(right>x+jumpScroll.getWidth())jumpScroll.smoothScrollTo(right-jumpScroll.getWidth(),0);});
         }
     }
 
-    private String[] progressSections(){java.util.List<String> sections=new java.util.ArrayList<>(java.util.Arrays.asList("statistics","road_discovery","motorways","a_roads"));sections.addAll(CollectionAccessStore.installed(this));return sections.toArray(new String[0]);}
+    private String[] progressSections(){java.util.List<String> sections=new java.util.ArrayList<>(java.util.Arrays.asList("statistics","road_discovery","motorways","a_roads"));sections.addAll(CollectionAccessStore.installed(this));sections.add("ncn");return sections.toArray(new String[0]);}
     private void addServiceStationPanel(LinearLayout parent){
         LinearLayout panel=statisticsPanel(CollectionAccessStore.name(CollectionAccessStore.SERVICES));
         VenueProgressPanel.populate(this,CollectionAccessStore.SERVICES,panel,expandedRoadCategories,this::refreshPubProgress);
@@ -1549,14 +1555,7 @@ public class ProgressActivity extends Activity {
     }
 
     private TextView aRoadBadge(String ref) {
-        TextView badge = new TextView(this);
-        badge.setText(ref);
-        badge.setTextColor(Color.WHITE);
-        badge.setTextSize(14);
-        badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setGravity(Gravity.CENTER);
-        badge.setBackground(roundRect(0xFF25834A, dp(6)));
-        return badge;
+        return RouteIdentifierBadge.create(this,ref,RoadCompletionBar.A_ROAD);
     }
 
     private void addARoadAggregatePanel(LinearLayout parent, DistanceStats stats) {
@@ -1628,15 +1627,8 @@ public class ProgressActivity extends Activity {
     }
 
     private TextView motorwayBadge(MotorwayProgressCalculator.Road road) {
-        TextView badge = new TextView(this);
-        badge.setText("NI".equals(road.region) ? road.ref + " · NI" : road.ref);
-        badge.setTextColor(Color.WHITE);
-        badge.setTextSize(12);
-        badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(5), dp(4), dp(5), dp(4));
-        badge.setBackground(signBadge());
-        return badge;
+        TextView badge=RouteIdentifierBadge.create(this,"NI".equals(road.region)?road.ref+" · NI":road.ref,RoadCompletionBar.MOTORWAY);
+        badge.setTextSize(12);return badge;
     }
 
     private android.graphics.drawable.GradientDrawable signBadge() {

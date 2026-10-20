@@ -44,7 +44,7 @@ final class NcnMapOverlay {
                 NcnProgressStore.Snapshot s=NcnProgressStore.current();try{if(s!=null){org.json.JSONObject r=s.catalogue.routes.get(route);double completed=s.ledger.metres(route,NcnProgressStore.mode(a)),total=r.getDouble("length_m");rows.addView(NcnProgressUi.text(a,route.replace(":"," ")+" · "+(r.optBoolean("measurable",true)?String.format(java.util.Locale.UK,"%.1f%%",100*completed/total):"assessment held"),19,android.graphics.Color.WHITE));rows.addView(NcnProgressUi.text(a,r.optBoolean("measurable",true)?DistanceUnits.format(a,completed)+" completed / "+DistanceUnits.format(a,total)+" reference · "+DistanceUnits.format(a,Math.max(0,total-completed))+" remaining":"Preserved alternative source inventory. Open-target assessment held; no completion awarded.",14,android.graphics.Color.WHITE));}}catch(Exception e){/* Route map exposes retry for unavailable details. */}
                 rows.addView(NcnProgressUi.action(a,route.replace(":"," ")+" · VIEW ROUTE & JOURNEYS",()->NcnProgressUi.open(a,route)));
             }
-            RoadprintsDialog.show(a,"National Cycle Network",NcnProgressUi.label(NcnProgressStore.mode(a))+" · Purple completed; grey dashed verified-open remaining. Choose a verified identity.",rows,"CLOSE",null,null,null);
+            RoadprintsDialog.show(a,"National Cycle Network",NcnProgressUi.label(NcnProgressStore.mode(a))+" · Purple completed; solid orange verified-open remaining. Choose a verified identity.",rows,"CLOSE",null,null,null);
         }
     }
 }

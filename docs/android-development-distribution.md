@@ -39,5 +39,21 @@ select historical definitions to distribute. Anyone with authority to change
 workflows/secrets remains able to change policy; this is not a substitute for
 GitHub repository access controls. No new Firebase credentials are introduced.
 
-This corrective 0.25.208 (254) is **development only**; no approval to promote it
-has been given. Existing testers must receive neither a release nor notifications.
+Corrective 0.25.208 (254) and 0.25.209 (255) are **development only**; no approval
+to promote either artifact has been given. Existing testers must receive neither a release nor notifications.
+
+## Safeguard verification — 20 October
+
+The successful development run 39382924243 contains only `development / build`,
+not a Firebase job. Full tests/lint/signing and artifact upload passed; no tester
+release was created. Active legacy entry-point safeguard backports:
+
+- main: `647e7087ec62f867b9780d5716c58cf4cdcf7f1a`.
+- stabilisation: `e3231bb54d15206238e8005e6d9650a6f737707c`.
+- NCN publication: `c51f541f345df6daa0018b4bf4e124efb30b627e`.
+- NCN integration: `98ec39a88d621f863f2035657bb4008d59453f30`.
+- Owner-only promotion installed on main: `02c87431a2fdb89b107c5a7a1b363c1f65781550`.
+
+Four control tests pass. Approved promotion itself was deliberately not invoked;
+0.25.208 remains unapproved for tester distribution. No environment reviewer
+configuration or manual Firebase rollback is claimed as tested.
