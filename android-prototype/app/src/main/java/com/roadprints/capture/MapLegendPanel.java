@@ -57,7 +57,7 @@ final class MapLegendPanel {
                 option.setOnClickListener(v->{CollectionAccessStore.select(activity,id);changed.run();});
             }body.addView(group);
             if(NcnProgressStore.enabled(activity)){
-                body.addView(text(activity,"NCN: Purple completed · Grey dashed verified-open remaining",14,0xFFCFB5F2,true));
+                body.addView(text(activity,"NCN: Purple completed · Solid orange verified-open remaining",14,0xFFCFB5F2,true));
                 RadioGroup activities=new RadioGroup(activity);
                 for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}body.addView(activities);
             }

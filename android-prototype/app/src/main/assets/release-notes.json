@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.208",
+      "version_code": 254,
+      "release_date": "2026-10-20",
+      "since": "0.25.207",
+      "changes": [
+        {
+          "title": "NCN presentation refinement",
+          "description": "Private development review: consistent bicycle collection cards, clearer shared coverage summaries, purple route cards and solid orange remaining NCN geometry."
+        },
+        {
+          "title": "Navigation and celebrations",
+          "description": "Corrected NCN Progress jump selection and chip visibility, centred achievement celebration headings and aligned Close."
+        },
+        {
+          "title": "Controlled distribution",
+          "description": "Development builds produce a signed APK artifact only. Tester distribution requires a separate manual owner approval of the exact source and APK checksum."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.207",
       "version_code": 253,
       "release_date": "2026-10-19",

@@ -21,6 +21,7 @@ public final class RoadDetailActivity extends Activity {
     private View zoom,loadingPanel;
     private TextView status,loadingLabel,journeyAction,sectionStatus,retry,legend,recordedLabel;
     private RoadCompletionBar progress;
+    private CoverageSummary coverageSummary;
     private RoadDetailSelection selection;
     private boolean cumulative,geometryShown;
     private int generation;
@@ -59,8 +60,9 @@ public final class RoadDetailActivity extends Activity {
         for(int i=0;i<2;i++){View line=new View(this);line.setBackgroundColor(0xFF46649E);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(i==0?-1:dp(150),dp(10));lp.topMargin=dp(8);skeleton.addView(line,lp);}stats.addView(skeleton);
         int colour=RoadDetailSelection.NCN.equals(selection.kind)?NcnProgressUi.PURPLE:RoadDetailSelection.MOTORWAY.equals(selection.kind)?RoadCompletionBar.MOTORWAY:RoadCompletionBar.A_ROAD;
         progress=new RoadCompletionBar(this,0,colour);progress.setTag("road_completion_graph");progress.setVisibility(View.GONE);
-        stats.addView(progress,new LinearLayout.LayoutParams(-1,dp(12)));
-        legend=text("",12);stats.addView(legend);
+        coverageSummary=new CoverageSummary(this,colour,progress);coverageSummary.setVisibility(View.GONE);stats.addView(coverageSummary,new LinearLayout.LayoutParams(-1,-2));
+        stats.setPadding(0,0,0,0);
+        legend=text("",12);legend.setPadding(dp(14),dp(6),dp(14),dp(8));stats.addView(legend);
         if(RoadDetailSelection.NCN.equals(selection.kind)){
             LinearLayout modes=new LinearLayout(this);for(String mode:new String[]{"combined","cycling","on_foot"})modes.addView(action(NcnProgressUi.label(mode),()->{NcnProgressStore.mode(this,mode);selection.ncnMode=mode;loadedRevision=Long.MIN_VALUE;geometryShown=false;load();}),new LinearLayout.LayoutParams(0,-2,1));root.addView(modes);
         }
@@ -95,7 +97,7 @@ public final class RoadDetailActivity extends Activity {
         if(cached!=null&&loader==DEFAULT_LOADER){model=cached;loadedRevision=revision;show();return;}
         map.setMapRoadTapListener(null);
         loading=true;loadingPanel.findViewWithTag("road_loading_spinner").setVisibility(View.VISIBLE);status.setOnClickListener(null);loadingPanel.setVisibility(View.VISIBLE);loadingLabel.setText("Preparing road geometry…");retry.setVisibility(View.GONE);
-        if(!geometryShown){status.setText("Loading your road…");skeleton.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
+        if(!geometryShown){coverageSummary.setVisibility(View.GONE);status.setVisibility(View.VISIBLE);status.setText("Loading your road…");skeleton.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
         journeyAction.setEnabled(false);
         deadline(request,()->showFailure("Loading took too long. Tap to retry."));
         pending=ScreenDataLoader.interactive(()->{
@@ -116,22 +118,19 @@ public final class RoadDetailActivity extends Activity {
     private void deadline(int request,Runnable failure){timeout=()->{if(!current(request)||!loading)return;generation++;cancelPending();failure.run();};handler.postDelayed(timeout,LOAD_TIMEOUT_MS);}
     private void cancelPending(){loading=false;if(timeout!=null)handler.removeCallbacks(timeout);if(pending!=null){pending.cancel(true);pending=null;}}
     private void showFailure(String message){
-        status.setText(message);status.setOnClickListener(v->load());skeleton.setVisibility(View.GONE);loadingPanel.setVisibility(View.VISIBLE);
+        coverageSummary.setVisibility(View.GONE);status.setVisibility(View.VISIBLE);status.setText(message);status.setOnClickListener(v->load());skeleton.setVisibility(View.GONE);loadingPanel.setVisibility(View.VISIBLE);
         ((View)loadingPanel.findViewWithTag("road_loading_spinner")).setVisibility(View.GONE);loadingLabel.setText(message);retry.setVisibility(View.VISIBLE);
         journeyAction.setEnabled(false);
     }
     private void showStatistics(){
-        skeleton.setVisibility(View.GONE);
+        skeleton.setVisibility(View.GONE);coverageSummary.setVisibility(View.GONE);status.setVisibility(View.VISIBLE);
         stats.setVisibility(cumulative||model.fullReference?View.VISIBLE:View.GONE);
         recordedLabel.setVisibility(!cumulative&&!model.fullReference?View.VISIBLE:View.GONE);
-        legend.setText(model.ncn?"Purple: completed · Grey dashed: remaining · "+NcnProgressUi.label(selection.ncnMode):cumulative?"":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled":"");
+        legend.setText(model.ncn?"Purple: completed · Solid orange: remaining · "+NcnProgressUi.label(selection.ncnMode):cumulative?"":model.fullReference?"Red: remaining · "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled":"");
         if(cumulative){status.setText(model.journeys.size()+" contributing journeys · newest first");progress.setVisibility(View.GONE);return;}
         if(model.fullReference){
-            String value=String.format(java.util.Locale.UK,"%.1f%%",model.percent);
-            android.text.SpannableStringBuilder label=new android.text.SpannableStringBuilder(value+(model.ncn?"  VERIFIED OPEN ROUTE\n":"  WHOLE ROAD\n")+DistanceUnits.format(this,model.uniqueMetres)+" travelled  /  "+DistanceUnits.format(this,model.referenceMetres)+" total");
-            label.setSpan(new android.text.style.AbsoluteSizeSpan(28,true),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            label.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),0,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);status.setText(label);
-            progress.setFraction(model.percent/100);progress.setContentDescription(String.format(java.util.Locale.UK,"Whole road %.1f percent complete",model.percent));progress.setVisibility(View.VISIBLE);
+            status.setVisibility(View.GONE);coverageSummary.setVisibility(View.VISIBLE);progress.setVisibility(View.VISIBLE);
+            coverageSummary.bind(selection.title(),model.uniqueMetres,model.referenceMetres,model.ncn?"Verified-open route":"Estimated unique road coverage");
         }else if(model.ncn){stats.setVisibility(View.VISIBLE);recordedLabel.setVisibility(View.GONE);status.setText("PRESERVED ALTERNATIVE INVENTORY\nOpen-target assessment held; no completion percentage");progress.setVisibility(View.GONE);}
         else{status.setText("RECORDED SECTIONS\nFull-road distance and completion unavailable");progress.setVisibility(View.GONE);}
     }
@@ -141,7 +140,7 @@ public final class RoadDetailActivity extends Activity {
         else if(model.fullReference&&RoadDetailSelection.MOTORWAY.equals(selection.kind))map.setMotorwayCoverageSegments(model.remaining,model.covered);
         else if(model.fullReference)map.setARoadCoverageSegments(model.remaining,model.covered);
         else map.setRouteData(null,model.covered);
-        map.setContentDescription(model.ncn?"NCN map. Purple completed, grey dashed remaining. Tap a section for eligible journeys. Pinch or use zoom buttons.":"Map of "+selection.title()+(model.fullReference?". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Tap a section for journeys.":". Recorded sections. Use View Journeys for contributing journeys.")+" Pinch or use zoom buttons.");
+        map.setContentDescription(model.ncn?"NCN map. Purple completed, solid orange remaining. Tap a section for eligible journeys. Pinch or use zoom buttons.":"Map of "+selection.title()+(model.fullReference?". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Tap a section for journeys.":". Recorded sections. Use View Journeys for contributing journeys.")+" Pinch or use zoom buttons.");
         java.util.List<org.json.JSONArray> fit=new java.util.ArrayList<>(model.covered);fit.addAll(model.remaining);
         map.fitRoadGeometry(fit);
         geometryShown=true;

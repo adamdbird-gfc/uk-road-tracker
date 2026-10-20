@@ -660,7 +660,7 @@ public class AchievementsActivity extends Activity {
         card.setClickable(true);
         card.setOnClickListener(view -> { });
 
-        TextView close=RoadprintsDialog.closeControl(this,()->closeCelebrations());close.setBackground(roundRect(NAVY,NAVY,dp(12)));
+        TextView close=RoadprintsDialog.closeControl(this,()->closeCelebrations());close.setBackground(roundRect(NAVY,NAVY,dp(12)));close.setGravity(Gravity.CENTER);close.setPadding(dp(12),0,dp(12),0);
         LinearLayout closeRow=new LinearLayout(this);closeRow.setGravity(Gravity.END);closeRow.addView(close);card.addView(closeRow,new LinearLayout.LayoutParams(-1,-2));
         celebrationIcon=RoadprintsIcons.image(this,R.drawable.ic_roadprints_star,0xFF0B1C50,"Achievement unlocked");
         celebrationIcon.setPadding(dp(16),dp(16),dp(16),dp(16));
@@ -668,9 +668,9 @@ public class AchievementsActivity extends Activity {
         card.addView(celebrationIcon,new LinearLayout.LayoutParams(dp(68),dp(68)));
 
         TextView eyebrow=text("ACHIEVEMENT UNLOCKED",12,0xFF735300,true);
-        eyebrow.setPadding(0,dp(17),0,dp(4));
-        card.addView(eyebrow);
-        TextView invitation=text("Look what you’ve unlocked!",16,0xFF735300,true);invitation.setGravity(Gravity.CENTER);card.addView(invitation);
+        eyebrow.setPadding(0,dp(17),0,dp(4));eyebrow.setGravity(Gravity.CENTER);
+        card.addView(eyebrow,new LinearLayout.LayoutParams(-1,-2));
+        TextView invitation=text("Look what you’ve unlocked!",16,0xFF735300,true);invitation.setGravity(Gravity.CENTER);card.addView(invitation,new LinearLayout.LayoutParams(-1,-2));
 
         celebrationTitle=text("Achievement",24,0xFF172033,true);
         celebrationTitle.setGravity(Gravity.CENTER);

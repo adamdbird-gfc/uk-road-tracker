@@ -2,6 +2,22 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## In progress — private NCN UI corrective development APK
+
+20 October device feedback authorises UI refinement and **private artifact-only**
+packaging. Version 0.25.208 (254), based on installed NCN beta 0.25.207 (253),
+keeps the published national catalogue and all assessment rules unchanged.
+Achievement alignment, bicycle collection cards/removal confirmation, shared
+coverage dashboard, purple NCN Progress cards/jump tracking and solid orange
+remaining NCN map lines are implemented. Automated/device status will be recorded
+when packaging completes. No real-device acceptance of these refinements yet.
+
+**Distribution policy supersedes all older automatic release instructions below:**
+Do not distribute development APKs to existing Firebase testers. Packaging retains
+signed artifacts only; approved beta promotion requires a separate manual owner
+approval naming the exact commit and APK SHA-256. No approval has been given for
+this corrective build. See [development/distribution controls](android-development-distribution.md).
+
 ## Latest delivery — coordinated national NCN beta
 
 **Released 0.25.207 (253)** through Firebase App Distribution to the established

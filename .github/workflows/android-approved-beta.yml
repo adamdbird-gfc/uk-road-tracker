@@ -1,0 +1,76 @@
+name: Manually approve an existing signed beta artifact
+# Never called by pushes, PRs, workflow_run, or another workflow. No rebuild.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful private development build run ID
+        required: true
+        type: string
+      source_sha:
+        description: Exact reviewed source commit (40 lowercase hex characters)
+        required: true
+        type: string
+      apk_sha256:
+        description: Exact approved APK SHA-256 from the private build
+        required: true
+        type: string
+      approval:
+        description: Type APPROVE_BETA followed by a space and the exact source SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: roadprints-approved-beta
+  cancel-in-progress: false
+jobs:
+  promote:
+    if: github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    environment: approved-beta
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify owner approval and artifact provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVAL: ${{ inputs.approval }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          APK_SHA256: ${{ inputs.apk_sha256 }}
+          BUILD_RUN_ID: ${{ inputs.run_id }}
+        run: python3 scripts/verify_android_beta_approval.py
+      - name: Check out approved source for release notes and identity
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: approved-source
+      - name: Verify established APK signature and application identity
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs approved-apk/app-debug.apk | tee certificate.txt
+          grep -Fq '5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031' certificate.txt
+          aapt=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)
+          "$aapt" dump badging approved-apk/app-debug.apk | head -n 1 | grep -F "name='com.roadprints.capture'"
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - run: npm install --global firebase-tools@15.33.0
+      - run: python3 -m pip install google-auth==2.40.3 requests==2.32.5
+      - name: Distribute only the explicitly approved bytes
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_RELEASE_CHANNEL: approved_beta
+          ROADPRINTS_APPROVED_APK_SHA256: ${{ inputs.apk_sha256 }}
+          ROADPRINTS_DISTRIBUTE_EXISTING_TESTERS: 'true'
+        run: |
+          set -euo pipefail
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/approved-beta-credentials.json"
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          python3 - <<'PY'
+          import os,pathlib,json
+          data=json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT_JSON'])
+          assert data['project_id']=='roadprints-822cc' and data['type']=='service_account'
+          p=pathlib.Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS']);p.touch(mode=0o600);p.write_text(json.dumps(data))
+          PY
+          unset FIREBASE_SERVICE_ACCOUNT_JSON
+          bash approved-source/scripts/upload_android_firebase.sh approved-apk/app-debug.apk

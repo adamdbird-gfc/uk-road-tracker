@@ -52,21 +52,48 @@ public class CollectionsActivity extends Activity {
     private void render() {
         body.removeAllViews();
         summary.setText("Choose the collections you want to explore. Beta access is free.");
-        LinearLayout ncn=panel();ncn.addView(text("↗ National Cycle Network",20,Color.WHITE,true));ncn.addView(text("Verified-open sections across the UK. Walking, running and cycling only. One-time catalogue download about 136 MB; available offline afterwards.",14,MUTED,false));
-        if(!NcnProgressStore.enabled(this))addAction(ncn,"Enable NCN collection",()->{NcnProgressStore.activate(this,true);render();});
-        else {addAction(ncn,"Show on map",()->{CollectionAccessStore.select(this,CollectionAccessStore.NCN);startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",CollectionAccessStore.NCN));});addAction(ncn,"View progress",()->startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","ncn")));addAction(ncn,"Remove collection",()->{NcnProgressStore.activate(this,false);render();});}body.addView(ncn);
+        addNcnCollection();
         for(VenueCollection.Definition collection:VenueCollection.all())addCollection(collection.id,collection.description,collection.siteStop?R.drawable.ic_roadprints_fuel:R.drawable.ic_nav_collections);
     }
 
-    private void addCollection(String id,String copy,int drawable) {
-        LinearLayout card=panel();
+    private TextView ncnStatus;
+    private final Runnable ncnRefresh=new Runnable(){public void run(){
+        if(isFinishing()||isDestroyed())return;
+        if(ncnStatus!=null)ncnStatus.setText(NcnProgressStore.status());View retry=body.findViewWithTag("ncn_collection_retry");if(retry!=null)retry.setVisibility(NcnProgressStore.status().contains("could not")?View.VISIBLE:View.GONE);
+        body.postDelayed(this,1000);
+    }};
+    @Override protected void onResume(){super.onResume();if(body!=null){body.removeCallbacks(ncnRefresh);body.post(ncnRefresh);}}
+    @Override protected void onPause(){if(body!=null)body.removeCallbacks(ncnRefresh);super.onPause();}
+    private void collectionHeading(LinearLayout card,String title,int drawable){
         LinearLayout heading=new LinearLayout(this);heading.setGravity(Gravity.CENTER_VERTICAL);
         ImageView icon=RoadprintsIcons.image(this,drawable,NAVY,null);
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         icon.setPadding(dp(6),dp(6),dp(6),dp(6));icon.setBackground(roundRect(TEAL,dp(10)));
         LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(40),dp(40));ip.rightMargin=dp(12);
-        heading.addView(icon,ip);heading.addView(text(CollectionAccessStore.name(id),20,Color.WHITE,true),new LinearLayout.LayoutParams(0,-2,1));
-        card.addView(heading);
+        heading.addView(icon,ip);heading.addView(text(title,20,Color.WHITE,true),new LinearLayout.LayoutParams(0,-2,1));card.addView(heading);
+    }
+    private void addNcnCollection(){
+        LinearLayout card=panel();card.setTag("ncn_collection_card");
+        collectionHeading(card,"National Cycle Network",R.drawable.ic_roadprints_bicycle);
+        boolean enabled=NcnProgressStore.enabled(this);
+        TextView description=text("Explore verified-open UK routes on foot or by bicycle."+(enabled?"":" Initial catalogue download about 136 MB; use it offline afterwards."),14,MUTED,false);
+        description.setPadding(0,dp(10),0,dp(16));card.addView(description);
+        ncnStatus=null;
+        if(!enabled)addAction(card,"Enable NCN collection",()->{if(!NcnProgressStore.enabled(this)){NcnProgressStore.activate(this,true);render();}});
+        else{
+            TextView installed=text("Installed · beta access",13,TEAL,true);installed.setPadding(0,0,0,dp(12));card.addView(installed);
+            ncnStatus=text(NcnProgressStore.status(),13,MUTED,false);ncnStatus.setPadding(0,0,0,dp(12));card.addView(ncnStatus);
+            TextView retry=text("Retry download or assessment",14,GOLD,true);retry.setTag("ncn_collection_retry");retry.setVisibility(NcnProgressStore.status().contains("could not")?View.VISIBLE:View.GONE);retry.setMinHeight(dp(48));retry.setGravity(Gravity.CENTER_VERTICAL);retry.setOnClickListener(v->NcnProgressStore.retry(this));card.addView(retry);
+            addAction(card,"Show on map",()->{CollectionAccessStore.select(this,CollectionAccessStore.NCN);startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",CollectionAccessStore.NCN));finish();});
+            addAction(card,"View progress",()->{startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","ncn"));finish();});
+            TextView remove=text("Remove collection",14,0xFFFF8A8A,false);remove.setTag("ncn_remove");remove.setGravity(Gravity.CENTER);remove.setMinHeight(dp(48));remove.setPadding(dp(12),dp(14),dp(12),dp(8));
+            remove.setOnClickListener(v->RoadprintsDialog.show(this,"Remove National Cycle Network?","The collection will be hidden from your map and progress. Your journeys and downloaded catalogue will be kept.",null,"Remove collection",()->{NcnProgressStore.activate(this,false);render();},"Cancel",null));card.addView(remove);
+        }body.addView(card);
+    }
+
+    private void addCollection(String id,String copy,int drawable) {
+        LinearLayout card=panel();
+        collectionHeading(card,CollectionAccessStore.name(id),drawable);
         TextView description=text(copy,14,MUTED,false);description.setPadding(0,dp(10),0,dp(12));card.addView(description);
         boolean installed=CollectionAccessStore.installed(this,id);
         if(!installed) {

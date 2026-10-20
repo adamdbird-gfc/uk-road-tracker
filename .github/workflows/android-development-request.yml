@@ -1,0 +1,16 @@
+name: Private Android development APK
+on:
+  push:
+    branches: [fix/ncn-ui-private-development]
+    paths: ['.github/development-request.json']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  development:
+    uses: ./.github/workflows/build-android-prototype.yml
+    with:
+      source_ref: ${{ github.sha }}
+      firebase_upload: false
+      distribute_existing_testers: false
+    secrets: inherit

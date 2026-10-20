@@ -64,4 +64,16 @@ public class ProgressAvailabilityTest {
         JourneyStore.deleteAll(app);assertFalse(app.getSharedPreferences("roadprints_progress_snapshot",Context.MODE_PRIVATE).contains("summary"));
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();assertFalse(hasText((View)get(screen,"statisticsContent"),"1.0 mi"));
     }
+    @Test public void ncnJumpSelectsAndTracksItsActualSection() throws Exception {
+        cache(stats());ProgressActivity screen=screen();
+        ViewGroup content=(ViewGroup)get(screen,"statisticsContent");
+        android.widget.ScrollView scroll=(android.widget.ScrollView)get(screen,"statisticsScroll");
+        content.measure(View.MeasureSpec.makeMeasureSpec(400,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+        content.layout(0,0,400,content.getMeasuredHeight());scroll.layout(0,0,400,300);
+        java.util.Map<String,TextView> chips=(java.util.Map<String,TextView>)get(screen,"progressJumpChips");
+        assertNotNull(chips.get("ncn"));chips.get("ncn").performClick();assertTrue(chips.get("ncn").isSelected());
+        invoke(screen,"updateActiveProgressJump");assertTrue(chips.get("ncn").isSelected());
+        chips.get("motorways").performClick();assertTrue(chips.get("motorways").isSelected());assertFalse(chips.get("ncn").isSelected());
+    }
+
 }
