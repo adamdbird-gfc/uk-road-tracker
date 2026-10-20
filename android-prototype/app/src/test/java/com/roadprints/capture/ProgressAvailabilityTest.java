@@ -68,6 +68,7 @@ public class ProgressAvailabilityTest {
         cache(stats());ProgressActivity screen=screen();
         ViewGroup content=(ViewGroup)get(screen,"statisticsContent");
         android.widget.ScrollView scroll=(android.widget.ScrollView)get(screen,"statisticsScroll");
+        TextView motorwayTarget=new TextView(screen);motorwayTarget.setTag("progress:motorways");motorwayTarget.setMinHeight(500);content.addView(motorwayTarget,1);
         content.measure(View.MeasureSpec.makeMeasureSpec(400,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
         content.layout(0,0,400,content.getMeasuredHeight());scroll.layout(0,0,400,300);
         java.util.Map<String,TextView> chips=(java.util.Map<String,TextView>)get(screen,"progressJumpChips");

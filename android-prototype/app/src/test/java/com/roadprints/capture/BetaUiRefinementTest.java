@@ -82,7 +82,7 @@ public class BetaUiRefinementTest {
         assertTrue((Boolean)get(screen,"geometryShown"));assertEquals(View.GONE,((View)get(screen,"loadingPanel")).getVisibility());
         assertEquals(View.GONE,((View)get(screen,"skeleton")).getVisibility());assertFalse(((View)get(screen,"journeyAction")).isEnabled());
         assertEquals(.376,((RoadCompletionBar)get(screen,"progress")).fraction(),.00001);
-        release.countDown();drain();assertTrue(((View)get(screen,"journeyAction")).isEnabled());assertTrue(((TextView)get(screen,"status")).getText().toString().contains("WHOLE ROAD"));
+        release.countDown();drain();assertTrue(((View)get(screen,"journeyAction")).isEnabled());assertEquals(View.VISIBLE,((View)get(screen,"coverageSummary")).getVisibility());assertEquals(.376,((RoadCompletionBar)get(screen,"progress")).fraction(),.00001);
     }
     @Test public void contributionCardsUseSharedMetadataAndOpenSavedJourney()throws Exception{
         RoadDetailModel ready=model();RoadDetailActivity.loader=(c,s,all)->ready;RoadDetailActivity screen=road(true).get();drain();

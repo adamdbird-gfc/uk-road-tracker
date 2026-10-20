@@ -39,4 +39,15 @@ public class NcnPresentationTest {
   dialog.dismiss();assertTrue(NcnProgressStore.enabled(c));
   c.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();controller.destroy();
  }
+ @Test public void celebrationHeadingAndCloseAreAlignedWithoutChangingPendingState()throws Exception{
+  Context c=RuntimeEnvironment.getApplication();c.getSharedPreferences("roadprints_achievements_v1",0).edit().clear().commit();c.getSharedPreferences("roadprints_achievement_celebrations_v1",0).edit().clear().commit();
+  AchievementStore.evaluate(c,Collections.singletonMap("motorway-quarter",25d),Collections.emptyMap(),new boolean[7],0);
+  org.robolectric.android.controller.ActivityController<AchievementsActivity> controller=Robolectric.buildActivity(AchievementsActivity.class).create();AchievementsActivity a=controller.get();
+  java.lang.reflect.Method show=AchievementsActivity.class.getDeclaredMethod("showCelebrations",java.util.List.class);show.setAccessible(true);show.invoke(a,AchievementCelebrations.pending(c));
+  android.app.Dialog dialog=(android.app.Dialog)field(a,"celebrationDialog");assertNotNull(dialog);View decor=dialog.getWindow().getDecorView();
+  TextView heading=text(decor,"ACHIEVEMENT UNLOCKED");assertNotNull(heading);assertEquals(Gravity.CENTER,heading.getGravity());assertEquals(-1,heading.getLayoutParams().width);
+  assertEquals(Gravity.CENTER,text(decor,"Look what you’ve unlocked!").getGravity());TextView close=text(decor,"CLOSE");assertEquals(Gravity.CENTER,close.getGravity());assertEquals(close.getPaddingLeft(),close.getPaddingRight());assertEquals(1,AchievementCelebrations.pending(c).size());
+  close.performClick();assertFalse(dialog.isShowing());controller.destroy();
+ }
+
 }

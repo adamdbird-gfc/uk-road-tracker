@@ -12,9 +12,14 @@ def validate(event,actor,owner,approval,source,digest,run):
 def main():
     repo=os.environ['GITHUB_REPOSITORY'];run_id=os.environ['BUILD_RUN_ID']
     if not re.fullmatch('[0-9]+',run_id):raise ValueError('Invalid run ID')
+    class SafeRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,req,fp,code,msg,headers,newurl):
+            redirected=super().redirect_request(req,fp,code,msg,headers,newurl)
+            if redirected is not None:redirected.remove_header('Authorization')
+            return redirected
     def get(path):
         req=urllib.request.Request('https://api.github.com/repos/'+repo+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-        with urllib.request.urlopen(req,timeout=90)as response:return response.read()
+        with urllib.request.build_opener(SafeRedirect()).open(req,timeout=90)as response:return response.read()
     run=json.loads(get('/actions/runs/'+run_id));source=os.environ['SOURCE_SHA'];digest=os.environ['APK_SHA256']
     validate(os.environ['GITHUB_EVENT_NAME'],os.environ['GITHUB_ACTOR'],os.environ['GITHUB_REPOSITORY_OWNER'],os.environ['APPROVAL'],source,digest,run)
     artifacts=json.loads(get('/actions/runs/'+run_id+'/artifacts'))['artifacts'];matches=[a for a in artifacts if a['name']=='roadprints-capture-prototype-debug' and not a['expired']]
