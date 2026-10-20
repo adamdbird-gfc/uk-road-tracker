@@ -91,15 +91,20 @@ final class NcnProgressStore {
             NcnCatalogue catalogue=NcnCatalogue.load(app);
             JSONObject root=new JSONObject(new String(NcnCatalogue.read(new AtomicFile(new File(app.getFilesDir(),"ncn-derived-snapshot.json")).openRead()),StandardCharsets.UTF_8));
             long revision=JourneyStore.dataRevision(app);
-            if(root.getInt("assessment_version")!=ASSESSMENT_VERSION||!root.getString("catalogue").equals(catalogue.version)||root.getLong("revision")!=revision)return null;
+            String miss=root.getInt("assessment_version")!=ASSESSMENT_VERSION?"assessment_rules":
+                    !root.getString("catalogue").equals(catalogue.version)?"catalogue":
+                    root.getLong("revision")!=revision?"archive_revision":null;
+            if(miss!=null){PerformanceDiagnostics.timing("ncn_cache",0,"miss="+miss);return null;}
             JSONObject payload=root.getJSONObject("payload");
-            if(!NcnJson.hash(payload.toString().getBytes(StandardCharsets.UTF_8)).equals(root.getString("sha256")))return null;
+            if(!NcnJson.hash(payload.toString().getBytes(StandardCharsets.UTF_8)).equals(root.getString("sha256"))) {
+                PerformanceDiagnostics.timing("ncn_cache",0,"miss=checksum");return null;
+            }
             NcnLedger ledger=new NcnLedger(catalogue);java.util.Map<String,JSONObject> metadata=new java.util.LinkedHashMap<>();
             JSONArray rows=payload.getJSONArray("rows");
             for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);String id=row.getString("id");ledger.put(id,row.getJSONObject("assessment"));metadata.put(id,row.getJSONObject("metadata"));}
             ledger.networkMetres("combined");
             return new Snapshot(catalogue,ledger,revision,metadata);
-        }catch(Exception unavailable){return null;}
+        }catch(Exception unavailable){PerformanceDiagnostics.timing("ncn_cache",0,"miss=absent_or_unreadable");return null;}
     }
     static void checkpoint(Context app,Snapshot value)throws Exception{
         JSONArray rows=new JSONArray();for(String id:value.ledger.activities.keySet())rows.put(new JSONObject().put("id",id).put("assessment",value.ledger.activities.get(id)).put("metadata",value.metadata.get(id)));
@@ -118,7 +123,7 @@ final class NcnProgressStore {
         long scanStarted=android.os.SystemClock.elapsedRealtime();
         // File metadata, not archive-wide revision, decides which evidence must be decoded.
         for (File source : JourneyStore.archiveFiles(app)) {
-            if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
+            if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted() || revision!=JourneyStore.dataRevision(app))
                 throw new java.util.concurrent.CancellationException();
             String token=JourneyStore.fileToken(source);
             String id=source.getName().substring("journey_".length(),source.getName().length()-".json".length());

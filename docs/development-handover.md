@@ -2,7 +2,77 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest private development delivery — responsiveness and NCN achievements
+## P0 history and journey-review stabilisation — 20 October 2026
+
+Candidate **0.25.211 (257)** in `fix/android-history-stabilisation`,
+[PR #211](https://github.com/adamdbird-gfc/uk-road-tracker/pull/211), based on
+210's documented head `6c0deacedd0e560a73229ab6b289fdff2fccf441`.
+This supersedes 210's performance acceptance: the owner's real archive still
+reports 68–141 s assessment and 37–55 s initial Map. No device acceptance claimed.
+
+- **NCN:** every JourneyStore save bumps the global archive revision (including
+  matching/status/dwell updates with unchanged journey count). That rejects the
+  aggregate checkpoint. The previous fallback streamed and hashed all 1,546
+  source files even on per-journey assessment-cache hits. Ledger construction
+  also queried/decompressed the same source way for each repeated activity span.
+  Assessment now validates per-file atomic-replacement tokens and checksummed
+  compact assessment/metadata rows; only missing/changed/rule-invalidated evidence
+  is decoded. Repeated source spans are unioned by way/mode before catalogue
+  lookup. New ledgers exclude deleted IDs; individual journey assessments remain
+  available for attribution. Catalogue/rule changes still force applicable
+  reassessment. Existing single-worker/running guard and queued change coalescing
+  remain. Atomic aggregate persistence completes on that worker before a newer
+  request can overtake it. Changed revisions/cancellation cannot publish stale
+  results; failed optional caches fall back to original evidence.
+- **Review:** the recap was gated on `mapReady || hasDisplayedMap` and queued on
+  the shared screen-data executor. New capture IDs are now persisted at their
+  first committed save, with a dedicated inbox reader/presenter independent of
+  Map and NCN. The existing Welcome back / VIEW NEW JOURNEYS flow, explicit
+  Dismiss/Back/navigation acknowledgement and saved-journey editor remain.
+  An acknowledgement set prevents a later historical discovery scan re-enqueuing
+  a journey already dismissed from the fast inbox. Presentation alone never
+  acknowledges. Imports/rematches are not new captures.
+- **Map:** whole-archive revision invalidation previously rebuilt every source
+  projection and all coverage. The shared disk cache rejected map payloads over
+  12 MiB; optional cache work also queues behind other screens. Per-source
+  checksummed map/summary projections now survive unrelated additions. Complete
+  Map snapshots use atomic compressed storage with a 48 MiB decoded bound;
+  original compatible small snapshots remain readable. Rendering, eligibility,
+  geometry budgets, filters, recovery/Retry/Reset and retained UI state remain.
+  Archive revision polling no longer acquires the archive-save monitor, avoiding
+  foreground waits behind serialization, venue checks and capture awards.
+  Exact Pixel bottleneck proportions still require the new stage diagnostics.
+
+Diagnostics: assessment trigger, coalesced requests, restored result, full versus
+incremental source reads, matches/reuse and aggregate miss reason; map reference
+initialisation/cache/evidence/filter/coverage/geometry/finalisation/render/total;
+review creation/presentation/acknowledgement. Existing foreground stall stacks
+remain. No coordinates or personal journey IDs are logged.
+
+Visibility rules are unchanged: only complete driving/bus/on-foot/cycling
+journeys with matched geometry are counted by the main map. Train/plane/ferry,
+unknown, unprocessed and empty-geometry journeys can explain the gap; **192
+cannot be reconciled exactly without the phone archive**. `map_filter` now
+reports disjoint aggregate exclusion counts. Do not force all history onto Map.
+
+Validation is pending on this candidate. Added tests cover incremental
+addition/edit/delete, stale/corrupt/rule-invalid caches, restart checkpoint,
+durable pending review/interrupted presentation, blocked Map/shared queue,
+rapid same-size replacements, large compressed Map snapshots, revision monitor
+contention, and a 1,546-journey synthetic cold/warm/addition workload.
+Synthetic JVM measurements are not Pixel startup measurements.
+Required owner checks: install over 210 without clearing data; cold/warm/offline
+restart; repeated Map/Journeys/Progress/Achievements navigation; single/multiple
+captures foreground/background; interrupted review and restart; filters,
+Cancel/Reset/Retry; unchanged completion, attribution and celebrations.
+**Aim for a usable Pixel map within 10 s; this remains a measurement target.**
+
+Private artifact-only packaging after green checks. No Firebase upload,
+distribution, tester notification, Google Play release or catalogue publication.
+The session has no local execution host/device; GitHub Actions performs compile,
+lint, tests and signing. Do not close #201/#194 from CI alone.
+
+## Previous private development delivery — responsiveness and NCN achievements
 
 **Private development 0.25.210 (256)** is ready for owner testing, in
 [PR #210](https://github.com/adamdbird-gfc/uk-road-tracker/pull/210), stacked on

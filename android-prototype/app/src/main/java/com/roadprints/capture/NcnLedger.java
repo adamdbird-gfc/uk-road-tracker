@@ -33,9 +33,11 @@ final class NcnLedger {
                 String route=span.getString(0);
                 JSONObject definition=catalogue.routes.get(route);
                 if(definition==null||!definition.optBoolean("measurable",true))continue;
+                double low=span.getDouble(2),high=span.getDouble(3);
+                if(!Double.isFinite(low)||!Double.isFinite(high)||high<=low)continue;
                 String key=route+"/"+span.getString(1);
                 raw.computeIfAbsent(key,k->new HashMap<>()).computeIfAbsent(mode,k->new ArrayList<>())
-                        .add(new double[]{span.getDouble(2),span.getDouble(3)});
+                        .add(new double[]{low,high});
             }
         }
         for(Map.Entry<String,Map<String,List<double[]>>> entry:raw.entrySet()) {

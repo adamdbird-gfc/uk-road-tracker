@@ -133,6 +133,63 @@ public class HistoryStabilisationTest {
             worker.submit(()->JourneyStore.dataRevision(app)).get(1,java.util.concurrent.TimeUnit.SECONDS);
         }} finally {worker.shutdownNow();}
     }
+    @Test public void foregroundReviewIsIndependentOfBlockedMapAndScreenQueue() throws Exception {
+        java.util.concurrent.CountDownLatch release=new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.CountDownLatch sharedBlocked=new java.util.concurrent.CountDownLatch(1);
+        ScreenDataLoader.execute(()->{sharedBlocked.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+        assertTrue(sharedBlocked.await(3,java.util.concurrent.TimeUnit.SECONDS));
+        JourneyStore.save(app,journey("foreground"));
+        MapActivity.MapRouteLoader previous=MapActivity.mapRouteLoader;
+        MapActivity.mapRouteLoader=(s,f,d,z)->{release.await();return new MapActivity.MapRoutes();};
+        org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class);
+        try {
+            controller.create().start().resume();
+            Field io=MapActivity.class.getDeclaredField("recapIo");io.setAccessible(true);
+            ((java.util.concurrent.ExecutorService)io.get(controller.get())).submit(()->{}).get(10,java.util.concurrent.TimeUnit.SECONDS);
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            assertNotNull(find(controller.get().getWindow().getDecorView(),"VIEW NEW JOURNEYS"));
+            assertEquals(1,ReturnRecapStore.pending(app).size());
+        } finally {
+            release.countDown();controller.pause().stop().destroy();MapActivity.mapRouteLoader=previous;
+        }
+    }
+
+    @Test public void representativeHistoryReportsColdWarmAndSingleAdditionWork() throws Exception {
+        JSONObject template=journey("benchmark");
+        JSONArray raw=new JSONArray();
+        for(int p=0;p<256;p++)raw.put(new JSONArray().put(0.37).put(51.44).put(p));
+        template.put("raw_capture_samples",raw);
+        long seed=System.nanoTime();
+        for(int i=0;i<1546;i++) {
+            template.put("journey_id","bench-"+i);
+            java.nio.file.Files.write(new File(app.getFilesDir(),"journey_bench-"+i+".json").toPath(),
+                    template.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        long start=System.nanoTime();int[] legacyReads={0};
+        JourneyStore.forEachNcnEvidence(app,()->false,row->legacyReads[0]++);
+        long legacyScan=System.nanoTime()-start;
+        start=System.nanoTime();NcnProgressStore.Snapshot cold=assess();long coldNcn=System.nanoTime()-start;
+        start=System.nanoTime();NcnProgressStore.Snapshot warm=assess();long warmNcn=System.nanoTime()-start;
+        assertEquals(1546,legacyReads[0]);assertEquals(1546,cold.evidenceReads);assertEquals(0,warm.evidenceReads);
+        assertEquals(cold.ledger.metres("NCN:344","combined"),warm.ledger.metres("NCN:344","combined"),.001);
+        JourneyStore.save(app,journey("bench-added"));
+        start=System.nanoTime();NcnProgressStore.Snapshot added=assess();long addition=System.nanoTime()-start;
+        assertEquals(1,added.evidenceReads);assertEquals(1547,added.metadata.size());
+        org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class).create();
+        try {
+            Method read=MapActivity.class.getDeclaredMethod("readMapRoutes",JourneyFilters.class,java.time.LocalDate.class,java.time.ZoneId.class);
+            read.setAccessible(true);
+            start=System.nanoTime();Object coldMap=read.invoke(controller.get(),JourneyFilters.all(),java.time.LocalDate.now(),java.time.ZoneId.systemDefault());long coldMapTime=System.nanoTime()-start;
+            start=System.nanoTime();Object warmMap=read.invoke(controller.get(),JourneyFilters.all(),java.time.LocalDate.now(),java.time.ZoneId.systemDefault());long warmMapTime=System.nanoTime()-start;
+            Field count=coldMap.getClass().getDeclaredField("matchedJourneys");count.setAccessible(true);
+            assertEquals(1547,count.getInt(coldMap));assertEquals(count.getInt(coldMap),count.getInt(warmMap));
+            System.out.println("HISTORY_BENCHMARK synthetic journeys=1546 legacy_full_evidence_ms="+legacyScan/1e6
+                +" cold_ncn_ms="+coldNcn/1e6+" warm_ncn_ms="+warmNcn/1e6+" add_one_ms="+addition/1e6
+                +" cold_map_preparation_ms="+coldMapTime/1e6+" warm_map_preparation_ms="+warmMapTime/1e6
+                +" source_decodes=1546,0,1 (JVM fixture; not Pixel startup)");
+        } finally {controller.destroy();}
+    }
+
     private View find(View v,String text) {
         if(v instanceof TextView && text.contentEquals(((TextView)v).getText()))return v;
         if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=find(((ViewGroup)v).getChildAt(i),text);if(found!=null)return found;}

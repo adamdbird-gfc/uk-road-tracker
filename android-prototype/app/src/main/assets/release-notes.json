@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.211",
+      "version_code": 257,
+      "release_date": "2026-10-20",
+      "since": "0.25.210",
+      "changes": [
+        {
+          "title": "NCN history reuse",
+          "description": "Unchanged journeys reuse saved assessments; newly saved journeys no longer require rereading the entire archive."
+        },
+        {
+          "title": "New journey review",
+          "description": "New recordings enter a saved review inbox that can appear while the map is loading."
+        },
+        {
+          "title": "Map startup",
+          "description": "Journey projections and larger compressed map snapshots reduce repeated archive preparation. Local diagnostics separate loading stages."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.210",
       "version_code": 256,
       "release_date": "2026-10-20",

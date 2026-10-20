@@ -440,7 +440,13 @@ public final class JourneyStore {
     }
 
     /** Stable metadata token for committed atomic replacements; no geometry decoding. */
-    static String fileToken(File file) { return file.lastModified() + ":" + file.length(); }
+    static String fileToken(File file) {
+        try {
+            java.nio.file.attribute.BasicFileAttributes a=java.nio.file.Files.readAttributes(
+                    file.toPath(),java.nio.file.attribute.BasicFileAttributes.class);
+            return a.lastModifiedTime().toMillis()+":"+a.size()+":"+a.fileKey();
+        } catch(IOException unavailable) {return file.lastModified()+":"+file.length();}
+    }
 
     /** NCN uses only recorded matched geometry/provenance; never upgrades captures. */
     static void forEachNcnEvidence(Context context, java.util.function.BooleanSupplier cancelled, JourneyVisitor visitor) throws Exception {
