@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Upload only by default. Explicit opt-in shares with existing project testers.
 set -euo pipefail
+# No CI caller may create even an undistributed Firebase release without manual owner approval.
+if [ "${GITHUB_ACTIONS:-false}" = true ]; then
+  test "${GITHUB_EVENT_NAME:-}" = workflow_dispatch
+  test "${GITHUB_ACTOR:-}" = "${GITHUB_REPOSITORY_OWNER:-}"
+  test "${ROADPRINTS_RELEASE_CHANNEL:-}" = approved_beta
+  test -n "${ROADPRINTS_APPROVED_APK_SHA256:-}"
+  test "$(sha256sum "${1:?APK required}" | cut -d ' ' -f 1)" = "$ROADPRINTS_APPROVED_APK_SHA256"
+fi
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 apk=${1:?Usage: bash scripts/upload_android_firebase.sh path/to/signed.apk [release-notes.txt]}
