@@ -1,69 +1,72 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-19. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## In progress — coordinated national NCN integration
+## Latest delivery — coordinated national NCN beta
 
-Active branch `integration/ncn-firebase-beta`, based on **0.25.206's released
-lineage `7bc10f4a`**. The user's coordinated development brief authorises NCN
-resumption and one verified beta. See [integration details, PR disposition,
-accounting policy and evidence limitations](ncn-national-integration.md).
+**Released 0.25.207 (253)** through Firebase App Distribution to the established
+testers. [Install NCN beta](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/7hem35tolspl8).
+Exact tested, signed and distributed source:
+`02ddf96aba6c403e2e88eab0d764feb61ef27ec4`.
+[Successful packaging/distribution run 39331303438](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438);
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438/artifacts/12224797445);
+[verification reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438/artifacts/12223649168).
 
-The existing shared road UI is preserved; national NCN uses indexed immutable
-reference data, conservative source evidence, separate physical-network union,
-mode filters and shared route/journey navigation. All 322 existing NCN Python
-tests pass. National database readback and five Firebase publication invariant
-tests pass. Android compilation, lint and the offline regression suite passed at
-`c810937e` in [run 39325561947](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39325561947).
-The serving gate returned **HTTP 404** for the unpublished catalogue, leaving
-`NcnNationalTest`/`NcnUiTest` unexecuted and the overall check failed. Firebase
-preview/live verification and full-suite acceptance remain pending; **no APK is ready**. #193 achievements remain excluded. Named identities are absent
-from the source checkpoint; NCN228 open-target assessment and 34 identities stay
-held explicitly rather than receiving unsupported completion claims.
+Draft [PR #207](https://github.com/adamdbird-gfc/uk-road-tracker/pull/207),
+`integration/ncn-firebase-beta`, retains the implementation and corrected
+publication/packaging workflow. Application baseline remains released 0.25.206
+lineage `7bc10f4a`; later documentation reconciliation is not a second APK.
+No journey archive or earned achievement migration/deletion was introduced.
 
-Architecture correction: large national binaries stay outside GitHub. The existing
-Firebase **Hosting** reference origin is `roadprints-data-822cc.web.app` (project
-`roadprints-822cc`; Storage bucket `roadprints-822cc.firebasestorage.app`). NCN now
-uses a small versioned manifest, immutable streamed download, compressed/decoded
-SHA-256 verification, resumable partials, atomic offline cache with prior-generation
-fallback and weekly updates independent of APK versions. The clone/add publisher
-preserves all live settlement/collection assets. See the integration document for
-exact hashes, workflow, rollback and validation limitations.
+**Required release checks passed:** 677 Android tests, zero failures/errors/skips;
+lint zero errors; stable-key APK signature verification; Firebase confirmed both
+release upload and tester distribution. The previously blocked `NcnNationalTest`
+(two tests) and `NcnUiTest` (one test) ran successfully against the published
+national database. Prior 322 NCN Python tests, national database readback and five
+publication invariant tests passed. See [integration details](ncn-national-integration.md)
+for hashes, provenance, accounting, test boundaries and remaining limitations.
 
-**Publication authentication verified:** the original Hosting secret works in
-Actions. Runs [39327313703](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327313703)
-and [39327496695](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39327496695)
-confirm the existing identity, live Hosting version and 18,155 preserved files.
-Original successful migration run: 38740224136 (`f43a8686`); its input was an
-existing GitHub Release APK, while full deployments staged repository files.
-No new Firebase login, project, account or key is needed.
+**Catalogue already live:** publication
+[run 39330952075](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39330952075)
+verified preview/live serving on existing Hosting site
+`https://roadprints-data-822cc.web.app/`, preserving all 18,155 prior files.
+The private Drive transfer and existing Firebase authentication both succeeded.
+There is no outstanding transfer/authentication blocker. Do not regenerate,
+re-upload, or republish the catalogue without evidence of a genuine defect.
+The first packaging attempt used an older reusable workflow; the corrected
+`package-existing` run reused the live catalogue, prepared checksum-verified
+national test data and completed the full signed release without republishing.
 
-**Actual blocker is input transport:** the prepared NCN payload is local/saved in
-ChatGPT, not available to the Actions runner. The configured Storage bucket's
-permission endpoint returned HTTP 404; no bucket or IAM setup was introduced.
-Minimum missing input is an authorised HTTPS location for the prepared
-`catalogue.db.gz`. `infra/ncn-publication` preserves a working credential check
-and extends publication to optional full-test/signed-beta packaging after verified
-live serving. The main implementation remains draft PR #207. No more national
-GitHub binary uploads. Checkpoint `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a`
-and its 71 confirmed parts remain intact. **0.25.207 (253) is reserved, not built.**
-See the integration document for exact original transport/authentication and
-publication/rollback instructions. Full national tests and real-device acceptance
-remain pending.
+Catalogue delivery uses a small versioned manifest, immutable compressed SQLite,
+compressed/decoded SHA-256 checks, resumable download and atomic offline cache
+with prior-generation fallback. Catalogue-only updates require no APK. First use
+downloads about 136 MiB; offline use requires a previously downloaded catalogue.
+Rollback is a higher manifest revision referencing retained immutable data;
+automated fallback/rollback invariants passed, but live rollback was not exercised.
 
-**Latest concrete handoff gate:** private Google Drive transport is prepared for
-Adam Bird's connected `adamdbird@googlemail.com` account and reader-only sharing
-with `roadprints-hosting@roadprints-822cc.iam.gserviceaccount.com`. Probe run
-39328900628 returns **403: Drive API disabled**; owner must click **Enable** at
-`https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=138967660563`.
-Automatic approval review also blocked the Drive upload pending explicit approval
-for that account/payload. **Nothing was uploaded or shared.** Stop transport retries.
-After owner approval/API activation, upload the preserved `catalogue.db.gz`, share
-reader access only to that identity, set the publication request `drive_file_id`,
-then verify Hosting, execute both national classes/full suite and package one beta.
-No manual file upload is needed if the connector action is approved.
+**Scope and acceptance:** 219 supported identities / 62,399 unique source ways;
+218 measurable open-main targets. NCN228 remains browseable but unmeasurable,
+34 held identities stay excluded, and Named routes have an explicit empty group.
+No planned/unopened sections or unsupported connectors are admitted. Driving
+earns no NCN credit; walking/running/cycling and unique physical-network coverage
+are covered by automated tests. New achievements remain deferred to #193.
+The original 71-object checkpoint `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a`
+is preserved; national binaries remain outside the release Git tree.
 
-## Latest delivery — Urgent Beta 1 corrective release (#201)
+Focused motorway/A-road/NCN summaries use rounded **white tracks** with blue,
+green and purple fills respectively. Full reference geometry (recorded geometry
+only for B/local) drives fit after layout; zoom, loading/error/Retry, shared
+journey cards and B/local Recorded sections presentation are retained.
+
+**Ready for real-device acceptance; not device-accepted.** Install over the
+existing app without clearing data. Verify cold/warm main-map readiness,
+Filter/Reset/Retry, retained tabs, M/A white tracks and complete fit, B/local
+recorded-section fit and journey counts, NCN first-download/resume/offline,
+purple/grey-dashed overlay, mode filters, section journeys and return context.
+Realistic-history assessment latency/memory, gestures and Android device visual
+contrast remain unverified. Follow the original 33-check acceptance list.
+
+## Previous delivery — Urgent Beta 1 corrective release (#201)
 
 **Released 0.25.206 (252)** on 19 October 2026. [Install corrective 206](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/0hi0t0j0s2d18). PR [#205](https://github.com/adamdbird-gfc/uk-road-tracker/pull/205), based directly on 205's application/release ancestry `04c4287a8a20b1cb9a40ce2993bd7e4a15df4fb9`. **205 failed real-device acceptance** (repeated initial-map timeout, incorrect chart track, B2008 UK-wide view); its prior automated green result did not prove those behaviours. This corrective slice supersedes the broader refinement brief. No NCN or unrelated UI development.
 
@@ -90,7 +93,7 @@ Install over 205 without clearing data. Verify cold All map loading (allow a lar
 
 **Ready for real-device acceptance, not yet device-accepted.** There is no attached phone/emulator; native JVM rendering and actual bundled-reference tests do not prove Android 16/17 behaviour on the original archive. A truly stalled or exceptionally slow request still errors after 120 seconds with recovery controls; uninterruptible work cannot be forcibly terminated. Existing B/local full-road metrics and section-tap limitations and the documented legacy settlement-return recomputation limitation are unchanged. No journey archive, tracking state, matching/rematching, collection, achievement or permanent coverage data is migrated/deleted. A1 and A1(M) remain separate.
 
-NCN remains paused. After this APK passes acceptance, use this released application lineage and the existing #79/#190–#194/PR #172 and catalogue-data handover below; no NCN audit, implementation or publication occurred here.
+Historical scope of corrective 206: NCN was paused during that slice. The coordinated NCN beta above now resumes from this released application lineage.
 
 
 ## Previous delivery — 205 failed device acceptance (#201)

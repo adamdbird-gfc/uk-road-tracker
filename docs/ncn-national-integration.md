@@ -1,4 +1,4 @@
-# National NCN Android integration — 19 October 2026
+# National NCN Android integration — delivered 20 October 2026
 
 Branch `integration/ncn-firebase-beta`, starting at released 0.25.206 lineage
 `7bc10f4a` (contains exact corrective source `452258f6`). No old app branch was
@@ -60,7 +60,7 @@ hashes, node pairs and route targets; startup does not parse the full network.
   the prior assets. The publisher records the source Hosting version for emergency
   server rollback; higher-revision catalogue rollback also reaches cached clients.
 
-### Publication workflow and current blocker
+### Established publication workflow
 
 `scripts/publish_ncn_reference.py` follows the existing county publisher: use
 `FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON`, assert the exact project/site, clone the
@@ -73,7 +73,7 @@ with the existing `firebase-reference-publication` group. It takes an authorised
 HTTPS payload location; the payload must match the committed manifest before any
 credentialed publication step. Do not commit staging URLs or credentials.
 
-The local payload has been checked, **not published**:
+The prepared payload was verified and published (confirmed run and URLs below):
 
 - Database: 243,724,288 bytes;
   SHA-256 `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093`.
@@ -109,60 +109,52 @@ the original county asset. The identity fingerprint is
 No key, bearer token, new account/project or new authentication design was exported.
 Verification script/workflow are preserved on `infra/ncn-publication`.
 
-The **payload transport** remains unavailable: the prepared NCN file is local
-and saved in ChatGPT, while the original runner obtained bytes from repository
-checkouts/an existing APK. A private ChatGPT file link is not an Actions-readable
-source. The configured Storage bucket `roadprints-822cc.firebasestorage.app`
-returned **HTTP 404** to the existing identity's permission query; it is not a
-verified staging bucket and no bucket/IAM changes were made. Existing map assets
-are on Hosting, which is available. Do not ask for a new Firebase connection.
+### Confirmed publication and packaging
 
-**Minimum missing action:** supply an authorised HTTPS download location for
-`catalogue.db.gz` from the preserved publication bundle (it must match the manifest
-pins). The existing NCN workflow consumes that URL and uses the proven Hosting
-secret; it does not need a replacement credential. It reads the URL from the event
-file rather than printing it in environment logs. Optional `package_beta=true`
-with `promote=true` then calls the established signed packaging/distribution
-workflow, pinned to the selected source SHA, which runs the complete Android
-suite including the two national classes. For catalogue-only updates leave
-`package_beta=false`. A small push request on `infra/ncn-publication` can use
-`{"action":"publish","asset_url":"<public HTTPS URL>","promote":true,"package_beta":true}`
-in `.github/ncn-reference/request.json`, following the original migration's
-push-triggered pattern. Never put signed/query URLs in that request; manual
-dispatch reads those inputs without printing them. No publication, full national execution or APK success is
-claimed until that input is available and the serving/build gates pass.
+The payload transport and authentication blockers are resolved. The owner uploaded
+the prepared catalogue to private Drive file
+`1S9WjK0KUQX-XjUclgO92uter9Wvl3gbX`, authorised reader access only to
+`roadprints-hosting@roadprints-822cc.iam.gserviceaccount.com`, and enabled the
+Drive API. The Actions runner downloaded it using the existing Hosting service
+account, checked its pinned bytes and published through the established Hosting
+clone/add mechanism. No new cloud account, project, credential or public Drive
+share was introduced. Earlier 403/API and transport notes are historical.
 
-### Private Drive handoff — concrete permission gate (19 October)
+[Publication run 39330952075](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39330952075),
+source `dda0aecc71a5e40ff501a32831b43440d559ebb4`, recorded
+`live_verified`, preserved all **18,155 existing files** and promoted version
+`sites/roadprints-data-822cc/versions/758e86605707677e`.
+Prior Hosting version `sites/roadprints-data-822cc/versions/ffae619efea48f69`
+was recorded for recovery.
 
-The available GitHub connector can download existing artifacts but cannot upload
-new release assets/workflow artifacts from this workspace. The original APK source
-does not contain the prepared national catalogue. No large binary was uploaded to Git.
+- [Live manifest](https://roadprints-data-822cc.web.app/collections/published/ncn/manifest-v2.json).
+- [Immutable catalogue](https://roadprints-data-822cc.web.app/collections/published/ncn/973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093/catalogue.db.gz).
+- Decoded database: **243,724,288 bytes**;
+  SHA-256 `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093`.
+- Compressed catalogue: **142,796,162 bytes**;
+  SHA-256 `91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91`.
 
-The connected Google Drive account is Adam Bird's `adamdbird@googlemail.com`.
-A private file shared as **reader** only with the existing deployment identity
-`roadprints-hosting@roadprints-822cc.iam.gserviceaccount.com` can supply Actions
-without public staging. `download_ncn_drive_reference.py` uses the same secret,
-requests a Drive read-only token, checks the file size and streamed SHA-256, then
-hands the verified gzip to the unchanged Hosting publisher. No new cloud identity,
-project, public share or replacement credential. Requests accept a non-secret
-`drive_file_id` instead of `asset_url`. Optional beta packaging remains gated on
-verified live publication and runs the complete Android suite.
+The first packaging job called an older reusable definition lacking national-data
+preparation. It failed tests and did not distribute. The corrected publisher
+workflow pins `build-android-prototype.yml@dda0aecc71a5e40ff501a32831b43440d559ebb4`.
+The `package-existing` request then skipped publication, retrieved the live
+immutable reference, verified compressed/decoded hashes and SQLite, exported
+`NCN_TEST_DATABASE`, and ran the complete suite. Never bypass these gates with
+offline-only exclusions when packaging.
 
-[Probe run 39328900628](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39328900628)
-confirmed **HTTP 403: Google Drive API is disabled** in project `138967660563`
-(`roadprints-822cc`). The exact activation link supplied by Google is
-`https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=138967660563`.
-The owner must open it, confirm Roadprints, and click **Enable**.
+**Released 0.25.207 (253)** from exact source
+`02ddf96aba6c403e2e88eab0d764feb61ef27ec4`.
+[Run 39331303438](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438) completed tests, lint, signed APK assembly
+and Firebase App Distribution successfully, including tester distribution.
+[Install release](https://appdistribution.firebase.google.com/testerapps/1:138967660563:android:d6ff13ee7ab7b7353ba7e6/releases/7hem35tolspl8).
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438/artifacts/12224797445);
+[reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39331303438/artifacts/12223649168).
+No repeat build or catalogue publication was needed on 20 October.
 
-Automatic approval review separately rejected the attempted private Drive upload:
-explicit approval for this payload in that Drive account was missing. **No file
-was uploaded; no Drive file ID or share exists.** Do not retry via a workaround.
-Ask Adam to authorise uploading `catalogue.db.gz` temporarily to that account and
-grant reader access only to the named existing deployment identity. Once approved,
-the connector can perform the upload/share, so Adam need not manually upload a file.
-The preserved bundle remains unchanged. Stop additional transport experiments
-until these two gates are resolved. No publication, national test execution or
-APK build occurred in this handoff slice.
+Application identity remains `com.roadprints.capture`, using the established
+stable signing identity. Verified certificate SHA-256:
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+Install over the existing app; do not clear user data.
 
 Original remote checkpoint `integration/ncn-national-beta` at
 `2ee1031218665ea50acd98fb38c7c3e4ae25ba6a` preserves the first 71 confirmed parts.
@@ -221,32 +213,40 @@ stable archive revision/activation epoch. Explicit Retry resumes failed work.
 
 | Checks | Status |
 |---|---|
-| 322 inherited Python NCN tests | Passed again after Firebase delivery changes. |
+| 322 inherited Python NCN tests | Passed after Firebase delivery changes. |
 | National database readback | Passed: identity/source counts, 34 holds, 218 measurable routes, all 335,007 measured target mappings, 333,497 unique network edges. |
 | 5 external-reference/publisher invariant tests | Passed: manifest bounds, monotonic rollback, preservation, config rules, corruption. |
-| Android Java syntax and Python compilation; git whitespace | Passed; syntax parsing is not Java type compilation. |
-| Android compilation | Passed at `c810937e` in CI run [39325561947](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39325561947). |
-| Lint / offline Robolectric regressions | Passed in run 39325561947 after correcting four orientation constants. Includes existing app regressions, trial eligibility/union tests, NCN geometry and new offline/corrupt-cache tests. |
-| National Robolectric tests | `NcnNationalTest` and `NcnUiTest` compiled but excluded from the offline run; not executed. The immutable reference download returned HTTP 404. |
-| Firebase preview serving/integrity/rollback and project capacity | Not verified; blocked on authenticated publication/payload transport. Run 39325561947 explicitly fails the serving gate (HTTP 404); the overall check is not green. |
-| APK 0.25.207 (253) | Version reserved in source only; no successful build or distribution yet. |
-| Real-device acceptance | Not performed. |
+| Public reference serving and integrity | Passed in publication and corrected packaging; existing Hosting files preserved. No regeneration or republication on resumption. |
+| Full Android regression suite | **677 tests; zero failures, errors or skips**, run 39331303438. Includes existing map/filter/reset/retry/navigation/edit/collection/achievement regressions. |
+| Previously blocked national classes | **NcnNationalTest: 2 passed; NcnUiTest: 1 passed**, using the verified national SQLite reference. |
+| Additional NCN Android classes | NcnAndroidTest: 11; NcnCatalogueFilesTest: 4; NcnGeometryTest: 3, all passed. |
+| Lint | Zero errors in corrected full packaging run. |
+| Signed APK and app identity | Passed established stable-key verification; com.roadprints.capture, 0.25.207 (253). |
+| Firebase App Distribution | Release 7hem35tolspl8 uploaded and distributed successfully to established testers. |
+| Offline fallback / rollback | Automated cache corruption, fallback and monotonic manifest invariants passed; production live rollback not exercised. |
+| Real-device acceptance | **Not performed.** No claim of device, realistic-history memory or latency acceptance. |
 
-The existing Android checks/package workflows download the immutable NCN pin into
-an ignored CI directory via `prepare_ncn_reference.py`, verify hashes/SQLite,
-export `NCN_TEST_DATABASE` for Robolectric and run national readback. The payload
-is **not** copied into APK assets. Missing/corrupt reference makes checks fail
-explicitly. Compilation/lint run before that gate; on serving failure, the
-`ncnOfflineChecks=true` property runs every offline regression while excluding
-only the two national-data classes. Packaging never uses that property and must
-pass the complete suite. After publication, run integrated unit tests/lint, then one coordinated
-APK through the existing pinned release-request/Firebase App Distribution flow.
+National golden tests cover eligible modes, repeated/mixed-mode physical unions,
+vehicle exclusion, conservative evidence, edit/delete checkpoint invalidation and
+resumption. UI tests cover grouped search/mode navigation and overlay camera
+retention. They do not substitute for real Android gestures, visual acceptance,
+actual archive processing time or large-history memory measurements.
 
-Device acceptance must cover all 33 checks in the development brief. Checks 1–10
-have shared UI/fit/loading regressions and new NCN geometry tests in the JVM suite,
-but gestures, pixel contrast and Retry must also be checked on device. Checks
-11–26 have data/matcher/ledger/UI/cache tests, with live overlay, section taps,
-large-history resume and retained navigation still requiring device validation.
-Checks 27–33 retain the main-map/filter/editing/collection regression tests;
-realistic-history memory, latency, tab switching and process restart are unverified.
-No source or JVM check substitutes for device acceptance.
+Shared Progress road detail retains opaque rounded white tracks with motorway blue
+and A-road green fills; focused NCN uses purple. Underlying estimated unique
+travelled distance, reference total and percentages are unchanged. Fit uses covered
+plus remaining geometry after layout, including disconnected sections; B/local
+fit recorded sections only. Zoom controls, skeleton/spinner, bounded loading,
+Retry/error/Close, shared contributing-journey cards and section-specific eligible
+NCN journey selection remain. B/local omit unsupported totals/percentages and
+display Recorded sections plus counted VIEW JOURNEYS; B/local section tapping
+remains deferred and is not promised.
+
+Device acceptance must cover all 33 checks in the development brief. Check cold/
+warm main-map readiness and recovery, Filter/Reset/Retry and retained tabs; M/A
+white tracks, full reference fit, zoom and journey navigation; B/local recorded
+fit and accurate counts; national first download/resume/offline, purple and grey
+dashed overlay, eligible mode progress and driving exclusion, section journeys
+and preserved mode/group/search/scroll context. Realistic-history assessment,
+edit/delete/import refresh, process restart, memory and latency remain device
+acceptance work. No new achievements or milepost mechanics are included.

@@ -45,7 +45,7 @@ jobs:
           import json,os
           request=json.load(open('.github/ncn-reference/request.json'))
           action=request['action']
-          if action not in ('verify-existing-access','publish'):raise ValueError('Unknown publication action')
+          if action not in ('verify-existing-access','publish','package-existing'):raise ValueError('Unknown publication action')
           with open(os.environ['GITHUB_OUTPUT'],'a') as target:target.write('action='+action+'\n')
           PYTHON
       - name: Check Drive API availability for the existing deployment identity
@@ -137,9 +137,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
   beta:
-    needs: publish
-    if: needs.publish.outputs.promote == 'true' && needs.publish.outputs.package_beta == 'true'
-    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    needs: [verify-existing-access, publish]
+    if: always() && ((needs.publish.result == 'success' && needs.publish.outputs.promote == 'true' && needs.publish.outputs.package_beta == 'true') || (needs.verify-existing-access.result == 'success' && needs.verify-existing-access.outputs.action == 'package-existing'))
+    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@dda0aecc71a5e40ff501a32831b43440d559ebb4
     with:
       source_ref: ${{ github.sha }}
       firebase_upload: true
