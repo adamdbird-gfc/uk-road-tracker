@@ -422,6 +422,19 @@ public final class JourneyStore {
         }
     }
 
+    /** NCN uses only recorded matched geometry/provenance; never upgrades captures. */
+    static void forEachNcnEvidence(Context context,java.util.function.BooleanSupplier cancelled,JourneyVisitor visitor)throws Exception{
+        migrateLegacy(context);for(File file:archiveFiles(context)){
+            if(cancelled.getAsBoolean())throw new java.util.concurrent.CancellationException();JSONObject journey=new JSONObject();
+            try(JsonReader reader=new JsonReader(new InputStreamReader(new FileInputStream(file),StandardCharsets.UTF_8))){
+                reader.beginObject();while(reader.hasNext()){String key=reader.nextName();
+                    if(key.equals("processing_result")&&reader.peek()==JsonToken.BEGIN_OBJECT){JSONObject result=new JSONObject();reader.beginObject();while(reader.hasNext()){String field=reader.nextName();if(field.equals("geojson")||field.equals("road_geojson")||field.equals("matcher")||field.equals("matching_mode")||field.equals("matched_path_evidence")||field.equals("cycling_path_evidence"))result.put(field,readEvidenceValue(reader));else reader.skipValue();}reader.endObject();journey.put(key,result);}
+                    else if(key.equals("journey_id")||key.equals("title")||key.equals("name")||key.equals("mode")||key.equals("processing_status")||key.equals("started_at")||key.equals("ended_at")||key.equals("distance_meters")||key.equals("gps_point_count")||key.equals("source")||key.equals("journey_corrections"))journey.put(key,readEvidenceValue(reader));else reader.skipValue();
+                }reader.endObject();
+            }visitor.visit(journey);
+        }
+    }
+
     static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
         migrateLegacy(context);
@@ -773,6 +786,7 @@ public final class JourneyStore {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         preferences.edit().putLong(DATA_REVISION,
                 preferences.getLong(DATA_REVISION, 0L) + 1L).apply();
+        NcnProgressStore.changed(context);
     }
 
     private static JSONObject read(File file) {

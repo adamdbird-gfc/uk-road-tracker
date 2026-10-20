@@ -52,6 +52,9 @@ public class CollectionsActivity extends Activity {
     private void render() {
         body.removeAllViews();
         summary.setText("Choose the collections you want to explore. Beta access is free.");
+        LinearLayout ncn=panel();ncn.addView(text("↗ National Cycle Network",20,Color.WHITE,true));ncn.addView(text("Verified-open sections across the UK. Walking, running and cycling only. One-time catalogue download about 136 MB; available offline afterwards.",14,MUTED,false));
+        if(!NcnProgressStore.enabled(this))addAction(ncn,"Enable NCN collection",()->{NcnProgressStore.activate(this,true);render();});
+        else {addAction(ncn,"Show on map",()->{CollectionAccessStore.select(this,CollectionAccessStore.NCN);startActivity(new Intent(this,MapActivity.class).putExtra("collection_id",CollectionAccessStore.NCN));});addAction(ncn,"View progress",()->startActivity(new Intent(this,ProgressActivity.class).putExtra("progress_section","ncn")));addAction(ncn,"Remove collection",()->{NcnProgressStore.activate(this,false);render();});}body.addView(ncn);
         for(VenueCollection.Definition collection:VenueCollection.all())addCollection(collection.id,collection.description,collection.siteStop?R.drawable.ic_roadprints_fuel:R.drawable.ic_nav_collections);
     }
 

@@ -15,8 +15,8 @@ android {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 252
-        versionName = "0.25.206"
+        versionCode = 253
+        versionName = "0.25.207"
     }
 }
 
@@ -46,6 +46,10 @@ if (stableKeystore != null && stableStorePassword != null && stableKeyAlias != n
     android.buildTypes.getByName("debug") { signingConfig = android.signingConfigs.getByName("stableDebug") }
 }
 
-
-
-
+// A failed external serving gate still permits all offline regression tests.
+// Packaging never sets this property and always runs the complete suite.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    if (providers.gradleProperty("ncnOfflineChecks").orNull == "true") {
+        exclude("**/NcnNationalTest*", "**/NcnUiTest*")
+    }
+}

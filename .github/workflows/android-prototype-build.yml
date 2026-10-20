@@ -70,8 +70,21 @@ jobs:
       - name: Check service catalogue metadata
         run: python3 scripts/test_service_collection_metadata.py
 
-      - name: Run unit tests and lint
-        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest :app:lintDebug
+      - name: Compile Android and lint independently of reference publication
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:compileDebugJavaWithJavac :app:lintDebug
+
+      - name: Download and verify pinned external NCN test reference
+        id: ncn_reference
+        run: |
+          python3 scripts/prepare_ncn_reference.py
+          NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
+
+      - name: Run integrated unit tests with verified external reference
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest
+
+      - name: Run offline regression suite when NCN publication is unavailable
+        if: failure() && steps.ncn_reference.outcome == 'failure'
+        run: gradle --no-daemon --stacktrace -p android-prototype :app:testDebugUnitTest -PncnOfflineChecks=true
 
       - name: Upload failed-check reports
         if: failure()

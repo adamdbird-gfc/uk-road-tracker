@@ -7,10 +7,11 @@ import java.util.List;
 
 /** Installation and map preference only; never manufactures or removes visit evidence. */
 final class CollectionAccessStore {
-    static final String SERVICES="services", SPOONS="wetherspoons", NONE="none";
+    static final String SERVICES="services", SPOONS="wetherspoons", NCN="ncn", NONE="none";
     static final String PREFS="roadprints_collection_access_v1";
     private CollectionAccessStore() {}
     static String name(String id) {
+        if(NCN.equals(id))return "National Cycle Network";
         if(known(id))return VenueCollection.definition(id).name;
         return "None";
     }
@@ -20,6 +21,7 @@ final class CollectionAccessStore {
         return known(id)&&prefs(context).getBoolean(id+"_test_access",false);
     }
     static boolean installed(Context context,String id) {
+        if(NCN.equals(id))return NcnProgressStore.enabled(context);
         // Existing Services owners retain their current installation after upgrade.
         return entitled(context,id)&&prefs(context).getBoolean(id+"_installed",SERVICES.equals(id));
     }
@@ -44,6 +46,7 @@ final class CollectionAccessStore {
     }
     static String selected(Context context) {
         List<String> ids=installed(context);
+        if(NcnProgressStore.enabled(context))ids.add(NCN);
         if(ids.isEmpty())return NONE;
         String value=prefs(context).getString("map_collection",SERVICES);
         return NONE.equals(value)||ids.contains(value)?value:ids.get(0);
