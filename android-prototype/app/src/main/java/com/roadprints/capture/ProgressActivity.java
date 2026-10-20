@@ -1555,14 +1555,7 @@ public class ProgressActivity extends Activity {
     }
 
     private TextView aRoadBadge(String ref) {
-        TextView badge = new TextView(this);
-        badge.setText(ref);
-        badge.setTextColor(Color.WHITE);
-        badge.setTextSize(14);
-        badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setGravity(Gravity.CENTER);
-        badge.setBackground(roundRect(0xFF25834A, dp(6)));
-        return badge;
+        return RouteIdentifierBadge.create(this,ref,RoadCompletionBar.A_ROAD);
     }
 
     private void addARoadAggregatePanel(LinearLayout parent, DistanceStats stats) {
@@ -1634,15 +1627,8 @@ public class ProgressActivity extends Activity {
     }
 
     private TextView motorwayBadge(MotorwayProgressCalculator.Road road) {
-        TextView badge = new TextView(this);
-        badge.setText("NI".equals(road.region) ? road.ref + " · NI" : road.ref);
-        badge.setTextColor(Color.WHITE);
-        badge.setTextSize(12);
-        badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setGravity(Gravity.CENTER);
-        badge.setPadding(dp(5), dp(4), dp(5), dp(4));
-        badge.setBackground(signBadge());
-        return badge;
+        TextView badge=RouteIdentifierBadge.create(this,"NI".equals(road.region)?road.ref+" · NI":road.ref,RoadCompletionBar.MOTORWAY);
+        badge.setTextSize(12);return badge;
     }
 
     private android.graphics.drawable.GradientDrawable signBadge() {

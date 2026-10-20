@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.208",
-  "version_code": 254,
-  "reason": "NCN UI correction; private artifact only; no tester distribution",
-  "revision": 2
+  "version_name": "0.25.209",
+  "version_code": 255,
+  "reason": "Compact route badges and shared NCN collection search/filter controls; private artifact only",
+  "revision": 3
 }

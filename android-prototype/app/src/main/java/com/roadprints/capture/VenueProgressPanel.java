@@ -56,12 +56,10 @@ final class VenueProgressPanel {
 
             TextView searchLabel=text(activity,"FIND A "+definition.singular.toUpperCase(java.util.Locale.ROOT),11,TEAL,true);
             searchLabel.setPadding(0,dp(activity,16),0,dp(activity,6));panel.addView(searchLabel);
-            android.widget.EditText search=new android.widget.EditText(activity);search.setSingleLine(true);
-            search.setHint(CollectionAccessStore.SPOONS.equals(collection)?"Search name, town or postcode":"Search name, road or postcode");
-            search.setTextSize(14);search.setTextColor(0xFF0B1C50);search.setHintTextColor(0xFF506080);
-            search.setBackground(background(activity,Color.WHITE,TEAL));search.setPadding(dp(activity,12),dp(activity,10),dp(activity,12),dp(activity,10));
-            search.setMinHeight(dp(activity,48));search.setTag("venue_search:"+collection);
-            search.setContentDescription(search.getHint());panel.addView(search,new LinearLayout.LayoutParams(-1,-2));
+            android.widget.EditText search=searchField(activity,
+                    CollectionAccessStore.SPOONS.equals(collection)?"Search name, town or postcode":"Search name, road or postcode",
+                    "venue_search:"+collection);
+            panel.addView(search,new LinearLayout.LayoutParams(-1,-2));
             LinearLayout filters=new LinearLayout(activity),results=new LinearLayout(activity);results.setOrientation(LinearLayout.VERTICAL);
             results.setTag("venue_results:"+collection);
             String[] selected={"All"};List<Button> choices=new ArrayList<>();
@@ -157,17 +155,23 @@ final class VenueProgressPanel {
     private static GradientDrawable background(Activity activity,int colour,int border){
         GradientDrawable bg=new GradientDrawable();bg.setColor(colour);bg.setCornerRadius(dp(activity,8));bg.setStroke(dp(activity,1),border);return bg;
     }
-    private static void addCompactButton(Activity activity,LinearLayout row,Button button,int gap){
+    static android.widget.EditText searchField(Activity activity,String hint,String tag){
+        android.widget.EditText search=new android.widget.EditText(activity);search.setSingleLine(true);
+        search.setHint(hint);search.setTextSize(14);search.setTextColor(0xFF0B1C50);search.setHintTextColor(0xFF506080);
+        search.setBackground(background(activity,Color.WHITE,TEAL));search.setPadding(dp(activity,12),dp(activity,10),dp(activity,12),dp(activity,10));
+        search.setMinHeight(dp(activity,48));search.setTag(tag);search.setContentDescription(hint);return search;
+    }
+    static void addCompactButton(Activity activity,LinearLayout row,Button button,int gap){
         LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(0,dp(activity,48),1);
         params.setMargins(dp(activity,gap),dp(activity,8),0,dp(activity,4));row.addView(button,params);
     }
-    private static void styleFilter(Activity activity,Button button,boolean selected){
+    static void styleFilter(Activity activity,Button button,boolean selected){
         button.setSelected(selected);button.setTextColor(selected?0xFF0B1C50:Color.WHITE);
         button.setTypeface(null,selected?Typeface.BOLD:Typeface.NORMAL);
         button.setBackground(background(activity,selected?GOLD:0xFF142B5C,selected?GOLD:0xFF57709C));
         button.setContentDescription(button.getText()+(selected?", selected":", not selected"));
     }
-    private static Button button(Activity activity,String title){
+    static Button button(Activity activity,String title){
         Button button=new Button(activity);button.setText(title);button.setAllCaps(false);button.setTextSize(12);button.setTextColor(TEAL);
         button.setMinHeight(0);button.setMinimumHeight(0);button.setMinWidth(0);button.setMinimumWidth(0);
         button.setPadding(dp(activity,6),0,dp(activity,6),0);button.setBackground(background(activity,0xFF142B5C,0xFF57709C));return button;

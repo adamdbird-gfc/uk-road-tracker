@@ -50,4 +50,13 @@ public class NcnPresentationTest {
   close.performClick();assertFalse(dialog.isShowing());controller.destroy();
  }
 
+ @Test public void focusedIdentifiersShareRoadBadgeDimensionsAndColors(){
+  Context c=RuntimeEnvironment.getApplication();String[] names={"M20","A12","NCN 344"};int[] colors={RoadCompletionBar.MOTORWAY,RoadCompletionBar.A_ROAD,NcnProgressUi.PURPLE};float density=c.getResources().getDisplayMetrics().density;
+  for(int i=0;i<names.length;i++){
+   CoverageSummary summary=new CoverageSummary(c,colors[i]);summary.bind(names[i],25,100,"Reference");TextView badge=summary.findViewWithTag("coverage_route_badge");
+   assertEquals(names[i],badge.getText().toString());assertEquals(Color.WHITE,badge.getCurrentTextColor());assertEquals(colors[i],((android.graphics.drawable.GradientDrawable)badge.getBackground()).getColor().getDefaultColor());
+   assertEquals(Math.round(78*density),badge.getLayoutParams().width);assertEquals(Math.round(32*density),badge.getLayoutParams().height);assertEquals(.25,summary.bar.fraction(),0);
+  }
+ }
+
 }

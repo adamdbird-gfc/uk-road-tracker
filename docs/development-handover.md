@@ -2,7 +2,26 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Latest private development delivery — NCN UI corrective APK
+## In progress — NCN row, badge and collection-control consistency
+
+Private corrective 0.25.209 (255), based on 0.25.208 (254) / PR #209. Reuses the
+78 × 32 dp road identifier badge in compact NCN rows and focused M/A/NCN summaries
+(blue/green/purple with white text). Main focused-map headings remain unchanged.
+NCN reuses the venue collection white/jade search field and selected/unselected
+48dp buttons. Search covers all groups, gives explicit empty results, restores
+browsing expansion on Clear and preserves query/mode on return. Activity changes
+update existing values/controls without rebuilding the search input. Remaining
+orange geometry, catalogue bytes, matching and coverage algorithms are untouched.
+
+Full national-data tests/lint/signed private packaging requested; no ready APK
+claimed until success. Existing approval-only beta distribution safeguards remain.
+No Firebase tester upload or notification is authorised for this correction.
+New regression checks cover compact badges, focused colours, combined search and
+all activity modes, group restoration, empty results, keyboard dismissal and
+return-state persistence. Real-device visual/keyboard/list performance review is
+still required; automated tests alone do not establish device acceptance.
+
+## Previous private development delivery — NCN UI corrective APK
 
 20 October device feedback authorises UI refinement and **private artifact-only**
 packaging. Version 0.25.208 (254), based on installed NCN beta 0.25.207 (253),
