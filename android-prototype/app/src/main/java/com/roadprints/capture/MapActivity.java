@@ -86,6 +86,7 @@ public class MapActivity extends Activity {
     private boolean recapLoading, replayPreparing, active;
     private Object ncnSnapshot;private String ncnMode;
     private int recapGeneration;
+    private final java.util.concurrent.ExecutorService recapIo = java.util.concurrent.Executors.newSingleThreadExecutor();
     private View recapCard;
     private TextView replayMessage;
     private List<JSONObject> recapJourneys = new ArrayList<>();
@@ -272,6 +273,7 @@ public class MapActivity extends Activity {
         hideMapLoading();
         mapLoadGeneration++;
         recapGeneration++;
+        recapIo.shutdownNow();
         super.onDestroy();
     }
 
@@ -366,7 +368,7 @@ public class MapActivity extends Activity {
         mapReady=ready;
         updateMapStatus();
         updateMapControls();
-        if(recapCard!=null)recapCard.setVisibility(ready||hasDisplayedMap?View.VISIBLE:View.GONE);
+        if(recapCard!=null)recapCard.setVisibility(View.VISIBLE);
     }
     private void updateMapStatus(){
         if(mapStatus==null)return;
@@ -426,10 +428,13 @@ public class MapActivity extends Activity {
             android.util.Log.i("RoadprintsTiming", "map_queue_ms="+(android.os.SystemClock.elapsedRealtime()-queuedAt));
             MapRoutes mapRoutes;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
+                long cacheStarted=android.os.SystemClock.elapsedRealtime();
                 JSONObject saved = selection.isAll()&&!skipDiskMapCache ? PersistentScreenCache.read(getApplicationContext(),
                         "map-routes", revision) : null;
                 try {mapRoutes = saved == null ? null : mapRoutesFromCache(saved);}
                 catch(Exception malformedCache){mapRoutes=null;}
+                PerformanceDiagnostics.timing("map_cache",android.os.SystemClock.elapsedRealtime()-cacheStarted,
+                        mapRoutes==null?"miss_or_bypass":"hit");
                 if (mapRoutes == null) {
                     mapRoutes = mapRouteLoader.load(this,selection, today, zone);
                     if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
@@ -716,24 +721,37 @@ public class MapActivity extends Activity {
             output.serviceStations = ServiceStationStore.stations(getApplicationContext());
             output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
         }
+        long initialiseStarted=android.os.SystemClock.elapsedRealtime();
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
+        PerformanceDiagnostics.timing("map_reference_init",android.os.SystemClock.elapsedRealtime()-initialiseStarted,"");
+        long evidenceStarted=android.os.SystemClock.elapsedRealtime();
+        long[] work=new long[3];int[] counts=new int[6];
         JourneyStore.forEachMapEvidence(getApplicationContext(), () -> isDestroyed() || Thread.currentThread().isInterrupted(), journey -> {
-            if (!selection.matches(journey, today, zone)) return;
-            if (!"complete".equals(journey.optString("processing_status", ""))) return;
+            counts[0]++;
+            long filterStarted=android.os.SystemClock.elapsedRealtime();
+            boolean selected=selection.matches(journey,today,zone);
+            work[0]+=android.os.SystemClock.elapsedRealtime()-filterStarted;
+            if(!selected){counts[1]++;return;}
+            if (!"complete".equals(journey.optString("processing_status", ""))) {counts[2]++;return;}
             String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
             boolean roadJourney = "driving".equals(mode) || "bus".equals(mode);
             boolean footJourney = "walking".equals(mode) || "running".equals(mode)
                     || "pedestrian".equals(mode);
-            if (!roadJourney && !footJourney && !MatchingCoordinator.isCycle(mode)) return;
+            if (!roadJourney && !footJourney && !MatchingCoordinator.isCycle(mode)) {counts[3]++;return;}
+            long coverageStarted=android.os.SystemClock.elapsedRealtime();
             motorwayCalculator.addJourney(journey);
             aRoadCalculator.addJourney(journey);
+            work[1]+=android.os.SystemClock.elapsedRealtime()-coverageStarted;
+            long geometryStarted=android.os.SystemClock.elapsedRealtime();
             // The main map represents matched travel along the road network. Raw GPS
             // traces can be sparse and make misleading point-to-point straight lines.
             List<JSONArray> matched = matchedSegments(journey);
             List<JSONArray> motorways = motorwaySegments(journey);
-            if (matched.isEmpty() && motorways.isEmpty()) return;
+            if (matched.isEmpty() && motorways.isEmpty()) {
+                work[2]+=android.os.SystemClock.elapsedRealtime()-geometryStarted;counts[4]++;return;
+            }
             for (JSONArray route : matched) {
                 if (output.retainedPoints >= MAX_MAP_POINTS
                         || output.sections.size() >= MAX_MAP_ROUTES) {
@@ -764,8 +782,15 @@ public class MapActivity extends Activity {
                     if (projected.length() < route.length()) output.simplified = true;
                 }
             }
-            output.matchedJourneys++;
+            output.matchedJourneys++;counts[5]++;
+            work[2]+=android.os.SystemClock.elapsedRealtime()-geometryStarted;
         });
+        long evidenceDuration=android.os.SystemClock.elapsedRealtime()-evidenceStarted;
+        PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2]),"projection_or_archive");
+        PerformanceDiagnostics.timing("map_filter",work[0],"total="+counts[0]+" filtered="+counts[1]+" unprocessed="+counts[2]+" hidden_mode="+counts[3]+" no_geometry="+counts[4]+" shown="+counts[5]);
+        PerformanceDiagnostics.timing("map_coverage_add",work[1],"");
+        PerformanceDiagnostics.timing("map_geometry",work[2],"");
+        long finishStarted=android.os.SystemClock.elapsedRealtime();
         MotorwayProgressCalculator.Summary summary = motorwayCalculator.finish();
         for (MotorwayProgressCalculator.Road road : summary.roads) {
             if (!road.referenceAvailable) continue;
@@ -784,6 +809,7 @@ public class MapActivity extends Activity {
             if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
+        PerformanceDiagnostics.timing("map_coverage_finish",android.os.SystemClock.elapsedRealtime()-finishStarted,"");
         return output;
     }
 
@@ -1814,8 +1840,14 @@ public class MapActivity extends Activity {
         recapLoading = true;
         int generation = ++recapGeneration;
         final long observedAt = System.currentTimeMillis();
-        ScreenDataLoader.execute(() -> {
+        recapIo.execute(() -> {
             try {
+                List<JSONObject> inbox = ReturnRecapStore.pending(getApplicationContext());
+                mainHandler.post(() -> {
+                    if (!active || isFinishing() || generation != recapGeneration || inbox.isEmpty()) return;
+                    recapJourneys = inbox;
+                    renderRecap();
+                });
                 List<JSONObject> rows = JourneyListActivity.preloadSummaries(getApplicationContext(), revision);
                 if (JourneyStore.dataRevision(getApplicationContext()) != revision) {
                     mainHandler.post(() -> { if (generation == recapGeneration) { recapLoading = false; if (active) refreshRecap(); } });
@@ -1860,7 +1892,6 @@ public class MapActivity extends Activity {
     }
 
     private void renderRecap() {
-        if (!mapReady&&!hasDisplayedMap) { if (recapCard != null) recapCard.setVisibility(View.GONE); return; }
         if (mapFrame == null || replayMessage != null) return;
         if (recapCard != null) mapFrame.removeView(recapCard);
         recapCard = null;
@@ -1920,6 +1951,7 @@ public class MapActivity extends Activity {
         params.setMargins(dp(12),dp(12),dp(12),dp(12));overlay.addView(scroll,params);
         mapFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));recapCard=overlay;
         recapVisible=true;updateMapControls();
+        PerformanceDiagnostics.timing("new_journeys_presented", 0, "count=" + shownIds.size());
     }
     private void dismissRecap(Set<String> shownIds) {
         ReturnRecapStore.dismiss(this,shownIds);recapGeneration++;recapLoading=false;recapRevision=Long.MIN_VALUE;

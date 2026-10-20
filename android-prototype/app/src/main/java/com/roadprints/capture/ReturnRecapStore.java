@@ -21,6 +21,7 @@ final class ReturnRecapStore {
         long previous = prefs.getLong("visited_at", now);
         Set<String> known = new HashSet<>(prefs.getStringSet("known_recordings", new HashSet<>()));
         Set<String> pending = new HashSet<>(prefs.getStringSet("pending", new HashSet<>()));
+        Set<String> acknowledged = new HashSet<>(prefs.getStringSet("acknowledged", new HashSet<>()));
         List<JSONObject> result = new ArrayList<>();
         Set<String> present = new HashSet<>();
         for (JSONObject journey : summaries) {
@@ -31,7 +32,7 @@ final class ReturnRecapStore {
             // Completion time can precede an early app visit: saving happens
             // asynchronously. Discover newly archived IDs, not a moving time window.
             boolean fresh = baseline ? legacy && ended > previous : !known.contains(id);
-            if (fresh) pending.add(id);
+            if (fresh && !acknowledged.contains(id)) pending.add(id);
             known.add(id);
             present.add(id);
             if (pending.contains(id)) result.add(journey);
@@ -42,11 +43,40 @@ final class ReturnRecapStore {
         return result;
     }
 
+    /** Enqueue only the first committed save of an actual recording, never an import/rematch. */
+    static synchronized void record(Context context, JSONObject journey) {
+        if (!isRecording(journey) || journey.optString("journey_id").isEmpty()) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Set<String> pending = new HashSet<>(prefs.getStringSet("pending", new HashSet<>()));
+        if (prefs.getStringSet("acknowledged", new HashSet<>()).contains(journey.optString("journey_id"))) return;
+        pending.add(journey.optString("journey_id"));
+        // Capture completion runs off the UI thread. Persist before broadcasting completion.
+        if (!prefs.edit().putStringSet("pending", pending).commit())
+            android.util.Log.w("RoadprintsTiming", "new_journeys_persist=failed");
+        PerformanceDiagnostics.timing("new_journeys_created", 0, "pending=" + pending.size());
+    }
+
+    /** Read just the durable inbox before any optional historical discovery scan. */
+    static synchronized List<JSONObject> pending(Context context) throws Exception {
+        List<JSONObject> rows = new ArrayList<>();
+        for (String id : context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getStringSet("pending", new HashSet<>())) {
+            if (id.contains("/") || id.contains("\\\\")) continue;
+            JSONObject row = JourneyStore.readSummary(new java.io.File(context.getFilesDir(), "journey_" + id + ".json"));
+            if (row != null) rows.add(row);
+        }
+        rows.sort((a,b) -> b.optString("ended_at").compareTo(a.optString("ended_at")));
+        return rows;
+    }
+
     static synchronized void dismiss(Context context, Set<String> ids) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         Set<String> pending = new HashSet<>(prefs.getStringSet("pending", new HashSet<>()));
         pending.removeAll(ids);
-        prefs.edit().putStringSet("pending", pending).apply();
+        Set<String> acknowledged = new HashSet<>(prefs.getStringSet("acknowledged", new HashSet<>()));
+        acknowledged.addAll(ids);
+        PerformanceDiagnostics.timing("new_journeys_acknowledged", 0, "count=" + ids.size());
+        prefs.edit().putStringSet("pending", pending).putStringSet("acknowledged", acknowledged).apply();
     }
 
     static boolean isRecording(JSONObject journey) {

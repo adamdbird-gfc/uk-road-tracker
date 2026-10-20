@@ -20,19 +20,39 @@ final class NcnLedger {
     private void prepare() throws Exception {
         if(index!=null)return;
         Map<String,Map<String,List<double[]>>> built=new HashMap<>();sourceIndex.clear();
+        // Union repeated source evidence before catalogue access. Commuting over the
+        // same way 1,000 times must decode its compressed path once, not 1,000 times.
+        Map<String,Map<String,List<double[]>>> raw=new HashMap<>();
         for(JSONObject activity:activities.values()) {
-            String mode=activity.getString("mode");if(!mode.equals("cycling")&&!mode.equals("on_foot"))continue;
+            String mode=activity.getString("mode");
+            if(!mode.equals("cycling")&&!mode.equals("on_foot"))continue;
             JSONArray spans=activity.getJSONArray("spans");
-            for(int i=0;i<spans.length();i++) {JSONArray s=spans.getJSONArray(i);
+            for(int i=0;i<spans.length();i++) {
                 if(Thread.currentThread().isInterrupted())throw new InterruptedException();
-                if(!catalogue.routes.get(s.getString(0)).optBoolean("measurable",true))continue;
-                for(NcnCatalogue.Path p:catalogue.way(s.getString(1)))if(p.route.equals(s.getString(0)))
+                JSONArray span=spans.getJSONArray(i);
+                String route=span.getString(0);
+                JSONObject definition=catalogue.routes.get(route);
+                if(definition==null||!definition.optBoolean("measurable",true))continue;
+                String key=route+"/"+span.getString(1);
+                raw.computeIfAbsent(key,k->new HashMap<>()).computeIfAbsent(mode,k->new ArrayList<>())
+                        .add(new double[]{span.getDouble(2),span.getDouble(3)});
+            }
+        }
+        for(Map.Entry<String,Map<String,List<double[]>>> entry:raw.entrySet()) {
+            int split=entry.getKey().indexOf('/');
+            String route=entry.getKey().substring(0,split),way=entry.getKey().substring(split+1);
+            List<NcnCatalogue.Path> paths=catalogue.way(way);
+            for(Map.Entry<String,List<double[]>> modeEntry:entry.getValue().entrySet()) {
+                String mode=modeEntry.getKey();
+                for(double[] span:merge(modeEntry.getValue()))for(NcnCatalogue.Path p:paths)if(p.route.equals(route))
                     for(int j=0;j<p.bindings.length();j++) {
                         JSONObject b=p.bindings.getJSONObject(j);if(!has(b.getJSONArray("modes"),mode))continue;
-                        double first=b.getDouble("start"),last=b.getDouble("end"),a=Math.max(first,s.getDouble(2)),z=Math.min(last,s.getDouble(3));if(z<=a)continue;
+                        double first=b.getDouble("start"),last=b.getDouble("end");
+                        double a=Math.max(first,span[0]),z=Math.min(last,span[1]);if(z<=a)continue;
                         sourceIndex.computeIfAbsent(mode+"/"+p.route+"/"+p.way,k->new ArrayList<>()).add(new double[]{a,z});
                         sourceIndex.computeIfAbsent("combined/"+p.route+"/"+p.way,k->new ArrayList<>()).add(new double[]{a,z});
-                        double low=b.getDouble("low"),high=b.getDouble("high");double[] interval={low+(a-first)/(last-first)*(high-low),low+(z-first)/(last-first)*(high-low)};
+                        double low=b.getDouble("low"),high=b.getDouble("high");
+                        double[] interval={low+(a-first)/(last-first)*(high-low),low+(z-first)/(last-first)*(high-low)};
                         String key=p.route+"/"+b.getString("target");
                         add(built,mode,key,interval);add(built,"combined",key,interval);
                     }

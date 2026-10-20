@@ -15,6 +15,10 @@ final class PersistentScreenCache {
     private PersistentScreenCache() {}
 
     static JSONObject read(Context context, String key, long revision) {
+        if ("map-routes".equals(key)) {
+            JSONObject compressed=MapSnapshotCache.read(context,revision);
+            if(compressed!=null)return compressed;
+        }
         File file = file(context, key);
         if (!file.isFile() || file.length() > 12L * 1024L * 1024L) return null;
         try (FileInputStream input = new FileInputStream(file)) {
@@ -33,6 +37,7 @@ final class PersistentScreenCache {
 
     static void write(Context context, String key, long revision, JSONObject data) {
         if (data == null) return;
+        if ("map-routes".equals(key)) {MapSnapshotCache.write(context,revision,data);return;}
         File target = file(context, key);
         File temporary = new File(target.getParentFile(), target.getName() + ".tmp");
         File parent = target.getParentFile();
