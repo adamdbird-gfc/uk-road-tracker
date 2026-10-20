@@ -1,4 +1,4 @@
-name: Package Roadprints test APK
+name: Package private Roadprints development APK
 
 on:
   workflow_dispatch:
