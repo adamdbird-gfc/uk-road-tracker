@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.213",
+      "version_code": 259,
+      "release_date": "2026-10-21",
+      "since": "0.25.212",
+      "changes": [
+        {
+          "title": "Ferry evidence and recovery",
+          "description": "Conservative Dover\u2013Calais ferry transitions, preserved recording and explicit split/restore review. Missing ferry GPS is never invented."
+        },
+        {
+          "title": "Transport and matching reliability",
+          "description": "Unhinted vehicle-speed movement stays Unknown; bounded matching retries and distance-integrity diagnostics preserve your original GPS evidence."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.212",
       "version_code": 258,
       "release_date": "2026-10-20",

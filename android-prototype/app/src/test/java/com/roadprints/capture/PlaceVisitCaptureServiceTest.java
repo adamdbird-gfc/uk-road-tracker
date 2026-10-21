@@ -97,7 +97,7 @@ public class PlaceVisitCaptureServiceTest {
         assertNull(PlaceAnchorStore.last(service));assertFalse(CaptureService.isActive(service));
     }
     @Test public void sparseRunningLapsWithinCampusStartAtFirstMeasuredMovement()throws Exception {
-        establish(true);List<Location> run=new ArrayList<>();
+        establish(true);field("visitActivityHint").set(service,"running");field("visitActivityHintAt").setLong(service,time);List<Location> run=new ArrayList<>();
         for(int i=0;i<13&&!CaptureService.isActive(service);i++) {
             Location p=fix(100*Math.cos(i*Math.PI/6),100*Math.sin(i*Math.PI/6),2.7f,60);run.add(p);observe(p);
         }
@@ -105,8 +105,13 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals(run.get(0).getTime(),points("points").get(0).getTime());
         assertEquals(run.size(),points("points").size());
     }
+    @Test public void expiredBicycleHintDoesNotClassifySlowCoachAsCycling()throws Exception {
+        establish(true);field("visitActivityHint").set(service,"cycling");field("visitActivityHintAt").setLong(service,time-1_200_000L);
+        for(int i=0;i<11&&!CaptureService.isActive(service);i++)observe(fix(i*45,0,5,30));
+        assertTrue(CaptureService.isActive(service));assertEquals("unknown",field("mode").get(service));
+    }
     @Test public void cyclingDepartureRetainsModeAndInitialPoints()throws Exception {
-        establish(false);field("visitActivityHint").set(service,"cycling");
+        establish(false);field("visitActivityHint").set(service,"cycling");field("visitActivityHintAt").setLong(service,time);
         Location first=null;
         for(int i=0;i<8&&!CaptureService.isActive(service);i++){Location p=fix(i*120,0,4,30);if(first==null)first=p;observe(p);}
         assertTrue(CaptureService.isActive(service));assertEquals("cycling",field("mode").get(service));

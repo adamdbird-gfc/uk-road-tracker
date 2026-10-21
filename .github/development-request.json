@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.212",
-  "version_code": 258,
-  "reason": "P0 map compact evidence and reusable exact road coverage, stale snapshot preflight, metadata-stable NCN and batched map fitting; private owner APK only",
-  "revision": 7
+  "version_name": "0.25.213",
+  "version_code": 259,
+  "reason": "Multimodal capture confidence, conservative Dover\u2013Calais ferry handoff and reviewable recovery, independent ferry display, bounded matcher failures, preserved NCN evidence; private owner APK only",
+  "revision": 8
 }

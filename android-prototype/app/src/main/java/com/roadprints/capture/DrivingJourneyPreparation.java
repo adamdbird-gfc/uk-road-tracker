@@ -142,6 +142,17 @@ final class DrivingJourneyPreparation {
         }
         return 5;
     }
+    static JSONObject distanceIntegrity(JSONObject result,JSONArray points) throws Exception {
+        double evidence=0;
+        for(int i=1;i<points.length();i++)evidence+=TimelineRoadPreparation.distance(points.getJSONObject(i-1),points.getJSONObject(i));
+        double matched=result.optDouble("matched_distance_m",-1),limit=Math.max(evidence*1.4,evidence+300);
+        boolean accepted=Double.isFinite(matched)&&matched>0&&matched<=limit;
+        JSONObject details=new JSONObject().put("submitted_geometry_distance_m",evidence)
+                .put("matched_distance_m",Double.isFinite(matched)?matched:-1).put("maximum_supported_distance_m",limit)
+                .put("accepted",accepted).put("reason",accepted?"supported":"matched_distance_missing_or_exceeds_gps_evidence");
+        if(evidence>0&&Double.isFinite(matched))details.put("matched_to_evidence_ratio",matched/evidence);
+        return details;
+    }
     static void validateDistance(JSONObject result, JSONArray points) throws Exception {
         double recorded=0;
         for(int i=1;i<points.length();i++) recorded+=TimelineRoadPreparation.distance(points.getJSONObject(i-1),points.getJSONObject(i));

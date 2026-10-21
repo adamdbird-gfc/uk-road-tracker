@@ -187,7 +187,7 @@ public final class MatchingCoordinator {
                                 if (cycleLane) cycleMatched.incrementAndGet(); else if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
                             } catch (Exception error) {
                                 failed.incrementAndGet();
-                                markFailed(nextJourneyId, error);
+                                markFailed(nextJourneyId, error, measurementJourney);
                                 if (measurementJourney != null) {
                                     android.os.Bundle parameters = BetaMeasurement.journeyParameters(measurementJourney);
                                     parameters.putString("attempt_type", forceRematch ? "rematch" : "match");
@@ -284,6 +284,8 @@ public final class MatchingCoordinator {
                 points.put(new JSONObject().put("lat", coordinate.optDouble(1)).put("lng", coordinate.optDouble(0)));
             }
         }
+        if (FerryJourneyEvidence.inspect(journey.optJSONArray("capture_route_samples")).hasMarineEvidence())
+            throw new IllegalStateException("Ferry movement requires transport review before road or cycling matching. The original recording is preserved.");
         if (points.length() < 2) throw new IllegalStateException("At least two GPS points are required");
         String mode = journey.optString("mode", "unknown");
         boolean foot = isFoot(mode);
@@ -347,11 +349,17 @@ public final class MatchingCoordinator {
                 JourneyStore.save(app, stored);
             }
         }
+        attempt.put("raw_gps_distance_m",traceDistance(journey.optJSONArray("raw_capture_samples")))
+                .put("filtered_gps_distance_m",traceDistance(journey.optJSONArray("capture_route_samples")))
+                .put("submitted_geometry_distance_m",road==null?pointDistance(requestPoints):requestDistance(roadRequests));
+        persistAttempt(journey,attempt);
         JSONObject result;
         boolean acceptedEndpointPartial = false;
         if (road == null) {
             JSONObject payload = new JSONObject().put("points", requestPoints);
             if(foot)payload.put("walking_recovery",true);
+            attempt.put("request_bytes",payload.toString().getBytes(StandardCharsets.UTF_8).length);
+            persistAttempt(journey,attempt);
             result = matcher != null ? matcher.match(endpointPath, payload)
                     : postWithRetry(API_BASE_URL + endpointPath, payload);
         } else {
@@ -361,6 +369,8 @@ public final class MatchingCoordinator {
             for (int index = 0; index < roadRequests.size(); index++) {
                 JSONArray submitted = roadRequests.get(index);
                 JSONObject payload = new JSONObject().put("points", submitted).put("road_recovery", true);
+                attempt.put("request_bytes",payload.toString().getBytes(StandardCharsets.UTF_8).length);
+                persistAttempt(journey,attempt);
                 JSONObject sectionResult = matcher != null ? matcher.match(endpointPath, payload)
                         : postWithRetry(API_BASE_URL + endpointPath, payload);
                 if (capturedDrive) {
@@ -378,6 +388,10 @@ public final class MatchingCoordinator {
                                 : postWithRetry(API_BASE_URL+endpointPath,payload);
                         road.details.put("redundant_fix_retry",true);
                     }
+                    JSONObject integrity=DrivingJourneyPreparation.distanceIntegrity(sectionResult,submitted);
+                    sectionDiagnostics.put(new JSONObject().put("section_index",index).put("integrity",integrity));
+                    attempt.put("distance_integrity",integrity);
+                    persistAttempt(journey,attempt);
                     DrivingJourneyPreparation.validateDistance(sectionResult,submitted);
                 }
                 sectionDiagnostics.put(TimelineRoadPreparation.diagnostics(sectionResult)
@@ -545,17 +559,22 @@ public final class MatchingCoordinator {
         return failedSections > 0 || inputPoints < 2 || matchedPoints != inputPoints;
     }
 
-    private void markFailed(String journeyId, Exception error) {
+    private void markFailed(String journeyId, Exception error, JSONObject expected) {
+        if(expected==null)return; // No matching attempt owns this saved revision.
         try {
             synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journeyId);
             if (stored == null) return;
+            if(expected!=null && (!expected.optString("mode").equals(stored.optString("mode"))
+                    || !String.valueOf(expected.optJSONObject("route_geometry")).equals(String.valueOf(stored.optJSONObject("route_geometry")))))return;
             String stage = matchingStage(stored.optString("mode", "unknown"));
             stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
             JSONObject attempt = stored.optJSONObject("last_match_attempt");
             if (attempt != null) {
                 attempt.put("finished_at_utc", Instant.now().toString());
-                attempt.put("error", safeMessage(error));
+                attempt.put("error", safeMessage(error)).put("failure_category",MatchFailure.category(error))
+                        .put("retryable",MatchFailure.retryable(error));
+                if(error instanceof MatchFailure)attempt.put("http_status",((MatchFailure)error).status);
                 stored.put("last_match_attempt", attempt);
             }
             JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
@@ -566,6 +585,29 @@ public final class MatchingCoordinator {
             CrashReporter.recordMatchFailure(app, stored, error);
             }
         } catch (Exception ignored) { }
+    }
+
+    private void persistAttempt(JSONObject journey,JSONObject attempt) throws Exception {
+        synchronized(JourneyStore.class) {
+            JSONObject saved=JourneyStore.get(app,journey.optString("journey_id"));
+            if(saved!=null && saved.optString("mode").equals(journey.optString("mode"))) {
+                saved.put("last_match_attempt",attempt);JourneyStore.save(app,saved);
+            }
+        }
+    }
+    static double traceDistance(JSONArray samples) {
+        double distance=0;
+        if(samples!=null)for(int i=1;i<samples.length();i++) {
+            JSONArray a=samples.optJSONArray(i-1),b=samples.optJSONArray(i);
+            if(a!=null&&b!=null)distance+=RailStationCatalog.metres(a.optDouble(1),a.optDouble(0),b.optDouble(1),b.optDouble(0));
+        }
+        return Double.isFinite(distance)?distance:0;
+    }
+    private static double pointDistance(JSONArray points) throws Exception {
+        double d=0;for(int i=1;i<points.length();i++)d+=TimelineRoadPreparation.distance(points.getJSONObject(i-1),points.getJSONObject(i));return d;
+    }
+    private static double requestDistance(List<JSONArray> requests) throws Exception {
+        double d=0;for(JSONArray points:requests)d+=pointDistance(points);return d;
     }
 
     static JSONArray sampleMatchPoints(JSONArray points, int maxPoints) throws Exception {
@@ -581,14 +623,11 @@ public final class MatchingCoordinator {
 
     private JSONObject postWithRetry(String endpoint, JSONObject payload) throws Exception {
         // Allow time for the free API instance to wake after an idle period.
-        long[] delays = {3_000L, 8_000L, 20_000L};
+        long[] delays = {3_000L};
         for (int attempt = 0; ; attempt++) try {
             return post(endpoint, payload);
         } catch (Exception error) {
-            String text = safeMessage(error).toLowerCase();
-            boolean transientFailure = text.contains("http 429") || text.matches("(?s).*http 5[0-9][0-9].*")
-                    || text.contains("timeout") || text.contains("failed to connect") || text.contains("connection reset");
-            if (!transientFailure || attempt >= delays.length) throw error;
+            if (!MatchFailure.retryNow(error,attempt)) throw error;
             Thread.sleep(delays[attempt]);
         }
     }
@@ -607,7 +646,7 @@ public final class MatchingCoordinator {
             String line; while ((line = reader.readLine()) != null) body.append(line);
         }
         if (status < 200 || status >= 300) {
-            throw new IllegalStateException(CrashReporter.summarizeMatcherError(
+            throw new MatchFailure(status,CrashReporter.summarizeMatcherError(
                     status, body.toString()));
         }
         return new JSONObject(body.toString());
@@ -658,8 +697,8 @@ public final class MatchingCoordinator {
         if (isCycle(mode)) return "cycle_matching";
         return "/match-walking".equals(endpointForMode(mode)) ? "foot_matching" : "road_matching";
     }
-    private boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
-    private boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
+    static boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
+    static boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
     private String safeMessage(Exception error) { return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(); }
 }
 

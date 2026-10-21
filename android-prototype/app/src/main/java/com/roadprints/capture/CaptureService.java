@@ -116,6 +116,7 @@ public class CaptureService extends Service {
     private String journeyId;
     private String startedAt;
     private String mode;
+    private String captureInitialMode, captureClassifiedAt;
     private double distanceMetres;
     private long stationarySince;
     private Location stationaryAnchor;
@@ -146,6 +147,8 @@ public class CaptureService extends Service {
     private final List<Location> visitPoints = new ArrayList<>();
     private final WalkingStillnessDetector idleStillness = new WalkingStillnessDetector();
     private String visitPointStopId = "", visitActivityHint;
+    private long visitActivityHintAt;
+    private JSONArray activityEvidence=new JSONArray();
     private long lastVisitDiagnosticAt, lastVisitBufferSave;
 
     private String currentActivity = "unknown";
@@ -272,6 +275,7 @@ public class CaptureService extends Service {
             // Retain rejected fixes as evidence, but do not credit their jumps
             // as travelled distance or let them reset the stop timer.
             points.add(observation);
+            if(evaluateFerryLocation(observation))return;
             if (automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
                 observeWalkingStillness(observation);
             if (trusted) {
@@ -467,6 +471,12 @@ public class CaptureService extends Service {
         if (!isArmed(this)) return;
 
         String activityLabel = activityLabel(activityType);
+        try {
+            JSONArray retained=new JSONArray();for(int i=Math.max(0,activityEvidence.length()-31);i<activityEvidence.length();i++)retained.put(activityEvidence.opt(i));
+            retained.put(new JSONObject().put("at_utc",Instant.now(wallClock).toString()).put("activity",activityLabel)
+                    .put("entering",transitionType==ActivityTransition.ACTIVITY_TRANSITION_ENTER).put("confidence","not_supplied_by_transition_api"));
+            activityEvidence=retained;
+        }catch(org.json.JSONException ignored){}
         boolean entering = transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER;
         MovementDiagnostics.recordActivity(this, activityLabel, entering ? "entered" : "left",
                 isArmed(this), isActive(this), mode);
@@ -515,9 +525,10 @@ public class CaptureService extends Service {
             return;
         }
 
+        if(isActive(this)&&"ferry".equals(mode)&&activityType!=DetectedActivity.STILL)return;
         String detectedMode = modeForActivity(activityType);
         if (!isActive(this) && activeVisit() != null) {
-            visitActivityHint=detectedMode;
+            visitActivityHint=detectedMode;visitActivityHintAt=wallClock.millis();
             clearCandidateStillness();
             broadcastUpdate("At a place; checking for departure or sustained activity...");
             return;
@@ -553,6 +564,26 @@ public class CaptureService extends Service {
                         + " before starting a new journey leg...");
             }
         }
+    }
+
+    private long lastFerryReviewAt;
+    private boolean evaluateFerryLocation(Location observation) {
+        if(!automaticCapture || captureFinishing || observation.getTime()-lastFerryReviewAt<30_000L)return false;
+        lastFerryReviewAt=observation.getTime();
+        // Most journeys never enter this corridor. No archive reads, map queries or network work.
+        if(observation.getLongitude()<1.25||observation.getLongitude()>2.05
+                ||observation.getLatitude()<50.90||observation.getLatitude()>51.20)return false;
+        try {
+            FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(sampleCoordinates(points));
+            if(!"ferry".equals(mode) && review.hasMarineEvidence()&&review.start>=1) {
+                prepareStationSplit(review.start,review.start,"ferry");
+            } else if("ferry".equals(mode)&&review.canSplit()&&review.end>=1) {
+                prepareStationSplit(review.end,review.end,"unknown");
+            } else return false;
+            stationEvidenceReason="ferry_terminal_transition";
+            MovementDiagnostics.recordEvent(this,"ferry_transition",review.json().toString());
+            finishCapture();return true;
+        } catch(Exception invalid){return false;}
     }
 
     private void clearPendingActivityMode() {
@@ -677,7 +708,7 @@ public class CaptureService extends Service {
                 && location.getTime()-visitPoints.get(0).getTime()>1_200_000L)visitPoints.remove(0);
         List<FootTraceValidator.Sample> samples=new ArrayList<>();
         for(int i=0;i<visitPoints.size();i++)samples.add(footSample(visitPoints.get(i),i));
-        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,visitActivityHint,wallClock.millis());
+        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,wallClock.millis()-visitActivityHintAt<=600_000L?visitActivityHint:null,wallClock.millis());
         if(decision==null) {
             persistVisitBuffer(stop.optString("id"));
             if(wallClock.millis()-lastVisitDiagnosticAt>=60_000L) {
@@ -884,7 +915,9 @@ public class CaptureService extends Service {
     private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
         if (isActive(this)) return;
         idleStillness.reset();
-        mode = requestedMode == null ? "driving" : requestedMode;
+        mode = requestedMode == null ? "unknown" : requestedMode;
+        captureInitialMode=mode;captureClassifiedAt=Instant.now(wallClock).toString();
+        lastFerryReviewAt=0;
         diagnosticUpdatesRegistered = false;
         MovementDiagnostics.recordEvent(this, "journey_capture_started", "Mode: " + mode);
         journeyId = UUID.randomUUID().toString();
@@ -1292,6 +1325,8 @@ public class CaptureService extends Service {
                 : confirmedStationaryStop && stationaryAnchor!=null && stationaryAnchor.getTime()>0
                     ? Instant.ofEpochMilli(stationaryAnchor.getTime()).toString() : Instant.now(wallClock).toString();
         final String savedTimezone = ZoneId.systemDefault().toString();
+        final String savedActivityEvidence=activityEvidence.toString();
+        final String savedInitialMode=captureInitialMode, savedClassifiedAt=captureClassifiedAt;
         final Location savedStopAnchor = stationaryAnchor == null
                 ? null : new Location(stationaryAnchor);
         final Location stopEvidenceAnchor=stationBoundary?savedPoints.get(savedPoints.size()-1):savedStopAnchor;
@@ -1420,6 +1455,12 @@ public class CaptureService extends Service {
                             "Mode: " + savedMode + "; cleaned recording did not establish a journey.");
                     // Save any pending handoff before retiring the rejected leg, too.
                 } else {
+                journey.put("activity_recognition_history",new JSONArray(savedActivityEvidence));
+                journey.put("capture_decisions",new JSONObject().put("initial_mode",savedInitialMode==null?JSONObject.NULL:savedInitialMode)
+                        .put("classified_at_utc",savedClassifiedAt==null?JSONObject.NULL:savedClassifiedAt).put("mode_at_save",savedMode)
+                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",savedStationReason!=null?savedStationReason:savedContextReason!=null?savedContextReason:"stop_or_manual")
+                        .put("confidence","ferry".equals(savedMode)?"supported_corridor":"requires_transport_confirmation"));
+                journey.put("ferry_evidence",FerryJourneyEvidence.inspect(routeSamples).json());
                 journey.put("capture_route_samples", routeSamples);
                 JSONObject quality = CaptureQualityValidator.inspect(routeSamples, "walking".equals(persistedMode) || "running".equals(persistedMode));
                 journey.put("recording_quality", quality);
@@ -1740,6 +1781,9 @@ public class CaptureService extends Service {
         snapshot.put("journey_id", savedJourneyId);
         snapshot.put("started_at", savedStartedAt);
         snapshot.put("mode", savedMode);
+        boolean current=java.util.Objects.equals(savedJourneyId,journeyId);
+        snapshot.put("capture_initial_mode",current?captureInitialMode:savedMode);
+        snapshot.put("capture_classified_at",current?captureClassifiedAt:Instant.now(wallClock).toString());
         snapshot.put("distance_meters", savedDistanceMetres);
         snapshot.put("stationary_since", savedStationarySince);
         JSONArray savedPoints = new JSONArray();
@@ -1784,6 +1828,8 @@ public class CaptureService extends Service {
             journeyId = snapshot.optString("journey_id");
             startedAt = snapshot.optString("started_at");
             mode = snapshot.optString("mode", "walking");
+            captureInitialMode=snapshot.optString("capture_initial_mode",null);
+            captureClassifiedAt=snapshot.optString("capture_classified_at",null);
             distanceMetres = snapshot.optDouble("distance_meters", 0);
             stationarySince = snapshot.optLong("stationary_since", 0);
             automaticCapture = snapshot.optBoolean("automatic_capture", true);

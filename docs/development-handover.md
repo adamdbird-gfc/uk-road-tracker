@@ -1,6 +1,55 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-21. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Current multimodal corrective candidate — 21 October 2026
+
+**0.25.213 (259), PR #213**, stacked on #212. Preserve 212's device-verified
+New Journeys and map/NCN caching improvements. Exact original baseline
+`b9b65eb58e8b4ed4d0c6f5c06fe972c5368bb861`.
+
+See [evidence, implementation limits, tests and next device checks](multimodal-ferry-stabilisation.md).
+The 09:00 UTC recording starts near Calais and has no supported crossing interval:
+**do not invent a Dover ferry split**. Movement logs identify the unhinted cycling
+place-departure heuristic. Changes add conservative Dover–Calais terminal/marine
+handoffs, recorded ferry map display, explicit journalled split/restore review,
+bounded transport/matching diagnostics and retries, negative overseas road gating,
+and NCN stability for ineligible transport matching-state changes.
+
+**Delivered private 0.25.213 (259).** Exact signed APK source:
+`5e9f1d56845584559fa8444715d9df0e4f650466`.
+[Successful private packaging 39676918329](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676918329);
+[APK artifact 12381562978](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676918329/artifacts/12381562978);
+[reports 12381488029](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676918329/artifacts/12381488029).
+Exact-source [independent checks 39676924222](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676924222) also passed.
+**732 Android tests, 100 suites, zero failures/errors/skips; lint passed.**
+National reference and private-distribution controls passed. Downloaded report XML
+independently confirms totals. APK: **36,584,107 bytes**, SHA-256
+`06d05a607da397531185565b9fa207ecbd10fb28ea2645f148fe31208b23e6da`.
+Downloaded artifact ZIP digest and APK checksum both match GitHub/build output.
+APK v2 signature and content digest independently verified with the established
+certificate `5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`.
+Binary manifest independently confirms `com.roadprints.capture`, 0.25.213/code 259.
+Install over the existing app without clearing data. One signed APK was built.
+
+Synthetic runner preparation (1,547 M2/A2 driving journeys): first **1,358.51 ms**,
+warm **132.81 ms**, one addition **112.23 ms**, identical completion. Warm reused
+all 1,547 records with zero source reads; one addition reused 1,547 and read/rebuilt
+only one source. These are runner preparation timings, not phone startup or a
+claim of improved first-materialisation speed. Device map and NCN timing acceptance
+remains outstanding; preserve the owner's 212 measurements as baseline.
+
+Initial checks found helper access errors, missing ferry display geometry, a
+missed A-road scope guard, and a too-short activity-hint expiry for sparse running;
+all were corrected, with no excluded tests. The stale-result expectation now keeps
+a corrected bus pending, and the running fixture explicitly supplies a running
+hint. An additional expired-bicycle-hint coach regression passes. Initial mode and
+classification timestamp survive checkpoints; older missing evidence exports null.
+No actual device verification, Firebase upload/distribution/notification, Google
+Play publication or backend deployment. #214 tracks missing crossing evidence,
+router/integrity follow-up and field acceptance. Later documentation-only commits
+do not change the delivered APK; do not build again merely to resume this handover.
+
 
 ## Current P0 map performance candidate — 20 October 2026
 

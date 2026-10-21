@@ -483,6 +483,7 @@ public class MapActivity extends Activity {
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(mapRoutes.sections.isEmpty()
+                    && mapRoutes.ferrySections.isEmpty()
                     && mapRoutes.motorwaySections.isEmpty()
                     && mapRoutes.incompleteMotorwaySections.isEmpty()
                     ? (mapFilters.isAll() ? "Recorded journeys will appear here." : "No mapped journeys match these filters. Try another selection or Reset.")
@@ -498,6 +499,7 @@ public class MapActivity extends Activity {
             map.beginOverviewUpdate();
             map.setOverviewLoading(false);
             map.setRouteData(null, mapRoutes.sections);
+            map.setFerrySegments(mapRoutes.ferrySections);
             map.setFlatRoadMapStyle(true);
             map.setMotorwaySegments(mapRoutes.motorwaySections);
             map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
@@ -738,6 +740,18 @@ public class MapActivity extends Activity {
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
+            if("ferry".equals(journey.optString("mode"))) {
+                JSONObject prepared=record.prepared(this::prepareFerryRecord);
+                if(!prepared.has("ferries"))prepared=record.rebuild(this::prepareFerryRecord);
+                JSONArray ferries=prepared.getJSONArray("ferries");
+                for(int i=0;i<ferries.length()&&output.ferryPoints<20000&&output.ferrySections.size()<MAX_MAP_ROUTES;i++) {
+                    JSONArray line=ferries.getJSONObject(i).getJSONArray("points");
+                    if(output.ferryPoints+line.length()>20000){output.simplified=true;break;}
+                    output.ferrySections.add(line);output.ferryPoints+=line.length();
+                }
+                if(ferries.length()>0){output.matchedJourneys++;counts[5]++;}else counts[4]++;
+                return; // Display only: never enter road coverage preparation or attribution.
+            }
             if (!"complete".equals(journey.optString("processing_status", ""))) {
                 counts[2]++;
                 String m=journey.optString("mode");
@@ -809,6 +823,14 @@ public class MapActivity extends Activity {
         return output;
     }
 
+
+    private JSONObject prepareFerryRecord(JSONObject header) throws Exception {
+        JSONObject geometry=JourneyStore.recordedGeometry(getApplicationContext(),header.optString("journey_id"));
+        JSONObject recorded=new JSONObject();if(geometry!=null)recorded.put("route_geometry",geometry);
+        return new JSONObject().put("motorway",new JSONArray()).put("a_road",new JSONArray())
+                .put("roads",new JSONArray()).put("motorways",new JSONArray())
+                .put("ferries",preparedLines(recordedSegments(recorded)));
+    }
 
     private JSONArray preparedLines(List<JSONArray> routes) throws Exception {
         JSONArray result=new JSONArray();
@@ -2075,6 +2097,7 @@ public class MapActivity extends Activity {
     private JSONObject mapRoutesToCache(MapRoutes routes) throws Exception {
         JSONObject root = new JSONObject();
         putRouteArrays(root, "sections", routes.sections);
+        putRouteArrays(root,"ferries",routes.ferrySections);
         putRouteArrays(root, "motorways", routes.motorwaySections);
         putRouteArrays(root, "incompleteMotorways", routes.incompleteMotorwaySections);
         putRouteArrays(root, "coveredMotorways", routes.coveredMotorwaySections);
@@ -2113,6 +2136,7 @@ public class MapActivity extends Activity {
         MapRoutes routes = new MapRoutes();
         if (!root.has("sections") || !root.has("stations")) return null;
         getRouteArrays(root, "sections", routes.sections);
+        getRouteArrays(root,"ferries",routes.ferrySections);
         getRouteArrays(root, "motorways", routes.motorwaySections);
         getRouteArrays(root, "incompleteMotorways", routes.incompleteMotorwaySections);
         getRouteArrays(root, "coveredMotorways", routes.coveredMotorwaySections);
@@ -2174,6 +2198,8 @@ public class MapActivity extends Activity {
 
     static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
+        final List<JSONArray> ferrySections = new ArrayList<>();
+        int ferryPoints;
         final List<JSONArray> motorwaySections = new ArrayList<>();
         final List<JSONArray> incompleteMotorwaySections = new ArrayList<>();
         final List<JSONArray> coveredMotorwaySections = new ArrayList<>();

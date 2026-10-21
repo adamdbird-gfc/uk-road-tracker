@@ -277,6 +277,17 @@ public class RoutePreviewView extends View {
         routeFitPending = false;
     }
 
+    private final List<JSONArray> ferrySegments=new ArrayList<>();
+    private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    public void setFerrySegments(List<JSONArray> routes) {
+        ferrySegments.clear();
+        if(routes!=null)for(JSONArray route:routes)if(hasRoutePoints(route))ferrySegments.add(route);
+        ferryPaint.setColor(0xFF008A99);ferryPaint.setStyle(Paint.Style.STROKE);ferryPaint.setStrokeWidth(4*getResources().getDisplayMetrics().density);
+        ferryPaint.setStrokeCap(Paint.Cap.ROUND);
+        coordinatesValid=hasRoutePoints(coordinates)||!matchedSegments.isEmpty()||!ferrySegments.isEmpty();
+        routeFitPending=coordinatesValid;invalidate();
+    }
+
     public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
         this.coordinates = coordinates;
         matchedSegments.clear();
@@ -647,6 +658,7 @@ public class RoutePreviewView extends View {
             if(motorwayVisible) for (JSONArray segment : motorwaySegments) {
                 drawRoute(canvas, segment, motorwayPaint, null);
             }
+            for(JSONArray ferry:ferrySegments)drawRoute(canvas,ferry,ferryPaint,null);
             if (showEndpointMarkers) {
                 JSONArray startEndRoute = hasRoutePoints(coordinates)
                         ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
@@ -783,6 +795,7 @@ public class RoutePreviewView extends View {
             else if (!settlementBoundaryRings.isEmpty()) {
                 fitRoutes.addAll(settlementBoundaryRings);
             } else {
+                fitRoutes.addAll(ferrySegments);
                 fitRoutes.addAll(matchedSegments);
                 fitRoutes.addAll(routeExtensions);
                 if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);

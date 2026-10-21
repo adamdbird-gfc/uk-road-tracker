@@ -1369,6 +1369,38 @@ public class JourneyListActivity extends Activity {
             }
         }
 
+        Button ferryReview=styledModalButton(journey.has("ferry_recovery")?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
+        ferryReview.setOnClickListener(v->requestCloseWithUnsavedChanges(
+                dialogRef[0],hasUnsavedChanges(titleInput,transport,transportModes,savedTitle[0],savedMode[0]),
+                saveEdits,()->processor.execute(()->{
+            try {
+                JSONObject current=JourneyStore.get(this,journey.optString("journey_id"));
+                if(current==null)return;
+                boolean restore=current.has("ferry_recovery");
+                FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(current.optJSONArray("capture_route_samples"));
+                String message=restore?"Restore the preserved original recording and remove the derived sections? Any edits to those derived sections will also be removed.":review.reason;
+                if(!restore&&review.canSplit()) {
+                    JSONArray samples=current.getJSONArray("capture_route_samples");
+                    message+="\n\nFerry section: "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.start).getLong(3))
+                            +" to "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.end).getLong(3))
+                            +" (UTC). These are measured terminal transitions; exact berth times are uncertain. Original evidence is retained. Road sections will need transport confirmation.";
+                }
+                final String text=message;
+                runOnUiThread(()->{
+                    AlertDialog.Builder builder=new AlertDialog.Builder(this).setTitle("Review ferry evidence").setMessage(text).setNegativeButton("Close",null);
+                    if(restore||review.canSplit())builder.setPositiveButton(restore?"Restore":"Split recording",(d,w)->processor.execute(()->{
+                        try {
+                            if(restore)FerryJourneyRecovery.restore(this,current.getString("journey_id"));
+                            else FerryJourneyRecovery.split(this,current.getString("journey_id"),current.optInt("revision"));
+                            runOnUiThread(()->{if(dialogRef[0]!=null)dialogRef[0].dismiss();recreate();});
+                        }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+                    }));
+                    builder.show();
+                });
+            }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+        })));
+        actions.addView(ferryReview,actionLayoutParams());
+
         TextView delete = new TextView(this);
         delete.setText("Delete Journey");
         delete.setTextSize(14);
