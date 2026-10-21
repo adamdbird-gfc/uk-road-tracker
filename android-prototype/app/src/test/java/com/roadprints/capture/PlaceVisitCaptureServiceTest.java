@@ -106,7 +106,7 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals(run.size(),points("points").size());
     }
     @Test public void cyclingDepartureRetainsModeAndInitialPoints()throws Exception {
-        establish(false);field("visitActivityHint").set(service,"cycling");
+        establish(false);field("visitActivityHint").set(service,"cycling");field("visitActivityHintAt").setLong(service,time);
         Location first=null;
         for(int i=0;i<8&&!CaptureService.isActive(service);i++){Location p=fix(i*120,0,4,30);if(first==null)first=p;observe(p);}
         assertTrue(CaptureService.isActive(service));assertEquals("cycling",field("mode").get(service));

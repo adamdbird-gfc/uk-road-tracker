@@ -687,6 +687,9 @@ public final class JourneyStore {
 
     /** Deletion must not parse, upgrade or migrate the data being discarded. */
     public static synchronized int deleteAll(Context context) {
+        new android.util.AtomicFile(new File(context.getFilesDir(),"ferry_recovery_pending.json")).delete();
+        File[] originals=context.getFilesDir().listFiles((directory,name)->name.startsWith("ferry_original_"));
+        if(originals!=null)for(File original:originals)if(!original.delete())throw new IllegalStateException("Could not delete preserved recording");
         int deleted = 0;
         File[] files = context.getFilesDir().listFiles((directory, name) ->
                 name.startsWith(PREFIX) && (name.endsWith(SUFFIX) || name.endsWith(".tmp")));
@@ -769,6 +772,11 @@ public final class JourneyStore {
                     stages.put(MatchingCoordinator.matchingStage(mode), "pending");
                 journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
             }
+            JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
+            JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
+            bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
+                    .put("to",mode).put("source","manual_confirmation"));
+            journey.put("transport_changes",bounded);
             journey.put("mode", mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             journey.put("transport_confirmation", "confirmed");
@@ -898,6 +906,7 @@ public final class JourneyStore {
     }
 
     private static synchronized void migrateLegacy(Context context) {
+        FerryJourneyRecovery.resume(context);
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getBoolean(MIGRATED, false)) return;
 
