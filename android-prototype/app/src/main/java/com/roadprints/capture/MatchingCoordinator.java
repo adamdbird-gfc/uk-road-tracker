@@ -560,6 +560,7 @@ public final class MatchingCoordinator {
     }
 
     private void markFailed(String journeyId, Exception error, JSONObject expected) {
+        if(expected==null)return; // No matching attempt owns this saved revision.
         try {
             synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journeyId);
@@ -697,7 +698,7 @@ public final class MatchingCoordinator {
         return "/match-walking".equals(endpointForMode(mode)) ? "foot_matching" : "road_matching";
     }
     private boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
-    private boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
+    static boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
     private String safeMessage(Exception error) { return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(); }
 }
 

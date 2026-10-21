@@ -106,6 +106,20 @@ public class MultimodalFerryTest {
         assertFalse(MatchFailure.retryNow(new MatchFailure(504,"timeout"),0));assertFalse(MatchFailure.retryable(new MatchFailure(422,"bad points")));
         assertFalse(MatchFailure.retryable(new IllegalStateException("Matched drive exceeds its GPS distance evidence")));
     }
+    @Test public void mainMapShowsFerryWithoutRoadCoverageAndReusesCache() throws Exception {
+        app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();
+        JourneyStore.save(app,journey("crossing",crossing()).put("mode","ferry").put("processing_status","pending"));
+        org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class);
+        MapActivity screen=controller.get();
+        java.lang.reflect.Method method=MapActivity.class.getDeclaredMethod("readMapRoutes",JourneyFilters.class,java.time.LocalDate.class,java.time.ZoneId.class);method.setAccessible(true);
+        MapActivity.MapRoutes routes=(MapActivity.MapRoutes)method.invoke(screen,JourneyFilters.all(),java.time.LocalDate.now(),java.time.ZoneOffset.UTC);
+        assertEquals(1,routes.ferrySections.size());assertTrue(routes.sections.isEmpty());assertTrue(routes.motorwaySections.isEmpty());
+        routes=(MapActivity.MapRoutes)method.invoke(screen,JourneyFilters.all(),java.time.LocalDate.now(),java.time.ZoneOffset.UTC);
+        assertEquals(1,routes.ferrySections.size());
+        assertTrue(JourneyFilters.matchesFilter(JourneyStore.get(app,"crossing"),7));
+        java.lang.reflect.Method encode=MapActivity.class.getDeclaredMethod("mapRoutesToCache",MapActivity.MapRoutes.class);encode.setAccessible(true);
+        assertEquals(1,((JSONObject)encode.invoke(screen,routes)).getJSONArray("ferries").length());
+    }
     @Test public void nonEligibleMatchingStatusDoesNotInvalidateNcn() throws Exception {
         JSONObject j=journey("road",crossing()).put("processing_status","pending");String before=JourneyStore.ncnEvidenceHash(j);
         j.put("processing_status","failed").put("last_match_attempt",new JSONObject().put("failure_category","dns"));

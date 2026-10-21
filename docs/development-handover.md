@@ -2,6 +2,24 @@
 
 Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Current multimodal corrective candidate — 21 October 2026
+
+**0.25.213 (259), PR #213**, stacked on #212. Preserve 212's device-verified
+New Journeys and map/NCN caching improvements. Exact original baseline
+`b9b65eb58e8b4ed4d0c6f5c06fe972c5368bb861`.
+
+See [evidence, implementation limits, tests and next device checks](multimodal-ferry-stabilisation.md).
+The 09:00 UTC recording starts near Calais and has no supported crossing interval:
+**do not invent a Dover ferry split**. Movement logs identify the unhinted cycling
+place-departure heuristic. Changes add conservative Dover–Calais terminal/marine
+handoffs, recorded ferry map display, explicit journalled split/restore review,
+bounded transport/matching diagnostics and retries, negative overseas road gating,
+and NCN stability for ineligible transport matching-state changes.
+
+Integrated validation and private packaging are in progress. No device verification
+of this candidate, Firebase distribution, Play publication or backend deployment.
+
+
 ## Current P0 map performance candidate — 20 October 2026
 
 Delivered private **0.25.212 (258)**, [PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212),
