@@ -105,6 +105,11 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals(run.get(0).getTime(),points("points").get(0).getTime());
         assertEquals(run.size(),points("points").size());
     }
+    @Test public void expiredBicycleHintDoesNotClassifySlowCoachAsCycling()throws Exception {
+        establish(true);field("visitActivityHint").set(service,"cycling");field("visitActivityHintAt").setLong(service,time-1_200_000L);
+        for(int i=0;i<11&&!CaptureService.isActive(service);i++)observe(fix(i*45,0,5,30));
+        assertTrue(CaptureService.isActive(service));assertEquals("unknown",field("mode").get(service));
+    }
     @Test public void cyclingDepartureRetainsModeAndInitialPoints()throws Exception {
         establish(false);field("visitActivityHint").set(service,"cycling");field("visitActivityHintAt").setLong(service,time);
         Location first=null;

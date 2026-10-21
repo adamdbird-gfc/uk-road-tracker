@@ -707,7 +707,7 @@ public class CaptureService extends Service {
                 && location.getTime()-visitPoints.get(0).getTime()>1_200_000L)visitPoints.remove(0);
         List<FootTraceValidator.Sample> samples=new ArrayList<>();
         for(int i=0;i<visitPoints.size();i++)samples.add(footSample(visitPoints.get(i),i));
-        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,wallClock.millis()-visitActivityHintAt<=300_000L?visitActivityHint:null,wallClock.millis());
+        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,wallClock.millis()-visitActivityHintAt<=600_000L?visitActivityHint:null,wallClock.millis());
         if(decision==null) {
             persistVisitBuffer(stop.optString("id"));
             if(wallClock.millis()-lastVisitDiagnosticAt>=60_000L) {
