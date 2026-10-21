@@ -697,7 +697,7 @@ public final class MatchingCoordinator {
         if (isCycle(mode)) return "cycle_matching";
         return "/match-walking".equals(endpointForMode(mode)) ? "foot_matching" : "road_matching";
     }
-    private boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
+    static boolean isFoot(String mode) { return "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode); }
     static boolean isRoad(String mode) { return "driving".equals(mode) || "bus".equals(mode); }
     private String safeMessage(Exception error) { return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(); }
 }
