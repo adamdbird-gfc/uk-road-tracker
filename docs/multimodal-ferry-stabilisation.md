@@ -126,3 +126,18 @@ cross-Channel road line or UK progress increment from France; test split review,
 restore and relaunch during correction on a backed-up test archive; export Debug
 Journey with the next bus distance rejection. Record timings/ANR behaviour and NCN
 changed/reused counts. No actual device acceptance is claimed here.
+
+## Delivered artifact and final validation
+
+Signed source `5e9f1d56845584559fa8444715d9df0e4f650466`, private build
+[39676918329](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676918329).
+732 tests in 100 suites; zero failures/errors/skips; lint and stable signing pass.
+Independent downloaded XML confirms totals. APK 36,584,107 bytes, SHA-256
+`06d05a607da397531185565b9fa207ecbd10fb28ea2645f148fe31208b23e6da`.
+Independent v2 signature/content-digest and binary-manifest checks passed.
+
+Exact-source synthetic M2/A2 preparation: first 1,358.51 ms; warm 132.81 ms;
+one addition 112.23 ms. Completion identical; warm 1,547 reused/zero source reads;
+one addition 1,547 reused/one source read. No new phone or NCN wall-clock timings
+are claimed. #214 remains open for the missing crossing, service-side follow-up
+and real-device acceptance. No Firebase or Play distribution occurred.
