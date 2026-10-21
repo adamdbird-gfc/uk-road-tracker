@@ -26,7 +26,7 @@ final class FerryJourneyRecovery {
         }
     }
     static void resume(Context c) {
-        if(replaying||!journal(c).isFile())return;
+        if(replaying||!(journal(c).isFile()||new File(journal(c).getPath()+".bak").isFile()))return;
         replaying=true;
         try {
             JSONObject job=read(journal(c));JSONArray records=job.getJSONArray("records");
@@ -75,11 +75,12 @@ final class FerryJourneyRecovery {
                         .put("capture_quality",new JSONObject().put("gps_points",segment.length()).put("status","usable"))
                         .put("recording_quality",CaptureQualityValidator.inspect(segment,false))
                         .put("processing_status",MatchingCoordinator.isRoad(mode)?"pending":"complete").put("processing",stages).put("stage_statuses",new JSONObject(stages.toString()))
-                        .put("ferry_recovery",new JSONObject().put("source_id",id).put("ids",ids).put("boundaries",review.json()).put("reviewed",true));
+                        .put("ferry_recovery",new JSONObject().put("source_id",id).put("backup_key",id+"-r"+source.optInt("revision",1)).put("ids",ids).put("boundaries",review.json()).put("reviewed",true));
                 records.put(child);
             }
             // Backup before journal; neither can enter normal history or map evidence.
-            if(!original(c,id).exists())write(original(c,id),source);
+            String backupKey=id+"-r"+source.optInt("revision",1);
+            if(!original(c,backupKey).exists())write(original(c,backupKey),source);
             write(journal(c),new JSONObject().put("records",records));resume(c);return records.length();
         }
     }
@@ -87,7 +88,7 @@ final class FerryJourneyRecovery {
         synchronized(JourneyStore.class) {
             JSONObject current=JourneyStore.get(c,id);if(current==null||!current.has("ferry_recovery"))return;
             JSONObject recovery=current.getJSONObject("ferry_recovery");String root=recovery.getString("source_id");
-            JSONObject source=read(original(c,root));source.put("revision",Math.max(source.optInt("revision"),current.optInt("revision"))+1);
+            JSONObject source=read(original(c,recovery.getString("backup_key")));source.put("revision",Math.max(source.optInt("revision"),current.optInt("revision"))+1);
             JSONArray remove=new JSONArray(),ids=recovery.getJSONArray("ids");
             for(int i=0;i<ids.length();i++)if(!root.equals(ids.getString(i)))remove.put(ids.getString(i));
             write(journal(c),new JSONObject().put("records",new JSONArray().put(source)).put("remove",remove));resume(c);

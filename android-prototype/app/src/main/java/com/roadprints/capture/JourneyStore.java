@@ -871,6 +871,9 @@ public final class JourneyStore {
     }
     static String ncnEvidenceHash(JSONObject journey) throws org.json.JSONException {
         JSONObject evidence=new JSONObject();
+        String mode=journey.optString("mode");
+        if(!MatchingCoordinator.isFoot(mode)&&!MatchingCoordinator.isCycle(mode))
+            return NcnJson.digest(evidence.put("journey_id",journey.optString("journey_id")).put("mode",mode));
         for(String key:new String[]{"journey_id","mode","processing_status","journey_corrections"})
             if(journey.has(key))evidence.put(key,journey.opt(key));
         JSONObject source=journey.optJSONObject("processing_result");

@@ -36,7 +36,7 @@ public class PlaceVisitEvidenceTest {
         List<FootTraceValidator.Sample> points=new ArrayList<>();
         for(int i=0;i<=24;i++)points.add(p(100*Math.cos(i*Math.PI/12),100*Math.sin(i*Math.PI/12),1000+i*10000L,2.7,i));
         assertTrue(FootTraceValidator.metres(points.get(0),points.get(24))<1);
-        PlaceVisitEvidence.Decision d=PlaceVisitEvidence.inspect(stop(true),points);
+        PlaceVisitEvidence.Decision d=PlaceVisitEvidence.inspect(stop(true),points,"running");
         assertNotNull(d);assertEquals("running",d.mode);assertEquals(0,d.startIndex);
         assertEquals("sustained_activity_within_place",d.reason);
     }

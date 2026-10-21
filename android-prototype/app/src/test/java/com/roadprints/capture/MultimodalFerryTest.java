@@ -38,7 +38,7 @@ public class MultimodalFerryTest {
         }
     }
     @Test public void supportedCorridorFindsTerminalTransitions() throws Exception {
-        FerryJourneyEvidence.Review r=FerryJourneyEvidence.inspect(crossing());assertTrue(r.canSplit());assertEquals(1,r.start);assertEquals(11,r.end);
+        FerryJourneyEvidence.Review r=FerryJourneyEvidence.inspect(crossing());assertTrue(r.canSplit());assertEquals(1,r.start);assertEquals(12,r.end);
     }
     @Test public void recordedCalaisRoadHasNoFerryToRecover() throws Exception {
         assertFalse(FerryJourneyEvidence.inspect(fixture("calais-road")).hasMarineEvidence());
@@ -105,6 +105,30 @@ public class MultimodalFerryTest {
         assertEquals("backend_timeout",MatchFailure.category(new MatchFailure(504,"timeout")));assertTrue(MatchFailure.retryable(new MatchFailure(504,"timeout")));
         assertFalse(MatchFailure.retryNow(new MatchFailure(504,"timeout"),0));assertFalse(MatchFailure.retryable(new MatchFailure(422,"bad points")));
         assertFalse(MatchFailure.retryable(new IllegalStateException("Matched drive exceeds its GPS distance evidence")));
+    }
+    @Test public void nonEligibleMatchingStatusDoesNotInvalidateNcn() throws Exception {
+        JSONObject j=journey("road",crossing()).put("processing_status","pending");String before=JourneyStore.ncnEvidenceHash(j);
+        j.put("processing_status","failed").put("last_match_attempt",new JSONObject().put("failure_category","dns"));
+        assertEquals(before,JourneyStore.ncnEvidenceHash(j));
+        j.put("mode","walking");assertNotEquals(before,JourneyStore.ncnEvidenceHash(j));
+    }
+    @Test public void overseasRoadIdentitiesNeverEnterUkContributions() throws Exception {
+        JSONArray line=new JSONArray().put(new JSONArray().put(2.55).put(49.07)).put(new JSONArray().put(2.56).put(49.08));
+        JSONObject feature=new JSONObject().put("type","Feature").put("properties",new JSONObject().put("road_ref","A1").put("distance_m",10000))
+                .put("geometry",new JSONObject().put("type","LineString").put("coordinates",line));
+        JSONObject collection=new JSONObject().put("type","FeatureCollection").put("features",new JSONArray().put(feature));
+        JSONObject j=journey("france",fixture("calais-road")).put("processing_status","complete")
+                .put("processing_result",new JSONObject().put("a_road_geojson",collection).put("motorway_geojson",collection));
+        assertFalse(UkRoadScope.candidateFeature(feature));
+        assertEquals(0,new ARoadProgressCalculator(app).contribution(j).length());
+        assertEquals(0,new MotorwayProgressCalculator(app).contribution(j).length());
+        assertTrue(UkRoadScope.candidate(1.333,51.126));assertFalse(UkRoadScope.candidate(1.875,50.981));
+        JourneyStore.save(app,j);assertNotNull(JourneyStore.get(app,"france"));
+    }
+    @Test public void interruptedCorrectionJournalReplaysBeforeArchiveRead() throws Exception {
+        JSONObject j=journey("replay",crossing());
+        FerryJourneyRecovery.write(new java.io.File(app.getFilesDir(),"ferry_recovery_pending.json"),new JSONObject().put("records",new JSONArray().put(j)));
+        assertNotNull(JourneyStore.get(app,"replay"));assertEquals(1,JourneyStore.count(app));assertNotNull(JourneyStore.get(app,"replay"));
     }
     @Test public void rejectedDistanceRetainsReturnedEvidenceAndThreshold() throws Exception {
         JSONArray points=new JSONArray().put(new JSONObject().put("lat",51).put("lng",1)).put(new JSONObject().put("lat",51.001).put("lng",1));

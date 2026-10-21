@@ -63,7 +63,7 @@ final class PlaceVisitEvidence {
         if(end==null||now-end.time>60_000L)return null;
         if(firstOutside!=null&&outsideCount>=3&&end.time-firstOutside.time>=30_000L) {
             String[] modes="cycling".equals(hint)?new String[]{"cycling","unknown","running","walking"}
-                    :new String[]{"unknown","running","walking"};
+                    :"running".equals(hint)?new String[]{"unknown","running","walking"}:new String[]{"unknown","walking"};
             for(String mode:modes) {
                 int start=CaptureMovementEvidence.modeChangeStart(points,mode,0,now);
                 if(start<0||start>firstOutside.index)continue;
@@ -83,7 +83,7 @@ final class PlaceVisitEvidence {
         }
         // Use maximum extent, not start-to-end distance: closed loops qualify.
         for(String mode:("cycling".equals(hint)?new String[]{"cycling","walking"}
-                :"running".equals(hint)?new String[]{"running","walking"}:new String[]{"running","unknown","walking"})) {
+                :"running".equals(hint)?new String[]{"running","walking"}:new String[]{"unknown","walking"})) {
             FootTraceValidator.Sample start=exercise(points,mode,now);
             if(start!=null)return new Decision(start.index,mode,"sustained_activity_within_place");
         }
@@ -105,7 +105,7 @@ final class PlaceVisitEvidence {
     }
     private static FootTraceValidator.Sample exercise(List<FootTraceValidator.Sample> points,String mode,long now) {
         boolean running="running".equals(mode),cycling="cycling".equals(mode)||"unknown".equals(mode);
-        double minimum=running?2.2:cycling?3:.8, maximum=running?6:cycling?15:2.2;
+        double minimum=running?2.2:"unknown".equals(mode)?2.2:cycling?3:.8, maximum=running?6:cycling?15:2.2;
         long duration=running||cycling?120_000L:360_000L;
         double required=running?220:cycling?350:450;
         FootTraceValidator.Sample first=null,previous=null;
