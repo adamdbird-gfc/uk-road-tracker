@@ -95,7 +95,9 @@ is not claimed. No production service configuration/deployment was changed.
   Walking/cycling corrections still invalidate the relevant evidence. No global
   startup scan, catalogue update or broad recalculation was added. The one-time
   hash-rule transition can refresh fingerprints once after upgrade.
-* Bounded 32-entry activity history, capture decisions, 16 manual confirmations,
+* Original capture mode and classification timestamp survive checkpoints; legacy
+  checkpoints without that history export null rather than guessing from the final mode.
+  Bounded 32-entry activity history, capture decisions, 16 manual confirmations,
   ferry review evidence, request bytes, distance integrity and failure category are
   included through the existing streaming diagnostic exporter. Older decisions
   that were never stored cannot be reconstructed. Existing section diagnostics

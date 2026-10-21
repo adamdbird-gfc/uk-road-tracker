@@ -1,6 +1,6 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-21. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
 ## Current multimodal corrective candidate — 21 October 2026
 
@@ -16,7 +16,10 @@ handoffs, recorded ferry map display, explicit journalled split/restore review,
 bounded transport/matching diagnostics and retries, negative overseas road gating,
 and NCN stability for ineligible transport matching-state changes.
 
-Integrated validation and private packaging are in progress. No device verification
+Full Android compilation, lint and integrated suite passed at `de2387e63a2413a615238de0b44d6f20f2effe58`
+([checks 39676313198](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39676313198)).
+The private signed packaging request repeats the full gate and includes persisted
+initial classification/checkpoint timestamps. Private packaging is in progress. No device verification
 of this candidate, Firebase distribution, Play publication or backend deployment.
 
 
