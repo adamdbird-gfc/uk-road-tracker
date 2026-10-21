@@ -108,7 +108,8 @@ public class MatchingCoordinatorTest {
         JourneyStore.updateMode(app, "edit-me", "bus"); release.countDown(); await(MatchingCoordinator.State.COMPLETE);
         JSONObject stored = JourneyStore.get(app, "edit-me");
         assertEquals("bus", stored.optString("mode")); assertFalse(stored.has("processing_result"));
-        assertEquals("failed", stored.optString("processing_status"));
+        assertEquals("pending", stored.optString("processing_status")); // Old walking failure cannot mark the corrected bus as failed.
+        assertEquals("confirmed",stored.optString("transport_confirmation"));
     }
     @Test public void failedJourneyCanRetryAndSuccessfulJourneyIsSkipped() throws Exception {
         save("retry", "walking", "pending"); AtomicInteger calls = new AtomicInteger();

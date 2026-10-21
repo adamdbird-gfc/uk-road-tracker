@@ -120,6 +120,10 @@ public class MultimodalFerryTest {
         java.lang.reflect.Method encode=MapActivity.class.getDeclaredMethod("mapRoutesToCache",MapActivity.MapRoutes.class);encode.setAccessible(true);
         assertEquals(1,((JSONObject)encode.invoke(screen,routes)).getJSONArray("ferries").length());
     }
+    @Test public void slowSailingCannotBecomeWalkingFromRoadContext() {
+        ContextJourneyModel model=new ContextJourneyModel();ContextMap.Evidence context=new ContextMap.Evidence();context.road=true;
+        for(int i=0;i<80;i++)assertNull(model.sample("ferry",i,1000000L+i*10000L,51.08,1.5+i*.0001,5,1.8f,context,false));
+    }
     @Test public void nonEligibleMatchingStatusDoesNotInvalidateNcn() throws Exception {
         JSONObject j=journey("road",crossing()).put("processing_status","pending");String before=JourneyStore.ncnEvidenceHash(j);
         j.put("processing_status","failed").put("last_match_attempt",new JSONObject().put("failure_category","dns"));

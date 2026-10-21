@@ -97,7 +97,7 @@ public class PlaceVisitCaptureServiceTest {
         assertNull(PlaceAnchorStore.last(service));assertFalse(CaptureService.isActive(service));
     }
     @Test public void sparseRunningLapsWithinCampusStartAtFirstMeasuredMovement()throws Exception {
-        establish(true);List<Location> run=new ArrayList<>();
+        establish(true);field("visitActivityHint").set(service,"running");field("visitActivityHintAt").setLong(service,time);List<Location> run=new ArrayList<>();
         for(int i=0;i<13&&!CaptureService.isActive(service);i++) {
             Location p=fix(100*Math.cos(i*Math.PI/6),100*Math.sin(i*Math.PI/6),2.7f,60);run.add(p);observe(p);
         }

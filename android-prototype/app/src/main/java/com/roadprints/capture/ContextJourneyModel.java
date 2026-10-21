@@ -16,6 +16,7 @@ final class ContextJourneyModel {
     private ContextMap.Evidence pauseContext=new ContextMap.Evidence();
     Decision sample(String mode,int index,long time,double lat,double lon,float accuracy,float speed,
                     ContextMap.Evidence context,boolean atStation) {
+        if("ferry".equals(mode))return null; // Marine transitions own this mode; slow sailing is not walking.
         if(!Float.isFinite(accuracy)||accuracy<=0||accuracy>50||time<=lastTime)return null;
         double step=lastTime==0?0:RailStationCatalog.metres(lastLat,lastLon,lat,lon);
         long gap=time-lastTime;

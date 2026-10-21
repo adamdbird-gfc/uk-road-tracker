@@ -46,6 +46,19 @@ public final class JourneyStore {
         return new FileInputStream(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
     }
 
+    static JSONObject recordedGeometry(Context context,String id) throws Exception {
+        try(FileInputStream snapshot=openDiagnosticSnapshot(context,id);
+                JsonReader reader=new JsonReader(new InputStreamReader(snapshot,StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while(reader.hasNext()) {
+                String key=reader.nextName();
+                if("route_geometry".equals(key))return (JSONObject)readEvidenceValue(reader);
+                reader.skipValue();
+            }
+            return null;
+        }
+    }
+
     public static synchronized void save(Context context, JSONObject journey) {
         migrateLegacy(context);
         String id = journey.optString("journey_id", "unknown");

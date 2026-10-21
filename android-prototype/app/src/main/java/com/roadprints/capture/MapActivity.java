@@ -741,8 +741,8 @@ public class MapActivity extends Activity {
             work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
             if("ferry".equals(journey.optString("mode"))) {
-                JSONObject prepared=record.prepared(raw->new JSONObject().put("ferries",preparedLines(recordedSegments(raw))));
-                if(!prepared.has("ferries"))prepared=record.rebuild(raw->new JSONObject().put("ferries",preparedLines(recordedSegments(raw))));
+                JSONObject prepared=record.prepared(this::prepareFerryRecord);
+                if(!prepared.has("ferries"))prepared=record.rebuild(this::prepareFerryRecord);
                 JSONArray ferries=prepared.getJSONArray("ferries");
                 for(int i=0;i<ferries.length()&&output.ferryPoints<20000&&output.ferrySections.size()<MAX_MAP_ROUTES;i++) {
                     JSONArray line=ferries.getJSONObject(i).getJSONArray("points");
@@ -823,6 +823,14 @@ public class MapActivity extends Activity {
         return output;
     }
 
+
+    private JSONObject prepareFerryRecord(JSONObject header) throws Exception {
+        JSONObject geometry=JourneyStore.recordedGeometry(getApplicationContext(),header.optString("journey_id"));
+        JSONObject recorded=new JSONObject();if(geometry!=null)recorded.put("route_geometry",geometry);
+        return new JSONObject().put("motorway",new JSONArray()).put("a_road",new JSONArray())
+                .put("roads",new JSONArray()).put("motorways",new JSONArray())
+                .put("ferries",preparedLines(recordedSegments(recorded)));
+    }
 
     private JSONArray preparedLines(List<JSONArray> routes) throws Exception {
         JSONArray result=new JSONArray();
