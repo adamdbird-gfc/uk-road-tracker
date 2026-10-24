@@ -1,35 +1,34 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-20. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Current Android development entrypoint — 20 October 2026
+## Current Android and backend entrypoint — 24 October 2026
 
-Latest owner-only APK: **0.25.212 (258)**,
-[PR #212](https://github.com/adamdbird-gfc/uk-road-tracker/pull/212), stacked on
-#211/#210/#209 and national NCN #207. **Use
-[the current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/android-map-contributions/docs/development-handover.md)
-before Android work.** Main's older application is not this unmerged private APK.
+Latest private Android: **0.25.215 (261), PR #218**. Use
+[the current generalised intelligence handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/generalised-journey-intelligence/docs/development-handover.md)
+for Android work. Main's older application is not the latest private APK.
+Exact signed source `d793d8b102ee85f1b1b51f62baa7dfed5ed19608`;
+[successful private build 40129351156](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156),
+[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156/artifacts/12574201664).
+759 tests / 102 suites passed, zero failures/errors/skips, lint and stable signing
+passed. Downloaded report totals and APK/ZIP hashes verified. APK SHA-256
+`a5a92be337bc0345dbe4722c2bcb46fd883bcb4659fd10611efc4fa8144f32be`.
 
-Exact signed source `5d5febdf35f8ac451565b110fbab1e7531fa8116`;
-[successful private build 39509571145](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145);
-[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/39509571145/artifacts/12305051296).
-711 tests passed, no failures/errors/skips; lint, national reference verification,
-distribution controls and stable signing passed. Downloaded APK checksum verified.
+Place/GPS intelligence is shared across destination types; portable translated
+fixtures replace any requirement to revisit Disneyland. Source originals and
+history remain intact. Main-map/NCN caching is preserved; one private APK,
+no Firebase upload/distribution or Play publication. See issue #216 and
+[portable acceptance](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/generalised-journey-intelligence/docs/journey-intelligence-portable-acceptance.md).
 
-**211 device findings:** New Journeys FIXED; NCN incremental ~1.5–2 s; Map still
-46–62 s (19–38 s evidence, 21–22 s coverage). 212 reuses compact map geometry and
-reference-validated coverage contributions, rejects stale snapshots before
-inflation, batches fitting and preserves NCN ledgers across irrelevant saves.
-Exact-source synthetic M2/A2 1,547-driving preparation: **896.48 ms first,
-120.55 ms warm, 84.33 ms after one addition**; unchanged completion, source reads
-1,547 / 0 / 1. These are runner preparation timings, not phone startup.
-
-**Pixel acceptance and 10-second target remain unverified.** First-use compaction
-and oversized-record fallback can still cost source processing. Keep #201/#194
-open; preserve verified New Journeys behaviour; broader NCN remains paused.
-**No Firebase upload, tester release/notification or Play publication.**
-See the linked handover for complete causes, stage metrics, artifact hash and
-device checklist. Do not build another APK merely to resume.
+**Production walking backend deployed and verified:** #217 merged as
+`7dd2c58c628ec819ace2b645d18aa296ddb238b4`, Render deploy
+`dep-dbegppdg1s2s739dhv30`, uk-road-tracker-api in the owner-selected workspace.
+Health confirms walking_work_version=2/database ready. Live public UK traces
+matched 6/6 and 8/8 points; overseas upstream fallback retained genuine 3/4-point
+partial geometry, with runtime counters corroborating the work. Original logs
+prove the 55-second application deadline, not the exact upstream cause.
+See [backend delivery details](walking-backend-completion.md). Later metadata-only
+commits are intentionally not redeployed; the above is the exact live code.
 
 ## Latest delivery — Urgent Beta 1 corrective release (#201)
 

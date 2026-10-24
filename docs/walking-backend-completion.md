@@ -21,8 +21,15 @@ Coordinate-free work counters are returned and logged; health reports
 `walking_work_version=2`. Context revision 3 adds public complex destination
 site tags/names and refreshes only derived context tiles, not user history.
 
-Local suite: 91 tests, five DB-dependent skips; database-backed CI and live
-rollout/verification pending. Do not claim deployment until Render reports live
-at the merged source and live health/matching verification has succeeded.
+Local suite: 91 tests, five DB-dependent skips; database-backed CI 40127264927
+and road-recovery CI 40127264932 passed. PR #217 merged as
+7dd2c58c628ec819ace2b645d18aa296ddb238b4; Render deploy
+dep-dbegppdg1s2s739dhv30 is live at that exact source. Live health confirms
+walking_work_version=2 and database ready. Public Kent/Scottish walking references
+matched 6/6 and 8/8 points with genuine geometry. Overseas synthetic fallback
+matched 3/4 points with real geometry and one upstream call, retaining unmatched
+evidence. Runtime work counters independently corroborate these checks.
+Simulated deadline/network/partial/long-route regressions passed; no claim is
+made that every future external-router request will succeed.
 No Android release, Firebase distribution, catalogue publication or historic
 journey reassessment belongs to this slice. Issue #216 tracks coordination.
