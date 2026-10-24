@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
 from map_context import shared_area, ContextUnavailable
+from walking_work import WalkingWorkBudget, WalkingWorkLimit, walking_work
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -63,7 +64,7 @@ REFERENCE_MATCH_LOCK = asyncio.Lock()
 foot_next_request_at = 0.0
 foot_cooldown_until = 0.0
 
-app = FastAPI(title="UK Road Tracker API", version="0.12.0")
+app = FastAPI(title="UK Road Tracker API", version="0.11.0")
 PLACE_NAME_CACHE = {}
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://adamdbird-gfc.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin.strip()]
 
@@ -223,7 +224,8 @@ async def request_match(client, points, radius, base_url):
     last_error = None
     for attempt in range(3):
         try:
-            response = await router_get(client, url, params, base_url)
+            budget = walking_work.get() if base_url == FOOT_OSRM_BASE_URL else None
+            response = await budget.call(lambda: router_get(client, url, params, base_url)) if budget else await router_get(client, url, params, base_url)
             try:
                 data = response.json()
             except ValueError:
@@ -323,6 +325,8 @@ async def match_chunk_resiliently(
     retry_no_match=False,
     road_recovery=False,
     point_offset=0,
+    subdivision_budget=None,
+    subdivision_depth=0,
 ):
     """Match a chunk without allowing one sparse portion to discard a journey.
 
@@ -331,6 +335,14 @@ async def match_chunk_resiliently(
     evidence.  A two-point failure is irreducibly sparse, so it is reported as
     an omitted portion rather than turning the whole request into a 422.
     """
+    if subdivision_budget is not None and subdivision_depth > 0:
+        if subdivision_budget[0] <= 0:
+            return {"matchings": [], "tracepoints": []}, None, [{
+                "points": len(points), "detail": "pedestrian_work_limit",
+                "start_point_index": point_offset,
+                "end_point_index": point_offset + len(points) - 1,
+            }]
+        subdivision_budget[0] -= 1
     try:
         data, radius = await osrm_match_chunk(
             client, points, chunk_index, base_url, polite_delay_seconds,
@@ -343,6 +355,12 @@ async def match_chunk_resiliently(
         if road_recovery:
             data["road_distance_legs"], data["road_distance_complete"] = matched_road_legs(data, point_offset)
         return data, radius, []
+    except WalkingWorkLimit as exc:
+        return {"matchings": [], "tracepoints": []}, None, [{
+            "points": len(points), "detail": exc.reason,
+            "start_point_index": point_offset,
+            "end_point_index": point_offset + len(points) - 1,
+        }]
     except HTTPException as exc:
         if exc.status_code != 422:
             raise
@@ -382,11 +400,11 @@ async def match_chunk_resiliently(
         right = points[midpoint:]
         left_data, left_radius, left_failures = await match_chunk_resiliently(
             client, left, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset,
+            radius_attempts, retry_no_match, road_recovery, point_offset, subdivision_budget, subdivision_depth + 1,
         )
         right_data, right_radius, right_failures = await match_chunk_resiliently(
             client, right, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint,
+            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint, subdivision_budget, subdivision_depth + 1,
         )
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),
@@ -431,7 +449,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.12.0", "source_commit": os.getenv("RENDER_GIT_COMMIT", ""), "road_capture_window_points": 10, "map_context_feature_revision": 2, "matched_path_evidence_version": 1, "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "walking_work_version": 2, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -634,6 +652,23 @@ def recorded_walking_result(point_count):
 
 @app.post("/match-walking")
 async def match_walking_activity(payload: MatchRequest):
+    budget = WalkingWorkBudget() if payload.walking_recovery else None
+    token = walking_work.set(budget)
+    status = 'failed'
+    try:
+        result = await _match_walking_activity(payload)
+        status = result.get('walking_outcome', result.get('status', 'ok'))
+        if budget: result['matcher_work'] = budget.summary()
+        return result
+    finally:
+        if budget:
+            summary = budget.summary()
+            logger.info("walking_work points=%s calls=%s limited=%s elapsed_ms=%s outcome=%s",
+                        len(payload.points), summary['router_calls'], summary['limited_calls'], summary['elapsed_ms'], status)
+        walking_work.reset(token)
+
+
+async def _match_walking_activity(payload: MatchRequest):
     if payload.walking_recovery and len(payload.points) <= 2:
         return recorded_walking_result(len(payload.points))
     # The preloaded shared public reference is used first. The request is
@@ -734,6 +769,7 @@ async def match_payload(
     tracepoints_seen = 0
     failed_sections = []
     recovered_sections = []
+    subdivision_budget = [16] if disjoint_chunks and base_url == FOOT_OSRM_BASE_URL else None
     road_distance_legs = {}
     road_distance_complete = True
 
@@ -743,6 +779,13 @@ async def match_payload(
             headers={"User-Agent": "Roadprints-POC/0.7 (+https://adamdbird-gfc.github.io/uk-road-tracker/)"},
         ) as client:
             for chunk_index, chunk in enumerate(chunks):
+                work = walking_work.get() if base_url == FOOT_OSRM_BASE_URL else None
+                if work and work.exhausted():
+                    for omitted in range(chunk_index, len(chunks)):
+                        start = omitted * max(1, chunk_size-overlap)
+                        failed_sections.append({'points': len(chunks[omitted]), 'detail': 'pedestrian_work_limit',
+                                                'start_point_index': start, 'end_point_index': start+len(chunks[omitted])-1})
+                    break
                 if chunk_index and polite_delay_seconds:
                     await asyncio.sleep(polite_delay_seconds)
                 chunk_start = chunk_index * max(1, chunk_size - overlap)
@@ -756,6 +799,7 @@ async def match_payload(
                     retry_no_match,
                     road_recovery,
                     chunk_start,
+                    subdivision_budget,
                 )
                 failed_sections.extend(chunk_failures)
                 recovered_sections.extend(data.get("road_recovery") or [])
@@ -850,6 +894,8 @@ async def match_payload(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Road matcher could not be reached: {exc}") from exc
 
+    if not features and any(failure.get("detail") in {"pedestrian_work_limit", "pedestrian_upstream_timeout"} for failure in failed_sections):
+        raise HTTPException(status_code=503, detail="Walking search work limit reached. The GPS evidence can be retried later.", headers={"Retry-After": "60"})
     if not features:
         raise HTTPException(status_code=422, detail="The matcher returned no route geometry.")
 
