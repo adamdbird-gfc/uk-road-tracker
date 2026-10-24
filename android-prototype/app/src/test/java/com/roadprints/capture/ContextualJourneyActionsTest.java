@@ -32,6 +32,8 @@ public class ContextualJourneyActionsTest {
         JSONArray partial=new JSONArray();for(int i=2;i<12;i++)partial.put(MultimodalFerryTest.crossing().get(i));
         assertTrue(FerryJourneyEvidence.reviewAvailable(MultimodalFerryTest.journey("partial",partial)));
         assertFalse(FerryJourneyEvidence.inspect(partial).canSplit());
+        journey.put("ferry_recovery",JSONObject.NULL);
+        assertTrue(FerryJourneyEvidence.reviewAvailable(journey));assertFalse(FerryJourneyEvidence.restorable(journey));
     }
     @Test public void ambiguityPortProximityAndSavedFlagsAreInsufficient()throws Exception {
         JSONObject journey=road("unknown").put("context_evidence",new JSONObject().put("reason","mixed_mode_requires_review"))

@@ -1373,14 +1373,14 @@ public class JourneyListActivity extends Activity {
         }
 
         if(FerryJourneyEvidence.reviewAvailable(journey)) {
-            Button ferryReview=styledModalButton(journey.has("ferry_recovery")?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
+            Button ferryReview=styledModalButton(FerryJourneyEvidence.restorable(journey)?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
             ferryReview.setOnClickListener(v->requestCloseWithUnsavedChanges(
                     dialogRef[0],hasUnsavedChanges(titleInput,transport,transportModes,savedTitle[0],savedMode[0]),
                     saveEdits,()->processor.execute(()->{
                 try {
                     JSONObject current=JourneyStore.get(this,journey.optString("journey_id"));
                     if(current==null)return;
-                    boolean restore=current.has("ferry_recovery");
+                    boolean restore=FerryJourneyEvidence.restorable(current);
                     FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(current.optJSONArray("capture_route_samples"));
                     String message=restore?"Restore the preserved original recording and remove the derived sections? Any edits to those derived sections will also be removed.":review.reason;
                     if(!restore&&review.canSplit()) {
