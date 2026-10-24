@@ -151,7 +151,7 @@ public class MatchingCoordinatorTest {
         assertTrue(attempt.optBoolean("points_reduced"));
     }
 
-    @Test public void longWalkingTraceIsSampledToMatcherLimitAndKeepsBothEndpoints() throws Exception {
+    @Test public void longWalkingTraceIsSimplifiedWithinGeometryAndMatcherBounds() throws Exception {
         JSONArray coordinates = new JSONArray();
         for (int i = 0; i < 844; i++) {
             coordinates.put(new JSONArray().put(0.15 + i * 0.00001).put(52.2 + i * 0.00001));
@@ -166,16 +166,19 @@ public class MatchingCoordinatorTest {
             assertEquals("/match-walking", foot);
             JSONArray sent = payload.optJSONArray("points");
             sentCount.set(sent.length());
+            for(int i=1;i<sent.length();i++)
+                assertTrue(TimelineRoadPreparation.distance(sent.getJSONObject(i-1),sent.getJSONObject(i))<=60.1);
             assertEquals(0.15, sent.getJSONObject(0).optDouble("lng"), 0.000001);
             assertEquals(0.15843, sent.getJSONObject(sent.length() - 1).optDouble("lng"), 0.000001);
             return route();
         });
         coordinator.start("long-walk"); await(MatchingCoordinator.State.COMPLETE);
-        assertEquals(MatchingCoordinator.MAX_MATCH_REQUEST_POINTS, sentCount.get());
+        assertTrue(sentCount.get()>=3);
+        assertTrue(sentCount.get()<MatchingCoordinator.MAX_MATCH_REQUEST_POINTS);
         JSONObject attempt = JourneyStore.get(app, "long-walk").optJSONObject("last_match_attempt");
         assertEquals("/match-walking", attempt.optString("endpoint"));
         assertEquals(844, attempt.optInt("source_points"));
-        assertEquals(500, attempt.optInt("submitted_points"));
+        assertEquals(sentCount.get(), attempt.optInt("submitted_points"));
         assertTrue(attempt.optBoolean("points_reduced"));
     }
 

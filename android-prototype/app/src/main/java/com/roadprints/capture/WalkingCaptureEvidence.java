@@ -24,6 +24,18 @@ final class WalkingCaptureEvidence {
             return new Result(FootTraceValidator.validate(input),0,0);
         for(int i=1;i<input.size()-1;i++) if(input.get(i).time<=0)
             return new Result(FootTraceValidator.validate(input),0,0);
+        List<FootTraceValidator.Sample> chronological=new ArrayList<>();
+        long latest=0;
+        for(FootTraceValidator.Sample p:input) {
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy<=0||p.accuracy>50||p.time<=latest)continue;
+            chronological.add(p);latest=p.time;
+        }
+        if(chronological.size()!=input.size()) {
+            Result clean=prepare(chronological);
+            return new Result(new FootTraceValidator.Result(clean.route.samples,input.size(),true,
+                    clean.route.resolved&&clean.route.samples.size()>=2),
+                    clean.rejectedFixes+input.size()-chronological.size(),clean.stationaryTail,clean.stationaryPoints);
+        }
         WalkingStillnessDetector detector=new WalkingStillnessDetector();
         PedestrianMotionWindow motion=new PedestrianMotionWindow();
         boolean[] stationary=new boolean[input.size()];

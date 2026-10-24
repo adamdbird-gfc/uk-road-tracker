@@ -1,6 +1,51 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-21. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Disneyland corrective candidate — 24 October 2026
+
+Continue from `fix/disneyland-gps-integrity`, based on private 213's actual
+application lineage. Candidate **0.25.214 (260)**. See
+[confirmed evidence, policy, validation and limits](disneyland-stabilisation.md).
+Offline mapped resort recognition, confirmed boundary departure, raw internal
+capture preservation, GPS freshness/ordering and moving-gap protection,
+bounded pedestrian simplification and backend recursive-search budget.
+No historical deletion/rematch, map/NCN cache reset or tester distribution.
+Final implementation source **f786fde2df32e05edaa98be7273595fcf35b0bf2** passed
+[Android compile, lint, national reference and complete unit tests](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40055191072).
+Database-backed context/walking CI 40055191068 and road recovery CI 40055191048
+also passed. Local backend suite: 87 tests, five DB-dependent skips (covered
+in database-backed CI). Earlier failures were missing 214 release notes and an
+obsolete uniform-sampling expectation; both corrected, no tests excluded.
+**Delivered private 0.25.214 (260), PR #215.** Exact signed source:
+`a0467b6ca788cf38e3df450289ae78be9c66b006`.
+[Successful private packaging 40055485610](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40055485610),
+[APK artifact 12544289738](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40055485610/artifacts/12544289738),
+[verification reports 12545137018](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40055485610/artifacts/12545137018).
+**746 Android tests / 101 suites; zero failures, errors or skips; lint passed.**
+Downloaded XML independently confirms totals. National reference verification,
+private-distribution controls and established v2 signing certificate
+`5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`
+passed. APK **36,589,685 bytes**, SHA-256
+`d29eae2db9df5d1e108ab94d5b7026091ff8ed755cf0899360f09872951ba8a2`.
+Downloaded artifact ZIP digest and APK checksum match build output. The exact
+packaged source also passed independent Android CI 40055489684, database-backed
+context/walking CI 40055489573 and road recovery CI 40055489645.
+
+Synthetic 1,547-driving runner preparation: **1,321.98ms first, 355.69ms warm,
+185.97ms after one addition**, identical completion. Warm reused 1,547 records
+with zero source reads; one addition reused 1,547 and rebuilt/read one source.
+These are runner timings, not Pixel measurements or proof of device latency.
+Existing NCN/cache and history tests pass; no global invalidation/migration.
+
+Install over 213 without clearing data. **One signed APK built; no Firebase
+upload, distribution/notification, Play publication or backend deployment.**
+Outstanding hotel footprint scope, live backend rollout/log access and field
+acceptance: [#216](https://github.com/adamdbird-gfc/uk-road-tracker/issues/216).
+The offline mapped boundary is not a claim to cover every hotel/connecting road;
+the eastern evening walk crosses it. Production matcher timeout root cause
+remains unverified without logs. Final documentation-only commits do not change
+the delivered binary.
 
 ## Current multimodal corrective candidate — 21 October 2026
 

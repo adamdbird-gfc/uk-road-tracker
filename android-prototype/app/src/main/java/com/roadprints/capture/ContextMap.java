@@ -45,7 +45,8 @@ final class ContextMap {
                 boolean building=tags.has("building") && !"no".equals(tags.optString("building"));
                 String amenity=tags.optString("amenity");
                 boolean site="school".equals(amenity)||"college".equals(amenity)||"university".equals(amenity)
-                        ||"hospital".equals(amenity)||"mall".equals(tags.optString("shop"));
+                        ||"hospital".equals(amenity)||"mall".equals(tags.optString("shop"))
+                        ||"theme_park".equals(tags.optString("tourism"));
                 double area=area(geometry);
                 // Prefer the encompassing site to an individual building, then the
                 // smallest eligible footprint. Feature order must not change identity.
@@ -53,7 +54,7 @@ final class ContextMap {
                         && (!result.destination || site&&!result.site || site==result.site&&area<selectedArea)) {
                     result.destination=true; result.parking=parking; result.site=site; selectedArea=area;
                     result.geometry=geometry;result.holes=holes;
-                    result.kind=site?("mall".equals(tags.optString("shop"))?"shopping_centre":amenity):parking?"parking":("house".equals(tags.optString("building"))
+                    result.kind="theme_park".equals(tags.optString("tourism"))?"theme_park":site?("mall".equals(tags.optString("shop"))?"shopping_centre":amenity):parking?"parking":("house".equals(tags.optString("building"))
                             || "residential".equals(tags.optString("building"))?"residential":"building");
                     result.name=tags.optString("name",result.kind);
                     result.featureId=f.optLong("id",0)>0?"osm:"+("relation".equals(f.optString("type"))?"relation":"way")+":"+f.optLong("id"):"";

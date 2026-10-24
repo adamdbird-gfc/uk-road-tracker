@@ -8,7 +8,7 @@ final class CaptureQualityValidator {
     static boolean reliable(FootTraceValidator.Sample a, FootTraceValidator.Sample b, boolean foot) {
         if (!Double.isFinite(b.lon) || !Double.isFinite(b.lat) || Math.abs(b.lon)>180
                 || Math.abs(b.lat)>90 || !Double.isFinite(b.accuracy)
-                || b.accuracy<0 || b.accuracy>100 || b.time<=0) return false;
+                || b.accuracy<=0 || b.accuracy>(foot?50:100) || b.time<=0) return false;
         if (a==null) return true;
         if (b.time<=a.time) return false;
         return foot ? FootTraceValidator.plausible(a,b)

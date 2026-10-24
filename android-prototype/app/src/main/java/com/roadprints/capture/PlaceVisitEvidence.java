@@ -71,9 +71,12 @@ final class PlaceVisitEvidence {
                 double extent=FootTraceValidator.metres(origin,end)-origin.accuracy-end.accuracy;
                 if(extent<("unknown".equals(mode)?50:20))continue;
                 // Preserve measured movement before the boundary crossing too.
+                if("theme_park".equals(stop.optString("kind")))
+                    return new Decision(firstOutside.index,mode,"departure_from_visit");
                 return "unknown".equals(mode)?vehicleDeparture(points,start):new Decision(start,mode,"departure_from_visit");
             }
         }
+        if("theme_park".equals(stop.optString("kind")))return null;
         // Real vehicle departure need not wait to leave a very large campus.
         if(!"cycling".equals(hint)) {
             int start=CaptureMovementEvidence.modeChangeStart(points,"unknown",0,now);

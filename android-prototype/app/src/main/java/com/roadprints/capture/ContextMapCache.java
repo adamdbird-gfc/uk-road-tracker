@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 final class ContextMapCache {
     private final File directory;
     private final Context app;
+    private final DestinationCatalog destinations;
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final Handler main=new Handler(Looper.getMainLooper());
     private JSONArray features;
@@ -30,14 +31,16 @@ final class ContextMapCache {
     static boolean enabled(Context context) {
         return context.getSharedPreferences("roadprints_capture_state",Context.MODE_PRIVATE).getBoolean("public_map_context",false);
     }
-    ContextMapCache(Context context) {app=context.getApplicationContext();directory=new File(app.getCacheDir(),"capture-context-v3");budget=new ContextRequestBudget(app);}
+    ContextMapCache(Context context) {app=context.getApplicationContext();destinations=new DestinationCatalog(app);directory=new File(app.getCacheDir(),"capture-context-v3");budget=new ContextRequestBudget(app);}
     ContextMap.Evidence evidence(double lat,double lon,float accuracy) {
-        return ContextMap.at(enabled(app)&&covers(lat,lon)?features:null,lat,lon,accuracy);
+        ContextMap.Evidence offline=destinations.evidence(lat,lon,accuracy);
+        return DestinationCatalog.suppresses(offline)?offline:ContextMap.at(enabled(app)&&covers(lat,lon)?features:null,lat,lon,accuracy);
     }
     private boolean covers(double lat,double lon) {
         return features!=null&&System.currentTimeMillis()<validUntil&&lat>=south-.003&&lat<=south+.013&&lon>=west-.006&&lon<=west+.026;
     }
     void request(double lat,double lon,Runnable callback) {
+        if(lat<49||lat>61||lon< -11||lon>2)return;
         if(!enabled(app)||closed||busy||covers(lat,lon)||System.currentTimeMillis()-attemptedAt<60_000L)return;
         busy=true; attemptedAt=System.currentTimeMillis();
         final double s=Math.floor(lat*100)/100,w=Math.floor(lon*50)/50;

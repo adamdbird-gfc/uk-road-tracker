@@ -179,4 +179,52 @@ public class PlaceVisitCaptureServiceTest {
             assertEquals(original.size()-1,boundary+continuation.size()-1);
         }
     }
+    @Test public void pinnedResortSurvivesBackgroundAndRestartWithoutAnOnlineLookup()throws Exception {
+        field("contextCache").set(service,new ContextMapCache(service));
+        ContextMap.Evidence map=new DestinationCatalog(service).evidence(48.872,2.774,5);
+        JSONObject stop=PlaceBoundaryEvidence.arrival("resort-stay",new FootTraceValidator.Sample(2.774,48.872,5,time,0,0),time+30000,map,null,"arrival_theme_park");
+        PlaceAnchorStore.record(service,new JSONObject().put("stops",new JSONArray().put(stop)));
+        for(int i=0;i<100;i++) {
+            time+=30000;Location p=new Location("gps");p.setLatitude(48.872+Math.sin(i*.2)*.001);p.setLongitude(2.774+Math.cos(i*.2)*.001);
+            p.setTime(time);p.setAccuracy(5);p.setSpeed(1.3f);observe(p);
+            assertFalse(CaptureService.isActive(service));
+        }
+        // Reload preferences and checkpoint exactly as a fresh idle visit does.
+        points("visitPoints").clear();field("visitPointStopId").set(service,"");
+        time+=30000;Location p=new Location("gps");p.setLatitude(48.872);p.setLongitude(2.774);p.setTime(time);p.setAccuracy(5);p.setSpeed(1.3f);observe(p);
+        assertFalse(CaptureService.isActive(service));assertEquals("theme_park",PlaceAnchorStore.last(service).getString("kind"));
+        ((ContextMapCache)field("contextCache").get(service)).close();
+    }
+    @Test public void finishingInternalAutomaticCaptureRetainsRawWithoutOrdinaryHistory()throws Exception {
+        field("contextCache").set(service,new ContextMapCache(service));
+        field("checkpointFile").set(service,new android.util.AtomicFile(new java.io.File(service.getFilesDir(),"resort-test-active.json")));
+        field("journeyId").set(service,"resort-raw-regression");field("mode").set(service,"walking");
+        field("automaticCapture").setBoolean(service,true);
+        field("startedAt").set(service,Instant.ofEpochMilli(time-30000).toString());
+        service.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
+        for(int i=0;i<4;i++) {
+            Location p=new Location("gps");p.setLatitude(48.872);p.setLongitude(2.774+i*.0001);
+            p.setTime(time-30000+i*10000L);p.setAccuracy(5);p.setSpeed(1.3f);points("points").add(p);
+        }
+        invoke("finishCapture",new Class<?>[0]);
+        ((ExecutorService)field("captureIo").get(service)).submit(()->{}).get(5,TimeUnit.SECONDS);
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        assertFalse(CaptureService.isActive(service));assertNull(JourneyStore.get(service,"resort-raw-regression"));
+        java.io.File file=new java.io.File(service.getFilesDir(),"destination-internal-evidence/resort-raw-regression.json");
+        JSONObject raw=new JSONObject(new String(java.nio.file.Files.readAllBytes(file.toPath()),java.nio.charset.StandardCharsets.UTF_8));
+        assertEquals(4,raw.getJSONArray("raw_capture_samples").length());
+        assertEquals("gps",raw.getJSONArray("raw_capture_samples").getJSONArray(0).getString(5));assertTrue(file.delete());
+        ((ContextMapCache)field("contextCache").get(service)).close();
+    }
+    @Test public void staleCachedFixCannotSplitAnActiveWalkingRecording()throws Exception {
+        field("mode").set(service,"walking");field("automaticCapture").setBoolean(service,true);
+        service.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
+        Location origin=new Location("gps");origin.setLatitude(51);origin.setLongitude(.3);origin.setAccuracy(5);origin.setSpeed(1.3f);origin.setTime(time-1200000);
+        points("points").add(origin);field("lastPoint").set(service,origin);
+        Location stale=new Location(origin);stale.setLongitude(.301);stale.setTime(time-300000);
+        ((LocationListener)field("locationListener").get(service)).onLocationChanged(stale);
+        assertFalse(field("captureFinishing").getBoolean(service));assertTrue(CaptureService.isActive(service));
+        assertEquals(2,points("points").size());assertEquals(origin.getTime(),((Location)field("lastPoint").get(service)).getTime());
+        assertEquals(0,field("distanceMetres").getDouble(service),0);
+    }
 }
