@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Contextual journey actions — current candidate 0.25.216 (262)
+## Contextual journey actions — delivered 0.25.216 (262)
 
 Continue from `fix/contextual-journey-actions`, stacked on #218's latest
 `0c48f84e`. See [changes, evidence limits and validation](contextual-journey-actions.md).
@@ -14,9 +14,26 @@ Implementation `3606d591a402c7c7e09a13b79ee5113dba783d89` passed full
 Android compilation/lint, pinned references and unit tests in run 40134680370.
 Ferry/ambiguous-mode/button regressions, exact-duration GPS-gap/restart replay,
 missing-input-hash NCN metadata and unfinished foot/cycle retry tests passed.
-Private packaging requested once; artifact/signature/hash verification pending.
-Newer diagnostic JSON/text was not available: original provider gap cause and
-remaining phone frame bottleneck are not claimed solved by synthetic tests.
+**Delivered private 0.25.216 (262), PR #219.** Exact signed source
+`4555346dcc770be3a41fc1767e523fa3a23c9d7c`.
+[Successful private packaging 40135070445](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445),
+[APK artifact 12576617872](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576617872),
+[verification reports 12576922475](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576922475).
+**771 tests / 103 suites, zero failures/errors/skips**; lint, national references,
+distribution controls and established v2 signing certificate passed. Downloaded
+XML independently confirms totals; artifact ZIP digests and APK hash match CI.
+APK **36,590,025 bytes**, SHA-256
+`52cfa666d3d5fa1fe9b1e18ceef6fcab18b9ba2d172b118c51fe769032299265`.
+Exact-source independent Android checks 40135074362 also passed.
+Install over 215 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical rewrite/rematch or cache reset.
+
+Synthetic 1,547-driving map preparation: **1,148.87ms cold / 258.17ms warm /
+176.18ms one addition**, identical completion. Warm reused 1,547 with zero source
+reads; adding one reused 1,547 and read/rebuilt one source. Runner measurements
+are not phone startup/frame proof. Updated draw-stage telemetry supports later
+ordinary-use diagnosis; the original missing-fix/remaining phone-frame causes
+are unconfirmed without the new diagnostic export.
 
 ## Generalised journey intelligence — delivered 24 October 2026
 

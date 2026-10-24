@@ -55,6 +55,23 @@ support diagnosis on ordinary future map use; CI timing is not phone frame proof
 Final implementation `3606d591a402c7c7e09a13b79ee5113dba783d89` passed
 complete Android compilation/lint, national references and all unit regressions
 in [run 40134680370](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40134680370).
-No tests excluded. Private packaging requested once for 0.25.216 (262);
-artifact/signature/checksum verification pending. No Firebase tester distribution, historical
-rewrite/rematch, global cache invalidation or backend deployment.
+No tests excluded. **Delivered private 0.25.216 (262), PR #219.** Exact signed source
+`4555346dcc770be3a41fc1767e523fa3a23c9d7c`.
+[Successful private packaging 40135070445](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445),
+[APK artifact 12576617872](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576617872),
+[verification reports 12576922475](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576922475).
+**771 tests / 103 suites, zero failures/errors/skips**; lint, national references,
+distribution controls and established v2 signing certificate passed. Downloaded
+XML independently confirms totals; artifact ZIP digests and APK hash match CI.
+APK **36,590,025 bytes**, SHA-256
+`52cfa666d3d5fa1fe9b1e18ceef6fcab18b9ba2d172b118c51fe769032299265`.
+Exact-source independent Android checks 40135074362 also passed.
+Install over 215 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical rewrite/rematch or cache reset.
+
+Synthetic 1,547-driving map preparation: **1,148.87ms cold / 258.17ms warm /
+176.18ms one addition**, identical completion. Warm reused 1,547 with zero source
+reads; adding one reused 1,547 and read/rebuilt one source. Runner measurements
+are not phone startup/frame proof. Updated draw-stage telemetry supports later
+ordinary-use diagnosis; the original missing-fix/remaining phone-frame causes
+are unconfirmed without the new diagnostic export.
