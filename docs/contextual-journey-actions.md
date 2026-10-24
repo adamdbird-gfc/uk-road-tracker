@@ -35,7 +35,7 @@ backend remains the already deployed #217 slice. No backend changes here.
   retry telemetry no longer trigger reassessment. Completed-result transitions,
   corrections and real source changes still invalidate. Existing input hashes
   are lazily refreshed on a later individual save, with no global migration;
- source tokens/fingerprints/checksums and per-row caches remain.
+  source tokens/fingerprints/checksums and per-row caches remain.
 - Slow-frame reports now separate tile, road, NCN and other draw time and count
   road sections. Empty route views avoid an unnecessary offscreen alpha layer.
   Projection limits, incremental map contributions, NCN caches and camera state
@@ -52,7 +52,9 @@ support diagnosis on ordinary future map use; CI timing is not phone frame proof
 
 ## Validation and delivery
 
-Targeted and complete Android CI/lint, national references and private packaging
-will be recorded in the handover after verification. One private 0.25.216 (262)
-APK is planned after tests pass. No Firebase tester distribution, historical
+Final implementation `3606d591a402c7c7e09a13b79ee5113dba783d89` passed
+complete Android compilation/lint, national references and all unit regressions
+in [run 40134680370](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40134680370).
+No tests excluded. Private packaging requested once for 0.25.216 (262);
+artifact/signature/checksum verification pending. No Firebase tester distribution, historical
 rewrite/rematch, global cache invalidation or backend deployment.

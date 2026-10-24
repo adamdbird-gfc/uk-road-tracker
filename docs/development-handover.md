@@ -10,7 +10,13 @@ Evidence-gated ferry review/restore, consistent 8dp action spacing, timed record
 preview sections without gap connectors, missing-hash NCN metadata protection,
 warm incremental assessment and stage-specific slow-frame diagnostics.
 No historical rewrite/rematch, cache reset, Firebase distribution or backend change.
-Tests and private delivery pending; no completion claim yet.
+Implementation `3606d591a402c7c7e09a13b79ee5113dba783d89` passed full
+Android compilation/lint, pinned references and unit tests in run 40134680370.
+Ferry/ambiguous-mode/button regressions, exact-duration GPS-gap/restart replay,
+missing-input-hash NCN metadata and unfinished foot/cycle retry tests passed.
+Private packaging requested once; artifact/signature/hash verification pending.
+Newer diagnostic JSON/text was not available: original provider gap cause and
+remaining phone frame bottleneck are not claimed solved by synthetic tests.
 
 ## Generalised journey intelligence — delivered 24 October 2026
 
