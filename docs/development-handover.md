@@ -9,9 +9,21 @@ and the validated production backend slice #217. Candidate **0.25.215 (261)**.
 See [portable acceptance and behavioural changes](journey-intelligence-portable-acceptance.md).
 No return to any original travel location is required. Deterministic portable
 regressions are the release acceptance gate; future device journeys are optional
-observational feedback. Android tests/build pending; do not claim APK delivery.
-Backend merge 7dd2c58c628ec819ace2b645d18aa296ddb238b4 is live on Render;
-endpoint verification remains pending. Issue #216 coordinates final evidence.
+observational feedback. Final implementation `957e7c10402a67a2d831eb801c2fc8624ccfc836` passed full
+Android compile/lint, pinned reference and unit tests in run 40128957116.
+Database-backed context/walking run 40128957090 and road-recovery run
+40128957091 also passed. No tests excluded. One private signed APK requested;
+artifact delivery remains pending.
+
+Backend merge `7dd2c58c628ec819ace2b645d18aa296ddb238b4` is live on Render,
+deploy `dep-dbegppdg1s2s739dhv30`, service `uk-road-tracker-api` in the owner-
+selected My Workspace. Health confirms policy version 2 and database ready.
+Live public walking references matched 6/6 Kent points (30.7m) and 8/8 Scottish
+points (34.3m); overseas fallback returned real geometry for 3/4 points (42.3m),
+one upstream call and explicit unmatched evidence. Runtime counters corroborate.
+No personal GPS or journeys were submitted. Exact historical timeout bottleneck
+remains unknown; logs establish the 55-second application deadline only.
+Issue #216 records portable acceptance and optional future observations.
 
 ## Disneyland corrective candidate — 24 October 2026
 
