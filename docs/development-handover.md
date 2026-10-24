@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Generalised journey intelligence candidate — 24 October 2026
+## Generalised journey intelligence — delivered 24 October 2026
 
 Continue from `fix/generalised-journey-intelligence`, based on delivered 214
 and the validated production backend slice #217. Candidate **0.25.215 (261)**.
@@ -12,8 +12,25 @@ regressions are the release acceptance gate; future device journeys are optional
 observational feedback. Final implementation `957e7c10402a67a2d831eb801c2fc8624ccfc836` passed full
 Android compile/lint, pinned reference and unit tests in run 40128957116.
 Database-backed context/walking run 40128957090 and road-recovery run
-40128957091 also passed. No tests excluded. One private signed APK requested;
-artifact delivery remains pending.
+40128957091 also passed. No tests excluded. **Delivered one private signed 0.25.215 (261), PR #218.** Exact binary source
+`d793d8b102ee85f1b1b51f62baa7dfed5ed19608`.
+[Successful packaging 40129351156](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156),
+[APK artifact 12574201664](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156/artifacts/12574201664),
+[reports 12574241629](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156/artifacts/12574241629).
+**759 tests / 102 suites; zero failures/errors/skips.** Lint, national references,
+distribution controls and established v2 signing certificate passed. Downloaded
+XML independently confirms totals. APK 36,589,905 bytes, SHA-256
+`a5a92be337bc0345dbe4722c2bcb46fd883bcb4659fd10611efc4fa8144f32be`;
+downloaded ZIP and APK hashes match build output. Exact-source independent
+Android CI 40129355413, context/walking CI 40129355394 and road-recovery
+CI 40129355386 passed.
+
+Synthetic 1,547-driving preparation: 727.54ms first / 187.03ms warm /
+126.33ms one addition, identical completion. These are runner measurements,
+not phone startup results. Existing map/NCN cache and history regressions pass.
+Install over 214 without clearing data. No historical migration/rematch, global
+cache invalidation, Firebase upload/tester notification or Play publication.
+Later documentation-only commits leave the delivered binary unchanged.
 
 Backend merge `7dd2c58c628ec819ace2b645d18aa296ddb238b4` is live on Render,
 deploy `dep-dbegppdg1s2s739dhv30`, service `uk-road-tracker-api` in the owner-

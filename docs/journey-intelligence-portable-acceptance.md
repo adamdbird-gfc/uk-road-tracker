@@ -95,3 +95,16 @@ Preserve compact main-map records, per-journey coverage and NCN ledgers. No glob
 cache invalidation or history reassessment. Only optional public context tiles
 use a new content revision to obtain richer destination tags. Private APK only;
 no Firebase upload/tester distribution or Play publication.
+
+## Verified private Android delivery
+
+Delivered 0.25.215 (261), PR #218, exact signed source
+`d793d8b102ee85f1b1b51f62baa7dfed5ed19608`, packaging 40129351156.
+759 Android tests in 102 suites passed, zero failures/errors/skips; lint and
+stable signing passed. Downloaded XML independently confirms totals; APK and
+artifact ZIP hashes match. APK 36,589,905 bytes, SHA-256
+`a5a92be337bc0345dbe4722c2bcb46fd883bcb4659fd10611efc4fa8144f32be`.
+One signed APK only, no Firebase distribution. Deterministic portable acceptance
+and live backend verification are complete; no return visit is required.
+The historical sparse-departure regression was retained and fixed in shared
+code, with a new equivalent across all six types. No test was excluded.
