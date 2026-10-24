@@ -234,6 +234,11 @@ public class CaptureService extends Service {
         @Override
         public void onLocationChanged(Location location) {
             lastLocationCallbackAt = android.os.SystemClock.elapsedRealtime();
+            android.os.Bundle provenance=location.getExtras()==null?new android.os.Bundle():new android.os.Bundle(location.getExtras());
+            long elapsed=location.getElapsedRealtimeNanos();
+            provenance.putLong("roadprints_received_age_ms",elapsed>0?
+                    Math.max(0,(android.os.SystemClock.elapsedRealtimeNanos()-elapsed)/1_000_000L):-1);
+            location=new Location(location);location.setExtras(provenance);
             if(location.hasAccuracy() && location.getAccuracy()<=50
                     && Math.abs(wallClock.millis()-location.getTime())<=60_000L)
                 lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
@@ -272,7 +277,8 @@ public class CaptureService extends Service {
                 finishCapture();
                 return;
             }
-            boolean fresh=Math.abs(wallClock.millis()-observation.getTime())<=60_000L;
+            boolean fresh=Math.abs(wallClock.millis()-observation.getTime())<=60_000L
+                    && (observation.getExtras()==null||observation.getExtras().getLong("roadprints_received_age_ms",-1)<=60_000L);
             boolean trusted = fresh && CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
                     footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
             // Retain rejected fixes as evidence, but do not credit their jumps
@@ -1806,7 +1812,9 @@ public class CaptureService extends Service {
                     .put(point.getLatitude())
                     .put(point.hasAccuracy() ? point.getAccuracy() : 0)
                     .put(point.getTime())
-                    .put(point.hasSpeed() ? point.getSpeed() : -1));
+                    .put(point.hasSpeed() ? point.getSpeed() : -1)
+                    .put(point.getProvider()).put(point.getElapsedRealtimeNanos())
+                    .put(point.getExtras()==null?-1:point.getExtras().getLong("roadprints_received_age_ms",-1)));
         }
         snapshot.put("points", savedPoints);
         return snapshot;
@@ -1856,7 +1864,7 @@ public class CaptureService extends Service {
             for (int index = 0; index < savedPoints.length(); index++) {
                 JSONArray coordinate = savedPoints.optJSONArray(index);
                 if (coordinate == null || coordinate.length() < 2) continue;
-                Location point = new Location("checkpoint");
+                Location point = new Location(coordinate.optString(5,"checkpoint"));
                 point.setLongitude(coordinate.optDouble(0));
                 point.setLatitude(coordinate.optDouble(1));
                 if (coordinate.length() > 2 && coordinate.optDouble(2) > 0) {
@@ -1865,6 +1873,8 @@ public class CaptureService extends Service {
                 if (coordinate.length() > 3) point.setTime(coordinate.optLong(3));
                 if (coordinate.length() > 4 && coordinate.optDouble(4, -1) >= 0)
                     point.setSpeed((float)coordinate.optDouble(4));
+                if(coordinate.optLong(6)>0)point.setElapsedRealtimeNanos(coordinate.optLong(6));
+                android.os.Bundle metadata=new android.os.Bundle();metadata.putLong("roadprints_received_age_ms",coordinate.optLong(7,-1));point.setExtras(metadata);
                 points.add(point);
             }
             if (points.isEmpty()) throw new IllegalStateException("No saved GPS points");
@@ -1937,7 +1947,11 @@ public class CaptureService extends Service {
 
     private JSONArray sampleCoordinates(List<Location> routePoints) throws Exception {
         JSONArray samples = new JSONArray();
-        for (int i = 0; i < routePoints.size(); i++) samples.put(WalkingJourneyPreparation.sampleJson(footSample(routePoints.get(i), i)));
+        for (int i = 0; i < routePoints.size(); i++) {
+            Location p=routePoints.get(i);
+            samples.put(WalkingJourneyPreparation.sampleJson(footSample(p,i)).put(p.getProvider()).put(p.getElapsedRealtimeNanos())
+                    .put(p.getExtras()==null?-1:p.getExtras().getLong("roadprints_received_age_ms",-1)));
+        }
         return samples;
     }
 

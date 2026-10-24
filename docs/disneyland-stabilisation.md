@@ -28,6 +28,8 @@ these are not newly introduced distance corrections. Both fused and native
 location callbacks feed capture. Original exports lack per-fix provider/receipt
 metadata, so the producing provider/cached-fix cause cannot be established.
 Do not attribute it to Android, the exporter or provider without further evidence.
+New raw sample rows append provider, monotonic fix time and received age (columns
+5–7); original columns 0–4 remain compatible. Active checkpoints retain them.
 
 Pedestrian fallback performs sequential eight-point chunks, up to three radii,
 recursive NoMatch subdivision and polite upstream delays within 55 seconds.
@@ -53,7 +55,7 @@ is available; no production log correlation or backend rollout is claimed.
   seeds only the outside recording, not hours of internal walking. Existing
   checkpoints/stop IDs persist visit state; refinements now persist name/identity
   as well as geometry.
-- Entirely internal automatic captures are retained atomically under
+- Automatic captures with a supported site and no confirmed outside fix are retained atomically under
   `destination-internal-evidence/<capture-id>.json`, outside JourneyStore,
   matching and progress. Ordinary in-place movement uses the existing bounded
   checkpoint buffer (20min/360 fixes). A browsable long-term internal-movement
@@ -81,7 +83,7 @@ is available; no production log correlation or backend rollout is claimed.
 
 Eight fixture routes lie entirely within the actual mapped footprint. The long
 22 October evening route extends beyond it toward the eastern hotel area;
-58/185 retained fixes are outside. Do not silently enlarge the boundary or hide
+58/185 retained fixes are nominally outside (uncertainty is assessed separately). Do not silently enlarge the boundary or hide
 that supported departure. Further hotel/connecting-ground scope needs mapped
 site evidence and field acceptance. Existing UK/NCN geography and source-identity
 gates remain; no catalogue rebuilding or global historical reassessment.

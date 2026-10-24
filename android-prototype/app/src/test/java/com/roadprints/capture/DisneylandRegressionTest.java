@@ -105,6 +105,13 @@ public class DisneylandRegressionTest {
             assertTrue(best<=3.01);
         }
     }
+    @Test public void internalEvidenceWritesAreIdempotentAndNeverCreateAJourney() throws Exception {
+        JSONObject raw=new JSONObject().put("journey_id","internal-regression").put("raw_capture_samples",fixtures().getJSONObject(1).getJSONArray("raw"));
+        InternalMovementStore.save(app,raw);InternalMovementStore.save(app,raw);
+        java.io.File file=new java.io.File(app.getFilesDir(),"destination-internal-evidence/internal-regression.json");
+        assertEquals(raw.toString(),new String(java.nio.file.Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8));
+        assertNull(JourneyStore.get(app,"internal-regression"));assertTrue(file.delete());
+    }
     @Test public void inheritedStopIsExplicitlyNotContinuousGpsCoverage() throws Exception {
         JSONObject departure=PlaceBoundaryEvidence.departure(stop(),p(2.762,48.875,36000000,5,0));
         assertFalse(departure.getBoolean("gps_continuity_from_arrival"));assertEquals("1970-01-01T10:00:00Z",departure.getString("departed_at"));
