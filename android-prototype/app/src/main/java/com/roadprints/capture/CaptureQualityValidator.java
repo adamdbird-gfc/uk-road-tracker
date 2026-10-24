@@ -32,6 +32,30 @@ final class CaptureQualityValidator {
         }
         return out.put("resolved",issues.length()==0).put("issues",issues);
     }
+    /** Display-only segmentation. Raw observation arrays and historical records stay intact.
+     * Null means no aligned timing evidence or no break; empty means no supported edge. */
+    static java.util.List<JSONArray> displaySections(JSONObject journey) {
+        JSONArray samples=journey.optJSONArray("capture_route_samples");
+        JSONObject geometry=journey.optJSONObject("route_geometry");
+        JSONArray coords=geometry==null?null:geometry.optJSONArray("coordinates");
+        if(samples==null||coords==null||samples.length()!=coords.length()||samples.length()<2)return null;
+        boolean foot=MatchingCoordinator.isFoot(journey.optString("mode"));
+        java.util.List<JSONArray> sections=new java.util.ArrayList<>();
+        JSONArray current=null;boolean broken=false;
+        for(int i=0;i<samples.length();i++) {
+            JSONArray p=samples.optJSONArray(i),c=coords.optJSONArray(i);
+            if(p==null||c==null||p.optDouble(0)!=c.optDouble(0)||p.optDouble(1)!=c.optDouble(1))return null;
+        }
+        for(int i=1;i<samples.length();i++) {
+            FootTraceValidator.Sample a=sample(samples.optJSONArray(i-1),i-1),b=sample(samples.optJSONArray(i),i);
+            boolean edge=reliable(null,a,foot)&&reliable(a,b,foot)&&b.time-a.time<=120000;
+            if(!edge) {broken=true;if(current!=null)sections.add(current);current=null;continue;}
+            if(current==null){current=new JSONArray();current.put(coords.optJSONArray(i-1));}
+            current.put(coords.optJSONArray(i));
+        }
+        if(current!=null)sections.add(current);
+        return broken?sections:null;
+    }
     private static FootTraceValidator.Sample sample(JSONArray p,int index) {
         return new FootTraceValidator.Sample(p.optDouble(0),p.optDouble(1),p.optDouble(2,-1),p.optLong(3),p.optDouble(4,-1),index);
     }

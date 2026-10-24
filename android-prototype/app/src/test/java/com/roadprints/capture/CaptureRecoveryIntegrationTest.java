@@ -65,6 +65,16 @@ public class CaptureRecoveryIntegrationTest {
         JSONObject quality=CaptureQualityValidator.inspect(state.getJSONArray("points"),false);
         assertFalse(quality.optBoolean("resolved"));
     }
+    @Test public void reportedMovingGapSurvivesRestartWithEveryOriginalObservation()throws Exception {
+        JSONObject state=snapshot("reported-gap",0,3);
+        state.getJSONArray("points").getJSONArray(3).put(0,.02).put(3,start+20000+888224);
+        String original=state.getJSONArray("points").toString();restore(state);
+        assertEquals(4,points().size());assertEquals(888224,points().get(3).getTime()-points().get(2).getTime());
+        assertEquals(original,state.getJSONArray("points").toString());
+        JSONObject quality=CaptureQualityValidator.inspect(state.getJSONArray("points"),false);
+        assertFalse(quality.getBoolean("resolved"));
+        assertEquals(888224,quality.getJSONArray("issues").getJSONObject(0).getLong("duration_ms"));
+    }
     @Test public void interruptedSaveHandoffIsReplayableAndDoesNotOverwriteCommittedMatch()throws Exception {
         JSONObject archived=new JSONObject().put("journey_id","old").put("mode","unknown")
                 .put("source",new JSONObject().put("type","android_activity_capture"))

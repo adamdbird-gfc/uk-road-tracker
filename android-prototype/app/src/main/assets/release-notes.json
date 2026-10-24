@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.216",
+      "version_code": 262,
+      "release_date": "2026-10-24",
+      "since": "0.25.215",
+      "changes": [
+        {
+          "title": "Relevant journey actions",
+          "description": "Show ferry review only with supported crossing evidence and separate journey action buttons."
+        },
+        {
+          "title": "GPS gaps and incremental progress",
+          "description": "Omit unsupported gaps from recorded previews, retain original evidence and avoid unnecessary NCN reassessment after metadata changes."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.215",
       "version_code": 261,
       "release_date": "2026-10-24",

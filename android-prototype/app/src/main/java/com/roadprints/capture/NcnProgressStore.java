@@ -56,7 +56,9 @@ final class NcnProgressStore {
                 java.util.function.BooleanSupplier cancelled=()->!enabled(app)||app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch;
                 Snapshot prior=snapshot;
                 boolean metadataOnly=prior!=null&&prior.evidenceRevision==JourneyStore.ncnDataRevision(app);
-                Snapshot result=metadataOnly?refreshMetadata(app,prior):restore(app);
+                // A published ledger already tells us the checkpoint is stale. Go directly
+                // to the per-source cache scan; do not log an expected cold-cache miss.
+                Snapshot result=metadataOnly?refreshMetadata(app,prior):prior==null?restore(app):null;
                 boolean restored=result!=null;
                 if(result==null)result=assess(app,cancelled);
                 final Snapshot completed=result;
@@ -112,7 +114,9 @@ final class NcnProgressStore {
             String miss=root.getInt("assessment_version")!=ASSESSMENT_VERSION?"assessment_rules":
                     !root.getString("catalogue").equals(catalogue.version)?"catalogue":
                     root.optLong("evidence_revision",root.getLong("revision"))!=JourneyStore.ncnDataRevision(app)?"evidence_revision":null;
-            if(miss!=null){PerformanceDiagnostics.timing("ncn_cache",0,"miss="+miss);return null;}
+            if(miss!=null){PerformanceDiagnostics.timing("ncn_cache",0,"miss="+miss
+                    +" recovery=incremental_source_cache checkpoint_evidence="+root.optLong("evidence_revision",root.optLong("revision"))
+                    +" current_evidence="+JourneyStore.ncnDataRevision(app));return null;}
             JSONObject payload=root.getJSONObject("payload");
             if(!NcnJson.hash(payload.toString().getBytes(StandardCharsets.UTF_8)).equals(root.getString("sha256"))) {
                 PerformanceDiagnostics.timing("ncn_cache",0,"miss=checksum");return null;

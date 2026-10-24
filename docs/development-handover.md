@@ -2,6 +2,16 @@
 
 Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Contextual journey actions — current candidate 0.25.216 (262)
+
+Continue from `fix/contextual-journey-actions`, stacked on #218's latest
+`0c48f84e`. See [changes, evidence limits and validation](contextual-journey-actions.md).
+Evidence-gated ferry review/restore, consistent 8dp action spacing, timed recorded
+preview sections without gap connectors, missing-hash NCN metadata protection,
+warm incremental assessment and stage-specific slow-frame diagnostics.
+No historical rewrite/rematch, cache reset, Firebase distribution or backend change.
+Tests and private delivery pending; no completion claim yet.
+
 ## Generalised journey intelligence — delivered 24 October 2026
 
 Continue from `fix/generalised-journey-intelligence`, based on delivered 214

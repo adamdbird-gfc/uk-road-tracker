@@ -21,6 +21,14 @@ final class FerryJourneyEvidence {
                     .put("reason",reason).put("original_geometry_preserved",true);
         }
     }
+    /** Mode, names and port proximity alone never make a crossing reviewable. */
+    static boolean reviewAvailable(JSONObject journey) {
+        if(journey==null)return false;
+        JSONObject recovery=journey.optJSONObject("ferry_recovery");
+        if(recovery!=null&&!recovery.optString("backup_key").isEmpty()
+                &&!recovery.optString("source_id").isEmpty())return true;
+        return inspect(journey.optJSONArray("capture_route_samples")).hasMarineEvidence();
+    }
     static int terminal(double lon,double lat) {
         if(RailStationCatalog.metres(lat,lon,51.126,1.333)<2500)return 1;
         if(RailStationCatalog.metres(lat,lon,50.981,1.875)<2500)return 2;

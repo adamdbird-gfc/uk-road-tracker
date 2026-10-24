@@ -617,9 +617,10 @@ public class RoutePreviewView extends View {
         super.onDraw(canvas);
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
+        long tilesFinished=android.os.SystemClock.elapsedRealtime();
 
         // Composite the existing road overlays as one layer so overlaps also stay at 50%.
-        int roadsLayer = discoveryReplay == null && ncnOverlay==null ? -1
+        int roadsLayer = !coordinatesValid || discoveryReplay == null && ncnOverlay==null ? -1
                 : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), ncnOverlay==null?128:65);
         if (coordinatesValid) {
             if(boundaryVisible) for (JSONArray ring : settlementBoundaryRings)
@@ -679,7 +680,9 @@ public class RoutePreviewView extends View {
         }
 
         if (roadsLayer >= 0) canvas.restoreToCount(roadsLayer);
+        long roadsFinished=android.os.SystemClock.elapsedRealtime();
         drawNcn(canvas);
+        long ncnFinished=android.os.SystemClock.elapsedRealtime();
         drawServiceStations(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
@@ -693,7 +696,9 @@ public class RoutePreviewView extends View {
         }
         long frameMs=android.os.SystemClock.elapsedRealtime()-frameStarted;
         if(frameMs>=100&&frameStarted-lastSlowFrameReport>=5000){lastSlowFrameReport=frameStarted;
-            PerformanceDiagnostics.timing("map_slow_frame",frameMs,"ncn_lines="+(ncnOverlay==null?0:ncnOverlay.size())+" heap_mb="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));}
+            PerformanceDiagnostics.timing("map_slow_frame",frameMs,"tiles_ms="+(tilesFinished-frameStarted)+" roads_ms="+(roadsFinished-tilesFinished)
+                    +" ncn_ms="+(ncnFinished-roadsFinished)+" other_ms="+(android.os.SystemClock.elapsedRealtime()-ncnFinished)
+                    +" road_sections="+matchedSegments.size()+" ncn_lines="+(ncnOverlay==null?0:ncnOverlay.size())+" heap_mb="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));}
     }
 
     public void setMapLayersFromPreferences(){

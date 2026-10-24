@@ -75,6 +75,11 @@ public final class JourneyStore {
             if(!newRecording&&contentHash.equals(contentHashes.getString(id,""))) {
                 temporary.delete();return; // No new evidence, metadata, revision or observer work.
             }
+            SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
+            String previousNcnHash=inputs.getString(id,null);
+            // A cache eviction/older installation is not evidence that this journey changed.
+            if(previousNcnHash==null&&!newRecording)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
+            catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
             output.write(encoded);
             output.flush();
             // A replacement has a distinct stable token even for equal-size writes in one millisecond.
@@ -88,8 +93,7 @@ public final class JourneyStore {
             contentHashes.edit().putString(id,contentHash).apply();
             if (newRecording) ReturnRecapStore.record(context, journey);
             String ncnHash=ncnEvidenceHash(journey);
-            SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
-            boolean ncnChanged=newRecording||!ncnHash.equals(inputs.getString(id,""));
+            boolean ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
             inputs.edit().putString(id,ncnHash).apply();
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
                     .putString(id,ncnMetadata(journey).toString()).apply();

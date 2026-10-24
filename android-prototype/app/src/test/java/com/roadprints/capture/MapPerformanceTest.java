@@ -157,6 +157,24 @@ public class MapPerformanceTest {
             JourneyStore.updateMode(app,"metadata","walking");assertNull(NcnProgressStore.restore(app));
         }finally{field.set(null,old);}
     }
+    @Test public void missingInputHashDoesNotTurnMetadataSaveIntoNcnEvidenceChange()throws Exception {
+        JSONObject original=trip("legacy");JourneyStore.save(app,original);long ncn=JourneyStore.ncnDataRevision(app);
+        app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
+        JourneyStore.updateTitle(app,"legacy","New label after cache eviction");
+        assertEquals(ncn,JourneyStore.ncnDataRevision(app));
+        assertNotNull(app.getSharedPreferences("roadprints_ncn_inputs",0).getString("legacy",null));
+        app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
+        JourneyStore.updateMode(app,"legacy","walking");assertTrue(JourneyStore.ncnDataRevision(app)>ncn);
+    }
+    @Test public void missingWalkingHashStillDetectsRealEvidenceChange()throws Exception {
+        JSONObject original=trip("foot").put("mode","walking");JourneyStore.save(app,original);
+        long ncn=JourneyStore.ncnDataRevision(app);
+        app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
+        JourneyStore.updateTitle(app,"foot","Label only");assertEquals(ncn,JourneyStore.ncnDataRevision(app));
+        app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
+        JSONObject changed=JourneyStore.get(app,"foot");changed.getJSONObject("processing_result").put("geojson",new JSONObject().put("features",new JSONArray()));
+        JourneyStore.save(app,changed);assertTrue(JourneyStore.ncnDataRevision(app)>ncn);
+    }
     @Test public void staleLargeSnapshotRejectsBeforeReadingItsBrokenCompressedBody() throws Exception {
         MapSnapshotCache.write(app,123,new JSONObject().put("marker","unchanged"));
         File file=new File(app.getFilesDir(),"screen-cache/map-routes.bin");

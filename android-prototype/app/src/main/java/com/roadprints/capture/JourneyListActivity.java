@@ -1027,6 +1027,9 @@ public class JourneyListActivity extends Activity {
             return new JourneyPreview(null, visible, visible.isEmpty() ? "All matched sections removed"
                     : partial ? "Partially matched route · unmatched sections omitted" : "Matched route");
         }
+        List<JSONArray> supported=CaptureQualityValidator.displaySections(journey);
+        if(supported!=null)return new JourneyPreview(null,supported,
+                "Recorded sections · GPS gaps or unreliable fixes omitted");
         return new JourneyPreview(coordinates, java.util.Collections.emptyList(), "Recorded route");
     }
 
@@ -1040,7 +1043,7 @@ public class JourneyListActivity extends Activity {
         if (legend != null) legend.setText(route.legend);
         View replayPlay = root.findViewWithTag("journey_replay_play");
         if (replayPlay != null) replayPlay.setVisibility(
-                !isPointToPointMode(journey.optString("mode", "")) && !route.matches.isEmpty()
+                !isPointToPointMode(journey.optString("mode", "")) && hasStoredMatch(journey) && !route.matches.isEmpty()
                         ? View.VISIBLE : View.GONE);
     }
 
@@ -1090,7 +1093,7 @@ public class JourneyListActivity extends Activity {
         String journeyMode = journey.optString("mode", "unknown").trim().toLowerCase();
         boolean pointToPoint = isPointToPointMode(journeyMode);
         JourneyPreview route = journeyPreview(journey);
-        if(!pointToPoint&&!route.matches.isEmpty())
+        if(!pointToPoint&&hasStoredMatch(journey)&&!route.matches.isEmpty())
             DiscoveryReplayCache.request(getApplicationContext(),java.util.Collections.singleton(journey.optString("journey_id")),null);
         RoutePreviewView preview = new RoutePreviewView(this, route.coordinates, route.matches);
         preview.setTag("journey_route_preview");
@@ -1106,7 +1109,7 @@ public class JourneyListActivity extends Activity {
         replayPlay.setContentDescription("Replay journey discoveries on the map");
         replayPlay.setClickable(true);
         replayPlay.setFocusable(true);
-        replayPlay.setVisibility(!pointToPoint && !route.matches.isEmpty() ? View.VISIBLE : View.GONE);
+        replayPlay.setVisibility(!pointToPoint && hasStoredMatch(journey) && !route.matches.isEmpty() ? View.VISIBLE : View.GONE);
         FrameLayout.LayoutParams playParams = new FrameLayout.LayoutParams(dp(48), dp(48),
                 Gravity.BOTTOM | Gravity.LEFT);
         playParams.setMargins(dp(12), 0, 0, dp(12));
@@ -1369,37 +1372,40 @@ public class JourneyListActivity extends Activity {
             }
         }
 
-        Button ferryReview=styledModalButton(journey.has("ferry_recovery")?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
-        ferryReview.setOnClickListener(v->requestCloseWithUnsavedChanges(
-                dialogRef[0],hasUnsavedChanges(titleInput,transport,transportModes,savedTitle[0],savedMode[0]),
-                saveEdits,()->processor.execute(()->{
-            try {
-                JSONObject current=JourneyStore.get(this,journey.optString("journey_id"));
-                if(current==null)return;
-                boolean restore=current.has("ferry_recovery");
-                FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(current.optJSONArray("capture_route_samples"));
-                String message=restore?"Restore the preserved original recording and remove the derived sections? Any edits to those derived sections will also be removed.":review.reason;
-                if(!restore&&review.canSplit()) {
-                    JSONArray samples=current.getJSONArray("capture_route_samples");
-                    message+="\n\nFerry section: "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.start).getLong(3))
-                            +" to "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.end).getLong(3))
-                            +" (UTC). These are measured terminal transitions; exact berth times are uncertain. Original evidence is retained. Road sections will need transport confirmation.";
-                }
-                final String text=message;
-                runOnUiThread(()->{
-                    AlertDialog.Builder builder=new AlertDialog.Builder(this).setTitle("Review ferry evidence").setMessage(text).setNegativeButton("Close",null);
-                    if(restore||review.canSplit())builder.setPositiveButton(restore?"Restore":"Split recording",(d,w)->processor.execute(()->{
-                        try {
-                            if(restore)FerryJourneyRecovery.restore(this,current.getString("journey_id"));
-                            else FerryJourneyRecovery.split(this,current.getString("journey_id"),current.optInt("revision"));
-                            runOnUiThread(()->{if(dialogRef[0]!=null)dialogRef[0].dismiss();recreate();});
-                        }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
-                    }));
-                    builder.show();
-                });
-            }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
-        })));
-        actions.addView(ferryReview,actionLayoutParams());
+        if(FerryJourneyEvidence.reviewAvailable(journey)) {
+            Button ferryReview=styledModalButton(journey.has("ferry_recovery")?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
+            ferryReview.setOnClickListener(v->requestCloseWithUnsavedChanges(
+                    dialogRef[0],hasUnsavedChanges(titleInput,transport,transportModes,savedTitle[0],savedMode[0]),
+                    saveEdits,()->processor.execute(()->{
+                try {
+                    JSONObject current=JourneyStore.get(this,journey.optString("journey_id"));
+                    if(current==null)return;
+                    boolean restore=current.has("ferry_recovery");
+                    FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(current.optJSONArray("capture_route_samples"));
+                    String message=restore?"Restore the preserved original recording and remove the derived sections? Any edits to those derived sections will also be removed.":review.reason;
+                    if(!restore&&review.canSplit()) {
+                        JSONArray samples=current.getJSONArray("capture_route_samples");
+                        message+="\n\nFerry section: "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.start).getLong(3))
+                                +" to "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.end).getLong(3))
+                                +" (UTC). These are measured terminal transitions; exact berth times are uncertain. Original evidence is retained. Road sections will need transport confirmation.";
+                    }
+                    final String text=message;
+                    runOnUiThread(()->{
+                        AlertDialog.Builder builder=new AlertDialog.Builder(this).setTitle("Review ferry evidence").setMessage(text).setNegativeButton("Close",null);
+                        if(restore||review.canSplit())builder.setPositiveButton(restore?"Restore":"Split recording",(d,w)->processor.execute(()->{
+                            try {
+                                if(restore)FerryJourneyRecovery.restore(this,current.getString("journey_id"));
+                                else FerryJourneyRecovery.split(this,current.getString("journey_id"),current.optInt("revision"));
+                                runOnUiThread(()->{if(dialogRef[0]!=null)dialogRef[0].dismiss();recreate();});
+                            }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+                        }));
+                        builder.show();
+                    });
+                }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+            })));
+            ferryReview.setTag("journey_ferry_review");
+            actions.addView(ferryReview,actionLayoutParams());
+        }
 
         TextView delete = new TextView(this);
         delete.setText("Delete Journey");
@@ -1563,8 +1569,10 @@ public class JourneyListActivity extends Activity {
     }
 
     private LinearLayout.LayoutParams actionLayoutParams() {
-        return new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+        params.topMargin=dp(8);
+        return params;
     }
 
     private TextView fieldLabel(String text) {
