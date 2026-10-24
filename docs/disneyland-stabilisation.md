@@ -94,3 +94,15 @@ clearing data; validate resort entry/stay/edge drift/ride hints/departure,
 background restart, ordinary UK exercise and driving, offline retry, map startup
 and warm-tab timings, and NCN incremental reuse. Private packaging only; no
 Firebase upload, distribution, notifications or Play publication.
+
+## Verified private delivery
+
+Delivered **0.25.214 (260)** from source `a0467b6ca788cf38e3df450289ae78be9c66b006`,
+PR #215, packaging run 40055485610. 746 tests / 101 suites passed with zero
+failures/errors/skips, lint passed, established v2 signing certificate verified.
+Downloaded reports independently confirm totals. APK 36,589,685 bytes;
+SHA-256 `d29eae2db9df5d1e108ab94d5b7026091ff8ed755cf0899360f09872951ba8a2`.
+Both artifact ZIP and extracted APK checksums match the published build.
+87 local backend tests passed with five DB skips; database-backed CI passed.
+One private APK only; no Firebase/Play distribution or backend deployment.
+Follow-up #216 retains the stated scope and device/backend acceptance limits.
