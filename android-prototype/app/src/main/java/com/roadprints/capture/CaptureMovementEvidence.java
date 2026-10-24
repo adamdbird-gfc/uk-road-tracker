@@ -99,6 +99,10 @@ final class CaptureMovementEvidence {
                 && path >= (running ? 100 : foot ? 30 : 60) ? first.index : -1;
     }
 
+    static boolean footSamplingGap(FootTraceValidator.Sample before,FootTraceValidator.Sample after) {
+        return before!=null&&WalkingStillnessDetector.usable(after)&&after.accuracy>0&&after.accuracy<=50
+                &&after.time-before.time>120_000L&&FootTraceValidator.metres(before,after)>Math.max(75,before.accuracy+after.accuracy);
+    }
     /** A long break is a recording boundary, not evidence of a routable connection. */
     static boolean separateSamplingSessions(FootTraceValidator.Sample before, FootTraceValidator.Sample after) {
         return before != null && WalkingStillnessDetector.usable(after) && after.accuracy <= 50

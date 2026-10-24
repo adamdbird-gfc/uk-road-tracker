@@ -275,6 +275,8 @@ public final class MatchingCoordinator {
     }
 
     private void matchJourney(JSONObject journey) throws Exception {
+        if(isFoot(journey.optString("mode"))&&ResortJourneyPolicy.internal(new DestinationCatalog(app),journey.optJSONArray("capture_route_samples")))
+            throw new IllegalStateException("Movement inside a recognised resort does not require road matching. The original recording is preserved.");
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         JSONArray points = new JSONArray();
@@ -308,6 +310,7 @@ public final class MatchingCoordinator {
                     "This app recording contains unreliable GPS fixes or a gap while moving. Full matching is blocked; your original recording is preserved. Use Debug Journey to report this capture issue.");
         }
         if (walking != null) points = walking.points;
+        if (foot) points=WalkingTraceSimplifier.simplify(points);
         if (points.length() < 2) throw new IllegalStateException("Not enough reliable GPS points to match this walk. The original recording is preserved.");
         if (cycle) {
             double[][] fixes = new double[points.length()][2];

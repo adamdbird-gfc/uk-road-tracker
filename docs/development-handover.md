@@ -1,6 +1,17 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-21. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Disneyland corrective candidate — 24 October 2026
+
+Continue from `fix/disneyland-gps-integrity`, based on private 213's actual
+application lineage. Candidate **0.25.214 (260)**. See
+[confirmed evidence, policy, validation and limits](disneyland-stabilisation.md).
+Offline mapped resort recognition, confirmed boundary departure, raw internal
+capture preservation, GPS freshness/ordering and moving-gap protection,
+bounded pedestrian simplification and backend recursive-search budget.
+No historical deletion/rematch, map/NCN cache reset or tester distribution.
+Build/test/artifact delivery is pending; do not claim release from this entry.
 
 ## Current multimodal corrective candidate — 21 October 2026
 

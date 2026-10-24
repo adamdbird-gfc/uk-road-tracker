@@ -29,7 +29,10 @@ final class FootTraceValidator {
             this.samples=samples; this.removed=original-samples.size(); this.timed=timed;
             this.resolved=resolved;
             double metres=0;
-            for(int i=1;i<samples.size();i++) metres+=metres(samples.get(i-1),samples.get(i));
+            for(int i=1;i<samples.size();i++) {
+                Sample a=samples.get(i-1),b=samples.get(i);
+                if(!CaptureMovementEvidence.footSamplingGap(a,b))metres+=metres(a,b);
+            }
             distance=metres;
         }
     }

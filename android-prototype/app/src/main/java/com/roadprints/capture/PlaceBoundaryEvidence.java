@@ -32,6 +32,10 @@ final class PlaceBoundaryEvidence {
                 if(map.holes!=null)result.put("site_holes",new JSONArray(map.holes.toString()));
             }
         }
+        if(mapped&&"arrival_theme_park".equals(reason)) {
+            result.put("source","map_footprint_and_entry").put("dwell_seconds",0)
+                    .put("boundary_confirmation_seconds",(confirmedAt-anchor.time)/1000);
+        }
         return result;
     }
 
@@ -56,6 +60,7 @@ final class PlaceBoundaryEvidence {
     }
     static JSONObject departure(JSONObject stop,FootTraceValidator.Sample point) throws org.json.JSONException {
         JSONObject result=new JSONObject(stop.toString());
+        result.put("gps_continuity_from_arrival",false);
         result.put("role","departure").put("departed_at",Instant.ofEpochMilli(point.time).toString())
                 .put("boundary_at",Instant.ofEpochMilli(point.time).toString());
         return result;

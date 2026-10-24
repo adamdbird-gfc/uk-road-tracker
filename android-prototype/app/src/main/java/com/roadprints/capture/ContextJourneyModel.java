@@ -8,6 +8,9 @@ final class ContextJourneyModel {
         Decision(int boundary,String nextMode,String reason){this.boundary=boundary;this.nextMode=nextMode;this.reason=reason;}
     }
     private long lastTime, pauseSince, proposalSince;
+    private long resortSince,resortLast;
+    private int resortIndex,resortCount;
+    private String resortId="";
     private double lastLat,lastLon,anchorLat,anchorLon,path,proposalLat,proposalLon;
     private float proposalAccuracy;
     private float lastAccuracy;
@@ -18,6 +21,14 @@ final class ContextJourneyModel {
                     ContextMap.Evidence context,boolean atStation) {
         if("ferry".equals(mode))return null; // Marine transitions own this mode; slow sailing is not walking.
         if(!Float.isFinite(accuracy)||accuracy<=0||accuracy>50||time<=lastTime)return null;
+        if(("walking".equals(mode)||"running".equals(mode))&&DestinationCatalog.suppresses(context)&&accuracy<=25) {
+            if(!context.featureId.equals(resortId)||time-resortLast>60_000L) {
+                resortId=context.featureId;resortSince=time;resortIndex=index;resortCount=0;
+            }
+            resortLast=time;resortCount++;
+            if(resortCount>=3&&time-resortSince>=30_000L)
+                return new Decision(Math.max(1,resortIndex),null,"arrival_theme_park");
+        } else {resortId="";resortCount=0;resortSince=0;}
         double step=lastTime==0?0:RailStationCatalog.metres(lastLat,lastLon,lat,lon);
         long gap=time-lastTime;
         boolean measuredSpeed=Float.isFinite(speed)&&speed>=0;

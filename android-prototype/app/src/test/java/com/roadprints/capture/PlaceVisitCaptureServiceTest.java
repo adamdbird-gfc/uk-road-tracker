@@ -179,4 +179,20 @@ public class PlaceVisitCaptureServiceTest {
             assertEquals(original.size()-1,boundary+continuation.size()-1);
         }
     }
+    @Test public void pinnedResortSurvivesBackgroundAndRestartWithoutAnOnlineLookup()throws Exception {
+        field("contextCache").set(service,new ContextMapCache(service));
+        ContextMap.Evidence map=new DestinationCatalog(service).evidence(48.872,2.774,5);
+        JSONObject stop=PlaceBoundaryEvidence.arrival("resort-stay",new FootTraceValidator.Sample(2.774,48.872,5,time,0,0),time+30000,map,null,"arrival_theme_park");
+        PlaceAnchorStore.record(service,new JSONObject().put("stops",new JSONArray().put(stop)));
+        for(int i=0;i<100;i++) {
+            time+=30000;Location p=new Location("gps");p.setLatitude(48.872+Math.sin(i*.2)*.001);p.setLongitude(2.774+Math.cos(i*.2)*.001);
+            p.setTime(time);p.setAccuracy(5);p.setSpeed(1.3f);observe(p);
+            assertFalse(CaptureService.isActive(service));
+        }
+        // Reload preferences and checkpoint exactly as a fresh idle visit does.
+        points("visitPoints").clear();field("visitPointStopId").set(service,"");
+        time+=30000;Location p=new Location("gps");p.setLatitude(48.872);p.setLongitude(2.774);p.setTime(time);p.setAccuracy(5);p.setSpeed(1.3f);observe(p);
+        assertFalse(CaptureService.isActive(service));assertEquals("theme_park",PlaceAnchorStore.last(service).getString("kind"));
+        ((ContextMapCache)field("contextCache").get(service)).close();
+    }
 }

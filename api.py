@@ -323,6 +323,7 @@ async def match_chunk_resiliently(
     retry_no_match=False,
     road_recovery=False,
     point_offset=0,
+    subdivision_budget=None,
 ):
     """Match a chunk without allowing one sparse portion to discard a journey.
 
@@ -331,6 +332,14 @@ async def match_chunk_resiliently(
     evidence.  A two-point failure is irreducibly sparse, so it is reported as
     an omitted portion rather than turning the whole request into a 422.
     """
+    if subdivision_budget is not None:
+        if subdivision_budget[0] <= 0:
+            return {"matchings": [], "tracepoints": []}, None, [{
+                "points": len(points), "detail": "pedestrian_work_limit",
+                "start_point_index": point_offset,
+                "end_point_index": point_offset + len(points) - 1,
+            }]
+        subdivision_budget[0] -= 1
     try:
         data, radius = await osrm_match_chunk(
             client, points, chunk_index, base_url, polite_delay_seconds,
@@ -382,11 +391,11 @@ async def match_chunk_resiliently(
         right = points[midpoint:]
         left_data, left_radius, left_failures = await match_chunk_resiliently(
             client, left, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset,
+            radius_attempts, retry_no_match, road_recovery, point_offset, subdivision_budget,
         )
         right_data, right_radius, right_failures = await match_chunk_resiliently(
             client, right, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint,
+            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint, subdivision_budget,
         )
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),
@@ -734,6 +743,7 @@ async def match_payload(
     tracepoints_seen = 0
     failed_sections = []
     recovered_sections = []
+    subdivision_budget = [16] if disjoint_chunks and base_url == FOOT_OSRM_BASE_URL else None
     road_distance_legs = {}
     road_distance_complete = True
 
@@ -756,6 +766,7 @@ async def match_payload(
                     retry_no_match,
                     road_recovery,
                     chunk_start,
+                    subdivision_budget,
                 )
                 failed_sections.extend(chunk_failures)
                 recovered_sections.extend(data.get("road_recovery") or [])
@@ -850,6 +861,8 @@ async def match_payload(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Road matcher could not be reached: {exc}") from exc
 
+    if not features and any(failure.get("detail") == "pedestrian_work_limit" for failure in failed_sections):
+        raise HTTPException(status_code=503, detail="Walking search work limit reached. The GPS evidence can be retried later.", headers={"Retry-After": "60"})
     if not features:
         raise HTTPException(status_code=422, detail="The matcher returned no route geometry.")
 
