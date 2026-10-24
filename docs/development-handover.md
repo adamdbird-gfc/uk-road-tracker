@@ -11,12 +11,15 @@ Offline mapped resort recognition, confirmed boundary departure, raw internal
 capture preservation, GPS freshness/ordering and moving-gap protection,
 bounded pedestrian simplification and backend recursive-search budget.
 No historical deletion/rematch, map/NCN cache reset or tester distribution.
-First integrated Android run compiled/linted and verified the national reference;
-743 tests ran, with two failures: missing new-version release notes and the old
-uniform 500-point walking expectation. Release notes now match 214, and the test
-checks endpoints/chord bounds/request maximum for simplification. No test is
-excluded. Final full-suite/build/artifact delivery remains pending. Outstanding
-hotel scope, live backend rollout/log access and field acceptance: #216.
+Final implementation source **f786fde2df32e05edaa98be7273595fcf35b0bf2** passed
+[Android compile, lint, national reference and complete unit tests](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40055191072).
+Database-backed context/walking CI 40055191068 and road recovery CI 40055191048
+also passed. Local backend suite: 87 tests, five DB-dependent skips (covered
+in database-backed CI). Earlier failures were missing 214 release notes and an
+obsolete uniform-sampling expectation; both corrected, no tests excluded.
+One private signed APK is now requested. Delivery/checksum remains pending.
+Outstanding hotel scope, live backend rollout/log access and field acceptance:
+[#216](https://github.com/adamdbird-gfc/uk-road-tracker/issues/216).
 
 ## Current multimodal corrective candidate — 21 October 2026
 
