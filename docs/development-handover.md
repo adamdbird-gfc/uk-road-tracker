@@ -4,21 +4,35 @@ Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for iss
 
 ## Current Android and backend entrypoint — 24 October 2026
 
-Latest private Android: **0.25.215 (261), PR #218**. Use
-[the current generalised intelligence handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/generalised-journey-intelligence/docs/development-handover.md)
-for Android work. Main's older application is not the latest private APK.
-Exact signed source `d793d8b102ee85f1b1b51f62baa7dfed5ed19608`;
-[successful private build 40129351156](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156),
-[APK artifact](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40129351156/artifacts/12574201664).
-759 tests / 102 suites passed, zero failures/errors/skips, lint and stable signing
-passed. Downloaded report totals and APK/ZIP hashes verified. APK SHA-256
-`a5a92be337bc0345dbe4722c2bcb46fd883bcb4659fd10611efc4fa8144f32be`.
+Latest private Android: **0.25.216 (262), PR #219**. Continue from
+`fix/contextual-journey-actions`, stacked on delivered #218. Main's older Android
+application is not the latest private APK. See the
+[current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/contextual-journey-actions/docs/development-handover.md)
+and [contextual actions / diagnostic limits](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/contextual-journey-actions/docs/contextual-journey-actions.md).
+Evidence-gated ferry actions, consistent spacing, timed gap-safe previews,
+zero-coverage retry identity and incremental NCN cache handling. Existing shared
+place/GPS intelligence and portable acceptance from #218 remain included.
 
-Place/GPS intelligence is shared across destination types; portable translated
-fixtures replace any requirement to revisit Disneyland. Source originals and
-history remain intact. Main-map/NCN caching is preserved; one private APK,
-no Firebase upload/distribution or Play publication. See issue #216 and
-[portable acceptance](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/generalised-journey-intelligence/docs/journey-intelligence-portable-acceptance.md).
+**Delivered private 0.25.216 (262), PR #219.** Exact signed source
+`4555346dcc770be3a41fc1767e523fa3a23c9d7c`.
+[Successful private packaging 40135070445](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445),
+[APK artifact 12576617872](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576617872),
+[verification reports 12576922475](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576922475).
+**771 tests / 103 suites, zero failures/errors/skips**; lint, national references,
+distribution controls and established v2 signing certificate passed. Downloaded
+XML independently confirms totals; artifact ZIP digests and APK hash match CI.
+APK **36,590,025 bytes**, SHA-256
+`52cfa666d3d5fa1fe9b1e18ceef6fcab18b9ba2d172b118c51fe769032299265`.
+Exact-source independent Android checks 40135074362 also passed.
+Install over 215 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical rewrite/rematch or cache reset.
+
+Synthetic 1,547-driving map preparation: **1,148.87ms cold / 258.17ms warm /
+176.18ms one addition**, identical completion. Warm reused 1,547 with zero source
+reads; adding one reused 1,547 and read/rebuilt one source. Runner measurements
+are not phone startup/frame proof. Updated draw-stage telemetry supports later
+ordinary-use diagnosis; the original missing-fix/remaining phone-frame causes
+are unconfirmed without the new diagnostic export.
 
 **Production walking backend deployed and verified:** #217 merged as
 `7dd2c58c628ec819ace2b645d18aa296ddb238b4`, Render deploy
