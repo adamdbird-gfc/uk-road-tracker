@@ -11,7 +11,12 @@ Offline mapped resort recognition, confirmed boundary departure, raw internal
 capture preservation, GPS freshness/ordering and moving-gap protection,
 bounded pedestrian simplification and backend recursive-search budget.
 No historical deletion/rematch, map/NCN cache reset or tester distribution.
-Build/test/artifact delivery is pending; do not claim release from this entry.
+First integrated Android run compiled/linted and verified the national reference;
+743 tests ran, with two failures: missing new-version release notes and the old
+uniform 500-point walking expectation. Release notes now match 214, and the test
+checks endpoints/chord bounds/request maximum for simplification. No test is
+excluded. Final full-suite/build/artifact delivery remains pending. Outstanding
+hotel scope, live backend rollout/log access and field acceptance: #216.
 
 ## Current multimodal corrective candidate — 21 October 2026
 

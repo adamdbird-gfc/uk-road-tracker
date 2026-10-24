@@ -72,7 +72,7 @@ is available; no production log correlation or backend rollout is claimed.
   limits straight chords to 60m/eight source intervals. Raw/saved GPS unchanged.
   Existing bounded network retry, atomic duplicate protection and durable failed
   state remain; 504/rate-limit workloads are not immediately repeated.
-- Backend native walking only: share a 16-subdivision budget across recursive
+- Backend native walking only: share a 16-extra-subdivision budget (successful root chunks do not consume it) across recursive
   fallback chunks. Exhaustion is an omitted section; verified siblings survive.
   If no geometry succeeds, return retryable 503, never a terminal off-path result.
   Keep the 55s deadline; no timeout increase. Backend change awaits rollout.

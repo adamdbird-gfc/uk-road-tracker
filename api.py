@@ -324,6 +324,7 @@ async def match_chunk_resiliently(
     road_recovery=False,
     point_offset=0,
     subdivision_budget=None,
+    subdivision_depth=0,
 ):
     """Match a chunk without allowing one sparse portion to discard a journey.
 
@@ -332,7 +333,7 @@ async def match_chunk_resiliently(
     evidence.  A two-point failure is irreducibly sparse, so it is reported as
     an omitted portion rather than turning the whole request into a 422.
     """
-    if subdivision_budget is not None:
+    if subdivision_budget is not None and subdivision_depth > 0:
         if subdivision_budget[0] <= 0:
             return {"matchings": [], "tracepoints": []}, None, [{
                 "points": len(points), "detail": "pedestrian_work_limit",
@@ -391,11 +392,11 @@ async def match_chunk_resiliently(
         right = points[midpoint:]
         left_data, left_radius, left_failures = await match_chunk_resiliently(
             client, left, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset, subdivision_budget,
+            radius_attempts, retry_no_match, road_recovery, point_offset, subdivision_budget, subdivision_depth + 1,
         )
         right_data, right_radius, right_failures = await match_chunk_resiliently(
             client, right, chunk_index, base_url, polite_delay_seconds,
-            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint, subdivision_budget,
+            radius_attempts, retry_no_match, road_recovery, point_offset + midpoint, subdivision_budget, subdivision_depth + 1,
         )
         return {
             "matchings": (left_data.get("matchings") or []) + (right_data.get("matchings") or []),

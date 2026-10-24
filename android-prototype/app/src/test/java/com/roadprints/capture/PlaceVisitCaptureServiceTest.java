@@ -195,4 +195,25 @@ public class PlaceVisitCaptureServiceTest {
         assertFalse(CaptureService.isActive(service));assertEquals("theme_park",PlaceAnchorStore.last(service).getString("kind"));
         ((ContextMapCache)field("contextCache").get(service)).close();
     }
+    @Test public void finishingInternalAutomaticCaptureRetainsRawWithoutOrdinaryHistory()throws Exception {
+        field("contextCache").set(service,new ContextMapCache(service));
+        field("checkpointFile").set(service,new android.util.AtomicFile(new java.io.File(service.getFilesDir(),"resort-test-active.json")));
+        field("journeyId").set(service,"resort-raw-regression");field("mode").set(service,"walking");
+        field("automaticCapture").setBoolean(service,true);
+        field("startedAt").set(service,Instant.ofEpochMilli(time-30000).toString());
+        service.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
+        for(int i=0;i<4;i++) {
+            Location p=new Location("gps");p.setLatitude(48.872);p.setLongitude(2.774+i*.0001);
+            p.setTime(time-30000+i*10000L);p.setAccuracy(5);p.setSpeed(1.3f);points("points").add(p);
+        }
+        invoke("finishCapture",new Class<?>[0]);
+        ((ExecutorService)field("captureIo").get(service)).submit(()->{}).get(5,TimeUnit.SECONDS);
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        assertFalse(CaptureService.isActive(service));assertNull(JourneyStore.get(service,"resort-raw-regression"));
+        java.io.File file=new java.io.File(service.getFilesDir(),"destination-internal-evidence/resort-raw-regression.json");
+        JSONObject raw=new JSONObject(new String(java.nio.file.Files.readAllBytes(file.toPath()),java.nio.charset.StandardCharsets.UTF_8));
+        assertEquals(4,raw.getJSONArray("raw_capture_samples").length());
+        assertEquals("gps",raw.getJSONArray("raw_capture_samples").getJSONArray(0).getString(5));assertTrue(file.delete());
+        ((ContextMapCache)field("contextCache").get(service)).close();
+    }
 }

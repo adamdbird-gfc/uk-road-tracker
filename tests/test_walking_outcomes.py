@@ -47,7 +47,7 @@ class WalkingWorkBudgetTests(unittest.IsolatedAsyncioTestCase):
         budget=[3]
         with patch.object(api,'osrm_match_chunk',new=AsyncMock(side_effect=HTTPException(422,'NoMatch'))) as router:
             data,radius,failures=await api.match_chunk_resiliently(None,points,0,api.FOOT_OSRM_BASE_URL,subdivision_budget=budget)
-        self.assertEqual(router.await_count,3)
+        self.assertEqual(router.await_count,4)
         self.assertEqual(data['matchings'],[])
         self.assertTrue(any(f['detail']=='pedestrian_work_limit' for f in failures))
         self.assertEqual(budget,[0])
@@ -60,16 +60,27 @@ class WalkingWorkBudgetTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(HTTPException) as failed:
                 await api.match_walking_activity(api.MatchRequest(points=points,walking_recovery=True))
         self.assertEqual(failed.exception.status_code,503)
-        self.assertLessEqual(router.await_count,16)
+        self.assertLessEqual(router.await_count,22)
 
     async def test_verified_sibling_geometry_survives_work_exhaustion(self):
         from types import SimpleNamespace
         points=[{'lat':48.87+i*.00001,'lng':2.77} for i in range(40)]
         success={'matchings':[{'geometry':{'type':'LineString','coordinates':[[2.77,48.87],[2.77,48.87001]]},'distance':1.1,'legs':[]}],
                  'tracepoints':[{'waypoint_index':i,'matchings_index':0} for i in range(8)]}
-        errors=[(success,20)]+[HTTPException(422,'NoMatch')]*16
+        errors=[(success,20)]+[HTTPException(422,'NoMatch')]*40
         with patch.object(api,'osrm_match_chunk',new=AsyncMock(side_effect=errors)),patch.object(api.asyncio,'sleep',new=AsyncMock()):
             result=await api.match_payload(api.MatchRequest(points=points,walking_recovery=True),api.FOOT_OSRM_BASE_URL,False,disjoint_chunks=True)
         self.assertEqual(len(result['geojson']['features']),1)
         self.assertEqual(result['matched_tracepoints'],8)
         self.assertTrue(any(f['detail']=='pedestrian_work_limit' for f in result['failed_sections']))
+
+    async def test_ordinary_long_successful_walk_is_not_truncated_by_retry_budget(self):
+        points=[{'lat':51+i*.00001,'lng':.3} for i in range(200)]
+        async def success(client,chunk,*args):
+            return {'matchings':[{'geometry':{'type':'LineString','coordinates':[[p.lng,p.lat] for p in chunk]},'distance':10,'legs':[]}],
+                    'tracepoints':[{'waypoint_index':i,'matchings_index':0} for i in range(len(chunk))]},20
+        with patch.object(api,'osrm_match_chunk',new=AsyncMock(side_effect=success)) as router:
+            result=await api.match_payload(api.MatchRequest(points=points,walking_recovery=True),api.FOOT_OSRM_BASE_URL,False,disjoint_chunks=True)
+        self.assertEqual(result['matched_tracepoints'],200)
+        self.assertEqual(result['failed_sections'],[])
+        self.assertGreater(router.await_count,16)

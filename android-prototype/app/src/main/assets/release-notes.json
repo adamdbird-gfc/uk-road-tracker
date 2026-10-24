@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.214",
+      "version_code": 260,
+      "release_date": "2026-10-24",
+      "since": "0.25.213",
+      "changes": [
+        {
+          "title": "Resort-aware walking",
+          "description": "Recognise the mapped Disneyland Paris resort offline, keep internal walking out of ordinary journeys and resume after a confirmed departure."
+        },
+        {
+          "title": "More reliable GPS evidence",
+          "description": "Reject stale and inaccurate walking fixes, keep original observations and separate recordings across missing GPS intervals."
+        },
+        {
+          "title": "Walking match preparation",
+          "description": "Reduce redundant walking points while preserving turns and original evidence. Existing recoverable network retries remain available."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.213",
       "version_code": 259,
       "release_date": "2026-10-21",

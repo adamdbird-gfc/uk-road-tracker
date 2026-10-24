@@ -112,6 +112,10 @@ public class DisneylandRegressionTest {
         assertEquals(raw.toString(),new String(java.nio.file.Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8));
         assertNull(JourneyStore.get(app,"internal-regression"));assertTrue(file.delete());
     }
+    @Test public void shortStraightWalkKeepsEnoughEvidenceForTheMatcher() throws Exception {
+        JSONArray points=new JSONArray();for(int i=0;i<5;i++)points.put(new JSONObject().put("lng",.1+i*.00005).put("lat",51));
+        assertEquals(3,WalkingTraceSimplifier.simplify(points).length());
+    }
     @Test public void inheritedStopIsExplicitlyNotContinuousGpsCoverage() throws Exception {
         JSONObject departure=PlaceBoundaryEvidence.departure(stop(),p(2.762,48.875,36000000,5,0));
         assertFalse(departure.getBoolean("gps_continuity_from_arrival"));assertEquals("1970-01-01T10:00:00Z",departure.getString("departed_at"));

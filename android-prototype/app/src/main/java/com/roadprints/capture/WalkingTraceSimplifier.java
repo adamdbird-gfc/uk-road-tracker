@@ -17,6 +17,8 @@ final class WalkingTraceSimplifier {
             if(split<0&&(z-a>8||FootTraceValidator.metres(first,last)>60))split=(a+z)/2;
             if(split>=0){keep[split]=true;ranges.push(new int[]{a,split});ranges.push(new int[]{split,z});}
         }
+        int count=0;for(boolean retained:keep)if(retained)count++;
+        if(count<3)keep[points.length()/2]=true; // The walking matcher needs at least three fixes.
         JSONArray result=new JSONArray();for(int i=0;i<keep.length;i++)if(keep[i])result.put(points.get(i));return result;
     }
     private static FootTraceValidator.Sample sample(JSONArray points,int i) throws Exception {
