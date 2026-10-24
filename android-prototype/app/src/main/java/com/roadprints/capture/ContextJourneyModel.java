@@ -21,13 +21,13 @@ final class ContextJourneyModel {
                     ContextMap.Evidence context,boolean atStation) {
         if("ferry".equals(mode))return null; // Marine transitions own this mode; slow sailing is not walking.
         if(!Float.isFinite(accuracy)||accuracy<=0||accuracy>50||time<=lastTime)return null;
-        if(("walking".equals(mode)||"running".equals(mode))&&DestinationCatalog.suppresses(context)&&accuracy<=25) {
+        if(("walking".equals(mode)||"running".equals(mode))&&DestinationPolicy.quickEntry(context)&&!atStation&&accuracy<=25) {
             if(!context.featureId.equals(resortId)||time-resortLast>60_000L) {
                 resortId=context.featureId;resortSince=time;resortIndex=index;resortCount=0;
             }
             resortLast=time;resortCount++;
             if(resortCount>=3&&time-resortSince>=30_000L)
-                return new Decision(Math.max(1,resortIndex),null,"arrival_theme_park");
+                return new Decision(Math.max(1,resortIndex),null,"arrival_destination_entry");
         } else {resortId="";resortCount=0;resortSince=0;}
         double step=lastTime==0?0:RailStationCatalog.metres(lastLat,lastLon,lat,lon);
         long gap=time-lastTime;

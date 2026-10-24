@@ -1,7 +1,7 @@
 name: Private Android development APK
 on:
   push:
-    branches: [fix/ncn-ui-private-development, fix/android-ncn-responsiveness, fix/android-history-stabilisation, fix/android-map-contributions, fix/multimodal-ferry-stabilisation, fix/disneyland-gps-integrity]
+    branches: [fix/ncn-ui-private-development, fix/android-ncn-responsiveness, fix/android-history-stabilisation, fix/android-map-contributions, fix/multimodal-ferry-stabilisation, fix/disneyland-gps-integrity, fix/generalised-journey-intelligence]
     paths: ['.github/development-request.json']
   workflow_dispatch:
 permissions:

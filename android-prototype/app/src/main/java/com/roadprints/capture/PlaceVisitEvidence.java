@@ -24,17 +24,7 @@ final class PlaceVisitEvidence {
                 && stop.optDouble("accuracy_m",1000)>0 && stop.optDouble("accuracy_m",1000)<=50;
     }
     static boolean outside(JSONObject stop,FootTraceValidator.Sample p) {
-        JSONArray ring=stop.optJSONArray("site_geometry"),holes=stop.optJSONArray("site_holes");
-        if(ring!=null && ring.length()>=4) {
-            boolean inside=ContextMap.inside(ring,p.lat,p.lon);
-            double edge=ContextMap.distance(ring,p.lat,p.lon);
-            if(holes!=null)for(int i=0;i<holes.length();i++) {
-                JSONArray hole=holes.optJSONArray(i);
-                if(ContextMap.inside(hole,p.lat,p.lon))inside=false;
-                edge=Math.min(edge,ContextMap.distance(hole,p.lat,p.lon));
-            }
-            return !inside && edge>p.accuracy+10;
-        }
+        if(PlaceGeometry.present(stop))return PlaceGeometry.outside(stop,p);
         // Offline fallback stays deliberately local; it never grows to fit an entire route.
         double radius=Math.max(60,35+stop.optDouble("accuracy_m",25));
         return RailStationCatalog.metres(stop.optDouble("latitude"),stop.optDouble("longitude"),p.lat,p.lon)
@@ -71,12 +61,28 @@ final class PlaceVisitEvidence {
                 double extent=FootTraceValidator.metres(origin,end)-origin.accuracy-end.accuracy;
                 if(extent<("unknown".equals(mode)?50:20))continue;
                 // Preserve measured movement before the boundary crossing too.
-                if("theme_park".equals(stop.optString("kind")))
-                    return new Decision(firstOutside.index,mode,"departure_from_visit");
+                if(DestinationPolicy.bounded(stop)) {
+                    int boundary=firstOutside.index;
+                    if(boundary>0) {
+                        FootTraceValidator.Sample before=points.get(boundary-1);
+                        if(firstOutside.time-before.time<=60000&&CaptureQualityValidator.reliable(before,firstOutside,true)
+                                &&ContextMap.distance(stop.optJSONArray("site_geometry"),before.lat,before.lon)<=before.accuracy+30)
+                            boundary--;
+                    }
+                    return new Decision(boundary,mode,"departure_from_visit");
+                }
                 return "unknown".equals(mode)?vehicleDeparture(points,start):new Decision(start,mode,"departure_from_visit");
             }
         }
-        if("theme_park".equals(stop.optString("kind")))return null;
+        if(DestinationPolicy.bounded(stop)&&!DestinationPolicy.campus(stop)) {
+            // Strong coherent exercise may start within a destination. Ordinary
+            // facility wandering and attraction/vehicle callbacks do not qualify.
+            String exerciseMode="running".equals(hint)?"running":"cycling".equals(hint)?"cycling":"walking";
+            FootTraceValidator.Sample start=exercise(points,exerciseMode,now);
+            if(start!=null&&purposeful(points,start,exerciseMode))
+                return new Decision(start.index,exerciseMode,"purposeful_activity_within_place");
+            return null;
+        }
         // Real vehicle departure need not wait to leave a very large campus.
         if(!"cycling".equals(hint)) {
             int start=CaptureMovementEvidence.modeChangeStart(points,"unknown",0,now);
@@ -91,6 +97,17 @@ final class PlaceVisitEvidence {
             if(start!=null)return new Decision(start.index,mode,"sustained_activity_within_place");
         }
         return null;
+    }
+    private static boolean purposeful(List<FootTraceValidator.Sample> points,FootTraceValidator.Sample start,String mode) {
+        FootTraceValidator.Sample end=points.get(points.size()-1);
+        if(!"walking".equals(mode))return true; // Explicit hint plus sustained measured exercise.
+        if(end.time-start.time<600000)return false;
+        double path=0;FootTraceValidator.Sample previous=null;
+        for(FootTraceValidator.Sample p:points)if(p.time>=start.time&&p.accuracy<=25) {
+            if(previous!=null)path+=FootTraceValidator.metres(previous,p);previous=p;
+        }
+        double distance=FootTraceValidator.metres(start,end)-start.accuracy-end.accuracy;
+        return distance>=400&&path>0&&distance/path>=.8;
     }
     private static Decision vehicleDeparture(List<FootTraceValidator.Sample> points,int vehicleStart) {
         // A short real walk to the car can occur wholly inside the venue. Once

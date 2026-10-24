@@ -25,17 +25,12 @@ final class PlaceBoundaryEvidence {
                 .put("confidence",mapped||station?"medium":"low").put("visit_status","stopped")
                 .put("source",station?"offline_station_catalog":mapped?"map_footprint_and_dwell":"gps_dwell")
                 .put("reason",reason==null?"arrival_dwell":reason).put("boundary_at",Instant.ofEpochMilli(anchor.time).toString());
-        if(mapped && !station && map.geometry!=null && map.geometry.length()<=2000) {
-            JSONObject boundary=new JSONObject().put("geometry",map.geometry).put("holes",map.holes);
-            if(boundary.toString().length()<=100_000) {
-                result.put("site_geometry",new JSONArray(map.geometry.toString()));
-                if(map.holes!=null)result.put("site_holes",new JSONArray(map.holes.toString()));
-            }
-        }
-        if(mapped&&"arrival_theme_park".equals(reason)) {
+        if(mapped&&!station)PlaceGeometry.attach(result,map);
+        if(mapped&&reason!=null&&(reason.equals("arrival_destination_entry")||reason.equals("arrival_theme_park"))) {
             result.put("source","map_footprint_and_entry").put("dwell_seconds",0)
                     .put("boundary_confirmation_seconds",(confirmedAt-anchor.time)/1000);
         }
+        PlaceIdentity.apply(result);
         return result;
     }
 
@@ -70,7 +65,8 @@ final class PlaceBoundaryEvidence {
         for(JSONObject stop:new JSONObject[]{departure,arrival}) {
             if(stop==null)continue;
             stops.put(new JSONObject(stop.toString()));
-            places.put(new JSONObject().put("id",stop.optString("place_id"))
+            PlaceIdentity.apply(stop);
+            places.put(new JSONObject().put("identity",stop.optJSONObject("identity")).put("display_label",stop.optString("display_label",stop.optString("name"))).put("id",stop.optString("place_id"))
                     .put("name",stop.optString("name")).put("kind",stop.optString("kind"))
                     .put("latitude",stop.optDouble("latitude")).put("longitude",stop.optDouble("longitude"))
                     .put("classification",stop.optString("classification")).put("source",stop.optString("source")));
@@ -86,7 +82,8 @@ final class PlaceBoundaryEvidence {
         result.put("classification",confirmed?"confirmed":"rejected")
                 .put("confidence",confirmed?"high":"low").put("visit_status",confirmed?"confirmed":"rejected")
                 .put("reviewed_at_ms",now).put("review_source","user_confirmation");
-        if(confirmed)result.put("name",label);
+        if(confirmed)result.put("name",label).put("display_label",label);
+        PlaceIdentity.apply(result);
         return result;
     }
     static void preserveReviews(JSONObject incoming,JSONObject stored) throws org.json.JSONException {
@@ -109,7 +106,8 @@ final class PlaceBoundaryEvidence {
         JSONArray stops=journey.optJSONArray("stops"),places=new JSONArray();
         if(stops!=null)for(int i=0;i<stops.length();i++) {
             JSONObject stop=stops.optJSONObject(i);if(stop==null||"rejected".equals(stop.optString("classification")))continue;
-            places.put(new JSONObject().put("id",stop.optString("place_id")).put("name",stop.optString("name"))
+            PlaceIdentity.apply(stop);
+            places.put(new JSONObject().put("identity",stop.optJSONObject("identity")).put("display_label",stop.optString("display_label",stop.optString("name"))).put("id",stop.optString("place_id")).put("name",stop.optString("name"))
                     .put("kind",stop.optString("kind")).put("latitude",stop.optDouble("latitude"))
                     .put("longitude",stop.optDouble("longitude")).put("classification",stop.optString("classification"))
                     .put("source",stop.optString("source")));

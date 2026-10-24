@@ -2,6 +2,17 @@
 
 Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Generalised journey intelligence candidate — 24 October 2026
+
+Continue from `fix/generalised-journey-intelligence`, based on delivered 214
+and the validated production backend slice #217. Candidate **0.25.215 (261)**.
+See [portable acceptance and behavioural changes](journey-intelligence-portable-acceptance.md).
+No return to any original travel location is required. Deterministic portable
+regressions are the release acceptance gate; future device journeys are optional
+observational feedback. Android tests/build pending; do not claim APK delivery.
+Backend merge 7dd2c58c628ec819ace2b645d18aa296ddb238b4 is live on Render;
+endpoint verification remains pending. Issue #216 coordinates final evidence.
+
 ## Disneyland corrective candidate — 24 October 2026
 
 Continue from `fix/disneyland-gps-integrity`, based on private 213's actual

@@ -701,11 +701,12 @@ public class CaptureService extends Service {
                 try {
                     JSONObject boundary=new JSONObject().put("geometry",map.geometry).put("holes",map.holes);
                     if(boundary.toString().length()<=100_000) {
-                        stop.put("site_geometry",map.geometry);
+                        PlaceGeometry.attach(stop,map);
                         stop.put("place_id",map.featureId).put("name",map.name).put("kind",map.kind)
                                 .put("classification","supported").put("confidence","medium")
                                 .put("source","map_footprint_and_dwell");
                         if(map.holes!=null)stop.put("site_holes",map.holes);
+                        PlaceIdentity.apply(stop);
                         PlaceAnchorStore.record(this,new JSONObject().put("stops",new JSONArray().put(stop)));
                     }
                 } catch(org.json.JSONException ignored) {}
@@ -733,7 +734,7 @@ public class CaptureService extends Service {
             return true;
         }
         List<Location> seed=new ArrayList<>(visitPoints.subList(decision.startIndex,visitPoints.size()));
-        try {departurePlace=PlaceBoundaryEvidence.departure(stop,footSample(seed.get(0),0));}
+        try {departurePlace=PlaceBoundaryEvidence.departure(stop,footSample(seed.get(0),0));departurePlace.put("departure_reason",decision.reason);}
         catch(org.json.JSONException ignored) {departurePlace=null;}
         cancelStartCandidate(null);
         automaticCapture=true;
@@ -811,8 +812,9 @@ public class CaptureService extends Service {
     private void considerArmedWalking(Location location) {
         if (!isArmed(this) || ("vehicle".equals(currentActivity)
                 && wallClock.millis()-currentActivityAtMs<120_000L) || location==null
-                || !location.hasAccuracy() || location.getAccuracy()>25 || !location.hasSpeed()
-                || location.getSpeed()<0.5f || location.getSpeed()>3.5f
+                || !location.hasAccuracy() || location.getAccuracy()>25
+                || location.hasSpeed()&&location.getSpeed()>3.5f
+                || (!location.hasSpeed()||location.getSpeed()<.5f)&&location.getAccuracy()>15
                 || Math.abs(wallClock.millis()-location.getTime())>60_000L) {
             armedWalkingPoints.clear(); return;
         }
@@ -1380,6 +1382,7 @@ public class CaptureService extends Service {
                 journey.put("timezone", savedTimezone);
                 journey.put("mode", savedMode);
                 journey.put("transport_confirmation", "required");
+                journey.put("capture_intent",savedAutomatic?"automatic":"manual");
                 JSONObject arrivalPlace=placeBoundary?StationPlaceEvidence.arrival(savedJourneyId,
                         footSample(stopEvidenceAnchor,savedPoints.size()-1),stopConfirmedAt,arrivalMap,savedStationCode,savedContextReason,savedStationCatalog):null;
                 PlaceBoundaryEvidence.attach(journey,savedDeparturePlace,arrivalPlace);
@@ -1460,7 +1463,10 @@ public class CaptureService extends Service {
                     routeSamples=sampleCoordinates(routePoints);routeDistance=routeDistanceMetres(routePoints);
                 }
                 boolean internalResort=savedAutomatic && ("walking".equals(savedMode)||"running".equals(savedMode))
-                        && ResortJourneyPolicy.internal(new DestinationCatalog(getApplicationContext()),routeSamples);
+                        && !(savedDeparturePlace!=null&&savedDeparturePlace.optString("departure_reason").matches("purposeful_activity_within_place|sustained_activity_within_place"))
+                        && (DestinationJourneyEvidence.internal(arrivalPlace,routeSamples)
+                            ||DestinationJourneyEvidence.internal(savedDeparturePlace,routeSamples)
+                            ||ResortJourneyPolicy.internal(new DestinationCatalog(getApplicationContext()),routeSamples));
                 if(internalResort) {
                     discarded=true;
                     if(arrivalPlace!=null)PlaceAnchorStore.record(getApplicationContext(),journey);

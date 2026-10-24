@@ -68,7 +68,7 @@ public class DisneylandRegressionTest {
         assertNull(model.sample("walking",1,1000,48.872,2.774,5,1.3f,catalog.evidence(48.872,2.774,5),false));
         assertNull(model.sample("walking",2,16000,48.8721,2.7741,5,1.3f,catalog.evidence(48.8721,2.7741,5),false));
         ContextJourneyModel.Decision d=model.sample("walking",3,31000,48.8722,2.7742,5,1.3f,catalog.evidence(48.8722,2.7742,5),false);
-        assertNotNull(d);assertEquals(1,d.boundary);assertEquals("arrival_theme_park",d.reason);assertNull(d.nextMode);
+        assertNotNull(d);assertEquals(1,d.boundary);assertEquals("arrival_destination_entry",d.reason);assertNull(d.nextMode);
     }
     @Test public void accurateConfirmedDepartureExcludesTheInternalWalk() throws Exception {
         JSONObject stop=stop();List<FootTraceValidator.Sample> points=new ArrayList<>();

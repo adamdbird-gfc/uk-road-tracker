@@ -84,3 +84,32 @@ class WalkingWorkBudgetTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['matched_tracepoints'],200)
         self.assertEqual(result['failed_sections'],[])
         self.assertGreater(router.await_count,16)
+
+class WalkingTemporalBudgetTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stalled_upstream_returns_recoverable_failure_with_no_geometry(self):
+        import asyncio
+        from walking_work import WalkingWorkBudget, walking_work
+        work=WalkingWorkBudget(seconds=.03,call_seconds=.01)
+        async def slow(*args): await asyncio.sleep(1)
+        token=walking_work.set(work)
+        try:
+            with patch.object(api,'router_get',new=AsyncMock(side_effect=slow)):
+                data,radius,failures=await api.match_chunk_resiliently(None,[api.Point(lat=51,lng=.3)]*4,0,api.FOOT_OSRM_BASE_URL)
+            self.assertEqual(data['matchings'],[])
+            self.assertEqual(failures[0]['detail'],'pedestrian_upstream_timeout')
+            self.assertEqual(work.calls,1)
+        finally: walking_work.reset(token)
+
+    async def test_call_limit_avoids_duplicate_upstream_work(self):
+        from walking_work import WalkingWorkBudget, WalkingWorkLimit
+        work=WalkingWorkBudget(max_calls=1)
+        operation=AsyncMock(return_value='ok')
+        self.assertEqual(await work.call(operation),'ok')
+        with self.assertRaises(WalkingWorkLimit):await work.call(operation)
+        self.assertEqual(operation.await_count,1)
+
+    async def test_request_local_state_is_cleared_after_error(self):
+        from walking_work import walking_work
+        with patch.object(api,'_match_walking_activity',new=AsyncMock(side_effect=HTTPException(504,'timeout'))):
+            with self.assertRaises(HTTPException):await api.match_walking_activity(api.MatchRequest(points=[{'lat':51,'lng':.3}]*4,walking_recovery=True))
+        self.assertIsNone(walking_work.get())

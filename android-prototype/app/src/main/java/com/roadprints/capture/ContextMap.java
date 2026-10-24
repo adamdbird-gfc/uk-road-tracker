@@ -9,7 +9,7 @@ final class ContextMap {
         boolean available, rail, road, outdoor, destination, parking, routeAmbiguous, throughRoad;
         String name = "", kind = "unknown", featureId = "";
         boolean site;
-        JSONArray geometry, holes;
+        JSONArray geometry, holes, areas;
     }
     static Evidence at(JSONArray features, double lat, double lon, float accuracy) {
         Evidence result = new Evidence();
@@ -44,9 +44,11 @@ final class ContextMap {
                 boolean parking="parking".equals(tags.optString("amenity"));
                 boolean building=tags.has("building") && !"no".equals(tags.optString("building"));
                 String amenity=tags.optString("amenity");
+                String siteKind=kind(tags);
+
                 boolean site="school".equals(amenity)||"college".equals(amenity)||"university".equals(amenity)
                         ||"hospital".equals(amenity)||"mall".equals(tags.optString("shop"))
-                        ||"theme_park".equals(tags.optString("tourism"));
+                        ||DestinationPolicy.complex(siteKind);
                 double area=area(geometry);
                 // Prefer the encompassing site to an individual building, then the
                 // smallest eligible footprint. Feature order must not change identity.
@@ -54,11 +56,21 @@ final class ContextMap {
                         && (!result.destination || site&&!result.site || site==result.site&&area<selectedArea)) {
                     result.destination=true; result.parking=parking; result.site=site; selectedArea=area;
                     result.geometry=geometry;result.holes=holes;
-                    result.kind="theme_park".equals(tags.optString("tourism"))?"theme_park":site?("mall".equals(tags.optString("shop"))?"shopping_centre":amenity):parking?"parking":("house".equals(tags.optString("building"))
+                    result.kind=DestinationPolicy.complex(siteKind)?siteKind:site?("mall".equals(tags.optString("shop"))?"shopping_centre":amenity):parking?"parking":("house".equals(tags.optString("building"))
                             || "residential".equals(tags.optString("building"))?"residential":"building");
                     result.name=tags.optString("name",result.kind);
                     result.featureId=f.optLong("id",0)>0?"osm:"+("relation".equals(f.optString("type"))?"relation":"way")+":"+f.optLong("id"):"";
                 }
+            }
+        }
+        if(result.destination&&result.site&&!result.featureId.isEmpty()) {
+            result.areas=new JSONArray();
+            for(int i=0;i<features.length()&&result.areas.length()<32;i++) {
+                JSONObject f=features.optJSONObject(i);if(f==null)continue;
+                String id=f.optLong("id",0)>0?"osm:"+("relation".equals(f.optString("type"))?"relation":"way")+":"+f.optLong("id"):"";
+                if(!id.equals(result.featureId))continue;
+                try {result.areas.put(new JSONObject().put("geometry",f.optJSONArray("geometry")).put("holes",f.optJSONArray("holes")));}
+                catch(org.json.JSONException ignored){}
             }
         }
         result.road=roadDistance<=Math.max(15,accuracy);
@@ -66,6 +78,16 @@ final class ContextMap {
         result.throughRoad=result.road&&throughRoadDistance+accuracy<=15;
         if(result.road && roadDistance<=accuracy && (!result.site || result.throughRoad))result.destination=false;
         return result;
+    }
+    private static String kind(JSONObject tags) {
+        String tourism=tags.optString("tourism"),aeroway=tags.optString("aeroway"),leisure=tags.optString("leisure");
+        if(tourism.matches("theme_park|resort|zoo"))return tourism;
+        if(aeroway.equals("aerodrome"))return "airport";
+        if(aeroway.equals("terminal"))return "terminal";
+        if(leisure.matches("stadium|sports_centre"))return leisure;
+        if(tags.optString("shop").equals("mall"))return "shopping_centre";
+        if(tags.optString("amenity").matches("conference_centre|events_venue|community_centre"))return "event_venue";
+        return tags.optString("amenity");
     }
     private static double area(JSONArray ring) {
         double sum=0;

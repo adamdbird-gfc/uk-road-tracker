@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.215",
+      "version_code": 261,
+      "release_date": "2026-10-24",
+      "since": "0.25.214",
+      "changes": [
+        {
+          "title": "Shared destination behaviour",
+          "description": "Use mapped destination evidence and confirmed departures across complex places, with purposeful exercise remaining recordable."
+        },
+        {
+          "title": "Walking evidence and recovery",
+          "description": "Recover supported walking starts when speed reports are missing, preserve raw GPS and avoid immediate retries while the matcher is busy."
+        },
+        {
+          "title": "Clearer place confidence",
+          "description": "Keep user labels separate from geographic identity and retain the measured journey endpoints."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.214",
       "version_code": 260,
       "release_date": "2026-10-24",

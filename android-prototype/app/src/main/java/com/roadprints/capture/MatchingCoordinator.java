@@ -260,6 +260,12 @@ public final class MatchingCoordinator {
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
             if (!forceRematch && "complete".equals(journey.optString("processing_status")) && (hasStoredMatch(journey)||WalkingMatchOutcome.terminal(journey)))
                 throw new IllegalStateException("Journey already has a matched route");
+            JSONObject previousAttempt=journey.optJSONObject("last_match_attempt");
+            if(previousAttempt!=null) {
+                try {if(Instant.parse(previousAttempt.optString("next_retry_at_utc")).isAfter(Instant.now()))
+                    throw new MatchFailure(503,"Walking matcher is busy; retry after the requested pause.");}
+                catch(java.time.format.DateTimeParseException absent) { /* Older attempts have no cooldown. */ }
+            }
             String stage = matchingStage(journey.optString("mode", "unknown"));
             journey.remove("walking_outcome");
             journey.put("processing_status", "processing");
@@ -275,7 +281,7 @@ public final class MatchingCoordinator {
     }
 
     private void matchJourney(JSONObject journey) throws Exception {
-        if(isFoot(journey.optString("mode"))&&ResortJourneyPolicy.internal(new DestinationCatalog(app),journey.optJSONArray("capture_route_samples")))
+        if(isFoot(journey.optString("mode"))&&!DestinationJourneyEvidence.purposeful(journey)&&ResortJourneyPolicy.internal(new DestinationCatalog(app),journey.optJSONArray("capture_route_samples")))
             throw new IllegalStateException("Movement inside a recognised resort does not require road matching. The original recording is preserved.");
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -577,7 +583,11 @@ public final class MatchingCoordinator {
                 attempt.put("finished_at_utc", Instant.now().toString());
                 attempt.put("error", safeMessage(error)).put("failure_category",MatchFailure.category(error))
                         .put("retryable",MatchFailure.retryable(error));
-                if(error instanceof MatchFailure)attempt.put("http_status",((MatchFailure)error).status);
+                if(error instanceof MatchFailure){
+                    MatchFailure failure=(MatchFailure)error;attempt.put("http_status",failure.status);
+                    if(failure.retryAfterSeconds>0)attempt.put("retry_after_seconds",failure.retryAfterSeconds)
+                            .put("next_retry_at_utc",Instant.now().plusSeconds(failure.retryAfterSeconds).toString());
+                }
                 stored.put("last_match_attempt", attempt);
             }
             JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
@@ -650,7 +660,7 @@ public final class MatchingCoordinator {
         }
         if (status < 200 || status >= 300) {
             throw new MatchFailure(status,CrashReporter.summarizeMatcherError(
-                    status, body.toString()));
+                    status, body.toString()),MatchFailure.retryAfter(connection.getHeaderField("Retry-After")));
         }
         return new JSONObject(body.toString());
         } finally { connection.disconnect(); }

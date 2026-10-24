@@ -11,7 +11,9 @@ final class WalkingStartEvidence {
         double movement=0;
         for(int i=0;i<samples.size();i++) {
             FootTraceValidator.Sample p=samples.get(i);
-            if(!WalkingStillnessDetector.usable(p) || p.accuracy>25 || p.speed<0.5 || p.speed>3.5) return false;
+            double speed=MovementSpeed.foot(i==0?null:samples.get(i-1),p);
+            if(!WalkingStillnessDetector.usable(p) || p.accuracy>25
+                    ||(i>0&&(speed<.5||speed>3.5))||i==0&&p.speed>3.5)return false;
             if(i>0) {
                 FootTraceValidator.Sample previous=samples.get(i-1);
                 if(p.time<=previous.time || p.time-previous.time>60_000L
