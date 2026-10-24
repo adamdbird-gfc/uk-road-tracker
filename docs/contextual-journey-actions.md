@@ -30,8 +30,12 @@ backend remains the already deployed #217 slice. No backend changes here.
   checkpoint misses report revision values and incremental recovery explicitly.
   Missing input-hash metadata now compares the existing source evidence before
   replacement, preventing label-only saves after eviction/upgrade from
-  unnecessarily changing NCN evidence revision. Genuine evidence changes still
-  invalidate; source tokens/fingerprints/checksums and per-row caches remain.
+  unnecessarily changing NCN evidence revision. Unfinished foot/cycle retry
+  states share the same zero-coverage identity; pending/processing/failed and
+  retry telemetry no longer trigger reassessment. Completed-result transitions,
+  corrections and real source changes still invalidate. Existing input hashes
+  are lazily refreshed on a later individual save, with no global migration;
+ source tokens/fingerprints/checksums and per-row caches remain.
 - Slow-frame reports now separate tile, road, NCN and other draw time and count
   road sections. Empty route views avoid an unnecessary offscreen alpha layer.
   Projection limits, incremental map contributions, NCN caches and camera state

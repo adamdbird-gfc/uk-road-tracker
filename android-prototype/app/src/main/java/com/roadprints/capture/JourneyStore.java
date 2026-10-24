@@ -891,6 +891,11 @@ public final class JourneyStore {
         String mode=journey.optString("mode");
         if(!MatchingCoordinator.isFoot(mode)&&!MatchingCoordinator.isCycle(mode))
             return NcnJson.digest(evidence.put("journey_id",journey.optString("journey_id")).put("mode",mode));
+        // Pending, processing and failed all contribute zero NCN spans. Retry
+        // telemetry/corrections cannot change that until a completed result exists.
+        if(!"complete".equals(journey.optString("processing_status")))
+            return NcnJson.digest(evidence.put("journey_id",journey.optString("journey_id"))
+                    .put("mode",mode).put("processing_status","unfinished"));
         for(String key:new String[]{"journey_id","mode","processing_status","journey_corrections"})
             if(journey.has(key))evidence.put(key,journey.opt(key));
         JSONObject source=journey.optJSONObject("processing_result");

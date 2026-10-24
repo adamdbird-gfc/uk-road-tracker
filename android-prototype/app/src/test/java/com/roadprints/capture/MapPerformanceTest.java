@@ -175,6 +175,20 @@ public class MapPerformanceTest {
         JSONObject changed=JourneyStore.get(app,"foot");changed.getJSONObject("processing_result").put("geojson",new JSONObject().put("features",new JSONArray()));
         JourneyStore.save(app,changed);assertTrue(JourneyStore.ncnDataRevision(app)>ncn);
     }
+    @Test public void unfinishedFootRetriesDoNotInvalidateNcnUntilCoverageCanChange()throws Exception {
+        for(String mode:new String[]{"walking","running","cycling"}) {
+            JSONObject row=trip(mode).put("mode",mode).put("processing_status","pending");JourneyStore.save(app,row);
+            long revision=JourneyStore.ncnDataRevision(app);
+            for(String state:new String[]{"processing","failed","pending","processing","failed"}) {
+                row.put("processing_status",state).put("last_match_attempt",new JSONObject().put("failure_category","backend_timeout"));
+                row.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0]")));
+                JourneyStore.save(app,row);assertEquals(mode+"/"+state,revision,JourneyStore.ncnDataRevision(app));
+            }
+            row.put("processing_status","complete");JourneyStore.save(app,row);assertTrue(JourneyStore.ncnDataRevision(app)>revision);
+            revision=JourneyStore.ncnDataRevision(app);row.put("processing_status","processing");JourneyStore.save(app,row);
+            assertTrue("Removing previously completed coverage still invalidates",JourneyStore.ncnDataRevision(app)>revision);
+        }
+    }
     @Test public void staleLargeSnapshotRejectsBeforeReadingItsBrokenCompressedBody() throws Exception {
         MapSnapshotCache.write(app,123,new JSONObject().put("marker","unchanged"));
         File file=new File(app.getFilesDir(),"screen-cache/map-routes.bin");
