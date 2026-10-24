@@ -5,6 +5,9 @@ import org.json.JSONObject;
 
 /** Capture evidence is independent of whether a router can connect two fixes. */
 final class CaptureQualityValidator {
+    static boolean fresh(long now,long fixTime,long receivedAge) {
+        return fixTime>0&&Math.abs(now-fixTime)<=60000&&receivedAge>=-1&&receivedAge<=60000;
+    }
     static boolean reliable(FootTraceValidator.Sample a, FootTraceValidator.Sample b, boolean foot) {
         if (!Double.isFinite(b.lon) || !Double.isFinite(b.lat) || Math.abs(b.lon)>180
                 || Math.abs(b.lat)>90 || !Double.isFinite(b.accuracy)

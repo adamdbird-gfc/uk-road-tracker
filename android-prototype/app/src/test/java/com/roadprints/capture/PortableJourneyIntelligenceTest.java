@@ -128,4 +128,25 @@ public class PortableJourneyIntelligenceTest {
         }
         assertTrue(MatchFailure.retryNow(new java.net.ConnectException(),0));assertFalse(MatchFailure.retryNow(new java.net.ConnectException(),1));
     }
+    @Test public void explicitManualAndPurposefulIntentRemainDistinctFromInternalWandering()throws Exception {
+        JSONObject manual=new JSONObject().put("capture_intent","manual");assertTrue(DestinationJourneyEvidence.purposeful(manual));
+        JSONObject departure=stop("airport",.37,51.44).put("departure_reason","purposeful_activity_within_place");
+        assertTrue(DestinationJourneyEvidence.purposeful(new JSONObject().put("stops",new JSONArray().put(departure))));
+        assertFalse(DestinationJourneyEvidence.purposeful(new JSONObject().put("stops",new JSONArray().put(stop("airport",.37,51.44)))));
+        MatchFailure pause=new MatchFailure(503,"temporary failure",120);
+        assertTrue(MatchFailure.retryable(pause));assertFalse(MatchFailure.retryNow(pause,0));
+    }
+    @Test public void sparseCoherentDepartureKeepsItsSupportedOriginAcrossDestinationTypes()throws Exception {
+        for(String kind:KINDS) {
+            JSONObject place=stop(kind,.37,51.44).put("site_geometry",ring(.37,51.44,-60,60,-60,60));
+            List<FootTraceValidator.Sample> samples=new ArrayList<>();for(int n=0;n<7;n++)samples.add(p(.37,51.44,n*20,0,1000+n*60000L,1.3,n));
+            assertEquals(kind,0,PlaceVisitEvidence.inspect(place,samples).startIndex);
+        }
+    }
+    @Test public void monotonicReceiptAgeRejectsCachedFixesEvenWhenWallTimestampLooksFresh() {
+        assertFalse(CaptureQualityValidator.fresh(200000,199000,120000));
+        assertFalse(CaptureQualityValidator.fresh(200000,100000,0));
+        assertTrue(CaptureQualityValidator.fresh(200000,199000,1000));
+        assertTrue(CaptureQualityValidator.fresh(200000,199000,-1)); // Legacy provider lacks monotonic evidence.
+    }
 }

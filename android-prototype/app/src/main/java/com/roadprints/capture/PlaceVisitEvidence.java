@@ -69,6 +69,7 @@ final class PlaceVisitEvidence {
                                 &&ContextMap.distance(stop.optJSONArray("site_geometry"),before.lat,before.lon)<=before.accuracy+30)
                             boundary--;
                     }
+                    if(coherentOriginDeparture(stop,points,start,firstOutside.index))boundary=start;
                     return new Decision(boundary,mode,"departure_from_visit");
                 }
                 return "unknown".equals(mode)?vehicleDeparture(points,start):new Decision(start,mode,"departure_from_visit");
@@ -97,6 +98,18 @@ final class PlaceVisitEvidence {
             if(start!=null)return new Decision(start.index,mode,"sustained_activity_within_place");
         }
         return null;
+    }
+    private static boolean coherentOriginDeparture(JSONObject stop,List<FootTraceValidator.Sample> points,int start,int outside) {
+        FootTraceValidator.Sample first=points.get(start),end=points.get(outside);
+        if(end.time-first.time>300000||RailStationCatalog.metres(stop.optDouble("latitude"),stop.optDouble("longitude"),first.lat,first.lon)
+                >35+stop.optDouble("accuracy_m",25)+first.accuracy)return false;
+        double path=0;FootTraceValidator.Sample previous=first;
+        for(int i=start+1;i<=outside;i++) {
+            FootTraceValidator.Sample p=points.get(i);
+            if(p.time-previous.time>60000||!CaptureQualityValidator.reliable(previous,p,true))return false;
+            path+=FootTraceValidator.metres(previous,p);previous=p;
+        }
+        return path>0&&FootTraceValidator.metres(first,end)/path>=.85;
     }
     private static boolean purposeful(List<FootTraceValidator.Sample> points,FootTraceValidator.Sample start,String mode) {
         FootTraceValidator.Sample end=points.get(points.size()-1);

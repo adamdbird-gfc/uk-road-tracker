@@ -239,6 +239,7 @@ public class CaptureService extends Service {
             provenance.putLong("roadprints_received_age_ms",elapsed>0?
                     Math.max(0,(android.os.SystemClock.elapsedRealtimeNanos()-elapsed)/1_000_000L):-1);
             location=new Location(location);location.setExtras(provenance);
+            boolean callbackFresh=CaptureQualityValidator.fresh(wallClock.millis(),location.getTime(),provenance.getLong("roadprints_received_age_ms",-1));
             if(location.hasAccuracy() && location.getAccuracy()<=50
                     && Math.abs(wallClock.millis()-location.getTime())<=60_000L)
                 lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
@@ -247,6 +248,7 @@ public class CaptureService extends Service {
                 return;
             }
             if (!isActive(CaptureService.this)) {
+                if(!callbackFresh){MovementDiagnostics.recordLocation(CaptureService.this,location,"rejected_stale_idle");return;}
                 if (observePlaceVisit(location)) return;
                 if (observeIdlePlace(location)) return;
                 if (candidateMode != null) {
@@ -261,8 +263,7 @@ public class CaptureService extends Service {
             MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
             Location observation = new Location(location);
             requestContext(observation);
-            boolean fresh=Math.abs(wallClock.millis()-observation.getTime())<=60_000L
-                    && (observation.getExtras()==null||observation.getExtras().getLong("roadprints_received_age_ms",-1)<=60_000L);
+            boolean fresh=callbackFresh;
             if (fresh && automaticCapture && lastPoint != null && (CaptureMovementEvidence.separateSamplingSessions(
                     footSample(lastPoint, 0), footSample(observation, 1))
                     || ("walking".equals(mode)||"running".equals(mode))
@@ -1026,7 +1027,7 @@ public class CaptureService extends Service {
             Location best = gps;
             if (network != null && (best == null || network.getTime() > best.getTime())) best = network;
             if (best == null || !best.hasAccuracy() || best.getAccuracy() > 50f
-                    || wallClock.millis() - best.getTime() > 60_000L) return null;
+                    || !CaptureQualityValidator.fresh(wallClock.millis(),best.getTime(),-1)) return null;
             return new Location(best);
         } catch (SecurityException ignored) { return null; }
     }
@@ -1034,7 +1035,7 @@ public class CaptureService extends Service {
     private void collectCandidateLocation(Location location) {
         if (candidateMode == null || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f || location.getTime() <= 0
-                || Math.abs(wallClock.millis()-location.getTime()) > 120_000L
+                || !CaptureQualityValidator.fresh(wallClock.millis(),location.getTime(),location.getExtras()==null?-1:location.getExtras().getLong("roadprints_received_age_ms",-1))
                 || (candidateMovementLast != null && location.getTime() <= candidateMovementLast.getTime())) return;
         if (("walking".equals(candidateMode)||"running".equals(candidateMode)) && candidateMovementLast != null
                 && !FootTraceValidator.plausible(footSample(candidateMovementLast, 0), footSample(location, 1))) {
@@ -1403,6 +1404,7 @@ public class CaptureService extends Service {
                 long routeEndTime=Instant.parse(savedEndedAt).toEpochMilli();
                 for (Location point : routePoints) {
                     if (point.getTime()>routeEndTime) continue;
+                    if(point.getExtras()!=null&&point.getExtras().getLong("roadprints_received_age_ms",-1)>60000)continue;
                     if (!WalkingStillnessDetector.usable(footSample(point, 0))) continue;
                     if (!chronologicalPoints.isEmpty()
                             && point.getTime() <= chronologicalPoints.get(chronologicalPoints.size()-1).getTime()) continue;

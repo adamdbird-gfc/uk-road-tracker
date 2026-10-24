@@ -29,7 +29,7 @@ final class WalkingJourneyPreparation {
         JSONArray saved=journey.optJSONArray("raw_capture_samples");
         if(saved!=null) for(int i=0;i<saved.length();i++) {
             JSONArray p=saved.optJSONArray(i);
-            if(p!=null && p.length()>=4) add(evidence,new FootTraceValidator.Sample(
+            if(p!=null && p.length()>=4 && p.optLong(7,-1)<=60000) add(evidence,new FootTraceValidator.Sample(
                     p.optDouble(0),p.optDouble(1),p.optDouble(2),p.optLong(3),p.optDouble(4,-1),i));
         }
         List<JSONObject> activities=new ArrayList<>();

@@ -227,4 +227,18 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals(2,points("points").size());assertEquals(origin.getTime(),((Location)field("lastPoint").get(service)).getTime());
         assertEquals(0,field("distanceMetres").getDouble(service),0);
     }
+    @Test public void generalDestinationStateSurvivesAnObservationGapAndRecoversBoundaryDeparture()throws Exception {
+        establish(true);
+        JSONObject place=PlaceAnchorStore.last(service);place.put("kind","airport").put("name","Unrelated terminal").put("place_id","osm:relation:42");
+        PlaceAnchorStore.record(service,new JSONObject().put("stops",new JSONArray().put(place)));
+        for(int i=0;i<30;i++)observe(fix(i%5*25,0,i%4==0?0:1.3f,60));
+        ((ExecutorService)field("captureIo").get(service)).submit(()->{}).get(5,TimeUnit.SECONDS);
+        points("visitPoints").clear();field("visitPointStopId").set(service,"");time+=6*3600000L;
+        observe(fix(50,0,0,60));assertFalse(CaptureService.isActive(service));
+        assertEquals("airport",PlaceAnchorStore.last(service).getString("kind"));
+        Location boundary=fix(490,0,1.3f,600);observe(boundary);
+        for(int i=0;i<5&&!CaptureService.isActive(service);i++)observe(fix(530+i*25,0,1.3f,20));
+        assertTrue(CaptureService.isActive(service));assertEquals(boundary.getTime(),points("points").get(0).getTime());
+        assertEquals("departure_from_visit",((JSONObject)field("departurePlace").get(service)).getString("departure_reason"));
+    }
 }

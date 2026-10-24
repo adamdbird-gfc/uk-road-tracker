@@ -74,8 +74,15 @@ browsable internal-movement journal remain separate follow-ups.
 The owner selected My Workspace. Production service uk-road-tracker-api auto-
 deploys main. #217 passed database-backed walking/context and road-recovery CI,
 merged as 7dd2c58c628ec819ace2b645d18aa296ddb238b4. Render reports deploy
-`dep-dbegppdg1s2s739dhv30` live at that source. Live endpoint verification is
-recorded in the handover after it completes.
+`dep-dbegppdg1s2s739dhv30` live at that source. Live live health confirms policy version 2 and database ready. A public six-point
+NCN walking reference matched 6/6 points and 30.7m with real geometry, using
+the preloaded pedestrian network (2,030ms server work, 8.02s client round trip).
+A second public Scottish NCN trace matched 8/8 points and 34.3m (887ms server
+work, 5.49s round trip). An overseas synthetic four-point trace exercised the
+actual fallback router: HTTP 200, 3/4 supported points, real 42.3m geometry,
+one upstream call, 1,037ms server work / 5.64s round trip. The unmatched point
+remained unmatched. Render runtime counters independently corroborate all three
+checks. No personal GPS, journey IDs or persisted journeys were submitted.
 
 Production logs confirm earlier 55-second application deadline failures; they
 lack sufficient per-stage evidence to identify the exact historical upstream
