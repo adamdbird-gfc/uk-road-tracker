@@ -14,7 +14,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 VERSION = 1
-FEATURE_REVISION = 2
+FEATURE_REVISION = 3
 TTL = 7 * 86400
 MAX_BYTES = 4_000_000
 MAX_AREAS = 256
@@ -53,8 +53,8 @@ def clean_document(document):
                or not -90 <= p["lat"] <= 90 or not -180 <= p["lon"] <= 180 for p in geometry):
             raise ValueError("Invalid context geometry")
         tags = item.get("tags", {})
-        allowed = {"highway", "railway", "building", "amenity", "leisure", "natural", "access", "area", "shop", "office"}
-        public_venue = tags.get("amenity") in {"school", "college", "university", "hospital", "restaurant", "cafe", "pub", "bar", "fast_food"} or "shop" in tags or "office" in tags
+        allowed = {"highway", "railway", "building", "amenity", "leisure", "natural", "access", "area", "shop", "office", "tourism", "aeroway"}
+        public_venue = tags.get("amenity") in {"school", "college", "university", "hospital", "restaurant", "cafe", "pub", "bar", "fast_food"} or "shop" in tags or "office" in tags or tags.get("tourism") in {"theme_park", "zoo", "resort", "hotel"} or tags.get("aeroway") in {"aerodrome", "terminal"} or tags.get("leisure") in {"stadium", "sports_centre"}
         tags = {k: v for k, v in tags.items() if k in allowed or k == "name" and public_venue}
         if "name" in tags:
             tags["name"] = str(tags["name"])[:160]
@@ -128,8 +128,8 @@ def fetch_elements(bounds):
     bbox = ",".join(f"{v:.3f}" for v in bounds)
     query = f"[out:json][timeout:12];(way[highway]({bbox});way[railway=rail]({bbox});" \
             f"way[building]({bbox});way[amenity=parking]({bbox});way[leisure]({bbox});way[natural]({bbox});" \
-            f'way[amenity~"^(school|college|university|hospital)$"]({bbox});way[shop=mall]({bbox});way[office]({bbox});' \
-            f'relation[amenity~"^(school|college|university|hospital)$"]({bbox});relation[shop=mall]({bbox});relation[building]({bbox}););out geom;' 
+            f'way[amenity~"^(school|college|university|hospital)$"]({bbox});way[shop=mall]({bbox});way[office]({bbox});way[tourism~"^(theme_park|zoo|resort|hotel)$"]({bbox});way[aeroway~"^(aerodrome|terminal)$"]({bbox});' \
+            f'relation[amenity~"^(school|college|university|hospital)$"]({bbox});relation[shop=mall]({bbox});relation[building]({bbox});relation[tourism~"^(theme_park|zoo|resort|hotel)$"]({bbox});relation[aeroway~"^(aerodrome|terminal)$"]({bbox});relation[leisure~"^(stadium|sports_centre)$"]({bbox}););out geom;'
     with httpx.Client(timeout=httpx.Timeout(18, connect=5), follow_redirects=False) as client:
         with client.stream("POST", UPSTREAM, data={"data": query},
                            headers={"User-Agent": "Roadprints-SharedContext/1"}) as response:
@@ -147,14 +147,14 @@ def postpass_query(bounds):
     # Only validated public area bounds enter this fixed read-only query.
     bbox = f"ST_MakeEnvelope({west:.3f},{south:.3f},{east:.3f},{north:.3f},4326)"
     return "SELECT osm_id,osm_type,(SELECT jsonb_object_agg(key,value) FROM jsonb_each(tags) " \
-           "WHERE key IN ('highway','railway','building','amenity','leisure','natural','access','area','shop','office') " \
-           "OR key='name' AND (tags->>'amenity' IN ('school','college','university','hospital','restaurant','cafe','pub','bar','fast_food') OR tags ? 'shop' OR tags ? 'office')) AS tags," \
+           "WHERE key IN ('highway','railway','building','amenity','leisure','natural','access','area','shop','office','tourism','aeroway') " \
+           "OR key='name' AND (tags->>'amenity' IN ('school','college','university','hospital','restaurant','cafe','pub','bar','fast_food') OR tags ? 'shop' OR tags ? 'office' OR tags->>'tourism' IN ('theme_park','zoo','resort','hotel') OR tags->>'aeroway' IN ('aerodrome','terminal') OR tags->>'leisure' IN ('stadium','sports_centre'))) AS tags," \
            f"CASE WHEN GeometryType(geom) IN ('POLYGON','MULTIPOLYGON') THEN geom ELSE " \
            f"ST_Multi(ST_CollectionExtract(ST_Intersection(geom,{bbox}),2)) END AS geom " \
            f"FROM postpass_linepolygon WHERE geom && {bbox} AND " \
            "(tags ?| ARRAY['highway','building','leisure','natural'] OR tags->>'railway'='rail' " \
            "OR tags->>'amenity' IN ('parking','school','college','university','hospital') " \
-           "OR tags->>'shop'='mall' OR tags ? 'office') LIMIT 10001"
+           "OR tags->>'shop'='mall' OR tags ? 'office' OR tags->>'tourism' IN ('theme_park','zoo','resort','hotel') OR tags->>'aeroway' IN ('aerodrome','terminal')) LIMIT 10001"
 
 
 def clean_postpass(document):

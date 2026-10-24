@@ -90,7 +90,16 @@ class ContextValidationTests(unittest.TestCase):
         cursor=Mock(); cursor.fetchone.return_value=({"schema_version":1},1000)
         self.assertIsNone(context.read_area(cursor,"v1:test",1001))
         cursor.fetchone.return_value=({"feature_revision":2},1000)
-        self.assertEqual(context.read_area(cursor,"v1:test",1001),{"feature_revision":2})
+        self.assertIsNone(context.read_area(cursor,"v1:test",1001))
+        cursor.fetchone.return_value=({"feature_revision":3},1000)
+        self.assertEqual(context.read_area(cursor,"v1:test",1001),{"feature_revision":3})
+    def test_complex_destination_tags_and_public_names_survive(self):
+        ring=[{'lat':51,'lon':0},{'lat':51,'lon':.01},{'lat':51.01,'lon':.01},{'lat':51,'lon':0}]
+        for tags in [{'tourism':'theme_park'},{'tourism':'resort'},{'aeroway':'terminal'},{'aeroway':'aerodrome'},{'leisure':'stadium'}]:
+            tags.update(name='Public destination')
+            result=context.clean_document({'elements':[{'id':9,'geometry':ring,'tags':dict(tags,**{'addr:street':'Private'})}]})
+            self.assertEqual(result[0]['tags'],tags)
+
 
 
 @unittest.skipUnless(os.getenv("TEST_CONTEXT_DATABASE_URL"),"Requires isolated PostgreSQL test service")
