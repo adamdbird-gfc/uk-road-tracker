@@ -261,7 +261,9 @@ public class CaptureService extends Service {
             MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
             Location observation = new Location(location);
             requestContext(observation);
-            if (automaticCapture && lastPoint != null && (CaptureMovementEvidence.separateSamplingSessions(
+            boolean fresh=Math.abs(wallClock.millis()-observation.getTime())<=60_000L
+                    && (observation.getExtras()==null||observation.getExtras().getLong("roadprints_received_age_ms",-1)<=60_000L);
+            if (fresh && automaticCapture && lastPoint != null && (CaptureMovementEvidence.separateSamplingSessions(
                     footSample(lastPoint, 0), footSample(observation, 1))
                     || ("walking".equals(mode)||"running".equals(mode))
                     && CaptureMovementEvidence.footSamplingGap(footSample(lastPoint,0),footSample(observation,1)))) {
@@ -277,8 +279,6 @@ public class CaptureService extends Service {
                 finishCapture();
                 return;
             }
-            boolean fresh=Math.abs(wallClock.millis()-observation.getTime())<=60_000L
-                    && (observation.getExtras()==null||observation.getExtras().getLong("roadprints_received_age_ms",-1)<=60_000L);
             boolean trusted = fresh && CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
                     footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
             // Retain rejected fixes as evidence, but do not credit their jumps

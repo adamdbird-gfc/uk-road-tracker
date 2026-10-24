@@ -216,4 +216,15 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals("gps",raw.getJSONArray("raw_capture_samples").getJSONArray(0).getString(5));assertTrue(file.delete());
         ((ContextMapCache)field("contextCache").get(service)).close();
     }
+    @Test public void staleCachedFixCannotSplitAnActiveWalkingRecording()throws Exception {
+        field("mode").set(service,"walking");field("automaticCapture").setBoolean(service,true);
+        service.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
+        Location origin=new Location("gps");origin.setLatitude(51);origin.setLongitude(.3);origin.setAccuracy(5);origin.setSpeed(1.3f);origin.setTime(time-1200000);
+        points("points").add(origin);field("lastPoint").set(service,origin);
+        Location stale=new Location(origin);stale.setLongitude(.301);stale.setTime(time-300000);
+        ((LocationListener)field("locationListener").get(service)).onLocationChanged(stale);
+        assertFalse(field("captureFinishing").getBoolean(service));assertTrue(CaptureService.isActive(service));
+        assertEquals(2,points("points").size());assertEquals(origin.getTime(),((Location)field("lastPoint").get(service)).getTime());
+        assertEquals(0,field("distanceMetres").getDouble(service),0);
+    }
 }
