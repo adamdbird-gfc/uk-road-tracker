@@ -15,6 +15,10 @@ final class DiagnosticNotifications {
     private static final String CHANNEL="roadprints_debug_reports",LAST="last_event";
     private static android.content.SharedPreferences prefs(Context c){return c.getSharedPreferences(PREFS,0);}
     private static JSONObject read(String value){try{return new JSONObject(value);}catch(Exception e){return new JSONObject();}}
+    private static boolean save(android.content.SharedPreferences p,JSONObject event) {
+        return p.edit().putString(LAST,event.toString())
+                .putString("episode:"+event.optString("scope_sha256"),event.toString()).commit();
+    }
     static synchronized JSONObject event(Context c,String scope,String signature,String original,String trigger,String worker)throws Exception {
         android.content.SharedPreferences p=prefs(c);
         String key="episode:"+NcnJson.digest(scope);
@@ -24,7 +28,7 @@ final class DiagnosticNotifications {
             // Rediscovery is diagnostic evidence, never a new delivery event.
             receipt.put("rediscovered_at_utc",Instant.now().toString()).put("rediscovery_trigger",trigger)
                     .put("rediscovery_worker",worker).put("rediscovered_event_id",prior.optString("event_id"));
-            p.edit().putString(LAST,receipt.toString()).commit();return null;
+            save(p,receipt);return null;
         }
         JSONObject event=new JSONObject().put("event_id",UUID.randomUUID().toString()).put("scope_sha256",NcnJson.digest(scope))
                 .put("signature",signature).put("notification_id",ID).put("recorded_at_utc",Instant.now().toString())
@@ -37,11 +41,18 @@ final class DiagnosticNotifications {
     static synchronized void ready(Context c,JSONObject expected)throws Exception {
         android.content.SharedPreferences p=prefs(c);JSONObject event=read(p.getString(LAST,"{}"));
         if(expected!=null&&expected.optString("event_id").equals(event.optString("event_id"))) {
-            event.put("delivery_state","pending");p.edit().putString(LAST,event.toString()).commit();
+            event.put("delivery_state","pending");save(p,event);
         }
     }
     static synchronized void resolved(Context c,String journeyId) {
-        prefs(c).edit().remove("episode:"+NcnJson.digest("journey:"+journeyId)).commit();
+        android.content.SharedPreferences p=prefs(c);String scope=NcnJson.digest("journey:"+journeyId);
+        JSONObject event=read(p.getString(LAST,"{}"));android.content.SharedPreferences.Editor edit=p.edit().remove("episode:"+scope);
+        if(scope.equals(event.optString("scope_sha256")))try{
+            event.put("delivery_state","resolved").put("resolved_at_utc",Instant.now().toString());edit.putString(LAST,event.toString());
+            NotificationManager manager=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
+            if(manager!=null)manager.cancel(ID);
+        }catch(Exception ignored){}
+        edit.commit();
     }
     static synchronized void deliver(Context c,String trigger,String worker) {
         android.content.SharedPreferences p=prefs(c);JSONObject event=read(p.getString(LAST,"{}"));
@@ -55,7 +66,7 @@ final class DiagnosticNotifications {
             event.put("notification_created_at_utc",created).put("delivery_trigger",trigger).put("delivery_worker",worker)
                     .put("delivery_state","claimed");
             // Crash between claim and notify may lose this alert, but cannot announce an old failure again.
-            if(!p.edit().putString(LAST,event.toString()).commit())return;
+            if(!save(p,event))return;
             Intent open=new Intent(c,DebugActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent content=PendingIntent.getActivity(c,ID,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             Intent dismissed=new Intent(c,DiagnosticNotificationReceiver.class).putExtra("event_id",event.getString("event_id"));
@@ -69,17 +80,17 @@ final class DiagnosticNotifications {
                     .setWhen(Instant.parse(created).toEpochMilli()).addExtras(details).build();
             manager.notify(ID,notification);
             event.put("delivery_state","posted").put("posted_at_utc",Instant.now().toString());
-            p.edit().putString(LAST,event.toString()).commit();
+            save(p,event);
         }catch(Exception failure){
             // Never loop on an OS delivery failure. Reports remain reviewable in Debug.
-            try{event.put("delivery_state","delivery_failed").put("delivery_error",failure.getClass().getSimpleName());p.edit().putString(LAST,event.toString()).commit();}
+            try{event.put("delivery_state","delivery_failed").put("delivery_error",failure.getClass().getSimpleName());save(p,event);}
             catch(Exception ignored){}
         }
     }
     static synchronized void acknowledged(Context c,String state,String id) {
         android.content.SharedPreferences p=prefs(c);JSONObject event=read(p.getString(LAST,"{}"));
         if(id!=null&&!id.equals(event.optString("event_id")))return;
-        try{if(event.length()>0){event.put("delivery_state",state).put("acknowledged_at_utc",Instant.now().toString());p.edit().putString(LAST,event.toString()).commit();}}
+        try{if(event.length()>0){event.put("delivery_state",state).put("acknowledged_at_utc",Instant.now().toString());save(p,event);}}
         catch(Exception ignored){}
     }
     static String report(Context c){return prefs(c).getString(LAST,"");}

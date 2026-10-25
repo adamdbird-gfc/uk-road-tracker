@@ -70,6 +70,11 @@ public class DiagnosticNotificationLifecycleTest {
         assertEquals(0,Shadows.shadowOf(manager).size());assertEquals("",CrashReporter.getDiagnosticReports(app));
         DiagnosticNotifications.resolved(app,"historical-walk");record(failure());assertNotEquals(id,receipt().getString("event_id"));assertEquals(1,Shadows.shadowOf(manager).size());
     }
+    @Test public void recoveryCancelsOnlyItsOwnAlertAndPersistsResolvedState()throws Exception {
+        record(failure());DiagnosticNotifications.resolved(app,"different-journey");assertEquals(1,Shadows.shadowOf(manager).size());
+        DiagnosticNotifications.resolved(app,"historical-walk");assertEquals(0,Shadows.shadowOf(manager).size());assertEquals("resolved",receipt().getString("delivery_state"));
+        restart();assertEquals(0,Shadows.shadowOf(manager).size());assertTrue(CrashReporter.getMatchFailureReports(app).contains("historical-walk"));
+    }
     @Test public void concurrentRediscoveryPostsOneEvent()throws Exception {
         JSONObject journey=failure();java.util.concurrent.ExecutorService worker=java.util.concurrent.Executors.newFixedThreadPool(4);
         try{java.util.List<java.util.concurrent.Future<?>> tasks=new java.util.ArrayList<>();for(int i=0;i<12;i++)tasks.add(worker.submit(()->record(journey)));for(java.util.concurrent.Future<?> f:tasks)f.get();}
