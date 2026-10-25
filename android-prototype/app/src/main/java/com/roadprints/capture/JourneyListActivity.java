@@ -137,6 +137,8 @@ public class JourneyListActivity extends Activity {
         buildScreen();
     }
 
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);}
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -449,7 +451,7 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
-        long bindStarted=android.os.SystemClock.elapsedRealtime();
+        long bindStarted=android.os.SystemClock.elapsedRealtime(),bindCpu=android.os.Debug.threadCpuTimeNanos();
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
         updateFilterStyles();
@@ -467,7 +469,7 @@ public class JourneyListActivity extends Activity {
             }
         }
         cardViews.keySet().removeIf(id->!containsJourney(id));cardTokens.keySet().retainAll(cardViews.keySet());
-        PerformanceDiagnostics.timing("journeys_bind",android.os.SystemClock.elapsedRealtime()-bindStarted,"visible="+rendered+" total="+visible);
+        PerformanceDiagnostics.timing("journeys_bind",android.os.SystemClock.elapsedRealtime()-bindStarted,"visible="+rendered+" total="+visible+" main_cpu_ms="+(android.os.Debug.threadCpuTimeNanos()-bindCpu)/1000000);
         navigation.frame(journeyList,"first_list","visible="+rendered+" total="+visible);
         if(!summariesPartial)navigation.frame(journeyList,"ready","summary_rows="+journeys.size());
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
@@ -1445,7 +1447,7 @@ public class JourneyListActivity extends Activity {
                 }));
         AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
-        dialog.setOnDismissListener(d->{navigation.event("detail_return", "");navigation.frame(journeyList,"detail_return_visible","");});
+        dialog.setOnDismissListener(d->{NavigationTrace back=new NavigationTrace("journey_return");back.resume(this);back.frame(journeyList,"first_list","cache=retained");});
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK) {

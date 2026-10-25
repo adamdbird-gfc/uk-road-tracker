@@ -164,7 +164,7 @@ public class ProgressActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending)navigation.frame(statisticsContent,"first_content", "cache=retained");
+        super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending){navigation.frame(statisticsContent,"first_content", "cache=retained");if(!loadedStats.summaryOnly&&loadedRevision==JourneyStore.dataRevision(this))navigation.frame(statisticsContent,"ready","cache=retained");}
         String checkinId=getIntent().getStringExtra("pub_checkin_id");
         if(checkinId!=null){
             getIntent().removeExtra("pub_checkin_id");
@@ -339,7 +339,7 @@ public class ProgressActivity extends Activity {
                 JSONObject row=cache.get(source,prepare);
                 if(!motorwayCalculator.accepts(row.getJSONArray("motorway"))||!aRoadCalculator.accepts(row.getJSONArray("a_road"))){cache.invalidate(source);row=cache.get(source,prepare);}
                 stats.activities+=row.optInt("activities");
-                for(String field:SNAPSHOT_FIELDS)try{java.lang.reflect.Field f=DistanceStats.class.getDeclaredField(field);f.setAccessible(true);f.setDouble(stats,f.getDouble(stats)+row.optDouble(field));}catch(ReflectiveOperationException impossible){throw new IllegalStateException(impossible);}
+                for(String field:SNAPSHOT_FIELDS)try{java.lang.reflect.Field f=DistanceStats.class.getDeclaredField(field);f.setAccessible(true);f.setDouble(stats,f.getDouble(stats)+row.optDouble(field,0));}catch(ReflectiveOperationException impossible){throw new IllegalStateException(impossible);}
                 uniqueRoadEdges.addCompact(row.getJSONArray("driving_edges"));uniqueFootEdges.addCompact(row.getJSONArray("foot_edges"));
                 motorwayCalculator.addContribution(row.getString("id"),row.getJSONArray("motorway"));aRoadCalculator.addContribution(row.getString("id"),row.getJSONArray("a_road"));
                 mergeDiscovery(stats,row.getJSONArray("discovery"),row.getString("id"));
@@ -359,7 +359,7 @@ public class ProgressActivity extends Activity {
     }
 
     private JSONObject progressRow(android.content.Context context,JSONObject journey,MotorwayProgressCalculator motorway,ARoadProgressCalculator aRoad)throws Exception {
-        DistanceStats mini=new DistanceStats();String mode=journey.optString("mode","unknown").toLowerCase(Locale.ROOT);double metres=Math.max(0,journey.optDouble("distance_meters"));
+        DistanceStats mini=new DistanceStats();String mode=journey.optString("mode","unknown").toLowerCase(Locale.ROOT);double metres=Math.max(0,journey.optDouble("distance_meters",0));
         if(isShownInJourneysList(journey,mode))mini.activities=1;
         if(isRoadModeForProgress(mode))mini.drivingMetres=metres;
         else if(MatchingCoordinator.isFoot(mode))mini.footMetres=metres;
@@ -578,6 +578,8 @@ public class ProgressActivity extends Activity {
     }
 
     private void renderStatistics(LinearLayout parent, DistanceStats stats) {
+        long bindWall=android.os.SystemClock.elapsedRealtime(),bindCpu=android.os.Debug.threadCpuTimeNanos();try{
+
         parent.removeAllViews();
         renderedKilometres = useKilometres;
         renderedServiceRevision = (31L*ServiceStationStore.revision(this)+CollectionAccessStore.revision(this)+1009L*PubVisitStore.revision(this)+CollectionCatalogueUpdates.revision());
@@ -603,6 +605,8 @@ public class ProgressActivity extends Activity {
         }
         NcnProgressUi.add(this,parent);
         if (statisticsScroll != null) statisticsScroll.post(this::updateActiveProgressJump);
+        }finally{PerformanceDiagnostics.timing("progress_bind",android.os.SystemClock.elapsedRealtime()-bindWall,"main_cpu_ms="+(android.os.Debug.threadCpuTimeNanos()-bindCpu)/1000000+" sections="+parent.getChildCount());}
+
     }
 
     private HorizontalScrollView jumpScroll;
@@ -811,13 +815,15 @@ public class ProgressActivity extends Activity {
             header.setOnClickListener(v -> {
                 long opened=android.os.SystemClock.elapsedRealtime();
                 boolean open = rows.getVisibility() != View.VISIBLE;
+                NavigationTrace categoryTrace=open?new NavigationTrace("road_type_"+category.toLowerCase(Locale.ROOT).replace(' ','_')):null;
+                if(categoryTrace!=null)categoryTrace.resume(this);
                 if (open && !Boolean.TRUE.equals(rows.getTag())) {
                     addRoadCategoryContents(rows, category, roads, stats);
                     rows.setTag(Boolean.TRUE);
                 }
                 rows.setVisibility(open ? View.VISIBLE : View.GONE);
                 if(open){PerformanceDiagnostics.timing("nav_road_type_bind",android.os.SystemClock.elapsedRealtime()-opened,"type="+category.replace(' ','_')+" rows="+roads.size());
-                    NavigationTrace trace=new NavigationTrace("road_type");trace.resume(this);trace.frame(rows,"first_list","type="+category.replace(' ','_')+" rows="+roads.size());}
+                    categoryTrace.frame(rows,"first_list","type="+category.replace(' ','_')+" rows="+roads.size());}
                 if (open) expandedRoadCategories.add(category);
                 else expandedRoadCategories.remove(category);
             });

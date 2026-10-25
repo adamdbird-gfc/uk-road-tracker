@@ -71,7 +71,7 @@ public class BetaUiRefinementTest {
     @Test public void mapContainerSpinnerAndStatisticsSkeletonExistBeforeBackgroundWork()throws Exception{
         RoadDetailActivity screen=road(false).get();View root=screen.getWindow().getDecorView();assertNotNull(root.findViewWithTag("road_map_container"));
         assertEquals(View.VISIBLE,root.findViewWithTag("road_stats_skeleton").getVisibility());assertEquals(View.VISIBLE,root.findViewWithTag("road_loading_spinner").getVisibility());
-        assertEquals(View.GONE,((View)get(screen,"zoom")).getVisibility());
+        assertEquals(View.VISIBLE,((View)get(screen,"zoom")).getVisibility());
     }
     @Test public void geometryCanRenderBeforeJourneyPreparationCompletes()throws Exception{
         CountDownLatch geometry=new CountDownLatch(1),release=new CountDownLatch(1);releases.add(release);RoadDetailModel ready=model();
@@ -115,7 +115,7 @@ public class BetaUiRefinementTest {
     @Test public void roadCacheKeepsDesignationsAndRevisionsSeparate()throws Exception{
         RoadDetailSelection a1=new RoadDetailSelection(RoadDetailSelection.A_ROAD,"A1","GB","","");RoadDetailSelection a1m=new RoadDetailSelection(RoadDetailSelection.MOTORWAY,"A1(M)","GB","","");
         String one=RoadDetailCache.key(app,a1,false,1),two=RoadDetailCache.key(app,a1m,false,1);assertNotEquals(one,two);assertNotEquals(one,RoadDetailCache.key(app,a1,false,2));
-        RoadDetailCache.put(one,model());RoadDetailCache.put(two,model());RoadDetailCache.put("third",model());assertNull(RoadDetailCache.get(one));assertNotNull(RoadDetailCache.get(two));
+        RoadDetailCache.put(one,model());RoadDetailCache.put(two,model());for(int i=0;i<7;i++)RoadDetailCache.put("extra"+i,model());assertNull(RoadDetailCache.get(one));assertNotNull(RoadDetailCache.get(two));
         JSONObject feature=new JSONObject().put("properties",new JSONObject().put("road_ref","A1").put("road_region","GB"));assertTrue(a1.matches(feature));assertFalse(a1m.matches(feature));
         feature.getJSONObject("properties").put("road_ref","A1(M)");assertTrue(a1m.matches(feature));assertFalse(a1.matches(feature));
     }

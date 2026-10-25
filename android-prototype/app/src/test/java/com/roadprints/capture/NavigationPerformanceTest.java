@@ -65,6 +65,8 @@ public class NavigationPerformanceTest {
             System.out.println("NAV_BENCHMARK archive=1577 journeys_recent12_read_ms="+firstRead/1e6+" all_summaries_ms="+fullRead/1e6+" journeys_full40_bind_draw_ms="+fullBind/1e6+" journeys_first12_bind_draw_ms="+pageBind/1e6+" road_all1577_bind_draw_ms="+fullRoadBind/1e6+" road_first30_bind_draw_ms="+pageRoadBind/1e6+" focused_full_ready_ms="+fullFocused/1e6+" focused_first_useful_draw_ms="+firstFocused/1e6+" progress_cold_ms="+coldProgress/1e6+" progress_warm_ms="+warmProgress/1e6+" environment=Robolectric_not_phone");
         }finally{cached.set(null,old);revision.setLong(null,oldRevision);}
         JourneyStore.updateTitle(app,"nav-0","Renamed");start=System.nanoTime();call(progress,"summarizeSavedJourneys",new Class<?>[]{Context.class,int.class},app,0);long changed=System.nanoTime()-start;
+        String last="";for(org.robolectric.shadows.ShadowLog.LogItem item:org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming"))if(item.msg.startsWith("progress_archive"))last=item.msg;
+        assertTrue(last,last.contains("reads=1 reused=1576"));
         try(CompactJourneyCache cache=new CompactJourneyCache(app,"progress-v1")){for(File file:JourneyStore.archiveFiles(app))cache.get(file,f->{throw new AssertionError("Unchanged neighbour decoded");});assertEquals(1577,cache.hits);}
         assertEquals(raw,JourneyStore.get(app,"nav-0").getJSONArray("raw_capture_samples").toString());System.out.println("NAV_BENCHMARK changed_one_progress_ms="+changed/1e6+" full_history_invalidations=0");
         list.finish();paged.finish();progress.finish();

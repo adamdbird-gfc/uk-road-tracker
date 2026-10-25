@@ -85,7 +85,7 @@ public class LateJourneyRecapTest {
     }
     private void drainLoads() throws Exception {
         for(int i=0;i<2;i++) {CountDownLatch done=new CountDownLatch(1);ScreenDataLoader.execute(done::countDown);
-            assertTrue(done.await(15,TimeUnit.SECONDS));Shadows.shadowOf(Looper.getMainLooper()).idle();}
+            assertTrue(done.await(15,TimeUnit.SECONDS));CountDownLatch summaries=new CountDownLatch(1);ScreenDataLoader.summaries(summaries::countDown);assertTrue(summaries.await(15,TimeUnit.SECONDS));Shadows.shadowOf(Looper.getMainLooper()).idle();}
     }
     private View find(View view,String text){if(view instanceof TextView&&text.contentEquals(((TextView)view).getText()))return view;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++){View found=find(g.getChildAt(i),text);if(found!=null)return found;}}return null;}
 }

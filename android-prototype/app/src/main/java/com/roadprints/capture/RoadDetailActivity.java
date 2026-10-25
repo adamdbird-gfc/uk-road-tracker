@@ -106,7 +106,7 @@ public final class RoadDetailActivity extends Activity {
             try {
                 RoadDetailModel result=loader.progressive(getApplicationContext(),selection,cumulative,preview->runOnUiThread(()->{
                     if(!current(request)||revision!=JourneyStore.dataRevision(this))return;
-                    model=preview;showGeometry();journeyAction.setText("Preparing contributing journeys…");
+                    model=preview;if(!geometryShown)showGeometry();else showStatistics();journeyAction.setText("Preparing contributing journeys…");
                 }));
                 runOnUiThread(()->{
                     if(!current(request))return;cancelPending();

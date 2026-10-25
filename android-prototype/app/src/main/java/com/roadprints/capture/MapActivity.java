@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MapActivity extends Activity {
+    private final NavigationTrace navigation=new NavigationTrace("main_map");
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
     private static final int MUTED = 0xFFB9C5D8;
@@ -209,7 +210,7 @@ public class MapActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();
+        super.onResume();navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained");navigation.frame(mapView,"ready","cache=retained");}
         active = true;
         if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         String requestedCollection=getIntent().getStringExtra("collection_id");
@@ -528,7 +529,7 @@ public class MapActivity extends Activity {
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
             displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;skipDiskMapCache=false;forceMapReload=false;
             completeMapWork();
-            setMapReady(true);
+            setMapReady(true);navigation.frame(mapView,"first_map","sections="+mapRoutes.sections.size());navigation.frame(mapView,"ready","sections="+mapRoutes.sections.size());
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
             PerformanceDiagnostics.timing("map_render",android.os.SystemClock.elapsedRealtime()-renderStarted,"");
             PerformanceDiagnostics.timing("map_total",android.os.SystemClock.elapsedRealtime()-mapStartedAt,"");
