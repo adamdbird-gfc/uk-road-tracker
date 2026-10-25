@@ -54,6 +54,14 @@ public class DiagnosticNotificationLifecycleTest {
         new DiagnosticNotificationReceiver().onReceive(app,new Intent().putExtra("event_id",id));
         assertEquals(next,receipt().getString("event_id"));assertEquals("posted",receipt().getString("delivery_state"));
     }
+    @Test public void oldPendingIntentRetainsItsIdentityAfterNewNotificationReplacesIt()throws Exception {
+        record(failure());String first=receipt().getString("event_id");android.app.PendingIntent old=Shadows.shadowOf(manager).getNotification(44).deleteIntent;
+        record(failure().put("journey_id","replacement"));String current=receipt().getString("event_id");
+        Intent oldDismiss=Shadows.shadowOf(old).getSavedIntent();assertEquals(first,oldDismiss.getStringExtra("event_id"));
+        new DiagnosticNotificationReceiver().onReceive(app,oldDismiss);
+        assertEquals(current,receipt().getString("event_id"));assertEquals("posted",receipt().getString("delivery_state"));
+        assertEquals(1,Shadows.shadowOf(manager).size());
+    }
     @Test public void deniedDeliveryWaitsForPermissionThenPostsOnlyOnce()throws Exception {
         Shadows.shadowOf(manager).setNotificationsEnabled(false);record(failure());assertEquals("pending",receipt().getString("delivery_state"));
         restart();assertEquals(0,Shadows.shadowOf(manager).size());Shadows.shadowOf(manager).setNotificationsEnabled(true);

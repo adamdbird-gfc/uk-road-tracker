@@ -72,7 +72,9 @@ final class DiagnosticNotifications {
             if(!save(p,event))return;
             Intent open=new Intent(c,DebugActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent content=PendingIntent.getActivity(c,ID,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-            Intent dismissed=new Intent(c,DiagnosticNotificationReceiver.class).putExtra("event_id",event.getString("event_id"));
+            Intent dismissed=new Intent(c,DiagnosticNotificationReceiver.class)
+                    .setAction("com.roadprints.capture.DISMISS_DIAGNOSTIC."+event.getString("event_id"))
+                    .putExtra("event_id",event.getString("event_id"));
             PendingIntent delete=PendingIntent.getBroadcast(c,ID,dismissed,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             android.os.Bundle details=new android.os.Bundle();
             for(String key:new String[]{"event_id","notification_created_at_utc","original_failure_at_utc","trigger","worker","delivery_trigger","delivery_worker"})details.putString("roadprints_"+key,event.optString(key));
