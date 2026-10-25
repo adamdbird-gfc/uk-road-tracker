@@ -128,6 +128,16 @@ public class NavigationPerformanceTest {
         cache.draw(canvas,row,paint,null,1,0,0,100,100,false);row.getJSONArray(1).put(0,.0002);cache.draw(canvas,row,paint,null,1,0,0,100,100,false);
         assertEquals(2,cache.builds);assertEquals(0,cache.vertices);
     }
+    @Test public void firstBindIncludesCachedDiscoveryBadgesAndKeepsCardIdentity()throws Exception {
+        JourneyStore.save(app,trip("badge-0"));List<JSONObject> rows=JourneyStore.allSummaries(app);long revision=JourneyStore.dataRevision(app);
+        Field cached=field(JourneyListActivity.class,"processNewRoadHighlights"),version=field(JourneyListActivity.class,"processDiscoveryRevision");Object old=cached.get(null);long oldVersion=version.getLong(null);
+        JourneyListActivity list=Robolectric.buildActivity(JourneyListActivity.class).get();
+        try {
+            cached.set(null,Collections.singletonMap("badge-0",Arrays.asList("B1234")));version.setLong(null,revision);call(list,"buildScreen",new Class<?>[]{});set(list,"journeys",rows);set(list,"displayedJourneyRevision",revision);
+            call(list,"render",new Class<?>[]{});LinearLayout content=(LinearLayout)field(JourneyListActivity.class,"journeyList").get(list);assertNotNull(find(content,"NEW ROADS"));View first=content.getChildAt(0);
+            call(list,"render",new Class<?>[]{});assertSame(first,content.getChildAt(0));
+        }finally{cached.set(null,old);version.setLong(null,oldVersion);list.finish();}
+    }
     @Test public void compactCoverageUnionEqualsRawCoverageWithOverlapAndRemovedEdges()throws Exception {
         JSONObject a=trip("union-0"),b=trip("union-1");b.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0,1]")));
         CoreAchievementEvidence.Coverage raw=new CoreAchievementEvidence.Coverage(),compact=new CoreAchievementEvidence.Coverage();

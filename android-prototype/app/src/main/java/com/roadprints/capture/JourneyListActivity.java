@@ -451,6 +451,7 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
+        synchronized(SUMMARY_CACHE_LOCK){if(processDiscoveryRevision==displayedJourneyRevision)newRoadHighlights=processNewRoadHighlights;}
         long bindStarted=android.os.SystemClock.elapsedRealtime(),bindCpu=android.os.Debug.threadCpuTimeNanos();
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
