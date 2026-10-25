@@ -509,11 +509,12 @@ public class JourneyListActivity extends Activity {
                 JSONObject row = rows.optJSONObject(i); if (row != null) loaded.add(row);
             }
         } else {
-            loaded = JourneyStore.allSummaries(context);
+            loaded = JourneyStore.allSummaries(context);sortForScreen(loaded);
             JSONArray compact = new JSONArray(); for (JSONObject row : loaded) compact.put(row);
             if (JourneyStore.dataRevision(context) == revision)
                 ScreenDataLoader.cache(()->{try{if(JourneyStore.dataRevision(context)==revision)PersistentScreenCache.write(context,"journey-summaries",revision,new JSONObject().put("rows",compact));}catch(Exception ignored){}});
         }
+        sortForScreen(loaded);
         if (JourneyStore.dataRevision(context) == revision) {
             synchronized (SUMMARY_CACHE_LOCK) {
                 processJourneySummaries = new ArrayList<>(loaded);
@@ -555,7 +556,7 @@ public class JourneyListActivity extends Activity {
         ScreenDataLoader.summaries(() -> {
             List<JSONObject> loaded;
             try {
-                if(firstDisplay){List<JSONObject> first=JourneyStore.firstSummaries(appContext,12);mainHandler.post(()->{
+                if(firstDisplay){List<JSONObject> first=JourneyStore.firstSummaries(appContext,12);sortForScreen(first);mainHandler.post(()->{
                     if(!isFinishing()&&generation==refreshGeneration&&JourneyStore.dataRevision(appContext)==initialRevision){summariesPartial=true;journeys=first;render();}
                 });}
                 loaded=preloadSummaries(appContext,initialRevision);
@@ -633,6 +634,10 @@ public class JourneyListActivity extends Activity {
         return JourneyFilters.matchesFilter(journey, filterIndex);
     }
 
+    private static void sortForScreen(List<JSONObject> rows){
+        for(JSONObject row:rows)try{row.put("_sort_started",Instant.parse(row.optString("started_at")).toEpochMilli());}catch(Exception invalid){try{row.put("_sort_started",Long.MIN_VALUE);}catch(Exception ignored){}}
+        rows.sort((a,b)->Long.compare(b.optLong("_sort_started"),a.optLong("_sort_started")));
+    }
     private void sortJourneysNewestFirst() {
         journeys.sort((left, right) -> Long.compare(
                 journeyStartMillis(right), journeyStartMillis(left)));

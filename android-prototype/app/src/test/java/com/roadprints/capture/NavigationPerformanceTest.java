@@ -104,6 +104,30 @@ public class NavigationPerformanceTest {
         for(int i=0;i<3;i++){RoadDetailModel model=new RoadDetailModel();for(int n=0;n<20000;n++)model.covered.add(line);RoadDetailCache.put("large"+i,model);}
         assertNull(RoadDetailCache.get("large0"));assertNotNull(RoadDetailCache.get("large2"));
     }
+    @Test public void summaryWorkDoesNotQueueBehindProgressPreparation()throws Exception {
+        CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1),summary=new CountDownLatch(1);
+        ScreenDataLoader.execute(()->{entered.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+        try{assertTrue(entered.await(2,TimeUnit.SECONDS));ScreenDataLoader.summaries(summary::countDown);assertTrue("Visible summaries are independent of heavy Progress work",summary.await(2,TimeUnit.SECONDS));}
+        finally{release.countDown();}
+    }
+    @Test public void repeatedRoadFramesReuseWorkerPathsAndCullOffscreenSections()throws Exception {
+        List<JSONArray> rows=new ArrayList<>();for(int i=0;i<3565;i++){
+            JSONArray line=new JSONArray();for(int p=0;p<20;p++)line.put(new JSONArray().put((i<60?.37:-6)+(i%10)*.001+p*.00001).put(i<60?51.44:55.0));rows.add(line);
+        }
+        Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(4);Canvas canvas=new Canvas(Bitmap.createBitmap(800,800,Bitmap.Config.ARGB_8888));
+        double scale=256*Math.pow(2,10)/(2*Math.PI*6378137),cx=MapRenderGeometry.x(.37),cy=MapRenderGeometry.y(51.44);
+        long start=System.nanoTime();for(JSONArray row:rows){Path path=new Path();for(int i=0;i<row.length();i++){JSONArray p=row.getJSONArray(i);float x=(float)(400+(MapRenderGeometry.x(p.getDouble(0))-MapRenderGeometry.x(.37))*scale),y=(float)(400-(MapRenderGeometry.y(p.getDouble(1))-MapRenderGeometry.y(51.44))*scale);if(i==0)path.moveTo(x,y);else path.lineTo(x,y);}canvas.drawPath(path,paint);}long legacy=System.nanoTime()-start;
+        MapRenderGeometry.clearPrepared();start=System.nanoTime();MapRenderGeometry.prepare(rows);long preparation=System.nanoTime()-start;
+        MapRenderGeometry cache=new MapRenderGeometry();start=System.nanoTime();for(JSONArray line:rows)cache.draw(canvas,line,paint,null,scale,cx,cy,800,800);long current=System.nanoTime()-start;
+        assertEquals(0,cache.builds);assertTrue(cache.culled>=3500);start=System.nanoTime();for(JSONArray line:rows)cache.draw(canvas,line,paint,null,scale,cx,cy,800,800);long warm=System.nanoTime()-start;
+        assertEquals(0,cache.builds);assertTrue(cache.vertices<=100000);
+        System.out.println("NAV_BENCHMARK road_sections=3565 legacy_project_draw_ms="+legacy/1e6+" worker_path_preparation_ms="+preparation/1e6+" first_cached_draw_ms="+current/1e6+" warm_cached_draw_ms="+warm/1e6+" ui_path_builds="+cache.builds+" offscreen_culled="+cache.culled+" environment=Robolectric_not_phone");MapRenderGeometry.clearPrepared();
+    }
+    @Test public void mutableEditingDoesNotReuseImmutableGeometry()throws Exception {
+        MapRenderGeometry cache=new MapRenderGeometry();JSONArray row=new JSONArray("[[0,0],[0.0001,0]]");Paint paint=new Paint();Canvas canvas=new Canvas(Bitmap.createBitmap(100,100,Bitmap.Config.ARGB_8888));
+        cache.draw(canvas,row,paint,null,1,0,0,100,100,false);row.getJSONArray(1).put(0,.0002);cache.draw(canvas,row,paint,null,1,0,0,100,100,false);
+        assertEquals(2,cache.builds);assertEquals(0,cache.vertices);
+    }
     @Test public void compactCoverageUnionEqualsRawCoverageWithOverlapAndRemovedEdges()throws Exception {
         JSONObject a=trip("union-0"),b=trip("union-1");b.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0,1]")));
         CoreAchievementEvidence.Coverage raw=new CoreAchievementEvidence.Coverage(),compact=new CoreAchievementEvidence.Coverage();

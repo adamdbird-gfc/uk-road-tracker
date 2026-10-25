@@ -1156,7 +1156,7 @@ public class RoutePreviewView extends View {
         try {
             double world=mapTileSize()*Math.pow(2.0,cameraZoom);
             renderGeometry.draw(canvas,coordinates,paint,haloPaint,world/(2*Math.PI*6378137),
-                    MapRenderGeometry.x(centerLongitude),MapRenderGeometry.y(centerLatitude),getWidth(),getHeight());
+                    MapRenderGeometry.x(centerLongitude),MapRenderGeometry.y(centerLatitude),getWidth(),getHeight(),!routeEditMode);
         } catch (Exception ignored) {
             drawMessage(canvas, "Route preview unavailable");
         }
