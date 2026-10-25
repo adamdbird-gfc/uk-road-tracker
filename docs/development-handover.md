@@ -1,38 +1,41 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
 ## Current Android and backend entrypoint — 24 October 2026
 
-Latest private Android: **0.25.216 (262), PR #219**. Continue from
-`fix/contextual-journey-actions`, stacked on delivered #218. Main's older Android
-application is not the latest private APK. See the
-[current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/contextual-journey-actions/docs/development-handover.md)
-and [contextual actions / diagnostic limits](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/contextual-journey-actions/docs/contextual-journey-actions.md).
-Evidence-gated ferry actions, consistent spacing, timed gap-safe previews,
-zero-coverage retry identity and incremental NCN cache handling. Existing shared
-place/GPS intelligence and portable acceptance from #218 remain included.
+Latest private Android: **0.25.217 (263), PR #220**. Continue from
+`fix/diagnostic-notification-lifecycle`, stacked on delivered #219/#218. Main's
+older Android application is not the latest private APK. See the
+[current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/diagnostic-notification-lifecycle/docs/development-handover.md)
+and [notification lifecycle evidence and limits](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/diagnostic-notification-lifecycle/docs/diagnostic-notification-lifecycle.md).
 
-**Delivered private 0.25.216 (262), PR #219.** Exact signed source
-`4555346dcc770be3a41fc1767e523fa3a23c9d7c`.
-[Successful private packaging 40135070445](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445),
-[APK artifact 12576617872](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576617872),
-[verification reports 12576922475](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40135070445/artifacts/12576922475).
-**771 tests / 103 suites, zero failures/errors/skips**; lint, national references,
-distribution controls and established v2 signing certificate passed. Downloaded
-XML independently confirms totals; artifact ZIP digests and APK hash match CI.
-APK **36,590,025 bytes**, SHA-256
-`52cfa666d3d5fa1fe9b1e18ceef6fcab18b9ba2d172b118c51fe769032299265`.
-Exact-source independent Android checks 40135074362 also passed.
-Install over 215 without clearing data. No Firebase upload/tester distribution,
-Play publication, backend change, historical rewrite/rematch or cache reset.
+Confirmed stored-report/startup re-alert defect in delivered 213 and 216;
+durable event identity/delivery/acknowledgement now survives restarts. Unchanged
+GPS-quality failures require new evidence or revised quality rules before retry.
+Pending cooldowns do not manufacture failures; transient retries stay bounded.
+Notification creation/trigger/worker/original-failure fields support future
+attribution. The exact Oct 25 app-post-versus-OS-delay incident remains unproven
+without contemporaneous device posting telemetry. Historical evidence remains.
 
-Synthetic 1,547-driving map preparation: **1,148.87ms cold / 258.17ms warm /
-176.18ms one addition**, identical completion. Warm reused 1,547 with zero source
-reads; adding one reused 1,547 and read/rebuilt one source. Runner measurements
-are not phone startup/frame proof. Updated draw-stage telemetry supports later
-ordinary-use diagnosis; the original missing-fix/remaining phone-frame causes
-are unconfirmed without the new diagnostic export.
+**Delivered private Android 0.25.217 (263), PR #220.** Exact signed source
+`5c0a29b0d4a41c627adaae231433539e51a115dd`.
+[Successful private packaging 40178241874](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874),
+[APK artifact 12592274219](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592274219),
+[reports 12592413861](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592413861).
+**787 tests / 105 suites; zero failures/errors/skips**, lint, national references,
+distribution controls and the established v2 signing certificate passed.
+Downloaded XML confirms totals independently; ZIP and APK hashes match CI.
+APK **36,606,617 bytes**, SHA-256
+`a4325601d2d8f180b429ca7e8b7e25298174766cdbd3f7d75b65491057aa508d`.
+Exact-source independent Android checks 40178244829 also passed.
+
+Synthetic 1,547-driving map preparation: **986.71ms cold / 149.51ms warm /
+140.24ms one addition**, identical completion. These are runner measurements,
+not phone startup timings. Existing history/map/NCN tests pass; no cache reset.
+Install over 216 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical deletion or automatic rematching.
+Later documentation-only commits leave this binary unchanged.
 
 **Production walking backend deployed and verified:** #217 merged as
 `7dd2c58c628ec819ace2b645d18aa296ddb238b4`, Render deploy
