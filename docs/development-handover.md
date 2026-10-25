@@ -2,40 +2,41 @@
 
 Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Current Android and backend entrypoint — 24 October 2026
+## Current Android and backend entrypoint — 25 October 2026
 
-Latest private Android: **0.25.217 (263), PR #220**. Continue from
-`fix/diagnostic-notification-lifecycle`, stacked on delivered #219/#218. Main's
-older Android application is not the latest private APK. See the
-[current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/diagnostic-notification-lifecycle/docs/development-handover.md)
-and [notification lifecycle evidence and limits](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/diagnostic-notification-lifecycle/docs/diagnostic-notification-lifecycle.md).
+Latest private Android: **0.25.218 (264), PR #221**. Continue from
+`fix/navigation-progress-responsiveness`, stacked on delivered #220/#219/#218.
+Main's older Android application is not the latest private APK.
+See the [current Android handover](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/navigation-progress-responsiveness/docs/development-handover.md)
+and [navigation performance evidence and limits](https://github.com/adamdbird-gfc/uk-road-tracker/blob/fix/navigation-progress-responsiveness/docs/navigation-progress-performance.md).
 
-Confirmed stored-report/startup re-alert defect in delivered 213 and 216;
-durable event identity/delivery/acknowledgement now survives restarts. Unchanged
-GPS-quality failures require new evidence or revised quality rules before retry.
-Pending cooldowns do not manufacture failures; transient retries stay bounded.
-Notification creation/trigger/worker/original-failure fields support future
-attribution. The exact Oct 25 app-post-versus-OS-delay incident remains unproven
-without contemporaneous device posting telemetry. Historical evidence remains.
+Journeys publishes 12 reliable recent-saved summaries before full chronological
+preparation, retains unchanged cards and separates summary work. Progress uses
+per-source compact contributions, paged lists and lazy county towns. Focused
+maps reuse prepared Progress geometry before contributors. Main-map immutable
+paths are worker-prepared, reused, bounded and culled. Hidden NCN drawing is
+not blamed for the supplied road-drawing slow frame. Necessary assessments,
+historical evidence, coverage and notification lifecycle fixes are preserved.
 
-**Delivered private Android 0.25.217 (263), PR #220.** Exact signed source
-`5c0a29b0d4a41c627adaae231433539e51a115dd`.
-[Successful private packaging 40178241874](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874),
-[APK artifact 12592274219](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592274219),
-[reports 12592413861](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592413861).
-**787 tests / 105 suites; zero failures/errors/skips**, lint, national references,
-distribution controls and the established v2 signing certificate passed.
-Downloaded XML confirms totals independently; ZIP and APK hashes match CI.
-APK **36,606,617 bytes**, SHA-256
-`a4325601d2d8f180b429ca7e8b7e25298174766cdbd3f7d75b65491057aa508d`.
-Exact-source independent Android checks 40178244829 also passed.
+Exact signed source `60fe5e5408b4ca03f04dff03e9926d9ea225bd71`.
+[Private packaging 40209370261](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261),
+[APK artifact 12604584815](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261/artifacts/12604584815),
+[reports 12604879417](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261/artifacts/12604879417).
+**797 tests / 106 suites, zero failures/errors/skips**; lint, pinned references,
+established signing certificate and independent checks 40209376378 passed.
+Downloaded XML and ZIP/APK hashes verified. APK 36,606,773 bytes, SHA-256
+`a514e61d1a7fb6bcec3eedcfc44b237fd452c3b5a9ec6b96e5ac2ae89ffd8863`.
 
-Synthetic 1,547-driving map preparation: **986.71ms cold / 149.51ms warm /
-140.24ms one addition**, identical completion. These are runner measurements,
-not phone startup timings. Existing history/map/NCN tests pass; no cache reset.
-Install over 216 without clearing data. No Firebase upload/tester distribution,
-Play publication, backend change, historical deletion or automatic rematching.
-Later documentation-only commits leave this binary unchanged.
+1,577-journey simulated display workload: 40→12 journey cards bind/draw
+235.94→69.23 ms; full→30 road rows 1,649.00→20.40 ms; focused full ready
+1,168.48 ms versus prepared geometry first draw 7.49 ms. 3,565-section road
+projection/draw 1,621.50→135.30 ms first /112.56 ms warm, zero UI Path builds.
+One source update rebuilds one compact contribution and reuses 1,576.
+These are Robolectric workload comparisons, not physical phone before/after
+timings. Actual cold/warm/back navigation-to-draw diagnostics support natural
+future use. See linked report for scope and limits. Install over 217 without
+clearing data. No Firebase distribution, cache purge, historical rewrite or
+backend change. Later documentation-only commits leave this binary unchanged.
 
 **Production walking backend deployed and verified:** #217 merged as
 `7dd2c58c628ec819ace2b645d18aa296ddb238b4`, Render deploy
