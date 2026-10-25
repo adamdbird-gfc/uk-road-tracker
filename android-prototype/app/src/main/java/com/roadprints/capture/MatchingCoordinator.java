@@ -465,8 +465,9 @@ public final class MatchingCoordinator {
                 }
                 if(walking!=null && walking.validated)WalkingArrivalTiming.apply(stored,walking.arrival);
                 stored.remove("error_summary");stored.remove("match_retry_state");
-                DiagnosticNotifications.resolved(app,stored.optString("journey_id"));stored.put("processing_completed_at",Instant.now().toString());
+                stored.put("processing_completed_at",Instant.now().toString());
                 JourneyStore.save(app,stored);
+                DiagnosticNotifications.resolved(app,stored.optString("journey_id"));
             }
             return;
         }
@@ -566,8 +567,8 @@ public final class MatchingCoordinator {
         stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");stored.remove("match_retry_state");
-        DiagnosticNotifications.resolved(app,stored.optString("journey_id"));
         JourneyStore.save(app, stored);
+        DiagnosticNotifications.resolved(app,stored.optString("journey_id"));
         JSONObject replaySource=stored.optJSONObject("source");
         if(replaySource!=null&&"android_activity_capture".equals(replaySource.optString("type")))
             DiscoveryReplayCache.request(app,java.util.Collections.singleton(stored.optString("journey_id")),null);

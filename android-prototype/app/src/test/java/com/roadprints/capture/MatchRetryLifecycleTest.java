@@ -51,6 +51,7 @@ public class MatchRetryLifecycleTest {
         JourneyStore.save(app,saved);freshWorker();worker.start();await();assertEquals(0,worker.snapshot().total);assertEquals(0,worker.snapshot().failed);
         assertEquals("",CrashReporter.getMatchFailureReports(app));
         saved.getJSONObject("last_match_attempt").put("next_retry_at_utc","2026-01-01T00:00:00Z");assertFalse(MatchRetryPolicy.coolingDown(saved));
+        JourneyStore.save(app,saved);freshWorker();worker.start();await();assertEquals(1,calls.get());assertEquals(1,worker.snapshot().matched);
         assertTrue(MatchFailure.retryable(new MatchFailure(504,"timeout")));assertFalse(MatchFailure.retryNow(new MatchFailure(504,"timeout"),0));
         assertTrue(MatchFailure.retryNow(new java.net.UnknownHostException(),0));assertFalse(MatchFailure.retryNow(new java.net.UnknownHostException(),1));
     }
