@@ -55,6 +55,51 @@ and queue-drain tests were updated for intended controls/capacity/executor
 behaviour; no tests were excluded. Additional tests protect first-bind badges,
 hidden-overlay isolation and summary queue independence.
 
-One coordinated private 218/264 packaging request follows green checks. Downloaded
-artifact/signature/report and numeric UI-workload measurements pending. No Firebase distribution, backend changes, historical rewrite/rematch,
-cache purge or disabling necessary collection assessments.
+## Delivered private 0.25.218 (264)
+
+Signed source `60fe5e5408b4ca03f04dff03e9926d9ea225bd71`, PR #221.
+[Private packaging 40209370261](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261)
+and independent exact-source Android checks 40209376378 succeeded.
+Downloaded XML: **797 tests / 106 suites, zero failures, errors or skips**.
+Lint, pinned national references, distribution controls and established v2
+certificate passed. APK and ZIP hashes independently match CI.
+APK: 36,606,773 bytes, SHA-256
+`a514e61d1a7fb6bcec3eedcfc44b237fd452c3b5a9ec6b96e5ac2ae89ffd8863`.
+[APK artifact 12604584815](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261/artifacts/12604584815),
+[verification reports 12604879417](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40209370261/artifacts/12604879417).
+Private owner download provided separately. Install over 217 without clearing data.
+
+### Measured display workloads
+
+Same Robolectric runner, 1,577 synthetic journeys. These measure real view
+binding/drawing and the former workload reproduced in current widgets; they
+are not an old-APK versus new-APK device experiment. First useful content can
+be a smaller list or geometry before contributor enrichment.
+
+| Workload | Full/previous workload | First useful workload |
+| --- | ---: | ---: |
+| Journeys cards: bind + draw | 40 cards: 235.94 ms | 12 cards: 69.23 ms |
+| Road rows: bind + draw | 1,577 rows: 1,649.00 ms | 30 rows: 20.40 ms |
+| Focused map | Full contributor readiness: 1,168.48 ms | Prepared Progress geometry + draw: 7.49 ms |
+| Road rendering: 3,565 sections | Legacy projection + draw: 1,621.50 ms | First cached draw: 135.30 ms; warm: 112.56 ms |
+
+Recent-12 summaries read: 72.82 ms; all summaries: 490.88 ms. Progress cold:
+1,653.17 ms, warm: 351.18 ms, one addition: 422.08 ms. The update assertion
+confirms one source rebuilt / 1,576 reused; zero full-history invalidations.
+Road preparation took 13.70 ms on the worker, with zero UI Path builds and
+3,505 offscreen sections culled per draw. Spatial/Path caches are bounded.
+The first-useful focused-map measurement assumes current Progress geometry;
+Local roads retain verified-boundary requirements. It is not a claim that every
+focused map or every road type opens in 7.49 ms.
+
+The supplied phone baseline (5–8 s main-map load, 456 ms road drawing in a
+466 ms frame) is not directly comparable with JVM results. New cold/warm/back,
+first-content/draw/ready and CPU/cache diagnostics enable phone comparisons
+through ordinary use. No physical-device before/after timings were available
+in this environment; natural observation remains necessary. Existing history,
+map interaction, UK coverage, collection switching and incremental NCN tests
+pass. NCN-hidden/Wetherspoons-selected isolation is explicitly tested.
+
+No Firebase distribution, backend change, historical rewrite/rematch, cache
+purge or disabling necessary collection assessments. Later documentation-only
+commits do not change this APK.

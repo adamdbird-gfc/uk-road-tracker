@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Navigation and Progress responsiveness — candidate 0.25.218 (264)
+## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 
 Continue from `fix/navigation-progress-responsiveness`, based on delivered #220
 `4f6ef175`. See [scope, measurements and limits](navigation-progress-performance.md).
@@ -12,7 +12,19 @@ bounded worker-prepared road paths/culling and navigation-to-draw diagnostics.
 The supplied trace has zero NCN drawing; preserve hidden-overlay separation and
 necessary background assessments. Final implementation `9f1d8934` passed full
 Android compile/lint, pinned references and all unit tests in run 40208792527.
-One private 218 build requested; artifact/checksum and UI benchmark figures pending.
+**Delivered private 218/264, PR #221**, exact signed source `60fe5e5408b4ca03f04dff03e9926d9ea225bd71`.
+Private packaging 40209370261 and independent checks 40209376378 passed.
+797 tests / 106 suites; zero failures/errors/skips. APK 36,606,773 bytes,
+SHA-256 `a514e61d1a7fb6bcec3eedcfc44b237fd452c3b5a9ec6b96e5ac2ae89ffd8863`.
+APK artifact 12604584815 / reports 12604879417; downloaded hashes/XML verified.
+Established signing certificate; install over 217 without clearing data.
+Simulated 1,577-journey display workload: Journeys 40→12-card bind/draw
+235.94→69.23 ms; road list full→30-row bind/draw 1,649.00→20.40 ms;
+focused full readiness 1,168.48 ms versus prepared geometry first draw 7.49 ms.
+Road projection/draw 1,621.50→135.30 ms first /112.56 ms warm for 3,565 sections;
+worker preparation 13.70 ms, zero UI Path builds. One changed source rebuilds
+one compact contribution and reuses 1,576. See linked report for caveats.
+No Firebase upload/distribution, backend change or historical rewrite.
 The eight focused model snapshots share 100k geometry-point/10k journey limits;
 path caches are bounded and spatial-only keys are weak. JVM display-workload
 measurements are not physical Pixel navigation timings.
