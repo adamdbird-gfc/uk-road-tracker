@@ -46,6 +46,15 @@ they are not a physical before/after device run. Actual device navigation-to-dra
 milestones are included for natural future comparisons. No acceptance claim
 based solely on internal map preparation.
 
-Tests/build measurements pending. One coordinated private 218/264 APK after green
-checks. No Firebase distribution, backend changes, historical rewrite/rematch,
+Implementation `9f1d8934ab08f9efb8c6f3c328962761f8645f8d` passed complete
+Android compile/lint, national references and unit tests in
+[run 40208792527](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40208792527).
+The preceding bounded-rendering run 40208365345 also passed. Initial tests caught
+a missing-distance NaN fallback; fixed in shared processing. Existing zoom/cache
+and queue-drain tests were updated for intended controls/capacity/executor
+behaviour; no tests were excluded. Additional tests protect first-bind badges,
+hidden-overlay isolation and summary queue independence.
+
+One coordinated private 218/264 packaging request follows green checks. Downloaded
+artifact/signature/report and numeric UI-workload measurements pending. No Firebase distribution, backend changes, historical rewrite/rematch,
 cache purge or disabling necessary collection assessments.

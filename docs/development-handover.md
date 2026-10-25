@@ -10,7 +10,12 @@ First reliable summaries, retained cards, paged road lists and lazy county towns
 per-source compact Progress contributions; focused geometry before enrichment;
 bounded worker-prepared road paths/culling and navigation-to-draw diagnostics.
 The supplied trace has zero NCN drawing; preserve hidden-overlay separation and
-necessary background assessments. Full CI and private artifact verification pending.
+necessary background assessments. Final implementation `9f1d8934` passed full
+Android compile/lint, pinned references and all unit tests in run 40208792527.
+One private 218 build requested; artifact/checksum and UI benchmark figures pending.
+The eight focused model snapshots share 100k geometry-point/10k journey limits;
+path caches are bounded and spatial-only keys are weak. JVM display-workload
+measurements are not physical Pixel navigation timings.
 
 ## Diagnostic notification lifecycle — delivered 0.25.217 (263)
 
