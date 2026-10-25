@@ -16,8 +16,10 @@ final class DiagnosticNotifications {
     private static android.content.SharedPreferences prefs(Context c){return c.getSharedPreferences(PREFS,0);}
     private static JSONObject read(String value){try{return new JSONObject(value);}catch(Exception e){return new JSONObject();}}
     private static boolean save(android.content.SharedPreferences p,JSONObject event) {
-        return p.edit().putString(LAST,event.toString())
-                .putString("episode:"+event.optString("scope_sha256"),event.toString()).commit();
+        android.content.SharedPreferences.Editor edit=p.edit().putString(LAST,event.toString());
+        String key="episode:"+event.optString("scope_sha256");
+        if(event.has("resolved_at_utc"))edit.remove(key);else edit.putString(key,event.toString());
+        return edit.commit();
     }
     static synchronized JSONObject event(Context c,String scope,String signature,String original,String trigger,String worker)throws Exception {
         android.content.SharedPreferences p=prefs(c);
@@ -40,7 +42,8 @@ final class DiagnosticNotifications {
     }
     static synchronized void ready(Context c,JSONObject expected)throws Exception {
         android.content.SharedPreferences p=prefs(c);JSONObject event=read(p.getString(LAST,"{}"));
-        if(expected!=null&&expected.optString("event_id").equals(event.optString("event_id"))) {
+        if(expected!=null&&expected.optString("event_id").equals(event.optString("event_id"))
+                &&"recording".equals(event.optString("delivery_state"))) {
             event.put("delivery_state","pending");save(p,event);
         }
     }
@@ -92,6 +95,8 @@ final class DiagnosticNotifications {
         if(id!=null&&!id.equals(event.optString("event_id")))return;
         try{if(event.length()>0){event.put("delivery_state",state).put("acknowledged_at_utc",Instant.now().toString());save(p,event);}}
         catch(Exception ignored){}
+        NotificationManager manager=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if(manager!=null)manager.cancel(ID);
     }
     static String report(Context c){return prefs(c).getString(LAST,"");}
 }

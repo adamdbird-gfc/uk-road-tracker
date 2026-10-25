@@ -363,16 +363,12 @@ public final class CrashReporter {
         PerformanceDiagnostics.clear(context);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .remove(REPORTS).remove(MATCH_REPORTS).putBoolean(NOTIFICATION_ACTIVE, false).commit();
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager != null) manager.cancel(DEBUG_NOTIFICATION_ID);
     }
 
     public static void markDiagnosticReportsViewed(Context context) {
         DiagnosticNotifications.acknowledged(context,"viewed",null);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(NOTIFICATION_ACTIVE, false).apply();
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager != null) manager.cancel(DEBUG_NOTIFICATION_ID);
     }
 
     private static String format(Thread thread, Throwable error) {

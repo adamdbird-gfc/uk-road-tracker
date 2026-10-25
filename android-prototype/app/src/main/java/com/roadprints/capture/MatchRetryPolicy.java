@@ -9,7 +9,7 @@ final class MatchRetryPolicy {
     static final int QUALITY_RULES_VERSION=1;
     static String input(JSONObject journey) {
         JSONObject evidence=new JSONObject();
-        try {for(String key:new String[]{"journey_id","mode","source","route_geometry","capture_route_samples",
+        try {for(String key:new String[]{"journey_id","mode","source","started_at","ended_at","route_geometry","capture_route_samples",
                 "raw_capture_samples","walking_validation"})if(journey.has(key))evidence.put(key,journey.opt(key));}
         catch(Exception invalid){throw new IllegalStateException(invalid);}
         return NcnJson.digest(evidence);
