@@ -55,6 +55,7 @@ public class ProgressActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private int statsLoadGeneration;
     private DistanceStats loadedStats;
+    private final NavigationTrace navigation=new NavigationTrace("progress");
     private long loadedRevision = Long.MIN_VALUE;
     private boolean renderedKilometres;
     private long renderedServiceRevision=Long.MIN_VALUE;
@@ -163,7 +164,7 @@ public class ProgressActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();
+        super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending)navigation.frame(statisticsContent,"first_content", "cache=retained");
         String checkinId=getIntent().getStringExtra("pub_checkin_id");
         if(checkinId!=null){
             getIntent().removeExtra("pub_checkin_id");
@@ -203,7 +204,7 @@ public class ProgressActivity extends Activity {
 
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
-        if (coordinates == null || coordinates.length() < 2) return false;
+        if ((coordinates==null?journey.optInt("_route_point_count"):coordinates.length())<2) return false;
 
         if (road) {
             JSONObject source = journey.optJSONObject("source");
@@ -247,6 +248,7 @@ public class ProgressActivity extends Activity {
         if (cached != null && cachedRevision == revision) {
             boolean newlyLoaded = loadedRevision != revision;
             loadedRevision = revision; refreshStatus.setVisibility(View.GONE);
+            navigation.frame(statisticsContent,"first_content","cache=process");navigation.frame(statisticsContent,"ready","roads="+cached.discoveredRoads.size());
             if (newlyLoaded) { enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation); }
             return;
         }
@@ -323,50 +325,28 @@ public class ProgressActivity extends Activity {
         CoreAchievementEvidence.Coverage uniqueRoadEdges = new CoreAchievementEvidence.Coverage();
         CoreAchievementEvidence.Coverage uniqueFootEdges = new CoreAchievementEvidence.Coverage();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
-                context, null, true, false);
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, false);
+                context, null, true, true);
+        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, true);
         int[] checkedJourneys = {0};
 
-        JourneyStore.forEach(context, journey -> {
-            int checked = ++checkedJourneys[0];
-            if (checked % 50 == 0) {
-                updateLoadingMessage(generation,
-                        "Checking saved journeys… " + String.format(Locale.UK, "%,d", checked) + " checked");
+        long started=android.os.SystemClock.elapsedRealtime();
+        JourneyStore.prepareArchive(context);
+        List<java.io.File> sources=JourneyStore.archiveFiles(context);sources.sort((a,b)->Long.compare(b.lastModified(),a.lastModified()));
+        try(CompactJourneyCache cache=new CompactJourneyCache(context,"progress-v1")) {
+            for(java.io.File source:sources){
+                if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
+                CompactJourneyCache.Reader prepare=file->progressRow(context,JourneyStore.mapEvidence(context,file,true),motorwayCalculator,aRoadCalculator);
+                JSONObject row=cache.get(source,prepare);
+                if(!motorwayCalculator.accepts(row.getJSONArray("motorway"))||!aRoadCalculator.accepts(row.getJSONArray("a_road"))){cache.invalidate(source);row=cache.get(source,prepare);}
+                stats.activities+=row.optInt("activities");
+                for(String field:SNAPSHOT_FIELDS)try{java.lang.reflect.Field f=DistanceStats.class.getDeclaredField(field);f.setAccessible(true);f.setDouble(stats,f.getDouble(stats)+row.optDouble(field));}catch(ReflectiveOperationException impossible){throw new IllegalStateException(impossible);}
+                uniqueRoadEdges.addCompact(row.getJSONArray("driving_edges"));uniqueFootEdges.addCompact(row.getJSONArray("foot_edges"));
+                motorwayCalculator.addContribution(row.getString("id"),row.getJSONArray("motorway"));aRoadCalculator.addContribution(row.getString("id"),row.getJSONArray("a_road"));
+                mergeDiscovery(stats,row.getJSONArray("discovery"),row.getString("id"));
+                if(++checkedJourneys[0]%100==0)updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys[0]+" journeys checked");
             }
-            String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
-            double metres = Math.max(0, journey.optDouble("distance_meters", 0));
-            if (isShownInJourneysList(journey, mode)) stats.activities++;
-
-            if ("driving".equals(mode) || "bus".equals(mode)) {
-                stats.drivingMetres += metres;
-                if ("complete".equals(journey.optString("processing_status", ""))) {
-                    uniqueRoadEdges.addJourney(journey);
-                }
-            } else if ("walking".equals(mode) || "running".equals(mode)
-                    || "pedestrian".equals(mode)) {
-                stats.footMetres += metres;
-                if ("complete".equals(journey.optString("processing_status", ""))) {
-                    uniqueFootEdges.addJourney(journey);
-                }
-            } else if ("train".equals(mode)) {
-                stats.trainMetres += metres;
-            } else if ("ferry".equals(mode)) {
-                stats.ferryMetres += metres;
-            } else if ("flight".equals(mode) || "plane".equals(mode)) {
-                stats.flightMetres += metres;
-            } else if ("transit".equals(mode)) {
-                stats.transitMetres += metres;
-            } else if ("cycling".equals(mode) || "bicycle".equals(mode)) {
-                stats.cyclingMetres += metres;
-            } else {
-                stats.unknownMetres += metres;
-            }
-            if ("complete".equals(journey.optString("processing_status", ""))) {
-                collectRoadDiscovery(journey, stats, mode);
-                motorwayCalculator.addJourney(journey);
-                aRoadCalculator.addJourney(journey);
-            }
-        });
+            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits);
+        }catch(Exception failure){throw new IllegalStateException("Progress preparation failed",failure);}
 
         stats.uniqueDrivingMetres = uniqueRoadEdges.metres();
         stats.uniqueFootMetres = uniqueFootEdges.metres();
@@ -376,6 +356,45 @@ public class ProgressActivity extends Activity {
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();
         return stats;
+    }
+
+    private JSONObject progressRow(android.content.Context context,JSONObject journey,MotorwayProgressCalculator motorway,ARoadProgressCalculator aRoad)throws Exception {
+        DistanceStats mini=new DistanceStats();String mode=journey.optString("mode","unknown").toLowerCase(Locale.ROOT);double metres=Math.max(0,journey.optDouble("distance_meters"));
+        if(isShownInJourneysList(journey,mode))mini.activities=1;
+        if(isRoadModeForProgress(mode))mini.drivingMetres=metres;
+        else if(MatchingCoordinator.isFoot(mode))mini.footMetres=metres;
+        else if(MatchingCoordinator.isCycle(mode))mini.cyclingMetres=metres;
+        else if("train".equals(mode))mini.trainMetres=metres;else if("ferry".equals(mode))mini.ferryMetres=metres;
+        else if("plane".equals(mode)||"flight".equals(mode))mini.flightMetres=metres;else if("transit".equals(mode))mini.transitMetres=metres;else mini.unknownMetres=metres;
+        CoreAchievementEvidence.Coverage drive=new CoreAchievementEvidence.Coverage(),foot=new CoreAchievementEvidence.Coverage();
+        if("complete".equals(journey.optString("processing_status"))){if(isRoadModeForProgress(mode))drive.addJourney(journey);else if(MatchingCoordinator.isFoot(mode))foot.addJourney(journey);collectRoadDiscovery(journey,mini,mode);}
+        JSONArray discovery=new JSONArray();for(RoadDiscoveryItem item:mini.discoveredRoads.values()){
+            JSONArray geometry=new JSONArray();for(JSONObject g:item.geometryEvidence)geometry.put(g);
+            discovery.put(new JSONObject().put("id",item.id).put("label",item.label).put("category",item.category).put("region",item.region).put("driven",item.driven).put("foot",item.onFoot).put("geometry",geometry));
+        }
+        JSONObject row=new JSONObject().put("id",journey.optString("journey_id")).put("activities",mini.activities)
+                .put("driving_edges",drive.compact()).put("foot_edges",foot.compact()).put("discovery",discovery)
+                .put("motorway",motorway.contribution(journey)).put("a_road",aRoad.contribution(journey));
+        for(String field:SNAPSHOT_FIELDS){java.lang.reflect.Field f=DistanceStats.class.getDeclaredField(field);f.setAccessible(true);row.put(field,f.getDouble(mini));}
+        return row;
+    }
+    private static boolean isRoadModeForProgress(String mode){return "driving".equals(mode)||"bus".equals(mode);}
+    private static void mergeDiscovery(DistanceStats stats,JSONArray rows,String journey)throws Exception {
+        for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);RoadDiscoveryItem item=stats.discoveredRoads.computeIfAbsent(row.getString("id"),id->new RoadDiscoveryItem(id,row.optString("label"),row.optString("category")));
+            item.region=row.optString("region");item.driven|=row.optBoolean("driven");item.onFoot|=row.optBoolean("foot");if(!journey.isEmpty())item.journeyIds.add(journey);
+            JSONArray geometry=row.getJSONArray("geometry");for(int k=0;k<geometry.length();k++){JSONObject g=geometry.getJSONObject(k);String key=NcnJson.digest(g);if(item.geometryEvidenceKeys.add(key))item.geometryEvidence.add(g);}
+        }
+    }
+    /** A current immutable Progress snapshot can provide real geometry before contributor lookup. */
+    static RoadDetailModel focusedPreview(android.content.Context context,RoadDetailSelection selection) {
+        DistanceStats stats; synchronized(STATS_CACHE_LOCK){if(processCachedRevision!=JourneyStore.dataRevision(context))return null;stats=processCachedStats;}
+        if(stats==null)return null;RoadDetailModel out=new RoadDetailModel();
+        if(RoadDetailSelection.MOTORWAY.equals(selection.kind)&&stats.motorwayProgress!=null)for(MotorwayProgressCalculator.Road road:stats.motorwayProgress.roads)
+            if(road.ref.equals(selection.label)&&(selection.region.isEmpty()||road.region.equals(selection.region))&&road.referenceAvailable){out.setReference(road.referenceKm*1000,road.estimatedUniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);return out;}
+        if(RoadDetailSelection.A_ROAD.equals(selection.kind)&&stats.aRoadProgress!=null)for(ARoadProgressCalculator.Road road:stats.aRoadProgress.roads)
+            if(road.ref.equals(selection.label)&&(selection.region.isEmpty()||road.region.equals(selection.region))&&road.referenceAvailable){out.setReference(road.totalKm*1000,road.uniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);return out;}
+        if(RoadDetailSelection.B_ROAD.equals(selection.kind))for(RoadDiscoveryItem item:stats.discoveredRoads.values())if(item.label.equals(selection.label)&&(selection.region.isEmpty()||selection.region.equals(item.region)))try{for(JSONObject g:item.geometryEvidence)out.covered.addAll(RoadDetailGeometry.lines(g,null));return out;}catch(Exception invalid){return null;}
+        return null;
     }
 
     private void updateLoadingMessage(int generation, String message) {
@@ -456,7 +475,7 @@ public class ProgressActivity extends Activity {
                         ignored -> new RoadDiscoveryItem(id, label, category));
                 road.region = region;
                 JSONObject geometry = feature.optJSONObject("geometry");
-                if (geometry != null && "Local roads".equals(category)) {
+                if (geometry != null && ("Local roads".equals(category)||"B roads".equals(category))) {
                     String geometryKey = geometryEvidenceKey(geometry);
                     if (road.geometryEvidenceKeys.add(geometryKey)) {
                         road.geometryEvidence.add(geometry);
@@ -790,12 +809,15 @@ public class ProgressActivity extends Activity {
                 rows.setVisibility(View.VISIBLE);
             }
             header.setOnClickListener(v -> {
+                long opened=android.os.SystemClock.elapsedRealtime();
                 boolean open = rows.getVisibility() != View.VISIBLE;
                 if (open && !Boolean.TRUE.equals(rows.getTag())) {
                     addRoadCategoryContents(rows, category, roads, stats);
                     rows.setTag(Boolean.TRUE);
                 }
                 rows.setVisibility(open ? View.VISIBLE : View.GONE);
+                if(open){PerformanceDiagnostics.timing("nav_road_type_bind",android.os.SystemClock.elapsedRealtime()-opened,"type="+category.replace(' ','_')+" rows="+roads.size());
+                    NavigationTrace trace=new NavigationTrace("road_type");trace.resume(this);trace.frame(rows,"first_list","type="+category.replace(' ','_')+" rows="+roads.size());}
                 if (open) expandedRoadCategories.add(category);
                 else expandedRoadCategories.remove(category);
             });
@@ -878,16 +900,14 @@ public class ProgressActivity extends Activity {
             countyContent.setVisibility(View.GONE);
             countyCard.addView(countyContent);
 
-            for (LocalTownProgress town : countyTowns) {
-                addLocalTownCard(countyContent, town);
-            }
             String countyKey = "county:" + county;
             boolean expanded = expandedRoadCategories.contains(countyKey);
-            if (expanded) countyContent.setVisibility(View.VISIBLE);
+            if (expanded){for(LocalTownProgress town:countyTowns)addLocalTownCard(countyContent,town);countyContent.setTag(Boolean.TRUE);countyContent.setVisibility(View.VISIBLE);}
             countyHeader.setClickable(true);
             countyHeader.setFocusable(true);
             countyHeader.setOnClickListener(v -> {
                 boolean open = countyContent.getVisibility() != View.VISIBLE;
+                if(open&&!Boolean.TRUE.equals(countyContent.getTag())){for(LocalTownProgress town:countyTowns)addLocalTownCard(countyContent,town);countyContent.setTag(Boolean.TRUE);}
                 countyContent.setVisibility(open ? View.VISIBLE : View.GONE);
                 if (open) expandedRoadCategories.add(countyKey);
                 else expandedRoadCategories.remove(countyKey);
@@ -1373,6 +1393,7 @@ public class ProgressActivity extends Activity {
                 if (screen == null) continue;
                 screen.mainHandler.post(() -> {
                     if (screen.loadedStats != stats || screen.isFinishing() || screen.isDestroyed() || screen.roadDiscoveryHost == null) return;
+                    if(!expandedRoadCategories.contains("Local roads"))return;
                     int y = screen.statisticsScroll == null ? 0 : screen.statisticsScroll.getScrollY();
                     screen.stopLocalRoadProgressTicker(); screen.roadDiscoveryHost.removeAllViews();
                     screen.addRoadDiscoveryPanel(screen.roadDiscoveryHost, stats); screen.refreshLocalRoadProgress(stats);
@@ -1387,7 +1408,7 @@ public class ProgressActivity extends Activity {
         view.setFocusable(true);
         view.setMinimumHeight(dp(48));
         view.setContentDescription(road.title() + (journeys ? ": view contributing journeys" : ": view road map"));
-        view.setOnClickListener(v -> startActivity(road.intent(this, journeys)));
+        view.setOnClickListener(v -> startActivity(road.intent(this, journeys).putExtra(NavigationTrace.EXTRA,android.os.SystemClock.elapsedRealtime())));
     }
 
     private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads) {
@@ -1396,8 +1417,11 @@ public class ProgressActivity extends Activity {
 
     private void addRoadDiscoveryRows(LinearLayout rows, List<RoadDiscoveryItem> roads,
                                       LocalRoadSettlementMatcher.Settlement settlement) {
-        int rowIndex = 0;
-        for (RoadDiscoveryItem road : roads) {
+        addRoadDiscoveryPage(rows,roads,settlement,0);
+    }
+    private void addRoadDiscoveryPage(LinearLayout rows,List<RoadDiscoveryItem> roads,LocalRoadSettlementMatcher.Settlement settlement,int start) {
+        int rowIndex = start;
+        for (RoadDiscoveryItem road : roads.subList(start,Math.min(roads.size(),start+30))) {
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
@@ -1430,6 +1454,10 @@ public class ProgressActivity extends Activity {
                 View divider = new View(this);
                 divider.setBackgroundColor(0x334C6798);
                 rows.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
+        }
+        if(start+30<roads.size()){
+            TextView more=new TextView(this);more.setText("SHOW MORE ROADS · "+(roads.size()-start-30)+" REMAINING");more.setTextColor(TEAL);more.setPadding(dp(12),dp(14),dp(12),dp(14));
+            more.setOnClickListener(v->{rows.removeView(more);addRoadDiscoveryPage(rows,roads,settlement,start+30);});rows.addView(more);
         }
     }
 

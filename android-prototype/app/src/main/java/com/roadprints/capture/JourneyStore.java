@@ -157,22 +157,22 @@ public final class JourneyStore {
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> summaries = new ArrayList<>();
-        for (File file : files) {
-            try {
-                String token=fileToken(file);
-                JSONObject summary=JourneyProjectionCache.read(context,file,"summary-v1");
-                if(summary==null) {
-                    summary=readSummary(file);
-                    JourneyProjectionCache.write(context,file,token,"summary-v1",summary);
-                }
-                if (summary != null) summaries.add(summary);
-            } catch (Exception ignored) {
-                // A compact summary is best-effort; skip only this malformed record.
-            }
+        long started=android.os.SystemClock.elapsedRealtime();
+        try(CompactJourneyCache cache=new CompactJourneyCache(context,"summaries-v1")) {
+            for(File file:files)try{JSONObject row=cache.get(file,JourneyStore::readSummary);if(row!=null)summaries.add(row);}
+            catch(Exception invalid){/* Skip only the malformed source. */}
+            PerformanceDiagnostics.timing("journeys_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+summaries.size()+" reads="+cache.reads+" reused="+cache.hits);
         }
         return summaries;
     }
 
+    /** Reliable recent saved rows for first display, before the complete chronological list. */
+    static List<JSONObject> firstSummaries(Context context,int limit) {
+        migrateLegacy(context);List<File> files=archiveFiles(context);files.sort((a,b)->Long.compare(b.lastModified(),a.lastModified()));
+        List<JSONObject> rows=new ArrayList<>();try(CompactJourneyCache cache=new CompactJourneyCache(context,"summaries-v1")){
+            for(File source:files){if(rows.size()>=limit)break;try{JSONObject row=cache.get(source,JourneyStore::readSummary);if(row!=null)rows.add(row);}catch(Exception invalid){}}
+        }return rows;
+    }
     /**
      * Reads only list-screen fields. Journey files can contain thousands of GPS
      * points and large matched GeoJSON arrays, so materializing the whole file

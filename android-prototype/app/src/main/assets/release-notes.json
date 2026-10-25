@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.218",
+      "version_code": 264,
+      "release_date": "2026-10-25",
+      "since": "0.25.217",
+      "changes": [
+        {
+          "title": "Faster navigation",
+          "description": "Show journey summaries and paged road lists sooner, reuse unchanged progress evidence and show prepared road maps before contributor lookups finish."
+        },
+        {
+          "title": "Smoother road maps",
+          "description": "Reuse projected road paths, skip offscreen geometry and retain useful screen content when returning."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.217",
       "version_code": 263,
       "release_date": "2026-10-25",

@@ -31,6 +31,8 @@ final class ScreenDataLoader {
             new java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy());
     static void cache(Runnable task) { CACHE.execute(task); }
 
+    private static final ExecutorService SUMMARIES=Executors.newSingleThreadExecutor(task->new Thread(task,"roadprints-journey-summaries"));
+    static void summaries(Runnable task){SUMMARIES.execute(task);}
     private ScreenDataLoader() {}
 
     static void execute(Runnable task) {

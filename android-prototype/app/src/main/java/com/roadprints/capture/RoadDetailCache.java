@@ -22,7 +22,7 @@ final class RoadDetailCache {
     static synchronized void put(String key,RoadDetailModel model){
         int points=0;for(JSONArray line:model.covered)points+=line.length();for(JSONArray line:model.remaining)points+=line.length();
         if(points>50000||model.journeys.size()>5000)return;
-        models.put(key,new Cached(key,model));while(models.size()>2)models.remove(models.keySet().iterator().next());
+        models.put(key,new Cached(key,model));while(models.size()>8)models.remove(models.keySet().iterator().next());
     }
     static synchronized void clear(){models.clear();}
 }

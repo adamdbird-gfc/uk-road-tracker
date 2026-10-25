@@ -66,6 +66,7 @@ public class RoutePreviewView extends View {
     private boolean restoreRouteMode;
     private java.util.List<NcnMapOverlay.Line> ncnOverlay;
     private long lastSlowFrameReport;
+    private final MapRenderGeometry renderGeometry=new MapRenderGeometry();
     String ncnLoadingStatus;
     private java.util.function.Consumer<java.util.Set<String>> ncnTap;
     private final Paint ncnCompleted=new Paint(Paint.ANTI_ALIAS_FLAG),ncnRemaining=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -289,6 +290,7 @@ public class RoutePreviewView extends View {
     }
 
     public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
+        renderGeometry.clear();
         this.coordinates = coordinates;
         matchedSegments.clear();
         if (sections != null) for (JSONArray section : sections)
@@ -615,6 +617,7 @@ public class RoutePreviewView extends View {
     protected void onDraw(Canvas canvas) {
         long frameStarted=android.os.SystemClock.elapsedRealtime();
         super.onDraw(canvas);
+        if(routeEditMode)renderGeometry.clear();
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
         long tilesFinished=android.os.SystemClock.elapsedRealtime();
@@ -698,6 +701,7 @@ public class RoutePreviewView extends View {
         if(frameMs>=100&&frameStarted-lastSlowFrameReport>=5000){lastSlowFrameReport=frameStarted;
             PerformanceDiagnostics.timing("map_slow_frame",frameMs,"tiles_ms="+(tilesFinished-frameStarted)+" roads_ms="+(roadsFinished-tilesFinished)
                     +" ncn_ms="+(ncnFinished-roadsFinished)+" other_ms="+(android.os.SystemClock.elapsedRealtime()-ncnFinished)
+                    +" path_builds="+renderGeometry.builds+" path_hits="+renderGeometry.hits+" culled="+renderGeometry.culled
                     +" road_sections="+matchedSegments.size()+" ncn_lines="+(ncnOverlay==null?0:ncnOverlay.size())+" heap_mb="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));}
     }
 
@@ -1150,16 +1154,9 @@ public class RoutePreviewView extends View {
 
     private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {
         try {
-            Path route = new Path();
-            for (int index = 0; index < coordinates.length(); index++) {
-                org.json.JSONArray point = coordinates.getJSONArray(index);
-                float x = screenX(point.getDouble(0));
-                float y = screenY(point.getDouble(1));
-                if (index == 0) route.moveTo(x, y);
-                else route.lineTo(x, y);
-            }
-            if (haloPaint != null) canvas.drawPath(route, haloPaint);
-            canvas.drawPath(route, paint);
+            double world=mapTileSize()*Math.pow(2.0,cameraZoom);
+            renderGeometry.draw(canvas,coordinates,paint,haloPaint,world/(2*Math.PI*6378137),
+                    MapRenderGeometry.x(centerLongitude),MapRenderGeometry.y(centerLatitude),getWidth(),getHeight());
         } catch (Exception ignored) {
             drawMessage(canvas, "Route preview unavailable");
         }

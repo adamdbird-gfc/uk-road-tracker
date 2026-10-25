@@ -153,6 +153,16 @@ final class CoreAchievementEvidence {
                 }
             }
         }
+        JSONArray compact()throws Exception {
+            JSONArray rows=new JSONArray();for(Map.Entry<String,List<double[]>> entry:intervals.entrySet())for(double[] v:entry.getValue())rows.put(new JSONArray().put(entry.getKey()).put(v[0]).put(v[1]).put(v[2]));return rows;
+        }
+        void addCompact(JSONArray rows)throws Exception {
+            for(int i=0;i<rows.length();i++){JSONArray row=rows.getJSONArray(i);String key=row.getString(0);double lo=row.getDouble(1),hi=row.getDouble(2),scale=row.getDouble(3);
+                List<double[]> values=intervals.computeIfAbsent(key,k->new ArrayList<>());
+                for(Iterator<double[]> it=values.iterator();it.hasNext();){double[] old=it.next();if(old[1]<lo-0.5||old[0]>hi+0.5)continue;lo=Math.min(lo,old[0]);hi=Math.max(hi,old[1]);scale=old[2];it.remove();}
+                values.add(new double[]{lo,hi,scale});
+            }
+        }
         double metres(){double total=0;for(List<double[]> values:intervals.values())for(double[] v:values)total+=(v[1]-v[0])*v[2];return total;}
         static double mercatorY(double lat){return 6378137*Math.log(Math.tan(Math.PI/4+Math.toRadians(lat)/2));}
     }

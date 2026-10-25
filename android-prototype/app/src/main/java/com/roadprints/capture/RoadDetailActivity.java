@@ -32,6 +32,7 @@ public final class RoadDetailActivity extends Activity {
     static final long LOAD_TIMEOUT_MS=30_000;
     private java.util.concurrent.Future<?> pending;
     private boolean loading;
+    private final NavigationTrace navigation=new NavigationTrace("focused");
     private Runnable timeout;
     interface Loader {
         RoadDetailModel load(android.content.Context c,RoadDetailSelection s,boolean cumulative)throws Exception;
@@ -71,7 +72,7 @@ public final class RoadDetailActivity extends Activity {
         body=new FrameLayout(this);root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         mapFrame=new FrameLayout(this);mapFrame.setTag("road_map_container");body.addView(mapFrame,new FrameLayout.LayoutParams(-1,-1));
         map=RoutePreviewView.overview(this);map.setFlatRoadMapStyle(true);map.setOverviewLoading(true);mapFrame.addView(map,new FrameLayout.LayoutParams(-1,-1));
-        zoom=MapZoomControls.add(mapFrame,map);zoom.setVisibility(View.GONE);
+        zoom=MapZoomControls.add(mapFrame,map);zoom.setVisibility(View.VISIBLE);
         LinearLayout panel=new LinearLayout(this);panel.setOrientation(LinearLayout.VERTICAL);panel.setGravity(Gravity.CENTER);panel.setPadding(dp(16),dp(12),dp(16),dp(12));
         panel.setBackground(JourneyCardHeader.background(this,0xEE0B1C50,0xFF46649E,14));panel.setTag("road_loading_overlay");
         ProgressBar spinner=new ProgressBar(this);spinner.setTag("road_loading_spinner");spinner.setIndeterminate(true);spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(0xFF67D5CC));panel.addView(spinner,new LinearLayout.LayoutParams(dp(32),dp(32)));
@@ -88,15 +89,16 @@ public final class RoadDetailActivity extends Activity {
             root.setPadding(dp(16)+insets.getSystemWindowInsetLeft(),dp(6)+insets.getSystemWindowInsetTop(),dp(16)+insets.getSystemWindowInsetRight(),dp(12)+insets.getSystemWindowInsetBottom());return insets;
         });root.requestApplyInsets();
     }
-    @Override protected void onResume(){super.onResume();if(selection!=null&&!loading&&loadedRevision!=JourneyStore.dataRevision(this))load();else if(model!=null)showStatistics();}
+    @Override protected void onResume(){super.onResume();navigation.resume(this);navigation.frame(mapFrame,"container","");if(selection!=null&&!loading&&loadedRevision!=JourneyStore.dataRevision(this))load();else if(model!=null){showStatistics();navigation.frame(map,"first_map","cache=retained");navigation.frame(map,"ready","cache=retained");}}
     private void load() {
         cancelPending();int request=++generation;long revision=JourneyStore.dataRevision(this);
         if(loadedRevision!=revision)geometryShown=false;
         String key=RoadDetailCache.key(this,selection,cumulative,revision);
         RoadDetailModel cached=RoadDetailCache.get(key);
         if(cached!=null&&loader==DEFAULT_LOADER){model=cached;loadedRevision=revision;show();return;}
+        if(loader==DEFAULT_LOADER&&!cumulative&&!geometryShown){RoadDetailModel preview=ProgressActivity.focusedPreview(this,selection);if(preview!=null){model=preview;showGeometry();}}
         map.setMapRoadTapListener(null);
-        loading=true;loadingPanel.findViewWithTag("road_loading_spinner").setVisibility(View.VISIBLE);status.setOnClickListener(null);loadingPanel.setVisibility(View.VISIBLE);loadingLabel.setText("Preparing road geometry…");retry.setVisibility(View.GONE);
+        loading=true;loadingPanel.findViewWithTag("road_loading_spinner").setVisibility(View.VISIBLE);status.setOnClickListener(null);loadingPanel.setVisibility(geometryShown?View.GONE:View.VISIBLE);loadingLabel.setText("Preparing road geometry…");retry.setVisibility(View.GONE);
         if(!geometryShown){coverageSummary.setVisibility(View.GONE);status.setVisibility(View.VISIBLE);status.setText("Loading your road…");skeleton.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
         journeyAction.setEnabled(false);
         deadline(request,()->showFailure("Loading took too long. Tap to retry."));
@@ -143,13 +145,14 @@ public final class RoadDetailActivity extends Activity {
         map.setContentDescription(model.ncn?"NCN map. Purple completed, solid orange remaining. Tap a section for eligible journeys. Pinch or use zoom buttons.":"Map of "+selection.title()+(model.fullReference?". Red: remaining. "+(RoadDetailSelection.MOTORWAY.equals(selection.kind)?"Blue":"Green")+": travelled. Tap a section for journeys.":". Recorded sections. Use View Journeys for contributing journeys.")+" Pinch or use zoom buttons.");
         java.util.List<org.json.JSONArray> fit=new java.util.ArrayList<>(model.covered);fit.addAll(model.remaining);
         map.fitRoadGeometry(fit);
-        geometryShown=true;
+        geometryShown=true;navigation.frame(map,"first_map","kind="+selection.kind+" sections="+(model.covered.size()+model.remaining.size()));
         if(model.covered.isEmpty()&&model.remaining.isEmpty()){sectionStatus.setText("No retained mapped sections are available for this road.");sectionStatus.setVisibility(View.VISIBLE);}
     }
     private void show(){
         status.setOnClickListener(null);
         if(cumulative){showStatistics();body.removeAllViews();body.addView(journeyList(model.journeys),new FrameLayout.LayoutParams(-1,-1));journeyAction.setVisibility(View.GONE);return;}
         if(!geometryShown)showGeometry();else showStatistics();loadingPanel.setVisibility(View.GONE);
+        navigation.frame(map,"ready","kind="+selection.kind+" contributors="+model.journeys.size());
         journeyAction.setText("VIEW JOURNEYS · "+model.journeys.size());journeyAction.setEnabled(true);map.setMapRoadTapListener(model.fullReference||model.ncn?this::inspectSection:null);
     }
     private void inspectSection(double latitude,double longitude){

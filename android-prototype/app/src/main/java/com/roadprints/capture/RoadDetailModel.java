@@ -44,18 +44,20 @@ final class RoadDetailModel {
         if(RoadDetailSelection.NCN.equals(selection.kind))return NcnProgressStore.detail(context,selection.label,selection.ncnMode,geometryReady);
         JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
-        RoadDetailModel output=new RoadDetailModel();output.boundary=boundary;
-        MotorwayProgressCalculator motorway=!cumulative&&RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
-        ARoadProgressCalculator aRoad=!cumulative&&RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
+        RoadDetailModel seed=cumulative?null:ProgressActivity.focusedPreview(context,selection);
+        RoadDetailModel output=seed==null?new RoadDetailModel():seed;output.boundary=boundary;
+        if(seed!=null&&geometryReady!=null)geometryReady.accept(seed.geometryPreview());
+        MotorwayProgressCalculator motorway=seed==null&&!cumulative&&RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
+        ARoadProgressCalculator aRoad=seed==null&&!cumulative&&RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
         Set<String> refs=Collections.singleton(RoadDetailSelection.normalizeRef(selection.label));
-        JourneyStore.forEachRoadEvidence(context,Thread.currentThread()::isInterrupted,journey->{
+        cachedRoadEvidence(context,journey->{
             if(!"complete".equals(journey.optString("processing_status")))return;
             if(motorway!=null)motorway.addJourney(journey,refs);
             if(aRoad!=null)aRoad.addJourney(journey,refs);
             Entry entry=collect(journey,selection,boundary,cumulative);
             if(entry.contributes||!entry.lines.isEmpty()) {
                 output.journeys.add(entry);
-                for(JSONArray line:entry.lines) {
+                if(seed==null)for(JSONArray line:entry.lines) {
                     if(output.covered.size()<MAX_MAP_EDGES)output.covered.add(line);else output.mapLimited=true;
                 }
                 entry.lines.clear(); // retain metadata, not the whole journey archive
@@ -76,11 +78,17 @@ final class RoadDetailModel {
         output.journeys.sort((a,b)->b.date.compareTo(a.date));
         return output;
     }
+    static void cachedRoadEvidence(Context context,JourneyStore.JourneyVisitor visitor)throws Exception {
+        JourneyStore.prepareArchive(context);try(CompactJourneyCache cache=new CompactJourneyCache(context,"road-evidence-v1")){
+            for(java.io.File source:JourneyStore.archiveFiles(context)){if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();visitor.visit(cache.get(source,file->JourneyStore.mapEvidence(context,file,false)));}
+            PerformanceDiagnostics.timing("focused_archive",0,"reads="+cache.reads+" reused="+cache.hits);
+        }
+    }
     List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) throws Exception {
         if(ncn){List<Entry> related=new ArrayList<>();Section selected=sectionAt(latitude,longitude);if(selected==null||!selected.travelled)return related;for(Entry e:journeys)for(JSONArray line:e.lines)if(NcnGeometry.overlaps(line,selected.line)){related.add(e);break;}return related;}
         Set<String> ids=new HashSet<>();for(Entry e:journeys)ids.add(e.id);
         List<Entry> related=new ArrayList<>();
-        JourneyStore.forEachRoadEvidence(context,Thread.currentThread()::isInterrupted,journey->{
+        cachedRoadEvidence(context,journey->{
             if(!ids.contains(journey.optString("journey_id")))return;
             Entry entry=collect(journey,selection,boundary,false);
             if(entry.near(latitude,longitude)){entry.lines.clear();related.add(entry);}
@@ -111,7 +119,7 @@ final class RoadDetailModel {
         }
         return best;
     }
-    private void setReference(double total,double travelled,double completion,List<JSONArray> yes,List<JSONArray> no) {
+    void setReference(double total,double travelled,double completion,List<JSONArray> yes,List<JSONArray> no) {
         // The selection always carries a region for numbered roads. Never merge GB/NI totals.
         fullReference=true;referenceMetres=total;uniqueMetres=travelled;percent=completion;
         covered.clear();covered.addAll(yes);remaining.clear();remaining.addAll(no);

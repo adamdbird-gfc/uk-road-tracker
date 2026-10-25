@@ -58,7 +58,7 @@ final class RoadprintsNavigation {
     }
 
     static void openDestination(Activity activity, Class<?> destination) {
-        Intent intent = new Intent(activity, destination);
+        Intent intent = new Intent(activity, destination).putExtra(NavigationTrace.EXTRA,android.os.SystemClock.elapsedRealtime());
         // Reorder one instance of each tab instead of destroying the tabs above Map.
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         activity.startActivity(intent);

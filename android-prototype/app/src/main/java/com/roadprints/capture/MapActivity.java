@@ -455,6 +455,9 @@ public class MapActivity extends Activity {
                     processMapCacheRevision = revision;
                 }
             }
+            long pathStarted=android.os.SystemClock.elapsedRealtime();
+            for(java.util.List<JSONArray> lines:java.util.Arrays.asList(mapRoutes.sections,mapRoutes.motorwaySections,mapRoutes.incompleteMotorwaySections,mapRoutes.coveredMotorwaySections,mapRoutes.incompleteARoadSections,mapRoutes.coveredARoadSections,mapRoutes.ferrySections))MapRenderGeometry.prepare(lines);
+            PerformanceDiagnostics.timing("map_paths_worker",android.os.SystemClock.elapsedRealtime()-pathStarted,"");
             displayMapRoutes(mapRoutes, generation);
             // Publish usable geometry before optional JSON serialization/fsync. Cache work
             // must not hold the interactive map lane or delay the readiness transition.

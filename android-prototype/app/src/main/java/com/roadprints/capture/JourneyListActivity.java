@@ -60,7 +60,7 @@ public class JourneyListActivity extends Activity {
     private static final int SAVE_JOURNEY_DEBUG = 4102;
     private String pendingDebugJourneyId;
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
-    private static final int INITIAL_JOURNEY_CARDS = 40;
+    private static final int INITIAL_JOURNEY_CARDS = 12;
     private static final int ADDITIONAL_JOURNEY_CARDS = 40;
     private static final Object SUMMARY_CACHE_LOCK = new Object();
     private static List<JSONObject> processJourneySummaries;
@@ -80,7 +80,11 @@ public class JourneyListActivity extends Activity {
 
     private LinearLayout journeyList;
     private ScrollView journeyScroll;
+    private boolean summariesPartial;
     private View journeyRoot;
+    private final NavigationTrace navigation=new NavigationTrace("journeys");
+    private final Map<String,View> cardViews=new LinkedHashMap<>();
+    private final Map<String,String> cardTokens=new LinkedHashMap<>();
     private TextView count;
     private TextView readinessSummary;
     private boolean launchGrowingAfterLoad;
@@ -136,7 +140,7 @@ public class JourneyListActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        listActive = true;
+        listActive = true;navigation.resume(this);
         refreshJourneysAsync();
         mainHandler.removeCallbacks(observeJourneyChanges);
         mainHandler.postDelayed(observeJourneyChanges, 3000);
@@ -445,6 +449,7 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
+        long bindStarted=android.os.SystemClock.elapsedRealtime();
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
         updateFilterStyles();
@@ -454,13 +459,21 @@ public class JourneyListActivity extends Activity {
             if (!shouldShowJourney(journey) || !matchesActiveFilter(journey)) continue;
             visible++;
             if (rendered < journeyCardLimit) {
-                journeyList.addView(createCard(journey));
+                String id=journey.optString("journey_id"),token=journey.toString()+String.valueOf(newRoadHighlights.get(id));
+                View card=cardViews.get(id);
+                if(card==null||!token.equals(cardTokens.get(id))){card=createCard(journey);cardViews.put(id,card);cardTokens.put(id,token);}
+                journeyList.addView(card);
                 rendered++;
             }
         }
+        cardViews.keySet().removeIf(id->!containsJourney(id));cardTokens.keySet().retainAll(cardViews.keySet());
+        PerformanceDiagnostics.timing("journeys_bind",android.os.SystemClock.elapsedRealtime()-bindStarted,"visible="+rendered+" total="+visible);
+        navigation.frame(journeyList,"first_list","visible="+rendered+" total="+visible);
+        if(!summariesPartial)navigation.frame(journeyList,"ready","summary_rows="+journeys.size());
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
         count.setVisibility(View.VISIBLE);
-        readinessSummary.setText(String.format(java.util.Locale.UK, "Showing: %,d journeys · newest first", visible));
+        readinessSummary.setText(summariesPartial?"Recent saved journeys · loading full history…":String.format(java.util.Locale.UK, "Showing: %,d journeys · newest first", visible));
+        if(summariesPartial)count.setVisibility(View.GONE);
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
@@ -479,6 +492,7 @@ public class JourneyListActivity extends Activity {
         }
     }
 
+    private boolean containsJourney(String id){for(JSONObject row:journeys)if(id.equals(row.optString("journey_id")))return true;return false;}
     /** Prepares only compact rows; Map uses these before scheduling route geometry. */
     static List<JSONObject> preloadSummaries(android.content.Context context, long revision) throws Exception {
         synchronized (SUMMARY_CACHE_LOCK) {
@@ -496,8 +510,7 @@ public class JourneyListActivity extends Activity {
             loaded = JourneyStore.allSummaries(context);
             JSONArray compact = new JSONArray(); for (JSONObject row : loaded) compact.put(row);
             if (JourneyStore.dataRevision(context) == revision)
-                PersistentScreenCache.write(context, "journey-summaries", revision,
-                        new JSONObject().put("rows", compact));
+                ScreenDataLoader.cache(()->{try{if(JourneyStore.dataRevision(context)==revision)PersistentScreenCache.write(context,"journey-summaries",revision,new JSONObject().put("rows",compact));}catch(Exception ignored){}});
         }
         if (JourneyStore.dataRevision(context) == revision) {
             synchronized (SUMMARY_CACHE_LOCK) {
@@ -512,6 +525,7 @@ public class JourneyListActivity extends Activity {
         if (journeyList == null) return;
         final android.content.Context appContext = getApplicationContext();
         final long initialRevision = JourneyStore.dataRevision(appContext);
+        if(displayedJourneyRevision==initialRevision&&journeys!=null&&journeyList.getChildCount()>0){navigation.frame(journeyList,"first_list","cache=retained");navigation.frame(journeyList,"ready","cache=retained");return;}
         if (loadingJourneyRevision == initialRevision) return;
         final int generation = ++refreshGeneration;
         loadingJourneyRevision = initialRevision;
@@ -535,21 +549,14 @@ public class JourneyListActivity extends Activity {
             }
             return;
         }
-        ScreenDataLoader.execute(() -> {
+        final boolean firstDisplay=displayedJourneyRevision==Long.MIN_VALUE&&!launchGrowingAfterLoad;
+        ScreenDataLoader.summaries(() -> {
             List<JSONObject> loaded;
             try {
-                JSONObject saved=PersistentScreenCache.read(appContext,"journey-summaries",initialRevision);
-                JSONArray rows=saved==null?null:saved.optJSONArray("rows");
-                if(rows!=null){
-                    loaded=new ArrayList<>(rows.length());
-                    for(int i=0;i<rows.length();i++){JSONObject row=rows.optJSONObject(i);if(row!=null)loaded.add(row);}
-                }else{
-                    loaded=JourneyStore.allSummaries(appContext);
-                    JSONArray compact=new JSONArray();for(JSONObject row:loaded)compact.put(row);
-                    if (JourneyStore.dataRevision(appContext) == initialRevision)
-                        PersistentScreenCache.write(appContext,"journey-summaries",initialRevision,
-                                new JSONObject().put("rows",compact));
-                }
+                if(firstDisplay){List<JSONObject> first=JourneyStore.firstSummaries(appContext,12);mainHandler.post(()->{
+                    if(!isFinishing()&&generation==refreshGeneration&&JourneyStore.dataRevision(appContext)==initialRevision){summariesPartial=true;journeys=first;render();}
+                });}
+                loaded=preloadSummaries(appContext,initialRevision);
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != refreshGeneration) return;
@@ -578,7 +585,7 @@ public class JourneyListActivity extends Activity {
                     return;
                 }
                 displayedJourneyRevision = initialRevision;
-                journeys = loaded;
+                summariesPartial=false;journeys = loaded;
                 if (launchGrowingAfterLoad) {
                     launchGrowingAfterLoad = false;
                     startBatchMatch();
@@ -631,7 +638,8 @@ public class JourneyListActivity extends Activity {
 
     private long journeyStartMillis(JSONObject journey) {
         try {
-            return Instant.parse(journey.optString("started_at")).toEpochMilli();
+            if(journey.has("_sort_started"))return journey.optLong("_sort_started");
+            long time=Instant.parse(journey.optString("started_at")).toEpochMilli();journey.put("_sort_started",time);return time;
         } catch (Exception ignored) {
             return Long.MIN_VALUE;
         }
@@ -642,7 +650,6 @@ public class JourneyListActivity extends Activity {
         synchronized (SUMMARY_CACHE_LOCK) {
             if (processDiscoveryRevision == revision) {
                 newRoadHighlights = processNewRoadHighlights;
-                render();
                 return;
             }
         }
@@ -654,7 +661,7 @@ public class JourneyListActivity extends Activity {
                     highlights = new LinkedHashMap<>();
                     try {
                         List<JourneyDiscoveryRecord> records = new ArrayList<>();
-                        JourneyStore.forEach(getApplicationContext(), journey -> {
+                        RoadDetailModel.cachedRoadEvidence(getApplicationContext(), journey -> {
                             if (!"complete".equals(journey.optString("processing_status"))) return;
                             String mode = journey.optString("mode", "unknown").toLowerCase();
                             if (!(isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) return;
@@ -861,6 +868,7 @@ public class JourneyListActivity extends Activity {
     }
 
     private void loadAndShowDetails(JSONObject summary) {
+        final NavigationTrace detailsTrace=new NavigationTrace("journey_detail");detailsTrace.resume(this);
         final String journeyId = summary.optString("journey_id", "");
         if (journeyId.isEmpty()) return;
         processor.execute(() -> {
@@ -885,7 +893,7 @@ public class JourneyListActivity extends Activity {
                             Toast.LENGTH_LONG).show();
                     return;
                 }
-                showDetails(journey);
+                showDetails(journey);detailsTrace.event("ready", "geometry=loaded");
             });
         });
     }
@@ -1437,6 +1445,7 @@ public class JourneyListActivity extends Activity {
                 }));
         AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
+        dialog.setOnDismissListener(d->{navigation.event("detail_return", "");navigation.frame(journeyList,"detail_return_visible","");});
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK) {

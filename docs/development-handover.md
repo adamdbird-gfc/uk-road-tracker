@@ -2,6 +2,16 @@
 
 Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Navigation and Progress responsiveness — candidate 0.25.218 (264)
+
+Continue from `fix/navigation-progress-responsiveness`, based on delivered #220
+`4f6ef175`. See [scope, measurements and limits](navigation-progress-performance.md).
+First reliable summaries, retained cards, paged road lists and lazy county towns;
+per-source compact Progress contributions; focused geometry before enrichment;
+bounded worker-prepared road paths/culling and navigation-to-draw diagnostics.
+The supplied trace has zero NCN drawing; preserve hidden-overlay separation and
+necessary background assessments. Full CI and private artifact verification pending.
+
 ## Diagnostic notification lifecycle — delivered 0.25.217 (263)
 
 Continue from `fix/diagnostic-notification-lifecycle`, based on latest #219
