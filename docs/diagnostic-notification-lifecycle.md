@@ -10,7 +10,8 @@ posted whenever stored crash/match reports were nonempty and
 `debug_notification_active` was false. Opening Debug cleared that flag while
 retaining reports. A later process start, including a background activity-recognition
 callback, could therefore announce the historical report as new without a journey
-or match. Notification ID 44 was fixed, but no persistent event identity, creation
+or match. This same path is verified in the exact delivered 213 source
+`5e9f1d56845584559fa8444715d9df0e4f650466`, as well as 216. Notification ID 44 was fixed, but no persistent event identity, creation
 clock, delivery receipt or originating worker existed. Report Time was attempt
 start time (or formatting time), not proof of notification posting time.
 
@@ -39,7 +40,8 @@ is unrelated. Foreground/background process startup still runs Application code.
   post again. New evidence, rules or error identity can form a new event.
 - Reports and notification extras expose event identity, recorded/creation/posting
   timestamps, trigger, worker/thread and original failure time. Pending permission
-  remains distinguishable from a posted alert. Stale dismiss intents cannot
+  remains distinguishable from a posted alert. A posted receipt means submitted
+  to Android, not proof of when an OEM displayed it. Stale dismiss intents cannot
   acknowledge a newer event.
 - Delivery is claimed durably before posting. A process death in the tiny
   claim-to-notify window can lose an alert; it cannot repeatedly regenerate an
@@ -65,7 +67,13 @@ state, new errors and successful-recovery episodes. Coordinator tests cover the
 reported-duration moving gap, repeated archive label updates, recreated workers,
 manual/batch requests, changed evidence/rules and transient cooldowns.
 No original-location/device journey is required. Deterministic tests cannot prove
-all Android/OEM notification scheduling. Full CI and private delivery pending.
+all Android/OEM notification scheduling.
+
+Final implementation `e4c02a1086d2ca9afac8c4a8c35f5583e8a34382` passed complete
+Android compilation/lint, pinned references and all unit tests in
+[run 40177903529](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40177903529).
+The prior complete run 40177567090 also passed; no exclusions. One private
+0.25.217 (263) packaging request follows green tests; artifact verification pending.
 
 No Firebase distribution, backend deployment, historical evidence deletion,
 automatic rematching, global cache invalidation or map/NCN reimplementation.

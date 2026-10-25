@@ -10,7 +10,14 @@ Stored reports no longer become new alerts on process startup; failure event
 identity/delivery/acknowledgement survives restarts. Unchanged GPS-quality
 rejections are held by input fingerprint/rule version. Transient retry bounds,
 raw evidence, journey history and map/NCN incremental work remain intact.
-Full Android CI and one private build pending. No Firebase distribution.
+Final implementation `e4c02a1086d2ca9afac8c4a8c35f5583e8a34382` passed full
+Android compile/lint, pinned references and unit tests in run 40177903529.
+The suite includes actual stale PendingIntent identity, restart/idle/acknowledgement,
+concurrent rediscovery, quality holds, repaired evidence and retry-after expiry.
+One private 217 build requested; signature/artifact verification pending.
+No Firebase distribution. Original Oct 25 post-versus-OS-delay attribution remains
+unprovable without contemporaneous device posting data; the old regeneration
+path is confirmed in delivered 213 and 216 source.
 
 ## Contextual journey actions — delivered 0.25.216 (262)
 

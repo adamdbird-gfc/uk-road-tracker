@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.216",
-  "version_code": 262,
-  "reason": "Evidence-based ferry actions, honest GPS-gap previews and incremental NCN retry handling; one private owner APK only",
-  "revision": 11
+  "version_name": "0.25.217",
+  "version_code": 263,
+  "reason": "Durable diagnostic alert lifecycle and evidence-aware GPS rejection retries; one private owner APK only",
+  "revision": 12
 }
