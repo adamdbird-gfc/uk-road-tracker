@@ -1,6 +1,16 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-24. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Diagnostic notification lifecycle — candidate 0.25.217 (263)
+
+Continue from `fix/diagnostic-notification-lifecycle`, based on latest #219
+`6fa85f85`. See [confirmed defect, incident limits and acceptance](diagnostic-notification-lifecycle.md).
+Stored reports no longer become new alerts on process startup; failure event
+identity/delivery/acknowledgement survives restarts. Unchanged GPS-quality
+rejections are held by input fingerprint/rule version. Transient retry bounds,
+raw evidence, journey history and map/NCN incremental work remain intact.
+Full Android CI and one private build pending. No Firebase distribution.
 
 ## Contextual journey actions — delivered 0.25.216 (262)
 

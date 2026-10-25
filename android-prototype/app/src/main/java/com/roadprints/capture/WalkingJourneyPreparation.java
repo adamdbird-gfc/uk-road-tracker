@@ -93,7 +93,7 @@ final class WalkingJourneyPreparation {
         if(vehicleTail>=1)leg=new ArrayList<>(leg.subList(0,vehicleTail));
         WalkingCaptureEvidence.Result capture=nativeWalk?WalkingCaptureEvidence.prepare(leg):null;
         FootTraceValidator.Result result=capture!=null?capture.route:new FootTraceValidator.Result(leg,leg.size(),false);
-        if(nativeWalk && result.timed && !result.resolved) throw new IllegalStateException(
+        if(nativeWalk && result.timed && !result.resolved) throw new CaptureEvidenceFailure(
                 "This walking recording contains a GPS gap that cannot be validated. Your original recording is preserved.");
         Prepared prepared=new Prepared(); prepared.validated=nativeWalk && result.timed;
         prepared.distance=result.distance;
@@ -102,7 +102,7 @@ final class WalkingJourneyPreparation {
         for(FootTraceValidator.Sample point:result.samples) prepared.points.put(new JSONObject().put("lng",point.lon).put("lat",point.lat));
         for(FootTraceValidator.Sample point:result.samples) prepared.validatedSamples.put(sampleJson(point));
         prepared.quality=CaptureQualityValidator.inspect(prepared.validatedSamples,true);
-        if(prepared.validated && !prepared.quality.optBoolean("resolved")) throw new IllegalStateException(
+        if(prepared.validated && !prepared.quality.optBoolean("resolved")) throw new CaptureEvidenceFailure(
                 "This walking recording has a moving GPS gap or unreliable route evidence. Your original recording is preserved.");
         if(prepared.validated) for(FootTraceValidator.Sample point:samples) prepared.recoveredSamples.put(sampleJson(point));
         prepared.details.put("version",1).put("timing_available",result.timed)

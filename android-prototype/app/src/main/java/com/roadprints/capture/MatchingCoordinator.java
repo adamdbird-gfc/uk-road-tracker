@@ -108,12 +108,16 @@ public final class MatchingCoordinator {
 
     public synchronized boolean rematch(String journeyId) { return start(journeyId, true); }
 
+    synchronized boolean startCaptured(String journeyId) {return start(journeyId,false,"capture_saved");}
     private synchronized boolean start(String journeyId, boolean forceRematch) {
+        return start(journeyId,forceRematch,forceRematch?"user_rematch":journeyId==null?"batch_request":"journey_request");
+    }
+    private synchronized boolean start(String journeyId, boolean forceRematch,String trigger) {
         if (state == State.PREPARING || state == State.RUNNING || state == State.PAUSING) return false;
         pauseRequested = false;
         state = State.PREPARING;
         message = forceRematch ? "Preparing journey to rematch…" : "Preparing journeys for matching…";
-        workers.execute(() -> prepareAndRun(journeyId, forceRematch));
+        workers.execute(() -> prepareAndRun(journeyId, forceRematch,trigger));
         return true;
     }
 
@@ -132,16 +136,20 @@ public final class MatchingCoordinator {
                 cycleTotal, cycleChecked.get(), cycleMatched.get(), message);
     }
 
-    private void prepareAndRun(String journeyId, boolean forceRematch) {
+    private void prepareAndRun(String journeyId, boolean forceRematch,String trigger) {
         try {
             List<String> road = new ArrayList<>();
             List<String> foot = new ArrayList<>();
             List<String> cycle = new ArrayList<>();
             Map<String, String> queuedModes = new HashMap<>();
+            boolean qualityHeld=false;
             if (journeyId != null) {
                 // A per-journey request must not parse every large archived journey.
                 JSONObject journey = JourneyStore.get(app, journeyId);
-                if (journey != null) enqueueIfMatchable(journey, road, foot, cycle, queuedModes, forceRematch);
+                if (journey != null) {
+                    enqueueIfMatchable(journey, road, foot, cycle, queuedModes, forceRematch);
+                    qualityHeld=MatchRetryPolicy.qualityBlocked(journey);
+                }
             } else {
                 // Keep only IDs in the work queue; full GeoJSON stays on disk until a
                 // worker needs that journey, avoiding a heap-sized archive snapshot.
@@ -155,7 +163,7 @@ public final class MatchingCoordinator {
             roadChecked.set(0); roadMatched.set(0); footChecked.set(0); footMatched.set(0); cycleChecked.set(0); cycleMatched.set(0);
             if (total == 0) {
                 state = State.COMPLETE;
-                message = "All eligible journeys are matched";
+                message = qualityHeld?"GPS quality review required · original recording preserved":"No journeys currently eligible for matching";
                 return;
             }
             state = State.RUNNING;
@@ -176,6 +184,7 @@ public final class MatchingCoordinator {
                             BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "journey_match");
                             try {
                                 JSONObject journey = markProcessing(nextJourneyId, queuedModes.get(nextJourneyId), forceRematch);
+                                if(journey==null)continue; // Recheck at execution without inventing a new failure.
                                 measurementJourney = journey;
                                 android.os.Bundle parameters = BetaMeasurement.journeyParameters(journey);
                                 parameters.putString("attempt_type", forceRematch ? "rematch" : "match");
@@ -187,7 +196,7 @@ public final class MatchingCoordinator {
                                 if (cycleLane) cycleMatched.incrementAndGet(); else if (footLane) footMatched.incrementAndGet(); else roadMatched.incrementAndGet();
                             } catch (Exception error) {
                                 failed.incrementAndGet();
-                                markFailed(nextJourneyId, error, measurementJourney);
+                                markFailed(nextJourneyId, error, measurementJourney,trigger,cycleLane?"cycle_matching":footLane?"foot_matching":"road_matching");
                                 if (measurementJourney != null) {
                                     android.os.Bundle parameters = BetaMeasurement.journeyParameters(measurementJourney);
                                     parameters.putString("attempt_type", forceRematch ? "rematch" : "match");
@@ -224,6 +233,9 @@ public final class MatchingCoordinator {
     private void enqueueIfMatchable(
             JSONObject journey, List<String> road, List<String> foot, List<String> cycle,
             Map<String, String> queuedModes, boolean forceRematch) {
+        try{if(MatchRetryPolicy.adoptLegacy(journey))JourneyStore.save(app,journey);}
+        catch(Exception ignored){return;}
+        if(MatchRetryPolicy.qualityBlocked(journey)||MatchRetryPolicy.coolingDown(journey))return;
         recoverIfInterrupted(journey);
         if (!canMatch(journey) || "processing".equals(journey.optString("processing_status"))) return;
         if (!forceRematch && "complete".equals(journey.optString("processing_status")) && (hasStoredMatch(journey)||WalkingMatchOutcome.terminal(journey))) return;
@@ -260,12 +272,9 @@ public final class MatchingCoordinator {
             if (!canMatch(journey)) throw new IllegalStateException("Journey is no longer eligible for matching");
             if (!forceRematch && "complete".equals(journey.optString("processing_status")) && (hasStoredMatch(journey)||WalkingMatchOutcome.terminal(journey)))
                 throw new IllegalStateException("Journey already has a matched route");
-            JSONObject previousAttempt=journey.optJSONObject("last_match_attempt");
-            if(previousAttempt!=null) {
-                try {if(Instant.parse(previousAttempt.optString("next_retry_at_utc")).isAfter(Instant.now()))
-                    throw new MatchFailure(503,"Walking matcher is busy; retry after the requested pause.");}
-                catch(java.time.format.DateTimeParseException absent) { /* Older attempts have no cooldown. */ }
-            }
+            if(MatchRetryPolicy.qualityBlocked(journey)||MatchRetryPolicy.coolingDown(journey))return null;
+            journey.put("last_match_attempt",new JSONObject().put("attempt_id",java.util.UUID.randomUUID().toString())
+                    .put("started_at_utc",Instant.now().toString()));
             String stage = matchingStage(journey.optString("mode", "unknown"));
             journey.remove("walking_outcome");
             journey.put("processing_status", "processing");
@@ -312,7 +321,7 @@ public final class MatchingCoordinator {
                 JSONObject saved = JourneyStore.get(app, journey.optString("journey_id"));
                 if (saved != null) { saved.put("recording_quality", quality); JourneyStore.save(app, saved); }
             }
-            if (!quality.optBoolean("resolved")) throw new IllegalStateException(
+            if (!quality.optBoolean("resolved")) throw new CaptureEvidenceFailure(
                     "This app recording contains unreliable GPS fixes or a gap while moving. Full matching is blocked; your original recording is preserved. Use Debug Journey to report this capture issue.");
         }
         if (walking != null) points = walking.points;
@@ -340,8 +349,7 @@ public final class MatchingCoordinator {
             }
         }
         String endpointPath = endpointForMode(mode);
-        JSONObject attempt = new JSONObject()
-                .put("started_at_utc", Instant.now().toString())
+        JSONObject attempt = new JSONObject(journey.getJSONObject("last_match_attempt").toString())
                 .put("mode", journey.optString("mode", "unknown"))
                 .put("endpoint", endpointPath)
                 .put("source_points", coordinates.length())
@@ -456,7 +464,8 @@ public final class MatchingCoordinator {
                     stages.put("foot_matching","complete");stored.put(key,stages);
                 }
                 if(walking!=null && walking.validated)WalkingArrivalTiming.apply(stored,walking.arrival);
-                stored.remove("error_summary");stored.put("processing_completed_at",Instant.now().toString());
+                stored.remove("error_summary");stored.remove("match_retry_state");
+                DiagnosticNotifications.resolved(app,stored.optString("journey_id"));stored.put("processing_completed_at",Instant.now().toString());
                 JourneyStore.save(app,stored);
             }
             return;
@@ -556,7 +565,8 @@ public final class MatchingCoordinator {
         }
         stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
-        stored.remove("error_summary");
+        stored.remove("error_summary");stored.remove("match_retry_state");
+        DiagnosticNotifications.resolved(app,stored.optString("journey_id"));
         JourneyStore.save(app, stored);
         JSONObject replaySource=stored.optJSONObject("source");
         if(replaySource!=null&&"android_activity_capture".equals(replaySource.optString("type")))
@@ -568,14 +578,15 @@ public final class MatchingCoordinator {
         return failedSections > 0 || inputPoints < 2 || matchedPoints != inputPoints;
     }
 
-    private void markFailed(String journeyId, Exception error, JSONObject expected) {
+    private void markFailed(String journeyId, Exception error, JSONObject expected,String trigger,String worker) {
         if(expected==null)return; // No matching attempt owns this saved revision.
         try {
             synchronized (JourneyStore.class) {
             JSONObject stored = JourneyStore.get(app, journeyId);
             if (stored == null) return;
             if(expected!=null && (!expected.optString("mode").equals(stored.optString("mode"))
-                    || !String.valueOf(expected.optJSONObject("route_geometry")).equals(String.valueOf(stored.optJSONObject("route_geometry")))))return;
+                    || !String.valueOf(expected.optJSONObject("route_geometry")).equals(String.valueOf(stored.optJSONObject("route_geometry")))
+                    || !MatchRetryPolicy.input(expected).equals(MatchRetryPolicy.input(stored))))return;
             String stage = matchingStage(stored.optString("mode", "unknown"));
             stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
             JSONObject attempt = stored.optJSONObject("last_match_attempt");
@@ -594,8 +605,10 @@ public final class MatchingCoordinator {
             stages.put(stage, "failed"); stored.put("stage_statuses", stages);
             JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
             processing.put(stage, "failed"); stored.put("processing", processing);
+            if(MatchRetryPolicy.qualityFailure(error))MatchRetryPolicy.reject(stored,Instant.now().toString());
+            else stored.remove("match_retry_state");
             JourneyStore.save(app, stored);
-            CrashReporter.recordMatchFailure(app, stored, error);
+            CrashReporter.recordMatchFailure(app, stored, error,trigger,worker);
             }
         } catch (Exception ignored) { }
     }

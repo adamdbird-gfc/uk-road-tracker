@@ -1511,7 +1511,7 @@ public class CaptureService extends Service {
                         "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
                                 + "; distance_m: " + Math.round(routeDistance));
                 if (roadMode(persistedMode) || "walking".equals(persistedMode) || "running".equals(persistedMode) || MatchingCoordinator.isCycle(persistedMode)) {
-                    MatchingCoordinator.get(getApplicationContext()).start(savedJourneyId);
+                    MatchingCoordinator.get(getApplicationContext()).startCaptured(savedJourneyId);
                 }
                 }
                 if (savedNextMode != null && savedNextPoints != null && !savedNextPoints.isEmpty()) {

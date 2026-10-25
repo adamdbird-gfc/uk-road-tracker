@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.217",
+      "version_code": 263,
+      "release_date": "2026-10-25",
+      "since": "0.25.216",
+      "changes": [
+        {
+          "title": "Quiet historical diagnostics",
+          "description": "Remember diagnostic delivery across restarts so viewed or unchanged historical failures do not create repeated alerts."
+        },
+        {
+          "title": "Evidence-aware retry",
+          "description": "Hold unchanged GPS-quality failures until evidence or validation rules change, while keeping recoverable network retries."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.216",
       "version_code": 262,
       "release_date": "2026-10-24",

@@ -54,7 +54,7 @@ public final class CrashReporter {
                     System.exit(10);
                 }
             });
-            notifyIfDiagnosticReportsAvailable(app);
+            DiagnosticNotifications.deliver(app,"application_startup_pending","RoadprintsApplication");
         }
     }
 
@@ -76,13 +76,31 @@ public final class CrashReporter {
             // commit() is intentional: this runs immediately before Android terminates the process.
             preferences.edit().putString(REPORTS, updated.toString()).commit();
         }
-        notifyIfDiagnosticReportsAvailable(context);
+        try {
+            JSONObject event=DiagnosticNotifications.event(context,"crash",NcnJson.digest(report),
+                    Instant.now().toString(),"uncaught_exception",thread==null?"unknown":thread.getName());
+            DiagnosticNotifications.ready(context,event);
+            DiagnosticNotifications.deliver(context,"uncaught_exception",thread==null?"unknown":thread.getName());
+        }catch(Exception ignored){}
     }
 
     /** Records a failed route match without retaining or exporting any route coordinates. */
     public static void recordMatchFailure(Context context, JSONObject journey, Throwable error) {
+        recordMatchFailure(context,journey,error,"matching_failure",Thread.currentThread().getName());
+    }
+    static void recordMatchFailure(Context context,JSONObject journey,Throwable error,String trigger,String worker) {
         try {
-            String report = formatMatchFailure(journey, error);
+            JSONObject attempt=journey==null?null:journey.optJSONObject("last_match_attempt");
+            String original=attempt==null?Instant.now().toString():attempt.optString("finished_at_utc",attempt.optString("started_at_utc",Instant.now().toString()));
+            String scope="journey:"+(journey==null?"unknown":journey.optString("journey_id","unknown"));
+            String signature=NcnJson.digest(new JSONArray().put(journey==null?"unknown":MatchRetryPolicy.input(journey))
+                    .put(MatchRetryPolicy.QUALITY_RULES_VERSION).put(MatchFailure.category(error)).put(sanitizeDiagnosticError(error==null?"":error.getMessage())));
+            JSONObject event=DiagnosticNotifications.event(context,scope,signature,original,trigger,worker);
+            if(event==null)return;
+            String report = formatMatchFailure(journey, error)
+                    +"\nOriginal failure time (UTC): "+event.optString("original_failure_at_utc")
+                    +"\nDiagnostic event ID: "+event.optString("event_id")
+                    +"\nDiagnostic trigger: "+trigger+"\nDiagnostic worker: "+worker;
             synchronized (LOCK) {
                 SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
                 JSONArray oldReports;
@@ -97,9 +115,10 @@ public final class CrashReporter {
                     String previous = sanitizeSavedMatchReport(oldReports.optString(index, ""));
                     if (!previous.isEmpty() && !previous.equals(report)) updated.put(previous);
                 }
-                preferences.edit().putString(MATCH_REPORTS, updated.toString()).apply();
+                if(!preferences.edit().putString(MATCH_REPORTS, updated.toString()).commit())return;
             }
-            notifyIfDiagnosticReportsAvailable(context);
+            DiagnosticNotifications.ready(context,event);
+            DiagnosticNotifications.deliver(context,trigger,worker);
         } catch (Exception ignored) {
             // Diagnostic recording must never interrupt journey matching or recovery.
         }
@@ -250,6 +269,9 @@ public final class CrashReporter {
         String matches = getMatchFailureReports(context);
         String performance=PerformanceDiagnostics.report(context);
         if(!performance.isEmpty())matches+=(matches.isEmpty()?"":"\n\n")+"Performance diagnostics (local timings and foreground stalls)\n"+performance;
+        String delivery=DiagnosticNotifications.report(context);
+        if((!crashes.isEmpty()||!matches.isEmpty())&&!delivery.isEmpty())
+            matches+=(matches.isEmpty()?"":"\n\n")+"Diagnostic notification lifecycle\n"+delivery;
         if (crashes.isEmpty()) return matches;
         if (matches.isEmpty()) return crashes;
         return crashes + "\n\n========== Journey match failures ==========" + "\n\n" + matches;
@@ -337,6 +359,7 @@ public final class CrashReporter {
     }
 
     public static void clear(Context context) {
+        DiagnosticNotifications.acknowledged(context,"cleared",null);
         PerformanceDiagnostics.clear(context);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .remove(REPORTS).remove(MATCH_REPORTS).putBoolean(NOTIFICATION_ACTIVE, false).commit();
@@ -345,51 +368,11 @@ public final class CrashReporter {
     }
 
     public static void markDiagnosticReportsViewed(Context context) {
+        DiagnosticNotifications.acknowledged(context,"viewed",null);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(NOTIFICATION_ACTIVE, false).apply();
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) manager.cancel(DEBUG_NOTIFICATION_ID);
-    }
-
-    private static void notifyIfDiagnosticReportsAvailable(Context context) {
-        try {
-            Context app = context.getApplicationContext();
-            // Routine performance timings are available on request, without debug notifications.
-            if (getReports(app).isEmpty() && getMatchFailureReports(app).isEmpty()) return;
-            SharedPreferences preferences = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            if (preferences.getBoolean(NOTIFICATION_ACTIVE, false)) return;
-            NotificationManager manager = (NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE);
-            if (manager == null || !manager.areNotificationsEnabled()) return;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                    && app.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) return;
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel(DEBUG_CHANNEL,
-                        "Roadprints debug reports", NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription("Alerts you when a new on-device Roadprints diagnostic report is ready");
-                manager.createNotificationChannel(channel);
-            }
-
-            Intent openDebug = new Intent(app, DebugActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent pendingIntent = PendingIntent.getActivity(app, DEBUG_NOTIFICATION_ID,
-                    openDebug, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    ? new Notification.Builder(app, DEBUG_CHANNEL)
-                    : new Notification.Builder(app).setPriority(Notification.PRIORITY_DEFAULT);
-            Notification notification = builder
-                    .setSmallIcon(android.R.drawable.stat_notify_error)
-                    .setContentTitle("Roadprints debug report ready")
-                    .setContentText("Tap to review the new report. It stays on this device.")
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .build();
-            manager.notify(DEBUG_NOTIFICATION_ID, notification);
-            preferences.edit().putBoolean(NOTIFICATION_ACTIVE, true).commit();
-        } catch (Throwable ignored) {
-            // A notification must never interrupt crash recording or journey matching.
-        }
     }
 
     private static String format(Thread thread, Throwable error) {

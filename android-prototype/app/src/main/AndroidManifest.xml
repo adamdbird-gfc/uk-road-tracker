@@ -66,6 +66,7 @@
             android:name=".CaptureService"
             android:exported="false"
             android:foregroundServiceType="location" />
+        <receiver android:name=".DiagnosticNotificationReceiver" android:exported="false" />
         <receiver
             android:name=".ActivityRecognitionReceiver"
             android:exported="false" />
