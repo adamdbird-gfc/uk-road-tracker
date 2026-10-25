@@ -95,8 +95,8 @@ public final class RoadDetailActivity extends Activity {
         if(loadedRevision!=revision)geometryShown=false;
         String key=RoadDetailCache.key(this,selection,cumulative,revision);
         RoadDetailModel cached=RoadDetailCache.get(key);
-        if(cached!=null&&loader==DEFAULT_LOADER){model=cached;loadedRevision=revision;show();return;}
-        if(loader==DEFAULT_LOADER&&!cumulative&&!geometryShown){RoadDetailModel preview=ProgressActivity.focusedPreview(this,selection);if(preview!=null){model=preview;showGeometry();}}
+        if(cached!=null&&loader==DEFAULT_LOADER){PerformanceDiagnostics.timing("focused_cache",0,"hit=model kind="+selection.kind);model=cached;loadedRevision=revision;show();return;}
+        if(loader==DEFAULT_LOADER&&!cumulative&&!geometryShown){RoadDetailModel preview=ProgressActivity.focusedPreview(this,selection);if(preview!=null){PerformanceDiagnostics.timing("focused_cache",0,"hit=progress_geometry kind="+selection.kind);model=preview;showGeometry();}else PerformanceDiagnostics.timing("focused_cache",0,"miss kind="+selection.kind);}
         map.setMapRoadTapListener(null);
         loading=true;loadingPanel.findViewWithTag("road_loading_spinner").setVisibility(View.VISIBLE);status.setOnClickListener(null);loadingPanel.setVisibility(geometryShown?View.GONE:View.VISIBLE);loadingLabel.setText("Preparing road geometry…");retry.setVisibility(View.GONE);
         if(!geometryShown){coverageSummary.setVisibility(View.GONE);status.setVisibility(View.VISIBLE);status.setText("Loading your road…");skeleton.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}

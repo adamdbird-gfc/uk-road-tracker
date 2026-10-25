@@ -86,6 +86,24 @@ public class NavigationPerformanceTest {
         for(int i=0;i<4200;i++)cache.draw(canvas,new JSONArray("[[1,51],[1.0001,51]]"),paint,null,1,x,y,800,800);assertTrue(cache.vertices<=200000);
         cache.clear();assertEquals(0,cache.vertices);
     }
+    @Test public void hiddenNcnDoesNotScheduleAssessmentWhenSpoonsPinsAreSelected()throws Exception {
+        android.app.Activity activity=Robolectric.buildActivity(android.app.Activity.class).setup().get();
+        CollectionAccessStore.installForTesting(app,CollectionAccessStore.SPOONS);assertTrue(CollectionAccessStore.select(app,CollectionAccessStore.SPOONS));
+        Field running=field(NcnProgressStore.class,"running");boolean previous=running.getBoolean(null);
+        try {
+            running.setBoolean(null,false);app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
+            RoutePreviewView map=RoutePreviewView.overview(activity);map.layout(0,0,800,800);map.restoreCameraState(.37,51.44,12);double[] camera=map.cameraState();
+            map.setCollectionVenues(CollectionAccessStore.SPOONS,new JSONArray(),Collections.emptySet());NcnMapOverlay.apply(activity,map);
+            assertFalse(running.getBoolean(null));assertNull(field(RoutePreviewView.class,"ncnOverlay").get(map));assertArrayEquals(camera,map.cameraState(),0);
+            assertEquals(CollectionAccessStore.SPOONS,field(RoutePreviewView.class,"collectionKind").get(map));
+            assertTrue(CollectionAccessStore.select(app,CollectionAccessStore.NONE));NcnMapOverlay.apply(activity,map);assertFalse(running.getBoolean(null));assertArrayEquals(camera,map.cameraState(),0);
+        }finally{running.setBoolean(null,previous);app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();activity.finish();}
+    }
+    @Test public void focusedCacheSharesGeometryBudgetAcrossEightSmallScreens()throws Exception {
+        RoadDetailCache.clear();JSONArray line=new JSONArray("[[0,0],[1,1]]");
+        for(int i=0;i<3;i++){RoadDetailModel model=new RoadDetailModel();for(int n=0;n<20000;n++)model.covered.add(line);RoadDetailCache.put("large"+i,model);}
+        assertNull(RoadDetailCache.get("large0"));assertNotNull(RoadDetailCache.get("large2"));
+    }
     @Test public void compactCoverageUnionEqualsRawCoverageWithOverlapAndRemovedEdges()throws Exception {
         JSONObject a=trip("union-0"),b=trip("union-1");b.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0,1]")));
         CoreAchievementEvidence.Coverage raw=new CoreAchievementEvidence.Coverage(),compact=new CoreAchievementEvidence.Coverage();

@@ -473,6 +473,7 @@ public class MapActivity extends Activity {
     }
 
     static void clearProcessMapCache() {
+        MapRenderGeometry.clearPrepared();
         synchronized (MAP_CACHE_LOCK) {
             processMapCache = null;
             processMapCacheRevision = Long.MIN_VALUE;

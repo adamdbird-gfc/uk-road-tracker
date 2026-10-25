@@ -79,9 +79,9 @@ final class RoadDetailModel {
         return output;
     }
     static void cachedRoadEvidence(Context context,JourneyStore.JourneyVisitor visitor)throws Exception {
-        JourneyStore.prepareArchive(context);try(CompactJourneyCache cache=new CompactJourneyCache(context,"road-evidence-v1")){
+        long started=android.os.SystemClock.elapsedRealtime();JourneyStore.prepareArchive(context);try(CompactJourneyCache cache=new CompactJourneyCache(context,"road-evidence-v1")){
             for(java.io.File source:JourneyStore.archiveFiles(context)){if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();visitor.visit(cache.get(source,file->JourneyStore.mapEvidence(context,file,false)));}
-            PerformanceDiagnostics.timing("focused_archive",0,"reads="+cache.reads+" reused="+cache.hits);
+            PerformanceDiagnostics.timing("focused_archive",android.os.SystemClock.elapsedRealtime()-started,"reads="+cache.reads+" reused="+cache.hits);
         }
     }
     List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) throws Exception {

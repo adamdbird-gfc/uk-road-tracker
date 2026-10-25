@@ -22,6 +22,7 @@ final class MapRenderGeometry {
             Line line=new Line(points);synchronized(prepared){while(!prepared.isEmpty()&&(prepared.size()>=4096||preparedPoints+line.count>200000)){JSONArray key=prepared.keySet().iterator().next();preparedPoints-=prepared.remove(key).count;}prepared.put(points,line);preparedPoints+=line.count;}
         }
     }
+    static void clearPrepared(){synchronized(prepared){prepared.clear();preparedPoints=0;}}
     private final LinkedHashMap<JSONArray,Line> lines=new LinkedHashMap<>(64,.75f,true);
     int vertices,builds,hits,culled;
     static double x(double lon){return lon*111319.49079327358;}

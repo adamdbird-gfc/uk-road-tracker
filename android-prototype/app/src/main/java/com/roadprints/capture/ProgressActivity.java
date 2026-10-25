@@ -353,8 +353,10 @@ public class ProgressActivity extends Activity {
         uniqueRoadEdges.intervals.clear();
         uniqueFootEdges.intervals.clear();
         updateLoadingMessage(generation, "Calculating motorway coverage…");
+        long geometryStarted=android.os.SystemClock.elapsedRealtime();
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();
+        PerformanceDiagnostics.timing("progress_geometry",android.os.SystemClock.elapsedRealtime()-geometryStarted,"roads="+stats.discoveredRoads.size());
         return stats;
     }
 
