@@ -11,8 +11,8 @@ posted whenever stored crash/match reports were nonempty and
 retaining reports. A later process start, including a background activity-recognition
 callback, could therefore announce the historical report as new without a journey
 or match. This same path is verified in the exact delivered 213 source
-`5e9f1d56845584559fa8444715d9df0e4f650466`, as well as 216. Notification ID 44 was fixed, but no persistent event identity, creation
-clock, delivery receipt or originating worker existed. Report Time was attempt
+`5e9f1d56845584559fa8444715d9df0e4f650466`, as well as 216. It used fixed notification ID 44, but had no persistent event
+identity, creation clock, delivery receipt or originating worker existed. Report Time was attempt
 start time (or formatting time), not proof of notification posting time.
 
 The reported a79da6c5-6c29-4b9e-be0c-ddb791ef79a0 failure text identifies a native
@@ -72,8 +72,26 @@ all Android/OEM notification scheduling.
 Final implementation `e4c02a1086d2ca9afac8c4a8c35f5583e8a34382` passed complete
 Android compilation/lint, pinned references and all unit tests in
 [run 40177903529](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40177903529).
-The prior complete run 40177567090 also passed; no exclusions. One private
-0.25.217 (263) packaging request follows green tests; artifact verification pending.
+The prior complete run 40177567090 also passed; no exclusions.
+
+**Delivered private Android 0.25.217 (263), PR #220.** Exact signed source
+`5c0a29b0d4a41c627adaae231433539e51a115dd`.
+[Successful private packaging 40178241874](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874),
+[APK artifact 12592274219](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592274219),
+[reports 12592413861](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592413861).
+**787 tests / 105 suites; zero failures/errors/skips**, lint, national references,
+distribution controls and the established v2 signing certificate passed.
+Downloaded XML confirms totals independently; ZIP and APK hashes match CI.
+APK **36,606,617 bytes**, SHA-256
+`a4325601d2d8f180b429ca7e8b7e25298174766cdbd3f7d75b65491057aa508d`.
+Exact-source independent Android checks 40178244829 also passed.
+
+Synthetic 1,547-driving map preparation: **986.71ms cold / 149.51ms warm /
+140.24ms one addition**, identical completion. These are runner measurements,
+not phone startup timings. Existing history/map/NCN tests pass; no cache reset.
+Install over 216 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical deletion or automatic rematching.
+Later documentation-only commits leave this binary unchanged.
 
 No Firebase distribution, backend deployment, historical evidence deletion,
 automatic rematching, global cache invalidation or map/NCN reimplementation.

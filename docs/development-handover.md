@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Diagnostic notification lifecycle — candidate 0.25.217 (263)
+## Diagnostic notification lifecycle — delivered 0.25.217 (263)
 
 Continue from `fix/diagnostic-notification-lifecycle`, based on latest #219
 `6fa85f85`. See [confirmed defect, incident limits and acceptance](diagnostic-notification-lifecycle.md).
@@ -14,8 +14,24 @@ Final implementation `e4c02a1086d2ca9afac8c4a8c35f5583e8a34382` passed full
 Android compile/lint, pinned references and unit tests in run 40177903529.
 The suite includes actual stale PendingIntent identity, restart/idle/acknowledgement,
 concurrent rediscovery, quality holds, repaired evidence and retry-after expiry.
-One private 217 build requested; signature/artifact verification pending.
-No Firebase distribution. Original Oct 25 post-versus-OS-delay attribution remains
+**Delivered private Android 0.25.217 (263), PR #220.** Exact signed source
+`5c0a29b0d4a41c627adaae231433539e51a115dd`.
+[Successful private packaging 40178241874](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874),
+[APK artifact 12592274219](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592274219),
+[reports 12592413861](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40178241874/artifacts/12592413861).
+**787 tests / 105 suites; zero failures/errors/skips**, lint, national references,
+distribution controls and the established v2 signing certificate passed.
+Downloaded XML confirms totals independently; ZIP and APK hashes match CI.
+APK **36,606,617 bytes**, SHA-256
+`a4325601d2d8f180b429ca7e8b7e25298174766cdbd3f7d75b65491057aa508d`.
+Exact-source independent Android checks 40178244829 also passed.
+
+Synthetic 1,547-driving map preparation: **986.71ms cold / 149.51ms warm /
+140.24ms one addition**, identical completion. These are runner measurements,
+not phone startup timings. Existing history/map/NCN tests pass; no cache reset.
+Install over 216 without clearing data. No Firebase upload/tester distribution,
+Play publication, backend change, historical deletion or automatic rematching.
+Later documentation-only commits leave this binary unchanged. Original Oct 25 post-versus-OS-delay attribution remains
 unprovable without contemporaneous device posting data; the old regeneration
 path is confirmed in delivered 213 and 216 source.
 
