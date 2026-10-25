@@ -7,6 +7,7 @@ import java.util.*;
 final class MapRenderGeometry {
     static final class Line {
         final Path path;final RectF bounds=new RectF();final int count;final double originX,originY;
+        Line(Line previous){count=previous.count;originX=previous.originX;originY=previous.originY;bounds.set(previous.bounds);path=null;}
         Line(JSONArray points,boolean build){count=points.length();JSONArray first=points.optJSONArray(0);
             originX=first==null?0:x(first.optDouble(0));originY=first==null?0:y(first.optDouble(1));path=build?new Path():null;
             boolean started=false;for(int i=0;i<points.length();i++){JSONArray p=points.optJSONArray(i);if(p==null||!Double.isFinite(p.optDouble(0))||!Double.isFinite(p.optDouble(1)))continue;
@@ -38,8 +39,9 @@ final class MapRenderGeometry {
     private void put(JSONArray points,Line line){
         if(lines.size()>=8192)lines.remove(lines.keySet().iterator().next());lines.put(points,line);
         Line previous=retained.remove(points);if(previous!=null)vertices-=cost(previous);
-        if(line.path==null||cost(line)>100000)return;
-        while(!retained.isEmpty()&&vertices+cost(line)>100000){JSONArray oldest=retained.keySet().iterator().next();vertices-=cost(retained.remove(oldest));}
+        if(line.path==null)return;
+        if(cost(line)>100000){lines.put(points,new Line(line));return;}
+        while(!retained.isEmpty()&&vertices+cost(line)>100000){JSONArray oldest=retained.keySet().iterator().next();Line discarded=retained.remove(oldest);vertices-=cost(discarded);lines.put(oldest,new Line(discarded));}
         retained.put(points,line);vertices+=cost(line);
     }
     boolean draw(Canvas canvas,JSONArray points,Paint paint,Paint halo,double scale,double centreX,double centreY,int width,int height){return draw(canvas,points,paint,halo,scale,centreX,centreY,width,height,true);}

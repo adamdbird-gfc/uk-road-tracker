@@ -210,7 +210,7 @@ public class MapActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained");navigation.frame(mapView,"ready","cache=retained");}
+        super.onResume();navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained current="+(displayedMapRevision==mapDataRevision()));if(displayedMapRevision==mapDataRevision())navigation.frame(mapView,"ready","cache=retained");}
         active = true;
         if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         String requestedCollection=getIntent().getStringExtra("collection_id");

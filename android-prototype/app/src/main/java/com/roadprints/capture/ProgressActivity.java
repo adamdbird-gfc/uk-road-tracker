@@ -248,7 +248,7 @@ public class ProgressActivity extends Activity {
         if (cached != null && cachedRevision == revision) {
             boolean newlyLoaded = loadedRevision != revision;
             loadedRevision = revision; refreshStatus.setVisibility(View.GONE);
-            navigation.frame(statisticsContent,"first_content","cache=process");navigation.frame(statisticsContent,"ready","roads="+cached.discoveredRoads.size());
+            navigation.frame(statisticsContent,"first_content","cache=process");navigation.frame(statisticsContent,"ready","roads="+cached.discoveredRoads.size()+" secondary_settlements="+(cached.localRoadEnrichmentComplete?"ready":"pending"));
             if (newlyLoaded) { enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation); }
             return;
         }
@@ -825,7 +825,8 @@ public class ProgressActivity extends Activity {
                 }
                 rows.setVisibility(open ? View.VISIBLE : View.GONE);
                 if(open){PerformanceDiagnostics.timing("nav_road_type_bind",android.os.SystemClock.elapsedRealtime()-opened,"type="+category.replace(' ','_')+" rows="+roads.size());
-                    categoryTrace.frame(rows,"first_list","type="+category.replace(' ','_')+" rows="+roads.size());}
+                    categoryTrace.frame(rows,"first_list","type="+category.replace(' ','_')+" bound_children="+rows.getChildCount()+" total_roads="+roads.size());
+                    categoryTrace.frame(rows,"ready","dataset_roads="+roads.size()+" secondary_settlements="+(stats.localRoadEnrichmentComplete?"ready":"pending"));}
                 if (open) expandedRoadCategories.add(category);
                 else expandedRoadCategories.remove(category);
             });
