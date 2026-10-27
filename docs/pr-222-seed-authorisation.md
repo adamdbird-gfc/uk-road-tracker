@@ -1,275 +1,149 @@
-# PR #222 — ready-to-authorise GitHub cache seed
+# PR #222 — draft-release staging correction for approval
 
-## Recommendation and current state
+## Current state — 27 October 2026
 
-**GO for approval of the staged operation described here. NO-GO for execution
-until approval, authenticated upload capability and workflow registration exist.**
-Full Android verification remains a separate NO-GO until tooling/dependency caches
-are pre-provisioned. Do not merge PR #222 or use an APK build workflow to bootstrap.
+Keep PR #222 in draft. No merge, Android build, dependency download, Firebase
+request, production configuration change or further Actions execution is authorised
+by this correction. Do not publish, replace or re-upload the existing bundle.
 
-The existing bundle was verified locally again, without regeneration or downloads:
+The owner manually uploaded the verified bundle and authorised the one-file manual
+workflow registration on main, commit `69537ebdf59d843a1a56bc3a637857134f546c0e`.
+Run [40511948834](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40511948834)
+then checked out the approved immutable source
+`79bcc970c176c6526224a91c24c89525f10bf152`. Offline preflight passed, but release
+staging failed at the published-release-by-tag endpoint with HTTP 404. No asset
+was downloaded; artifact publication and cache save/restore were skipped.
+The shared cache remains unseeded by this operation.
 
-| File | Bytes | SHA-256 |
-|---|---:|---|
-| ZIP `roadprints-reference-pins-2026-10-27.zip` | 157,393,480 | `d547847572e574cecd16cdb8e08077bf2e0a1014507c7f876c94c7c88b97853c` |
-| Member `catalogue.db` | 243,724,288 | `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093` |
-| Member `boundaries.bin` | 8,992,277 | `b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850` |
+| Identity | Verified GitHub metadata |
+|---|---|
+| Draft release | ID `425479238`, tag `reference-pins-2026-10-27-bootstrap`, draft true |
+| Uploaded ZIP | Asset ID `681638825`, `roadprints-reference-pins-2026-10-27.zip` |
+| ZIP size | 157,393,480 bytes |
+| ZIP SHA-256 | `d547847572e574cecd16cdb8e08077bf2e0a1014507c7f876c94c7c88b97853c` |
+| NCN member | `catalogue.db`, 243,724,288 bytes, SHA-256 `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093` |
+| County member | `boundaries.bin`, 8,992,277 bytes, SHA-256 `b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850` |
 
-The current staging workspace can read the verified ZIP at
-`/workspace/scratch/0707e03317a5/roadprints/.cache/reference-bootstrap/roadprints-reference-pins-2026-10-27.zip`.
-A durable copy is [available here](https://chatgpt.com/library?file_id=libfile_84308ddbbf488191add27b1e27dd0e5e&account_id=personal).
-A GitHub runner cannot directly read this workspace/Library file; the approved
-external draft-release upload below bridges that boundary. No such upload occurred.
+The ZIP and member pins are unchanged. Existing independent local hash verification
+and GitHub's asset digest agree. No re-download/re-upload is needed for review.
 
-## Browser fallback and live Render inspection follow-up
+## Corrected discovery and integrity checks
 
-The owner approved the GitHub browser fallback and read-only use of **My Workspace**.
-The browser reached GitHub but had no signed-in session; the secure authentication
-flow did not complete. The upload attempt stopped before any draft release or
-asset creation. No authentication material was read/exported and no alternate
-credential path was used. The release/asset identity remains unavailable because
-nothing has been uploaded. Do not retry authentication without a new user request.
+`scripts/stage_github_reference_bundle.py` now uses authenticated paginated
+`GET /repos/adamdbird-gfc/uk-road-tracker/releases`, matching the exact input tag
+and requiring exactly one result with `draft=true`. Missing, published, ambiguous,
+malformed or incompletely paginated results fail before binary download.
 
-Read-only Render inspection of workspace `tea-da821ljbc2fs73ciadag` succeeded:
+It then lists the selected release's assets via its validated numeric ID. Exactly
+one asset with the pinned filename must exist; its size, `sha256:` digest, uploaded
+state and numeric ID are validated before downloading. Download uses authenticated
+`GET /repos/adamdbird-gfc/uk-road-tracker/releases/assets/{asset_id}` with
+`Accept: application/octet-stream`. Public browser URLs and API-provided URLs/Link
+headers are never followed. Pagination URLs are constructed locally with bounded
+pages and response sizes. HTTPS is restricted to this repository's release API
+and GitHub release-asset storage; cross-host redirects strip the API token.
 
-| Service | ID | Live repository settings |
-|---|---|---|
-| API | `srv-da82330u01pc73ccg6n0` | Same Roadprints repo, branch main, autoDeploy yes, trigger commit; PR previews disabled. |
-| Reference ingestion cron | `crn-dapdcsg473hc7393bk3g` | Same repo, branch main, autoDeploy yes, trigger commit; existing schedule `0 0 1 1 *`. |
+The downloaded bytes are independently hashed, then the two fixed root members
+are size/hash verified before installation. Existing SQLite/county validation,
+artifact publication and cache save/restore ordering are unchanged. No integrity
+check or pinned hash was weakened. Errors do not retry or escalate permissions.
+HTTP 401/403/404 diagnostics explain possible draft visibility failures without
+logging tokens, signed URLs or response bodies.
 
-No service settings, schedules, deployment or execution were changed.
-The [current Render deploy documentation](https://render.com/docs/deploys.md)
-explicitly documents `[skip render]` / `[render skip]` in a commit message to
-prevent an auto-deploy. Its [cron documentation](https://render.com/docs/cronjobs.md)
-confirms that connected-branch pushes otherwise rebuild cron code. Thus the
-proposed registration must use both `[skip ci] [skip render]`; a plain main
-commit is not safe. No suppression-by-live-push test is claimed or authorised.
+## Permissions: documented support, runner verification still pending
 
-The single-file main proposal and exact 79bcc97 seed invocation remain unchanged.
-Main registration and Actions execution are still withheld pending separate owner
-approval, successful upload and the existing source/trigger rechecks. The former
-workspace-selection blocker is resolved; authenticated upload remains blocked.
+[GitHub release-list documentation](https://docs.github.com/en/rest/releases/releases#list-releases)
+specifies `Contents: read` for installation-token access, but also states that
+only callers with repository push access see draft releases.
+[Release asset documentation](https://docs.github.com/en/rest/releases/assets#get-a-release-asset)
+specifies `Contents: read` and authenticated octet-stream download/redirect support.
 
-## Approved upload attempt and current-main inspection
+The registered workflow retains **contents: read / actions: read**. It does not
+request contents write, a PAT or a new secret. The connected GitHub app can read
+the draft metadata, but it is a different identity from the ephemeral runner
+`GITHUB_TOKEN`. The failed run did not test releases-list visibility or asset
+access, so runtime success with that token is **not yet proven**. No runner token
+is available locally, and Actions may not be run during this task. Do not claim
+that the published-tag 404 establishes a permissions failure or that correcting
+the lookup guarantees download access.
 
-The owner has explicitly approved uploading the exact bundle from reviewed source
-`79bcc970c176c6526224a91c24c89525f10bf152`. That upload permission remains valid;
-it does not authorise modifying main, registering a workflow or dispatching Actions.
+The next separately approved run is the controlled verification of that identity.
+If listing hides the draft, or asset listing/download returns 401/403/404, stop:
+leave release/cache unchanged and review a separately authorised credential or
+artifact-transfer approach. Do not publish the release, grant write access,
+retry blindly or add Firebase fallback.
 
-The bundle and both members were rehashed successfully before attempting upload.
-**Upload has not occurred:** the installed GitHub connection exposes no release
-creation/binary asset-upload action, no authenticated GitHub CLI is installed,
-and no GH_TOKEN/GITHUB_TOKEN is present. Plugin discovery confirmed the existing
-GitHub integration, but exposed no alternative uploader. No credentials were
-exported or new client installed. A tag lookup returned 404; no release/asset ID
-or upload receipt was obtained. This is a capability blocker, not missing owner
-permission. Browser fallback requires separate approval under the browser access
-rules; it has not been started.
+## Source availability and exact next operation
 
-Current `main` inspected at `98b503f7435665e6ceda0869413ea08a019579ee`:
-all **23 workflow files** were parsed and reviewed for the one proposed path,
-`.github/workflows/reference-pin-cache.yml`. No configured push/PR filter matches
-that change. No release/create trigger is configured. The Firebase publication
-workflow's workflow_run filter names only the settlement inventory builders, not
-the proposed seed workflow. The current main Android packager is manual-only.
-No configured Actions build, Firebase publication or distribution workflow would
-start from this one-file change. This conclusion uses actual main content, not
-PR branch workflow assumptions, and must be rechecked if main advances.
+**79bcc97 remains immutable, but contains the broken script. Reusing that input
+will repeat the failure.** The workflow already registered on main checks out the
+explicit `source_sha` before running the script. It is byte-for-byte unchanged by
+this correction; no new main registration is needed.
 
-**External deployment clearance is not yet established.** Main's `render.yaml`
-sets `autoDeploy: true` for `uk-road-tracker-api`. Live Render details could not be
-read because no workspace is selected. Workspace discovery returned one candidate,
-**My Workspace** (`tea-da821ljbc2fs73ciadag`); it was not selected or inferred.
-The Render access guidance requires the owner to identify the workspace before
-service reads. Confirm that workspace for read-only deployment/filter inspection.
-Do not claim the absence of all unrelated automation from GitHub YAML alone.
-Main registration remains NO-GO until external deployment suppression is confirmed.
+After reviewing the corrective PR commit, separately approve its full 40-character
+SHA as `CORRECTED_SOURCE_SHA`. That new source choice is an explicit change from
+79bcc97, not a branch-name fallback or rewrite of the old commit. The delivery
+receipt identifies the exact corrective SHA. Later documentation-only commits
+must not silently replace it.
 
-The exact one-file registration patch was prepared locally and checked in an
-isolated Git index against that main SHA. It adds only the approved workflow;
-no branch/ref/working index or production file was modified. Patch SHA-256:
-`ea85458c621cd8bbedcfe9e07d68c4bc94200272ceea22482d1e0062524a4e65`.
-Workflow SHA-256 remains
-`ab164307bdf83d30e77134e081fc42418affeeba61481a0a77afce2f20624c41`.
-The proposal has not been applied or published as a main commit.
-
-After upload capability and external deployment clearance are resolved, request
-separate approval for (a) applying that one-file registration with skip markers,
-and (b) the following single dispatch. The approved runtime source stays at the
-reviewed 79bcc97 commit even if this PR receives documentation-only updates:
+Proposed invocation, **not executed**:
 
 ```sh
 gh workflow run reference-pin-cache.yml --ref main \
   --repo adamdbird-gfc/uk-road-tracker \
-  -f source_sha=79bcc970c176c6526224a91c24c89525f10bf152 \
+  -f source_sha="$CORRECTED_SOURCE_SHA" \
   -f release_tag=reference-pins-2026-10-27-bootstrap
 ```
 
-Leave `run_id` and `artifact_name` unset. Preconditions: the exact ZIP must have a
-verified GitHub draft-release asset identity, the approved workflow must be
-registered, and the owner must separately approve the invocation. No Actions,
-Firebase calls, external uploads, main changes, deployments, APKs or merges were
-performed by this inspection.
+Leave `run_id` and `artifact_name` blank. Approve one new dispatch with the reviewed
+source; do not rerun the old attempt, whose original source is still 79bcc97.
+The current connected tools cannot dispatch a new run. An owner can use Actions →
+Seed verified offline Android reference pins → Run workflow, with the same inputs.
 
-## Exact proposed operation — none of these commands has been executed
+Success requires all of: exact ZIP/member checks, SQLite integrity, retained
+`roadprints-reference-pins-v2` artifact, cache save, deletion of only the two local
+installed pin files, exact-key restore into empty paths, and final pin validation.
+Cache save alone is insufficient. Missing/evicted/corrupt pins fail closed; there
+is no broad restore-key or Firebase recovery path.
 
-1. Resolve the approved, immutable PR #222 head into `REVIEWED_SHA`. Confirm the
-   reviewed workflow file's SHA-256 is
-   `ab164307bdf83d30e77134e081fc42418affeeba61481a0a77afce2f20624c41`.
-   Reject changed workflow/source content until reviewed again.
-2. With an existing owner-authorised GitHub upload client, create the private draft
-   release `reference-pins-2026-10-27-bootstrap` and upload the exact ZIP. This
-   requires repository contents-write authority for the operator, not the seed job.
-   Do not publish the draft, upload a replacement or use `--clobber`.
+## Workflow and external automation review
 
-   Example for an already authenticated, already installed GitHub CLI:
+The workflow is manual-only, owner-only, default-branch-scoped, serialized, and
+limited to 15 minutes. It uses pinned checkout/cache/artifact actions and the
+runner's Python. Its only external operations are GitHub checkout, release reads,
+asset download, artifact transfer and cache operations. No pip, SDK, Gradle,
+application startup, Android packaging, Render call, release publication or
+Firebase deployment is invoked. No repository ref is written by the seed job.
+Publication workflow_run filters name settlement builders, not this workflow.
 
-   ```sh
-   gh release create reference-pins-2026-10-27-bootstrap \
-     --repo adamdbird-gfc/uk-road-tracker --draft --target "$REVIEWED_SHA" \
-     --title 'Verified reference pins — private bootstrap' \
-     --notes 'Exact verified PR 222 reference bundle. Keep draft; no app release.'
-   gh release upload reference-pins-2026-10-27-bootstrap \
-     /absolute/path/roadprints-reference-pins-2026-10-27.zip \
-     --repo adamdbird-gfc/uk-road-tracker
-   ```
-
-   The current connected GitHub tools expose no local binary asset-upload method
-   and `gh` is absent here. Do not export credentials or install a client silently;
-   an approved existing uploader/operator is a prerequisite.
-3. Separately authorise registration of **only** the reviewed
-   `.github/workflows/reference-pin-cache.yml` on the default branch (`main`).
-   Do not merge the PR or copy app code. The workflow checks out `source_sha`, so
-   its validation/helpers come from the approved PR commit, not main's older app.
-   The file was confirmed absent from main by a read-only GitHub contents check.
-   Recheck the default branch and trigger filters immediately before this write.
-   The registration commit must include `[skip ci] [skip render]`; confirm any
-   external auto-deployment integration honours the skip before making that write.
-   If this cannot be established, registration is NO-GO pending separate review.
-   This single dispatch-only workflow path does not match the currently inspected
-   automatic build/publication path filters. Registration is a repository write,
-   and remains unapproved/unperformed in this task.
-4. Explicitly authorise **one** manual run:
-   - Workflow: **Seed verified offline Android reference pins**
-   - File: `reference-pin-cache.yml`; event: `workflow_dispatch`; ref: `main`.
-   - `source_sha`: the approved complete 40-character `REVIEWED_SHA`.
-   - `release_tag`: `reference-pins-2026-10-27-bootstrap`.
-   - Leave `run_id` and `artifact_name` blank for this first bootstrap.
-
-   ```sh
-   gh workflow run reference-pin-cache.yml --ref main \
-     --repo adamdbird-gfc/uk-road-tracker \
-     -f source_sha="$REVIEWED_SHA" \
-     -f release_tag=reference-pins-2026-10-27-bootstrap
-   ```
-
-5. After that approved run only, inspect its results: ZIP/member pins, SQLite check,
-   root-level artifact `roadprints-reference-pins-v2`, cache save, deletion of the
-   two local installed pins, exact-key restore and revalidation. A saved-cache
-   message without successful restore/revalidation is insufficient. Record the
-   run/artifact/cache identities before enabling future development builds.
-
-The alternative existing-artifact mode remains supported: supply a run ID and
-artifact name instead of `release_tag`. Never pass the prior APK/report/receipt
-artifact IDs as reference bundles. This preparation authorises neither mode.
-
-## Network/dependency and trigger review
-
-The seed workflow uses `ubuntu-24.04`'s existing Python 3; no Python setup/download,
-pip, Java, SDK, Gradle, app startup, test suite or APK task is invoked. The workflow
-is owner-only, dispatch-only, serialized and restricted to default-branch scope.
-Its token has **contents: read / actions: read** and no Firebase/production secrets.
-
-| Operation | Anticipated network |
-|---|---|
-| External draft creation/upload, after approval | GitHub repository/release APIs and GitHub asset storage; no application deployment. |
-| Pinned checkout | GitHub git/source retrieval for `source_sha`; credentials are not persisted. |
-| New release downloader | Fixed same-repository `api.github.com/.../releases/` paths and redirects only to `release-assets.githubusercontent.com`; HTTPS only. API tokens are stripped from cross-host redirects. Other hosts, including Firebase, fail before redirect connection. |
-| Optional artifact restore | Official GitHub Actions artifact API/storage. |
-| Local validation/extraction | No network: archive size/hash, fixed member sizes/hashes, SQLite integrity/route count and county pin checks. Imported files are never executed. |
-| Artifact retention / cache save and restore | Official GitHub Actions artifact/cache services and their signed GitHub-managed storage. |
-
-Official Node20 action definitions were inspected at the exact commits below;
-all action references in this workflow are immutable. They are standard trusted
-GitHub transfer actions, not a general network sandbox for arbitrary future code.
-The explicit release downloader is host-restricted; no Firebase client, deployment
-script or Android task is on the workflow's executed path. No end-to-end network
-trace is claimed: the first run is still pending authorisation.
-
-- checkout: `11d5960a326750d5838078e36cf38b85af677262`.
-- download-artifact: `d3f86a106a0bac45b974a628896c90dbdf5c8093`.
-- upload-artifact: `ea165f8d65b6e75b540449e92b4886f43607fa02`.
-- cache save/restore: `0057852bfaa89a56745cba8c7296529d2fc39830`.
-
-No pushes, PRs, schedules or workflow_run events can start this seed workflow.
-Its name is not among the settlement workflows watched by the repository's
-publication workflow. It does not write a repository ref, publish a release,
-request a beta, call a reusable packaging workflow or deploy. The proposed draft
-release is a new metadata record; its publication/deployment is expressly excluded.
-
-Cache key and paths exactly match both Android consumers:
+Cache keys and paths remain identical to Android consumers:
 `reference-pins-v2-${runner.os}-${hashFiles(NCN manifest, county catalogue)}`;
 `.cache/ncn/catalogue.db` and
 `android-prototype/app/src/main/assets/historic-counties/boundaries.bin`.
-The key is computed from the checked-out reviewed source. Default-branch scope is
-visible to later PR/feature builds; the workflow rejects PR/feature seed refs.
-Pin changes create a new key and require a new approved bundle/pin review. Eviction
-causes consumers to fail closed. A corrupt existing immutable cache must be
-explicitly removed and reseeded; there is no broad-key or Firebase fallback.
-Retain the private draft bundle for recovery; artifact retention is 90 days and
-cache retention is separately controlled by GitHub.
+The key is calculated from the explicitly checked-out source; manifest bytes must
+remain unchanged for existing consumers to restore the same exact key.
 
-## Controlled offline Android verification — prepared, not executed
+**Important automation correction:** registration on main unexpectedly triggered
+GitHub's managed Pages/Jekyll workflow [40510370047](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40510370047),
+which completed its Pages deployment despite `[skip ci]`. Reviewing repository
+YAML alone did not reveal this trigger. `[skip ci]` is not a guarantee against
+managed Pages runs. No further main change is proposed. Render's API and cron
+track main; registration used `[skip render]`, and subsequent read-only deployment
+history showed no new Render deployment. Never claim there were no deployments:
+the GitHub Pages deployment did occur. This PR correction changes only its feature
+branch with skip markers; no main, Render or Firebase change is made.
 
-Minimum: JDK 17; Gradle 8.10; Android SDK platform 35 and build tools selected by
-AGP 8.6.1; cached AGP 8.6.1 / Google Services 4.4.4 / Crashlytics 3.0.6 plugins;
-all existing app Maven dependencies; Robolectric 4.14.1 plus instrumented API
-28/33 jars; JUnit 4.13.2; org.json 20240303; both verified reference pins.
+## Offline verification
 
-Only JDK 17 and the real reference pins are available here. Historical successful
-Ubuntu build jobs establish a compatible runner class, not a currently reusable
-persistent SDK/Gradle/Robolectric workspace. No suitable fully provisioned runner
-or dependency cache has been confirmed, and no downloads/compilation were started.
+`python3 -m unittest discover -s scripts -p test_github_reference_staging.py -v`
+passes **14 tests**. Socket connections are rejected; HTTP responses and ZIP
+payloads are synthetic. Coverage includes paginated exact draft discovery,
+missing/ambiguous/published releases, missing/duplicate/wrong-size/wrong-hash/
+incomplete assets, 401/403/404 at discovery and download, no retries or token
+leakage, restricted redirects, authenticated asset endpoint usage, corrupt bytes,
+full synthetic ZIP/member verification, and unchanged workflow safety controls.
 
-One later controlled procedure, after separate verification authorisation:
-
-1. Restore the exact reference cache and pre-provisioned tool/dependency caches
-   through GitHub-only steps. Check every prerequisite locally; stop if absent.
-2. Run `verify_offline_build_controls.py`, `prepare_ncn_reference.py` and county
-   preparation. They must validate the restored pins with no network transport.
-3. Run the compile/lint/test phase inside an egress-denied network namespace on
-   the prepared Linux runner. Enable loopback only for Gradle's local IPC; no
-   external interface/route. If isolation is unavailable, stop rather than fall
-   back to an online invocation. Preserve explicit SDK/cache paths for the process.
-4. Within that isolation, run only:
-
-   ```sh
-   NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" \
-   gradle --offline --no-daemon -p android-prototype \
-     :app:compileDebugJavaWithJavac :app:lintDebug :app:testDebugUnitTest \
-     -Drobolectric.offline=true \
-     -Drobolectric.dependency.dir=/absolute/preprovisioned-robolectric-jars
-   ```
-
-   The reviewed Test configuration forwards these flags and disables reference
-   connections. Do not use offline test exclusions, dependency refresh, SDK
-   installation, assemble, signing, upload or application launch tasks.
-5. Retain results; report failures honestly. A green seed run alone does not make
-   the Android application verified or authorise merging the PR.
-
-## Evidence from this preparation
-
-Existing real ZIP and both member hashes/sizes checked; no asset regeneration.
-Five new local safety tests passed with socket connections blocked (host rules,
-redirect token handling, corrupt input, input validation and workflow restrictions).
-The adjusted existing manual-seed contract test passed. The new extractor also
-processed the existing real bundle locally and its NCN output passed SQLite
-validation. Python syntax, YAML parsing and diff checks pass. These are local
-staging checks, not an Actions run or Android build.
-
-**Approval state:** private GitHub draft/asset upload is now approved but blocked
-by upload capability; the single-file
-manual-workflow registration on main, and one explicitly scoped seed dispatch
-using the reviewed immutable source SHA. None has been performed. SDK/dependency
-installation, full Android verification, merge, APK creation and distribution are
-outside that approval.
+Full Android compilation/lint/Robolectric remain pending pre-provisioned SDK,
+Gradle/dependency caches and separate offline verification; no Android task was
+attempted here. Do not merge or resume APK packaging on the strength of these
+staging tests alone.

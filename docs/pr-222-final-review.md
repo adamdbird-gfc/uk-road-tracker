@@ -10,19 +10,27 @@ release/development requests, matching calculations and map rendering are unchan
 No Firebase requests, deployments, live tests, Actions dispatches, APK generation,
 installation, distribution or production changes were performed.
 
-## Prepared GitHub-only staging and seed authorisation
+## Draft-release seed correction — current status
 
-Read [the ready-to-authorise operation](pr-222-seed-authorisation.md). The existing
-bundle and its two members were reverified in place. The seed workflow now has a
-host-restricted, hash-pinned private draft GitHub release path, removing the need
-for a pre-existing artifact on first bootstrap. It retains the verified artifact,
-saves in default-branch scope, removes the local pins, restores the exact key and
-revalidates. All action versions are pinned to reviewed commits.
+Read [the current approval procedure](pr-222-seed-authorisation.md). The existing
+verified ZIP is uploaded to draft release 425479238, asset 681638825. Main's manual
+workflow was registered as 69537eb. Approved run 40511948834 failed on the published
+tag lookup before asset download/cache publication. The corrected script now uses
+authenticated paginated release/asset discovery and requires exact draft/asset
+identity, size and SHA-256. Both payload integrity checks remain unchanged.
 
-**No upload, registration or workflow execution is approved/performed.** The older
-artifact-only bootstrap limitation below is historical; the new preparation
-specifies the exact approval and prerequisites. SDK/dependency downloads and full
-Android verification are separate, still unapproved operations.
+14 socket-blocked synthetic tests pass, including permission/404 failures and
+successful authenticated asset staging. No new Actions run or main edit occurred.
+79bcc97 remains immutable; the next run must explicitly approve the corrective
+commit SHA to obtain the fixed script. The workflow file itself is unchanged.
+Contents-read API support is documented, but actual runner access to the draft
+requires later approved verification; there is no silent permission escalation.
+
+Registration unexpectedly triggered a managed GitHub Pages deployment despite
+skip markers. Render history showed no new deployments. Earlier statements below
+about no uploads/registration/Actions/deployments describe prior investigation
+sessions, not the current overall project state. Cache remains unseeded and full
+Android compilation/lint/Robolectric remain pending; keep the PR in draft.
 
 ## Reference discovery and local bootstrap — completed follow-up
 

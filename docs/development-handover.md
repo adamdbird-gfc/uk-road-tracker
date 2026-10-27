@@ -2,54 +2,28 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## PR #222 — Render read-only check complete; browser upload stopped
+## PR #222 — draft-release lookup corrected; new seed approval required
 
-Owner approved browser fallback and My Workspace inspection. GitHub browser had no
-signed-in session; secure authentication did not complete, so no draft release or
-asset was created. Do not repeat authentication without a new user request.
+The owner uploaded the verified ZIP to draft release 425479238 (asset 681638825).
+Main now has only the manual seed workflow registration, commit 69537eb. The first
+approved run 40511948834 failed on the published-release-by-tag lookup, before ZIP
+download, artifact publication or cache save. Do not rerun that old attempt.
 
-Live Render reads confirm both API and reference-ingestion cron track main with
-commit-triggered autoDeploy enabled; API PR previews are disabled. Render's current
-documentation specifies `[skip render]` to suppress auto-deploy. Any later approved
-one-file registration must include `[skip ci] [skip render]`; no main push or live
-suppression test occurred. No Render setting, cron schedule or production state
-was changed. Upload and seed remain incomplete; registration/Actions still need
-separate approval. The exact runtime source remains 79bcc97.
+The corrective PR script discovers the exact draft using authenticated paginated
+release/asset lists, validates filename/size/API SHA-256 and independently checks
+downloaded ZIP/member bytes. Tests cover missing/ambiguous assets, permission and
+404 failures without retries, plus synthetic successful staging with sockets blocked.
+79bcc97 is preserved unchanged; the next run must explicitly approve the corrective
+commit SHA because the workflow checks out source_sha. No main workflow edit is
+required. Keep contents: read; actual runner draft visibility/download remains
+unverified until a separately approved run. Never publish the draft to fix access.
 
-## PR #222 — upload authorised, uploader/deployment clearance blocked
-
-The owner approved only the exact bundle upload using source
-`79bcc970c176c6526224a91c24c89525f10bf152`; main registration and Actions still
-require further approval. Both member hashes and ZIP hash were revalidated.
-No release/asset upload was possible with the current connection: no asset-upload
-operation or authenticated CLI is available. No uploaded asset ID exists.
-
-Read [the updated approval and main-inspection record](pr-222-seed-authorisation.md).
-Actual main `98b503f` has 23 workflow files; none matches the single proposed
-registration path. An isolated-index patch adds only the reviewed manual YAML.
-External deployment clearance remains unresolved: `render.yaml` enables autoDeploy,
-and Render has no selected workspace. Owner confirmation of **My Workspace** is
-required before read-only live service inspection; no workspace was selected.
-Do not write main or run Actions until that clearance and separate approval exist.
-Runtime source for any later authorised dispatch must remain exact 79bcc97.
-No Firebase access, upload, main update, workflow execution, APK or merge occurred.
-
-## PR #222 — GitHub seed ready for authorisation, not execution
-
-See [the exact staging/seed operation and offline verification plan](pr-222-seed-authorisation.md).
-The existing verified ZIP is accessible in the staging workspace and durably saved.
-A new private-draft-release input removes the initial artifact bootstrap loop.
-The prepared manual workflow is owner/default-branch only, uses read-only GitHub
-permissions and immutable action pins, validates before retaining an artifact or
-saving cache, then verifies an exact-key restore. It invokes no Android build or
-Firebase/production script. Five new local safety tests, the adjusted contract
-test and a real-bundle extraction/SQLite check pass; no Actions run is claimed.
-
-Pending explicit approval: GitHub draft release/asset upload, registration of only
-the reviewed seed workflow on main, then one manual dispatch at the approved
-immutable PR source SHA. No such upload, default-branch change, dispatch, tool
-installation, compilation, merge or APK generation has occurred. Full Android
-verification separately needs the pre-provisioned SDK/Gradle/Robolectric caches.
+See [the current seed approval procedure](pr-222-seed-authorisation.md) for exact
+identities, token limits, unchanged cache keys and next invocation. Main registration
+also triggered an unexpected GitHub-managed Pages deployment despite [skip ci];
+repository YAML alone was insufficient to rule it out. Render histories showed no
+new deployments. This correction does not change main or run any Actions. Full
+Android verification remains blocked on pre-provisioned tooling/dependency caches.
 
 ## P0 Firebase bandwidth — PR #222 bootstrap follow-up, 27 October 2026
 
