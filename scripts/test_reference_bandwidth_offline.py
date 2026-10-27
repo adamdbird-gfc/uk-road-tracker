@@ -140,6 +140,11 @@ class OfflineReferences(unittest.TestCase):
         self.assertIn('unshare --net',runs)
         self.assertIn('--offline --no-daemon',runs)
         self.assertIn('-Drobolectric.offline=true',runs)
+        self.assertLess(runs.index(':app:prepareRobolectricOffline'),runs.index('unshare --net'))
+        for version in ['9-robolectric-4913185-2-i7','13-robolectric-9030017-i7','15-robolectric-12650502-i7']:
+            self.assertIn('org.robolectric:android-all-instrumented:'+version,runs)
+        self.assertIn('files.transitive = false',runs)
+        self.assertLess(runs.index('].collect { coordinate ->'),runs.index('detachedConfiguration'))
         for line in runs.splitlines():
             if line.strip().startswith('gradle '):
                 self.assertIn('-Pandroid.builder.sdkDownload=false',line)

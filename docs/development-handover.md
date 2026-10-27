@@ -2,6 +2,22 @@
 
 Last reviewed: 2026-10-27.
 
+## PR #222 — Android cache restore/compile/lint passed; test fixtures missing
+
+Run 40582984194 verified source cd0e649: exact GitHub reference cache restored,
+both pins validated, Android and unit-test sources compiled, lint passed. The
+unit phase had 103 passes and 698 failures, all due to three missing local
+Robolectric jars (API 28/33/35 fixtures), not assertions. Report artifact 12769329063
+was inspected. Reference bootstrap is complete and must not be repeated.
+
+The prepared correction resolves those three Maven fixtures before the existing
+network-isolated unit-test step. It changes only verification setup/test/docs;
+application source remains cd0e649. It needs approval to update the one registered
+main workflow and start one new dispatch, retaining skip markers and acknowledging
+the static Pages side effect. No Firebase, SDK install, cache reseed, APK or merge.
+16 updated offline build-contract tests and shell parsing pass. Full tests still
+need that approved runner run; do not claim all Android tests passed.
+
 ## PR #222 — reference cache seeded; final Android verification pending
 
 Bootstrap is complete. Published reference ZIP is unchanged. Offline staging run

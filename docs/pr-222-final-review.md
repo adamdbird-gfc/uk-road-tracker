@@ -1,8 +1,42 @@
 # PR #222 — final build-cache integration review
 
-Status: reference bootstrap complete; Android runner verification still requires
-approval. Do not merge yet. This report supersedes earlier draft-release, signed
+Status: reference restore, Android compilation and lint verified; unit verification
+needs the three missing Maven fixtures described below. Do not merge yet. This report supersedes earlier draft-release, signed
 URL and cache-bootstrap preparation instructions.
+
+## Android runner result and narrow verification fix
+
+[Run 40582984194](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40582984194)
+used application/integration source `cd0e6499ee7959819105c64a30f0f1e852c0679b`.
+It restored the exact shared reference cache, validated both datasets, passed
+preflight/offline controls, compiled Android and unit-test sources, and passed lint.
+`BUILD SUCCESSFUL` for compile/lint is recorded in the log. No reference fallback
+or Firebase request occurred. This now establishes Android build preparation with
+the GitHub cache, beyond the earlier seed-only proof.
+
+The unit run executed inside the network namespace: **801 tests, 103 passed,
+698 failed**. Report artifact `12769329063` (768,708 bytes) was inspected. Every
+failure reports a missing local Robolectric instrumented Android jar, not a test
+assertion failure: 687 need `android-all-instrumented-9-robolectric-4913185-2-i7.jar`,
+7 need `android-all-instrumented-13-robolectric-9030017-i7.jar`, and 4 need
+`android-all-instrumented-15-robolectric-12650502-i7.jar`.
+
+The verification setup incorrectly assumed those files were in the restored
+Gradle/Maven caches. The correction preloads these exact three Maven test fixtures
+before disabling external networking. Each version is resolved in a separate
+non-transitive configuration so Gradle does not discard older SDKs through version
+conflict resolution. No Android app, reference pin, cache key or bootstrap change
+is needed. These are test-library jars from Maven Central, not Firebase assets or
+Android SDK installations. Test execution remains network-isolated/offline.
+
+16 offline build-contract tests and shell syntax checks pass after this correction.
+The Gradle fixture-preparation task itself needs the next approved runner execution;
+no local dependency download or new Actions run was performed here. PR #222 stays
+draft until the test suite can execute with those fixtures present. Do not rerun
+old attempts: update only the registered verification workflow after approval,
+then use a new dispatch with the same already-compiled source SHA `cd0e649...`.
+Registration is already complete at main commit b56616c; the remaining request is
+an update of that one workflow plus one fresh run, not another bootstrap.
 
 ## Established results — do not repeat bootstrap
 
@@ -70,8 +104,8 @@ production secrets, cache save, distribution, publication or deployment task exi
 Total: **58 offline checks passed** (24 Java + 34 Python). No live reference file
 was downloaded and bootstrap was not repeated. The successful seed proves restore
 and integrity in the seed job; equality of consumer keys/paths is verified from
-source. A normal Android workflow's own restore/build has **not** yet been run
-against the final integration commit. Do not describe that as completed.
+source. The subsequent Android verification result above now proves cache restore and
+compilation/lint against cd0e649; complete unit-test success remains outstanding.
 
 Local Android validation cannot run: Java is present, but Gradle 8.10, Android SDK
 35/build tools and the complete Gradle/Robolectric dependency caches are absent.
@@ -81,14 +115,14 @@ No installation or futile compile attempt was made.
 
 Approve only these concrete actions after reviewing this commit:
 
-1. Register only `.github/workflows/verify-android-reference-cache.yml` on main,
+1. Update only `.github/workflows/verify-android-reference-cache.yml` on main,
    using `[skip ci] [skip render]`. This does not merge the PR, change website files
    or touch the published ZIP/cache. GitHub's managed Pages build may republish
    existing static content despite `[skip ci]`; approval must cover that side
    effect. Render API and cron follow main, so retain `[skip render]`.
-2. Run that workflow once on main, setting `source_sha` to the exact reviewed
-   integration commit, not main's older Android baseline. The delivery receipt/PR
-   body identifies that full SHA. No further bootstrap/seed workflow is required.
+2. Run that workflow once on main, setting `source_sha` to
+   `cd0e6499ee7959819105c64a30f0f1e852c0679b`, the same already-compiled integration
+   source. Only the runner workflow fixture setup changes, not the application. No further bootstrap/seed workflow is required.
 
 The verification job uses the runner's existing Java 17/Android SDK 35 and fails
 if the SDK is missing; it never invokes sdkmanager or enables SDK downloads.
@@ -100,9 +134,9 @@ has occurred in this task.
 
 Actual unit test execution is inside a Linux network namespace with loopback only,
 using Gradle offline mode, Robolectric offline mode and the reference transport
-guard. Existing instrumented Android jars are copied from restored Gradle/Maven
-caches into a temporary dependency directory. Missing test jars/dependencies fail
-clearly; there is no online retry or live Firebase test. The job captures build,
+guard. The three required instrumented Android test jars are resolved with normal
+Gradle dependency handling into the temporary dependency directory before network
+isolation. Missing test jars/dependencies still fail clearly; there is no online retry or live Firebase test. The job captures build,
 lint and unit reports only, never APKs. The network-namespace procedure has been
 reviewed structurally but cannot be runner-tested before approval.
 
