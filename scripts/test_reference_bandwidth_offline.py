@@ -34,6 +34,7 @@ class OfflineReferences(unittest.TestCase):
         for name in ['android-prototype-build.yml','build-android-prototype.yml']:
             text=(ROOT/'.github/workflows'/name).read_text()
             self.assertIn('actions/cache/restore@v4',text);self.assertNotIn('--allow-firebase-download',text)
+            self.assertIn('fail-on-cache-miss: true',text)
         script=(ROOT/'android-prototype/scripts/prepare_county_reference.sh').read_text()
         self.assertNotIn('curl ',script);self.assertNotIn('web.app',script)
     def test_all_three_hosted_transports_are_instrumented(self):
@@ -105,5 +106,45 @@ class OfflineReferences(unittest.TestCase):
             (source/'boundaries.bin').write_bytes(b'x'*len(data))
             with self.assertRaisesRegex(ValueError,'checksum'):seed(source,root)
             self.assertEqual(data,(county/'boundaries.bin').read_bytes())
+
+    def test_verification_restores_the_exact_seeded_build_cache(self):
+        import yaml
+        contracts=[]
+        for name in ['reference-pin-cache.yml','android-prototype-build.yml',
+                     'build-android-prototype.yml','verify-android-reference-cache.yml']:
+            d=yaml.load((ROOT/'.github/workflows'/name).read_text(),Loader=yaml.BaseLoader)
+            job=next(iter(d['jobs'].values()))
+            restores=[s for s in job['steps'] if s.get('uses','').startswith('actions/cache/restore@')]
+            self.assertEqual(1,len(restores),name)
+            cfg=restores[0]['with']
+            self.assertEqual('true',cfg['fail-on-cache-miss'],name)
+            self.assertNotIn('restore-keys',cfg,name)
+            contracts.append((cfg['key'],cfg['path'].splitlines()))
+        self.assertTrue(all(c==contracts[0] for c in contracts))
+
+    def test_manual_android_verification_has_no_deployment_or_apk_tasks(self):
+        import yaml
+        d=yaml.load((ROOT/'.github/workflows/verify-android-reference-cache.yml').read_text(),Loader=yaml.BaseLoader)
+        self.assertEqual(['workflow_dispatch'],list(d['on']))
+        self.assertEqual({'contents':'read'},d['permissions'])
+        job=d['jobs']['verify']
+        self.assertIn('github.actor == github.repository_owner',job['if'])
+        self.assertIn('github.event.repository.default_branch',job['if'])
+        steps=job['steps'];runs='\n'.join(s.get('run','') for s in steps)
+        checkout=next(s for s in steps if s.get('uses','').startswith('actions/checkout@'))
+        self.assertEqual('${{ inputs.source_sha }}',checkout['with']['ref'])
+        self.assertEqual('false',checkout['with']['persist-credentials'])
+        self.assertLess(runs.index('verify_offline_build_controls.py'),runs.index('prepare_ncn_reference.py'))
+        self.assertIn('compileDebugJavaWithJavac',runs);self.assertIn(':app:lintDebug',runs)
+        self.assertIn(':app:testDebugUnitTest',runs)
+        self.assertIn('unshare --net',runs)
+        self.assertIn('--offline --no-daemon',runs)
+        self.assertIn('-Drobolectric.offline=true',runs)
+        for line in runs.splitlines():
+            if line.strip().startswith('gradle '):
+                self.assertIn('-Pandroid.builder.sdkDownload=false',line)
+        for token in ['assembleDebug','bundleRelease','firebase deploy','upload_android_firebase',
+                      'secrets.','actions/cache/save@','sdkmanager','pip install']:
+            self.assertNotIn(token,json.dumps(steps))
 
 if __name__=='__main__':unittest.main()

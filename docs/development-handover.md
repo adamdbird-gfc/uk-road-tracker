@@ -1,87 +1,34 @@
 # Roadprints development handover
 
-Owner clarification: broader reference-data access is acceptable subject to no
-personal data and source redistribution terms. Offline inspection and source terms
-support staging the national datasets with attribution; the proposed artifact now
-includes pinned manifests and REFERENCE-LICENCES.txt. The existing ZIP/data hashes
-are unchanged. One unchanged-site Pages rebuild is approved, but main registration,
-secret creation and Actions execution still require separate clear approval. See
-[the current procedure](pr-222-artifact-bootstrap.md). No such operation occurred.
+Last reviewed: 2026-10-27.
 
-## PR #222 — private artifact bootstrap prepared for review
+## PR #222 — reference cache seeded; final Android verification pending
 
-Latest run 40555030074 passed corrected inputs/source checks, but contents-read
-GITHUB_TOKEN could not discover the existing draft. No ZIP download/cache save
-occurred. A new manual artifact-stage workflow is proposed: read a temporary
-GitHub signed asset URL from an Actions secret, check out immutable 79bcc97,
-verify ZIP/member/SQLite/county integrity, and upload only the two root datasets.
-It never accesses Firebase or the shared cache. Seven offline staging-contract
-checks passed. No new main write, secret, Actions run or release change occurred.
+Bootstrap is complete. Published reference ZIP is unchanged. Offline staging run
+40576749837 and cache-seeding run 40579277763 succeeded. Seed source 54c2cca;
+original 79bcc97 remains immutable. Both pins were saved/restored/revalidated under
+`reference-pins-v2-Linux-46a8b52eef4cb8117614b9944797b353027f46e4b30ffa6e3ed582a34a19e024`.
+Do not repeat release upload, asset discovery, signed-URL secrets or bootstrap.
 
-Read [the full artifact bootstrap/approval procedure](pr-222-artifact-bootstrap.md).
-Approval must cover the temporary asset-scoped bearer secret and staging run;
-main registration also needs explicit treatment of the known managed Pages
-side effect despite [skip ci]. Existing cache seeding then works unchanged using
-source 79bcc97 + numeric staging run_id + roadprints-reference-pins-v2, leaving
-release_tag empty. No PAT, permission expansion, public asset upload, external
-hosting, APK or merge is proposed. A live signed URL has not been tested.
+Android checks and private packaging restore the same exact key/paths and validate
+both datasets before Java/Gradle setup. The final correction makes missing-cache
+failure explicit. Helpers remain local-only; no Firebase fallback. Existing local
+packaging callers inherit the protection. App baseline is still 0.25.218 (264).
 
-Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
+58 offline checks passed in final integration (24 Java, 16 reference/build contract,
+14 published-release staging, 4 distribution controls). These do not prove an
+Android compile. Local SDK/Gradle/Robolectric caches remain absent; no build was
+attempted. A manual no-APK Android verification workflow is prepared on the PR.
+It needs approval for one-file main registration (with skip markers and known
+Pages side effect) and one run against the exact reviewed integration SHA. It
+restores/validates references first, allows normal Gradle/Maven dependency setup,
+and executes unit tests offline with no external network. No SDK download,
+Firebase call, production secret or distribution is permitted.
 
-## PR #222 — draft-release lookup corrected; new seed approval required
-
-The owner uploaded the verified ZIP to draft release 425479238 (asset 681638825).
-Main now has only the manual seed workflow registration, commit 69537eb. The first
-approved run 40511948834 failed on the published-release-by-tag lookup, before ZIP
-download, artifact publication or cache save. Do not rerun that old attempt.
-
-The corrective PR script discovers the exact draft using authenticated paginated
-release/asset lists, validates filename/size/API SHA-256 and independently checks
-downloaded ZIP/member bytes. Tests cover missing/ambiguous assets, permission and
-404 failures without retries, plus synthetic successful staging with sockets blocked.
-79bcc97 is preserved unchanged; the next run must explicitly approve the corrective
-commit SHA because the workflow checks out source_sha. No main workflow edit is
-required. Keep contents: read; actual runner draft visibility/download remains
-unverified until a separately approved run. Never publish the draft to fix access.
-
-See [the current seed approval procedure](pr-222-seed-authorisation.md) for exact
-identities, token limits, unchanged cache keys and next invocation. Main registration
-also triggered an unexpected GitHub-managed Pages deployment despite [skip ci];
-repository YAML alone was insufficient to rule it out. Render histories showed no
-new deployments. This correction does not change main or run any Actions. Full
-Android verification remains blocked on pre-provisioned tooling/dependency caches.
-
-## P0 Firebase bandwidth — PR #222 bootstrap follow-up, 27 October 2026
-
-Continue on `fix/firebase-bandwidth-offline` against delivered Android 218's
-`fix/navigation-progress-responsiveness`. **Keep draft: full Android verification
-and shared cache seeding still require a prepared runner and explicit Actions
-approval.** Read [the updated review and safe build procedure](pr-222-final-review.md).
-
-**Asset discovery is resolved.** The original NCN publication ZIP was located in
-Library; its manifest matches revision 1. NCN decoded database 243,724,288 bytes /
-SHA `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093`,
-SQLite quick_check=ok, 219 routes. County binary recovered from existing APK 218:
-8,992,277 bytes / SHA
-`b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850`.
-Both real pins are installed locally. A ready-to-seed reference ZIP was prepared;
-see the review for its identity, sources and bootstrap paths. No datasets are
-committed; bootstrap/source directories are now ignored.
-
-The real NCN national catalogue/mapping test passed with socket access blocked.
-Prior 57 offline checks were not rerun without cause. Full compile/lint/Robolectric
-remains blocked by missing Gradle 8.10, Android SDK/build tools and Maven/
-Robolectric caches. No build tools were downloaded or unavailable build attempted.
-Gradle now explicitly forwards Robolectric offline/dependency-directory settings
-to Test workers; the prior daemon-only command was insufficient.
-
-The shared GitHub cache is **not** seeded. Inspected historical GitHub artifacts
-contain APKs/reports/publication receipt, not the required bundle. The dormant
-manual seed workflow needs an existing two-pin GitHub artifact and a visible
-cache scope; approved staging and explicit workflow-run authorisation remain
-necessary. No Actions was started. Do not use old workflows to bypass a cache miss.
-No merge, Firebase request, production change, new APK, installation or distribution
-occurred. Preserve Android 0.25.218 (264) and installed app data.
+See [the current final review](pr-222-final-review.md) for evidence, exact remaining
+actions and runtime limits. Keep the PR draft until Android verification passes;
+merge remains separately approved. No main, workflow, secret, reference/cache,
+production, release or APK change occurred during this final integration task.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 

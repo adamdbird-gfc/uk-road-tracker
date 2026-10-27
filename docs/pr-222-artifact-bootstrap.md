@@ -1,3 +1,11 @@
+# Historical signed-URL proposal — abandoned
+
+Do not follow these setup instructions. The owner instead published the verified
+release and successful run 40579277763 already seeded/restored/revalidated the
+shared cache. No browser developer tools or temporary URL secret is needed.
+Use [the final integration review](pr-222-final-review.md) as the current handover.
+The remainder is retained only as historical preparation, not authorisation.
+
 # PR #222 — GitHub-only artifact bootstrap proposal
 
 ## Owner clarification and data review

@@ -54,6 +54,7 @@ jobs:
             .cache/ncn/catalogue.db
             android-prototype/app/src/main/assets/historic-counties/boundaries.bin
           key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
 
       - name: Verify both reference pins before build setup
         run: |
