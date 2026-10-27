@@ -135,14 +135,7 @@ final class LocalRoadSettlementMatcher {
         ReferenceDataDiagnostics.initialize(context.getFilesDir());
         byte[] bytes = new ReferenceDataCache(new java.io.File(context.getFilesDir(), "settlement-boundaries-v1"))
                 .get(code, "published-v1", () -> fetchBoundary(code).toString().getBytes(StandardCharsets.UTF_8),
-                        value -> {
-                            JSONObject geometry = new JSONObject(new String(value, StandardCharsets.UTF_8));
-                            if ("Feature".equals(geometry.optString("type"))) geometry = geometry.getJSONObject("geometry");
-                            String type = geometry.optString("type");
-                            if (!("Polygon".equals(type) || "MultiPolygon".equals(type))
-                                    || geometry.getJSONArray("coordinates").length() == 0)
-                                throw new java.io.IOException("Invalid settlement boundary");
-                        });
+                        value -> SettlementBoundaryValidation.validate(new JSONObject(new String(value, StandardCharsets.UTF_8))));
         return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
     }
 
@@ -150,7 +143,7 @@ final class LocalRoadSettlementMatcher {
         try {
             JSONObject response = request("GET", API + "/settlement-boundaries/" + code, null);
             JSONObject boundary = response.optJSONObject("boundary");
-            if (boundary != null) return boundary;
+            if (boundary != null) { SettlementBoundaryValidation.validate(boundary); return boundary; }
         } catch (Exception ignored) {
             // The published public boundary files provide a read-only fallback.
         }

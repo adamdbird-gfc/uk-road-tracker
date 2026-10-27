@@ -2,24 +2,29 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## P0 Firebase bandwidth protection — 27 October 2026
+## P0 Firebase bandwidth — PR #222 review, 27 October 2026
 
-Continue on `fix/firebase-bandwidth-offline`, based on delivered private 218's
-`fix/navigation-progress-responsiveness` source. Read
-[the investigation, inventory, fixes, test limits and bandwidth model](firebase-bandwidth-investigation-2026-10-27.md).
-No Firebase request, deployment, billing/configuration change, app launch or APK
-build occurred. Reference preparation is offline by default; cold build cache
-misses deliberately fail until verified local pins are provisioned. Workflows
-pinned to historical SHAs retain their old behaviour. Do not launch those
-workflows during the quota incident.
+Continue on `fix/firebase-bandwidth-offline` against delivered Android 218's
+`fix/navigation-progress-responsiveness`. **Keep draft: full Android verification
+and real reference-cache bootstrap are blocked.** Read the
+[final review and safe build procedure](pr-222-final-review.md) before merging or
+running any build. The [initial investigation](firebase-bandwidth-investigation-2026-10-27.md)
+retains the bandwidth model and source inventory.
 
-Persistent settlement boundary caching, NCN discovery/retry protection and bounded
-local bandwidth diagnostics are added. Runtime NCN and venue payload caches were
-already persistent; no evidence shows every map opening fetched the national DB.
-35 targeted offline checks passed (20 Java cache/transport checks, 5 Python
-contracts, 4 distribution controls, 6 county recovery). Full Android build,
-Robolectric integration and device navigation remain unverified: no Android SDK
-or Gradle is installed. No new APK, release request or tester distribution.
+Reviewed/fixed historical-source download bypasses, external packaging callers,
+cache seeding/restore-only controls, cancellation and boundary integrity. NCN pin
+preparation now has no network implementation. The dormant manual cache seed
+workflow uses existing GitHub artifacts only; no seed or Actions workflow was run.
+Android Test workers reject reference HTTP connections. 57 targeted offline checks
+pass; full compile/lint/Robolectric cannot run without pre-provisioned SDK/Gradle
+and real pins. Four new Android test methods remain unexecuted.
+
+Source filters show no automatic workflow on merge into the current base; later
+main merges match the guarded Android checks. The reference bundle must be seeded
+in a visible GitHub cache scope before normal builds resume. Never run old pinned
+workflow revisions to bypass missing references. No Firebase requests, deployment,
+APK generation, app launch, signing, release request or tester distribution occurred.
+Keep installed app data and Android version 0.25.218 (264) unchanged.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 

@@ -33,18 +33,34 @@ final class NcnCatalogueFiles {
         for(String name:new String[]{"active.json","previous.json"})try{JSONObject m=readManifest(new File(dir,name));validate(m);File file=new File(dir,m.getString("sha256")+".db");if(file.length()!=m.getLong("database_bytes"))throw new IOException("Cached NCN length differs");String key=file.getPath()+":"+file.lastModified();if(!verified.contains(key)){if(!digest(file).equals(m.getString("sha256")))throw new IOException("Cached NCN checksum differs");verified.add(key);}return new Installed(file,m);}catch(Exception absent){failure=absent;}
         throw new IOException("No verified NCN catalogue cached",failure);
     }
-    static Installed open(Context c)throws Exception{
+    static Installed open(Context c)throws Exception {
         synchronized(INSTALL_LOCK) {
-        try{Installed result=cached(c);ReferenceDataDiagnostics.cache("ncn",result.manifest.getString("sha256"),result.manifest.getString("sha256"),true,"valid");return result;}catch(IOException absent){
-            android.content.SharedPreferences retry=c.getSharedPreferences("ncn_reference_updates",0);
-            long now=System.currentTimeMillis(), next=retry.getLong("install_retry_after",0);
-            if(now<next && next-now<=60*60_000)throw new IOException("NCN retry deferred; use explicit Retry");
-            retry.edit().putLong("install_retry_after",now+60*60_000).apply();
-            ReferenceDataDiagnostics.cache("ncn","seed_or_latest","none",false,"missing_or_corrupt");cachedVersion.set("none");
-            JSONObject seed=readManifest(c.getAssets().open("ncn-national/manifest.json"));validate(seed);
-            JSONObject selected=seed;try{JSONObject latest=remoteManifest();if(latest.getLong("revision")>=seed.getLong("revision"))selected=latest;}catch(Exception unavailable){/* Immutable seed is a fallback when discovery is unavailable. */}
-            NcnProgressStore.catalogueStatus("Downloading verified-open NCN catalogue…");install(c,selected);retry.edit().remove("install_retry_after").putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();return cached(c);
-        }
+            try {
+                Installed result=cached(c);
+                ReferenceDataDiagnostics.cache("ncn",result.manifest.getString("sha256"),result.manifest.getString("sha256"),true,"valid");
+                return result;
+            } catch(IOException absent) {
+                android.content.SharedPreferences retry=c.getSharedPreferences("ncn_reference_updates",0);
+                long now=System.currentTimeMillis(), next=retry.getLong("install_retry_after",0);
+                if(now<next && next-now<=60*60_000)throw new IOException("NCN retry deferred; use explicit Retry");
+                if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("NCN request cancelled");
+                retry.edit().putLong("install_retry_after",now+60*60_000).commit();
+                ReferenceDataDiagnostics.cache("ncn","seed_or_latest","none",false,"missing_or_corrupt");
+                cachedVersion.set("none");
+                try {
+                    JSONObject seed=readManifest(c.getAssets().open("ncn-national/manifest.json"));validate(seed);
+                    JSONObject selected=seed;
+                    try {
+                        JSONObject latest=remoteManifest();
+                        if(latest.getLong("revision")>=seed.getLong("revision"))selected=latest;
+                    } catch(Exception unavailable) { /* Immutable seed supports discovery failure. */ }
+                    if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("NCN request cancelled");
+                    NcnProgressStore.catalogueStatus("Downloading verified-open NCN catalogue…");
+                    install(c,selected);
+                    retry.edit().remove("install_retry_after").putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();
+                    return cached(c);
+                } finally { cachedVersion.remove(); }
+            }
         }
     }
     static HttpURLConnection connection(String path)throws Exception{

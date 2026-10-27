@@ -1,0 +1,44 @@
+name: Seed verified offline Android reference pins
+# Dormant until separately requested by the owner. Never fetch Firebase content.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Existing same-repository run holding a local reference bundle
+        required: true
+        type: string
+      artifact_name:
+        description: Existing artifact containing catalogue.db and boundaries.bin
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  seed:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify offline build controls
+        run: python3 scripts/verify_offline_build_controls.py
+      - name: Download existing GitHub reference artifact (never Firebase)
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: reference-input
+      - name: Verify exact pins before seeding cache
+        run: python3 scripts/seed_reference_pins.py --source-directory reference-input
+      - name: Save verified reference pins
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}

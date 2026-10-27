@@ -43,14 +43,22 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Verify offline source build controls before preparing references
+        run: python3 scripts/verify_offline_build_controls.py
+
       # Cache immutable pins across checks and packaging; a cold miss fails closed.
       - name: Restore pinned references without Firebase access
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             .cache/ncn/catalogue.db
             android-prototype/app/src/main/assets/historic-counties/boundaries.bin
-          key: reference-pins-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+
+      - name: Verify both reference pins before build setup
+        run: |
+          python3 scripts/prepare_ncn_reference.py
+          bash android-prototype/scripts/prepare_county_reference.sh
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -68,9 +76,6 @@ jobs:
           python3 scripts/generate_venue_collections.py --check
           python3 -m unittest discover -s scripts -p test_venue_catalogue.py
 
-      - name: Package pinned offline historic county reference
-        run: bash android-prototype/scripts/prepare_county_reference.sh
-
       - name: Verify pinned service footprints
         run: |
           python3 -m pip install shapely==2.2.0
@@ -82,10 +87,9 @@ jobs:
       - name: Compile Android and lint independently of reference publication
         run: gradle --no-daemon --stacktrace -p android-prototype :app:compileDebugJavaWithJavac :app:lintDebug
 
-      - name: Verify locally cached NCN test reference (no Firebase access)
+      - name: Run national NCN fixtures against verified local reference
         id: ncn_reference
         run: |
-          python3 scripts/prepare_ncn_reference.py
           NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" python3 scripts/test_ncn_national.py
 
       - name: Run integrated unit tests with verified external reference

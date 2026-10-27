@@ -49,6 +49,8 @@ if (stableKeystore != null && stableStorePassword != null && stableKeyAlias != n
 // A failed external serving gate still permits all offline regression tests.
 // Packaging never sets this property and always runs the complete suite.
 tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    // Mock Transport fixtures still work. Any real public reference connection fails before opening a URL.
+    systemProperty("roadprints.referenceNetworkDisabled", "true")
     if (providers.gradleProperty("ncnOfflineChecks").orNull == "true") {
         exclude("**/NcnNationalTest*", "**/NcnUiTest*")
     }

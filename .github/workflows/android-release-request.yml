@@ -28,7 +28,7 @@ jobs:
         run: python3 scripts/validate_android_release_request.py >> "$GITHUB_OUTPUT"
   package:
     needs: request
-    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    uses: ./.github/workflows/build-android-prototype.yml
     with:
       source_ref: ${{ needs.request.outputs.source_sha }}
       firebase_upload: false

@@ -14,7 +14,10 @@ final class ReferenceDataConnection extends HttpURLConnection {
         this(url, dataset, version, trigger, "unknown_see_cache_event");
     }
     ReferenceDataConnection(URL url, String dataset, String version, String trigger, String cachedVersion) throws IOException {
-        super(url); delegate = (HttpURLConnection) url.openConnection();
+        super(url);
+        if (Boolean.getBoolean("roadprints.referenceNetworkDisabled"))
+            throw new IOException("Reference network disabled for offline verification");
+        delegate = (HttpURLConnection) url.openConnection();
         this.dataset = dataset; this.version = version; this.trigger = trigger; this.cachedVersion = cachedVersion;
     }
     private void begin() { if (!attempted) { attempted = true; started = System.nanoTime(); } }

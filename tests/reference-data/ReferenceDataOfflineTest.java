@@ -81,6 +81,30 @@ public final class ReferenceDataOfflineTest {
             Thread.currentThread().interrupt();
             fails(()->shared.get("cancelled","v1",load(count,V1),VALIDATE));Thread.interrupted();check(count.get()==5);
             pass("cancelled consumer does not start a download");
+            AtomicInteger retried = new AtomicInteger();
+            shared.get("cancelled","v1",load(retried,V1),VALIDATE);
+            check(retried.get()==1);pass("pre-cancelled request does not poison later retry");
+            shared.get("backoff-write-failure","v1",()->V1,VALIDATE);
+            Files.createDirectory(base.resolve("cache/backoff-write-failure.retry"));
+            check(Arrays.equals(V1,shared.get("backoff-write-failure","v2",()->{throw new IOException("failed");},VALIDATE)));
+            pass("backoff metadata write failure preserves valid fallback");
+            ExecutorService independent=Executors.newFixedThreadPool(2);
+            CountDownLatch loading=new CountDownLatch(1),release=new CountDownLatch(1);
+            try {
+                String prefix=base.resolve("cache").toFile().getCanonicalPath()+"/";
+                String key="independent";
+                while (((prefix+key).hashCode()&Integer.MAX_VALUE)%32==((prefix+"blocked").hashCode()&Integer.MAX_VALUE)%32) key+="x";
+                Future<byte[]> blocked=independent.submit(()->shared.get("blocked","v1",()->{loading.countDown();release.await();return V1;},VALIDATE));
+                check(loading.await(2,TimeUnit.SECONDS));
+                final String otherKey=key;
+                check(Arrays.equals(V1,independent.submit(()->shared.get(otherKey,"v1",()->V1,VALIDATE)).get(2,TimeUnit.SECONDS)));
+                release.countDown();check(Arrays.equals(V1,blocked.get(2,TimeUnit.SECONDS)));
+                pass("unrelated reference keys do not queue behind a blocked download");
+            } finally { release.countDown();independent.shutdownNow(); }
+            System.setProperty("roadprints.referenceNetworkDisabled","true");
+            fails(()->new ReferenceDataConnection(new URL("https://synthetic.invalid/blocked"),"ncn","v1","test"));
+            System.clearProperty("roadprints.referenceNetworkDisabled");
+            pass("offline test property rejects reference connection before transport creation");
             ReferenceDataConnection connection=new ReferenceDataConnection(new URL("https://synthetic.invalid/ok"),"ncn","v1","synthetic_test");
             check(connection.getResponseCode()==200);
             try(InputStream input=connection.getInputStream()){check(Arrays.equals(input.readAllBytes(),V1));}

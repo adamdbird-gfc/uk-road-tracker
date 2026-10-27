@@ -1,5 +1,13 @@
 # Firebase Hosting bandwidth investigation — 27 October 2026
 
+## Follow-up review
+
+[PR #222 final review](pr-222-final-review.md) supersedes the initial implementation
+and test status below. Reference preparation is now entirely local-only (the
+remote opt-in was removed); builds restore only, explicit verified seeding is
+provided, historical-source controls are checked, and 57 offline checks pass.
+Full Android verification and real reference-cache bootstrap remain blockers.
+
 ## Outcome and evidence limits
 
 Source fixes are based on delivered private **0.25.218 (264)**, exact signed source

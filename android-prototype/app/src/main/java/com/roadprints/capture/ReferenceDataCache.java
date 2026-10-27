@@ -9,7 +9,8 @@ import java.security.MessageDigest;
 final class ReferenceDataCache {
     interface Loader { byte[] load() throws Exception; }
     interface Validator { void validate(byte[] bytes) throws Exception; }
-    private static final Object LOCK = new Object();
+    private static final java.util.concurrent.locks.ReentrantLock[] LOCKS = new java.util.concurrent.locks.ReentrantLock[32];
+    static { for (int i = 0; i < LOCKS.length; i++) LOCKS[i] = new java.util.concurrent.locks.ReentrantLock(); }
     private static final long RETRY_MS = 60L * 60 * 1000;
     private static final int MAX_BYTES = 4 * 1024 * 1024;
     private final File directory;
@@ -18,7 +19,11 @@ final class ReferenceDataCache {
         if (!dataset.matches("[A-Za-z0-9_-]{1,100}") || version.length() > 200)
             throw new IllegalArgumentException("Invalid reference identity");
         // Shared across instances; a waiting consumer rechecks the committed file.
-        synchronized (LOCK) {
+        String identity = directory.getCanonicalPath() + "/" + dataset;
+        java.util.concurrent.locks.ReentrantLock lock = LOCKS[(identity.hashCode() & Integer.MAX_VALUE) % LOCKS.length];
+        try { lock.lockInterruptibly(); }
+        catch (InterruptedException cancelled) { Thread.currentThread().interrupt(); throw new InterruptedIOException("Reference request cancelled"); }
+        try {
             if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Reference cache unavailable");
             File target = new File(directory, dataset + ".ref"), retry = new File(directory, dataset + ".retry");
             byte[] previous = null; String existing = "none";
@@ -55,11 +60,14 @@ final class ReferenceDataCache {
                 retry.delete(); return bytes;
             } catch (Exception failure) {
                 temp.delete();
-                try (FileOutputStream out = new FileOutputStream(retry)) { out.write(0); }
+                if (!Thread.currentThread().isInterrupted()) {
+                    try (FileOutputStream out = new FileOutputStream(retry)) { out.write(0); }
+                    catch (IOException ignored) { /* Failure to write backoff must not hide the valid previous generation. */ }
+                }
                 if (previous != null) return previous;
                 throw failure;
             }
-        }
+        } finally { lock.unlock(); }
     }
     private static String digest(byte[] bytes) throws Exception {
         StringBuilder out = new StringBuilder();
