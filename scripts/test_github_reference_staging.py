@@ -17,7 +17,7 @@ TAG='reference-pins-2026-10-27-bootstrap'
 
 
 def release(**changes):
-    return dict({'id':425479238,'tag_name':TAG,'draft':True},**changes)
+    return dict({'id':425479238,'tag_name':TAG,'draft':False,'published_at':'2026-10-27T20:00:00Z'},**changes)
 
 
 def asset(**changes):
@@ -66,9 +66,9 @@ class StagingSafety(unittest.TestCase):
         with patch.object(staging,'PAGE_SIZE',2):
             self.assertEqual(681638825,staging.discover_asset(opener,TAG,'synthetic'))
         self.assertIn('page=2',opener.open.call_args_list[1].args[0].full_url)
-    def test_missing_ambiguous_or_published_release_is_rejected(self):
+    def test_missing_ambiguous_or_unpublished_release_is_rejected(self):
         for releases in [[],[release(tag_name=TAG+'-other')],[release(),release()],
-                         [release(draft=False)]]:
+                         [release(draft=True)],[release(published_at=None)]]:
             with self.subTest(releases=releases):
                 opener=Mock();opener.open.return_value=response(releases)
                 with self.assertRaises(ValueError):staging.discover_asset(opener,TAG,'synthetic')
