@@ -2,66 +2,31 @@
 
 Last reviewed: 2026-10-27.
 
-## PR #222 — 793/801 runner tests passed; eight failure fixes prepared
+## PR #222 — bandwidth protection verified; ready for merge approval
 
-Run 40584540947 passed GitHub reference cache restore/validation, Android and unit
-compilation, lint and Robolectric fixture preparation. The remaining eight errors
-were traced from report artifact 12772030710: five NCN tests lost NCN_TEST_DATABASE
-at the isolated sudo boundary; three existing diagnostics-clear assertions exposed
-bandwidth counters/report formatting not clearing. The PR fixes preserve the NCN
-path and clear only diagnostic counters/timings, leaving reference/journey caches
-and notification identities intact. No existing test assertion was weakened.
+Successful Android verification [40585966577](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40585966577)
+checked exact runtime source **2f70f1145b211cc46f646d84b9a319bd8bb7cfd3**:
+GitHub reference cache restored, both dataset pins validated, Android/unit sources
+compiled, lint passed and **801 tests / 107 suites passed with zero failures,
+errors or skips**. XML reports independently checked, artifact 12772066575 (expires
+3 November). Unit execution had no external network. 25 pure Java offline checks,
+16 reference/build contracts, 4 distribution checks and 6 county recovery checks
+also passed in that run. The earlier test failures are resolved.
 
-25 Java + 16 Python offline checks and workflow shell parsing pass after the fixes.
-Full runner verification of the new corrective source remains pending. The next
-approved dispatch must use that new PR commit, not old cd0e649. Main update is
-only the verification workflow's NCN environment pass-through; use skip markers
-and request approval before it or another run. No bootstrap/secret/reference
-publication/cache reseed is needed. Keep the PR draft until that verification.
+Normal Android checks and private packaging restore the same exact cache and
+validate local files; missing/corrupt pins fail safely, with no Firebase fallback.
+Both existing manifests/hashes and website content remain unchanged. Shared cache
+was previously seeded/restored/revalidated successfully by run 40579277763.
+Do not repeat bootstrap, release publication, browser developer tools, secret
+creation or verification. Later documentation-only updates do not change the
+verified runtime source and do not require another build.
 
-## PR #222 — Android cache restore/compile/lint passed; test fixtures missing
-
-Run 40582984194 verified source cd0e649: exact GitHub reference cache restored,
-both pins validated, Android and unit-test sources compiled, lint passed. The
-unit phase had 103 passes and 698 failures, all due to three missing local
-Robolectric jars (API 28/33/35 fixtures), not assertions. Report artifact 12769329063
-was inspected. Reference bootstrap is complete and must not be repeated.
-
-The prepared correction resolves those three Maven fixtures before the existing
-network-isolated unit-test step. It changes only verification setup/test/docs;
-application source remains cd0e649. It needs approval to update the one registered
-main workflow and start one new dispatch, retaining skip markers and acknowledging
-the static Pages side effect. No Firebase, SDK install, cache reseed, APK or merge.
-16 updated offline build-contract tests and shell parsing pass. Full tests still
-need that approved runner run; do not claim all Android tests passed.
-
-## PR #222 — reference cache seeded; final Android verification pending
-
-Bootstrap is complete. Published reference ZIP is unchanged. Offline staging run
-40576749837 and cache-seeding run 40579277763 succeeded. Seed source 54c2cca;
-original 79bcc97 remains immutable. Both pins were saved/restored/revalidated under
-`reference-pins-v2-Linux-46a8b52eef4cb8117614b9944797b353027f46e4b30ffa6e3ed582a34a19e024`.
-Do not repeat release upload, asset discovery, signed-URL secrets or bootstrap.
-
-Android checks and private packaging restore the same exact key/paths and validate
-both datasets before Java/Gradle setup. The final correction makes missing-cache
-failure explicit. Helpers remain local-only; no Firebase fallback. Existing local
-packaging callers inherit the protection. App baseline is still 0.25.218 (264).
-
-58 offline checks passed in final integration (24 Java, 16 reference/build contract,
-14 published-release staging, 4 distribution controls). These do not prove an
-Android compile. Local SDK/Gradle/Robolectric caches remain absent; no build was
-attempted. A manual no-APK Android verification workflow is prepared on the PR.
-It needs approval for one-file main registration (with skip markers and known
-Pages side effect) and one run against the exact reviewed integration SHA. It
-restores/validates references first, allows normal Gradle/Maven dependency setup,
-and executes unit tests offline with no external network. No SDK download,
-Firebase call, production secret or distribution is permitted.
-
-See [the current final review](pr-222-final-review.md) for evidence, exact remaining
-actions and runtime limits. Keep the PR draft until Android verification passes;
-merge remains separately approved. No main, workflow, secret, reference/cache,
-production, release or APK change occurred during this final integration task.
+See [the final review and evidence](pr-222-final-review.md). PR #222 is technically
+ready; merge still requires explicit owner approval. Its existing target is
+fix/navigation-progress-responsiveness, not main; do not retarget or merge the
+stacked baseline into main implicitly. No APK was produced/distributed and no app
+was launched. Continue normal Android development from the protected branch;
+current app version remains 0.25.218 (264). Stop infrastructure investigation here.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 
