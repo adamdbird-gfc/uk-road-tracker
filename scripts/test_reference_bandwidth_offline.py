@@ -140,6 +140,7 @@ class OfflineReferences(unittest.TestCase):
         self.assertIn('unshare --net',runs)
         self.assertIn('--offline --no-daemon',runs)
         self.assertIn('-Drobolectric.offline=true',runs)
+        self.assertEqual(2,runs.count('RUNNER_TEMP,NCN_TEST_DATABASE'))
         self.assertLess(runs.index(':app:prepareRobolectricOffline'),runs.index('unshare --net'))
         for version in ['9-robolectric-4913185-2-i7','13-robolectric-9030017-i7','15-robolectric-12650502-i7']:
             self.assertIn('org.robolectric:android-all-instrumented:'+version,runs)

@@ -55,11 +55,11 @@ final class ReferenceDataDiagnostics {
     }
     // Coalesced disk work never runs on a screen/cache caller.
     static void flush() {
-        Properties snapshot = new Properties(); File target;
-        synchronized (ReferenceDataDiagnostics.class) {
-            pending = false; target = file; if (target == null) return; snapshot.putAll(totals);
-        }
         synchronized (WRITER) {
+            Properties snapshot = new Properties(); File target;
+            synchronized (ReferenceDataDiagnostics.class) {
+                pending = false; target = file; if (target == null) return; snapshot.putAll(totals);
+            }
             File temp = new File(target.getPath() + ".tmp");
             try (FileOutputStream out = new FileOutputStream(temp)) {
                 snapshot.store(out, "Local reference data counters; body bytes exclude headers/TLS");
@@ -68,11 +68,19 @@ final class ReferenceDataDiagnostics {
                     java.nio.file.StandardCopyOption.ATOMIC_MOVE); } catch (IOException ignored) { }
         }
     }
+    static void clear() {
+        synchronized (ReferenceDataDiagnostics.class) {
+            totals.clear(); recent.clear();
+        }
+        // Snapshot inside the writer lock prevents a queued old snapshot restoring cleared data.
+        flush();
+    }
     private static long counter(String key) {
         try { return Math.max(0, Long.parseLong(totals.getProperty(key, "0"))); }
         catch (NumberFormatException invalid) { return 0; }
     }
     static synchronized String report() {
+        if (totals.isEmpty()) return "";
         StringBuilder out = new StringBuilder("Reference data bandwidth (response-body bytes; not Firebase billing)\n");
         for (String key : new TreeSet<>(totals.stringPropertyNames()))
             if (!key.equals("recent")) out.append(key).append('=').append(totals.getProperty(key)).append('\n');

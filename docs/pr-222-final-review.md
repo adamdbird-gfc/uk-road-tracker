@@ -1,8 +1,41 @@
 # PR #222 — final build-cache integration review
 
-Status: reference restore, Android compilation and lint verified; unit verification
-needs the three missing Maven fixtures described below. Do not merge yet. This report supersedes earlier draft-release, signed
+Status: reference restore, Android compilation/lint and test fixtures verified;
+eight remaining test failures corrected on the PR, runner confirmation pending. Do not merge yet. This report supersedes earlier draft-release, signed
 URL and cache-bootstrap preparation instructions.
+
+## Latest verification — eight failures traced and corrected on the PR
+
+[Run 40584540947](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40584540947)
+finished against cd0e649 with **793/801 tests passed, 8 failed**. Reference cache
+restore/integrity, Android/unit compilation, lint and all three Robolectric fixture
+resolutions passed. The test reports (artifact 12772030710, 359,577 bytes) identify
+all eight failures:
+
+- Five NCN tests: the test network-namespace sudo boundary dropped the already
+  exported NCN_TEST_DATABASE variable. The database was restored and verified;
+  this was environment propagation, not a missing reference asset. Both sudo
+  boundaries now explicitly preserve this one local-file path.
+- Three diagnostics tests: new bandwidth counters survived Clear diagnostics,
+  and an empty report still emitted a heading/newline. This was a regression in
+  PR #222's diagnostic integration. Clear now empties the local bandwidth ledger
+  as well as timing diagnostics, emits no report for empty data, and serializes
+  flush snapshots so an older queued write cannot restore cleared counters.
+  It does not clear reference files, retry metadata, journey data or notification
+  identities. Existing CrashReporter/notification regression assertions remain
+  unchanged, not relaxed.
+
+25 pure Java checks and 16 Python build/reference checks pass after these fixes,
+including durable diagnostic clearing without deleting cached references and
+preservation of the NCN path through the isolated launcher. Shell parsing passes.
+No new workflow, main change, Firebase request or cache/bootstrap action occurred.
+
+The new reviewed PR commit must be used as source_sha for the next full runner
+verification because it includes the two diagnostic Java corrections. Reusing
+cd0e649 would retest the known failing diagnostic code. Approval is required to
+update only the registered verification workflow (NCN environment propagation)
+and start one fresh run against that new source. No reseed/secret/APK is needed.
+The delivery receipt/PR body identifies the exact new source SHA.
 
 ## Android runner result and narrow verification fix
 
@@ -120,9 +153,9 @@ Approve only these concrete actions after reviewing this commit:
    or touch the published ZIP/cache. GitHub's managed Pages build may republish
    existing static content despite `[skip ci]`; approval must cover that side
    effect. Render API and cron follow main, so retain `[skip render]`.
-2. Run that workflow once on main, setting `source_sha` to
-   `cd0e6499ee7959819105c64a30f0f1e852c0679b`, the same already-compiled integration
-   source. Only the runner workflow fixture setup changes, not the application. No further bootstrap/seed workflow is required.
+2. Run that workflow once on main, setting `source_sha` to the new reviewed corrective commit identified in the
+   delivery receipt/PR body. This includes the diagnostic-clear Java fixes and
+   NCN environment propagation described above. No further bootstrap/seed workflow is required.
 
 The verification job uses the runner's existing Java 17/Android SDK 35 and fails
 if the SDK is missing; it never invokes sdkmanager or enables SDK downloads.

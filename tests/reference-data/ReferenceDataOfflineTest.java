@@ -120,6 +120,13 @@ public final class ReferenceDataOfflineTest {
             ReferenceDataDiagnostics.flush();
             Properties stored=new Properties();try(InputStream in=Files.newInputStream(base.resolve("reference-bandwidth.properties"))){stored.load(in);}
             check(stored.getProperty("recent").split("\n").length==64);pass("diagnostics retain 64 events and aggregate counters");
+            ReferenceDataDiagnostics.clear();
+            check(ReferenceDataDiagnostics.report().isEmpty());
+            ReferenceDataDiagnostics.flush(); // queued/background flush must not resurrect the old ledger.
+            stored.clear();try(InputStream in=Files.newInputStream(base.resolve("reference-bandwidth.properties"))){stored.load(in);}
+            check(stored.isEmpty());
+            check(Files.exists(base.resolve("cache/boundary.ref")));
+            pass("clearing diagnostics empties memory and disk without deleting reference data");
             System.out.println(passed+" offline checks passed; no real network transport available");
         } finally {
             try(java.util.stream.Stream<Path> paths=Files.walk(base)) {

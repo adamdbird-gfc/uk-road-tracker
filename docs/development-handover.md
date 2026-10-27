@@ -2,6 +2,23 @@
 
 Last reviewed: 2026-10-27.
 
+## PR #222 — 793/801 runner tests passed; eight failure fixes prepared
+
+Run 40584540947 passed GitHub reference cache restore/validation, Android and unit
+compilation, lint and Robolectric fixture preparation. The remaining eight errors
+were traced from report artifact 12772030710: five NCN tests lost NCN_TEST_DATABASE
+at the isolated sudo boundary; three existing diagnostics-clear assertions exposed
+bandwidth counters/report formatting not clearing. The PR fixes preserve the NCN
+path and clear only diagnostic counters/timings, leaving reference/journey caches
+and notification identities intact. No existing test assertion was weakened.
+
+25 Java + 16 Python offline checks and workflow shell parsing pass after the fixes.
+Full runner verification of the new corrective source remains pending. The next
+approved dispatch must use that new PR commit, not old cd0e649. Main update is
+only the verification workflow's NCN environment pass-through; use skip markers
+and request approval before it or another run. No bootstrap/secret/reference
+publication/cache reseed is needed. Keep the PR draft until that verification.
+
 ## PR #222 — Android cache restore/compile/lint passed; test fixtures missing
 
 Run 40582984194 verified source cd0e649: exact GitHub reference cache restored,

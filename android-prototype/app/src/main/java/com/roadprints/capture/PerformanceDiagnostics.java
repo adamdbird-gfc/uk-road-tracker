@@ -56,6 +56,15 @@ final class PerformanceDiagnostics {
         if(combined.length()>16000)combined=combined.substring(0,16000);
         p.edit().putString("recent",combined).apply();
     }
-    static void clear(Context context){context.getSharedPreferences(PREFS,0).edit().clear().apply();}
-    static String report(Context context){ReferenceDataDiagnostics.initialize(context.getFilesDir());return ReferenceDataDiagnostics.report()+"\n"+context.getSharedPreferences(PREFS,0).getString("recent","");}
+    static void clear(Context context){
+        context.getSharedPreferences(PREFS,0).edit().clear().apply();
+        ReferenceDataDiagnostics.initialize(context.getFilesDir());
+        ReferenceDataDiagnostics.clear();
+    }
+    static String report(Context context){
+        ReferenceDataDiagnostics.initialize(context.getFilesDir());
+        String bandwidth=ReferenceDataDiagnostics.report();
+        String timings=context.getSharedPreferences(PREFS,0).getString("recent","");
+        return bandwidth.isEmpty()?timings:timings.isEmpty()?bandwidth:bandwidth+"\n"+timings;
+    }
 }
