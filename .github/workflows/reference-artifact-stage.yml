@@ -1,0 +1,112 @@
+name: Stage existing verified reference artifact
+# Proposal only: main registration, temporary URL secret and one run need approval.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: reference-artifact-bootstrap
+  cancel-in-progress: false
+jobs:
+  stage:
+    if: github.actor == github.repository_owner && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: 79bcc970c176c6526224a91c24c89525f10bf152
+          persist-credentials: false
+      - name: Verify offline build controls without running Android
+        run: python3 scripts/verify_offline_build_controls.py
+      - name: Download only the approved GitHub asset and validate locally
+        env:
+          REFERENCE_ZIP_URL: ${{ secrets.ROADPRINTS_REFERENCE_ZIP_URL }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,shutil,sys,tempfile,urllib.request
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          sys.path.insert(0,'scripts')
+          from stage_github_reference_bundle import extract_verified,BUNDLE_BYTES
+          from ncn_reference import verify_database
+
+          def allowed(url):
+              p=urlsplit(url)
+              return (p.scheme=='https' and p.hostname=='release-assets.githubusercontent.com'
+                      and p.port is None and not p.username and not p.password and not p.fragment
+                      and p.path.startswith('/github-production-release-asset/1347394235/')
+                      and bool(p.query))
+
+          class AssetRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,request,fp,code,msg,headers,newurl):
+                  if not allowed(newurl):raise ValueError('Disallowed asset redirect')
+                  return super().redirect_request(request,fp,code,msg,headers,newurl)
+
+          def stage(url,destination=Path('reference-input')):
+              if not url or not allowed(url):raise ValueError('Missing or disallowed GitHub asset URL')
+              if destination.exists():raise ValueError('Destination must be new')
+              # No repository token, cookies, proxy or arbitrary header is passed to asset storage.
+              opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),AssetRedirect())
+              with tempfile.TemporaryDirectory() as work:
+                  bundle=Path(work)/'reference.zip'
+                  with opener.open(urllib.request.Request(url,method='GET'),timeout=120) as source,bundle.open('wb') as out:
+                      total=0
+                      for chunk in iter(lambda:source.read(65536),b''):
+                          total+=len(chunk)
+                          if total>BUNDLE_BYTES:raise ValueError('Asset exceeds approved size')
+                          out.write(chunk)
+                  verified=Path(work)/'verified'
+                  # Pinned 79bcc97 code checks the full ZIP and both member sizes/SHA-256.
+                  extract_verified(bundle,verified)
+                  manifest=json.loads(Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+                  verify_database(verified/'catalogue.db',manifest)
+                  county=json.loads(Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+                  boundary=verified/'boundaries.bin'
+                  if boundary.stat().st_size!=max(r['offset']+r['length'] for r in county['counties']):
+                      raise ValueError('County length differs from pin')
+                  with boundary.open('rb') as f:
+                      if hashlib.file_digest(f,'sha256').hexdigest()!=county['data_sha256']:
+                          raise ValueError('County SHA-256 differs from pin')
+                  destination.mkdir()
+                  for name in ('catalogue.db','boundaries.bin'):
+                      shutil.copyfile(verified/name,destination/name)
+                  shutil.copyfile('android-prototype/app/src/main/assets/ncn-national/manifest.json',destination/'ncn-manifest.json')
+                  shutil.copyfile('android-prototype/app/src/main/assets/historic-counties/catalogue.json',destination/'county-catalogue.json')
+                  (destination/'REFERENCE-LICENCES.txt').write_text(
+                      'Roadprints national reference datasets; no personal journey data.\n\n'
+                      'catalogue.db: OpenStreetMap-derived reference database, ODbL 1.0.\n'
+                      'Copyright OpenStreetMap contributors. Redistribution/adaptations of this database remain subject to ODbL 1.0.\n'
+                      'https://www.openstreetmap.org/copyright\n'
+                      'https://opendatacommons.org/licenses/odbl/1-0/\n'
+                      'Official NCN scope: Walk Wheel Cycle Trust (formerly Sustrans), OGL 3.0.\n'
+                      'Contains Ordnance Survey data: Crown copyright and database rights 2018.\n'
+                      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/\n'
+                      'Original source: https://data-sustrans-uk.opendata.arcgis.com/datasets/Sustrans-UK::national-cycle-network-public-1/about\n'
+                      'See ncn-manifest.json for pinned revision, attribution and integrity metadata.\n\n'
+                      'boundaries.bin: derived from Historic County Borders Project, Historic Counties Trust.\n'
+                      'The provider permits personal, educational, non-commercial and commercial reuse without specific permission.\n'
+                      'This project made use of data provided by the Historic County Borders Project.\n'
+                      'https://county-borders.co.uk/\n'
+                      'See county-catalogue.json for source URL, version and integrity metadata.\n',encoding='utf-8')
+              print('ZIP, both member pins, NCN SQLite integrity and county catalogue verified')
+
+          if __name__=='__main__':
+              try:stage(os.environ.get('REFERENCE_ZIP_URL',''))
+              except Exception:
+                  # Never print exception details: HTTP errors can contain signed credentials.
+                  raise SystemExit('Staging failed; check temporary URL validity and pinned integrity. No retry or fallback; artifact upload skipped.') from None
+          PY
+      - name: Upload verified reference files with source and licence notices
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: roadprints-reference-pins-v2
+          path: |
+            reference-input/catalogue.db
+            reference-input/boundaries.bin
+            reference-input/ncn-manifest.json
+            reference-input/county-catalogue.json
+            reference-input/REFERENCE-LICENCES.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
