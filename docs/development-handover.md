@@ -2,6 +2,20 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## PR #222 — Render read-only check complete; browser upload stopped
+
+Owner approved browser fallback and My Workspace inspection. GitHub browser had no
+signed-in session; secure authentication did not complete, so no draft release or
+asset was created. Do not repeat authentication without a new user request.
+
+Live Render reads confirm both API and reference-ingestion cron track main with
+commit-triggered autoDeploy enabled; API PR previews are disabled. Render's current
+documentation specifies `[skip render]` to suppress auto-deploy. Any later approved
+one-file registration must include `[skip ci] [skip render]`; no main push or live
+suppression test occurred. No Render setting, cron schedule or production state
+was changed. Upload and seed remain incomplete; registration/Actions still need
+separate approval. The exact runtime source remains 79bcc97.
+
 ## PR #222 — upload authorised, uploader/deployment clearance blocked
 
 The owner approved only the exact bundle upload using source

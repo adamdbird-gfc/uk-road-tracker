@@ -21,6 +21,35 @@ A durable copy is [available here](https://chatgpt.com/library?file_id=libfile_8
 A GitHub runner cannot directly read this workspace/Library file; the approved
 external draft-release upload below bridges that boundary. No such upload occurred.
 
+## Browser fallback and live Render inspection follow-up
+
+The owner approved the GitHub browser fallback and read-only use of **My Workspace**.
+The browser reached GitHub but had no signed-in session; the secure authentication
+flow did not complete. The upload attempt stopped before any draft release or
+asset creation. No authentication material was read/exported and no alternate
+credential path was used. The release/asset identity remains unavailable because
+nothing has been uploaded. Do not retry authentication without a new user request.
+
+Read-only Render inspection of workspace `tea-da821ljbc2fs73ciadag` succeeded:
+
+| Service | ID | Live repository settings |
+|---|---|---|
+| API | `srv-da82330u01pc73ccg6n0` | Same Roadprints repo, branch main, autoDeploy yes, trigger commit; PR previews disabled. |
+| Reference ingestion cron | `crn-dapdcsg473hc7393bk3g` | Same repo, branch main, autoDeploy yes, trigger commit; existing schedule `0 0 1 1 *`. |
+
+No service settings, schedules, deployment or execution were changed.
+The [current Render deploy documentation](https://render.com/docs/deploys.md)
+explicitly documents `[skip render]` / `[render skip]` in a commit message to
+prevent an auto-deploy. Its [cron documentation](https://render.com/docs/cronjobs.md)
+confirms that connected-branch pushes otherwise rebuild cron code. Thus the
+proposed registration must use both `[skip ci] [skip render]`; a plain main
+commit is not safe. No suppression-by-live-push test is claimed or authorised.
+
+The single-file main proposal and exact 79bcc97 seed invocation remain unchanged.
+Main registration and Actions execution are still withheld pending separate owner
+approval, successful upload and the existing source/trigger rechecks. The former
+workspace-selection blocker is resolved; authenticated upload remains blocked.
+
 ## Approved upload attempt and current-main inspection
 
 The owner has explicitly approved uploading the exact bundle from reviewed source
