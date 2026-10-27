@@ -42,13 +42,22 @@ jobs:
         with:
           ref: ${{ inputs.source_ref || github.ref }}
 
+      # Cache immutable pins across checks and packaging; a cold miss fails closed.
+      - name: Restore pinned references without Firebase access
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Download and verify pinned external NCN test reference
+      - name: Verify locally cached NCN test reference (no Firebase access)
         run: |
           python3 -m unittest discover -s scripts -p test_android_distribution_controls.py -v
           python3 scripts/prepare_ncn_reference.py

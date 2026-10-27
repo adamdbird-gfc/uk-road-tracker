@@ -47,7 +47,8 @@ final class VenueCatalogueUpdates {
     long revision(){synchronized(LOCK){return revision;}}
 
     JSONArray pins(Context context)throws Exception{
-        synchronized(LOCK){if(pins!=null)return pins;}
+        ReferenceDataDiagnostics.initialize(context.getFilesDir());
+        synchronized(LOCK){if(pins!=null){ReferenceDataDiagnostics.cache(definition.id,Long.toString(revision),Long.toString(revision),true,"memory");return pins;}}
         return pins(context,bundled(context));
     }
     JSONArray pins(Context context,JSONObject bundled){
@@ -196,7 +197,7 @@ final class VenueCatalogueUpdates {
     private byte[] download(String filename,int limit) throws Exception {
         if(!filename.equals("manifest-v1.json")&&!filename.matches("catalogue-[0-9]{10}\\.json"))
             throw new IllegalArgumentException("Unsupported venue file");
-        HttpURLConnection connection=(HttpURLConnection)new URL(BASE_URL+definition.id+"/"+filename).openConnection();
+        HttpURLConnection connection=new ReferenceDataConnection(new URL(BASE_URL+definition.id+"/"+filename),definition.id+(filename.equals("manifest-v1.json")?"-manifest":""),filename,"map_collection_due_refresh",Long.toString(revision()));
         connection.setConnectTimeout(5000);connection.setReadTimeout(10000);
         connection.setInstanceFollowRedirects(false);
         try{

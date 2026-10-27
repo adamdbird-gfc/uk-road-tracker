@@ -1,6 +1,25 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## P0 Firebase bandwidth protection — 27 October 2026
+
+Continue on `fix/firebase-bandwidth-offline`, based on delivered private 218's
+`fix/navigation-progress-responsiveness` source. Read
+[the investigation, inventory, fixes, test limits and bandwidth model](firebase-bandwidth-investigation-2026-10-27.md).
+No Firebase request, deployment, billing/configuration change, app launch or APK
+build occurred. Reference preparation is offline by default; cold build cache
+misses deliberately fail until verified local pins are provisioned. Workflows
+pinned to historical SHAs retain their old behaviour. Do not launch those
+workflows during the quota incident.
+
+Persistent settlement boundary caching, NCN discovery/retry protection and bounded
+local bandwidth diagnostics are added. Runtime NCN and venue payload caches were
+already persistent; no evidence shows every map opening fetched the national DB.
+35 targeted offline checks passed (20 Java cache/transport checks, 5 Python
+contracts, 4 distribution controls, 6 county recovery). Full Android build,
+Robolectric integration and device navigation remain unverified: no Android SDK
+or Gradle is installed. No new APK, release request or tester distribution.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 

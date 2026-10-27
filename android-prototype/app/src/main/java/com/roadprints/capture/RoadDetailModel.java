@@ -42,7 +42,7 @@ final class RoadDetailModel {
     }
     static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative,java.util.function.Consumer<RoadDetailModel> geometryReady) throws Exception {
         if(RoadDetailSelection.NCN.equals(selection.kind))return NcnProgressStore.detail(context,selection.label,selection.ncnMode,geometryReady);
-        JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(selection.settlementCode):null;
+        JSONObject boundary=RoadDetailSelection.LOCAL.equals(selection.kind)?LocalRoadSettlementMatcher.boundary(context, selection.settlementCode):null;
         if(RoadDetailSelection.LOCAL.equals(selection.kind)&&boundary==null)throw new IllegalStateException("Town boundary unavailable");
         RoadDetailModel seed=cumulative?null:ProgressActivity.focusedPreview(context,selection);
         RoadDetailModel output=seed==null?new RoadDetailModel():seed;output.boundary=boundary;

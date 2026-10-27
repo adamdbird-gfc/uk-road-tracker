@@ -57,5 +57,5 @@ final class PerformanceDiagnostics {
         p.edit().putString("recent",combined).apply();
     }
     static void clear(Context context){context.getSharedPreferences(PREFS,0).edit().clear().apply();}
-    static String report(Context context){return context.getSharedPreferences(PREFS,0).getString("recent","");}
+    static String report(Context context){ReferenceDataDiagnostics.initialize(context.getFilesDir());return ReferenceDataDiagnostics.report()+"\n"+context.getSharedPreferences(PREFS,0).getString("recent","");}
 }

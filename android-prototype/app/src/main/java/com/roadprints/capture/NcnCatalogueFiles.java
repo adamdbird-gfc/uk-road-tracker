@@ -15,11 +15,12 @@ final class NcnCatalogueFiles {
     static final String MANIFEST="collections/published/ncn/manifest-v2.json";
     private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
     private static boolean updating;
+    private static final ThreadLocal<String> cachedVersion=new ThreadLocal<>();
     // Download/verification may take minutes. UI scheduling must never acquire this lock.
     static final Object INSTALL_LOCK=new Object();
     private static final java.util.Set<String> verified=java.util.concurrent.ConcurrentHashMap.newKeySet();
     static final class Installed {final File file;final JSONObject manifest;Installed(File f,JSONObject m){file=f;manifest=m;}}
-    static File directory(Context c){File d=new File(c.getFilesDir(),"ncn-reference-v2");if(!d.isDirectory()&&!d.mkdirs())throw new IllegalStateException("NCN cache unavailable");return d;}
+    static File directory(Context c){ReferenceDataDiagnostics.initialize(c.getFilesDir());File d=new File(c.getFilesDir(),"ncn-reference-v2");if(!d.isDirectory()&&!d.mkdirs())throw new IllegalStateException("NCN cache unavailable");return d;}
     static void validate(JSONObject m)throws Exception{
         String hash=m.getString("sha256");long bytes=m.getLong("database_bytes"),packed=m.getLong("compressed_bytes");
         if(m.getInt("schema_version")!=2||!m.getString("scope").equals("national-verified-open-checkpoint")||m.getBoolean("whole_published_route_ready")||!hash.matches("[a-f0-9]{64}")||!m.getString("compressed_sha256").matches("[a-f0-9]{64}")||!m.getString("filename").equals("collections/published/ncn/"+hash+"/catalogue.db.gz")||bytes<4096||bytes>512L*1024*1024||packed<100||packed>256L*1024*1024||m.getInt("supported_identities")<1||m.getInt("supported_identities")>2000||m.getLong("revision")<1)throw new IllegalArgumentException("Unsupported NCN release manifest");
@@ -33,15 +34,22 @@ final class NcnCatalogueFiles {
         throw new IOException("No verified NCN catalogue cached",failure);
     }
     static Installed open(Context c)throws Exception{
-        try{return cached(c);}catch(IOException absent){
+        synchronized(INSTALL_LOCK) {
+        try{Installed result=cached(c);ReferenceDataDiagnostics.cache("ncn",result.manifest.getString("sha256"),result.manifest.getString("sha256"),true,"valid");return result;}catch(IOException absent){
+            android.content.SharedPreferences retry=c.getSharedPreferences("ncn_reference_updates",0);
+            long now=System.currentTimeMillis(), next=retry.getLong("install_retry_after",0);
+            if(now<next && next-now<=60*60_000)throw new IOException("NCN retry deferred; use explicit Retry");
+            retry.edit().putLong("install_retry_after",now+60*60_000).apply();
+            ReferenceDataDiagnostics.cache("ncn","seed_or_latest","none",false,"missing_or_corrupt");cachedVersion.set("none");
             JSONObject seed=readManifest(c.getAssets().open("ncn-national/manifest.json"));validate(seed);
             JSONObject selected=seed;try{JSONObject latest=remoteManifest();if(latest.getLong("revision")>=seed.getLong("revision"))selected=latest;}catch(Exception unavailable){/* Immutable seed is a fallback when discovery is unavailable. */}
-            NcnProgressStore.catalogueStatus("Downloading verified-open NCN catalogue…");install(c,selected);return cached(c);
+            NcnProgressStore.catalogueStatus("Downloading verified-open NCN catalogue…");install(c,selected);retry.edit().remove("install_retry_after").putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();return cached(c);
+        }
         }
     }
     static HttpURLConnection connection(String path)throws Exception{
         if(path.contains("..")||path.startsWith("/"))throw new IllegalArgumentException("Invalid reference path");
-        HttpURLConnection http=(HttpURLConnection)new URL(PublicReferenceData.BASE_URL+path).openConnection();http.setInstanceFollowRedirects(false);http.setConnectTimeout(30_000);http.setReadTimeout(45_000);http.setRequestProperty("Accept-Encoding","identity");return http;
+        HttpURLConnection http=new ReferenceDataConnection(new URL(PublicReferenceData.BASE_URL+path),path.equals(MANIFEST)?"ncn-manifest":"ncn",path.equals(MANIFEST)?"manifest":path.split("/")[3],path.equals(MANIFEST)?"ncn_manifest_discovery":"ncn_install_or_update",cachedVersion.get()==null?"unknown":cachedVersion.get());http.setInstanceFollowRedirects(false);http.setConnectTimeout(30_000);http.setReadTimeout(45_000);http.setRequestProperty("Accept-Encoding","identity");return http;
     }
     static String digest(File file)throws Exception{MessageDigest hash=MessageDigest.getInstance("SHA-256");try(InputStream in=new FileInputStream(file)){byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)hash.update(b,0,n);}StringBuilder out=new StringBuilder();for(byte b:hash.digest())out.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return out.toString();}
     static void install(Context c,JSONObject manifest)throws Exception{
@@ -77,7 +85,7 @@ final class NcnCatalogueFiles {
     }
     static void write(File target,JSONObject m)throws Exception{AtomicFile file=new AtomicFile(target);FileOutputStream out=null;try{out=file.startWrite();out.write(m.toString().getBytes(StandardCharsets.UTF_8));file.finishWrite(out);}catch(Exception e){if(out!=null)file.failWrite(out);throw e;}}
     static synchronized void refreshIfDue(Context context){
-        Context c=context.getApplicationContext();android.content.SharedPreferences prefs=c.getSharedPreferences("ncn_reference_updates",0);long now=System.currentTimeMillis();if(updating||now<prefs.getLong("next",0))return;updating=true;prefs.edit().putLong("next",now+60*60_000).apply();
-        WORKER.execute(()->{try{JSONObject incoming=remoteManifest();validate(incoming);Installed previous=cached(c);if(incoming.getLong("revision")>previous.manifest.getLong("revision")){install(c,incoming);NcnCatalogue.invalidate();NcnProgressStore.catalogueChanged(c);}prefs.edit().putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();}catch(Exception unavailable){/* Keep the last fully validated offline catalogue. */}finally{synchronized(NcnCatalogueFiles.class){updating=false;}}});
+        Context c=context.getApplicationContext();ReferenceDataDiagnostics.initialize(c.getFilesDir());android.content.SharedPreferences prefs=c.getSharedPreferences("ncn_reference_updates",0);long now=System.currentTimeMillis();if(updating||now<prefs.getLong("next",0))return;updating=true;prefs.edit().putLong("next",now+60*60_000).apply();
+        WORKER.execute(()->{try{Installed previous=cached(c);cachedVersion.set(previous.manifest.getString("sha256"));JSONObject incoming=remoteManifest();validate(incoming);if(incoming.getLong("revision")>previous.manifest.getLong("revision")){install(c,incoming);NcnCatalogue.invalidate();NcnProgressStore.catalogueChanged(c);}prefs.edit().putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();}catch(Exception unavailable){/* Keep the last fully validated offline catalogue. */}finally{cachedVersion.remove();synchronized(NcnCatalogueFiles.class){updating=false;}}});
     }
 }
