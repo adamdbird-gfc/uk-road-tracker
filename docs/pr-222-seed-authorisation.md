@@ -21,6 +21,67 @@ A durable copy is [available here](https://chatgpt.com/library?file_id=libfile_8
 A GitHub runner cannot directly read this workspace/Library file; the approved
 external draft-release upload below bridges that boundary. No such upload occurred.
 
+## Approved upload attempt and current-main inspection
+
+The owner has explicitly approved uploading the exact bundle from reviewed source
+`79bcc970c176c6526224a91c24c89525f10bf152`. That upload permission remains valid;
+it does not authorise modifying main, registering a workflow or dispatching Actions.
+
+The bundle and both members were rehashed successfully before attempting upload.
+**Upload has not occurred:** the installed GitHub connection exposes no release
+creation/binary asset-upload action, no authenticated GitHub CLI is installed,
+and no GH_TOKEN/GITHUB_TOKEN is present. Plugin discovery confirmed the existing
+GitHub integration, but exposed no alternative uploader. No credentials were
+exported or new client installed. A tag lookup returned 404; no release/asset ID
+or upload receipt was obtained. This is a capability blocker, not missing owner
+permission. Browser fallback requires separate approval under the browser access
+rules; it has not been started.
+
+Current `main` inspected at `98b503f7435665e6ceda0869413ea08a019579ee`:
+all **23 workflow files** were parsed and reviewed for the one proposed path,
+`.github/workflows/reference-pin-cache.yml`. No configured push/PR filter matches
+that change. No release/create trigger is configured. The Firebase publication
+workflow's workflow_run filter names only the settlement inventory builders, not
+the proposed seed workflow. The current main Android packager is manual-only.
+No configured Actions build, Firebase publication or distribution workflow would
+start from this one-file change. This conclusion uses actual main content, not
+PR branch workflow assumptions, and must be rechecked if main advances.
+
+**External deployment clearance is not yet established.** Main's `render.yaml`
+sets `autoDeploy: true` for `uk-road-tracker-api`. Live Render details could not be
+read because no workspace is selected. Workspace discovery returned one candidate,
+**My Workspace** (`tea-da821ljbc2fs73ciadag`); it was not selected or inferred.
+The Render access guidance requires the owner to identify the workspace before
+service reads. Confirm that workspace for read-only deployment/filter inspection.
+Do not claim the absence of all unrelated automation from GitHub YAML alone.
+Main registration remains NO-GO until external deployment suppression is confirmed.
+
+The exact one-file registration patch was prepared locally and checked in an
+isolated Git index against that main SHA. It adds only the approved workflow;
+no branch/ref/working index or production file was modified. Patch SHA-256:
+`ea85458c621cd8bbedcfe9e07d68c4bc94200272ceea22482d1e0062524a4e65`.
+Workflow SHA-256 remains
+`ab164307bdf83d30e77134e081fc42418affeeba61481a0a77afce2f20624c41`.
+The proposal has not been applied or published as a main commit.
+
+After upload capability and external deployment clearance are resolved, request
+separate approval for (a) applying that one-file registration with skip markers,
+and (b) the following single dispatch. The approved runtime source stays at the
+reviewed 79bcc97 commit even if this PR receives documentation-only updates:
+
+```sh
+gh workflow run reference-pin-cache.yml --ref main \
+  --repo adamdbird-gfc/uk-road-tracker \
+  -f source_sha=79bcc970c176c6526224a91c24c89525f10bf152 \
+  -f release_tag=reference-pins-2026-10-27-bootstrap
+```
+
+Leave `run_id` and `artifact_name` unset. Preconditions: the exact ZIP must have a
+verified GitHub draft-release asset identity, the approved workflow must be
+registered, and the owner must separately approve the invocation. No Actions,
+Firebase calls, external uploads, main changes, deployments, APKs or merges were
+performed by this inspection.
+
 ## Exact proposed operation — none of these commands has been executed
 
 1. Resolve the approved, immutable PR #222 head into `REVIEWED_SHA`. Confirm the
@@ -177,7 +238,8 @@ processed the existing real bundle locally and its NCN output passed SQLite
 validation. Python syntax, YAML parsing and diff checks pass. These are local
 staging checks, not an Actions run or Android build.
 
-**Approval requested next:** the private GitHub draft/asset upload, the single-file
+**Approval state:** private GitHub draft/asset upload is now approved but blocked
+by upload capability; the single-file
 manual-workflow registration on main, and one explicitly scoped seed dispatch
 using the reviewed immutable source SHA. None has been performed. SDK/dependency
 installation, full Android verification, merge, APK creation and distribution are

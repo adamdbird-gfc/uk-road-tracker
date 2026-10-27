@@ -2,6 +2,24 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## PR #222 — upload authorised, uploader/deployment clearance blocked
+
+The owner approved only the exact bundle upload using source
+`79bcc970c176c6526224a91c24c89525f10bf152`; main registration and Actions still
+require further approval. Both member hashes and ZIP hash were revalidated.
+No release/asset upload was possible with the current connection: no asset-upload
+operation or authenticated CLI is available. No uploaded asset ID exists.
+
+Read [the updated approval and main-inspection record](pr-222-seed-authorisation.md).
+Actual main `98b503f` has 23 workflow files; none matches the single proposed
+registration path. An isolated-index patch adds only the reviewed manual YAML.
+External deployment clearance remains unresolved: `render.yaml` enables autoDeploy,
+and Render has no selected workspace. Owner confirmation of **My Workspace** is
+required before read-only live service inspection; no workspace was selected.
+Do not write main or run Actions until that clearance and separate approval exist.
+Runtime source for any later authorised dispatch must remain exact 79bcc97.
+No Firebase access, upload, main update, workflow execution, APK or merge occurred.
+
 ## PR #222 — GitHub seed ready for authorisation, not execution
 
 See [the exact staging/seed operation and offline verification plan](pr-222-seed-authorisation.md).
