@@ -8,3 +8,7 @@
 /android-prototype/app/src/main/assets/ncn-national/*
 !/android-prototype/app/src/main/assets/ncn-national/manifest.json
 .cache/ncn/
+
+# Verified reference bootstrap inputs remain local, never source-controlled.
+/.cache/reference-bootstrap/
+/.cache/reference-source/

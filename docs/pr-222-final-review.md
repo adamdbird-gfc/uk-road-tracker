@@ -10,6 +10,94 @@ release/development requests, matching calculations and map rendering are unchan
 No Firebase requests, deployments, live tests, Actions dispatches, APK generation,
 installation, distribution or production changes were performed.
 
+## Reference discovery and local bootstrap — completed follow-up
+
+The two exact reference assets have now been recovered **without Firebase access**.
+The original Library archive `roadprints-ncn-firebase-publication-2026-10-19.zip`
+contains the compressed NCN catalogue; its embedded manifest exactly matches the
+committed revision-1 manifest. Existing local APK 218 supplies the county binary;
+the APK's catalogue and full APK hash match the delivered baseline.
+
+| Asset | Verified bytes | Verified SHA-256 | Provenance / validation |
+|---|---:|---|---|
+| NCN compressed input | 142,796,162 | `91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91` | Previously prepared publication ZIP, Library file `libfile_8ab97d8102a88191905627b3c064c7cd`; manifest revision 1 matches exactly. |
+| NCN database | 243,724,288 | `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093` | Bounded local decompression; SQLite `quick_check=ok`; 219 routes. |
+| County boundary binary | 8,992,277 | `b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850` | Recovered from existing `roadprints-0.25.218.apk`; county version `2026-10-06`; catalogue exactly matches source. |
+
+Source APK SHA-256:
+`a514e61d1a7fb6bcec3eedcfc44b237fd452c3b5a9ec6b96e5ac2ae89ffd8863`.
+The inspected GitHub packaging run `40209370261` retains the same APK in artifact
+`12604584815` (reported expiry 1 November 2026); its other artifact is reports.
+Publication run `39330952075` retains a 468-byte publication receipt, not the NCN
+binary. No binary was fetched from these Actions artifacts and neither run was
+re-executed. This is not an exhaustive claim about every repository artifact.
+
+Local import and bootstrap succeeded:
+
+- `.cache/ncn/catalogue.db` is the verified national database.
+- `android-prototype/app/src/main/assets/historic-counties/boundaries.bin` is the
+  verified county pin.
+- `.cache/reference-bootstrap/` holds both verified source files and a ready-to-seed
+  ZIP. These are real pins, not synthetic replacements. All generated reference
+  paths are ignored by Git; no dataset is included in the PR.
+- Both build workflows' cache restore paths and key expressions exactly equal the
+  seed workflow's save configuration. This is a source/configuration comparison,
+  **not proof that a shared GitHub cache has been saved or restored**.
+
+A reusable `roadprints-reference-pins-2026-10-27.zip` was prepared from the exact
+verified files (plus their manifests and README): **157,393,480 bytes**, SHA-256
+`d547847572e574cecd16cdb8e08077bf2e0a1014507c7f876c94c7c88b97853c`.
+The prepared bundle is saved as Library file
+`libfile_84308ddbbf488191add27b1e27dd0e5e`:
+[download the verified bundle](https://chatgpt.com/library?file_id=libfile_84308ddbbf488191add27b1e27dd0e5e&account_id=personal).
+The source publication ZIP remains available independently for recovery.
+
+The existing **real national catalogue test passed** with socket connections
+rejected. It checks the pinned database, 219 route identities, 62,399 physical
+ways, 62,487 route-way rows, held identities, overviews, network length and all
+canonical target-to-network mappings. Prior 57 synthetic/control checks were not
+repeated during this discovery task; their earlier results remain historical
+verification evidence. This one real-data test is not Android integration proof.
+
+One offline-verification correction was required: Gradle daemon `-D` settings
+are not automatically inherited by forked Test workers. The Test configuration
+now explicitly forwards `robolectric.offline` and `robolectric.dependency.dir`.
+The wiring was checked statically; full Gradle execution remains unavailable.
+
+### Build environment inventory
+
+| Prerequisite | Current status |
+|---|---|
+| Java 17 | OpenJDK 17.0.20 and `jdk.compiler` module available. |
+| Gradle | Required workflow distribution 8.10 absent; no local dependency cache found. |
+| Android SDK | Platform 35 / `android.jar`, SDK build tools and platform tools absent. |
+| Android Gradle plugins | No cached AGP 8.6.1, Google Services 4.4.4 or Crashlytics 3.0.6 dependencies. |
+| Robolectric | 4.14.1, required instrumented SDK jars for test API 28/33, JUnit 4.13.2 and org.json 20240303 jars absent. |
+| App Maven dependencies | No usable Gradle dependency cache for the existing declared dependencies. |
+| Reference assets | Both exact pins now available and locally bootstrapped. |
+
+Search covered repository files, local development/workspace caches, common SDK/
+Gradle locations and available Java runtime roots. No SDK, Gradle, Maven or
+Robolectric dependencies were downloaded, and no unavailable build was attempted.
+
+### Shared cache remains unseeded
+
+The ready local ZIP is not itself a GitHub Actions artifact. The current seed
+workflow takes an **existing same-repository artifact run ID and name**; the
+inspected runs above do not provide such a two-pin bundle. The connected GitHub
+capabilities used here can inspect/download artifacts but do not upload a local
+file as an Actions artifact or directly save a shared cache.
+
+Before CI can resume: arrange an explicitly authorised, reviewed staging step to
+make this verified ZIP's extracted files available as a GitHub artifact, then
+explicitly authorise the seed workflow on a ref visible to the intended builds
+(default-branch scope preferred). Do not supply the APK/report/receipt artifact
+IDs as if they were a reference bundle. The workflow must also be available for
+manual dispatch; no default-branch file was installed or merged by this task.
+No Actions run is authorised merely by preparing these files or documentation.
+After an approved seed, confirm both cache restores and full offline verification
+on the prepared runner. Until then, cold CI builds must continue to fail closed.
+
 ## Review findings resolved
 
 | Finding | Correction |
@@ -86,7 +174,8 @@ APK**:
 NCN_TEST_DATABASE="$PWD/.cache/ncn/catalogue.db" \
   gradle --offline --no-daemon -p android-prototype \
   :app:compileDebugJavaWithJavac :app:lintDebug :app:testDebugUnitTest \
-  -Drobolectric.offline=true
+  -Drobolectric.offline=true \
+  -Drobolectric.dependency.dir=/path/to/preinstalled-robolectric-jars
 ```
 
 Gradle `--offline` alone does not guarantee Robolectric has all SDK artifacts.
@@ -131,14 +220,16 @@ backoff-write failure fallback and concurrent independent reference keys.
 
 1. **Full Android compile/lint and Robolectric suite have not run.** This workspace
    has JDK compiler modules but no Android SDK, Gradle installation/dependency cache
-   or org.json/Robolectric jars. No dependencies were downloaded. Four new Android
+   or org.json/Robolectric jars. The real reference pins are now local, but no build
+   dependencies were downloaded. Four new Android
    test methods (boundary structure/wrappers and NCN retry/cancellation), plus the
    existing suite, are authored but unexecuted. Helper tests do not prove these
    Android integrations compile or pass.
-2. **Real pinned references are not available locally and no shared v2 cache has
-   been seeded.** The import/seed logic was verified using synthetic fixtures only.
-   Identify an existing verified bundle and arrange an approved seed in a visible
-   cache scope. Normal builds intentionally stop on a cold/invalid pin until then.
+2. **Shared v2 cache seeding/restoration is still unverified and unauthorised.**
+   Both real pins are now verified and locally bootstrapped; asset discovery is
+   resolved. A prepared bundle exists, but approved GitHub artifact staging and
+   an explicitly authorised seed run in a visible scope are still required.
+   Normal cold CI builds intentionally stop until this is completed.
 
 After resolving those blockers, preserve existing app data and later perform
 Pixel/Samsung acceptance: settlement map reopen/offline boundaries, NCN initial

@@ -2,29 +2,37 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## P0 Firebase bandwidth — PR #222 review, 27 October 2026
+## P0 Firebase bandwidth — PR #222 bootstrap follow-up, 27 October 2026
 
 Continue on `fix/firebase-bandwidth-offline` against delivered Android 218's
 `fix/navigation-progress-responsiveness`. **Keep draft: full Android verification
-and real reference-cache bootstrap are blocked.** Read the
-[final review and safe build procedure](pr-222-final-review.md) before merging or
-running any build. The [initial investigation](firebase-bandwidth-investigation-2026-10-27.md)
-retains the bandwidth model and source inventory.
+and shared cache seeding still require a prepared runner and explicit Actions
+approval.** Read [the updated review and safe build procedure](pr-222-final-review.md).
 
-Reviewed/fixed historical-source download bypasses, external packaging callers,
-cache seeding/restore-only controls, cancellation and boundary integrity. NCN pin
-preparation now has no network implementation. The dormant manual cache seed
-workflow uses existing GitHub artifacts only; no seed or Actions workflow was run.
-Android Test workers reject reference HTTP connections. 57 targeted offline checks
-pass; full compile/lint/Robolectric cannot run without pre-provisioned SDK/Gradle
-and real pins. Four new Android test methods remain unexecuted.
+**Asset discovery is resolved.** The original NCN publication ZIP was located in
+Library; its manifest matches revision 1. NCN decoded database 243,724,288 bytes /
+SHA `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093`,
+SQLite quick_check=ok, 219 routes. County binary recovered from existing APK 218:
+8,992,277 bytes / SHA
+`b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850`.
+Both real pins are installed locally. A ready-to-seed reference ZIP was prepared;
+see the review for its identity, sources and bootstrap paths. No datasets are
+committed; bootstrap/source directories are now ignored.
 
-Source filters show no automatic workflow on merge into the current base; later
-main merges match the guarded Android checks. The reference bundle must be seeded
-in a visible GitHub cache scope before normal builds resume. Never run old pinned
-workflow revisions to bypass missing references. No Firebase requests, deployment,
-APK generation, app launch, signing, release request or tester distribution occurred.
-Keep installed app data and Android version 0.25.218 (264) unchanged.
+The real NCN national catalogue/mapping test passed with socket access blocked.
+Prior 57 offline checks were not rerun without cause. Full compile/lint/Robolectric
+remains blocked by missing Gradle 8.10, Android SDK/build tools and Maven/
+Robolectric caches. No build tools were downloaded or unavailable build attempted.
+Gradle now explicitly forwards Robolectric offline/dependency-directory settings
+to Test workers; the prior daemon-only command was insufficient.
+
+The shared GitHub cache is **not** seeded. Inspected historical GitHub artifacts
+contain APKs/reports/publication receipt, not the required bundle. The dormant
+manual seed workflow needs an existing two-pin GitHub artifact and a visible
+cache scope; approved staging and explicit workflow-run authorisation remain
+necessary. No Actions was started. Do not use old workflows to bypass a cache miss.
+No merge, Firebase request, production change, new APK, installation or distribution
+occurred. Preserve Android 0.25.218 (264) and installed app data.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 
