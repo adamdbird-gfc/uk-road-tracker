@@ -1,5 +1,21 @@
 # PR #222 — draft-release staging correction for approval
 
+## Latest status — artifact route proposed, not executed
+
+Run 40555030074 used corrected source 8233533 and valid inputs, but the read-only
+runner token did not discover the draft. Do not repeat that release path. The ZIP
+remains unchanged/unpublished. See [the artifact bootstrap proposal](pr-222-artifact-bootstrap.md)
+for a minimal manual stage using an owner-supplied temporary GitHub asset URL in
+an Actions secret, unchanged contents-read permissions and hard-pinned 79bcc97
+validation. Supplying that short-lived credential, main registration (including
+known managed Pages side effects), staging, and subsequent cache seeding each need
+explicit approval. No such actions occurred in this preparation. Once the stage
+artifact exists, the registered seed workflow works unchanged with source_sha
+79bcc97, numeric run_id and artifact_name, and an empty release_tag.
+
+The draft-discovery correction below is historical context, not the recommended
+next run. Runtime token visibility has now failed; do not treat it as pending.
+
 ## Current state — 27 October 2026
 
 Keep PR #222 in draft. No merge, Android build, dependency download, Firebase

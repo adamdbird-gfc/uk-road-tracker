@@ -1,5 +1,18 @@
 # PR #222 final review and safe build procedure — 27 October 2026
 
+## Artifact ingress proposal — current next step
+
+Run 40555030074 confirmed the read-only runner did not discover the draft even
+with corrected inputs/source. The ZIP is still unchanged/unpublished and no
+cache was saved. The [artifact bootstrap proposal](pr-222-artifact-bootstrap.md)
+provides the reviewed one-file manual staging workflow and exact approval gates.
+It uses a temporary GitHub asset URL kept in an Actions secret (an asset-scoped
+credential, requiring approval), pinned 79bcc97 local validation, and artifact
+upload after ZIP/member/SQLite/county checks. Seven socket-blocked tests pass.
+No workflow, credential creation, main/cache/release change or Firebase access
+occurred during preparation. The existing cache seed workflow needs no edit;
+use source 79bcc97 and artifact inputs only after staging is approved/successful.
+
 ## Disposition
 
 **Keep PR #222 in draft. Do not merge yet.** Reviewed the complete initial diff

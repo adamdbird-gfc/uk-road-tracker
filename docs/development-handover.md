@@ -1,5 +1,23 @@
 # Roadprints development handover
 
+## PR #222 — private artifact bootstrap prepared for review
+
+Latest run 40555030074 passed corrected inputs/source checks, but contents-read
+GITHUB_TOKEN could not discover the existing draft. No ZIP download/cache save
+occurred. A new manual artifact-stage workflow is proposed: read a temporary
+GitHub signed asset URL from an Actions secret, check out immutable 79bcc97,
+verify ZIP/member/SQLite/county integrity, and upload only the two root datasets.
+It never accesses Firebase or the shared cache. Seven offline staging-contract
+checks passed. No new main write, secret, Actions run or release change occurred.
+
+Read [the full artifact bootstrap/approval procedure](pr-222-artifact-bootstrap.md).
+Approval must cover the temporary asset-scoped bearer secret and staging run;
+main registration also needs explicit treatment of the known managed Pages
+side effect despite [skip ci]. Existing cache seeding then works unchanged using
+source 79bcc97 + numeric staging run_id + roadprints-reference-pins-v2, leaving
+release_tag empty. No PAT, permission expansion, public asset upload, external
+hosting, APK or merge is proposed. A live signed URL has not been tested.
+
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
 ## PR #222 — draft-release lookup corrected; new seed approval required
