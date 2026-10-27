@@ -1,0 +1,23 @@
+name: Test reference release staging offline
+# Preparation only. Manual dispatch requires separate owner approval.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out reviewed branch without stored credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: fix/firebase-bandwidth-offline
+          persist-credentials: false
+      - name: Run synthetic offline tests only
+        env:
+          PYTHONPATH: scripts
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 -m unittest scripts/test_github_reference_staging.py -v
