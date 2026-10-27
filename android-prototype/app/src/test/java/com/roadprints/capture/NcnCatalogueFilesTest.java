@@ -34,4 +34,26 @@ public class NcnCatalogueFilesTest {
   JSONObject m=cached("a",1);m.put("filename","https://other.invalid/db.gz");try{NcnCatalogueFiles.validate(m);fail();}catch(IllegalArgumentException expected){}
   m=cached("a",1);m.put("compressed_bytes",300L*1024*1024);try{NcnCatalogueFiles.validate(m);fail();}catch(IllegalArgumentException expected){}
  }
+ @Test public void failedColdInstallIsDeferredWithoutRemovingAnyOfflineGeneration()throws Exception{
+  Context context=new android.content.ContextWrapper(app()) {
+   @Override public File getFilesDir(){File root=new File(super.getFilesDir(),"cold-retry");root.mkdirs();return root;}
+  };
+  android.content.SharedPreferences prefs=context.getSharedPreferences("ncn_reference_updates",0);
+  prefs.edit().clear().commit();
+  System.setProperty("roadprints.referenceNetworkDisabled","true");
+  try{NcnCatalogueFiles.open(context);fail("No local fixture means no install");}catch(IOException expected){}
+  assertTrue(prefs.getLong("install_retry_after",0)>System.currentTimeMillis());
+  try{NcnCatalogueFiles.open(context);fail("Retry must be deferred");}
+  catch(IOException expected){assertTrue(expected.getMessage().contains("retry deferred"));}
+ }
+ @Test public void cancelledColdOpenDoesNotCreateAnInstallRetryDeadline()throws Exception{
+  Context context=new android.content.ContextWrapper(app()) {
+   @Override public File getFilesDir(){File root=new File(super.getFilesDir(),"cancelled-retry");root.mkdirs();return root;}
+  };
+  android.content.SharedPreferences prefs=context.getSharedPreferences("ncn_reference_updates",0);
+  prefs.edit().clear().commit();Thread.currentThread().interrupt();
+  try{NcnCatalogueFiles.open(context);fail();}catch(InterruptedIOException expected){}
+  finally{Thread.interrupted();}
+  assertEquals(0,prefs.getLong("install_retry_after",0));
+ }
 }

@@ -49,6 +49,15 @@ if (stableKeystore != null && stableStorePassword != null && stableKeyAlias != n
 // A failed external serving gate still permits all offline regression tests.
 // Packaging never sets this property and always runs the complete suite.
 tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    // Mock Transport fixtures still work. Any real public reference connection fails before opening a URL.
+    systemProperty("roadprints.referenceNetworkDisabled", "true")
+    // Gradle daemon system properties are not implicitly inherited by forked Test JVMs.
+    providers.systemProperty("robolectric.offline").orNull?.let {
+        systemProperty("robolectric.offline", it)
+    }
+    providers.systemProperty("robolectric.dependency.dir").orNull?.let {
+        systemProperty("robolectric.dependency.dir", it)
+    }
     if (providers.gradleProperty("ncnOfflineChecks").orNull == "true") {
         exclude("**/NcnNationalTest*", "**/NcnUiTest*")
     }

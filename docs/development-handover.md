@@ -1,6 +1,32 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-27.
+
+## PR #222 — bandwidth protection verified; ready for merge approval
+
+Successful Android verification [40585966577](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40585966577)
+checked exact runtime source **2f70f1145b211cc46f646d84b9a319bd8bb7cfd3**:
+GitHub reference cache restored, both dataset pins validated, Android/unit sources
+compiled, lint passed and **801 tests / 107 suites passed with zero failures,
+errors or skips**. XML reports independently checked, artifact 12772066575 (expires
+3 November). Unit execution had no external network. 25 pure Java offline checks,
+16 reference/build contracts, 4 distribution checks and 6 county recovery checks
+also passed in that run. The earlier test failures are resolved.
+
+Normal Android checks and private packaging restore the same exact cache and
+validate local files; missing/corrupt pins fail safely, with no Firebase fallback.
+Both existing manifests/hashes and website content remain unchanged. Shared cache
+was previously seeded/restored/revalidated successfully by run 40579277763.
+Do not repeat bootstrap, release publication, browser developer tools, secret
+creation or verification. Later documentation-only updates do not change the
+verified runtime source and do not require another build.
+
+See [the final review and evidence](pr-222-final-review.md). PR #222 is technically
+ready; merge still requires explicit owner approval. Its existing target is
+fix/navigation-progress-responsiveness, not main; do not retarget or merge the
+stacked baseline into main implicitly. No APK was produced/distributed and no app
+was launched. Continue normal Android development from the protected branch;
+current app version remains 0.25.218 (264). Stop infrastructure investigation here.
 
 ## Navigation and Progress responsiveness — delivered 0.25.218 (264)
 

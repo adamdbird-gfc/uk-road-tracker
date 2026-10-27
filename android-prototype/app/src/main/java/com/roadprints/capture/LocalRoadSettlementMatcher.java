@@ -130,16 +130,34 @@ final class LocalRoadSettlementMatcher {
         return count;
     }
 
-    static JSONObject boundary(String code) throws Exception {
+    static JSONObject boundary(Context context, String code) throws Exception {
+        if (!code.matches("[A-Z][0-9]{8}")) throw new IllegalArgumentException("Invalid settlement code");
+        ReferenceDataDiagnostics.initialize(context.getFilesDir());
+        byte[] bytes = new ReferenceDataCache(new java.io.File(context.getFilesDir(), "settlement-boundaries-v1"))
+                .get(code, "published-v1", () -> fetchBoundary(code).toString().getBytes(StandardCharsets.UTF_8),
+                        value -> SettlementBoundaryValidation.validate(new JSONObject(new String(value, StandardCharsets.UTF_8))));
+        return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+    }
+
+    private static JSONObject fetchBoundary(String code) throws Exception {
         try {
             JSONObject response = request("GET", API + "/settlement-boundaries/" + code, null);
             JSONObject boundary = response.optJSONObject("boundary");
-            if (boundary != null) return boundary;
+            if (boundary != null) { SettlementBoundaryValidation.validate(boundary); return boundary; }
         } catch (Exception ignored) {
             // The published public boundary files provide a read-only fallback.
         }
-        return request("GET", PublicReferenceData.BASE_URL
-                + "settlement-inventories-v1/" + code + "-boundary.geojson", null);
+        HttpURLConnection connection = new ReferenceDataConnection(new URL(PublicReferenceData.BASE_URL
+                + "settlement-inventories-v1/" + code + "-boundary.geojson"),
+                "settlement-boundary", "published-v1", "focused_map_cache_miss");
+        connection.setInstanceFollowRedirects(false);
+        connection.setConnectTimeout(12000); connection.setReadTimeout(25000);
+        try {
+            if (connection.getResponseCode() != 200) throw new java.io.IOException("Boundary unavailable");
+            try (InputStream input = connection.getInputStream()) {
+                return new JSONObject(new String(VenueCatalogueUpdates.readBounded(input, 4 * 1024 * 1024), StandardCharsets.UTF_8));
+            }
+        } finally { connection.disconnect(); }
     }
 
     private static boolean needsMetadata(List<Settlement> settlements) {

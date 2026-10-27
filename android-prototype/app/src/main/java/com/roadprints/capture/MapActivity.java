@@ -554,7 +554,7 @@ public class MapActivity extends Activity {
             int retainedSettlementPoints = 0;
             String failure = null;
             try {
-                boundary = LocalRoadSettlementMatcher.boundary(code);
+                boundary = LocalRoadSettlementMatcher.boundary(this, code);
                 JSONArray journeyIds = new JSONArray(journeyIdJson == null ? "[]" : journeyIdJson);
                 for (int index = 0; index < journeyIds.length()
                         && roads.size() < MAX_MAP_ROUTES

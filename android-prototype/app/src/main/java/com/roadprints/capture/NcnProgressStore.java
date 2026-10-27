@@ -101,7 +101,7 @@ final class NcnProgressStore {
         c.getSharedPreferences(PREFS,0).edit().putLong("epoch",c.getSharedPreferences(PREFS,0).getLong("epoch",0)+1).commit();
         snapshot=null;failedRevision=Long.MIN_VALUE;ensure(c);
     }
-    static synchronized void retry(Context c){failedRevision=Long.MIN_VALUE;ensure(c);}
+    static synchronized void retry(Context c){c.getSharedPreferences("ncn_reference_updates",0).edit().remove("install_retry_after").apply();failedRevision=Long.MIN_VALUE;ensure(c);}
     static void changed(Context context) {
         if(!enabled(context)||!changeQueued.compareAndSet(false,true))return;
         Context app=context.getApplicationContext();WORKER.execute(()->{changeQueued.set(false);ensure(app,"archive_changed");});

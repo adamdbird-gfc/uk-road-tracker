@@ -139,7 +139,7 @@ jobs:
   beta:
     needs: [verify-existing-access, publish]
     if: always() && ((needs.publish.result == 'success' && needs.publish.outputs.promote == 'true' && needs.publish.outputs.package_beta == 'true') || (needs.verify-existing-access.result == 'success' && needs.verify-existing-access.outputs.action == 'package-existing'))
-    uses: adamdbird-gfc/uk-road-tracker/.github/workflows/build-android-prototype.yml@fix/onboarding-start-tracking
+    uses: ./.github/workflows/build-android-prototype.yml
     with:
       source_ref: ${{ github.sha }}
       firebase_upload: false

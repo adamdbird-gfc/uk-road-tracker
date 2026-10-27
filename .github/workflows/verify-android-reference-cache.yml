@@ -1,0 +1,110 @@
+name: Verify cached Android references
+# Manual validation only: no assemble, publication or distribution tasks.
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed PR 222 source commit (40 lowercase hex characters)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: android-reference-cache-verification
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.actor == github.repository_owner && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
+    steps:
+      - name: Require an explicit reviewed source
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          python3 - <<'PY'
+          import os,re
+          if not re.fullmatch('[a-f0-9]{40}',os.environ['SOURCE_SHA']):
+              raise ValueError('Exact reviewed source SHA required')
+          PY
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - name: Reject historical network-capable preparation helpers
+        run: python3 scripts/verify_offline_build_controls.py
+      - name: Restore the same exact reference cache as Android builds
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Validate both restored datasets before any build setup
+        run: |
+          python3 scripts/prepare_ncn_reference.py
+          bash android-prototype/scripts/prepare_county_reference.sh
+      - name: Require existing runner SDK and Java 17
+        run: |
+          test -n "$JAVA_HOME_17_X64" || { echo '::error::Runner Java 17 missing; no installation attempted.'; exit 1; }
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar" || { echo '::error::Runner Android SDK 35 missing; no SDK download allowed.'; exit 1; }
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Restore Gradle tooling and dependency cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Run targeted offline regression checks
+        run: |
+          bash scripts/check_reference_bandwidth_offline.sh
+          python3 -m unittest discover -s scripts -p test_android_distribution_controls.py -v
+      # Approval for this run must include ordinary Gradle/Maven dependency resolution.
+      # Reference data remains cache-only; Android Test workers reject reference HTTP.
+      - name: Compile and lint with SDK downloads disabled
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac
+      - name: Resolve the three required Robolectric test fixtures before isolation
+        run: |
+          mkdir -p "$RUNNER_TEMP/robolectric-offline"
+          cat > "$RUNNER_TEMP/robolectric-fixtures.init.gradle" <<'GRADLE'
+          gradle.projectsEvaluated {
+              def app = gradle.rootProject.project(':app')
+              // Resolve each SDK separately; one configuration would select only the newest version.
+              def sdks = [
+                  'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7',
+                  'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7',
+                  'org.robolectric:android-all-instrumented:15-robolectric-12650502-i7'
+              ].collect { coordinate ->
+                  def files = app.configurations.detachedConfiguration(app.dependencies.create(coordinate))
+                  files.transitive = false
+                  files
+              }
+              app.tasks.register('prepareRobolectricOffline', Copy) {
+                  from(sdks)
+                  into(new File(System.getenv('RUNNER_TEMP'), 'robolectric-offline'))
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/robolectric-fixtures.init.gradle" :app:prepareRobolectricOffline
+      - name: Run unit tests without external network access
+        run: |
+          gradle_path="$(command -v gradle)"
+          sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE unshare --net bash -c '
+            set -e
+            ip link set lo up
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
+          ' _ "$gradle_path"
+      - name: Retain verification reports without APKs or credentials
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-reference-cache-verification
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 7
