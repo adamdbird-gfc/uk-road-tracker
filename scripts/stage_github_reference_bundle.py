@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage the exact prepared ZIP from a private draft GitHub release; no Firebase transport."""
+"""Stage the exact prepared ZIP from an approved published GitHub release; no Firebase transport."""
 import argparse
 import hashlib
 import json
@@ -62,9 +62,9 @@ def open_github(opener, request, operation, timeout=30):
         error.close()
         # Do not log response bodies, signed URLs or authentication headers.
         raise RuntimeError(
-            f'GitHub {operation} failed (HTTP {code}). Draft visibility requires '
-            'repository push access; release listing and asset reads require contents: read. '
-            '404 may hide inaccessible drafts/assets. No retry, permission escalation, '
+            f'GitHub {operation} failed (HTTP {code}). Published release visibility requires '
+            'release access; listing and asset reads require contents: read. '
+            '404 may hide inaccessible releases/assets. No retry, permission escalation, '
             'publication or public-download fallback was attempted.'
         ) from None
 
@@ -94,8 +94,8 @@ def discover_asset(opener, tag, token):
         raise ValueError('Expected exactly one visible release matching the exact tag; '
                          'check draft visibility/push access if missing')
     release = releases[0]
-    if release.get('draft') is not True:
-        raise ValueError('Bootstrap source must remain a private draft release')
+    if release.get('draft') is not False or not release.get('published_at'):
+        raise ValueError('Bootstrap source must be an explicitly published release')
     release_id = release.get('id')
     if type(release_id) is not int or release_id <= 0:
         raise ValueError('Invalid GitHub release identity')
@@ -111,7 +111,7 @@ def discover_asset(opener, tag, token):
     asset_id = asset.get('id')
     if type(asset_id) is not int or asset_id <= 0:
         raise ValueError('Invalid GitHub asset identity')
-    print(f'Exact draft release {release_id}, asset {asset_id} and pinned metadata verified')
+    print(f'Exact published release {release_id}, asset {asset_id} and pinned metadata verified')
     return asset_id
 
 
