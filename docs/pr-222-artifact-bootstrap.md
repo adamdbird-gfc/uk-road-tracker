@@ -1,12 +1,49 @@
 # PR #222 — GitHub-only artifact bootstrap proposal
 
+## Owner clarification and data review
+
+The owner accepts wider access to the national reference datasets provided no
+personal information is included and redistribution terms are respected. The
+repository is public: signed-in readers can download its Actions artifacts, and
+shared caches are not a privacy boundary. Do not describe this artifact route as
+owner-only storage. The temporary signed asset URL and account credentials must
+remain secret. One Pages rebuild is now approved if existing website content is
+unchanged; main registration, secret creation and workflow execution still each
+require a clearly described approval before acting.
+
+Offline inspection rehashed the unchanged ZIP and NCN database, listed all five
+ZIP members and all SQLite tables, and parsed all 219 route records and 62,487
+path records. These contain route labels, public map geometry, OSM node/way IDs,
+network mappings and provenance, not user journeys/accounts/timestamps/credentials.
+County metadata describes 92 public historic county boundaries. The source build
+code generates this reference database independently of personal capture data.
+
+Source terms checked on 27 October 2026:
+- OpenStreetMap: ODbL 1.0 permits redistribution with attribution and share-alike
+  conditions. https://www.openstreetmap.org/copyright and
+  https://opendatacommons.org/licenses/odbl/1-0/ .
+- Official NCN scope: the publisher's ArcGIS NCN metadata identifies OGL 3.0 and
+  Ordnance Survey attribution. OGL permits redistribution with source credit:
+  https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/ .
+- Historic County Borders Project permits personal, educational, non-commercial
+  and commercial reuse without specific permission, and requests acknowledgement:
+  https://county-borders.co.uk/ .
+
+The proposed artifact now includes both pinned manifests and a licence/source
+notice alongside the two unchanged datasets. This does not edit/repackage the
+existing ZIP or alter either dataset hash. Keep those notices with subsequent
+redistributions. The existing seed accepts these additional files unchanged;
+its own retained artifact currently contains the two data files, while notices
+remain in the original staging artifact and this reviewed workflow/source record.
+
 ## Decision — preparation only
 
 Use a small, manually dispatched **Stage existing verified reference artifact**
 workflow, proposed as `.github/workflows/reference-artifact-stage.yml`. It reads
 GitHub's temporary signed URL for the already uploaded asset from a temporary
-Actions secret. It validates the existing ZIP and both datasets, then uploads only
-`catalogue.db` and `boundaries.bin` as `roadprints-reference-pins-v2`.
+Actions secret. It validates the existing ZIP and both datasets, then uploads
+`catalogue.db`, `boundaries.bin`, their pinned manifests and `REFERENCE-LICENCES.txt`
+as `roadprints-reference-pins-v2`.
 
 **Conditional GO for review, not execution.** No Actions, secret/credential creation,
 permission changes, main writes, cache changes, release publication/re-upload,
@@ -78,7 +115,7 @@ asset download. Official checkout and upload-artifact actions are pinned.
 | Offline helper preflight | Source inspection only; no Android execution |
 | ZIP download | HTTPS GET to `release-assets.githubusercontent.com`, restricted to `/github-production-release-asset/1347394235/` and a signed query; same restriction on redirects; proxies disabled |
 | Local checks | ZIP hash/size, fixed member pins, SQLite and county catalogue checks; no network |
-| Artifact upload | GitHub Actions artifact service/storage, using job runtime authentication; two verified root files only, no URL/secret/ZIP included; retention 90 days |
+| Artifact upload | GitHub Actions artifact service/storage, using job runtime authentication; two verified data files, their manifests and licence notice; no URL/secret/ZIP included; retention 90 days |
 
 The binary download is bounded to the exact ZIP size and made once, without retry.
 Exceptions are replaced with a generic diagnostic so signed URLs cannot appear
@@ -101,7 +138,7 @@ still show API `srv-da82330u01pc73ccg6n0` and cron `crn-dapdcsg473hc7393bk3g`
 tracking main with commit-triggered autoDeploy enabled. No configuration changed.
 Keep both skip markers, and recheck these facts before any approved registration.
 
-Proposed workflow SHA-256: `e9b9cb281a4b07306cc12cab0bfb3c05fa054b7634bb15ec10d4f94e89e6394a`.
+Proposed workflow SHA-256: `2669437e234418bc69bf71b9ed27b475ad2f3544f3edee403cfea0f2c55ccd52`.
 
 ## Approvals and owner steps — do not perform yet
 
@@ -111,12 +148,12 @@ Proposed workflow SHA-256: `e9b9cb281a4b07306cc12cab0bfb3c05fa054b7634bb15ec10d4
    must contain `[skip ci] [skip render]`; first recheck the current main head,
    all workflow filters and Render configuration.
 
-   **Registration is currently NO-GO without explicit treatment of Pages:** the
+   **The owner has now approved one unchanged-site Pages rebuild:** the
    previous main registration triggered managed Pages/Jekyll deployment despite
-   `[skip ci]`. A new main write can do so again. Either explicitly approve that
-   known GitHub Pages side effect or separately approve disabling its automatic
-   source before registration. Do not change Pages settings or assume the skip
-   marker prevents this managed run. Main's configured push filters do not match
+   `[skip ci]`. A new main write can do so again. The owner accepts that known GitHub Pages side effect provided existing site
+   content is unchanged. Only the workflow file may be registered; do not copy
+   these PR documentation changes to main. Do not change Pages settings or assume
+   the skip marker prevents the managed run. Main's configured push filters do not match
    the new staging path; Render's API and cron follow main and rely on the
    documented `[skip render]` suppression. No claim of universally inert main
    writes is made.

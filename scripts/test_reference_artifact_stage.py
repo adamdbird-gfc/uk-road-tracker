@@ -35,7 +35,9 @@ class ArtifactStage(unittest.TestCase):
         self.assertEqual('${{ secrets.ROADPRINTS_REFERENCE_ZIP_URL }}',steps[2]['env']['REFERENCE_ZIP_URL'])
         upload=steps[-1]
         self.assertEqual('roadprints-reference-pins-v2',upload['with']['name'])
-        self.assertEqual(['reference-input/catalogue.db','reference-input/boundaries.bin'],upload['with']['path'].splitlines())
+        self.assertEqual(['reference-input/catalogue.db','reference-input/boundaries.bin',
+                         'reference-input/ncn-manifest.json','reference-input/county-catalogue.json',
+                         'reference-input/REFERENCE-LICENCES.txt'],upload['with']['path'].splitlines())
         for step in steps:
             if 'uses' in step:self.assertEqual(40,len(step['uses'].rsplit('@',1)[1]))
         for banned in ['actions/cache','gradle ','assemble','firebase ','render ','GH_TOKEN','GITHUB_TOKEN','pip install','browser_download_url']:
@@ -96,6 +98,9 @@ class ArtifactStage(unittest.TestCase):
                 self.ns['stage'](URL)
                 self.assertEqual(['zip-and-member-pins','sqlite'],events)
                 self.assertEqual(b'county',Path('reference-input/boundaries.bin').read_bytes())
+                notice=Path('reference-input/REFERENCE-LICENCES.txt').read_text()
+                for required in ['ODbL 1.0','OGL 3.0','Historic County Borders Project','https://county-borders.co.uk/']:
+                    self.assertIn(required,notice)
                 request=opener.open.call_args.args[0]
                 self.assertEqual('GET',request.get_method())
                 self.assertIsNone(request.get_header('Authorization'))

@@ -71,6 +71,24 @@ jobs:
                   destination.mkdir()
                   for name in ('catalogue.db','boundaries.bin'):
                       shutil.copyfile(verified/name,destination/name)
+                  shutil.copyfile('android-prototype/app/src/main/assets/ncn-national/manifest.json',destination/'ncn-manifest.json')
+                  shutil.copyfile('android-prototype/app/src/main/assets/historic-counties/catalogue.json',destination/'county-catalogue.json')
+                  (destination/'REFERENCE-LICENCES.txt').write_text(
+                      'Roadprints national reference datasets; no personal journey data.\n\n'
+                      'catalogue.db: OpenStreetMap-derived reference database, ODbL 1.0.\n'
+                      'Copyright OpenStreetMap contributors. Redistribution/adaptations of this database remain subject to ODbL 1.0.\n'
+                      'https://www.openstreetmap.org/copyright\n'
+                      'https://opendatacommons.org/licenses/odbl/1-0/\n'
+                      'Official NCN scope: Walk Wheel Cycle Trust (formerly Sustrans), OGL 3.0.\n'
+                      'Contains Ordnance Survey data: Crown copyright and database rights 2018.\n'
+                      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/\n'
+                      'Original source: https://data-sustrans-uk.opendata.arcgis.com/datasets/Sustrans-UK::national-cycle-network-public-1/about\n'
+                      'See ncn-manifest.json for pinned revision, attribution and integrity metadata.\n\n'
+                      'boundaries.bin: derived from Historic County Borders Project, Historic Counties Trust.\n'
+                      'The provider permits personal, educational, non-commercial and commercial reuse without specific permission.\n'
+                      'This project made use of data provided by the Historic County Borders Project.\n'
+                      'https://county-borders.co.uk/\n'
+                      'See county-catalogue.json for source URL, version and integrity metadata.\n',encoding='utf-8')
               print('ZIP, both member pins, NCN SQLite integrity and county catalogue verified')
 
           if __name__=='__main__':
@@ -79,13 +97,16 @@ jobs:
                   # Never print exception details: HTTP errors can contain signed credentials.
                   raise SystemExit('Staging failed; check temporary URL validity and pinned integrity. No retry or fallback; artifact upload skipped.') from None
           PY
-      - name: Upload only the two verified root-level reference files
+      - name: Upload verified reference files with source and licence notices
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: roadprints-reference-pins-v2
           path: |
             reference-input/catalogue.db
             reference-input/boundaries.bin
+            reference-input/ncn-manifest.json
+            reference-input/county-catalogue.json
+            reference-input/REFERENCE-LICENCES.txt
           if-no-files-found: error
           compression-level: 0
           retention-days: 90

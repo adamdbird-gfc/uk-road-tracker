@@ -1,5 +1,13 @@
 # PR #222 — draft-release staging correction for approval
 
+Owner clarification: broader reference-data access is acceptable subject to no
+personal data and source redistribution terms. Offline inspection and source terms
+support staging the national datasets with attribution; the proposed artifact now
+includes pinned manifests and REFERENCE-LICENCES.txt. The existing ZIP/data hashes
+are unchanged. One unchanged-site Pages rebuild is approved, but main registration,
+secret creation and Actions execution still require separate clear approval. See
+[the current procedure](pr-222-artifact-bootstrap.md). No such operation occurred.
+
 ## Latest status — artifact route proposed, not executed
 
 Run 40555030074 used corrected source 8233533 and valid inputs, but the read-only
