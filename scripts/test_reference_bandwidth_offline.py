@@ -84,8 +84,8 @@ class OfflineReferences(unittest.TestCase):
     def test_seed_is_manual_github_artifact_only_and_validates_before_save(self):
         text=(ROOT/'.github/workflows/reference-pin-cache.yml').read_text()
         self.assertIn('workflow_dispatch:',text);self.assertNotIn('  push:',text);self.assertNotIn('  pull_request:',text)
-        self.assertIn('actions/download-artifact@v4',text)
-        self.assertLess(text.index('python3 scripts/seed_reference_pins.py'),text.index('actions/cache/save@v4'))
+        self.assertIn('actions/download-artifact@',text)
+        self.assertLess(text.index('python3 scripts/seed_reference_pins.py'),text.index('actions/cache/save@'))
         self.assertIn('github.actor == github.repository_owner',text)
     def test_gradle_blocks_reference_transport_before_url_open(self):
         text=(ROOT/'android-prototype/app/build.gradle.kts').read_text()

@@ -2,6 +2,23 @@
 
 Last reviewed: 2026-10-27. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## PR #222 — GitHub seed ready for authorisation, not execution
+
+See [the exact staging/seed operation and offline verification plan](pr-222-seed-authorisation.md).
+The existing verified ZIP is accessible in the staging workspace and durably saved.
+A new private-draft-release input removes the initial artifact bootstrap loop.
+The prepared manual workflow is owner/default-branch only, uses read-only GitHub
+permissions and immutable action pins, validates before retaining an artifact or
+saving cache, then verifies an exact-key restore. It invokes no Android build or
+Firebase/production script. Five new local safety tests, the adjusted contract
+test and a real-bundle extraction/SQLite check pass; no Actions run is claimed.
+
+Pending explicit approval: GitHub draft release/asset upload, registration of only
+the reviewed seed workflow on main, then one manual dispatch at the approved
+immutable PR source SHA. No such upload, default-branch change, dispatch, tool
+installation, compilation, merge or APK generation has occurred. Full Android
+verification separately needs the pre-provisioned SDK/Gradle/Robolectric caches.
+
 ## P0 Firebase bandwidth — PR #222 bootstrap follow-up, 27 October 2026
 
 Continue on `fix/firebase-bandwidth-offline` against delivered Android 218's

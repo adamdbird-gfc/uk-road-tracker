@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Stage the exact prepared ZIP from a private draft GitHub release; no Firebase transport."""
+import argparse
+import hashlib
+import json
+import os
+import re
+import tempfile
+import urllib.request
+import zipfile
+from pathlib import Path
+from urllib.parse import urlsplit
+
+REPOSITORY = 'adamdbird-gfc/uk-road-tracker'
+ASSET = 'roadprints-reference-pins-2026-10-27.zip'
+BUNDLE_BYTES = 157393480
+BUNDLE_SHA256 = 'd547847572e574cecd16cdb8e08077bf2e0a1014507c7f876c94c7c88b97853c'
+MEMBERS = {
+    'catalogue.db': (243724288, '973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093'),
+    'boundaries.bin': (8992277, 'b81fe3bf42400548c45576750d4e40ca2795975ddbc8903b83a9bb6072c6e850'),
+}
+
+
+def allowed_url(url):
+    parsed = urlsplit(url)
+    return (parsed.scheme == 'https' and not parsed.username and not parsed.password
+            and parsed.port is None and not parsed.fragment
+            and ((parsed.hostname == 'api.github.com' and parsed.path.startswith('/repos/' + REPOSITORY + '/releases/'))
+                 or parsed.hostname == 'release-assets.githubusercontent.com'))
+
+
+class GitHubOnlyRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        if not allowed_url(newurl):
+            raise ValueError('Non-GitHub release redirect rejected')
+        redirected = super().redirect_request(request, fp, code, msg, headers, newurl)
+        # A GitHub API token must never follow a signed redirect to asset storage.
+        if redirected is not None and urlsplit(newurl).hostname != 'api.github.com':
+            redirected.remove_header('Authorization')
+        return redirected
+
+
+def github_request(path, token, accept='application/vnd.github+json'):
+    url = 'https://api.github.com/repos/' + REPOSITORY + '/releases/' + path
+    if not allowed_url(url):
+        raise ValueError('Invalid GitHub release URL')
+    return urllib.request.Request(url, headers={'Authorization': 'Bearer ' + token,
+        'Accept': accept, 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'Roadprints-reference-bootstrap'})
+
+
+def extract_verified(bundle, destination):
+    if bundle.stat().st_size != BUNDLE_BYTES:
+        raise ValueError('Bundle size differs from approved input')
+    with bundle.open('rb') as stream:
+        if hashlib.file_digest(stream, 'sha256').hexdigest() != BUNDLE_SHA256:
+            raise ValueError('Bundle checksum differs from approved input')
+    destination.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(bundle) as archive:
+        if len(archive.namelist()) != len(set(archive.namelist())):
+            raise ValueError('Duplicate ZIP member')
+        # Only the two fixed root-level files are extracted; no ZIP paths/scripts execute.
+        with tempfile.TemporaryDirectory(dir=destination) as work:
+            for name, (size, expected) in MEMBERS.items():
+                info = archive.getinfo(name)
+                if info.file_size != size:
+                    raise ValueError('Reference member size differs')
+                target = Path(work) / name
+                digest = hashlib.sha256()
+                total = 0
+                with archive.open(info) as source, target.open('wb') as out:
+                    for chunk in iter(lambda: source.read(65536), b''):
+                        total += len(chunk)
+                        if total > size:
+                            raise ValueError('Reference member exceeds pin')
+                        digest.update(chunk)
+                        out.write(chunk)
+                if total != size or digest.hexdigest() != expected:
+                    raise ValueError('Reference member checksum differs')
+            for name in MEMBERS:
+                (Path(work) / name).replace(destination / name)
+
+
+def stage(tag, destination, token):
+    if not re.fullmatch(r'[A-Za-z0-9._-]{1,100}', tag):
+        raise ValueError('Invalid release tag')
+    if not token:
+        raise ValueError('Read-only same-repository GitHub token required')
+    opener = urllib.request.build_opener(GitHubOnlyRedirect())
+    with opener.open(github_request('tags/' + tag, token), timeout=30) as response:
+        raw = response.read(65537)
+    if len(raw) > 65536:
+        raise ValueError('GitHub release metadata exceeds limit')
+    release = json.loads(raw)
+    if release.get('draft') is not True:
+        raise ValueError('Bootstrap source must remain a private draft release')
+    assets = [a for a in release.get('assets', []) if a.get('name') == ASSET]
+    if len(assets) != 1 or assets[0].get('size') != BUNDLE_BYTES:
+        raise ValueError('Expected exactly one approved release asset')
+    asset_id = assets[0].get('id')
+    if type(asset_id) is not int or asset_id <= 0:
+        raise ValueError('Invalid GitHub asset identity')
+    with tempfile.TemporaryDirectory() as work:
+        bundle = Path(work) / ASSET
+        with opener.open(github_request('assets/' + str(asset_id), token, 'application/octet-stream'), timeout=120) as source, bundle.open('wb') as out:
+            total = 0
+            for chunk in iter(lambda: source.read(65536), b''):
+                total += len(chunk)
+                if total > BUNDLE_BYTES:
+                    raise ValueError('GitHub asset exceeds approved size')
+                out.write(chunk)
+        extract_verified(bundle, destination)
+    print('Approved GitHub bundle and both pinned members verified; staging complete')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--release-tag', required=True)
+    parser.add_argument('--destination', type=Path, default=Path('reference-input'))
+    args = parser.parse_args()
+    stage(args.release_tag, args.destination, os.environ.get('GH_TOKEN', ''))

@@ -10,6 +10,20 @@ release/development requests, matching calculations and map rendering are unchan
 No Firebase requests, deployments, live tests, Actions dispatches, APK generation,
 installation, distribution or production changes were performed.
 
+## Prepared GitHub-only staging and seed authorisation
+
+Read [the ready-to-authorise operation](pr-222-seed-authorisation.md). The existing
+bundle and its two members were reverified in place. The seed workflow now has a
+host-restricted, hash-pinned private draft GitHub release path, removing the need
+for a pre-existing artifact on first bootstrap. It retains the verified artifact,
+saves in default-branch scope, removes the local pins, restores the exact key and
+revalidates. All action versions are pinned to reviewed commits.
+
+**No upload, registration or workflow execution is approved/performed.** The older
+artifact-only bootstrap limitation below is historical; the new preparation
+specifies the exact approval and prerequisites. SDK/dependency downloads and full
+Android verification are separate, still unapproved operations.
+
 ## Reference discovery and local bootstrap — completed follow-up
 
 The two exact reference assets have now been recovered **without Firebase access**.
