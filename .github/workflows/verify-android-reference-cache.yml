@@ -67,18 +67,31 @@ jobs:
       - name: Compile and lint with SDK downloads disabled
         run: |
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac
-      - name: Run unit tests without external network access
+      - name: Resolve the three required Robolectric test fixtures before isolation
         run: |
           mkdir -p "$RUNNER_TEMP/robolectric-offline"
-          python3 - <<'PY'
-          import os,shutil
-          from pathlib import Path
-          destination=Path(os.environ['RUNNER_TEMP'])/'robolectric-offline'
-          for root in (Path(os.environ.get('GRADLE_USER_HOME',str(Path.home()/'.gradle'))),Path.home()/'.m2'):
-              if root.exists():
-                  for jar in root.rglob('android-all-instrumented-*.jar'):
-                      shutil.copyfile(jar,destination/jar.name)
-          PY
+          cat > "$RUNNER_TEMP/robolectric-fixtures.init.gradle" <<'GRADLE'
+          gradle.projectsEvaluated {
+              def app = gradle.rootProject.project(':app')
+              // Resolve each SDK separately; one configuration would select only the newest version.
+              def sdks = [
+                  'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7',
+                  'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7',
+                  'org.robolectric:android-all-instrumented:15-robolectric-12650502-i7'
+              ].collect { coordinate ->
+                  def files = app.configurations.detachedConfiguration(app.dependencies.create(coordinate))
+                  files.transitive = false
+                  files
+              }
+              app.tasks.register('prepareRobolectricOffline', Copy) {
+                  from(sdks)
+                  into(new File(System.getenv('RUNNER_TEMP'), 'robolectric-offline'))
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/robolectric-fixtures.init.gradle" :app:prepareRobolectricOffline
+      - name: Run unit tests without external network access
+        run: |
           gradle_path="$(command -v gradle)"
           sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP unshare --net bash -c '
             set -e
