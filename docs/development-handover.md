@@ -2,7 +2,19 @@
 
 Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Current corrective slice — selection6 live and private Android220 delivered
+## Current corrective slice — selection7 continuity correction
+
+Backend-only PR227 corrects accuracy-centre attraction and per-transition travel
+discounts in the existing global pedestrian selector. The original private
+fixture reproduces live selection6 exactly; proposed selection7 is 1860.0m,
+262coordinates, zero immediate reversals/revisited vertices. Local median
+three-run matching 2.780→2.839s; candidate/search work and deadlines unchanged.
+Eight new movement/evidence tests include genuine returns and NCN spur exclusion.
+Android220 already sends retained accuracy and can explicitly rematch existing
+journeys; no APK is needed. See [policy and regression details](pedestrian-continuity-selection7.md).
+Deployment/live verification will be recorded here after completion.
+
+## Previous corrective slice — selection6 live and private Android220 delivered
 
 Backend-only [PR226](https://github.com/adamdbird-gfc/uk-road-tracker/pull/226) merged as **d7f07060ebf15cee1d32fd3f948248d59f454cb2**; Render **dep-dbgun1ivcj2c73dslg60** is live. Actual live117-position replay with retained accuracy:279coordinates/1986.7m/6immediate reversals versus409/2486.5m/22 before. Confirmation returned identical geometry/evidence. Three original22 flagged terminal edges remain retraced. Larger detours reduced; six small returns, Strand/Charing hooks and indoor endpoint remain uncertain. Full visual/device acceptance is not claimed. CPU matcher16.766–17.003s versus7.868s before, reflecting broader evidence-supported search.
 
