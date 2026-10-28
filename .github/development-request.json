@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.218",
-  "version_code": 264,
-  "reason": "Faster first useful Journeys and Progress navigation, focused map previews and bounded road drawing reuse; one private owner APK only",
-  "revision": 13
+  "version_name": "0.25.219",
+  "version_code": 265,
+  "reason": "Walking editor matched geometry and request diagnostics; selection revision 5 backend pending separate deployment. One private owner APK, no Firebase distribution.",
+  "revision": 14
 }
