@@ -10,6 +10,10 @@ parser.add_argument('--baseline')
 parser.add_argument('--baseline-database')
 parser.add_argument('--network',help='Read-only source rows, including unselected alternatives')
 parser.add_argument('--repeat',type=int,default=1)
+parser.add_argument('--include-accuracy',action='store_true')
+parser.add_argument('--output-request')
+parser.add_argument('--output-result')
+parser.add_argument('--expected-baseline')
 args=parser.parse_args()
 j=json.load(open(args.export))['journey']
 original=json.dumps(j,sort_keys=True)
@@ -36,6 +40,13 @@ while ranges:
  if split>=0:keep.add(split);ranges.extend([(a,split),(split,z)])
 trace=[{'lng':p[0],'lat':p[1]} for i,p in enumerate(t) if i in keep]
 assert len(trace)==117,len(trace)
+if args.include_accuracy:
+ samples=j['capture_route_samples']
+ for fix,index in zip(trace,sorted(keep)):
+  assert samples[index][:2]==t[index], 'Accuracy samples must align with preserved source positions'
+  accuracy=samples[index][2]
+  if accuracy and math.isfinite(accuracy) and accuracy>0:fix['accuracy_m']=accuracy
+if args.output_request:Path(args.output_request).write_text(json.dumps({'points':trace,'walking_recovery':True}))
 refs=j['processing_result']['matched_path_evidence']['references'];features=j['processing_result']['road_geojson']['features']
 assert len(refs)==len(features)
 rows=[(r['source_key'],r['source_version'],r['source_feature_id'],r['reference_kind'],r['tags'],json.dumps(f['geometry'])) for r,f in zip(refs,features)]
@@ -62,11 +73,13 @@ for name,path in modules:
  if result:
   c=result['geojson']['features'][0]['geometry']['coordinates'];rev=[i for i in range(1,len(c)-1) if c[i-1]==c[i+1]]
   print(name,'seconds',elapsed,'distance',result['matched_distance_m'],'coordinates',len(c),'exact immediate reversals',len(rev),'network ways',len(rows))
+  if name=='current' and args.output_result:Path(args.output_result).write_text(json.dumps(result))
   assert all(math.isfinite(value) for point in c for value in point)
   assert result['matched_path_evidence']['status']=='available'
   assert result['matched_distance_m'] <= j['walking_validation']['validated_gps_distance_m']*1.6
   if name=='baseline' and args.network:
-   assert c==j['processing_result']['geojson']['features'][0]['geometry']['coordinates'], 'Baseline snapshot does not reproduce original geometry'
+   expected=json.load(open(args.expected_baseline)) if args.expected_baseline else j['processing_result']
+   assert c==expected['geojson']['features'][0]['geometry']['coordinates'], 'Baseline snapshot does not reproduce expected geometry'
    print('Original matched geometry reproduced exactly')
   if profiles and profiles[0]: print('Median profile ms/counters:',{key:statistics.median(p[key] for p in profiles) for key in profiles[0]})
  else:print(name,'no match')

@@ -30,7 +30,7 @@ class ArrivalStateTests(unittest.TestCase):
                            0 if start==end else 11) for end in targets}
         # Isolate the history-dependent selection: the cheaper arrival from A
         # reverses at B, while the slightly more expensive C arrival continues.
-        def score(before, after, route, distance, length):
+        def score(before, after, route, distance, length, **kwargs):
             return 1 if route == [vertices['c'],vertices['b']] else 0
         with patch('pedestrian_matching.score_pedestrian_path',side_effect=score):
             return select_trajectory_paths(trace,layers,vertices,distance_metres,paths)
@@ -119,7 +119,7 @@ class PedestrianPathTests(unittest.TestCase):
                                             paths, time.monotonic()+10, diagnostics)
         self.assertEqual((['start','street'], ['connected-road']), result)
         self.assertEqual(24, diagnostics['candidate_count'])
-        self.assertEqual([6,6,24,24], calls)
+        self.assertEqual([24,24], calls)
 
     def test_recovery_keeps_deadline_and_rejects_real_disconnection(self):
         vertices = {'start': [0.0,51.5], 'end': [0.001,51.5]}
@@ -293,7 +293,7 @@ class PedestrianGraphSearchTests(unittest.TestCase):
 
 
 class PedestrianEdgeCandidateTests(unittest.TestCase):
-    def match(self, trace, coordinates, edges):
+    def match(self, trace, coordinates, edges, accuracies=None):
         vertices = dict(enumerate(coordinates))
         graph = {key: [] for key in vertices}
         for i, (a, b) in enumerate(edges):
@@ -301,13 +301,43 @@ class PedestrianEdgeCandidateTests(unittest.TestCase):
             graph[a].append((b, gap, str(i)))
             graph[b].append((a, gap, str(i)))
         deadline = time.monotonic()+10
-        index = PedestrianEdgeCandidates(trace, vertices, graph, distance_metres, deadline)
+        index = PedestrianEdgeCandidates(trace, vertices, graph, distance_metres, deadline, accuracies=accuracies)
         retained = {key for layer in index.layers.values() for key, _ in layer}
         compact = compress_pedestrian_graph(graph, retained, deadline)
         search = PedestrianGraphPaths(compact, deadline)
         result = match_reference_trajectory(trace, index, vertices, distance_metres,
-                                            search, deadline, {})
+                                            search, deadline, {}, accuracies=accuracies)
         return result, vertices, graph, index
+
+    def test_uncertain_along_edge_jitter_can_hold_one_projection(self):
+        trace=[(0,51),(.0004,51),(.00036,51),(.0009,51),(.001,51)]
+        result,vertices,_,_=self.match(trace,[(0,51),(.001,51)],[(0,1)],[15]*len(trace))
+        xs=[vertices[key][0] for key in result[0]]
+        self.assertEqual(sorted(xs),xs)
+
+    def test_precise_deliberate_out_and_back_is_not_erased(self):
+        trace=[(0,51),(.0004,51),(.0008,51),(.0004,51),(0,51)]
+        result,vertices,_,_=self.match(trace,[(0,51),(.001,51)],[(0,1)],[2]*len(trace))
+        route=[vertices[key] for key in result[0]]
+        self.assertEqual(route[0],route[-1]);self.assertGreaterEqual(max(p[0] for p in route),.00079)
+
+    def test_poor_urban_fix_does_not_force_a_side_road_excursion(self):
+        coords=[(0,51),(.001,51),(.002,51),(.001,51.00015)]
+        trace=[(0,51),(.0005,51),(.001,51.00014),(.0015,51),(.002,51)]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(1,3)],[3,5,35,5,3])
+        self.assertTrue(all(abs(vertices[key][1]-51)<1e-8 for key in result[0]))
+
+    def test_precise_small_spur_and_return_are_retained(self):
+        coords=[(0,51),(.001,51),(.002,51),(.001,51.00015)]
+        trace=[coords[0],coords[1],coords[3],coords[1],coords[2]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(1,3)],[1]*len(trace))
+        self.assertGreater(max(vertices[key][1] for key in result[0]),51.00014)
+
+    def test_precise_closed_loop_keeps_every_observed_corner(self):
+        coords=[(0,51),(.001,51),(.001,51.001),(0,51.001)]
+        result,vertices,_,_=self.match(coords+[coords[0]],coords,[(0,1),(1,2),(2,3),(3,0)],[2]*5)
+        route=[tuple(vertices[key]) for key in result[0]]
+        self.assertEqual(route[0],route[-1]);self.assertTrue(all(p in route for p in coords))
 
     def test_straight_walk_does_not_visit_side_road_vertices(self):
         # Sparse main-road vertices, with nearer side-road nodes at each fix.

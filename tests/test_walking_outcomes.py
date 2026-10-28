@@ -113,3 +113,15 @@ class WalkingTemporalBudgetTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(api,'_match_walking_activity',new=AsyncMock(side_effect=HTTPException(504,'timeout'))):
             with self.assertRaises(HTTPException):await api.match_walking_activity(api.MatchRequest(points=[{'lat':51,'lng':.3}]*4,walking_recovery=True))
         self.assertIsNone(walking_work.get())
+
+
+class WalkingAccuracyContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_optional_accuracy_reaches_reference_matcher_without_changing_positions(self):
+        payload=api.MatchRequest(points=[{'lng':.1+i*.0001,'lat':51,'accuracy_m':accuracy}
+            for i,accuracy in enumerate([4,18,None,35])],walking_recovery=True)
+        with patch.object(api,'match_pedestrian_reference',return_value={'status':'ok','pedestrian_selection_version':6}) as reference:
+            result=await api.match_walking_activity(payload)
+        rows=reference.call_args.args[0]
+        self.assertEqual([4,18,None,35],[row.get('accuracy_m') for row in rows])
+        self.assertEqual([.1+i*.0001 for i in range(4)],[row['lng'] for row in rows])
+        self.assertEqual(6,result['pedestrian_selection_version'])
