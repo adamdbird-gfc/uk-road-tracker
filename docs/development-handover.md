@@ -2,6 +2,16 @@
 
 Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Current corrective slice — selection6 live and private Android220 delivered
+
+Backend-only [PR226](https://github.com/adamdbird-gfc/uk-road-tracker/pull/226) merged as **d7f07060ebf15cee1d32fd3f948248d59f454cb2**; Render **dep-dbgun1ivcj2c73dslg60** is live. Actual live117-position replay with retained accuracy:279coordinates/1986.7m/6immediate reversals versus409/2486.5m/22 before. Confirmation returned identical geometry/evidence. Three original22 flagged terminal edges remain retraced. Larger detours reduced; six small returns, Strand/Charing hooks and indoor endpoint remain uncertain. Full visual/device acceptance is not claimed. CPU matcher16.766–17.003s versus7.868s before, reflecting broader evidence-supported search.
+
+Private **0.25.220 (266)** built once from **67e74e7d9e9873552ae98b23397cd9e265fc3517**, [PR225](https://github.com/adamdbird-gfc/uk-road-tracker/pull/225) targeting the existing Android branch. [Packaging40690390058](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40690390058): **810tests/109suites,0failures/errors/skips**, lint0errors, pinned references/national NCN/signing passed. APK36,623,557bytes, SHA256`5eb4485327a9646bc95d4f57e3959a9acc944e8feb14b3fe9605e1aa359ae265`, same established signing certificate. No Firebase distribution. Backend106/PostgreSQL tests and driving recovery passed. Android code preserves navigation/ref caching work; no Android work merged into main.
+
+Identity cache test:25,000coordinates/30frames/0structural hash calls;43.714ms aggregate warm Robolectric frames. This removes the reported nested-JSON-hash mechanism, without claiming a Pixel stall measurement. Existing navigation/NCN fixtures passed. Exact production selectors on actual persisted/reopened live responses choose returned coordinates; raw333/saved148 preserved. Details use matched geometry minus removals; editor full matched edges permits restoration. Exact-edge correction reconciliation preserves manual changes; incompatible rematches retain old complete evidence and show explicit review status. Existing journeys rematch without recapture;220 is needed for accuracy forwarding and Android cache fix.
+
+See [full corrective findings and limits](pedestrian-visual-correction.md). Private equivalent-zoom visuals,22flag audit, actual coordinate/timing evidence and APK are delivered to owner. Older pending statements below are historical and superseded by this section.
+
 ## Pedestrian backend — deployed and verified 28 October 2026
 
 Backend-only PR224 merged to main as **610a8011a26e8c13077660b02bc98408156de435**; Render **dep-dbgtg329lscs7393fiv0** is live. HTTP200 health/database ready; /match-walking returns **pedestrian_selection_version=5**, compatible matcher family v4. All100 backend/PostgreSQL tests and driving recovery passed. No Android development merge, migration, APK build or NCN reference change.

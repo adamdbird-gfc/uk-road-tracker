@@ -1,28 +1,58 @@
-# Pedestrian visual correction and rendering cache — 28 October 2026
+# Roadprints pedestrian correction — 28 October 2026
 
-Baseline: installed private Android0.25.219/code265, PR223; deployed backend selection5, main610a8011/PR224. Previous work failed visual acceptance. This slice preserves navigation, offline Firebase reference pins and NCN UI; it does not rebuild reference data or merge Android into production main.
+Delivered private Android **0.25.220 (266)** from `67e74e7d9e9873552ae98b23397cd9e265fc3517`, PR225 targeting the existing Android development branch. Backend-only PR226 was squash-merged to production main as `d7f07060ebf15cee1d32fd3f948248d59f454cb2`. Render deployment `dep-dbgun1ivcj2c73dslg60` is **live**, finished 12:34:11 UTC. No Android development was merged into main; no Firebase distribution or reference rebuild occurred.
 
-## Confirmed causes
+## Confirmed causes and corrections
 
-- Details already select processing_result.geojson (after saved section removals), not route_geometry. The editor edits matched edges and permits restoration of removed edges; source/raw geometry is kept for diagnostics and correction splicing. This is not a raw-GPS-overlaid-on-matched-route defect.
-- Native capture retains per-fix accuracy, but WalkingJourneyPreparation omitted it from requests and Point accepted positions only. Several 1–17m reversals occur near fixes whose reported uncertainty is15–45m. Perpendicular emission and shape costs consequently treated noise as precise turns.
-- The matcher accepted the first successful six-candidate solution. Valid paths crowded out by closer nearby ways were never considered unless matching failed. Edge projections were specific to each observation, so along-edge pauses/jitter could force movement even when one shared network position was compatible with both fixes.
-- A large binary reversal penalty could prefer going around a short loop to paying the turn cost. For observations with accuracy, the revised model uses an uncertainty-aware distance likelihood and travel prior rather than that binary turn cost. Precise deliberate turns, spurs, crossings and out-and-back movements are covered by regressions.
-- MapRenderGeometry used JSONArray directly in weak maps and retained linked maps. Both invoke structural hashCode/equals on nested mutable arrays, matching the reported foreground stack. Changing a mutable array's value could also invalidate its hash key. All four caches now use identity keys: weak metadata with a reference queue; bounded strong path retention. Existing8192-entry,200k prepared-vertex and100k per-view path budgets remain. Same-length republished arrays invalidate their previous prepared path; editing bypasses immutable reuse.
-- Removed section indices belonged to the old match. A changed match could apply them to different edges. Exact physical-edge reconciliation now transfers compatible edits; otherwise the old route and edits are retained with an explicit failure message instead of silently reassigned.
+Walking preparation dropped recorded GPS accuracy; observations inside their uncertainty were treated as precise deviations. The matcher accepted the first successful six-candidate solution and could force along-edge movement between observation-specific projections. A binary reversal penalty could make a loop preferable to a reversal. Selection6 forwards retained accuracy, evaluates the existing24 prepared alternatives, adds bounded real junction/shared projection candidates and scores accuracy-supported travel continuously. Unknown-accuracy clients retain legacy scoring with expanded candidates. This changes actual matched network geometry, evidence spans and distance together; no display smoothing or artificial cross-network joins.
 
-## Implementation and evidence
+The 2,001ms reported UI stack is explained by structural hashing of nested mutable JSONArray cache keys. All four geometry caches use weak/strong identity wrappers now. Existing memory budgets remain; explicit same-array republication invalidates prepared paths, and mutable editing bypasses immutable reuse. Manual removed-edge indices are reconciled only to exact physical edges; incompatible rematches keep the previous completed route, evidence and edits with an explicit amber review message. They are never silently assigned to nearby parallel edges.
 
-Optional accuracy_m is preserved through preparation, simplification, request validation and server sampling. No GPS fix or raw evidence is deleted by this change. The matcher considers the existing24 prepared edge alternatives, plus a bounded set of nearby shared projections/junctions supported by reported accuracy. It never joins crossing or parallel paths artificially. Candidate radii are bounded by available accuracy; unknown-accuracy clients keep their legacy scoring and receive the expanded candidate set.
+Changed components: backend `api.py`, `database.py`, `pedestrian_matching.py`, focused tests/replay helper; Android `WalkingJourneyPreparation`, `MapRenderGeometry`, `RoutePreviewView`, `JourneyCorrectionUtils`, `MatchingCoordinator`, `JourneyListActivity`, three test classes, version/release notes and handover/build-request metadata. Existing journey navigation, reference pins, driving and NCN implementations were preserved.
 
-Returned network geometry is used unchanged for evidence spans and matched distance. There is no display-only smoothing. Matcher family remains preloaded_pedestrian_network_v4 for NCN compatibility; pedestrian_selection_version=6 identifies this policy.
+## Actual Charing Cross regression
 
-Full11,734-way offline replay with original117 submitted positions and their retained accuracies currently returns279 coordinates,1986.7m and six immediate reversals versus deployed selection5's409 coordinates,2486.5m and22. Remaining terminal retrace edges are about0.8–5.3m. This is not a ground-truth route claim: position uncertainty cannot establish whether every tiny return was intentional. Live deployment, actual before/after timing and equivalent-zoom visuals will be recorded after verification.
+The private fixture retains the original333 raw capture positions,148 saved positions and117 submitted positions. For the new request only retained per-fix accuracy is added; all148 saved accuracies recovered identically from raw and aligned capture samples. The backend samples82 observations. Both live revision6 replays returned exactly the same279 coordinates as the offline snapshot regression.
 
-The source/raw recording remains333 coordinates; saved route148; request117. Backend sampling retains82 observations. Successful results replace processing_result separately; JourneyStore atomically saves and increments archive/evidence revisions, invalidating history/map/coverage caches. Journey detail and editor consume the new match. User-drawn route_geometry corrections are retained; safely transferable edge removals are remapped by exact geometry, and incompatible edits preserve the previous map. No automatic history rewrite or reassessment is introduced.
+| Measure | Live selection5 | Live selection6 |
+|---|---:|---:|
+| Returned coordinates |409|279|
+| Matched distance |2,486.5m|1,986.7m|
+| Immediate A–B–A reversals |22|6|
+| Repeated exact-edge distance (approximate planar metres) |220.05m|33.71m|
+| Original22 flagged terminal edges still bidirectionally retraced |22|3|
+| Matcher work |7.868s|17.003s; confirmation16.766s|
+| Client elapsed (remote replay) |35.704s|22.139s; confirmation24.761s|
 
-## Verification and delivery status
+CPU time increased: expanded search costs approximately9s more. The before request includes idle startup, so client timings do not prove a controlled network/phone speedup. Reference20s and overall48s deadlines remain; both live calls succeeded without upstream router calls. Backend phase details and Server-Timing are included in the JSON summaries.
 
-Local backend106 tests pass with five PostgreSQL integrations skipped locally; CI must exercise Postgres. New Android regressions cover zero structural hashes across large warm/cold/cull cache use, same-count republication, path budgets, mutable editing and correction reconciliation. The large-array test deliberately demonstrates that the old WeakHashMap key operation calls the forbidden structural hash; the new cache must complete30 frames without one call. Device-level ANR elimination is not claimed from JVM checks.
+The distance reduction499.8m is material and consistent with removal of repeated travel, but neither shorter distance nor proximity proves the actual route. Validated recorded distance2,409.95m remains a different measurement and was not rewritten. Rejected capture fixes remain excluded from validated distance. Road motorway/A-road result collections are empty for this walk. Pedestrian coverage is derived from the returned matched evidence, not an independently cosmetically corrected display. NCN family/evidence compatibility remains `preloaded_pedestrian_network_v4`; policy is separately identified by `pedestrian_selection_version:6`.
 
-Android0.25.220/code266 is prepared. No APK has been requested or built at this checkpoint. One private signed APK will be requested after backend and Android checks pass. Backend changes will be isolated onto main and verified live; no Firebase tester distribution.
+## Visual review and remaining ambiguity
+
+`route-before-after-regions.png` plots actual live coordinates at identical bounds/scale within each before/after column. Network is grey, saved GPS orange, matched network blue, immediate reversals red rings. It covers Charing Cross, Strand, Fleet Street and Blackfriars; `route-before-after-overview.png` shows the full corridor. These are diagnostic coordinate plots, not phone screenshots.
+
+Large junction detours and repeated excursions are visibly reduced and the principal corridor is more coherent. **Full visual acceptance is not claimed.** Six residual terminal reverse edges remain: Charing Cross two (~0.8m and5.3m), Strand junction two (~4.2m and2.0m), Fleet Street one (~2.1m), Blackfriars approach one (~2.4m). A terminal-edge length is not the complete outward-and-return excursion; nested/overlapping paths may span more than one edge. Small hooks and section offsets are still visible, particularly around Charing Cross and Strand. Their nearby GPS uncertainty15–45m cannot reliably distinguish intentional short visits from noise. Detailed coordinates and each of the original22 flag comparisons are retained in the private owner evidence bundle.
+
+The final network endpoint lies about28.6m from the last saved fix, within its37.35m reported accuracy. The mapped turn towards an entrance/possible indoor continuation remains uncertain. No ground-truth path, deliberate crossing or backtrack has been invented or erased simply to produce a straight line. Network segmentation/footway availability still limits exact pavement attribution.
+
+## Returned, persisted and displayed geometry
+
+Before: details already selected successful `processing_result.geojson`; the219 editor selected matched edges with the previously fixed inferred GPS tail suppressed. Remaining artefacts were in the backend coordinates. Raw `route_geometry` was not overriding a successful match.
+
+After: successful rematching replaces `processing_result`, atomically saves through JourneyStore, advances archive/evidence revisions and refreshes preview/progress caches. Details select matched geometry minus explicit saved removals. The editor loads the full current matched route so removed edges can be restored; it omits unsupported GPS-derived extensions. Raw/saved positions remain diagnostics and correction-splicing input. With no removals, both views consume the returned279 positions unchanged. With edits, intentionally different visible segments follow the saved correction contract. Incompatible edits retain the previous completed route instead of accepting a destructive replacement.
+
+`actual-coordinate-selector-proof.json` executes the verbatim extracted production detail/editor selector methods on the actual409/279-position responses after JSON file serialization and reopen; both select exactly the returned coordinates and preserve raw/saved evidence. The unmatched fallback is a throwing stub, never reached. This portable proof is not a physical Android JourneyStore/device observation. Separate full Android tests exercise persistence/rematch/preview/editor contracts. Physical Pixel visual and foreground timing acceptance remains outstanding.
+
+Existing recorded journeys can rematch without recapture. Install220 to forward retained accuracy and receive the identity-cache correction;219 cannot send accuracy and cannot receive the Android stall fix from a backend deployment. Historical records are not automatically rewritten/reassessed. Manual corrections remain authoritative.
+
+## Verification
+
+- Backend106 tests passed in CI including PostgreSQL; driving recovery regression passed. Locally106 tests passed with5 PostgreSQL integrations skipped locally only.
+- Private packaging run40690390058: **810 tests /109 suites**, zero failures/errors/skips, compile, lint0errors (310 existing warnings), pinned reference validation, national NCN fixtures and signing verification passed. PR checks40690399277 also passed.
+- Focused cases cover precise genuine backtracking, short deliberate spurs, loops/crossings, parallel-path uncertainty, stationary jitter, historical compatibility, manual edit preservation and large rendering caches.
+- The old WeakHashMap operation is explicitly shown to invoke a forbidden structural hash; replacement renders30frames of25,000coordinates with **0 structural hash calls**,43.714ms aggregate warm frames in Robolectric. This removes the identified mechanism; it is not a replacement measurement for the phone's2,001ms stall. Cache-budget/same-length mutation/editor tests pass.
+- Existing navigation fixture: first12journey bind/draw28.94ms versus full40at127.26ms; cached-road first draw25.40ms; UI path builds0; changed-one history invalidations0. Reference caching/NCN/driving assertions unchanged and pass. Synthetic runner timings are not Pixel performance guarantees.
+
+APK36,623,557bytes; SHA256 `5eb4485327a9646bc95d4f57e3959a9acc944e8feb14b3fe9605e1aa359ae265`. Manifest220/266 and established signing certificate independently extracted from downloaded APK; CI apksigner verified cryptographic signature. Exactly one220APK was built. No tester distribution.
+
