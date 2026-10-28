@@ -341,94 +341,70 @@ def select_trajectory_paths(
     if len(trace) == 1:
         return [candidate_layers[0][0][0]], []
 
-    previous_costs = {
-        index: (gap / 15.0) ** 2
-        for index, (_, gap) in enumerate(candidate_layers[0])
-    }
-    back_pointers = []
-    transition_paths = []
-
+    # Reversal costs depend on arrival direction. Collapsing all arrivals at
+    # a candidate into one cost loses the globally best continuation. Retain
+    # the last moving edge and its GPS origin, including across stationary snaps.
+    states = {(index, None, None): (gap / 15.0) ** 2
+              for index, (_, gap) in enumerate(candidate_layers[0])}
+    history = []
     for layer_index in range(1, len(candidate_layers)):
         trace_start, trace_end = trace[layer_index - 1], trace[layer_index]
         observed_distance = length_metres(trace_start, trace_end)
         max_path_distance = max(120.0, observed_distance * 4.0 + 60.0)
         target_keys = [key for key, _ in candidate_layers[layer_index]]
-        paths_by_previous = {
-            previous_index: paths_to_targets(
-                candidate_layers[layer_index - 1][previous_index][0],
-                target_keys,
-                max_path_distance,
-            )
-            for previous_index, previous_cost in previous_costs.items()
-            if math.isfinite(previous_cost)
-        }
-
-        current_costs = {}
-        current_back = {}
-        layer_paths = {}
-        for current_index, (current_key, current_gap) in enumerate(candidate_layers[layer_index]):
-            best_cost = float("inf")
-            best_previous = -1
-            for previous_index, previous_cost in previous_costs.items():
-                if not math.isfinite(previous_cost):
-                    continue
-                result = paths_by_previous[previous_index].get(current_key)
+        sources = {state[0] for state in states}
+        paths = {index: paths_to_targets(candidate_layers[layer_index-1][index][0],
+                                        target_keys, max_path_distance)
+                 for index in sources}
+        # Score each geometric transition once, irrespective of arrival history.
+        scores = {}
+        for index, results in paths.items():
+            for current, (key, gap) in enumerate(candidate_layers[layer_index]):
+                result = results.get(key)
+                if result:
+                    path, _, distance = result
+                    scores[index, current] = score_pedestrian_path(
+                        trace_start, trace_end, [vertices[k] for k in path],
+                        distance, length_metres) + (gap / 15.0) ** 2
+        costs, back = {}, {}
+        for prior, cost in states.items():
+            previous, arrival, origin = prior
+            for current, (key, _) in enumerate(candidate_layers[layer_index]):
+                result = paths[previous].get(key)
                 if not result:
                     continue
-                path, feature_ids, path_distance = result
-                route = [vertices[key] for key in path]
-                total = previous_cost + score_pedestrian_path(
-                    trace_start, trace_end, route, path_distance, length_metres
-                ) + (current_gap / 15.0) ** 2
-                if layer_index > 1 and len(path) > 1:
-                    prior_state = back_pointers[-1].get(previous_index, -1)
-                    prior_result = transition_paths[-1].get((prior_state, previous_index))
-                    if prior_result:
+                path, _, _ = result
+                total = cost + scores[previous, current]
+                if len(path) > 1:
+                    if arrival is not None:
                         total += unsupported_reversal_penalty(
-                            trace[layer_index-2], trace_start, trace_end,
-                            prior_result[0], path, vertices, length_metres)
-                if total < best_cost:
-                    best_cost, best_previous = total, previous_index
-            current_costs[current_index] = best_cost
-            current_back[current_index] = best_previous
-            if best_previous >= 0:
-                layer_paths[(best_previous, current_index)] = paths_by_previous[best_previous][current_key]
-
-        if not current_costs or min(current_costs.values()) == float("inf"):
+                            trace[origin], trace_start, trace_end,
+                            [arrival, path[0]], path, vertices, length_metres)
+                    state = (current, path[-2], layer_index-1)
+                else:
+                    state = (current, arrival, origin)
+                if total < costs.get(state, float("inf")):
+                    costs[state] = total
+                    back[state] = (prior, result)
+        if not costs:
             if diagnostics is not None:
-                reachable_sources = [index for index, cost in previous_costs.items()
-                                     if math.isfinite(cost)]
-                connected = [result
-                             for index in reachable_sources
-                             for result in paths_by_previous[index].values()]
-                diagnostics.update(
-                    failure_layer=layer_index,
+                connected = [result for results in paths.values() for result in results.values()]
+                diagnostics.update(failure_layer=layer_index,
                     observed_distance_m=round(observed_distance, 1),
-                    source_candidates=len(reachable_sources),
-                    target_candidates=len(target_keys),
+                    source_candidates=len(sources), target_candidates=len(target_keys),
                     connected_transitions=len(connected),
-                    stationary_transitions=sum(len(result[0]) == 1 for result in connected),
-                )
+                    stationary_transitions=sum(len(result[0]) == 1 for result in connected))
             return None
-        previous_costs = current_costs
-        back_pointers.append(current_back)
-        transition_paths.append(layer_paths)
-
-    state = min(previous_costs, key=previous_costs.get)
-    selected_states = [state]
-    for back in reversed(back_pointers):
-        state = back[state]
-        if state < 0:
-            return None
-        selected_states.append(state)
-    selected_states.reverse()
-
-    route_keys = [candidate_layers[0][selected_states[0]][0]]
+        states = costs
+        history.append(back)
+    state = min(states, key=states.get)
+    selected = []
+    for back in reversed(history):
+        state, result = back[state]
+        selected.append(result)
+    route_keys = [candidate_layers[0][state[0]][0]]
     used_feature_ids = []
-    for layer_index, (previous_index, current_index) in enumerate(
-        zip(selected_states, selected_states[1:])
-    ):
-        path, feature_ids, _ = transition_paths[layer_index][(previous_index, current_index)]
+    for path, feature_ids, _ in reversed(selected):
         route_keys.extend(path[1:])
         used_feature_ids.extend(feature_ids)
     return route_keys, used_feature_ids
