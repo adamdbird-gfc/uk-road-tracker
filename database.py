@@ -602,6 +602,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     vertices: dict[tuple[int, int], list[float]] = {}
     adjacency: dict[tuple[int, int], list[tuple[tuple[int, int], float, str]]] = {}
     features: dict[str, dict] = {}
+    reference_inputs = {}
     for source_key, source_version, source_feature_id, kind, tags, geometry_json in rows:
         feature_id = json.dumps([source_key, str(source_feature_id)], separators=(",", ":"))
         if time.monotonic() >= deadline:
@@ -611,9 +612,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         coords = geometry.get("coordinates") or []
         if len(coords) < 2:
             continue
+        reference_inputs[feature_id] = (source_key, source_version, source_feature_id, kind, tags, coords)
         features[feature_id] = {
-            "matched_reference": public_way_reference(source_key, source_version,
-                source_feature_id, kind, tags, coords),
             "type": "Feature",
             "properties": {
                 "road_ref": (tags or {}).get("ref", ""),
@@ -721,6 +721,10 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
+    # Source hashes are needed only for travelled ways. Avoid hashing the
+    # entire candidate envelope while preserving identical selected evidence.
+    for feature_id in unique_feature_ids:
+        features[feature_id]["matched_reference"] = public_way_reference(*reference_inputs[feature_id])
     evidence = build_matched_path_evidence(coordinates, used_feature_ids, features)
     profile["geometry_evidence_ms"] = round((time.perf_counter()-stage)*1000,2)
     profile["searches"] = shortest_paths_to_targets.searches

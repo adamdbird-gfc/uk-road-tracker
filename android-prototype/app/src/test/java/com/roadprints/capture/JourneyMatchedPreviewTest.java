@@ -61,6 +61,23 @@ public class JourneyMatchedPreviewTest {
         assertEquals(evidence,reopened.getJSONObject("processing_result").toString());
         assertEquals(2,JourneyMapEditorActivity.matchedRouteSegments(reopened.getJSONObject("processing_result")).size());
     }
+    @Test public void openingWalkingEditorDoesNotAddGpsExtensionsOrRawMarkers() throws Exception {
+        JSONObject j=journey().put("journey_id","walking-editor-open").put("mode","walking");
+        JourneyStore.save(RuntimeEnvironment.getApplication(),j);
+        android.content.Intent intent=new android.content.Intent(RuntimeEnvironment.getApplication(),JourneyMapEditorActivity.class)
+                .putExtra("journey_id","walking-editor-open");
+        org.robolectric.android.controller.ActivityController<JourneyMapEditorActivity> controller=
+                org.robolectric.Robolectric.buildActivity(JourneyMapEditorActivity.class,intent).create();
+        JourneyMapEditorActivity editor=controller.get();
+        assertFalse(editor.isFinishing());
+        Field field=JourneyMapEditorActivity.class.getDeclaredField("routeView");field.setAccessible(true);
+        RoutePreviewView view=(RoutePreviewView)field.get(editor);
+        Field coordinates=RoutePreviewView.class.getDeclaredField("coordinates");coordinates.setAccessible(true);
+        assertNull(coordinates.get(view));
+        Field extensions=RoutePreviewView.class.getDeclaredField("routeExtensions");extensions.setAccessible(true);
+        assertTrue(((java.util.List<?>)extensions.get(view)).isEmpty());
+        controller.destroy();
+    }
     @Test public void editorKeepsDrivingAndLegacySourceContract() throws Exception {
         JSONObject j=journey();
         assertNotNull(JourneyMapEditorActivity.editorSourceCoordinates(j));

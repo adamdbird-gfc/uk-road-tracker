@@ -4,7 +4,7 @@ Last reviewed: 2026-10-28.
 
 ## Pedestrian stabilisation — current development slice
 
-Branch `fix/pedestrian-route-accuracy` starts at PR221 head `3c62cb86`, preserving navigation and merged bandwidth/reference work. See [findings, private replay and timing limits](pedestrian-route-accuracy.md). Android 0.25.219 (265) is prepared, not packaged at this checkpoint. Details already selected matched geometry; walking editor GPS endpoint extensions are removed. Matcher arrival-state correction and request-stage timings are implemented, pending CI and separate backend deployment. The private exported network subset is not a ground-truth full-network replay; remaining route artefacts are not claimed resolved. No automatic rematch, historical rewrite, NCN feature change or Firebase distribution.
+Branch `fix/pedestrian-route-accuracy` starts at PR221 head `3c62cb86`, preserving navigation and merged bandwidth/reference work. See [findings, private replay and timing limits](pedestrian-route-accuracy.md). Android 0.25.219 (265) is prepared, not packaged at this checkpoint. Details already selected matched geometry; walking editor GPS endpoint extensions are removed. Matcher arrival-state correction and request-stage timings are implemented, pending CI and separate backend deployment. A read-only full candidate snapshot reproduces the original matched geometry exactly. Revised selection reduces immediate exact retraces 23→22; remaining uncertain artefacts are not claimed resolved. Deferred source hashing reduces five-run local replay median 1478.6→1154.8ms; live latency remains unmeasured. No automatic rematch, historical rewrite, NCN feature change or Firebase distribution.
 
 ## PR #222 — bandwidth protection verified; ready for merge approval
 

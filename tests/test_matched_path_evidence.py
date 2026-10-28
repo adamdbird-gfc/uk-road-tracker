@@ -53,10 +53,13 @@ class MatchedPathEvidenceTests(unittest.TestCase):
         connection=MagicMock();connection.__enter__.return_value=connection
         cursor=connection.cursor.return_value.__enter__.return_value
         cursor.fetchall.return_value=[('osm_geofabrik_trial','latest','42','path',{'name':'Trial path','foot':'yes'},
-                                      json.dumps({'type':'LineString','coordinates':[[0,51],[.001,51],[.002,51]]}))]
+                                      json.dumps({'type':'LineString','coordinates':[[0,51],[.001,51],[.002,51]]})),
+                                      ('osm_geofabrik_trial','latest','unused','path',{},json.dumps({'type':'LineString','coordinates':[[.01,51],[.02,51]]}))]
         with patch.object(database,'DATABASE_URL','trial'), patch.dict(database.database_state,status='ready'), \
-                patch.object(database.psycopg,'connect',return_value=connection):
+                patch.object(database.psycopg,'connect',return_value=connection), \
+                patch.object(database,'public_way_reference',wraps=database.public_way_reference) as references:
             result=database.match_pedestrian_reference([{'lng':.00025,'lat':51},{'lng':.00075,'lat':51}])
+        self.assertEqual(1,references.call_count)
         self.assertIsNotNone(result)
         evidence=result['matched_path_evidence']
         self.assertEqual('available',evidence['status'])

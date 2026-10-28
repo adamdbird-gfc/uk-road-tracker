@@ -11,15 +11,19 @@ Base: `3c62cb86626a814ddbff714df2a09aaac138fdf6`, latest PR221 navigation/perfor
 
 ## Private regression and uncertainty
 
-The supplied diagnostic stays outside the public repository. Run:
+The supplied diagnostic stays outside the public repository. A read-only snapshot of the full production candidate envelope contains **11,734 public source ways**. Replaying the old selection against that snapshot reproduces the original **416 coordinates exactly**, including the matched evidence geometry. No personal trace was sent to the database; only its public reference envelope was read.
 
-`python3 scripts/replay_pedestrian_diagnostic.py /private/roadprints-journey-20261026-223410.json [/private/baseline_pedestrian_matching.py]`
+Repeat with the private fixture bundle:
 
-The script reproduces Android's simplification from 148 validated coordinates to 117 submitted positions. It uses the 112 exported matched source ways through the production graph/evidence builder with a mocked database boundary. **These are only previously used ways, not the complete candidate network.** It cannot reproduce the original full-network candidate decision or establish the actual pavement/crossings taken.
+`python3 scripts/replay_pedestrian_diagnostic.py /private/roadprints-journey-20261026-223410.json --baseline /private/pedestrian_matching_before.py --baseline-database /private/database_before_lazy.py --network /private/network_snapshot.json --repeat 5`
+
+The script reproduces Android simplification from 148 validated coordinates to 117 submitted positions and calls the production graph/evidence builder at a mocked database boundary. A subset-only mode can use the 112 exported selected ways but is labelled incomplete; it must not be used for full-network acceptance.
 
 Original: 333 raw coordinates; 148 saved; 416 matched; 2,409.95m validated; 2,422.7m matched. Raw sample distance 11,439m and original captured distance 7,557m describe different stages. Neither is substituted for validated distance.
 
-Subset replay on this host: old selection 2,313.0m /408 coordinates /15 immediate exact retraces; revised selection 2,306.1m /406 coordinates /16 immediate exact retraces. Example runtime 77ms →92ms. This demonstrates a changed connected/evidence-aligned solution, **not a proven overall reduction in artefacts or latency**. Counting repeated segments cannot distinguish deliberate retracing from noisy fixes. Remaining short reversals and uncertain crossings require full-network replay and visual review, not deletion to make the line look cleaner.
+Full replay after state correction: **409 coordinates, 2,486.5m, 22 immediate exact retraces versus 23 originally**. The additional 63.8m (+2.63%) follows the globally selected connected alternatives under the existing path and turn scoring, and remains within the established validated-distance guard. It is not new raw distance or automatic historical credit. Finite geometry and aligned source evidence are checked and the input is unchanged.
+
+The test does not establish which pavement or crossing was actually taken. Many remaining retraces are supported by short GPS reversals; repeated source references alone cannot distinguish genuine retracing from noisy fixes. **An overall artefact-free route is not claimed.** Remaining uncertain sections require visual/device review rather than deletion to make the line look cleaner. The synthetic regressions specifically prove the corrected software failure mechanism while preserving a GPS-supported return.
 
 ## Timing
 
@@ -27,10 +31,10 @@ Original attempt: 51,307.5ms (request-start timestamp to response-finished times
 
 New Android diagnostics separate preparation, each HTTP attempt/retry, JSON encoding, connection, upload, header wait, response read, parsing and processing-to-save. Final persistence duration is logged under RoadprintsTiming without coordinates. Fixed-length streaming reuses one encoded request body. Backend records lock wait, reference execution, database fetch, graph/candidates, trajectory and geometry/evidence. ASGI Server-Timing covers request handling through serialized response headers; logs cover request receive bytes/time and response send bytes/backpressure. ASGI send is not a measurement of end-to-end transmission; Android header/read timings supply that other side. Delay before ASGI admission remains outside server timings.
 
-No speedup is claimed from instrumentation or the subset replay. Backend changes need a separate deployment; an APK alone cannot install matcher v5. Retrying an existing journey remains explicit.
+Profiling found eager source hashes for all 11,734 candidates, although only 112 ways were used. Hashes are now computed only for selected ways; a regression verifies unused ways are not hashed while source identity stays aligned. Five-run full-snapshot median on this host: **1,478.6ms →1,154.8ms (21.9% less)**, with identical search work (442 searches /39,223 settled nodes). This excludes live database/network/cold-start costs and is not a measured 51-second phone-request improvement. Backend changes need a separate deployment; an APK alone cannot install matcher v5. Retrying an existing journey remains explicit.
 
 ## Verification status
 
 Local backend: 96 tests, zero failures/errors, five PostgreSQL integration tests skipped because no local test database is configured. New selection tests reproduce competing arrivals, stationary direction retention and GPS-supported return. Existing edge/crossing/connectivity, real out-and-back, graph search and evidence tests pass. ASGI tests preserve response bytes/headers and exclude private payload from logs.
 
-Android tests add walking detail/editor selection and persisted reopen/removal/evidence preservation plus legacy/driving compatibility. Full Android and PostgreSQL CI results and APK provenance will be recorded after completion. No APK has been built at this checkpoint. No Firebase distribution or backend deployment.
+Android tests add walking detail/editor selection and persisted reopen/removal/evidence preservation plus legacy/driving compatibility. Full Android and PostgreSQL CI results and APK provenance will be recorded after completion. Initial PostgreSQL CI and road-recovery CI passed for `632e3099`; final checks must also cover deferred hashing and the actual editor-open regression. No APK has been built at this checkpoint. No Firebase distribution or backend deployment.
