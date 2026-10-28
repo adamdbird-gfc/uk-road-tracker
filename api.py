@@ -79,6 +79,7 @@ app.add_middleware(
 )
 
 class Point(BaseModel):
+    accuracy_m: float | None = Field(default=None, ge=0, le=1000)
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
 
@@ -688,7 +689,7 @@ async def _match_walking_activity(payload: MatchRequest):
     try:
         reference_match = await asyncio.to_thread(
             match_pedestrian_reference,
-            [{"lat": point.lat, "lng": point.lng} for point in payload.points],
+            [{"lat": point.lat, "lng": point.lng, "accuracy_m": point.accuracy_m} for point in payload.points],
         )
     finally:
         REFERENCE_MATCH_LOCK.release()

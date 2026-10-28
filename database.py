@@ -640,6 +640,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     # Connecting every individual fix to its nearest vertex can make the line
     # oscillate between adjacent streets when GPS accuracy wanders at a junction.
     sampled_trace = [trace[0]]
+    sampled_indices = [0]
     accumulated = 0.0
     for index in range(1, len(trace) - 1):
         before, point, after = trace[index - 1], trace[index], trace[index + 1]
@@ -660,14 +661,17 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
             and turn > 0.35
         ):
             sampled_trace.append(point)
+            sampled_indices.append(index)
             accumulated = 0.0
     sampled_trace.append(trace[-1])
+    sampled_indices.append(len(trace)-1)
+    sampled_accuracies = [float(points[index].get("accuracy_m") or 0.0) for index in sampled_indices]
 
     # Snap along edges rather than pulling dense fixes to side-road vertices.
     # Splits preserve the reference graph's actual connectivity.
     try:
         vertex_index = PedestrianEdgeCandidates(sampled_trace, vertices, adjacency,
-                                                length_metres, deadline)
+                                                length_metres, deadline, accuracies=sampled_accuracies)
     except TimeoutError:
         logger.warning("pedestrian reference projection exceeded 20 seconds")
         return None
@@ -685,7 +689,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     diagnostics = {}
     route_result = match_reference_trajectory(
         sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
-        deadline, diagnostics,
+        deadline, diagnostics, accuracies=sampled_accuracies,
     )
     diagnostics.update(searches=shortest_paths_to_targets.searches,
                        cache_hits=shortest_paths_to_targets.cache_hits,
@@ -727,12 +731,15 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         features[feature_id]["matched_reference"] = public_way_reference(*reference_inputs[feature_id])
     evidence = build_matched_path_evidence(coordinates, used_feature_ids, features)
     profile["geometry_evidence_ms"] = round((time.perf_counter()-stage)*1000,2)
+    profile["candidate_count"] = diagnostics.get("candidate_count")
+    profile["max_layer_candidates"] = diagnostics.get("max_layer_candidates")
+    profile["accuracy_samples"] = sum(value>0 for value in sampled_accuracies)
     profile["searches"] = shortest_paths_to_targets.searches
     profile["settled_nodes"] = shortest_paths_to_targets.settled_nodes
     return {
         "status": "ok",
         "matcher": "preloaded_pedestrian_network_v4",
-        "pedestrian_selection_version": 5,
+        "pedestrian_selection_version": 6,
         "matcher_profile": profile,
         "matched_path_evidence": evidence,
         "input_points": len(points),

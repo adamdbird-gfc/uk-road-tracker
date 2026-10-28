@@ -14,7 +14,7 @@ class PedestrianEdgeCandidates:
     identity. All candidate layers are prepared before graph contraction.
     """
 
-    def __init__(self, trace, vertices, adjacency, length_metres, deadline):
+    def __init__(self, trace, vertices, adjacency, length_metres, deadline, accuracies=None):
         cells, edges, broad_edges = {}, [], []
         cell_size = PedestrianVertexIndex.CELL_DEGREES
         seen = set()
@@ -38,6 +38,9 @@ class PedestrianEdgeCandidates:
                     for y in range(south, north + 1):
                         cells.setdefault((x, y), []).append(edge_id)
 
+        junction_index = PedestrianVertexIndex({key:coordinate for key,coordinate in vertices.items()
+            if len(adjacency.get(key,()))!=2}) if accuracies is not None else None
+        self.accuracy_radii = {}
         self.layers = {}
         splits = {}
         for point in trace:
@@ -89,6 +92,31 @@ class PedestrianEdgeCandidates:
                     break
             self.layers[tuple(point)] = layer
 
+        # Adjacent uncertain fixes may represent the same physical position.
+        # Share existing edge projections, never join crossing/parallel edges.
+        # This permits a stationary transition along an edge, not only at a
+        # pre-existing network junction. Original candidates remain available.
+        self.shared_layers = {}
+        self.junction_layers = {}
+        if accuracies is not None:
+            for index, point in enumerate(trace):
+                accuracy=accuracies[index] or 0.0
+                if not math.isfinite(accuracy) or accuracy<=0:continue
+                if time.monotonic()>=deadline:raise TimeoutError("Pedestrian shared candidates exceeded deadline")
+                radius=min(50.0,max(3.0,accuracy))
+                self.accuracy_radii[tuple(point)]=max(15.0,2.0*radius)
+                own={key for key,_ in self.layers[tuple(point)]}
+                shared={}
+                for nearby in (index-1,index+1):
+                    if nearby<0 or nearby>=len(trace):continue
+                    for key,_ in self.layers[tuple(trace[nearby])]:
+                        if key in own:continue
+                        gap=length_metres(point,vertices[key])
+                        if gap<=radius:shared[key]=gap
+                self.junction_layers[tuple(point)]=[(key,gap) for key,gap in
+                    junction_index.nearest(point,length_metres,radius=radius,count=4) if key not in own]
+                self.shared_layers[tuple(point)]=sorted(shared.items(),key=lambda item:item[1])[:8]
+
         for edge_id, projections in splits.items():
             if time.monotonic() >= deadline:
                 raise TimeoutError("Pedestrian edge splitting exceeded deadline")
@@ -102,8 +130,13 @@ class PedestrianEdgeCandidates:
                 adjacency.setdefault(end, []).append((start, distance, feature))
 
     def nearest(self, point, length_metres, radius=120.0, count=6):
-        return [(key, gap) for key, gap in self.layers.get(tuple(point), ())
-                if gap <= radius][:count]
+        evidence_radius=min(radius,self.accuracy_radii.get(tuple(point),radius))
+        own=[(key,gap) for key,gap in self.layers.get(tuple(point),()) if gap<=evidence_radius][:count]
+        if not own:own=[(key,gap) for key,gap in self.layers.get(tuple(point),()) if gap<=radius][:1]
+        shared=[(key,gap) for key,gap in self.shared_layers.get(tuple(point),()) if gap<=radius][:count//2]
+        keys={key for key,_ in own+shared}
+        junctions=[(key,gap) for key,gap in self.junction_layers.get(tuple(point),()) if key not in keys and gap<=radius]
+        return own+shared+junctions
 
 
 class PedestrianVertexIndex:
@@ -290,14 +323,14 @@ class PedestrianGraphPaths:
 
 
 def match_reference_trajectory(trace, vertex_index, vertices, length_metres,
-                               paths_to_targets, deadline, diagnostics):
+                               paths_to_targets, deadline, diagnostics, accuracies=None):
     """Try a small candidate set, then recover crowded network junctions.
 
     More candidates retain connected street alternatives when nearer steps
     or service ways crowd them out. Both passes share the original deadline,
     search radius and network graph; no disconnected edges are invented.
     """
-    for count in (6, 24):
+    for count in (24,):
         layers = []
         for point in trace:
             if time.monotonic() >= deadline:
@@ -312,7 +345,7 @@ def match_reference_trajectory(trace, vertex_index, vertices, length_metres,
         diagnostics['candidate_count'] = count
         diagnostics['max_layer_candidates'] = max(len(layer) for layer in layers)
         result = select_trajectory_paths(trace, layers, vertices, length_metres,
-                                         paths_to_targets, diagnostics=diagnostics)
+                                         paths_to_targets, diagnostics=diagnostics, accuracies=accuracies)
         if result:
             return result
         if time.monotonic() >= deadline:
@@ -328,6 +361,7 @@ def select_trajectory_paths(
     length_metres,
     paths_to_targets,
     diagnostics: dict | None = None,
+    accuracies: list[float] | None = None,
 ) -> tuple[list, list[str]] | None:
     """Select a connected network route that best follows ordered GPS fixes.
 
@@ -341,10 +375,16 @@ def select_trajectory_paths(
     if len(trace) == 1:
         return [candidate_layers[0][0][0]], []
 
+    def uncertainty(index):
+        value=accuracies[index] if accuracies is not None else 0
+        return min(50.0, max(3.0, value)) if value and math.isfinite(value) else 0.0
+    def sigma(index):
+        return uncertainty(index) or 15.0
+
     # Reversal costs depend on arrival direction. Collapsing all arrivals at
     # a candidate into one cost loses the globally best continuation. Retain
     # the last moving edge and its GPS origin, including across stationary snaps.
-    states = {(index, None, None): (gap / 15.0) ** 2
+    states = {(index, None, None): (gap / sigma(0)) ** 2
               for index, (_, gap) in enumerate(candidate_layers[0])}
     history = []
     for layer_index in range(1, len(candidate_layers)):
@@ -365,7 +405,7 @@ def select_trajectory_paths(
                     path, _, distance = result
                     scores[index, current] = score_pedestrian_path(
                         trace_start, trace_end, [vertices[k] for k in path],
-                        distance, length_metres) + (gap / 15.0) ** 2
+                        distance, length_metres, uncertainty=max(uncertainty(layer_index-1),uncertainty(layer_index))) + (gap / sigma(layer_index)) ** 2
         costs, back = {}, {}
         for prior, cost in states.items():
             previous, arrival, origin = prior
@@ -375,11 +415,17 @@ def select_trajectory_paths(
                     continue
                 path, _, _ = result
                 total = cost + scores[previous, current]
-                if len(path) > 1:
+                if uncertainty(layer_index-1)>0 and uncertainty(layer_index)>0:
+                    # The evidence-aware distance likelihood already prices
+                    # repeated travel. A second binary turn cost would reward
+                    # taking a loop merely to avoid a reversal.
+                    state = (current, None, None)
+                elif len(path) > 1:
                     if arrival is not None:
                         total += unsupported_reversal_penalty(
                             trace[origin], trace_start, trace_end,
-                            [arrival, path[0]], path, vertices, length_metres)
+                            [arrival, path[0]], path, vertices, length_metres,
+                            uncertainty=max(uncertainty(origin),uncertainty(layer_index-1),uncertainty(layer_index)))
                     state = (current, path[-2], layer_index-1)
                 else:
                     state = (current, arrival, origin)
@@ -411,7 +457,7 @@ def select_trajectory_paths(
 
 
 def unsupported_reversal_penalty(before, point, after, incoming, outgoing,
-                                 vertices, length_metres):
+                                 vertices, length_metres, uncertainty=0.0):
     """Discourage immediately retracing an edge without GPS turn evidence.
 
     This is a selection cost, never a geometry deletion: a genuine return is
@@ -426,10 +472,10 @@ def unsupported_reversal_penalty(before, point, after, incoming, outgoing,
     ex, ey = (after[0]-point[0])*scale, after[1]-point[1]
     norm = math.hypot(dx, dy)*math.hypot(ex, ey)
     if (norm and (dx*ex+dy*ey)/norm < -0.5
-            and min(length_metres(before, point),length_metres(point, after)) >= 8.0):
+            and min(length_metres(before, point),length_metres(point, after)) >= max(8.0, 2.0*uncertainty)):
         return 0.0
     retraced = length_metres(vertices[outgoing[0]], vertices[outgoing[1]])
-    return 8.0 + min(8.0, retraced/10.0)
+    return retraced/max(5.0, uncertainty) if uncertainty else 8.0 + min(8.0, retraced/10.0)
 
 
 def score_pedestrian_path(
@@ -438,6 +484,7 @@ def score_pedestrian_path(
     route: list[tuple[float, float]],
     route_distance: float,
     length_metres,
+    uncertainty=0.0,
 ) -> float:
     """Score a connected network path against one ordered GPS trace section.
 
@@ -453,8 +500,9 @@ def score_pedestrian_path(
         return float("inf")
 
     observed_distance = length_metres(trace_start, trace_end)
-    distance_scale = max(20.0, observed_distance * 0.4)
-    distance_penalty = abs(route_distance - observed_distance) / distance_scale
+    distance_scale = max(20.0, observed_distance * 0.4, uncertainty*2.0)
+    distance_penalty = max(0.0, abs(route_distance - observed_distance)-2.0*uncertainty) / distance_scale
+    travel_prior = route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0
 
     # Project the route and GPS section into a local metre-based plane. The
     # trace segment is the evidence available between these two observations;
@@ -484,8 +532,8 @@ def score_pedestrian_path(
             nearest_x, nearest_y = start_x, start_y
         deviations.append(math.hypot(point_x - nearest_x, point_y - nearest_y))
 
-    mean_deviation = sum(deviations) / len(deviations)
-    max_deviation = max(deviations)
-    shape_penalty = 2.0 * (mean_deviation / 12.0) ** 2
-    shape_penalty += 1.5 * (max_deviation / 25.0) ** 2
-    return distance_penalty + shape_penalty
+    mean_deviation = max(0.0, sum(deviations) / len(deviations)-uncertainty)
+    max_deviation = max(0.0, max(deviations)-2.0*uncertainty)
+    shape_penalty = 2.0 * (mean_deviation / max(12.0, uncertainty)) ** 2
+    shape_penalty += 1.5 * (max_deviation / max(25.0, uncertainty*2.0)) ** 2
+    return distance_penalty + shape_penalty + travel_prior
