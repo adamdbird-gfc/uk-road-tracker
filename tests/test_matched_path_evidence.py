@@ -76,3 +76,40 @@ class MatchedPathEvidenceTests(unittest.TestCase):
     def test_geometry_hash_survives_android_numeric_json_formatting(self):
         self.assertEqual(geometry_digest([[0.0,51.0],[.001,51.0]]),geometry_digest([[0,51],[.001,51]]))
         self.assertEqual(geometry_digest([[-0.0,51],[.001,51]]),geometry_digest([[0,51],[.001,51]]))
+
+    def test_continuity_rebuilds_walking_ncn_evidence_from_selected_edges(self):
+        import json
+        import math
+        from unittest.mock import MagicMock, patch
+        import database
+        from test_pedestrian_matching import distance_metres
+
+        main=[[0,51],[.001,51],[.002,51]]
+        spur=[[.001,51],[.001,51.00022]]
+        drift=[main[0],[.0007,51],[.001,51.00018],[.001,51.00021],
+               [.001,51.00019],[.0013,51],main[-1]]
+        visit=[main[0],main[1],spur[-1],main[1],main[-1]]
+        connection=MagicMock();connection.__enter__.return_value=connection
+        cursor=connection.cursor.return_value.__enter__.return_value
+        cursor.fetchall.return_value=[
+            ('osm_trial','latest','main','footway',{},json.dumps({'type':'LineString','coordinates':main})),
+            ('osm_trial','latest','ncn-spur','footway',{'ncn_ref':'42'},json.dumps({'type':'LineString','coordinates':spur}))]
+        for trace,accuracies,expected in [(drift,[3,10,25,25,25,10,3],False),(visit,[1]*5,True)]:
+            with self.subTest(genuine_visit=expected), patch.object(database,'DATABASE_URL','trial'), \
+                    patch.dict(database.database_state,status='ready'), \
+                    patch.object(database.psycopg,'connect',return_value=connection):
+                points=[dict(lng=p[0],lat=p[1],accuracy_m=a) for p,a in zip(trace,accuracies)]
+                original=copy.deepcopy(points)
+                result=database.match_pedestrian_reference(points)
+                self.assertIsNotNone(result)
+                evidence=result['matched_path_evidence']
+                coords=result['geojson']['features'][0]['geometry']['coordinates']
+                identities={r['source_feature_id'] for r in evidence['references']}
+                self.assertEqual(expected,'ncn-spur' in identities)
+                self.assertEqual(geometry_digest(coords),evidence['geometry_sha256'])
+                self.assertEqual(list(range(len(coords)-1)),
+                                 [i for start,end,_ in evidence['spans'] for i in range(start,end)])
+                distance=sum(distance_metres(a,b) for a,b in zip(coords,coords[1:]))
+                self.assertAlmostEqual(distance,result['matched_distance_m'],delta=.051)
+                self.assertTrue(math.isfinite(distance))
+                self.assertEqual(original,points)
