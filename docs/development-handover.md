@@ -2,7 +2,21 @@
 
 Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Current corrective slice — selection7 continuity correction
+## Current corrective slice — pedestrian workload correction
+
+Additional acceptance: normal walking journeys must match within existing20s
+reference /48srequest budgets. The reported188-saved /133-submitted fixture
+exhausted reference matching at97sampled fixes, then fallback returned503.
+Its reconstructed9515-byte request agrees with the failed log. Selection6/7
+search work is identical; the larger trace had inadequate CPU headroom.
+Exact state-dominance bounds, per-pair score reuse and tighter spatial queries
+reduce work while preserving selection7 geometry/evidence. Private failed-trip
+replay remains320coordinates/2103.9m; original Charing Cross remains262/1860.0m
+and passes all5region gates. No deadline/limit increases or APK changes.
+See [workload correction and acceptance](pedestrian-workload-correction.md).
+Production verification will be recorded after deployment.
+
+## Previous corrective slice — selection7 continuity correction
 
 Backend-only PR227 corrects accuracy-centre attraction and per-transition travel
 discounts in the existing global pedestrian selector. The original private
