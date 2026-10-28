@@ -12,7 +12,7 @@ three-run matching 2.780→2.839s; candidate/search work and deadlines unchanged
 Eight new movement/evidence tests include genuine returns and NCN spur exclusion.
 Android220 already sends retained accuracy and can explicitly rematch existing
 journeys; no APK is needed. See [policy and regression details](pedestrian-continuity-selection7.md).
-Deployment/live verification will be recorded here after completion.
+PR227 squash commit **7033c05bb5f1abe34a7bcb96e7c33a51a3ba6924** is live in Render **dep-dbh1on942hec739hlb9g**, finished **16:02:58 UTC** on28October. CI40721549322 passed all114backend/PostgreSQL tests with zero skips, including driving/cycling and walkingNCN evidence. Two production replays returned selection7 and identical1860.0m/262-coordinate geometry and evidence, equal to the offline regression. All261returned edges lie on their cited source segments;5private defect-region checks pass. Reported matcher work17.090s and17.362s versus same-session selection6 16.398s; candidate/search counts unchanged. No timeout increases. Fixed-bound full/region plots and detailed candidate evidence were delivered privately. Small real network connectors and an uncertain29.4m endpoint offset remain; exact pavement and phone-side appearance are not claimed verified. Android220 explicit Rematch is supported; no APK was built.
 
 ## Previous corrective slice — selection6 live and private Android220 delivered
 
