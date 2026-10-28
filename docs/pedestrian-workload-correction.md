@@ -68,7 +68,13 @@ NCN controls remain required. Added public controls check dominated-source
 work, preservation of a more costly but globally supported turn, exhaustive
 unknown-accuracy arrivals and pair-cache isolation/bounds.
 
-Production deployment and repeated live-budget acceptance are recorded in the
-development handover after verification. Raw journey/network fixtures remain
-private. Android0.25.220 can explicitly rematch existing saved journeys; no APK
-or recapture is required.
+PR228 is live as3c95e253586301aa28287795858d77d0b765d345 in Render
+dep-dbh2ll95efls73ankppg, finished17:04:36UTC. All118backend/PostgreSQL
+tests pass with zero skips in40731670205. Three production133-point requests
+return HTTP200 with15.248/13.988/14.137s reference work and zero router calls,
+identical geometry/evidence. Live Charing Cross returns the exact accepted
+selection7 geometry/evidence in12.224s. Worst observed local-reference headroom
+is4.75s under the unchanged20sdeadline; all request work is below48s.
+
+Raw journey/network fixtures remain private. Android0.25.220 can explicitly
+rematch existing saved journeys; no APK or recapture is required.

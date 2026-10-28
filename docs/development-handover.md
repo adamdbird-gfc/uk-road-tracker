@@ -14,7 +14,7 @@ reduce work while preserving selection7 geometry/evidence. Private failed-trip
 replay remains320coordinates/2103.9m; original Charing Cross remains262/1860.0m
 and passes all5region gates. No deadline/limit increases or APK changes.
 See [workload correction and acceptance](pedestrian-workload-correction.md).
-Production verification will be recorded after deployment.
+Backend-only PR228 is deployed as **3c95e253586301aa28287795858d77d0b765d345**, Render **dep-dbh2ll95efls73ankppg** live **17:04:36 UTC** on28October. CI40731670205 passed all118backend/PostgreSQL tests with zero skips. Three live133-point requests completed HTTP200 in15.248/13.988/14.137s reference work, zero router calls, identical320-coordinate/2103.9m geometry and evidence. Live original117-point Charing Cross completed in12.224s, preserving exactly262coordinates/1860.0m and all5region checks. Selection policy7 remains; pedestrian_search_version2 identifies the optimised execution. Worst observed reference headroom4.75s under unchanged20sdeadline. Controlled8×clock replay fails before and passes after;40seeded urban cases preserve candidates, optimal cost and route. Normal walking completion within existing work limits is now an explicit acceptance criterion. No APK required.
 
 ## Previous corrective slice — selection7 continuity correction
 
