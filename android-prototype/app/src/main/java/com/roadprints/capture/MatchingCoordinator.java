@@ -528,6 +528,7 @@ public final class MatchingCoordinator {
         stages.put(stage, "complete"); stored.put("stage_statuses", stages);
         JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
         processing.put(stage, "complete"); stored.put("processing", processing);
+        JourneyCorrectionUtils.reconcileMatchedRemovals(stored,result);
         stored.put("processing_result", result);
         if(foot)stored.put("walking_outcome",walkingPartial?"partial":"matched");
         if (road != null && road.changed && !capturedDrive) {

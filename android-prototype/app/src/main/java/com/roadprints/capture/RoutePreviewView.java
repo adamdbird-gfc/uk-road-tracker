@@ -290,6 +290,13 @@ public class RoutePreviewView extends View {
     }
 
     public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
+        // A caller may republish a mutated array with the same point count.
+        // Identity lookup avoids structural JSON hashing while retiring its old world path.
+        java.util.IdentityHashMap<JSONArray,Boolean> previous=new java.util.IdentityHashMap<>();
+        if(this.coordinates!=null)previous.put(this.coordinates,true);
+        for(JSONArray row:matchedSegments)previous.put(row,true);
+        if(coordinates!=null&&previous.containsKey(coordinates))MapRenderGeometry.invalidatePrepared(coordinates);
+        if(sections!=null)for(JSONArray row:sections)if(previous.containsKey(row))MapRenderGeometry.invalidatePrepared(row);
         renderGeometry.clear();
         this.coordinates = coordinates;
         matchedSegments.clear();

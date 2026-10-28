@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.220",
+      "version_code": 266,
+      "release_date": "2026-10-28",
+      "since": "0.25.219",
+      "changes": [
+        {
+          "title": "More coherent walking matches",
+          "description": "Use preserved GPS accuracy when rematching walks, reducing unsupported short detours while retaining raw evidence and deliberate movement."
+        },
+        {
+          "title": "Responsive route drawing",
+          "description": "Avoid expensive coordinate-array hashing during map drawing and refresh cached paths when geometry changes."
+        },
+        {
+          "title": "Preserved section edits",
+          "description": "Keep manual section removals attached to the same physical edges when rematching; preserve the previous route when an edit cannot safely transfer."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.219",
       "version_code": 265,
       "release_date": "2026-10-28",

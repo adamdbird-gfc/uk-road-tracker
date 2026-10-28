@@ -20,6 +20,39 @@ final class JourneyCorrectionUtils {
 
     private JourneyCorrectionUtils() {}
 
+    /** Edge indices belong to a particular matched geometry, never to its replacement. */
+    static void reconcileMatchedRemovals(JSONObject journey, JSONObject replacement) throws Exception {
+        JSONObject corrections=journey.optJSONObject("journey_corrections");
+        JSONArray removed=corrections==null?null:corrections.optJSONArray("removed_matched_segments");
+        if(removed==null||removed.length()==0)return;
+        List<String> before=matchedEdgeKeys(journey.optJSONObject("processing_result")),after=matchedEdgeKeys(replacement);
+        if(before.equals(after))return;
+        Set<String> exclusions=new LinkedHashSet<>();
+        Map<String,Integer> selected=new LinkedHashMap<>(),all=new LinkedHashMap<>();
+        for(String edge:before)all.put(edge,all.getOrDefault(edge,0)+1);
+        for(int i=0;i<removed.length();i++){
+            int index=removed.optInt(i,-1);
+            if(index<0||index>=before.size())throw editedMatchChanged();
+            String edge=before.get(index);exclusions.add(edge);selected.put(edge,selected.getOrDefault(edge,0)+1);
+        }
+        // Exact physical edges only: do not transfer an edit to a nearby footway.
+        for(String edge:exclusions)if(!all.get(edge).equals(selected.get(edge))||!after.contains(edge))throw editedMatchChanged();
+        JSONArray mapped=new JSONArray();for(int i=0;i<after.size();i++)if(exclusions.contains(after.get(i)))mapped.put(i);
+        corrections.put("removed_matched_segments",mapped);
+    }
+    private static IllegalStateException editedMatchChanged(){return new IllegalStateException(
+            "The new match changes sections you edited. Your previous route and edits are preserved; review or restore those sections before rematching.");}
+    private static List<String> matchedEdgeKeys(JSONObject result) throws Exception {
+        List<String> keys=new ArrayList<>();
+        for(JSONArray line:JourneyMapEditorActivity.matchedRouteSegments(result))for(int i=1;i<line.length();i++){
+            JSONArray a=line.getJSONArray(i-1),b=line.getJSONArray(i);
+            String first=Double.toHexString(a.getDouble(0))+","+Double.toHexString(a.getDouble(1));
+            String second=Double.toHexString(b.getDouble(0))+","+Double.toHexString(b.getDouble(1));
+            keys.add(first.compareTo(second)<=0?first+"|"+second:second+"|"+first);
+        }
+        return keys;
+    }
+
     static Set<String> removedRoadIds(JSONObject journey) {
         if (journey == null) return Collections.emptySet();
         synchronized (REMOVED_ROAD_CACHE) {

@@ -2,6 +2,10 @@
 
 Last reviewed: 2026-10-28.
 
+## Current corrective slice — visual walking accuracy and identity rendering cache
+
+Previous219/265 and deployed backend selection5 did not pass visual acceptance. Continue on `fix/pedestrian-visual-rendering`, preserving PR223/navigation/bandwidth work. See [confirmed defects and corrective evidence](pedestrian-visual-correction.md). Accuracy propagation, broader supported candidates and uncertainty-aware network selection target the remaining loops. Rendering uses bounded weak identity caches to remove nested JSONArray hashing from drawing. Manual removals are reconciled only to exact replacement edges; otherwise the previous edited match is preserved. Version220/266 is prepared, with no APK request yet. Backend production changes remain separately based on main/PR224, not a merge of Android development. Older pending-deployment statements below are historical: selection5 was deployed as610a8011; this new selection6 is not yet live.
+
 ## Pedestrian stabilisation — current development slice
 
 Delivered one private signed **0.25.219 (265)**, [PR223](https://github.com/adamdbird-gfc/uk-road-tracker/pull/223), exact packaged source **9ab5433e67304d5055c334d5ee63459f66dd7b38**. [Packaging40671999061](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40671999061) passed **804 tests /107 suites, zero failures/errors/skips**, lint, pinned references and established signing certificate. Downloaded XML, ZIP digests, APK SHA/manifest/certificate independently verified. APK36,623,297 bytes, SHA-256 `8c7b96df099c63e8dcc82e314f84af3f304abb74029bc0488885f06c64e350d2`; artifact12809690328, reports12808273706. Private APK and regression fixture delivered to the owner; no Firebase upload or tester distribution.

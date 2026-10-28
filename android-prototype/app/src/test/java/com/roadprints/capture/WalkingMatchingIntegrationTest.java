@@ -75,6 +75,25 @@ public class WalkingMatchingIntegrationTest {
         int first=submitted.get();coordinator.rematch("walk");await();assertEquals(first,submitted.get());
         assertEquals(500,JourneyStore.get(app,"walk").getDouble("original_distance_meters"),.01);
     }
+    @Test public void savedAccuracyIsSentAndAnUnmappableManualRemovalKeepsTheOldMatch() throws Exception {
+        JSONObject old=result(44);JSONObject j=walk().put("processing_status","complete").put("processing_result",old)
+                .put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0]")));
+        JourneyStore.save(app,j);
+        coordinator=new MatchingCoordinator(app,(endpoint,payload)->{
+            JSONArray points=payload.getJSONArray("points");
+            for(int i=0;i<points.length();i++)assertEquals(15,points.getJSONObject(i).getDouble("accuracy_m"),0);
+            JSONObject changed=result(40);changed.getJSONObject("geojson").getJSONArray("features").getJSONObject(0)
+                    .getJSONObject("geometry").put("coordinates",new JSONArray("[[0,0],[0.00035,0]]"));
+            return changed;
+        });
+        coordinator.rematch("walk");await();assertEquals(1,coordinator.snapshot().failed);
+        JSONObject saved=JourneyStore.get(app,"walk");
+        assertEquals(old.toString(),saved.getJSONObject("processing_result").toString());
+        assertEquals("[0]",saved.getJSONObject("journey_corrections").getJSONArray("removed_matched_segments").toString());
+        assertTrue(saved.getString("error_summary").contains("preserved"));
+        assertEquals(j.getJSONArray("raw_capture_samples").toString(),saved.getJSONArray("raw_capture_samples").toString());
+    }
+
     @Test public void inflatedMatchDoesNotOverwriteOriginalDistanceOrPreviousMatch() throws Exception {
         JSONObject walk=walk().put("processing_result",result(45));JourneyStore.save(app,walk);
         coordinator=new MatchingCoordinator(app,(foot,payload)->result(1000));coordinator.start("walk");await();

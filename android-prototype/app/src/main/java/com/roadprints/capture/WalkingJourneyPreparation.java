@@ -99,7 +99,11 @@ final class WalkingJourneyPreparation {
         prepared.distance=result.distance;
         prepared.arrival=prepared.validated?WalkingArrivalTiming.fromRaw(saved,leg):null;
         if(saved==null)prepared.arrival=WalkingArrivalTiming.candidate(leg,capture);
-        for(FootTraceValidator.Sample point:result.samples) prepared.points.put(new JSONObject().put("lng",point.lon).put("lat",point.lat));
+        for(FootTraceValidator.Sample point:result.samples) {
+            JSONObject fix=new JSONObject().put("lng",point.lon).put("lat",point.lat);
+            if(Double.isFinite(point.accuracy)&&point.accuracy>0)fix.put("accuracy_m",point.accuracy);
+            prepared.points.put(fix);
+        }
         for(FootTraceValidator.Sample point:result.samples) prepared.validatedSamples.put(sampleJson(point));
         prepared.quality=CaptureQualityValidator.inspect(prepared.validatedSamples,true);
         if(prepared.validated && !prepared.quality.optBoolean("resolved")) throw new CaptureEvidenceFailure(
