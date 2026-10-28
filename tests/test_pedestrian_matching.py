@@ -15,6 +15,36 @@ def distance_metres(a, b):
     return 6371008.8 * 2 * math.asin(min(1.0, math.sqrt(term)))
 
 
+class ArrivalStateTests(unittest.TestCase):
+    def select(self, pause=False, returning=False):
+        from unittest.mock import patch
+        vertices = {'a': (0, 51), 'b': (.0002, 51), 'c': (.0004, 51)}
+        trace = [(0,51),(.0002,51)]
+        layers = [[('a',0),('c',0)],[('b',0)]]
+        if pause:
+            trace.append(trace[-1]); layers.append([('b',0)])
+        trace.append((0 if returning else .0004,51)); layers.append([('a',0)])
+        def paths(start, targets, limit):
+            return {end: ([start] if start==end else [start,end],
+                           [] if start==end else [start+end],
+                           0 if start==end else 11) for end in targets}
+        # Isolate the history-dependent selection: the cheaper arrival from A
+        # reverses at B, while the slightly more expensive C arrival continues.
+        def score(before, after, route, distance, length):
+            return 1 if route == [vertices['c'],vertices['b']] else 0
+        with patch('pedestrian_matching.score_pedestrian_path',side_effect=score):
+            return select_trajectory_paths(trace,layers,vertices,distance_metres,paths)
+
+    def test_globally_better_arrival_is_not_discarded_before_turn_cost(self):
+        self.assertEqual(['c','b','a'],self.select()[0])
+
+    def test_stationary_snap_retains_arrival_direction(self):
+        self.assertEqual(['c','b','a'],self.select(pause=True)[0])
+
+    def test_gps_supported_return_survives_stationary_snap(self):
+        self.assertEqual(['a','b','a'],self.select(pause=True,returning=True)[0])
+
+
 class PedestrianVertexIndexTests(unittest.TestCase):
     def test_candidates_equal_full_scan_across_uk_and_cell_boundaries(self):
         rng = random.Random(178)

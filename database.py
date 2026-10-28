@@ -547,6 +547,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     except (KeyError, TypeError, ValueError):
         return None
 
+    started = time.perf_counter()
+    profile = {}
     deadline = time.monotonic() + 20.0
 
     # Build a compact, route-local graph from the prepared public reference.
@@ -576,6 +578,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     except Exception as exc:
         logger.warning("pedestrian reference query unavailable: %s", exc.__class__.__name__)
         return None
+    profile["database_ms"] = round((time.perf_counter()-started)*1000,2)
+    stage = time.perf_counter()
     if len(rows) > 50000:
         logger.warning("pedestrian reference graph exceeds 50000-segment limit")
         return None
@@ -676,6 +680,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     search_graph = compress_pedestrian_graph(adjacency, retained_vertices, deadline)
     shortest_paths_to_targets = PedestrianGraphPaths(search_graph, deadline)
 
+    profile["graph_candidates_ms"] = round((time.perf_counter()-stage)*1000,2)
+    stage = time.perf_counter()
     diagnostics = {}
     route_result = match_reference_trajectory(
         sampled_trace, vertex_index, vertices, length_metres, shortest_paths_to_targets,
@@ -690,6 +696,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
                        len(sampled_trace), len(rows), time.monotonic() >= deadline)
         logger.warning("pedestrian reference transition failure: %s", diagnostics)
         return None
+    profile["trajectory_ms"] = round((time.perf_counter()-stage)*1000,2)
+    stage = time.perf_counter()
     route_keys, used_feature_ids = route_result
     logger.info("pedestrian reference matched: samples=%s segments=%s candidate_count=%s",
                 len(sampled_trace), len(rows), diagnostics.get('candidate_count'))
@@ -708,15 +716,20 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "type": "Feature",
         "properties": {
             "reference_area": "preloaded_public_network",
-            "matcher": "preloaded_pedestrian_network_v4",
+            "matcher": "preloaded_pedestrian_network_v5",
             "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
     }
+    evidence = build_matched_path_evidence(coordinates, used_feature_ids, features)
+    profile["geometry_evidence_ms"] = round((time.perf_counter()-stage)*1000,2)
+    profile["searches"] = shortest_paths_to_targets.searches
+    profile["settled_nodes"] = shortest_paths_to_targets.settled_nodes
     return {
         "status": "ok",
-        "matcher": "preloaded_pedestrian_network_v4",
-        "matched_path_evidence": build_matched_path_evidence(coordinates, used_feature_ids, features),
+        "matcher": "preloaded_pedestrian_network_v5",
+        "matcher_profile": profile,
+        "matched_path_evidence": evidence,
         "input_points": len(points),
         "chunks_used": 1,
         "points_sent_to_matcher": len(points),

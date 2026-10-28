@@ -46,4 +46,25 @@ public class JourneyMatchedPreviewTest {
         Field segments=RoutePreviewView.class.getDeclaredField("matchedSegments");segments.setAccessible(true);
         assertEquals(2,((java.util.List<?>)segments.get(view)).size());
     }
+
+    @Test public void walkingEditorAndDetailsUseMatchedGeometryAfterPersistence() throws Exception {
+        JSONObject j=journey().put("journey_id","walking-preview-regression").put("mode","walking")
+                .put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0]")));
+        String source=j.getJSONObject("route_geometry").toString();
+        String evidence=j.getJSONObject("processing_result").toString();
+        JourneyStore.save(RuntimeEnvironment.getApplication(),j);
+        JSONObject reopened=JourneyStore.get(RuntimeEnvironment.getApplication(),j.getString("journey_id"));
+        assertNull(JourneyMapEditorActivity.editorSourceCoordinates(reopened));
+        assertNull(JourneyListActivity.journeyPreview(reopened).coordinates);
+        assertEquals(2,JourneyListActivity.journeyPreview(reopened).matches.get(0).getJSONArray(0).getDouble(0),0);
+        assertEquals(source,reopened.getJSONObject("route_geometry").toString());
+        assertEquals(evidence,reopened.getJSONObject("processing_result").toString());
+        assertEquals(2,JourneyMapEditorActivity.matchedRouteSegments(reopened.getJSONObject("processing_result")).size());
+    }
+    @Test public void editorKeepsDrivingAndLegacySourceContract() throws Exception {
+        JSONObject j=journey();
+        assertNotNull(JourneyMapEditorActivity.editorSourceCoordinates(j));
+        j.put("mode","walking");j.remove("processing_result");
+        assertNotNull(JourneyMapEditorActivity.editorSourceCoordinates(j));
+    }
 }

@@ -290,6 +290,7 @@ public final class MatchingCoordinator {
     }
 
     private void matchJourney(JSONObject journey) throws Exception {
+        long preparationStarted = android.os.SystemClock.elapsedRealtime();
         if(isFoot(journey.optString("mode"))&&!DestinationJourneyEvidence.purposeful(journey)&&ResortJourneyPolicy.internal(new DestinationCatalog(app),journey.optJSONArray("capture_route_samples")))
             throw new IllegalStateException("Movement inside a recognised resort does not require road matching. The original recording is preserved.");
         JSONObject geometry = journey.optJSONObject("route_geometry");
@@ -370,6 +371,7 @@ public final class MatchingCoordinator {
                 .put("filtered_gps_distance_m",traceDistance(journey.optJSONArray("capture_route_samples")))
                 .put("submitted_geometry_distance_m",road==null?pointDistance(requestPoints):requestDistance(roadRequests));
         persistAttempt(journey,attempt);
+        attempt.put("preparation_ms", android.os.SystemClock.elapsedRealtime()-preparationStarted);
         JSONObject result;
         boolean acceptedEndpointPartial = false;
         if (road == null) {
@@ -378,7 +380,7 @@ public final class MatchingCoordinator {
             attempt.put("request_bytes",payload.toString().getBytes(StandardCharsets.UTF_8).length);
             persistAttempt(journey,attempt);
             result = matcher != null ? matcher.match(endpointPath, payload)
-                    : postWithRetry(API_BASE_URL + endpointPath, payload);
+                    : postWithRetry(API_BASE_URL + endpointPath, payload, attempt);
         } else {
             List<JSONObject> results = new ArrayList<>();
             JSONArray sectionDiagnostics = new JSONArray();
@@ -389,7 +391,7 @@ public final class MatchingCoordinator {
                 attempt.put("request_bytes",payload.toString().getBytes(StandardCharsets.UTF_8).length);
                 persistAttempt(journey,attempt);
                 JSONObject sectionResult = matcher != null ? matcher.match(endpointPath, payload)
-                        : postWithRetry(API_BASE_URL + endpointPath, payload);
+                        : postWithRetry(API_BASE_URL + endpointPath, payload, attempt);
                 if (capturedDrive) {
                     JSONArray retry=DrivingJourneyPreparation.retryPoints(sectionResult,submitted,journey);
                     if(retry!=null) {
@@ -402,7 +404,7 @@ public final class MatchingCoordinator {
                         submitted=retry;
                         payload=new JSONObject().put("points",submitted).put("road_recovery",true);
                         sectionResult=matcher!=null ? matcher.match(endpointPath,payload)
-                                : postWithRetry(API_BASE_URL+endpointPath,payload);
+                                : postWithRetry(API_BASE_URL+endpointPath,payload,attempt);
                         road.details.put("redundant_fix_retry",true);
                     }
                     JSONObject integrity=DrivingJourneyPreparation.distanceIntegrity(sectionResult,submitted);
@@ -564,10 +566,13 @@ public final class MatchingCoordinator {
             stored.put("distance_meters", result.getDouble("matched_distance_m"));
             stored.put("distance_source", "validated_cycling_match");
         }
+        attempt.put("processing_to_save_ms",android.os.SystemClock.elapsedRealtime()-preparationStarted);
         stored.put("last_match_attempt", attempt);
         stored.put("processing_completed_at", Instant.now().toString());
         stored.remove("error_summary");stored.remove("match_retry_state");
+        long saveStarted=android.os.SystemClock.elapsedRealtime();
         JourneyStore.save(app, stored);
+        android.util.Log.i("RoadprintsTiming","matching persistence_ms="+(android.os.SystemClock.elapsedRealtime()-saveStarted));
         DiagnosticNotifications.resolved(app,stored.optString("journey_id"));
         JSONObject replaySource=stored.optJSONObject("source");
         if(replaySource!=null&&"android_activity_capture".equals(replaySource.optString("type")))
@@ -648,36 +653,62 @@ public final class MatchingCoordinator {
         return sampled;
     }
 
-    private JSONObject postWithRetry(String endpoint, JSONObject payload) throws Exception {
-        // Allow time for the free API instance to wake after an idle period.
-        long[] delays = {3_000L};
-        for (int attempt = 0; ; attempt++) try {
-            return post(endpoint, payload);
-        } catch (Exception error) {
-            if (!MatchFailure.retryNow(error,attempt)) throw error;
-            Thread.sleep(delays[attempt]);
+    private JSONObject postWithRetry(String endpoint, JSONObject payload, JSONObject attempt) throws Exception {
+        JSONArray requests = attempt.optJSONArray("http_timings");
+        if (requests == null) { requests = new JSONArray(); attempt.put("http_timings", requests); }
+        for (int retry = 0; ; retry++) {
+            JSONObject timing = new JSONObject().put("retry", retry);
+            requests.put(timing);
+            try { return post(endpoint, payload, timing); }
+            catch (Exception error) {
+                if (!MatchFailure.retryNow(error,retry)) throw error;
+                timing.put("retry_delay_ms",3000);
+                Thread.sleep(3000L);
+            }
         }
     }
 
-    private JSONObject post(String endpoint, JSONObject payload) throws Exception {
+    private JSONObject post(String endpoint, JSONObject payload, JSONObject timing) throws Exception {
+        long started = android.os.SystemClock.elapsedRealtime();
+        byte[] request = payload.toString().getBytes(StandardCharsets.UTF_8);
+        timing.put("encode_ms", android.os.SystemClock.elapsedRealtime()-started);
+        timing.put("request_bytes",request.length);
         HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
         try {
-        connection.setRequestMethod("POST"); connection.setConnectTimeout(15000); connection.setReadTimeout(90000);
-        connection.setDoOutput(true); connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        try (OutputStream output = connection.getOutputStream()) { output.write(payload.toString().getBytes(StandardCharsets.UTF_8)); }
-        int status = connection.getResponseCode();
-        java.io.InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
-        StringBuilder body = new StringBuilder();
-        if (stream != null) try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line; while ((line = reader.readLine()) != null) body.append(line);
+            connection.setRequestMethod("POST"); connection.setConnectTimeout(15000); connection.setReadTimeout(90000);
+            connection.setDoOutput(true); connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setFixedLengthStreamingMode(request.length);
+            long stage = android.os.SystemClock.elapsedRealtime();
+            connection.connect();
+            timing.put("connect_ms",android.os.SystemClock.elapsedRealtime()-stage);
+            stage = android.os.SystemClock.elapsedRealtime();
+            try (OutputStream output = connection.getOutputStream()) { output.write(request); }
+            timing.put("upload_ms",android.os.SystemClock.elapsedRealtime()-stage);
+            stage = android.os.SystemClock.elapsedRealtime();
+            int status = connection.getResponseCode();
+            timing.put("headers_wait_ms",android.os.SystemClock.elapsedRealtime()-stage).put("status",status);
+            timing.put("server_timing",connection.getHeaderField("Server-Timing"));
+            stage = android.os.SystemClock.elapsedRealtime();
+            java.io.InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+            StringBuilder body = new StringBuilder();
+            if (stream != null) try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                String line; while ((line = reader.readLine()) != null) body.append(line);
+            }
+            timing.put("response_read_ms",android.os.SystemClock.elapsedRealtime()-stage);
+            timing.put("response_bytes",body.toString().getBytes(StandardCharsets.UTF_8).length);
+            if (status < 200 || status >= 300) {
+                throw new MatchFailure(status,CrashReporter.summarizeMatcherError(
+                        status, body.toString()),MatchFailure.retryAfter(connection.getHeaderField("Retry-After")));
+            }
+            stage = android.os.SystemClock.elapsedRealtime();
+            JSONObject result = new JSONObject(body.toString());
+            timing.put("response_parse_ms",android.os.SystemClock.elapsedRealtime()-stage);
+            return result;
+        } finally {
+            timing.put("total_ms",android.os.SystemClock.elapsedRealtime()-started);
+            connection.disconnect();
         }
-        if (status < 200 || status >= 300) {
-            throw new MatchFailure(status,CrashReporter.summarizeMatcherError(
-                    status, body.toString()),MatchFailure.retryAfter(connection.getHeaderField("Retry-After")));
-        }
-        return new JSONObject(body.toString());
-        } finally { connection.disconnect(); }
     }
 
     private boolean canMatch(JSONObject j) {

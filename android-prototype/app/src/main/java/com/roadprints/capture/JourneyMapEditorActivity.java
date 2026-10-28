@@ -73,6 +73,17 @@ public class JourneyMapEditorActivity extends Activity {
         buildScreen(routes);
     }
 
+    // Walking edits address matched edges. GPS-derived extensions are not
+    // matched evidence and can reintroduce rejected tails or false connectors.
+    // Correction splicing still reads the preserved route_geometry explicitly.
+    static JSONArray editorSourceCoordinates(JSONObject journey) {
+        String mode = journey.optString("mode", "");
+        if (MatchingCoordinator.isFoot(mode)
+                && !matchedRouteSegments(journey.optJSONObject("processing_result")).isEmpty()) return null;
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        return geometry == null ? null : geometry.optJSONArray("coordinates");
+    }
+
     private void buildScreen(List<JSONArray> routes) {
         int side = dp(20);
         LinearLayout root = new LinearLayout(this);
@@ -110,8 +121,7 @@ public class JourneyMapEditorActivity extends Activity {
         header.addView(instructions);
         root.addView(header);
 
-        JSONObject geometry = journey.optJSONObject("route_geometry");
-        JSONArray original = geometry == null ? null : geometry.optJSONArray("coordinates");
+        JSONArray original = editorSourceCoordinates(journey);
         routeView = new RoutePreviewView(this, original, routes, removedEdges,
                 this::onRouteEdgesTap);
         routeView.setRouteExtensions(unmatchedEndpointTrace(original, routes));
@@ -662,7 +672,7 @@ public class JourneyMapEditorActivity extends Activity {
         }
     }
 
-    private List<JSONArray> matchedRouteSegments(JSONObject result) {
+    static List<JSONArray> matchedRouteSegments(JSONObject result) {
         List<JSONArray> segments = new ArrayList<>();
         if (result == null) return segments;
         JSONObject geojson = result.optJSONObject("geojson");
