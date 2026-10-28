@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, AsyncMock
-from walking_timing import WalkingTimingMiddleware
+from walking_timing import WalkingTimingMiddleware, WalkingJSONResponse
 
 
 class WalkingTimingTests(unittest.IsolatedAsyncioTestCase):
@@ -21,6 +21,14 @@ class WalkingTimingTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b'request;dur=',headers[b'server-timing'])
         self.assertIn('request_bytes=12',logs.output[0])
         self.assertNotIn('private-body',logs.output[0])
+
+    async def test_json_serialization_preserves_content_and_logs_only_size_and_time(self):
+        import json
+        with self.assertLogs('roadprints.walking_timing',level='INFO') as logs:
+            response=WalkingJSONResponse({'geometry':{'coordinates':[[1.0,51],[2,52]]},'private':'secret'})
+        self.assertEqual({'geometry':{'coordinates':[[1.0,51],[2,52]]},'private':'secret'},json.loads(response.body))
+        self.assertIn('serialize_ms=',logs.output[0])
+        self.assertNotIn('secret',logs.output[0])
 
     async def test_other_routes_are_not_wrapped(self):
         app=AsyncMock();scope={'type':'http','path':'/match'};receive=AsyncMock();send=AsyncMock()

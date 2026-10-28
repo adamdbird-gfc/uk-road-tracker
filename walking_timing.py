@@ -1,8 +1,18 @@
 """Coordinate-free ASGI timings. Send duration is server backpressure, not wire RTT."""
 import logging
 import time
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger('roadprints.walking_timing')
+
+
+class WalkingJSONResponse(JSONResponse):
+    def render(self, content):
+        started = time.perf_counter()
+        body = super().render(content)
+        logger.info('walking_json serialize_ms=%.2f response_bytes=%s',
+                    (time.perf_counter()-started)*1000, len(body))
+        return body
 
 
 class WalkingTimingMiddleware:

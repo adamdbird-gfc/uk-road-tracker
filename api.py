@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
 from map_context import shared_area, ContextUnavailable
 from walking_work import WalkingWorkBudget, WalkingWorkLimit, walking_work
-from walking_timing import WalkingTimingMiddleware
+from walking_timing import WalkingTimingMiddleware, WalkingJSONResponse
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -652,7 +652,7 @@ def recorded_walking_result(point_count):
             "road_geojson": {"type": "FeatureCollection", "features": []}}
 
 
-@app.post("/match-walking")
+@app.post("/match-walking", response_class=WalkingJSONResponse)
 async def match_walking_activity(payload: MatchRequest):
     budget = WalkingWorkBudget() if payload.walking_recovery else None
     token = walking_work.set(budget)
