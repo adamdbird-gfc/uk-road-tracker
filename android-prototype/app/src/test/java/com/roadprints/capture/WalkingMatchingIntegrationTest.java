@@ -78,6 +78,7 @@ public class WalkingMatchingIntegrationTest {
     @Test public void savedAccuracyIsSentAndAnUnmappableManualRemovalKeepsTheOldMatch() throws Exception {
         JSONObject old=result(44);JSONObject j=walk().put("processing_status","complete").put("processing_result",old)
                 .put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray("[0]")));
+        String priorCoverage=JourneyStore.ncnEvidenceHash(j);
         JourneyStore.save(app,j);
         coordinator=new MatchingCoordinator(app,(endpoint,payload)->{
             JSONArray points=payload.getJSONArray("points");
@@ -88,6 +89,9 @@ public class WalkingMatchingIntegrationTest {
         });
         coordinator.rematch("walk");await();assertEquals(1,coordinator.snapshot().failed);
         JSONObject saved=JourneyStore.get(app,"walk");
+        assertEquals("complete",saved.getString("processing_status"));
+        assertEquals(priorCoverage,JourneyStore.ncnEvidenceHash(saved));
+        assertEquals("retained_manual_edits",saved.getJSONObject("last_match_attempt").getString("outcome"));
         assertEquals(old.toString(),saved.getJSONObject("processing_result").toString());
         assertEquals("[0]",saved.getJSONObject("journey_corrections").getJSONArray("removed_matched_segments").toString());
         assertTrue(saved.getString("error_summary").contains("preserved"));

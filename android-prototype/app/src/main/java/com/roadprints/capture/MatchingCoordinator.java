@@ -595,12 +595,15 @@ public final class MatchingCoordinator {
                     || !String.valueOf(expected.optJSONObject("route_geometry")).equals(String.valueOf(stored.optJSONObject("route_geometry")))
                     || !MatchRetryPolicy.input(expected).equals(MatchRetryPolicy.input(stored))))return;
             String stage = matchingStage(stored.optString("mode", "unknown"));
-            stored.put("processing_status", "failed"); stored.put("error_summary", safeMessage(error));
+            boolean retainedEdit=error instanceof JourneyCorrectionUtils.EditedMatchRetained && hasStoredMatch(stored);
+            String retainedStatus=retainedEdit?"complete":"failed";
+            stored.put("processing_status", retainedStatus); stored.put("error_summary", safeMessage(error));
             JSONObject attempt = stored.optJSONObject("last_match_attempt");
             if (attempt != null) {
                 attempt.put("finished_at_utc", Instant.now().toString());
                 attempt.put("error", safeMessage(error)).put("failure_category",MatchFailure.category(error))
-                        .put("retryable",MatchFailure.retryable(error));
+                        .put("retryable",!retainedEdit&&MatchFailure.retryable(error));
+                if(retainedEdit)attempt.put("outcome","retained_manual_edits");
                 if(error instanceof MatchFailure){
                     MatchFailure failure=(MatchFailure)error;attempt.put("http_status",failure.status);
                     if(failure.retryAfterSeconds>0)attempt.put("retry_after_seconds",failure.retryAfterSeconds)
@@ -609,9 +612,9 @@ public final class MatchingCoordinator {
                 stored.put("last_match_attempt", attempt);
             }
             JSONObject stages = stored.optJSONObject("stage_statuses"); if (stages == null) stages = new JSONObject();
-            stages.put(stage, "failed"); stored.put("stage_statuses", stages);
+            stages.put(stage, retainedStatus); stored.put("stage_statuses", stages);
             JSONObject processing = stored.optJSONObject("processing"); if (processing == null) processing = new JSONObject();
-            processing.put(stage, "failed"); stored.put("processing", processing);
+            processing.put(stage, retainedStatus); stored.put("processing", processing);
             if(MatchRetryPolicy.qualityFailure(error))MatchRetryPolicy.reject(stored,Instant.now().toString());
             else stored.remove("match_retry_state");
             JourneyStore.save(app, stored);

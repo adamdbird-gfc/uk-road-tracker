@@ -40,7 +40,10 @@ final class JourneyCorrectionUtils {
         JSONArray mapped=new JSONArray();for(int i=0;i<after.size();i++)if(exclusions.contains(after.get(i)))mapped.put(i);
         corrections.put("removed_matched_segments",mapped);
     }
-    private static IllegalStateException editedMatchChanged(){return new IllegalStateException(
+    static final class EditedMatchRetained extends IllegalStateException {
+        EditedMatchRetained(String message){super(message);}
+    }
+    private static EditedMatchRetained editedMatchChanged(){return new EditedMatchRetained(
             "The new match changes sections you edited. Your previous route and edits are preserved; review or restore those sections before rematching.");}
     private static List<String> matchedEdgeKeys(JSONObject result) throws Exception {
         List<String> keys=new ArrayList<>();
