@@ -1,5 +1,6 @@
 """Private offline regression; never uploads the diagnostic or invents missing ways."""
 import sys,json,math,time,importlib.util,argparse,statistics
+from collections import Counter
 from unittest.mock import MagicMock,patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -14,6 +15,7 @@ parser.add_argument('--include-accuracy',action='store_true')
 parser.add_argument('--output-request')
 parser.add_argument('--output-result')
 parser.add_argument('--expected-baseline')
+parser.add_argument('--acceptance',help='Private ground-truth JSON: forbidden_vertices and require_no_revisited_vertices; checked on current geometry only')
 args=parser.parse_args()
 j=json.load(open(args.export))['journey']
 original=json.dumps(j,sort_keys=True)
@@ -73,6 +75,18 @@ for name,path in modules:
  if result:
   c=result['geojson']['features'][0]['geometry']['coordinates'];rev=[i for i in range(1,len(c)-1) if c[i-1]==c[i+1]]
   print(name,'seconds',elapsed,'distance',result['matched_distance_m'],'coordinates',len(c),'exact immediate reversals',len(rev),'network ways',len(rows))
+  edges=Counter(tuple(sorted((tuple(a),tuple(b)))) for a,b in zip(c,c[1:]))
+  repeated=sum((count-1)*metres(*edge) for edge,count in edges.items())
+  revisited=sum(count-1 for count in Counter(map(tuple,c)).values() if count>1)
+  print('Repeated exact-edge distance m:',round(repeated,2),'revisited vertices:',revisited)
+  if name=='current' and args.acceptance:
+   acceptance=json.load(open(args.acceptance))
+   coordinates=set(map(tuple,c))
+   for defect in acceptance.get('defects',[]):
+    assert not coordinates.intersection(map(tuple,defect['forbidden_vertices'])), defect['name']
+   if acceptance.get('require_no_revisited_vertices'):
+    assert revisited==0,'Confirmed continuous fixture contains a return/loop; inspect the full geometry'
+   print('Private confirmed-movement acceptance passed:',len(acceptance.get('defects',[])),'defect regions')
   if name=='current' and args.output_result:Path(args.output_result).write_text(json.dumps(result))
   assert all(math.isfinite(value) for point in c for value in point)
   assert result['matched_path_evidence']['status']=='available'

@@ -333,6 +333,61 @@ class PedestrianEdgeCandidateTests(unittest.TestCase):
         result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(1,3)],[1]*len(trace))
         self.assertGreater(max(vertices[key][1] for key in result[0]),51.00014)
 
+    def test_sequence_of_uncertain_fixes_does_not_buy_a_side_street_visit(self):
+        # Several fixes can share correlated urban drift. They are not
+        # independent evidence for walking to the centre of each accuracy disc.
+        coords=[(0,51),(.001,51),(.002,51),(.001,51.00022)]
+        trace=[coords[0],(.0007,51),(.001,51.00018),(.001,51.00021),
+               (.001,51.00019),(.0013,51),coords[2]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(1,3)],
+                                     [3,10,25,25,25,10,3])
+        self.assertTrue(all(abs(vertices[key][1]-51)<1e-8 for key in result[0]))
+
+    def test_sustained_side_street_visit_survives_ordinary_accuracy(self):
+        coords=[(0,51),(.001,51),(.002,51),(.001,51.0008)]
+        trace=[coords[0],coords[1],(.001,51.0003),(.001,51.0006),
+               coords[3],(.001,51.0005),(.001,51.0002),coords[1],coords[2]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(1,3)],[12]*len(trace))
+        self.assertGreater(max(vertices[key][1] for key in result[0]),51.00065)
+        self.assertTrue(any(result[0].count(key)>1 for key in result[0]))
+
+    def test_sustained_out_and_back_is_retained_with_uncertain_fixes(self):
+        trace=[(0,51),(.0004,51),(.0008,51),(.0012,51),
+               (.0008,51),(.0004,51),(0,51)]
+        result,vertices,_,_=self.match(trace,[(0,51),(.0015,51)],[(0,1)],[10]*len(trace))
+        self.assertEqual(vertices[result[0][0]],vertices[result[0][-1]])
+        self.assertGreater(max(vertices[key][0] for key in result[0]),.001)
+
+    def test_uncertain_closed_loop_keeps_sustained_corners(self):
+        coords=[(0,51),(.002,51),(.002,51.002),(0,51.002)]
+        trace=coords+[coords[0]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(2,3),(3,0)],[15]*5)
+        route=[tuple(vertices[key]) for key in result[0]]
+        self.assertEqual(route[0],route[-1])
+        self.assertTrue(all(p in route for p in coords))
+
+    def test_parallel_pavements_with_frequent_crossings_do_not_switch_for_drift(self):
+        coords=[(x,y) for y in (51,51.0002) for x in (0,.001,.002,.003)]
+        edges=[(0,1),(1,2),(2,3),(4,5),(5,6),(6,7),(0,4),(1,5),(2,6),(3,7)]
+        trace=[(0,51),(.0005,51.00004),(.001,51.00016),(.0015,51.00004),
+               (.002,51.00016),(.0025,51.00004),(.003,51)]
+        result,vertices,_,_=self.match(trace,coords,edges,[3,20,20,20,20,20,3])
+        self.assertTrue(all(abs(vertices[key][1]-51)<1e-8 for key in result[0]))
+
+    def test_sustained_pavement_change_uses_actual_crossing(self):
+        coords=[(x,y) for y in (51,51.0003) for x in (0,.001,.002)]
+        trace=[coords[0],(.0005,51),coords[1],coords[4],(.0015,51.0003),coords[5]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(3,4),(4,5),(1,4)],[5]*6)
+        route=[tuple(vertices[key]) for key in result[0]]
+        self.assertIn(coords[1],route);self.assertIn(coords[4],route)
+        self.assertEqual(coords[5],route[-1])
+
+    def test_uncertain_endpoint_does_not_add_a_terminal_spur(self):
+        coords=[(0,51),(.001,51),(.002,51),(.002,51.0002)]
+        trace=[coords[0],(.0005,51),coords[1],(.0015,51),(.002,51.00018)]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(2,3)],[3,5,5,5,25])
+        self.assertTrue(all(abs(vertices[key][1]-51)<1e-8 for key in result[0]))
+
     def test_precise_closed_loop_keeps_every_observed_corner(self):
         coords=[(0,51),(.001,51),(.001,51.001),(0,51.001)]
         result,vertices,_,_=self.match(coords+[coords[0]],coords,[(0,1),(1,2),(2,3),(3,0)],[2]*5)

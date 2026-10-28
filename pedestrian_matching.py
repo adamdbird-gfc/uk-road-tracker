@@ -2,6 +2,7 @@
 
 import math
 import time
+from statistics import median
 from heapq import nsmallest, heappop, heappush
 from collections import OrderedDict
 
@@ -381,10 +382,24 @@ def select_trajectory_paths(
     def sigma(index):
         return uncertainty(index) or 15.0
 
+    def observation_cost(gap, index):
+        # Accuracy is an uncertainty region, not evidence for visiting its
+        # centre. Rewarding every closer snap makes a run of drifting fixes
+        # buy an unsupported side-street visit, even in a global Viterbi pass.
+        return (max(0.0, gap - uncertainty(index)) / sigma(index)) ** 2
+
+    known_uncertainties = [uncertainty(i) for i in range(len(trace)) if uncertainty(i) > 0]
+    continuity_scale = max(20.0, median(known_uncertainties)) if known_uncertainties else None
+    # One travel cost for the entire sequence: summing transitions now prices
+    # cumulative network travel (including longer retraces) consistently.
+    # Per-transition accuracy previously made travel artificially cheaper at
+    # poor fixes. All observation/shape costs and real connected alternatives
+    # remain in the optimisation; this is not endpoint shortest-path routing.
+
     # Reversal costs depend on arrival direction. Collapsing all arrivals at
     # a candidate into one cost loses the globally best continuation. Retain
     # the last moving edge and its GPS origin, including across stationary snaps.
-    states = {(index, None, None): (gap / sigma(0)) ** 2
+    states = {(index, None, None): observation_cost(gap, 0)
               for index, (_, gap) in enumerate(candidate_layers[0])}
     history = []
     for layer_index in range(1, len(candidate_layers)):
@@ -405,7 +420,9 @@ def select_trajectory_paths(
                     path, _, distance = result
                     scores[index, current] = score_pedestrian_path(
                         trace_start, trace_end, [vertices[k] for k in path],
-                        distance, length_metres, uncertainty=max(uncertainty(layer_index-1),uncertainty(layer_index))) + (gap / sigma(layer_index)) ** 2
+                        distance, length_metres,
+                        uncertainty=max(uncertainty(layer_index-1),uncertainty(layer_index)),
+                        continuity_scale=continuity_scale) + observation_cost(gap, layer_index)
         costs, back = {}, {}
         for prior, cost in states.items():
             previous, arrival, origin = prior
@@ -485,6 +502,7 @@ def score_pedestrian_path(
     route_distance: float,
     length_metres,
     uncertainty=0.0,
+    continuity_scale=None,
 ) -> float:
     """Score a connected network path against one ordered GPS trace section.
 
@@ -502,7 +520,8 @@ def score_pedestrian_path(
     observed_distance = length_metres(trace_start, trace_end)
     distance_scale = max(20.0, observed_distance * 0.4, uncertainty*2.0)
     distance_penalty = max(0.0, abs(route_distance - observed_distance)-2.0*uncertainty) / distance_scale
-    travel_prior = route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0
+    travel_prior = (route_distance / continuity_scale if continuity_scale else
+                    route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0)
 
     # Project the route and GPS section into a local metre-based plane. The
     # trace segment is the evidence available between these two observations;

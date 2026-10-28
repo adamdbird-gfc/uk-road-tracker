@@ -739,7 +739,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     return {
         "status": "ok",
         "matcher": "preloaded_pedestrian_network_v4",
-        "pedestrian_selection_version": 6,
+        "pedestrian_selection_version": 7,
         "matcher_profile": profile,
         "matched_path_evidence": evidence,
         "input_points": len(points),
