@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.219",
+      "version_code": 265,
+      "release_date": "2026-10-28",
+      "since": "0.25.218",
+      "changes": [
+        {
+          "title": "Consistent walking route editing",
+          "description": "Open matched walking routes in the editor without adding inferred GPS endpoint sections. Your original recording and saved section edits remain available."
+        },
+        {
+          "title": "Clearer matching diagnostics",
+          "description": "Record separate preparation, connection, request and response timings to investigate slow walking matches."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.218",
       "version_code": 264,
       "release_date": "2026-10-25",
