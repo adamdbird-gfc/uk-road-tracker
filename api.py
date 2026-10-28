@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
 from map_context import shared_area, ContextUnavailable
 from walking_work import WalkingWorkBudget, WalkingWorkLimit, walking_work
+from walking_timing import WalkingTimingMiddleware, WalkingJSONResponse
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -65,6 +66,7 @@ foot_next_request_at = 0.0
 foot_cooldown_until = 0.0
 
 app = FastAPI(title="UK Road Tracker API", version="0.11.0")
+app.add_middleware(WalkingTimingMiddleware)
 PLACE_NAME_CACHE = {}
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://adamdbird-gfc.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if origin.strip()]
 
@@ -650,7 +652,7 @@ def recorded_walking_result(point_count):
             "road_geojson": {"type": "FeatureCollection", "features": []}}
 
 
-@app.post("/match-walking")
+@app.post("/match-walking", response_class=WalkingJSONResponse)
 async def match_walking_activity(payload: MatchRequest):
     budget = WalkingWorkBudget() if payload.walking_recovery else None
     token = walking_work.set(budget)
@@ -673,6 +675,7 @@ async def _match_walking_activity(payload: MatchRequest):
         return recorded_walking_result(len(payload.points))
     # The preloaded shared public reference is used first. The request is
     # read-only and transient: no Timeline route data is retained by Postgres.
+    lock_started = time.perf_counter()
     try:
         await asyncio.wait_for(REFERENCE_MATCH_LOCK.acquire(), timeout=5.0)
     except asyncio.TimeoutError as exc:
@@ -680,6 +683,8 @@ async def _match_walking_activity(payload: MatchRequest):
             status_code=503, detail="Walking matcher is busy. Retry this journey shortly.",
             headers={"Retry-After": "30"},
         ) from exc
+    lock_ms = (time.perf_counter()-lock_started)*1000
+    reference_started = time.perf_counter()
     try:
         reference_match = await asyncio.to_thread(
             match_pedestrian_reference,
@@ -688,6 +693,8 @@ async def _match_walking_activity(payload: MatchRequest):
     finally:
         REFERENCE_MATCH_LOCK.release()
     if reference_match:
+        reference_match["request_profile"] = {"lock_wait_ms": round(lock_ms,2),
+            "reference_ms": round((time.perf_counter()-reference_started)*1000,2)}
         return reference_match
     # Other areas retain the established pedestrian-router path until their
     # equivalent public reference catalogue is loaded and verified.

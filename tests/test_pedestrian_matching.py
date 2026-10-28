@@ -15,6 +15,36 @@ def distance_metres(a, b):
     return 6371008.8 * 2 * math.asin(min(1.0, math.sqrt(term)))
 
 
+class ArrivalStateTests(unittest.TestCase):
+    def select(self, pause=False, returning=False):
+        from unittest.mock import patch
+        vertices = {'a': (0, 51), 'b': (.0002, 51), 'c': (.0004, 51)}
+        trace = [(0,51),(.0002,51)]
+        layers = [[('a',0),('c',0)],[('b',0)]]
+        if pause:
+            trace.append(trace[-1]); layers.append([('b',0)])
+        trace.append((0 if returning else .0004,51)); layers.append([('a',0)])
+        def paths(start, targets, limit):
+            return {end: ([start] if start==end else [start,end],
+                           [] if start==end else [start+end],
+                           0 if start==end else 11) for end in targets}
+        # Isolate the history-dependent selection: the cheaper arrival from A
+        # reverses at B, while the slightly more expensive C arrival continues.
+        def score(before, after, route, distance, length):
+            return 1 if route == [vertices['c'],vertices['b']] else 0
+        with patch('pedestrian_matching.score_pedestrian_path',side_effect=score):
+            return select_trajectory_paths(trace,layers,vertices,distance_metres,paths)
+
+    def test_globally_better_arrival_is_not_discarded_before_turn_cost(self):
+        self.assertEqual(['c','b','a'],self.select()[0])
+
+    def test_stationary_snap_retains_arrival_direction(self):
+        self.assertEqual(['c','b','a'],self.select(pause=True)[0])
+
+    def test_gps_supported_return_survives_stationary_snap(self):
+        self.assertEqual(['a','b','a'],self.select(pause=True,returning=True)[0])
+
+
 class PedestrianVertexIndexTests(unittest.TestCase):
     def test_candidates_equal_full_scan_across_uk_and_cell_boundaries(self):
         rng = random.Random(178)
@@ -297,6 +327,36 @@ class PedestrianEdgeCandidateTests(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertGreater(max(vertices[key][1] for key in result[0]),51.0006)
         self.assertEqual(vertices[result[0][0]],vertices[result[0][-1]])
+
+    def test_genuine_closed_walking_loop_keeps_all_observed_corners(self):
+        coords=[(0,51),(.001,51),(.001,51.001),(0,51.001)]
+        trace=coords+[coords[0]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(2,3),(3,0)])
+        self.assertIsNotNone(result)
+        route=[tuple(vertices[key]) for key in result[0]]
+        self.assertEqual(route[0],route[-1])
+        self.assertTrue(all(corner in route for corner in coords))
+
+    def test_parallel_footway_and_road_do_not_oscillate_with_small_gps_errors(self):
+        coords=[(0,51),(.002,51),(0,51.0001),(.002,51.0001)]
+        trace=[(0,51.0001),(.0004,51.00003),(.0008,51.00007),
+               (.0012,51.00003),(.0016,51.00007),(.002,51.0001)]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(2,3),(0,2),(1,3)])
+        self.assertIsNotNone(result)
+        route=[vertices[key] for key in result[0]]
+        # Crossings exist only at the ends; noisy interior fixes must not
+        # manufacture repeated changes between the road and footway.
+        switches=sum(abs(a[1]-b[1])>.00005 for a,b in zip(route,route[1:]))
+        self.assertLessEqual(switches,1)
+
+    def test_observed_pedestrian_crossing_uses_the_real_connector(self):
+        coords=[(0,51),(.001,51),(.002,51),(0,51.0003),(.001,51.0003),(.002,51.0003)]
+        trace=[coords[3],(.0005,51.0003),coords[4],coords[1],(.0015,51),coords[2]]
+        result,vertices,_,_=self.match(trace,coords,[(0,1),(1,2),(3,4),(4,5),(1,4)])
+        self.assertIsNotNone(result)
+        route=[tuple(vertices[key]) for key in result[0]]
+        self.assertIn(coords[4],route);self.assertIn(coords[1],route)
+        self.assertEqual(coords[2],route[-1])
 
     def test_crossing_paths_do_not_gain_a_junction(self):
         coords = [(-.001,51),(.001,51),(0,50.999),(0,51.001)]
