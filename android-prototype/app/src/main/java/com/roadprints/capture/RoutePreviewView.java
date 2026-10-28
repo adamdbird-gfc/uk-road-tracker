@@ -27,6 +27,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -41,25 +43,66 @@ public class RoutePreviewView extends View {
     private static final ExecutorService TILE_EXECUTOR = Executors.newFixedThreadPool(3);
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
-    private final JSONArray coordinates;
+    private boolean travelVisible=true,motorwayVisible=true,aRoadVisible=true,remainingVisible=true,boundaryVisible=true;
+    private JSONArray coordinates;
     private final List<JSONArray> matchedSegments;
+    private final List<JSONArray> routeExtensions = new ArrayList<>();
+    private final List<JSONArray> motorwaySegments = new ArrayList<>();
+    private final List<JSONArray> incompleteMotorwaySegments = new ArrayList<>();
+    private final List<JSONArray> coveredMotorwaySegments = new ArrayList<>();
+    private final List<JSONArray> incompleteARoadSegments = new ArrayList<>();
+    private final List<JSONArray> coveredARoadSegments = new ArrayList<>();
+    private final List<JSONArray> settlementBoundaryRings = new ArrayList<>();
+    private final Paint aRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint aRoadIncompletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint settlementBoundaryPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final boolean interactive;
     private final boolean showEmptyMessage;
+    private boolean overviewLoading;
     private final boolean showEndpointMarkers;
     private boolean routeEditMode;
     private Set<Integer> removedRouteEdges = Collections.emptySet();
-    private int selectedRouteEdge = -1;
+    private Set<Integer> selectedRouteEdges = Collections.emptySet();
     private boolean restoreRouteMode;
+    private java.util.List<NcnMapOverlay.Line> ncnOverlay;
+    private long lastSlowFrameReport;
+    private final MapRenderGeometry renderGeometry=new MapRenderGeometry();
+    String ncnLoadingStatus;
+    private java.util.function.Consumer<java.util.Set<String>> ncnTap;
+    private final Paint ncnCompleted=new Paint(Paint.ANTI_ALIAS_FLAG),ncnRemaining=new Paint(Paint.ANTI_ALIAS_FLAG);
+    private void ncnPaints(){for(Paint p:new Paint[]{ncnCompleted,ncnRemaining}){p.setStyle(Paint.Style.STROKE);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeWidth(dp(3));p.setStrokeJoin(Paint.Join.ROUND);}ncnCompleted.setColor(0xFF8D55C7);ncnRemaining.setColor(NcnProgressUi.ORANGE);ncnRemaining.setPathEffect(null);}
+    void setNcnOverlay(java.util.List<NcnMapOverlay.Line> lines,java.util.function.Consumer<java.util.Set<String>> tap){ncnOverlay=lines;ncnTap=tap;ncnPaints();invalidate();}
+    void setNcnCoverageSegments(List<JSONArray> remaining,List<JSONArray> travelled){ncnPaints();motorwayIncompletePaint.setColor(NcnProgressUi.ORANGE);motorwayIncompletePaint.setPathEffect(null);motorwayPaint.setColor(0xFF8D55C7);setMotorwayCoverageSegments(remaining,travelled);}
+    private void drawNcn(Canvas canvas){if(ncnOverlay==null)return;for(NcnMapOverlay.Line line:ncnOverlay){float left=screenX(line.west),right=screenX(line.east),top=screenY(line.north),bottom=screenY(line.south);if(right<0||left>getWidth()||bottom<0||top>getHeight())continue;drawRoute(canvas,line.points,line.completed?ncnCompleted:ncnRemaining,null);}}
+    private boolean tapNcn(float x,float y){if(ncnOverlay==null||ncnTap==null)return false;float nearest=dp(24);java.util.Set<String> routes=new java.util.LinkedHashSet<>();
+        for(NcnMapOverlay.Line line:ncnOverlay)for(int i=1;i<line.points.length();i++){float distance=editableEdgeDistance(line.points,i,x,y);if(distance<nearest-1){nearest=distance;routes.clear();routes.add(line.route);}else if(distance<=nearest+1)routes.add(line.route);}
+        if(routes.isEmpty())return false;ncnTap.accept(routes);return true;
+    }
+    private boolean correctionDrawMode;
+    private final List<JSONArray> correctionTrace = new ArrayList<>();
+    private JSONArray activeCorrectionTrace;
+    private OnCorrectionTraceListener correctionTraceListener;
     private final Paint selectedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint correctionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint correctionHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint zoomControlBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint zoomControlTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private int pressedZoomControl;
     private OnRouteEdgeTapListener routeEdgeTapListener;
     private final Paint removedRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint motorwayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint motorwayIncompletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint routeHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint rawRoutePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint attributionBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint serviceStationPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint serviceStationOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private JSONArray serviceStations = new JSONArray();
+    private String collectionKind=CollectionAccessStore.SERVICES;
+    private Set<String> visitedServiceStationIds = Collections.emptySet();
     private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =
@@ -74,6 +117,9 @@ public class RoutePreviewView extends View {
     private double lastTouchY;
     private boolean coordinatesValid;
     private boolean routeFitPending;
+    private boolean overviewUpdate;
+    private List<JSONArray> focusedFitGeometry;
+    private boolean flatRoadMapStyle;
 
     public RoutePreviewView(Context context, JSONArray coordinates) {
         this(context, coordinates, Collections.emptyList());
@@ -89,8 +135,220 @@ public class RoutePreviewView extends View {
         this(context, null, routeSections, interactive, false, false);
     }
 
+    /** Refresh an open journey aperture after matching without rebuilding its form. */
+    private DiscoveryReplay discoveryReplay;
+    private android.animation.ValueAnimator discoveryAnimator;
+    private float discoveryFraction;
+    private Runnable discoveryComplete;
+    private final Paint replayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    public void startDiscoveryReplay(DiscoveryReplay replay, Runnable complete) {
+        stopDiscoveryReplay();
+        discoveryReplay = replay;
+        discoveryFraction = 0;
+        discoveryComplete = complete;
+        fitDiscoveryReplay();
+        if (!android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            discoveryFraction = 1;
+            invalidate(); completeDiscoveryReplay(); return;
+        }
+        discoveryAnimator = android.animation.ValueAnimator.ofFloat(0, 1);
+        discoveryAnimator.setDuration(5500);
+        discoveryAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+        discoveryAnimator.addUpdateListener(animator -> {
+            discoveryFraction = (float) animator.getAnimatedValue(); invalidate();
+        });
+        discoveryAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean cancelled;
+            @Override public void onAnimationCancel(android.animation.Animator animator) { cancelled = true; }
+            @Override public void onAnimationEnd(android.animation.Animator animator) {
+                if (!cancelled) completeDiscoveryReplay();
+            }
+        });
+        discoveryAnimator.start();
+    }
+
+    /** Add confirmed highlights without restarting animation or changing the camera. */
+    public void updateDiscoveryReplay(DiscoveryReplay replay) {
+        if(discoveryReplay==null)return;
+        discoveryReplay=replay;invalidate();
+    }
+
+    private void fitDiscoveryReplay() {
+        DiscoveryReplay replay = discoveryReplay;
+        if (replay == null || getWidth() <= 0 || getHeight() <= 0) return;
+        double minX = 1, maxX = 0, minY = 1, maxY = 0;
+        for (DiscoveryReplay.Section section : replay.routes) {
+            for (int i = 0; i < section.points.length(); i++) {
+                JSONArray point = section.points.optJSONArray(i);
+                if (point == null) continue;
+                double x = longitudeToUnitX(point.optDouble(0));
+                double y = latitudeToUnitY(point.optDouble(1));
+                minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+            }
+        }
+        if (maxX >= minX && maxY >= minY) {
+            double zoomX = log2(Math.max(1, getWidth() - dp(100)) / (Math.max(.000001, maxX - minX) * mapTileSize()));
+            double zoomY = log2(Math.max(1, getHeight() - dp(260)) / (Math.max(.000001, maxY - minY) * mapTileSize()));
+            restoreCameraState((minX + maxX) * 180 - 180, unitYToLatitude((minY + maxY) / 2),
+                    Math.min(zoomX, zoomY));
+        }
+    }
+
+    public void stopDiscoveryReplay() {
+        if (discoveryAnimator != null) { discoveryAnimator.cancel(); discoveryAnimator = null; }
+        discoveryReplay = null;
+        discoveryComplete = null;
+        invalidate();
+    }
+
+    /** Freeze the final journey overlay without restoring the overview camera. */
+    public void finishDiscoveryReplay() {
+        if (discoveryReplay == null) return;
+        if (discoveryAnimator != null) { discoveryAnimator.cancel(); discoveryAnimator = null; }
+        discoveryFraction = 1;
+        invalidate();
+        completeDiscoveryReplay();
+    }
+
+    private void completeDiscoveryReplay() {
+        Runnable complete = discoveryComplete;
+        discoveryComplete = null;
+        if (complete != null) complete.run();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        finishDiscoveryReplay();
+        super.onDetachedFromWindow();
+    }
+
+    private void drawDiscoveryReplay(Canvas canvas) {
+        if (discoveryReplay == null) return;
+        float routeFraction = Math.min(1, discoveryFraction / .65f);
+        int total = 0;
+        for (DiscoveryReplay.Section section : discoveryReplay.routes) total += section.points.length();
+        for(int pass=0;pass<2;pass++){
+            float remaining = total * routeFraction;
+            for (DiscoveryReplay.Section section : discoveryReplay.routes) {
+                float fraction = Math.min(1, Math.max(0, remaining / section.points.length()));
+                drawReplaySection(canvas, section, fraction, false,pass==0);
+                remaining -= section.points.length();
+            }
+        }
+        if (discoveryFraction > .65f) {
+            float fraction = Math.min(1, (discoveryFraction - .65f) / .35f);
+            for(int pass=0;pass<2;pass++)for (DiscoveryReplay.Section section : discoveryReplay.discoveries)
+                drawReplaySection(canvas, section, fraction, true,pass==0);
+        }
+    }
+
+    private void drawReplaySection(Canvas canvas, DiscoveryReplay.Section section, float fraction, boolean fresh,boolean halo) {
+        if (fraction <= 0) return;
+        Path path = new Path();
+        for (int i = 0; i < section.points.length(); i++) {
+            JSONArray point = section.points.optJSONArray(i);
+            if (point == null) continue;
+            float x = screenX(point.optDouble(0)), y = screenY(point.optDouble(1));
+            if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+        }
+        android.graphics.PathMeasure measure = new android.graphics.PathMeasure(path, false);
+        Path visible = new Path();
+        measure.getSegment(0, measure.getLength() * fraction, visible, true);
+        replayPaint.setStyle(Paint.Style.STROKE);
+        replayPaint.setStrokeCap(Paint.Cap.ROUND);
+        replayPaint.setStrokeJoin(Paint.Join.ROUND);
+        replayPaint.setColor(halo?Color.WHITE:fresh?0xFFF7C450:section.color);
+        replayPaint.setStrokeWidth(dp(halo?(fresh?11:9):(fresh?8:5)));
+        canvas.drawPath(visible, replayPaint);
+        if (!halo && !fresh && fraction < 1) {
+            float[] head = new float[2];
+            measure.getPosTan(measure.getLength() * fraction, head, null);
+            replayPaint.setStyle(Paint.Style.FILL); replayPaint.setColor(0xFFF7C450);
+            canvas.drawCircle(head[0], head[1], dp(6), replayPaint);
+        }
+    }
+
+    public void setReplayContext(List<JSONArray> roads, List<JSONArray> motorways, List<JSONArray> aRoads) {
+        double[] camera = cameraState();
+        setRouteData(null, roads);
+        setMotorwaySegments(motorways);
+        setARoadCoverageSegments(java.util.Collections.emptyList(), aRoads);
+        restoreCameraState(camera[0], camera[1], camera[2]);
+        routeFitPending = false;
+    }
+
+    private final List<JSONArray> ferrySegments=new ArrayList<>();
+    private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    public void setFerrySegments(List<JSONArray> routes) {
+        ferrySegments.clear();
+        if(routes!=null)for(JSONArray route:routes)if(hasRoutePoints(route))ferrySegments.add(route);
+        ferryPaint.setColor(0xFF008A99);ferryPaint.setStyle(Paint.Style.STROKE);ferryPaint.setStrokeWidth(4*getResources().getDisplayMetrics().density);
+        ferryPaint.setStrokeCap(Paint.Cap.ROUND);
+        coordinatesValid=hasRoutePoints(coordinates)||!matchedSegments.isEmpty()||!ferrySegments.isEmpty();
+        routeFitPending=coordinatesValid;invalidate();
+    }
+
+    public void setRouteData(JSONArray coordinates, List<JSONArray> sections) {
+        // A caller may republish a mutated array with the same point count.
+        // Identity lookup avoids structural JSON hashing while retiring its old world path.
+        java.util.IdentityHashMap<JSONArray,Boolean> previous=new java.util.IdentityHashMap<>();
+        if(this.coordinates!=null)previous.put(this.coordinates,true);
+        for(JSONArray row:matchedSegments)previous.put(row,true);
+        if(coordinates!=null&&previous.containsKey(coordinates))MapRenderGeometry.invalidatePrepared(coordinates);
+        if(sections!=null)for(JSONArray row:sections)if(previous.containsKey(row))MapRenderGeometry.invalidatePrepared(row);
+        renderGeometry.clear();
+        this.coordinates = coordinates;
+        matchedSegments.clear();
+        if (sections != null) for (JSONArray section : sections)
+            if (hasRoutePoints(section)) matchedSegments.add(section);
+        coordinatesValid = hasRoutePoints(coordinates) || !matchedSegments.isEmpty();
+        routeFitPending = coordinatesValid;
+        invalidate();
+    }
+
     public interface OnRouteEdgeTapListener {
-        void onRouteEdgeTap(int edgeIndex);
+        void onRouteEdgesTap(Set<Integer> edgeIndices);
+    }
+
+    public interface OnServiceStationTapListener {
+        void onServiceStationTap(org.json.JSONObject station);
+    }
+
+    public interface OnMapRoadTapListener {
+        void onMapRoadTap(double latitude, double longitude);
+    }
+
+    private OnMapRoadTapListener mapRoadTapListener;
+
+    public void setMapRoadTapListener(OnMapRoadTapListener listener) {
+        mapRoadTapListener = listener;
+    }
+
+    private OnServiceStationTapListener serviceStationTapListener;
+
+    public void setServiceStationTapListener(OnServiceStationTapListener listener) {
+        serviceStationTapListener = listener;
+    }
+
+    public interface OnCorrectionTraceListener {
+        void onCorrectionTrace(JSONArray coordinates);
+    }
+
+    public void setCorrectionTraceListener(OnCorrectionTraceListener listener) {
+        correctionTraceListener = listener;
+    }
+
+    public void setCorrectionDrawMode(boolean enabled) {
+        correctionDrawMode = enabled;
+        if (!enabled) activeCorrectionTrace = null;
+        invalidate();
+    }
+
+    public void setCorrectionTrace(JSONArray coordinates) {
+        correctionTrace.clear();
+        if (hasRoutePoints(coordinates)) correctionTrace.add(coordinates);
+        invalidate();
     }
 
     public RoutePreviewView(Context context, JSONArray coordinates,
@@ -107,6 +365,11 @@ public class RoutePreviewView extends View {
         removedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
         removedRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
                 new float[]{dp(7), dp(5)}, 0));
+    }
+
+    /** Overview maps do not label endpoints from unrelated saved journeys. */
+    public static RoutePreviewView overview(Context context) {
+        return new RoutePreviewView(context, null, Collections.emptyList(), true, true, false);
     }
 
     public RoutePreviewView(Context context) {
@@ -130,11 +393,36 @@ public class RoutePreviewView extends View {
         this.coordinatesValid = hasRoutePoints(coordinates) || !this.matchedSegments.isEmpty();
         this.routeFitPending = coordinatesValid;
 
-        routePaint.setColor(Color.BLACK);
+        routePaint.setColor(MapLayerPreferences.Layer.TRAVEL.color);
         routePaint.setStyle(Paint.Style.STROKE);
         routePaint.setStrokeWidth(dp(7));
         routePaint.setStrokeCap(Paint.Cap.ROUND);
         routePaint.setStrokeJoin(Paint.Join.ROUND);
+        motorwayPaint.setColor(MapLayerPreferences.Layer.MOTORWAYS.color);
+        motorwayPaint.setStyle(Paint.Style.STROKE);
+        motorwayPaint.setStrokeWidth(dp(4));
+        motorwayPaint.setStrokeCap(Paint.Cap.ROUND);
+        motorwayPaint.setStrokeJoin(Paint.Join.ROUND);
+        motorwayIncompletePaint.setColor(MapLayerPreferences.Layer.REMAINING.color);
+        motorwayIncompletePaint.setStyle(Paint.Style.STROKE);
+        motorwayIncompletePaint.setStrokeWidth(dp(4));
+        motorwayIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
+        motorwayIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
+        aRoadPaint.setColor(MapLayerPreferences.Layer.A_ROADS.color);
+        aRoadPaint.setStyle(Paint.Style.STROKE);
+        aRoadPaint.setStrokeWidth(dp(4));
+        aRoadPaint.setStrokeCap(Paint.Cap.ROUND);
+        aRoadPaint.setStrokeJoin(Paint.Join.ROUND);
+        aRoadIncompletePaint.setColor(MapLayerPreferences.Layer.REMAINING.color);
+        aRoadIncompletePaint.setStyle(Paint.Style.STROKE);
+        aRoadIncompletePaint.setStrokeWidth(dp(4));
+        aRoadIncompletePaint.setStrokeCap(Paint.Cap.ROUND);
+        aRoadIncompletePaint.setStrokeJoin(Paint.Join.ROUND);
+        settlementBoundaryPaint.setColor(Color.rgb(228, 87, 87));
+        settlementBoundaryPaint.setStyle(Paint.Style.STROKE);
+        settlementBoundaryPaint.setStrokeWidth(dp(3));
+        settlementBoundaryPaint.setStrokeCap(Paint.Cap.ROUND);
+        settlementBoundaryPaint.setStrokeJoin(Paint.Join.ROUND);
         routeHaloPaint.setColor(Color.WHITE);
         routeHaloPaint.setStyle(Paint.Style.STROKE);
         routeHaloPaint.setStrokeWidth(dp(10));
@@ -145,18 +433,30 @@ public class RoutePreviewView extends View {
         selectedRoutePaint.setStrokeWidth(dp(12));
         selectedRoutePaint.setStrokeCap(Paint.Cap.ROUND);
         selectedRoutePaint.setStrokeJoin(Paint.Join.ROUND);
-        rawRoutePaint.setColor(Color.rgb(112, 131, 164));
-        rawRoutePaint.setStyle(Paint.Style.STROKE);
-        rawRoutePaint.setStrokeWidth(dp(2));
-        rawRoutePaint.setStrokeCap(Paint.Cap.ROUND);
-        rawRoutePaint.setStrokeJoin(Paint.Join.ROUND);
-        rawRoutePaint.setPathEffect(new android.graphics.DashPathEffect(
-                new float[]{dp(5), dp(4)}, 0));
+        correctionPaint.setColor(Color.rgb(20, 160, 145));
+        correctionPaint.setStyle(Paint.Style.STROKE);
+        correctionPaint.setStrokeWidth(dp(8));
+        correctionPaint.setStrokeCap(Paint.Cap.ROUND);
+        correctionPaint.setStrokeJoin(Paint.Join.ROUND);
+        correctionHaloPaint.setColor(Color.WHITE);
+        correctionHaloPaint.setStyle(Paint.Style.STROKE);
+        correctionHaloPaint.setStrokeWidth(dp(14));
+        correctionHaloPaint.setStrokeCap(Paint.Cap.ROUND);
+        correctionHaloPaint.setStrokeJoin(Paint.Join.ROUND);
+        zoomControlBackgroundPaint.setColor(Color.WHITE);
+        zoomControlTextPaint.setColor(Color.rgb(18, 37, 75));
+        zoomControlTextPaint.setTextAlign(Paint.Align.CENTER);
+        zoomControlTextPaint.setTextSize(dp(28));
+        zoomControlTextPaint.setTypeface(android.graphics.Typeface.create(
+                "sans-serif-medium", android.graphics.Typeface.NORMAL));
         markerTextPaint.setColor(Color.WHITE);
         markerTextPaint.setTextAlign(Paint.Align.CENTER);
         markerTextPaint.setTextSize(dp(11));
         markerTextPaint.setTypeface(android.graphics.Typeface.create(
                 "sans-serif", android.graphics.Typeface.BOLD));
+        serviceStationPaint.setStyle(Paint.Style.FILL);
+        serviceStationOutlinePaint.setStyle(Paint.Style.FILL);
+        serviceStationOutlinePaint.setColor(Color.WHITE);
         attributionPaint.setColor(Color.rgb(18, 37, 75));
         attributionPaint.setTextSize(dp(10));
         attributionPaint.setTypeface(android.graphics.Typeface.create(
@@ -185,10 +485,15 @@ public class RoutePreviewView extends View {
             @Override
             public boolean onSingleTapUp(MotionEvent event) {
                 if (RoutePreviewView.this.routeEditMode) {
-                    tapNearestRouteEdge(event.getX(), event.getY());
+                    int zoomControl = zoomControlAt(event.getX(), event.getY());
+                    if (zoomControl != 0) applyZoomControl(zoomControl, event.getX(), event.getY());
+                    else if (!RoutePreviewView.this.correctionDrawMode)
+                        tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
-                return false;
+                if (tapNcn(event.getX(),event.getY()))return true;
+                if (tapServiceStation(event.getX(), event.getY())) return true;
+                return tapMapRoad(event.getX(), event.getY());
             }
 
             @Override
@@ -200,62 +505,322 @@ public class RoutePreviewView extends View {
         });
     }
 
+    /** Adds the local service-station catalogue as map pins. */
+    public void setServiceStations(JSONArray stations, Set<String> visitedIds) {
+        setCollectionVenues(CollectionAccessStore.SERVICES,stations,visitedIds);
+    }
+    public void setCollectionVenues(String id,JSONArray stations,Set<String> visitedIds) {
+        collectionKind=id;
+        serviceStations = stations == null ? new JSONArray() : stations;
+        visitedServiceStationIds = visitedIds == null
+                ? Collections.emptySet() : new java.util.HashSet<>(visitedIds);
+        if (serviceStations.length() > 0) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    /** Adds the POC-style blue motorway evidence over the normal journey map. */
+    public void setMotorwaySegments(List<JSONArray> segments) {
+        motorwaySegments.clear();
+        if (segments != null) {
+            for (JSONArray segment : segments) {
+                if (hasRoutePoints(segment)) motorwaySegments.add(segment);
+            }
+        }
+        if (!motorwaySegments.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    public void setMotorwayCoverageSegments(List<JSONArray> incomplete, List<JSONArray> covered) {
+        replaceSegments(incompleteMotorwaySegments, incomplete);
+        replaceSegments(coveredMotorwaySegments, covered);
+        if (!incompleteMotorwaySegments.isEmpty() || !coveredMotorwaySegments.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    public void setARoadCoverageSegments(List<JSONArray> incomplete, List<JSONArray> covered) {
+        replaceSegments(incompleteARoadSegments, incomplete);
+        replaceSegments(coveredARoadSegments, covered);
+        if (!incompleteARoadSegments.isEmpty() || !coveredARoadSegments.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    public void setSettlementBoundary(org.json.JSONObject boundary) {
+        settlementBoundaryRings.clear();
+        collectSettlementRings(boundary);
+        if (!settlementBoundaryRings.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
+    private void collectSettlementRings(org.json.JSONObject value) {
+        if (value == null) return;
+        String type = value.optString("type", "");
+        if ("FeatureCollection".equals(type)) {
+            org.json.JSONArray features = value.optJSONArray("features");
+            if (features != null) for (int index = 0; index < features.length(); index++)
+                collectSettlementRings(features.optJSONObject(index));
+            return;
+        }
+        if ("Feature".equals(type)) {
+            collectSettlementRings(value.optJSONObject("geometry"));
+            return;
+        }
+        org.json.JSONArray coordinates = value.optJSONArray("coordinates");
+        if ("Polygon".equals(type) && coordinates != null) {
+            addBoundaryRing(coordinates.optJSONArray(0));
+        } else if ("MultiPolygon".equals(type) && coordinates != null) {
+            for (int index = 0; index < coordinates.length(); index++)
+                addBoundaryRing(coordinates.optJSONArray(index) == null ? null
+                        : coordinates.optJSONArray(index).optJSONArray(0));
+        }
+    }
+
+    private void addBoundaryRing(JSONArray ring) {
+        if (ring != null && ring.length() >= 4) settlementBoundaryRings.add(ring);
+    }
+
+    private void replaceSegments(List<JSONArray> target, List<JSONArray> source) {
+        target.clear();
+        if (source == null) return;
+        for (JSONArray segment : source) {
+            if (hasRoutePoints(segment)) target.add(segment);
+        }
+    }
+
+    public void setFlatRoadMapStyle(boolean flat) {
+        flatRoadMapStyle = flat;
+        if (flat) routePaint.setStrokeWidth(dp(5));
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
         fitRouteIfReady();
+        if (discoveryReplay != null) fitDiscoveryReplay();
         invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        long frameStarted=android.os.SystemClock.elapsedRealtime();
         super.onDraw(canvas);
+        if(routeEditMode)renderGeometry.clear();
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
+        long tilesFinished=android.os.SystemClock.elapsedRealtime();
 
+        // Composite the existing road overlays as one layer so overlaps also stay at 50%.
+        int roadsLayer = !coordinatesValid || discoveryReplay == null && ncnOverlay==null ? -1
+                : canvas.saveLayerAlpha(0, 0, getWidth(), getHeight(), ncnOverlay==null?128:65);
         if (coordinatesValid) {
+            if(boundaryVisible) for (JSONArray ring : settlementBoundaryRings)
+                drawRoute(canvas, ring, settlementBoundaryPaint, null);
             boolean hasMatchedRoute = !matchedSegments.isEmpty();
-            JSONArray startEndRoute = hasRoutePoints(coordinates)
-                    ? coordinates : matchedSegments.get(0);
-            if (hasMatchedRoute && hasRoutePoints(coordinates) && !routeEditMode) {
-                drawRoute(canvas, coordinates, rawRoutePaint, null);
-            }
-            if (hasMatchedRoute) {
-                if (routeEditMode) drawEditableRoutes(canvas);
-                else for (JSONArray segment : matchedSegments) {
-                    drawRoute(canvas, segment, routePaint, routeHaloPaint);
+            if (travelVisible && hasMatchedRoute) {
+                if (routeEditMode) {
+                    for(JSONArray extension:routeExtensions)drawRoute(canvas,extension,routeHaloPaint,null);
+                    drawEditableRoutes(canvas);
+                    for (JSONArray extension : routeExtensions) {
+                        drawRoute(canvas, extension, routePaint,null);
+                    }
+                } else {
+                    // Paint every outline before any centreline. A later
+                    // section's round white cap must not cut the preceding line.
+                    if(!flatRoadMapStyle)for(JSONArray segment:matchedSegments)
+                        drawRoute(canvas,segment,routeHaloPaint,null);
+                    for(JSONArray segment:matchedSegments)drawRoute(canvas,segment,routePaint,null);
                 }
-            } else if (hasRoutePoints(coordinates)) {
-                drawRoute(canvas, coordinates, routePaint, routeHaloPaint);
+            } else if (travelVisible && hasRoutePoints(coordinates)) {
+                drawRoute(canvas, coordinates, routePaint,
+                        flatRoadMapStyle ? null : routeHaloPaint);
             }
+            if(remainingVisible) for (JSONArray segment : incompleteMotorwaySegments) {
+                drawRoute(canvas, segment, motorwayIncompletePaint, null);
+            }
+            if(remainingVisible) for (JSONArray segment : incompleteARoadSegments) {
+                drawRoute(canvas, segment, aRoadIncompletePaint, null);
+            }
+            if(aRoadVisible) for (JSONArray segment : coveredARoadSegments) {
+                drawRoute(canvas, segment, aRoadPaint, null);
+            }
+            if(motorwayVisible) for (JSONArray segment : coveredMotorwaySegments) {
+                drawRoute(canvas, segment, motorwayPaint, null);
+            }
+            if(motorwayVisible) for (JSONArray segment : motorwaySegments) {
+                drawRoute(canvas, segment, motorwayPaint, null);
+            }
+            for(JSONArray ferry:ferrySegments)drawRoute(canvas,ferry,ferryPaint,null);
             if (showEndpointMarkers) {
+                JSONArray startEndRoute = hasRoutePoints(coordinates)
+                        ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
+                        : firstMotorwayRoute();
                 JSONArray endRoute = hasRoutePoints(coordinates)
-                        ? coordinates : matchedSegments.get(matchedSegments.size() - 1);
-                drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
-                drawEndpoint(canvas, endRoute, endRoute.length() - 1,
-                        Color.rgb(190, 55, 55), "E");
+                        ? coordinates : hasMatchedRoute
+                                ? matchedSegments.get(matchedSegments.size() - 1)
+                                : lastMotorwayRoute();
+                if (hasRoutePoints(startEndRoute))
+                    drawEndpoint(canvas, startEndRoute, 0, Color.rgb(35, 140, 75), "S");
+                if (hasRoutePoints(endRoute))
+                    drawEndpoint(canvas, endRoute, endRoute.length() - 1,
+                            Color.rgb(190, 55, 55), "E");
             }
-        } else if (showEmptyMessage) {
-            drawEmptyMessage(canvas);
-        } else {
-            drawMessage(canvas, "Not enough GPS points for a route preview");
+        } else if (discoveryReplay == null) {
+            if (showEmptyMessage) { if (!overviewLoading && ncnOverlay==null) drawEmptyMessage(canvas); }
+            else drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
+        if (roadsLayer >= 0) canvas.restoreToCount(roadsLayer);
+        long roadsFinished=android.os.SystemClock.elapsedRealtime();
+        drawNcn(canvas);
+        long ncnFinished=android.os.SystemClock.elapsedRealtime();
+        drawServiceStations(canvas);
+        drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
-        if (!hasTiles) drawMessage(canvas, coordinatesValid
+        if (!hasTiles) drawMessage(canvas, (coordinatesValid || discoveryReplay != null)
                 ? "Map tiles unavailable · showing route only"
                 : "Map tiles unavailable · check connection");
+        if (routeEditMode) {
+            drawCorrectionTraces(canvas);
+            if (correctionDrawMode) drawCorrectionModeHint(canvas);
+            drawZoomControls(canvas);
+        }
+        long frameMs=android.os.SystemClock.elapsedRealtime()-frameStarted;
+        if(frameMs>=100&&frameStarted-lastSlowFrameReport>=5000){lastSlowFrameReport=frameStarted;
+            PerformanceDiagnostics.timing("map_slow_frame",frameMs,"tiles_ms="+(tilesFinished-frameStarted)+" roads_ms="+(roadsFinished-tilesFinished)
+                    +" ncn_ms="+(ncnFinished-roadsFinished)+" other_ms="+(android.os.SystemClock.elapsedRealtime()-ncnFinished)
+                    +" path_builds="+renderGeometry.builds+" path_hits="+renderGeometry.hits+" culled="+renderGeometry.culled
+                    +" road_sections="+matchedSegments.size()+" ncn_lines="+(ncnOverlay==null?0:ncnOverlay.size())+" heap_mb="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));}
     }
 
+    public void setMapLayersFromPreferences(){
+        travelVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.TRAVEL);
+        motorwayVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MOTORWAYS);
+        aRoadVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.A_ROADS);
+        remainingVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.REMAINING);
+        boundaryVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.BOUNDARIES);
+        invalidate();
+    }
+
+    private void drawCorrectionModeHint(Canvas canvas) {
+        Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background.setColor(0xE610285D);
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.WHITE);
+        text.setTextSize(dp(13));
+        text.setTypeface(android.graphics.Typeface.create(
+                "sans-serif-medium", android.graphics.Typeface.NORMAL));
+        text.setTextAlign(Paint.Align.LEFT);
+        String label = "TRACE MODE · drag to draw";
+        float left = dp(12), top = dp(12);
+        float width = text.measureText(label) + dp(22), height = dp(38);
+        canvas.drawRoundRect(new RectF(left, top, left + width, top + height),
+                dp(9), dp(9), background);
+        canvas.drawText(label, left + dp(11),
+                top + height / 2f - (text.ascent() + text.descent()) / 2f, text);
+    }
+
+    private void drawCorrectionTraces(Canvas canvas) {
+        for (JSONArray correction : correctionTrace) {
+            drawRoute(canvas, correction, correctionHaloPaint, null);
+            drawRoute(canvas, correction, correctionPaint, null);
+        }
+        if (activeCorrectionTrace != null) {
+            drawRoute(canvas, activeCorrectionTrace, correctionHaloPaint, null);
+            drawRoute(canvas, activeCorrectionTrace, correctionPaint, null);
+        }
+    }
+
+    private RectF zoomControlRect(int index) {
+        float size = dp(44);
+        float right = getWidth() - dp(14);
+        float top = dp(14) + index * dp(52);
+        return new RectF(right - size, top, right, top + size);
+    }
+
+    private int zoomControlAt(float x, float y) {
+        if (!routeEditMode) return 0;
+        if (zoomControlRect(0).contains(x, y)) return 1;
+        if (zoomControlRect(1).contains(x, y)) return -1;
+        return 0;
+    }
+
+    private void drawZoomControls(Canvas canvas) {
+        for (int control : new int[]{1, -1}) {
+            RectF rect = zoomControlRect(control == 1 ? 0 : 1);
+            canvas.drawRoundRect(rect, dp(9), dp(9), zoomControlBackgroundPaint);
+            canvas.drawText(control == 1 ? "+" : "−", rect.centerX(),
+                    rect.centerY() - (zoomControlTextPaint.ascent()
+                            + zoomControlTextPaint.descent()) / 2,
+                    zoomControlTextPaint);
+        }
+    }
+
+    private void applyZoomControl(int control, float x, float y) {
+        zoomAt(control > 0 ? 1.5 : 1.0 / 1.5, x, y);
+    }
+
+    /** Fit newly supplied focused geometry now or after layout, once per geometry publication. */
+    void fitRoadGeometry(List<JSONArray> geometry) {
+        focusedFitGeometry=new ArrayList<>();
+        if(geometry!=null)for(JSONArray line:geometry){if(line==null)continue;JSONArray valid=new JSONArray();
+            for(int i=0;i<line.length();i++){JSONArray p=line.optJSONArray(i);if(p!=null&&Double.isFinite(p.optDouble(0,Double.NaN))&&Double.isFinite(p.optDouble(1,Double.NaN)))valid.put(p);}
+            if(valid.length()>0)focusedFitGeometry.add(valid);
+        }
+        if(focusedFitGeometry.isEmpty())return;
+        routeFitPending=true;fitRouteIfReady();invalidate();
+    }
+
+    void beginOverviewUpdate(){overviewUpdate=true;}
+    void endOverviewUpdate(boolean fit){
+        overviewUpdate=false;
+        if(fit)fitRouteIfReady();else routeFitPending=false;
+        invalidate();
+    }
     private void fitRouteIfReady() {
-        if (!routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
+        if (overviewUpdate || !routeFitPending || getWidth() <= 0 || getHeight() <= 0) return;
         double minX = Double.MAX_VALUE;
         double maxX = -Double.MAX_VALUE;
         double minY = Double.MAX_VALUE;
         double maxY = -Double.MAX_VALUE;
         try {
-            List<JSONArray> fitRoutes = new ArrayList<>(matchedSegments);
-            if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
+            // Local settlement views are framed by their boundary. Matched
+            // roads may continue far beyond town limits and must not zoom out
+            // the map just to include those off-screen ends.
+            List<JSONArray> fitRoutes = new ArrayList<>();
+            if(focusedFitGeometry!=null)fitRoutes.addAll(focusedFitGeometry);
+            else if (!settlementBoundaryRings.isEmpty()) {
+                fitRoutes.addAll(settlementBoundaryRings);
+            } else {
+                fitRoutes.addAll(ferrySegments);
+                fitRoutes.addAll(matchedSegments);
+                fitRoutes.addAll(routeExtensions);
+                if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
+                fitRoutes.addAll(motorwaySegments);
+                fitRoutes.addAll(incompleteMotorwaySegments);
+                fitRoutes.addAll(coveredMotorwaySegments);
+                fitRoutes.addAll(incompleteARoadSegments);
+                fitRoutes.addAll(coveredARoadSegments);
+            }
             for (JSONArray routeCoordinates : fitRoutes) {
                 for (int index = 0; index < routeCoordinates.length(); index++) {
                     org.json.JSONArray point = routeCoordinates.getJSONArray(index);
@@ -267,6 +832,20 @@ public class RoutePreviewView extends View {
                     maxY = Math.max(maxY, latitudeToUnitY(lat));
                 }
             }
+            if (focusedFitGeometry==null&&settlementBoundaryRings.isEmpty()) {
+                for (int i = 0; i < serviceStations.length(); i++) {
+                    org.json.JSONObject station = serviceStations.optJSONObject(i);
+                    if (station == null) continue;
+                    double lon = station.optDouble("lng", Double.NaN);
+                    double lat = station.optDouble("lat", Double.NaN);
+                    if (!Double.isFinite(lon) || !Double.isFinite(lat)) continue;
+                    minX = Math.min(minX, longitudeToUnitX(lon));
+                    maxX = Math.max(maxX, longitudeToUnitX(lon));
+                    minY = Math.min(minY, latitudeToUnitY(lat));
+                    maxY = Math.max(maxY, latitudeToUnitY(lat));
+                }
+            }
+            if(minX==Double.MAX_VALUE)return;
             double spanX = Math.max(0.000001, maxX - minX);
             double spanY = Math.max(0.000001, maxY - minY);
             double availableWidth = Math.max(1, getWidth() - dp(72));
@@ -281,6 +860,25 @@ public class RoutePreviewView extends View {
             coordinatesValid = false;
             routeFitPending = false;
         }
+    }
+
+    private JSONArray firstMotorwayRoute() {
+        if (!motorwaySegments.isEmpty()) return motorwaySegments.get(0);
+        if (!coveredMotorwaySegments.isEmpty()) return coveredMotorwaySegments.get(0);
+        if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(0);
+        if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(0);
+        return incompleteARoadSegments.isEmpty() ? null : incompleteARoadSegments.get(0);
+    }
+
+    private JSONArray lastMotorwayRoute() {
+        if (!motorwaySegments.isEmpty()) return motorwaySegments.get(motorwaySegments.size() - 1);
+        if (!coveredMotorwaySegments.isEmpty()) {
+            return coveredMotorwaySegments.get(coveredMotorwaySegments.size() - 1);
+        }
+        if (!incompleteMotorwaySegments.isEmpty()) return incompleteMotorwaySegments.get(incompleteMotorwaySegments.size() - 1);
+        if (!coveredARoadSegments.isEmpty()) return coveredARoadSegments.get(coveredARoadSegments.size() - 1);
+        return incompleteARoadSegments.isEmpty() ? null
+                : incompleteARoadSegments.get(incompleteARoadSegments.size() - 1);
     }
 
     private boolean drawTiles(Canvas canvas) {
@@ -318,14 +916,27 @@ public class RoutePreviewView extends View {
         return drawn;
     }
 
-    public void setRouteEditState(Set<Integer> removedEdges, int selectedEdge, boolean restoreMode) {
+    public void setRouteExtensions(List<JSONArray> extensions) {
+        routeExtensions.clear();
+        if (extensions != null) {
+            for (JSONArray route : extensions) if (hasRoutePoints(route)) routeExtensions.add(route);
+        }
+        routeFitPending = true;
+        fitRouteIfReady();
+        invalidate();
+    }
+
+    public void setRouteEditState(Set<Integer> removedEdges, Set<Integer> selectedEdges,
+                                   boolean restoreMode) {
         this.removedRouteEdges = removedEdges == null ? Collections.emptySet() : removedEdges;
-        this.selectedRouteEdge = selectedEdge;
+        this.selectedRouteEdges = selectedEdges == null ? Collections.emptySet() : selectedEdges;
         this.restoreRouteMode = restoreMode;
         invalidate();
     }
 
     private void drawEditableRoutes(Canvas canvas) {
+        List<Path> activePaths=new ArrayList<>(),selectedPaths=new ArrayList<>(),removedPaths=new ArrayList<>();
+        List<float[]> selectedMarkers=new ArrayList<>();
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             Path activePath = new Path();
@@ -339,11 +950,10 @@ public class RoutePreviewView extends View {
                     float x2 = screenX(second.getDouble(0));
                     float y2 = screenY(second.getDouble(1));
                     boolean removed = removedRouteEdges.contains(edgeIndex);
-                    boolean selected = selectedRouteEdge == edgeIndex;
+                    boolean selected = selectedRouteEdges.contains(edgeIndex);
                     if (removed || selected) {
                         if (hasActivePath) {
-                            canvas.drawPath(activePath, routeHaloPaint);
-                            canvas.drawPath(activePath, routePaint);
+                            activePaths.add(activePath);
                             activePath = new Path();
                             hasActivePath = false;
                         }
@@ -351,14 +961,10 @@ public class RoutePreviewView extends View {
                         edge.moveTo(x1, y1);
                         edge.lineTo(x2, y2);
                         if (selected) {
-                            canvas.drawPath(edge, routeHaloPaint);
-                            canvas.drawPath(edge, selectedRoutePaint);
-                            float markerRadius = dp(5);
-                            markerPaint.setColor(Color.rgb(218, 55, 55));
-                            canvas.drawCircle((x1 + x2) / 2f, (y1 + y2) / 2f,
-                                    markerRadius, markerPaint);
+                            selectedPaths.add(edge);
+                            selectedMarkers.add(new float[]{(x1+x2)/2f,(y1+y2)/2f});
                         } else if (restoreRouteMode) {
-                            canvas.drawPath(edge, removedRoutePaint);
+                            removedPaths.add(edge);
                         }
                     } else {
                         if (!hasActivePath) {
@@ -369,18 +975,23 @@ public class RoutePreviewView extends View {
                     }
                 } catch (Exception ignored) {
                     if (hasActivePath) {
-                        canvas.drawPath(activePath, routeHaloPaint);
-                        canvas.drawPath(activePath, routePaint);
+                        activePaths.add(activePath);
                         activePath = new Path();
                         hasActivePath = false;
                     }
                 }
             }
             if (hasActivePath) {
-                canvas.drawPath(activePath, routeHaloPaint);
-                canvas.drawPath(activePath, routePaint);
+                activePaths.add(activePath);
             }
         }
+        for(Path path:activePaths)canvas.drawPath(path,routeHaloPaint);
+        for(Path path:selectedPaths)canvas.drawPath(path,routeHaloPaint);
+        for(Path path:activePaths)canvas.drawPath(path,routePaint);
+        for(Path path:selectedPaths)canvas.drawPath(path,selectedRoutePaint);
+        for(Path path:removedPaths)canvas.drawPath(path,removedRoutePaint);
+        markerPaint.setColor(Color.rgb(218,55,55));
+        for(float[] marker:selectedMarkers)canvas.drawCircle(marker[0],marker[1],dp(5),markerPaint);
     }
 
     private void tapNearestRouteEdge(float tapX, float tapY) {
@@ -389,49 +1000,170 @@ public class RoutePreviewView extends View {
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             for (int index = 1; index < route.length(); index++, edgeIndex++) {
-                try {
-                    JSONArray first = route.getJSONArray(index - 1);
-                    JSONArray second = route.getJSONArray(index);
-                    float x1 = screenX(first.getDouble(0));
-                    float y1 = screenY(first.getDouble(1));
-                    float x2 = screenX(second.getDouble(0));
-                    float y2 = screenY(second.getDouble(1));
-                    float dx = x2 - x1;
-                    float dy = y2 - y1;
-                    float lengthSquared = dx * dx + dy * dy;
-                    float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
-                            ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
-                    float distance = (float) Math.hypot(
-                            tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
-                    if (removedRouteEdges.contains(edgeIndex) != restoreRouteMode) continue;
-                    if (distance < nearestDistance) {
-                        nearestDistance = distance;
-                        nearestIndex = edgeIndex;
-                    }
-                } catch (Exception ignored) {
-                    // Skip a malformed edge.
+                float distance = editableEdgeDistance(route, index, tapX, tapY);
+                if (Float.isFinite(distance)
+                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
+                        && distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestIndex = edgeIndex;
                 }
             }
         }
-        if (nearestIndex >= 0 && nearestDistance <= dp(90)
-                && routeEdgeTapListener != null) {
-            routeEdgeTapListener.onRouteEdgeTap(nearestIndex);
+        // Keep selection precise: unmatched endpoint traces and nearby roads may be
+        // visible, but they are not editable matched sections. Ignore taps that are
+        // too far from a matched edge instead of snapping to another line.
+        if (nearestIndex < 0 || nearestDistance > dp(32) || routeEdgeTapListener == null) return;
+
+        // Select only truly coincident strokes. A narrow tolerance preserves the
+        // one-tap stacked-line removal without catching a neighbouring road below.
+        float stackTolerance = dp(4);
+        float stackLimit = nearestDistance + stackTolerance;
+        Set<Integer> selected = new java.util.LinkedHashSet<>();
+        edgeIndex = 0;
+        for (JSONArray route : matchedSegments) {
+            for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                float distance = editableEdgeDistance(route, index, tapX, tapY);
+                if (Float.isFinite(distance)
+                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
+                        && distance <= stackLimit) {
+                    selected.add(edgeIndex);
+                }
+            }
+        }
+        if (!selected.isEmpty()) {
+            routeEdgeTapListener.onRouteEdgesTap(selected);
             invalidate();
         }
     }
 
+    private float editableEdgeDistance(JSONArray route, int index, float tapX, float tapY) {
+        try {
+            JSONArray first = route.getJSONArray(index - 1);
+            JSONArray second = route.getJSONArray(index);
+            float x1 = screenX(first.getDouble(0));
+            float y1 = screenY(first.getDouble(1));
+            float x2 = screenX(second.getDouble(0));
+            float y2 = screenY(second.getDouble(1));
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float lengthSquared = dx * dx + dy * dy;
+            float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                    ((tapX - x1) * dx + (tapY - y1) * dy) / lengthSquared));
+            return (float) Math.hypot(tapX - (x1 + amount * dx), tapY - (y1 + amount * dy));
+        } catch (Exception ignored) {
+            return Float.NaN;
+        }
+    }
+
+    private boolean tapMapRoad(float x, float y) {
+        if (mapRoadTapListener == null) return false;
+        float nearest = Float.MAX_VALUE;
+        double selectedLongitude = Double.NaN;
+        double selectedLatitude = Double.NaN;
+        List<List<JSONArray>> groups = new ArrayList<>();
+        if(travelVisible) groups.add(matchedSegments);
+        if(travelVisible) groups.add(routeExtensions);
+        if(motorwayVisible) groups.add(motorwaySegments);
+        if(remainingVisible) groups.add(incompleteMotorwaySegments);
+        if(motorwayVisible) groups.add(coveredMotorwaySegments);
+        if(remainingVisible) groups.add(incompleteARoadSegments);
+        if(aRoadVisible) groups.add(coveredARoadSegments);
+        for (List<JSONArray> group : groups) {
+            for (JSONArray route : group) {
+                for (int i = 1; i < route.length(); i++) {
+                    JSONArray a = route.optJSONArray(i - 1);
+                    JSONArray b = route.optJSONArray(i);
+                    if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
+                    float x1 = screenX(a.optDouble(0)), y1 = screenY(a.optDouble(1));
+                    float x2 = screenX(b.optDouble(0)), y2 = screenY(b.optDouble(1));
+                    float dx = x2 - x1, dy = y2 - y1;
+                    float lengthSquared = dx * dx + dy * dy;
+                    float amount = lengthSquared == 0 ? 0 : Math.max(0, Math.min(1,
+                            ((x - x1) * dx + (y - y1) * dy) / lengthSquared));
+                    float projectedX = x1 + amount * dx, projectedY = y1 + amount * dy;
+                    float distance = (float) Math.hypot(x - projectedX, y - projectedY);
+                    if (distance >= nearest) continue;
+                    nearest = distance;
+                    double ax = longitudeToUnitX(a.optDouble(0));
+                    double bx = longitudeToUnitX(b.optDouble(0));
+                    double ay = latitudeToUnitY(clampLatitude(a.optDouble(1)));
+                    double by = latitudeToUnitY(clampLatitude(b.optDouble(1)));
+                    selectedLongitude = (ax + amount * (bx - ax)) * 360.0 - 180.0;
+                    selectedLatitude = unitYToLatitude(ay + amount * (by - ay));
+                }
+            }
+        }
+        // Resolve from the closest point on the rendered road line, not the finger
+        // coordinate. This compensates for thick strokes and low zoom levels.
+        if (nearest > dp(42) || !Double.isFinite(selectedLatitude)
+                || !Double.isFinite(selectedLongitude)) return false;
+        mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
+        return true;
+    }
+
+    private List<CollectionMapClusters.Cluster> collectionClusters() {
+        return CollectionMapClusters.build(serviceStations,visitedServiceStationIds,
+                new CollectionMapClusters.Projection(){
+                    public float x(double longitude){return screenX(longitude);}
+                    public float y(double latitude){return screenY(latitude);}
+                },getWidth(),getHeight(),dp(54));
+    }
+    private boolean tapServiceStation(float x,float y) {
+        if(serviceStationTapListener==null||serviceStations.length()==0)return false;
+        CollectionMapClusters.Cluster cluster=CollectionMapClusters.hit(collectionClusters(),x,y,dp(38));
+        if(cluster==null)return false;
+        if(cluster.venues.size()==1){serviceStationTapListener.onServiceStationTap(cluster.venues.get(0));return true;}
+        org.json.JSONObject first=cluster.venues.get(0);boolean coincident=true;
+        for(org.json.JSONObject venue:cluster.venues)if(ServiceStationEvidence.metres(
+                first.optDouble("lat"),first.optDouble("lng"),venue.optDouble("lat"),venue.optDouble("lng"))>2){coincident=false;break;}
+        if(!coincident&&cameraZoom<MAX_ZOOM-.5){zoomAt(2.0,cluster.x(),cluster.y());return true;}
+        String[] names=new String[cluster.venues.size()];
+        for(int i=0;i<names.length;i++)names[i]=cluster.venues.get(i).optString("name","Venue");
+        new RoadprintsDialog.Builder(getContext()).setTitle("Choose a venue")
+                .setItems(names,(dialog,which)->serviceStationTapListener.onServiceStationTap(cluster.venues.get(which)))
+                .setNegativeButton("Cancel",null).show();return true;
+    }
+
+    private void drawServiceStations(Canvas canvas) {
+        float singleRadius = dp(10);
+        List<CollectionMapClusters.Cluster> clusters=collectionClusters();
+        float originalTextSize = markerTextPaint.getTextSize();
+        int originalTextColor = markerTextPaint.getColor();
+        markerTextPaint.setTextSize(dp(10));
+        markerTextPaint.setTextAlign(Paint.Align.CENTER);
+        for (CollectionMapClusters.Cluster cluster : clusters) {
+            float x = cluster.x();
+            float y = cluster.y();
+            boolean visited = cluster.visited > 0;
+            serviceStationPaint.setColor(visited ? 0xFFF7C450 : CollectionAccessStore.known(collectionKind)?VenueCollection.definition(collectionKind).pinColor:0xFF74829A);
+            if (cluster.venues.size() > 1) {
+                float radius = dp(14);
+                canvas.drawCircle(x, y, radius + dp(1.5f), serviceStationOutlinePaint);
+                canvas.drawCircle(x, y, radius, serviceStationPaint);
+                markerTextPaint.setColor(Color.WHITE);
+                String label = cluster.venues.size() > 99 ? "99+" : String.valueOf(cluster.venues.size());
+                canvas.drawText(label, x,
+                        y - (markerTextPaint.ascent() + markerTextPaint.descent()) / 2,
+                        markerTextPaint);
+            } else {
+                canvas.drawCircle(x, y, singleRadius + dp(2), serviceStationOutlinePaint);
+                canvas.drawCircle(x, y, singleRadius, serviceStationPaint);
+                markerPaint.setColor(Color.WHITE);
+                if(CollectionAccessStore.known(collectionKind)&&!VenueCollection.definition(collectionKind).pinLabel.isEmpty()) {
+                    markerTextPaint.setColor(Color.WHITE);canvas.drawText(VenueCollection.definition(collectionKind).pinLabel,x,
+                            y-(markerTextPaint.ascent()+markerTextPaint.descent())/2,markerTextPaint);
+                } else canvas.drawCircle(x,y,dp(2.5f),markerPaint);
+            }
+        }
+        markerTextPaint.setTextSize(originalTextSize);
+        markerTextPaint.setColor(originalTextColor);
+    }
+
     private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {
         try {
-            Path route = new Path();
-            for (int index = 0; index < coordinates.length(); index++) {
-                org.json.JSONArray point = coordinates.getJSONArray(index);
-                float x = screenX(point.getDouble(0));
-                float y = screenY(point.getDouble(1));
-                if (index == 0) route.moveTo(x, y);
-                else route.lineTo(x, y);
-            }
-            if (haloPaint != null) canvas.drawPath(route, haloPaint);
-            canvas.drawPath(route, paint);
+            double world=mapTileSize()*Math.pow(2.0,cameraZoom);
+            renderGeometry.draw(canvas,coordinates,paint,haloPaint,world/(2*Math.PI*6378137),
+                    MapRenderGeometry.x(centerLongitude),MapRenderGeometry.y(centerLatitude),getWidth(),getHeight(),!routeEditMode);
         } catch (Exception ignored) {
             drawMessage(canvas, "Route preview unavailable");
         }
@@ -460,9 +1192,14 @@ public class RoutePreviewView extends View {
         }
     }
 
+    void setOverviewLoading(boolean loading) {
+        overviewLoading = loading;
+        invalidate();
+    }
+
     private void drawEmptyMessage(Canvas canvas) {
-        String title = "Your map is ready to explore";
-        String subtitle = "Travelled roads will appear here as journeys are matched.";
+        String title = "Your Roadprints start here";
+        String subtitle = "Matched journeys will light up the roads you travel.";
         float centerY = getHeight() * 0.76f;
         Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
         background.setColor(0xEFFFFFFF);
@@ -642,6 +1379,22 @@ public class RoutePreviewView extends View {
         return new File(directory, key.replace('/', '_') + extension);
     }
 
+    /** Returns the current map centre and zoom for restoring the user's view. */
+    public double[] cameraState() {
+        return new double[]{centerLongitude, centerLatitude, cameraZoom};
+    }
+
+    /** Restores a saved view and prevents the initial route fit from replacing it. */
+    public void restoreCameraState(double longitude, double latitude, double zoom) {
+        if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
+                || !Double.isFinite(zoom)) return;
+        centerLongitude = clampUnitX((longitude + 180.0) / 360.0) * 360.0 - 180.0;
+        centerLatitude = Math.max(-85.05112878, Math.min(85.05112878, latitude));
+        cameraZoom = clampZoom(zoom);
+        routeFitPending = false;
+        invalidate();
+    }
+
     public void zoomIn() {
         zoomAt(1.5, getWidth() / 2f, getHeight() / 2f);
     }
@@ -664,6 +1417,28 @@ public class RoutePreviewView extends View {
         centerLatitude = unitYToLatitude(clampUnitY(focusUnitY
                 - (focusY - getHeight() / 2.0) / newWorld));
         invalidate();
+    }
+
+    private void addCorrectionPoint(float x, float y) {
+        if (activeCorrectionTrace == null) return;
+        double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+        double unitX = longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world;
+        double unitY = latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world;
+        double longitude = unitX * 360.0 - 180.0;
+        double latitude = unitYToLatitude(unitY);
+        try {
+            if (activeCorrectionTrace.length() == 0) {
+                activeCorrectionTrace.put(new JSONArray().put(longitude).put(latitude));
+                return;
+            }
+            JSONArray previous = activeCorrectionTrace.optJSONArray(activeCorrectionTrace.length() - 1);
+            double previousX = previous == null ? Double.NaN : screenX(previous.optDouble(0));
+            double previousY = previous == null ? Double.NaN : screenY(previous.optDouble(1));
+            if (previous == null || Math.hypot(previousX - x, previousY - y) >= dp(6))
+                activeCorrectionTrace.put(new JSONArray().put(longitude).put(latitude));
+        } catch (org.json.JSONException ignored) {
+            // A missing sample is safer than interrupting map interaction.
+        }
     }
 
     private float screenX(double longitude) {
@@ -728,7 +1503,55 @@ public class RoutePreviewView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!interactive) return false;
+        if (!interactive || overviewLoading) return false;
+        if (routeEditMode && correctionDrawMode) {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                pressedZoomControl = zoomControlAt(event.getX(), event.getY());
+                if (pressedZoomControl != 0) return true;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
+                if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
+                addCorrectionPoint(event.getX(), event.getY());
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                if (pressedZoomControl != 0) return true;
+                if (activeCorrectionTrace == null) activeCorrectionTrace = new JSONArray();
+                addCorrectionPoint(event.getX(), event.getY());
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+                if (pressedZoomControl != 0) {
+                    int control = pressedZoomControl;
+                    pressedZoomControl = 0;
+                    if (zoomControlAt(event.getX(), event.getY()) == control)
+                        applyZoomControl(control, event.getX(), event.getY());
+                    return true;
+                }
+                addCorrectionPoint(event.getX(), event.getY());
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                // A tap should not finish drawing mode. Keep the map armed so the
+                // user's next drag is captured as the replacement path, not a pan.
+                if (activeCorrectionTrace != null && activeCorrectionTrace.length() >= 2) {
+                    JSONArray completed = activeCorrectionTrace;
+                    activeCorrectionTrace = null;
+                    correctionDrawMode = false;
+                    if (correctionTraceListener != null)
+                        correctionTraceListener.onCorrectionTrace(completed);
+                }
+                invalidate();
+                return true;
+            }
+            if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                pressedZoomControl = 0;
+                activeCorrectionTrace = null;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                invalidate();
+                return true;
+            }
+            return true;
+        }
         scaleDetector.onTouchEvent(event);
         gestureDetector.onTouchEvent(event);
 
@@ -755,3 +1578,8 @@ public class RoutePreviewView extends View {
         return true;
     }
 }
+
+
+
+
+

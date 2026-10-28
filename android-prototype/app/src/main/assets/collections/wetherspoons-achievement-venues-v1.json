@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-10-12",
+  "venues": [
+    {
+      "id": "spoons-osm-n12231843057",
+      "name": "Wetherspoons - The Lion & The Unicorn",
+      "town": "London",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-lion-the-unicorn-waterloo/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "Upper-Ground Floor, The Sidings (under platforms 20–24), Waterloo station, Waterloo, Lambeth, SE1 7BH"
+    },
+    {
+      "id": "spoons-osm-n366073245",
+      "name": "Hamilton Hall",
+      "town": "London",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/hamilton-hall-city-of-london/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "Liverpool Street station, Street-level Concourse, City of London, EC2M 7PY"
+    },
+    {
+      "id": "spoons-osm-n5141625722",
+      "name": "The Sir John Hawkshaw",
+      "town": "London",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-john-hawkshaw-city-of-london/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "Cannon Street station, Cannon Street, City of London, EC4N 6AP"
+    },
+    {
+      "id": "spoons-osm-n618653525",
+      "name": "Wetherspoons",
+      "town": "London",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoons-victoria/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "Victoria station concourse, (1st floor above WHSmith), Victoria, Westminster, SW1V 1JT"
+    },
+    {
+      "id": "spoons-osm-n646585258",
+      "name": "The Barrel Vault",
+      "town": "London",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-barrel-vault-camden/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "St Pancras International station, Pancras Road, Camden, London, N1C 4QP"
+    },
+    {
+      "id": "spoons-osm-n313099976",
+      "name": "Wetherspoon",
+      "town": "Leeds",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoons-leeds/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings)."
+    },
+    {
+      "id": "spoons-osm-n10210502045",
+      "name": "The London and North Western",
+      "town": "Birmingham",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-and-north-western-birmingham/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings)."
+    },
+    {
+      "id": "spoons-osm-n348176545",
+      "name": "The North Western",
+      "town": "Liverpool",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-north-western-liverpool/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings)."
+    },
+    {
+      "id": "spoons-osm-w377738789",
+      "name": "Booking Office",
+      "town": "Edinburgh",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-booking-office-edinburgh/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings)."
+    },
+    {
+      "id": "spoons-osm-n7449053702",
+      "name": "Yr Hen Orsaf",
+      "town": "Aberystwyth",
+      "category": "train",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/yr-hen-orsaf-aberystwyth/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address/history identifies railway station premises (including attached or converted station buildings).",
+      "address": "Alexandra Road, Aberystwyth, Ceredigion, SY23 1LN"
+    },
+    {
+      "id": "spoons-osm-n4465391587",
+      "name": "Airport Wetherspoons",
+      "town": "Birmingham",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/wetherspoon-birmingham/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Birmingham Airport (after security), Birmingham, B26 3QJ"
+    },
+    {
+      "id": "spoons-osm-n4485727695",
+      "name": "The Red Lion",
+      "town": "Crawley",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-lion-crawley/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Gatwick Airport, North Terminal (after security), Crawley, West Sussex, RH6 0PJ"
+    },
+    {
+      "id": "spoons-osm-n5046986705",
+      "name": "The Beehive",
+      "town": "Gatwick Airport",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-beehive-crawley/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Gatwick Airport, South Terminal (before security), Crawley, West Sussex, RH6 0NQ"
+    },
+    {
+      "id": "spoons-osm-n5046986721",
+      "name": "The Flying Horse",
+      "town": "Gatwick Airport",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-flying-horse-crawley/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Gatwick Airport, South Terminal (after security), Crawley, West Sussex, RH6 0NN"
+    },
+    {
+      "id": "spoons-osm-w358385140",
+      "name": "The Star Light",
+      "town": "Heathrow Airport, Terminal 4",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/star-light-hounslow/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Heathrow Airport, Terminal 4 (after security) , Hounslow, Middlesex, TW6 3XA"
+    },
+    {
+      "id": "spoons-osm-w370650569",
+      "name": "The Windmill",
+      "town": "Stansted Airport",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-windmill-stansted/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Stansted Airport (after security), Stansted, Essex, CM24 1RW"
+    },
+    {
+      "id": "spoons-osm-w438299712",
+      "name": "The Crown Rivers",
+      "town": "Heathrow Airport, Terminal 5",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-crown-rivers-hounslow/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Heathrow Airport, Terminal 5 (after security) , Hounslow, Hillingdon, TW6 2GA"
+    },
+    {
+      "id": "spoons-curated-belle-vue-manchester-airport",
+      "name": "The Belle Vue",
+      "town": "Manchester Airport, Terminal 2",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-belle-vue-manchester/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Terminal 2 (after security), Manchester Airport, Manchester, Greater Manchester, M90 1QX"
+    },
+    {
+      "id": "spoons-curated-sir-frank-whittle-heathrow",
+      "name": "The Sir Frank Whittle",
+      "town": "Heathrow Terminal 2",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-frank-whittle-hounslow/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub.",
+      "address": "Terminal 2, after security, lower level, gates A19–26, Heathrow Airport, Hounslow, London, TW6 1EW"
+    },
+    {
+      "id": "spoons-osm-n3270658212",
+      "name": "The Sir Walter Scott",
+      "town": "Edinburgh",
+      "category": "plane",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-walter-scott-edinburgh/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Reviewed operator address identifies an airport pub."
+    },
+    {
+      "id": "spoons-osm-n12846582848",
+      "name": "The Humber Stone",
+      "town": "Cleethorpes",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-humber-stone-cleethorpes/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-osm-n441938181",
+      "name": "The Five Stones",
+      "town": "Filey",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-five-stones-filey/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-alfred-wainwright-lakeland",
+      "name": "The Alfred Wainwright",
+      "town": "Lakeland, Flookburgh",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-alfred-wainwright-grange-over-sands/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Lakeland Leisure Park, Moor Lane, Flookburgh, Grange-over-Sands, Cumbria, LA11 7LT",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-bluff-inn-hayle",
+      "name": "The Bluff Inn",
+      "town": "Phillack, Hayle",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-bluff-inn-hayle/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "18 Riviere Towans, Phillack, Hayle, Cornwall, TR27 5AF",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-london-stone-kent-coast",
+      "name": "The London Stone",
+      "town": "Allhallows-on-Sea",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-london-stone-rochester/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Haven, Kent Coast, Allhallows-on-Sea, Rochester, Kent, ME3 9QD",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-red-rocks-exmouth",
+      "name": "The Red Rocks",
+      "town": "Devon Cliffs, Exmouth",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-red-rocks-exmouth/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Haven, Devon Cliffs Holiday Park, Sandy Bay, Exmouth, Devon, EX8 5BT",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-sir-thomas-haggerston",
+      "name": "The Sir Thomas Haggerston",
+      "town": "Haggerston Castle",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-sir-thomas-haggerston-berwick-upon-tweed/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Haven, Haggerston Castle Holiday Park, Haggerston, Berwick-upon-Tweed, Northumberland, TD15 2PA",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-springfield-cala-gran",
+      "name": "The Springfield",
+      "town": "Cala Gran, Fleetwood",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-springfield-fleetwood/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Cala Gran Holiday Park, Fleetwood Road, Fleetwood, Blackpool, FY7 8JY",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    },
+    {
+      "id": "spoons-curated-white-clover-hopton",
+      "name": "The White Clover",
+      "town": "Hopton, Norfolk",
+      "category": "holiday",
+      "evidence_url": "https://www.jdwetherspoon.com/pubs/the-white-clover-great-yarmouth/",
+      "reviewed_at": "2026-10-12",
+      "basis": "Operator Haven franchise list identifies this park pub.",
+      "address": "Hopton Holiday Village, Hopton, Great Yarmouth, Norfolk, NR31 9BW",
+      "category_evidence_url": "https://franchising.jdwetherspoon.com/franchises/the-five-stones-primrose-valley-wetherspoon/"
+    }
+  ]
+}

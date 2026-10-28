@@ -18,10 +18,11 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.HorizontalScrollView;
+import android.widget.FrameLayout;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -44,53 +45,179 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 public class JourneyListActivity extends Activity {
+    private static final int SAVE_JOURNEY_DEBUG = 4102;
+    private String pendingDebugJourneyId;
     private static final String API_BASE_URL = "https://uk-road-tracker-api.onrender.com";
-    private final ExecutorService processor = Executors.newSingleThreadExecutor();
+    private static final int INITIAL_JOURNEY_CARDS = 12;
+    private static final int ADDITIONAL_JOURNEY_CARDS = 40;
+    private static final Object SUMMARY_CACHE_LOCK = new Object();
+    private static List<JSONObject> processJourneySummaries;
+    private static long processJourneyRevision = Long.MIN_VALUE;
+    private static long processDiscoveryRevision = Long.MIN_VALUE;
+    private static Map<String, List<String>> processNewRoadHighlights = Collections.emptyMap();
+    private static int savedJourneyScrollY;
+    private static int savedJourneyCardLimit = INITIAL_JOURNEY_CARDS;
+    private static int savedJourneyFilter;
+    private static String savedJourneyStatusFilter = "all";
+    private static JourneyDateFilter savedJourneyDateFilter = JourneyDateFilter.all();
+    private volatile RailStationCatalog placeStationCatalog;
+    private final ExecutorService processor = Executors.newFixedThreadPool(3);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final String[] FILTER_LABELS = {
-            "All", "🚗 Driving", "👟 On foot", "🚌 Bus",
-            "🚆 Train", "🚲 Cycling", "✈️ Flight", "⛴ Ferry", "Unknowns"
-    };
-    private static final String[] FILTER_VALUES = {
-            "all", "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
-    };
+    private static final String[] FILTER_LABELS = JourneyFilters.FILTER_LABELS;
+    private static final String[] FILTER_VALUES = JourneyFilters.FILTER_VALUES;
 
     private LinearLayout journeyList;
+    private ScrollView journeyScroll;
+    private boolean summariesPartial;
+    private View journeyRoot;
+    private final NavigationTrace navigation=new NavigationTrace("journeys");
+    private final Map<String,View> cardViews=new LinkedHashMap<>();
+    private final Map<String,String> cardTokens=new LinkedHashMap<>();
     private TextView count;
     private TextView readinessSummary;
+    private boolean launchGrowingAfterLoad;
     private List<JSONObject> journeys;
+    private int journeyCardLimit = INITIAL_JOURNEY_CARDS;
+    private int refreshGeneration;
+    private boolean listActive;
+    private long displayedJourneyRevision = Long.MIN_VALUE;
+    private long loadingJourneyRevision = Long.MIN_VALUE;
+    private final Runnable observeJourneyChanges = new Runnable() {
+        @Override public void run() {
+            if (!listActive) return;
+            long revision = JourneyStore.dataRevision(getApplicationContext());
+            if (displayedJourneyRevision != revision && loadingJourneyRevision != revision) {
+                savedJourneyScrollY = journeyScroll == null ? 0 : journeyScroll.getScrollY();
+                refreshJourneysAsync();
+            }
+            mainHandler.postDelayed(this, 3000);
+        }
+    };
     private int activeFilter = 0;
-    private final List<TextView> filterChips = new ArrayList<>();
+    private String activeJourneyStatusFilter = "all";
+    private JourneyDateFilter activeDateFilter = JourneyDateFilter.all();
+    private TextView filterSummary;
+    private static final String[] STATUS_VALUES = JourneyFilters.STATUS_VALUES;
+    private static final String[] STATUS_LABELS = JourneyFilters.STATUS_LABELS;
+    private Set<String> recapJourneyIds = Collections.emptySet();
+    private Map<String, List<String>> newRoadHighlights = Collections.emptyMap();
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (state != null) pendingDebugJourneyId = state.getString("debug_journey_id");
+        ArrayList<String> recap = getIntent().getStringArrayListExtra("recap_journey_ids");
+        if (recap != null) recapJourneyIds = new HashSet<>(recap);
+        journeyCardLimit = Math.max(INITIAL_JOURNEY_CARDS, savedJourneyCardLimit);
+        activeFilter = savedJourneyFilter;
+        activeJourneyStatusFilter = savedJourneyStatusFilter;
+        activeDateFilter = savedJourneyDateFilter;
+        if (state != null) {
+            activeFilter = Math.max(0, Math.min(FILTER_VALUES.length - 1, state.getInt("filter_mode", activeFilter)));
+            activeJourneyStatusFilter = state.getString("filter_status", activeJourneyStatusFilter);
+            activeDateFilter = JourneyDateFilter.restore(state.getString("filter_date", "all"), state.getString("filter_from"), state.getString("filter_to"));
+        }
+        if (!recapJourneyIds.isEmpty() && state == null) { activeFilter = 0; activeJourneyStatusFilter = "all"; activeDateFilter = JourneyDateFilter.all(); }
         Window window = getWindow();
+        launchGrowingAfterLoad = getIntent().getBooleanExtra("open_growing", false);
         window.setStatusBarColor(0xFF0B1C50);
         window.setNavigationBarColor(0xFF10275D);
         buildScreen();
-        journeys = JourneyStore.all(this);
-        render();
     }
+
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);}
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (journeyList != null) {
-            journeys = JourneyStore.all(this);
-            render();
-        }
+        listActive = true;navigation.resume(this);
+        refreshJourneysAsync();
+        mainHandler.removeCallbacks(observeJourneyChanges);
+        mainHandler.postDelayed(observeJourneyChanges, 3000);
+    }
+
+    @Override
+    protected void onPause() {
+        listActive = false;
+        mainHandler.removeCallbacks(observeJourneyChanges);
+        if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
+        savedJourneyCardLimit = journeyCardLimit;
+        savedJourneyFilter = activeFilter;
+        savedJourneyStatusFilter = activeJourneyStatusFilter;
+        savedJourneyDateFilter = activeDateFilter;
+        super.onPause();
     }
 
     @Override
     protected void onDestroy() {
+        listActive = false;
+        mainHandler.removeCallbacks(observeJourneyChanges);
+        refreshGeneration++;
         processor.shutdownNow();
         super.onDestroy();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putString("debug_journey_id", pendingDebugJourneyId);
+        state.putInt("filter_mode", activeFilter);
+        state.putString("filter_status", activeJourneyStatusFilter);
+        state.putString("filter_date", activeDateFilter.preset);
+        state.putString("filter_from", activeDateFilter.from == null ? null : activeDateFilter.from.toString());
+        state.putString("filter_to", activeDateFilter.to == null ? null : activeDateFilter.to.toString());
+        super.onSaveInstanceState(state);
+    }
+
+    private void exportJourneyDebug(String journeyId) {
+        if (pendingDebugJourneyId != null) return;
+        pendingDebugJourneyId = journeyId;
+        Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        save.addCategory(Intent.CATEGORY_OPENABLE);
+        save.setType("application/json");
+        String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+                .withZone(java.time.ZoneOffset.UTC).format(Instant.now());
+        save.putExtra(Intent.EXTRA_TITLE, "roadprints-journey-" + stamp + ".json");
+        try {
+            startActivityForResult(save, SAVE_JOURNEY_DEBUG);
+        } catch (android.content.ActivityNotFoundException error) {
+            pendingDebugJourneyId = null;
+            Toast.makeText(this, "No file-saving app is available.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != SAVE_JOURNEY_DEBUG) return;
+        String journeyId = pendingDebugJourneyId;
+        pendingDebugJourneyId = null;
+        if (resultCode != RESULT_OK || data == null || data.getData() == null || journeyId == null) return;
+        android.net.Uri uri = data.getData();
+        android.content.Context app = getApplicationContext();
+        Toast.makeText(app, "Saving journey diagnostics…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String message;
+            try (OutputStream output = app.getContentResolver().openOutputStream(uri, "wt")) {
+                if (output == null) throw new java.io.IOException("Could not open selected file");
+                JourneyDebugExporter.write(app, journeyId, output);
+                message = "Journey diagnostics saved.";
+            } catch (Exception error) {
+                message = "Journey diagnostics could not be saved. Please try again.";
+            }
+            final String result = message;
+            new Handler(Looper.getMainLooper()).post(() ->
+                    Toast.makeText(app, result, Toast.LENGTH_LONG).show());
+        }, "journey-debug-export").start();
     }
 
     private void buildScreen() {
@@ -100,27 +227,13 @@ public class JourneyListActivity extends Activity {
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(36, 26, 36, 12);
+        content.setPadding(dp(18), dp(26), dp(18), dp(12));
 
         LinearLayout brandRow = new LinearLayout(this);
         brandRow.setGravity(Gravity.CENTER_VERTICAL);
-        brandRow.setPadding(0, 0, 0, 28);
-
-        ImageView logoMark = new ImageView(this);
-        logoMark.setImageResource(R.drawable.roadprints_mark);
-        logoMark.setContentDescription("Roadprints");
-        logoMark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(42, 42);
-        markParams.setMargins(0, 0, 10, 0);
-        brandRow.addView(logoMark, markParams);
-
-        TextView logo = new TextView(this);
-        logo.setText("roadprints");
-        logo.setTextSize(22);
-        logo.setTypeface(null, android.graphics.Typeface.BOLD);
-        logo.setTextColor(Color.WHITE);
-        logo.setPadding(0, 0, 0, 0);
-        brandRow.addView(logo);
+        brandRow.setPadding(0, 0, 0, dp(28));
+        brandRow.addView(RoadprintsHeader.create(this),
+                new LinearLayout.LayoutParams(0, dp(44), 1));
 
         LinearLayout headingRow = new LinearLayout(this);
         headingRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -153,6 +266,7 @@ public class JourneyListActivity extends Activity {
         count.setGravity(Gravity.CENTER);
         count.setPadding(22, 14, 22, 14);
         count.setBackground(pill(0xFFF7C450, 0xFFF7C450, 40));
+        count.setVisibility(View.GONE);
 
         headingRow.addView(heading);
         headingRow.addView(count);
@@ -167,41 +281,54 @@ public class JourneyListActivity extends Activity {
         readinessSummary.setTextSize(12);
         readinessSummary.setTextColor(0xFFB9C5D8);
         readinessSummary.setLineSpacing(0, 1.1f);
-        readinessSummary.setPadding(0, 0, 0, 16);
-
-        HorizontalScrollView filterScroll = new HorizontalScrollView(this);
-        filterScroll.setHorizontalScrollBarEnabled(false);
-        filterScroll.setPadding(0, dp(10), 0, dp(10));
+        readinessSummary.setPadding(0, 0, 0, dp(8));
         LinearLayout filters = new LinearLayout(this);
-        filters.setOrientation(LinearLayout.HORIZONTAL);
-        for (int index = 0; index < FILTER_LABELS.length; index++) {
-            final int selected = index;
-            TextView filter = new TextView(this);
-            filter.setText(FILTER_LABELS[index]);
-            filter.setTextSize(13);
-            filter.setGravity(Gravity.CENTER);
-            filter.setTypeface(null, android.graphics.Typeface.BOLD);
-            filter.setPadding(18, 0, 18, 0);
-            filter.setMinHeight(48);
-            filterChips.add(filter);
-            filter.setOnClickListener(v -> {
-                activeFilter = selected;
-                updateFilterStyles();
-                render();
-            });
-            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 48);
-            chipParams.setMargins(0, 0, 10, 0);
-            filters.addView(filter, chipParams);
-        }
-        filterScroll.addView(filters);
-        updateFilterStyles();
+        filters.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout openFilters = new LinearLayout(this);
+        openFilters.setGravity(Gravity.CENTER);
+        openFilters.setPadding(dp(16), 0, dp(16), 0);
+        openFilters.setBackground(roundRect(0xFF233B78, 0xFF46649E, dp(12)));
+        openFilters.setTag("journey_filters_open");
+        openFilters.setContentDescription("Filter journeys");
+        openFilters.setFocusable(true);
+        openFilters.setOnClickListener(v -> showJourneyFilters());
+        openFilters.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override public void onInitializeAccessibilityNodeInfo(View host,
+                    android.view.accessibility.AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(android.widget.Button.class.getName());
+            }
+        });
+        ImageView filterIcon = RoadprintsIcons.image(this, R.drawable.ic_roadprints_filter, Color.WHITE, "");
+        filterIcon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        openFilters.addView(filterIcon, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView filterLabel = actionButton("FILTER JOURNEYS", 0xFF233B78, Color.WHITE);
+        filterLabel.setBackground(null);
+        filterLabel.setPadding(0, 0, 0, 0);
+        filterLabel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(-2, -2);
+        labelParams.leftMargin = dp(8);
+        openFilters.addView(filterLabel, labelParams);
+        LinearLayout.LayoutParams openParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+        openParams.rightMargin = dp(8);
+        filters.addView(openFilters, openParams);
+        TextView reset = actionButton("RESET", 0xFF0B1C50, 0xFFF7C450);
+        reset.setOnClickListener(v -> { activeFilter = 0; activeJourneyStatusFilter = "all"; activeDateFilter = JourneyDateFilter.all(); applyJourneyFilters(); });
+        filters.addView(reset, new LinearLayout.LayoutParams(dp(72), dp(48)));
+        filterSummary = new TextView(this);
+        filterSummary.setTextColor(0xFF67D5CC);
+        filterSummary.setTextSize(13);
+        filterSummary.setPadding(0, dp(8), 0, dp(4));
+        filterSummary.setOnClickListener(v -> showJourneyFilters());
 
         journeyList = new LinearLayout(this);
         journeyList.setOrientation(LinearLayout.VERTICAL);
-        journeyList.setPadding(dp(10), dp(18), dp(10), dp(18));
+        journeyList.setPadding(0, dp(18), 0, dp(18));
+        journeyList.addView(ScreenLoadingView.create(this, "Preparing your journeys",
+                "Reading compact journey details without loading route files into memory."));
 
         ScrollView scroll = new ScrollView(this);
+        journeyScroll = scroll;
         scroll.addView(journeyList);
         scroll.setFillViewport(true);
 
@@ -209,14 +336,29 @@ public class JourneyListActivity extends Activity {
         content.addView(headingRow);
         content.addView(intro);
         content.addView(readinessSummary);
-        content.addView(filterScroll);
+        content.addView(filters);
+        content.addView(filterSummary);
+        if (!recapJourneyIds.isEmpty()) {
+            TextView recapNotice = new TextView(this);
+            recapNotice.setText("New recordings · tap to show all journeys");
+            recapNotice.setTextColor(0xFF67D5CC);
+            recapNotice.setPadding(0, dp(12), 0, dp(12));
+            recapNotice.setOnClickListener(view -> {
+                recapJourneyIds = Collections.emptySet();
+                recapNotice.setVisibility(View.GONE);
+                render();
+            });
+            content.addView(recapNotice);
+        }
         content.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
         root.addView(content, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         View bottomNavigation = buildBottomNavigation();
+        root.addView(GrowingStatusControl.create(this));
         root.addView(bottomNavigation);
+        journeyRoot = root;
         setContentView(root);
         applySystemBarInsets(root, content, bottomNavigation);
     }
@@ -234,7 +376,7 @@ public class JourneyListActivity extends Activity {
                 top = insets.getSystemWindowInsetTop();
                 bottom = insets.getSystemWindowInsetBottom();
             }
-            content.setPadding(dp(36), dp(26) + top, dp(36), dp(12));
+            content.setPadding(dp(18), dp(26) + top, dp(18), dp(12));
             bottomNavigation.setPadding(dp(8), 0, dp(8), bottom);
             LinearLayout.LayoutParams navParams =
                     (LinearLayout.LayoutParams) bottomNavigation.getLayoutParams();
@@ -268,7 +410,7 @@ public class JourneyListActivity extends Activity {
             ImageView icon = new ImageView(this);
             icon.setImageResource(iconResources[index]);
             icon.setContentDescription(labels[index]);
-            icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             icon.setColorFilter(index == 1 ? 0xFFF7C450 : 0xFFB9C5D8,
                     android.graphics.PorterDuff.Mode.SRC_IN);
             item.addView(icon, new LinearLayout.LayoutParams(
@@ -286,15 +428,19 @@ public class JourneyListActivity extends Activity {
 
             LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(0, dp(68), 1);
             nav.addView(item, itemParams);
-            if (index == 0 || index == 2) {
+            if (index == 0 || index == 2 || index == 3 || index == 4) {
                 final int selected = index;
                 item.setClickable(true);
                 item.setFocusable(true);
                 item.setOnClickListener(v -> {
                     if (selected == 0) {
                         startActivity(new Intent(this, MapActivity.class));
-                    } else {
+                    } else if (selected == 2) {
                         startActivity(new Intent(this, ProgressActivity.class));
+                    } else if (selected == 4) {
+                        startActivity(new Intent(this, CollectionsActivity.class));
+                    } else {
+                        startActivity(new Intent(this, AchievementsActivity.class));
                     }
                     finish();
                 });
@@ -305,17 +451,32 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
+        synchronized(SUMMARY_CACHE_LOCK){if(processDiscoveryRevision==displayedJourneyRevision)newRoadHighlights=processNewRoadHighlights;}
+        long bindStarted=android.os.SystemClock.elapsedRealtime(),bindCpu=android.os.Debug.threadCpuTimeNanos();
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
-        updateReadinessSummary();
-        updateAvailableFilters();
+        updateFilterStyles();
         int visible = 0;
+        int rendered = 0;
         for (JSONObject journey : journeys) {
             if (!shouldShowJourney(journey) || !matchesActiveFilter(journey)) continue;
-            journeyList.addView(createCard(journey));
             visible++;
+            if (rendered < journeyCardLimit) {
+                String id=journey.optString("journey_id"),token=journey.toString()+String.valueOf(newRoadHighlights.get(id));
+                View card=cardViews.get(id);
+                if(card==null||!token.equals(cardTokens.get(id))){card=createCard(journey);cardViews.put(id,card);cardTokens.put(id,token);}
+                journeyList.addView(card);
+                rendered++;
+            }
         }
+        cardViews.keySet().removeIf(id->!containsJourney(id));cardTokens.keySet().retainAll(cardViews.keySet());
+        PerformanceDiagnostics.timing("journeys_bind",android.os.SystemClock.elapsedRealtime()-bindStarted,"visible="+rendered+" total="+visible+" main_cpu_ms="+(android.os.Debug.threadCpuTimeNanos()-bindCpu)/1000000);
+        navigation.frame(journeyList,"first_list","visible="+rendered+" total="+visible);
+        if(!summariesPartial)navigation.frame(journeyList,"ready","summary_rows="+journeys.size());
         count.setText(String.format(java.util.Locale.UK, "%,d", visible));
+        count.setVisibility(View.VISIBLE);
+        readinessSummary.setText(summariesPartial?"Recent saved journeys · loading full history…":String.format(java.util.Locale.UK, "Showing: %,d journeys · newest first", visible));
+        if(summariesPartial)count.setVisibility(View.GONE);
         if (visible == 0) {
             TextView empty = new TextView(this);
             empty.setText("No journeys match this filter.");
@@ -323,6 +484,127 @@ public class JourneyListActivity extends Activity {
             empty.setTextColor(0xFFD3DCED);
             empty.setPadding(0, 28, 0, 28);
             journeyList.addView(empty);
+        } else if (visible > rendered) {
+            Button more = styledModalButton("SHOW MORE JOURNEYS · " + String.format(java.util.Locale.UK, "%,d", visible - rendered)
+                    + " REMAINING", 0xFF233B78, Color.WHITE);
+            more.setOnClickListener(v -> {
+                journeyCardLimit += ADDITIONAL_JOURNEY_CARDS;
+                render();
+            });
+            journeyList.addView(more);
+        }
+    }
+
+    private boolean containsJourney(String id){for(JSONObject row:journeys)if(id.equals(row.optString("journey_id")))return true;return false;}
+    /** Prepares only compact rows; Map uses these before scheduling route geometry. */
+    static List<JSONObject> preloadSummaries(android.content.Context context, long revision) throws Exception {
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processJourneySummaries != null && processJourneyRevision == revision)
+                return new ArrayList<>(processJourneySummaries);
+        }
+        JSONObject saved = PersistentScreenCache.read(context, "journey-summaries", revision);
+        JSONArray rows = saved == null ? null : saved.optJSONArray("rows");
+        List<JSONObject> loaded = new ArrayList<>();
+        if (rows != null) {
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i); if (row != null) loaded.add(row);
+            }
+        } else {
+            loaded = JourneyStore.allSummaries(context);sortForScreen(loaded);
+            JSONArray compact = new JSONArray(); for (JSONObject row : loaded) compact.put(row);
+            if (JourneyStore.dataRevision(context) == revision)
+                ScreenDataLoader.cache(()->{try{if(JourneyStore.dataRevision(context)==revision)PersistentScreenCache.write(context,"journey-summaries",revision,new JSONObject().put("rows",compact));}catch(Exception ignored){}});
+        }
+        sortForScreen(loaded);
+        if (JourneyStore.dataRevision(context) == revision) {
+            synchronized (SUMMARY_CACHE_LOCK) {
+                processJourneySummaries = new ArrayList<>(loaded);
+                processJourneyRevision = revision;
+            }
+        }
+        return loaded;
+    }
+
+    private void refreshJourneysAsync() {
+        if (journeyList == null) return;
+        final android.content.Context appContext = getApplicationContext();
+        final long initialRevision = JourneyStore.dataRevision(appContext);
+        if(displayedJourneyRevision==initialRevision&&journeys!=null&&journeyList.getChildCount()>0){navigation.frame(journeyList,"first_list","cache=retained");navigation.frame(journeyList,"ready","cache=retained");return;}
+        if (loadingJourneyRevision == initialRevision) return;
+        final int generation = ++refreshGeneration;
+        loadingJourneyRevision = initialRevision;
+        List<JSONObject> cached = null;
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processJourneySummaries != null && processJourneyRevision == initialRevision) {
+                cached = new ArrayList<>(processJourneySummaries);
+            }
+        }
+        if (cached != null) {
+            journeys = cached;
+            displayedJourneyRevision = initialRevision;
+            loadingJourneyRevision = Long.MIN_VALUE;
+            if (launchGrowingAfterLoad) {
+                launchGrowingAfterLoad = false;
+                startBatchMatch();
+            } else {
+                render();
+                loadNewRoadHighlights(initialRevision, generation);
+                restoreJourneyScroll();
+            }
+            return;
+        }
+        final boolean firstDisplay=displayedJourneyRevision==Long.MIN_VALUE&&!launchGrowingAfterLoad;
+        ScreenDataLoader.summaries(() -> {
+            List<JSONObject> loaded;
+            try {
+                if(firstDisplay){List<JSONObject> first=JourneyStore.firstSummaries(appContext,12);sortForScreen(first);mainHandler.post(()->{
+                    if(!isFinishing()&&generation==refreshGeneration&&JourneyStore.dataRevision(appContext)==initialRevision){summariesPartial=true;journeys=first;render();}
+                });}
+                loaded=preloadSummaries(appContext,initialRevision);
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != refreshGeneration) return;
+                    loadingJourneyRevision = Long.MIN_VALUE;
+                    journeyList.removeAllViews();
+                    TextView failure = new TextView(this);
+                    failure.setText("Journeys could not be loaded. Return and try again.");
+                    failure.setTextColor(0xFFD3DCED);
+                    failure.setTextSize(16);
+                    journeyList.addView(failure);
+                });
+                return;
+            }
+            final long resultRevision = JourneyStore.dataRevision(appContext);
+            if (resultRevision == initialRevision) {
+                synchronized (SUMMARY_CACHE_LOCK) {
+                    processJourneySummaries = new ArrayList<>(loaded);
+                    processJourneyRevision = resultRevision;
+                }
+            }
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != refreshGeneration) return;
+                loadingJourneyRevision = Long.MIN_VALUE;
+                if (JourneyStore.dataRevision(appContext) != initialRevision) {
+                    if (listActive) refreshJourneysAsync();
+                    return;
+                }
+                displayedJourneyRevision = initialRevision;
+                summariesPartial=false;journeys = loaded;
+                if (launchGrowingAfterLoad) {
+                    launchGrowingAfterLoad = false;
+                    startBatchMatch();
+                } else {
+                    render();
+                    loadNewRoadHighlights(resultRevision, generation);
+                    restoreJourneyScroll();
+                }
+            });
+        });
+    }
+
+    private void restoreJourneyScroll() {
+        if (journeyScroll != null && savedJourneyScrollY > 0) {
+            journeyScroll.post(() -> journeyScroll.scrollTo(0, savedJourneyScrollY));
         }
     }
 
@@ -330,48 +612,33 @@ public class JourneyListActivity extends Activity {
         String mode = journey.optString("mode", "unknown").trim().toLowerCase();
         // Journeys that cannot be matched because they lack route points add no
         // review value. Keep them in the archive, but omit them from this list.
-        if (isRoadMode(mode) || isFootMode(mode)) {
+        if (isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode)) {
             return hasEnoughMatchingEvidence(journey);
         }
         return true;
     }
 
     private boolean matchesActiveFilter(JSONObject journey) {
-        if (activeFilter == 0) return true;
-        String mode = journey.optString("mode", "unknown").trim().toLowerCase();
-        if (activeFilter == FILTER_VALUES.length - 1) return isUnknownMode(mode);
-        return FILTER_VALUES[activeFilter].equals(mode);
+        if (!recapJourneyIds.isEmpty() && !recapJourneyIds.contains(journey.optString("journey_id"))) return false;
+        if (!matchesJourneyStatusFilter(journey)) return false;
+        return matchesFilter(journey, activeFilter) && activeDateFilter.matches(journey, java.time.LocalDate.now(), ZoneId.systemDefault());
     }
 
-    private boolean isUnknownMode(String mode) {
-        return mode.isEmpty() || "unknown".equals(mode) || "other".equals(mode)
-                || "unclassified".equals(mode) || "transit".equals(mode)
-                || "other_travel".equals(mode);
+    private boolean matchesJourneyStatusFilter(JSONObject journey) {
+        return matchesJourneyStatusFilter(journey, activeJourneyStatusFilter);
     }
 
-    private void updateAvailableFilters() {
-        for (int filterIndex = 0; filterIndex < filterChips.size(); filterIndex++) {
-            boolean available = filterIndex == 0;
-            for (JSONObject journey : journeys) {
-                if (shouldShowJourney(journey)
-                        && matchesFilter(journey, filterIndex)) {
-                    available = true;
-                    break;
-                }
-            }
-            filterChips.get(filterIndex).setVisibility(available ? View.VISIBLE : View.GONE);
-            if (filterIndex == activeFilter && !available) activeFilter = 0;
-        }
-        updateFilterStyles();
+    private boolean matchesJourneyStatusFilter(JSONObject journey, String filter) {
+        return JourneyFilters.matchesJourneyStatusFilter(journey, filter);
     }
-
     private boolean matchesFilter(JSONObject journey, int filterIndex) {
-        String mode = journey.optString("mode", "unknown").trim().toLowerCase();
-        if (filterIndex == 0) return true;
-        if (filterIndex == FILTER_VALUES.length - 1) return isUnknownMode(mode);
-        return FILTER_VALUES[filterIndex].equals(mode);
+        return JourneyFilters.matchesFilter(journey, filterIndex);
     }
 
+    private static void sortForScreen(List<JSONObject> rows){
+        for(JSONObject row:rows)try{row.put("_sort_started",Instant.parse(row.optString("started_at")).toEpochMilli());}catch(Exception invalid){try{row.put("_sort_started",Long.MIN_VALUE);}catch(Exception ignored){}}
+        rows.sort((a,b)->Long.compare(b.optLong("_sort_started"),a.optLong("_sort_started")));
+    }
     private void sortJourneysNewestFirst() {
         journeys.sort((left, right) -> Long.compare(
                 journeyStartMillis(right), journeyStartMillis(left)));
@@ -379,9 +646,157 @@ public class JourneyListActivity extends Activity {
 
     private long journeyStartMillis(JSONObject journey) {
         try {
-            return Instant.parse(journey.optString("started_at")).toEpochMilli();
+            if(journey.has("_sort_started"))return journey.optLong("_sort_started");
+            long time=Instant.parse(journey.optString("started_at")).toEpochMilli();journey.put("_sort_started",time);return time;
         } catch (Exception ignored) {
             return Long.MIN_VALUE;
+        }
+    }
+
+    private void loadNewRoadHighlights(long revision, int generation) {
+        if (processor.isShutdown()) return;
+        synchronized (SUMMARY_CACHE_LOCK) {
+            if (processDiscoveryRevision == revision) {
+                newRoadHighlights = processNewRoadHighlights;
+                return;
+            }
+        }
+        try {
+            processor.execute(() -> {
+                Map<String, List<String>> highlights = readDiscoveryCache(revision);
+                boolean calculated = highlights != null;
+                if (highlights == null) {
+                    highlights = new LinkedHashMap<>();
+                    try {
+                        List<JourneyDiscoveryRecord> records = new ArrayList<>();
+                        RoadDetailModel.cachedRoadEvidence(getApplicationContext(), journey -> {
+                            if (!"complete".equals(journey.optString("processing_status"))) return;
+                            String mode = journey.optString("mode", "unknown").toLowerCase();
+                            if (!(isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) return;
+                            Map<String, String> roads = new LinkedHashMap<>();
+                            for (JSONObject feature : discoveryFeatures(journey)) {
+                                JSONObject properties = feature.optJSONObject("properties");
+                                if (properties == null) continue;
+                                String rawRef = properties.optString("road_ref",
+                                        properties.optString("ref", ""));
+                                String name = properties.optString("name",
+                                        properties.optString("road_name", "")).trim();
+                                String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
+                                        : rawRef.trim().split("[;,/]");
+                                for (String value : refs) {
+                                    String ref = value.trim().toUpperCase();
+                                    boolean usableRef = !ref.isEmpty()
+                                            && !ref.matches("\\d+(?:[.,]\\d+)?");
+                                    String label = usableRef ? ref : name;
+                                    if (label.isEmpty()
+                                            || label.matches("\\d+(?:[.,]\\d+)?")) continue;
+                                    roads.putIfAbsent(usableRef ? "ref:" + ref
+                                            : "name:" + label.toLowerCase(), label);
+                                }
+                            }
+                            if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
+                                    journey.optString("journey_id", ""),
+                                    journeyStartMillis(journey), roads));
+                        });
+                        records.sort(Comparator.comparingLong(record -> record.startedAt));
+                        Set<String> seen = new HashSet<>();
+                        for (JourneyDiscoveryRecord record : records) {
+                            List<String> fresh = new ArrayList<>();
+                            for (Map.Entry<String, String> road : record.roads.entrySet())
+                                if (!seen.contains(road.getKey())) fresh.add(road.getValue());
+                            if (!fresh.isEmpty()) highlights.put(record.journeyId, fresh);
+                            seen.addAll(record.roads.keySet());
+                        }
+                        calculated = true;
+                    } catch (Exception error) {
+                        android.util.Log.w("Roadprints",
+                                "Journey road highlights could not be calculated", error);
+                    }
+                }
+                final Map<String, List<String>> result = highlights;
+                if (calculated && JourneyStore.dataRevision(getApplicationContext()) == revision) {
+                    synchronized (SUMMARY_CACHE_LOCK) {
+                        processDiscoveryRevision = revision;
+                        processNewRoadHighlights = result;
+                    }
+                    writeDiscoveryCache(revision, result);
+                }
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != refreshGeneration) return;
+                    newRoadHighlights = result;
+                    render();
+                });
+            });
+        } catch (RejectedExecutionException ignored) {
+            // The activity may be closing while its background queue is shutting down.
+        }
+    }
+
+    private Map<String, List<String>> readDiscoveryCache(long revision) {
+        JSONObject saved = PersistentScreenCache.read(getApplicationContext(),
+                "journey-discovery-highlights", revision);
+        JSONObject rows = saved == null ? null : saved.optJSONObject("rows");
+        if (rows == null) return null;
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        java.util.Iterator<String> keys = rows.keys();
+        while (keys.hasNext()) {
+            String journeyId = keys.next();
+            JSONArray labels = rows.optJSONArray(journeyId);
+            if (labels == null) continue;
+            List<String> values = new ArrayList<>();
+            for (int i = 0; i < labels.length(); i++) values.add(labels.optString(i));
+            result.put(journeyId, values);
+        }
+        return result;
+    }
+
+    private void writeDiscoveryCache(long revision, Map<String, List<String>> highlights) {
+        try {
+            JSONObject rows = new JSONObject();
+            for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
+                JSONArray labels = new JSONArray();
+                for (String label : entry.getValue()) labels.put(label);
+                rows.put(entry.getKey(), labels);
+            }
+            PersistentScreenCache.write(getApplicationContext(), "journey-discovery-highlights",
+                    revision, new JSONObject().put("rows", rows));
+        } catch (Exception error) {
+            android.util.Log.w("Roadprints", "Journey highlight cache could not be saved", error);
+        }
+    }
+
+    private List<JSONObject> discoveryFeatures(JSONObject journey) {
+        JSONObject result = journey.optJSONObject("processing_result");
+        JSONObject roadGeoJson = result == null ? null : result.optJSONObject("road_geojson");
+        JSONArray features = roadGeoJson == null ? null : roadGeoJson.optJSONArray("features");
+        if (features == null || features.length() == 0) {
+            features = new JSONArray();
+            appendDiscoveryFeatures(features, result == null ? null : result.optJSONObject("motorway_geojson"));
+            appendDiscoveryFeatures(features, result == null ? null : result.optJSONObject("a_road_geojson"));
+        }
+        List<JSONObject> output = new ArrayList<>();
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            if (feature != null && !JourneyCorrectionUtils.excludesRoadFeature(journey, feature))
+                output.add(feature);
+        }
+        return output;
+    }
+
+    private void appendDiscoveryFeatures(JSONArray target, JSONObject geojson) {
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return;
+        for (int index = 0; index < features.length(); index++) target.put(features.opt(index));
+    }
+
+    private static final class JourneyDiscoveryRecord {
+        final String journeyId;
+        final long startedAt;
+        final Map<String, String> roads;
+        JourneyDiscoveryRecord(String journeyId, long startedAt, Map<String, String> roads) {
+            this.journeyId = journeyId;
+            this.startedAt = startedAt;
+            this.roads = roads;
         }
     }
 
@@ -394,74 +809,55 @@ public class JourneyListActivity extends Activity {
 
         String mode = journey.optString("mode", "unknown");
         double metres = journey.optDouble("distance_meters", 0);
-        JSONObject geometry = journey.optJSONObject("route_geometry");
-        JSONArray coordinates = geometry == null
-                ? null : geometry.optJSONArray("coordinates");
-        int points = coordinates == null ? 0 : coordinates.length();
+        int points = pointCount(journey);
 
-        LinearLayout details = new LinearLayout(this);
-        details.setOrientation(LinearLayout.VERTICAL);
-        details.setLayoutParams(new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-
-        TextView label = new TextView(this);
-        label.setText(displayMode(mode).toUpperCase() + "  •  "
-                + displayTime(journey.optString("started_at")).toUpperCase());
-        label.setTextSize(12);
-        label.setTypeface(null, android.graphics.Typeface.BOLD);
-        label.setTextColor(0xFF67D5CC);
-
-        TextView heading = new TextView(this);
-        String savedTitle = journey.optString("title", "");
-        JSONObject source = journey.optJSONObject("source");
-        boolean imported = source != null
-                && "timeline_import".equals(source.optString("type"));
-        heading.setText(savedTitle.length() > 0 ? savedTitle
-                : imported ? "Imported journey" : "Captured journey");
-        heading.setTextSize(23);
-        heading.setTypeface(null, android.graphics.Typeface.BOLD);
-        heading.setTextColor(Color.WHITE);
-        heading.setPadding(0, 8, 0, 0);
-
-        TextView summary = new TextView(this);
-        summary.setText(String.format("%.1f mi  •  %s  •  %d GPS points",
-                metres / 1609.344, journeyDuration(journey), points));
-        summary.setTextSize(16);
-        summary.setTextColor(0xFFD3DCED);
-        summary.setPadding(0, 4, 0, 0);
+        JourneyCardHeader shared=new JourneyCardHeader(this,journey);
+        LinearLayout details=shared.details;
 
         TextView evidence = new TextView(this);
         String statusText = journeyStatusText(journey, points);
         evidence.setText(statusText);
         evidence.setTextSize(14);
         evidence.setTextColor(statusText.startsWith("Insufficient")
-                || statusText.startsWith("Processing failed") ? 0xFFF7C450 : 0xFF67D5CC);
+                || statusText.startsWith("Processing failed")
+                || statusText.startsWith("Partially matched")
+                || statusText.startsWith("Processed, but no matched route")
+                ? 0xFFF7C450 : 0xFF67D5CC);
         evidence.setPadding(0, 16, 0, 16);
 
-        details.addView(label);
-        details.addView(heading);
-        details.addView(summary);
         details.addView(evidence);
+
+        List<String> newRoads = newRoadHighlights.get(journey.optString("journey_id", ""));
+        if (newRoads != null && !newRoads.isEmpty()) {
+            TextView discoveries = new TextView(this);
+            StringBuilder text = new StringBuilder("NEW ROADS · ").append(newRoads.size());
+            int shown = Math.min(5, newRoads.size());
+            for (int index = 0; index < shown; index++) {
+                text.append(index == 0 ? "\n" : "  ·  ").append(newRoads.get(index));
+            }
+            if (newRoads.size() > shown) text.append("  ·  +").append(newRoads.size() - shown).append(" more");
+            discoveries.setText(text.toString());
+            discoveries.setTextSize(12);
+            discoveries.setTypeface(null, android.graphics.Typeface.BOLD);
+            discoveries.setTextColor(0xFFFFD36A);
+            discoveries.setPadding(dp(11), dp(9), dp(11), dp(9));
+            discoveries.setBackground(roundRect(0x332E5C9B, 0x887CB5EA, dp(10)));
+            LinearLayout.LayoutParams discoveryParams = new LinearLayout.LayoutParams(-1, -2);
+            discoveryParams.bottomMargin = dp(8);
+            details.addView(discoveries, discoveryParams);
+        }
 
         LinearLayout cardContent = new LinearLayout(this);
         cardContent.setOrientation(LinearLayout.HORIZONTAL);
         cardContent.setGravity(Gravity.TOP);
         cardContent.addView(details);
 
-        TextView modeIcon = new TextView(this);
-        modeIcon.setText(transportIcon(mode));
-        modeIcon.setTextSize(26);
-        modeIcon.setGravity(Gravity.CENTER);
-        modeIcon.setContentDescription(displayMode(mode));
-        modeIcon.setBackground(roundRect(0xFF304B88, 0xFF8EA7D4, dp(12)));
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(44), dp(44));
-        iconParams.setMargins(dp(12), dp(2), 0, 0);
-        cardContent.addView(modeIcon, iconParams);
+        cardContent.addView(shared.icon);
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
-        TextView inspect = actionButton("VIEW & REFINE", 0xFF102047, Color.WHITE);
-        inspect.setOnClickListener(v -> showDetails(journey));
+        TextView inspect = actionButton("VIEW JOURNEY", 0xFF102047, Color.WHITE);
+        inspect.setOnClickListener(v -> loadAndShowDetails(journey));
         actions.addView(inspect, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
 
@@ -470,13 +866,44 @@ public class JourneyListActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         actionParams.topMargin = dp(16);
         card.addView(actions, actionParams);
-        card.setOnClickListener(v -> showDetails(journey));
+        card.setOnClickListener(v -> loadAndShowDetails(journey));
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, dp(16));
         card.setLayoutParams(params);
         return card;
+    }
+
+    private void loadAndShowDetails(JSONObject summary) {
+        final NavigationTrace detailsTrace=new NavigationTrace("journey_detail");detailsTrace.resume(this);
+        final String journeyId = summary.optString("journey_id", "");
+        if (journeyId.isEmpty()) return;
+        processor.execute(() -> {
+            JSONObject loaded;
+            try {
+                loaded = JourneyStore.get(getApplicationContext(), journeyId);
+                if (placeStationCatalog == null) {
+                    try (InputStreamReader stations = new InputStreamReader(
+                            getAssets().open("rail-stations/stations.csv"), StandardCharsets.UTF_8)) {
+                        placeStationCatalog = RailStationCatalog.read(stations);
+                    } catch (Exception unavailable) { /* Do not invent station identity without reference data. */ }
+                }
+            } catch (Exception error) {
+                loaded = null;
+            }
+            JSONObject journey = loaded;
+            mainHandler.post(() -> {
+                if (isFinishing()) return;
+                if (journey == null) {
+                    Toast.makeText(this,
+                            "This journey could not be loaded. Your saved data is unchanged.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showDetails(journey);detailsTrace.event("ready", "geometry=loaded");
+            });
+        });
     }
 
     private TextView actionButton(String text, int background, int foreground) {
@@ -492,16 +919,34 @@ public class JourneyListActivity extends Activity {
     }
 
     private void updateFilterStyles() {
-        for (int index = 0; index < filterChips.size(); index++) {
-            boolean selected = index == activeFilter;
-            TextView chip = filterChips.get(index);
-            chip.setTextColor(selected ? 0xFF0B1C50 : Color.WHITE);
-            chip.setBackground(roundRect(
-                    selected ? 0xFFF7C450 : 0x1AFFFFFF,
-                    selected ? 0xFFF7C450 : 0xFF46649E,
-                    28));
-        }
+        if (filterSummary != null) filterSummary.setText(FILTER_LABELS[activeFilter] + " · " + statusLabel(activeJourneyStatusFilter) + " · " + activeDateFilter.label());
     }
+
+    private String statusLabel(String value) {
+        for (int i = 0; i < STATUS_VALUES.length; i++) if (STATUS_VALUES[i].equals(value)) return STATUS_LABELS[i];
+        return STATUS_LABELS[0];
+    }
+
+    private void applyJourneyFilters() {
+        journeyCardLimit = INITIAL_JOURNEY_CARDS;
+        render();
+        if (journeyScroll != null) journeyScroll.post(() -> journeyScroll.scrollTo(0, 0));
+    }
+
+    private JourneyFilterPanel journeyFilterPanel() {
+        List<JSONObject> archive = new ArrayList<>();
+        if (journeys != null) for (JSONObject journey : journeys) {
+            if (shouldShowJourney(journey) && (recapJourneyIds.isEmpty()
+                    || recapJourneyIds.contains(journey.optString("journey_id")))) archive.add(journey);
+        }
+        return new JourneyFilterPanel(this, archive,
+                new JourneyFilters(activeFilter, activeJourneyStatusFilter, activeDateFilter), false, filters -> {
+                    activeFilter=filters.mode; activeJourneyStatusFilter=filters.status;
+                    activeDateFilter=filters.date; applyJourneyFilters();
+                });
+    }
+
+    private void showJourneyFilters() { journeyFilterPanel().show(); }
 
     private GradientDrawable roundRect(int fill, int stroke, int radius) {
         GradientDrawable drawable = new GradientDrawable();
@@ -515,7 +960,7 @@ public class JourneyListActivity extends Activity {
         return roundRect(fill, stroke, radius);
     }
 
-    private List<JSONArray> matchedRouteSegments(JSONObject result) {
+    private static List<JSONArray> matchedRouteSegments(JSONObject result) {
         List<JSONArray> segments = new ArrayList<>();
         if (result == null) return segments;
         JSONObject geojson = result.optJSONObject("geojson");
@@ -540,7 +985,7 @@ public class JourneyListActivity extends Activity {
         return segments;
     }
 
-    private List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
+    static List<JSONArray> matchedRouteSegmentsForDisplay(JSONObject journey) {
         List<JSONArray> routes = matchedRouteSegments(
                 journey.optJSONObject("processing_result"));
         JSONObject corrections = journey.optJSONObject("journey_corrections");
@@ -576,6 +1021,53 @@ public class JourneyListActivity extends Activity {
         return visible;
     }
 
+    static final class JourneyPreview {
+        final JSONArray coordinates;
+        final List<JSONArray> matches;
+        final String legend;
+        JourneyPreview(JSONArray coordinates, List<JSONArray> matches, String legend) {
+            this.coordinates = coordinates; this.matches = matches; this.legend = legend;
+        }
+    }
+
+    static boolean retainedEditedMatch(JSONObject journey) {
+        JSONObject attempt=journey.optJSONObject("last_match_attempt");
+        return attempt!=null&&"retained_manual_edits".equals(attempt.optString("outcome"));
+    }
+
+    static JourneyPreview journeyPreview(JSONObject journey) {
+        JSONObject geometry = journey.optJSONObject("route_geometry");
+        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+        String mode = journey.optString("mode", "unknown").trim().toLowerCase(java.util.Locale.ROOT);
+        if (isPointToPointMode(mode)) return new JourneyPreview(endpointCoordinates(coordinates),
+                java.util.Collections.emptyList(), "Point-to-point journey");
+        JSONObject result = journey.optJSONObject("processing_result");
+        if (!matchedRouteSegments(result).isEmpty()) {
+            List<JSONArray> visible = matchedRouteSegmentsForDisplay(journey);
+            boolean partial = isPartialMatchResult(result);
+            return new JourneyPreview(null, visible, visible.isEmpty() ? "All matched sections removed"
+                    : partial ? "Partially matched route · unmatched sections omitted" : "Matched route");
+        }
+        List<JSONArray> supported=CaptureQualityValidator.displaySections(journey);
+        if(supported!=null)return new JourneyPreview(null,supported,
+                "Recorded sections · GPS gaps or unreliable fixes omitted");
+        return new JourneyPreview(coordinates, java.util.Collections.emptyList(), "Recorded route");
+    }
+
+    private void refreshDetailPreview(AlertDialog dialog, JSONObject journey) {
+        View root = dialog.getWindow() == null ? null : dialog.getWindow().getDecorView();
+        if (root == null) return;
+        RoutePreviewView preview = root.findViewWithTag("journey_route_preview");
+        TextView legend = root.findViewWithTag("journey_route_legend");
+        JourneyPreview route = journeyPreview(journey);
+        if (preview != null) preview.setRouteData(route.coordinates, route.matches);
+        if (legend != null) legend.setText(route.legend);
+        View replayPlay = root.findViewWithTag("journey_replay_play");
+        if (replayPlay != null) replayPlay.setVisibility(
+                !isPointToPointMode(journey.optString("mode", "")) && hasStoredMatch(journey) && !route.matches.isEmpty()
+                        ? View.VISIBLE : View.GONE);
+    }
+
     private void showDetails(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -601,13 +1093,7 @@ public class JourneyListActivity extends Activity {
         modalTitle.setTextColor(Color.WHITE);
         header.addView(modalTitle, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        TextView close = new TextView(this);
-        close.setText("CLOSE");
-        close.setTextSize(13);
-        close.setTypeface(null, android.graphics.Typeface.BOLD);
-        close.setTextColor(0xFFF7C450);
-        close.setGravity(Gravity.CENTER);
-        close.setPadding(dp(12), dp(12), 0, dp(12));
+        TextView close = RoadprintsDialog.closeControl(this,null);
         header.addView(close);
         container.addView(header);
 
@@ -623,18 +1109,40 @@ public class JourneyListActivity extends Activity {
         previewLabel.setPadding(side, dp(8), side, dp(10));
         body.addView(previewLabel);
 
-        // Keep the map aperture edge-to-edge; surrounding content uses a larger inset.
-        RoutePreviewView preview = new RoutePreviewView(this, coordinates, matchedSegments);
-        body.addView(preview, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(190)));
-        if (!matchedSegments.isEmpty()) {
-            TextView routeLegend = new TextView(this);
-            routeLegend.setText("Blue: matched route  ·  Grey: original GPS trace");
-            routeLegend.setTextSize(11);
-            routeLegend.setTextColor(0xFFD3DCED);
-            routeLegend.setPadding(side, dp(6), side, dp(2));
-            body.addView(routeLegend);
-        }
+        // Flights and trains are shown as a simple endpoint-to-endpoint connection,
+        // matching the POC. Their detailed Timeline trace remains saved in the journey.
+        String journeyMode = journey.optString("mode", "unknown").trim().toLowerCase();
+        boolean pointToPoint = isPointToPointMode(journeyMode);
+        JourneyPreview route = journeyPreview(journey);
+        if(!pointToPoint&&hasStoredMatch(journey)&&!route.matches.isEmpty())
+            DiscoveryReplayCache.request(getApplicationContext(),java.util.Collections.singleton(journey.optString("journey_id")),null);
+        RoutePreviewView preview = new RoutePreviewView(this, route.coordinates, route.matches);
+        preview.setTag("journey_route_preview");
+        FrameLayout previewFrame = new FrameLayout(this);
+        previewFrame.addView(preview, new FrameLayout.LayoutParams(-1, -1));
+        TextView replayPlay = new TextView(this);
+        replayPlay.setText("▶");
+        replayPlay.setTag("journey_replay_play");
+        replayPlay.setTextSize(22);
+        replayPlay.setTextColor(0xFF0B1C50);
+        replayPlay.setGravity(Gravity.CENTER);
+        replayPlay.setBackground(roundRect(0xFFF7C450, 0xFF0B1C50, dp(24)));
+        replayPlay.setContentDescription("Replay journey discoveries on the map");
+        replayPlay.setClickable(true);
+        replayPlay.setFocusable(true);
+        replayPlay.setVisibility(!pointToPoint && hasStoredMatch(journey) && !route.matches.isEmpty() ? View.VISIBLE : View.GONE);
+        FrameLayout.LayoutParams playParams = new FrameLayout.LayoutParams(dp(48), dp(48),
+                Gravity.BOTTOM | Gravity.LEFT);
+        playParams.setMargins(dp(12), 0, 0, dp(12));
+        previewFrame.addView(replayPlay, playParams);
+        body.addView(previewFrame, new LinearLayout.LayoutParams(-1, dp(190)));
+        TextView routeLegend = new TextView(this);
+        routeLegend.setTag("journey_route_legend");
+        routeLegend.setText(route.legend);
+        routeLegend.setTextSize(11);
+        routeLegend.setTextColor(0xFFD3DCED);
+        routeLegend.setPadding(side, dp(6), side, dp(2));
+        body.addView(routeLegend);
 
         LinearLayout fields = new LinearLayout(this);
         fields.setOrientation(LinearLayout.VERTICAL);
@@ -642,14 +1150,10 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("Start", displayTime(journey.optString("started_at"))));
         fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
         fields.addView(detailRow("Duration", journeyDuration(journey)));
-
-        TextView routeFacts = new TextView(this);
-        routeFacts.setText(String.format("%s  ·  %.0f m  ·  %d GPS points",
-                displayMode(journey.optString("mode", "unknown")), metres, points));
-        routeFacts.setTextSize(14);
-        routeFacts.setTextColor(0xFFD3DCED);
-        routeFacts.setPadding(0, dp(8), 0, dp(18));
-        fields.addView(routeFacts);
+        fields.addView(detailRow("Distance", DistanceUnits.format(this, metres)));
+        fields.addView(detailRow("GPS points", DistanceUnits.formatPointCount(points)));
+        fields.addView(detailRow("Transport", displayMode(journey.optString("mode", "unknown"))));
+        addPlaceReviewFields(fields,journey);
 
         fields.addView(fieldLabel("Journey name"));
         EditText titleInput = new EditText(this);
@@ -717,7 +1221,7 @@ public class JourneyListActivity extends Activity {
                 break;
             }
         }
-        if (!matchedTransport && isUnknownMode(currentMode)) {
+        if (!matchedTransport && JourneyFilters.isUnknownMode(currentMode)) {
             transport.setSelection(transportModes.length - 1);
         }
         final String[] savedTitle = {titleInput.getText().toString().trim()};
@@ -735,33 +1239,55 @@ public class JourneyListActivity extends Activity {
         String processingStatus = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
         boolean footMode = isFootMode(mode);
-        boolean processableMode = footMode || isRoadMode(mode);
+        boolean processableMode = footMode || isRoadMode(mode) || MatchingCoordinator.isCycle(mode);
         boolean enoughEvidence = hasEnoughMatchingEvidence(journey);
         TextView status = new TextView(this);
         String statusText;
         int statusColor;
-        if (!processableMode) {
+        if ("unknown".equals(mode)
+                && "required".equals(journey.optString("transport_confirmation"))) {
+            statusText = "Confirm the transport type before matching this journey";
+            statusColor = 0xFFF7C450;
+        } else if (!processableMode) {
             statusText = "No route matching required for this transport type";
             statusColor = 0xFFB9C5D8;
+        } else if (WalkingMatchOutcome.label(journey)!=null) {
+            statusText=WalkingMatchOutcome.label(journey)+". Original trace and distance preserved.";
+            statusColor=0xFF67D5CC;
         } else if (!enoughEvidence) {
             statusText = isRoadMode(mode)
                     ? "Insufficient Timeline points for reliable road matching"
                     : "Not enough GPS evidence to match this journey";
             statusColor = 0xFFF7C450;
+        } else if (retainedEditedMatch(journey)) {
+            statusText = "New match not applied · your edited route is preserved. Review saved section edits before rematching.";
+            statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
-            statusText = "✓  Processed · matched route available";
-            statusColor = 0xFF8BE0B1;
+            boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"))
+                    || journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false);
+            statusText = partial ? (journey.optJSONObject("processing_result").optBoolean("capture_partial_match", false)
+                    ? "Partially matched · only validated sections count. Original recording preserved."
+                    : journey.optJSONObject("processing_result").optBoolean("timeline_partial_match", false)
+                    ? "Partially matched · Timeline data is incomplete or inconsistent. Only matched sections count."
+                    : journey.optJSONObject("processing_result").optBoolean("endpoint_partial_match", false)
+                    ? "Road portion matched · start/end GPS samples remain unmatched"
+                    : "Partial match · some route sections were not matched")
+                    : "✓  Processed · matched route available";
+            statusColor = partial ? 0xFFF7C450 : 0xFF8BE0B1;
         } else if ("complete".equals(processingStatus)) {
-            statusText = "No matched route geometry saved · retry matching";
+            statusText = "No matched route is available · retry matching from this journey";
             statusColor = 0xFFF7C450;
         } else if ("processing".equals(processingStatus)) {
             statusText = "Matching in progress…";
             statusColor = 0xFFF7C450;
         } else if ("failed".equals(processingStatus)) {
-            statusText = "Matching failed · you can retry below";
+            JSONObject recordingQuality = journey.optJSONObject("recording_quality");
+            statusText = recordingQuality != null && !recordingQuality.optBoolean("resolved", true)
+                    ? "Recording quality issue · GPS gap or unreliable fixes. Original recording preserved."
+                    : "Matching failed · retry from this journey";
             statusColor = 0xFFF7C450;
         } else {
-            statusText = "Not yet matched to roads";
+            statusText = "Ready to match from this journey";
             statusColor = 0xFFB9C5D8;
         }
         status.setText(statusText);
@@ -797,8 +1323,7 @@ public class JourneyListActivity extends Activity {
             } catch (Exception ignored) { }
             savedTitle[0] = updatedTitle;
             savedMode[0] = updatedMode;
-            journeys = JourneyStore.all(this);
-            render();
+            refreshJourneysAsync();
             updateSaveState.run();
             Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
         };
@@ -820,40 +1345,112 @@ public class JourneyListActivity extends Activity {
         });
         updateSaveState.run();
         saveChanges.setOnClickListener(v -> saveEdits.run());
+        replayPlay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                        transportModes, savedTitle[0], savedMode[0]),
+                saveEdits, () -> startActivity(JourneyReplayActivity.replayIntent(this, journey))));
         actions.addView(saveChanges, actionLayoutParams());
 
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
         secondaryParams.topMargin = dp(8);
-        if ("complete".equals(processingStatus) && hasMatchedGeometry) {
-            Button refineMatched = styledModalButton(
-                    "EDIT MATCHED JOURNEY", 0xFF233B78, Color.WHITE);
-            refineMatched.setOnClickListener(v -> requestCloseWithUnsavedChanges(
-                    dialogRef[0], hasUnsavedChanges(titleInput, transport,
-                            transportModes, savedTitle[0], savedMode[0]),
-                    saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
-            actions.addView(refineMatched, secondaryParams);
-        } else if (processableMode && enoughEvidence) {
-            String buttonLabel = "complete".equals(processingStatus)
-                    ? "RETRY MATCHING"
-                    : "failed".equals(processingStatus)
-                    ? (footMode ? "RETRY ON-FOOT MATCH" : "RETRY ROAD MATCH")
-                    : "processing".equals(processingStatus) ? "MATCHING…"
-                    : (footMode ? "MATCH ON-FOOT JOURNEY" : "MATCH ROAD JOURNEY");
-            Button processButton = styledModalButton(buttonLabel, 0xFF233B78, Color.WHITE);
-            processButton.setEnabled(!"processing".equals(processingStatus));
-            processButton.setOnClickListener(v -> processJourney(journey, processButton, status, dialogRef));
-            actions.addView(processButton, secondaryParams);
+        Button matchJourney = null;
+        if (processableMode && enoughEvidence) {
+            boolean matched = "complete".equals(processingStatus) && hasMatchedGeometry;
+            boolean matching = "processing".equals(processingStatus);
+            String actionText = matched ? "VIEW & EDIT ON MAP"
+                    : matching ? "MATCHING…"
+                    : "failed".equals(processingStatus) || "complete".equals(processingStatus)
+                        ? "RETRY MATCHING" : "MATCH JOURNEY";
+            matchJourney = styledModalButton(actionText,
+                    matched ? 0xFF233B78 : 0xFFF7C450,
+                    matched ? Color.WHITE : 0xFF0B1C50);
+            matchJourney.setEnabled(!matching);
+            matchJourney.setAlpha(matching ? 0.62f : 1f);
+            Button journeyAction = matchJourney;
+            if (matched) {
+                journeyAction.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> showMatchedRefinement(journey, dialogRef)));
+            } else if (!matching) {
+                journeyAction.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> startSingleJourneyMatch(
+                                journey, journeyAction, status, dialogRef,
+                                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits)));
+            }
+            actions.addView(journeyAction, secondaryParams);
+            if (matched) {
+                Button rematch = styledModalButton("REMATCH JOURNEY", 0xFFF7C450, 0xFF0B1C50);
+                LinearLayout.LayoutParams rematchParams = actionLayoutParams();
+                rematchParams.topMargin = dp(8);
+                rematch.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                        dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                transportModes, savedTitle[0], savedMode[0]),
+                        saveEdits, () -> startSingleJourneyMatch(
+                                journey, rematch, status, dialogRef,
+                                titleInput, transport, transportModes, savedTitle, savedMode,
+                                saveEdits, true)));
+                actions.addView(rematch, rematchParams);
+            }
+        }
+
+        if(FerryJourneyEvidence.reviewAvailable(journey)) {
+            Button ferryReview=styledModalButton(FerryJourneyEvidence.restorable(journey)?"RESTORE ORIGINAL RECORDING":"REVIEW FERRY SPLIT",0xFFF7C450,0xFF0B1C50);
+            ferryReview.setOnClickListener(v->requestCloseWithUnsavedChanges(
+                    dialogRef[0],hasUnsavedChanges(titleInput,transport,transportModes,savedTitle[0],savedMode[0]),
+                    saveEdits,()->processor.execute(()->{
+                try {
+                    JSONObject current=JourneyStore.get(this,journey.optString("journey_id"));
+                    if(current==null)return;
+                    boolean restore=FerryJourneyEvidence.restorable(current);
+                    FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(current.optJSONArray("capture_route_samples"));
+                    String message=restore?"Restore the preserved original recording and remove the derived sections? Any edits to those derived sections will also be removed.":review.reason;
+                    if(!restore&&review.canSplit()) {
+                        JSONArray samples=current.getJSONArray("capture_route_samples");
+                        message+="\n\nFerry section: "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.start).getLong(3))
+                                +" to "+java.time.Instant.ofEpochMilli(samples.getJSONArray(review.end).getLong(3))
+                                +" (UTC). These are measured terminal transitions; exact berth times are uncertain. Original evidence is retained. Road sections will need transport confirmation.";
+                    }
+                    final String text=message;
+                    runOnUiThread(()->{
+                        AlertDialog.Builder builder=new AlertDialog.Builder(this).setTitle("Review ferry evidence").setMessage(text).setNegativeButton("Close",null);
+                        if(restore||review.canSplit())builder.setPositiveButton(restore?"Restore":"Split recording",(d,w)->processor.execute(()->{
+                            try {
+                                if(restore)FerryJourneyRecovery.restore(this,current.getString("journey_id"));
+                                else FerryJourneyRecovery.split(this,current.getString("journey_id"),current.optInt("revision"));
+                                runOnUiThread(()->{if(dialogRef[0]!=null)dialogRef[0].dismiss();recreate();});
+                            }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+                        }));
+                        builder.show();
+                    });
+                }catch(Exception error){runOnUiThread(()->Toast.makeText(this,error.getMessage(),Toast.LENGTH_LONG).show());}
+            })));
+            ferryReview.setTag("journey_ferry_review");
+            actions.addView(ferryReview,actionLayoutParams());
         }
 
         TextView delete = new TextView(this);
-        delete.setText("Delete journey");
+        delete.setText("Delete Journey");
         delete.setTextSize(14);
         delete.setTextColor(0xFFFF8A8A);
         delete.setGravity(Gravity.CENTER);
         delete.setPadding(dp(12), dp(14), dp(12), dp(8));
         delete.setOnClickListener(v -> confirmDelete(journey));
-        actions.addView(delete, new LinearLayout.LayoutParams(
+        LinearLayout supplemental = new LinearLayout(this);
+        supplemental.setGravity(Gravity.CENTER);
+        TextView debug = new TextView(this);
+        debug.setText("Debug Journey");
+        debug.setTextSize(14);
+        debug.setTextColor(0xFFD3DCED);
+        debug.setGravity(Gravity.CENTER);
+        debug.setPadding(dp(12), dp(14), dp(12), dp(8));
+        debug.setOnClickListener(v -> exportJourneyDebug(journey.optString("journey_id")));
+        supplemental.addView(debug);
+        actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        actions.addView(delete,new LinearLayout.LayoutParams(-1,-2));
         container.addView(actions);
 
         close.setOnClickListener(v -> requestCloseWithUnsavedChanges(
@@ -862,8 +1459,9 @@ public class JourneyListActivity extends Activity {
                 saveEdits, () -> {
                     if (dialogRef[0] != null) dialogRef[0].dismiss();
                 }));
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(container).create();
+        AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
+        dialog.setOnDismissListener(d->{NavigationTrace back=new NavigationTrace("journey_return");back.resume(this);back.frame(journeyList,"first_list","cache=retained");});
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -891,6 +1489,78 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
+        if (matchJourney != null
+                && "processing".equals(journey.optString("processing_status"))) {
+            watchSingleJourneyMatch(journey, matchJourney, status, dialogRef,
+                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, false);
+        }
+    }
+
+    private void addPlaceReviewFields(LinearLayout fields,JSONObject journey) {
+        JSONArray stops=journey.optJSONArray("stops");if(stops==null||stops.length()==0)return;
+        boolean headingAdded=false;
+        for(int i=0;i<stops.length();i++) {
+            JSONObject stop=stops.optJSONObject(i);if(stop==null||stop.optString("id").isEmpty())continue;
+            if(!StationPlaceEvidence.reviewable(stop,placeStationCatalog))continue;
+            if(!headingAdded){fields.addView(fieldLabel("Journey places"));headingAdded=true;}
+            TextView review=new TextView(this);
+            review.setTextColor(0xFF67D5CC);review.setTextSize(15);review.setPadding(0,dp(12),0,dp(12));
+            review.setTag("review_place_"+stop.optString("role"));
+            updatePlaceLabel(review,stop);
+            review.setOnClickListener(v->showPlaceReview(journey.optString("journey_id"),stop,review));
+            fields.addView(review);
+        }
+    }
+    private void updatePlaceLabel(TextView view,JSONObject stop) {
+        String classification=stop.optString("classification","estimated");
+        String status="confirmed".equals(classification)?"confirmed": "supported".equals(classification)?"suggested":
+                "rejected".equals(classification)?"not a stop":"estimated";
+        view.setText(("departure".equals(stop.optString("role"))?"From: ":"To: ")+StationPlaceEvidence.label(stop,placeStationCatalog)
+                +" · "+status+"\nTap to confirm or correct");
+    }
+    private void showPlaceReview(String journeyId,JSONObject stop,TextView label) {
+        LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);
+        form.addView(fieldLabel("Place name"));
+        EditText name=new EditText(this);name.setSingleLine(true);name.setHint("Place name");
+        name.setText("estimated".equals(stop.optString("kind"))&&"Estimated stop".equals(stop.optString("name"))
+                ?"":StationPlaceEvidence.label(stop,placeStationCatalog));
+        name.setTextColor(Color.WHITE);name.setHintTextColor(0xFFB9C5D8);name.setTextSize(16);
+        name.setBackground(roundRect(0xFF142957,0xFF7188B8,dp(10)));
+        name.setPadding(dp(14),dp(10),dp(14),dp(10));name.setMinHeight(dp(52));
+        name.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(120)});
+        form.addView(name);
+        TextView note=new TextView(this);
+        note.setText("Confirm or correct this "+("departure".equals(stop.optString("role"))?"departure":"arrival")
+                +" place, or mark it as not a stop. Your original recording remains saved.");
+        note.setTextColor(0xFFB9C5D8);note.setTextSize(15);note.setPadding(0,dp(12),0,0);form.addView(note);
+        AlertDialog[] dialogRef=new AlertDialog[1];
+        dialogRef[0]=RoadprintsDialog.show(this,"Review journey place",null,form,"CONFIRM PLACE",()->{
+            if(name.getText().toString().trim().isEmpty()){name.setError("Enter a place name");return;}
+            savePlaceReview(journeyId,stop,name.getText().toString(),true,label,dialogRef[0]);
+        },"NOT A STOP",()->savePlaceReview(journeyId,stop,"",false,label,dialogRef[0]),false);
+    }
+    private void setPlaceReviewActionsEnabled(AlertDialog dialog,boolean enabled) {
+        if(dialog.getWindow()==null)return;
+        for(String tag:new String[]{"roadprints_dialog_primary","roadprints_dialog_secondary"}) {
+            View action=dialog.getWindow().getDecorView().findViewWithTag(tag);
+            if(action!=null){action.setEnabled(enabled);action.setAlpha(enabled?1f:.5f);}
+        }
+    }
+    private void savePlaceReview(String journeyId,JSONObject stop,String name,boolean confirmed,TextView label,AlertDialog dialog) {
+        setPlaceReviewActionsEnabled(dialog,false);
+        new Thread(()->{
+            try {
+                JourneyStore.reviewStop(getApplicationContext(),journeyId,stop.optString("id"),name,confirmed);
+                JSONObject latest=JourneyStore.get(getApplicationContext(),journeyId);
+                JSONArray stops=latest==null?null:latest.optJSONArray("stops");JSONObject reviewed=null;
+                if(stops!=null)for(int i=0;i<stops.length();i++){JSONObject candidate=stops.optJSONObject(i);
+                    if(candidate!=null&&stop.optString("id").equals(candidate.optString("id")))reviewed=candidate;}
+                JSONObject result=reviewed;
+                runOnUiThread(()->{if(result!=null){updatePlaceLabel(label,result);label.setOnClickListener(v->showPlaceReview(journeyId,result,label));}
+                    dialog.dismiss();});
+            } catch(Exception failed) {runOnUiThread(()->{setPlaceReviewActionsEnabled(dialog,true);
+                Toast.makeText(this,"Could not save the place review. Please try again.",Toast.LENGTH_LONG).show();});}
+        },"roadprints-place-review").start();
     }
 
     private boolean hasUnsavedChanges(
@@ -906,7 +1576,7 @@ public class JourneyListActivity extends Activity {
             continueAction.run();
             return;
         }
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Unsaved changes")
                 .setMessage("Save your journey changes before closing?")
                 .setPositiveButton("Save changes", (prompt, which) -> {
@@ -924,8 +1594,10 @@ public class JourneyListActivity extends Activity {
     }
 
     private LinearLayout.LayoutParams actionLayoutParams() {
-        return new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+        params.topMargin=dp(8);
+        return params;
     }
 
     private TextView fieldLabel(String text) {
@@ -971,136 +1643,157 @@ public class JourneyListActivity extends Activity {
     }
 
     private void showMatchedRefinement(JSONObject journey, AlertDialog[] dialogRef) {
+        String journeyId = journey == null ? "" : journey.optString("journey_id", "");
+        if (journeyId.isEmpty()) {
+            Toast.makeText(this, "Journey could not be opened", Toast.LENGTH_LONG).show();
+            return;
+        }
         Intent editor = new Intent(this, JourneyMapEditorActivity.class);
-        editor.putExtra("journey_json", journey.toString());
+        editor.putExtra("journey_id", journeyId);
         startActivity(editor);
         if (dialogRef[0] != null) dialogRef[0].dismiss();
     }
 
     private void confirmDelete(JSONObject journey) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete journey?")
                 .setMessage("This will permanently remove this journey from this device.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
                     JourneyStore.delete(this, journey.optString("journey_id"));
-                    journeys = JourneyStore.all(this);
-                    render();
                     Toast.makeText(this, "Journey deleted", Toast.LENGTH_SHORT).show();
+                    refreshJourneysAsync();
                 })
                 .show();
     }
 
-    private void processJourney(JSONObject journey, Button button, TextView status, AlertDialog[] dialogRef) {
-        JSONObject geometry = journey.optJSONObject("route_geometry");
-        JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
+    private void startBatchMatch() {
+        MatchingCoordinator.get(this).start();
+        startActivity(new Intent(this, GrowingActivity.class));
+    }
+
+    private boolean hasStoredMatch(JSONObject journey) {
+        if (journey.has("_has_stored_match")) {
+            return journey.optBoolean("_has_stored_match", false);
+        }
+        JSONObject result = journey.optJSONObject("processing_result");
+        return result != null && !matchedRouteSegments(result).isEmpty();
+    }
+
+    private void startSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits) {
+        startSingleJourneyMatch(journey, action, status, dialogRef, titleInput, transport,
+                transportModes, savedTitle, savedMode, saveEdits, false);
+    }
+
+    private void startSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
         if (!canMatchJourney(journey)) {
-            Toast.makeText(this, "This journey does not meet the route-matching evidence threshold",
-                    Toast.LENGTH_LONG).show();
+            status.setText("This journey does not have enough route points to match.");
             return;
         }
-        if (coordinates == null || coordinates.length() < 2) {
-            Toast.makeText(this, "At least two GPS points are required", Toast.LENGTH_SHORT).show();
+        MatchingCoordinator coordinator = MatchingCoordinator.get(this);
+        boolean accepted = forceRematch
+                ? coordinator.rematch(journey.optString("journey_id"))
+                : coordinator.start(journey.optString("journey_id"));
+        if (!accepted) {
+            status.setText("Another matching run is active. Try this journey again when it finishes.");
+            action.setText("MATCH JOURNEY");
+            action.setEnabled(true);
+            action.setAlpha(1f);
             return;
         }
-        String mode = journey.optString("mode", "unknown");
-        String endpoint = ("walking".equals(mode) || "running".equals(mode)
-                || "pedestrian".equals(mode)) ? "/match-walking" : "/match";
-        try {
-            JSONArray points = new JSONArray();
-            for (int index = 0; index < coordinates.length(); index++) {
-                JSONArray coordinate = coordinates.optJSONArray(index);
-                if (coordinate != null && coordinate.length() >= 2
-                        && !coordinate.isNull(0) && !coordinate.isNull(1)) {
-                    points.put(new JSONObject().put("lat", coordinate.optDouble(1))
-                            .put("lng", coordinate.optDouble(0)));
+        action.setText("MATCHING…");
+        action.setEnabled(false);
+        action.setAlpha(0.62f);
+        status.setText("Matching this journey…");
+        status.setTextColor(0xFFF7C450);
+        watchSingleJourneyMatch(journey, action, status, dialogRef,
+                titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch);
+    }
+
+    private void watchSingleJourneyMatch(
+            JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
+            EditText titleInput, Spinner transport, String[] transportModes,
+            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
+        AlertDialog dialog = dialogRef[0];
+        if (dialog == null || !dialog.isShowing()) return;
+        MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(this).snapshot();
+        if (snapshot.state == MatchingCoordinator.State.PREPARING
+                || snapshot.state == MatchingCoordinator.State.RUNNING
+                || snapshot.state == MatchingCoordinator.State.PAUSING) {
+            mainHandler.postDelayed(
+                    () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
+                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch), 1000L);
+            return;
+        }
+        String journeyId = journey.optString("journey_id", "");
+        processor.execute(() -> {
+            JSONObject latest;
+            try {
+                latest = JourneyStore.get(getApplicationContext(), journeyId);
+            } catch (Exception error) {
+                latest = null;
+            }
+            JSONObject saved = latest;
+            mainHandler.post(() -> {
+                if (dialogRef[0] == null || !dialogRef[0].isShowing()) return;
+                if (saved == null) {
+                    status.setText("Journey status could not be refreshed. Retry matching.");
+                    action.setText("RETRY MATCHING");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    return;
                 }
-            }
-            if (points.length() < 2) {
-                throw new IllegalStateException("At least two valid GPS points are required");
-            }
-            JSONObject payload = new JSONObject().put("points", points);
-            String journeyId = journey.optString("journey_id");
-            String stageKey = isFootMode(mode) ? "foot_matching" : "road_matching";
-            journey.put("processing_status", "processing");
-            JSONObject stages = journey.optJSONObject("stage_statuses");
-            if (stages == null) stages = new JSONObject();
-            stages.put(stageKey, "processing");
-            journey.put("stage_statuses", stages);
-            JSONObject processingState = journey.optJSONObject("processing");
-            if (processingState == null) processingState = new JSONObject();
-            processingState.put(stageKey, "processing");
-            journey.put("processing", processingState);
-            journey.remove("processing_result");
-            JourneyStore.save(this, journey);
-            button.setEnabled(false);
-            button.setText("MATCHING…");
-            status.setText("Matching in progress…");
-            status.setTextColor(0xFFF7C450);
-            processor.execute(() -> {
                 try {
-                    JSONObject result = postJson(API_BASE_URL + endpoint, payload);
-                    if (matchedRouteSegments(result).isEmpty()) {
-                        throw new IllegalStateException(
-                                "Matcher returned no route geometry to display");
+                    journey.put("processing_status", saved.optString("processing_status", "pending"));
+                    for(String key:new String[]{"journey_corrections","last_match_attempt","error_summary"}) {
+                        if(saved.has(key))journey.put(key,saved.opt(key));else journey.remove(key);
                     }
-                    JSONObject stored = JourneyStore.get(this, journeyId);
-                    if (stored == null) throw new IllegalStateException("Journey is no longer available");
-                    stored.put("processing_status", "complete");
-                    JSONObject storedStages = stored.optJSONObject("stage_statuses");
-                    if (storedStages == null) storedStages = new JSONObject();
-                    storedStages.put(stageKey, "complete");
-                    stored.put("stage_statuses", storedStages);
-                    JSONObject storedProcessing = stored.optJSONObject("processing");
-                    if (storedProcessing == null) storedProcessing = new JSONObject();
-                    storedProcessing.put(stageKey, "complete");
-                    stored.put("processing", storedProcessing);
-                    stored.put("processing_result", result);
-                    stored.put("processing_completed_at", Instant.now().toString());
-                    JourneyStore.save(this, stored);
-                    mainHandler.post(() -> {
-                        button.setEnabled(false);
-                        button.setVisibility(View.GONE);
-                        if (dialogRef[0] != null) dialogRef[0].dismiss();
-                        journeys = JourneyStore.all(this);
-                        render();
-                        JSONObject refreshed = JourneyStore.get(this, journeyId);
-                        if (refreshed != null) showDetails(refreshed);
-                        Toast.makeText(this, "Journey processed by Roadprints", Toast.LENGTH_SHORT).show();
-                    });
-                } catch (Exception error) {
-                    try {
-                        JSONObject stored = JourneyStore.get(this, journeyId);
-                        if (stored != null) {
-                            stored.put("processing_status", "failed");
-                            stored.put("error_summary", error.getMessage());
-                            JSONObject storedStages = stored.optJSONObject("stage_statuses");
-                            if (storedStages == null) storedStages = new JSONObject();
-                            storedStages.put(stageKey, "failed");
-                            stored.put("stage_statuses", storedStages);
-                            JSONObject storedProcessing = stored.optJSONObject("processing");
-                            if (storedProcessing == null) storedProcessing = new JSONObject();
-                            storedProcessing.put(stageKey, "failed");
-                            stored.put("processing", storedProcessing);
-                            JourneyStore.save(this, stored);
-                        }
-                    } catch (Exception ignored) { }
-                    mainHandler.post(() -> {
-                        button.setEnabled(true);
-                        button.setText("RETRY PROCESSING");
-                        status.setText("Matching failed · you can retry below");
-                        status.setTextColor(0xFFF7C450);
-                        Toast.makeText(this, "Processing failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                    });
+                    if (saved.has("processing_result")) {
+                        journey.put("processing_result", saved.optJSONObject("processing_result"));
+                    } else {
+                        journey.remove("processing_result");
+                    }
+                } catch (Exception ignored) { }
+                boolean matched = "complete".equals(saved.optString("processing_status"))
+                        && !matchedRouteSegments(saved.optJSONObject("processing_result")).isEmpty();
+                if (matched) {
+                    refreshDetailPreview(dialogRef[0], saved);
+                    boolean partial = isPartialMatchResult(saved.optJSONObject("processing_result"));
+                    boolean retained=retainedEditedMatch(saved);
+                    status.setText(retained ? "New match not applied · your edited route is preserved. Review saved section edits before rematching."
+                            : partial ? "Partially matched · some source sections could not be matched"
+                            : "✓  Processed · matched route available");
+                    status.setTextColor(partial||retained ? 0xFFF7C450 : 0xFF8BE0B1);
+                    action.setText(forceRematch ? "REMATCH JOURNEY" : "VIEW & EDIT ON MAP");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    if (!forceRematch) action.setOnClickListener(v -> requestCloseWithUnsavedChanges(
+                            dialogRef[0], hasUnsavedChanges(titleInput, transport,
+                                    transportModes, savedTitle[0], savedMode[0]),
+                            saveEdits,
+                            () -> showMatchedRefinement(journey, dialogRef)));
+                } else if ("processing".equals(saved.optString("processing_status"))) {
+                    mainHandler.postDelayed(
+                            () -> watchSingleJourneyMatch(journey, action, status, dialogRef,
+                                    titleInput, transport, transportModes, savedTitle, savedMode, saveEdits, forceRematch), 1000L);
+                } else {
+                    status.setText("Matching failed or returned no route. You can retry here.");
+                    status.setTextColor(0xFFF7C450);
+                    action.setText("RETRY MATCHING");
+                    action.setEnabled(true);
+                    action.setAlpha(1f);
+                    action.setOnClickListener(v -> startSingleJourneyMatch(
+                            journey, action, status, dialogRef,
+                            titleInput, transport, transportModes, savedTitle, savedMode, saveEdits));
                 }
             });
-        } catch (Exception error) {
-            button.setEnabled(true);
-            button.setText("PROCESS JOURNEY");
-            status.setText("Could not prepare journey for matching");
-            status.setTextColor(0xFFF7C450);
-            Toast.makeText(this, "Could not prepare journey: " + error.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        });
     }
 
     private JSONObject postJson(String urlValue, JSONObject payload) throws Exception {
@@ -1133,39 +1826,25 @@ public class JourneyListActivity extends Activity {
         return new JSONObject(body.toString());
     }
 
-    private void updateReadinessSummary() {
-        if (readinessSummary == null) return;
-        int roadReady = 0;
-        int footReady = 0;
-        int noMatch = 0;
-        int processed = 0;
-        int failed = 0;
-        for (JSONObject journey : journeys) {
-            String status = journey.optString("processing_status", "pending");
-            String mode = journey.optString("mode", "unknown");
-            if ((isFootMode(mode) || isRoadMode(mode))
-                    && !hasEnoughMatchingEvidence(journey)) {
-                continue;
-            }
-            if (!isFootMode(mode) && !isRoadMode(mode)) {
-                noMatch++;
-            } else if ("complete".equals(status)) {
-                processed++;
-            } else if ("failed".equals(status)) {
-                failed++;
-            } else if (isFootMode(mode)) {
-                footReady++;
-            } else {
-                roadReady++;
-            }
-        }
-        String firstLine = "Ready: " + roadReady + " road • " + footReady + " on foot"
-                + " • " + noMatch + " no matching";
-        String secondLine = "Processed: " + processed + " • Failed: " + failed;
-        readinessSummary.setText(firstLine + "\n" + secondLine);
+    static boolean isPointToPointMode(String mode) {
+        return "train".equals(mode) || "plane".equals(mode);
+    }
+
+    static JSONArray endpointCoordinates(JSONArray coordinates) {
+        if (coordinates == null || coordinates.length() < 2) return coordinates;
+        JSONArray endpoints = new JSONArray();
+        endpoints.put(coordinates.optJSONArray(0));
+        endpoints.put(coordinates.optJSONArray(coordinates.length() - 1));
+        return endpoints;
     }
 
     private int pointCount(JSONObject journey) {
+        if (journey.has("gps_point_count")) {
+            return journey.optInt("gps_point_count", 0);
+        }
+        if (journey.has("_route_point_count")) {
+            return journey.optInt("_route_point_count", 0);
+        }
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
         return coordinates == null ? 0 : coordinates.length();
@@ -1183,36 +1862,55 @@ public class JourneyListActivity extends Activity {
     private boolean hasEnoughMatchingEvidence(JSONObject journey) {
         if (pointCount(journey) < 2) return false;
         String mode = journey.optString("mode", "unknown");
-        if (isRoadMode(mode)) {
+        if (isRoadMode(mode) || MatchingCoordinator.isCycle(mode)) {
             JSONObject source = journey.optJSONObject("source");
             if (source != null && "timeline_import".equals(source.optString("type", ""))) {
                 JSONObject quality = journey.optJSONObject("capture_quality");
                 return quality != null && quality.optInt("source_route_points", 0) >= 2;
             }
         }
-        return isFootMode(mode) || isRoadMode(mode);
+        return isFootMode(mode) || isRoadMode(mode) || MatchingCoordinator.isCycle(mode);
     }
 
     private boolean canMatchJourney(JSONObject journey) {
         String mode = journey.optString("mode", "unknown");
-        return (isFootMode(mode) || isRoadMode(mode))
+        return (isFootMode(mode) || isRoadMode(mode) || MatchingCoordinator.isCycle(mode))
                 && hasEnoughMatchingEvidence(journey);
     }
 
     private String journeyStatusText(JSONObject journey, int points) {
+        String walkingLabel=WalkingMatchOutcome.label(journey);
+        if(walkingLabel!=null)return walkingLabel;
         String status = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
-        if (!isFootMode(mode) && !isRoadMode(mode)) return "No route matching required";
+        if (!isFootMode(mode) && !isRoadMode(mode) && !MatchingCoordinator.isCycle(mode)) return "No route matching required";
         if (!hasEnoughMatchingEvidence(journey)) {
             return isRoadMode(mode)
                     ? "Insufficient Timeline points for reliable road matching"
                     : "Insufficient GPS evidence";
         }
-        if ("complete".equals(status)) return "Processed by Roadprints";
+        if ("complete".equals(status)) {
+            if (!hasStoredMatch(journey)) return "Processed, but no matched route was saved";
+            return isPartialMatchResult(journey.optJSONObject("processing_result"))
+                    ? "Partially matched · rematch available" : "Processed by Roadprints";
+        }
         if ("processing".equals(status)) return "Processing journey…";
         if ("failed".equals(status)) return "Processing failed — retry available";
+        if (MatchingCoordinator.isCycle(mode)) return "Ready for cycling matching";
         if (isFootMode(mode)) return "Ready for on-foot matching";
         return "Ready for road matching";
+    }
+
+    private static boolean isPartialMatchResult(JSONObject result) {
+        if (result == null) return false;
+        if (result.optBoolean("walking_partial_match", false)) return true;
+        if (result.optBoolean("capture_partial_match", false)) return true;
+        if (result.optBoolean("timeline_partial_match", false)) return true;
+        JSONArray failed = result.optJSONArray("failed_sections");
+        if (failed != null && failed.length() > 0) return true;
+        int input = result.optInt("input_points", -1);
+        int matched = result.optInt("matched_tracepoints", -1);
+        return input >= 0 && matched >= 0 && matched < input;
     }
 
     private void shareJourney(JSONObject journey) {
@@ -1223,32 +1921,19 @@ public class JourneyListActivity extends Activity {
         startActivity(Intent.createChooser(share, "Share journey data"));
     }
 
-    private String transportIcon(String mode) {
-        switch (mode) {
-            case "driving": return "🚗";
-            case "walking":
-            case "running": return "👟";
-            case "bus": return "🚌";
-            case "train": return "🚆";
-            case "cycling": return "🚲";
-            case "plane": return "✈️";
-            case "ferry": return "⛴";
-            default: return "📍";
-        }
-    }
 
-    private String displayMode(String value) {
+    static String displayMode(String value) {
         if ("driving".equals(value)) return "Driving";
-        if ("walking".equals(value)) return "On foot";
+        if (JourneyFilters.isFootMode(value)) return "On foot";
         if ("cycling".equals(value)) return "Cycling";
         if ("bus".equals(value)) return "Bus";
         if ("train".equals(value)) return "Train";
-        if ("plane".equals(value)) return "Plane";
+        if ("plane".equals(value)) return "Flight";
         if ("ferry".equals(value)) return "Ferry";
         return "Unknown";
     }
 
-    private String displayTime(String value) {
+    static String displayTime(String value) {
         try {
             return DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
                     .withZone(ZoneId.systemDefault())
@@ -1258,7 +1943,7 @@ public class JourneyListActivity extends Activity {
         }
     }
 
-    private String journeyDuration(JSONObject journey) {
+    static String journeyDuration(JSONObject journey) {
         try {
             long seconds = Math.max(0, Duration.between(
                     Instant.parse(journey.optString("started_at")),
@@ -1274,4 +1959,3 @@ public class JourneyListActivity extends Activity {
         }
     }
 }
-

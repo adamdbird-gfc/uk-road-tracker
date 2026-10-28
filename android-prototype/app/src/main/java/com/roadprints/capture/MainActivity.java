@@ -4,18 +4,29 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
+import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,14 +36,18 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 41;
+    private static final int TRACKING_REQUEST = 42;
+    private static final String PENDING_TRACKING = "pending_tracking_permission";
     private static final String[] MODE_LABELS = {
-            "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry"
+            "Driving", "Walking", "Bus", "Train", "Cycling", "Plane", "Ferry", "Unknown"
     };
     private static final String[] MODE_VALUES = {
-            "driving", "walking", "bus", "train", "cycling", "plane", "ferry"
+            "driving", "walking", "bus", "train", "cycling", "plane", "ferry", "unknown"
     };
 
     private TextView status;
@@ -44,6 +59,14 @@ public class MainActivity extends Activity {
     private Spinner modeSpinner;
     private boolean capturing;
     private boolean tracking;
+    private boolean pendingTrackingPermission;
+    private final ExecutorService archiveIo = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private TextView deleteRoadAction;
+    private TextView deleteFootAction;
+    private TextView deleteAllAction;
+    private TextView debugLink;
+    private int archiveSummaryGeneration;
 
     private final BroadcastReceiver captureReceiver = new BroadcastReceiver() {
         @Override
@@ -57,16 +80,16 @@ public class MainActivity extends Activity {
             updateTrackingButton();
 
             String message = intent.getStringExtra(CaptureService.EXTRA_MESSAGE);
-            if (message != null) status.setText(message);
+            if (message != null && status != null) status.setText(message);
 
             double metres = intent.getDoubleExtra(CaptureService.EXTRA_DISTANCE, 0);
             int points = intent.getIntExtra(CaptureService.EXTRA_POINTS, 0);
-            if (active) {
+            if (active && distance != null) {
                 distance.setText(String.format(
                         "Distance: %.0f m - %d points", metres, points));
             } else {
-                saved.setText("Saved prototype journeys: " + JourneyStore.count(MainActivity.this));
-                distance.setText("Distance: 0 m");
+                if (saved != null) refreshSavedCount();
+                if (distance != null) distance.setText("Distance: 0 m");
             }
         }
     };
@@ -74,6 +97,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        pendingTrackingPermission = state != null && state.getBoolean(PENDING_TRACKING, false);
+        if (!isTrackingSettingsScreen()) {
+            if (CaptureService.isArmed(this)) repairTrackingSubscription();
+            else if (CaptureService.isActive(this)) resumeActiveCapture();
+            startActivity(new Intent(this, MapActivity.class));
+            finish();
+            return;
+        }
         registerCaptureReceiver();
         buildScreen();
         capturing = CaptureService.isActive(this);
@@ -81,12 +112,41 @@ public class MainActivity extends Activity {
         updateCaptureButton();
         updateTrackingButton();
         if (tracking) repairTrackingSubscription();
-        modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
+        else if (capturing) resumeActiveCapture();
+        if (modeSpinner != null) modeSpinner.postDelayed(this::reviewLatestJourney, 350L);
+        if (getIntent().getBooleanExtra("onboarding_enable_tracking", false)) {
+            getIntent().removeExtra("onboarding_enable_tracking");
+            if (!tracking && !pendingTrackingPermission) toggleTracking();
+        }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putBoolean(PENDING_TRACKING, pendingTrackingPermission);
+        super.onSaveInstanceState(state);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != TRACKING_REQUEST || !pendingTrackingPermission) return;
+        pendingTrackingPermission = false;
+        // Check actual permission state: notification approval is optional, and
+        // Android can return an empty result when the permission dialog closes.
+        if (hasTrackingPermissions()) {
+            startAutomaticTracking();
+        } else {
+            status.setText("Automatic tracking is off. Allow precise location and physical activity "
+                    + "in Utilities > Permissions, then enable automatic tracking in Tracking settings.");
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        updateDebugLink();
+        if (CaptureService.isArmed(this) && getSharedPreferences("roadprints_capture_state",MODE_PRIVATE)
+                .contains("tracking_blocked")) {
+            startForegroundService(new Intent(this,CaptureService.class).setAction(CaptureService.ACTION_ARM));
+        }
         if (captureButton != null) {
             capturing = CaptureService.isActive(this);
             tracking = CaptureService.isArmed(this);
@@ -96,115 +156,317 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
-        unregisterReceiver(captureReceiver);
+        if (isTrackingSettingsScreen()) unregisterReceiver(captureReceiver);
+        archiveIo.shutdownNow();
         super.onDestroy();
     }
 
     private void registerCaptureReceiver() {
         IntentFilter filter = new IntentFilter(CaptureService.ACTION_UPDATE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(captureReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        androidx.core.content.ContextCompat.registerReceiver(this, captureReceiver, filter,
+                androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
+    }
+
+    private boolean isTrackingSettingsScreen() { return getIntent().getBooleanExtra("tracking_settings_screen", false); }
+
+    private void buildScreen() {
+        getWindow().setStatusBarColor(0xFF0B1C50);
+        getWindow().setNavigationBarColor(0xFF10275D);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(0xFF0B1C50);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(24), dp(26), dp(24), dp(28));
+        LinearLayout brand = new LinearLayout(this);
+        brand.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView mark = new ImageView(this);
+        mark.setImageResource(R.drawable.roadprints_mark);
+        mark.setContentDescription("Roadprints");
+        mark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        brand.addView(mark, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        LinearLayout brandIdentity = new LinearLayout(this);
+        brandIdentity.setOrientation(LinearLayout.VERTICAL);
+        TextView wordmark = text("roadprints", 22, Color.WHITE, true);
+        wordmark.setPadding(dp(10), 0, 0, 0);
+        brandIdentity.addView(wordmark);
+        TextView version = text("Version " + BuildConfig.VERSION_NAME
+                + " (" + BuildConfig.VERSION_CODE + ")", 10, 0xFFB9C5D8, false);
+        version.setPadding(dp(10), 0, 0, 0);
+        brandIdentity.addView(version);
+        brand.addView(brandIdentity, new LinearLayout.LayoutParams(0, -2, 1));
+        content.addView(brand);
+        TextView eyebrow = text("YOUR TRAVEL RECORD", 13, 0xFF67D5CC, true);
+        eyebrow.setPadding(0, dp(30), 0, dp(4));
+        content.addView(eyebrow);
+
+        if (isTrackingSettingsScreen()) {
+            content.addView(text("Tracking settings", 32, Color.WHITE, true));
+            TextView subtitle = text("Choose a journey type and control automatic or manual recording.",
+                    16, 0xFFD3DCED, false);
+            subtitle.setPadding(0, dp(8), 0, dp(16));
+            content.addView(subtitle);
+            content.addView(text("Journey type", 16, 0xFF67D5CC, true));
+            modeSpinner = new Spinner(this);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                    this, android.R.layout.simple_spinner_item, MODE_LABELS) {
+                private TextView whiteText(android.view.View row) {
+                    TextView label = (TextView) row;
+                    label.setTextColor(Color.WHITE);
+                    label.setBackgroundColor(0xFF182F66);
+                    return label;
+                }
+                @Override public android.view.View getView(int p, android.view.View c, android.view.ViewGroup parent) {
+                    return whiteText(super.getView(p, c, parent));
+                }
+                @Override public android.view.View getDropDownView(int p, android.view.View c, android.view.ViewGroup parent) {
+                    return whiteText(super.getDropDownView(p, c, parent));
+                }
+            };
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            modeSpinner.setAdapter(adapter);
+            modeSpinner.setBackground(roundedBackground(0xFF182F66, 0xFF496096, dp(12)));
+            modeSpinner.setPadding(dp(14), 0, dp(14), 0);
+            LinearLayout.LayoutParams modeParams = new LinearLayout.LayoutParams(-1, dp(54));
+            modeParams.bottomMargin = dp(14);
+            content.addView(modeSpinner, modeParams);
+            trackingButton = new Button(this);
+            trackingButton.setOnClickListener(v -> toggleTracking());
+            styleAction(trackingButton, 0xFFF7C450, 0xFF0B1C50);
+            LinearLayout.LayoutParams trackingParams = new LinearLayout.LayoutParams(-1, dp(54));
+            trackingParams.bottomMargin = dp(12);
+            content.addView(trackingButton, trackingParams);
+            android.widget.Switch mapContext=new android.widget.Switch(this);
+            mapContext.setText("Use online place and route context");
+            mapContext.setTextColor(Color.WHITE);mapContext.setMinHeight(dp(56));
+            mapContext.setChecked(ContextMapCache.enabled(this));
+            mapContext.setOnCheckedChangeListener((button,checked)->ContextConsent.choose(this,checked));
+            content.addView(mapContext,new LinearLayout.LayoutParams(-1,-2));
+            TextView contextCopy=text(ContextConsent.COPY,14,0xFFD3DCED,false);
+            contextCopy.setPadding(0,0,0,dp(18));content.addView(contextCopy);
+            captureButton = new Button(this);
+            captureButton.setOnClickListener(v -> toggleCapture());
+            styleAction(captureButton, 0xFF263F7C, Color.WHITE);
+            LinearLayout.LayoutParams captureParams = new LinearLayout.LayoutParams(-1, dp(54));
+            captureParams.bottomMargin = dp(18);
+            content.addView(captureButton, captureParams);
+            LinearLayout live = card();
+            status = text("Ready to capture.", 15, 0xFF67D5CC, false);
+            distance = text("Distance: 0 m", 20, Color.WHITE, true);
+            distance.setPadding(0, dp(12), 0, 0);
+            live.addView(status); live.addView(distance);
+            content.addView(live);
         } else {
-            registerReceiver(captureReceiver, filter);
+            Button utilities = new Button(this);
+            utilities.setText("UTILITIES");
+            styleAction(utilities, 0xFF263F7C, Color.WHITE);
+            utilities.setOnClickListener(v -> startActivity(new Intent(this, UtilitiesActivity.class)));
+            LinearLayout.LayoutParams utilityParams = new LinearLayout.LayoutParams(-1, dp(52));
+            utilityParams.bottomMargin = dp(28);
+            content.addView(utilities, utilityParams);
+            content.addView(text("Your journeys", 21, Color.WHITE, true));
+            saved = text("Loading saved journeys…", 15, 0xFFD3DCED, false);
+            saved.setPadding(0, dp(5), 0, dp(12));
+            content.addView(saved);
+            LinearLayout nav = new LinearLayout(this);
+            Button map = new Button(this); map.setText("OPEN MAP");
+            styleAction(map, 0xFF263F7C, Color.WHITE);
+            map.setOnClickListener(v -> startActivity(new Intent(this, MapActivity.class)));
+            historyButton = new Button(this); historyButton.setText("OPEN JOURNEYS");
+            styleAction(historyButton, 0xFF263F7C, Color.WHITE);
+            historyButton.setOnClickListener(v -> startActivity(new Intent(this, JourneyListActivity.class)));
+            nav.addView(map, new LinearLayout.LayoutParams(0, dp(50), 1));
+            LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(0, dp(50), 1);
+            hp.leftMargin = dp(10); nav.addView(historyButton, hp); content.addView(nav);
+        }
+        scroll.addView(content);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        root.addView(GrowingStatusControl.create(this));
+        TextView utilityBack = null;
+        if (isTrackingSettingsScreen()) {
+            utilityBack = RoadprintsHeader.backLink(this, "BACK TO UTILITIES", this::finish);
+            root.addView(utilityBack, new LinearLayout.LayoutParams(-1, dp(58)));
+        }
+        final TextView bottomBack = utilityBack;
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int systemTop;
+            int systemBottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(
+                        android.view.WindowInsets.Type.systemBars());
+                systemTop = bars.top;
+                systemBottom = bars.bottom;
+            } else {
+                systemTop = insets.getSystemWindowInsetTop();
+                systemBottom = insets.getSystemWindowInsetBottom();
+            }
+            content.setPadding(dp(24), dp(26) + systemTop, dp(24),
+                    dp(28) + (bottomBack == null ? systemBottom : 0));
+            if (bottomBack != null) {
+                bottomBack.setPadding(dp(24), 0, dp(24), systemBottom);
+                LinearLayout.LayoutParams backParams =
+                        (LinearLayout.LayoutParams) bottomBack.getLayoutParams();
+                backParams.height = dp(58) + systemBottom;
+                bottomBack.setLayoutParams(backParams);
+            }
+            return insets;
+        });
+        setContentView(root);
+        root.requestApplyInsets();
+        if (!isTrackingSettingsScreen()) refreshArchiveSummary();
+    }
+
+    private void showDebugReport() {
+        String report = CrashReporter.getDiagnosticReports(this);
+        boolean available = !report.isEmpty();
+        TextView details = text(available
+                        ? "Review this report before copying. It stays on this device until you choose to copy it.\\n\\n" + report
+                        : "No reports have been saved on this device yet. If a journey match fails or Roadprints crashes, tap debug here. Reports stay on this device and are not sent automatically.",
+                13, 0xFFD3DCED, false);
+        details.setTextIsSelectable(true);
+        details.setPadding(dp(4), dp(8), dp(4), dp(8));
+        ScrollView reportScroll = new ScrollView(this);
+        reportScroll.addView(details);
+
+        AlertDialog.Builder dialog = new RoadprintsDialog.Builder(this)
+                .setTitle(available ? "Debug reports" : "Debug")
+                .setView(reportScroll)
+                .setNegativeButton(available ? "Close" : "OK", null);
+        if (available) {
+            dialog.setPositiveButton("Copy report", (which, button) -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("Roadprints debug reports", report));
+                Toast.makeText(this, "Debug report copied", Toast.LENGTH_SHORT).show();
+            });
+            dialog.setNeutralButton("Clear reports", (which, button) -> {
+                CrashReporter.clear(this);
+                updateDebugLink();
+                Toast.makeText(this, "Debug reports cleared", Toast.LENGTH_SHORT).show();
+            });
+        }
+        dialog.show();
+    }
+
+    private void updateDebugLink() {
+        if (debugLink != null) {
+            debugLink.setText(CrashReporter.hasReports(this) ? "debug · report ready" : "debug");
         }
     }
 
-    private void buildScreen() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 48, 32, 32);
-        root.setBackgroundColor(0xFFF6F9FC);
+    private LinearLayout card() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dp(18), dp(16), dp(18), dp(16));
+        layout.setBackground(roundedBackground(0xFF233B78, 0xFF233B78, dp(18)));
+        return layout;
+    }
 
-        TextView title = new TextView(this);
-        title.setText("Roadprints");
-        title.setTextSize(30);
-        title.setTextColor(0xFF0A2B43);
-        title.setGravity(Gravity.CENTER_HORIZONTAL);
+    private TextView text(String value, float size, int colour, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(colour);
+        if (bold) view.setTypeface(null, Typeface.BOLD);
+        return view;
+    }
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Android prototype v" + BuildConfig.VERSION_NAME + " - automatic tracking test");
-        subtitle.setTextSize(15);
-        subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
-        subtitle.setPadding(0, 8, 0, 32);
+    private void styleAction(Button button, int background, int foreground) {
+        button.setTextColor(foreground);
+        button.setTextSize(14);
+        button.setTypeface(null, Typeface.BOLD);
+        button.setAllCaps(true);
+        button.setBackground(roundedBackground(background, background, dp(14)));
+        button.setElevation(dp(2));
+    }
 
-        modeSpinner = new Spinner(this);
-        modeSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+    private GradientDrawable roundedBackground(int colour, int stroke, int radius) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setColor(colour);
+        shape.setCornerRadius(radius);
+        shape.setStroke(dp(1), stroke);
+        return shape;
+    }
 
-        trackingButton = new Button(this);
-        trackingButton.setOnClickListener(v -> toggleTracking());
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
 
-        captureButton = new Button(this);
-        captureButton.setOnClickListener(v -> toggleCapture());
+    private void refreshArchiveSummary() {
+        if (saved == null) return;
+        final int generation = ++archiveSummaryGeneration;
+        saved.setText("Loading saved journeys…");
+        saved.setOnClickListener(null);
+        archiveIo.execute(() -> {
+            List<JSONObject> journeys;
+            try {
+                journeys = JourneyStore.allSummaries(getApplicationContext());
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing() || generation != archiveSummaryGeneration) return;
+                    saved.setText("Saved journeys could not be loaded. Tap here to retry.");
+                    saved.setOnClickListener(view -> refreshArchiveSummary());
+                });
+                return;
+            }
+            int roadCount = 0;
+            int footCount = 0;
+            for (JSONObject journey : journeys) {
+                String mode = journey.optString("mode", "unknown");
+                if ("driving".equals(mode) || "bus".equals(mode) || "cycling".equals(mode)) roadCount++;
+                if ("walking".equals(mode) || "running".equals(mode)
+                        || "pedestrian".equals(mode)) footCount++;
+            }
+            final int savedCount = journeys.size();
+            final int roads = roadCount;
+            final int foot = footCount;
+            mainHandler.post(() -> {
+                if (isFinishing() || generation != archiveSummaryGeneration) return;
+                saved.setText("Saved journeys: " + savedCount);
+                saved.setOnClickListener(null);
+                setDeleteActionEnabled(deleteRoadAction, roads > 0);
+                setDeleteActionEnabled(deleteFootAction, foot > 0);
+                setDeleteActionEnabled(deleteAllAction, savedCount > 0);
+            });
+        });
+    }
 
-        status = new TextView(this);
-        status.setText("Ready. Enable automatic tracking to test movement detection.");
-        status.setTextSize(16);
-        status.setPadding(0, 32, 0, 12);
+    private void refreshSavedCount() {
+        if (saved == null) return;
+        archiveIo.execute(() -> {
+            int savedCount;
+            try {
+                savedCount = JourneyStore.count(getApplicationContext());
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (isFinishing()) return;
+                    saved.setText("Saved journeys could not be refreshed. Tap here to retry.");
+                    saved.setOnClickListener(view -> refreshArchiveSummary());
+                });
+                return;
+            }
+            final int count = savedCount;
+            mainHandler.post(() -> {
+                if (isFinishing()) return;
+                saved.setText("Saved journeys: " + count);
+                saved.setOnClickListener(null);
+            });
+        });
+    }
 
-        distance = new TextView(this);
-        distance.setText("Distance: 0 m");
-        distance.setTextSize(18);
-
-        saved = new TextView(this);
-        saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-        saved.setPadding(0, 24, 0, 0);
-
-        Button mapButton = new Button(this);
-        mapButton.setText("Open map");
-        mapButton.setOnClickListener(v ->
-                startActivity(new Intent(this, MapActivity.class)));
-
-        historyButton = new Button(this);
-        historyButton.setText("Open journeys");
-        historyButton.setOnClickListener(v ->
-                startActivity(new Intent(this, JourneyListActivity.class)));
-
-        root.addView(title);
-        root.addView(subtitle);
-        root.addView(modeSpinner);
-        root.addView(trackingButton);
-        root.addView(captureButton);
-        root.addView(status);
-        root.addView(distance);
-        root.addView(saved);
-        root.addView(mapButton);
-        root.addView(historyButton);
-
-        android.widget.Space spacer = new android.widget.Space(this);
-        root.addView(spacer, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        LinearLayout deleteRow = new LinearLayout(this);
-        deleteRow.setOrientation(LinearLayout.HORIZONTAL);
-        deleteRow.setPadding(0, 18, 0, 0);
-
-        int roadCount = JourneyStore.countByModes(this, "driving", "bus", "cycling");
-        int footCount = JourneyStore.countByModes(this, "walking");
-        int totalCount = JourneyStore.count(this);
-
-        TextView deleteRoad = deleteButton("Delete road data", roadCount > 0);
-        deleteRoad.setOnClickListener(v -> confirmDeleteData(
-                "Delete road data?",
-                "This removes driving, bus and cycling journeys from this device.",
-                new String[]{"driving", "bus", "cycling"}));
-
-        TextView deleteFoot = deleteButton("Delete on-foot data", footCount > 0);
-        deleteFoot.setOnClickListener(v -> confirmDeleteData(
-                "Delete on-foot data?",
-                "This removes walking journeys from this device.",
-                new String[]{"walking"}));
-
-        TextView deleteAll = deleteButton("Delete all saved data", totalCount > 0);
-        deleteAll.setOnClickListener(v -> confirmDeleteAll());
-
-        deleteRow.addView(deleteRoad, deleteButtonParams());
-        deleteRow.addView(deleteFoot, deleteButtonParams());
-        deleteRow.addView(deleteAll, deleteButtonParams());
-        root.addView(deleteRow);
-
-        setContentView(root);
+    private void setDeleteActionEnabled(TextView button, boolean enabled) {
+        if (button == null) return;
+        button.setClickable(enabled);
+        button.setFocusable(enabled);
+        button.setTextColor(enabled ? 0xFFFFB7B7 : 0xFF9FB3D0);
+        button.setAlpha(enabled ? 1f : 0.75f);
     }
 
     private TextView deleteButton(String label, boolean enabled) {
@@ -225,30 +487,57 @@ public class MainActivity extends Activity {
     }
 
     private void confirmDeleteData(String title, String message, String[] modes) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle(title)
                 .setMessage(message)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    int deleted = JourneyStore.deleteByModes(this, modes);
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-                    status.setText(deleted + " journey"
-                            + (deleted == 1 ? "" : "s") + " deleted from this device.");
+                    status.setText("Deleting journeys…");
+                    archiveIo.execute(() -> {
+                        final int deleted;
+                        try {
+                            deleted = JourneyStore.deleteByModes(getApplicationContext(), modes);
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete journeys.");
+                            });
+                            return;
+                        }
+                        mainHandler.post(() -> {
+                            if (isFinishing()) return;
+                            status.setText(deleted + " journey"
+                                    + (deleted == 1 ? "" : "s") + " deleted from this device.");
+                            refreshArchiveSummary();
+                        });
+                    });
                 })
                 .show();
     }
 
     private void confirmDeleteAll() {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete all saved data?")
                 .setMessage("This removes every saved journey and returns you to the Roadprints welcome screen.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete all", (dialog, which) -> {
-                    JourneyStore.deleteAll(this);
-                    getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
-                            .edit().remove("complete").apply();
-                    startActivity(new Intent(this, OnboardingActivity.class));
-                    finish();
+                    status.setText("Deleting saved journeys…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.deleteAll(getApplicationContext());
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete saved journeys.");
+                            });
+                            return;
+                        }
+                        mainHandler.post(() -> {
+                            if (isFinishing()) return;
+                            getSharedPreferences("roadprints_onboarding", MODE_PRIVATE)
+                                    .edit().remove("complete").apply();
+                            startActivity(new Intent(this, OnboardingActivity.class));
+                            finish();
+                        });
+                    });
                 })
                 .show();
     }
@@ -263,6 +552,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void resumeActiveCapture() {
+        Intent resume = new Intent(this, CaptureService.class)
+                .setAction(CaptureService.ACTION_RESUME);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(resume);
+        } else {
+            startService(resume);
+        }
+    }
+
     private void toggleTracking() {
         if (tracking || CaptureService.isArmed(this)) {
             Intent stop = new Intent(this, CaptureService.class)
@@ -271,35 +570,46 @@ public class MainActivity extends Activity {
             return;
         }
 
-        boolean locationGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
-        boolean activityGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                || checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION)
-                == PackageManager.PERMISSION_GRANTED;
-
-        if (!locationGranted || !activityGranted) {
+        if (!hasTrackingPermissions()) {
+            if (pendingTrackingPermission) return;
+            pendingTrackingPermission = true;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACTIVITY_RECOGNITION,
                         Manifest.permission.POST_NOTIFICATIONS
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACTIVITY_RECOGNITION
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             } else {
                 requestPermissions(new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION
-                }, LOCATION_REQUEST);
+                }, TRACKING_REQUEST);
             }
             return;
         }
+        startAutomaticTracking();
+    }
 
+    private boolean hasTrackingPermissions() {
+        boolean locationGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean activityGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                || checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION)
+                == PackageManager.PERMISSION_GRANTED;
+
+        return locationGranted && activityGranted;
+    }
+
+    private void startAutomaticTracking() {
+        // Permission completion enables tracking; it must never toggle it off.
+        if (tracking || CaptureService.isArmed(this)) return;
         Intent start = new Intent(this, CaptureService.class)
                 .setAction(CaptureService.ACTION_ARM);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -369,9 +679,24 @@ public class MainActivity extends Activity {
     }
 
     private void showJourneyHistory() {
-        List<JSONObject> journeys = JourneyStore.all(this);
+        archiveIo.execute(() -> {
+            final List<JSONObject> journeys;
+            try {
+                journeys = JourneyStore.allSummaries(getApplicationContext());
+            } catch (Exception error) {
+                mainHandler.post(() -> {
+                    if (!isFinishing()) status.setText("Could not load saved journeys.");
+                });
+                return;
+            }
+            mainHandler.post(() -> showJourneyHistory(journeys));
+        });
+    }
+
+    private void showJourneyHistory(List<JSONObject> journeys) {
+        if (isFinishing()) return;
         if (journeys.isEmpty()) {
-            new AlertDialog.Builder(this)
+            new RoadprintsDialog.Builder(this)
                     .setTitle("Saved journeys")
                     .setMessage("No journeys have been saved on this device yet.")
                     .setPositiveButton("Close", null)
@@ -388,24 +713,40 @@ public class MainActivity extends Activity {
             JSONObject geometry = journey.optJSONObject("route_geometry");
             JSONArray coordinates = geometry == null
                     ? null : geometry.optJSONArray("coordinates");
-            int points = coordinates == null ? 0 : coordinates.length();
+            int points = journey.optInt("_route_point_count", coordinates == null ? 0 : coordinates.length());
             rows[index] = String.format(
-                    "%s • %s\n%.0f m • %s • %d GPS points",
-                    started, mode, metres,
+                    "%s • %s\n%s • %s • %d GPS points",
+                    started, mode, DistanceUnits.format(this, metres),
                     journeyDuration(journey), points);
         }
 
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Saved journeys")
-                .setItems(rows, (dialog, which) -> editJourney(journeys.get(which)))
+                .setItems(rows, (dialog, which) -> {
+                    String journeyId = journeys.get(which).optString("journey_id");
+                    archiveIo.execute(() -> {
+                        JSONObject fullJourney = JourneyStore.get(getApplicationContext(), journeyId);
+                        mainHandler.post(() -> {
+                            if (!isFinishing() && fullJourney != null) editJourney(fullJourney);
+                        });
+                    });
+                })
                 .setPositiveButton("Close", null)
                 .show();
     }
 
     private void editJourney(JSONObject journey) {
         Spinner reviewSpinner = new Spinner(this);
-        reviewSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+        ArrayAdapter<String> transportAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,MODE_LABELS) {
+            @Override public android.view.View getView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(16,16,16,16);return text;
+            }
+            @Override public android.view.View getDropDownView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getDropDownView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setBackgroundColor(0xFF233B78);return text;
+            }
+        };
+        reviewSpinner.setAdapter(transportAdapter);
+        reviewSpinner.setBackgroundColor(0xFF233B78);
         reviewSpinner.setSelection(modeIndex(journey.optString("mode", "driving")));
 
         double metres = journey.optDouble("distance_meters", 0);
@@ -416,10 +757,10 @@ public class MainActivity extends Activity {
 
         TextView message = new TextView(this);
         message.setText(String.format(
-                "Start: %s\nEnd: %s\nDuration: %s\n%.0f m across %d GPS points",
+                "Start: %s\nEnd: %s\nDuration: %s\n%s across %d GPS points",
                 displayTime(journey.optString("started_at")),
                 displayTime(journey.optString("ended_at")),
-                journeyDuration(journey), metres, points));
+                journeyDuration(journey), DistanceUnits.format(this, metres), points));
         message.setTextSize(16);
         message.setPadding(24, 0, 24, 16);
 
@@ -446,16 +787,29 @@ public class MainActivity extends Activity {
         container.addView(message);
         container.addView(reviewSpinner);
 
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Journey details")
                 .setView(container)
                 .setNegativeButton("Close", null)
                 .setNeutralButton("Delete", (dialog, which) -> confirmDeleteJourney(journey))
                 .setPositiveButton("Save transport", (dialog, which) -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
-                    JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
-                    status.setText("Journey updated to " + selected + ".");
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
+                    status.setText("Saving journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.updateMode(getApplicationContext(),
+                                    journey.optString("journey_id"), selected);
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                status.setText("Journey updated to " + selected + ".");
+                                refreshSavedCount();
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not update journey.");
+                            });
+                        }
+                    });
                 })
                 .show();
     }
@@ -473,18 +827,27 @@ public class MainActivity extends Activity {
     }
 
     private void confirmDeleteJourney(JSONObject journey) {
-        new AlertDialog.Builder(this)
+        new RoadprintsDialog.Builder(this)
                 .setTitle("Delete journey?")
                 .setMessage("This removes the saved journey and its GPS route from this device.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    try {
-                        JourneyStore.delete(this, journey.optString("journey_id"));
-                        saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-                        status.setText("Journey deleted from this device.");
-                    } catch (Exception error) {
-                        status.setText("Could not delete journey.");
-                    }
+                    status.setText("Deleting journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.delete(getApplicationContext(),
+                                    journey.optString("journey_id"));
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                refreshSavedCount();
+                                status.setText("Journey deleted from this device.");
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not delete journey.");
+                            });
+                        }
+                    });
                 })
                 .show();
     }
@@ -516,22 +879,37 @@ public class MainActivity extends Activity {
     }
 
     private void reviewLatestJourney() {
-        if (capturing) return;
-        JSONObject journey = JourneyStore.latest(this);
-        if (journey == null
+        if (capturing || !isTrackingSettingsScreen()) return;
+        archiveIo.execute(() -> {
+            JSONObject journey = JourneyStore.latest(getApplicationContext());
+            mainHandler.post(() -> showLatestJourneyReview(journey));
+        });
+    }
+
+    private void showLatestJourneyReview(JSONObject journey) {
+        if (isFinishing() || capturing || journey == null
                 || !"required".equals(journey.optString("transport_confirmation"))) {
             return;
         }
 
         String currentMode = journey.optString("mode", "driving");
         Spinner reviewSpinner = new Spinner(this);
-        reviewSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
+        ArrayAdapter<String> transportAdapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,MODE_LABELS) {
+            @Override public android.view.View getView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setPadding(dp(12),dp(12),dp(12),dp(12));return text;
+            }
+            @Override public android.view.View getDropDownView(int position,android.view.View reuse,android.view.ViewGroup parent) {
+                TextView text=(TextView)super.getDropDownView(position,reuse,parent);text.setTextColor(Color.WHITE);text.setBackgroundColor(0xFF233B78);return text;
+            }
+        };
+        reviewSpinner.setAdapter(transportAdapter);
+        reviewSpinner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF67D5CC));
+        reviewSpinner.setMinimumHeight(dp(52));
         reviewSpinner.setSelection(modeIndex(currentMode));
 
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(24, 0, 24, 0);
+        container.setPadding(0, 0, 0, 0);
         TextView message = new TextView(this);
         double metres = journey.optDouble("distance_meters", 0);
         int points = journey.optJSONObject("route_geometry") == null
@@ -542,24 +920,34 @@ public class MainActivity extends Activity {
                 : journey.optJSONObject("route_geometry")
                         .optJSONArray("coordinates").length();
         message.setText(String.format(
-                "Latest journey: %.0f m across %d GPS points. Was it recorded using the right transport?",
-                metres, points));
+                "Latest journey: %s across %d GPS points. Was it recorded using the right transport?",
+                DistanceUnits.format(this, metres), points));
         message.setTextSize(16);
-        message.setPadding(0, 0, 0, 16);
+        message.setTextColor(0xFFB9C5D8);
+        message.setPadding(0, 0, 0, dp(12));
         container.addView(message);
         container.addView(reviewSpinner);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Review journey")
-                .setView(container)
-                .setNegativeButton("Later", null)
-                .setPositiveButton("Save transport", (dialog, which) -> {
+        RoadprintsDialog.show(this,"Review journey",null,container,
+                "SAVE TRANSPORT", () -> {
                     String selected = MODE_VALUES[reviewSpinner.getSelectedItemPosition()];
-                    JourneyStore.updateMode(this, journey.optString("journey_id"), selected);
-                    status.setText("Journey updated to " + selected + ".");
-                    saved.setText("Saved prototype journeys: " + JourneyStore.count(this));
-                })
-                .show();
+                    status.setText("Saving journey…");
+                    archiveIo.execute(() -> {
+                        try {
+                            JourneyStore.updateMode(getApplicationContext(),
+                                    journey.optString("journey_id"), selected);
+                            mainHandler.post(() -> {
+                                if (isFinishing()) return;
+                                status.setText("Journey updated to " + selected + ".");
+                                refreshSavedCount();
+                            });
+                        } catch (Exception error) {
+                            mainHandler.post(() -> {
+                                if (!isFinishing()) status.setText("Could not update journey.");
+                            });
+                        }
+                    });
+                },null,null);
     }
 
     private int modeIndex(String value) {
@@ -569,3 +957,6 @@ public class MainActivity extends Activity {
         return 0;
     }
 }
+
+
+
