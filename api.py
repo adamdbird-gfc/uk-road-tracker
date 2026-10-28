@@ -16,6 +16,7 @@ from cycling_path_evidence import cycling_feature_evidence, cycling_evidence
 from map_context import shared_area, ContextUnavailable
 from walking_work import WalkingWorkBudget, WalkingWorkLimit, walking_work
 from walking_timing import WalkingTimingMiddleware, WalkingJSONResponse
+from road_distance_evidence import supported_road_sections
 from database import (
     database_state,
     find_settlements_for_geometry,
@@ -351,13 +352,16 @@ async def match_chunk_resiliently(
             client, points, chunk_index, base_url, polite_delay_seconds,
             radius_attempts, retry_no_match,
         )
+        distance_failures = []
+        if road_recovery:
+            data, distance_failures = supported_road_sections(data, points, point_offset)
         data["matched_point_indices"] = [
             index for index, point in enumerate(data.get("tracepoints") or [])
             if point is not None and index < len(points)
         ]
         if road_recovery:
             data["road_distance_legs"], data["road_distance_complete"] = matched_road_legs(data, point_offset)
-        return data, radius, []
+        return data, radius, distance_failures
     except WalkingWorkLimit as exc:
         return {"matchings": [], "tracepoints": []}, None, [{
             "points": len(points), "detail": exc.reason,
@@ -378,14 +382,15 @@ async def match_chunk_resiliently(
                     )
                     tracepoints = recovered.get("tracepoints") or []
                     if supported_road_recovery_snap(points, tracepoints):
-                        recovered["matched_point_indices"] = list(range(len(points)))
+                        recovered, distance_failures = supported_road_sections(recovered, points, point_offset)
+                        recovered["matched_point_indices"] = [i for i, point in enumerate(recovered.get("tracepoints") or []) if point is not None]
                         recovered["road_distance_legs"], recovered["road_distance_complete"] = matched_road_legs(recovered, point_offset)
                         recovered["road_recovery"] = [{
                             "start_point_index": point_offset,
                             "end_point_index": point_offset + len(points) - 1,
                             "radius_m": radius,
                         }]
-                        return recovered, radius, []
+                        return recovered, radius, distance_failures
                 except HTTPException as recovery_error:
                     if recovery_error.status_code != 422:
                         raise
@@ -452,7 +457,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 2, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "walking_work_version": 2, "database": database_state}
+    return {"status": "ok", "version": "0.11.0", "road_recovery_version": 1, "road_distance_version": 3, "cycling_match_version": 1, "map_context_version": 1, "walking_outcome_version": 1, "walking_work_version": 2, "database": database_state}
 
 @app.get("/reference-catalogue/status")
 async def reference_catalogue():
@@ -897,7 +902,7 @@ async def match_payload(
                     chunk_start + index for index in data.get("matched_point_indices") or []
                     if chunk_start + index < len(payload.points)
                 )
-                tracepoints_seen += len(tracepoints) + sum(failure["points"] for failure in chunk_failures)
+                tracepoints_seen += len(tracepoints) + sum(failure["points"] for failure in chunk_failures if not failure.get("response_received"))
 
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Road matcher could not be reached: {exc}") from exc
@@ -934,6 +939,8 @@ async def match_payload(
         "road_geojson": {"type": "FeatureCollection", "features": road_features},
         "other_road_distance_m": round(other_road_distance_m, 1),
     }
+    if road_recovery:
+        result["road_distance_evidence_version"] = 1
     if base_url == CYCLE_OSRM_BASE_URL:
         result["cycling_path_evidence"] = cycling_evidence(cycling_source_features)
     return result

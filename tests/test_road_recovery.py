@@ -10,6 +10,7 @@ import pathlib
 import types
 import unittest
 from walking_work import WalkingWorkLimit, walking_work
+from road_distance_evidence import supported_road_sections
 
 
 class HTTPException(Exception):
@@ -36,7 +37,7 @@ def load_functions():
     tree = ast.parse(path.read_text())
     names = {"osrm_match_chunk", "matched_road_legs", "supported_road_recovery_snap", "match_chunk_resiliently", "chunk_points", "match_payload"}
     nodes = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name in names]
-    namespace = dict(asyncio=asyncio, math=math, HTTPException=HTTPException, RADIUS_ATTEMPTS=[20, 10, 5],
+    namespace = dict(asyncio=asyncio, math=math, supported_road_sections=supported_road_sections, HTTPException=HTTPException, RADIUS_ATTEMPTS=[20, 10, 5],
                      OSRM_CHUNK_SIZE=8, OSRM_CHUNK_OVERLAP=2, FOOT_OSRM_BASE_URL="foot", WalkingWorkLimit=WalkingWorkLimit, walking_work=walking_work, CYCLE_OSRM_BASE_URL="bike", MatchRequest=object,
                      httpx=types.SimpleNamespace(AsyncClient=Client, HTTPError=NetworkError),
                      motorway_refs=lambda ref: [], a_road_refs=lambda ref: [])
