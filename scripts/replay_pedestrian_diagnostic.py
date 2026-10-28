@@ -15,6 +15,9 @@ parser.add_argument('--include-accuracy',action='store_true')
 parser.add_argument('--output-request')
 parser.add_argument('--output-result')
 parser.add_argument('--expected-baseline')
+parser.add_argument('--expected-points',type=int,default=117,help='Expected submitted positions after existing Android simplification')
+parser.add_argument('--request',help='Exact prepared request, for fixtures with additional validated sample removal')
+parser.add_argument('--expected-result',help='Require unchanged current geometry, distance and source evidence')
 parser.add_argument('--acceptance',help='Private ground-truth JSON: forbidden_vertices and require_no_revisited_vertices; checked on current geometry only')
 args=parser.parse_args()
 j=json.load(open(args.export))['journey']
@@ -41,8 +44,18 @@ while ranges:
  if split<0 and (z-a>8 or metres(t[a],t[z])>60):split=(a+z)//2
  if split>=0:keep.add(split);ranges.extend([(a,split),(split,z)])
 trace=[{'lng':p[0],'lat':p[1]} for i,p in enumerate(t) if i in keep]
-assert len(trace)==117,len(trace)
-if args.include_accuracy:
+if args.request:
+ trace=json.load(open(args.request))['points']
+ # A prepared replay must still be an ordered subsequence of saved evidence.
+ position=0
+ for fix in trace:
+  while position<len(t) and t[position]!=[fix['lng'],fix['lat']]:position+=1
+  assert position<len(t),'Prepared position is not in the preserved chronological evidence'
+  if fix.get('accuracy_m'):
+   assert fix['accuracy_m']==j['capture_route_samples'][position][2],'Prepared accuracy differs from recorded evidence'
+  position+=1
+assert len(trace)==args.expected_points,len(trace)
+if args.include_accuracy and not args.request:
  samples=j['capture_route_samples']
  for fix,index in zip(trace,sorted(keep)):
   assert samples[index][:2]==t[index], 'Accuracy samples must align with preserved source positions'
@@ -66,7 +79,10 @@ if args.baseline_database:
 for name,path in modules:
  database=baseline_database if name=='baseline' and args.baseline_database else current_database
  spec=importlib.util.spec_from_file_location(name,path);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
- with patch.object(database,'DATABASE_URL','trial'),patch.dict(database.database_state,status='ready'),patch.object(database.psycopg,'connect',return_value=connection),patch.object(database,'match_reference_trajectory',module.match_reference_trajectory):
+ with patch.object(database,'DATABASE_URL','trial'),patch.dict(database.database_state,status='ready'),patch.object(database.psycopg,'connect',return_value=connection),patch.object(database,'match_reference_trajectory',module.match_reference_trajectory), \
+      patch.object(database,'PedestrianEdgeCandidates',module.PedestrianEdgeCandidates), \
+      patch.object(database,'PedestrianGraphPaths',module.PedestrianGraphPaths), \
+      patch.object(database,'compress_pedestrian_graph',module.compress_pedestrian_graph):
   durations=[];profiles=[]
   for repeat in range(args.repeat):
    started=time.perf_counter();result=database.match_pedestrian_reference(trace);durations.append(time.perf_counter()-started)
@@ -88,6 +104,12 @@ for name,path in modules:
     assert revisited==0,'Confirmed continuous fixture contains a return/loop; inspect the full geometry'
    print('Private confirmed-movement acceptance passed:',len(acceptance.get('defects',[])),'defect regions')
   if name=='current' and args.output_result:Path(args.output_result).write_text(json.dumps(result))
+  if name=='current' and args.expected_result:
+   expected=json.load(open(args.expected_result))
+   for field in ('geojson','matched_path_evidence','matched_distance_m'):
+    assert result[field]==expected[field], 'Current regression differs: '+field
+   print('Current geometry, distance and source evidence reproduced exactly')
+  assert elapsed<20.0,'Reference match exceeded the unchanged operational deadline'
   assert all(math.isfinite(value) for point in c for value in point)
   assert result['matched_path_evidence']['status']=='available'
   assert result['matched_distance_m'] <= j['walking_validation']['validated_gps_distance_m']*1.6
@@ -96,6 +118,8 @@ for name,path in modules:
    assert c==expected['geojson']['features'][0]['geometry']['coordinates'], 'Baseline snapshot does not reproduce expected geometry'
    print('Original matched geometry reproduced exactly')
   if profiles and profiles[0]: print('Median profile ms/counters:',{key:statistics.median(p[key] for p in profiles) for key in profiles[0]})
- else:print(name,'no match')
+ else:
+  print(name,'no match')
+  assert name!='current','Required fixture failed to match within its operational budget'
 
 assert json.dumps(j,sort_keys=True)==original,'Diagnostic evidence was mutated'

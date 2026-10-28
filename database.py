@@ -736,10 +736,13 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     profile["accuracy_samples"] = sum(value>0 for value in sampled_accuracies)
     profile["searches"] = shortest_paths_to_targets.searches
     profile["settled_nodes"] = shortest_paths_to_targets.settled_nodes
+    for key in ("scored_transitions", "pruned_transitions", "shape_vertices"):
+        profile[key] = diagnostics.get(key, 0)
     return {
         "status": "ok",
         "matcher": "preloaded_pedestrian_network_v4",
         "pedestrian_selection_version": 7,
+        "pedestrian_search_version": 2,
         "matcher_profile": profile,
         "matched_path_evidence": evidence,
         "input_points": len(points),

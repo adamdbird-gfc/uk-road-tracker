@@ -16,8 +16,11 @@ class PedestrianEdgeCandidates:
     """
 
     def __init__(self, trace, vertices, adjacency, length_metres, deadline, accuracies=None):
-        cells, edges, broad_edges = {}, [], []
-        cell_size = PedestrianVertexIndex.CELL_DEGREES
+        cells, edges, edge_bounds, broad_edges = {}, [], [], []
+        # Finer edge cells keep crowded urban queries local. All intersecting
+        # cells and broad edges are still queried; the acceptance radius and
+        # exact great-circle ranking do not change.
+        cell_size = PedestrianVertexIndex.CELL_DEGREES / 4
         seen = set()
         for a, links in adjacency.items():
             for b, distance, feature in links:
@@ -30,6 +33,8 @@ class PedestrianEdgeCandidates:
                 edge_id = len(edges)
                 edges.append((a, b, distance, feature))
                 start, end = vertices[a], vertices[b]
+                edge_bounds.append((min(start[0], end[0]), max(start[0], end[0]),
+                                    min(start[1], end[1]), max(start[1], end[1])))
                 west, east = sorted((math.floor(start[0]/cell_size), math.floor(end[0]/cell_size)))
                 south, north = sorted((math.floor(start[1]/cell_size), math.floor(end[1]/cell_size)))
                 if (east-west+1)*(north-south+1) > 4096:
@@ -63,6 +68,14 @@ class PedestrianEdgeCandidates:
             for edge_id in nearby:
                 if time.monotonic() >= deadline:
                     raise TimeoutError("Pedestrian projection exceeded deadline")
+                west, east, south, north = edge_bounds[edge_id]
+                # Grid cells are deliberately coarse. Reject edges whose
+                # bounding boxes cannot intersect the exact 120 m spherical
+                # cap before doing projection/trigonometry. This removes no
+                # candidate that can pass the original great-circle cutoff.
+                if (west > longitude+lng_radius or east < longitude-lng_radius
+                        or south > latitude+lat_radius or north < latitude-lat_radius):
+                    continue
                 a, b, _, _ = edges[edge_id]
                 start, end = vertices[a], vertices[b]
                 dx, dy = (end[0]-start[0])*scale, end[1]-start[1]
@@ -402,37 +415,75 @@ def select_trajectory_paths(
     states = {(index, None, None): observation_cost(gap, 0)
               for index, (_, gap) in enumerate(candidate_layers[0])}
     history = []
+    scored_transitions = pruned_transitions = shape_vertices = 0
     for layer_index in range(1, len(candidate_layers)):
         trace_start, trace_end = trace[layer_index - 1], trace[layer_index]
         observed_distance = length_metres(trace_start, trace_end)
         max_path_distance = max(120.0, observed_distance * 4.0 + 60.0)
         target_keys = [key for key, _ in candidate_layers[layer_index]]
         sources = {state[0] for state in states}
-        paths = {index: paths_to_targets(candidate_layers[layer_index-1][index][0],
-                                        target_keys, max_path_distance)
-                 for index in sources}
-        # Score each geometric transition once, irrespective of arrival history.
-        scores = {}
-        for index, results in paths.items():
+        # The full candidate lattice remains available. Reuse exact geometry
+        # calculations within this pair instead of rescoring shared vertices.
+        pair_uncertainty = max(uncertainty(layer_index-1), uncertainty(layer_index))
+        known_pair = uncertainty(layer_index-1)>0 and uncertainty(layer_index)>0
+        score_context = PedestrianPathScoreContext(
+            trace_start, trace_end, length_metres, pair_uncertainty, continuity_scale)
+        observation_costs = [observation_cost(gap, layer_index)
+                             for _, gap in candidate_layers[layer_index]]
+        source_costs = {}
+        for state, cost in states.items():
+            source_costs[state[0]] = min(source_costs.get(state[0], float('inf')), cost)
+        # With known accuracies the policy merges arrivals at each candidate.
+        # All remaining costs are nonnegative. A lower bound worse than an
+        # already connected arrival can therefore never win this state or any
+        # future continuation. Unknown-accuracy direction states stay exhaustive.
+        ordered_sources = sorted(sources, key=source_costs.get) if known_pair else sources
+        paths, scores, best_arrivals = {}, {}, {}
+        for index in ordered_sources:
+            source_key = candidate_layers[layer_index-1][index][0]
+            needed = []
+            for current, (key, _) in enumerate(candidate_layers[layer_index]):
+                best = best_arrivals.get(current, float('inf'))
+                if known_pair and math.isfinite(best):
+                    # Network travel cannot be shorter than great-circle
+                    # separation. The travel prior alone is a lower bound;
+                    # omit shape/distance penalties until a path is known.
+                    travel = max(0.0, length_metres(vertices[source_key], vertices[key])-1e-6)
+                    lower = observation_costs[current] + travel/continuity_scale
+                    if source_costs[index]+lower > best:
+                        continue
+                needed.append(key)
+            pruned_transitions += len(target_keys)-len(needed)
+            results = paths_to_targets(source_key, needed, max_path_distance) if needed else {}
+            paths[index] = results
             for current, (key, gap) in enumerate(candidate_layers[layer_index]):
                 result = results.get(key)
                 if result:
                     path, _, distance = result
+                    if (known_pair and source_costs[index] + (
+                            score_context.lower_bound(distance)+observation_costs[current])
+                            > best_arrivals.get(current, float('inf'))):
+                        pruned_transitions += 1
+                        continue
                     scores[index, current] = score_pedestrian_path(
                         trace_start, trace_end, [vertices[k] for k in path],
                         distance, length_metres,
-                        uncertainty=max(uncertainty(layer_index-1),uncertainty(layer_index)),
-                        continuity_scale=continuity_scale) + observation_cost(gap, layer_index)
+                        uncertainty=pair_uncertainty, continuity_scale=continuity_scale,
+                        prepared=score_context) + observation_costs[current]
+                    scored_transitions += 1
+                    best_arrivals[current] = min(best_arrivals.get(current, float('inf')),
+                                                source_costs[index]+scores[index, current])
+        shape_vertices += len(score_context.deviations)
         costs, back = {}, {}
         for prior, cost in states.items():
             previous, arrival, origin = prior
             for current, (key, _) in enumerate(candidate_layers[layer_index]):
                 result = paths[previous].get(key)
-                if not result:
+                if not result or (previous, current) not in scores:
                     continue
                 path, _, _ = result
                 total = cost + scores[previous, current]
-                if uncertainty(layer_index-1)>0 and uncertainty(layer_index)>0:
+                if known_pair:
                     # The evidence-aware distance likelihood already prices
                     # repeated travel. A second binary turn cost would reward
                     # taking a loop merely to avoid a reversal.
@@ -460,6 +511,10 @@ def select_trajectory_paths(
             return None
         states = costs
         history.append(back)
+    if diagnostics is not None:
+        diagnostics.update(scored_transitions=scored_transitions,
+                           pruned_transitions=pruned_transitions,
+                           shape_vertices=shape_vertices)
     state = min(states, key=states.get)
     selected = []
     for back in reversed(history):
@@ -495,64 +550,80 @@ def unsupported_reversal_penalty(before, point, after, incoming, outgoing,
     return retraced/max(5.0, uncertainty) if uncertainty else 8.0 + min(8.0, retraced/10.0)
 
 
-def score_pedestrian_path(
-    trace_start: tuple[float, float],
-    trace_end: tuple[float, float],
-    route: list[tuple[float, float]],
-    route_distance: float,
-    length_metres,
-    uncertainty=0.0,
-    continuity_scale=None,
-) -> float:
-    """Score a connected network path against one ordered GPS trace section.
+class PedestrianPathScoreContext:
+    """Exact pair-local scoring, reusing deviation work across candidate paths.
 
-    A path can have plausible endpoints yet take a needless side-road loop
-    between them. Measuring the route's deviation from the GPS segment catches
-    that case, especially for two-point traces where there are no intermediate
-    fixes to steer a point-only matcher.
+    Candidate paths share many network vertices. A context belongs to one GPS
+    transition only, so neither cache size nor lifetime grows with the journey.
+    Coordinates and arithmetic are identical to the scalar scoring formula.
     """
-    # Dense fixes and short pauses can legitimately share a snapped vertex.
-    # Score the zero-length network transition against the observed movement
-    # and deviation below; rejecting it forces a detour or breaks the trace.
-    if not route:
-        return float("inf")
 
-    observed_distance = length_metres(trace_start, trace_end)
-    distance_scale = max(20.0, observed_distance * 0.4, uncertainty*2.0)
-    distance_penalty = max(0.0, abs(route_distance - observed_distance)-2.0*uncertainty) / distance_scale
-    travel_prior = (route_distance / continuity_scale if continuity_scale else
-                    route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0)
+    def __init__(self, trace_start, trace_end, length_metres, uncertainty=0.0,
+                 continuity_scale=None):
+        self.observed_distance = length_metres(trace_start, trace_end)
+        self.uncertainty = uncertainty
+        self.continuity_scale = continuity_scale
+        self.distance_scale = max(20.0, self.observed_distance * 0.4, uncertainty*2.0)
+        mean_latitude = math.radians((trace_start[1] + trace_end[1]) / 2.0)
+        self.metres_per_degree_lat = 111_320.0
+        self.metres_per_degree_lng = self.metres_per_degree_lat * math.cos(mean_latitude)
+        self.start_x = trace_start[0] * self.metres_per_degree_lng
+        self.start_y = trace_start[1] * self.metres_per_degree_lat
+        end_x = trace_end[0] * self.metres_per_degree_lng
+        end_y = trace_end[1] * self.metres_per_degree_lat
+        self.segment_x, self.segment_y = end_x-self.start_x, end_y-self.start_y
+        self.segment_length_squared = self.segment_x*self.segment_x + self.segment_y*self.segment_y
+        self.deviations = {}
 
-    # Project the route and GPS section into a local metre-based plane. The
-    # trace segment is the evidence available between these two observations;
-    # a supported turn is retained because turn points are sampled separately.
-    mean_latitude = math.radians((trace_start[1] + trace_end[1]) / 2.0)
-    metres_per_degree_lat = 111_320.0
-    metres_per_degree_lng = metres_per_degree_lat * math.cos(mean_latitude)
-    start_x = trace_start[0] * metres_per_degree_lng
-    start_y = trace_start[1] * metres_per_degree_lat
-    end_x = trace_end[0] * metres_per_degree_lng
-    end_y = trace_end[1] * metres_per_degree_lat
-    segment_x, segment_y = end_x - start_x, end_y - start_y
-    segment_length_squared = segment_x * segment_x + segment_y * segment_y
-
-    deviations = []
-    for longitude, latitude in route:
-        point_x = longitude * metres_per_degree_lng
-        point_y = latitude * metres_per_degree_lat
-        if segment_length_squared:
-            projection = (
-                (point_x - start_x) * segment_x + (point_y - start_y) * segment_y
-            ) / segment_length_squared
+    def deviation(self, coordinate):
+        key = tuple(coordinate)
+        value = self.deviations.get(key)
+        if value is not None:
+            return value
+        longitude, latitude = coordinate
+        point_x = longitude * self.metres_per_degree_lng
+        point_y = latitude * self.metres_per_degree_lat
+        if self.segment_length_squared:
+            projection = ((point_x-self.start_x)*self.segment_x
+                          + (point_y-self.start_y)*self.segment_y) / self.segment_length_squared
             projection = max(0.0, min(1.0, projection))
-            nearest_x = start_x + projection * segment_x
-            nearest_y = start_y + projection * segment_y
+            nearest_x = self.start_x + projection*self.segment_x
+            nearest_y = self.start_y + projection*self.segment_y
         else:
-            nearest_x, nearest_y = start_x, start_y
-        deviations.append(math.hypot(point_x - nearest_x, point_y - nearest_y))
+            nearest_x, nearest_y = self.start_x, self.start_y
+        value = math.hypot(point_x-nearest_x, point_y-nearest_y)
+        self.deviations[key] = value
+        return value
 
-    mean_deviation = max(0.0, sum(deviations) / len(deviations)-uncertainty)
-    max_deviation = max(0.0, max(deviations)-2.0*uncertainty)
-    shape_penalty = 2.0 * (mean_deviation / max(12.0, uncertainty)) ** 2
-    shape_penalty += 1.5 * (max_deviation / max(25.0, uncertainty*2.0)) ** 2
-    return distance_penalty + shape_penalty + travel_prior
+    def score(self, route, route_distance):
+        if not route:
+            return float("inf")
+        uncertainty = self.uncertainty
+        distance_penalty = max(0.0, abs(route_distance-self.observed_distance)
+                               - 2.0*uncertainty) / self.distance_scale
+        travel_prior = (route_distance/self.continuity_scale if self.continuity_scale else
+                        route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0)
+        deviations = [self.deviation(coordinate) for coordinate in route]
+        mean_deviation = max(0.0, sum(deviations)/len(deviations)-uncertainty)
+        max_deviation = max(0.0, max(deviations)-2.0*uncertainty)
+        shape_penalty = 2.0 * (mean_deviation/max(12.0, uncertainty))**2
+        shape_penalty += 1.5 * (max_deviation/max(25.0, uncertainty*2.0))**2
+        return distance_penalty + shape_penalty + travel_prior
+
+    def lower_bound(self, route_distance):
+        """Original distance/travel terms with the nonnegative shape cost zero."""
+        uncertainty = self.uncertainty
+        distance_penalty = max(0.0, abs(route_distance-self.observed_distance)
+                               - 2.0*uncertainty) / self.distance_scale
+        travel_prior = (route_distance/self.continuity_scale if self.continuity_scale else
+                        route_distance/max(20.0, 2.0*uncertainty) if uncertainty else 0.0)
+        return distance_penalty + travel_prior
+
+
+def score_pedestrian_path(trace_start, trace_end, route, route_distance,
+                          length_metres, uncertainty=0.0, continuity_scale=None,
+                          prepared=None):
+    """Score the original connected path; optionally reuse its pair-local frame."""
+    context = prepared if prepared is not None else PedestrianPathScoreContext(
+        trace_start, trace_end, length_metres, uncertainty, continuity_scale)
+    return context.score(route, route_distance)
