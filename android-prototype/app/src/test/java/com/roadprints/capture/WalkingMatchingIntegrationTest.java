@@ -92,6 +92,7 @@ public class WalkingMatchingIntegrationTest {
         assertEquals("complete",saved.getString("processing_status"));
         assertEquals(priorCoverage,JourneyStore.ncnEvidenceHash(saved));
         assertEquals("retained_manual_edits",saved.getJSONObject("last_match_attempt").getString("outcome"));
+        assertTrue(JourneyListActivity.retainedEditedMatch(saved));
         assertEquals(old.toString(),saved.getJSONObject("processing_result").toString());
         assertEquals("[0]",saved.getJSONObject("journey_corrections").getJSONArray("removed_matched_segments").toString());
         assertTrue(saved.getString("error_summary").contains("preserved"));

@@ -1030,6 +1030,11 @@ public class JourneyListActivity extends Activity {
         }
     }
 
+    static boolean retainedEditedMatch(JSONObject journey) {
+        JSONObject attempt=journey.optJSONObject("last_match_attempt");
+        return attempt!=null&&"retained_manual_edits".equals(attempt.optString("outcome"));
+    }
+
     static JourneyPreview journeyPreview(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -1253,6 +1258,9 @@ public class JourneyListActivity extends Activity {
             statusText = isRoadMode(mode)
                     ? "Insufficient Timeline points for reliable road matching"
                     : "Not enough GPS evidence to match this journey";
+            statusColor = 0xFFF7C450;
+        } else if (retainedEditedMatch(journey)) {
+            statusText = "New match not applied · your edited route is preserved. Review saved section edits before rematching.";
             statusColor = 0xFFF7C450;
         } else if ("complete".equals(processingStatus) && hasMatchedGeometry) {
             boolean partial = isPartialMatchResult(journey.optJSONObject("processing_result"))
@@ -1743,6 +1751,9 @@ public class JourneyListActivity extends Activity {
                 }
                 try {
                     journey.put("processing_status", saved.optString("processing_status", "pending"));
+                    for(String key:new String[]{"journey_corrections","last_match_attempt","error_summary"}) {
+                        if(saved.has(key))journey.put(key,saved.opt(key));else journey.remove(key);
+                    }
                     if (saved.has("processing_result")) {
                         journey.put("processing_result", saved.optJSONObject("processing_result"));
                     } else {
@@ -1754,9 +1765,11 @@ public class JourneyListActivity extends Activity {
                 if (matched) {
                     refreshDetailPreview(dialogRef[0], saved);
                     boolean partial = isPartialMatchResult(saved.optJSONObject("processing_result"));
-                    status.setText(partial ? "Partially matched · some source sections could not be matched"
+                    boolean retained=retainedEditedMatch(saved);
+                    status.setText(retained ? "New match not applied · your edited route is preserved. Review saved section edits before rematching."
+                            : partial ? "Partially matched · some source sections could not be matched"
                             : "✓  Processed · matched route available");
-                    status.setTextColor(partial ? 0xFFF7C450 : 0xFF8BE0B1);
+                    status.setTextColor(partial||retained ? 0xFFF7C450 : 0xFF8BE0B1);
                     action.setText(forceRematch ? "REMATCH JOURNEY" : "VIEW & EDIT ON MAP");
                     action.setEnabled(true);
                     action.setAlpha(1f);
