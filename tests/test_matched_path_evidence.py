@@ -59,6 +59,8 @@ class MatchedPathEvidenceTests(unittest.TestCase):
                 patch.object(database.psycopg,'connect',return_value=connection), \
                 patch.object(database,'public_way_reference',wraps=database.public_way_reference) as references:
             result=database.match_pedestrian_reference([{'lng':.00025,'lat':51},{'lng':.00075,'lat':51}])
+        self.assertEqual("preloaded_pedestrian_network_v4", result["matcher"])
+        self.assertEqual(5,result["pedestrian_selection_version"])
         self.assertEqual(1,references.call_count)
         self.assertIsNotNone(result)
         evidence=result['matched_path_evidence']

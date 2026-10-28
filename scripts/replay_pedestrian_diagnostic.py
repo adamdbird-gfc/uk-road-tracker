@@ -18,6 +18,10 @@ t=j['route_geometry']['coordinates'];keep={0,len(t)-1};ranges=[(0,len(t)-1)]
 def metres(a,b):
  x,y=math.radians(a[1]),math.radians(b[1]);h=math.sin((y-x)/2)**2+math.cos(x)*math.cos(y)*math.sin(math.radians(b[0]-a[0])/2)**2
  return 12742000*math.asin(min(1,math.sqrt(h)))
+matched=j['processing_result']['geojson']['features'][0]['geometry']['coordinates']
+last=min(range(len(t)),key=lambda i:metres(t[i],matched[-1]))
+extension=[matched[-1]]+t[last+1:]
+print('Old editor inferred endpoint tail:',len(extension),'points,',round(sum(metres(a,b) for a,b in zip(extension,extension[1:])),2),'m')
 def gap(p,a,b):
  scale=math.cos(math.radians(p[1]));dx=(b[0]-a[0])*scale;dy=b[1]-a[1];px=(p[0]-a[0])*scale;py=p[1]-a[1];norm=dx*dx+dy*dy;f=max(0,min(1,(px*dx+py*dy)/norm)) if norm else 0
  return math.hypot(px-f*dx,py-f*dy)*111195

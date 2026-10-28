@@ -716,7 +716,7 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
         "type": "Feature",
         "properties": {
             "reference_area": "preloaded_public_network",
-            "matcher": "preloaded_pedestrian_network_v5",
+            "matcher": "preloaded_pedestrian_network_v4",
             "confidence": 1.0,
         },
         "geometry": {"type": "LineString", "coordinates": coordinates},
@@ -731,7 +731,8 @@ def match_pedestrian_reference(points: list[dict]) -> dict | None:
     profile["settled_nodes"] = shortest_paths_to_targets.settled_nodes
     return {
         "status": "ok",
-        "matcher": "preloaded_pedestrian_network_v5",
+        "matcher": "preloaded_pedestrian_network_v4",
+        "pedestrian_selection_version": 5,
         "matcher_profile": profile,
         "matched_path_evidence": evidence,
         "input_points": len(points),
