@@ -1,6 +1,14 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-25. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
+
+## Pedestrian backend — deployed and verified 28 October 2026
+
+Backend-only PR224 merged to main as **610a8011a26e8c13077660b02bc98408156de435**; Render **dep-dbgtg329lscs7393fiv0** is live. HTTP200 health/database ready; /match-walking returns **pedestrian_selection_version=5**, compatible matcher family v4. All100 backend/PostgreSQL tests and driving recovery passed. No Android development merge, migration, APK build or NCN reference change.
+
+Actual identical117-point Charing Cross live replay:416→409 coordinates;2422.7→2486.5 m; immediate reversals23→22; repeated exact-edge distance225.37→219.80 m. Both post-deploy responses match the tested revision exactly. Live matcher work11.285→8.090 s (confirmation8.179 s); these are development replay measurements, not phone timings. **Visual improvement remains modest; remaining hooks/retraces are not claimed fixed.**
+
+Installed private Android **0.25.219 (265)** can explicitly rematch saved journeys and display the new GeoJSON without another release. Reopening alone does not refresh old matches; Debug Journey should show pedestrian_selection_version5 after rematching. Android code remains on PR223's separate development lineage; main's older Android source was intentionally not merged. See [live deployment, geometry comparison and remaining limits](pedestrian-backend-deployment.md).
 
 ## Current Android and backend entrypoint — 25 October 2026
 
