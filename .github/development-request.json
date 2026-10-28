@@ -1,7 +1,7 @@
 {
   "channel": "development",
-  "version_name": "0.25.219",
-  "version_code": 265,
-  "reason": "Walking editor matched geometry and request diagnostics; selection revision 5 backend pending separate deployment. One private owner APK, no Firebase distribution.",
-  "revision": 14
+  "version_name": "0.25.220",
+  "version_code": 266,
+  "reason": "Correct evidence-aware walking geometry and identity rendering cache after green integrated checks; one private owner APK, no Firebase distribution.",
+  "revision": 15
 }
