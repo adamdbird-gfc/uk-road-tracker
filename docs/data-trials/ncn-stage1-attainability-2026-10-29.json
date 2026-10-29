@@ -1,0 +1,4898 @@
+{
+  "schema_version": 1,
+  "status": "partial_correction_full_attainability_blocked",
+  "baseline_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+  "candidate_sha256": "c2d0927abb3bc9e89645d4bf042f8eacc96bfbd08d3de3328c253a7589b2fc1e",
+  "candidate_manifest": {
+    "attribution": "\u00a9 OpenStreetMap contributors (ODbL 1.0); official open scope: Walk Wheel Cycle Trust (OGL 3.0).",
+    "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+    "compressed_bytes": 142570731,
+    "compressed_sha256": "3cb84578163c303da2ab212e79249f749424d36d81b4b87a13b60c2deadd3190",
+    "database_bytes": 243351552,
+    "filename": "collections/published/ncn/c2d0927abb3bc9e89645d4bf042f8eacc96bfbd08d3de3328c253a7589b2fc1e/catalogue.db.gz",
+    "held_route_keys": [
+      "NCN:207",
+      "NCN:253",
+      "NCN:274",
+      "NCN:323",
+      "NCN:410",
+      "NCN:422",
+      "NCN:524",
+      "NCN:626",
+      "NCN:689",
+      "NCN:776",
+      "NCN:820",
+      "RCN:11",
+      "RCN:12",
+      "RCN:15",
+      "RCN:16",
+      "RCN:17",
+      "RCN:21",
+      "RCN:30",
+      "RCN:31",
+      "RCN:32",
+      "RCN:40",
+      "RCN:41",
+      "RCN:50",
+      "RCN:51",
+      "RCN:55",
+      "RCN:61",
+      "RCN:67",
+      "RCN:71",
+      "RCN:80",
+      "RCN:81",
+      "RCN:82",
+      "RCN:83",
+      "RCN:85",
+      "RCN:89"
+    ],
+    "network_length_m": 17435132.494005967,
+    "revision": 2,
+    "schema_version": 2,
+    "scope": "national-verified-open-checkpoint",
+    "sha256": "c2d0927abb3bc9e89645d4bf042f8eacc96bfbd08d3de3328c253a7589b2fc1e",
+    "source_ways": 62399,
+    "supported_identities": 219,
+    "whole_published_route_ready": false
+  },
+  "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+  "input_pins_sha256": "a706b3ce8c0307c5410954045e68d938ae7f2616dc8c6e32c29b48ca5b8d0641",
+  "geometry_identity_and_mode_changes": 0,
+  "candidate_only_not_published": true,
+  "capacity_is_synthetic_not_personal_travel": true,
+  "counts": {
+    "source_rows_checked": 62487,
+    "corrected_binding_rows": 56226,
+    "unbound_intervals": 385605
+  },
+  "corrected_source_rows": 2422,
+  "routes_with_corrections": 183,
+  "measurable_routes": 218,
+  "attainable_routes": 0,
+  "before_network": {
+    "target_m": 17435132.494005967,
+    "on_foot_m": 15449071.826687733,
+    "cycling_m": 16049033.4245956,
+    "combined_m": 16099973.626061544,
+    "unbound_m": 1335158.867944423,
+    "attainable": false,
+    "combined_percent": 92.34213523525882
+  },
+  "after_network": {
+    "target_m": 17435132.494005967,
+    "on_foot_m": 15449071.826687733,
+    "cycling_m": 16049033.4245956,
+    "combined_m": 16099973.626061544,
+    "unbound_m": 1335158.867944423,
+    "attainable": false,
+    "combined_percent": 92.34213523525882
+  },
+  "diagnostic_unbound_route_local_metres": {
+    "no_admitted_source_within_existing_offset": 522329.86497831973,
+    "nearby_source_without_unique_finite_correspondence": 799584.3381243823,
+    "deferred_alternative_neighbourhood": 12122.517854530231
+  },
+  "diagnostic_caveat": "Neighbourhood classification is a lead, not proof of access or a proposed binding. Exact intervals retained in unbound-intervals.jsonl.gz.",
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "before": {
+        "target_m": 1943972.4188039866,
+        "on_foot_m": 1764266.4141314537,
+        "cycling_m": 1798125.3915329014,
+        "combined_m": 1801243.7111433605,
+        "unbound_m": 142728.70766062615,
+        "attainable": false,
+        "combined_percent": 92.65788412016468
+      },
+      "after": {
+        "target_m": 1943972.4188039866,
+        "on_foot_m": 1764266.4141314537,
+        "cycling_m": 1798125.3915329014,
+        "combined_m": 1801243.7111433605,
+        "unbound_m": 142728.70766062615,
+        "attainable": false,
+        "combined_percent": 92.65788412016468
+      },
+      "corrected_source_rows": 247
+    },
+    {
+      "route_key": "NCN:10",
+      "before": {
+        "target_m": 232324.24870637778,
+        "on_foot_m": 209148.05529437948,
+        "cycling_m": 210562.10207524098,
+        "combined_m": 210625.22919238114,
+        "unbound_m": 21699.019513996638,
+        "attainable": false,
+        "combined_percent": 90.6600281138019
+      },
+      "after": {
+        "target_m": 232324.24870637778,
+        "on_foot_m": 209148.05529437948,
+        "cycling_m": 210562.10207524098,
+        "combined_m": 210625.22919238114,
+        "unbound_m": 21699.019513996638,
+        "attainable": false,
+        "combined_percent": 90.6600281138019
+      },
+      "corrected_source_rows": 13
+    },
+    {
+      "route_key": "NCN:11",
+      "before": {
+        "target_m": 94198.79094601293,
+        "on_foot_m": 88011.74424076143,
+        "cycling_m": 89333.1485195352,
+        "combined_m": 89445.68473737499,
+        "unbound_m": 4753.106208637939,
+        "attainable": false,
+        "combined_percent": 94.95417493058692
+      },
+      "after": {
+        "target_m": 94198.79094601293,
+        "on_foot_m": 88011.74424076143,
+        "cycling_m": 89333.1485195352,
+        "combined_m": 89445.68473737499,
+        "unbound_m": 4753.106208637939,
+        "attainable": false,
+        "combined_percent": 94.95417493058692
+      },
+      "corrected_source_rows": 11
+    },
+    {
+      "route_key": "NCN:110",
+      "before": {
+        "target_m": 6843.589006917979,
+        "on_foot_m": 6545.6244754409545,
+        "cycling_m": 6555.157805290374,
+        "combined_m": 6555.157805290374,
+        "unbound_m": 288.4312016276044,
+        "attainable": false,
+        "combined_percent": 95.78538101373363
+      },
+      "after": {
+        "target_m": 6843.589006917979,
+        "on_foot_m": 6545.6244754409545,
+        "cycling_m": 6555.157805290374,
+        "combined_m": 6555.157805290374,
+        "unbound_m": 288.4312016276044,
+        "attainable": false,
+        "combined_percent": 95.78538101373363
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:12",
+      "before": {
+        "target_m": 196613.73559746594,
+        "on_foot_m": 180865.7526428625,
+        "cycling_m": 184219.3042892975,
+        "combined_m": 184233.21558133038,
+        "unbound_m": 12380.52001613556,
+        "attainable": false,
+        "combined_percent": 93.70312558351334
+      },
+      "after": {
+        "target_m": 196613.73559746594,
+        "on_foot_m": 180865.7526428625,
+        "cycling_m": 184219.3042892975,
+        "combined_m": 184233.21558133038,
+        "unbound_m": 12380.52001613556,
+        "attainable": false,
+        "combined_percent": 93.70312558351334
+      },
+      "corrected_source_rows": 30
+    },
+    {
+      "route_key": "NCN:125",
+      "before": {
+        "target_m": 5515.472328023311,
+        "on_foot_m": 2491.6879201801644,
+        "cycling_m": 3496.264090138439,
+        "combined_m": 3516.7885807563453,
+        "unbound_m": 1998.6837472669658,
+        "attainable": false,
+        "combined_percent": 63.76223778493194
+      },
+      "after": {
+        "target_m": 5515.472328023311,
+        "on_foot_m": 2491.6879201801644,
+        "cycling_m": 3496.264090138439,
+        "combined_m": 3516.7885807563453,
+        "unbound_m": 1998.6837472669658,
+        "attainable": false,
+        "combined_percent": 63.76223778493194
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:13",
+      "before": {
+        "target_m": 240317.03600222626,
+        "on_foot_m": 223155.21765340705,
+        "cycling_m": 225890.21700727532,
+        "combined_m": 227277.05918316508,
+        "unbound_m": 13039.97681906118,
+        "attainable": false,
+        "combined_percent": 94.57384418683478
+      },
+      "after": {
+        "target_m": 240317.03600222626,
+        "on_foot_m": 223155.21765340705,
+        "cycling_m": 225890.21700727532,
+        "combined_m": 227277.05918316508,
+        "unbound_m": 13039.97681906118,
+        "attainable": false,
+        "combined_percent": 94.57384418683478
+      },
+      "corrected_source_rows": 39
+    },
+    {
+      "route_key": "NCN:136",
+      "before": {
+        "target_m": 17697.608819588775,
+        "on_foot_m": 15676.779661604802,
+        "cycling_m": 15725.762694465848,
+        "combined_m": 15731.538856973257,
+        "unbound_m": 1966.0699626155183,
+        "attainable": false,
+        "combined_percent": 88.89075929602787
+      },
+      "after": {
+        "target_m": 17697.608819588775,
+        "on_foot_m": 15676.779661604802,
+        "cycling_m": 15725.762694465848,
+        "combined_m": 15731.538856973257,
+        "unbound_m": 1966.0699626155183,
+        "attainable": false,
+        "combined_percent": 88.89075929602787
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:137",
+      "before": {
+        "target_m": 3053.2766885010283,
+        "on_foot_m": 2655.675229425688,
+        "cycling_m": 697.8367015044678,
+        "combined_m": 2730.5457484671592,
+        "unbound_m": 322.73094003386905,
+        "attainable": false,
+        "combined_percent": 89.43001329524739
+      },
+      "after": {
+        "target_m": 3053.2766885010283,
+        "on_foot_m": 2655.675229425688,
+        "cycling_m": 697.8367015044678,
+        "combined_m": 2730.5457484671592,
+        "unbound_m": 322.73094003386905,
+        "attainable": false,
+        "combined_percent": 89.43001329524739
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:14",
+      "before": {
+        "target_m": 139951.6453706928,
+        "on_foot_m": 123690.97220465797,
+        "cycling_m": 130792.56493679622,
+        "combined_m": 131169.6073042281,
+        "unbound_m": 8782.03806646471,
+        "attainable": false,
+        "combined_percent": 93.72494832539944
+      },
+      "after": {
+        "target_m": 139951.6453706928,
+        "on_foot_m": 123690.97220465797,
+        "cycling_m": 130792.56493679622,
+        "combined_m": 131169.6073042281,
+        "unbound_m": 8782.03806646471,
+        "attainable": false,
+        "combined_percent": 93.72494832539944
+      },
+      "corrected_source_rows": 21
+    },
+    {
+      "route_key": "NCN:141",
+      "before": {
+        "target_m": 10883.645941059687,
+        "on_foot_m": 10073.982501223067,
+        "cycling_m": 10073.982501223067,
+        "combined_m": 10073.982501223067,
+        "unbound_m": 809.6634398366205,
+        "attainable": false,
+        "combined_percent": 92.5607333772033
+      },
+      "after": {
+        "target_m": 10883.645941059687,
+        "on_foot_m": 10073.982501223067,
+        "cycling_m": 10073.982501223067,
+        "combined_m": 10073.982501223067,
+        "unbound_m": 809.6634398366205,
+        "attainable": false,
+        "combined_percent": 92.5607333772033
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:15",
+      "before": {
+        "target_m": 52210.77775270417,
+        "on_foot_m": 47287.2183176663,
+        "cycling_m": 47527.12580379562,
+        "combined_m": 47623.62968953816,
+        "unbound_m": 4587.148063166009,
+        "attainable": false,
+        "combined_percent": 91.2141740448821
+      },
+      "after": {
+        "target_m": 52210.77775270417,
+        "on_foot_m": 47287.2183176663,
+        "cycling_m": 47527.12580379562,
+        "combined_m": 47623.62968953816,
+        "unbound_m": 4587.148063166009,
+        "attainable": false,
+        "combined_percent": 91.2141740448821
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:150",
+      "before": {
+        "target_m": 15828.153633279368,
+        "on_foot_m": 9034.953262254185,
+        "cycling_m": 15111.177568982408,
+        "combined_m": 15240.50791813502,
+        "unbound_m": 587.6457151443483,
+        "attainable": false,
+        "combined_percent": 96.28733882195331
+      },
+      "after": {
+        "target_m": 15828.153633279368,
+        "on_foot_m": 9034.953262254185,
+        "cycling_m": 15111.177568982408,
+        "combined_m": 15240.50791813502,
+        "unbound_m": 587.6457151443483,
+        "attainable": false,
+        "combined_percent": 96.28733882195331
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:151",
+      "before": {
+        "target_m": 3278.961652804842,
+        "on_foot_m": 2099.5512359823388,
+        "cycling_m": 2099.5512359823388,
+        "combined_m": 2099.5512359823388,
+        "unbound_m": 1179.410416822503,
+        "attainable": false,
+        "combined_percent": 64.03097865406176
+      },
+      "after": {
+        "target_m": 3278.961652804842,
+        "on_foot_m": 2099.5512359823388,
+        "cycling_m": 2099.5512359823388,
+        "combined_m": 2099.5512359823388,
+        "unbound_m": 1179.410416822503,
+        "attainable": false,
+        "combined_percent": 64.03097865406176
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:155",
+      "before": {
+        "target_m": 11920.213141195401,
+        "on_foot_m": 11469.765455451274,
+        "cycling_m": 11477.89887145282,
+        "combined_m": 11477.89887145282,
+        "unbound_m": 442.314269742581,
+        "attainable": false,
+        "combined_percent": 96.2893761671595
+      },
+      "after": {
+        "target_m": 11920.213141195401,
+        "on_foot_m": 11469.765455451274,
+        "cycling_m": 11477.89887145282,
+        "combined_m": 11477.89887145282,
+        "unbound_m": 442.314269742581,
+        "attainable": false,
+        "combined_percent": 96.2893761671595
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:16",
+      "before": {
+        "target_m": 68120.32815612688,
+        "on_foot_m": 59401.2603565818,
+        "cycling_m": 64227.716259880835,
+        "combined_m": 64418.47445458551,
+        "unbound_m": 3701.853701541375,
+        "attainable": false,
+        "combined_percent": 94.56571363975671
+      },
+      "after": {
+        "target_m": 68120.32815612688,
+        "on_foot_m": 59401.2603565818,
+        "cycling_m": 64227.716259880835,
+        "combined_m": 64418.47445458551,
+        "unbound_m": 3701.853701541375,
+        "attainable": false,
+        "combined_percent": 94.56571363975671
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:164",
+      "before": {
+        "target_m": 60897.599967122376,
+        "on_foot_m": 55720.96110466627,
+        "cycling_m": 55687.92606457592,
+        "combined_m": 55758.74008230573,
+        "unbound_m": 5138.859884816644,
+        "attainable": false,
+        "combined_percent": 91.56147387156304
+      },
+      "after": {
+        "target_m": 60897.599967122376,
+        "on_foot_m": 55720.96110466627,
+        "cycling_m": 55687.92606457592,
+        "combined_m": 55758.74008230573,
+        "unbound_m": 5138.859884816644,
+        "attainable": false,
+        "combined_percent": 91.56147387156304
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:165",
+      "before": {
+        "target_m": 115211.78998202892,
+        "on_foot_m": 112337.36547263141,
+        "cycling_m": 112337.36547263141,
+        "combined_m": 112337.36547263141,
+        "unbound_m": 2874.424509397504,
+        "attainable": false,
+        "combined_percent": 97.50509517311912
+      },
+      "after": {
+        "target_m": 115211.78998202892,
+        "on_foot_m": 112337.36547263141,
+        "cycling_m": 112337.36547263141,
+        "combined_m": 112337.36547263141,
+        "unbound_m": 2874.424509397504,
+        "attainable": false,
+        "combined_percent": 97.50509517311912
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:166",
+      "before": {
+        "target_m": 56994.74351098911,
+        "on_foot_m": 56356.02829371332,
+        "cycling_m": 56356.02829371332,
+        "combined_m": 56356.02829371332,
+        "unbound_m": 638.7152172757851,
+        "attainable": false,
+        "combined_percent": 98.87934364130854
+      },
+      "after": {
+        "target_m": 56994.74351098911,
+        "on_foot_m": 56356.02829371332,
+        "cycling_m": 56356.02829371332,
+        "combined_m": 56356.02829371332,
+        "unbound_m": 638.7152172757851,
+        "attainable": false,
+        "combined_percent": 98.87934364130854
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:167",
+      "before": {
+        "target_m": 28789.982924431253,
+        "on_foot_m": 28089.15241458156,
+        "cycling_m": 28432.903836992395,
+        "combined_m": 28432.903836992395,
+        "unbound_m": 357.07908743885855,
+        "attainable": false,
+        "combined_percent": 98.7597106661156
+      },
+      "after": {
+        "target_m": 28789.982924431253,
+        "on_foot_m": 28089.15241458156,
+        "cycling_m": 28432.903836992395,
+        "combined_m": 28432.903836992395,
+        "unbound_m": 357.07908743885855,
+        "attainable": false,
+        "combined_percent": 98.7597106661156
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:168",
+      "before": {
+        "target_m": 20715.667331420744,
+        "on_foot_m": 18585.18643287359,
+        "cycling_m": 17422.812529783405,
+        "combined_m": 19196.934720149806,
+        "unbound_m": 1518.732611270938,
+        "attainable": false,
+        "combined_percent": 92.6686763840459
+      },
+      "after": {
+        "target_m": 20715.667331420744,
+        "on_foot_m": 18585.18643287359,
+        "cycling_m": 17422.812529783405,
+        "combined_m": 19196.934720149806,
+        "unbound_m": 1518.732611270938,
+        "attainable": false,
+        "combined_percent": 92.6686763840459
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:169",
+      "before": {
+        "target_m": 9074.277925675058,
+        "on_foot_m": 5316.879171067287,
+        "cycling_m": 6476.755572210489,
+        "combined_m": 6476.755572210489,
+        "unbound_m": 2597.5223534645693,
+        "attainable": false,
+        "combined_percent": 71.37488652276062
+      },
+      "after": {
+        "target_m": 9074.277925675058,
+        "on_foot_m": 5316.879171067287,
+        "cycling_m": 6476.755572210489,
+        "combined_m": 6476.755572210489,
+        "unbound_m": 2597.5223534645693,
+        "attainable": false,
+        "combined_percent": 71.37488652276062
+      },
+      "corrected_source_rows": 15
+    },
+    {
+      "route_key": "NCN:17",
+      "before": {
+        "target_m": 55782.942694001285,
+        "on_foot_m": 47028.231450052896,
+        "cycling_m": 47848.72994128511,
+        "combined_m": 47949.35605015156,
+        "unbound_m": 7833.586643849725,
+        "attainable": false,
+        "combined_percent": 85.95702150956599
+      },
+      "after": {
+        "target_m": 55782.942694001285,
+        "on_foot_m": 47028.231450052896,
+        "cycling_m": 47848.72994128511,
+        "combined_m": 47949.35605015156,
+        "unbound_m": 7833.586643849725,
+        "attainable": false,
+        "combined_percent": 85.95702150956599
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:174",
+      "before": {
+        "target_m": 14579.384412601963,
+        "on_foot_m": 12850.653497517802,
+        "cycling_m": 12786.685131028724,
+        "combined_m": 12918.565118926557,
+        "unbound_m": 1660.8192936754058,
+        "attainable": false,
+        "combined_percent": 88.6084402010839
+      },
+      "after": {
+        "target_m": 14579.384412601963,
+        "on_foot_m": 12850.653497517802,
+        "cycling_m": 12786.685131028724,
+        "combined_m": 12918.565118926557,
+        "unbound_m": 1660.8192936754058,
+        "attainable": false,
+        "combined_percent": 88.6084402010839
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:177",
+      "before": {
+        "target_m": 15147.377380842527,
+        "on_foot_m": 12426.376443243544,
+        "cycling_m": 12430.259506584684,
+        "combined_m": 12430.259506584684,
+        "unbound_m": 2717.117874257843,
+        "attainable": false,
+        "combined_percent": 82.0621233237756
+      },
+      "after": {
+        "target_m": 15147.377380842527,
+        "on_foot_m": 12426.376443243544,
+        "cycling_m": 12430.259506584684,
+        "combined_m": 12430.259506584684,
+        "unbound_m": 2717.117874257843,
+        "attainable": false,
+        "combined_percent": 82.0621233237756
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:179",
+      "before": {
+        "target_m": 19687.07554122239,
+        "on_foot_m": 18142.849481641115,
+        "cycling_m": 18905.50785557219,
+        "combined_m": 18905.50785557219,
+        "unbound_m": 781.5676856502032,
+        "attainable": false,
+        "combined_percent": 96.03004679890778
+      },
+      "after": {
+        "target_m": 19687.07554122239,
+        "on_foot_m": 18142.849481641115,
+        "cycling_m": 18905.50785557219,
+        "combined_m": 18905.50785557219,
+        "unbound_m": 781.5676856502032,
+        "attainable": false,
+        "combined_percent": 96.03004679890778
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:18",
+      "before": {
+        "target_m": 99544.7683300006,
+        "on_foot_m": 92750.05521289608,
+        "cycling_m": 94851.52513679968,
+        "combined_m": 94851.52513679968,
+        "unbound_m": 4693.24319320092,
+        "attainable": false,
+        "combined_percent": 95.2852939718114
+      },
+      "after": {
+        "target_m": 99544.7683300006,
+        "on_foot_m": 92750.05521289608,
+        "cycling_m": 94851.52513679968,
+        "combined_m": 94851.52513679968,
+        "unbound_m": 4693.24319320092,
+        "attainable": false,
+        "combined_percent": 95.2852939718114
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:195",
+      "before": {
+        "target_m": 65274.05421072938,
+        "on_foot_m": 44671.10295832742,
+        "cycling_m": 60925.33480212062,
+        "combined_m": 60925.33480212062,
+        "unbound_m": 4348.719408608762,
+        "attainable": false,
+        "combined_percent": 93.33775194264868
+      },
+      "after": {
+        "target_m": 65274.05421072938,
+        "on_foot_m": 44671.10295832742,
+        "cycling_m": 60925.33480212062,
+        "combined_m": 60925.33480212062,
+        "unbound_m": 4348.719408608762,
+        "attainable": false,
+        "combined_percent": 93.33775194264868
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:196",
+      "before": {
+        "target_m": 32590.165606541403,
+        "on_foot_m": 31957.555917568105,
+        "cycling_m": 31957.555917568105,
+        "combined_m": 31957.555917568105,
+        "unbound_m": 632.609688973298,
+        "attainable": false,
+        "combined_percent": 98.05889391109346
+      },
+      "after": {
+        "target_m": 32590.165606541403,
+        "on_foot_m": 31957.555917568105,
+        "cycling_m": 31957.555917568105,
+        "combined_m": 31957.555917568105,
+        "unbound_m": 632.609688973298,
+        "attainable": false,
+        "combined_percent": 98.05889391109346
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:2",
+      "before": {
+        "target_m": 565505.8691796699,
+        "on_foot_m": 513225.6616508574,
+        "cycling_m": 519193.7674183935,
+        "combined_m": 528757.7266742943,
+        "unbound_m": 36748.14250537555,
+        "attainable": false,
+        "combined_percent": 93.50172217333785
+      },
+      "after": {
+        "target_m": 565505.8691796699,
+        "on_foot_m": 513225.6616508574,
+        "cycling_m": 519193.7674183935,
+        "combined_m": 528757.7266742943,
+        "unbound_m": 36748.14250537555,
+        "attainable": false,
+        "combined_percent": 93.50172217333785
+      },
+      "corrected_source_rows": 82
+    },
+    {
+      "route_key": "NCN:20",
+      "before": {
+        "target_m": 45357.414128543474,
+        "on_foot_m": 36472.85065468313,
+        "cycling_m": 37397.99031370255,
+        "combined_m": 37404.06889968604,
+        "unbound_m": 7953.3452288574335,
+        "attainable": false,
+        "combined_percent": 82.4651705092412
+      },
+      "after": {
+        "target_m": 45357.414128543474,
+        "on_foot_m": 36472.85065468313,
+        "cycling_m": 37397.99031370255,
+        "combined_m": 37404.06889968604,
+        "unbound_m": 7953.3452288574335,
+        "attainable": false,
+        "combined_percent": 82.4651705092412
+      },
+      "corrected_source_rows": 18
+    },
+    {
+      "route_key": "NCN:208",
+      "before": {
+        "target_m": 8571.52567737116,
+        "on_foot_m": 7153.207142762858,
+        "cycling_m": 7346.2413788897065,
+        "combined_m": 7624.820951213717,
+        "unbound_m": 946.7047261574435,
+        "attainable": false,
+        "combined_percent": 88.95523665458127
+      },
+      "after": {
+        "target_m": 8571.52567737116,
+        "on_foot_m": 7153.207142762858,
+        "cycling_m": 7346.2413788897065,
+        "combined_m": 7624.820951213717,
+        "unbound_m": 946.7047261574435,
+        "attainable": false,
+        "combined_percent": 88.95523665458127
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:21",
+      "before": {
+        "target_m": 152539.17817917062,
+        "on_foot_m": 136446.104284463,
+        "cycling_m": 140988.35764109687,
+        "combined_m": 141364.21712327644,
+        "unbound_m": 11174.961055894179,
+        "attainable": false,
+        "combined_percent": 92.67403876873638
+      },
+      "after": {
+        "target_m": 152539.17817917062,
+        "on_foot_m": 136446.104284463,
+        "cycling_m": 140988.35764109687,
+        "combined_m": 141364.21712327644,
+        "unbound_m": 11174.961055894179,
+        "attainable": false,
+        "combined_percent": 92.67403876873638
+      },
+      "corrected_source_rows": 22
+    },
+    {
+      "route_key": "NCN:22",
+      "before": {
+        "target_m": 153629.2253777585,
+        "on_foot_m": 140545.96459549025,
+        "cycling_m": 141324.96488107598,
+        "combined_m": 141486.07640745366,
+        "unbound_m": 12143.148970304843,
+        "attainable": false,
+        "combined_percent": 92.09580798155685
+      },
+      "after": {
+        "target_m": 153629.2253777585,
+        "on_foot_m": 140545.96459549025,
+        "cycling_m": 141324.96488107598,
+        "combined_m": 141486.07640745366,
+        "unbound_m": 12143.148970304843,
+        "attainable": false,
+        "combined_percent": 92.09580798155685
+      },
+      "corrected_source_rows": 24
+    },
+    {
+      "route_key": "NCN:221",
+      "before": {
+        "target_m": 13989.638926882943,
+        "on_foot_m": 13088.176425290585,
+        "cycling_m": 12695.980150060965,
+        "combined_m": 13088.176425290585,
+        "unbound_m": 901.4625015923575,
+        "attainable": false,
+        "combined_percent": 93.55621323535321
+      },
+      "after": {
+        "target_m": 13989.638926882943,
+        "on_foot_m": 13088.176425290585,
+        "cycling_m": 12695.980150060965,
+        "combined_m": 13088.176425290585,
+        "unbound_m": 901.4625015923575,
+        "attainable": false,
+        "combined_percent": 93.55621323535321
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:222",
+      "before": {
+        "target_m": 29083.680720021734,
+        "on_foot_m": 19336.96728405124,
+        "cycling_m": 25027.230754028864,
+        "combined_m": 25133.580581222144,
+        "unbound_m": 3950.1001387995893,
+        "attainable": false,
+        "combined_percent": 86.41815602080837
+      },
+      "after": {
+        "target_m": 29083.680720021734,
+        "on_foot_m": 19336.96728405124,
+        "cycling_m": 25027.230754028864,
+        "combined_m": 25133.580581222144,
+        "unbound_m": 3950.1001387995893,
+        "attainable": false,
+        "combined_percent": 86.41815602080837
+      },
+      "corrected_source_rows": 12
+    },
+    {
+      "route_key": "NCN:223",
+      "before": {
+        "target_m": 73185.21237161152,
+        "on_foot_m": 67911.10162687338,
+        "cycling_m": 67773.33516417004,
+        "combined_m": 68098.62772260074,
+        "unbound_m": 5086.58464901078,
+        "attainable": false,
+        "combined_percent": 93.04970979221498
+      },
+      "after": {
+        "target_m": 73185.21237161152,
+        "on_foot_m": 67911.10162687338,
+        "cycling_m": 67773.33516417004,
+        "combined_m": 68098.62772260074,
+        "unbound_m": 5086.58464901078,
+        "attainable": false,
+        "combined_percent": 93.04970979221498
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:224",
+      "before": {
+        "target_m": 21114.715469931736,
+        "on_foot_m": 16677.858457168953,
+        "cycling_m": 19999.740544308403,
+        "combined_m": 20020.04603963316,
+        "unbound_m": 1094.669430298578,
+        "attainable": false,
+        "combined_percent": 94.81560889675528
+      },
+      "after": {
+        "target_m": 21114.715469931736,
+        "on_foot_m": 16677.858457168953,
+        "cycling_m": 19999.740544308403,
+        "combined_m": 20020.04603963316,
+        "unbound_m": 1094.669430298578,
+        "attainable": false,
+        "combined_percent": 94.81560889675528
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:23",
+      "before": {
+        "target_m": 137132.0893298333,
+        "on_foot_m": 128091.98706368198,
+        "cycling_m": 128557.81159755058,
+        "combined_m": 129463.99720742102,
+        "unbound_m": 7668.092122412287,
+        "attainable": false,
+        "combined_percent": 94.40824378897283
+      },
+      "after": {
+        "target_m": 137132.0893298333,
+        "on_foot_m": 128091.98706368198,
+        "cycling_m": 128557.81159755058,
+        "combined_m": 129463.99720742102,
+        "unbound_m": 7668.092122412287,
+        "attainable": false,
+        "combined_percent": 94.40824378897283
+      },
+      "corrected_source_rows": 16
+    },
+    {
+      "route_key": "NCN:236",
+      "before": {
+        "target_m": 26753.387321512477,
+        "on_foot_m": 20306.70821369657,
+        "cycling_m": 24615.287763097862,
+        "combined_m": 24791.64971945737,
+        "unbound_m": 1961.7376020551055,
+        "attainable": false,
+        "combined_percent": 92.66733001515038
+      },
+      "after": {
+        "target_m": 26753.387321512477,
+        "on_foot_m": 20306.70821369657,
+        "cycling_m": 24615.287763097862,
+        "combined_m": 24791.64971945737,
+        "unbound_m": 1961.7376020551055,
+        "attainable": false,
+        "combined_percent": 92.66733001515038
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:24",
+      "before": {
+        "target_m": 110853.60799587631,
+        "on_foot_m": 103291.619395764,
+        "cycling_m": 104378.7491320608,
+        "combined_m": 104579.36012222862,
+        "unbound_m": 6274.247873647691,
+        "attainable": false,
+        "combined_percent": 94.3400598437165
+      },
+      "after": {
+        "target_m": 110853.60799587631,
+        "on_foot_m": 103291.619395764,
+        "cycling_m": 104378.7491320608,
+        "combined_m": 104579.36012222862,
+        "unbound_m": 6274.247873647691,
+        "attainable": false,
+        "combined_percent": 94.3400598437165
+      },
+      "corrected_source_rows": 14
+    },
+    {
+      "route_key": "NCN:244",
+      "before": {
+        "target_m": 5904.109210270869,
+        "on_foot_m": 5519.178320417063,
+        "cycling_m": 5519.178320417063,
+        "combined_m": 5519.178320417063,
+        "unbound_m": 384.93088985380564,
+        "attainable": false,
+        "combined_percent": 93.4802884542824
+      },
+      "after": {
+        "target_m": 5904.109210270869,
+        "on_foot_m": 5519.178320417063,
+        "cycling_m": 5519.178320417063,
+        "combined_m": 5519.178320417063,
+        "unbound_m": 384.93088985380564,
+        "attainable": false,
+        "combined_percent": 93.4802884542824
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:246",
+      "before": {
+        "target_m": 50758.047762516886,
+        "on_foot_m": 48829.26234327992,
+        "cycling_m": 48954.23114281562,
+        "combined_m": 48996.407645517946,
+        "unbound_m": 1761.6401169989404,
+        "attainable": false,
+        "combined_percent": 96.52933831253483
+      },
+      "after": {
+        "target_m": 50758.047762516886,
+        "on_foot_m": 48829.26234327992,
+        "cycling_m": 48954.23114281562,
+        "combined_m": 48996.407645517946,
+        "unbound_m": 1761.6401169989404,
+        "attainable": false,
+        "combined_percent": 96.52933831253483
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:248",
+      "before": {
+        "target_m": 3434.7421693718084,
+        "on_foot_m": 2365.7859219315883,
+        "cycling_m": 2365.7859219315883,
+        "combined_m": 2365.7859219315883,
+        "unbound_m": 1068.95624744022,
+        "attainable": false,
+        "combined_percent": 68.87812258596036
+      },
+      "after": {
+        "target_m": 3434.7421693718084,
+        "on_foot_m": 2365.7859219315883,
+        "cycling_m": 2365.7859219315883,
+        "combined_m": 2365.7859219315883,
+        "unbound_m": 1068.95624744022,
+        "attainable": false,
+        "combined_percent": 68.87812258596036
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:25",
+      "before": {
+        "target_m": 92727.72491444714,
+        "on_foot_m": 84121.78561894633,
+        "cycling_m": 87861.90659906609,
+        "combined_m": 87861.90659906609,
+        "unbound_m": 4865.818315381053,
+        "attainable": false,
+        "combined_percent": 94.75257446478885
+      },
+      "after": {
+        "target_m": 92727.72491444714,
+        "on_foot_m": 84121.78561894633,
+        "cycling_m": 87861.90659906609,
+        "combined_m": 87861.90659906609,
+        "unbound_m": 4865.818315381053,
+        "attainable": false,
+        "combined_percent": 94.75257446478885
+      },
+      "corrected_source_rows": 12
+    },
+    {
+      "route_key": "NCN:250",
+      "before": {
+        "target_m": 10268.168307751277,
+        "on_foot_m": 9592.082158036701,
+        "cycling_m": 9845.513510313776,
+        "combined_m": 9845.513510313776,
+        "unbound_m": 422.65479743750075,
+        "attainable": false,
+        "combined_percent": 95.88383453825503
+      },
+      "after": {
+        "target_m": 10268.168307751277,
+        "on_foot_m": 9592.082158036701,
+        "cycling_m": 9845.513510313776,
+        "combined_m": 9845.513510313776,
+        "unbound_m": 422.65479743750075,
+        "attainable": false,
+        "combined_percent": 95.88383453825503
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:256",
+      "before": {
+        "target_m": 22542.96045870898,
+        "on_foot_m": 17722.095987295215,
+        "cycling_m": 20047.87303819481,
+        "combined_m": 20047.87303819481,
+        "unbound_m": 2495.08742051417,
+        "attainable": false,
+        "combined_percent": 88.93185557822223
+      },
+      "after": {
+        "target_m": 22542.96045870898,
+        "on_foot_m": 17722.095987295215,
+        "cycling_m": 20047.87303819481,
+        "combined_m": 20047.87303819481,
+        "unbound_m": 2495.08742051417,
+        "attainable": false,
+        "combined_percent": 88.93185557822223
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:26",
+      "before": {
+        "target_m": 112890.46183617889,
+        "on_foot_m": 101900.73836271545,
+        "cycling_m": 108262.53757085785,
+        "combined_m": 108274.48530274205,
+        "unbound_m": 4615.976533436842,
+        "attainable": false,
+        "combined_percent": 95.91110138238666
+      },
+      "after": {
+        "target_m": 112890.46183617889,
+        "on_foot_m": 101900.73836271545,
+        "cycling_m": 108262.53757085785,
+        "combined_m": 108274.48530274205,
+        "unbound_m": 4615.976533436842,
+        "attainable": false,
+        "combined_percent": 95.91110138238666
+      },
+      "corrected_source_rows": 14
+    },
+    {
+      "route_key": "NCN:267",
+      "before": {
+        "target_m": 4756.679570760199,
+        "on_foot_m": 1839.3083217750143,
+        "cycling_m": 4116.51219194813,
+        "combined_m": 4136.571949995828,
+        "unbound_m": 620.107620764371,
+        "attainable": false,
+        "combined_percent": 86.96343506978614
+      },
+      "after": {
+        "target_m": 4756.679570760199,
+        "on_foot_m": 1839.3083217750143,
+        "cycling_m": 4116.51219194813,
+        "combined_m": 4136.571949995828,
+        "unbound_m": 620.107620764371,
+        "attainable": false,
+        "combined_percent": 86.96343506978614
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:27",
+      "before": {
+        "target_m": 120675.59053580389,
+        "on_foot_m": 100144.50524248168,
+        "cycling_m": 112852.0947349787,
+        "combined_m": 112914.18519676689,
+        "unbound_m": 7761.405339036995,
+        "attainable": false,
+        "combined_percent": 93.56837177711243
+      },
+      "after": {
+        "target_m": 120675.59053580389,
+        "on_foot_m": 100144.50524248168,
+        "cycling_m": 112852.0947349787,
+        "combined_m": 112914.18519676689,
+        "unbound_m": 7761.405339036995,
+        "attainable": false,
+        "combined_percent": 93.56837177711243
+      },
+      "corrected_source_rows": 21
+    },
+    {
+      "route_key": "NCN:270",
+      "before": {
+        "target_m": 2690.162858361819,
+        "on_foot_m": 2117.5559340050713,
+        "cycling_m": 2430.2202085106283,
+        "combined_m": 2430.2202085106283,
+        "unbound_m": 259.9426498511907,
+        "attainable": false,
+        "combined_percent": 90.33728946769105
+      },
+      "after": {
+        "target_m": 2690.162858361819,
+        "on_foot_m": 2117.5559340050713,
+        "cycling_m": 2430.2202085106283,
+        "combined_m": 2430.2202085106283,
+        "unbound_m": 259.9426498511907,
+        "attainable": false,
+        "combined_percent": 90.33728946769105
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:272",
+      "before": {
+        "target_m": 40547.439064213366,
+        "on_foot_m": 38429.81195184736,
+        "cycling_m": 38429.81195184736,
+        "combined_m": 38429.81195184736,
+        "unbound_m": 2117.6271123660044,
+        "attainable": false,
+        "combined_percent": 94.77740848438688
+      },
+      "after": {
+        "target_m": 40547.439064213366,
+        "on_foot_m": 38429.81195184736,
+        "cycling_m": 38429.81195184736,
+        "combined_m": 38429.81195184736,
+        "unbound_m": 2117.6271123660044,
+        "attainable": false,
+        "combined_percent": 94.77740848438688
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:278",
+      "before": {
+        "target_m": 11894.907413788353,
+        "on_foot_m": 11611.811826168452,
+        "cycling_m": 11611.811826168452,
+        "combined_m": 11611.811826168452,
+        "unbound_m": 283.09558761990047,
+        "attainable": false,
+        "combined_percent": 97.62002697648794
+      },
+      "after": {
+        "target_m": 11894.907413788353,
+        "on_foot_m": 11611.811826168452,
+        "cycling_m": 11611.811826168452,
+        "combined_m": 11611.811826168452,
+        "unbound_m": 283.09558761990047,
+        "attainable": false,
+        "combined_percent": 97.62002697648794
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:28",
+      "before": {
+        "target_m": 127236.55390914512,
+        "on_foot_m": 118025.18685762712,
+        "cycling_m": 118608.10754150226,
+        "combined_m": 118608.10754150226,
+        "unbound_m": 8628.446367642857,
+        "attainable": false,
+        "combined_percent": 93.21857901479783
+      },
+      "after": {
+        "target_m": 127236.55390914512,
+        "on_foot_m": 118025.18685762712,
+        "cycling_m": 118608.10754150226,
+        "combined_m": 118608.10754150226,
+        "unbound_m": 8628.446367642857,
+        "attainable": false,
+        "combined_percent": 93.21857901479783
+      },
+      "corrected_source_rows": 15
+    },
+    {
+      "route_key": "NCN:288",
+      "before": {
+        "target_m": 5836.8657617204535,
+        "on_foot_m": 5080.447014054321,
+        "cycling_m": 5080.447014054321,
+        "combined_m": 5080.447014054321,
+        "unbound_m": 756.4187476661327,
+        "attainable": false,
+        "combined_percent": 87.04066911000582
+      },
+      "after": {
+        "target_m": 5836.8657617204535,
+        "on_foot_m": 5080.447014054321,
+        "cycling_m": 5080.447014054321,
+        "combined_m": 5080.447014054321,
+        "unbound_m": 756.4187476661327,
+        "attainable": false,
+        "combined_percent": 87.04066911000582
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:3",
+      "before": {
+        "target_m": 505702.3423116841,
+        "on_foot_m": 471701.2869953141,
+        "cycling_m": 482519.48395651934,
+        "combined_m": 483452.57429543335,
+        "unbound_m": 22249.768016250746,
+        "attainable": false,
+        "combined_percent": 95.60022444931899
+      },
+      "after": {
+        "target_m": 505702.3423116841,
+        "on_foot_m": 471701.2869953141,
+        "cycling_m": 482519.48395651934,
+        "combined_m": 483452.57429543335,
+        "unbound_m": 22249.768016250746,
+        "attainable": false,
+        "combined_percent": 95.60022444931899
+      },
+      "corrected_source_rows": 42
+    },
+    {
+      "route_key": "NCN:304",
+      "before": {
+        "target_m": 17319.24115368731,
+        "on_foot_m": 17024.679218265195,
+        "cycling_m": 17024.679218265195,
+        "combined_m": 17024.679218265195,
+        "unbound_m": 294.5619354221162,
+        "attainable": false,
+        "combined_percent": 98.29922146814496
+      },
+      "after": {
+        "target_m": 17319.24115368731,
+        "on_foot_m": 17024.679218265195,
+        "cycling_m": 17024.679218265195,
+        "combined_m": 17024.679218265195,
+        "unbound_m": 294.5619354221162,
+        "attainable": false,
+        "combined_percent": 98.29922146814496
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:305",
+      "before": {
+        "target_m": 25538.669301081536,
+        "on_foot_m": 22681.892531881505,
+        "cycling_m": 24436.453980939536,
+        "combined_m": 24436.453980939536,
+        "unbound_m": 1102.2153201420006,
+        "attainable": false,
+        "combined_percent": 95.68413174880916
+      },
+      "after": {
+        "target_m": 25538.669301081536,
+        "on_foot_m": 22681.892531881505,
+        "cycling_m": 24436.453980939536,
+        "combined_m": 24436.453980939536,
+        "unbound_m": 1102.2153201420006,
+        "attainable": false,
+        "combined_percent": 95.68413174880916
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:32",
+      "before": {
+        "target_m": 62299.214264844246,
+        "on_foot_m": 56860.43707334998,
+        "cycling_m": 56554.09118508836,
+        "combined_m": 57095.61721087259,
+        "unbound_m": 5203.597053971658,
+        "attainable": false,
+        "combined_percent": 91.64741142344057
+      },
+      "after": {
+        "target_m": 62299.214264844246,
+        "on_foot_m": 56860.43707334998,
+        "cycling_m": 56554.09118508836,
+        "combined_m": 57095.61721087259,
+        "unbound_m": 5203.597053971658,
+        "attainable": false,
+        "combined_percent": 91.64741142344057
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:327",
+      "before": {
+        "target_m": 38655.40714205914,
+        "on_foot_m": 37730.74244422575,
+        "cycling_m": 37725.73632383882,
+        "combined_m": 37730.74244422575,
+        "unbound_m": 924.6646978333956,
+        "attainable": false,
+        "combined_percent": 97.60792922336779
+      },
+      "after": {
+        "target_m": 38655.40714205914,
+        "on_foot_m": 37730.74244422575,
+        "cycling_m": 37725.73632383882,
+        "combined_m": 37730.74244422575,
+        "unbound_m": 924.6646978333956,
+        "attainable": false,
+        "combined_percent": 97.60792922336779
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:33",
+      "before": {
+        "target_m": 87159.06599962362,
+        "on_foot_m": 73759.82740234536,
+        "cycling_m": 76204.21244994306,
+        "combined_m": 76236.00908888047,
+        "unbound_m": 10923.056910743151,
+        "attainable": false,
+        "combined_percent": 87.4676755820326
+      },
+      "after": {
+        "target_m": 87159.06599962362,
+        "on_foot_m": 73759.82740234536,
+        "cycling_m": 76204.21244994306,
+        "combined_m": 76236.00908888047,
+        "unbound_m": 10923.056910743151,
+        "attainable": false,
+        "combined_percent": 87.4676755820326
+      },
+      "corrected_source_rows": 14
+    },
+    {
+      "route_key": "NCN:334",
+      "before": {
+        "target_m": 10796.310207947883,
+        "on_foot_m": 10468.565056654788,
+        "cycling_m": 10468.565056654788,
+        "combined_m": 10468.565056654788,
+        "unbound_m": 327.74515129309475,
+        "attainable": false,
+        "combined_percent": 96.96428552921887
+      },
+      "after": {
+        "target_m": 10796.310207947883,
+        "on_foot_m": 10468.565056654788,
+        "cycling_m": 10468.565056654788,
+        "combined_m": 10468.565056654788,
+        "unbound_m": 327.74515129309475,
+        "attainable": false,
+        "combined_percent": 96.96428552921887
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:339",
+      "before": {
+        "target_m": 14534.47315879236,
+        "on_foot_m": 14306.847237008875,
+        "cycling_m": 14306.847237008875,
+        "combined_m": 14306.847237008875,
+        "unbound_m": 227.62592178348496,
+        "attainable": false,
+        "combined_percent": 98.43388942071294
+      },
+      "after": {
+        "target_m": 14534.47315879236,
+        "on_foot_m": 14306.847237008875,
+        "cycling_m": 14306.847237008875,
+        "combined_m": 14306.847237008875,
+        "unbound_m": 227.62592178348496,
+        "attainable": false,
+        "combined_percent": 98.43388942071294
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:34",
+      "before": {
+        "target_m": 10227.76422690689,
+        "on_foot_m": 5063.23783322026,
+        "cycling_m": 5882.643599293526,
+        "combined_m": 5882.643599293526,
+        "unbound_m": 4345.1206276133635,
+        "attainable": false,
+        "combined_percent": 57.51641775059349
+      },
+      "after": {
+        "target_m": 10227.76422690689,
+        "on_foot_m": 5063.23783322026,
+        "cycling_m": 5882.643599293526,
+        "combined_m": 5882.643599293526,
+        "unbound_m": 4345.1206276133635,
+        "attainable": false,
+        "combined_percent": 57.51641775059349
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:344",
+      "before": {
+        "target_m": 14273.240651508411,
+        "on_foot_m": 13942.513357280937,
+        "cycling_m": 13942.513357280937,
+        "combined_m": 13942.513357280937,
+        "unbound_m": 330.727294227474,
+        "attainable": false,
+        "combined_percent": 97.68288574191088
+      },
+      "after": {
+        "target_m": 14273.240651508411,
+        "on_foot_m": 13942.513357280937,
+        "cycling_m": 13942.513357280937,
+        "combined_m": 13942.513357280937,
+        "unbound_m": 330.727294227474,
+        "attainable": false,
+        "combined_percent": 97.68288574191088
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:4",
+      "before": {
+        "target_m": 680116.3093395459,
+        "on_foot_m": 549135.9676482534,
+        "cycling_m": 598275.2557078548,
+        "combined_m": 603468.3243497016,
+        "unbound_m": 76647.98498984426,
+        "attainable": false,
+        "combined_percent": 88.73016512950905
+      },
+      "after": {
+        "target_m": 680116.3093395459,
+        "on_foot_m": 549135.9676482534,
+        "cycling_m": 598275.2557078548,
+        "combined_m": 603468.3243497016,
+        "unbound_m": 76647.98498984426,
+        "attainable": false,
+        "combined_percent": 88.73016512950905
+      },
+      "corrected_source_rows": 119
+    },
+    {
+      "route_key": "NCN:403",
+      "before": {
+        "target_m": 64313.7273574212,
+        "on_foot_m": 61479.048270786574,
+        "cycling_m": 61514.469521605235,
+        "combined_m": 61537.30880520493,
+        "unbound_m": 2776.4185522162734,
+        "attainable": false,
+        "combined_percent": 95.68300786426757
+      },
+      "after": {
+        "target_m": 64313.7273574212,
+        "on_foot_m": 61479.048270786574,
+        "cycling_m": 61514.469521605235,
+        "combined_m": 61537.30880520493,
+        "unbound_m": 2776.4185522162734,
+        "attainable": false,
+        "combined_percent": 95.68300786426757
+      },
+      "corrected_source_rows": 16
+    },
+    {
+      "route_key": "NCN:41",
+      "before": {
+        "target_m": 185373.40105659203,
+        "on_foot_m": 163178.3681432178,
+        "cycling_m": 166538.45201750216,
+        "combined_m": 166680.0953781244,
+        "unbound_m": 18693.305678467645,
+        "attainable": false,
+        "combined_percent": 89.91586410352322
+      },
+      "after": {
+        "target_m": 185373.40105659203,
+        "on_foot_m": 163178.3681432178,
+        "cycling_m": 166538.45201750216,
+        "combined_m": 166680.0953781244,
+        "unbound_m": 18693.305678467645,
+        "attainable": false,
+        "combined_percent": 89.91586410352322
+      },
+      "corrected_source_rows": 22
+    },
+    {
+      "route_key": "NCN:411",
+      "before": {
+        "target_m": 1563.4202583650522,
+        "on_foot_m": 841.2640469479153,
+        "cycling_m": 899.5182472144787,
+        "combined_m": 940.5395411792566,
+        "unbound_m": 622.8807171857956,
+        "attainable": false,
+        "combined_percent": 60.15909901044947
+      },
+      "after": {
+        "target_m": 1563.4202583650522,
+        "on_foot_m": 841.2640469479153,
+        "cycling_m": 899.5182472144787,
+        "combined_m": 940.5395411792566,
+        "unbound_m": 622.8807171857956,
+        "attainable": false,
+        "combined_percent": 60.15909901044947
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:416",
+      "before": {
+        "target_m": 20709.886177553035,
+        "on_foot_m": 16514.417442342725,
+        "cycling_m": 18321.499990911732,
+        "combined_m": 18341.631737093478,
+        "unbound_m": 2368.2544404595574,
+        "attainable": false,
+        "combined_percent": 88.5646187518575
+      },
+      "after": {
+        "target_m": 20709.886177553035,
+        "on_foot_m": 16514.417442342725,
+        "cycling_m": 18321.499990911732,
+        "combined_m": 18341.631737093478,
+        "unbound_m": 2368.2544404595574,
+        "attainable": false,
+        "combined_percent": 88.5646187518575
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:42",
+      "before": {
+        "target_m": 98169.43960473515,
+        "on_foot_m": 92615.43588686793,
+        "cycling_m": 94056.28140382975,
+        "combined_m": 94400.64801463966,
+        "unbound_m": 3768.791590095483,
+        "attainable": false,
+        "combined_percent": 96.16093195064578
+      },
+      "after": {
+        "target_m": 98169.43960473515,
+        "on_foot_m": 92615.43588686793,
+        "cycling_m": 94056.28140382975,
+        "combined_m": 94400.64801463966,
+        "unbound_m": 3768.791590095483,
+        "attainable": false,
+        "combined_percent": 96.16093195064578
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:423",
+      "before": {
+        "target_m": 41316.05507546004,
+        "on_foot_m": 37850.15542379506,
+        "cycling_m": 37953.080154172814,
+        "combined_m": 37953.080154172814,
+        "unbound_m": 3362.9749212872266,
+        "attainable": false,
+        "combined_percent": 91.86036780339978
+      },
+      "after": {
+        "target_m": 41316.05507546004,
+        "on_foot_m": 37850.15542379506,
+        "cycling_m": 37953.080154172814,
+        "combined_m": 37953.080154172814,
+        "unbound_m": 3362.9749212872266,
+        "attainable": false,
+        "combined_percent": 91.86036780339978
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:425",
+      "before": {
+        "target_m": 7414.787144544135,
+        "on_foot_m": 6619.263116239114,
+        "cycling_m": 6630.793656127967,
+        "combined_m": 6630.793656127967,
+        "unbound_m": 783.9934884161685,
+        "attainable": false,
+        "combined_percent": 89.42662178788183
+      },
+      "after": {
+        "target_m": 7414.787144544135,
+        "on_foot_m": 6619.263116239114,
+        "cycling_m": 6630.793656127967,
+        "combined_m": 6630.793656127967,
+        "unbound_m": 783.9934884161685,
+        "attainable": false,
+        "combined_percent": 89.42662178788183
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:426",
+      "before": {
+        "target_m": 8726.228262760314,
+        "on_foot_m": 8398.773986981088,
+        "cycling_m": 8398.773986981088,
+        "combined_m": 8398.773986981088,
+        "unbound_m": 327.454275779226,
+        "attainable": false,
+        "combined_percent": 96.24747066064435
+      },
+      "after": {
+        "target_m": 8726.228262760314,
+        "on_foot_m": 8398.773986981088,
+        "cycling_m": 8398.773986981088,
+        "combined_m": 8398.773986981088,
+        "unbound_m": 327.454275779226,
+        "attainable": false,
+        "combined_percent": 96.24747066064435
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:43",
+      "before": {
+        "target_m": 49936.51875903693,
+        "on_foot_m": 34686.35940846972,
+        "cycling_m": 44649.298679422616,
+        "combined_m": 44649.298679422616,
+        "unbound_m": 5287.220079614315,
+        "attainable": false,
+        "combined_percent": 89.41211720198758
+      },
+      "after": {
+        "target_m": 49936.51875903693,
+        "on_foot_m": 34686.35940846972,
+        "cycling_m": 44649.298679422616,
+        "combined_m": 44649.298679422616,
+        "unbound_m": 5287.220079614315,
+        "attainable": false,
+        "combined_percent": 89.41211720198758
+      },
+      "corrected_source_rows": 15
+    },
+    {
+      "route_key": "NCN:437",
+      "before": {
+        "target_m": 13052.109319117035,
+        "on_foot_m": 8932.997389060063,
+        "cycling_m": 9976.041292179407,
+        "combined_m": 9976.041292179407,
+        "unbound_m": 3076.068026937628,
+        "attainable": false,
+        "combined_percent": 76.43240681081178
+      },
+      "after": {
+        "target_m": 13052.109319117035,
+        "on_foot_m": 8932.997389060063,
+        "cycling_m": 9976.041292179407,
+        "combined_m": 9976.041292179407,
+        "unbound_m": 3076.068026937628,
+        "attainable": false,
+        "combined_percent": 76.43240681081178
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:439",
+      "before": {
+        "target_m": 7725.044124851083,
+        "on_foot_m": 2270.1593624215266,
+        "cycling_m": 6811.46547361475,
+        "combined_m": 6848.5945846386385,
+        "unbound_m": 876.4495402124448,
+        "attainable": false,
+        "combined_percent": 88.65443968930934
+      },
+      "after": {
+        "target_m": 7725.044124851083,
+        "on_foot_m": 2270.1593624215266,
+        "cycling_m": 6811.46547361475,
+        "combined_m": 6848.5945846386385,
+        "unbound_m": 876.4495402124448,
+        "attainable": false,
+        "combined_percent": 88.65443968930934
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:44",
+      "before": {
+        "target_m": 70772.93724637254,
+        "on_foot_m": 67889.34282332698,
+        "cycling_m": 67719.03507287467,
+        "combined_m": 67889.34282332698,
+        "unbound_m": 2883.5944230455643,
+        "attainable": false,
+        "combined_percent": 95.92556910135397
+      },
+      "after": {
+        "target_m": 70772.93724637254,
+        "on_foot_m": 67889.34282332698,
+        "cycling_m": 67719.03507287467,
+        "combined_m": 67889.34282332698,
+        "unbound_m": 2883.5944230455643,
+        "attainable": false,
+        "combined_percent": 95.92556910135397
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:440",
+      "before": {
+        "target_m": 5712.416149784283,
+        "on_foot_m": 5521.797309133281,
+        "cycling_m": 5521.797309133281,
+        "combined_m": 5521.797309133281,
+        "unbound_m": 190.61884065100276,
+        "attainable": false,
+        "combined_percent": 96.66307853537243
+      },
+      "after": {
+        "target_m": 5712.416149784283,
+        "on_foot_m": 5521.797309133281,
+        "cycling_m": 5521.797309133281,
+        "combined_m": 5521.797309133281,
+        "unbound_m": 190.61884065100276,
+        "attainable": false,
+        "combined_percent": 96.66307853537243
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:442",
+      "before": {
+        "target_m": 81122.70543550097,
+        "on_foot_m": 75894.3033779535,
+        "cycling_m": 78832.37009661121,
+        "combined_m": 79310.17870490477,
+        "unbound_m": 1812.5267305962043,
+        "attainable": false,
+        "combined_percent": 97.7656973829142
+      },
+      "after": {
+        "target_m": 81122.70543550097,
+        "on_foot_m": 75894.3033779535,
+        "cycling_m": 78832.37009661121,
+        "combined_m": 79310.17870490477,
+        "unbound_m": 1812.5267305962043,
+        "attainable": false,
+        "combined_percent": 97.7656973829142
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:45",
+      "before": {
+        "target_m": 369345.28314196225,
+        "on_foot_m": 338263.3137949285,
+        "cycling_m": 349792.32354209805,
+        "combined_m": 349869.2013993775,
+        "unbound_m": 19476.081742584764,
+        "attainable": false,
+        "combined_percent": 94.72686328172252
+      },
+      "after": {
+        "target_m": 369345.28314196225,
+        "on_foot_m": 338263.3137949285,
+        "cycling_m": 349792.32354209805,
+        "combined_m": 349869.2013993775,
+        "unbound_m": 19476.081742584764,
+        "attainable": false,
+        "combined_percent": 94.72686328172252
+      },
+      "corrected_source_rows": 45
+    },
+    {
+      "route_key": "NCN:451",
+      "before": {
+        "target_m": 22019.040570968482,
+        "on_foot_m": 18487.611631680033,
+        "cycling_m": 18793.842034713,
+        "combined_m": 18829.274111890314,
+        "unbound_m": 3189.766459078168,
+        "attainable": false,
+        "combined_percent": 85.51359924699085
+      },
+      "after": {
+        "target_m": 22019.040570968482,
+        "on_foot_m": 18487.611631680033,
+        "cycling_m": 18793.842034713,
+        "combined_m": 18829.274111890314,
+        "unbound_m": 3189.766459078168,
+        "attainable": false,
+        "combined_percent": 85.51359924699085
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:455",
+      "before": {
+        "target_m": 36832.00579237813,
+        "on_foot_m": 35509.09384331213,
+        "cycling_m": 35641.78690869403,
+        "combined_m": 35641.78690869403,
+        "unbound_m": 1190.2188836840942,
+        "attainable": false,
+        "combined_percent": 96.76852004641465
+      },
+      "after": {
+        "target_m": 36832.00579237813,
+        "on_foot_m": 35509.09384331213,
+        "cycling_m": 35641.78690869403,
+        "combined_m": 35641.78690869403,
+        "unbound_m": 1190.2188836840942,
+        "attainable": false,
+        "combined_percent": 96.76852004641465
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:46",
+      "before": {
+        "target_m": 140478.50541859912,
+        "on_foot_m": 121409.70053433726,
+        "cycling_m": 127789.04764669188,
+        "combined_m": 127815.59067313786,
+        "unbound_m": 12662.914745461254,
+        "attainable": false,
+        "combined_percent": 90.98587025272786
+      },
+      "after": {
+        "target_m": 140478.50541859912,
+        "on_foot_m": 121409.70053433726,
+        "cycling_m": 127789.04764669188,
+        "combined_m": 127815.59067313786,
+        "unbound_m": 12662.914745461254,
+        "attainable": false,
+        "combined_percent": 90.98587025272786
+      },
+      "corrected_source_rows": 35
+    },
+    {
+      "route_key": "NCN:461",
+      "before": {
+        "target_m": 8879.847272777675,
+        "on_foot_m": 8171.888030424215,
+        "cycling_m": 8175.795258434682,
+        "combined_m": 8175.795258434682,
+        "unbound_m": 704.0520143429931,
+        "attainable": false,
+        "combined_percent": 92.0713499600229
+      },
+      "after": {
+        "target_m": 8879.847272777675,
+        "on_foot_m": 8171.888030424215,
+        "cycling_m": 8175.795258434682,
+        "combined_m": 8175.795258434682,
+        "unbound_m": 704.0520143429931,
+        "attainable": false,
+        "combined_percent": 92.0713499600229
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:465",
+      "before": {
+        "target_m": 17957.874976326962,
+        "on_foot_m": 13135.447352244517,
+        "cycling_m": 16032.255094182941,
+        "combined_m": 16032.255094182941,
+        "unbound_m": 1925.6198821440212,
+        "attainable": false,
+        "combined_percent": 89.27701699292106
+      },
+      "after": {
+        "target_m": 17957.874976326962,
+        "on_foot_m": 13135.447352244517,
+        "cycling_m": 16032.255094182941,
+        "combined_m": 16032.255094182941,
+        "unbound_m": 1925.6198821440212,
+        "attainable": false,
+        "combined_percent": 89.27701699292106
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:466",
+      "before": {
+        "target_m": 21787.26600326609,
+        "on_foot_m": 15763.05027777839,
+        "cycling_m": 17819.40926185954,
+        "combined_m": 17898.821612112803,
+        "unbound_m": 3888.444391153287,
+        "attainable": false,
+        "combined_percent": 82.15267399512
+      },
+      "after": {
+        "target_m": 21787.26600326609,
+        "on_foot_m": 15763.05027777839,
+        "cycling_m": 17819.40926185954,
+        "combined_m": 17898.821612112803,
+        "unbound_m": 3888.444391153287,
+        "attainable": false,
+        "combined_percent": 82.15267399512
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:467",
+      "before": {
+        "target_m": 13563.035800785958,
+        "on_foot_m": 9525.48939624395,
+        "cycling_m": 12180.072303432311,
+        "combined_m": 12180.072303432311,
+        "unbound_m": 1382.9634973536467,
+        "attainable": false,
+        "combined_percent": 89.80343694681166
+      },
+      "after": {
+        "target_m": 13563.035800785958,
+        "on_foot_m": 9525.48939624395,
+        "cycling_m": 12180.072303432311,
+        "combined_m": 12180.072303432311,
+        "unbound_m": 1382.9634973536467,
+        "attainable": false,
+        "combined_percent": 89.80343694681166
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:468",
+      "before": {
+        "target_m": 15500.377360150824,
+        "on_foot_m": 13430.106864541767,
+        "cycling_m": 13864.045901087267,
+        "combined_m": 13864.045901087267,
+        "unbound_m": 1636.3314590635564,
+        "attainable": false,
+        "combined_percent": 89.44327985671934
+      },
+      "after": {
+        "target_m": 15500.377360150824,
+        "on_foot_m": 13430.106864541767,
+        "cycling_m": 13864.045901087267,
+        "combined_m": 13864.045901087267,
+        "unbound_m": 1636.3314590635564,
+        "attainable": false,
+        "combined_percent": 89.44327985671934
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:469",
+      "before": {
+        "target_m": 8671.706914217304,
+        "on_foot_m": 7323.417375515892,
+        "cycling_m": 7415.840053786296,
+        "combined_m": 7420.041393786189,
+        "unbound_m": 1251.6655204311155,
+        "attainable": false,
+        "combined_percent": 85.56609981387858
+      },
+      "after": {
+        "target_m": 8671.706914217304,
+        "on_foot_m": 7323.417375515892,
+        "cycling_m": 7415.840053786296,
+        "combined_m": 7420.041393786189,
+        "unbound_m": 1251.6655204311155,
+        "attainable": false,
+        "combined_percent": 85.56609981387858
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:47",
+      "before": {
+        "target_m": 184931.7613086619,
+        "on_foot_m": 170523.48954167071,
+        "cycling_m": 171612.26872592748,
+        "combined_m": 171612.26872592748,
+        "unbound_m": 13319.492582734412,
+        "attainable": false,
+        "combined_percent": 92.79761762475002
+      },
+      "after": {
+        "target_m": 184931.7613086619,
+        "on_foot_m": 170523.48954167071,
+        "cycling_m": 171612.26872592748,
+        "combined_m": 171612.26872592748,
+        "unbound_m": 13319.492582734412,
+        "attainable": false,
+        "combined_percent": 92.79761762475002
+      },
+      "corrected_source_rows": 36
+    },
+    {
+      "route_key": "NCN:475",
+      "before": {
+        "target_m": 7613.161127810138,
+        "on_foot_m": 4681.177407845153,
+        "cycling_m": 5960.32102072341,
+        "combined_m": 5960.32102072341,
+        "unbound_m": 1652.8401070867285,
+        "attainable": false,
+        "combined_percent": 78.289700173965
+      },
+      "after": {
+        "target_m": 7613.161127810138,
+        "on_foot_m": 4681.177407845153,
+        "cycling_m": 5960.32102072341,
+        "combined_m": 5960.32102072341,
+        "unbound_m": 1652.8401070867285,
+        "attainable": false,
+        "combined_percent": 78.289700173965
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:476",
+      "before": {
+        "target_m": 2717.324286412442,
+        "on_foot_m": 853.5713324080297,
+        "cycling_m": 2635.566320049964,
+        "combined_m": 2635.566320049964,
+        "unbound_m": 81.75796636247787,
+        "attainable": false,
+        "combined_percent": 96.99123263383412
+      },
+      "after": {
+        "target_m": 2717.324286412442,
+        "on_foot_m": 853.5713324080297,
+        "cycling_m": 2635.566320049964,
+        "combined_m": 2635.566320049964,
+        "unbound_m": 81.75796636247787,
+        "attainable": false,
+        "combined_percent": 96.99123263383412
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:477",
+      "before": {
+        "target_m": 9522.154349713079,
+        "on_foot_m": 6644.824067162274,
+        "cycling_m": 7749.931201568754,
+        "combined_m": 7749.931201568754,
+        "unbound_m": 1772.223148144325,
+        "attainable": false,
+        "combined_percent": 81.38842237736121
+      },
+      "after": {
+        "target_m": 9522.154349713079,
+        "on_foot_m": 6644.824067162274,
+        "cycling_m": 7749.931201568754,
+        "combined_m": 7749.931201568754,
+        "unbound_m": 1772.223148144325,
+        "attainable": false,
+        "combined_percent": 81.38842237736121
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:478",
+      "before": {
+        "target_m": 19779.29904811811,
+        "on_foot_m": 10432.302878145962,
+        "cycling_m": 16748.638666504106,
+        "combined_m": 16804.4042087144,
+        "unbound_m": 2974.8948394037106,
+        "attainable": false,
+        "combined_percent": 84.95955376291884
+      },
+      "after": {
+        "target_m": 19779.29904811811,
+        "on_foot_m": 10432.302878145962,
+        "cycling_m": 16748.638666504106,
+        "combined_m": 16804.4042087144,
+        "unbound_m": 2974.8948394037106,
+        "attainable": false,
+        "combined_percent": 84.95955376291884
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:48",
+      "before": {
+        "target_m": 127200.89158957911,
+        "on_foot_m": 116100.4177480633,
+        "cycling_m": 117958.75205474219,
+        "combined_m": 117958.75205474219,
+        "unbound_m": 9242.139534836926,
+        "attainable": false,
+        "combined_percent": 92.73421796078505
+      },
+      "after": {
+        "target_m": 127200.89158957911,
+        "on_foot_m": 116100.4177480633,
+        "cycling_m": 117958.75205474219,
+        "combined_m": 117958.75205474219,
+        "unbound_m": 9242.139534836926,
+        "attainable": false,
+        "combined_percent": 92.73421796078505
+      },
+      "corrected_source_rows": 16
+    },
+    {
+      "route_key": "NCN:482",
+      "before": {
+        "target_m": 11682.13393199029,
+        "on_foot_m": 11365.912337416681,
+        "cycling_m": 11365.912337416681,
+        "combined_m": 11365.912337416681,
+        "unbound_m": 316.22159457360976,
+        "attainable": false,
+        "combined_percent": 97.29311788056401
+      },
+      "after": {
+        "target_m": 11682.13393199029,
+        "on_foot_m": 11365.912337416681,
+        "cycling_m": 11365.912337416681,
+        "combined_m": 11365.912337416681,
+        "unbound_m": 316.22159457360976,
+        "attainable": false,
+        "combined_percent": 97.29311788056401
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:49",
+      "before": {
+        "target_m": 32491.138514928367,
+        "on_foot_m": 30029.244177140787,
+        "cycling_m": 30040.090186024845,
+        "combined_m": 30040.090186024845,
+        "unbound_m": 2451.048328903522,
+        "attainable": false,
+        "combined_percent": 92.45625594874933
+      },
+      "after": {
+        "target_m": 32491.138514928367,
+        "on_foot_m": 30029.244177140787,
+        "cycling_m": 30040.090186024845,
+        "combined_m": 30040.090186024845,
+        "unbound_m": 2451.048328903522,
+        "attainable": false,
+        "combined_percent": 92.45625594874933
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:492",
+      "before": {
+        "target_m": 25062.215209911737,
+        "on_foot_m": 20732.2552216485,
+        "cycling_m": 22416.448315088113,
+        "combined_m": 22416.448315088113,
+        "unbound_m": 2645.766894823624,
+        "attainable": false,
+        "combined_percent": 89.44320415149392
+      },
+      "after": {
+        "target_m": 25062.215209911737,
+        "on_foot_m": 20732.2552216485,
+        "cycling_m": 22416.448315088113,
+        "combined_m": 22416.448315088113,
+        "unbound_m": 2645.766894823624,
+        "attainable": false,
+        "combined_percent": 89.44320415149392
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:5",
+      "before": {
+        "target_m": 578924.210829198,
+        "on_foot_m": 509858.67088627536,
+        "cycling_m": 528935.5070011315,
+        "combined_m": 530173.7729094642,
+        "unbound_m": 48750.43791973381,
+        "attainable": false,
+        "combined_percent": 91.57913298358896
+      },
+      "after": {
+        "target_m": 578924.210829198,
+        "on_foot_m": 509858.67088627536,
+        "cycling_m": 528935.5070011315,
+        "combined_m": 530173.7729094642,
+        "unbound_m": 48750.43791973381,
+        "attainable": false,
+        "combined_percent": 91.57913298358896
+      },
+      "corrected_source_rows": 87
+    },
+    {
+      "route_key": "NCN:50",
+      "before": {
+        "target_m": 106028.33956517752,
+        "on_foot_m": 98363.23039217634,
+        "cycling_m": 99497.67893140361,
+        "combined_m": 99627.82223920152,
+        "unbound_m": 6400.517325976005,
+        "attainable": false,
+        "combined_percent": 93.96339002173896
+      },
+      "after": {
+        "target_m": 106028.33956517752,
+        "on_foot_m": 98363.23039217634,
+        "cycling_m": 99497.67893140361,
+        "combined_m": 99627.82223920152,
+        "unbound_m": 6400.517325976005,
+        "attainable": false,
+        "combined_percent": 93.96339002173896
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:51",
+      "before": {
+        "target_m": 303551.461226709,
+        "on_foot_m": 270339.4552446181,
+        "cycling_m": 280599.79529566603,
+        "combined_m": 281430.60272306576,
+        "unbound_m": 22120.85850364325,
+        "attainable": false,
+        "combined_percent": 92.71264963962003
+      },
+      "after": {
+        "target_m": 303551.461226709,
+        "on_foot_m": 270339.4552446181,
+        "cycling_m": 280599.79529566603,
+        "combined_m": 281430.60272306576,
+        "unbound_m": 22120.85850364325,
+        "attainable": false,
+        "combined_percent": 92.71264963962003
+      },
+      "corrected_source_rows": 41
+    },
+    {
+      "route_key": "NCN:517",
+      "before": {
+        "target_m": 38763.32459916615,
+        "on_foot_m": 13675.602912131213,
+        "cycling_m": 14887.334825236228,
+        "combined_m": 14953.897269712863,
+        "unbound_m": 23809.42732945329,
+        "attainable": false,
+        "combined_percent": 38.57743736984454
+      },
+      "after": {
+        "target_m": 38763.32459916615,
+        "on_foot_m": 13675.602912131213,
+        "cycling_m": 14887.334825236228,
+        "combined_m": 14953.897269712863,
+        "unbound_m": 23809.42732945329,
+        "attainable": false,
+        "combined_percent": 38.57743736984454
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:52",
+      "before": {
+        "target_m": 71272.3008735003,
+        "on_foot_m": 63295.51059079322,
+        "cycling_m": 66075.41104743628,
+        "combined_m": 66156.59645876879,
+        "unbound_m": 5115.704414731503,
+        "attainable": false,
+        "combined_percent": 92.82231055819109
+      },
+      "after": {
+        "target_m": 71272.3008735003,
+        "on_foot_m": 63295.51059079322,
+        "cycling_m": 66075.41104743628,
+        "combined_m": 66156.59645876879,
+        "unbound_m": 5115.704414731503,
+        "attainable": false,
+        "combined_percent": 92.82231055819109
+      },
+      "corrected_source_rows": 17
+    },
+    {
+      "route_key": "NCN:523",
+      "before": {
+        "target_m": 3727.5864819481912,
+        "on_foot_m": 1788.0043499422618,
+        "cycling_m": 2803.727857128094,
+        "combined_m": 2803.727857128094,
+        "unbound_m": 923.8586248200972,
+        "attainable": false,
+        "combined_percent": 75.2156353905101
+      },
+      "after": {
+        "target_m": 3727.5864819481912,
+        "on_foot_m": 1788.0043499422618,
+        "cycling_m": 2803.727857128094,
+        "combined_m": 2803.727857128094,
+        "unbound_m": 923.8586248200972,
+        "attainable": false,
+        "combined_percent": 75.2156353905101
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:53",
+      "before": {
+        "target_m": 17950.151734545958,
+        "on_foot_m": 15256.259270751196,
+        "cycling_m": 15513.261857091691,
+        "combined_m": 15560.340951869255,
+        "unbound_m": 2389.8107826767027,
+        "attainable": false,
+        "combined_percent": 86.68640344651018
+      },
+      "after": {
+        "target_m": 17950.151734545958,
+        "on_foot_m": 15256.259270751196,
+        "cycling_m": 15513.261857091691,
+        "combined_m": 15560.340951869255,
+        "unbound_m": 2389.8107826767027,
+        "attainable": false,
+        "combined_percent": 86.68640344651018
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:533",
+      "before": {
+        "target_m": 5268.130331137489,
+        "on_foot_m": 5165.091556950632,
+        "cycling_m": 5165.091556950632,
+        "combined_m": 5165.091556950632,
+        "unbound_m": 103.03877418685624,
+        "attainable": false,
+        "combined_percent": 98.0441111417111
+      },
+      "after": {
+        "target_m": 5268.130331137489,
+        "on_foot_m": 5165.091556950632,
+        "cycling_m": 5165.091556950632,
+        "combined_m": 5165.091556950632,
+        "unbound_m": 103.03877418685624,
+        "attainable": false,
+        "combined_percent": 98.0441111417111
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:534",
+      "before": {
+        "target_m": 9895.689573545467,
+        "on_foot_m": 5063.57320450483,
+        "cycling_m": 9029.610469160067,
+        "combined_m": 9043.405587288204,
+        "unbound_m": 852.2839862572637,
+        "attainable": false,
+        "combined_percent": 91.38732091459592
+      },
+      "after": {
+        "target_m": 9895.689573545467,
+        "on_foot_m": 5063.57320450483,
+        "cycling_m": 9029.610469160067,
+        "combined_m": 9043.405587288204,
+        "unbound_m": 852.2839862572637,
+        "attainable": false,
+        "combined_percent": 91.38732091459592
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:535",
+      "before": {
+        "target_m": 13178.287158652187,
+        "on_foot_m": 8857.707372382489,
+        "cycling_m": 11486.444920510323,
+        "combined_m": 11516.906298194392,
+        "unbound_m": 1661.3808604577953,
+        "attainable": false,
+        "combined_percent": 87.39304402418476
+      },
+      "after": {
+        "target_m": 13178.287158652187,
+        "on_foot_m": 8857.707372382489,
+        "cycling_m": 11486.444920510323,
+        "combined_m": 11516.906298194392,
+        "unbound_m": 1661.3808604577953,
+        "attainable": false,
+        "combined_percent": 87.39304402418476
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:536",
+      "before": {
+        "target_m": 5378.219133708998,
+        "on_foot_m": 4619.568960518184,
+        "cycling_m": 4645.018701836542,
+        "combined_m": 4645.018701836542,
+        "unbound_m": 733.2004318724557,
+        "attainable": false,
+        "combined_percent": 86.36722651784521
+      },
+      "after": {
+        "target_m": 5378.219133708998,
+        "on_foot_m": 4619.568960518184,
+        "cycling_m": 4645.018701836542,
+        "combined_m": 4645.018701836542,
+        "unbound_m": 733.2004318724557,
+        "attainable": false,
+        "combined_percent": 86.36722651784521
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:539",
+      "before": {
+        "target_m": 28717.50568196975,
+        "on_foot_m": 16261.601875572725,
+        "cycling_m": 25921.203679413837,
+        "combined_m": 25940.81034671426,
+        "unbound_m": 2776.6953352554883,
+        "attainable": false,
+        "combined_percent": 90.331001006822
+      },
+      "after": {
+        "target_m": 28717.50568196975,
+        "on_foot_m": 16261.601875572725,
+        "cycling_m": 25921.203679413837,
+        "combined_m": 25940.81034671426,
+        "unbound_m": 2776.6953352554883,
+        "attainable": false,
+        "combined_percent": 90.331001006822
+      },
+      "corrected_source_rows": 13
+    },
+    {
+      "route_key": "NCN:54",
+      "before": {
+        "target_m": 93783.53373191033,
+        "on_foot_m": 81216.31095856793,
+        "cycling_m": 86781.09114115693,
+        "combined_m": 86797.12853910412,
+        "unbound_m": 6986.405192806211,
+        "attainable": false,
+        "combined_percent": 92.55049909637916
+      },
+      "after": {
+        "target_m": 93783.53373191033,
+        "on_foot_m": 81216.31095856793,
+        "cycling_m": 86781.09114115693,
+        "combined_m": 86797.12853910412,
+        "unbound_m": 6986.405192806211,
+        "attainable": false,
+        "combined_percent": 92.55049909637916
+      },
+      "corrected_source_rows": 11
+    },
+    {
+      "route_key": "NCN:544",
+      "before": {
+        "target_m": 16428.91764023934,
+        "on_foot_m": 15817.364505291907,
+        "cycling_m": 15817.364505291907,
+        "combined_m": 15817.364505291907,
+        "unbound_m": 611.5531349474313,
+        "attainable": false,
+        "combined_percent": 96.27758110218073
+      },
+      "after": {
+        "target_m": 16428.91764023934,
+        "on_foot_m": 15817.364505291907,
+        "cycling_m": 15817.364505291907,
+        "combined_m": 15817.364505291907,
+        "unbound_m": 611.5531349474313,
+        "attainable": false,
+        "combined_percent": 96.27758110218073
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:547",
+      "before": {
+        "target_m": 194.43272809547824,
+        "on_foot_m": 180.07969356264877,
+        "cycling_m": 180.07969356264877,
+        "combined_m": 180.07969356264877,
+        "unbound_m": 14.353034532829469,
+        "attainable": false,
+        "combined_percent": 92.61799457662227
+      },
+      "after": {
+        "target_m": 194.43272809547824,
+        "on_foot_m": 180.07969356264877,
+        "cycling_m": 180.07969356264877,
+        "combined_m": 180.07969356264877,
+        "unbound_m": 14.353034532829469,
+        "attainable": false,
+        "combined_percent": 92.61799457662227
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:548",
+      "before": {
+        "target_m": 8393.42973937798,
+        "on_foot_m": 8312.710883381558,
+        "cycling_m": 8312.710883381558,
+        "combined_m": 8312.710883381558,
+        "unbound_m": 80.71885599642155,
+        "attainable": false,
+        "combined_percent": 99.03830902857591
+      },
+      "after": {
+        "target_m": 8393.42973937798,
+        "on_foot_m": 8312.710883381558,
+        "cycling_m": 8312.710883381558,
+        "combined_m": 8312.710883381558,
+        "unbound_m": 80.71885599642155,
+        "attainable": false,
+        "combined_percent": 99.03830902857591
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:549",
+      "before": {
+        "target_m": 31899.914637477385,
+        "on_foot_m": 30195.993552462052,
+        "cycling_m": 30207.876702583064,
+        "combined_m": 30207.876702583064,
+        "unbound_m": 1692.0379348943206,
+        "attainable": false,
+        "combined_percent": 94.6957916529769
+      },
+      "after": {
+        "target_m": 31899.914637477385,
+        "on_foot_m": 30195.993552462052,
+        "cycling_m": 30207.876702583064,
+        "combined_m": 30207.876702583064,
+        "unbound_m": 1692.0379348943206,
+        "attainable": false,
+        "combined_percent": 94.6957916529769
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:55",
+      "before": {
+        "target_m": 175701.3586063826,
+        "on_foot_m": 152833.32375548847,
+        "cycling_m": 156814.40419951561,
+        "combined_m": 156942.87021941866,
+        "unbound_m": 18758.48838696393,
+        "attainable": false,
+        "combined_percent": 89.32365205610738
+      },
+      "after": {
+        "target_m": 175701.3586063826,
+        "on_foot_m": 152833.32375548847,
+        "cycling_m": 156814.40419951561,
+        "combined_m": 156942.87021941866,
+        "unbound_m": 18758.48838696393,
+        "attainable": false,
+        "combined_percent": 89.32365205610738
+      },
+      "corrected_source_rows": 33
+    },
+    {
+      "route_key": "NCN:550",
+      "before": {
+        "target_m": 33087.82900521009,
+        "on_foot_m": 30331.221787107097,
+        "cycling_m": 31462.911990876095,
+        "combined_m": 31514.781457405294,
+        "unbound_m": 1573.0475478047993,
+        "attainable": false,
+        "combined_percent": 95.24584236833095
+      },
+      "after": {
+        "target_m": 33087.82900521009,
+        "on_foot_m": 30331.221787107097,
+        "cycling_m": 31462.911990876095,
+        "combined_m": 31514.781457405294,
+        "unbound_m": 1573.0475478047993,
+        "attainable": false,
+        "combined_percent": 95.24584236833095
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:551",
+      "before": {
+        "target_m": 37983.23978800673,
+        "on_foot_m": 32336.090257747917,
+        "cycling_m": 32345.315303646592,
+        "combined_m": 32345.315303646592,
+        "unbound_m": 5637.924484360137,
+        "attainable": false,
+        "combined_percent": 85.1568099092476
+      },
+      "after": {
+        "target_m": 37983.23978800673,
+        "on_foot_m": 32336.090257747917,
+        "cycling_m": 32345.315303646592,
+        "combined_m": 32345.315303646592,
+        "unbound_m": 5637.924484360137,
+        "attainable": false,
+        "combined_percent": 85.1568099092476
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:552",
+      "before": {
+        "target_m": 52109.918722171984,
+        "on_foot_m": 41257.04776022935,
+        "cycling_m": 41262.98208798971,
+        "combined_m": 41262.98208798971,
+        "unbound_m": 10846.936634182275,
+        "attainable": false,
+        "combined_percent": 79.18450671164247
+      },
+      "after": {
+        "target_m": 52109.918722171984,
+        "on_foot_m": 41257.04776022935,
+        "cycling_m": 41262.98208798971,
+        "combined_m": 41262.98208798971,
+        "unbound_m": 10846.936634182275,
+        "attainable": false,
+        "combined_percent": 79.18450671164247
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:555",
+      "before": {
+        "target_m": 1428.451944098782,
+        "on_foot_m": 702.2755131304235,
+        "cycling_m": 1155.5710371938794,
+        "combined_m": 1155.5710371938794,
+        "unbound_m": 272.88090690490253,
+        "attainable": false,
+        "combined_percent": 80.89673873648829
+      },
+      "after": {
+        "target_m": 1428.451944098782,
+        "on_foot_m": 702.2755131304235,
+        "cycling_m": 1155.5710371938794,
+        "combined_m": 1155.5710371938794,
+        "unbound_m": 272.88090690490253,
+        "attainable": false,
+        "combined_percent": 80.89673873648829
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:558",
+      "before": {
+        "target_m": 7545.378744140329,
+        "on_foot_m": 5102.165185002437,
+        "cycling_m": 5258.880262022812,
+        "combined_m": 5258.880262022812,
+        "unbound_m": 2286.4984821175176,
+        "attainable": false,
+        "combined_percent": 69.69670364270063
+      },
+      "after": {
+        "target_m": 7545.378744140329,
+        "on_foot_m": 5102.165185002437,
+        "cycling_m": 5258.880262022812,
+        "combined_m": 5258.880262022812,
+        "unbound_m": 2286.4984821175176,
+        "attainable": false,
+        "combined_percent": 69.69670364270063
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:559",
+      "before": {
+        "target_m": 11495.72333704716,
+        "on_foot_m": 10928.533410547916,
+        "cycling_m": 10928.533410547916,
+        "combined_m": 10928.533410547916,
+        "unbound_m": 567.1899264992444,
+        "attainable": false,
+        "combined_percent": 95.06607883758504
+      },
+      "after": {
+        "target_m": 11495.72333704716,
+        "on_foot_m": 10928.533410547916,
+        "cycling_m": 10928.533410547916,
+        "combined_m": 10928.533410547916,
+        "unbound_m": 567.1899264992444,
+        "attainable": false,
+        "combined_percent": 95.06607883758504
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:56",
+      "before": {
+        "target_m": 72499.3363175313,
+        "on_foot_m": 62584.286318719955,
+        "cycling_m": 62138.528346076964,
+        "combined_m": 63362.969038308554,
+        "unbound_m": 9136.367279222744,
+        "attainable": false,
+        "combined_percent": 87.3979987358678
+      },
+      "after": {
+        "target_m": 72499.3363175313,
+        "on_foot_m": 62584.286318719955,
+        "cycling_m": 62138.528346076964,
+        "combined_m": 63362.969038308554,
+        "unbound_m": 9136.367279222744,
+        "attainable": false,
+        "combined_percent": 87.3979987358678
+      },
+      "corrected_source_rows": 27
+    },
+    {
+      "route_key": "NCN:562",
+      "before": {
+        "target_m": 35913.19399175898,
+        "on_foot_m": 32733.88952238998,
+        "cycling_m": 33098.93308083691,
+        "combined_m": 33558.04667587487,
+        "unbound_m": 2355.1473158841036,
+        "attainable": false,
+        "combined_percent": 93.4421112295817
+      },
+      "after": {
+        "target_m": 35913.19399175898,
+        "on_foot_m": 32733.88952238998,
+        "cycling_m": 33098.93308083691,
+        "combined_m": 33558.04667587487,
+        "unbound_m": 2355.1473158841036,
+        "attainable": false,
+        "combined_percent": 93.4421112295817
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:563",
+      "before": {
+        "target_m": 13065.48909065947,
+        "on_foot_m": 10439.80621280897,
+        "cycling_m": 10969.413633385191,
+        "combined_m": 10969.413633385191,
+        "unbound_m": 2096.075457274279,
+        "attainable": false,
+        "combined_percent": 83.9571604037941
+      },
+      "after": {
+        "target_m": 13065.48909065947,
+        "on_foot_m": 10439.80621280897,
+        "cycling_m": 10969.413633385191,
+        "combined_m": 10969.413633385191,
+        "unbound_m": 2096.075457274279,
+        "attainable": false,
+        "combined_percent": 83.9571604037941
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:566",
+      "before": {
+        "target_m": 25580.59982508976,
+        "on_foot_m": 16561.7237282118,
+        "cycling_m": 24388.815257780883,
+        "combined_m": 24388.815257780883,
+        "unbound_m": 1191.7845673088777,
+        "attainable": false,
+        "combined_percent": 95.34106089983096
+      },
+      "after": {
+        "target_m": 25580.59982508976,
+        "on_foot_m": 16561.7237282118,
+        "cycling_m": 24388.815257780883,
+        "combined_m": 24388.815257780883,
+        "unbound_m": 1191.7845673088777,
+        "attainable": false,
+        "combined_percent": 95.34106089983096
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:568",
+      "before": {
+        "target_m": 24063.956367706294,
+        "on_foot_m": 21253.12811039471,
+        "cycling_m": 21415.83935815565,
+        "combined_m": 21428.956821885575,
+        "unbound_m": 2634.9995458207195,
+        "attainable": false,
+        "combined_percent": 89.05001527779997
+      },
+      "after": {
+        "target_m": 24063.956367706294,
+        "on_foot_m": 21253.12811039471,
+        "cycling_m": 21415.83935815565,
+        "combined_m": 21428.956821885575,
+        "unbound_m": 2634.9995458207195,
+        "attainable": false,
+        "combined_percent": 89.05001527779997
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:57",
+      "before": {
+        "target_m": 103821.81953631551,
+        "on_foot_m": 98306.85486740421,
+        "cycling_m": 100245.86973763116,
+        "combined_m": 100498.6729488598,
+        "unbound_m": 3323.1465874557034,
+        "attainable": false,
+        "combined_percent": 96.79918286705299
+      },
+      "after": {
+        "target_m": 103821.81953631551,
+        "on_foot_m": 98306.85486740421,
+        "cycling_m": 100245.86973763116,
+        "combined_m": 100498.6729488598,
+        "unbound_m": 3323.1465874557034,
+        "attainable": false,
+        "combined_percent": 96.79918286705299
+      },
+      "corrected_source_rows": 11
+    },
+    {
+      "route_key": "NCN:573",
+      "before": {
+        "target_m": 31417.66866968013,
+        "on_foot_m": 30062.112140369798,
+        "cycling_m": 30115.1243215584,
+        "combined_m": 30115.1243215584,
+        "unbound_m": 1302.5443481217299,
+        "attainable": false,
+        "combined_percent": 95.85410247394086
+      },
+      "after": {
+        "target_m": 31417.66866968013,
+        "on_foot_m": 30062.112140369798,
+        "cycling_m": 30115.1243215584,
+        "combined_m": 30115.1243215584,
+        "unbound_m": 1302.5443481217299,
+        "attainable": false,
+        "combined_percent": 95.85410247394086
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:574",
+      "before": {
+        "target_m": 4364.303872886899,
+        "on_foot_m": 4025.401649593625,
+        "cycling_m": 4017.146965130599,
+        "combined_m": 4025.401649593625,
+        "unbound_m": 338.9022232932739,
+        "attainable": false,
+        "combined_percent": 92.23467858416795
+      },
+      "after": {
+        "target_m": 4364.303872886899,
+        "on_foot_m": 4025.401649593625,
+        "cycling_m": 4017.146965130599,
+        "combined_m": 4025.401649593625,
+        "unbound_m": 338.9022232932739,
+        "attainable": false,
+        "combined_percent": 92.23467858416795
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:6",
+      "before": {
+        "target_m": 690038.1387238943,
+        "on_foot_m": 594495.3501322345,
+        "cycling_m": 619229.5935378277,
+        "combined_m": 622529.0237052332,
+        "unbound_m": 67509.11501866102,
+        "attainable": false,
+        "combined_percent": 90.21661104942585
+      },
+      "after": {
+        "target_m": 690038.1387238943,
+        "on_foot_m": 594495.3501322345,
+        "cycling_m": 619229.5935378277,
+        "combined_m": 622529.0237052332,
+        "unbound_m": 67509.11501866102,
+        "attainable": false,
+        "combined_percent": 90.21661104942585
+      },
+      "corrected_source_rows": 92
+    },
+    {
+      "route_key": "NCN:60",
+      "before": {
+        "target_m": 7000.400426460651,
+        "on_foot_m": 6286.80904359404,
+        "cycling_m": 6262.87719169361,
+        "combined_m": 6286.80904359404,
+        "unbound_m": 713.5913828666107,
+        "attainable": false,
+        "combined_percent": 89.80642049889998
+      },
+      "after": {
+        "target_m": 7000.400426460651,
+        "on_foot_m": 6286.80904359404,
+        "cycling_m": 6262.87719169361,
+        "combined_m": 6286.80904359404,
+        "unbound_m": 713.5913828666107,
+        "attainable": false,
+        "combined_percent": 89.80642049889998
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:601",
+      "before": {
+        "target_m": 6316.974761359787,
+        "on_foot_m": 5705.710438161613,
+        "cycling_m": 5705.710438161613,
+        "combined_m": 5705.710438161613,
+        "unbound_m": 611.2643231981747,
+        "attainable": false,
+        "combined_percent": 90.32346421680819
+      },
+      "after": {
+        "target_m": 6316.974761359787,
+        "on_foot_m": 5705.710438161613,
+        "cycling_m": 5705.710438161613,
+        "combined_m": 5705.710438161613,
+        "unbound_m": 611.2643231981747,
+        "attainable": false,
+        "combined_percent": 90.32346421680819
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:604",
+      "before": {
+        "target_m": 4956.233362279653,
+        "on_foot_m": 4723.649720808951,
+        "cycling_m": 4723.649720808951,
+        "combined_m": 4723.649720808951,
+        "unbound_m": 232.58364147070188,
+        "attainable": false,
+        "combined_percent": 95.30724999268955
+      },
+      "after": {
+        "target_m": 4956.233362279653,
+        "on_foot_m": 4723.649720808951,
+        "cycling_m": 4723.649720808951,
+        "combined_m": 4723.649720808951,
+        "unbound_m": 232.58364147070188,
+        "attainable": false,
+        "combined_percent": 95.30724999268955
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:606",
+      "before": {
+        "target_m": 9735.312875253405,
+        "on_foot_m": 5872.510113052044,
+        "cycling_m": 7351.502778537022,
+        "combined_m": 7351.502778537022,
+        "unbound_m": 2383.8100967163828,
+        "attainable": false,
+        "combined_percent": 75.5137803246582
+      },
+      "after": {
+        "target_m": 9735.312875253405,
+        "on_foot_m": 5872.510113052044,
+        "cycling_m": 7351.502778537022,
+        "combined_m": 7351.502778537022,
+        "unbound_m": 2383.8100967163828,
+        "attainable": false,
+        "combined_percent": 75.5137803246582
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:61",
+      "before": {
+        "target_m": 53240.21539614796,
+        "on_foot_m": 47599.32337588127,
+        "cycling_m": 48575.54698747811,
+        "combined_m": 48575.54698747811,
+        "unbound_m": 4664.6684086698515,
+        "attainable": false,
+        "combined_percent": 91.23844940528292
+      },
+      "after": {
+        "target_m": 53240.21539614796,
+        "on_foot_m": 47599.32337588127,
+        "cycling_m": 48575.54698747811,
+        "combined_m": 48575.54698747811,
+        "unbound_m": 4664.6684086698515,
+        "attainable": false,
+        "combined_percent": 91.23844940528292
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:62",
+      "before": {
+        "target_m": 338924.29846813553,
+        "on_foot_m": 267517.86644992745,
+        "cycling_m": 298534.55129837716,
+        "combined_m": 299793.0924339642,
+        "unbound_m": 39131.20603417134,
+        "attainable": false,
+        "combined_percent": 88.45429312355712
+      },
+      "after": {
+        "target_m": 338924.29846813553,
+        "on_foot_m": 267517.86644992745,
+        "cycling_m": 298534.55129837716,
+        "combined_m": 299793.0924339642,
+        "unbound_m": 39131.20603417134,
+        "attainable": false,
+        "combined_percent": 88.45429312355712
+      },
+      "corrected_source_rows": 59
+    },
+    {
+      "route_key": "NCN:622",
+      "before": {
+        "target_m": 31718.931232180934,
+        "on_foot_m": 27054.733207329304,
+        "cycling_m": 28002.506030856013,
+        "combined_m": 28328.864389327548,
+        "unbound_m": 3390.0668428533863,
+        "attainable": false,
+        "combined_percent": 89.31216560218164
+      },
+      "after": {
+        "target_m": 31718.931232180934,
+        "on_foot_m": 27054.733207329304,
+        "cycling_m": 28002.506030856013,
+        "combined_m": 28328.864389327548,
+        "unbound_m": 3390.0668428533863,
+        "attainable": false,
+        "combined_percent": 89.31216560218164
+      },
+      "corrected_source_rows": 12
+    },
+    {
+      "route_key": "NCN:627",
+      "before": {
+        "target_m": 37656.51934611396,
+        "on_foot_m": 34908.86059375922,
+        "cycling_m": 35016.982090069476,
+        "combined_m": 35024.186807036196,
+        "unbound_m": 2632.332539077761,
+        "attainable": false,
+        "combined_percent": 93.00962334069409
+      },
+      "after": {
+        "target_m": 37656.51934611396,
+        "on_foot_m": 34908.86059375922,
+        "cycling_m": 35016.982090069476,
+        "combined_m": 35024.186807036196,
+        "unbound_m": 2632.332539077761,
+        "attainable": false,
+        "combined_percent": 93.00962334069409
+      },
+      "corrected_source_rows": 11
+    },
+    {
+      "route_key": "NCN:63",
+      "before": {
+        "target_m": 140724.80609465364,
+        "on_foot_m": 117424.41249015507,
+        "cycling_m": 132446.72720191983,
+        "combined_m": 132478.11022538797,
+        "unbound_m": 8246.695869265677,
+        "attainable": false,
+        "combined_percent": 94.13984208035161
+      },
+      "after": {
+        "target_m": 140724.80609465364,
+        "on_foot_m": 117424.41249015507,
+        "cycling_m": 132446.72720191983,
+        "combined_m": 132478.11022538797,
+        "unbound_m": 8246.695869265677,
+        "attainable": false,
+        "combined_percent": 94.13984208035161
+      },
+      "corrected_source_rows": 15
+    },
+    {
+      "route_key": "NCN:636",
+      "before": {
+        "target_m": 6423.323986635142,
+        "on_foot_m": 5976.420994611063,
+        "cycling_m": 6063.832285367973,
+        "combined_m": 6063.832285367973,
+        "unbound_m": 359.49170126716945,
+        "attainable": false,
+        "combined_percent": 94.40333848930624
+      },
+      "after": {
+        "target_m": 6423.323986635142,
+        "on_foot_m": 5976.420994611063,
+        "cycling_m": 6063.832285367973,
+        "combined_m": 6063.832285367973,
+        "unbound_m": 359.49170126716945,
+        "attainable": false,
+        "combined_percent": 94.40333848930624
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:637",
+      "before": {
+        "target_m": 17191.77240150979,
+        "on_foot_m": 15761.725576646579,
+        "cycling_m": 15761.725576646579,
+        "combined_m": 15761.725576646579,
+        "unbound_m": 1430.0468248632096,
+        "attainable": false,
+        "combined_percent": 91.68179527122159
+      },
+      "after": {
+        "target_m": 17191.77240150979,
+        "on_foot_m": 15761.725576646579,
+        "cycling_m": 15761.725576646579,
+        "combined_m": 15761.725576646579,
+        "unbound_m": 1430.0468248632096,
+        "attainable": false,
+        "combined_percent": 91.68179527122159
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:64",
+      "before": {
+        "target_m": 85632.64387732472,
+        "on_foot_m": 79870.90640127448,
+        "cycling_m": 81118.54909705941,
+        "combined_m": 81206.37020408188,
+        "unbound_m": 4426.273673242846,
+        "attainable": false,
+        "combined_percent": 94.83109072331828
+      },
+      "after": {
+        "target_m": 85632.64387732472,
+        "on_foot_m": 79870.90640127448,
+        "cycling_m": 81118.54909705941,
+        "combined_m": 81206.37020408188,
+        "unbound_m": 4426.273673242846,
+        "attainable": false,
+        "combined_percent": 94.83109072331828
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:645",
+      "before": {
+        "target_m": 18214.284545133625,
+        "on_foot_m": 17908.855411282715,
+        "cycling_m": 16678.33891374754,
+        "combined_m": 17908.855411282715,
+        "unbound_m": 305.42913385091015,
+        "attainable": false,
+        "combined_percent": 98.32313405945713
+      },
+      "after": {
+        "target_m": 18214.284545133625,
+        "on_foot_m": 17908.855411282715,
+        "cycling_m": 16678.33891374754,
+        "combined_m": 17908.855411282715,
+        "unbound_m": 305.42913385091015,
+        "attainable": false,
+        "combined_percent": 98.32313405945713
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:647",
+      "before": {
+        "target_m": 20989.61590260895,
+        "on_foot_m": 17214.929930174454,
+        "cycling_m": 17237.988291721398,
+        "combined_m": 17237.988291721398,
+        "unbound_m": 3751.6276108875536,
+        "attainable": false,
+        "combined_percent": 82.12626839721618
+      },
+      "after": {
+        "target_m": 20989.61590260895,
+        "on_foot_m": 17214.929930174454,
+        "cycling_m": 17237.988291721398,
+        "combined_m": 17237.988291721398,
+        "unbound_m": 3751.6276108875536,
+        "attainable": false,
+        "combined_percent": 82.12626839721618
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:648",
+      "before": {
+        "target_m": 8350.59175159792,
+        "on_foot_m": 7480.742250640817,
+        "cycling_m": 7480.742250640817,
+        "combined_m": 7480.742250640817,
+        "unbound_m": 869.8495009571034,
+        "attainable": false,
+        "combined_percent": 89.58337891694137
+      },
+      "after": {
+        "target_m": 8350.59175159792,
+        "on_foot_m": 7480.742250640817,
+        "cycling_m": 7480.742250640817,
+        "combined_m": 7480.742250640817,
+        "unbound_m": 869.8495009571034,
+        "attainable": false,
+        "combined_percent": 89.58337891694137
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:65",
+      "before": {
+        "target_m": 218438.02013695257,
+        "on_foot_m": 202066.10263574385,
+        "cycling_m": 204891.97741862238,
+        "combined_m": 205538.35551320997,
+        "unbound_m": 12899.664623742603,
+        "attainable": false,
+        "combined_percent": 94.09458819684642
+      },
+      "after": {
+        "target_m": 218438.02013695257,
+        "on_foot_m": 202066.10263574385,
+        "cycling_m": 204891.97741862238,
+        "combined_m": 205538.35551320997,
+        "unbound_m": 12899.664623742603,
+        "attainable": false,
+        "combined_percent": 94.09458819684642
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:656",
+      "before": {
+        "target_m": 29232.819742229913,
+        "on_foot_m": 28682.828205706537,
+        "cycling_m": 28682.828205706537,
+        "combined_m": 28682.828205706537,
+        "unbound_m": 549.9915365233755,
+        "attainable": false,
+        "combined_percent": 98.11858198636632
+      },
+      "after": {
+        "target_m": 29232.819742229913,
+        "on_foot_m": 28682.828205706537,
+        "cycling_m": 28682.828205706537,
+        "combined_m": 28682.828205706537,
+        "unbound_m": 549.9915365233755,
+        "attainable": false,
+        "combined_percent": 98.11858198636632
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:657",
+      "before": {
+        "target_m": 35594.77580055506,
+        "on_foot_m": 33497.7927603592,
+        "cycling_m": 34981.415326883725,
+        "combined_m": 34981.415326883725,
+        "unbound_m": 613.3604736713314,
+        "attainable": false,
+        "combined_percent": 98.27682445000323
+      },
+      "after": {
+        "target_m": 35594.77580055506,
+        "on_foot_m": 33497.7927603592,
+        "cycling_m": 34981.415326883725,
+        "combined_m": 34981.415326883725,
+        "unbound_m": 613.3604736713314,
+        "attainable": false,
+        "combined_percent": 98.27682445000323
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:658",
+      "before": {
+        "target_m": 3687.4645868073194,
+        "on_foot_m": 3400.889572699953,
+        "cycling_m": 2677.0960182210342,
+        "combined_m": 3400.889572699953,
+        "unbound_m": 286.5750141073663,
+        "attainable": false,
+        "combined_percent": 92.22839955853003
+      },
+      "after": {
+        "target_m": 3687.4645868073194,
+        "on_foot_m": 3400.889572699953,
+        "cycling_m": 2677.0960182210342,
+        "combined_m": 3400.889572699953,
+        "unbound_m": 286.5750141073663,
+        "attainable": false,
+        "combined_percent": 92.22839955853003
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:66",
+      "before": {
+        "target_m": 215638.88901677128,
+        "on_foot_m": 186578.34519267414,
+        "cycling_m": 195904.66631367026,
+        "combined_m": 196669.3848128037,
+        "unbound_m": 18969.504203967575,
+        "attainable": false,
+        "combined_percent": 91.2031154072157
+      },
+      "after": {
+        "target_m": 215638.88901677128,
+        "on_foot_m": 186578.34519267414,
+        "cycling_m": 195904.66631367026,
+        "combined_m": 196669.3848128037,
+        "unbound_m": 18969.504203967575,
+        "attainable": false,
+        "combined_percent": 91.2031154072157
+      },
+      "corrected_source_rows": 40
+    },
+    {
+      "route_key": "NCN:665",
+      "before": {
+        "target_m": 16808.800782153143,
+        "on_foot_m": 15224.706142995761,
+        "cycling_m": 15332.756895309289,
+        "combined_m": 15332.756895309289,
+        "unbound_m": 1476.0438868438541,
+        "attainable": false,
+        "combined_percent": 91.21862465993972
+      },
+      "after": {
+        "target_m": 16808.800782153143,
+        "on_foot_m": 15224.706142995761,
+        "cycling_m": 15332.756895309289,
+        "combined_m": 15332.756895309289,
+        "unbound_m": 1476.0438868438541,
+        "attainable": false,
+        "combined_percent": 91.21862465993972
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:668",
+      "before": {
+        "target_m": 9837.578239243261,
+        "on_foot_m": 6187.53726241731,
+        "cycling_m": 8343.308335350639,
+        "combined_m": 8343.308335350639,
+        "unbound_m": 1494.269903892622,
+        "attainable": false,
+        "combined_percent": 84.81059192056229
+      },
+      "after": {
+        "target_m": 9837.578239243261,
+        "on_foot_m": 6187.53726241731,
+        "cycling_m": 8343.308335350639,
+        "combined_m": 8343.308335350639,
+        "unbound_m": 1494.269903892622,
+        "attainable": false,
+        "combined_percent": 84.81059192056229
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:67",
+      "before": {
+        "target_m": 196329.0055925534,
+        "on_foot_m": 174058.37553901848,
+        "cycling_m": 176823.43646182708,
+        "combined_m": 176874.22478908722,
+        "unbound_m": 19454.780803466187,
+        "attainable": false,
+        "combined_percent": 90.09072513521451
+      },
+      "after": {
+        "target_m": 196329.0055925534,
+        "on_foot_m": 174058.37553901848,
+        "cycling_m": 176823.43646182708,
+        "combined_m": 176874.22478908722,
+        "unbound_m": 19454.780803466187,
+        "attainable": false,
+        "combined_percent": 90.09072513521451
+      },
+      "corrected_source_rows": 39
+    },
+    {
+      "route_key": "NCN:672",
+      "before": {
+        "target_m": 4992.132649461029,
+        "on_foot_m": 4849.17525619567,
+        "cycling_m": 4849.17525619567,
+        "combined_m": 4849.17525619567,
+        "unbound_m": 142.95739326535931,
+        "attainable": false,
+        "combined_percent": 97.13634626113564
+      },
+      "after": {
+        "target_m": 4992.132649461029,
+        "on_foot_m": 4849.17525619567,
+        "cycling_m": 4849.17525619567,
+        "combined_m": 4849.17525619567,
+        "unbound_m": 142.95739326535931,
+        "attainable": false,
+        "combined_percent": 97.13634626113564
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:674",
+      "before": {
+        "target_m": 10834.785888602526,
+        "on_foot_m": 10162.317687556158,
+        "cycling_m": 10159.087758405229,
+        "combined_m": 10162.317687556158,
+        "unbound_m": 672.4682010463675,
+        "attainable": false,
+        "combined_percent": 93.79343341012618
+      },
+      "after": {
+        "target_m": 10834.785888602526,
+        "on_foot_m": 10162.317687556158,
+        "cycling_m": 10159.087758405229,
+        "combined_m": 10162.317687556158,
+        "unbound_m": 672.4682010463675,
+        "attainable": false,
+        "combined_percent": 93.79343341012618
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:677",
+      "before": {
+        "target_m": 8183.130613271826,
+        "on_foot_m": 6582.0725140683835,
+        "cycling_m": 6268.00788434008,
+        "combined_m": 6582.0725140683835,
+        "unbound_m": 1601.058099203443,
+        "attainable": false,
+        "combined_percent": 80.43465056506902
+      },
+      "after": {
+        "target_m": 8183.130613271826,
+        "on_foot_m": 6582.0725140683835,
+        "cycling_m": 6268.00788434008,
+        "combined_m": 6582.0725140683835,
+        "unbound_m": 1601.058099203443,
+        "attainable": false,
+        "combined_percent": 80.43465056506902
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:68",
+      "before": {
+        "target_m": 437586.7546747344,
+        "on_foot_m": 411391.33318377397,
+        "cycling_m": 418819.1081348363,
+        "combined_m": 418850.80715194286,
+        "unbound_m": 18735.94752279151,
+        "attainable": false,
+        "combined_percent": 95.71834674550004
+      },
+      "after": {
+        "target_m": 437586.7546747344,
+        "on_foot_m": 411391.33318377397,
+        "cycling_m": 418819.1081348363,
+        "combined_m": 418850.80715194286,
+        "unbound_m": 18735.94752279151,
+        "attainable": false,
+        "combined_percent": 95.71834674550004
+      },
+      "corrected_source_rows": 16
+    },
+    {
+      "route_key": "NCN:680",
+      "before": {
+        "target_m": 22457.229408294024,
+        "on_foot_m": 21280.722538845977,
+        "cycling_m": 21370.860810319504,
+        "combined_m": 21370.860810319504,
+        "unbound_m": 1086.3685979745205,
+        "attainable": false,
+        "combined_percent": 95.16249944183542
+      },
+      "after": {
+        "target_m": 22457.229408294024,
+        "on_foot_m": 21280.722538845977,
+        "cycling_m": 21370.860810319504,
+        "combined_m": 21370.860810319504,
+        "unbound_m": 1086.3685979745205,
+        "attainable": false,
+        "combined_percent": 95.16249944183542
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:685",
+      "before": {
+        "target_m": 3596.1791724361246,
+        "on_foot_m": 3220.4609136701124,
+        "cycling_m": 3220.4609136701124,
+        "combined_m": 3220.4609136701124,
+        "unbound_m": 375.71825876601224,
+        "attainable": false,
+        "combined_percent": 89.55229312138269
+      },
+      "after": {
+        "target_m": 3596.1791724361246,
+        "on_foot_m": 3220.4609136701124,
+        "cycling_m": 3220.4609136701124,
+        "combined_m": 3220.4609136701124,
+        "unbound_m": 375.71825876601224,
+        "attainable": false,
+        "combined_percent": 89.55229312138269
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:688",
+      "before": {
+        "target_m": 76265.85816081791,
+        "on_foot_m": 73331.3640461671,
+        "cycling_m": 73331.3640461671,
+        "combined_m": 73331.3640461671,
+        "unbound_m": 2934.4941146508063,
+        "attainable": false,
+        "combined_percent": 96.15228336057926
+      },
+      "after": {
+        "target_m": 76265.85816081791,
+        "on_foot_m": 73331.3640461671,
+        "cycling_m": 73331.3640461671,
+        "combined_m": 73331.3640461671,
+        "unbound_m": 2934.4941146508063,
+        "attainable": false,
+        "combined_percent": 96.15228336057926
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:69",
+      "before": {
+        "target_m": 79796.67482613277,
+        "on_foot_m": 70447.57996449224,
+        "cycling_m": 72050.99207741972,
+        "combined_m": 72064.39412638628,
+        "unbound_m": 7732.280699746494,
+        "attainable": false,
+        "combined_percent": 90.31002141806762
+      },
+      "after": {
+        "target_m": 79796.67482613277,
+        "on_foot_m": 70447.57996449224,
+        "cycling_m": 72050.99207741972,
+        "combined_m": 72064.39412638628,
+        "unbound_m": 7732.280699746494,
+        "attainable": false,
+        "combined_percent": 90.31002141806762
+      },
+      "corrected_source_rows": 13
+    },
+    {
+      "route_key": "NCN:696",
+      "before": {
+        "target_m": 9931.478566816857,
+        "on_foot_m": 9619.751709012611,
+        "cycling_m": 9619.751709012611,
+        "combined_m": 9619.751709012611,
+        "unbound_m": 311.7268578042458,
+        "attainable": false,
+        "combined_percent": 96.86122407950624
+      },
+      "after": {
+        "target_m": 9931.478566816857,
+        "on_foot_m": 9619.751709012611,
+        "cycling_m": 9619.751709012611,
+        "combined_m": 9619.751709012611,
+        "unbound_m": 311.7268578042458,
+        "attainable": false,
+        "combined_percent": 96.86122407950624
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:697",
+      "before": {
+        "target_m": 5848.093335381122,
+        "on_foot_m": 5721.298414864455,
+        "cycling_m": 5721.298414864455,
+        "combined_m": 5721.298414864455,
+        "unbound_m": 126.79492051666784,
+        "attainable": false,
+        "combined_percent": 97.83185880858716
+      },
+      "after": {
+        "target_m": 5848.093335381122,
+        "on_foot_m": 5721.298414864455,
+        "cycling_m": 5721.298414864455,
+        "combined_m": 5721.298414864455,
+        "unbound_m": 126.79492051666784,
+        "attainable": false,
+        "combined_percent": 97.83185880858716
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:699",
+      "before": {
+        "target_m": 3241.1074644769174,
+        "on_foot_m": 2308.9535578506407,
+        "cycling_m": 2410.3189984292767,
+        "combined_m": 2410.3189984292767,
+        "unbound_m": 830.7884660476407,
+        "attainable": false,
+        "combined_percent": 74.36714224525963
+      },
+      "after": {
+        "target_m": 3241.1074644769174,
+        "on_foot_m": 2308.9535578506407,
+        "cycling_m": 2410.3189984292767,
+        "combined_m": 2410.3189984292767,
+        "unbound_m": 830.7884660476407,
+        "attainable": false,
+        "combined_percent": 74.36714224525963
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:7",
+      "before": {
+        "target_m": 884853.9902621717,
+        "on_foot_m": 797327.169794073,
+        "cycling_m": 832815.8081024275,
+        "combined_m": 833317.3532917125,
+        "unbound_m": 51536.63697045925,
+        "attainable": false,
+        "combined_percent": 94.17569027911716
+      },
+      "after": {
+        "target_m": 884853.9902621717,
+        "on_foot_m": 797327.169794073,
+        "cycling_m": 832815.8081024275,
+        "combined_m": 833317.3532917125,
+        "unbound_m": 51536.63697045925,
+        "attainable": false,
+        "combined_percent": 94.17569027911716
+      },
+      "corrected_source_rows": 82
+    },
+    {
+      "route_key": "NCN:70",
+      "before": {
+        "target_m": 188009.14106165027,
+        "on_foot_m": 177496.75872008112,
+        "cycling_m": 179325.40407584558,
+        "combined_m": 179605.87192510016,
+        "unbound_m": 8403.269136550109,
+        "attainable": false,
+        "combined_percent": 95.53039331540025
+      },
+      "after": {
+        "target_m": 188009.14106165027,
+        "on_foot_m": 177496.75872008112,
+        "cycling_m": 179325.40407584558,
+        "combined_m": 179605.87192510016,
+        "unbound_m": 8403.269136550109,
+        "attainable": false,
+        "combined_percent": 95.53039331540025
+      },
+      "corrected_source_rows": 12
+    },
+    {
+      "route_key": "NCN:700",
+      "before": {
+        "target_m": 61345.89951115468,
+        "on_foot_m": 57441.511880063495,
+        "cycling_m": 57441.511880063495,
+        "combined_m": 57441.511880063495,
+        "unbound_m": 3904.3876310911874,
+        "attainable": false,
+        "combined_percent": 93.63545459076488
+      },
+      "after": {
+        "target_m": 61345.89951115468,
+        "on_foot_m": 57441.511880063495,
+        "cycling_m": 57441.511880063495,
+        "combined_m": 57441.511880063495,
+        "unbound_m": 3904.3876310911874,
+        "attainable": false,
+        "combined_percent": 93.63545459076488
+      },
+      "corrected_source_rows": 8
+    },
+    {
+      "route_key": "NCN:71",
+      "before": {
+        "target_m": 108568.85693519148,
+        "on_foot_m": 105467.02295202667,
+        "cycling_m": 105467.02295202667,
+        "combined_m": 105467.02295202667,
+        "unbound_m": 3101.8339831648045,
+        "attainable": false,
+        "combined_percent": 97.14297997535665
+      },
+      "after": {
+        "target_m": 108568.85693519148,
+        "on_foot_m": 105467.02295202667,
+        "cycling_m": 105467.02295202667,
+        "combined_m": 105467.02295202667,
+        "unbound_m": 3101.8339831648045,
+        "attainable": false,
+        "combined_percent": 97.14297997535665
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:715",
+      "before": {
+        "target_m": 28301.72045796345,
+        "on_foot_m": 27107.828814598488,
+        "cycling_m": 27347.05387289172,
+        "combined_m": 27373.654128189883,
+        "unbound_m": 928.0663297735664,
+        "attainable": false,
+        "combined_percent": 96.7208130291866
+      },
+      "after": {
+        "target_m": 28301.72045796345,
+        "on_foot_m": 27107.828814598488,
+        "cycling_m": 27347.05387289172,
+        "combined_m": 27373.654128189883,
+        "unbound_m": 928.0663297735664,
+        "attainable": false,
+        "combined_percent": 96.7208130291866
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:72",
+      "before": {
+        "target_m": 252022.06756572152,
+        "on_foot_m": 225365.99648286702,
+        "cycling_m": 237404.34559716223,
+        "combined_m": 238452.76226912127,
+        "unbound_m": 13569.305296600243,
+        "attainable": false,
+        "combined_percent": 94.61582653151527
+      },
+      "after": {
+        "target_m": 252022.06756572152,
+        "on_foot_m": 225365.99648286702,
+        "cycling_m": 237404.34559716223,
+        "combined_m": 238452.76226912127,
+        "unbound_m": 13569.305296600243,
+        "attainable": false,
+        "combined_percent": 94.61582653151527
+      },
+      "corrected_source_rows": 18
+    },
+    {
+      "route_key": "NCN:725",
+      "before": {
+        "target_m": 14988.691482009013,
+        "on_foot_m": 11543.781266863924,
+        "cycling_m": 12249.44035356441,
+        "combined_m": 12253.124085856485,
+        "unbound_m": 2735.567396152528,
+        "attainable": false,
+        "combined_percent": 81.74912466884757
+      },
+      "after": {
+        "target_m": 14988.691482009013,
+        "on_foot_m": 11543.781266863924,
+        "cycling_m": 12249.44035356441,
+        "combined_m": 12253.124085856485,
+        "unbound_m": 2735.567396152528,
+        "attainable": false,
+        "combined_percent": 81.74912466884757
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:73",
+      "before": {
+        "target_m": 47840.14523237535,
+        "on_foot_m": 43231.81598057539,
+        "cycling_m": 44660.801705626945,
+        "combined_m": 45177.22378453923,
+        "unbound_m": 2662.9214478361173,
+        "attainable": false,
+        "combined_percent": 94.43370952387075
+      },
+      "after": {
+        "target_m": 47840.14523237535,
+        "on_foot_m": 43231.81598057539,
+        "cycling_m": 44660.801705626945,
+        "combined_m": 45177.22378453923,
+        "unbound_m": 2662.9214478361173,
+        "attainable": false,
+        "combined_percent": 94.43370952387075
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:74",
+      "before": {
+        "target_m": 62140.08695196648,
+        "on_foot_m": 47249.54183793022,
+        "cycling_m": 59050.30875579668,
+        "combined_m": 59082.19570920852,
+        "unbound_m": 3057.891242757956,
+        "attainable": false,
+        "combined_percent": 95.07903610575623
+      },
+      "after": {
+        "target_m": 62140.08695196648,
+        "on_foot_m": 47249.54183793022,
+        "cycling_m": 59050.30875579668,
+        "combined_m": 59082.19570920852,
+        "unbound_m": 3057.891242757956,
+        "attainable": false,
+        "combined_percent": 95.07903610575623
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:75",
+      "before": {
+        "target_m": 135061.48866621556,
+        "on_foot_m": 121904.4792373507,
+        "cycling_m": 125625.21313226044,
+        "combined_m": 125866.72029050339,
+        "unbound_m": 9194.76837571217,
+        "attainable": false,
+        "combined_percent": 93.19216123965901
+      },
+      "after": {
+        "target_m": 135061.48866621556,
+        "on_foot_m": 121904.4792373507,
+        "cycling_m": 125625.21313226044,
+        "combined_m": 125866.72029050339,
+        "unbound_m": 9194.76837571217,
+        "attainable": false,
+        "combined_percent": 93.19216123965901
+      },
+      "corrected_source_rows": 22
+    },
+    {
+      "route_key": "NCN:753",
+      "before": {
+        "target_m": 16170.416035812383,
+        "on_foot_m": 14186.261805232396,
+        "cycling_m": 13741.879153731743,
+        "combined_m": 14404.73144116859,
+        "unbound_m": 1765.6845946437934,
+        "attainable": false,
+        "combined_percent": 89.0807720052882
+      },
+      "after": {
+        "target_m": 16170.416035812383,
+        "on_foot_m": 14186.261805232396,
+        "cycling_m": 13741.879153731743,
+        "combined_m": 14404.73144116859,
+        "unbound_m": 1765.6845946437934,
+        "attainable": false,
+        "combined_percent": 89.0807720052882
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:754",
+      "before": {
+        "target_m": 90769.69226735673,
+        "on_foot_m": 88716.23666354464,
+        "cycling_m": 88349.16459057573,
+        "combined_m": 88716.23666354464,
+        "unbound_m": 2053.4556038120936,
+        "attainable": false,
+        "combined_percent": 97.73772990464289
+      },
+      "after": {
+        "target_m": 90769.69226735673,
+        "on_foot_m": 88716.23666354464,
+        "cycling_m": 88349.16459057573,
+        "combined_m": 88716.23666354464,
+        "unbound_m": 2053.4556038120936,
+        "attainable": false,
+        "combined_percent": 97.73772990464289
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:755",
+      "before": {
+        "target_m": 12867.13221580012,
+        "on_foot_m": 12690.700012357342,
+        "cycling_m": 12699.730029000886,
+        "combined_m": 12699.730029000886,
+        "unbound_m": 167.4021867992342,
+        "attainable": false,
+        "combined_percent": 98.69899380847527
+      },
+      "after": {
+        "target_m": 12867.13221580012,
+        "on_foot_m": 12690.700012357342,
+        "cycling_m": 12699.730029000886,
+        "combined_m": 12699.730029000886,
+        "unbound_m": 167.4021867992342,
+        "attainable": false,
+        "combined_percent": 98.69899380847527
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:756",
+      "before": {
+        "target_m": 19681.717418114684,
+        "on_foot_m": 14705.847649046384,
+        "cycling_m": 17915.283197638342,
+        "combined_m": 17915.283197638342,
+        "unbound_m": 1766.4342204763416,
+        "attainable": false,
+        "combined_percent": 91.02499958235073
+      },
+      "after": {
+        "target_m": 19681.717418114684,
+        "on_foot_m": 14705.847649046384,
+        "cycling_m": 17915.283197638342,
+        "combined_m": 17915.283197638342,
+        "unbound_m": 1766.4342204763416,
+        "attainable": false,
+        "combined_percent": 91.02499958235073
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:76",
+      "before": {
+        "target_m": 181295.64194056354,
+        "on_foot_m": 155128.06846066614,
+        "cycling_m": 169458.88702836723,
+        "combined_m": 169529.64271444656,
+        "unbound_m": 11765.999226116983,
+        "attainable": false,
+        "combined_percent": 93.51004850410338
+      },
+      "after": {
+        "target_m": 181295.64194056354,
+        "on_foot_m": 155128.06846066614,
+        "cycling_m": 169458.88702836723,
+        "combined_m": 169529.64271444656,
+        "unbound_m": 11765.999226116983,
+        "attainable": false,
+        "combined_percent": 93.51004850410338
+      },
+      "corrected_source_rows": 18
+    },
+    {
+      "route_key": "NCN:764",
+      "before": {
+        "target_m": 23394.938524679696,
+        "on_foot_m": 19762.922563482654,
+        "cycling_m": 20129.254888624517,
+        "combined_m": 20129.254888624517,
+        "unbound_m": 3265.683636055179,
+        "attainable": false,
+        "combined_percent": 86.04106767534286
+      },
+      "after": {
+        "target_m": 23394.938524679696,
+        "on_foot_m": 19762.922563482654,
+        "cycling_m": 20129.254888624517,
+        "combined_m": 20129.254888624517,
+        "unbound_m": 3265.683636055179,
+        "attainable": false,
+        "combined_percent": 86.04106767534286
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:765",
+      "before": {
+        "target_m": 18430.75794632012,
+        "on_foot_m": 13506.729951847283,
+        "cycling_m": 17246.017984163816,
+        "combined_m": 17347.918495210717,
+        "unbound_m": 1082.8394511094011,
+        "attainable": false,
+        "combined_percent": 94.12482408882376
+      },
+      "after": {
+        "target_m": 18430.75794632012,
+        "on_foot_m": 13506.729951847283,
+        "cycling_m": 17246.017984163816,
+        "combined_m": 17347.918495210717,
+        "unbound_m": 1082.8394511094011,
+        "attainable": false,
+        "combined_percent": 94.12482408882376
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:766",
+      "before": {
+        "target_m": 21209.63625018927,
+        "on_foot_m": 18905.41139351377,
+        "cycling_m": 18905.41139351377,
+        "combined_m": 18905.41139351377,
+        "unbound_m": 2304.2248566755006,
+        "attainable": false,
+        "combined_percent": 89.13595297206034
+      },
+      "after": {
+        "target_m": 21209.63625018927,
+        "on_foot_m": 18905.41139351377,
+        "cycling_m": 18905.41139351377,
+        "combined_m": 18905.41139351377,
+        "unbound_m": 2304.2248566755006,
+        "attainable": false,
+        "combined_percent": 89.13595297206034
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:767",
+      "before": {
+        "target_m": 10175.961322334866,
+        "on_foot_m": 9819.959855104235,
+        "cycling_m": 9819.959855104235,
+        "combined_m": 9819.959855104235,
+        "unbound_m": 356.00146723063153,
+        "attainable": false,
+        "combined_percent": 96.50154461132576
+      },
+      "after": {
+        "target_m": 10175.961322334866,
+        "on_foot_m": 9819.959855104235,
+        "cycling_m": 9819.959855104235,
+        "combined_m": 9819.959855104235,
+        "unbound_m": 356.00146723063153,
+        "attainable": false,
+        "combined_percent": 96.50154461132576
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "NCN:768",
+      "before": {
+        "target_m": 9469.514396139022,
+        "on_foot_m": 8906.358048944829,
+        "cycling_m": 8937.98322098497,
+        "combined_m": 8937.98322098497,
+        "unbound_m": 531.5311751540521,
+        "attainable": false,
+        "combined_percent": 94.3869225715442
+      },
+      "after": {
+        "target_m": 9469.514396139022,
+        "on_foot_m": 8906.358048944829,
+        "cycling_m": 8937.98322098497,
+        "combined_m": 8937.98322098497,
+        "unbound_m": 531.5311751540521,
+        "attainable": false,
+        "combined_percent": 94.3869225715442
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:77",
+      "before": {
+        "target_m": 78837.45815447891,
+        "on_foot_m": 75030.65218122555,
+        "cycling_m": 75281.36185034088,
+        "combined_m": 75300.86944515338,
+        "unbound_m": 3536.5887093255296,
+        "attainable": false,
+        "combined_percent": 95.51407567910711
+      },
+      "after": {
+        "target_m": 78837.45815447891,
+        "on_foot_m": 75030.65218122555,
+        "cycling_m": 75281.36185034088,
+        "combined_m": 75300.86944515338,
+        "unbound_m": 3536.5887093255296,
+        "attainable": false,
+        "combined_percent": 95.51407567910711
+      },
+      "corrected_source_rows": 10
+    },
+    {
+      "route_key": "NCN:775",
+      "before": {
+        "target_m": 26429.063714035612,
+        "on_foot_m": 24507.250661622587,
+        "cycling_m": 24490.857092181588,
+        "combined_m": 24507.250661622587,
+        "unbound_m": 1921.8130524130247,
+        "attainable": false,
+        "combined_percent": 92.72841038484306
+      },
+      "after": {
+        "target_m": 26429.063714035612,
+        "on_foot_m": 24507.250661622587,
+        "cycling_m": 24490.857092181588,
+        "combined_m": 24507.250661622587,
+        "unbound_m": 1921.8130524130247,
+        "attainable": false,
+        "combined_percent": 92.72841038484306
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:777",
+      "before": {
+        "target_m": 25839.43584036547,
+        "on_foot_m": 25438.327250013805,
+        "cycling_m": 25438.327250013805,
+        "combined_m": 25438.327250013805,
+        "unbound_m": 401.10859035166504,
+        "attainable": false,
+        "combined_percent": 98.44768828224544
+      },
+      "after": {
+        "target_m": 25839.43584036547,
+        "on_foot_m": 25438.327250013805,
+        "cycling_m": 25438.327250013805,
+        "combined_m": 25438.327250013805,
+        "unbound_m": 401.10859035166504,
+        "attainable": false,
+        "combined_percent": 98.44768828224544
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:78",
+      "before": {
+        "target_m": 143351.2386428014,
+        "on_foot_m": 134931.36368681965,
+        "cycling_m": 135382.15647889144,
+        "combined_m": 135642.74794828793,
+        "unbound_m": 7708.490694513486,
+        "attainable": false,
+        "combined_percent": 94.62265497843288
+      },
+      "after": {
+        "target_m": 143351.2386428014,
+        "on_foot_m": 134931.36368681965,
+        "cycling_m": 135382.15647889144,
+        "combined_m": 135642.74794828793,
+        "unbound_m": 7708.490694513486,
+        "attainable": false,
+        "combined_percent": 94.62265497843288
+      },
+      "corrected_source_rows": 18
+    },
+    {
+      "route_key": "NCN:8",
+      "before": {
+        "target_m": 383185.1131687598,
+        "on_foot_m": 335293.1477796255,
+        "cycling_m": 355037.5551415163,
+        "combined_m": 355252.32935895614,
+        "unbound_m": 27932.78380980366,
+        "attainable": false,
+        "combined_percent": 92.71036821373025
+      },
+      "after": {
+        "target_m": 383185.1131687598,
+        "on_foot_m": 335293.1477796255,
+        "cycling_m": 355037.5551415163,
+        "combined_m": 355252.32935895614,
+        "unbound_m": 27932.78380980366,
+        "attainable": false,
+        "combined_percent": 92.71036821373025
+      },
+      "corrected_source_rows": 68
+    },
+    {
+      "route_key": "NCN:81",
+      "before": {
+        "target_m": 204255.01529156585,
+        "on_foot_m": 169851.80759943495,
+        "cycling_m": 188173.7771216484,
+        "combined_m": 188302.70213518306,
+        "unbound_m": 15952.313156382792,
+        "attainable": false,
+        "combined_percent": 92.19000173209382
+      },
+      "after": {
+        "target_m": 204255.01529156585,
+        "on_foot_m": 169851.80759943495,
+        "cycling_m": 188173.7771216484,
+        "combined_m": 188302.70213518306,
+        "unbound_m": 15952.313156382792,
+        "attainable": false,
+        "combined_percent": 92.19000173209382
+      },
+      "corrected_source_rows": 32
+    },
+    {
+      "route_key": "NCN:810",
+      "before": {
+        "target_m": 29022.28425846992,
+        "on_foot_m": 26996.418455496954,
+        "cycling_m": 26972.874215597592,
+        "combined_m": 27045.940005181496,
+        "unbound_m": 1976.3442532884255,
+        "attainable": false,
+        "combined_percent": 93.1902525807849
+      },
+      "after": {
+        "target_m": 29022.28425846992,
+        "on_foot_m": 26996.418455496954,
+        "cycling_m": 26972.874215597592,
+        "combined_m": 27045.940005181496,
+        "unbound_m": 1976.3442532884255,
+        "attainable": false,
+        "combined_percent": 93.1902525807849
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:82",
+      "before": {
+        "target_m": 207019.97944444488,
+        "on_foot_m": 186915.96328302534,
+        "cycling_m": 193033.36659477712,
+        "combined_m": 193042.927130814,
+        "unbound_m": 13977.052313630877,
+        "attainable": false,
+        "combined_percent": 93.24845246766064
+      },
+      "after": {
+        "target_m": 207019.97944444488,
+        "on_foot_m": 186915.96328302534,
+        "cycling_m": 193033.36659477712,
+        "combined_m": 193042.927130814,
+        "unbound_m": 13977.052313630877,
+        "attainable": false,
+        "combined_percent": 93.24845246766064
+      },
+      "corrected_source_rows": 30
+    },
+    {
+      "route_key": "NCN:822",
+      "before": {
+        "target_m": 3644.073615129793,
+        "on_foot_m": 2524.653633562223,
+        "cycling_m": 2615.1879102724192,
+        "combined_m": 2615.1879102724192,
+        "unbound_m": 1028.8857048573736,
+        "attainable": false,
+        "combined_percent": 71.76550713504926
+      },
+      "after": {
+        "target_m": 3644.073615129793,
+        "on_foot_m": 2524.653633562223,
+        "cycling_m": 2615.1879102724192,
+        "combined_m": 2615.1879102724192,
+        "unbound_m": 1028.8857048573736,
+        "attainable": false,
+        "combined_percent": 71.76550713504926
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:825",
+      "before": {
+        "target_m": 106188.63139313507,
+        "on_foot_m": 101596.3763088956,
+        "cycling_m": 101911.2833319908,
+        "combined_m": 101911.2833319908,
+        "unbound_m": 4277.348061144279,
+        "attainable": false,
+        "combined_percent": 95.97193409028078
+      },
+      "after": {
+        "target_m": 106188.63139313507,
+        "on_foot_m": 101596.3763088956,
+        "cycling_m": 101911.2833319908,
+        "combined_m": 101911.2833319908,
+        "unbound_m": 4277.348061144279,
+        "attainable": false,
+        "combined_percent": 95.97193409028078
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:83",
+      "before": {
+        "target_m": 55776.23693540978,
+        "on_foot_m": 51820.91169668904,
+        "cycling_m": 54524.444778562385,
+        "combined_m": 54584.30326177949,
+        "unbound_m": 1191.933673630294,
+        "attainable": false,
+        "combined_percent": 97.86300808530596
+      },
+      "after": {
+        "target_m": 55776.23693540978,
+        "on_foot_m": 51820.91169668904,
+        "cycling_m": 54524.444778562385,
+        "combined_m": 54584.30326177949,
+        "unbound_m": 1191.933673630294,
+        "attainable": false,
+        "combined_percent": 97.86300808530596
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:84",
+      "before": {
+        "target_m": 15757.9187089353,
+        "on_foot_m": 14785.849489114944,
+        "cycling_m": 14380.511099240504,
+        "combined_m": 14865.358508174075,
+        "unbound_m": 892.5602007612251,
+        "attainable": false,
+        "combined_percent": 94.33579892593866
+      },
+      "after": {
+        "target_m": 15757.9187089353,
+        "on_foot_m": 14785.849489114944,
+        "cycling_m": 14380.511099240504,
+        "combined_m": 14865.358508174075,
+        "unbound_m": 892.5602007612251,
+        "attainable": false,
+        "combined_percent": 94.33579892593866
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:85",
+      "before": {
+        "target_m": 9874.45490281918,
+        "on_foot_m": 9274.858340079696,
+        "cycling_m": 9453.736296069084,
+        "combined_m": 9453.736296069084,
+        "unbound_m": 420.7186067500952,
+        "attainable": false,
+        "combined_percent": 95.73932322451562
+      },
+      "after": {
+        "target_m": 9874.45490281918,
+        "on_foot_m": 9274.858340079696,
+        "cycling_m": 9453.736296069084,
+        "combined_m": 9453.736296069084,
+        "unbound_m": 420.7186067500952,
+        "attainable": false,
+        "combined_percent": 95.73932322451562
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:862",
+      "before": {
+        "target_m": 6783.376267934729,
+        "on_foot_m": 4939.098856660788,
+        "cycling_m": 5550.573854894895,
+        "combined_m": 5550.573854894895,
+        "unbound_m": 1232.8024130398344,
+        "attainable": false,
+        "combined_percent": 81.82612368316738
+      },
+      "after": {
+        "target_m": 6783.376267934729,
+        "on_foot_m": 4939.098856660788,
+        "cycling_m": 5550.573854894895,
+        "combined_m": 5550.573854894895,
+        "unbound_m": 1232.8024130398344,
+        "attainable": false,
+        "combined_percent": 81.82612368316738
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:88",
+      "before": {
+        "target_m": 49734.1209056837,
+        "on_foot_m": 43737.65184206556,
+        "cycling_m": 43907.64664094877,
+        "combined_m": 43907.64664094877,
+        "unbound_m": 5826.474264734934,
+        "attainable": false,
+        "combined_percent": 88.28475469429866
+      },
+      "after": {
+        "target_m": 49734.1209056837,
+        "on_foot_m": 43737.65184206556,
+        "cycling_m": 43907.64664094877,
+        "combined_m": 43907.64664094877,
+        "unbound_m": 5826.474264734934,
+        "attainable": false,
+        "combined_percent": 88.28475469429866
+      },
+      "corrected_source_rows": 15
+    },
+    {
+      "route_key": "NCN:881",
+      "before": {
+        "target_m": 19410.835868063525,
+        "on_foot_m": 7661.341982928695,
+        "cycling_m": 14067.560173109261,
+        "combined_m": 14067.560173109261,
+        "unbound_m": 5343.275694954264,
+        "attainable": false,
+        "combined_percent": 72.47271713968019
+      },
+      "after": {
+        "target_m": 19410.835868063525,
+        "on_foot_m": 7661.341982928695,
+        "cycling_m": 14067.560173109261,
+        "combined_m": 14067.560173109261,
+        "unbound_m": 5343.275694954264,
+        "attainable": false,
+        "combined_percent": 72.47271713968019
+      },
+      "corrected_source_rows": 7
+    },
+    {
+      "route_key": "NCN:883",
+      "before": {
+        "target_m": 6913.942873913505,
+        "on_foot_m": 6018.034953790493,
+        "cycling_m": 6644.92438215235,
+        "combined_m": 6644.92438215235,
+        "unbound_m": 269.018491761155,
+        "attainable": false,
+        "combined_percent": 96.10904375886344
+      },
+      "after": {
+        "target_m": 6913.942873913505,
+        "on_foot_m": 6018.034953790493,
+        "cycling_m": 6644.92438215235,
+        "combined_m": 6644.92438215235,
+        "unbound_m": 269.018491761155,
+        "attainable": false,
+        "combined_percent": 96.10904375886344
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:884",
+      "before": {
+        "target_m": 2480.3081545137265,
+        "on_foot_m": 76.54752759853919,
+        "cycling_m": 1996.2238615031638,
+        "combined_m": 1996.2238615031638,
+        "unbound_m": 484.08429301056276,
+        "attainable": false,
+        "combined_percent": 80.48289717027241
+      },
+      "after": {
+        "target_m": 2480.3081545137265,
+        "on_foot_m": 76.54752759853919,
+        "cycling_m": 1996.2238615031638,
+        "combined_m": 1996.2238615031638,
+        "unbound_m": 484.08429301056276,
+        "attainable": false,
+        "combined_percent": 80.48289717027241
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "NCN:885",
+      "before": {
+        "target_m": 13057.157460890732,
+        "on_foot_m": 9748.634225107422,
+        "cycling_m": 11580.852509083446,
+        "combined_m": 11580.852509083446,
+        "unbound_m": 1476.3049518072858,
+        "attainable": false,
+        "combined_percent": 88.69351957936352
+      },
+      "after": {
+        "target_m": 13057.157460890732,
+        "on_foot_m": 9748.634225107422,
+        "cycling_m": 11580.852509083446,
+        "combined_m": 11580.852509083446,
+        "unbound_m": 1476.3049518072858,
+        "attainable": false,
+        "combined_percent": 88.69351957936352
+      },
+      "corrected_source_rows": 5
+    },
+    {
+      "route_key": "NCN:887",
+      "before": {
+        "target_m": 23035.904208027056,
+        "on_foot_m": 12906.667620372278,
+        "cycling_m": 21041.1465242768,
+        "combined_m": 21041.1465242768,
+        "unbound_m": 1994.7576837502565,
+        "attainable": false,
+        "combined_percent": 91.34065819280858
+      },
+      "after": {
+        "target_m": 23035.904208027056,
+        "on_foot_m": 12906.667620372278,
+        "cycling_m": 21041.1465242768,
+        "combined_m": 21041.1465242768,
+        "unbound_m": 1994.7576837502565,
+        "attainable": false,
+        "combined_percent": 91.34065819280858
+      },
+      "corrected_source_rows": 4
+    },
+    {
+      "route_key": "NCN:888",
+      "before": {
+        "target_m": 10773.457724125212,
+        "on_foot_m": 10596.039900996853,
+        "cycling_m": 10596.039900996853,
+        "combined_m": 10596.039900996853,
+        "unbound_m": 177.41782312835858,
+        "attainable": false,
+        "combined_percent": 98.35319516100144
+      },
+      "after": {
+        "target_m": 10773.457724125212,
+        "on_foot_m": 10596.039900996853,
+        "cycling_m": 10596.039900996853,
+        "combined_m": 10596.039900996853,
+        "unbound_m": 177.41782312835858,
+        "attainable": false,
+        "combined_percent": 98.35319516100144
+      },
+      "corrected_source_rows": 1
+    },
+    {
+      "route_key": "NCN:9",
+      "before": {
+        "target_m": 66635.79732580522,
+        "on_foot_m": 58788.478412570534,
+        "cycling_m": 60543.82990787296,
+        "combined_m": 60572.51015845511,
+        "unbound_m": 6063.287167350114,
+        "attainable": false,
+        "combined_percent": 90.90085598030046
+      },
+      "after": {
+        "target_m": 66635.79732580522,
+        "on_foot_m": 58788.478412570534,
+        "cycling_m": 60543.82990787296,
+        "combined_m": 60572.51015845511,
+        "unbound_m": 6063.287167350114,
+        "attainable": false,
+        "combined_percent": 90.90085598030046
+      },
+      "corrected_source_rows": 20
+    },
+    {
+      "route_key": "NCN:91",
+      "before": {
+        "target_m": 6215.045995132424,
+        "on_foot_m": 3300.591605873094,
+        "cycling_m": 3200.50337330663,
+        "combined_m": 3300.591605873094,
+        "unbound_m": 2914.4543892593297,
+        "attainable": false,
+        "combined_percent": 53.10647110991764
+      },
+      "after": {
+        "target_m": 6215.045995132424,
+        "on_foot_m": 3300.591605873094,
+        "cycling_m": 3200.50337330663,
+        "combined_m": 3300.591605873094,
+        "unbound_m": 2914.4543892593297,
+        "attainable": false,
+        "combined_percent": 53.10647110991764
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:92",
+      "before": {
+        "target_m": 27685.00404690001,
+        "on_foot_m": 12051.860588197109,
+        "cycling_m": 13336.944767133244,
+        "combined_m": 13336.944767133244,
+        "unbound_m": 14348.059279766765,
+        "attainable": false,
+        "combined_percent": 48.17389495244315
+      },
+      "after": {
+        "target_m": 27685.00404690001,
+        "on_foot_m": 12051.860588197109,
+        "cycling_m": 13336.944767133244,
+        "combined_m": 13336.944767133244,
+        "unbound_m": 14348.059279766765,
+        "attainable": false,
+        "combined_percent": 48.17389495244315
+      },
+      "corrected_source_rows": 16
+    },
+    {
+      "route_key": "NCN:93",
+      "before": {
+        "target_m": 54252.8680600422,
+        "on_foot_m": 40655.82834213853,
+        "cycling_m": 39635.86119841516,
+        "combined_m": 41076.183951566505,
+        "unbound_m": 13176.684108475696,
+        "attainable": false,
+        "combined_percent": 75.71246538728067
+      },
+      "after": {
+        "target_m": 54252.8680600422,
+        "on_foot_m": 40655.82834213853,
+        "cycling_m": 39635.86119841516,
+        "combined_m": 41076.183951566505,
+        "unbound_m": 13176.684108475696,
+        "attainable": false,
+        "combined_percent": 75.71246538728067
+      },
+      "corrected_source_rows": 34
+    },
+    {
+      "route_key": "NCN:94",
+      "before": {
+        "target_m": 13864.280973130317,
+        "on_foot_m": 12122.074093919291,
+        "cycling_m": 12117.207250649655,
+        "combined_m": 12183.425595707435,
+        "unbound_m": 1680.8553774228822,
+        "attainable": false,
+        "combined_percent": 87.87636098344757
+      },
+      "after": {
+        "target_m": 13864.280973130317,
+        "on_foot_m": 12122.074093919291,
+        "cycling_m": 12117.207250649655,
+        "combined_m": 12183.425595707435,
+        "unbound_m": 1680.8553774228822,
+        "attainable": false,
+        "combined_percent": 87.87636098344757
+      },
+      "corrected_source_rows": 6
+    },
+    {
+      "route_key": "NCN:96",
+      "before": {
+        "target_m": 7758.711396697638,
+        "on_foot_m": 5486.3227584562765,
+        "cycling_m": 5953.314482361583,
+        "combined_m": 5953.314482361583,
+        "unbound_m": 1805.3969143360546,
+        "attainable": false,
+        "combined_percent": 76.73071181505101
+      },
+      "after": {
+        "target_m": 7758.711396697638,
+        "on_foot_m": 5486.3227584562765,
+        "cycling_m": 5953.314482361583,
+        "combined_m": 5953.314482361583,
+        "unbound_m": 1805.3969143360546,
+        "attainable": false,
+        "combined_percent": 76.73071181505101
+      },
+      "corrected_source_rows": 9
+    },
+    {
+      "route_key": "NCN:97",
+      "before": {
+        "target_m": 1724.1004336038345,
+        "on_foot_m": 987.6495378212536,
+        "cycling_m": 844.7219793754998,
+        "combined_m": 987.6495378212536,
+        "unbound_m": 736.4508957825809,
+        "attainable": false,
+        "combined_percent": 57.2849190552548
+      },
+      "after": {
+        "target_m": 1724.1004336038345,
+        "on_foot_m": 987.6495378212536,
+        "cycling_m": 844.7219793754998,
+        "combined_m": 987.6495378212536,
+        "unbound_m": 736.4508957825809,
+        "attainable": false,
+        "combined_percent": 57.2849190552548
+      },
+      "corrected_source_rows": 3
+    },
+    {
+      "route_key": "NCN:99",
+      "before": {
+        "target_m": 22604.475348755277,
+        "on_foot_m": 10763.724055075028,
+        "cycling_m": 10781.732492863925,
+        "combined_m": 10781.732492863925,
+        "unbound_m": 11822.742855891353,
+        "attainable": false,
+        "combined_percent": 47.697335711256066
+      },
+      "after": {
+        "target_m": 22604.475348755277,
+        "on_foot_m": 10763.724055075028,
+        "cycling_m": 10781.732492863925,
+        "combined_m": 10781.732492863925,
+        "unbound_m": 11822.742855891353,
+        "attainable": false,
+        "combined_percent": 47.697335711256066
+      },
+      "corrected_source_rows": 2
+    },
+    {
+      "route_key": "RCN:70",
+      "before": {
+        "target_m": 3791.6971916789616,
+        "on_foot_m": 3769.980348697722,
+        "cycling_m": 3769.980348697722,
+        "combined_m": 3769.980348697722,
+        "unbound_m": 21.71684298123955,
+        "attainable": false,
+        "combined_percent": 99.42725270813033
+      },
+      "after": {
+        "target_m": 3791.6971916789616,
+        "on_foot_m": 3769.980348697722,
+        "cycling_m": 3769.980348697722,
+        "combined_m": 3769.980348697722,
+        "unbound_m": 21.71684298123955,
+        "attainable": false,
+        "combined_percent": 99.42725270813033
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "RCN:90",
+      "before": {
+        "target_m": 2934.5068413689805,
+        "on_foot_m": 276.8224097022896,
+        "cycling_m": 276.8224097022896,
+        "combined_m": 276.8224097022896,
+        "unbound_m": 2657.684431666691,
+        "attainable": false,
+        "combined_percent": 9.4333537001791
+      },
+      "after": {
+        "target_m": 2934.5068413689805,
+        "on_foot_m": 276.8224097022896,
+        "cycling_m": 276.8224097022896,
+        "combined_m": 276.8224097022896,
+        "unbound_m": 2657.684431666691,
+        "attainable": false,
+        "combined_percent": 9.4333537001791
+      },
+      "corrected_source_rows": 0
+    },
+    {
+      "route_key": "RCN:92",
+      "before": {
+        "target_m": 273.6785876331362,
+        "on_foot_m": 115.01743201999898,
+        "cycling_m": 115.01743201999898,
+        "combined_m": 115.01743201999898,
+        "unbound_m": 158.66115561313723,
+        "attainable": false,
+        "combined_percent": 42.026463602691074
+      },
+      "after": {
+        "target_m": 273.6785876331362,
+        "on_foot_m": 115.01743201999898,
+        "cycling_m": 115.01743201999898,
+        "combined_m": 115.01743201999898,
+        "unbound_m": 158.66115561313723,
+        "attainable": false,
+        "combined_percent": 42.026463602691074
+      },
+      "corrected_source_rows": 0
+    }
+  ],
+  "blocker_artifact_sha256": "930c7c9dd02ded1f5324a9dd411a1d1a266a652edf41be15bbc8f9a5d5ebf0ae",
+  "correction_artifact_sha256": "6db5c8a763e14ee17ad5e3b3e461c8ec6cfee1025448ed32b2393fef599ea5bf",
+  "sqlite_writer_version": "3.53.1",
+  "candidate_content_sha256": "936c347468a0f14ed6d2a6d3a31765674e059d48a625c1bce96339032456a57a"
+}

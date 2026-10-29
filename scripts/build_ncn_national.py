@@ -19,6 +19,53 @@ def positions(coords,origin):
     for a,z in zip(xy,xy[1:]):out.append(out[-1]+math.dist(a,z))
     return out
 
+def compile_path_bindings(path, plan, alternative, *, sections=None, bindex=None):
+    """Translate section-local anchors to their evidenced full-way positions.
+
+    Open-main plans can also contain proper sub-sections of a source way. They
+    must use the same offset discipline as the preserved alternative inventory.
+    A section key is only an occurrence hint: its coordinates must agree too.
+    """
+    origin=plan['metadata']['projection_origin'] if alternative else plan['projection_origin']
+    coords=[list(c) for c in path.coordinates]; pos=positions(coords,origin)
+    if sections is None:
+        sections={s['key']:s for s in plan['sections' if alternative else 'physical_sections_metric']}
+    if bindex is None:
+        bindex={}
+        for b in plan['bindings']:bindex.setdefault(b['physical_key'],[]).append(b)
+    if alternative:
+        points=coords
+    else:
+        project=lambda c:(6371008.8*math.radians(c[0]-origin[0])*math.cos(math.radians(origin[1])),6371008.8*math.radians(c[1]-origin[1]))
+        points=[project(c) for c in coords]
+    result=[]
+    for key in path.section_keys:
+        section=sections[key]['coordinates']
+        def agrees(i):
+            return (0<=i<=len(points)-len(section) and
+                    (points[i:i+len(section)]==[list(c) for c in section] if alternative else
+                     all(math.dist(a,z)<=1e-7 for a,z in zip(points[i:i+len(section)],section))))
+        suffix=key.split(':')
+        if key==str(path.way_id) and len(section)==len(points) and agrees(0):
+            start=0
+        elif (len(suffix)>=3 and suffix[-2].isdigit() and suffix[-1].isdigit()
+              and int(suffix[-1])-int(suffix[-2])+1==len(section) and agrees(int(suffix[-2]))):
+            start=int(suffix[-2])
+        else:
+            starts=[i for i in range(len(points)-len(section)+1) if agrees(i)]
+            if len(starts)!=1:raise ValueError('Exact source section occurrence required: '+key)
+            start=starts[0]
+        offset=pos[start]; limit=pos[start+len(section)-1]
+        for b in bindex.get(key,[]):
+            if not b['modes'] or not set(b['modes'])<=set(path.modes)&{'on_foot','cycling'}:
+                raise ValueError('Binding exceeds admitted source mode: '+key)
+            a,z=offset+b['physical_start'],offset+b['physical_end']
+            if not offset<=a<z or z>limit+1e-7:
+                raise ValueError('Binding exceeds exact source section: '+key)
+            result.append({'start':a,'end':z,'target':b['logical_key'],
+                'low':b['logical_start'],'high':b['logical_end'],'modes':b['modes']})
+    return result
+
 def build(root,out):
     pinsraw=(root/'inputs/input-pins.json').read_bytes();assert sha(pinsraw)==PINS
     pins=json.loads(pinsraw);summaryraw=(root/'plans/summary.json').read_bytes()
@@ -73,16 +120,11 @@ def build(root,out):
         if not alternative:all_targets.extend(LineString(c)for c in targets.values())
         bindex={}
         for b in plan['bindings']:bindex.setdefault(b['physical_key'],[]).append(b)
-        sections={s['key']:s for s in plan.get('sections',[])}
+        sections={s['key']:s for s in plan['sections' if alternative else 'physical_sections_metric']}
         hashes={a['way_id']:a['source_geometry_sha256']for a in associations['paths']}
         for p in known:
-            coords=[list(c)for c in p.coordinates];pos=positions(coords,origin);bindings=[]
-            for section in p.section_keys:
-                offset=0.
-                if alternative:
-                    points=sections[section]['coordinates'];starts=[i for i in range(len(coords)-len(points)+1)if coords[i:i+len(points)]==points]
-                    assert len(starts)==1;offset=pos[starts[0]]
-                for b in bindex.get(section,[]):bindings.append({'start':offset+b['physical_start'],'end':offset+b['physical_end'],'target':b['logical_key'],'low':b['logical_start'],'high':b['logical_end'],'modes':b['modes']})
+            coords=[list(c)for c in p.coordinates];pos=positions(coords,origin)
+            bindings=compile_path_bindings(p,plan,alternative,sections=sections,bindex=bindex)
             value={'route':key,'way':p.way_id,'coordinates':coords,'nodes':p.osm_node_ids,'modes':p.modes,'source_geometry_sha256':hashes[p.way_id],'origin':origin,'positions':pos,'bindings':bindings}
             identity=digest([coords,p.osm_node_ids]);assert p.way_id not in registry or registry[p.way_id]==identity;registry[p.way_id]=identity
             physical.append(value)
