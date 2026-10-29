@@ -77,7 +77,7 @@ python -m scripts.ncn_binding_attainability gate \
 
 The completion gate deliberately fails while any eligible route/network interval
 remains unassessable. The existing schema is retained: no APK is expected for this
-data correction, subject to candidate Android consumer validation. No publication
+data correction, confirmed by the focused candidate Android run below. No publication
 or real-device acceptance has occurred.
 
 ## Validation and interrupted-run handoff
@@ -92,8 +92,8 @@ Initial CI run **40875207936** failed before candidate reproduction because the
 workflow invoked removed `scripts/prepare_ncn_reference.py`. Its Android steps
 were skipped. The workflow now directly validates restored DB and county hashes.
 No local validation process remained running when the stalled UI was investigated.
-Follow the latest PR check results; until candidate Android checks pass, do not
-claim APK compatibility or full validation. No device timings are claimed.
+Candidate Android validation subsequently passed in run 40894305507, as recorded
+below. No device timings or full 810-test-suite validation are claimed.
 
 ## Safe next action and owner decisions
 
@@ -108,3 +108,62 @@ The recommended course is to retain the scope and its explicit blocked status
 while obtaining the missing evidence. Source integration, Firebase publication,
 APK distribution and device acceptance remain separate approvals. No merge,
 deployment, publication, APK build/distribution or issue closure was performed.
+
+## Android candidate validation recovery — completed
+
+Failed run [40885880828](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40885880828)
+failed at `:app:compileDebugUnitTestJavaWithJavac`, before any assertions ran.
+`NcnBindingCandidateTest.candidate()` used `NcnCatalogue.load(app())` despite
+declaring a local `Context app` and defining no `app()` method. The compiler
+reported “cannot find symbol: method app()” at line 31. Production Java
+compilation had succeeded. This was a test-setup defect introduced by PR #239;
+the class is absent from the base main tree, so this failure did not predate
+the PR. There was no demonstrated consumer incompatibility or resource failure.
+
+Code correction: commit `e7a9a65f3c7495a52f9f2395196a63dd05d6f814` changes
+that one expression to `NcnCatalogue.load(app)`. No assertions, test selections,
+candidate data, compiler bindings, tolerances or Android runtime files changed.
+A local Gradle reproduction was unavailable because the recovered workspace has
+no Java compiler, Gradle or Android SDK; the original and corrected CI jobs
+provide the compilation reproduction and validation.
+
+Successful rerun:
+[40894305507](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40894305507),
+source `e7a9a65`, job `123519118688`. Every candidate workflow step passed:
+
+- Exact shipped-pin validation and correction replay; seven focused Python tests.
+- Candidate manifest selection only in the disposable CI checkout.
+- `python scripts/test_ncn_national.py -v`: all target/network mappings passed.
+- Production and unit-test Java compilation, then **41 Android tests in 10 suites,
+  zero failures, errors or skips**. Both `NcnBindingCandidateTest` cases ran.
+- [Uploaded XML reports](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40894305507/artifacts/12906217636)
+  were read to verify those counts; this is not merely a green-job assumption.
+- Existing NCN research/reference workflow
+  [40894305346](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40894305346)
+  also passed. The separate legacy Android integration workflow was skipped by
+  its existing branch guard; it is not part of the 41-test result.
+
+Exact Android command:
+
+```bash
+gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false \
+  :app:testDebugUnitTest --tests 'com.roadprints.capture.Ncn*' \
+  --tests 'com.roadprints.capture.AchievementCelebrationsTest'
+```
+
+`NCN_TEST_DATABASE` points to `.cache/ncn/ci-candidate/ncn-national.db`;
+`NCN_ATTAINABILITY_REPORT` points to the receipt containing that candidate's
+actual manifest. The test verifies the input DB hash, installs it as the active
+catalogue and asserts the loaded version. No candidate test was skipped.
+Positive foot/run/cycle evidence, unadmitted-prefix negatives, driving/unsupported
+modes, corrections, union deduplication, exact milestone thresholds, partial
+route capacities, historical progress, persistence and presentation checks passed.
+
+**Compatibility conclusion:** the existing Android 0.25.220 (266) consumer can
+process this corrected catalogue; no APK update is necessary for this data
+correction. This is automated consumer compatibility, not phone field acceptance
+or permission to publish. Wider binding gaps on all 218 measurable routes remain
+unchanged and outside this recovery. No new owner product decision is needed;
+PR #239 is ready for review of the partial correction and integration approval,
+with catalogue publication still separate. PR #238 is unchanged. No merge,
+Firebase/backend release, APK build/distribution, tester release or issue closure.
