@@ -1,0 +1,71 @@
+name: NCN Stage 1 binding candidate (validation only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build_ncn_national.py'
+      - 'scripts/ncn_binding_attainability.py'
+      - 'scripts/test_ncn_binding_attainability.py'
+      - '.github/ncn-reference/stage1-binding-correction.json.gz'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/NcnBindingCandidateTest.java'
+      - '.github/workflows/ncn-attainability-checks.yml'
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-trial.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify shipped pins and reproduce exact candidate offline
+        run: |
+          python scripts/prepare_ncn_reference.py
+          bash android-prototype/scripts/prepare_county_reference.sh
+          python -m unittest scripts.test_ncn_binding_attainability -v
+          python -m scripts.ncn_binding_attainability apply --database .cache/ncn/catalogue.db --patch .github/ncn-reference/stage1-binding-correction.json.gz --output .cache/ncn/ci-candidate/ncn-national.db
+      - name: Select candidate only inside this disposable test checkout
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          from scripts.finalize_ncn_android import pack
+          receipt=json.loads(pathlib.Path('docs/data-trials/ncn-stage1-attainability-2026-10-29.json').read_text())
+          folder=pathlib.Path('.cache/ncn/ci-candidate')
+          (folder/'manifest.json').write_text(json.dumps(receipt['candidate_manifest']))
+          # Different SQLite writers can have different file headers/layout.
+          # apply already verified the canonical content hash of every table.
+          pack(folder)
+          receipt['candidate_manifest']=json.loads((folder/'manifest.json').read_text())
+          receipt['candidate_sha256']=receipt['candidate_manifest']['sha256']
+          pathlib.Path('docs/data-trials/ncn-stage1-attainability-2026-10-29.json').write_text(json.dumps(receipt)+'\n')
+          pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').write_text(json.dumps(receipt['candidate_manifest'])+'\n')
+          PY
+      - name: Read back candidate catalogue and every target-to-network mapping
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/ci-candidate/ncn-national.db
+        run: python scripts/test_ncn_national.py -v
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.10'}
+      - name: Test existing Android consumer against candidate (no APK tasks)
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/ci-candidate/ncn-national.db
+          NCN_ATTAINABILITY_REPORT: ${{ github.workspace }}/docs/data-trials/ncn-stage1-attainability-2026-10-29.json
+        run: |
+          gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests 'com.roadprints.capture.Ncn*' --tests 'com.roadprints.capture.AchievementCelebrationsTest'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-candidate-test-reports
+          path: android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 7
