@@ -1,0 +1,732 @@
+{
+  "schema_version": 1,
+  "route_key": "NCN:99",
+  "input_pins_sha256": "ce6cd0a0a13eefa2d0fa67825247c2aae2c50661f44a658bd069f24e6558a555",
+  "official_open_union_m": 22604.47534875528,
+  "supported_source_union_m": 11182.223733249726,
+  "outside_supported_10m_m": 11363.070838713094,
+  "feature_residual_sum_m": 11363.070838713096,
+  "feature_residual_sum_is_union": false,
+  "source_member_way_count": 53,
+  "supported_way_count": 48,
+  "admitted_new_ways": 0,
+  "removed_official_open_features": 0,
+  "completion_binding_ready": false,
+  "whole_route_activation_blocked": true,
+  "policy": "Retain official open extent pending bounded adjudication; exclude planned links; nearby mapped paths are not NCN membership evidence.",
+  "features": [
+    {
+      "segment_id": 8272,
+      "capture_feature_id": 583,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 88.85435106101204,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.90553286192704,
+        54.6028477304243
+      ],
+      "end_lon_lat": [
+        -5.9055836153762,
+        54.602702757529
+      ],
+      "vertex_count": 4,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 738048912,
+          "highway": "path",
+          "name": null,
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 82.6378991863202
+        }
+      ]
+    },
+    {
+      "segment_id": 23751,
+      "capture_feature_id": 701,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 798.2250255543315,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.79961518502929,
+        54.5863193719813
+      ],
+      "end_lon_lat": [
+        -5.79020780154081,
+        54.5834740717562
+      ],
+      "vertex_count": 30,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 11520,
+      "capture_feature_id": 865,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 133.42826765092866,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.90520378812216,
+        54.6021654580842
+      ],
+      "end_lon_lat": [
+        -5.90587610758243,
+        54.6019283589726
+      ],
+      "vertex_count": 11,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 416977426,
+          "highway": "path",
+          "name": null,
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 79.07987774198969
+        },
+        {
+          "way_id": 151558584,
+          "highway": "trunk",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 54.40789608347841
+        }
+      ]
+    },
+    {
+      "segment_id": 22135,
+      "capture_feature_id": 4209,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 199.94897635895646,
+      "outside_supported_10m_m": 8.985916492874228,
+      "start_lon_lat": [
+        -5.89018425973817,
+        54.598819914104
+      ],
+      "end_lon_lat": [
+        -5.88846324482088,
+        54.5975738287479
+      ],
+      "vertex_count": 12,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 14520480,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 151.97756864007866
+        },
+        {
+          "way_id": 544887049,
+          "highway": "pedestrian",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 54.440304211102294
+        }
+      ]
+    },
+    {
+      "segment_id": 33298,
+      "capture_feature_id": 4210,
+      "location": "belfast_ballymacarrett_walkway",
+      "determination": "unlisted_source_membership_hold",
+      "official_open_length_m": 526.9021131143721,
+      "outside_supported_10m_m": 526.9021131143721,
+      "start_lon_lat": [
+        -5.89018425973817,
+        54.598819914104
+      ],
+      "end_lon_lat": [
+        -5.89678820250576,
+        54.6012968241318
+      ],
+      "vertex_count": 29,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 460932694,
+          "highway": "cycleway",
+          "name": "Ballymacarrett Walkway",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 395.79313572244854
+        },
+        {
+          "way_id": 1096334483,
+          "highway": "pedestrian",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 98.7227019492659
+        },
+        {
+          "way_id": 1096264458,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 85.19981804097262
+        },
+        {
+          "way_id": 14520647,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 81.76751056838101
+        },
+        {
+          "way_id": 1096264457,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 47.223434982860425
+        },
+        {
+          "way_id": 1096334488,
+          "highway": "cycleway",
+          "name": "Ballymacarrett Walkway",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 40.21103917650046
+        }
+      ]
+    },
+    {
+      "segment_id": 25534,
+      "capture_feature_id": 5935,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 60.084257715395,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.81344233390686,
+        54.5893744692995
+      ],
+      "end_lon_lat": [
+        -5.81289427226823,
+        54.5896411749956
+      ],
+      "vertex_count": 3,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 11008,
+      "capture_feature_id": 6971,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 4648.7652674153,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.88293865642332,
+        54.5950800074608
+      ],
+      "end_lon_lat": [
+        -5.8134423338155,
+        54.5893744686274
+      ],
+      "vertex_count": 126,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 56279,
+      "capture_feature_id": 7690,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 724.5445587980599,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.79163095372709,
+        54.5823760646487
+      ],
+      "end_lon_lat": [
+        -5.78376359542931,
+        54.5777831910222
+      ],
+      "vertex_count": 12,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 36528,
+      "capture_feature_id": 7749,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 76.04751634368733,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.90553286204934,
+        54.6028477312369
+      ],
+      "end_lon_lat": [
+        -5.9059243425906,
+        54.6034087416478
+      ],
+      "vertex_count": 5,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 9945,
+      "capture_feature_id": 10793,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 58.157660524580905,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.75935566606193,
+        54.5586764766706
+      ],
+      "end_lon_lat": [
+        -5.75884353847512,
+        54.5582954957927
+      ],
+      "vertex_count": 4,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 35866,
+      "capture_feature_id": 16661,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 65.67791473035108,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.88846324482088,
+        54.5975738287479
+      ],
+      "end_lon_lat": [
+        -5.887763528507,
+        54.5972049020505
+      ],
+      "vertex_count": 4,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 59831555,
+          "highway": "residential",
+          "name": "Ravenscroft Avenue",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 45.05392983233878
+        }
+      ]
+    },
+    {
+      "segment_id": 33297,
+      "capture_feature_id": 25132,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 306.07464266333886,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.88654660918805,
+        54.5968198512033
+      ],
+      "end_lon_lat": [
+        -5.88293865653749,
+        54.5950800082368
+      ],
+      "vertex_count": 22,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 938208696,
+          "highway": "cycleway",
+          "name": "Bloomfield Walkway",
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 295.2679710279953
+        },
+        {
+          "way_id": 1316109245,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 123.87301191290311
+        }
+      ]
+    },
+    {
+      "segment_id": 34228,
+      "capture_feature_id": 25212,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 162.45567077018714,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.79020780154081,
+        54.5834740717562
+      ],
+      "end_lon_lat": [
+        -5.79163095381201,
+        54.5823760652907
+      ],
+      "vertex_count": 15,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 55854,
+      "capture_feature_id": 26565,
+      "location": "belfast_middlepath_street",
+      "determination": "unlisted_source_membership_hold",
+      "official_open_length_m": 871.4381367022104,
+      "outside_supported_10m_m": 868.8407373132479,
+      "start_lon_lat": [
+        -5.91919037210494,
+        54.6004527466857
+      ],
+      "end_lon_lat": [
+        -5.9063207586324,
+        54.6016738597382
+      ],
+      "vertex_count": 31,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 1119387287,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 286.580245657282
+        },
+        {
+          "way_id": 369427264,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 251.87190826044412
+        },
+        {
+          "way_id": 1084566269,
+          "highway": "primary",
+          "name": "Middlepath Street",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 247.95335256860233
+        },
+        {
+          "way_id": 635011375,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 216.61836612350402
+        },
+        {
+          "way_id": 740824450,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 82.77016962635689
+        },
+        {
+          "way_id": 1378301712,
+          "highway": "path",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 78.4089913020376
+        },
+        {
+          "way_id": 624192500,
+          "highway": "primary",
+          "name": "Middlepath Street",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 72.09282818123546
+        },
+        {
+          "way_id": 898608751,
+          "highway": "primary",
+          "name": "Middlepath Street",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 69.43251462630808
+        },
+        {
+          "way_id": 740825752,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 68.57513595671756
+        },
+        {
+          "way_id": 1497519292,
+          "highway": "primary",
+          "name": "Middlepath Street",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 67.23879064970308
+        },
+        {
+          "way_id": 635011374,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 61.6523432192454
+        },
+        {
+          "way_id": 635011376,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 53.18030081302996
+        },
+        {
+          "way_id": 1119387298,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 52.78334879081946
+        }
+      ]
+    },
+    {
+      "segment_id": 9946,
+      "capture_feature_id": 28618,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 968.2865562180207,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.80018492555388,
+        54.586369049241
+      ],
+      "end_lon_lat": [
+        -5.81289427217703,
+        54.5896411743244
+      ],
+      "vertex_count": 36,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 9949,
+      "capture_feature_id": 28619,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 44.130590462627026,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.80018492555388,
+        54.586369049241
+      ],
+      "end_lon_lat": [
+        -5.79961518494199,
+        54.5863193713283
+      ],
+      "vertex_count": 4,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 57295,
+      "capture_feature_id": 31874,
+      "location": "bangor_newtownards_ballyrickard",
+      "determination": "geometry_and_source_membership_hold",
+      "official_open_length_m": 10072.009973865732,
+      "outside_supported_10m_m": 9958.342071792602,
+      "start_lon_lat": [
+        -5.67158810634046,
+        54.6327317439184
+      ],
+      "end_lon_lat": [
+        -5.7052984434779,
+        54.5625080814599
+      ],
+      "vertex_count": 46,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 38111409,
+          "highway": "residential",
+          "name": "Beverley Avenue; Rosevale Avenue",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 271.1387066975852
+        },
+        {
+          "way_id": 43475618,
+          "highway": "service",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 144.24366267293877
+        },
+        {
+          "way_id": 1531057448,
+          "highway": "cycleway",
+          "name": "Flood Bank Path Extension",
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 135.43438535282294
+        },
+        {
+          "way_id": 107217091,
+          "highway": "cycleway",
+          "name": "Flood Bank Path",
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 94.19489883298249
+        },
+        {
+          "way_id": 43021601,
+          "highway": "cycleway",
+          "name": "Tide Bank",
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 77.2203625549851
+        },
+        {
+          "way_id": 896202311,
+          "highway": "trunk",
+          "name": "Newtownards Road",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 74.74653440318143
+        },
+        {
+          "way_id": 38111383,
+          "highway": "residential",
+          "name": "Beverley Crescent",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 74.11406162088227
+        },
+        {
+          "way_id": 389400791,
+          "highway": "service",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 70.91897871011659
+        },
+        {
+          "way_id": 107214782,
+          "highway": "path",
+          "name": "Greenway",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 67.76778069211545
+        },
+        {
+          "way_id": 390767560,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 59.86154775132982
+        },
+        {
+          "way_id": 1131700435,
+          "highway": "track",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 59.32703635053406
+        },
+        {
+          "way_id": 38111364,
+          "highway": "residential",
+          "name": "Chapel Hill Park",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 54.47365366153349
+        },
+        {
+          "way_id": 473829689,
+          "highway": "trunk",
+          "name": "Portaferry Road Roundabout",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 54.471563456844336
+        },
+        {
+          "way_id": 25411187,
+          "highway": "residential",
+          "name": "Victoria Crescent",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 52.47158535907872
+        },
+        {
+          "way_id": 776777165,
+          "highway": "service",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 46.6407123876567
+        },
+        {
+          "way_id": 41562734,
+          "highway": "trunk",
+          "name": "Portaferry Road",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 46.594243840139534
+        },
+        {
+          "way_id": 1156811083,
+          "highway": "cycleway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 46.271153281868415
+        },
+        {
+          "way_id": 1317916062,
+          "highway": "footway",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 45.90443807696016
+        },
+        {
+          "way_id": 1422638801,
+          "highway": "trunk",
+          "name": "Portaferry Road",
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 44.53110882017862
+        },
+        {
+          "way_id": 43676039,
+          "highway": "service",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 43.8771764209054
+        }
+      ]
+    },
+    {
+      "segment_id": 3222,
+      "capture_feature_id": 36104,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 2684.862053719948,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.78376359551207,
+        54.5777831916537
+      ],
+      "end_lon_lat": [
+        -5.75935566613753,
+        54.5586764772704
+      ],
+      "vertex_count": 30,
+      "mapped_candidates_diagnostic_only": []
+    },
+    {
+      "segment_id": 34187,
+      "capture_feature_id": 36995,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 64.58118035224506,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.90558361549851,
+        54.6027027583418
+      ],
+      "end_lon_lat": [
+        -5.90520378824432,
+        54.6021654588963
+      ],
+      "vertex_count": 3,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 375946629,
+          "highway": "path",
+          "name": null,
+          "source_relation_member": true,
+          "mapped_length_inside_target_10m_m": 70.87667617533494
+        }
+      ]
+    },
+    {
+      "segment_id": 34188,
+      "capture_feature_id": 37121,
+      "location": "belfast_comber",
+      "determination": "retain_existing_review",
+      "official_open_length_m": 50.000634733994545,
+      "outside_supported_10m_m": 0.0,
+      "start_lon_lat": [
+        -5.90587610770483,
+        54.6019283597859
+      ],
+      "end_lon_lat": [
+        -5.90528205803734,
+        54.6016407001927
+      ],
+      "vertex_count": 4,
+      "mapped_candidates_diagnostic_only": [
+        {
+          "way_id": 841698392,
+          "highway": "pedestrian",
+          "name": null,
+          "source_relation_member": false,
+          "mapped_length_inside_target_10m_m": 58.46526632689775
+        }
+      ]
+    }
+  ]
+}

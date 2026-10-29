@@ -1,0 +1,3866 @@
+{
+  "schema_version": 1,
+  "route_keys": [
+    "NCN:221",
+    "NCN:250",
+    "NCN:647",
+    "NCN:83",
+    "NCN:99"
+  ],
+  "scope": "Explicit partial-provider open-span review; not full-route certification",
+  "capture_sha256": "80b10b570abae274cc7baf2cd46fc98eda2d28c3a9ea4881c517a7809855c2e9",
+  "official_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+  "physical_report_sha256": "6e9bf5dacc65fd8946d73e1a48cab022b91022468b7f01fbad68b0f3d98fe196",
+  "membership_profiles_sha256": "a4b695a2632a81a5cf801d4c8a586308723b2e3807a80ed58932ac4964414048",
+  "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+  "routes": [
+    {
+      "route_key": "NCN:221",
+      "status": "supported_open_spans",
+      "current_source_way_count": 152,
+      "membership_changes": {
+        "9559159": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 9559159,
+          "version": 3,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "network": "ncn",
+            "note": "Super-Relation: Apart from some links to side roads, Saturn Trail is branding (not a separate cycle route) for NCN221 in Woking - use relation 4026393 outside Woking and relation 4026281 in Woking, and use new relation 9559076 for the side links",
+            "ref": "221",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "9559159": {
+          "relation_id": 9559159,
+          "expected_way_count": 152,
+          "provider_base_records": 121,
+          "missing_way_ids": [
+            36860668,
+            36860670,
+            36860672,
+            302660434,
+            302660655,
+            302668236,
+            302668237,
+            432207471,
+            432207472,
+            432207603,
+            432207819,
+            542828811,
+            543396878,
+            543396879,
+            678461879,
+            678469057,
+            781910523,
+            781910524,
+            781910525,
+            781914110,
+            781914111,
+            781914112,
+            781914113,
+            781914114,
+            781914115,
+            781914116,
+            781914117,
+            781914118,
+            781914120,
+            781914121,
+            781914123
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 4026281,
+          "state": null
+        },
+        {
+          "id": 4026393,
+          "state": "proposed"
+        },
+        {
+          "id": 9559159,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 37,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 13989.638926972353,
+      "supported_source_union_m": 13773.25195480512,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 13773.25195480512,
+        "cycling": 13289.045174702593
+      },
+      "official_open_without_supported_source_at_10m_m": 199.70835459634162,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [
+        "581355478",
+        "978260288",
+        "978260290"
+      ],
+      "catalogue_audit": {
+        "route_key": "NCN:221",
+        "source_relations": [
+          {
+            "id": 9559159,
+            "version": 3,
+            "timestamp": "2020-01-13T23:45:44Z"
+          }
+        ],
+        "accepted_way_count": 115,
+        "held_way_count": 39,
+        "partial_way_count": 2,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": []
+        },
+        "held": [
+          {
+            "way_id": 36860668,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 36860670,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 36860672,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 302660434,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 302660655,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 302668236,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 302668237,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 324111614,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 324112795,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 324112796,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 326165331,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 326165449,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 326645232,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 432207471,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 432207472,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 432207603,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 432207819,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 542828811,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 543396878,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 543396879,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 678461879,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 678469057,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 689745727,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 781910523,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781910524,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781910525,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914110,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914111,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914112,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914113,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914114,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914115,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914116,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914117,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914118,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914120,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914121,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 781914123,
+            "reason": "proposed_or_closed_source_membership"
+          },
+          {
+            "way_id": 863329642,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "partly_accepted": false
+          }
+        ],
+        "held_reason_counts": {
+          "proposed_or_closed_source_membership": 31,
+          "unresolved_official_extent_edges": 8
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "e7c8c72070e39dd9b9794053db7ade128f120495624af04612c03428141f8f63",
+        "recorded_source_route_key": "NCN:221",
+        "target_route_key": "NCN:221",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:221",
+        "target_route_key": "NCN:221",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+        "official_features_sha256": "d1796909c35b743d31439691078a16a646023d2d8ac14cbdd1c6a4ba28732142",
+        "approved_open_features_sha256": "d1796909c35b743d31439691078a16a646023d2d8ac14cbdd1c6a4ba28732142",
+        "source_snapshot_sha256": "941ee0ca917d248901260692c4e3d3d0381a1b2aae2163c819ad5bdbee1ffd5c",
+        "provider_sha256": "332b50a1d4cb3cc11cefd91e8d2740c1c14a93d401a4857e1cd1dc566e50cfdf",
+        "source_relations_sha256": "c70433f325ee6e3236214565abdc80bb53c3aa1d5ad4b222f6995d57e1f4d9ee",
+        "source_relation_ids": [
+          9559159
+        ],
+        "approved_official_feature_ids": [
+          2207,
+          2245,
+          2358,
+          5348,
+          6741,
+          9822,
+          10284,
+          11813,
+          11817,
+          12535,
+          13026,
+          13794,
+          13829,
+          13957,
+          14133,
+          14935,
+          14936,
+          18352,
+          20469,
+          20520,
+          21650,
+          21678,
+          23654,
+          24659,
+          24672,
+          24802,
+          26527,
+          26839,
+          27273,
+          29435,
+          29667,
+          30582,
+          34585,
+          34661,
+          34810,
+          36434,
+          36435
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 36777064,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 36798564,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 36798565,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 80324970,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 80519879,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 218904293,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 218904297,
+            "from_vertex": 0,
+            "to_vertex": 34
+          },
+          {
+            "way_id": 218904300,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 218904301,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 270368414,
+            "from_vertex": 0,
+            "to_vertex": 32
+          },
+          {
+            "way_id": 324111613,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 324111614,
+            "from_vertex": 1,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 324111617,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 324111621,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 324213636,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 324213640,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 324889605,
+            "from_vertex": 0,
+            "to_vertex": 34
+          },
+          {
+            "way_id": 324889606,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 324889608,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 324889610,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 324890303,
+            "from_vertex": 0,
+            "to_vertex": 28
+          },
+          {
+            "way_id": 324890304,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 324891794,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 324891800,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 326165334,
+            "from_vertex": 0,
+            "to_vertex": 30
+          },
+          {
+            "way_id": 326165447,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 326167751,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 326602754,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 326632018,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 326640647,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 326640658,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 326821608,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 326834882,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 329596114,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 331312382,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 331312403,
+            "from_vertex": 0,
+            "to_vertex": 20
+          },
+          {
+            "way_id": 331314082,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 373436569,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 528878828,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 543763104,
+            "from_vertex": 0,
+            "to_vertex": 16
+          },
+          {
+            "way_id": 543763105,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 543763106,
+            "from_vertex": 0,
+            "to_vertex": 21
+          },
+          {
+            "way_id": 543768888,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 543770544,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 543774238,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 543774240,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 581355478,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 589064241,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 645449810,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 649518270,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 649518272,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 649523510,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 649523511,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 688483010,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 688483013,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 688987800,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 688989404,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 688989405,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 688989406,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 688989766,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 689202671,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 689202673,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 689205291,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689205293,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 689205295,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 689205296,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 689217260,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 689217261,
+            "from_vertex": 0,
+            "to_vertex": 30
+          },
+          {
+            "way_id": 689222901,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689367352,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689367623,
+            "from_vertex": 0,
+            "to_vertex": 19
+          },
+          {
+            "way_id": 689367624,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 689369487,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 689369488,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 689369489,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689369490,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689737176,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 689737177,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 689744832,
+            "from_vertex": 0,
+            "to_vertex": 19
+          },
+          {
+            "way_id": 689744837,
+            "from_vertex": 0,
+            "to_vertex": 23
+          },
+          {
+            "way_id": 689745727,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 689745728,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 689745729,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 689745730,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 689745737,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 689749212,
+            "from_vertex": 0,
+            "to_vertex": 19
+          },
+          {
+            "way_id": 732504659,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 736885923,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 751770671,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 781914712,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 781914713,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 781923577,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 863329634,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 863329636,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 863329638,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 863329640,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 863332226,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 888734096,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 888734097,
+            "from_vertex": 0,
+            "to_vertex": 23
+          },
+          {
+            "way_id": 888734176,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 888734177,
+            "from_vertex": 0,
+            "to_vertex": 41
+          },
+          {
+            "way_id": 978260288,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 978260290,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 978260291,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 978260292,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 978260293,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1368380691,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1369366767,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1369366768,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1442241192,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1442241193,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1442241194,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1442241195,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1466529370,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1467069966,
+            "from_vertex": 0,
+            "to_vertex": 18
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/9559159/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28250%2C99%2C647%2C83%2C221%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "46c846d869c07c2bbd85880341a50d707317eb9dd8f8557bcff36baf8462d28a"
+    },
+    {
+      "route_key": "NCN:250",
+      "status": "supported_open_spans",
+      "current_source_way_count": 34,
+      "membership_changes": {
+        "2986634": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 2986634,
+          "version": 13,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "name": "National Cycle Network 250",
+            "network": "ncn",
+            "ref": "250",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "2986634": {
+          "relation_id": 2986634,
+          "expected_way_count": 34,
+          "provider_base_records": 35,
+          "missing_way_ids": [
+            75127304
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            75127304
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 2986634,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 15,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 10268.16830775128,
+      "supported_source_union_m": 9966.678444973943,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 9712.819609006194,
+        "cycling": 9966.67844497394
+      },
+      "official_open_without_supported_source_at_10m_m": 238.3242597055066,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "catalogue_audit": {
+        "route_key": "NCN:250",
+        "source_relations": [
+          {
+            "id": 2986634,
+            "version": 13,
+            "timestamp": "2025-08-12T10:20:57Z"
+          }
+        ],
+        "accepted_way_count": 33,
+        "held_way_count": 1,
+        "partial_way_count": 0,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": []
+        },
+        "held": [
+          {
+            "way_id": 75127304,
+            "reason": "logical_branch_policy_required"
+          }
+        ],
+        "held_reason_counts": {
+          "logical_branch_policy_required": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "4c01246a04b095726afafac1c51cb5bb81278b808307bd439210bd47c705226e",
+        "recorded_source_route_key": "NCN:250",
+        "target_route_key": "NCN:250",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:250",
+        "target_route_key": "NCN:250",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+        "official_features_sha256": "02eda919e68f672ddd518012f92ce44040d056417cb69d0d5791c7fc98a0f28f",
+        "approved_open_features_sha256": "02eda919e68f672ddd518012f92ce44040d056417cb69d0d5791c7fc98a0f28f",
+        "source_snapshot_sha256": "941ee0ca917d248901260692c4e3d3d0381a1b2aae2163c819ad5bdbee1ffd5c",
+        "provider_sha256": "2bdf86c8de0e0c12abb3b641bc3f370bc95985f69e95ac942b25dd3f26a53c8d",
+        "source_relations_sha256": "bfc7bc5c571e2d5b359989494304a285923f5e17028061e33813cdf8605e82e2",
+        "source_relation_ids": [
+          2986634
+        ],
+        "approved_official_feature_ids": [
+          3250,
+          5653,
+          6805,
+          9569,
+          11531,
+          12367,
+          12769,
+          15874,
+          22602,
+          24640,
+          28222,
+          28223,
+          31039,
+          32527,
+          33580
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 23373075,
+            "from_vertex": 0,
+            "to_vertex": 64
+          },
+          {
+            "way_id": 23449704,
+            "from_vertex": 0,
+            "to_vertex": 33
+          },
+          {
+            "way_id": 42143073,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 43709483,
+            "from_vertex": 0,
+            "to_vertex": 31
+          },
+          {
+            "way_id": 43715076,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 75060717,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 75127309,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 75226999,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 75227000,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 75227003,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 79577433,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 86571054,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 86571063,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 220287793,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 220400868,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 284250696,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 284250697,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 514074285,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 594277407,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 594277408,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 901818217,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 901818218,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 901818220,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 901818221,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 1066595931,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1066595936,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1182604865,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 1182604866,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1210582720,
+            "from_vertex": 0,
+            "to_vertex": 22
+          },
+          {
+            "way_id": 1210584025,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1210992258,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1348703727,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 1409258395,
+            "from_vertex": 0,
+            "to_vertex": 3
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/2986634/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28250%2C99%2C647%2C83%2C221%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "0cf557854167c0ccc18997b36f7fe455e234f2500c28b267cd99d61c28758f56"
+    },
+    {
+      "route_key": "NCN:647",
+      "status": "supported_open_spans",
+      "current_source_way_count": 94,
+      "membership_changes": {
+        "1854718": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 1854718,
+          "version": 45,
+          "tags": {
+            "ascent": "50",
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "descent": "115",
+            "distance": "32",
+            "name": "NCN National Route 647",
+            "network": "ncn",
+            "ref": "647",
+            "roundtrip": "no",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "1854718": {
+          "relation_id": 1854718,
+          "expected_way_count": 94,
+          "provider_base_records": 95,
+          "missing_way_ids": [
+            89666353
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            89666353
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 1854718,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 28,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 20989.61590260895,
+      "supported_source_union_m": 17468.999556797644,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 17445.941027367735,
+        "cycling": 17468.99955679765
+      },
+      "official_open_without_supported_source_at_10m_m": 3467.544853567866,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "catalogue_audit": {
+        "route_key": "NCN:647",
+        "source_relations": [
+          {
+            "id": 1854718,
+            "version": 45,
+            "timestamp": "2025-05-01T10:54:51Z"
+          }
+        ],
+        "accepted_way_count": 53,
+        "held_way_count": 45,
+        "partial_way_count": 4,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": [
+            {
+              "way_ids": [
+                89666353
+              ],
+              "gate_node_ids": [
+                1608121093,
+                1886839257,
+                1886839317,
+                1886839319
+              ],
+              "reason": "not_a_simple_two_gate_roundabout"
+            }
+          ]
+        },
+        "held": [
+          {
+            "way_id": 4846351,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 30691655,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 40962177,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 40962179,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 89295481,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 89295482,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 89317828,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 89317833,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 89666353,
+            "reason": "logical_branch_policy_required"
+          },
+          {
+            "way_id": 89666355,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 130343287,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 130343288,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 137654256,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 137654272,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 137654276,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 138720925,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 138720926,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 172760512,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 178321404,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              2
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 178898311,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 225254527,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 225254528,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 236840599,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 236840609,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 266580826,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              17
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 266587927,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 266669684,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 271669900,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 271669901,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 272121169,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 272121171,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 279615842,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 291601706,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 291605819,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 291605822,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 292570108,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 292570109,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 292570111,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 293764773,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 295959337,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 295959338,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 338788429,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              53,
+              54,
+              55,
+              56,
+              57,
+              58,
+              59,
+              60,
+              61,
+              62,
+              63,
+              64,
+              65,
+              66,
+              67,
+              68,
+              69,
+              70,
+              71,
+              72,
+              73,
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86,
+              87,
+              88,
+              89,
+              90,
+              91,
+              92,
+              93,
+              94,
+              95,
+              96,
+              97,
+              98,
+              99,
+              100,
+              101,
+              102,
+              103,
+              104,
+              105,
+              106,
+              107,
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 396121190,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 473869551,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 473871704,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          }
+        ],
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 44,
+          "logical_branch_policy_required": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "054bebf6893eabce7b1d0144434f82b17b12b92fece6e8a0d5ddc37a36586fe4",
+        "recorded_source_route_key": "NCN:647",
+        "target_route_key": "NCN:647",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:647",
+        "target_route_key": "NCN:647",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+        "official_features_sha256": "18feadde9aab61c8f534bfd6726f84a7ea9e2dca154dd65661b2d635d2995315",
+        "approved_open_features_sha256": "18feadde9aab61c8f534bfd6726f84a7ea9e2dca154dd65661b2d635d2995315",
+        "source_snapshot_sha256": "941ee0ca917d248901260692c4e3d3d0381a1b2aae2163c819ad5bdbee1ffd5c",
+        "provider_sha256": "30a7428e0f7d4511a285842a096409ebb64320d02ebe5d9d99b8b0f98c43f7b8",
+        "source_relations_sha256": "927b14f29cda2f01108ae4e5478a14860e452017a5c7f8e33bea6c5eb017f77f",
+        "source_relation_ids": [
+          1854718
+        ],
+        "approved_official_feature_ids": [
+          2567,
+          3800,
+          3801,
+          4581,
+          10028,
+          12076,
+          12077,
+          12562,
+          12784,
+          14622,
+          19901,
+          20640,
+          20641,
+          22633,
+          23851,
+          25069,
+          26038,
+          26090,
+          26119,
+          28899,
+          29030,
+          30279,
+          30338,
+          31084,
+          32541,
+          32852,
+          33412,
+          35505
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 40959259,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 40959417,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 61649122,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 78343820,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 81910243,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 81910245,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 89349043,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 130343289,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 130343290,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 137654258,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 137654276,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 137654277,
+            "from_vertex": 0,
+            "to_vertex": 16
+          },
+          {
+            "way_id": 137654281,
+            "from_vertex": 0,
+            "to_vertex": 23
+          },
+          {
+            "way_id": 160099041,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 172760514,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 178321404,
+            "from_vertex": 1,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 225264588,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 225264591,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 266580826,
+            "from_vertex": 0,
+            "to_vertex": 17
+          },
+          {
+            "way_id": 266580826,
+            "from_vertex": 18,
+            "to_vertex": 40
+          },
+          {
+            "way_id": 292571139,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 292571140,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 292571143,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 292571145,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 292571293,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 292571294,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 294688341,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 294689944,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 294689948,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 294689950,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 294689954,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 294691568,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 294691569,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 295941702,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 295941706,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 316886590,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 316886591,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 316886592,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 316886596,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 316886599,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 316886603,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 338220234,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 395124703,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 395124706,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 396121190,
+            "from_vertex": 2,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 442134976,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 442977948,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 472394103,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 472398067,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 553115725,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 553115732,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 553126355,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 553126358,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1382744458,
+            "from_vertex": 0,
+            "to_vertex": 3
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/1854718/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28250%2C99%2C647%2C83%2C221%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "f3f1cfaddac9455ef224efe3bf3d822235cc4ecde00a365c3354070922d59440"
+    },
+    {
+      "route_key": "NCN:83",
+      "status": "supported_open_spans",
+      "current_source_way_count": 109,
+      "membership_changes": {
+        "1328554": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 1328554,
+          "version": 45,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "from": "Stranraer",
+            "name": "NCN National Route 83",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "83",
+            "route": "bicycle",
+            "state": "complete",
+            "to": "Newton Stewart",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "1328554": {
+          "relation_id": 1328554,
+          "expected_way_count": 109,
+          "provider_base_records": 110,
+          "missing_way_ids": [
+            949979263
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            949979263
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 1328554,
+          "state": "complete"
+        }
+      ],
+      "official_open_feature_count": 52,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 55776.23693540979,
+      "supported_source_union_m": 55890.75981712826,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 53074.2399890809,
+        "cycling": 55830.890351383154
+      },
+      "official_open_without_supported_source_at_10m_m": 57.15643039855549,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "catalogue_audit": {
+        "route_key": "NCN:83",
+        "source_relations": [
+          {
+            "id": 1328554,
+            "version": 45,
+            "timestamp": "2026-08-04T10:24:11Z"
+          }
+        ],
+        "accepted_way_count": 108,
+        "held_way_count": 4,
+        "partial_way_count": 3,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": [
+            {
+              "way_ids": [
+                949979263
+              ],
+              "gate_node_ids": [
+                8794549412,
+                8794549418,
+                8794549423,
+                8794549424
+              ],
+              "reason": "not_a_simple_two_gate_roundabout"
+            }
+          ]
+        },
+        "held": [
+          {
+            "way_id": 588306469,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 588306514,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 836234691,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 949979263,
+            "reason": "logical_branch_policy_required"
+          }
+        ],
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 3,
+          "logical_branch_policy_required": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "f1f0d0e5ca5aca1505242243d664a081c728f1a24bd5c9cad585c5cb45bc6bcd",
+        "recorded_source_route_key": "NCN:83",
+        "target_route_key": "NCN:83",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:83",
+        "target_route_key": "NCN:83",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+        "official_features_sha256": "6722a186f9e3b3ef71a33086ca1fc89da8b6b3033ab46f351b4bdb19c3d191b3",
+        "approved_open_features_sha256": "6722a186f9e3b3ef71a33086ca1fc89da8b6b3033ab46f351b4bdb19c3d191b3",
+        "source_snapshot_sha256": "941ee0ca917d248901260692c4e3d3d0381a1b2aae2163c819ad5bdbee1ffd5c",
+        "provider_sha256": "475b19bc766f480a69507bda49636ce10a461afd6d91127c0e5daa01d1ed3ec3",
+        "source_relations_sha256": "368ce477e13f3735e86bde437235f71ff68037e6bb87fa3221fe0e6391a52b67",
+        "source_relation_ids": [
+          1328554
+        ],
+        "approved_official_feature_ids": [
+          6,
+          1434,
+          2448,
+          2730,
+          3012,
+          3668,
+          5896,
+          5897,
+          5964,
+          6367,
+          6870,
+          6871,
+          7291,
+          8652,
+          9212,
+          9953,
+          10492,
+          11412,
+          12488,
+          12489,
+          14647,
+          15009,
+          15307,
+          15828,
+          16194,
+          16620,
+          16942,
+          17873,
+          18169,
+          21173,
+          21364,
+          21752,
+          21753,
+          21783,
+          22198,
+          23454,
+          24467,
+          24470,
+          24768,
+          25290,
+          25579,
+          27038,
+          28178,
+          28400,
+          30218,
+          30408,
+          32003,
+          32354,
+          32662,
+          33296,
+          33392,
+          34993
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 4828480,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 4828636,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 4841669,
+            "from_vertex": 0,
+            "to_vertex": 31
+          },
+          {
+            "way_id": 4841670,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 4841672,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 4841673,
+            "from_vertex": 0,
+            "to_vertex": 29
+          },
+          {
+            "way_id": 4841767,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 4841772,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 4843476,
+            "from_vertex": 0,
+            "to_vertex": 31
+          },
+          {
+            "way_id": 19851127,
+            "from_vertex": 0,
+            "to_vertex": 183
+          },
+          {
+            "way_id": 25561663,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 37570581,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 39185054,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 39185167,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 43567741,
+            "from_vertex": 0,
+            "to_vertex": 29
+          },
+          {
+            "way_id": 43567742,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 43567756,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 58620278,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 58665885,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 58665896,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 58712479,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 58712481,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 58726495,
+            "from_vertex": 0,
+            "to_vertex": 27
+          },
+          {
+            "way_id": 58912618,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 90288160,
+            "from_vertex": 0,
+            "to_vertex": 44
+          },
+          {
+            "way_id": 90288161,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 90288162,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 90288167,
+            "from_vertex": 0,
+            "to_vertex": 77
+          },
+          {
+            "way_id": 90288169,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 90288192,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 90288194,
+            "from_vertex": 0,
+            "to_vertex": 81
+          },
+          {
+            "way_id": 118937728,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 125695701,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 125695702,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 130770989,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 130770991,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 130770992,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 130770994,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 130770996,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 130770999,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 139460902,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 158680284,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 233661712,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 294561869,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 294564106,
+            "from_vertex": 0,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 338665858,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 429477460,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 429477466,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 429485079,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 429485080,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 546136907,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 576869797,
+            "from_vertex": 0,
+            "to_vertex": 33
+          },
+          {
+            "way_id": 588306462,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 588306466,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 588306469,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 588306469,
+            "from_vertex": 2,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 588306497,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 588306501,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 588306514,
+            "from_vertex": 1,
+            "to_vertex": 13
+          },
+          {
+            "way_id": 588306518,
+            "from_vertex": 0,
+            "to_vertex": 22
+          },
+          {
+            "way_id": 588474320,
+            "from_vertex": 0,
+            "to_vertex": 22
+          },
+          {
+            "way_id": 588474328,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 588474329,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 588474331,
+            "from_vertex": 0,
+            "to_vertex": 9
+          },
+          {
+            "way_id": 589645067,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 589645068,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 589703370,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 589703371,
+            "from_vertex": 0,
+            "to_vertex": 30
+          },
+          {
+            "way_id": 589706540,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 589706541,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 589959396,
+            "from_vertex": 0,
+            "to_vertex": 40
+          },
+          {
+            "way_id": 589959397,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 591255734,
+            "from_vertex": 0,
+            "to_vertex": 7
+          },
+          {
+            "way_id": 591268999,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 611748051,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 613155099,
+            "from_vertex": 0,
+            "to_vertex": 11
+          },
+          {
+            "way_id": 682010511,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 722046962,
+            "from_vertex": 0,
+            "to_vertex": 41
+          },
+          {
+            "way_id": 737729378,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 737729379,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 737729383,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 754029876,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 754029877,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 754029878,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 754029879,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 827484694,
+            "from_vertex": 0,
+            "to_vertex": 14
+          },
+          {
+            "way_id": 827484703,
+            "from_vertex": 0,
+            "to_vertex": 38
+          },
+          {
+            "way_id": 827484706,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 827484707,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 827484708,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 827484709,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 836234691,
+            "from_vertex": 2,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 836234692,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 836234696,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 836234774,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 949933677,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 949933678,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 949979261,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 949979262,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 949979264,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 949979265,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 951560247,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 951560248,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 961251994,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 961251995,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 966807119,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 966807120,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 967930028,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 968080930,
+            "from_vertex": 0,
+            "to_vertex": 3
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/1328554/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28250%2C99%2C647%2C83%2C221%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "e5aa3715f015180fb63d67b5f39496a700c44348609677089bb0e39631497ef2"
+    },
+    {
+      "route_key": "NCN:99",
+      "status": "supported_open_spans",
+      "current_source_way_count": 53,
+      "membership_changes": {
+        "931223": {
+          "added_way_ids": [
+            43021601,
+            107217091,
+            618203570,
+            1528978884,
+            1531057443,
+            1531057444,
+            1531057447,
+            1531057448
+          ],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 931223,
+          "version": 230,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "description": "Belfast to Newcastle",
+            "from": "Belfast",
+            "name": "National Cycle Network National Route 99",
+            "ncn": "yes",
+            "ncn_ref": "99",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "99",
+            "roundtrip": "no",
+            "route": "bicycle",
+            "to": "Newcastle, County Down",
+            "type": "route",
+            "website": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/comber-greenway-route-99/"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "931223": {
+          "relation_id": 931223,
+          "expected_way_count": 53,
+          "provider_base_records": 53,
+          "missing_way_ids": [],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": true,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 931223,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 20,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 22604.47534875528,
+      "supported_source_union_m": 11182.223733249726,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 11164.19945479397,
+        "cycling": 11182.223733249726
+      },
+      "official_open_without_supported_source_at_10m_m": 11363.070838713094,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "catalogue_audit": {
+        "route_key": "NCN:99",
+        "source_relations": [
+          {
+            "id": 931223,
+            "version": 230,
+            "timestamp": "2026-10-16T13:59:42Z"
+          }
+        ],
+        "accepted_way_count": 48,
+        "held_way_count": 8,
+        "partial_way_count": 3,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": []
+        },
+        "held": [
+          {
+            "way_id": 43021601,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 107217091,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              55,
+              56,
+              57
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 618203570,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1528978884,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42,
+              43,
+              44,
+              45,
+              46,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              53,
+              54,
+              55,
+              56,
+              57,
+              58,
+              59,
+              60,
+              61
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1531057443,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1531057444,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1531057447,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "partly_accepted": false
+          },
+          {
+            "way_id": 1531057448,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              0,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "partly_accepted": true
+          }
+        ],
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 8
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "50e63d8ea2fb70a44d247514610a9f0b2168c06f1ca6158582a44319f88374ff",
+        "recorded_source_route_key": "NCN:99",
+        "target_route_key": "NCN:99",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "review": {
+        "schema_version": 1,
+        "source_route_key": "NCN:99",
+        "target_route_key": "NCN:99",
+        "policy": "partial_provider_verified_spans_only",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false,
+        "official_network_sha256": "b78dc2e8f77833598dbe9855761ac7a564a964961c841b7dfe9debe6f25408f1",
+        "official_features_sha256": "216b38f2bbdb61d7b34ee360aa005da77c85ebf60d172edb0865810cb7e28628",
+        "approved_open_features_sha256": "216b38f2bbdb61d7b34ee360aa005da77c85ebf60d172edb0865810cb7e28628",
+        "source_snapshot_sha256": "941ee0ca917d248901260692c4e3d3d0381a1b2aae2163c819ad5bdbee1ffd5c",
+        "provider_sha256": "dcbbcfcc4df49946cc3ab253ca848e31bbe47323d122ea24efd799e016011c17",
+        "source_relations_sha256": "0b8a6003946cbc60e3ccc3e49dc6e9542c959cb7d2714170f1f33e09a5538097",
+        "source_relation_ids": [
+          931223
+        ],
+        "approved_official_feature_ids": [
+          583,
+          701,
+          865,
+          4209,
+          4210,
+          5935,
+          6971,
+          7690,
+          7749,
+          10793,
+          16661,
+          25132,
+          25212,
+          26565,
+          28618,
+          28619,
+          31874,
+          36104,
+          36995,
+          37121
+        ],
+        "approved_source_spans": [
+          {
+            "way_id": 14339545,
+            "from_vertex": 0,
+            "to_vertex": 47
+          },
+          {
+            "way_id": 14520480,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 37707568,
+            "from_vertex": 0,
+            "to_vertex": 43
+          },
+          {
+            "way_id": 43021601,
+            "from_vertex": 3,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 75536974,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 107217091,
+            "from_vertex": 53,
+            "to_vertex": 55
+          },
+          {
+            "way_id": 215312909,
+            "from_vertex": 0,
+            "to_vertex": 43
+          },
+          {
+            "way_id": 215312910,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 215317119,
+            "from_vertex": 0,
+            "to_vertex": 12
+          },
+          {
+            "way_id": 215317120,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 215317121,
+            "from_vertex": 0,
+            "to_vertex": 4
+          },
+          {
+            "way_id": 215317122,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 215317123,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 215317124,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 223819118,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 375946629,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 416977418,
+            "from_vertex": 0,
+            "to_vertex": 8
+          },
+          {
+            "way_id": 416977421,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 416977426,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 551959600,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 551959601,
+            "from_vertex": 0,
+            "to_vertex": 61
+          },
+          {
+            "way_id": 551959603,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 635006354,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 734184330,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 734184331,
+            "from_vertex": 0,
+            "to_vertex": 16
+          },
+          {
+            "way_id": 738048912,
+            "from_vertex": 0,
+            "to_vertex": 3
+          },
+          {
+            "way_id": 738054928,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 911567535,
+            "from_vertex": 0,
+            "to_vertex": 27
+          },
+          {
+            "way_id": 930379828,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 930379829,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 930379830,
+            "from_vertex": 0,
+            "to_vertex": 42
+          },
+          {
+            "way_id": 930379831,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 930379832,
+            "from_vertex": 0,
+            "to_vertex": 6
+          },
+          {
+            "way_id": 930379833,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 930379836,
+            "from_vertex": 0,
+            "to_vertex": 15
+          },
+          {
+            "way_id": 930379837,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 930379838,
+            "from_vertex": 0,
+            "to_vertex": 5
+          },
+          {
+            "way_id": 930379839,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 930379840,
+            "from_vertex": 0,
+            "to_vertex": 10
+          },
+          {
+            "way_id": 938208696,
+            "from_vertex": 0,
+            "to_vertex": 22
+          },
+          {
+            "way_id": 1070906014,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1070907064,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1185055692,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1185055693,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1320374059,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1331484094,
+            "from_vertex": 0,
+            "to_vertex": 1
+          },
+          {
+            "way_id": 1331588984,
+            "from_vertex": 0,
+            "to_vertex": 2
+          },
+          {
+            "way_id": 1531057448,
+            "from_vertex": 1,
+            "to_vertex": 2
+          }
+        ],
+        "identity_evidence_urls": [
+          "https://api.openstreetmap.org/api/0.6/relation/931223/full.json",
+          "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28250%2C99%2C647%2C83%2C221%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+        ],
+        "existing_registry_sha256": "ee7cf5c1a935f7e433f94fbbe234260b2e5723a15d4c71e3b05398cd3e6c7fb6",
+        "existing_registry_identity_conflict_way_ids": []
+      },
+      "manifest_sha256": "25e6b00dfd86725426d1196598d4756b373515fc715c59ca5147cb926531a413"
+    }
+  ],
+  "previous_supported_catalogues": 183,
+  "supported_catalogues": 188,
+  "previous_distinct_supported_ways": 43103,
+  "distinct_supported_ways": 43457,
+  "new_distinct_supported_ways": 354,
+  "shared_existing_way_ids": [
+    "581355478",
+    "978260288",
+    "978260290"
+  ],
+  "whole_published_route_ready": false,
+  "app_release": false,
+  "android_internal_trial_route_count": 8
+}

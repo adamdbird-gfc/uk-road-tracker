@@ -1,0 +1,758 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-18",
+  "route_key": "NCN:601",
+  "source_relation_id": 9300597,
+  "recorded_source_route_key": "NCN:626",
+  "source_metadata_preserved": true,
+  "reviewed_span_identity": "NCN:601",
+  "route_alias": false,
+  "old_journey_evidence_transferred": false,
+  "official_open_features": 30,
+  "official_closed_features": 5,
+  "official_open_extent_m": 6316.9747613597865,
+  "supported_source_union_m": 6017.633779579171,
+  "excluded_closed_geometry_union_m": 600.2745114254141,
+  "construction_way_excluded": 359405104,
+  "official_open_without_supported_source_at_10m_m": 177.64416766323268,
+  "diagnostic_corridors_grant_credit": false,
+  "completion_binding_ready": false,
+  "whole_published_route_ready": false,
+  "prior626_inventory_retained": true,
+  "prior626_plan_sha256": "a5485966364f785b4f3f87eae542dde1a5c8191f1715279ddede5c6d1514d684",
+  "source_relation_review": {
+    "relation_id": 9300597,
+    "added_way_ids": [],
+    "removed_way_ids": [],
+    "previous_profile_sha256": "2a973fd45f3fc43163065a6c8df2871daa94bcac2e8a0643f43c94643b0ff6c7",
+    "current_profile_sha256": "e0deb2a378c7f5b0ed83d28232be1cdde52374b0667ff18dab34ba016e50b0ba",
+    "previous_source_relations": [
+      {
+        "id": 9300597,
+        "version": 16,
+        "timestamp": "2025-12-16T16:22:01Z"
+      }
+    ],
+    "current_source_relations": [
+      {
+        "id": 9300597,
+        "version": 16,
+        "timestamp": "2025-12-16T16:22:01Z"
+      }
+    ],
+    "previous_provider_sha256": "86b4bcb11288e580af9f880c3815ed5a1a2b2965a0fef67da1466a29fc32456e",
+    "refreshed_provider_sha256": "86b4bcb11288e580af9f880c3815ed5a1a2b2965a0fef67da1466a29fc32456e",
+    "current_source_way_count": 32,
+    "provider_node_maximum_drift_m": 0.0040456199619594065,
+    "representation_tolerance_m": 0.03,
+    "previous_geometry_outside_refreshed_m": 0.0,
+    "refreshed_geometry_outside_previous_m": 0.0,
+    "geometry_review": "same_linework_at_representation_tolerance",
+    "membership_baseline_reconciled": true,
+    "old_journey_evidence_transferred": false,
+    "whole_published_route_ready": false
+  },
+  "catalogue_audit": {
+    "route_key": "NCN:601",
+    "source_relations": [
+      {
+        "id": 9300597,
+        "version": 16,
+        "timestamp": "2025-12-16T16:22:01Z"
+      }
+    ],
+    "accepted_way_count": 25,
+    "held_way_count": 9,
+    "partial_way_count": 2,
+    "roundabout_review": {
+      "reviewed": [],
+      "held": []
+    },
+    "held": [
+      {
+        "way_id": 26992327,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          17
+        ],
+        "partly_accepted": true
+      },
+      {
+        "way_id": 217169391,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 217598294,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 217598305,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0,
+          1
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 217598312,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 359405104,
+        "reason": "mode_policy_unresolved_or_restricted"
+      },
+      {
+        "way_id": 359405108,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 951654718,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "partly_accepted": false
+      },
+      {
+        "way_id": 1236624707,
+        "reason": "unresolved_official_extent_edges",
+        "edge_indices": [
+          1,
+          2
+        ],
+        "partly_accepted": true
+      }
+    ],
+    "held_reason_counts": {
+      "unresolved_official_extent_edges": 8,
+      "mode_policy_unresolved_or_restricted": 1
+    },
+    "whole_route_completion_ready": false,
+    "accepted_source_node_geometry_verified": true,
+    "scope": "explicit_member_source_spans_only_not_full_official_route",
+    "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+    "source_identity_review_sha256": "06c98008aaac15c292428316f5e1314618a122f54fdb0996c55332fcf74ebfb5",
+    "recorded_source_route_key": "NCN:626",
+    "target_route_key": "NCN:601",
+    "route_alias": false,
+    "old_journey_evidence_transferred": false
+  },
+  "catalogue_manifest_sha256": "8c420eadd4442555e50a4903041f2d56f92ee48a50c948f7a4717e54f60ff1d2",
+  "identity_review": {
+    "schema_version": 1,
+    "source_route_key": "NCN:626",
+    "target_route_key": "NCN:601",
+    "policy": "reviewed_source_edges_to_official_open_target",
+    "route_alias": false,
+    "old_journey_evidence_transferred": false,
+    "whole_published_route_ready": false,
+    "official_network_sha256": "2d3c08be764a56fbdd7463148e5b18fdda9b023c85467ffec2b83cca61ede3ea",
+    "official_features_sha256": "b962f4bc733f785c6e51943d87f59a0abb1b3a8f94db42e276c31cd21446e637",
+    "approved_open_features_sha256": "8aa7bdd22a6f618b7fdce06ae12fb2523a76384d6af58b5a8d04ad1a22ee5394",
+    "source_snapshot_sha256": "847afcc532ab4c680dff85fcdd04d5f8cc9f799443a551f4ed7252939d4b33f5",
+    "provider_sha256": "cddf7c67af406b4d3b9486808045babe50cf3279d6ca766a298074e35ff634ce",
+    "source_relations_sha256": "db1fe35189353fbb65b931d5fdb9ab7d746dd921c381657d59d188f3a32ba2ab",
+    "source_relation_ids": [
+      9300597
+    ],
+    "approved_official_feature_ids": [
+      1879,
+      2250,
+      6678,
+      9000,
+      9658,
+      13807,
+      13942,
+      14084,
+      14486,
+      14912,
+      16169,
+      16380,
+      18602,
+      18603,
+      19326,
+      19327,
+      21780,
+      22989,
+      24738,
+      25153,
+      27172,
+      27653,
+      28091,
+      29035,
+      31309,
+      32319,
+      32320,
+      32533,
+      34090,
+      36823
+    ],
+    "approved_source_spans": [
+      {
+        "way_id": 26992327,
+        "from_vertex": 0,
+        "to_vertex": 17
+      },
+      {
+        "way_id": 30079359,
+        "from_vertex": 0,
+        "to_vertex": 13
+      },
+      {
+        "way_id": 63095777,
+        "from_vertex": 0,
+        "to_vertex": 4
+      },
+      {
+        "way_id": 77388503,
+        "from_vertex": 0,
+        "to_vertex": 1
+      },
+      {
+        "way_id": 78144116,
+        "from_vertex": 0,
+        "to_vertex": 3
+      },
+      {
+        "way_id": 180301707,
+        "from_vertex": 0,
+        "to_vertex": 1
+      },
+      {
+        "way_id": 205224932,
+        "from_vertex": 0,
+        "to_vertex": 5
+      },
+      {
+        "way_id": 205403589,
+        "from_vertex": 0,
+        "to_vertex": 14
+      },
+      {
+        "way_id": 233443210,
+        "from_vertex": 0,
+        "to_vertex": 22
+      },
+      {
+        "way_id": 233443359,
+        "from_vertex": 0,
+        "to_vertex": 42
+      },
+      {
+        "way_id": 668545791,
+        "from_vertex": 0,
+        "to_vertex": 25
+      },
+      {
+        "way_id": 668545792,
+        "from_vertex": 0,
+        "to_vertex": 1
+      },
+      {
+        "way_id": 668545796,
+        "from_vertex": 0,
+        "to_vertex": 3
+      },
+      {
+        "way_id": 668623898,
+        "from_vertex": 0,
+        "to_vertex": 4
+      },
+      {
+        "way_id": 668623899,
+        "from_vertex": 0,
+        "to_vertex": 25
+      },
+      {
+        "way_id": 669568619,
+        "from_vertex": 0,
+        "to_vertex": 14
+      },
+      {
+        "way_id": 669568623,
+        "from_vertex": 0,
+        "to_vertex": 17
+      },
+      {
+        "way_id": 669568636,
+        "from_vertex": 0,
+        "to_vertex": 5
+      },
+      {
+        "way_id": 669568639,
+        "from_vertex": 0,
+        "to_vertex": 9
+      },
+      {
+        "way_id": 669568642,
+        "from_vertex": 0,
+        "to_vertex": 8
+      },
+      {
+        "way_id": 670345074,
+        "from_vertex": 0,
+        "to_vertex": 7
+      },
+      {
+        "way_id": 951652977,
+        "from_vertex": 0,
+        "to_vertex": 5
+      },
+      {
+        "way_id": 1236624707,
+        "from_vertex": 0,
+        "to_vertex": 1
+      },
+      {
+        "way_id": 1391020788,
+        "from_vertex": 0,
+        "to_vertex": 2
+      },
+      {
+        "way_id": 1431398903,
+        "from_vertex": 0,
+        "to_vertex": 2
+      }
+    ],
+    "identity_evidence_urls": [
+      "https://shop.walkwheelcycletrust.org.uk/products/merseyside-manchester-cycle-map-25",
+      "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?where=RouteType+%3D+%27NCN%27+AND+RouteNo+IN+%28228%2C626%2C601%29&outFields=%2A&outSR=4326&f=geojson&resultRecordCount=2000"
+    ],
+    "decision": "Only exact source spans passing current open-target extent and access checks acquire NCN601 identity. Preserve original NCN626 source metadata and historical inventory; no whole-relation alias.",
+    "source_relation_geometry_proof_sha256": "1027ac452cd341a354944bd1603feffd67ec50ef9ce514cd2791f55f88a445cc",
+    "publisher_map_edition": "May 2021; identity corroboration, not a current access inspection",
+    "official_capture_at": "2026-10-18T16:53:44.760187+00:00"
+  },
+  "official_feature_register": [
+    {
+      "FID": 670,
+      "SegmentID": 37841,
+      "GlobalID": "0865dd37-3d43-457c-82cd-14ca313e7c46",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Temporary Closure",
+      "Desc_": "OnRoad",
+      "in_open_extent": false
+    },
+    {
+      "FID": 1879,
+      "SegmentID": 1952,
+      "GlobalID": "190129a4-7e7a-4dec-83e2-8b46c9a798db",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 2250,
+      "SegmentID": 17236,
+      "GlobalID": "e68db9a3-5b53-4c9a-bcae-d1c9a8c69c76",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 5916,
+      "SegmentID": 54240,
+      "GlobalID": "93dd7366-d1ff-4440-8a68-9cfa91d66237",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Temporary Closure",
+      "Desc_": "TrafficFree",
+      "in_open_extent": false
+    },
+    {
+      "FID": 6678,
+      "SegmentID": 29101,
+      "GlobalID": "36cda98f-b105-46ac-ba84-b51bef8b89a8",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 9000,
+      "SegmentID": 17572,
+      "GlobalID": "690dea9b-2fb6-44b4-bdaf-90b9c24219db",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 9658,
+      "SegmentID": 1953,
+      "GlobalID": "0dc01e30-5362-439c-b9d9-250ca61e35a1",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 13807,
+      "SegmentID": 22904,
+      "GlobalID": "45d4e18f-fa1c-4a85-be08-3623dbd63c1e",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 13942,
+      "SegmentID": 1406,
+      "GlobalID": "a69578f4-242c-4f6e-92f3-717b256c09cb",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 14084,
+      "SegmentID": 8101,
+      "GlobalID": "9c956406-4d18-4eac-8ccb-429a5e6c47d9",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 14486,
+      "SegmentID": 26111,
+      "GlobalID": "c388ab69-58e4-4862-b3fa-f76269930e44",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 14912,
+      "SegmentID": 38391,
+      "GlobalID": "b029a2b2-77c1-4bc4-9a3b-7e143b21496c",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 16169,
+      "SegmentID": 25028,
+      "GlobalID": "52231dac-7121-4950-b20e-62bc47b632ba",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 16380,
+      "SegmentID": 23255,
+      "GlobalID": "a3436e20-094e-4cef-a4a6-7cc6ea17ec94",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 17782,
+      "SegmentID": 5710,
+      "GlobalID": "2483d934-3bca-4681-a941-0936b2c706a6",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Temporary Closure",
+      "Desc_": "TrafficFree",
+      "in_open_extent": false
+    },
+    {
+      "FID": 18602,
+      "SegmentID": 22903,
+      "GlobalID": "a5be5468-2958-4412-993a-703ef7760851",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 18603,
+      "SegmentID": 30014,
+      "GlobalID": "dc2f0992-7dca-47ea-a774-de6a9f6366a9",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 19326,
+      "SegmentID": 23254,
+      "GlobalID": "a0247fee-bd3b-46e2-a2d0-1ea47fa6564b",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 19327,
+      "SegmentID": 39586,
+      "GlobalID": "384ffd2f-9add-4012-a901-babe3bdf1fe6",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 21780,
+      "SegmentID": 55857,
+      "GlobalID": "b396fa55-d067-472f-86cf-ee8a29d9ae20",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 22989,
+      "SegmentID": 2273,
+      "GlobalID": "7c4e57cf-f25d-4e28-8089-5cfc753e7c8f",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 24738,
+      "SegmentID": 43396,
+      "GlobalID": "3e662713-da06-4dc3-9eb8-ffe2eda7dc57",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 25153,
+      "SegmentID": 26507,
+      "GlobalID": "562c107e-c058-4bcf-b805-d61869ff26d2",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 27172,
+      "SegmentID": 51967,
+      "GlobalID": "e658ebdb-cae4-4c33-b293-ebc6622de228",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 27653,
+      "SegmentID": 35974,
+      "GlobalID": "f52771a3-f5ec-4b51-9965-5e74e6dfc6e3",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 28091,
+      "SegmentID": 12032,
+      "GlobalID": "d098a214-e109-4f06-b4da-526d749baa7e",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 29035,
+      "SegmentID": 828,
+      "GlobalID": "6978e9d5-6226-4106-be48-82f87b43a396",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 31309,
+      "SegmentID": 35973,
+      "GlobalID": "753b45ae-51d2-4410-a84e-c78f641ac53a",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 32319,
+      "SegmentID": 32976,
+      "GlobalID": "a3ecd6e0-2924-4f2d-a514-9ec2b5710c0f",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 32320,
+      "SegmentID": 16952,
+      "GlobalID": "7b7bd408-b02c-4244-8e99-c166fc52ccf2",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "TrafficFree",
+      "in_open_extent": true
+    },
+    {
+      "FID": 32533,
+      "SegmentID": 1484,
+      "GlobalID": "d8201878-5c4b-4645-a282-abf1eca024b0",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 34090,
+      "SegmentID": 1407,
+      "GlobalID": "4d4256c4-aa39-492b-be64-c3dd6c157bfc",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    },
+    {
+      "FID": 34904,
+      "SegmentID": 37856,
+      "GlobalID": "9918d00a-ec3b-4ff6-9eb1-b4a6f5cf48fc",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Temporary Closure",
+      "Desc_": "TrafficFree",
+      "in_open_extent": false
+    },
+    {
+      "FID": 36262,
+      "SegmentID": 5709,
+      "GlobalID": "5bfb2640-2899-4887-88dc-f19004388020",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Temporary Closure",
+      "Desc_": "TrafficFree",
+      "in_open_extent": false
+    },
+    {
+      "FID": 36823,
+      "SegmentID": 37015,
+      "GlobalID": "5eeb98fa-1c82-4962-9cba-3eeb3f6b8eca",
+      "RouteType": "NCN",
+      "RouteNo": 601,
+      "RouteCat": "Main Route",
+      "OpenStatus": "Open",
+      "Desc_": "OnRoad",
+      "in_open_extent": true
+    }
+  ],
+  "counts": {
+    "supported_catalogues": 183,
+    "previous_supported_catalogues": 182,
+    "distinct_supported_ways": 43103,
+    "new_distinct_supported_ways": 25,
+    "shared_existing_way_ids": []
+  },
+  "official_capture_sha256": "2d3c08be764a56fbdd7463148e5b18fdda9b023c85467ffec2b83cca61ede3ea",
+  "provider_capture_sha256": "2d6795cc30c0f0fac34d78e0187a00827c855c08b413cd8f6aa3157bd97abcc1",
+  "android_internal_trial_route_count": 8,
+  "app_release": false,
+  "remaining": "NCN626 legacy inventory and four regional inventories remain unactivated. NCN601 retains unmatched open extent and held source edges; it is not a full orbital route. The other 65 national source-review keys remain pending."
+}
