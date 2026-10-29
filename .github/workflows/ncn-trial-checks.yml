@@ -1,0 +1,43 @@
+name: NCN local trial checks
+on:
+  pull_request:
+    paths:
+      - 'scripts/ncn_trial/**'
+      - 'scripts/*ncn*.py'
+      - 'docs/ncn-historical-reconciliation.md'
+      - 'tests/fixtures/ncn-*/**'
+      - 'requirements-ncn-trial.txt'
+      - 'matched_path_evidence.py'
+      - 'cycling_path_evidence.py'
+      - '.github/workflows/ncn-trial-checks.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ncn-trial-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  local-trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-trial.txt
+      - run: python -m unittest discover -s scripts/ncn_trial -t . -p 'test_*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_cycling_path_evidence.py' -v
+      - run: python -m scripts.ncn_trial.run --output "$RUNNER_TEMP/ncn-route1"
+      - run: python -m scripts.ncn_trial.association_bundle --output "$RUNNER_TEMP/ncn-associations"
+      - run: python scripts/test_ncn_reference.py -v
+      - name: Restore existing offline reference pins (no Firebase access)
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Validate the exact shipped catalogue and all physical mappings
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+        run: python scripts/test_ncn_national.py -v

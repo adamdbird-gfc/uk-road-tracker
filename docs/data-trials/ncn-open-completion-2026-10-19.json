@@ -1,0 +1,459 @@
+{
+  "schema_version": 1,
+  "catalogue_summary_sha256": "53781739c89bed4ab0f616f2ee3155c8149df4cabd7dc7ebc416981768fbafe6",
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "plan_sha256": "e597153b7682f64635f8ce467c919354699836323d129765a1109b6d422910c8",
+      "association_sha256": "c2475d74a2b9e3c583bfa809e88ff4f58f42f1c6ee88bd20633629dc053b61e2",
+      "reference_version": "open-completion:cd3168f9a279780a27677bb80c7e43098f93a7fa153bd981a1013f37809e901f",
+      "catalogue_manifest_sha256": "612db43f34c6eb398259e1d5e530c1b3d8ffedb8691c6301ec04dd71c1e6e8fe",
+      "canonical_open_length_m": 1943972.4188039866,
+      "maximum_bound_open_length_m": {
+        "on_foot": 1765275.6975875548,
+        "cycling": 1799136.773957944,
+        "combined": 1802259.3366047288
+      },
+      "unbound_open_length_m": 141713.0821992578,
+      "ambiguous_source_occurrence_m": 6868.191492739203,
+      "unbound_source_occurrence_m": 54798.75215930511
+    },
+    {
+      "route_key": "NCN:151",
+      "plan_sha256": "8214b496f2ae6079eaaa7167af1eb8badd0b067e84ae21c55a1b668d50024ec3",
+      "association_sha256": "6716418a492a32d94593044b4e0708f7e44ec23e0e6245a0e7e1bc667b11713f",
+      "reference_version": "open-completion:38ae30157ecf66ac92204f75ac8ad42c908e6712dbccc225fc6a9f3c708ac00c",
+      "catalogue_manifest_sha256": "23cbd22d158579970c741771955559790298381aa1d793588582b534198a9df1",
+      "canonical_open_length_m": 3278.961652804842,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2099.5512359823388,
+        "cycling": 2099.5512359823388,
+        "combined": 2099.5512359823388
+      },
+      "unbound_open_length_m": 1179.410416822503,
+      "ambiguous_source_occurrence_m": 686.1653737194661,
+      "unbound_source_occurrence_m": 855.7864390111458
+    },
+    {
+      "route_key": "NCN:2",
+      "plan_sha256": "400e3b08e38c6d50954acc4f7de3b9f15cb62b6d92e301d15c0a9dc543b7e0bd",
+      "association_sha256": "bd10274f902ea3a0ad81a20b74176e3cd5e080ce8d3b8d923b9cd0994ced6f54",
+      "reference_version": "open-completion:ec9f452a90a00112b856c6e43b4ae47a8e4fcc54ff495a6142441d4ee6845a90",
+      "catalogue_manifest_sha256": "375c600b46c616c43316099d0229952eedaa0010e95a353bcb15ebc29b77cbc9",
+      "canonical_open_length_m": 565505.8691796699,
+      "maximum_bound_open_length_m": {
+        "on_foot": 513945.90407673223,
+        "cycling": 519914.0098442684,
+        "combined": 529477.9691001691
+      },
+      "unbound_open_length_m": 36027.900079500745,
+      "ambiguous_source_occurrence_m": 2374.651470973308,
+      "unbound_source_occurrence_m": 18644.833678021478
+    },
+    {
+      "route_key": "NCN:21",
+      "plan_sha256": "81a6c3850bbba80a6e2907031f705c32638b575dfd2ea323db1dca9346fb49d1",
+      "association_sha256": "d777d9aa29f8c3d0d44b3127752cb8820310ae92f7a8a7ffbd5b1ab57fe398a6",
+      "reference_version": "open-completion:d83282eb71d26da7954bceb7a7535d13c87fbf6d3fcc2ea8699598e701f3475d",
+      "catalogue_manifest_sha256": "e9d83d8dbbe9e83b979e43cc4e240f1039c67e0e6cd9535823daa83c66319480",
+      "canonical_open_length_m": 152539.17817917062,
+      "maximum_bound_open_length_m": {
+        "on_foot": 136707.63011106322,
+        "cycling": 141249.88346769707,
+        "combined": 141625.74294987664
+      },
+      "unbound_open_length_m": 10913.435229293973,
+      "ambiguous_source_occurrence_m": 585.1778135284746,
+      "unbound_source_occurrence_m": 7748.582787300734
+    },
+    {
+      "route_key": "NCN:23",
+      "plan_sha256": "e631c27fc0d18e4bdc09212bdf807206fa615ca390c905ba013d07b4a3aa19ec",
+      "association_sha256": "a0ee3251032c7b36f47c53e8e96f87ab9d2c0c667a14497ee2de663e0369720a",
+      "reference_version": "open-completion:fadb414bdf2444196ddb331b86993367888650445049fcb1f33f828d943a3eb4",
+      "catalogue_manifest_sha256": "742a1f87008e13d8c0654f4be696e58c2bcf3873fc7698140046c2aae22642c5",
+      "canonical_open_length_m": 137132.0893298333,
+      "maximum_bound_open_length_m": {
+        "on_foot": 128091.98706368198,
+        "cycling": 128557.81159755058,
+        "combined": 129463.99720742102
+      },
+      "unbound_open_length_m": 7668.092122412287,
+      "ambiguous_source_occurrence_m": 447.1441683806739,
+      "unbound_source_occurrence_m": 4941.529945860647
+    },
+    {
+      "route_key": "NCN:248",
+      "plan_sha256": "ae830d652e2d2cffd30c084a62340b455db04ac0521f79fd96a784f4876a4f80",
+      "association_sha256": "4460efe3d0eafbfdf9447d1a8ac47650d3b7be3176cae5e7fd2df67abb9b4451",
+      "reference_version": "open-completion:26e3131e3c9db6c28807aa3b61c5d972d4ebccee42473542fa838250c2b22eb5",
+      "catalogue_manifest_sha256": "411eca2d350b802fc1979b0744f2d4e025607af0714861cf5adac7df6eec75c0",
+      "canonical_open_length_m": 3434.7421693718084,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2365.7859219315883,
+        "cycling": 2365.7859219315883,
+        "combined": 2365.7859219315883
+      },
+      "unbound_open_length_m": 1068.95624744022,
+      "ambiguous_source_occurrence_m": 7.0110995233534075,
+      "unbound_source_occurrence_m": 51.77263533546627
+    },
+    {
+      "route_key": "NCN:267",
+      "plan_sha256": "8b683b5b395851de40a58b53c904b1d6595fdd6aa04f5f1071226e76e36fc4ec",
+      "association_sha256": "7d3b5a53e1af9b74acd4dec5c70585eaab2d9531f97fcef1c244e1f8e86e2481",
+      "reference_version": "open-completion:a7a69b19ee4986fa75ee6fe841a94e60cd772bcb6ea9f3549e9505f66ce84e71",
+      "catalogue_manifest_sha256": "4dbba2937d559baf60448161f4ff6e4b1c8d3902fb4e6f83261eadebfba73e8b",
+      "canonical_open_length_m": 4756.679570760199,
+      "maximum_bound_open_length_m": {
+        "on_foot": 1839.3083217750143,
+        "cycling": 4116.51219194813,
+        "combined": 4136.571949995828
+      },
+      "unbound_open_length_m": 620.107620764371,
+      "ambiguous_source_occurrence_m": 7.433334997062499,
+      "unbound_source_occurrence_m": 244.89600244472473
+    },
+    {
+      "route_key": "NCN:304",
+      "plan_sha256": "fdb55ed56c729a8f3e1aae9666189c87559d2a0c2f39f5dbaf88819588c19abb",
+      "association_sha256": "71246e29b1002384c67a8b74ccfe8dfef2a8babde9af4d29e7e2286b29897ad9",
+      "reference_version": "open-completion:70c2249c1631bcfefeb20f4b2806f7bbe1d01bd7d6d6c11abfca744f6b585ffa",
+      "catalogue_manifest_sha256": "654d72bdb3136293b5bfe2d1d943c1a71a850660f3c5b571d704d67299a6e311",
+      "canonical_open_length_m": 17319.24115368731,
+      "maximum_bound_open_length_m": {
+        "on_foot": 17024.679218265195,
+        "cycling": 17024.679218265195,
+        "combined": 17024.679218265195
+      },
+      "unbound_open_length_m": 294.5619354221162,
+      "ambiguous_source_occurrence_m": 20.159776634763556,
+      "unbound_source_occurrence_m": 288.6177359521751
+    },
+    {
+      "route_key": "NCN:305",
+      "plan_sha256": "8dea2abd9c81cd3120166d98602d9d9561b01a5806104f2bcadfb9cf3a26bd92",
+      "association_sha256": "803c033043d79d99d12609a37007684736e0b9e4ea4514b709d5f081d2db29f1",
+      "reference_version": "open-completion:486bc8fd4fc3a46919a1cc904015850da392b26b84694646ad5cc7d399671d51",
+      "catalogue_manifest_sha256": "542eb0b76d9dc95e931999b438ac77db41591471d709b9e5a0f9966ce21ff415",
+      "canonical_open_length_m": 25538.669301081536,
+      "maximum_bound_open_length_m": {
+        "on_foot": 22681.892531881505,
+        "cycling": 24436.453980939536,
+        "combined": 24436.453980939536
+      },
+      "unbound_open_length_m": 1102.2153201420006,
+      "ambiguous_source_occurrence_m": 42.76038308242909,
+      "unbound_source_occurrence_m": 915.3437772139305
+    },
+    {
+      "route_key": "NCN:334",
+      "plan_sha256": "31449043cd3df383032705e0423f0a3411b9647c64513611ba5aafc62929c8a0",
+      "association_sha256": "5483cb93bc8ddd2bdff251e029521ee80fb14ef291dc3c47547071b86f74ac52",
+      "reference_version": "open-completion:cea2b69a8ac621b53f76c59721669702f7e1cf5e1f98ec45e9c3b37182e667cd",
+      "catalogue_manifest_sha256": "c3e091f92f46014cc5a1bc42e8c7218dfc09058e5f9896e6151221c0285d3b3f",
+      "canonical_open_length_m": 10796.310207947883,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10468.565056654788,
+        "cycling": 10468.565056654788,
+        "combined": 10468.565056654788
+      },
+      "unbound_open_length_m": 327.74515129309475,
+      "ambiguous_source_occurrence_m": 90.29748197939946,
+      "unbound_source_occurrence_m": 298.30552123936184
+    },
+    {
+      "route_key": "NCN:4",
+      "plan_sha256": "db9ee4be90078b80c89d8527cfd031cb23c17c515ddbd9369180dc9978f907bb",
+      "association_sha256": "f8a6ab0db188eb22a744193c32c61f25163a993f095f38ea0bfe2bef9ced0848",
+      "reference_version": "open-completion:90dc6ea181f23a06e118558917a0e483f3c9ea77b184ab28a08a611a2aade3d8",
+      "catalogue_manifest_sha256": "c07039b7da368422867d716f470d42523e287d7a4358a419fe3dcb7b5365ee63",
+      "canonical_open_length_m": 680116.3093395459,
+      "maximum_bound_open_length_m": {
+        "on_foot": 549279.9378360853,
+        "cycling": 598419.2258956868,
+        "combined": 603612.2945375337
+      },
+      "unbound_open_length_m": 76504.01480201224,
+      "ambiguous_source_occurrence_m": 3451.778293575087,
+      "unbound_source_occurrence_m": 27210.867592093815
+    },
+    {
+      "route_key": "NCN:41",
+      "plan_sha256": "e5daf89613403b12e3f9db845066a980f2f866d5dc8a57c03f20433609b6c7e9",
+      "association_sha256": "3d84fa20e7cfb7a01f39a44891a2be8d28f33fed331e9569e3c867b806d0de6c",
+      "reference_version": "open-completion:55380acabcf30737bde988dfcbf1d34c8b7dfd0137d5a53fefc28b2a7249ef56",
+      "catalogue_manifest_sha256": "83334c261eb889c97ab613c552e6494487484e76aa0254d846bec1d268b90879",
+      "canonical_open_length_m": 185373.40105659203,
+      "maximum_bound_open_length_m": {
+        "on_foot": 163242.83628849583,
+        "cycling": 166602.92016278018,
+        "combined": 166744.5635234024
+      },
+      "unbound_open_length_m": 18628.837533189624,
+      "ambiguous_source_occurrence_m": 670.9330265698615,
+      "unbound_source_occurrence_m": 5033.264191079524
+    },
+    {
+      "route_key": "NCN:42",
+      "plan_sha256": "e41b3b5427a0be4ed42400f87a06709d289555972597d5acb6cb4cbb8c708231",
+      "association_sha256": "ba60db3f9dcbba8a5352c07b7176e1652bcfd8ebe42e075dadc262600a9da6a0",
+      "reference_version": "open-completion:29095985b55b727e095d40941d8781e5cfe794bab5b62e7c4386ef5937dd8173",
+      "catalogue_manifest_sha256": "3aabde5a9bcfa46c1a093074f3637c3c4832ca115158aa0fae0979da6d882da0",
+      "canonical_open_length_m": 98169.43960473515,
+      "maximum_bound_open_length_m": {
+        "on_foot": 92718.65445317316,
+        "cycling": 94159.499970135,
+        "combined": 94503.86658094492
+      },
+      "unbound_open_length_m": 3665.5730237902317,
+      "ambiguous_source_occurrence_m": 205.98029541747763,
+      "unbound_source_occurrence_m": 2505.3821162849213
+    },
+    {
+      "route_key": "NCN:439",
+      "plan_sha256": "9de7d9464e96cbffde17b3c4c022ae6c1d972006c09f17f8cf5ef81b17b5571d",
+      "association_sha256": "7b23c1659ae016bfced185e25062dae5db343273f3f2435745867cbedf0cb1d4",
+      "reference_version": "open-completion:24907bd2936167816b4eb28f21c1d30af2269fe3105e70db231a470ed264d7aa",
+      "catalogue_manifest_sha256": "4afcddaf203b014dcdaef70865fde11cb8288dbac66d331312e11db0608e914a",
+      "canonical_open_length_m": 7725.044124851083,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2270.1593624215266,
+        "cycling": 6811.46547361475,
+        "combined": 6848.5945846386385
+      },
+      "unbound_open_length_m": 876.4495402124448,
+      "ambiguous_source_occurrence_m": 52.93763783433377,
+      "unbound_source_occurrence_m": 230.6587644290761
+    },
+    {
+      "route_key": "NCN:461",
+      "plan_sha256": "234ee3f524966cc748b8728298a921b3c40c451a10841f7c49ac9db304cc197d",
+      "association_sha256": "52484bc296102a819808e03006ed1dff5a109285e7062021ecce8ef6b672bee7",
+      "reference_version": "open-completion:a91ad1fa4dfd41c4aa1db3e0d2599f734c461a1a9cddb5c0342d01f09d56b3f6",
+      "catalogue_manifest_sha256": "f71925d5747b8dcff85201c1744c621d4467386bd0f0ba95bf8808cb6b9ce56d",
+      "canonical_open_length_m": 8879.847272777675,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8171.888030424215,
+        "cycling": 8175.795258434682,
+        "combined": 8175.795258434682
+      },
+      "unbound_open_length_m": 704.0520143429931,
+      "ambiguous_source_occurrence_m": 81.42568852373486,
+      "unbound_source_occurrence_m": 579.0770133674708
+    },
+    {
+      "route_key": "NCN:47",
+      "plan_sha256": "9c9ccfcaf8abf7378e5da3af0c1b7cd135f02b11c41c1ddbba83cb9e60b8c872",
+      "association_sha256": "cb47b20bda0939314722535fc8457e73f4ab9c34b884cf1629287984e3788dd8",
+      "reference_version": "open-completion:317ce3384f6b4f5b1145f5664062ce5c1dfe8abc310e7602cca567bf30cfc4cb",
+      "catalogue_manifest_sha256": "f3b86d701f4bbabb1dcd945fff2f3241fa045f7c78d7002751b54bf89bb4f7b2",
+      "canonical_open_length_m": 184931.7613086619,
+      "maximum_bound_open_length_m": {
+        "on_foot": 170583.82344461675,
+        "cycling": 171672.60262887352,
+        "combined": 171672.60262887352
+      },
+      "unbound_open_length_m": 13259.15867978838,
+      "ambiguous_source_occurrence_m": 493.73585835152835,
+      "unbound_source_occurrence_m": 6181.181411513971
+    },
+    {
+      "route_key": "NCN:533",
+      "plan_sha256": "35b63e8af307fbb85f9285183b816b9b5200a76e0d68d37a75d0f9fedebc1bea",
+      "association_sha256": "9ee22cd680c5f89edcb7d7278cedcf82d96a43c96af0d4574d053023b487d434",
+      "reference_version": "open-completion:5f39368d615097a8626bde6f060084b6e8b9dd719fa1098493ebf33cffc699ae",
+      "catalogue_manifest_sha256": "d9527d5ca60d9b34e897eb7658f492620dbc576f6ff72df53100bfae7e6b1f3b",
+      "canonical_open_length_m": 5268.130331137489,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5165.091556950632,
+        "cycling": 5165.091556950632,
+        "combined": 5165.091556950632
+      },
+      "unbound_open_length_m": 103.03877418685624,
+      "ambiguous_source_occurrence_m": 4.559527582169907,
+      "unbound_source_occurrence_m": 64.43443280425261
+    },
+    {
+      "route_key": "NCN:604",
+      "plan_sha256": "36a583cb15d6f4bbbfb9bb453a749e06eb39950ca451a7a6c517577557ab0955",
+      "association_sha256": "af3385b150da751d9a6656134df501a12c4fcbefb7260d4790dd1ee0652cf266",
+      "reference_version": "open-completion:6012a231374a017c6aceff8efc5677efab03138fba0a121cd3a7b22ce2ca43c5",
+      "catalogue_manifest_sha256": "c57cd328ad2b900ffd27b43c9e2dc04bba5f90395509a4007f8eb63d6ba416f9",
+      "canonical_open_length_m": 4956.233362279653,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4723.649720808951,
+        "cycling": 4723.649720808951,
+        "combined": 4723.649720808951
+      },
+      "unbound_open_length_m": 232.58364147070188,
+      "ambiguous_source_occurrence_m": 17.02898319319239,
+      "unbound_source_occurrence_m": 185.4346031253416
+    },
+    {
+      "route_key": "NCN:674",
+      "plan_sha256": "d5e7dd6a76498143222092ee7194b3b1e79c58a9190072716801f16c3c6e05db",
+      "association_sha256": "0426fbff5cbbb3ece60548d763e9624a6ceab592bf442e65db7a751a5b67497f",
+      "reference_version": "open-completion:698f751abc729f52843f2bc10a05fbde2e94c8ead7a0eab345bc2a9b48053127",
+      "catalogue_manifest_sha256": "72f9e7371b01180ed0c5726831d06801265ddf5d4a3de91923332079b594f7f3",
+      "canonical_open_length_m": 10834.785888602526,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10162.317687556158,
+        "cycling": 10159.087758405229,
+        "combined": 10162.317687556158
+      },
+      "unbound_open_length_m": 672.4682010463675,
+      "ambiguous_source_occurrence_m": 29.66824558401265,
+      "unbound_source_occurrence_m": 338.2587563643791
+    },
+    {
+      "route_key": "NCN:685",
+      "plan_sha256": "c0b63c870a7eae586b5e950dff6518e2f936204ce2da4f3900f5c1d18ca078b5",
+      "association_sha256": "85f8f97d466b40f56215c2ee3cd240c9eb04a4702f8f3532a140874328a7acec",
+      "reference_version": "open-completion:909c6666b523060f58a409306c14dc69bd1cd72371084be7a07f7a31d3b36d3e",
+      "catalogue_manifest_sha256": "87bd9b6e6ea381ed5df0a1664206abe19be494cc46fe113078e1b51c32cb6645",
+      "canonical_open_length_m": 3596.1791724361246,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3220.4609136701124,
+        "cycling": 3220.4609136701124,
+        "combined": 3220.4609136701124
+      },
+      "unbound_open_length_m": 375.71825876601224,
+      "ambiguous_source_occurrence_m": 37.71022754599774,
+      "unbound_source_occurrence_m": 180.20596880567206
+    },
+    {
+      "route_key": "NCN:70",
+      "plan_sha256": "e4d7f54db108e7069c2c5cc654ab440e19e472337391b196d900496304a4517f",
+      "association_sha256": "b6f0e8aa1dd90aa4143d6cafd3d9eda6d130291dbf3abf9ce6cb6f3de2889bb3",
+      "reference_version": "open-completion:593d9bea2cd09bac0c1c5b2e3a655f87a1d14b8cf0ffefb952b5a4b0751acb89",
+      "catalogue_manifest_sha256": "343e8fd2e450ac5347b720340cbb42e49aebe0340c9ba43040e6c545772780e7",
+      "canonical_open_length_m": 188009.14106165027,
+      "maximum_bound_open_length_m": {
+        "on_foot": 177665.76651124505,
+        "cycling": 179494.41186700953,
+        "combined": 179774.8797162641
+      },
+      "unbound_open_length_m": 8234.261345386156,
+      "ambiguous_source_occurrence_m": 466.23865996357097,
+      "unbound_source_occurrence_m": 4958.295990262576
+    },
+    {
+      "route_key": "NCN:700",
+      "plan_sha256": "06922bc5d7a2b8099f3d60863f4186d6229e963079dba2a170f40100393f0b41",
+      "association_sha256": "9701b4fdaa59022b2e5b31ef6eb7381c275b9fd0f392e8f0cca9d62e18482285",
+      "reference_version": "open-completion:b5ad2557afaac249ab2843e8c4047a1cb6018fd16240cbb270e45f9e9d7de593",
+      "catalogue_manifest_sha256": "448ad4265baa7108d745452a2d536a86f8b917f1ee484e84053397286f544b7c",
+      "canonical_open_length_m": 61345.89951115468,
+      "maximum_bound_open_length_m": {
+        "on_foot": 57441.511880063495,
+        "cycling": 57441.511880063495,
+        "combined": 57441.511880063495
+      },
+      "unbound_open_length_m": 3904.3876310911874,
+      "ambiguous_source_occurrence_m": 99.8835802442769,
+      "unbound_source_occurrence_m": 1739.1199343376295
+    },
+    {
+      "route_key": "NCN:8",
+      "plan_sha256": "6505d83302af2772c9a260c2d697a0c0cff4b0c97f6d8287e36d8c8f94300fcb",
+      "association_sha256": "6fc115d1061a1be994a71614326ab4a4c2dc9fbdb8ba0aa003a2b476eb87dbdf",
+      "reference_version": "open-completion:24d30e8ec6c7abf17317e1c1ccb45d9fa45f7a2145688abb55eb6dd24c418ac2",
+      "catalogue_manifest_sha256": "02e30ba1946c1bdbc931612f7df9d3ed0c1c39612db80628fb04b53a5611cdf0",
+      "canonical_open_length_m": 383185.1131687598,
+      "maximum_bound_open_length_m": {
+        "on_foot": 335464.4321737365,
+        "cycling": 355208.83953562734,
+        "combined": 355423.61375306715
+      },
+      "unbound_open_length_m": 27761.49941569264,
+      "ambiguous_source_occurrence_m": 848.7278730886652,
+      "unbound_source_occurrence_m": 12175.211696316768
+    },
+    {
+      "route_key": "RCN:70",
+      "plan_sha256": "c79d347d1b06cde402e825dbe7ac98e18d33c368005b03e06c5d6d29064d903f",
+      "association_sha256": "ea84d076feddde2830f4ce8ad5996ff299cb3ce451c015a6ac24467bf4e6b11e",
+      "reference_version": "open-completion:314fccff9646f2586a8b3b5b892f66c0c1056c3711dac94579a511e39738d832",
+      "catalogue_manifest_sha256": "5e02b2bd599465cb733c8579b92363aa9d48127f60f9ebed5768056e27fb2f61",
+      "canonical_open_length_m": 3791.6971916789616,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3769.980348697722,
+        "cycling": 3769.980348697722,
+        "combined": 3769.980348697722
+      },
+      "unbound_open_length_m": 21.71684298123955,
+      "ambiguous_source_occurrence_m": 3.288211267555592,
+      "unbound_source_occurrence_m": 29.38182492339606
+    },
+    {
+      "route_key": "RCN:92",
+      "plan_sha256": "f36fd135c768d5f04758ce03cb4fe270c7e72d06f927ec17a5725d0d06a8dce8",
+      "association_sha256": "5ba15112b74bfcf08414c8ee0963bdc7484f64848b72748e4f29f56cdfa33aa5",
+      "reference_version": "open-completion:c93670dd254d0a9229419d52fe0ccaaf1c7678f50fc95152c8766730ef55a601",
+      "catalogue_manifest_sha256": "b6ec2cb103b2f4ed0277aae34729ac523e9d5906c02cb2cec49ddf7f7d7a56e8",
+      "canonical_open_length_m": 273.6785876331362,
+      "maximum_bound_open_length_m": {
+        "on_foot": 115.01743201999898,
+        "cycling": 115.01743201999898,
+        "combined": 115.01743201999898
+      },
+      "unbound_open_length_m": 158.66115561313723,
+      "ambiguous_source_occurrence_m": 0.0,
+      "unbound_source_occurrence_m": 2.9047545860325323
+    }
+  ],
+  "held_route_keys": [
+    "NCN:207",
+    "NCN:253",
+    "NCN:274",
+    "NCN:323",
+    "NCN:410",
+    "NCN:422",
+    "NCN:524",
+    "NCN:689",
+    "NCN:776",
+    "NCN:820",
+    "RCN:12",
+    "RCN:15",
+    "RCN:16",
+    "RCN:21",
+    "RCN:30",
+    "RCN:31",
+    "RCN:32",
+    "RCN:40",
+    "RCN:41",
+    "RCN:50",
+    "RCN:51",
+    "RCN:55",
+    "RCN:61",
+    "RCN:67",
+    "RCN:80",
+    "RCN:81",
+    "RCN:83",
+    "RCN:85",
+    "RCN:89"
+  ],
+  "whole_published_route_ready": false,
+  "android_activation_ready": false,
+  "plan_summary_sha256": "f69cc693a0a8a0c1fd81ab11759d19db3f24766ecd440a07dfd696a059b5a863",
+  "supported_identity_checkpoint": 219,
+  "distinct_supported_way_checkpoint": 62399,
+  "new_route_admissions": 0,
+  "newly_resolved_holds": 0,
+  "source_geometry_unchanged_for_all_25": true,
+  "binding_intervals": 206815,
+  "validation": {
+    "ncn_tests": 317,
+    "cycling_tests": 5,
+    "total_tests": 322,
+    "portable_real_plans_validated": 25,
+    "unchanged_source_path_sets": 25
+  },
+  "limitations": [
+    "Python trial only; Android activation remains separate",
+    "Latest 25 accepted catalogues only",
+    "Conservative straight-edge correspondence leaves unbound target",
+    "Captured open extent is not the whole promoted itinerary"
+  ]
+}

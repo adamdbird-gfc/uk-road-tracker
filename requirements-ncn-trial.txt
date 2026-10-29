@@ -1,0 +1,2 @@
+# Local, isolated NCN reference/coverage experiments only.
+shapely==2.1.2
