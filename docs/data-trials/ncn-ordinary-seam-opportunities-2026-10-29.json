@@ -1,0 +1,2336 @@
+{
+  "method": "diagnostic upper bound: two degree-two continuing target edges; hairpins/branches/deferred excluded; source brackets the shared vertex; no bindings created",
+  "affected_routes": 217,
+  "route_local_target_m": 45611.814215395934,
+  "target_intervals": 159378,
+  "unique_network_upper_bound_m": 45631.4633491449,
+  "rejected_source_windows": 79831,
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "intervals": 14576,
+      "target_metres": 4004.22136854346
+    },
+    {
+      "route_key": "NCN:10",
+      "intervals": 1562,
+      "target_metres": 467.91124484451154
+    },
+    {
+      "route_key": "NCN:11",
+      "intervals": 708,
+      "target_metres": 191.3916369166243
+    },
+    {
+      "route_key": "NCN:110",
+      "intervals": 34,
+      "target_metres": 17.05203442562514
+    },
+    {
+      "route_key": "NCN:12",
+      "intervals": 1950,
+      "target_metres": 541.8515680023243
+    },
+    {
+      "route_key": "NCN:125",
+      "intervals": 38,
+      "target_metres": 12.446828654580251
+    },
+    {
+      "route_key": "NCN:13",
+      "intervals": 1842,
+      "target_metres": 483.5644566409595
+    },
+    {
+      "route_key": "NCN:136",
+      "intervals": 210,
+      "target_metres": 63.750051660732176
+    },
+    {
+      "route_key": "NCN:137",
+      "intervals": 74,
+      "target_metres": 32.22274485880648
+    },
+    {
+      "route_key": "NCN:14",
+      "intervals": 1370,
+      "target_metres": 301.33447282135177
+    },
+    {
+      "route_key": "NCN:141",
+      "intervals": 144,
+      "target_metres": 15.90111350058801
+    },
+    {
+      "route_key": "NCN:15",
+      "intervals": 430,
+      "target_metres": 129.75443331689448
+    },
+    {
+      "route_key": "NCN:150",
+      "intervals": 168,
+      "target_metres": 32.258054740186644
+    },
+    {
+      "route_key": "NCN:151",
+      "intervals": 14,
+      "target_metres": 6.842847165570259
+    },
+    {
+      "route_key": "NCN:155",
+      "intervals": 106,
+      "target_metres": 34.417625458854616
+    },
+    {
+      "route_key": "NCN:16",
+      "intervals": 542,
+      "target_metres": 191.22455822999402
+    },
+    {
+      "route_key": "NCN:164",
+      "intervals": 362,
+      "target_metres": 101.56177457521187
+    },
+    {
+      "route_key": "NCN:165",
+      "intervals": 916,
+      "target_metres": 232.15445492645526
+    },
+    {
+      "route_key": "NCN:166",
+      "intervals": 292,
+      "target_metres": 65.13485846577228
+    },
+    {
+      "route_key": "NCN:167",
+      "intervals": 206,
+      "target_metres": 52.64489769856527
+    },
+    {
+      "route_key": "NCN:168",
+      "intervals": 162,
+      "target_metres": 60.90781801915412
+    },
+    {
+      "route_key": "NCN:169",
+      "intervals": 88,
+      "target_metres": 23.37553371894533
+    },
+    {
+      "route_key": "NCN:17",
+      "intervals": 628,
+      "target_metres": 207.41626883931804
+    },
+    {
+      "route_key": "NCN:174",
+      "intervals": 124,
+      "target_metres": 44.9882055912977
+    },
+    {
+      "route_key": "NCN:177",
+      "intervals": 180,
+      "target_metres": 38.13115951882551
+    },
+    {
+      "route_key": "NCN:179",
+      "intervals": 170,
+      "target_metres": 48.06948414265312
+    },
+    {
+      "route_key": "NCN:18",
+      "intervals": 924,
+      "target_metres": 346.05947732850484
+    },
+    {
+      "route_key": "NCN:195",
+      "intervals": 546,
+      "target_metres": 166.8178400396946
+    },
+    {
+      "route_key": "NCN:196",
+      "intervals": 306,
+      "target_metres": 72.13819313477943
+    },
+    {
+      "route_key": "NCN:2",
+      "intervals": 5422,
+      "target_metres": 1458.007373147731
+    },
+    {
+      "route_key": "NCN:20",
+      "intervals": 428,
+      "target_metres": 124.68408304439355
+    },
+    {
+      "route_key": "NCN:208",
+      "intervals": 96,
+      "target_metres": 20.12563477710072
+    },
+    {
+      "route_key": "NCN:21",
+      "intervals": 1886,
+      "target_metres": 618.1740094935
+    },
+    {
+      "route_key": "NCN:22",
+      "intervals": 1742,
+      "target_metres": 531.612886957668
+    },
+    {
+      "route_key": "NCN:221",
+      "intervals": 600,
+      "target_metres": 95.40341182303698
+    },
+    {
+      "route_key": "NCN:222",
+      "intervals": 243,
+      "target_metres": 59.179030526819176
+    },
+    {
+      "route_key": "NCN:223",
+      "intervals": 1192,
+      "target_metres": 370.77181554089
+    },
+    {
+      "route_key": "NCN:224",
+      "intervals": 234,
+      "target_metres": 45.4308672819904
+    },
+    {
+      "route_key": "NCN:23",
+      "intervals": 1189,
+      "target_metres": 301.71387536666657
+    },
+    {
+      "route_key": "NCN:236",
+      "intervals": 217,
+      "target_metres": 58.76548130565585
+    },
+    {
+      "route_key": "NCN:24",
+      "intervals": 924,
+      "target_metres": 244.57047738392166
+    },
+    {
+      "route_key": "NCN:244",
+      "intervals": 106,
+      "target_metres": 15.574694708264927
+    },
+    {
+      "route_key": "NCN:246",
+      "intervals": 370,
+      "target_metres": 101.1854767361952
+    },
+    {
+      "route_key": "NCN:248",
+      "intervals": 22,
+      "target_metres": 12.101443167130306
+    },
+    {
+      "route_key": "NCN:25",
+      "intervals": 772,
+      "target_metres": 193.98514329546535
+    },
+    {
+      "route_key": "NCN:250",
+      "intervals": 184,
+      "target_metres": 24.806194144886156
+    },
+    {
+      "route_key": "NCN:256",
+      "intervals": 222,
+      "target_metres": 32.01697404034951
+    },
+    {
+      "route_key": "NCN:26",
+      "intervals": 1041,
+      "target_metres": 260.66754365978176
+    },
+    {
+      "route_key": "NCN:267",
+      "intervals": 48,
+      "target_metres": 7.522308101740238
+    },
+    {
+      "route_key": "NCN:27",
+      "intervals": 1258,
+      "target_metres": 353.8301023243979
+    },
+    {
+      "route_key": "NCN:270",
+      "intervals": 36,
+      "target_metres": 15.417127352970772
+    },
+    {
+      "route_key": "NCN:272",
+      "intervals": 292,
+      "target_metres": 119.30624303871281
+    },
+    {
+      "route_key": "NCN:278",
+      "intervals": 100,
+      "target_metres": 30.005234701314695
+    },
+    {
+      "route_key": "NCN:28",
+      "intervals": 1284,
+      "target_metres": 490.4626183551762
+    },
+    {
+      "route_key": "NCN:288",
+      "intervals": 48,
+      "target_metres": 12.599005049192217
+    },
+    {
+      "route_key": "NCN:3",
+      "intervals": 4575,
+      "target_metres": 1312.8326280840558
+    },
+    {
+      "route_key": "NCN:304",
+      "intervals": 138,
+      "target_metres": 37.36072750215138
+    },
+    {
+      "route_key": "NCN:305",
+      "intervals": 264,
+      "target_metres": 71.54299228399381
+    },
+    {
+      "route_key": "NCN:32",
+      "intervals": 514,
+      "target_metres": 146.63207893756427
+    },
+    {
+      "route_key": "NCN:327",
+      "intervals": 272,
+      "target_metres": 81.27223158775037
+    },
+    {
+      "route_key": "NCN:33",
+      "intervals": 814,
+      "target_metres": 246.2541580786419
+    },
+    {
+      "route_key": "NCN:334",
+      "intervals": 88,
+      "target_metres": 33.524009950052225
+    },
+    {
+      "route_key": "NCN:339",
+      "intervals": 124,
+      "target_metres": 23.455566721599023
+    },
+    {
+      "route_key": "NCN:34",
+      "intervals": 98,
+      "target_metres": 16.270487731891905
+    },
+    {
+      "route_key": "NCN:344",
+      "intervals": 112,
+      "target_metres": 28.509364406075168
+    },
+    {
+      "route_key": "NCN:4",
+      "intervals": 7481,
+      "target_metres": 2162.8367771851185
+    },
+    {
+      "route_key": "NCN:403",
+      "intervals": 432,
+      "target_metres": 146.49115966185633
+    },
+    {
+      "route_key": "NCN:41",
+      "intervals": 1622,
+      "target_metres": 380.33062113927394
+    },
+    {
+      "route_key": "NCN:411",
+      "intervals": 22,
+      "target_metres": 10.289885912550425
+    },
+    {
+      "route_key": "NCN:416",
+      "intervals": 319,
+      "target_metres": 83.31376499988781
+    },
+    {
+      "route_key": "NCN:42",
+      "intervals": 796,
+      "target_metres": 299.85154439979704
+    },
+    {
+      "route_key": "NCN:423",
+      "intervals": 324,
+      "target_metres": 120.70725252723258
+    },
+    {
+      "route_key": "NCN:425",
+      "intervals": 48,
+      "target_metres": 18.264871711345886
+    },
+    {
+      "route_key": "NCN:426",
+      "intervals": 80,
+      "target_metres": 34.832486628933026
+    },
+    {
+      "route_key": "NCN:43",
+      "intervals": 468,
+      "target_metres": 201.1210864100137
+    },
+    {
+      "route_key": "NCN:437",
+      "intervals": 94,
+      "target_metres": 48.12774578054869
+    },
+    {
+      "route_key": "NCN:439",
+      "intervals": 42,
+      "target_metres": 13.937183812633373
+    },
+    {
+      "route_key": "NCN:44",
+      "intervals": 572,
+      "target_metres": 194.82546923618906
+    },
+    {
+      "route_key": "NCN:440",
+      "intervals": 102,
+      "target_metres": 51.05345266525447
+    },
+    {
+      "route_key": "NCN:442",
+      "intervals": 570,
+      "target_metres": 164.50619835542557
+    },
+    {
+      "route_key": "NCN:45",
+      "intervals": 2908,
+      "target_metres": 812.3868011536615
+    },
+    {
+      "route_key": "NCN:451",
+      "intervals": 202,
+      "target_metres": 42.49449157080862
+    },
+    {
+      "route_key": "NCN:455",
+      "intervals": 350,
+      "target_metres": 111.69671375532529
+    },
+    {
+      "route_key": "NCN:46",
+      "intervals": 1228,
+      "target_metres": 408.20181571788726
+    },
+    {
+      "route_key": "NCN:461",
+      "intervals": 194,
+      "target_metres": 62.492894392134325
+    },
+    {
+      "route_key": "NCN:465",
+      "intervals": 172,
+      "target_metres": 65.56296799906472
+    },
+    {
+      "route_key": "NCN:466",
+      "intervals": 116,
+      "target_metres": 51.627978515855666
+    },
+    {
+      "route_key": "NCN:467",
+      "intervals": 138,
+      "target_metres": 77.74329878869705
+    },
+    {
+      "route_key": "NCN:468",
+      "intervals": 172,
+      "target_metres": 70.80124681499429
+    },
+    {
+      "route_key": "NCN:469",
+      "intervals": 98,
+      "target_metres": 17.331723345449774
+    },
+    {
+      "route_key": "NCN:47",
+      "intervals": 2008,
+      "target_metres": 719.9658852753462
+    },
+    {
+      "route_key": "NCN:475",
+      "intervals": 50,
+      "target_metres": 27.191342909138662
+    },
+    {
+      "route_key": "NCN:476",
+      "intervals": 34,
+      "target_metres": 8.360917244850011
+    },
+    {
+      "route_key": "NCN:477",
+      "intervals": 82,
+      "target_metres": 21.626217011944117
+    },
+    {
+      "route_key": "NCN:478",
+      "intervals": 160,
+      "target_metres": 62.163397748193866
+    },
+    {
+      "route_key": "NCN:48",
+      "intervals": 848,
+      "target_metres": 289.92393269635943
+    },
+    {
+      "route_key": "NCN:482",
+      "intervals": 64,
+      "target_metres": 21.432982944528202
+    },
+    {
+      "route_key": "NCN:49",
+      "intervals": 590,
+      "target_metres": 235.04983976176868
+    },
+    {
+      "route_key": "NCN:492",
+      "intervals": 242,
+      "target_metres": 102.50884101413341
+    },
+    {
+      "route_key": "NCN:5",
+      "intervals": 5243,
+      "target_metres": 1319.9327893723091
+    },
+    {
+      "route_key": "NCN:50",
+      "intervals": 752,
+      "target_metres": 252.8255868163949
+    },
+    {
+      "route_key": "NCN:51",
+      "intervals": 2922,
+      "target_metres": 679.2580375140489
+    },
+    {
+      "route_key": "NCN:517",
+      "intervals": 130,
+      "target_metres": 37.202825089854684
+    },
+    {
+      "route_key": "NCN:52",
+      "intervals": 929,
+      "target_metres": 177.67447812776314
+    },
+    {
+      "route_key": "NCN:523",
+      "intervals": 8,
+      "target_metres": 3.142062486271979
+    },
+    {
+      "route_key": "NCN:53",
+      "intervals": 212,
+      "target_metres": 37.14745628096857
+    },
+    {
+      "route_key": "NCN:533",
+      "intervals": 76,
+      "target_metres": 7.690485067872794
+    },
+    {
+      "route_key": "NCN:534",
+      "intervals": 143,
+      "target_metres": 32.37230045894042
+    },
+    {
+      "route_key": "NCN:535",
+      "intervals": 208,
+      "target_metres": 27.633893858304614
+    },
+    {
+      "route_key": "NCN:536",
+      "intervals": 84,
+      "target_metres": 12.056012247480442
+    },
+    {
+      "route_key": "NCN:539",
+      "intervals": 368,
+      "target_metres": 82.89961061627244
+    },
+    {
+      "route_key": "NCN:54",
+      "intervals": 1112,
+      "target_metres": 258.45019660838653
+    },
+    {
+      "route_key": "NCN:544",
+      "intervals": 229,
+      "target_metres": 30.4957122105476
+    },
+    {
+      "route_key": "NCN:547",
+      "intervals": 2,
+      "target_metres": 0.17513424209136375
+    },
+    {
+      "route_key": "NCN:548",
+      "intervals": 70,
+      "target_metres": 13.134103870771693
+    },
+    {
+      "route_key": "NCN:549",
+      "intervals": 354,
+      "target_metres": 116.43618163586524
+    },
+    {
+      "route_key": "NCN:55",
+      "intervals": 1664,
+      "target_metres": 456.810794168927
+    },
+    {
+      "route_key": "NCN:550",
+      "intervals": 268,
+      "target_metres": 93.82321067558883
+    },
+    {
+      "route_key": "NCN:551",
+      "intervals": 254,
+      "target_metres": 57.58464699357147
+    },
+    {
+      "route_key": "NCN:552",
+      "intervals": 292,
+      "target_metres": 102.88280336460043
+    },
+    {
+      "route_key": "NCN:555",
+      "intervals": 12,
+      "target_metres": 2.2023864966977484
+    },
+    {
+      "route_key": "NCN:558",
+      "intervals": 46,
+      "target_metres": 11.470253536790148
+    },
+    {
+      "route_key": "NCN:559",
+      "intervals": 138,
+      "target_metres": 53.50013451816126
+    },
+    {
+      "route_key": "NCN:56",
+      "intervals": 638,
+      "target_metres": 207.88449276422762
+    },
+    {
+      "route_key": "NCN:562",
+      "intervals": 420,
+      "target_metres": 74.73827581427982
+    },
+    {
+      "route_key": "NCN:563",
+      "intervals": 114,
+      "target_metres": 26.63426238394463
+    },
+    {
+      "route_key": "NCN:566",
+      "intervals": 224,
+      "target_metres": 90.96896248768066
+    },
+    {
+      "route_key": "NCN:568",
+      "intervals": 144,
+      "target_metres": 36.66286682242288
+    },
+    {
+      "route_key": "NCN:57",
+      "intervals": 1012,
+      "target_metres": 238.4714706212343
+    },
+    {
+      "route_key": "NCN:573",
+      "intervals": 206,
+      "target_metres": 47.644051631161034
+    },
+    {
+      "route_key": "NCN:574",
+      "intervals": 46,
+      "target_metres": 14.735201504275462
+    },
+    {
+      "route_key": "NCN:6",
+      "intervals": 7247,
+      "target_metres": 1723.61301132896
+    },
+    {
+      "route_key": "NCN:60",
+      "intervals": 90,
+      "target_metres": 10.120822472760063
+    },
+    {
+      "route_key": "NCN:601",
+      "intervals": 80,
+      "target_metres": 14.722166432039096
+    },
+    {
+      "route_key": "NCN:604",
+      "intervals": 156,
+      "target_metres": 25.326953712928177
+    },
+    {
+      "route_key": "NCN:606",
+      "intervals": 24,
+      "target_metres": 14.009930903990291
+    },
+    {
+      "route_key": "NCN:61",
+      "intervals": 960,
+      "target_metres": 195.47203424484653
+    },
+    {
+      "route_key": "NCN:62",
+      "intervals": 2964,
+      "target_metres": 741.2301127998735
+    },
+    {
+      "route_key": "NCN:622",
+      "intervals": 574,
+      "target_metres": 108.31971675589726
+    },
+    {
+      "route_key": "NCN:627",
+      "intervals": 286,
+      "target_metres": 101.72474879154748
+    },
+    {
+      "route_key": "NCN:63",
+      "intervals": 1072,
+      "target_metres": 243.57934659219603
+    },
+    {
+      "route_key": "NCN:636",
+      "intervals": 50,
+      "target_metres": 18.154278185617688
+    },
+    {
+      "route_key": "NCN:637",
+      "intervals": 234,
+      "target_metres": 88.51639929895806
+    },
+    {
+      "route_key": "NCN:64",
+      "intervals": 496,
+      "target_metres": 128.2675469573187
+    },
+    {
+      "route_key": "NCN:645",
+      "intervals": 116,
+      "target_metres": 15.715849888087957
+    },
+    {
+      "route_key": "NCN:647",
+      "intervals": 100,
+      "target_metres": 25.263351634265682
+    },
+    {
+      "route_key": "NCN:648",
+      "intervals": 52,
+      "target_metres": 12.512745667739313
+    },
+    {
+      "route_key": "NCN:65",
+      "intervals": 1674,
+      "target_metres": 405.50546464781263
+    },
+    {
+      "route_key": "NCN:656",
+      "intervals": 188,
+      "target_metres": 43.312918524447
+    },
+    {
+      "route_key": "NCN:657",
+      "intervals": 214,
+      "target_metres": 69.58347624185244
+    },
+    {
+      "route_key": "NCN:658",
+      "intervals": 37,
+      "target_metres": 13.7485985850669
+    },
+    {
+      "route_key": "NCN:66",
+      "intervals": 2257,
+      "target_metres": 535.7920427249558
+    },
+    {
+      "route_key": "NCN:665",
+      "intervals": 116,
+      "target_metres": 39.54661141345796
+    },
+    {
+      "route_key": "NCN:668",
+      "intervals": 72,
+      "target_metres": 28.53767735197493
+    },
+    {
+      "route_key": "NCN:67",
+      "intervals": 1866,
+      "target_metres": 629.872056582321
+    },
+    {
+      "route_key": "NCN:672",
+      "intervals": 54,
+      "target_metres": 19.10034407155567
+    },
+    {
+      "route_key": "NCN:674",
+      "intervals": 110,
+      "target_metres": 44.58548442017834
+    },
+    {
+      "route_key": "NCN:677",
+      "intervals": 92,
+      "target_metres": 35.186262713656845
+    },
+    {
+      "route_key": "NCN:68",
+      "intervals": 3676,
+      "target_metres": 1001.5689369921797
+    },
+    {
+      "route_key": "NCN:680",
+      "intervals": 210,
+      "target_metres": 50.069935290801716
+    },
+    {
+      "route_key": "NCN:685",
+      "intervals": 58,
+      "target_metres": 4.60970165323868
+    },
+    {
+      "route_key": "NCN:688",
+      "intervals": 460,
+      "target_metres": 123.539593585066
+    },
+    {
+      "route_key": "NCN:69",
+      "intervals": 678,
+      "target_metres": 216.0494257693865
+    },
+    {
+      "route_key": "NCN:696",
+      "intervals": 164,
+      "target_metres": 51.71234429857661
+    },
+    {
+      "route_key": "NCN:697",
+      "intervals": 52,
+      "target_metres": 10.077578414067503
+    },
+    {
+      "route_key": "NCN:699",
+      "intervals": 26,
+      "target_metres": 12.106174972969296
+    },
+    {
+      "route_key": "NCN:7",
+      "intervals": 7551,
+      "target_metres": 2443.747983793647
+    },
+    {
+      "route_key": "NCN:70",
+      "intervals": 1444,
+      "target_metres": 479.2510637232825
+    },
+    {
+      "route_key": "NCN:700",
+      "intervals": 468,
+      "target_metres": 121.5425698332543
+    },
+    {
+      "route_key": "NCN:71",
+      "intervals": 726,
+      "target_metres": 196.46407601492368
+    },
+    {
+      "route_key": "NCN:715",
+      "intervals": 174,
+      "target_metres": 58.89024372866649
+    },
+    {
+      "route_key": "NCN:72",
+      "intervals": 2142,
+      "target_metres": 562.1791787610747
+    },
+    {
+      "route_key": "NCN:725",
+      "intervals": 112,
+      "target_metres": 24.946849187111084
+    },
+    {
+      "route_key": "NCN:73",
+      "intervals": 499,
+      "target_metres": 191.17350945660053
+    },
+    {
+      "route_key": "NCN:74",
+      "intervals": 582,
+      "target_metres": 186.9844078744912
+    },
+    {
+      "route_key": "NCN:75",
+      "intervals": 2148,
+      "target_metres": 460.99860966690505
+    },
+    {
+      "route_key": "NCN:753",
+      "intervals": 216,
+      "target_metres": 51.56342650215157
+    },
+    {
+      "route_key": "NCN:754",
+      "intervals": 1712,
+      "target_metres": 310.71384913025827
+    },
+    {
+      "route_key": "NCN:755",
+      "intervals": 130,
+      "target_metres": 26.233525532858298
+    },
+    {
+      "route_key": "NCN:756",
+      "intervals": 238,
+      "target_metres": 65.37962035398778
+    },
+    {
+      "route_key": "NCN:76",
+      "intervals": 1876,
+      "target_metres": 481.51706459493226
+    },
+    {
+      "route_key": "NCN:764",
+      "intervals": 96,
+      "target_metres": 22.979121044959218
+    },
+    {
+      "route_key": "NCN:765",
+      "intervals": 164,
+      "target_metres": 47.93138307607777
+    },
+    {
+      "route_key": "NCN:766",
+      "intervals": 174,
+      "target_metres": 62.14910012907531
+    },
+    {
+      "route_key": "NCN:767",
+      "intervals": 96,
+      "target_metres": 30.95506766811956
+    },
+    {
+      "route_key": "NCN:768",
+      "intervals": 54,
+      "target_metres": 23.87108270062783
+    },
+    {
+      "route_key": "NCN:77",
+      "intervals": 584,
+      "target_metres": 218.0846295426433
+    },
+    {
+      "route_key": "NCN:775",
+      "intervals": 154,
+      "target_metres": 57.585062923293414
+    },
+    {
+      "route_key": "NCN:777",
+      "intervals": 176,
+      "target_metres": 51.157228990757716
+    },
+    {
+      "route_key": "NCN:78",
+      "intervals": 2010,
+      "target_metres": 542.5276095645524
+    },
+    {
+      "route_key": "NCN:8",
+      "intervals": 3640,
+      "target_metres": 1295.3787954594281
+    },
+    {
+      "route_key": "NCN:81",
+      "intervals": 2034,
+      "target_metres": 730.851464976886
+    },
+    {
+      "route_key": "NCN:810",
+      "intervals": 344,
+      "target_metres": 52.76194716925992
+    },
+    {
+      "route_key": "NCN:82",
+      "intervals": 1850,
+      "target_metres": 686.3647071056554
+    },
+    {
+      "route_key": "NCN:822",
+      "intervals": 16,
+      "target_metres": 6.200822521032093
+    },
+    {
+      "route_key": "NCN:825",
+      "intervals": 826,
+      "target_metres": 236.9246550854502
+    },
+    {
+      "route_key": "NCN:83",
+      "intervals": 418,
+      "target_metres": 115.42449254377499
+    },
+    {
+      "route_key": "NCN:84",
+      "intervals": 238,
+      "target_metres": 53.80021731245425
+    },
+    {
+      "route_key": "NCN:85",
+      "intervals": 140,
+      "target_metres": 54.4314926240977
+    },
+    {
+      "route_key": "NCN:862",
+      "intervals": 38,
+      "target_metres": 7.7923294289343055
+    },
+    {
+      "route_key": "NCN:88",
+      "intervals": 356,
+      "target_metres": 114.25360589316966
+    },
+    {
+      "route_key": "NCN:881",
+      "intervals": 142,
+      "target_metres": 61.22408364672709
+    },
+    {
+      "route_key": "NCN:883",
+      "intervals": 82,
+      "target_metres": 16.84385553507475
+    },
+    {
+      "route_key": "NCN:884",
+      "intervals": 26,
+      "target_metres": 15.14185846927799
+    },
+    {
+      "route_key": "NCN:885",
+      "intervals": 174,
+      "target_metres": 62.76122819467828
+    },
+    {
+      "route_key": "NCN:887",
+      "intervals": 372,
+      "target_metres": 147.84784209596947
+    },
+    {
+      "route_key": "NCN:888",
+      "intervals": 74,
+      "target_metres": 21.043494932764105
+    },
+    {
+      "route_key": "NCN:9",
+      "intervals": 904,
+      "target_metres": 548.2648452120418
+    },
+    {
+      "route_key": "NCN:91",
+      "intervals": 52,
+      "target_metres": 35.623146097979266
+    },
+    {
+      "route_key": "NCN:92",
+      "intervals": 128,
+      "target_metres": 89.12763716503405
+    },
+    {
+      "route_key": "NCN:93",
+      "intervals": 478,
+      "target_metres": 245.33311282042663
+    },
+    {
+      "route_key": "NCN:94",
+      "intervals": 132,
+      "target_metres": 81.90143316776346
+    },
+    {
+      "route_key": "NCN:96",
+      "intervals": 52,
+      "target_metres": 41.34146571628241
+    },
+    {
+      "route_key": "NCN:97",
+      "intervals": 22,
+      "target_metres": 20.072019695796232
+    },
+    {
+      "route_key": "NCN:99",
+      "intervals": 144,
+      "target_metres": 20.89791807603473
+    },
+    {
+      "route_key": "RCN:70",
+      "intervals": 88,
+      "target_metres": 5.517914789786935
+    },
+    {
+      "route_key": "RCN:90",
+      "intervals": 2,
+      "target_metres": 0.09614618243509199
+    },
+    {
+      "route_key": "RCN:92",
+      "intervals": 0,
+      "target_metres": 0.0
+    }
+  ],
+  "examples": [
+    {
+      "route_key": "NCN:9",
+      "source_section_key": "59306268:4:27",
+      "source_edge_metric": [
+        [
+          -12121.789965503394,
+          -8554.459849127794
+        ],
+        [
+          -12116.163877951556,
+          -8545.086103864387
+        ]
+      ],
+      "source_window_m": [
+        2.3745290501574208,
+        6.08240710865381
+      ],
+      "target_keys": [
+        "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29",
+        "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -12178.943008360819,
+            -8631.761868869082
+          ],
+          [
+            -12111.802287312223,
+            -8555.263373844244
+          ]
+        ],
+        [
+          [
+            -12111.802287312223,
+            -8555.263373844244
+          ],
+          [
+            -12100.59872340422,
+            -8520.677210942777
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.612506905826045
+        ],
+        [
+          33.36100694280114,
+          36.35550176366034
+        ]
+      ],
+      "opportunity_m": 6.607001726685247,
+      "witness_projection_interval_m": [
+        0.0,
+        3.612506905826045
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:8",
+      "source_section_key": "31252441:47:55",
+      "source_edge_metric": [
+        [
+          14755.82524962197,
+          11189.074130008317
+        ],
+        [
+          14739.08246208218,
+          11208.688942161609
+        ]
+      ],
+      "source_window_m": [
+        3.2276419724314396,
+        7.613829870460352
+      ],
+      "target_keys": [
+        "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00",
+        "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            14759.225593428953,
+            11199.143564044814
+          ],
+          [
+            14774.930644095382,
+            11168.516603462815
+          ]
+        ],
+        [
+          [
+            14725.677490023078,
+            11223.357111706391
+          ],
+          [
+            14759.225593428953,
+            11199.143564044814
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.0644441108476492
+        ],
+        [
+          37.112096151249425,
+          41.37355595656215
+        ]
+      ],
+      "opportunity_m": 6.3259039161603745,
+      "witness_projection_interval_m": [
+        37.112096151249425,
+        41.37355595656215
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:93",
+      "source_section_key": "204990559:52:56",
+      "source_edge_metric": [
+        [
+          -50949.97905825586,
+          8973.304818473474
+        ],
+        [
+          -50947.23079220784,
+          8968.100888718569
+        ]
+      ],
+      "source_window_m": [
+        1.646214717893154,
+        5.543602939936972
+      ],
+      "target_keys": [
+        "open-edge:c3a3c769fa2814b42af2fa3e5d4ab46c234da75abb55bdfc81ed8c0596714ddb",
+        "open-edge:37b7958cbbf9927ba48a630bb956f3d9b647af3ee800ccd78811b53de6e58733"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -50939.987326536786,
+            8975.097295141986
+          ],
+          [
+            -50936.85107807579,
+            8966.192102606732
+          ]
+        ],
+        [
+          [
+            -50949.63493771136,
+            8985.76586784107
+          ],
+          [
+            -50939.987326536786,
+            8975.097295141986
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:c3a3c769fa2814b42af2fa3e5d4ab46c234da75abb55bdfc81ed8c0596714ddb",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.855201911012237
+        ],
+        [
+          7.211894158690887,
+          9.441319213914197
+        ]
+      ],
+      "opportunity_m": 6.084626966235547,
+      "witness_projection_interval_m": [
+        0.0,
+        3.855201911012237
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:8",
+      "source_section_key": "470953132",
+      "source_edge_metric": [
+        [
+          -13199.32274286573,
+          42718.23897908199
+        ],
+        [
+          -13199.444903455786,
+          42727.02339042038
+        ]
+      ],
+      "source_window_m": [
+        4.207320049927269,
+        8.119491438064472
+      ],
+      "target_keys": [
+        "open-edge:08141033a18ba47dedee6ea55af009e82bb3b248d6e74bd4ebdd427bd0a1e5b3",
+        "open-edge:5a86e627b87d1001868e73390aca3756e4dc134b61f7c27a8e31e81fc495e48d"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -13208.058061186994,
+            42723.99714875023
+          ],
+          [
+            -13201.140703955592,
+            42698.729875554636
+          ]
+        ],
+        [
+          [
+            -13208.058061186994,
+            42723.99714875023
+          ],
+          [
+            -13204.91171719507,
+            42741.59594435008
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:5a86e627b87d1001868e73390aca3756e4dc134b61f7c27a8e31e81fc495e48d",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.841162969141921
+        ],
+        [
+          15.646447636933175,
+          17.877837874888915
+        ]
+      ],
+      "opportunity_m": 6.072553207097661,
+      "witness_projection_interval_m": [
+        0.0,
+        3.841162969141921
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:8",
+      "source_section_key": "470953132",
+      "source_edge_metric": [
+        [
+          -13199.32274286573,
+          42718.23897908199
+        ],
+        [
+          -13199.444903455786,
+          42727.02339042038
+        ]
+      ],
+      "source_window_m": [
+        4.207320049927269,
+        8.119491438064472
+      ],
+      "target_keys": [
+        "open-edge:08141033a18ba47dedee6ea55af009e82bb3b248d6e74bd4ebdd427bd0a1e5b3",
+        "open-edge:5a86e627b87d1001868e73390aca3756e4dc134b61f7c27a8e31e81fc495e48d"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -13208.058061186994,
+            42723.99714875023
+          ],
+          [
+            -13201.140703955592,
+            42698.729875554636
+          ]
+        ],
+        [
+          [
+            -13208.058061186994,
+            42723.99714875023
+          ],
+          [
+            -13204.91171719507,
+            42741.59594435008
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:08141033a18ba47dedee6ea55af009e82bb3b248d6e74bd4ebdd427bd0a1e5b3",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.787322729754112
+        ],
+        [
+          24.0110395750908,
+          26.197040401689737
+        ]
+      ],
+      "opportunity_m": 5.9733235563530505,
+      "witness_projection_interval_m": [
+        0.0,
+        3.787322729754112
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:67",
+      "source_section_key": "548668434",
+      "source_edge_metric": [
+        [
+          -941.5174916027864,
+          15143.212499623773
+        ],
+        [
+          -930.622441143891,
+          15104.21638498604
+        ]
+      ],
+      "source_window_m": [
+        9.719189921143961,
+        12.797094812434953
+      ],
+      "target_keys": [
+        "open-edge:dc4d32753f5b2fe6757534980b923d9b2912678f27bc7f4315b3a06ecc7a3586",
+        "open-edge:713097b621fd48d235e710209529f580e9a9067b1db49ba6c50fe6fc2ad6fd6e"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -946.6642345579553,
+            15129.998649732846
+          ],
+          [
+            -921.0680048902532,
+            15078.435861309214
+          ]
+        ],
+        [
+          [
+            -950.4747658290727,
+            15166.829329561577
+          ],
+          [
+            -946.6642345579553,
+            15129.998649732846
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:713097b621fd48d235e710209529f580e9a9067b1db49ba6c50fe6fc2ad6fd6e",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.6548949253480294
+        ],
+        [
+          33.9933999680464,
+          37.02727542251264
+        ]
+      ],
+      "opportunity_m": 5.688770379814271,
+      "witness_projection_interval_m": [
+        33.9933999680464,
+        37.02727542251264
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:56",
+      "source_section_key": "235858085:2:13",
+      "source_edge_metric": [
+        [
+          -23169.079985425007,
+          8146.232250994785
+        ],
+        [
+          -23167.40017865112,
+          8152.559251060533
+        ]
+      ],
+      "source_window_m": [
+        1.6652740566489905,
+        5.2661649082030095
+      ],
+      "target_keys": [
+        "open-edge:3d78cba3b9161c31ce53c1669f012abdfb06facd138e444b63314a999e2dfb8e",
+        "open-edge:a51a72fb65775d6c28d79c4b7e9a8d14388a88630be5ad2070f3d33a3c9a24e5"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -23169.290056692076,
+            8129.347353418988
+          ],
+          [
+            -23160.36361352129,
+            8147.749474973494
+          ]
+        ],
+        [
+          [
+            -23160.36361352129,
+            8147.749474973494
+          ],
+          [
+            -23160.164539714126,
+            8165.629477960764
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:a51a72fb65775d6c28d79c4b7e9a8d14388a88630be5ad2070f3d33a3c9a24e5",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.490388540311012
+        ],
+        [
+          16.034313418393403,
+          17.881111184864437
+        ]
+      ],
+      "opportunity_m": 5.337186306782047,
+      "witness_projection_interval_m": [
+        0.0,
+        3.490388540311012
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:33",
+      "source_section_key": "517086386",
+      "source_edge_metric": [
+        [
+          -12948.022642324211,
+          20546.043932860237
+        ],
+        [
+          -12955.7498906893,
+          20548.93500494612
+        ]
+      ],
+      "source_window_m": [
+        4.225647998422017,
+        6.96186883671032
+      ],
+      "target_keys": [
+        "open-edge:5a63d062259f4972725d1eaa7fab5e0cfe225fd490323290b696531089303a46",
+        "open-edge:3482217628f4bba2971b7d0c038e6e568e64b4375051da830374ff7b9a22361b"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -12950.441674083499,
+            20554.366165161548
+          ],
+          [
+            -12935.463522297192,
+            20543.923370959845
+          ]
+        ],
+        [
+          [
+            -12973.65765880543,
+            20559.58754863021
+          ],
+          [
+            -12950.441674083499,
+            20554.366165161548
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:3482217628f4bba2971b7d0c038e6e568e64b4375051da830374ff7b9a22361b",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.530154534204825
+        ],
+        [
+          21.085238320254714,
+          23.79589863686168
+        ]
+      ],
+      "opportunity_m": 5.24081485081179,
+      "witness_projection_interval_m": [
+        21.085238320254714,
+        23.79589863686168
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:4",
+      "source_section_key": "25670973",
+      "source_edge_metric": [
+        [
+          -114805.27929027854,
+          7439.777739965368
+        ],
+        [
+          -114809.59667464554,
+          7413.758091190836
+        ]
+      ],
+      "source_window_m": [
+        16.273609172654854,
+        20.313429129234898
+      ],
+      "target_keys": [
+        "open-edge:5b845197832bda1f9850de1a531ce028870078cf8cf5cd53426784ed666d168b",
+        "open-edge:0b4306484f0b2c232504645b623bfa3a2b7eba4eff90417821a1a6ba1a278c48"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -114817.70402424851,
+            7423.327594892671
+          ],
+          [
+            -114815.9313663011,
+            7379.637806787377
+          ]
+        ],
+        [
+          [
+            -114817.70402424851,
+            7423.327594892671
+          ],
+          [
+            -114815.63987024149,
+            7428.560670101402
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:5b845197832bda1f9850de1a531ce028870078cf8cf5cd53426784ed666d168b",
+      "missing_intervals_m": [
+        [
+          1.7763568394002505e-15,
+          3.9552455341753614
+        ],
+        [
+          42.46147329754291,
+          43.72573499535556
+        ]
+      ],
+      "opportunity_m": 5.219507231988009,
+      "witness_projection_interval_m": [
+        1.7763568394002505e-15,
+        3.9552455341753614
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:55",
+      "source_section_key": "124803605",
+      "source_edge_metric": [
+        [
+          -17458.193062862705,
+          58638.66165393911
+        ],
+        [
+          -17465.202846936245,
+          58646.20068037856
+        ]
+      ],
+      "source_window_m": [
+        2.2432530118733376,
+        5.09578936259874
+      ],
+      "target_keys": [
+        "open-edge:7f29fa6debd52c826e819b4d5e071a076dcca99ae5464c62ae5a7fe22dfc52ec",
+        "open-edge:74ad64c4f51b8d5025b2c4785063e114084ad2fdb9d14f86efce78b26b026e9d"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -17456.17263164113,
+            58645.701881576344
+          ],
+          [
+            -17449.789129180805,
+            58635.1082354141
+          ]
+        ],
+        [
+          [
+            -17464.627079598176,
+            58651.25935365362
+          ],
+          [
+            -17456.17263164113,
+            58645.701881576344
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:7f29fa6debd52c826e819b4d5e071a076dcca99ae5464c62ae5a7fe22dfc52ec",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.791801834262823
+        ],
+        [
+          9.975073823484669,
+          12.368283739942546
+        ]
+      ],
+      "opportunity_m": 5.1850117507207,
+      "witness_projection_interval_m": [
+        0.0,
+        2.791801834262823
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:32",
+      "source_section_key": "148624640:3:11",
+      "source_edge_metric": [
+        [
+          -9853.177403549085,
+          3224.2925945327834
+        ],
+        [
+          -9851.263196285347,
+          3201.4420055448077
+        ]
+      ],
+      "source_window_m": [
+        19.24024268534069,
+        22.17923338477296
+      ],
+      "target_keys": [
+        "open-edge:a00e884b5efab1a95c9fbf319c43f52ff5c3c130cc280a27cdab4837b7b5deb3",
+        "open-edge:add6beb8f2226f20d2c3c774a3e229d555b8fb966e9072dabea33ca68ab4338a"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -9843.180846251029,
+            3190.658803550221
+          ],
+          [
+            -9842.582919914299,
+            3204.7377779079625
+          ]
+        ],
+        [
+          [
+            -9847.883194167765,
+            3222.9318336082483
+          ],
+          [
+            -9842.582919914299,
+            3204.7377779079625
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:a00e884b5efab1a95c9fbf319c43f52ff5c3c130cc280a27cdab4837b7b5deb3",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.107883266886038
+        ],
+        [
+          11.1759807660257,
+          14.091665439900986
+        ]
+      ],
+      "opportunity_m": 5.023567940761323,
+      "witness_projection_interval_m": [
+        11.1759807660257,
+        14.091665439900986
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:2",
+      "source_section_key": "2809478",
+      "source_edge_metric": [
+        [
+          27055.376220298745,
+          16283.567837201766
+        ],
+        [
+          27059.49360172307,
+          16272.05914639742
+        ]
+      ],
+      "source_window_m": [
+        0.0,
+        2.5093972465043595
+      ],
+      "target_keys": [
+        "open-edge:d41724e89703a48b03237c6c183fd818f7dea073db1b626d5820d57a16ea3768",
+        "open-edge:17b7382a20e9bb0500273810178dfc916d9cfdba4c6fe9f1d66667c0e89a3ff5"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            27046.780760670696,
+            16279.796301865712
+          ],
+          [
+            27064.404851164363,
+            16240.6264460043
+          ]
+        ],
+        [
+          [
+            27045.635097648064,
+            16287.473734856987
+          ],
+          [
+            27046.780760670696,
+            16279.796301865712
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:d41724e89703a48b03237c6c183fd818f7dea073db1b626d5820d57a16ea3768",
+      "missing_intervals_m": [
+        [
+          0.08746160236551814,
+          2.588986632171286
+        ],
+        [
+          40.60350992955391,
+          42.95213817649534
+        ]
+      ],
+      "opportunity_m": 4.850153276747198,
+      "witness_projection_interval_m": [
+        0.08746160236551814,
+        2.588986632171286
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:9",
+      "source_section_key": "59721385",
+      "source_edge_metric": [
+        [
+          -12771.166068636114,
+          7673.9839721111775
+        ],
+        [
+          -12780.184641662203,
+          7665.622102077869
+        ]
+      ],
+      "source_window_m": [
+        4.489666704080378,
+        7.411314723222731
+      ],
+      "target_keys": [
+        "open-edge:467d9bcfaedc459c8f6fa27db570d3fa05fe2710fc1b250f58d9cb148671658f",
+        "open-edge:2c55479d1429fbe634b22005670684262d63ba656809174738a1a8a60930cab6"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -12799.262591686835,
+            7647.370311567449
+          ],
+          [
+            -12770.845111553966,
+            7665.159410986757
+          ]
+        ],
+        [
+          [
+            -12770.845111553966,
+            7665.159410986757
+          ],
+          [
+            -12744.813086856784,
+            7704.739121205782
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:2c55479d1429fbe634b22005670684262d63ba656809174738a1a8a60930cab6",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.8369416233368456
+        ],
+        [
+          45.383403790999715,
+          47.37319675572532
+        ]
+      ],
+      "opportunity_m": 4.826734588062448,
+      "witness_projection_interval_m": [
+        0.0,
+        2.8369416233368456
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:68",
+      "source_section_key": "328236264",
+      "source_edge_metric": [
+        [
+          8118.668526097032,
+          -69949.10472107751
+        ],
+        [
+          8116.5663296942685,
+          -69990.93631026115
+        ]
+      ],
+      "source_window_m": [
+        19.972983686384588,
+        23.31302988155222
+      ],
+      "target_keys": [
+        "open-edge:56cc3c2881af0ce7d3cdb0ea51b648158bc28346e3f367c9cf44fe668586ad86",
+        "open-edge:a7f16d438edfea34105d52ec8e27b6dc1652c52f80335a99d5bd4ab91b3e1fcb"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            8108.229706395855,
+            -69970.83652618105
+          ],
+          [
+            8114.088451800601,
+            -70001.82612902291
+          ]
+        ],
+        [
+          [
+            8108.229706395855,
+            -69970.83652618105
+          ],
+          [
+            8116.929485282951,
+            -69918.87514396958
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:56cc3c2881af0ce7d3cdb0ea51b648158bc28346e3f367c9cf44fe668586ad86",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.2466327108424395
+        ],
+        [
+          30.20698828361003,
+          31.538553898582375
+        ]
+      ],
+      "opportunity_m": 4.578198325814784,
+      "witness_projection_interval_m": [
+        0.0,
+        3.2466327108424395
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:42",
+      "source_section_key": "23627196",
+      "source_edge_metric": [
+        [
+          -8487.376621268486,
+          -21449.709445680382
+        ],
+        [
+          -8413.683440561814,
+          -21366.813513366204
+        ]
+      ],
+      "source_window_m": [
+        51.677359434959605,
+        54.48940297939791
+      ],
+      "target_keys": [
+        "open-edge:217e2bc7096691c2165b1a41c81de0e48f55486a78034d5ffe947d88af7cb63b",
+        "open-edge:a5b65336b4183f93ab28e318dcad112d0a6a0ebb23b6098787649c7f7975e452"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -8499.335739217075,
+            -21461.877446207392
+          ],
+          [
+            -8459.293007393462,
+            -21403.423489675013
+          ]
+        ],
+        [
+          [
+            -8459.293007393462,
+            -21403.423489675013
+          ],
+          [
+            -8369.766598562328,
+            -21330.399397783847
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:a5b65336b4183f93ab28e318dcad112d0a6a0ebb23b6098787649c7f7975e452",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.7761811616307313
+        ],
+        [
+          113.75055063351073,
+          115.53136316485156
+        ]
+      ],
+      "opportunity_m": 4.5569936929715595,
+      "witness_projection_interval_m": [
+        0.0,
+        2.7761811616307313
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:51",
+      "source_section_key": "179243206",
+      "source_edge_metric": [
+        [
+          16591.936996784974,
+          20772.92003333592
+        ],
+        [
+          16602.435545392465,
+          20780.270028139126
+        ]
+      ],
+      "source_window_m": [
+        9.52059336842867,
+        12.717710179641482
+      ],
+      "target_keys": [
+        "open-edge:9554450252b22d7833b1b786898f3ab269787ea34e9715069e4249250c3a87d6",
+        "open-edge:f2930902590d6cbadd9e25710c8029da5adfd4ec9ef4f046e150d7b77c872d8b"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            16573.96723962927,
+            20755.25239381535
+          ],
+          [
+            16606.636767280866,
+            20771.719867306398
+          ]
+        ],
+        [
+          [
+            16606.636767280866,
+            20771.719867306398
+          ],
+          [
+            16681.6259416367,
+            20849.41320217227
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:f2930902590d6cbadd9e25710c8029da5adfd4ec9ef4f046e150d7b77c872d8b",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.1381749688241505
+        ],
+        [
+          106.64649625775567,
+          107.97976918455561
+        ]
+      ],
+      "opportunity_m": 4.471447895624086,
+      "witness_projection_interval_m": [
+        0.0,
+        3.1381749688241505
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:17",
+      "source_section_key": "24329799",
+      "source_edge_metric": [
+        [
+          5487.652527965029,
+          -4177.162567354717
+        ],
+        [
+          5454.415170912701,
+          -4161.728690218081
+        ]
+      ],
+      "source_window_m": [
+        1.7502540367314057,
+        6.312535658353347
+      ],
+      "target_keys": [
+        "open-edge:5f00fb8e80fb7cf9d7d6531d78c697e390d5af9ed5c8ad0579eaefefae5b3b7a",
+        "open-edge:f0af71face184f077188b2260e569c0bfba5aaf7fa75b97b38e275bdf6b6103e"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            5487.830792386251,
+            -4166.681569169452
+          ],
+          [
+            5496.182334716176,
+            -4172.984561472114
+          ]
+        ],
+        [
+          [
+            5275.472527973451,
+            -4128.199365245726
+          ],
+          [
+            5487.830792386251,
+            -4166.681569169452
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:5f00fb8e80fb7cf9d7d6531d78c697e390d5af9ed5c8ad0579eaefefae5b3b7a",
+      "missing_intervals_m": [
+        [
+          0.0,
+          4.460349790185149
+        ]
+      ],
+      "opportunity_m": 4.460349790185149,
+      "witness_projection_interval_m": [
+        0.0,
+        4.460349790185149
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:17",
+      "source_section_key": "24329799",
+      "source_edge_metric": [
+        [
+          5487.652527965029,
+          -4177.162567354717
+        ],
+        [
+          5454.415170912701,
+          -4161.728690218081
+        ]
+      ],
+      "source_window_m": [
+        1.7502540367314057,
+        6.312535658353347
+      ],
+      "target_keys": [
+        "open-edge:5f00fb8e80fb7cf9d7d6531d78c697e390d5af9ed5c8ad0579eaefefae5b3b7a",
+        "open-edge:f0af71face184f077188b2260e569c0bfba5aaf7fa75b97b38e275bdf6b6103e"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            5487.830792386251,
+            -4166.681569169452
+          ],
+          [
+            5496.182334716176,
+            -4172.984561472114
+          ]
+        ],
+        [
+          [
+            5275.472527973451,
+            -4128.199365245726
+          ],
+          [
+            5487.830792386251,
+            -4166.681569169452
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:f0af71face184f077188b2260e569c0bfba5aaf7fa75b97b38e275bdf6b6103e",
+      "missing_intervals_m": [
+        [
+          211.40262404360956,
+          215.81684939606532
+        ]
+      ],
+      "opportunity_m": 4.414225352455759,
+      "witness_projection_interval_m": [
+        211.40262404360956,
+        215.81684939606532
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:74",
+      "source_section_key": "54445806",
+      "source_edge_metric": [
+        [
+          -3505.0073340257127,
+          6477.856378190786
+        ],
+        [
+          -3425.5681830688723,
+          6518.865123780562
+        ]
+      ],
+      "source_window_m": [
+        21.89935542866549,
+        25.16920983338787
+      ],
+      "target_keys": [
+        "open-edge:b1fe55c3aca87d5dcd0c629af5a100c78b41465db82d46899ddee61749025803",
+        "open-edge:9d237709dc81382c93264af0f24a2337e75dcc6d5ea7a01dfad7ab72cdad7aae"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -3480.375269383024,
+            6479.985832262239
+          ],
+          [
+            -3419.5936652217515,
+            6519.702693539696
+          ]
+        ],
+        [
+          [
+            -3518.06504204796,
+            6470.91124568594
+          ],
+          [
+            -3480.375269383024,
+            6479.985832262239
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:b1fe55c3aca87d5dcd0c629af5a100c78b41465db82d46899ddee61749025803",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.2527791285394967
+        ],
+        [
+          71.44986934213348,
+          72.60738580991885
+        ]
+      ],
+      "opportunity_m": 4.410295596324867,
+      "witness_projection_interval_m": [
+        0.0,
+        3.2527791285394967
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    },
+    {
+      "route_key": "NCN:45",
+      "source_section_key": "48825896",
+      "source_edge_metric": [
+        [
+          4713.441771482891,
+          22356.99454893942
+        ],
+        [
+          4697.593729188575,
+          22368.58107629926
+        ]
+      ],
+      "source_window_m": [
+        11.17766947616911,
+        13.630575244023442
+      ],
+      "target_keys": [
+        "open-edge:8e9ae75f833666ab3e258e48c8f5186341905c60a2af83cb4c1ad283045d029b",
+        "open-edge:d6cc97b85cf881033015fadee11ea49ad3e427a92b4d74c16b9f50fedbb63648"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            4699.00188478505,
+            22358.49251672081
+          ],
+          [
+            4782.28484824438,
+            22314.77639391756
+          ]
+        ],
+        [
+          [
+            4684.9292138184765,
+            22373.441638081487
+          ],
+          [
+            4699.00188478505,
+            22358.49251672081
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:d6cc97b85cf881033015fadee11ea49ad3e427a92b4d74c16b9f50fedbb63648",
+      "missing_intervals_m": [
+        [
+          0.0,
+          1.9863050482562628
+        ],
+        [
+          18.11949357743564,
+          20.53086207614555
+        ]
+      ],
+      "opportunity_m": 4.397673546966171,
+      "witness_projection_interval_m": [
+        18.11949357743564,
+        20.530862076145553
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m"
+    }
+  ],
+  "integration_commit": "cc088b828982a3ff9399e2bd930978ce02ecba4a",
+  "candidate_content_sha256": "936c347468a0f14ed6d2a6d3a31765674e059d48a625c1bce96339032456a57a"
+}
