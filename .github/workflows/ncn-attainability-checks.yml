@@ -28,8 +28,16 @@ jobs:
           fail-on-cache-miss: true
       - name: Verify shipped pins and reproduce exact candidate offline
         run: |
-          python scripts/prepare_ncn_reference.py
-          bash android-prototype/scripts/prepare_county_reference.sh
+          python - <<'PYTHON'
+          import hashlib,json,pathlib
+          from scripts.ncn_reference import verify_database
+          manifest=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          verify_database(pathlib.Path('.cache/ncn/catalogue.db'),manifest)
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          data=pathlib.Path('android-prototype/app/src/main/assets/historic-counties/boundaries.bin')
+          assert hashlib.file_digest(data.open('rb'),'sha256').hexdigest()==county['data_sha256']
+          print('Verified both restored reference pins; no network preparation helper')
+          PYTHON
           python -m unittest scripts.test_ncn_binding_attainability -v
           python -m scripts.ncn_binding_attainability apply --database .cache/ncn/catalogue.db --patch .github/ncn-reference/stage1-binding-correction.json.gz --output .cache/ncn/ci-candidate/ncn-national.db
       - name: Select candidate only inside this disposable test checkout
