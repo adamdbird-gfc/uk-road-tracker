@@ -1,8 +1,22 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-10-29. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Integrated Android baseline — 29 October 2026
+## Current development instructions — 29 October 2026
+
+The authoritative source integration baseline is the **latest validated main**.
+The completed reconciliation commit is
+`d62b9e40c6095f93c82efe95e1686d0a0f73d01e` (#236), preserved as provenance;
+new approved development continues from current main rather than obsolete stacks.
+Create short-lived feature/fix branches directly from main and target main with
+PRs unless an explicitly approved exception applies. Avoid stacked PRs; document
+any necessary dependencies, integration order and plan to return to main.
+Follow the [approved development governance](DEVELOPMENT_GOVERNANCE.md) and
+[coding-agent instructions](../AGENTS.md), including regression validation and
+owner approval before merging. Verify actual installed APK, live backend and
+active Firebase reference-data versions for relevant work; none is inferred from
+source integration. APK packaging, backend deployment, Firebase publication and
+real-device acceptance each retain their separate controls.
 
 Android **0.25.220 (266)** is integrated through #233 (`51d693f2`); #234's
 four router regressions are merged at `89ae65dc` with deployment skipped.
@@ -16,6 +30,14 @@ current main for new work; do not restart the old stacked-branch integration.
 See [permanent baseline, complete tree comparison and validation record](android-025220-integrated-baseline.md).
 The corrective-slice records below retain their original deployment/acceptance
 history. No new APK or backend/Firebase release accompanied this reconciliation.
+
+## Historical technical handover records
+
+All sections below describe earlier development and delivery states at their
+recorded dates. Labels such as “current”, pending merge/deployment statements and
+historical branch recommendations apply to those earlier slices, not today's
+starting instructions. Preserve their technical evidence and acceptance limits;
+use the current development instructions above for new work.
 
 ## Current corrective slice — pedestrian workload correction
 
