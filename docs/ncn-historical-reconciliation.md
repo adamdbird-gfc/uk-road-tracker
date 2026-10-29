@@ -104,6 +104,9 @@ identifiers, denominator mappings or published data require a focused proposal,
 source evidence, tests and owner approval. No new catalogue admission or upload
 is necessary to finish historical PR reconciliation.
 
-Historical branches remain intact. This preservation PR is reviewable and **not
-merged**; the old stacked PRs can close because their active data is accounted for
-and their missing maintainability work is preserved here.
+Historical branches remain intact. Preservation PR #235 was approved and merged
+as `8c1e50ca8a3713d096c4efd02a15a549039bbce0` on 29 October 2026. The old
+stacked PRs are closed without merging: their active data is accounted for and
+their missing maintainability work is now integrated here. The 333-test CI gate
+and final local review passed without failures, errors or skips. No data was
+published, no application/backend runtime changed, and deployment was skipped.
