@@ -1,0 +1,270 @@
+{
+  "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+  "candidate_content_sha256": "936c347468a0f14ed6d2a6d3a31765674e059d48a625c1bce96339032456a57a",
+  "purpose": "Read-only ordinary-continuation and genuine hairpin diagnostic witnesses; not travelled journeys",
+  "ordinary_candidates": [
+    {
+      "route_key": "NCN:9",
+      "source_section_key": "59306268:4:27",
+      "source_edge_metric": [
+        [
+          -12121.789965503394,
+          -8554.459849127794
+        ],
+        [
+          -12116.163877951556,
+          -8545.086103864387
+        ]
+      ],
+      "source_window_m": [
+        2.3745290501574208,
+        6.08240710865381
+      ],
+      "target_keys": [
+        "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29",
+        "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -12178.943008360819,
+            -8631.761868869082
+          ],
+          [
+            -12111.802287312223,
+            -8555.263373844244
+          ]
+        ],
+        [
+          [
+            -12111.802287312223,
+            -8555.263373844244
+          ],
+          [
+            -12100.59872340422,
+            -8520.677210942777
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.612506905826045
+        ],
+        [
+          33.36100694280114,
+          36.35550176366034
+        ]
+      ],
+      "opportunity_m": 6.607001726685247,
+      "witness_projection_interval_m": [
+        0.0,
+        3.612506905826045
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m",
+      "source_way_id": "59306268",
+      "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+      "admitted_modes": [
+        "on_foot",
+        "cycling"
+      ]
+    },
+    {
+      "route_key": "NCN:8",
+      "source_section_key": "31252441:47:55",
+      "source_edge_metric": [
+        [
+          14755.82524962197,
+          11189.074130008317
+        ],
+        [
+          14739.08246208218,
+          11208.688942161609
+        ]
+      ],
+      "source_window_m": [
+        3.2276419724314396,
+        7.613829870460352
+      ],
+      "target_keys": [
+        "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00",
+        "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            14759.225593428953,
+            11199.143564044814
+          ],
+          [
+            14774.930644095382,
+            11168.516603462815
+          ]
+        ],
+        [
+          [
+            14725.677490023078,
+            11223.357111706391
+          ],
+          [
+            14759.225593428953,
+            11199.143564044814
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1",
+      "missing_intervals_m": [
+        [
+          0.0,
+          2.0644441108476492
+        ],
+        [
+          37.112096151249425,
+          41.37355595656215
+        ]
+      ],
+      "opportunity_m": 6.3259039161603745,
+      "witness_projection_interval_m": [
+        37.112096151249425,
+        41.37355595656215
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m",
+      "source_way_id": "31252441",
+      "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+      "admitted_modes": [
+        "on_foot",
+        "cycling"
+      ]
+    },
+    {
+      "route_key": "NCN:93",
+      "source_section_key": "204990559:52:56",
+      "source_edge_metric": [
+        [
+          -50949.97905825586,
+          8973.304818473474
+        ],
+        [
+          -50947.23079220784,
+          8968.100888718569
+        ]
+      ],
+      "source_window_m": [
+        1.646214717893154,
+        5.543602939936972
+      ],
+      "target_keys": [
+        "open-edge:c3a3c769fa2814b42af2fa3e5d4ab46c234da75abb55bdfc81ed8c0596714ddb",
+        "open-edge:37b7958cbbf9927ba48a630bb956f3d9b647af3ee800ccd78811b53de6e58733"
+      ],
+      "target_edges_metric": [
+        [
+          [
+            -50939.987326536786,
+            8975.097295141986
+          ],
+          [
+            -50936.85107807579,
+            8966.192102606732
+          ]
+        ],
+        [
+          [
+            -50949.63493771136,
+            8985.76586784107
+          ],
+          [
+            -50939.987326536786,
+            8975.097295141986
+          ]
+        ]
+      ],
+      "internal_target_degree": 2,
+      "target_key": "open-edge:c3a3c769fa2814b42af2fa3e5d4ab46c234da75abb55bdfc81ed8c0596714ddb",
+      "missing_intervals_m": [
+        [
+          0.0,
+          3.855201911012237
+        ],
+        [
+          7.211894158690887,
+          9.441319213914197
+        ]
+      ],
+      "opportunity_m": 6.084626966235547,
+      "witness_projection_interval_m": [
+        0.0,
+        3.855201911012237
+      ],
+      "example_note": "missing_intervals_m is the target-level union; this selected source window illustrates only witness_projection_interval_m",
+      "source_way_id": "204990559",
+      "source_geometry_sha256": "2229b012f01b16aa63bd55a9e1b89bf08fe12a1a2ba5fb917ed609c79a154070",
+      "admitted_modes": [
+        "on_foot",
+        "cycling"
+      ]
+    }
+  ],
+  "genuine_hairpin_negative": {
+    "route_key": "NCN:81",
+    "source_section_key": "44807950",
+    "source_edge_metric": [
+      [
+        58218.60743664252,
+        -24034.754582595844
+      ],
+      [
+        58206.424860906656,
+        -24082.801976764484
+      ]
+    ],
+    "source_window_m": [
+      2.8834142337607873,
+      49.567804449628284
+    ],
+    "target_keys": [
+      "open-edge:eaa4aeacba79d530defb4216021a9b7ca57cfd652bfd151398f93c069c5da9f9",
+      "open-edge:eae0d4bebe56d38d78e6aa07537fe51b4607c6656c08ad6cd712f2bfef53b722"
+    ],
+    "target_edges_metric": [
+      [
+        [
+          58203.72603574418,
+          -24088.87114412689
+        ],
+        [
+          58217.29087786532,
+          -24037.38938233535
+        ]
+      ],
+      [
+        [
+          58210.11170746015,
+          -24088.8092191421
+        ],
+        [
+          58217.29087786532,
+          -24037.38938233535
+        ]
+      ]
+    ],
+    "internal_target_degree": 2,
+    "target_key": "open-edge:eaa4aeacba79d530defb4216021a9b7ca57cfd652bfd151398f93c069c5da9f9",
+    "missing_intervals_m": [
+      [
+        1.0923367660384262,
+        53.23886492903848
+      ]
+    ],
+    "opportunity_m": 52.14652816300005,
+    "source_way_id": "44807950",
+    "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+    "admitted_modes": [
+      "on_foot",
+      "cycling"
+    ]
+  }
+}
