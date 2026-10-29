@@ -2,6 +2,18 @@
 
 Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Integrated Android baseline — 29 October 2026
+
+Android **0.25.220 (266)** is integrated through #233 (`51d693f2`); #234's
+four router regressions are merged at `89ae65dc` with deployment skipped.
+The Android subtree is byte-identical to packaged `67e74e7d`, and main's later
+backend/Dover corrections are preserved. The fresh #234 gate passed 810 Android
+and 130 backend/PostgreSQL tests with zero failures/errors/skips. Start from
+current main for new work; do not restart the old stacked-branch integration.
+See [permanent baseline, complete tree comparison and validation record](android-025220-integrated-baseline.md).
+The corrective-slice records below retain their original deployment/acceptance
+history. No new APK or backend/Firebase release accompanied this reconciliation.
+
 ## Current corrective slice — pedestrian workload correction
 
 Additional acceptance: normal walking journeys must match within existing20s
