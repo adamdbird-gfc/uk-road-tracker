@@ -1,7 +1,7 @@
 # Roadprints development governance
 
-Status: proposed policy (documentation PR; effective after owner approval and merge).
-Owner: Roadprints project owner. Last reviewed: 28 October 2026.
+Status: approved and adopted by the owner on 29 October 2026.
+Owner: Roadprints project owner. Last reviewed: 29 October 2026.
 
 ## Principles
 - Protect working functionality, user journey evidence, private tester distribution, and production reference data.
@@ -10,11 +10,15 @@ Owner: Roadprints project owner. Last reviewed: 28 October 2026.
 - GitHub issues and PRs must reflect actual delivery state; distinguish implemented, integrated, deployed, tested, accepted and closed.
 
 ## Authoritative baseline and integration
-- Before changing Android, record the installed APK version/code, exact source commit and branch, parent/base chain, backend version/deployment and reference-data version where known. Mark unknowns explicitly.
-- Do not assume main contains the current Android beta. Map stacked PR dependencies before changing bases, merging, or closing.
-- Prefer short-lived topic branches from the agreed integration baseline. If stacking is necessary, document parent PR, merge order and consolidation plan.
-- Integrate only after compatibility and regression checks; do not bulk-merge old branches or rewrite history to tidy the backlog.
-- Do not delete branches or close PRs merely because they are old. First verify whether changes are already integrated, superseded, or still needed.
+- The latest validated `main` is the authoritative source integration baseline. New development begins there unless the owner explicitly approves an exception.
+- Android 0.25.220 (266) is integrated into main. Historical stacked Android and NCN branches have been reconciled; do not resume development from obsolete historical branches.
+- Normally create short-lived feature and fix branches directly from main, and target main with their pull requests.
+- Avoid stacked PRs. Where genuinely necessary and approved as a baseline exception, record dependencies, integration order and the plan to consolidate and return to main.
+- Before integration, complete appropriate compatibility and regression validation and obtain owner approval. Do not bulk-merge old branches or rewrite history to tidy the backlog.
+- Verify the actual installed APK version/code and source provenance, live backend commit/deployment, and active Firebase reference-data version/pins for relevant work. Record exact source commits/branches and any approved dependencies; mark unknowns explicitly. Installed, deployed and published versions do not automatically match main.
+- Keep source integration, APK packaging, backend deployment, Firebase publication and real-device acceptance as distinct delivery states. A source merge authorises none of the other states by itself.
+- Where deployment is not approved, prevent a source merge from triggering automatic deployment (for example, use Render's `[skip render]` merge-commit phrase).
+- Preserve working journey data, reference datasets, regression coverage and private tester distribution safeguards. Do not delete branches or close PRs merely because they are old; first verify incorporation, supersession or remaining work.
 
 ## Task lifecycle and definition of done
 1. Record scope, issue(s), acceptance criteria, regression risks and delivery constraints.
@@ -27,7 +31,7 @@ Owner: Roadprints project owner. Last reviewed: 28 October 2026.
 
 ## Approval gates
 Explicit owner approval is required before:
-- Merging into main or changing the agreed integration baseline.
+- Merging into main or using a development baseline other than validated main.
 - Building or distributing an Android APK unless specifically authorised in the task.
 - Deploying backend, Firebase or production reference datasets unless authorised.
 - Modifying or deleting production database records, indexes or schema; changing repository visibility; deleting branches or rewriting Git history.
@@ -62,8 +66,19 @@ Private development APKs must never be automatically released or distributed to 
 - Issues updated/closed and remaining work/risks.
 - Any action requiring explicit owner approval.
 
-## One-time reconciliation (separate from this documentation PR)
-- Establish the exact source lineage for Android 0.25.220 (266) and the live backend.
-- Map the 38 open PRs and stacked chains; classify active, superseded, integrated and deferred with evidence.
-- Propose an integration plan with tests and rollback; do not merge, close, delete, build or deploy as part of the audit.
-- Present a short owner decision list before any integration changes.
+## Completed reconciliation record
+The one-time repository reconciliation is complete. Android 0.25.220 (266) was
+integrated through #233; router regression preservation through #234; NCN
+maintenance resources through #235; and the permanent integration record through
+#236. The final reconciliation baseline is
+`d62b9e40c6095f93c82efe95e1686d0a0f73d01e`. Future approved development advances
+from the latest validated main, rather than remaining pinned to that historical commit.
+
+The 39 historical PRs were closed with explanatory comments, and all 40 reviewed
+historical branches were retained. These records are evidence, not instructions
+to restart the old audit or merge historical stacks. The superseded one-time audit
+instructions remain available in this file's Git history.
+
+See the [permanent integration and validation record](android-025220-integrated-baseline.md),
+[NCN provenance and research dispositions](ncn-historical-reconciliation.md), and
+[current development handover](development-handover.md).
