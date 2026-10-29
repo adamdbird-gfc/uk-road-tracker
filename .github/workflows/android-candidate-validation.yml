@@ -1,0 +1,78 @@
+name: Validate Android 0.25.220 integration candidate (no release)
+
+on:
+  push:
+    branches:
+      - integration/android-025220-candidate
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'android-prototype/**'
+      - '.github/workflows/android-candidate-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-test:
+    if: github.head_ref == 'integration/android-025220-candidate' || github.ref == 'refs/heads/integration/android-025220-candidate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Confirm Android SDK available on runner
+        run: test -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}" && echo "Android SDK available"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+      - name: Restore immutable offline reference pins
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify restored reference bytes against packaged source pins
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          ncn=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          for file,digest,size in (
+              ('android-prototype/app/src/main/assets/historic-counties/boundaries.bin',county['data_sha256'],None),
+              ('.cache/ncn/catalogue.db',ncn['sha256'],ncn['database_bytes']),
+          ):
+              path=pathlib.Path(file)
+              assert path.is_file(),f'Missing pinned reference: {file}'
+              if size is not None: assert path.stat().st_size==size,f'Invalid size: {file}'
+              assert hashlib.file_digest(path.open('rb'),'sha256').hexdigest()==digest,f'Invalid SHA-256: {file}'
+              print('Verified pinned reference:',file)
+          PY
+      - name: Compile Android Java
+        working-directory: android-prototype
+        run: gradle --no-daemon :app:compileDebugJavaWithJavac
+      - name: Android lint
+        working-directory: android-prototype
+        run: gradle --no-daemon :app:lintDebug
+      - name: Run all 810 unit tests with pinned NCN and county references
+        working-directory: android-prototype
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+        run: gradle --no-daemon :app:testDebugUnitTest
+      - name: Upload test and lint reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-validation-reports
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 3

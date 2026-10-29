@@ -2,6 +2,8 @@ package com.roadprints.capture;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.JsonReader;
+import android.util.JsonToken;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,40 +25,110 @@ public final class JourneyStore {
     private static final String PREFS = "roadprints_journeys_v1";
     private static final String MIGRATED = "journeys_migrated_to_archive";
     private static final String LOW_QUALITY_PRUNED = "insufficient_timeline_journeys_pruned";
+    private static final String DATA_REVISION = "journey_archive_revision";
     private static final String PREFIX = "journey_";
     private static final String SUFFIX = ".json";
 
+    public interface JourneyVisitor {
+        void visit(JSONObject journey);
+    }
+
     private JourneyStore() {}
+
+    /** Open the committed archive while holding the store lock, then stream it
+     * outside the lock. Saves replace the file, so this descriptor remains a
+     * consistent snapshot even if matching saves a newer revision meanwhile. */
+    static synchronized FileInputStream openDiagnosticSnapshot(Context context, String journeyId)
+            throws IOException {
+        if (journeyId == null || journeyId.isEmpty() || journeyId.contains("/")
+                || journeyId.contains("\\")) throw new IOException("Invalid journey ID");
+        migrateLegacy(context);
+        return new FileInputStream(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
+    }
+
+    static JSONObject recordedGeometry(Context context,String id) throws Exception {
+        try(FileInputStream snapshot=openDiagnosticSnapshot(context,id);
+                JsonReader reader=new JsonReader(new InputStreamReader(snapshot,StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while(reader.hasNext()) {
+                String key=reader.nextName();
+                if("route_geometry".equals(key))return (JSONObject)readEvidenceValue(reader);
+                reader.skipValue();
+            }
+            return null;
+        }
+    }
 
     public static synchronized void save(Context context, JSONObject journey) {
         migrateLegacy(context);
         String id = journey.optString("journey_id", "unknown");
         File target = new File(context.getFilesDir(), PREFIX + id + SUFFIX);
         File temporary = new File(context.getFilesDir(), PREFIX + id + ".tmp");
+        boolean newRecording = !target.isFile();
+        long previousModified = target.lastModified();
         try (FileOutputStream output = new FileOutputStream(temporary)) {
+            PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
             ensureSharedFields(journey);
-            output.write(journey.toString().getBytes(StandardCharsets.UTF_8));
+            byte[] encoded=journey.toString().getBytes(StandardCharsets.UTF_8);
+            SharedPreferences contentHashes=context.getSharedPreferences("roadprints_journey_content",0);
+            String contentHash=NcnJson.hash(encoded);
+            if(!newRecording&&contentHash.equals(contentHashes.getString(id,""))) {
+                temporary.delete();return; // No new evidence, metadata, revision or observer work.
+            }
+            SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
+            String previousNcnHash=inputs.getString(id,null);
+            // A cache eviction/older installation is not evidence that this journey changed.
+            if(previousNcnHash==null&&!newRecording)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
+            catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
+            output.write(encoded);
             output.flush();
-            if (target.exists() && !target.delete()) {
-                throw new IllegalStateException("Could not replace journey archive");
-            }
-            if (!temporary.renameTo(target)) {
-                throw new IllegalStateException("Could not commit journey archive");
-            }
+            // A replacement has a distinct stable token even for equal-size writes in one millisecond.
+            java.nio.file.Files.setLastModifiedTime(temporary.toPath(), java.nio.file.attribute.FileTime.fromMillis(
+                    Math.max(System.currentTimeMillis(), previousModified + 1)));
+            // Same-filesystem atomic replacement keeps the committed journey intact
+            // if writing or replacing its successor is interrupted.
+            java.nio.file.Files.move(temporary.toPath(),target.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            contentHashes.edit().putString(id,contentHash).apply();
+            if (newRecording) ReturnRecapStore.record(context, journey);
+            String ncnHash=ncnEvidenceHash(journey);
+            boolean ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
+            inputs.edit().putString(id,ncnHash).apply();
+            context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
+                    .putString(id,ncnMetadata(journey).toString()).apply();
+            bumpDataRevision(context,ncnChanged);
+            PlaceAnchorStore.record(context,journey);
+            AchievementStore.recordCapture(context, journey);
+            try { ServiceStationStore.recordJourney(context,journey);
+                for(VenueCollection.Definition collection:VenueCollection.all()) VenueVisitStore.recordJourney(context,collection.id,journey); }
+            catch(Exception stationError){android.util.Log.w("Roadprints","Service-station visit check skipped",stationError);}
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey locally", error);
         }
     }
 
+    /** Add bounded post-arrival observations without changing route, timing or raw recording. */
+    static synchronized void appendArrivalDwell(Context context,JSONObject stop,JSONArray observations) throws Exception {
+        String id=stop.optString("journey_id");
+        JSONObject journey=get(context,id);
+        if(journey==null)return; // Never resurrect deleted history.
+        if(ArrivalDwellEvidence.append(journey,stop,observations))save(context,journey);
+    }
+
     public static synchronized int count(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         return archiveFiles(context).size();
+    }
+
+    /** Cheap token for invalidating screen summaries when saved journey data changes. */
+    public static long dataRevision(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(DATA_REVISION, 0L);
     }
 
     public static synchronized JSONObject latest(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         if (files.isEmpty()) return null;
         File latest = Collections.max(files, Comparator.comparingLong(File::lastModified));
@@ -64,7 +137,6 @@ public final class JourneyStore {
 
     public static synchronized List<JSONObject> all(Context context) {
         migrateLegacy(context);
-        pruneInsufficientTimelineJourneys(context);
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
@@ -73,6 +145,509 @@ public final class JourneyStore {
             if (journey != null) journeys.add(journey);
         }
         return journeys;
+    }
+
+    /**
+     * Loads only the compact fields needed to show the journey list. Matcher
+     * GeoJSON can be large, so the list screen must not retain every result in
+     * memory just to display titles, dates and processing states.
+     */
+    public static List<JSONObject> allSummaries(Context context) {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        List<JSONObject> summaries = new ArrayList<>();
+        long started=android.os.SystemClock.elapsedRealtime();
+        try(CompactJourneyCache cache=new CompactJourneyCache(context,"summaries-v1")) {
+            for(File file:files)try{JSONObject row=cache.get(file,JourneyStore::readSummary);if(row!=null)summaries.add(row);}
+            catch(Exception invalid){/* Skip only the malformed source. */}
+            PerformanceDiagnostics.timing("journeys_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+summaries.size()+" reads="+cache.reads+" reused="+cache.hits);
+        }
+        return summaries;
+    }
+
+    /** Reliable recent saved rows for first display, before the complete chronological list. */
+    static List<JSONObject> firstSummaries(Context context,int limit) {
+        migrateLegacy(context);List<File> files=archiveFiles(context);files.sort((a,b)->Long.compare(b.lastModified(),a.lastModified()));
+        List<JSONObject> rows=new ArrayList<>();try(CompactJourneyCache cache=new CompactJourneyCache(context,"summaries-v1")){
+            for(File source:files){if(rows.size()>=limit)break;try{JSONObject row=cache.get(source,JourneyStore::readSummary);if(row!=null)rows.add(row);}catch(Exception invalid){}}
+        }return rows;
+    }
+    /**
+     * Reads only list-screen fields. Journey files can contain thousands of GPS
+     * points and large matched GeoJSON arrays, so materializing the whole file
+     * as a String and JSONObject can exhaust the app heap just to draw a list.
+     */
+    static JSONObject readSummary(File file) throws IOException, org.json.JSONException {
+        if (file == null || !file.exists()) return null;
+        JSONObject summary = new JSONObject();
+        int routePointCount = 0;
+        boolean hasStoredMatch = false;
+        try (JsonReader reader = new JsonReader(new InputStreamReader(
+                new FileInputStream(file), StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                switch (name) {
+                    case "journey_id": case "started_at": case "ended_at":
+                    case "distance_meters": case "gps_point_count": case "mode": case "title":
+                    case "processing_status": case "error_summary": case "walking_outcome":
+                        summary.put(name, readScalar(reader));
+                        break;
+                    case "source": case "capture_quality":
+                    case "stage_statuses": case "processing":
+                        summary.put(name, readFlatObject(reader));
+                        break;
+                    case "route_geometry":
+                        routePointCount = readRouteGeometry(reader);
+                        break;
+                    case "processing_result":
+                        hasStoredMatch = readProcessingResult(reader);
+                        break;
+                    default:
+                        reader.skipValue();
+                        break;
+                }
+            }
+            reader.endObject();
+        }
+
+        summary.put("_route_point_count", routePointCount);
+        summary.put("_has_stored_match", hasStoredMatch);
+        if (!summary.has("capture_quality")) {
+            summary.put("capture_quality", new JSONObject()
+                    .put("gps_points", routePointCount)
+                    .put("distance_meters", summary.optDouble("distance_meters", 0))
+                    .put("status", routePointCount >= 2 ? "usable" : "insufficient_gps_data"));
+        } else {
+            JSONObject quality = summary.optJSONObject("capture_quality");
+            if (quality != null && !quality.has("gps_points")) {
+                quality.put("gps_points", routePointCount);
+            }
+        }
+        return summary;
+    }
+
+    private static Object readScalar(JsonReader reader) throws IOException {
+        JsonToken token = reader.peek();
+        if (token == JsonToken.STRING || token == JsonToken.NUMBER) return reader.nextString();
+        if (token == JsonToken.BOOLEAN) return reader.nextBoolean();
+        if (token == JsonToken.NULL) { reader.nextNull(); return JSONObject.NULL; }
+        reader.skipValue();
+        return JSONObject.NULL;
+    }
+
+    /** Keeps metadata objects small and flat, ignoring unexpected nested payloads. */
+    private static JSONObject readPlaceReviews(File file) throws Exception {
+        try(JsonReader reader=new JsonReader(new InputStreamReader(new FileInputStream(file),StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while(reader.hasNext()) {
+                String key=reader.nextName();
+                if("stops".equals(key))return new JSONObject().put("stops",readEvidenceValue(reader));
+                reader.skipValue();
+            }
+        }
+        return null;
+    }
+
+    private static JSONObject readFlatObject(JsonReader reader)
+            throws IOException, org.json.JSONException {
+        JSONObject value = new JSONObject();
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return value; }
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            JsonToken token = reader.peek();
+            if (token == JsonToken.STRING || token == JsonToken.NUMBER
+                    || token == JsonToken.BOOLEAN || token == JsonToken.NULL) {
+                value.put(name, readScalar(reader));
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        return value;
+    }
+
+    private static int readRouteGeometry(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return 0; }
+        int points = 0;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("coordinates".equals(name)) points = countArrayItems(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return points;
+    }
+
+    private static int countArrayItems(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return 0; }
+        int count = 0;
+        reader.beginArray();
+        while (reader.hasNext()) { reader.skipValue(); count++; }
+        reader.endArray();
+        return count;
+    }
+
+    private static boolean readProcessingResult(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("geojson".equals(name)) found = readGeoJson(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readGeoJson(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("features".equals(name)) found = readFeatures(reader);
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readFeatures(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginArray();
+        while (reader.hasNext()) found = readFeature(reader) || found;
+        reader.endArray();
+        return found;
+    }
+
+    private static boolean readFeature(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean found = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("geometry".equals(name)) found = readMatchedGeometry(reader) || found;
+            else reader.skipValue();
+        }
+        reader.endObject();
+        return found;
+    }
+
+    private static boolean readMatchedGeometry(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_OBJECT) { reader.skipValue(); return false; }
+        boolean line = false;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("coordinates".equals(name)) {
+                // Count coordinate pairs without relying on GeoJSON property order.
+                // Some saved files serialize coordinates before the geometry type.
+                line = countCoordinatePairs(reader) >= 2;
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endObject();
+        return line;
+    }
+
+    private static int countCoordinatePairs(JsonReader reader) throws IOException {
+        if (reader.peek() != JsonToken.BEGIN_ARRAY) { reader.skipValue(); return 0; }
+        int numberCount = 0;
+        int nestedCoordinateCount = 0;
+        reader.beginArray();
+        while (reader.hasNext()) {
+            JsonToken token = reader.peek();
+            if (token == JsonToken.NUMBER) {
+                reader.nextString();
+                numberCount++;
+            } else if (token == JsonToken.BEGIN_ARRAY) {
+                nestedCoordinateCount += countCoordinatePairs(reader);
+            } else {
+                reader.skipValue();
+            }
+        }
+        reader.endArray();
+        // A coordinate tuple has at least longitude and latitude. A route is
+        // any nesting of at least two such tuples (LineString or MultiLineString).
+        return numberCount >= 2 ? 1 : nestedCoordinateCount;
+    }
+
+    /** Visit one full journey at a time, so consumers can project large result files and release them. */
+    public static void forEach(Context context, JourneyVisitor visitor) {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        for (File file : files) {
+            JSONObject journey = upgrade(context, read(file));
+            if (journey != null) visitor.visit(journey);
+        }
+    }
+
+    static void forEachServiceStationEvidence(Context context,JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        for(File file:archiveFiles(context)) {
+            JSONObject journey=new JSONObject();
+            try(JsonReader reader=new JsonReader(new InputStreamReader(new FileInputStream(file),StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while(reader.hasNext()) {
+                    String key=reader.nextName();
+                    if("journey_id".equals(key)||"source".equals(key)||"raw_capture_samples".equals(key)
+                            ||"capture_route_samples".equals(key)||"arrival_dwell_samples".equals(key)||"stops".equals(key))journey.put(key,readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            visitor.visit(journey);
+        }
+    }
+
+    /** Replay reads road evidence without allocating raw capture arrays or matched GPS traces. */
+    static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor) throws Exception {
+        forEachRoadEvidence(context, cancelled, visitor, false);
+    }
+
+    static void forEachMapEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                   JourneyVisitor visitor) throws Exception {
+        forEachRoadEvidence(context, cancelled, visitor, true);
+    }
+
+    private static void forEachRoadEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor, boolean map) throws Exception {
+        migrateLegacy(context);
+        for (File file : archiveFiles(context)) {
+            if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
+                throw new java.util.concurrent.CancellationException();
+            String token=fileToken(file);
+            JSONObject cached=map?JourneyProjectionCache.read(context,file,"map-v1"):null;
+            if(cached!=null){visitor.visit(cached);continue;}
+            JSONObject journey=mapEvidence(context,file,map);
+            if (journey != null) {
+                if(map)JourneyProjectionCache.enqueue(context,file,token,"map-v1",journey);
+                visitor.visit(journey);
+            }
+        }
+    }
+
+    static JSONObject mapEvidence(Context context,File file,boolean map) throws Exception {
+        JSONObject journey = new JSONObject();
+            try (JsonReader reader = new JsonReader(new InputStreamReader(
+                    new FileInputStream(file), StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+                    if ("processing_result".equals(key) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                        JSONObject result = new JSONObject(); reader.beginObject();
+                        while (reader.hasNext()) {
+                            String field = reader.nextName();
+                            if ("road_geojson".equals(field) || "motorway_geojson".equals(field)
+                                    || "a_road_geojson".equals(field) || "cycling_geojson".equals(field)
+                                    || (map && "geojson".equals(field))) result.put(field, readEvidenceValue(reader));
+                            else reader.skipValue();
+                        }
+                        reader.endObject(); journey.put(key, result);
+                    } else if ("route_geometry".equals(key)) {
+                        journey.put("_route_point_count", readRouteGeometry(reader));
+                    } else if ("journey_id".equals(key) || "mode".equals(key)
+                            || "processing_status".equals(key) || "started_at".equals(key)
+                            || "title".equals(key) || "name".equals(key) || "gps_point_count".equals(key)
+                            || "ended_at".equals(key) || "distance_meters".equals(key)
+                            || "source".equals(key) || "capture_quality".equals(key) || "walking_outcome".equals(key)
+                            || "journey_corrections".equals(key)) journey.put(key, readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            JSONObject edits = journey.optJSONObject("journey_corrections");
+            JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
+            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
+            // Legacy edge-only corrections need the original trace to identify removed roads.
+            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
+                journey = upgrade(context, read(file));
+        return journey;
+    }
+
+    /** Stable metadata token for committed atomic replacements; no geometry decoding. */
+    static String fileToken(File file) {
+        try {
+            java.nio.file.attribute.BasicFileAttributes a=java.nio.file.Files.readAttributes(
+                    file.toPath(),java.nio.file.attribute.BasicFileAttributes.class);
+            return a.lastModifiedTime().toMillis()+":"+a.size()+":"+a.fileKey();
+        } catch(IOException unavailable) {return file.lastModified()+":"+file.length();}
+    }
+
+    /** NCN uses only recorded matched geometry/provenance; never upgrades captures. */
+    static void forEachNcnEvidence(Context context, java.util.function.BooleanSupplier cancelled, JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        for (File file : archiveFiles(context)) {
+            if (cancelled.getAsBoolean()) throw new java.util.concurrent.CancellationException();
+            visitor.visit(ncnEvidence(file));
+        }
+    }
+
+    static JSONObject ncnEvidence(File file) throws Exception {
+        JSONObject journey = new JSONObject();
+        try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String key = reader.nextName();
+                if (key.equals("processing_result") && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                    JSONObject result = new JSONObject(); reader.beginObject();
+                    while (reader.hasNext()) {
+                        String field = reader.nextName();
+                        if (field.equals("geojson") || field.equals("road_geojson") || field.equals("matcher")
+                                || field.equals("matching_mode") || field.equals("matched_path_evidence") || field.equals("cycling_path_evidence"))
+                            result.put(field, readEvidenceValue(reader));
+                        else reader.skipValue();
+                    }
+                    reader.endObject(); journey.put(key, result);
+                } else if (key.equals("journey_id") || key.equals("title") || key.equals("name") || key.equals("mode")
+                        || key.equals("processing_status") || key.equals("started_at") || key.equals("ended_at")
+                        || key.equals("distance_meters") || key.equals("gps_point_count") || key.equals("source")
+                        || key.equals("journey_corrections")) journey.put(key, readEvidenceValue(reader));
+                else reader.skipValue();
+            }
+            reader.endObject();
+        }
+        return journey;
+    }
+
+    static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
+                                    JourneyVisitor visitor) throws Exception {
+        migrateLegacy(context);
+        List<File> files = archiveFiles(context);
+        files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+        for (File file : files) {
+            if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())
+                throw new java.util.concurrent.CancellationException();
+            JSONObject journey = new JSONObject();
+            try (JsonReader reader = new JsonReader(new InputStreamReader(
+                    new FileInputStream(file), StandardCharsets.UTF_8))) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+                    if ("processing_result".equals(key) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                        JSONObject result = new JSONObject(); reader.beginObject();
+                        while (reader.hasNext()) {
+                            String field = reader.nextName();
+                            if ("road_geojson".equals(field) || "motorway_geojson".equals(field)
+                                    || "a_road_geojson".equals(field) || "geojson".equals(field)) result.put(field, readEvidenceValue(reader));
+                            else reader.skipValue();
+                        }
+                        reader.endObject(); journey.put(key, result);
+                    } else if ("route_geometry".equals(key) && reader.peek()==JsonToken.BEGIN_OBJECT) {
+                        journey.put(key, readPatternGeometry(reader));
+                    } else if ("journey_id".equals(key) || "mode".equals(key)
+                            || "processing_status".equals(key) || "started_at".equals(key)
+                            || "journey_corrections".equals(key) || "distance_meters".equals(key)
+                            || "ended_at".equals(key) || "timezone".equals(key)
+                            || "source".equals(key)) journey.put(key, readEvidenceValue(reader));
+                    else reader.skipValue();
+                }
+                reader.endObject();
+            }
+            JSONObject edits = journey.optJSONObject("journey_corrections");
+            JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
+            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
+            // Legacy edge-only corrections need the original trace to identify removed roads.
+            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
+                journey = upgrade(context, read(file));
+            if (journey != null) visitor.visit(journey);
+        }
+    }
+
+    /** Retain a small ordered train-route fingerprint without allocating raw GPS history. */
+    private static JSONObject readPatternGeometry(JsonReader reader) throws Exception {
+        JSONObject geometry=new JSONObject();JSONArray output=new JSONArray();
+        reader.beginObject();
+        while(reader.hasNext()) {
+            String key=reader.nextName();
+            if("type".equals(key))geometry.put(key,readScalar(reader));
+            else if("coordinates".equals(key)&&reader.peek()==JsonToken.BEGIN_ARRAY) {
+                java.util.List<JSONArray> points=new java.util.ArrayList<>();JSONArray last=null;
+                int stride=1,index=0;reader.beginArray();
+                while(reader.hasNext()) {
+                    if(reader.peek()==JsonToken.BEGIN_ARRAY) {
+                        JSONArray value=new JSONArray();reader.beginArray();
+                        while(reader.hasNext()) {
+                            if(value.length()<2&&(reader.peek()==JsonToken.NUMBER||reader.peek()==JsonToken.STRING)) {
+                                String coordinate=reader.nextString();
+                                try {
+                                    double number=Double.parseDouble(coordinate);
+                                    if(Double.isFinite(number))value.put(number);
+                                    else {geometry.put("pattern_route_invalid",true);value.put(coordinate);}
+                                }catch(NumberFormatException invalid){geometry.put("pattern_route_invalid",true);value.put(coordinate);}
+                            } else {
+                                if(value.length()<2)geometry.put("pattern_route_invalid",true);
+                                reader.skipValue();
+                            }
+                        }
+                        reader.endArray();
+                        if(TravelAchievementRoutes.point(value)==null)geometry.put("pattern_route_invalid",true);
+                        last=value;
+                        if(index%stride==0)points.add(last);
+                        if(points.size()>257) {
+                            java.util.List<JSONArray> reduced=new java.util.ArrayList<>();
+                            for(int i=0;i<points.size();i+=2)reduced.add(points.get(i));
+                            points=reduced;stride*=2;
+                        }
+                        index++;
+                    }else {reader.skipValue();geometry.put("pattern_route_invalid",true);}
+                }
+                reader.endArray();
+                if(last!=null&&(points.isEmpty()||points.get(points.size()-1)!=last))points.add(last);
+                for(JSONArray point:points)output.put(point);
+            }else reader.skipValue();
+        }
+        reader.endObject();geometry.put("coordinates",output);return geometry;
+    }
+
+    private static Object readEvidenceValue(JsonReader reader) throws Exception {
+        switch (reader.peek()) {
+            case BEGIN_OBJECT:
+                JSONObject object = new JSONObject();reader.beginObject();
+                while(reader.hasNext()) object.put(reader.nextName(),readEvidenceValue(reader));
+                reader.endObject();return object;
+            case BEGIN_ARRAY:
+                JSONArray array = new JSONArray();reader.beginArray();
+                while(reader.hasNext()) array.put(readEvidenceValue(reader));
+                reader.endArray();return array;
+            case NUMBER:
+                String number=reader.nextString();
+                try { return Long.parseLong(number); }
+                catch(NumberFormatException decimal) { return Double.parseDouble(number); }
+            case BOOLEAN: return reader.nextBoolean();
+            case NULL: reader.nextNull();return JSONObject.NULL;
+            default: return reader.nextString();
+        }
+    }
+
+    private static boolean hasStoredRoute(JSONObject result) {
+        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
+        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
+        if (features == null) return false;
+        for (int index = 0; index < features.length(); index++) {
+            JSONObject feature = features.optJSONObject(index);
+            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
+            if (geometry == null) continue;
+            String type = geometry.optString("type", "");
+            JSONArray coordinates = geometry.optJSONArray("coordinates");
+            if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) return true;
+            if ("MultiLineString".equals(type) && coordinates != null) {
+                for (int line = 0; line < coordinates.length(); line++) {
+                    JSONArray segment = coordinates.optJSONArray(line);
+                    if (segment != null && segment.length() >= 2) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static synchronized JSONObject get(Context context, String journeyId) {
@@ -84,14 +659,18 @@ public final class JourneyStore {
     public static synchronized void delete(Context context, String journeyId) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
-        if (file.exists() && !file.delete()) {
-            throw new IllegalStateException("Could not delete journey archive");
+        if (file.exists()) {
+            if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
+            bumpDataRevision(context);
+            ServiceStationStore.forgetJourney(context,journeyId);
+            VenueVisitStore.forgetJourney(context,journeyId);
+            PlaceAnchorStore.forget(context,journeyId);
         }
     }
 
     public static synchronized int countByModes(Context context, String... modes) {
         int count = 0;
-        for (JSONObject journey : all(context)) {
+        for (JSONObject journey : allSummaries(context)) {
             String value = journey.optString("mode", "unknown");
             for (String mode : modes) {
                 if (mode.equals(value)) {
@@ -105,7 +684,7 @@ public final class JourneyStore {
 
     public static synchronized int deleteByModes(Context context, String... modes) {
         int deleted = 0;
-        List<JSONObject> journeys = all(context);
+        List<JSONObject> journeys = allSummaries(context);
         for (JSONObject journey : journeys) {
             String value = journey.optString("mode", "unknown");
             boolean match = false;
@@ -123,13 +702,57 @@ public final class JourneyStore {
         return deleted;
     }
 
+    /** Deletion must not parse, upgrade or migrate the data being discarded. */
     public static synchronized int deleteAll(Context context) {
+        new android.util.AtomicFile(new File(context.getFilesDir(),"ferry_recovery_pending.json")).delete();
+        File[] originals=context.getFilesDir().listFiles((directory,name)->name.startsWith("ferry_original_"));
+        if(originals!=null)for(File original:originals)if(!original.delete())throw new IllegalStateException("Could not delete preserved recording");
         int deleted = 0;
-        for (JSONObject journey : all(context)) {
-            delete(context, journey.optString("journey_id"));
-            deleted++;
+        File[] files = context.getFilesDir().listFiles((directory, name) ->
+                name.startsWith(PREFIX) && (name.endsWith(SUFFIX) || name.endsWith(".tmp")));
+        try {
+            if (files != null) for (File file : files) {
+                if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
+                if (file.getName().endsWith(SUFFIX)) deleted++;
+            }
+        } finally {
+            // A partially completed deletion also invalidates cached screen data.
+            if (deleted > 0) bumpDataRevision(context);
         }
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long revision = preferences.getLong(DATA_REVISION, 0L);
+        // Discard legacy preference records without migrating them into new files.
+        if (!preferences.edit().clear().putBoolean(MIGRATED, true)
+                .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
+            throw new IllegalStateException("Could not clear legacy journey data");
+        ServiceStationStore.clearOnDeleteAll(context);
+        PlaceAnchorStore.clear(context);
+        ReturnRecapStore.clear(context);
+        DiscoveryReplayCache.clear(context);
+        JourneyReplayActivity.clearSeed();
+        ProgressActivity.clearCachedStatistics(context);
+        AchievementStore.clearTravelUnlocks(context);
+        AchievementsActivity.clearCachedAchievements(context);
         return deleted;
+    }
+
+    static synchronized void reviewStop(Context context,String journeyId,String stopId,String name,boolean confirmed) {
+        JSONObject journey=get(context,journeyId);
+        if(journey==null)throw new IllegalArgumentException("Journey is unavailable");
+        JSONArray stops=journey.optJSONArray("stops");
+        try {
+            if(stops!=null)for(int i=0;i<stops.length();i++) {
+                JSONObject stop=stops.optJSONObject(i);
+                if(stop!=null&&stopId.equals(stop.optString("id"))) {
+                    stops.put(i,PlaceBoundaryEvidence.review(stop,name,confirmed,
+                            Math.max(System.currentTimeMillis(),stop.optLong("reviewed_at_ms")+1)));
+                    PlaceBoundaryEvidence.rebuildPlaces(journey);
+                    journey.put("revision",journey.optInt("revision",1)+1);
+                    save(context,journey);return;
+                }
+            }
+        } catch(org.json.JSONException invalid){throw new IllegalStateException("Could not save place review",invalid);}
+        throw new IllegalArgumentException("Stop is unavailable");
     }
 
     public static synchronized void updateTitle(Context context, String journeyId, String title) {
@@ -154,6 +777,23 @@ public final class JourneyStore {
         JSONObject journey = read(file);
         if (journey == null) return;
         try {
+            if (!mode.equals(journey.optString("mode"))) {
+                journey.remove("processing_result"); journey.remove("last_match_attempt");
+                journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
+                journey.put("processing_status", "pending");
+                JSONObject stages = new JSONObject().put("import", "complete")
+                        .put("road_matching", "not_required").put("foot_matching", "not_required")
+                        .put("cycle_matching", "not_required");
+                if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
+                        || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
+                    stages.put(MatchingCoordinator.matchingStage(mode), "pending");
+                journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+            }
+            JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
+            JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
+            bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
+                    .put("to",mode).put("source","manual_confirmation"));
+            journey.put("transport_changes",bounded);
             journey.put("mode", mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
             journey.put("transport_confirmation", "confirmed");
@@ -172,6 +812,7 @@ public final class JourneyStore {
             JSONObject journey = read(file);
             if (!isInsufficientTimelineJourney(journey)) continue;
             if (!file.delete()) complete = false;
+            else bumpDataRevision(context);
         }
         if (complete) {
             preferences.edit().putBoolean(LOW_QUALITY_PRUNED, true).apply();
@@ -198,9 +839,10 @@ public final class JourneyStore {
     private static JSONObject upgrade(Context context, JSONObject journey) {
         if (journey == null) return null;
         try {
-            String before = journey.toString();
+            boolean needsUpgrade = !journey.has("places") || !journey.has("stops")
+                    || !journey.has("capture_quality");
             ensureSharedFields(journey);
-            if (!before.equals(journey.toString())) save(context, journey);
+            if (needsUpgrade) save(context, journey);
         } catch (Exception ignored) {
             // Preserve the readable journey even if a best-effort upgrade fails.
         }
@@ -224,12 +866,54 @@ public final class JourneyStore {
         }
     }
 
-    private static List<File> archiveFiles(Context context) {
+    static void prepareArchive(Context context) { migrateLegacy(context); }
+
+    static List<File> archiveFiles(Context context) {
         File[] files = context.getFilesDir().listFiles((directory, name) ->
                 name.startsWith(PREFIX) && name.endsWith(SUFFIX));
         List<File> result = new ArrayList<>();
         if (files != null) Collections.addAll(result, files);
         return result;
+    }
+
+    static long ncnDataRevision(Context context) {
+        SharedPreferences preferences=context.getSharedPreferences(PREFS,0);
+        return preferences.getLong("ncn_evidence_revision",preferences.getLong(DATA_REVISION,0));
+    }
+    private static JSONObject ncnMetadata(JSONObject journey) throws org.json.JSONException {
+        JSONObject metadata=new JSONObject();
+        for(String key:new String[]{"journey_id","title","name","mode","started_at","ended_at","distance_meters","gps_point_count","_route_point_count"})
+            metadata.put(key,journey.has(key)?journey.opt(key):JSONObject.NULL);
+        return metadata;
+    }
+    static String ncnEvidenceHash(JSONObject journey) throws org.json.JSONException {
+        JSONObject evidence=new JSONObject();
+        String mode=journey.optString("mode");
+        if(!MatchingCoordinator.isFoot(mode)&&!MatchingCoordinator.isCycle(mode))
+            return NcnJson.digest(evidence.put("journey_id",journey.optString("journey_id")).put("mode",mode));
+        // Pending, processing and failed all contribute zero NCN spans. Retry
+        // telemetry/corrections cannot change that until a completed result exists.
+        if(!"complete".equals(journey.optString("processing_status")))
+            return NcnJson.digest(evidence.put("journey_id",journey.optString("journey_id"))
+                    .put("mode",mode).put("processing_status","unfinished"));
+        for(String key:new String[]{"journey_id","mode","processing_status","journey_corrections"})
+            if(journey.has(key))evidence.put(key,journey.opt(key));
+        JSONObject source=journey.optJSONObject("processing_result");
+        if(source!=null) {
+            JSONObject result=new JSONObject();
+            for(String key:new String[]{"geojson","road_geojson","matcher","matching_mode","matched_path_evidence","cycling_path_evidence"})
+                if(source.has(key))result.put(key,source.opt(key));
+            evidence.put("processing_result",result);
+        }
+        return NcnJson.digest(evidence);
+    }
+    private static void bumpDataRevision(Context context) {bumpDataRevision(context,true);}
+    private static void bumpDataRevision(Context context,boolean ncnChanged) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
+        preferences.edit().putLong(DATA_REVISION,archive+1)
+                .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
+        NcnProgressStore.changed(context);
     }
 
     private static JSONObject read(File file) {
@@ -247,6 +931,7 @@ public final class JourneyStore {
     }
 
     private static synchronized void migrateLegacy(Context context) {
+        FerryJourneyRecovery.resume(context);
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getBoolean(MIGRATED, false)) return;
 
@@ -266,3 +951,4 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+

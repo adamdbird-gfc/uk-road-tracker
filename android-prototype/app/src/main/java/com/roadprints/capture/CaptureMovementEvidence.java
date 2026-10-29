@@ -1,0 +1,116 @@
+package com.roadprints.capture;
+
+import java.util.List;
+
+/** Movement corroboration independent of Android's sometimes late activity labels. */
+final class CaptureMovementEvidence {
+    /** Keep a real walk to transport, but do not save a transient start label as a leg. */
+    static boolean hasInitialFootLeg(List<FootTraceValidator.Sample> samples) {
+        FootTraceValidator.Sample first=null,previous=null;int moving=0;double path=0;
+        for(FootTraceValidator.Sample p:samples) {
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy>25)continue;
+            if(Double.isFinite(p.speed)&&p.speed>=6)break;
+            if(!Double.isFinite(p.speed)||p.speed<.5||p.speed>3.5)continue;
+            if(previous!=null && (!CaptureQualityValidator.reliable(previous,p,true)||p.time-previous.time>60000)) {
+                first=null;previous=null;moving=0;path=0;
+            }
+            if(first==null)first=p;
+            if(previous!=null)path+=CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous,p),
+                    (float)previous.accuracy,(float)p.accuracy);
+            previous=p;moving++;
+            if(moving>=3 && p.time-first.time>=20000 && path>=30
+                    && FootTraceValidator.metres(first,p)-first.accuracy-p.accuracy>=25)return true;
+        }
+        return false;
+    }
+    static boolean hasVehicleMovement(List<FootTraceValidator.Sample> samples) {
+        FootTraceValidator.Sample first=null,previous=null;int count=0;double path=0;
+        for(FootTraceValidator.Sample p:samples) {
+            if(!WalkingStillnessDetector.usable(p)||p.accuracy>50||!Double.isFinite(p.speed)||p.speed<6
+                    ||previous!=null&&(!CaptureQualityValidator.reliable(previous,p,false)||p.time-previous.time>60000)) {
+                first=null;previous=null;count=0;path=0;continue;
+            }
+            if(first==null)first=p;
+            if(previous!=null)path+=CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous,p),(float)previous.accuracy,(float)p.accuracy);
+            previous=p;count++;
+            if(count>=3&&p.time-first.time>=20000&&path>=100)return true;
+        }
+        return false;
+    }
+    static boolean hasJourneyMovement(List<FootTraceValidator.Sample> samples, String mode) {
+        if (samples.size() < 3) return false;
+        if("walking".equals(mode)||"running".equals(mode)){
+            PedestrianMotionWindow window=new PedestrianMotionWindow();
+            for(FootTraceValidator.Sample p:samples){window.accept(p);if(window.moving())return true;}
+            return false;
+        }
+        FootTraceValidator.Sample origin = null, previous = null;
+        double path = 0, extent = 0;
+        long first = 0, last = 0;
+        for (FootTraceValidator.Sample p : samples) {
+            if (!WalkingStillnessDetector.usable(p) || p.accuracy > 50) continue;
+            if (origin == null) { origin = p; first = p.time; }
+            if (previous != null && CaptureQualityValidator.reliable(previous, p, false)
+                    && p.time - previous.time <= 120_000L) {
+                path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
+                        (float)previous.accuracy, (float)p.accuracy);
+            }
+            extent = Math.max(extent, FootTraceValidator.metres(origin, p) - origin.accuracy - p.accuracy);
+            previous = p; last = p.time;
+        }
+        double threshold = "walking".equals(mode) || "running".equals(mode) ? 25 : 50;
+        return last - first >= 20_000L && extent >= threshold && path >= threshold;
+    }
+
+    static boolean confirmsMode(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
+        return modeChangeStart(samples, proposed, since, now) >= 0;
+    }
+
+    /** Original index of the fresh, continuous run supporting the proposed mode.
+     * Android's callback time is a search bound, not a measured leg boundary. */
+    static int modeChangeStart(List<FootTraceValidator.Sample> samples, String proposed, long since, long now) {
+        int fixes = 0;
+        boolean running="running".equals(proposed);
+        FootTraceValidator.Sample first = null, previous = null, last = null;
+        double path = 0;
+        boolean foot = "walking".equals(proposed) || "running".equals(proposed);
+        boolean cycle = "cycling".equals(proposed);
+        for (FootTraceValidator.Sample p : samples) {
+            if (p.time < since || p.time > now || !WalkingStillnessDetector.usable(p) || p.accuracy > 25) continue;
+            if (previous != null && p.time <= previous.time) continue;
+            if (previous != null && (!CaptureQualityValidator.reliable(previous, p, foot)
+                    || p.time - previous.time > 60_000L)) {
+                fixes = 0; path = 0; first = null;
+            }
+            double speed=foot&&!running?MovementSpeed.foot(previous,p):p.speed;
+            boolean moving = Double.isFinite(speed) && (running ? speed >= 2.2 && speed <= 6 : foot ? speed >= .5 && speed <= 3.5
+                    : cycle ? speed >= .8 && speed <= 12 : speed >= 6);
+            if (!moving) {
+                fixes = 0; path = 0; first = null; previous = p; last = null;
+                continue;
+            }
+            if (first == null) {
+                if(foot&&!running&&p.speed<.5&&previous!=null&&previous.time>=since) {first=previous;fixes=1;}
+                else first=p;
+            }
+            if (previous != null && fixes > 0)
+                path += CaptureStartGate.reliableMovementIncrement((float)FootTraceValidator.metres(previous, p),
+                        (float)previous.accuracy, (float)p.accuracy);
+            fixes++; previous = p; last = p;
+        }
+        return first != null && last != null && now - last.time <= 60_000L
+                && last.time - first.time >= (running ? 60_000L : 20_000L) && fixes >= (running ? 5 : 3)
+                && path >= (running ? 100 : foot ? 30 : 60) ? first.index : -1;
+    }
+
+    static boolean footSamplingGap(FootTraceValidator.Sample before,FootTraceValidator.Sample after) {
+        return before!=null&&WalkingStillnessDetector.usable(after)&&after.accuracy>0&&after.accuracy<=50
+                &&after.time-before.time>120_000L&&FootTraceValidator.metres(before,after)>Math.max(75,before.accuracy+after.accuracy);
+    }
+    /** A long break is a recording boundary, not evidence of a routable connection. */
+    static boolean separateSamplingSessions(FootTraceValidator.Sample before, FootTraceValidator.Sample after) {
+        return before != null && WalkingStillnessDetector.usable(after) && after.accuracy <= 50
+                && after.time - before.time >= 900_000L && after.speed >= 0 && after.speed < 2.5
+                && FootTraceValidator.metres(before, after) <= 500;
+    }
+}

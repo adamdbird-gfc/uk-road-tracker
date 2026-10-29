@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "releases": [
+    {
+      "version_name": "0.25.220",
+      "version_code": 266,
+      "release_date": "2026-10-28",
+      "since": "0.25.219",
+      "changes": [
+        {
+          "title": "More coherent walking matches",
+          "description": "Use preserved GPS accuracy when rematching walks, reducing unsupported short detours while retaining raw evidence and deliberate movement."
+        },
+        {
+          "title": "Responsive route drawing",
+          "description": "Avoid expensive coordinate-array hashing during map drawing and refresh cached paths when geometry changes."
+        },
+        {
+          "title": "Preserved section edits",
+          "description": "Keep manual section removals attached to the same physical edges when rematching; preserve the previous route when an edit cannot safely transfer."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.219",
+      "version_code": 265,
+      "release_date": "2026-10-28",
+      "since": "0.25.218",
+      "changes": [
+        {
+          "title": "Consistent walking route editing",
+          "description": "Open matched walking routes in the editor without adding inferred GPS endpoint sections. Your original recording and saved section edits remain available."
+        },
+        {
+          "title": "Clearer matching diagnostics",
+          "description": "Record separate preparation, connection, request and response timings to investigate slow walking matches."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.218",
+      "version_code": 264,
+      "release_date": "2026-10-25",
+      "since": "0.25.217",
+      "changes": [
+        {
+          "title": "Faster navigation",
+          "description": "Show journey summaries and paged road lists sooner, reuse unchanged progress evidence and show prepared road maps before contributor lookups finish."
+        },
+        {
+          "title": "Smoother road maps",
+          "description": "Reuse projected road paths, skip offscreen geometry and retain useful screen content when returning."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.217",
+      "version_code": 263,
+      "release_date": "2026-10-25",
+      "since": "0.25.216",
+      "changes": [
+        {
+          "title": "Quiet historical diagnostics",
+          "description": "Remember diagnostic delivery across restarts so viewed or unchanged historical failures do not create repeated alerts."
+        },
+        {
+          "title": "Evidence-aware retry",
+          "description": "Hold unchanged GPS-quality failures until evidence or validation rules change, while keeping recoverable network retries."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.216",
+      "version_code": 262,
+      "release_date": "2026-10-24",
+      "since": "0.25.215",
+      "changes": [
+        {
+          "title": "Relevant journey actions",
+          "description": "Show ferry review only with supported crossing evidence and separate journey action buttons."
+        },
+        {
+          "title": "GPS gaps and incremental progress",
+          "description": "Omit unsupported gaps from recorded previews, retain original evidence and avoid unnecessary NCN reassessment after metadata changes."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.215",
+      "version_code": 261,
+      "release_date": "2026-10-24",
+      "since": "0.25.214",
+      "changes": [
+        {
+          "title": "Shared destination behaviour",
+          "description": "Use mapped destination evidence and confirmed departures across complex places, with purposeful exercise remaining recordable."
+        },
+        {
+          "title": "Walking evidence and recovery",
+          "description": "Recover supported walking starts when speed reports are missing, preserve raw GPS and avoid immediate retries while the matcher is busy."
+        },
+        {
+          "title": "Clearer place confidence",
+          "description": "Keep user labels separate from geographic identity and retain the measured journey endpoints."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.214",
+      "version_code": 260,
+      "release_date": "2026-10-24",
+      "since": "0.25.213",
+      "changes": [
+        {
+          "title": "Resort-aware walking",
+          "description": "Recognise the mapped Disneyland Paris resort offline, keep internal walking out of ordinary journeys and resume after a confirmed departure."
+        },
+        {
+          "title": "More reliable GPS evidence",
+          "description": "Reject stale and inaccurate walking fixes, keep original observations and separate recordings across missing GPS intervals."
+        },
+        {
+          "title": "Walking match preparation",
+          "description": "Reduce redundant walking points while preserving turns and original evidence. Existing recoverable network retries remain available."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.213",
+      "version_code": 259,
+      "release_date": "2026-10-21",
+      "since": "0.25.212",
+      "changes": [
+        {
+          "title": "Ferry evidence and recovery",
+          "description": "Conservative Dover\u2013Calais ferry transitions, preserved recording and explicit split/restore review. Missing ferry GPS is never invented."
+        },
+        {
+          "title": "Transport and matching reliability",
+          "description": "Unhinted vehicle-speed movement stays Unknown; bounded matching retries and distance-integrity diagnostics preserve your original GPS evidence."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.212",
+      "version_code": 258,
+      "release_date": "2026-10-20",
+      "since": "0.25.211",
+      "changes": [
+        {
+          "title": "Faster map preparation",
+          "description": "Unchanged journeys reuse compact map geometry and road coverage contributions. Newly changed journeys rebuild only their own records."
+        },
+        {
+          "title": "Retained NCN assessment",
+          "description": "Duplicate saves and metadata-only updates no longer require NCN evidence reassessment. Existing New Journeys review is preserved."
+        },
+        {
+          "title": "Responsive map loading",
+          "description": "Stale map snapshots are rejected before decoding, and map publication avoids repeated camera fitting. Private owner testing only."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.211",
+      "version_code": 257,
+      "release_date": "2026-10-20",
+      "since": "0.25.210",
+      "changes": [
+        {
+          "title": "NCN history reuse",
+          "description": "Unchanged journeys reuse saved assessments; newly saved journeys no longer require rereading the entire archive."
+        },
+        {
+          "title": "New journey review",
+          "description": "New recordings enter a saved review inbox that can appear while the map is loading."
+        },
+        {
+          "title": "Map startup",
+          "description": "Journey projections and larger compressed map snapshots reduce repeated archive preparation. Local diagnostics separate loading stages."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.210",
+      "version_code": 256,
+      "release_date": "2026-10-20",
+      "since": "0.25.209",
+      "changes": [
+        {
+          "title": "NCN responsiveness",
+          "description": "Catalogue installation no longer blocks UI polling. Unchanged NCN history restores from a validated checkpoint; stale map work stops early."
+        },
+        {
+          "title": "National Cycle Network achievements",
+          "description": "First discovery and combined 25%, 50%, 75% and complete milestones for supported verified-open routes and the unique physical network. Walking, running and cycling qualify."
+        },
+        {
+          "title": "Private owner testing",
+          "description": "This development build adds local performance diagnostics and retains the established map and Progress layout."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.209",
+      "version_code": 255,
+      "release_date": "2026-10-20",
+      "since": "0.25.208",
+      "changes": [
+        {
+          "title": "Consistent route identifiers",
+          "description": "Compact NCN rows use purple identifier badges with white text beside completion bars and percentages. Focused motorway, A-road and NCN summaries use matching coloured badges."
+        },
+        {
+          "title": "Collection search and activity filters",
+          "description": "NCN uses the shared labelled collection search box and selected filter buttons. Search spans all route groups; clearing restores browsing groups. Activity changes preserve the query and update completion without rebuilding search controls."
+        },
+        {
+          "title": "Private development review",
+          "description": "Signed artifact only. No Firebase tester distribution or notifications; wider beta release still requires explicit owner approval. National catalogue and eligibility rules unchanged."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.208",
+      "version_code": 254,
+      "release_date": "2026-10-20",
+      "since": "0.25.207",
+      "changes": [
+        {
+          "title": "NCN presentation refinement",
+          "description": "Private development review: consistent bicycle collection cards, clearer shared coverage summaries, purple route cards and solid orange remaining NCN geometry."
+        },
+        {
+          "title": "Navigation and celebrations",
+          "description": "Corrected NCN Progress jump selection and chip visibility, centred achievement celebration headings and aligned Close."
+        },
+        {
+          "title": "Controlled distribution",
+          "description": "Development builds produce a signed APK artifact only. Tester distribution requires a separate manual owner approval of the exact source and APK checksum."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.207",
+      "version_code": 253,
+      "release_date": "2026-10-19",
+      "since": "0.25.206",
+      "changes": [
+        {
+          "title": "National Cycle Network beta",
+          "description": "Enable NCN in Collections to assess saved walking, running and cycling evidence. Browse supported open sections, mode-specific unique progress, focused route maps and eligible contributing journeys. Driving never earns NCN credit."
+        },
+        {
+          "title": "Shared Progress maps",
+          "description": "Motorway and A-road white tracks, road fitting, zoom controls and retained journey cards continue from the corrective beta. NCN maps use purple completed and grey dashed remaining geometry."
+        },
+        {
+          "title": "Conservative evidence handling",
+          "description": "34 held identities and deferred alternatives remain explicit. NCN228 is a preserved alternative inventory without an open-route completion percentage. No independently verified Named route records are present in this checkpoint."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.206",
+      "version_code": 252,
+      "release_date": "2026-10-19",
+      "since": "0.25.205",
+      "changes": [
+        {
+          "title": "Map loading correction",
+          "description": "Allow large cold maps to finish, publish geometry before optional cache writes, bypass cached results on Retry/Reset after a failure, and show consistent map readiness in the footer."
+        },
+        {
+          "title": "Matching Progress charts",
+          "description": "Focused motorway and A-road cards now share the actual white-track Progress component, with existing blue/green fills and unchanged values."
+        },
+        {
+          "title": "Focused-road camera fit",
+          "description": "Fit full motorway/A-road geometry or recorded B/local sections when geometry and viewport are ready. Preserve manual zoom during secondary loading."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.205",
+      "version_code": 251,
+      "release_date": "2026-10-19",
+      "since": "0.25.204",
+      "changes": [
+        {
+          "title": "Recoverable map filters",
+          "description": "Apply filters without losing the previous map. Cancel, Reset, timeout and Retry prevent a trapped loading screen; map work runs independently of background history scans."
+        },
+        {
+          "title": "Clearer focused road maps",
+          "description": "Brighter white progress tracks with blue motorway or green A-road completion, clearer distances, balanced headers and a prominent contributing-journeys action. B/local maps focus on recorded sections and journey lists."
+        },
+        {
+          "title": "Beta 1 continuity",
+          "description": "Welcome-back overlay and prepared-map dismissal retained. Existing journeys, tracking, matching, achievements, collections and independent A1/A1(M) coverage preserved."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.204",
+      "version_code": 250,
+      "release_date": "2026-10-19",
+      "since": "0.25.203",
+      "changes": [
+        {
+          "title": "A clearer welcome back",
+          "description": "New journey discoveries appear over the prepared map. Dismiss or open their actions to reveal the map controls without another map load."
+        },
+        {
+          "title": "Focused road maps",
+          "description": "See a loading map container and statistics placeholders, then road coverage and a graphical whole-road summary. Focused maps now share the main map zoom buttons and retain bounded retry handling."
+        },
+        {
+          "title": "Consistent road and journey details",
+          "description": "Whole-road and selected-section statistics are clearly labelled. Contributing journeys share the main journey typography, transport badges, local dates and available details. Close controls align with their content edges."
+        },
+        {
+          "title": "Existing road identities retained",
+          "description": "A1 and A1(M) keep their independent coverage and mileage. Tracking, matching and collections remain as in the working stabilisation release. Please verify these UI changes on your device."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.203",
+      "version_code": 249,
+      "release_date": "2026-10-19",
+      "since": "0.25.202",
+      "changes": [
+        {
+          "title": "Beta 1 stabilisation",
+          "description": "Journey filters open immediately and map controls wait until road loading finishes. Pending achievement celebrations can be opened while progress refreshes."
+        },
+        {
+          "title": "Road maps and faster return visits",
+          "description": "Focused road maps load independently of background history and offer retry on failure or timeout. Tabs retain their screens, map position and progress scroll. Map loading streams only the evidence needed for display, preserving saved journeys and corrections."
+        },
+        {
+          "title": "Device checks still needed",
+          "description": "Please check map filters, pending celebrations, M2 coverage and contributing journeys, then switch tabs and return. Pixel and Samsung first-load timings still need real-device verification. No NCN changes are included."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.202",
+      "version_code": 248,
+      "release_date": "2026-10-19",
+      "since": "0.25.201",
+      "changes": [
+        {
+          "title": "Beta 1: journey reliability",
+          "description": "Improved stationary drift protection, arrival and departure timing, walking/driving boundaries and interrupted recording recovery. Existing journeys remain explicitly rematchable with their raw recordings preserved."
+        },
+        {
+          "title": "Continuous driving routes",
+          "description": "Longer verified matching context improves motorway and local-road matching while preserving route continuity and disclosing unsupported GPS gaps."
+        },
+        {
+          "title": "Service-station visits",
+          "description": "Mapped service grounds and timed dwell evidence distinguish genuine visits from passing traffic. Saved recordings with sufficient evidence can recover previously missed visits."
+        },
+        {
+          "title": "Interactive road Progress",
+          "description": "Open focused motorway, A-road, B-road and local-road views where supported, with contributing journeys. Map filters and late-saved journey refresh are also included."
+        },
+        {
+          "title": "Beta testing requirements",
+          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.201",
+      "version_code": 247,
+      "release_date": "2026-10-15",
+      "since": "0.25.200",
+      "changes": [
+        {
+          "title": "Clearer navigation",
+          "description": "The icons along the bottom of the app now share the larger size you see in Collections, making it easier to move between screens."
+        },
+        {
+          "title": "More places to explore",
+          "description": "Road totals and settlement boundaries are now available for 9,072 places across England, Scotland, Wales and Northern Ireland. Your existing road names and progress are preserved."
+        },
+        {
+          "title": "Northern Ireland county progress",
+          "description": "Northern Ireland's settlements are now linked to their historic counties, so they can contribute to your county progress."
+        },
+        {
+          "title": "Keep up with What's new",
+          "description": "Open What's new in Utilities to see what each update brings. You can also contact Roadprints to report an issue or suggest a feature."
+        }
+      ]
+    }
+  ]
+}

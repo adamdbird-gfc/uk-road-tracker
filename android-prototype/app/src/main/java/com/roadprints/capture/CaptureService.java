@@ -1,5 +1,6 @@
 package com.roadprints.capture;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.util.AtomicFile;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -22,24 +24,41 @@ import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.ActivityTransition;
 import com.google.android.gms.location.ActivityTransitionRequest;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.Priority;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CaptureService extends Service {
     public static final String ACTION_START = "com.roadprints.capture.START";
+    public static final String ACTION_RESUME = "com.roadprints.capture.RESUME";
     public static final String ACTION_STOP = "com.roadprints.capture.STOP";
     public static final String ACTION_ARM = "com.roadprints.capture.ARM";
     public static final String ACTION_DISARM = "com.roadprints.capture.DISARM";
     public static final String ACTION_ACTIVITY = "com.roadprints.capture.ACTIVITY";
     public static final String ACTION_UPDATE = "com.roadprints.capture.UPDATE";
+    public static final String ACTION_DIAGNOSTICS_CHANGED = "com.roadprints.capture.DIAGNOSTICS_CHANGED";
     public static final String EXTRA_MODE = "mode";
     public static final String EXTRA_ACTIVE = "active";
     public static final String EXTRA_ARMED = "armed";
@@ -56,40 +75,243 @@ public class CaptureService extends Service {
     private static final String STATE_ARMED = "armed";
     private static final String CHANNEL_ID = "roadprints_recording";
     private static final int NOTIFICATION_ID = 41;
-    private static final long STILLNESS_END_THRESHOLD_MS = 180_000L;
+    private static final long STILLNESS_END_THRESHOLD_MS = CaptureStartGate.STILLNESS_END_THRESHOLD_MS;
+    private static final long MODE_CHANGE_CONFIRMATION_MS = 15_000L;
+    private static final long CHECKPOINT_INTERVAL_MS = 15_000L;
     private static final float STILLNESS_MOVEMENT_THRESHOLD_METRES = 35f;
+    static final long ROAD_CAPTURE_INTERVAL_MS = 8_000L;
+    static final long WALK_CAPTURE_INTERVAL_MS = 10_000L;
+    static final float ROAD_CAPTURE_MIN_DISTANCE_METRES = 20f;
+    static final float WALK_CAPTURE_MIN_DISTANCE_METRES = 10f;
 
     private LocationManager locationManager;
     private ActivityRecognitionClient activityClient;
+    private FusedLocationProviderClient fusedClient;
+    private boolean serviceDestroyed;
+    private long lastLocationCallbackAt;
+    private final LocationCallback fusedCallback = new LocationCallback() {
+        @Override public void onLocationResult(LocationResult result) {
+            if (serviceDestroyed || (!isArmed(CaptureService.this) && !isActive(CaptureService.this))) return;
+            Location location = result.getLastLocation();
+            if (location != null) locationListener.onLocationChanged(location);
+        }
+        @Override public void onLocationAvailability(LocationAvailability availability) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "fused_location_availability",
+                    "available=" + availability.isLocationAvailable());
+        }
+    };
     private PendingIntent activityPendingIntent;
     private final List<Location> points = new ArrayList<>();
+    private final List<Location> candidatePoints = new ArrayList<>();
+    private Location candidateOrigin;
+    private Location candidateMovementLast;
+    private float candidateMovementMetres;
+    private Location departureAnchor;
+    private long candidateStartedAtMs;
+    private long candidateStationarySince;
+    private Location candidateStationaryAnchor;
+    private String candidateStartedAt;
+    private String candidateMode;
     private Location lastPoint;
     private String journeyId;
     private String startedAt;
     private String mode;
+    private String captureInitialMode, captureClassifiedAt;
     private double distanceMetres;
     private long stationarySince;
     private Location stationaryAnchor;
+    private final WalkingStillnessDetector walkingStillness=new WalkingStillnessDetector();
+    private boolean gpsStillness;
+    private final List<Location> armedWalkingPoints=new ArrayList<>();
+    // Keep UTC evidence time injectable; scheduling/watchdogs still use monotonic Android time.
+    private java.time.Clock wallClock=java.time.Clock.systemUTC();
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final ExecutorService captureIo = Executors.newSingleThreadExecutor();
+    private boolean captureFinishing;
+    private boolean recoveringFinish;
+    private String pendingFinishEndedAt;
+    private boolean checkpointPending;
+    private boolean diagnosticUpdatesRegistered;
+    private final Runnable diagnosticWindowExpiry = () -> {
+        MovementDiagnostics.isRunning(this);
+        refreshDiagnosticLocationUpdates();
+    };
+    private String nextCaptureMode;
+    private String pendingActivityMode;
+    private RailStationCatalog stationCatalog;
+    private StationJourneyModel stationModel;
+    private ContextMapCache contextCache;
+    private ContextJourneyModel contextModel=new ContextJourneyModel();
+    private String contextReason;
+    private JSONObject departurePlace;
+    private final List<Location> visitPoints = new ArrayList<>();
+    private final WalkingStillnessDetector idleStillness = new WalkingStillnessDetector();
+    private String visitPointStopId = "", visitActivityHint;
+    private long visitActivityHintAt;
+    private JSONArray activityEvidence=new JSONArray();
+    private long lastVisitDiagnosticAt, lastVisitBufferSave;
+
+    private String currentActivity = "unknown";
+    private long currentActivityAtMs;
+    private String stationEvidenceReason, stationEvidenceCode;
+    private List<Location> nextCapturePoints;
+    private String nextCaptureStartedAt;
+    private String nextCaptureJourneyId;
+    private int stationEndIndex = -1;
+    private boolean automaticCapture;
+    private boolean captureDiscarded;
+    private long pendingActivitySince;
+    private long stillActivitySince;
+
+    private final Runnable confirmActivityModeChange = this::commitPendingActivityMode;
+    private AtomicFile checkpointFile;
+    private long lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
+    private final Runnable samplingWatchdog=new Runnable() {
+        @Override public void run() {
+            if(isArmed(CaptureService.this) && !captureFinishing
+                    && android.os.SystemClock.elapsedRealtime()-lastReliableSampleAt>90_000L) {
+                MovementDiagnostics.recordEvent(CaptureService.this,"sampling_refresh_after_silence",
+                        "No recent accurate fix; refreshing subscriptions. Missing travel remains uncredited.");
+                recordSamplingState("watchdog");
+                try {
+                    refreshSamplingSubscriptions();
+                } catch(SecurityException error) {
+                    broadcastUpdate("Location access is needed to resume tracking.");
+                }
+                lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
+            }
+            handler.postDelayed(this,60_000L);
+        }
+    };
     private final Runnable finishIfStill = () -> {
-        if (isActive(this) && stationarySince != 0 && System.currentTimeMillis() - stationarySince >= STILLNESS_END_THRESHOLD_MS) {
-            finishCapture();
+        if (isActive(this) && stationarySince != 0
+                && CaptureStartGate.shouldEndAfterStillness(wallClock.millis() - stationarySince)) {
+            boolean activityConfirmsStop = stillActivitySince > 0
+                    && wallClock.millis() - stillActivitySince >= STILLNESS_END_THRESHOLD_MS;
+            if (gpsStillness && !walkingStillness.canFinish(wallClock.millis()) && !activityConfirmsStop) {
+                handler.postDelayed(this.finishIfStill,30_000L);
+                return;
+            }
+            if (stationModel != null && stationModel.holdStill(mode, wallClock.millis())) {
+                handler.postDelayed(this.finishIfStill, 30_000L);
+            } else {
+                ContextMap.Evidence context=stationaryAnchor==null||contextCache==null?new ContextMap.Evidence()
+                        :contextCache.evidence(stationaryAnchor.getLatitude(),stationaryAnchor.getLongitude(),stationaryAnchor.getAccuracy());
+                if(automaticCapture && contextModel.holdPause(mode,wallClock.millis()-stationarySince,context)) {
+                    handler.postDelayed(this.finishIfStill,30000L);
+                    broadcastUpdate("Paused on the route; listening for movement...");
+                    return;
+                }
+                resolveGpsArrivalBoundary(wallClock.millis());
+                if (stationModel!=null && stationModel.stationaryEndIndex(mode)>=1) {
+                    stationEndIndex=stationModel.stationaryEndIndex(mode);
+                    stationEvidenceReason="station_arrival_waiting";
+                    stationEvidenceCode=stationModel.stationCode();
+                    // If a mode transition was missed, keep the remaining travel
+                    // as an uncertain leg instead of trimming it out of history.
+                    List<FootTraceValidator.Sample> remainder=new ArrayList<>();
+                    for(int i=stationEndIndex+1;i<points.size();i++)remainder.add(footSample(points.get(i),i));
+                    if(CaptureMovementEvidence.hasJourneyMovement(remainder,"unknown"))
+                        prepareStationSplit(stationEndIndex,stationEndIndex+1,"unknown");
+                }
+                finishCapture();
+            }
+        }
+    };
+    private final Runnable candidateTimeout = () -> {
+        if (candidateMode != null) cancelStartCandidate(candidatePoints.size() < 2
+                ? "Journey could not be confirmed: insufficient location updates."
+                : "Movement was too short to save as a journey.");
+    };
+    private final Runnable candidateStillTimeout = () -> {
+        if (candidateMode != null && candidateStationarySince != 0
+                && CaptureStartGate.shouldEndAfterStillness(wallClock.millis() - candidateStationarySince)) {
+            cancelStartCandidate("The stop lasted too long to count as the start of a journey.");
         }
     };
 
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if (lastPoint != null) distanceMetres += lastPoint.distanceTo(location);
-            lastPoint = location;
-            points.add(location);
-            clearStillnessIfMovementContinues(location);
+            lastLocationCallbackAt = android.os.SystemClock.elapsedRealtime();
+            android.os.Bundle provenance=location.getExtras()==null?new android.os.Bundle():new android.os.Bundle(location.getExtras());
+            long elapsed=location.getElapsedRealtimeNanos();
+            provenance.putLong("roadprints_received_age_ms",elapsed>0?
+                    Math.max(0,(android.os.SystemClock.elapsedRealtimeNanos()-elapsed)/1_000_000L):-1);
+            location=new Location(location);location.setExtras(provenance);
+            boolean callbackFresh=CaptureQualityValidator.fresh(wallClock.millis(),location.getTime(),provenance.getLong("roadprints_received_age_ms",-1));
+            if(location.hasAccuracy() && location.getAccuracy()<=50
+                    && Math.abs(wallClock.millis()-location.getTime())<=60_000L)
+                lastReliableSampleAt=android.os.SystemClock.elapsedRealtime();
+            if (captureFinishing) {
+                if (nextCapturePoints != null) nextCapturePoints.add(new Location(location));
+                return;
+            }
+            if (!isActive(CaptureService.this)) {
+                if(!callbackFresh){MovementDiagnostics.recordLocation(CaptureService.this,location,"rejected_stale_idle");return;}
+                if (observePlaceVisit(location)) return;
+                if (observeIdlePlace(location)) return;
+                if (candidateMode != null) {
+                    MovementDiagnostics.recordLocation(CaptureService.this, location, "walk_candidate");
+                    collectCandidateLocation(location);
+                } else {
+                    MovementDiagnostics.recordLocation(CaptureService.this, location, "armed_waiting_for_movement");
+                    considerArmedMovement(location);
+                }
+                return;
+            }
+            MovementDiagnostics.recordLocation(CaptureService.this, location, "recording_" + mode);
+            Location observation = new Location(location);
+            requestContext(observation);
+            boolean fresh=callbackFresh;
+            if (fresh && automaticCapture && lastPoint != null && (CaptureMovementEvidence.separateSamplingSessions(
+                    footSample(lastPoint, 0), footSample(observation, 1))
+                    || ("walking".equals(mode)||"running".equals(mode))
+                    && CaptureMovementEvidence.footSamplingGap(footSample(lastPoint,0),footSample(observation,1)))) {
+                // Do not draw or match across a long indoor/signal break. Preserve both
+                // observations, with the unknown interval outside either route.
+                prepareStationSplit(points.size()-1, points.size()-1, mode);
+                nextCapturePoints = new ArrayList<>();
+                nextCapturePoints.add(observation);
+                nextCaptureStartedAt = Instant.ofEpochMilli(observation.getTime()).toString();
+                stationEvidenceReason = "long_sampling_break";
+                MovementDiagnostics.recordEvent(CaptureService.this, "sampling_session_boundary",
+                        "Long GPS break near the previous endpoint; preserving separate recording sessions.");
+                finishCapture();
+                return;
+            }
+            boolean trusted = fresh && CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                    footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
+            // Retain rejected fixes as evidence, but do not credit their jumps
+            // as travelled distance or let them reset the stop timer.
+            points.add(observation);
+            if(evaluateFerryLocation(observation))return;
+            if (trusted && automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
+                observeWalkingStillness(observation);
+            if (trusted) {
+                if (lastPoint != null && !gpsStillness) distanceMetres += lastPoint.distanceTo(observation);
+                lastPoint = observation;
+                clearStillnessIfMovementContinues(observation);
+            }
+            // Sustained real vehicle speed still reaches station departure
+            // detection while Android's activity callback is delayed.
+            if (trusted)
+                evaluateStationLocation(observation, points.size() - 1);
+            if (captureFinishing) return;
+            if(trusted && automaticCapture) evaluateContextLocation(observation,points.size()-1);
+            if(captureFinishing)return;
             updateNotification();
-            broadcastUpdate("Recording " + mode + " locally...");
+            broadcastUpdate(gpsStillness
+                    ? "Checking arrival; waiting for sustained movement or a confirmed stop..."
+                    : "Recording " + mode + " locally...");
         }
 
-        @Override public void onProviderEnabled(String provider) {}
-        @Override public void onProviderDisabled(String provider) {}
+        @Override public void onProviderEnabled(String provider) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "location_provider_enabled", provider);
+        }
+        @Override public void onProviderDisabled(String provider) {
+            MovementDiagnostics.recordEvent(CaptureService.this, "location_provider_disabled", provider);
+        }
     };
 
     public static boolean isActive(Context context) {
@@ -105,17 +327,50 @@ public class CaptureService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        checkpointFile = new AtomicFile(new File(getFilesDir(), "roadprints_active_capture.json"));
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         activityClient = ActivityRecognition.getClient(this);
+        fusedClient = LocationServices.getFusedLocationProviderClient(this);
         createNotificationChannel();
+        handler.postDelayed(samplingWatchdog,60_000L);
+        contextCache=new ContextMapCache(this);
+        restoreDepartureAnchor();
+        if (isActive(this) || isArmed(this) && checkpointFile.getBaseFile().exists()) {
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putBoolean(STATE_ACTIVE,true).commit();
+            restoreActiveCapture();
+        }
+        captureIo.execute(() -> {
+            try (InputStream input = getAssets().open("rail-stations/stations.csv")) {
+                RailStationCatalog loaded = RailStationCatalog.read(new InputStreamReader(input, StandardCharsets.UTF_8));
+                handler.post(() -> {
+                    stationCatalog = loaded;
+                    resetStationModel();
+                    if (isActive(this) && lastPoint != null) evaluateStationLocation(lastPoint, points.size()-1);
+                    MovementDiagnostics.recordEvent(this, "station_reference_ready", "Bundled station reference loaded locally.");
+                });
+            } catch (Exception error) {
+                MovementDiagnostics.recordEvent(this, "station_reference_unavailable", error.getClass().getSimpleName());
+            }
+        });
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) return START_NOT_STICKY;
+        if (intent == null) {
+            if(isArmed(this))armTracking();
+            if(isArmed(this)||isActive(this))return START_STICKY;
+            stopSelf(startId);
+            return START_NOT_STICKY;
+        }
 
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
+            cancelStartCandidate(null);
+            nextCaptureMode = null;
+            nextCapturePoints = null;
+            nextCaptureStartedAt = null; nextCaptureJourneyId = null;
+            stationEndIndex = -1;
+            clearPendingActivityMode();
             finishCapture();
         } else if (ACTION_START.equals(action)) {
             startCapture(intent.getStringExtra(EXTRA_MODE));
@@ -123,12 +378,26 @@ public class CaptureService extends Service {
             armTracking();
         } else if (ACTION_DISARM.equals(action)) {
             disarmTracking();
+        } else if (ACTION_DIAGNOSTICS_CHANGED.equals(action)) {
+            if (isArmed(this) && !startForegroundWithNotification()) return START_NOT_STICKY;
+            refreshDiagnosticLocationUpdates();
         } else if (ACTION_ACTIVITY.equals(action)) {
+            if (!isArmed(this) && !isActive(this)) {
+                // A transition can race with disarming or arrive after an old subscription fires.
+                // Since this request came from startForegroundService(), stop promptly when idle.
+                stopSelf(startId);
+                return START_NOT_STICKY;
+            }
+            // Promote before processing the event. Candidate detection may wait for GPS points
+            // and previously left this startForegroundService() request unpromoted.
+            if (!startForegroundWithNotification()) return START_NOT_STICKY;
             handleTransition(
                     intent.getIntExtra(EXTRA_ACTIVITY_TYPE, DetectedActivity.UNKNOWN),
                     intent.getIntExtra(EXTRA_TRANSITION, -1));
+        } else if (ACTION_RESUME.equals(action) && !isActive(this)) {
+            broadcastUpdate("No recoverable active journey was found.");
         }
-        return START_NOT_STICKY;
+        return isArmed(this)||isActive(this)?START_STICKY:START_NOT_STICKY;
     }
 
     private void armTracking() {
@@ -141,7 +410,9 @@ public class CaptureService extends Service {
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, true)
                 .apply();
-        startForegroundWithNotification();
+        if (!startForegroundWithNotification()) return;
+        MovementDiagnostics.recordEvent(this, "tracking_armed", "Automatic tracking enabled.");
+        refreshDiagnosticLocationUpdates();
 
         try {
             activityPendingIntent = PendingIntent.getBroadcast(
@@ -179,6 +450,13 @@ public class CaptureService extends Service {
     }
 
     private void disarmTracking() {
+        MovementDiagnostics.recordEvent(this, "tracking_disarmed", "Automatic tracking disabled.");
+        visitPoints.clear();visitPointStopId="";
+        idleStillness.reset();
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().remove("visit_buffer").apply();
+        cancelStartCandidate(null);
+        nextCaptureMode = null;
+        clearPendingActivityMode();
         getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                 .putBoolean(STATE_ARMED, false).apply();
         removeActivityUpdates();
@@ -203,12 +481,27 @@ public class CaptureService extends Service {
         if (!isArmed(this)) return;
 
         String activityLabel = activityLabel(activityType);
+        try {
+            JSONArray retained=new JSONArray();for(int i=Math.max(0,activityEvidence.length()-31);i<activityEvidence.length();i++)retained.put(activityEvidence.opt(i));
+            retained.put(new JSONObject().put("at_utc",Instant.now(wallClock).toString()).put("activity",activityLabel)
+                    .put("entering",transitionType==ActivityTransition.ACTIVITY_TRANSITION_ENTER).put("confidence","not_supplied_by_transition_api"));
+            activityEvidence=retained;
+        }catch(org.json.JSONException ignored){}
         boolean entering = transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER;
+        MovementDiagnostics.recordActivity(this, activityLabel, entering ? "entered" : "left",
+                isArmed(this), isActive(this), mode);
         broadcastUpdate("Android detected " + (entering ? "entered " : "left ")
                 + activityLabel + ".");
 
+        if (entering) {
+            currentActivityAtMs=wallClock.millis();
+            currentActivity = activityType == DetectedActivity.IN_VEHICLE ? "vehicle"
+                    : (activityType == DetectedActivity.STILL ? "still"
+                    : (("walking".equals(modeForActivity(activityType)) || "running".equals(modeForActivity(activityType))) ? "walking" : "unknown"));
+            if (stationModel != null) stationModel.activity(currentActivity, wallClock.millis(), points.size()-1);
+        }
         if (!entering) {
-            if (activityType == DetectedActivity.STILL) {
+            if (activityType == DetectedActivity.STILL && !gpsStillness) {
                 stationarySince = 0;
                 stationaryAnchor = null;
                 handler.removeCallbacks(finishIfStill);
@@ -217,26 +510,369 @@ public class CaptureService extends Service {
         }
 
         if (activityType == DetectedActivity.STILL) {
+            if (stillActivitySince == 0) stillActivitySince = wallClock.millis();
+            clearPendingActivityMode();
+            if (!isActive(this) && candidateMode != null) {
+                if (candidateStationarySince == 0) candidateStationarySince = wallClock.millis();
+                candidateStationaryAnchor = candidatePoints.isEmpty()
+                        ? (candidateOrigin == null ? null : new Location(candidateOrigin))
+                        : new Location(candidatePoints.get(candidatePoints.size() - 1));
+                handler.removeCallbacks(candidateStillTimeout);
+                handler.postDelayed(candidateStillTimeout, Math.max(1L, CaptureStartGate.CANDIDATE_STILL_CANCEL_MS
+                        - (wallClock.millis() - candidateStationarySince)));
+                broadcastUpdate("Brief stop detected; keeping the movement check open...");
+            }
             if (isActive(this)) {
-                stationarySince = System.currentTimeMillis();
-                stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
+                if (stationarySince == 0) {
+                    stationarySince = wallClock.millis();
+                    stationaryAnchor = lastPoint == null ? null : new Location(lastPoint);
+                }
                 handler.removeCallbacks(finishIfStill);
-                handler.postDelayed(finishIfStill, STILLNESS_END_THRESHOLD_MS);
-                broadcastUpdate("Stationary detected; checking GPS movement for 3 minutes...");
+                handler.postDelayed(finishIfStill, Math.max(1L, STILLNESS_END_THRESHOLD_MS
+                        - (wallClock.millis()-stationarySince)));
+                broadcastUpdate("Stationary detected; checking for a genuine stop for 5 minutes...");
             }
             return;
         }
 
-        stationarySince = 0;
-        stationaryAnchor = null;
-        handler.removeCallbacks(finishIfStill);
+        if(isActive(this)&&"ferry".equals(mode)&&activityType!=DetectedActivity.STILL)return;
         String detectedMode = modeForActivity(activityType);
-        if (detectedMode != null && !isActive(this)) {
-            startCapture(detectedMode);
+        if (!isActive(this) && activeVisit() != null) {
+            visitActivityHint=detectedMode;visitActivityHintAt=wallClock.millis();
+            clearCandidateStillness();
+            broadcastUpdate("At a place; checking for departure or sustained activity...");
+            return;
+        }
+        if (activityType == DetectedActivity.IN_VEHICLE && roadMode(mode)) detectedMode = mode;
+        if (activityType == DetectedActivity.IN_VEHICLE && "cycling".equals(mode)) detectedMode = mode;
+        boolean gpsQuiet=isActive(this) && mode != null && automaticCapture && gpsStillness;
+        // Activity labels alone must not cancel GPS-corroborated arrival. Trusted
+        // movement in onLocationChanged clears it when travel actually resumes.
+        if(!gpsQuiet) {
+            stationarySince = 0; stationaryAnchor = null; gpsStillness=false;
+            stillActivitySince = 0;
+            handler.removeCallbacks(finishIfStill);
+        }
+        clearCandidateStillness();
+        if (detectedMode != null) {
+            if (!isActive(this)) {
+                beginStartCandidate(detectedMode);
+            } else if (stationModel != null && automaticCapture && stationModel.ownsModeChange(mode)) {
+                clearPendingActivityMode();
+                broadcastUpdate("Checking station arrival or departure before changing the journey leg...");
+            } else if (gpsQuiet) {
+                clearPendingActivityMode();
+                broadcastUpdate("Checking arrival; small local movements do not start a new journey leg...");
+            } else if (detectedMode.equals(mode)) {
+                clearPendingActivityMode();
+            } else {
+                if (!detectedMode.equals(pendingActivityMode)) pendingActivitySince = wallClock.millis();
+                pendingActivityMode = detectedMode;
+                handler.removeCallbacks(confirmActivityModeChange);
+                handler.postDelayed(confirmActivityModeChange, MODE_CHANGE_CONFIRMATION_MS);
+                broadcastUpdate("Checking the change to " + detectedMode
+                        + " before starting a new journey leg...");
+            }
         }
     }
 
+    private long lastFerryReviewAt;
+    private boolean evaluateFerryLocation(Location observation) {
+        if(!automaticCapture || captureFinishing || observation.getTime()-lastFerryReviewAt<30_000L)return false;
+        lastFerryReviewAt=observation.getTime();
+        // Most journeys never enter this corridor. No archive reads, map queries or network work.
+        if(observation.getLongitude()<1.25||observation.getLongitude()>2.05
+                ||observation.getLatitude()<50.90||observation.getLatitude()>51.20)return false;
+        try {
+            FerryJourneyEvidence.Review review=FerryJourneyEvidence.inspect(sampleCoordinates(points));
+            if(!"ferry".equals(mode) && review.hasMarineEvidence()&&review.start>=1) {
+                prepareStationSplit(review.start,review.start,"ferry");
+            } else if("ferry".equals(mode)&&review.canSplit()&&review.end>=1) {
+                prepareStationSplit(review.end,review.end,"unknown");
+            } else return false;
+            stationEvidenceReason="ferry_terminal_transition";
+            MovementDiagnostics.recordEvent(this,"ferry_transition",review.json().toString());
+            finishCapture();return true;
+        } catch(Exception invalid){return false;}
+    }
+
+    private void clearPendingActivityMode() {
+        pendingActivityMode = null;
+        pendingActivitySince = 0;
+        handler.removeCallbacks(confirmActivityModeChange);
+    }
+
+    private void commitPendingActivityMode() {
+        String confirmedMode = pendingActivityMode;
+        if (confirmedMode == null || !isActive(this) || confirmedMode.equals(mode)) {
+            clearPendingActivityMode();
+            return;
+        }
+        if (captureFinishing) {
+            handler.postDelayed(confirmActivityModeChange, 1_000L);
+            return;
+        }
+        if (automaticCapture && gpsStillness) {
+            clearPendingActivityMode();
+            return;
+        }
+        if (stationModel != null && automaticCapture && stationModel.ownsModeChange(mode)) {
+            clearPendingActivityMode();
+            return;
+        }
+        List<FootTraceValidator.Sample> modeEvidence = new ArrayList<>();
+        for (int i = 0; i < points.size(); i++) modeEvidence.add(footSample(points.get(i), i));
+        int confirmedBoundary = CaptureMovementEvidence.modeChangeStart(modeEvidence, confirmedMode,
+                pendingActivitySince, wallClock.millis());
+        if (confirmedBoundary < 0) {
+            if (wallClock.millis() - pendingActivitySince < 120_000L) {
+                handler.postDelayed(confirmActivityModeChange, 10_000L);
+            } else {
+                MovementDiagnostics.recordEvent(this, "mode_change_rejected", "GPS did not corroborate " + confirmedMode);
+                clearPendingActivityMode();
+            }
+            return;
+        }
+        clearPendingActivityMode();
+        if (promoteProvisionalDepartureMode(confirmedMode))return;
+        if (points.size() < 2) {
+            broadcastUpdate("Activity changed, but this segment is too short to split safely.");
+            return;
+        }
+        // IN_VEHICLE cannot distinguish trains from road vehicles. Save that leg
+        // as Unknown so it can be classified in Journeys without road matching.
+        int boundary = Math.max(1, confirmedBoundary);
+        prepareStationSplit(boundary, boundary, confirmedMode);
+        MovementDiagnostics.recordEvent(this, "mode_change_confirmed",
+                "mode=" + confirmedMode + "; boundary_index=" + boundary
+                        + "; boundary_time_ms=" + points.get(boundary).getTime());
+        finishCapture();
+        broadcastUpdate("Activity change confirmed; saving this journey leg...");
+    }
+
+    private JSONObject activeVisit() {
+        JSONObject stop=PlaceAnchorStore.last(this);
+        if (!isArmed(this) || !PlaceVisitEvidence.eligible(stop)
+                || stop.optString("id").equals(getSharedPreferences(STATE_PREFS, MODE_PRIVATE)
+                    .getString("departed_visit_id", ""))) return null;
+        return stop;
+    }
+
+    /** Establish a measured idle stay even before the first saved arrival.
+     * Uses the same dwell detector; never creates an archived journey. */
+    private boolean observeIdlePlace(Location location) {
+        if(!isArmed(this)||location==null||!location.hasAccuracy()
+                ||Math.abs(wallClock.millis()-location.getTime())>60_000L)return false;
+        idleStillness.accept(footSample(location,0));
+        long now=wallClock.millis();
+        if(!idleStillness.canFinish(now))return false;
+        FootTraceValidator.Sample anchor=idleStillness.anchor();
+        ContextMap.Evidence map=contextCache==null?new ContextMap.Evidence():
+                contextCache.evidence(anchor.lat,anchor.lon,(float)anchor.accuracy);
+        // Stations and accurately located through-route queues keep their own policy.
+        if(map.rail||map.throughRoad&&!map.destination)return false;
+        try {
+            JSONObject stop=PlaceBoundaryEvidence.arrival("idle-"+UUID.randomUUID(),anchor,now,map,null,"idle_gps_dwell");
+            if(!PlaceVisitEvidence.eligible(stop))return false;
+            PlaceAnchorStore.record(this,new JSONObject().put("stops",new JSONArray().put(stop)));
+            cancelStartCandidate(null);idleStillness.reset();
+            MovementDiagnostics.recordEvent(this,"idle_place_established",
+                    "Supported stationary stay; no journey created.");
+            return true;
+        }catch(org.json.JSONException invalid){return false;}
+    }
+
+    private boolean observePlaceVisit(Location location) {
+        JSONObject stop=activeVisit();
+        if (stop==null) {visitPoints.clear();visitPointStopId="";return false;}
+        requestContext(location);
+        MovementDiagnostics.recordLocation(this, location, "at_place_checking_activity");
+        if(location==null || !location.hasAccuracy() || location.getAccuracy()>35
+                || Math.abs(wallClock.millis()-location.getTime())>60_000L)return true;
+        if(!stop.optString("id").equals(visitPointStopId)) {
+            visitPoints.clear();visitPointStopId=stop.optString("id");
+            restoreVisitBuffer(visitPointStopId);
+        }
+        // A later successful lookup may refine an estimated stop without claiming
+        // a named place when the map provider was unavailable at arrival.
+        if(stop.optJSONArray("site_geometry")==null && contextCache!=null) {
+            ContextMap.Evidence map=contextCache.evidence(stop.optDouble("latitude"),stop.optDouble("longitude"),
+                    (float)stop.optDouble("accuracy_m",25));
+            if(map.destination && map.geometry!=null && map.geometry.length()<=2000) {
+                try {
+                    JSONObject boundary=new JSONObject().put("geometry",map.geometry).put("holes",map.holes);
+                    if(boundary.toString().length()<=100_000) {
+                        PlaceGeometry.attach(stop,map);
+                        stop.put("place_id",map.featureId).put("name",map.name).put("kind",map.kind)
+                                .put("classification","supported").put("confidence","medium")
+                                .put("source","map_footprint_and_dwell");
+                        if(map.holes!=null)stop.put("site_holes",map.holes);
+                        PlaceIdentity.apply(stop);
+                        PlaceAnchorStore.record(this,new JSONObject().put("stops",new JSONArray().put(stop)));
+                    }
+                } catch(org.json.JSONException ignored) {}
+            }
+        }
+        if(!visitPoints.isEmpty()) {
+            long last=visitPoints.get(visitPoints.size()-1).getTime();
+            if(location.getTime()<=last || location.getTime()-last<3_000L)return true;
+            if(location.getTime()-last>120_000L)visitPoints.clear();
+        }
+        visitPoints.add(new Location(location));
+        while(visitPoints.size()>360 || visitPoints.size()>1
+                && location.getTime()-visitPoints.get(0).getTime()>1_200_000L)visitPoints.remove(0);
+        List<FootTraceValidator.Sample> samples=new ArrayList<>();
+        for(int i=0;i<visitPoints.size();i++)samples.add(footSample(visitPoints.get(i),i));
+        PlaceVisitEvidence.Decision decision=PlaceVisitEvidence.inspect(stop,samples,wallClock.millis()-visitActivityHintAt<=600_000L?visitActivityHint:null,wallClock.millis());
+        if(decision==null) {
+            persistVisitBuffer(stop.optString("id"));
+            if(wallClock.millis()-lastVisitDiagnosticAt>=60_000L) {
+                MovementDiagnostics.recordEvent(this,"place_visit_continues",
+                        "boundary="+(stop.optJSONArray("site_geometry")==null?"estimated":"mapped")
+                        +"; buffered_samples="+visitPoints.size());
+                lastVisitDiagnosticAt=wallClock.millis();
+            }
+            return true;
+        }
+        List<Location> seed=new ArrayList<>(visitPoints.subList(decision.startIndex,visitPoints.size()));
+        try {departurePlace=PlaceBoundaryEvidence.departure(stop,footSample(seed.get(0),0));departurePlace.put("departure_reason",decision.reason);}
+        catch(org.json.JSONException ignored) {departurePlace=null;}
+        cancelStartCandidate(null);
+        automaticCapture=true;
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("departed_visit_id",stop.optString("id"))
+                .remove("visit_buffer").apply();
+        visitPoints.clear();visitActivityHint=null;idleStillness.reset();
+        MovementDiagnostics.recordEvent(this,"place_visit_departure",decision.reason+"; mode="+decision.mode);
+        activateCapture(decision.mode,Instant.ofEpochMilli(seed.get(0).getTime()).toString(),seed);
+        if(decision.nextMode!=null && isActive(this)) {
+            int boundary=decision.transitionIndex-decision.startIndex;
+            prepareStationSplit(boundary,boundary,decision.nextMode);
+            finishCapture();
+        }
+        return true;
+    }
+
+    private void restoreVisitBuffer(String stopId) {
+        try {
+            JSONObject saved=new JSONObject(getSharedPreferences(STATE_PREFS,MODE_PRIVATE).getString("visit_buffer",""));
+            JSONArray rows=saved.getJSONArray("samples");
+            long now=wallClock.millis();
+            if(!stopId.equals(saved.optString("stop_id")) || rows.length()>360
+                    || saved.optLong("saved_at")>now || now-saved.optLong("saved_at")>1_200_000L)return;
+            long previous=0;
+            for(int i=0;i<rows.length();i++) {
+                JSONArray row=rows.getJSONArray(i);
+                Location p=new Location("visit_checkpoint");p.setLongitude(row.getDouble(0));p.setLatitude(row.getDouble(1));
+                p.setAccuracy((float)row.getDouble(2));p.setTime(row.getLong(3));
+                if(p.getTime()<=previous||p.getTime()>now||now-p.getTime()>1_200_000L
+                        ||!WalkingStillnessDetector.usable(footSample(p,i))||p.getAccuracy()>35)
+                    throw new java.io.IOException("Invalid visit checkpoint");
+                previous=p.getTime();
+                if(row.optDouble(4,-1)>=0)p.setSpeed((float)row.getDouble(4));
+                visitPoints.add(p);
+            }
+        } catch(Exception invalid) {visitPoints.clear();}
+    }
+
+    private void persistVisitBuffer(String stopId) {
+        if(wallClock.millis()-lastVisitBufferSave<30_000L)return;
+        lastVisitBufferSave=wallClock.millis();
+        try {
+            String snapshot=new JSONObject().put("stop_id",stopId).put("saved_at",wallClock.millis())
+                    .put("samples",sampleCoordinates(visitPoints)).toString();
+            captureIo.execute(()->{
+                JSONObject current=PlaceAnchorStore.last(this);
+                if(isArmed(this)&&!isActive(this) && current!=null && stopId.equals(current.optString("id"))
+                        && !stopId.equals(getSharedPreferences(STATE_PREFS,MODE_PRIVATE).getString("departed_visit_id",""))) {
+                    getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("visit_buffer",snapshot).apply();
+                    try { JourneyStore.appendArrivalDwell(this,current,new JSONObject(snapshot).getJSONArray("samples")); }
+                    catch(Exception error) { android.util.Log.w("Roadprints","Arrival dwell could not be saved",error); }
+                }
+            });
+        } catch(Exception ignored) { /* Missing checkpoint never becomes movement evidence. */ }
+    }
+
+    private void considerArmedMovement(Location location) {
+        requestContext(location);
+        if (isArmed(this) && location != null && location.hasAccuracy() && location.getAccuracy() <= 25
+                && location.hasSpeed() && location.getSpeed() >= 6
+                && Math.abs(wallClock.millis()-location.getTime()) <= 60_000L) {
+            // Buffer vehicle fixes just as we buffer walking, even if the activity
+            // callback is late. IN_VEHICLE remains Unknown until transport is confirmed.
+            armedWalkingPoints.add(new Location(location));
+            List<FootTraceValidator.Sample> evidence = new ArrayList<>();
+            for (int i = 0; i < armedWalkingPoints.size(); i++) evidence.add(footSample(armedWalkingPoints.get(i), i));
+            if (CaptureMovementEvidence.confirmsMode(evidence, "unknown", location.getTime()-120_000L,
+                    wallClock.millis())) beginStartCandidate("unknown");
+            while (armedWalkingPoints.size() > 12) armedWalkingPoints.remove(0);
+            return;
+        }
+        considerArmedWalking(location);
+    }
+
+    private void considerArmedWalking(Location location) {
+        if (!isArmed(this) || ("vehicle".equals(currentActivity)
+                && wallClock.millis()-currentActivityAtMs<120_000L) || location==null
+                || !location.hasAccuracy() || location.getAccuracy()>25
+                || location.hasSpeed()&&location.getSpeed()>3.5f
+                || (!location.hasSpeed()||location.getSpeed()<.5f)&&location.getAccuracy()>15
+                || Math.abs(wallClock.millis()-location.getTime())>60_000L) {
+            armedWalkingPoints.clear(); return;
+        }
+        if(!armedWalkingPoints.isEmpty()) {
+            Location previous=armedWalkingPoints.get(armedWalkingPoints.size()-1);
+            if(location.getTime()<=previous.getTime()) return;
+            if(location.getTime()-previous.getTime()>60_000L
+                    || !FootTraceValidator.plausible(footSample(previous,0),footSample(location,1)))
+                armedWalkingPoints.clear();
+        }
+        armedWalkingPoints.add(new Location(location));
+        while(armedWalkingPoints.size()>1
+                && location.getTime()-armedWalkingPoints.get(0).getTime()>120_000L)
+            armedWalkingPoints.remove(0);
+        if(armedWalkingPoints.size()<3) return;
+        List<FootTraceValidator.Sample> evidence=new ArrayList<>();
+        for(int i=0;i<armedWalkingPoints.size();i++) evidence.add(footSample(armedWalkingPoints.get(i),i));
+        if(!WalkingStartEvidence.confirmed(evidence,wallClock.millis())) return;
+        beginStartCandidate("walking");
+        armedWalkingPoints.clear();
+    }
+
+    private void observeWalkingStillness(Location location) {
+        walkingStillness.accept(footSample(location,points.size()-1),roadMode(mode) || "unknown".equals(mode));
+        long now=wallClock.millis();
+        if(!walkingStillness.quiet(now)) {
+            if(gpsStillness) {
+                stationarySince=0; stationaryAnchor=null; gpsStillness=false;
+                stillActivitySince=0;
+                handler.removeCallbacks(finishIfStill);
+            }
+            return;
+        }
+        FootTraceValidator.Sample anchor=walkingStillness.anchor();
+        if(anchor==null || anchor.index<0 || anchor.index>=points.size()) return;
+        gpsStillness=true; stationarySince=anchor.time;
+        stationaryAnchor=new Location(points.get(anchor.index));
+        handler.removeCallbacks(finishIfStill);
+        handler.postDelayed(finishIfStill,Math.max(1L,
+                STILLNESS_END_THRESHOLD_MS-(now-stationarySince)));
+    }
+
+    private void resolveGpsArrivalBoundary(long now) {
+        if(!automaticCapture || !gpsStillness || !walkingStillness.canFinish(now))return;
+        FootTraceValidator.Sample arrival=walkingStillness.anchor();
+        if(arrival==null || arrival.index<1 || arrival.index>=points.size())return;
+        stationEndIndex=arrival.index;
+        contextReason="arrival_gps_dwell";
+        clearPendingActivityMode();
+        MovementDiagnostics.recordEvent(this,"gps_arrival_confirmed",
+                "Sustained GPS dwell; confirmation observations retained outside the travelled route.");
+    }
+
     private void clearStillnessIfMovementContinues(Location location) {
+        // The corroborated GPS detector owns departure for every mode. A
+        // single fix rejected by that detector must not reset its deadline.
+        if(gpsStillness && walkingStillness.quiet(wallClock.millis()))return;
         if (stationarySince == 0 || stationaryAnchor == null
                 || location == null || !location.hasAccuracy()
                 || location.getAccuracy() > 50f) {
@@ -248,12 +884,15 @@ public class CaptureService extends Service {
         } else {
             accuracyAllowance += 15f;
         }
-        float threshold = Math.max(STILLNESS_MOVEMENT_THRESHOLD_METRES, accuracyAllowance);
+        float threshold = gpsStillness ? STILLNESS_MOVEMENT_THRESHOLD_METRES + accuracyAllowance
+                : Math.max(STILLNESS_MOVEMENT_THRESHOLD_METRES, accuracyAllowance);
         if (stationaryAnchor.distanceTo(location) < threshold) return;
 
         stationarySince = 0;
         stationaryAnchor = null;
         handler.removeCallbacks(finishIfStill);
+        gpsStillness=false;
+        stillActivitySince=0;
         broadcastUpdate("GPS shows movement continuing; keeping the journey open.");
     }
 
@@ -268,11 +907,13 @@ public class CaptureService extends Service {
     }
 
     private String modeForActivity(int activityType) {
-        if (activityType == DetectedActivity.IN_VEHICLE) return "driving";
+        // Android's activity API reports both trains and road vehicles as
+        // IN_VEHICLE. Keep this unclassified until the user confirms transport.
+        if (activityType == DetectedActivity.IN_VEHICLE) return "unknown";
         if (activityType == DetectedActivity.ON_BICYCLE) return "cycling";
+        if (activityType == DetectedActivity.RUNNING) return "running";
         if (activityType == DetectedActivity.WALKING
-                || activityType == DetectedActivity.ON_FOOT
-                || activityType == DetectedActivity.RUNNING) {
+                || activityType == DetectedActivity.ON_FOOT) {
             return "walking";
         }
         return null;
@@ -280,35 +921,377 @@ public class CaptureService extends Service {
 
     private void startCapture(String requestedMode) {
         if (isActive(this)) return;
+        cancelStartCandidate(null);
+        clearDepartureAnchor();
+        automaticCapture = false;
+        departurePlace=null;
+        activateCapture(requestedMode, Instant.now(wallClock).toString(), null);
+    }
 
-        mode = requestedMode == null ? "driving" : requestedMode;
+    private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
+        if (isActive(this)) return;
+        idleStillness.reset();
+        mode = requestedMode == null ? "unknown" : requestedMode;
+        captureInitialMode=mode;captureClassifiedAt=Instant.now(wallClock).toString();
+        lastFerryReviewAt=0;
+        diagnosticUpdatesRegistered = false;
+        MovementDiagnostics.recordEvent(this, "journey_capture_started", "Mode: " + mode);
         journeyId = UUID.randomUUID().toString();
-        startedAt = Instant.now().toString();
+        walkingStillness.reset(); gpsStillness=false; armedWalkingPoints.clear();
+        stillActivitySince=0;
+        startedAt = captureStartedAt == null ? Instant.now(wallClock).toString() : captureStartedAt;
         distanceMetres = 0;
         lastPoint = null;
         stationarySince = 0;
         stationaryAnchor = null;
         points.clear();
-
-        getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
-                .putBoolean(STATE_ACTIVE, true)
-                .putString(STATE_MODE, mode)
-                .apply();
-
-        startForegroundWithNotification();
-        try {
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 2000L, 5f, locationListener);
-            broadcastUpdate("Recording " + mode + " locally...");
-        } catch (SecurityException error) {
-            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
-                    .putBoolean(STATE_ACTIVE, false).apply();
-            broadcastUpdate("Location permission is required to record.");
-            if (!isArmed(this)) {
-                stopForeground(STOP_FOREGROUND_REMOVE);
-                stopSelf();
+        if (initialPoints != null) {
+            for (Location point : initialPoints) {
+                Location copy = new Location(point);
+                points.add(copy);
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(copy, 1), "walking".equals(mode) || "running".equals(mode))) {
+                    if (lastPoint != null) distanceMetres += lastPoint.distanceTo(copy);
+                    lastPoint = copy;
+                }
             }
         }
+        resetStationModel();
+        getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                .putBoolean(STATE_ACTIVE, true).putString(STATE_MODE, mode).apply();
+        if (!startForegroundWithNotification()) return;
+        try {
+            requestCaptureLocationUpdates();
+            scheduleCaptureCheckpoint();
+            android.os.Bundle measurement = new android.os.Bundle();
+            measurement.putString("mode", BetaMeasurement.normalizedMode(mode));
+            measurement.putString("source", "capture");
+            measurement.putString("capture_type", automaticCapture ? "automatic" : "manual");
+            BetaMeasurement.event(this, "capture_started", measurement);
+            broadcastUpdate("Confirmed " + mode + " journey; recording locally...");
+        } catch (SecurityException error) {
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit().putBoolean(STATE_ACTIVE, false).apply();
+            android.os.Bundle failure = new android.os.Bundle();
+            failure.putString("error_category", "permission");
+            BetaMeasurement.event(this, "capture_start_failed", failure);
+            broadcastUpdate("Location permission is required to record.");
+            if (!isArmed(this)) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
+        }
+    }
+
+    private void beginStartCandidate(String requestedMode) {
+        if (isActive(this) || captureFinishing || requestedMode == null) return;
+        if (requestedMode.equals(candidateMode)) return;
+        cancelStartCandidate(null);
+        candidateMode = requestedMode;
+        diagnosticUpdatesRegistered = false;
+        candidateMovementMetres = 0f;
+        candidateMovementLast = null;
+        candidateStartedAtMs = wallClock.millis();
+        MovementDiagnostics.recordEvent(this, "journey_candidate_started", "Mode: " + requestedMode);
+        candidateStationarySince = 0;
+        candidateStationaryAnchor = null;
+        candidateStartedAt = Instant.now(wallClock).toString();
+        candidatePoints.clear();
+        candidateOrigin = recentLastKnownLocation();
+        candidateMovementMetres = 0f;
+        candidateMovementLast = candidateOrigin == null ? null : new Location(candidateOrigin);
+        if (candidateOrigin != null) candidatePoints.add(new Location(candidateOrigin));
+        try {
+            requestLocationUpdatesForMode(candidateMode, true);
+            handler.removeCallbacks(candidateTimeout);
+            handler.postDelayed(candidateTimeout, CaptureStartGate.START_CANDIDATE_TIMEOUT_MS);
+            broadcastUpdate("Checking movement before saving a journey...");
+            if (!armedWalkingPoints.isEmpty()
+                    && Math.abs(wallClock.millis()-armedWalkingPoints.get(armedWalkingPoints.size()-1).getTime())<=60_000L) {
+                List<Location> buffered=new ArrayList<>(armedWalkingPoints);
+                armedWalkingPoints.clear();
+                candidateStartedAtMs=buffered.get(0).getTime();
+                candidateStartedAt=Instant.ofEpochMilli(candidateStartedAtMs).toString();
+                candidatePoints.clear(); candidateOrigin=null; candidateMovementLast=null; candidateMovementMetres=0;
+                for(Location point:buffered) {
+                    if(candidateMode==null) break;
+                    collectCandidateLocation(point);
+                }
+            }
+        } catch (SecurityException error) {
+            cancelStartCandidate("Location permission is required to confirm movement.");
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private Location recentLastKnownLocation() {
+        try {
+            Location gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location network = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Location best = gps;
+            if (network != null && (best == null || network.getTime() > best.getTime())) best = network;
+            if (best == null || !best.hasAccuracy() || best.getAccuracy() > 50f
+                    || !CaptureQualityValidator.fresh(wallClock.millis(),best.getTime(),-1)) return null;
+            return new Location(best);
+        } catch (SecurityException ignored) { return null; }
+    }
+
+    private void collectCandidateLocation(Location location) {
+        if (candidateMode == null || location == null || !location.hasAccuracy()
+                || location.getAccuracy() > 50f || location.getTime() <= 0
+                || !CaptureQualityValidator.fresh(wallClock.millis(),location.getTime(),location.getExtras()==null?-1:location.getExtras().getLong("roadprints_received_age_ms",-1))
+                || (candidateMovementLast != null && location.getTime() <= candidateMovementLast.getTime())) return;
+        if (("walking".equals(candidateMode)||"running".equals(candidateMode)) && candidateMovementLast != null
+                && !FootTraceValidator.plausible(footSample(candidateMovementLast, 0), footSample(location, 1))) {
+            candidatePoints.add(new Location(location));
+            return;
+        }
+        if (candidateStationarySince != 0 && candidateStationaryAnchor != null) {
+            float allowance = location.getAccuracy()
+                    + (candidateStationaryAnchor.hasAccuracy() ? candidateStationaryAnchor.getAccuracy() : 15f);
+            if (candidateStationaryAnchor.distanceTo(location) >= Math.max(STILLNESS_MOVEMENT_THRESHOLD_METRES, allowance)) {
+                clearCandidateStillness();
+            }
+        }
+        if (candidateOrigin == null) {
+            candidateOrigin = new Location(location);
+            candidateMovementLast = new Location(location);
+        }
+        if (candidateMovementLast != null) {
+            float stepMetres = candidateMovementLast.distanceTo(location);
+            float previousAccuracy = candidateMovementLast.hasAccuracy()
+                    ? candidateMovementLast.getAccuracy() : 15f;
+            // Credit only movement beyond GPS uncertainty so small location jitter
+            // does not accumulate into a false journey start.
+            candidateMovementMetres += CaptureStartGate.reliableMovementIncrement(
+                    stepMetres, previousAccuracy, location.getAccuracy());
+        }
+        candidateMovementLast = new Location(location);
+        if (candidatePoints.isEmpty()
+                || candidatePoints.get(candidatePoints.size() - 1).distanceTo(location) >= 5f) {
+            candidatePoints.add(new Location(location));
+            if (candidatePoints.size() > 48) candidatePoints.remove(0);
+        }
+        float fromOrigin = candidateOrigin.distanceTo(location);
+        float fromStop = departureAnchor == null ? Float.MAX_VALUE : departureAnchor.distanceTo(location);
+        boolean walking = "walking".equals(candidateMode)||"running".equals(candidateMode);
+        MovementDiagnostics.recordEvent(this, "journey_candidate_sample",
+                "mode=" + candidateMode
+                        + "; elapsed_ms=" + (wallClock.millis() - candidateStartedAtMs)
+                        + "; path_m=" + Math.round(candidateMovementMetres)
+                        + "; straight_line_m=" + Math.round(fromOrigin)
+                        + "; accuracy_m=" + Math.round(location.getAccuracy())
+                        + "; previous_stop_distance_m=" + (departureAnchor == null ? "none" : Math.round(fromStop))
+                        + "; previous_stop_radius_enforced=" + (!walking && departureAnchor != null)
+                        + "; required_path_m=" + Math.round(CaptureStartGate.minimumMovementMetres(candidateMode)));
+        float confirmedMovement = walking ? candidateMovementMetres : fromOrigin;
+        boolean requireDepartureRadius = !walking && departureAnchor != null;
+        if (!CaptureStartGate.shouldConfirmStart(candidateMode,
+                wallClock.millis() - candidateStartedAtMs,
+                confirmedMovement, requireDepartureRadius, fromStop)) return;
+        List<FootTraceValidator.Sample> startEvidence = new ArrayList<>();
+        for (int i = 0; i < candidatePoints.size(); i++) startEvidence.add(footSample(candidatePoints.get(i), i));
+        if (!CaptureMovementEvidence.hasJourneyMovement(startEvidence, candidateMode)) return;
+        if(walking && departureAnchor!=null && fromStop<=75+location.getAccuracy()
+                && !PedestrianMotionWindow.sustainedDeparture(startEvidence))return;
+        String confirmedMode = candidateMode;
+        String confirmedStart = candidateStartedAt;
+        MovementDiagnostics.recordEvent(this, "journey_candidate_confirmed",
+                "Mode: " + confirmedMode + "; uncertainty-adjusted path distance reached start threshold.");
+        List<Location> seedPoints = new ArrayList<>(candidatePoints);
+        JSONObject origin=PlaceAnchorStore.last(this);
+        List<FootTraceValidator.Sample> departureEvidence=new ArrayList<>();
+        for(int i=0;i<seedPoints.size();i++)departureEvidence.add(footSample(seedPoints.get(i),i));
+        int departureIndex=PlaceBoundaryEvidence.departureIndex(origin,departureEvidence);
+        JSONObject supportedDeparture=null;
+        if(departureIndex>=0) {
+            try {
+                supportedDeparture=PlaceBoundaryEvidence.departure(origin,departureEvidence.get(departureIndex));
+                supportedDeparture.put("candidate_samples",sampleCoordinates(seedPoints));
+                seedPoints=new ArrayList<>(seedPoints.subList(departureIndex,seedPoints.size()));
+                confirmedStart=Instant.ofEpochMilli(seedPoints.get(0).getTime()).toString();
+            } catch(Exception ignored){supportedDeparture=null; /* Preserve the measured candidate when origin is unavailable. */ }
+        }
+        cancelStartCandidate(null);
+        automaticCapture = true;
+        departurePlace=supportedDeparture;
+        activateCapture(confirmedMode, confirmedStart, seedPoints);
+    }
+
+    private void clearCandidateStillness() {
+        candidateStationarySince = 0;
+        candidateStationaryAnchor = null;
+        handler.removeCallbacks(candidateStillTimeout);
+    }
+
+    private void cancelStartCandidate(String message) {
+        handler.removeCallbacks(candidateTimeout);
+        handler.removeCallbacks(candidateStillTimeout);
+        clearCandidateStillness();
+        if (candidateMode == null) return;
+        candidateMode = null;
+        candidateStartedAt = null;
+        candidateStartedAtMs = 0;
+        candidateOrigin = null;
+        candidateMovementLast = null;
+        candidateMovementMetres = 0f;
+        candidatePoints.clear();
+        if (!isActive(this)) removeLocationUpdates();
+        if (message != null && isArmed(this)) {
+            MovementDiagnostics.recordEvent(this, "journey_candidate_rejected", message);
+            broadcastUpdate(message);
+        }
+        if (isArmed(this)) requestDiagnosticLocationUpdates();
+    }
+
+    private void restoreDepartureAnchor() {
+        SharedPreferences preferences = getSharedPreferences(STATE_PREFS, MODE_PRIVATE);
+        if (!preferences.contains("departure_lat_e7") || !preferences.contains("departure_lng_e7")) return;
+        Location anchor = new Location("roadprints_stop");
+        anchor.setLatitude(preferences.getLong("departure_lat_e7", 0L) / 10_000_000.0);
+        anchor.setLongitude(preferences.getLong("departure_lng_e7", 0L) / 10_000_000.0);
+        anchor.setAccuracy(preferences.getFloat("departure_accuracy", 25f));
+        anchor.setTime(preferences.getLong("departure_time",0));
+        departureAnchor = anchor;
+    }
+
+    private void storeDepartureAnchor(Location anchor) {
+        departureAnchor = anchor == null ? null : new Location(anchor);
+        SharedPreferences.Editor editor = getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit();
+        if (anchor == null) {
+            editor.remove("departure_lat_e7").remove("departure_lng_e7").remove("departure_accuracy").remove("departure_time");
+        } else {
+            editor.putLong("departure_lat_e7", Math.round(anchor.getLatitude() * 10_000_000.0))
+                    .putLong("departure_lng_e7", Math.round(anchor.getLongitude() * 10_000_000.0))
+                    .putFloat("departure_accuracy", anchor.hasAccuracy() ? anchor.getAccuracy() : 25f)
+                    .putLong("departure_time",anchor.getTime());
+        }
+        editor.apply();
+    }
+
+    private void clearDepartureAnchor() { storeDepartureAnchor(null); }
+
+    private JSONArray restoredStationState;
+    private JSONArray restoredContextState;
+
+    private void resetStationModel() {
+        contextModel=new ContextJourneyModel();
+        if(restoredContextState!=null) {
+            String[] state=new String[restoredContextState.length()];
+            for(int i=0;i<state.length;i++)state[i]=restoredContextState.optString(i);
+            contextModel.restore(state,points.size());restoredContextState=null;
+        }
+        stationModel = stationCatalog == null || !automaticCapture ? null : new StationJourneyModel(stationCatalog);
+        if (stationModel == null) return;
+        if (restoredStationState != null) {
+            String[] state = new String[restoredStationState.length()];
+            for (int i=0;i<state.length;i++) state[i]=restoredStationState.optString(i);
+            stationModel.restore(state, points.size());
+            restoredStationState = null;
+            currentActivity = stationModel.currentActivity();
+        } else {
+            // A previous confirmed station arrival supplies origin context,
+            // while only new movement belongs to this journey's geometry.
+            if(departureAnchor!=null && departureAnchor.getTime()>0 && !points.isEmpty()
+                    && points.get(0).getTime()-departureAnchor.getTime()<3*60*60*1000L) {
+                stationModel.sample("unknown",0,departureAnchor.getTime(),departureAnchor.getLatitude(),
+                        departureAnchor.getLongitude(),departureAnchor.getAccuracy(),0);
+                stationModel.activity("still",departureAnchor.getTime(),0);
+            }
+            // Seed station origin from reliable retained candidate points, without making a split.
+            for (int i=0;i<points.size();i++) {
+                Location point=points.get(i);
+                stationModel.sample(mode,i,point.getTime(),point.getLatitude(),point.getLongitude(),
+                        point.hasAccuracy()?point.getAccuracy():Float.POSITIVE_INFINITY,
+                        point.hasSpeed()?point.getSpeed():-1);
+            }
+            stationModel.activity(currentActivity,wallClock.millis(),Math.max(0,points.size()-1));
+        }
+    }
+
+    private void evaluateStationLocation(Location location, int index) {
+        if (!automaticCapture || stationModel==null || captureFinishing) return;
+        ContextMap.Evidence map=contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(location.getLatitude(),location.getLongitude(),location.getAccuracy());
+        StationJourneyModel.Decision decision=stationModel.sample(mode,index,location.getTime(),
+                location.getLatitude(),location.getLongitude(),
+                location.hasAccuracy()?location.getAccuracy():Float.POSITIVE_INFINITY,
+                location.hasSpeed()?location.getSpeed():-1,
+                map.rail&&!map.road,map.available);
+        if(decision==null)decision=stationModel.arrivalBoundary(mode,location.getTime());
+        if (decision==null) return;
+        stationEvidenceReason=decision.reason; stationEvidenceCode=decision.stationCode;
+        MovementDiagnostics.recordEvent(this,"station_transition_confirmed",
+                "reason="+decision.reason+"; station="+decision.stationCode+"; next_mode="+decision.nextMode);
+        clearPendingActivityMode();
+        if (decision.endIndex<0) {
+            mode=decision.nextMode;
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
+            return;
+        }
+        if(decision.nextMode==null) {
+            stationEndIndex=Math.min(decision.endIndex,points.size()-1);
+            stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
+        } else prepareStationSplit(decision.endIndex,decision.startIndex,decision.nextMode);
+        finishCapture();
+    }
+
+    private void requestContext(Location location) {
+        if(contextCache==null||!isArmed(this)||location==null||!location.hasAccuracy()||location.getAccuracy()>50)return;
+        boolean needsContext=stationarySince>0 || pendingActivityMode!=null || "unknown".equals(mode)
+                || (location.hasSpeed() && location.getSpeed()<=1.2f);
+        if(!needsContext)return;
+        contextCache.request(location.getLatitude(),location.getLongitude(),()->{
+            MovementDiagnostics.recordEvent(this,"place_context_updated","Shared map context lookup completed; recording remains active.");
+        });
+    }
+
+    private void evaluateContextLocation(Location location,int index) {
+        ContextMap.Evidence evidence=contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(location.getLatitude(),location.getLongitude(),location.getAccuracy());
+        boolean atStation=stationModel!=null&&!stationModel.stationCode().isEmpty();
+        ContextJourneyModel.Decision decision=contextModel.sample(mode,index,location.getTime(),
+                location.getLatitude(),location.getLongitude(),location.hasAccuracy()?location.getAccuracy():Float.POSITIVE_INFINITY,
+                location.hasSpeed()?location.getSpeed():-1,evidence,atStation);
+        if(decision==null)return;
+        contextReason=decision.reason;
+        MovementDiagnostics.recordEvent(this,"context_transition_confirmed",
+                "reason="+decision.reason+"; next_mode="+decision.nextMode+"; boundary_point="+decision.boundary);
+        clearPendingActivityMode();
+        if(promoteProvisionalDepartureMode(decision.nextMode))return;
+        if("unknown".equals(mode) && ("driving".equals(decision.nextMode)||"train".equals(decision.nextMode))) {
+            mode=decision.nextMode;
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
+            return;
+        }
+        if(decision.nextMode==null) {
+            stationEndIndex=Math.min(decision.boundary,points.size()-1);
+            stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
+        } else prepareStationSplit(decision.boundary,decision.boundary,decision.nextMode);
+        finishCapture();
+    }
+
+    private boolean promoteProvisionalDepartureMode(String proposed) {
+        if(!automaticCapture || !("walking".equals(mode)||"running".equals(mode))
+                || !("unknown".equals(proposed)||roadMode(proposed)) || points.size()<3)return false;
+        List<FootTraceValidator.Sample> evidence=new ArrayList<>();
+        for(int i=0;i<points.size();i++)evidence.add(footSample(points.get(i),i));
+        if(points.get(points.size()-1).getTime()-points.get(0).getTime()>120000
+                || !CaptureMovementEvidence.hasVehicleMovement(evidence)
+                || CaptureMovementEvidence.hasInitialFootLeg(evidence))return false;
+        mode=proposed;
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
+        contextReason="provisional_departure_mode_resolved";
+        MovementDiagnostics.recordEvent(this,"departure_mode_resolved",
+                "Vehicle movement resolved the initial provisional label; no supported walking leg was removed.");
+        return true;
+    }
+
+    private void prepareStationSplit(int endIndex,int startIndex,String continueMode) {
+        if (points.size()<2) return;
+        stationEndIndex=Math.max(1,Math.min(endIndex,points.size()-1));
+        int first=Math.max(1,Math.min(startIndex,points.size()-1));
+        nextCapturePoints=new ArrayList<>();
+        for (Location point:points.subList(first,points.size())) nextCapturePoints.add(new Location(point));
+        nextCaptureStartedAt=Instant.ofEpochMilli(nextCapturePoints.get(0).getTime()).toString();
+        nextCaptureMode=continueMode;
+        nextCaptureJourneyId=UUID.randomUUID().toString();
     }
 
     private void finishCapture() {
@@ -316,32 +1299,276 @@ public class CaptureService extends Service {
             if (!isArmed(this)) stopSelf();
             return;
         }
+        if (captureFinishing) return;
 
-        locationManager.removeUpdates(locationListener);
-        boolean savedSuccessfully = false;
-        try {
-            JSONObject journey = new JSONObject();
-            journey.put("journey_id", journeyId);
-            journey.put("revision", 1);
-            journey.put("source", new JSONObject().put("type", "android_activity_capture"));
-            journey.put("started_at", startedAt);
-            journey.put("ended_at", Instant.now().toString());
-            journey.put("timezone", ZoneId.systemDefault().toString());
-            journey.put("mode", mode);
-            journey.put("transport_confirmation", "required");
-            journey.put("distance_meters", distanceMetres);
-            journey.put("route_geometry", new JSONObject()
-                    .put("type", "LineString")
-                    .put("coordinates", coordinates()));
-            journey.put("processing", new JSONObject()
-                    .put("import", "complete")
-                    .put("road_matching", roadMode(mode) ? "pending" : "not_required")
-                    .put("foot_matching", mode.equals("walking") ? "pending" : "not_required"));
-            JourneyStore.save(this, journey);
-            savedSuccessfully = true;
-        } catch (Exception ignored) {
-            // The final UI update below reports the failed save after state cleanup.
-        } finally {
+        captureFinishing = true;
+        captureDiscarded = false;
+        handler.removeCallbacks(checkpointCapture);
+        removeLocationUpdates();
+
+        // Snapshot the small live-capture state quickly on the service thread.
+        // JourneyStore.save is synchronized with archive reads, so serializing and
+        // saving here could block Android's main thread while another screen scans
+        // a large journey archive.
+        final List<Location> fullCapturePoints = new ArrayList<>(points);
+        final boolean stationBoundary = stationEndIndex >= 1 && stationEndIndex < points.size();
+        final List<Location> savedPoints = new ArrayList<>(stationBoundary
+                ? points.subList(0, stationEndIndex + 1) : points);
+        final String savedNextMode = nextCaptureMode, savedNextStartedAt = nextCaptureStartedAt;
+        final String savedNextJourneyId = nextCaptureJourneyId;
+        final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
+        final String savedStationReason = stationEvidenceReason;
+        final String savedStationCode = stationEvidenceCode;
+        final RailStationCatalog savedStationCatalog = stationCatalog;
+        final String savedContextReason=contextReason;
+        final JSONObject savedDeparturePlace=departurePlace;
+        final String savedJourneyId = journeyId;
+        final String savedStartedAt = startedAt;
+        final String savedMode = mode;
+        final boolean savedAutomatic = automaticCapture;
+        final boolean savedRecoveringFinish = recoveringFinish;
+        MovementDiagnostics.recordEvent(this, "journey_capture_finishing",
+                "Mode: " + savedMode + "; GPS points: " + points.size()
+                        + "; distance_m: " + Math.round(distanceMetres));
+        diagnosticUpdatesRegistered = false;
+        final double savedDistanceMetres = stationBoundary ? routeDistanceMetres(savedPoints) : distanceMetres;
+        final int savedGpsPointCount = savedPoints.size();
+        final boolean confirmedStationaryStop = stationarySince != 0
+                && wallClock.millis() - stationarySince
+                >= CaptureStartGate.STILLNESS_END_THRESHOLD_MS;
+        final String savedEndedAt = pendingFinishEndedAt!=null ? pendingFinishEndedAt : stationBoundary
+                ? Instant.ofEpochMilli(savedPoints.get(savedPoints.size()-1).getTime()).toString()
+                : confirmedStationaryStop && stationaryAnchor!=null && stationaryAnchor.getTime()>0
+                    ? Instant.ofEpochMilli(stationaryAnchor.getTime()).toString() : Instant.now(wallClock).toString();
+        final String savedTimezone = ZoneId.systemDefault().toString();
+        final String savedActivityEvidence=activityEvidence.toString();
+        final String savedInitialMode=captureInitialMode, savedClassifiedAt=captureClassifiedAt;
+        final Location savedStopAnchor = stationaryAnchor == null
+                ? null : new Location(stationaryAnchor);
+        final Location stopEvidenceAnchor=stationBoundary?savedPoints.get(savedPoints.size()-1):savedStopAnchor;
+        final long stopConfirmedAt=wallClock.millis();
+        final boolean placeBoundary=savedAutomatic && stopEvidenceAnchor!=null && (
+                gpsStillness&&walkingStillness.canFinish(stopConfirmedAt)
+                || savedContextReason!=null&&(savedContextReason.startsWith("arrival_")||"departure_after_place_stay".equals(savedContextReason))
+                || "station_arrival_waiting".equals(savedStationReason)
+                || "station_gps_alighting".equals(savedStationReason)
+                || "station_alighting_or_transfer".equals(savedStationReason)
+                || "station_boarding_departure".equals(savedStationReason));
+        final ContextMap.Evidence arrivalMap=stopEvidenceAnchor==null||contextCache==null?new ContextMap.Evidence()
+                :contextCache.evidence(stopEvidenceAnchor.getLatitude(),stopEvidenceAnchor.getLongitude(),stopEvidenceAnchor.getAccuracy());
+        broadcastUpdate("Saving journey locally...");
+
+        captureIo.execute(() -> {
+            boolean savedSuccessfully = false;
+            boolean discarded = false;
+            try {
+                // Commit the save/split intent before the archive. A process restart
+                // can replay this transaction without overwriting an already saved leg.
+                JSONObject pending=checkpointSnapshot(savedJourneyId,savedStartedAt,savedMode,
+                        savedDistanceMetres,0,fullCapturePoints);
+                pending.put("automatic_capture",savedAutomatic).put("finish_pending",true)
+                        .put("finish_boundary_index",stationBoundary?savedPoints.size()-1:-1).put("finish_ended_at",savedEndedAt)
+                        .put("context_reason",savedContextReason).put("departure_place",savedDeparturePlace)
+                        .put("station_reason",savedStationReason).put("station_code",savedStationCode);
+                if(savedNextMode!=null&&savedNextPoints!=null&&!savedNextPoints.isEmpty())
+                    pending.put("finish_next",checkpointSnapshot(savedNextJourneyId,savedNextStartedAt,
+                            savedNextMode,routeDistanceMetres(savedNextPoints),0,savedNextPoints));
+                writeCaptureCheckpoint(pending);
+                JSONObject journey = new JSONObject();
+                journey.put("journey_id", savedJourneyId);
+                journey.put("revision", 1);
+                journey.put("source", new JSONObject().put("type", "android_activity_capture"));
+                journey.put("started_at", savedStartedAt);
+                journey.put("ended_at", savedEndedAt);
+                journey.put("timezone", savedTimezone);
+                journey.put("mode", savedMode);
+                journey.put("transport_confirmation", "required");
+                journey.put("capture_intent",savedAutomatic?"automatic":"manual");
+                JSONObject arrivalPlace=placeBoundary?StationPlaceEvidence.arrival(savedJourneyId,
+                        footSample(stopEvidenceAnchor,savedPoints.size()-1),stopConfirmedAt,arrivalMap,savedStationCode,savedContextReason,savedStationCatalog):null;
+                PlaceBoundaryEvidence.attach(journey,savedDeparturePlace,arrivalPlace);
+                if(savedContextReason!=null)journey.put("context_evidence",new JSONObject().put("version",1)
+                        .put("reason",savedContextReason).put("classification","suggested"));
+                if (savedStationReason != null) journey.put("station_evidence", new JSONObject()
+                        .put("reason", savedStationReason).put("station_code", savedStationCode)
+                        .put("classification", "suggested"));
+                journey.put("raw_capture_geometry", new JSONObject()
+                        .put("type", "LineString").put("coordinates", coordinates(fullCapturePoints)));
+                journey.put("raw_capture_samples", sampleCoordinates(fullCapturePoints));
+                List<Location> routePoints = confirmedStationaryStop && !stationBoundary
+                        && !"walking".equals(savedMode) && !"running".equals(savedMode)
+                        ? collapseStationaryEndpoint(savedPoints, savedStopAnchor) : savedPoints;
+                double routeDistance = routePoints.size() < savedPoints.size()
+                        ? routeDistanceMetres(routePoints) : savedDistanceMetres;
+                List<Location> chronologicalPoints = new ArrayList<>();
+                long routeEndTime=Instant.parse(savedEndedAt).toEpochMilli();
+                for (Location point : routePoints) {
+                    if (point.getTime()>routeEndTime) continue;
+                    if(point.getExtras()!=null&&point.getExtras().getLong("roadprints_received_age_ms",-1)>60000)continue;
+                    if (!WalkingStillnessDetector.usable(footSample(point, 0))) continue;
+                    if (!chronologicalPoints.isEmpty()
+                            && point.getTime() <= chronologicalPoints.get(chronologicalPoints.size()-1).getTime()) continue;
+                    chronologicalPoints.add(point);
+                }
+                routePoints = chronologicalPoints;
+                routeDistance = routeDistanceMetres(routePoints);
+                if ("walking".equals(savedMode) || "running".equals(savedMode)) {
+                    List<FootTraceValidator.Sample> evidence = new ArrayList<>();
+                    for (int i = 0; i < routePoints.size(); i++) evidence.add(footSample(routePoints.get(i), i));
+                    WalkingCaptureEvidence.Result prepared=WalkingCaptureEvidence.prepare(evidence);
+                    FootTraceValidator.Result validated = prepared.route;
+                    WalkingArrivalTiming.apply(journey,WalkingArrivalTiming.candidate(evidence,prepared));
+                    journey.put("original_distance_meters", routeDistanceMetres(routePoints));
+                    List<Location> cleaned = new ArrayList<>();
+                    for (FootTraceValidator.Sample point : validated.samples) cleaned.add(routePoints.get(point.index));
+                    routePoints = cleaned;
+                    routeDistance = validated.resolved ? validated.distance : 0;
+                    journey.put("capture_validation", new JSONObject().put("version", 1)
+                            .put("resolved", validated.resolved)
+                            .put("timing_available", validated.timed).put("removed_gps_points", validated.removed)
+                            .put("validated_points", cleaned.size()).put("capture_preparation_version",3)
+                            .put("rejected_fixes",prepared.rejectedFixes).put("stationary_tail_points",prepared.stationaryTail)
+                            .put("stationary_points",prepared.stationaryPoints));
+                    journey.put("distance_source", validated.resolved && validated.timed ? "validated_gps" : "gps_unverified");
+                }
+                JSONArray routeSamples = sampleCoordinates(routePoints);
+                if (!"walking".equals(savedMode) && !"running".equals(savedMode)) {
+                    // Keep the raw recording, but remove individual invalid fixes from
+                    // the derived route. Gap validation still runs on retained samples.
+                    List<Location> reliablePoints = new ArrayList<>();
+                    for (Location point : routePoints) {
+                        Location previous = reliablePoints.isEmpty() ? null : reliablePoints.get(reliablePoints.size()-1);
+                        if (CaptureQualityValidator.reliable(previous == null ? null : footSample(previous, 0),
+                                footSample(point, 1), false)) reliablePoints.add(point);
+                    }
+                    routePoints = reliablePoints;
+                    routeSamples = sampleCoordinates(routePoints);
+                    routeDistance = routeDistanceMetres(routePoints);
+                }
+                List<FootTraceValidator.Sample> movementEvidence = new ArrayList<>();
+                for (int i = 0; i < routePoints.size(); i++) movementEvidence.add(footSample(routePoints.get(i), i));
+                String persistedMode=savedMode;
+                List<FootTraceValidator.Sample> originalEvidence=new ArrayList<>();
+                for(int i=0;i<savedPoints.size();i++)originalEvidence.add(footSample(savedPoints.get(i),i));
+                if(savedAutomatic && ("walking".equals(savedMode)||"running".equals(savedMode))
+                        && CaptureMovementEvidence.hasVehicleMovement(originalEvidence)) {
+                    // Failed segmentation must remain reviewable, with no foot
+                    // credit for the vehicle travel removed by the foot validator.
+                    persistedMode="unknown";journey.put("mode",persistedMode);
+                    journey.put("context_evidence",new JSONObject().put("version",1).put("reason","mixed_mode_requires_review").put("classification","uncertain"));
+                    routePoints=new ArrayList<>();movementEvidence=new ArrayList<>();
+                    for(Location point:savedPoints) {
+                        Location previous=routePoints.isEmpty()?null:routePoints.get(routePoints.size()-1);
+                        if(CaptureQualityValidator.reliable(previous==null?null:footSample(previous,0),footSample(point,1),false))routePoints.add(point);
+                    }
+                    for(int i=0;i<routePoints.size();i++)movementEvidence.add(footSample(routePoints.get(i),i));
+                    routeSamples=sampleCoordinates(routePoints);routeDistance=routeDistanceMetres(routePoints);
+                }
+                boolean internalResort=savedAutomatic && ("walking".equals(savedMode)||"running".equals(savedMode))
+                        && !(savedDeparturePlace!=null&&savedDeparturePlace.optString("departure_reason").matches("purposeful_activity_within_place|sustained_activity_within_place"))
+                        && (DestinationJourneyEvidence.internal(arrivalPlace,routeSamples)
+                            ||DestinationJourneyEvidence.internal(savedDeparturePlace,routeSamples)
+                            ||ResortJourneyPolicy.internal(new DestinationCatalog(getApplicationContext()),routeSamples));
+                if(internalResort) {
+                    discarded=true;
+                    if(arrivalPlace!=null)PlaceAnchorStore.record(getApplicationContext(),journey);
+                    InternalMovementStore.save(getApplicationContext(),journey);
+                } else if (savedAutomatic && !CaptureMovementEvidence.hasJourneyMovement(movementEvidence, persistedMode)) {
+                    discarded = true;
+                    // A false start can still establish a real stay. Preserve
+                    // its origin evidence without creating a phantom journey.
+                    if(arrivalPlace!=null)PlaceAnchorStore.record(getApplicationContext(),journey);
+                    MovementDiagnostics.recordEvent(getApplicationContext(), "capture_rejected_no_movement",
+                            "Mode: " + savedMode + "; cleaned recording did not establish a journey.");
+                    // Save any pending handoff before retiring the rejected leg, too.
+                } else {
+                journey.put("activity_recognition_history",new JSONArray(savedActivityEvidence));
+                journey.put("capture_decisions",new JSONObject().put("initial_mode",savedInitialMode==null?JSONObject.NULL:savedInitialMode)
+                        .put("classified_at_utc",savedClassifiedAt==null?JSONObject.NULL:savedClassifiedAt).put("mode_at_save",savedMode)
+                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",savedStationReason!=null?savedStationReason:savedContextReason!=null?savedContextReason:"stop_or_manual")
+                        .put("confidence","ferry".equals(savedMode)?"supported_corridor":"requires_transport_confirmation"));
+                journey.put("ferry_evidence",FerryJourneyEvidence.inspect(routeSamples).json());
+                journey.put("capture_route_samples", routeSamples);
+                JSONObject quality = CaptureQualityValidator.inspect(routeSamples, "walking".equals(persistedMode) || "running".equals(persistedMode));
+                journey.put("recording_quality", quality);
+                if (!quality.optBoolean("resolved")) routeDistance = 0;
+                journey.put("distance_meters", routeDistance);
+                journey.put("gps_point_count", savedGpsPointCount);
+                journey.put("route_geometry", new JSONObject()
+                        .put("type", "LineString")
+                        .put("coordinates", coordinates(routePoints)));
+                journey.put("processing", new JSONObject()
+                        .put("import", "complete")
+                        .put("road_matching", roadMode(persistedMode) ? "pending" : "not_required")
+                        .put("foot_matching", ("walking".equals(persistedMode) || "running".equals(persistedMode)) ? "pending" : "not_required")
+                        .put("cycle_matching", MatchingCoordinator.isCycle(persistedMode) ? "pending" : "not_required"));
+                if(!savedRecoveringFinish || JourneyStore.get(getApplicationContext(),savedJourneyId)==null)
+                    JourneyStore.save(getApplicationContext(), journey);
+                android.os.Bundle measurement = BetaMeasurement.journeyParameters(journey);
+                measurement.putLong("gps_points", savedGpsPointCount);
+                BetaMeasurement.event(getApplicationContext(), "capture_saved", measurement);
+                MovementDiagnostics.recordEvent(getApplicationContext(), "journey_saved",
+                        "Mode: " + savedMode + "; GPS points: " + savedGpsPointCount
+                                + "; distance_m: " + Math.round(routeDistance));
+                if (roadMode(persistedMode) || "walking".equals(persistedMode) || "running".equals(persistedMode) || MatchingCoordinator.isCycle(persistedMode)) {
+                    MatchingCoordinator.get(getApplicationContext()).startCaptured(savedJourneyId);
+                }
+                }
+                if (savedNextMode != null && savedNextPoints != null && !savedNextPoints.isEmpty()) {
+                    // Persist the next leg before clearing the old live state. A restart during
+                    // the handoff recovers the new leg using the same journey ID.
+                    JSONObject handoff = checkpointSnapshot(savedNextJourneyId, savedNextStartedAt,
+                            savedNextMode, routeDistanceMetres(savedNextPoints), 0, savedNextPoints);
+                    handoff.put("automatic_capture", true);
+                    handoff.put("station_reason", savedStationReason);
+                    handoff.put("station_code", savedStationCode);
+                    if(arrivalPlace!=null && !savedNextPoints.isEmpty())
+                        handoff.put("departure_place",PlaceBoundaryEvidence.departure(arrivalPlace,footSample(savedNextPoints.get(0),0)));
+                    FileOutputStream output = null;
+                    try {
+                        output = checkpointFile.startWrite();
+                        output.write(handoff.toString().getBytes(StandardCharsets.UTF_8));
+                        checkpointFile.finishWrite(output);
+                    } catch (Exception error) {
+                        if (output != null) checkpointFile.failWrite(output);
+                        throw error;
+                    }
+                } else checkpointFile.delete();
+                savedSuccessfully = true;
+            } catch (Exception ignored) {
+                // Report the failure on the service thread after the disk operation.
+            }
+
+            final boolean completed = savedSuccessfully;
+            final boolean rejected = discarded;
+            handler.post(() -> {
+                captureDiscarded = rejected;
+                completeCaptureSave(completed, savedStopAnchor);
+            });
+        });
+    }
+
+    private void completeCaptureSave(boolean savedSuccessfully, Location savedStopAnchor) {
+        captureFinishing = false;
+        recoveringFinish = false;
+        pendingFinishEndedAt=null;
+        if (savedSuccessfully) {
+            String continueMode = nextCaptureMode;
+            List<Location> continuePoints = nextCapturePoints;
+            String continueStartedAt = nextCaptureStartedAt;
+            String continueJourneyId = nextCaptureJourneyId;
+            String continueStationCode = stationEvidenceCode;
+            String continueStationReason = stationEvidenceReason;
+            JSONObject continueDeparture=null;
+            if(continueMode!=null) {
+                JSONObject stop=PlaceAnchorStore.last(this);
+                if(stop!=null && journeyId!=null && journeyId.equals(stop.optString("journey_id")) && continuePoints!=null&&!continuePoints.isEmpty())
+                    try {continueDeparture=PlaceBoundaryEvidence.departure(stop,footSample(continuePoints.get(0),0));}catch(org.json.JSONException ignored){}
+            }
+            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
+            stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null;
+            contextReason=null;
+            departurePlace=null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
                     .putBoolean(STATE_ACTIVE, false)
                     .remove(STATE_MODE)
@@ -354,19 +1581,52 @@ public class CaptureService extends Service {
             lastPoint = null;
             stationarySince = 0;
             stationaryAnchor = null;
-
-            if (isArmed(this)) {
-                updateNotification();
+            automaticCapture = false;
+            gpsStillness = false;
+            stillActivitySince = 0;
+            walkingStillness.reset();
+            clearPendingActivityMode();
+            stationModel = null;
+            handler.removeCallbacks(finishIfStill);
+            if (continueMode != null) {
+                clearDepartureAnchor();
+                automaticCapture = true;
+                departurePlace=continueDeparture;
+                activateCapture(continueMode, continueStartedAt, continuePoints);
+                stationEvidenceCode = continueStationCode;
+                stationEvidenceReason = continueStationReason;
+                if (continueJourneyId != null) journeyId = continueJourneyId;
+                handler.removeCallbacks(checkpointCapture);
+                handler.post(checkpointCapture);
+                broadcastUpdate("Started a new " + continueMode + " journey leg.");
+            } else {
+                storeDepartureAnchor(savedStopAnchor);
+                if (isArmed(this)) {
+                    updateNotification();
+                    refreshDiagnosticLocationUpdates();
+                }
             }
-
-            // Broadcast after clearing active state so the UI refreshes the saved
-            // journey count immediately instead of treating this as a live update.
-            broadcastUpdate(savedSuccessfully
-                    ? "Journey saved locally. Review its transport type next time."
-                    : "Could not save journey.");
+            broadcastUpdate(captureDiscarded
+                    ? "No journey saved: only brief or stationary movement. Waiting for your next journey..."
+                    : "Journey saved locally. Review its transport type next time.");
             if (!isArmed(this)) {
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
+            }
+        } else {
+            nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
+            stationEndIndex = -1;
+            android.os.Bundle failure = new android.os.Bundle();
+            failure.putString("mode", BetaMeasurement.normalizedMode(mode));
+            failure.putString("source", "capture");
+            BetaMeasurement.event(this, "capture_save_failed", failure);
+            broadcastUpdate("Could not save journey. It is still open; tap Stop to retry.");
+            // Retain the points and recording state so a later Stop can retry.
+            try {
+                requestCaptureLocationUpdates();
+                scheduleCaptureCheckpoint();
+            } catch (SecurityException ignored) {
+                broadcastUpdate("Could not resume location updates after the save failed.");
             }
         }
     }
@@ -375,14 +1635,376 @@ public class CaptureService extends Service {
         return "driving".equals(journeyMode) || "bus".equals(journeyMode);
     }
 
-    private JSONArray coordinates() throws org.json.JSONException {
+    @SuppressLint("MissingPermission")
+    private void requestCaptureLocationUpdates() {
+        requestLocationUpdatesForMode(mode, false);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void refreshSamplingSubscriptions() {
+        removeLocationUpdates();
+        diagnosticUpdatesRegistered = false;
+        if (isActive(this)) requestCaptureLocationUpdates();
+        else if (candidateMode != null) requestLocationUpdatesForMode(candidateMode, true);
+        else refreshDiagnosticLocationUpdates();
+    }
+
+    private void removeLocationUpdates() {
+        locationManager.removeUpdates(locationListener);
+        if (fusedClient != null) fusedClient.removeLocationUpdates(fusedCallback)
+                .addOnFailureListener(error -> MovementDiagnostics.recordEvent(this,
+                        "fused_location_remove_failed", error.getClass().getSimpleName()));
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestFusedUpdates(long interval) {
+        if (fusedClient == null) return;
+        LocationRequest request = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
+                .setMinUpdateIntervalMillis(interval).setMinUpdateDistanceMeters(0f)
+                .setMaxUpdateDelayMillis(0L).setMaxUpdateAgeMillis(0L)
+                .setWaitForAccurateLocation(false).build();
+        try {
+            fusedClient.requestLocationUpdates(request, fusedCallback, Looper.getMainLooper())
+                    .addOnSuccessListener(unused -> MovementDiagnostics.recordEvent(this,
+                            "fused_location_subscribed", "interval_ms=" + interval))
+                    .addOnFailureListener(error -> MovementDiagnostics.recordEvent(this,
+                            "fused_location_subscription_failed", error.getClass().getSimpleName()));
+        } catch (RuntimeException error) {
+            MovementDiagnostics.recordEvent(this, "fused_location_subscription_failed",
+                    error.getClass().getSimpleName());
+        }
+    }
+
+    private void recordSamplingState(String reason) {
+        if (!MovementDiagnostics.isRunning(this)) return;
+        android.os.PowerManager power = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+        long now = android.os.SystemClock.elapsedRealtime();
+        String detail = "reason=" + reason + "; version=" + BuildConfig.VERSION_NAME
+                + "; active=" + isActive(this) + "; candidate=" + candidateMode
+                + "; callback_age_ms=" + (lastLocationCallbackAt == 0 ? "none" : now-lastLocationCallbackAt)
+                + "; accurate_fix_age_ms=" + (now-lastReliableSampleAt)
+                + "; gps_enabled=" + locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                + "; network_enabled=" + locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                + "; fine_permission=" + (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                + "; background_permission=" + (Build.VERSION.SDK_INT < 29 ||
+                    checkSelfPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                + "; screen_interactive=" + (power != null && power.isInteractive())
+                + "; power_save=" + (power != null && power.isPowerSaveMode())
+                + "; device_idle=" + (power != null && power.isDeviceIdleMode())
+                + "; battery_exempt=" + (power != null && power.isIgnoringBatteryOptimizations(getPackageName()));
+        MovementDiagnostics.recordEvent(this, "sampling_state", detail);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestLocationUpdatesForMode(String requestedMode, boolean candidate) {
+        boolean road = roadMode(requestedMode);
+        long interval = candidate ? 5_000L : (road ? ROAD_CAPTURE_INTERVAL_MS : WALK_CAPTURE_INTERVAL_MS);
+        // Time-based fixes retain evidence during stops and make sampling gaps observable.
+        float minDistance = 0f;
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                interval, minDistance, locationListener);
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    15_000L, 0f, locationListener);
+        requestFusedUpdates(interval);
+        recordSamplingState(candidate ? "candidate_subscription" : "capture_subscription");
+        diagnosticUpdatesRegistered = false;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void refreshDiagnosticLocationUpdates() {
+        if (isArmed(this)
+                && !isActive(this) && candidateMode == null) {
+            requestDiagnosticLocationUpdates();
+        } else {
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            if (!isArmed(this)
+                    && !isActive(this) && candidateMode == null && diagnosticUpdatesRegistered) {
+                removeLocationUpdates();
+                diagnosticUpdatesRegistered = false;
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestDiagnosticLocationUpdates() {
+        if (!isArmed(this)
+                || isActive(this) || candidateMode != null || diagnosticUpdatesRegistered) return;
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    30_000L, 10f, locationListener);
+            requestFusedUpdates(30_000L);
+            recordSamplingState("armed_subscription");
+            diagnosticUpdatesRegistered = true;
+            handler.removeCallbacks(diagnosticWindowExpiry);
+            if (MovementDiagnostics.isRunning(this)) handler.postDelayed(diagnosticWindowExpiry,
+                    Math.max(1_000L, MovementDiagnostics.until(this) - wallClock.millis()));
+            MovementDiagnostics.recordEvent(this, "movement_sampling_started",
+                    "GPS samples requested at most every 30 seconds while waiting for movement.");
+        } catch (SecurityException error) {
+            MovementDiagnostics.recordEvent(this, "location_updates_failed",
+                    "GPS permission: " + error.getClass().getSimpleName());
+        }
+    }
+
+    private void scheduleCaptureCheckpoint() {
+        handler.removeCallbacks(checkpointCapture);
+        handler.postDelayed(checkpointCapture, CHECKPOINT_INTERVAL_MS);
+    }
+
+    private final Runnable checkpointCapture = new Runnable() {
+        @Override public void run() {
+            if (!isActive(CaptureService.this) || captureFinishing) return;
+            if (!checkpointPending) {
+                checkpointPending = true;
+                final List<Location> savedPoints = new ArrayList<>(points);
+                final String savedJourneyId = journeyId;
+                final String savedStartedAt = startedAt;
+                final String savedMode = mode;
+                final double savedDistanceMetres = distanceMetres;
+                final long savedStationarySince = stationarySince;
+                final boolean savedAutomatic = automaticCapture;
+        final boolean savedRecoveringFinish = recoveringFinish;
+                final boolean savedGpsStillness = gpsStillness;
+                final String savedStationReason = stationEvidenceReason, savedStationCode = stationEvidenceCode;
+                final String[] stationState = stationModel == null ? null : stationModel.checkpoint();
+                final String[] contextState=contextModel.checkpoint();
+                final String savedContextReason=contextReason;
+                final JSONObject savedDeparturePlace=departurePlace;
+                captureIo.execute(() -> {
+                    FileOutputStream output = null;
+                    try {
+                        JSONObject snapshot = checkpointSnapshot(savedJourneyId, savedStartedAt,
+                                savedMode, savedDistanceMetres, savedStationarySince, savedPoints);
+                        snapshot.put("automatic_capture", savedAutomatic);
+                        snapshot.put("gps_stillness", savedGpsStillness);
+                        snapshot.put("station_reason", savedStationReason);
+                        snapshot.put("station_code", savedStationCode);
+                        snapshot.put("context_state",new JSONArray(Arrays.asList(contextState)));
+                        snapshot.put("context_reason",savedContextReason);
+                        snapshot.put("departure_place",savedDeparturePlace);
+                        if (stationState != null) snapshot.put("station_state", new JSONArray(Arrays.asList(stationState)));
+                        output = checkpointFile.startWrite();
+                        output.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));
+                        checkpointFile.finishWrite(output);
+                    } catch (Exception ignored) {
+                        if (output != null) checkpointFile.failWrite(output);
+                        // Keep the prior atomic checkpoint if this write fails.
+                    } finally {
+                        handler.post(() -> checkpointPending = false);
+                    }
+                });
+            }
+            handler.postDelayed(this, CHECKPOINT_INTERVAL_MS);
+        }
+    };
+
+    private JSONObject checkpointSnapshot(String savedJourneyId, String savedStartedAt,
+            String savedMode, double savedDistanceMetres, long savedStationarySince,
+            List<Location> savedRoutePoints) throws org.json.JSONException {
+        JSONObject snapshot = new JSONObject();
+        snapshot.put("journey_id", savedJourneyId);
+        snapshot.put("started_at", savedStartedAt);
+        snapshot.put("mode", savedMode);
+        boolean current=java.util.Objects.equals(savedJourneyId,journeyId);
+        snapshot.put("capture_initial_mode",current?captureInitialMode:savedMode);
+        snapshot.put("capture_classified_at",current?captureClassifiedAt:Instant.now(wallClock).toString());
+        snapshot.put("distance_meters", savedDistanceMetres);
+        snapshot.put("stationary_since", savedStationarySince);
+        JSONArray savedPoints = new JSONArray();
+        for (Location point : savedRoutePoints) {
+            savedPoints.put(new JSONArray()
+                    .put(point.getLongitude())
+                    .put(point.getLatitude())
+                    .put(point.hasAccuracy() ? point.getAccuracy() : 0)
+                    .put(point.getTime())
+                    .put(point.hasSpeed() ? point.getSpeed() : -1)
+                    .put(point.getProvider()).put(point.getElapsedRealtimeNanos())
+                    .put(point.getExtras()==null?-1:point.getExtras().getLong("roadprints_received_age_ms",-1)));
+        }
+        snapshot.put("points", savedPoints);
+        return snapshot;
+    }
+
+    private void writeCaptureCheckpoint(JSONObject snapshot) throws Exception {
+        FileOutputStream output=null;
+        try {
+            output=checkpointFile.startWrite();
+            output.write(snapshot.toString().getBytes(StandardCharsets.UTF_8));
+            checkpointFile.finishWrite(output);
+        } catch(Exception error) {
+            if(output!=null)checkpointFile.failWrite(output);
+            throw error;
+        }
+    }
+
+    private void restoreActiveCapture() {
+        try (InputStream input = checkpointFile.openRead();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(input,
+                     StandardCharsets.UTF_8))) {
+            StringBuilder json = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) json.append(line);
+            JSONObject snapshot = new JSONObject(json.toString());
+            JSONArray savedPoints = snapshot.optJSONArray("points");
+            if (savedPoints == null || savedPoints.length() == 0
+                    || snapshot.optString("journey_id", "").isEmpty()) {
+                throw new IllegalStateException("Incomplete capture checkpoint");
+            }
+
+            journeyId = snapshot.optString("journey_id");
+            startedAt = snapshot.optString("started_at");
+            mode = snapshot.optString("mode", "walking");
+            captureInitialMode=snapshot.optString("capture_initial_mode",null);
+            captureClassifiedAt=snapshot.optString("capture_classified_at",null);
+            distanceMetres = snapshot.optDouble("distance_meters", 0);
+            stationarySince = snapshot.optLong("stationary_since", 0);
+            automaticCapture = snapshot.optBoolean("automatic_capture", true);
+            restoredStationState = snapshot.optJSONArray("station_state");
+            restoredContextState=snapshot.optJSONArray("context_state");
+            contextReason=snapshot.isNull("context_reason")?null:snapshot.optString("context_reason",null);
+            departurePlace=snapshot.optJSONObject("departure_place");
+            stationEvidenceReason = snapshot.isNull("station_reason") ? null : snapshot.optString("station_reason", null);
+            stationEvidenceCode = snapshot.isNull("station_code") ? null : snapshot.optString("station_code", null);
+            points.clear();
+            for (int index = 0; index < savedPoints.length(); index++) {
+                JSONArray coordinate = savedPoints.optJSONArray(index);
+                if (coordinate == null || coordinate.length() < 2) continue;
+                Location point = new Location(coordinate.optString(5,"checkpoint"));
+                point.setLongitude(coordinate.optDouble(0));
+                point.setLatitude(coordinate.optDouble(1));
+                if (coordinate.length() > 2 && coordinate.optDouble(2) > 0) {
+                    point.setAccuracy((float) coordinate.optDouble(2));
+                }
+                if (coordinate.length() > 3) point.setTime(coordinate.optLong(3));
+                if (coordinate.length() > 4 && coordinate.optDouble(4, -1) >= 0)
+                    point.setSpeed((float)coordinate.optDouble(4));
+                if(coordinate.optLong(6)>0)point.setElapsedRealtimeNanos(coordinate.optLong(6));
+                android.os.Bundle metadata=new android.os.Bundle();metadata.putLong("roadprints_received_age_ms",coordinate.optLong(7,-1));point.setExtras(metadata);
+                points.add(point);
+            }
+            if (points.isEmpty()) throw new IllegalStateException("No saved GPS points");
+            lastPoint = null;
+            distanceMetres = 0;
+            for (Location point : points) {
+                if (CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                        footSample(point, 1), "walking".equals(mode) || "running".equals(mode))) {
+                    if (lastPoint != null) distanceMetres += lastPoint.distanceTo(point);
+                    lastPoint = new Location(point);
+                }
+            }
+
+            walkingStillness.reset(); gpsStillness=snapshot.optBoolean("gps_stillness", false);
+            if(automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode))) {
+                for(int i=0;i<points.size();i++) walkingStillness.accept(footSample(points.get(i),i),roadMode(mode) || "unknown".equals(mode));
+                if(walkingStillness.quiet(wallClock.millis())) {
+                    FootTraceValidator.Sample anchor=walkingStillness.anchor();
+                    gpsStillness=true; stationarySince=anchor.time;
+                    stationaryAnchor=new Location(points.get(anchor.index));
+                }
+            }
+            if (!startForegroundWithNotification()) return;
+            if(snapshot.optBoolean("finish_pending")) {
+                recoveringFinish=true;
+                pendingFinishEndedAt=snapshot.optString("finish_ended_at",null);
+                stationEndIndex=snapshot.optInt("finish_boundary_index",-1);
+                JSONObject next=snapshot.optJSONObject("finish_next");
+                if(next!=null) {
+                    nextCaptureMode=next.getString("mode");nextCaptureStartedAt=next.getString("started_at");
+                    nextCaptureJourneyId=next.getString("journey_id");nextCapturePoints=new ArrayList<>();
+                    JSONArray rows=next.getJSONArray("points");
+                    for(int i=0;i<rows.length();i++) {
+                        JSONArray row=rows.getJSONArray(i);Location point=new Location("handoff_checkpoint");
+                        point.setLongitude(row.getDouble(0));point.setLatitude(row.getDouble(1));
+                        point.setAccuracy((float)row.getDouble(2));point.setTime(row.getLong(3));
+                        if(row.optDouble(4,-1)>=0)point.setSpeed((float)row.getDouble(4));
+                        nextCapturePoints.add(point);
+                    }
+                }
+                finishCapture();return;
+            }
+            scheduleCaptureCheckpoint();
+            if (stationarySince > 0) {
+                long remaining = Math.max(1L, STILLNESS_END_THRESHOLD_MS
+                        - (wallClock.millis() - stationarySince));
+                handler.postDelayed(finishIfStill, remaining);
+            }
+            try {
+                requestCaptureLocationUpdates();
+                broadcastUpdate("Recovered the active journey from its local checkpoint.");
+            } catch (SecurityException error) {
+                broadcastUpdate("Journey recovered; location permission is needed to resume tracking.");
+            }
+        } catch (Exception error) {
+            getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
+                    .putBoolean(STATE_ACTIVE, false)
+                    .remove(STATE_MODE)
+                    .apply();
+            checkpointFile.delete();
+            broadcastUpdate("The previous recording could not be recovered.");
+        }
+    }
+
+    static FootTraceValidator.Sample footSample(Location point, int index) {
+        return new FootTraceValidator.Sample(point.getLongitude(), point.getLatitude(),
+                point.hasAccuracy() ? point.getAccuracy() : 0, point.getTime(),
+                point.hasSpeed() ? point.getSpeed() : -1, index);
+    }
+
+    private JSONArray sampleCoordinates(List<Location> routePoints) throws Exception {
+        JSONArray samples = new JSONArray();
+        for (int i = 0; i < routePoints.size(); i++) {
+            Location p=routePoints.get(i);
+            samples.put(WalkingJourneyPreparation.sampleJson(footSample(p,i)).put(p.getProvider()).put(p.getElapsedRealtimeNanos())
+                    .put(p.getExtras()==null?-1:p.getExtras().getLong("roadprints_received_age_ms",-1)));
+        }
+        return samples;
+    }
+
+    private JSONArray coordinates(List<Location> routePoints) throws org.json.JSONException {
         JSONArray coordinates = new JSONArray();
-        for (Location point : points) {
+        for (Location point : routePoints) {
             coordinates.put(new JSONArray()
                     .put(point.getLongitude())
                     .put(point.getLatitude()));
         }
         return coordinates;
+    }
+
+    static List<Location> collapseStationaryEndpoint(List<Location> routePoints, Location stopAnchor) {
+        List<Location> result = new ArrayList<>();
+        if (routePoints == null) return result;
+        if (stopAnchor == null || routePoints.size() < 4) {
+            result.addAll(routePoints);
+            return result;
+        }
+        float radius = stopAnchor.hasAccuracy()
+                ? Math.max(20f, Math.min(35f, stopAnchor.getAccuracy()))
+                : 25f;
+        int suffixStart = routePoints.size();
+        for (int index = routePoints.size() - 1; index >= 0; index--) {
+            Location point = routePoints.get(index);
+            if (point == null || point.distanceTo(stopAnchor) > radius) break;
+            suffixStart = index;
+        }
+        int clusteredPoints = routePoints.size() - suffixStart;
+        if (suffixStart == 0 || clusteredPoints < 3) {
+            result.addAll(routePoints);
+            return result;
+        }
+        for (int index = 0; index < suffixStart; index++) result.add(routePoints.get(index));
+        result.add(new Location(stopAnchor));
+        return result;
+    }
+
+    private static double routeDistanceMetres(List<Location> routePoints) {
+        double distance = 0;
+        for (int index = 1; index < routePoints.size(); index++) {
+            distance += routePoints.get(index - 1).distanceTo(routePoints.get(index));
+        }
+        return distance;
     }
 
     private void removeActivityUpdates() {
@@ -400,18 +2022,39 @@ public class CaptureService extends Service {
         }
         // Clear both APIs so upgrades from v0.4.3 cannot leave an old
         // sampling subscription delivering callbacks to this receiver.
-        activityClient.removeActivityUpdates(pendingIntent);
-        activityClient.removeActivityTransitionUpdates(pendingIntent);
+        try {
+            activityClient.removeActivityUpdates(pendingIntent);
+            activityClient.removeActivityTransitionUpdates(pendingIntent);
+        } catch (SecurityException error) {
+            // Permission can be revoked while tracking is armed. Cleanup must
+            // still finish instead of crashing when the service is stopped.
+            android.util.Log.w("Roadprints", "Activity permission revoked during cleanup", error);
+        }
         activityPendingIntent = null;
     }
 
-    private void startForegroundWithNotification() {
+    private boolean startForegroundWithNotification() {
+        try {
         Notification notification = buildNotification();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
         } else {
             startForeground(NOTIFICATION_ID, notification);
+        }
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().remove("tracking_blocked").apply();
+        return true;
+        } catch (RuntimeException error) {
+            if (!(error instanceof SecurityException)
+                    && !"ForegroundServiceStartNotAllowedException".equals(error.getClass().getSimpleName())) throw error;
+            // Retain the last checkpoint and active preference for a visible-app
+            // retry. Never turn a permission/start refusal into data deletion.
+            getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit()
+                    .putString("tracking_blocked",error.getClass().getSimpleName()).apply();
+            MovementDiagnostics.recordEvent(this,"tracking_start_blocked",error.getClass().getSimpleName());
+            broadcastUpdate("Tracking paused by Android. Open Roadprints to resume; check background location access in Permissions.");
+            stopSelf();
+            return false;
         }
     }
 
@@ -465,12 +2108,19 @@ public class CaptureService extends Service {
 
     @Override
     public void onDestroy() {
+        serviceDestroyed = true;
+        MovementDiagnostics.recordEvent(this, "capture_service_destroyed", "active=" + isActive(this));
         removeActivityUpdates();
-        if (isActive(this)) {
-            try {
-                locationManager.removeUpdates(locationListener);
-            } catch (Exception ignored) {}
-        }
+        handler.removeCallbacks(samplingWatchdog);
+        handler.removeCallbacks(checkpointCapture);
+        handler.removeCallbacks(diagnosticWindowExpiry);
+        clearPendingActivityMode();
+        handler.removeCallbacks(candidateTimeout);
+        handler.removeCallbacks(candidateStillTimeout);
+        handler.removeCallbacks(finishIfStill);
+        try { removeLocationUpdates(); } catch (Exception ignored) {}
+        captureIo.shutdown();
+        if(contextCache!=null)contextCache.close();
         super.onDestroy();
     }
 
