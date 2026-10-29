@@ -28,7 +28,7 @@ public class NcnBindingCandidateTest {
         Context app=RuntimeEnvironment.getApplication();File dir=NcnCatalogueFiles.directory(app);
         Files.copy(input.toPath(),new File(dir,manifest.getString("sha256")+".db").toPath(),StandardCopyOption.REPLACE_EXISTING);
         NcnCatalogueFiles.write(new File(dir,"active.json"),manifest);NcnCatalogue.invalidate();
-        catalogue=NcnCatalogue.load(app());assertEquals(manifest.getString("sha256"),catalogue.version);
+        catalogue=NcnCatalogue.load(app);assertEquals(manifest.getString("sha256"),catalogue.version);
     }
     private NcnCatalogue.Path source()throws Exception {
         return catalogue.way("1050757473").stream().filter(p->p.route.equals("NCN:1")).findFirst().get();
