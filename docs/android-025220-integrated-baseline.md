@@ -47,7 +47,7 @@ Recomputed invariants for the initial candidate:
 - **Zero Android path/blob mismatches** against packaged source.
 - **Zero non-Android path/blob mismatches** against original production main.
 
-Final main after #234 still has **zero Android path/blob mismatches** against
+Final main after the preservation merges still has **zero Android path/blob mismatches** against
 packaged source, and **zero top-level backend Python blob changes** against the
 pre-integration production main. Later candidate CI commits added only the
 validation workflow needed to restore/verify offline reference prerequisites.
@@ -104,8 +104,18 @@ router tests were preserved and are now integrated through #234. See the
 are retained on its historical branch; this curated record preserves their durable
 baseline, complete comparison, safeguards, validation and disposition findings.
 Its old “do not merge #233”, no-CI and pre-integration warnings are superseded.
-NCN research/catalogue tooling is a separate preservation PR, not part of the
-Android source merge; it requires owner review before integration.
+NCN research/catalogue tooling is integrated separately through #235 at
+`8c1e50ca8a3713d096c4efd02a15a549039bbce0`, from reviewed source `a76f0bcd`.
+Its 333 NCN/reference/cycling tests passed with zero failures/errors/skips in
+[CI40842500420](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/40842500420)
+and the final local review. The new provenance verifier also checks the complete
+pinned archive and exact published database. No active catalogue or application
+code changed. See [NCN preservation and outstanding research](ncn-historical-reconciliation.md).
+
+PR #236 integrates this permanent record and current handover. Normal development
+resumes from main containing #233, #234, #235 and #236; historical branches are
+retained, not individually merged. The final #236/main commit is recorded by its
+GitHub merge event and sign-off comment, avoiding a self-referential document hash.
 
 No branch deletion, backend/Firebase deployment, APK build/distribution or new
 production-data publication is part of this documentation preservation.

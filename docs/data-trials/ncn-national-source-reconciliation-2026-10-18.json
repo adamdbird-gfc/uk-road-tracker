@@ -1,0 +1,5758 @@
+{
+  "schema_version": 1,
+  "checkpoint_date": "2026-10-18",
+  "scope": "Numbered source inventory assessment, not published route certification or user progress",
+  "whole_published_route_ready": false,
+  "app_publication_ready": false,
+  "national_route_totals_are_additive": false,
+  "counts": {
+    "official_numbered_keys": 253,
+    "assessed_keys": 187,
+    "source_relation_snapshots": 308,
+    "supported_catalogues": 175,
+    "distinct_supported_way_ids": 37793,
+    "fixed_inventory_plans": 187,
+    "two_gate_group_route_occurrences": 86,
+    "fully_bound_source_inventories": 10,
+    "original_48_preserved": true,
+    "shared_supported_way_ids": 44
+  },
+  "inputs": {
+    "source_capture_sha256": "61c779242af7d704a2d4adb5ed25835122e800278534f9fac2490e6b94af5a47",
+    "catalogue_summary_sha256": "3d6031a61fedff3e05a8a34db57438d5a0270fc65e8fe6ee07f0ae55c10b8b8b",
+    "plan_summary_sha256": "85080e649947ae4f9e9da0522c1665aecee07dfd05fbec29b7f2427158bb31ce",
+    "scope_summary_sha256": "7f4283ea7b650f3332963ff7cfb9c0a6a6ab2b4051cd1e2b60423641e9a29864",
+    "official_snapshot_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2"
+  },
+  "held_reason_occurrences_non_additive": {
+    "unresolved_official_extent_edges": 11434,
+    "logical_branch_policy_required": 640,
+    "mode_policy_unresolved_or_restricted": 348,
+    "current_geometry_differs_from_assessed_provider": 13
+  },
+  "shared_supported_way_routes": {
+    "1025629135": [
+      "NCN:10",
+      "NCN:72"
+    ],
+    "1033910753": [
+      "NCN:6",
+      "NCN:627"
+    ],
+    "10685938": [
+      "NCN:6",
+      "NCN:63"
+    ],
+    "113072511": [
+      "NCN:7",
+      "NCN:73"
+    ],
+    "1164011097": [
+      "NCN:55",
+      "NCN:81"
+    ],
+    "122818223": [
+      "NCN:7",
+      "NCN:72"
+    ],
+    "1246911590": [
+      "NCN:44",
+      "NCN:81"
+    ],
+    "128008310": [
+      "NCN:65",
+      "NCN:658"
+    ],
+    "1344645613": [
+      "NCN:403",
+      "NCN:45"
+    ],
+    "1460129024": [
+      "NCN:411",
+      "NCN:467"
+    ],
+    "1525010377": [
+      "NCN:65",
+      "NCN:66"
+    ],
+    "184236552": [
+      "NCN:45",
+      "NCN:54"
+    ],
+    "18825879": [
+      "NCN:53",
+      "NCN:63"
+    ],
+    "18825889": [
+      "NCN:53",
+      "NCN:63"
+    ],
+    "207248557": [
+      "NCN:68",
+      "NCN:72"
+    ],
+    "208909035": [
+      "NCN:46",
+      "NCN:478"
+    ],
+    "209253929": [
+      "NCN:411",
+      "NCN:467"
+    ],
+    "22286427": [
+      "NCN:12",
+      "NCN:57"
+    ],
+    "226578043": [
+      "NCN:7",
+      "NCN:75"
+    ],
+    "22931609": [
+      "NCN:24",
+      "NCN:45"
+    ],
+    "22992295": [
+      "NCN:65",
+      "NCN:658"
+    ],
+    "23384774": [
+      "NCN:10",
+      "NCN:6"
+    ],
+    "24331624": [
+      "NCN:45",
+      "NCN:81"
+    ],
+    "25690748": [
+      "NCN:6",
+      "NCN:61"
+    ],
+    "291529823": [
+      "NCN:6",
+      "NCN:606"
+    ],
+    "332395035": [
+      "NCN:165",
+      "NCN:65"
+    ],
+    "35393970": [
+      "NCN:52",
+      "NCN:63"
+    ],
+    "39761556": [
+      "NCN:6",
+      "NCN:69"
+    ],
+    "400966049": [
+      "NCN:6",
+      "NCN:63"
+    ],
+    "41277077": [
+      "NCN:14",
+      "NCN:7"
+    ],
+    "4588232": [
+      "NCN:75",
+      "NCN:754"
+    ],
+    "459032647": [
+      "NCN:6",
+      "NCN:63"
+    ],
+    "548021055": [
+      "NCN:442",
+      "NCN:48"
+    ],
+    "56684789": [
+      "NCN:10",
+      "NCN:6"
+    ],
+    "56685058": [
+      "NCN:10",
+      "NCN:6"
+    ],
+    "60647782": [
+      "NCN:6",
+      "NCN:622"
+    ],
+    "69998194": [
+      "NCN:10",
+      "NCN:68"
+    ],
+    "823268621": [
+      "NCN:62",
+      "NCN:622"
+    ],
+    "823268622": [
+      "NCN:62",
+      "NCN:622"
+    ],
+    "825987878": [
+      "NCN:10",
+      "NCN:72"
+    ],
+    "88313433": [
+      "NCN:10",
+      "NCN:6"
+    ],
+    "917117513": [
+      "NCN:27",
+      "NCN:3"
+    ],
+    "97611027": [
+      "NCN:6",
+      "NCN:67"
+    ],
+    "986359400": [
+      "NCN:44",
+      "NCN:81"
+    ]
+  },
+  "not_assessed_by_this_batch": [
+    {
+      "official_route_key": "NCN:1",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        192623,
+        1992599,
+        8438340,
+        9067786
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:151",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        9818709
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:16",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        2018704
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:2",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        192635,
+        1950688
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:207",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:21",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        21909
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:221",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        9559159
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:222",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        2646359
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:23",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        192009,
+        19013994
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:248",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        13368234
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:250",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        2986634
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:253",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:267",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        13248353
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:274",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:304",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        18928305
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:305",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        1848829
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:323",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:334",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        1493227
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:4",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        192889,
+        1318931
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:41",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        52310
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:410",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:42",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        33951
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:422",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:439",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        21209444
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:461",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        10877009
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:47",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        22696,
+        6291978,
+        8201445
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:524",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:533",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        11954765
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:601",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:604",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        10011902
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:647",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        1854718
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:657",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        156095
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:674",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        12151562
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:685",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        10008682
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:688",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        1191478
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:689",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:70",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        11113
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:700",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:725",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        2530039
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:74",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        184965,
+        6413919
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:776",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:8",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        5487294
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:820",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:83",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        1328554
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "NCN:99",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        931223
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": true,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:12",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        21899,
+        1186346,
+        7436212
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:15",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        8824,
+        7436209
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:16",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        7588613
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:21",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        180060,
+        7371337
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:30",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        23668,
+        297415,
+        2174529,
+        8033867,
+        17851741
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:31",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        1561929
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:32",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        6677165
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:40",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        2149265,
+        4143953
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:41",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        2851,
+        2224950
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:50",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        5544574
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:51",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        8495916
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:55",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        163962
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:61",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        3347713
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:67",
+      "state": "partial_source_geometry",
+      "candidate_relation_ids": [
+        2742
+      ],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:70",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        23552
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:80",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        92257
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:81",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        3719157
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:83",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        116231
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:85",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        12762,
+        93599
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:89",
+      "state": "missing_source_membership",
+      "candidate_relation_ids": [],
+      "source_geometry_complete": false,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    },
+    {
+      "official_route_key": "RCN:92",
+      "state": "source_scope_review_required",
+      "candidate_relation_ids": [
+        2514475
+      ],
+      "source_geometry_complete": true,
+      "uk_metadata_anchor": false,
+      "missing_geometry_relation_ids": [],
+      "source_error_relations": {}
+    }
+  ],
+  "catalogue_routes": [
+    {
+      "route_key": "NCN:10",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 394,
+      "held_way_count": 220,
+      "partial_way_count": 28,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 187,
+        "logical_branch_policy_required": 31,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:11",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 392,
+      "held_way_count": 101,
+      "partial_way_count": 26,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 95,
+        "mode_policy_unresolved_or_restricted": 6
+      }
+    },
+    {
+      "route_key": "NCN:110",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 23,
+      "held_way_count": 39,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 38,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:12",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 967,
+      "held_way_count": 221,
+      "partial_way_count": 57,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 200,
+        "logical_branch_policy_required": 19,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:125",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 52,
+      "held_way_count": 32,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 32
+      }
+    },
+    {
+      "route_key": "NCN:13",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 1225,
+      "held_way_count": 278,
+      "partial_way_count": 89,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 103,
+        "unresolved_official_extent_edges": 173,
+        "mode_policy_unresolved_or_restricted": 1,
+        "current_geometry_differs_from_assessed_provider": 1
+      }
+    },
+    {
+      "route_key": "NCN:136",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 152,
+      "held_way_count": 27,
+      "partial_way_count": 13,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 27
+      }
+    },
+    {
+      "route_key": "NCN:137",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 6,
+      "held_way_count": 3,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 3
+      }
+    },
+    {
+      "route_key": "NCN:14",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 684,
+      "held_way_count": 145,
+      "partial_way_count": 54,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 135,
+        "logical_branch_policy_required": 9,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:141",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 25,
+      "held_way_count": 3,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 3
+      }
+    },
+    {
+      "route_key": "NCN:15",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 239,
+      "held_way_count": 45,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 43,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:150",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 49,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:155",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 44,
+      "held_way_count": 5,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5
+      }
+    },
+    {
+      "route_key": "NCN:164",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 134,
+      "held_way_count": 17,
+      "partial_way_count": 13,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 16,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:165",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 268,
+      "held_way_count": 30,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 4,
+        "unresolved_official_extent_edges": 26
+      }
+    },
+    {
+      "route_key": "NCN:166",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 105,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:167",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 66,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:168",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 45,
+      "held_way_count": 6,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 6
+      }
+    },
+    {
+      "route_key": "NCN:169",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 57,
+      "held_way_count": 90,
+      "partial_way_count": 25,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 8,
+        "unresolved_official_extent_edges": 82
+      }
+    },
+    {
+      "route_key": "NCN:17",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 207,
+      "held_way_count": 23,
+      "partial_way_count": 18,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 23
+      }
+    },
+    {
+      "route_key": "NCN:174",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 67,
+      "held_way_count": 7,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 7
+      }
+    },
+    {
+      "route_key": "NCN:177",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 63,
+      "held_way_count": 8,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:179",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 57,
+      "held_way_count": 5,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5
+      }
+    },
+    {
+      "route_key": "NCN:18",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 339,
+      "held_way_count": 29,
+      "partial_way_count": 17,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 28,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:195",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 174,
+      "held_way_count": 32,
+      "partial_way_count": 17,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 32
+      }
+    },
+    {
+      "route_key": "NCN:196",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 2519659,
+        "current_version": 59,
+        "current_timestamp": "2026-10-18T11:24:18Z",
+        "added_way_ids": [
+          1569402908
+        ],
+        "removed_way_ids": []
+      }
+    },
+    {
+      "route_key": "NCN:20",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 12179,
+        "current_version": 344,
+        "current_timestamp": "2024-01-16T11:08:41Z",
+        "added_way_ids": [
+          1569101100
+        ],
+        "removed_way_ids": []
+      }
+    },
+    {
+      "route_key": "NCN:208",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 95,
+      "held_way_count": 8,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:22",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 67578,
+        "current_version": 526,
+        "current_timestamp": "2026-10-17T12:31:14Z",
+        "added_way_ids": [
+          1569104786
+        ],
+        "removed_way_ids": []
+      }
+    },
+    {
+      "route_key": "NCN:223",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 420,
+      "held_way_count": 41,
+      "partial_way_count": 21,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 41
+      }
+    },
+    {
+      "route_key": "NCN:224",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 118,
+      "held_way_count": 121,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 121
+      }
+    },
+    {
+      "route_key": "NCN:228",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 0,
+      "held_way_count": 35,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 35
+      }
+    },
+    {
+      "route_key": "NCN:236",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 193,
+      "held_way_count": 70,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 70
+      }
+    },
+    {
+      "route_key": "NCN:24",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 405,
+      "held_way_count": 105,
+      "partial_way_count": 21,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 105
+      }
+    },
+    {
+      "route_key": "NCN:244",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 34,
+      "held_way_count": 6,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 6
+      }
+    },
+    {
+      "route_key": "NCN:246",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 179,
+      "held_way_count": 43,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 41,
+        "logical_branch_policy_required": 1,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:25",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 330,
+      "held_way_count": 67,
+      "partial_way_count": 21,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 66,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:256",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 91,
+      "held_way_count": 15,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 14,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:26",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 384,
+      "held_way_count": 89,
+      "partial_way_count": 19,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 87,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:27",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 569,
+      "held_way_count": 278,
+      "partial_way_count": 33,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 254,
+        "logical_branch_policy_required": 19,
+        "mode_policy_unresolved_or_restricted": 5
+      }
+    },
+    {
+      "route_key": "NCN:270",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 28,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:272",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 112,
+      "held_way_count": 15,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 15
+      }
+    },
+    {
+      "route_key": "NCN:278",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 42,
+      "held_way_count": 2,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 2
+      }
+    },
+    {
+      "route_key": "NCN:28",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 436,
+      "held_way_count": 57,
+      "partial_way_count": 24,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 46,
+        "mode_policy_unresolved_or_restricted": 4,
+        "logical_branch_policy_required": 7
+      }
+    },
+    {
+      "route_key": "NCN:288",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 18,
+      "held_way_count": 107,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 106,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:3",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 1563,
+      "held_way_count": 241,
+      "partial_way_count": 80,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 225,
+        "mode_policy_unresolved_or_restricted": 16
+      }
+    },
+    {
+      "route_key": "NCN:32",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 164,
+      "held_way_count": 84,
+      "partial_way_count": 13,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 71,
+        "logical_branch_policy_required": 8,
+        "mode_policy_unresolved_or_restricted": 5
+      }
+    },
+    {
+      "route_key": "NCN:327",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 63,
+      "held_way_count": 4,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 4
+      }
+    },
+    {
+      "route_key": "NCN:33",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 404,
+      "held_way_count": 184,
+      "partial_way_count": 23,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 182,
+        "logical_branch_policy_required": 2
+      }
+    },
+    {
+      "route_key": "NCN:339",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 27,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:34",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 31,
+      "held_way_count": 15,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 13,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:344",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 22,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:403",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 275,
+      "held_way_count": 67,
+      "partial_way_count": 27,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 59,
+        "logical_branch_policy_required": 5,
+        "mode_policy_unresolved_or_restricted": 3
+      }
+    },
+    {
+      "route_key": "NCN:411",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 14,
+      "held_way_count": 9,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 9
+      }
+    },
+    {
+      "route_key": "NCN:416",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 108,
+      "held_way_count": 33,
+      "partial_way_count": 14,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 30,
+        "mode_policy_unresolved_or_restricted": 3
+      }
+    },
+    {
+      "route_key": "NCN:423",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 65,
+      "held_way_count": 9,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 1,
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:425",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 121,
+      "held_way_count": 26,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 16,
+        "unresolved_official_extent_edges": 10
+      }
+    },
+    {
+      "route_key": "NCN:426",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 10,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:43",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 101,
+      "held_way_count": 45,
+      "partial_way_count": 19,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 37,
+        "mode_policy_unresolved_or_restricted": 8
+      }
+    },
+    {
+      "route_key": "NCN:437",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 33,
+      "held_way_count": 24,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 24
+      }
+    },
+    {
+      "route_key": "NCN:44",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 155,
+      "held_way_count": 47,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 46,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:440",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 20,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:442",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 209,
+      "held_way_count": 153,
+      "partial_way_count": 13,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 133,
+        "mode_policy_unresolved_or_restricted": 19,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:45",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 1160,
+      "held_way_count": 360,
+      "partial_way_count": 79,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 251,
+        "logical_branch_policy_required": 103,
+        "mode_policy_unresolved_or_restricted": 6
+      }
+    },
+    {
+      "route_key": "NCN:451",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 132,
+      "held_way_count": 56,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 4,
+        "unresolved_official_extent_edges": 52
+      }
+    },
+    {
+      "route_key": "NCN:455",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 81,
+      "held_way_count": 7,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 4,
+        "unresolved_official_extent_edges": 3
+      }
+    },
+    {
+      "route_key": "NCN:46",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 434,
+      "held_way_count": 236,
+      "partial_way_count": 62,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 9,
+        "logical_branch_policy_required": 54,
+        "unresolved_official_extent_edges": 173
+      }
+    },
+    {
+      "route_key": "NCN:465",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 54,
+      "held_way_count": 13,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 13
+      }
+    },
+    {
+      "route_key": "NCN:466",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 81,
+      "held_way_count": 28,
+      "partial_way_count": 12,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 27,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:467",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 66,
+      "held_way_count": 8,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:468",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 98,
+      "held_way_count": 21,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 21
+      }
+    },
+    {
+      "route_key": "NCN:469",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 40,
+      "held_way_count": 12,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 12
+      }
+    },
+    {
+      "route_key": "NCN:475",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 36,
+      "held_way_count": 7,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 7
+      }
+    },
+    {
+      "route_key": "NCN:476",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 9,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:477",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 31,
+      "held_way_count": 8,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:478",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 79,
+      "held_way_count": 13,
+      "partial_way_count": 8,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 10,
+        "mode_policy_unresolved_or_restricted": 3
+      }
+    },
+    {
+      "route_key": "NCN:48",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 333,
+      "held_way_count": 128,
+      "partial_way_count": 29,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 27,
+        "unresolved_official_extent_edges": 98,
+        "logical_branch_policy_required": 3
+      }
+    },
+    {
+      "route_key": "NCN:482",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 43,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:49",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 40,
+      "held_way_count": 9,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 9
+      }
+    },
+    {
+      "route_key": "NCN:492",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 62,
+      "held_way_count": 10,
+      "partial_way_count": 10,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 10
+      }
+    },
+    {
+      "route_key": "NCN:5",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 123318,
+        "current_version": 992,
+        "current_timestamp": "2025-11-30T11:13:50Z",
+        "added_way_ids": [
+          1569083382,
+          1569088365,
+          1569089207
+        ],
+        "removed_way_ids": []
+      }
+    },
+    {
+      "route_key": "NCN:50",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 357,
+      "held_way_count": 49,
+      "partial_way_count": 24,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 41,
+        "mode_policy_unresolved_or_restricted": 7,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:51",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 15020,
+        "current_version": 1605,
+        "current_timestamp": "2026-10-16T18:53:18Z",
+        "added_way_ids": [
+          1306529955,
+          1306529956,
+          1306529957
+        ],
+        "removed_way_ids": [
+          4342660,
+          1134019543
+        ]
+      }
+    },
+    {
+      "route_key": "NCN:517",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "route_hold": "Source membership changed; reassess extent",
+      "source_membership_change": {
+        "relation_id": 9622407,
+        "current_version": 22,
+        "current_timestamp": "2026-10-17T15:30:37Z",
+        "added_way_ids": [
+          1569161679
+        ],
+        "removed_way_ids": []
+      }
+    },
+    {
+      "route_key": "NCN:52",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 302,
+      "held_way_count": 98,
+      "partial_way_count": 32,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 82,
+        "mode_policy_unresolved_or_restricted": 15,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:523",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 8,
+      "held_way_count": 8,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 7,
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:53",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 120,
+      "held_way_count": 50,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 50
+      }
+    },
+    {
+      "route_key": "NCN:534",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 60,
+      "held_way_count": 15,
+      "partial_way_count": 12,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 15
+      }
+    },
+    {
+      "route_key": "NCN:535",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 63,
+      "held_way_count": 19,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 19
+      }
+    },
+    {
+      "route_key": "NCN:536",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 41,
+      "held_way_count": 13,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 12,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:539",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 155,
+      "held_way_count": 44,
+      "partial_way_count": 23,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 40,
+        "mode_policy_unresolved_or_restricted": 3,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:54",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 392,
+      "held_way_count": 187,
+      "partial_way_count": 26,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 179,
+        "mode_policy_unresolved_or_restricted": 7,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:544",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 93,
+      "held_way_count": 17,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 17
+      }
+    },
+    {
+      "route_key": "NCN:547",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 1,
+      "held_way_count": 50,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 50
+      }
+    },
+    {
+      "route_key": "NCN:548",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 19,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:549",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 133,
+      "held_way_count": 21,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 21
+      }
+    },
+    {
+      "route_key": "NCN:55",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 810,
+      "held_way_count": 186,
+      "partial_way_count": 62,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 175,
+        "mode_policy_unresolved_or_restricted": 6,
+        "logical_branch_policy_required": 5
+      }
+    },
+    {
+      "route_key": "NCN:550",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 59,
+      "held_way_count": 11,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 11
+      }
+    },
+    {
+      "route_key": "NCN:551",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 117,
+      "held_way_count": 42,
+      "partial_way_count": 12,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 41,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:552",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 92,
+      "held_way_count": 5,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5
+      }
+    },
+    {
+      "route_key": "NCN:555",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 14,
+      "held_way_count": 48,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 48
+      }
+    },
+    {
+      "route_key": "NCN:558",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 29,
+      "held_way_count": 44,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 44
+      }
+    },
+    {
+      "route_key": "NCN:559",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 37,
+      "held_way_count": 6,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:56",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 335,
+      "held_way_count": 222,
+      "partial_way_count": 47,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 212,
+        "logical_branch_policy_required": 10
+      }
+    },
+    {
+      "route_key": "NCN:562",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 134,
+      "held_way_count": 38,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 5,
+        "unresolved_official_extent_edges": 33
+      }
+    },
+    {
+      "route_key": "NCN:563",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 44,
+      "held_way_count": 11,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 11
+      }
+    },
+    {
+      "route_key": "NCN:566",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 61,
+      "held_way_count": 24,
+      "partial_way_count": 8,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 24
+      }
+    },
+    {
+      "route_key": "NCN:568",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 66,
+      "held_way_count": 71,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "current_geometry_differs_from_assessed_provider": 6,
+        "unresolved_official_extent_edges": 65
+      }
+    },
+    {
+      "route_key": "NCN:57",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 425,
+      "held_way_count": 60,
+      "partial_way_count": 19,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 54,
+        "mode_policy_unresolved_or_restricted": 6
+      }
+    },
+    {
+      "route_key": "NCN:573",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 116,
+      "held_way_count": 3,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 2,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:574",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 22,
+      "held_way_count": 4,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 4
+      }
+    },
+    {
+      "route_key": "NCN:6",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 3184,
+      "held_way_count": 640,
+      "partial_way_count": 192,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 562,
+        "mode_policy_unresolved_or_restricted": 39,
+        "logical_branch_policy_required": 39
+      }
+    },
+    {
+      "route_key": "NCN:60",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 40,
+      "held_way_count": 53,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 53
+      }
+    },
+    {
+      "route_key": "NCN:606",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 40,
+      "held_way_count": 21,
+      "partial_way_count": 11,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 21
+      }
+    },
+    {
+      "route_key": "NCN:61",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 283,
+      "held_way_count": 327,
+      "partial_way_count": 15,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 303,
+        "logical_branch_policy_required": 22,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:62",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 1097,
+      "held_way_count": 305,
+      "partial_way_count": 93,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 287,
+        "logical_branch_policy_required": 9,
+        "mode_policy_unresolved_or_restricted": 9
+      }
+    },
+    {
+      "route_key": "NCN:622",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 141,
+      "held_way_count": 53,
+      "partial_way_count": 22,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 53
+      }
+    },
+    {
+      "route_key": "NCN:626",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 0,
+      "held_way_count": 32,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 31,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:627",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 151,
+      "held_way_count": 50,
+      "partial_way_count": 18,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 48,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:63",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 549,
+      "held_way_count": 227,
+      "partial_way_count": 44,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 219,
+        "mode_policy_unresolved_or_restricted": 1,
+        "logical_branch_policy_required": 7
+      }
+    },
+    {
+      "route_key": "NCN:636",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 20,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:637",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 85,
+      "held_way_count": 8,
+      "partial_way_count": 8,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:64",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 220,
+      "held_way_count": 165,
+      "partial_way_count": 15,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 162,
+        "mode_policy_unresolved_or_restricted": 3
+      }
+    },
+    {
+      "route_key": "NCN:645",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 46,
+      "held_way_count": 1,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:648",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 31,
+      "held_way_count": 5,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5
+      }
+    },
+    {
+      "route_key": "NCN:65",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 743,
+      "held_way_count": 62,
+      "partial_way_count": 24,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 60,
+        "mode_policy_unresolved_or_restricted": 1,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:656",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 83,
+      "held_way_count": 1,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:658",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 55,
+      "held_way_count": 13,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 13
+      }
+    },
+    {
+      "route_key": "NCN:66",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 936,
+      "held_way_count": 282,
+      "partial_way_count": 71,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 265,
+        "mode_policy_unresolved_or_restricted": 14,
+        "logical_branch_policy_required": 3
+      }
+    },
+    {
+      "route_key": "NCN:665",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 38,
+      "held_way_count": 15,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 15
+      }
+    },
+    {
+      "route_key": "NCN:668",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 84,
+      "held_way_count": 21,
+      "partial_way_count": 12,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 21
+      }
+    },
+    {
+      "route_key": "NCN:67",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 729,
+      "held_way_count": 173,
+      "partial_way_count": 59,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 107,
+        "logical_branch_policy_required": 59,
+        "mode_policy_unresolved_or_restricted": 7
+      }
+    },
+    {
+      "route_key": "NCN:672",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 13,
+      "held_way_count": 4,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 4
+      }
+    },
+    {
+      "route_key": "NCN:677",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 50,
+      "held_way_count": 11,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 11
+      }
+    },
+    {
+      "route_key": "NCN:68",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 1006,
+      "held_way_count": 542,
+      "partial_way_count": 34,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 503,
+        "mode_policy_unresolved_or_restricted": 24,
+        "logical_branch_policy_required": 15
+      }
+    },
+    {
+      "route_key": "NCN:680",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 83,
+      "held_way_count": 7,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 7
+      }
+    },
+    {
+      "route_key": "NCN:69",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 345,
+      "held_way_count": 38,
+      "partial_way_count": 22,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 6,
+        "unresolved_official_extent_edges": 30,
+        "mode_policy_unresolved_or_restricted": 2
+      }
+    },
+    {
+      "route_key": "NCN:696",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 18,
+      "held_way_count": 6,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 6
+      }
+    },
+    {
+      "route_key": "NCN:697",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 11,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:699",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 21,
+      "held_way_count": 9,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8,
+        "current_geometry_differs_from_assessed_provider": 1
+      }
+    },
+    {
+      "route_key": "NCN:7",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 2032,
+      "held_way_count": 353,
+      "partial_way_count": 121,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 319,
+        "logical_branch_policy_required": 22,
+        "mode_policy_unresolved_or_restricted": 11,
+        "current_geometry_differs_from_assessed_provider": 1
+      }
+    },
+    {
+      "route_key": "NCN:71",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 274,
+      "held_way_count": 9,
+      "partial_way_count": 7,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 9
+      }
+    },
+    {
+      "route_key": "NCN:715",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 69,
+      "held_way_count": 3,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 2,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:72",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 698,
+      "held_way_count": 120,
+      "partial_way_count": 40,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 104,
+        "logical_branch_policy_required": 11,
+        "mode_policy_unresolved_or_restricted": 5
+      }
+    },
+    {
+      "route_key": "NCN:73",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 123,
+      "held_way_count": 31,
+      "partial_way_count": 13,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 31
+      }
+    },
+    {
+      "route_key": "NCN:75",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 585,
+      "held_way_count": 228,
+      "partial_way_count": 42,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 221,
+        "mode_policy_unresolved_or_restricted": 6,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:753",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 46,
+      "held_way_count": 8,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 8
+      }
+    },
+    {
+      "route_key": "NCN:754",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 154,
+      "held_way_count": 20,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 20
+      }
+    },
+    {
+      "route_key": "NCN:755",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 32,
+      "held_way_count": 0,
+      "partial_way_count": 0,
+      "held_reason_counts": {}
+    },
+    {
+      "route_key": "NCN:756",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 103,
+      "held_way_count": 12,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 1,
+        "unresolved_official_extent_edges": 11
+      }
+    },
+    {
+      "route_key": "NCN:76",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 666,
+      "held_way_count": 298,
+      "partial_way_count": 45,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 298
+      }
+    },
+    {
+      "route_key": "NCN:764",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 60,
+      "held_way_count": 5,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 4,
+        "current_geometry_differs_from_assessed_provider": 1
+      }
+    },
+    {
+      "route_key": "NCN:765",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 91,
+      "held_way_count": 14,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 14
+      }
+    },
+    {
+      "route_key": "NCN:766",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 106,
+      "held_way_count": 9,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 9
+      }
+    },
+    {
+      "route_key": "NCN:767",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 34,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:768",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 29,
+      "held_way_count": 4,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 4
+      }
+    },
+    {
+      "route_key": "NCN:77",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 160,
+      "held_way_count": 18,
+      "partial_way_count": 14,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 14,
+        "logical_branch_policy_required": 4
+      }
+    },
+    {
+      "route_key": "NCN:775",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 88,
+      "held_way_count": 11,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 11
+      }
+    },
+    {
+      "route_key": "NCN:777",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 46,
+      "held_way_count": 9,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 9
+      }
+    },
+    {
+      "route_key": "NCN:78",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 334,
+      "held_way_count": 68,
+      "partial_way_count": 28,
+      "held_reason_counts": {
+        "mode_policy_unresolved_or_restricted": 2,
+        "logical_branch_policy_required": 5,
+        "unresolved_official_extent_edges": 61
+      }
+    },
+    {
+      "route_key": "NCN:81",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 530,
+      "held_way_count": 264,
+      "partial_way_count": 60,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 259,
+        "mode_policy_unresolved_or_restricted": 5
+      }
+    },
+    {
+      "route_key": "NCN:810",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 145,
+      "held_way_count": 33,
+      "partial_way_count": 8,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 33
+      }
+    },
+    {
+      "route_key": "NCN:82",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 417,
+      "held_way_count": 148,
+      "partial_way_count": 47,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 147,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:822",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 31,
+      "held_way_count": 5,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 2,
+        "current_geometry_differs_from_assessed_provider": 2,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "NCN:825",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 163,
+      "held_way_count": 7,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 5,
+        "mode_policy_unresolved_or_restricted": 1,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:84",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 63,
+      "held_way_count": 6,
+      "partial_way_count": 5,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 6
+      }
+    },
+    {
+      "route_key": "NCN:85",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 24,
+      "held_way_count": 7,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 7
+      }
+    },
+    {
+      "route_key": "NCN:862",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 26,
+      "held_way_count": 6,
+      "partial_way_count": 4,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 6
+      }
+    },
+    {
+      "route_key": "NCN:88",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 180,
+      "held_way_count": 120,
+      "partial_way_count": 26,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 119,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "NCN:881",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 59,
+      "held_way_count": 25,
+      "partial_way_count": 14,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 25
+      }
+    },
+    {
+      "route_key": "NCN:883",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 14,
+      "held_way_count": 2,
+      "partial_way_count": 2,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 2
+      }
+    },
+    {
+      "route_key": "NCN:884",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 6,
+      "held_way_count": 18,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 18
+      }
+    },
+    {
+      "route_key": "NCN:885",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 64,
+      "held_way_count": 29,
+      "partial_way_count": 15,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 29
+      }
+    },
+    {
+      "route_key": "NCN:887",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 77,
+      "held_way_count": 13,
+      "partial_way_count": 8,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 13
+      }
+    },
+    {
+      "route_key": "NCN:888",
+      "source_review_state": "close_bidirectional_correspondence_candidate",
+      "accepted_way_count": 14,
+      "held_way_count": 1,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 1
+      }
+    },
+    {
+      "route_key": "NCN:9",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 183,
+      "held_way_count": 39,
+      "partial_way_count": 31,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 39
+      }
+    },
+    {
+      "route_key": "NCN:91",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 35,
+      "held_way_count": 23,
+      "partial_way_count": 6,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 23
+      }
+    },
+    {
+      "route_key": "NCN:92",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 47,
+      "held_way_count": 27,
+      "partial_way_count": 19,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 27
+      }
+    },
+    {
+      "route_key": "NCN:93",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 256,
+      "held_way_count": 84,
+      "partial_way_count": 54,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 84
+      }
+    },
+    {
+      "route_key": "NCN:94",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 48,
+      "held_way_count": 12,
+      "partial_way_count": 9,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 12
+      }
+    },
+    {
+      "route_key": "NCN:96",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 55,
+      "held_way_count": 27,
+      "partial_way_count": 18,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 27
+      }
+    },
+    {
+      "route_key": "NCN:97",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 7,
+      "held_way_count": 4,
+      "partial_way_count": 3,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 3,
+        "mode_policy_unresolved_or_restricted": 1
+      }
+    },
+    {
+      "route_key": "RCN:11",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "held_way_count": 105,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 101,
+        "mode_policy_unresolved_or_restricted": 3,
+        "logical_branch_policy_required": 1
+      }
+    },
+    {
+      "route_key": "RCN:17",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "held_way_count": 130,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 121,
+        "logical_branch_policy_required": 9
+      }
+    },
+    {
+      "route_key": "RCN:71",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "held_way_count": 477,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 477
+      }
+    },
+    {
+      "route_key": "RCN:82",
+      "source_review_state": "partial_or_different_extent_review",
+      "accepted_way_count": 0,
+      "held_way_count": 233,
+      "partial_way_count": 0,
+      "held_reason_counts": {
+        "logical_branch_policy_required": 11,
+        "unresolved_official_extent_edges": 219,
+        "mode_policy_unresolved_or_restricted": 2,
+        "current_geometry_differs_from_assessed_provider": 1
+      }
+    },
+    {
+      "route_key": "RCN:90",
+      "source_review_state": "offset_sensitive_correspondence_review",
+      "accepted_way_count": 4,
+      "held_way_count": 666,
+      "partial_way_count": 1,
+      "held_reason_counts": {
+        "unresolved_official_extent_edges": 666
+      }
+    }
+  ],
+  "inventory_plans": [
+    {
+      "route_key": "NCN:10",
+      "source_way_count": 586,
+      "bound_way_count": 394,
+      "source_inventory_length_m": 271693.7195427971,
+      "canonical_inventory_length_m": 271693.7195427971,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 55280.812134992826,
+      "maximum_supported_coverage_m": {
+        "on_foot": 214848.2087584823,
+        "cycling": 216349.75570633053,
+        "combined": 216412.90740780425
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:11",
+      "source_way_count": 467,
+      "bound_way_count": 392,
+      "source_inventory_length_m": 98486.20384609552,
+      "canonical_inventory_length_m": 98400.86537984018,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 5955.010947651579,
+      "maximum_supported_coverage_m": {
+        "on_foot": 90825.08269677979,
+        "cycling": 92324.24804291585,
+        "combined": 92445.8544321886
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:110",
+      "source_way_count": 58,
+      "bound_way_count": 23,
+      "source_inventory_length_m": 19701.821613147076,
+      "canonical_inventory_length_m": 19701.821613147076,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 12903.654666113278,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6753.288031086472,
+        "cycling": 6798.166947033797,
+        "combined": 6798.166947033797
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:12",
+      "source_way_count": 1131,
+      "bound_way_count": 967,
+      "source_inventory_length_m": 208732.28563461092,
+      "canonical_inventory_length_m": 208652.45668475144,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 15830.236295459617,
+      "maximum_supported_coverage_m": {
+        "on_foot": 189156.7554218869,
+        "cycling": 192784.91125185313,
+        "combined": 192822.22038929182
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:125",
+      "source_way_count": 79,
+      "bound_way_count": 52,
+      "source_inventory_length_m": 5892.305751702326,
+      "canonical_inventory_length_m": 5892.305751702326,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1891.345422351711,
+      "maximum_supported_coverage_m": {
+        "on_foot": 2713.177972797718,
+        "cycling": 3980.4163179147736,
+        "combined": 4000.960329350615
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:13",
+      "source_way_count": 1414,
+      "bound_way_count": 1225,
+      "source_inventory_length_m": 257446.21209811364,
+      "canonical_inventory_length_m": 257446.21209811364,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 22243.964658984158,
+      "maximum_supported_coverage_m": {
+        "on_foot": 230550.83168677543,
+        "cycling": 233558.7630034497,
+        "combined": 235202.24743912948
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:136",
+      "source_way_count": 166,
+      "bound_way_count": 152,
+      "source_inventory_length_m": 17778.18522620243,
+      "canonical_inventory_length_m": 17778.18522620243,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 779.4035589974665,
+      "maximum_supported_coverage_m": {
+        "on_foot": 16895.310354740606,
+        "cycling": 16981.28989107888,
+        "combined": 16998.781667204963
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:137",
+      "source_way_count": 7,
+      "bound_way_count": 6,
+      "source_inventory_length_m": 3036.8900101990484,
+      "canonical_inventory_length_m": 3036.8900101990484,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 73.55142974275759,
+      "maximum_supported_coverage_m": {
+        "on_foot": 2849.5311755864104,
+        "cycling": 831.7041007306644,
+        "combined": 2963.338580456291
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:14",
+      "source_way_count": 775,
+      "bound_way_count": 684,
+      "source_inventory_length_m": 155195.22111838267,
+      "canonical_inventory_length_m": 154976.62704432342,
+      "roundabout_group_count": 5,
+      "unmapped_inventory_m": 18450.199420069577,
+      "maximum_supported_coverage_m": {
+        "on_foot": 128562.16925566462,
+        "cycling": 136057.50455843803,
+        "combined": 136526.42762425385
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:141",
+      "source_way_count": 25,
+      "bound_way_count": 25,
+      "source_inventory_length_m": 10763.583968129966,
+      "canonical_inventory_length_m": 10763.583968129966,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 392.2914294139118,
+      "maximum_supported_coverage_m": {
+        "on_foot": 10371.292538716054,
+        "cycling": 10371.292538716054,
+        "combined": 10371.292538716054
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:15",
+      "source_way_count": 273,
+      "bound_way_count": 239,
+      "source_inventory_length_m": 55183.66234880944,
+      "canonical_inventory_length_m": 55183.66234880944,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5222.010724815082,
+      "maximum_supported_coverage_m": {
+        "on_foot": 49611.75608462257,
+        "cycling": 49863.40920594952,
+        "combined": 49961.65162399436
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:150",
+      "source_way_count": 49,
+      "bound_way_count": 49,
+      "source_inventory_length_m": 15859.192570941566,
+      "canonical_inventory_length_m": 15859.192570941566,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 81.40477951881803,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9401.056520545844,
+        "cycling": 15614.399359349,
+        "combined": 15777.787791422748
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:155",
+      "source_way_count": 46,
+      "bound_way_count": 44,
+      "source_inventory_length_m": 12449.185953631586,
+      "canonical_inventory_length_m": 12449.185953631586,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 546.4829074070458,
+      "maximum_supported_coverage_m": {
+        "on_foot": 11873.446453476687,
+        "cycling": 11902.70304622454,
+        "combined": 11902.70304622454
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:164",
+      "source_way_count": 138,
+      "bound_way_count": 134,
+      "source_inventory_length_m": 58467.51595133019,
+      "canonical_inventory_length_m": 58467.51595133019,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1612.4879620378924,
+      "maximum_supported_coverage_m": {
+        "on_foot": 56809.03354390963,
+        "cycling": 56753.44510576166,
+        "combined": 56855.0279892923
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:165",
+      "source_way_count": 291,
+      "bound_way_count": 268,
+      "source_inventory_length_m": 118152.3531706838,
+      "canonical_inventory_length_m": 118152.3531706838,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3643.002849784156,
+      "maximum_supported_coverage_m": {
+        "on_foot": 114509.35032089964,
+        "cycling": 114509.35032089964,
+        "combined": 114509.35032089964
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:166",
+      "source_way_count": 105,
+      "bound_way_count": 105,
+      "source_inventory_length_m": 56987.06598064124,
+      "canonical_inventory_length_m": 56987.06598064124,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 56987.06598064124,
+        "cycling": 56987.06598064124,
+        "combined": 56987.06598064124
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:167",
+      "source_way_count": 66,
+      "bound_way_count": 66,
+      "source_inventory_length_m": 28833.527131722276,
+      "canonical_inventory_length_m": 28833.527131722276,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 28483.272303806018,
+        "cycling": 28833.527131722276,
+        "combined": 28833.527131722276
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:168",
+      "source_way_count": 47,
+      "bound_way_count": 45,
+      "source_inventory_length_m": 20778.653639009568,
+      "canonical_inventory_length_m": 20706.116721573286,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 1067.3757629888314,
+      "maximum_supported_coverage_m": {
+        "on_foot": 18996.646546534357,
+        "cycling": 17853.0048434322,
+        "combined": 19638.740958584454
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:169",
+      "source_way_count": 122,
+      "bound_way_count": 57,
+      "source_inventory_length_m": 68971.70901840882,
+      "canonical_inventory_length_m": 68971.70901840882,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 61675.39431600023,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6010.706345964521,
+        "cycling": 7296.314702408582,
+        "combined": 7296.314702408582
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:17",
+      "source_way_count": 212,
+      "bound_way_count": 207,
+      "source_inventory_length_m": 55863.62767629236,
+      "canonical_inventory_length_m": 55827.01615437704,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 5559.512750374866,
+      "maximum_supported_coverage_m": {
+        "on_foot": 49258.34326526951,
+        "cycling": 50118.44731543818,
+        "combined": 50267.50340400217
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:174",
+      "source_way_count": 71,
+      "bound_way_count": 67,
+      "source_inventory_length_m": 14742.834349941471,
+      "canonical_inventory_length_m": 14742.834349941471,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1057.8305154741593,
+      "maximum_supported_coverage_m": {
+        "on_foot": 13610.681860140754,
+        "cycling": 13334.665686982335,
+        "combined": 13685.003834467312
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:177",
+      "source_way_count": 66,
+      "bound_way_count": 63,
+      "source_inventory_length_m": 13123.70562902384,
+      "canonical_inventory_length_m": 13123.70562902384,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 262.4653827307011,
+      "maximum_supported_coverage_m": {
+        "on_foot": 12835.512813801506,
+        "cycling": 12861.240246293139,
+        "combined": 12861.240246293139
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:179",
+      "source_way_count": 60,
+      "bound_way_count": 57,
+      "source_inventory_length_m": 20104.64474216192,
+      "canonical_inventory_length_m": 20104.64474216192,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 458.6844124479139,
+      "maximum_supported_coverage_m": {
+        "on_foot": 18778.370112379358,
+        "cycling": 19645.960329714006,
+        "combined": 19645.960329714006
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:18",
+      "source_way_count": 351,
+      "bound_way_count": 339,
+      "source_inventory_length_m": 101275.24386362078,
+      "canonical_inventory_length_m": 101275.24386362078,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2685.2542056577513,
+      "maximum_supported_coverage_m": {
+        "on_foot": 96287.17563603322,
+        "cycling": 98589.98965796303,
+        "combined": 98589.98965796303
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:195",
+      "source_way_count": 189,
+      "bound_way_count": 174,
+      "source_inventory_length_m": 67723.74099755652,
+      "canonical_inventory_length_m": 67723.74099755652,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 4601.964693739821,
+      "maximum_supported_coverage_m": {
+        "on_foot": 46456.26671881032,
+        "cycling": 63121.7763038167,
+        "combined": 63121.7763038167
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:196",
+      "source_way_count": 132,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 40000.49043751507,
+      "canonical_inventory_length_m": 40000.49043751507,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 40000.49043751507,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:20",
+      "source_way_count": 567,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 47105.01271603634,
+      "canonical_inventory_length_m": 47105.01271603634,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 47105.01271603634,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:208",
+      "source_way_count": 99,
+      "bound_way_count": 95,
+      "source_inventory_length_m": 8637.728216038142,
+      "canonical_inventory_length_m": 8637.728216038142,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 553.5240109337947,
+      "maximum_supported_coverage_m": {
+        "on_foot": 7503.68483042054,
+        "cycling": 7750.003883481634,
+        "combined": 8084.204205104347
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:22",
+      "source_way_count": 956,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 166016.65365656503,
+      "canonical_inventory_length_m": 165910.4901851769,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 165910.4901851769,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:223",
+      "source_way_count": 440,
+      "bound_way_count": 420,
+      "source_inventory_length_m": 73298.19916744396,
+      "canonical_inventory_length_m": 73298.19916744396,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2463.8861310302455,
+      "maximum_supported_coverage_m": {
+        "on_foot": 70589.97146326397,
+        "cycling": 70411.73109619979,
+        "combined": 70834.31303641372
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:224",
+      "source_way_count": 233,
+      "bound_way_count": 118,
+      "source_inventory_length_m": 49071.49372236408,
+      "canonical_inventory_length_m": 49071.49372236408,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 28414.056633649274,
+      "maximum_supported_coverage_m": {
+        "on_foot": 17294.80329397027,
+        "cycling": 20615.81863602269,
+        "combined": 20657.437088714807
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:228",
+      "source_way_count": 35,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 5649.324723293566,
+      "canonical_inventory_length_m": 5649.324723293566,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5649.324723293566,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:236",
+      "source_way_count": 254,
+      "bound_way_count": 193,
+      "source_inventory_length_m": 32039.280887093835,
+      "canonical_inventory_length_m": 32039.280887093835,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5733.611348013434,
+      "maximum_supported_coverage_m": {
+        "on_foot": 21548.823488369333,
+        "cycling": 26003.06254147998,
+        "combined": 26305.6695390804
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:24",
+      "source_way_count": 489,
+      "bound_way_count": 405,
+      "source_inventory_length_m": 122180.76741571868,
+      "canonical_inventory_length_m": 122150.46364931704,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 14623.297085529339,
+      "maximum_supported_coverage_m": {
+        "on_foot": 106140.02621438928,
+        "cycling": 107300.63129992166,
+        "combined": 107527.1665637877
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:244",
+      "source_way_count": 36,
+      "bound_way_count": 34,
+      "source_inventory_length_m": 5787.515495766462,
+      "canonical_inventory_length_m": 5787.515495766462,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 175.52901730009035,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5611.986478466371,
+        "cycling": 5611.986478466371,
+        "combined": 5611.986478466371
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:246",
+      "source_way_count": 211,
+      "bound_way_count": 179,
+      "source_inventory_length_m": 57883.26592801367,
+      "canonical_inventory_length_m": 57852.98274698018,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 7574.223583320643,
+      "maximum_supported_coverage_m": {
+        "on_foot": 50106.94892350363,
+        "cycling": 50231.37288035616,
+        "combined": 50278.75916365954
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:25",
+      "source_way_count": 376,
+      "bound_way_count": 330,
+      "source_inventory_length_m": 95910.77181349834,
+      "canonical_inventory_length_m": 95910.77181349834,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5371.500342428437,
+      "maximum_supported_coverage_m": {
+        "on_foot": 86341.7750144706,
+        "cycling": 90539.27147106991,
+        "combined": 90539.27147106991
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:256",
+      "source_way_count": 103,
+      "bound_way_count": 91,
+      "source_inventory_length_m": 23148.96205045348,
+      "canonical_inventory_length_m": 23126.175923094674,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 2480.910036240515,
+      "maximum_supported_coverage_m": {
+        "on_foot": 18294.020140917743,
+        "cycling": 20638.53704945782,
+        "combined": 20645.26588685416
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:26",
+      "source_way_count": 454,
+      "bound_way_count": 384,
+      "source_inventory_length_m": 137225.36176432573,
+      "canonical_inventory_length_m": 137225.36176432573,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 25694.526005911,
+      "maximum_supported_coverage_m": {
+        "on_foot": 104873.25016424488,
+        "cycling": 111504.68918956285,
+        "combined": 111530.83575841473
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:27",
+      "source_way_count": 814,
+      "bound_way_count": 569,
+      "source_inventory_length_m": 174786.5873562937,
+      "canonical_inventory_length_m": 174731.82424921796,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 57502.00842550727,
+      "maximum_supported_coverage_m": {
+        "on_foot": 103840.25641851166,
+        "cycling": 117146.29729798496,
+        "combined": 117229.81582371068
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:270",
+      "source_way_count": 28,
+      "bound_way_count": 28,
+      "source_inventory_length_m": 2686.574983175655,
+      "canonical_inventory_length_m": 2686.574983175655,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 2309.976072773967,
+        "cycling": 2686.574983175655,
+        "combined": 2686.574983175655
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:272",
+      "source_way_count": 118,
+      "bound_way_count": 112,
+      "source_inventory_length_m": 42992.84256617345,
+      "canonical_inventory_length_m": 42992.84256617345,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3320.9933261232,
+      "maximum_supported_coverage_m": {
+        "on_foot": 39671.84924005025,
+        "cycling": 39671.84924005025,
+        "combined": 39671.84924005025
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:278",
+      "source_way_count": 43,
+      "bound_way_count": 42,
+      "source_inventory_length_m": 11923.50593294221,
+      "canonical_inventory_length_m": 11923.50593294221,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 31.834527906985386,
+      "maximum_supported_coverage_m": {
+        "on_foot": 11891.671405035224,
+        "cycling": 11891.671405035224,
+        "combined": 11891.671405035224
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:28",
+      "source_way_count": 469,
+      "bound_way_count": 436,
+      "source_inventory_length_m": 129305.59405320026,
+      "canonical_inventory_length_m": 129262.87323782909,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 5418.653728094781,
+      "maximum_supported_coverage_m": {
+        "on_foot": 123233.41023363205,
+        "cycling": 123818.80331618512,
+        "combined": 123844.2195097343
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:288",
+      "source_way_count": 123,
+      "bound_way_count": 18,
+      "source_inventory_length_m": 30216.597742718848,
+      "canonical_inventory_length_m": 30216.597742718848,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 24808.106340081173,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5408.4914026376755,
+        "cycling": 5408.4914026376755,
+        "combined": 5408.4914026376755
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:3",
+      "source_way_count": 1724,
+      "bound_way_count": 1563,
+      "source_inventory_length_m": 531754.2789415816,
+      "canonical_inventory_length_m": 531592.9972443961,
+      "roundabout_group_count": 5,
+      "unmapped_inventory_m": 31649.612161559693,
+      "maximum_supported_coverage_m": {
+        "on_foot": 487275.74934820796,
+        "cycling": 498828.31269570853,
+        "combined": 499943.38508283644
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:32",
+      "source_way_count": 235,
+      "bound_way_count": 164,
+      "source_inventory_length_m": 74491.53894379428,
+      "canonical_inventory_length_m": 74491.53894379428,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 15690.982287604398,
+      "maximum_supported_coverage_m": {
+        "on_foot": 58548.98389016378,
+        "cycling": 58225.37038799615,
+        "combined": 58800.55665618988
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:327",
+      "source_way_count": 63,
+      "bound_way_count": 63,
+      "source_inventory_length_m": 38713.43570072087,
+      "canonical_inventory_length_m": 38713.43570072087,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 262.6458354811548,
+      "maximum_supported_coverage_m": {
+        "on_foot": 38450.78986523971,
+        "cycling": 38440.38663489684,
+        "combined": 38450.78986523971
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:33",
+      "source_way_count": 565,
+      "bound_way_count": 404,
+      "source_inventory_length_m": 135293.8912377341,
+      "canonical_inventory_length_m": 135158.08889393447,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 54754.298555467045,
+      "maximum_supported_coverage_m": {
+        "on_foot": 77706.1094458424,
+        "cycling": 80231.20420806821,
+        "combined": 80403.79033846743
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:339",
+      "source_way_count": 27,
+      "bound_way_count": 27,
+      "source_inventory_length_m": 14543.38442842826,
+      "canonical_inventory_length_m": 14543.38442842826,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14543.38442842826,
+        "cycling": 14543.38442842826,
+        "combined": 14543.38442842826
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:34",
+      "source_way_count": 45,
+      "bound_way_count": 31,
+      "source_inventory_length_m": 6654.413121895364,
+      "canonical_inventory_length_m": 6654.413121895364,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 523.6887490376566,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5295.796505338407,
+        "cycling": 6130.724372857708,
+        "combined": 6130.724372857708
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:344",
+      "source_way_count": 22,
+      "bound_way_count": 22,
+      "source_inventory_length_m": 14315.618851424679,
+      "canonical_inventory_length_m": 14315.618851424679,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14315.618851424679,
+        "cycling": 14315.618851424679,
+        "combined": 14315.618851424679
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:403",
+      "source_way_count": 315,
+      "bound_way_count": 275,
+      "source_inventory_length_m": 68598.0750838533,
+      "canonical_inventory_length_m": 68598.0750838533,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5040.958751849175,
+      "maximum_supported_coverage_m": {
+        "on_foot": 63471.565346355594,
+        "cycling": 63530.60578689,
+        "combined": 63557.11633200412
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:411",
+      "source_way_count": 17,
+      "bound_way_count": 14,
+      "source_inventory_length_m": 1196.8081673175043,
+      "canonical_inventory_length_m": 1196.8081673175043,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 123.71941918866742,
+      "maximum_supported_coverage_m": {
+        "on_foot": 940.8111198665789,
+        "cycling": 1009.647422555871,
+        "combined": 1073.0887481288369
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:416",
+      "source_way_count": 127,
+      "bound_way_count": 108,
+      "source_inventory_length_m": 21240.829158697317,
+      "canonical_inventory_length_m": 21240.829158697317,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1607.6237194850655,
+      "maximum_supported_coverage_m": {
+        "on_foot": 17694.57755632909,
+        "cycling": 19606.608082230625,
+        "combined": 19633.20543921225
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:423",
+      "source_way_count": 69,
+      "bound_way_count": 65,
+      "source_inventory_length_m": 39929.89273494123,
+      "canonical_inventory_length_m": 39879.639378545864,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 1044.64825865678,
+      "maximum_supported_coverage_m": {
+        "on_foot": 38705.965174380435,
+        "cycling": 38834.991119889084,
+        "combined": 38834.991119889084
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:425",
+      "source_way_count": 143,
+      "bound_way_count": 121,
+      "source_inventory_length_m": 8197.878554556415,
+      "canonical_inventory_length_m": 8197.878554556415,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1024.3669177124002,
+      "maximum_supported_coverage_m": {
+        "on_foot": 7148.470171394757,
+        "cycling": 7149.941631702808,
+        "combined": 7173.511636844015
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:426",
+      "source_way_count": 10,
+      "bound_way_count": 10,
+      "source_inventory_length_m": 8738.649797127218,
+      "canonical_inventory_length_m": 8738.649797127218,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 8738.649797127218,
+        "cycling": 8738.649797127218,
+        "combined": 8738.649797127218
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:43",
+      "source_way_count": 127,
+      "bound_way_count": 101,
+      "source_inventory_length_m": 52723.76447412023,
+      "canonical_inventory_length_m": 52723.76447412023,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6207.5450327600265,
+      "maximum_supported_coverage_m": {
+        "on_foot": 36130.039273091716,
+        "cycling": 46516.219441360205,
+        "combined": 46516.219441360205
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:437",
+      "source_way_count": 46,
+      "bound_way_count": 33,
+      "source_inventory_length_m": 15662.047793942533,
+      "canonical_inventory_length_m": 15662.047793942533,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 4939.318608632002,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9672.72283203085,
+        "cycling": 10722.72918531053,
+        "combined": 10722.72918531053
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:44",
+      "source_way_count": 193,
+      "bound_way_count": 155,
+      "source_inventory_length_m": 81606.75678642167,
+      "canonical_inventory_length_m": 81580.30534638945,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 11630.298414772595,
+      "maximum_supported_coverage_m": {
+        "on_foot": 69944.12193969962,
+        "cycling": 69758.0556481327,
+        "combined": 69950.00693161685
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:440",
+      "source_way_count": 20,
+      "bound_way_count": 20,
+      "source_inventory_length_m": 5702.886722244168,
+      "canonical_inventory_length_m": 5702.886722244168,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5702.886722244168,
+        "cycling": 5702.886722244168,
+        "combined": 5702.886722244168
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:442",
+      "source_way_count": 349,
+      "bound_way_count": 209,
+      "source_inventory_length_m": 111722.12003301959,
+      "canonical_inventory_length_m": 111722.12003301959,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 30834.424691494743,
+      "maximum_supported_coverage_m": {
+        "on_foot": 77396.00459303071,
+        "cycling": 80390.53218959674,
+        "combined": 80887.69534152484
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:45",
+      "source_way_count": 1441,
+      "bound_way_count": 1160,
+      "source_inventory_length_m": 420365.40124047355,
+      "canonical_inventory_length_m": 420365.40124047355,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 60458.234216181736,
+      "maximum_supported_coverage_m": {
+        "on_foot": 347759.45973051724,
+        "cycling": 359814.80725148536,
+        "combined": 359907.1670242918
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:451",
+      "source_way_count": 179,
+      "bound_way_count": 132,
+      "source_inventory_length_m": 26911.37308620511,
+      "canonical_inventory_length_m": 26911.37308620511,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 7303.701350245225,
+      "maximum_supported_coverage_m": {
+        "on_foot": 19245.105408603453,
+        "cycling": 19561.88336749103,
+        "combined": 19607.671735959884
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:455",
+      "source_way_count": 85,
+      "bound_way_count": 81,
+      "source_inventory_length_m": 37026.65568541638,
+      "canonical_inventory_length_m": 36969.81653959111,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 69.49828093368706,
+      "maximum_supported_coverage_m": {
+        "on_foot": 36755.693550690594,
+        "cycling": 36900.318258657426,
+        "combined": 36900.318258657426
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:46",
+      "source_way_count": 608,
+      "bound_way_count": 434,
+      "source_inventory_length_m": 167597.11905468063,
+      "canonical_inventory_length_m": 167580.28317114222,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 34395.87945693915,
+      "maximum_supported_coverage_m": {
+        "on_foot": 126209.69656060441,
+        "cycling": 133134.57670131818,
+        "combined": 133184.40371420307
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:465",
+      "source_way_count": 56,
+      "bound_way_count": 54,
+      "source_inventory_length_m": 17823.306739850537,
+      "canonical_inventory_length_m": 17823.306739850537,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 940.877543427323,
+      "maximum_supported_coverage_m": {
+        "on_foot": 13834.65484727762,
+        "cycling": 16882.429196423214,
+        "combined": 16882.429196423214
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:466",
+      "source_way_count": 97,
+      "bound_way_count": 81,
+      "source_inventory_length_m": 21852.608160298372,
+      "canonical_inventory_length_m": 21833.051317333833,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 2800.537114625018,
+      "maximum_supported_coverage_m": {
+        "on_foot": 16719.945732571123,
+        "cycling": 18938.082502114557,
+        "combined": 19032.514202708815
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:467",
+      "source_way_count": 67,
+      "bound_way_count": 66,
+      "source_inventory_length_m": 13482.086228063325,
+      "canonical_inventory_length_m": 13482.086228063325,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 802.2784339643767,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9908.965945198017,
+        "cycling": 12679.807794098948,
+        "combined": 12679.807794098948
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:468",
+      "source_way_count": 110,
+      "bound_way_count": 98,
+      "source_inventory_length_m": 15834.859420438052,
+      "canonical_inventory_length_m": 15834.859420438052,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 933.666102326064,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14299.114236941827,
+        "cycling": 14901.193318111988,
+        "combined": 14901.193318111988
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:469",
+      "source_way_count": 46,
+      "bound_way_count": 40,
+      "source_inventory_length_m": 8383.955550724793,
+      "canonical_inventory_length_m": 8383.955550724793,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 687.0041306683079,
+      "maximum_supported_coverage_m": {
+        "on_foot": 7594.6506520523635,
+        "cycling": 7692.745804817,
+        "combined": 7696.951420056485
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:475",
+      "source_way_count": 39,
+      "bound_way_count": 36,
+      "source_inventory_length_m": 7330.418219793018,
+      "canonical_inventory_length_m": 7330.418219793018,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 544.9865077653012,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5375.712763827644,
+        "cycling": 6785.4317120277165,
+        "combined": 6785.4317120277165
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:476",
+      "source_way_count": 9,
+      "bound_way_count": 9,
+      "source_inventory_length_m": 2728.5573928591493,
+      "canonical_inventory_length_m": 2728.5573928591493,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 897.299303684639,
+        "cycling": 2728.5573928591493,
+        "combined": 2728.5573928591493
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:477",
+      "source_way_count": 32,
+      "bound_way_count": 31,
+      "source_inventory_length_m": 9544.520193839471,
+      "canonical_inventory_length_m": 9544.520193839471,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1430.2241339659486,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6997.216953319782,
+        "cycling": 8114.296059873523,
+        "combined": 8114.296059873523
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:478",
+      "source_way_count": 84,
+      "bound_way_count": 79,
+      "source_inventory_length_m": 19697.580277757777,
+      "canonical_inventory_length_m": 19697.580277757777,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1469.2828682588733,
+      "maximum_supported_coverage_m": {
+        "on_foot": 11250.186230982828,
+        "cycling": 18166.955828625607,
+        "combined": 18228.297409498904
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:48",
+      "source_way_count": 432,
+      "bound_way_count": 333,
+      "source_inventory_length_m": 142958.90292711701,
+      "canonical_inventory_length_m": 142958.90292711701,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 21999.92902035742,
+      "maximum_supported_coverage_m": {
+        "on_foot": 118949.28526058579,
+        "cycling": 120958.9739067596,
+        "combined": 120958.9739067596
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:482",
+      "source_way_count": 43,
+      "bound_way_count": 43,
+      "source_inventory_length_m": 11670.83085915375,
+      "canonical_inventory_length_m": 11670.83085915375,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 15.455783053492269,
+      "maximum_supported_coverage_m": {
+        "on_foot": 11655.375076100258,
+        "cycling": 11655.375076100258,
+        "combined": 11655.375076100258
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:49",
+      "source_way_count": 42,
+      "bound_way_count": 40,
+      "source_inventory_length_m": 32224.721793500546,
+      "canonical_inventory_length_m": 32224.721793500546,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 548.4684315379563,
+      "maximum_supported_coverage_m": {
+        "on_foot": 31665.35795334124,
+        "cycling": 31676.25336196259,
+        "combined": 31676.25336196259
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:492",
+      "source_way_count": 62,
+      "bound_way_count": 62,
+      "source_inventory_length_m": 25091.012400375912,
+      "canonical_inventory_length_m": 25091.012400375912,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1591.0903794859223,
+      "maximum_supported_coverage_m": {
+        "on_foot": 21625.230119691474,
+        "cycling": 23499.92202088999,
+        "combined": 23499.92202088999
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:5",
+      "source_way_count": 2716,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 621299.3358383927,
+      "canonical_inventory_length_m": 621106.6152785639,
+      "roundabout_group_count": 6,
+      "unmapped_inventory_m": 621106.6152785639,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:50",
+      "source_way_count": 382,
+      "bound_way_count": 357,
+      "source_inventory_length_m": 106162.49948121575,
+      "canonical_inventory_length_m": 106133.01259085712,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 3283.3625032307027,
+      "maximum_supported_coverage_m": {
+        "on_foot": 101485.04808477528,
+        "cycling": 102706.4369780321,
+        "combined": 102849.65008762642
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:51",
+      "source_way_count": 1831,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 382227.6047644036,
+      "canonical_inventory_length_m": 382155.79152165196,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 382155.79152165196,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:517",
+      "source_way_count": 108,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 21685.12321650141,
+      "canonical_inventory_length_m": 21685.12321650141,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 21685.12321650141,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:52",
+      "source_way_count": 368,
+      "bound_way_count": 302,
+      "source_inventory_length_m": 77499.66614535335,
+      "canonical_inventory_length_m": 77393.45618698047,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 8582.71687146595,
+      "maximum_supported_coverage_m": {
+        "on_foot": 65802.25286801475,
+        "cycling": 68721.2705325094,
+        "combined": 68810.73931551453
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:523",
+      "source_way_count": 15,
+      "bound_way_count": 8,
+      "source_inventory_length_m": 5972.699458076688,
+      "canonical_inventory_length_m": 5972.699458076688,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3164.887091041889,
+      "maximum_supported_coverage_m": {
+        "on_foot": 1791.9317598086293,
+        "cycling": 2807.8123670347986,
+        "combined": 2807.8123670347986
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:53",
+      "source_way_count": 159,
+      "bound_way_count": 120,
+      "source_inventory_length_m": 34146.67778914817,
+      "canonical_inventory_length_m": 34146.67778914817,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 17439.260637470703,
+      "maximum_supported_coverage_m": {
+        "on_foot": 16319.13604819028,
+        "cycling": 16659.29414020354,
+        "combined": 16707.417151677466
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:534",
+      "source_way_count": 63,
+      "bound_way_count": 60,
+      "source_inventory_length_m": 10313.108380607373,
+      "canonical_inventory_length_m": 10313.108380607373,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 652.9066827314655,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5484.7777479904,
+        "cycling": 9646.240566186578,
+        "combined": 9660.201697875907
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:535",
+      "source_way_count": 76,
+      "bound_way_count": 63,
+      "source_inventory_length_m": 13151.819032987038,
+      "canonical_inventory_length_m": 13151.819032987038,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1089.5056276949927,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9178.912914530403,
+        "cycling": 12016.40468711405,
+        "combined": 12062.313405292045
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:536",
+      "source_way_count": 48,
+      "bound_way_count": 41,
+      "source_inventory_length_m": 5546.081672646056,
+      "canonical_inventory_length_m": 5546.081672646056,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 668.4039505779047,
+      "maximum_supported_coverage_m": {
+        "on_foot": 4840.065206459492,
+        "cycling": 4877.6777220681515,
+        "combined": 4877.6777220681515
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:539",
+      "source_way_count": 176,
+      "bound_way_count": 155,
+      "source_inventory_length_m": 29782.348848971844,
+      "canonical_inventory_length_m": 29782.348848971844,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2533.544793842426,
+      "maximum_supported_coverage_m": {
+        "on_foot": 17132.86552347722,
+        "cycling": 27223.861389249192,
+        "combined": 27248.804055129418
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:54",
+      "source_way_count": 553,
+      "bound_way_count": 392,
+      "source_inventory_length_m": 110967.56690232662,
+      "canonical_inventory_length_m": 110900.95380956729,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 20723.186395473094,
+      "maximum_supported_coverage_m": {
+        "on_foot": 84241.8752030498,
+        "cycling": 90158.39857518543,
+        "combined": 90177.7674140942
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:544",
+      "source_way_count": 108,
+      "bound_way_count": 93,
+      "source_inventory_length_m": 17499.651415474444,
+      "canonical_inventory_length_m": 17499.651415474444,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1414.6915408240275,
+      "maximum_supported_coverage_m": {
+        "on_foot": 16084.959874650416,
+        "cycling": 16084.959874650416,
+        "combined": 16084.959874650416
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:547",
+      "source_way_count": 50,
+      "bound_way_count": 1,
+      "source_inventory_length_m": 13066.461404273721,
+      "canonical_inventory_length_m": 13066.461404273721,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 12881.193926875556,
+      "maximum_supported_coverage_m": {
+        "on_foot": 185.26747739816437,
+        "cycling": 185.26747739816437,
+        "combined": 185.26747739816437
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:548",
+      "source_way_count": 19,
+      "bound_way_count": 19,
+      "source_inventory_length_m": 8391.064685205673,
+      "canonical_inventory_length_m": 8391.064685205673,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 8391.064685205673,
+        "cycling": 8391.064685205673,
+        "combined": 8391.064685205673
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:549",
+      "source_way_count": 149,
+      "bound_way_count": 133,
+      "source_inventory_length_m": 34653.764587028905,
+      "canonical_inventory_length_m": 34653.764587028905,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3644.5490712998835,
+      "maximum_supported_coverage_m": {
+        "on_foot": 30997.290134967243,
+        "cycling": 31009.21551572902,
+        "combined": 31009.21551572902
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:55",
+      "source_way_count": 934,
+      "bound_way_count": 810,
+      "source_inventory_length_m": 189471.4131626142,
+      "canonical_inventory_length_m": 189395.1150037024,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 24513.247591523803,
+      "maximum_supported_coverage_m": {
+        "on_foot": 160548.36577654406,
+        "cycling": 164684.36497116782,
+        "combined": 164881.8674121786
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:550",
+      "source_way_count": 69,
+      "bound_way_count": 59,
+      "source_inventory_length_m": 33903.78451107913,
+      "canonical_inventory_length_m": 33903.78451107913,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1028.3588289427207,
+      "maximum_supported_coverage_m": {
+        "on_foot": 31649.015433803484,
+        "cycling": 32814.739520284784,
+        "combined": 32875.42568213641
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:551",
+      "source_way_count": 147,
+      "bound_way_count": 117,
+      "source_inventory_length_m": 39346.17779678467,
+      "canonical_inventory_length_m": 39259.79038295909,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 5741.4745575489,
+      "maximum_supported_coverage_m": {
+        "on_foot": 33500.69872893412,
+        "cycling": 33518.31582541019,
+        "combined": 33518.31582541019
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:552",
+      "source_way_count": 93,
+      "bound_way_count": 92,
+      "source_inventory_length_m": 42561.7598427482,
+      "canonical_inventory_length_m": 42561.7598427482,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 453.7093304285445,
+      "maximum_supported_coverage_m": {
+        "on_foot": 42102.04179908294,
+        "cycling": 42108.050512319656,
+        "combined": 42108.050512319656
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:555",
+      "source_way_count": 60,
+      "bound_way_count": 14,
+      "source_inventory_length_m": 12660.991168325614,
+      "canonical_inventory_length_m": 12660.991168325614,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 11313.400399144757,
+      "maximum_supported_coverage_m": {
+        "on_foot": 803.8608879584801,
+        "cycling": 1347.5907691808561,
+        "combined": 1347.5907691808561
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:558",
+      "source_way_count": 70,
+      "bound_way_count": 29,
+      "source_inventory_length_m": 9360.711135613878,
+      "canonical_inventory_length_m": 9360.711135613878,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3681.9994929745444,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5509.369375790571,
+        "cycling": 5678.711642639333,
+        "combined": 5678.711642639333
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:559",
+      "source_way_count": 40,
+      "bound_way_count": 37,
+      "source_inventory_length_m": 11518.053004760566,
+      "canonical_inventory_length_m": 11518.053004760566,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 76.44936312094433,
+      "maximum_supported_coverage_m": {
+        "on_foot": 11441.603641639622,
+        "cycling": 11441.603641639622,
+        "combined": 11441.603641639622
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:56",
+      "source_way_count": 510,
+      "bound_way_count": 335,
+      "source_inventory_length_m": 94947.08177587352,
+      "canonical_inventory_length_m": 94947.08177587352,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 28479.0525337922,
+      "maximum_supported_coverage_m": {
+        "on_foot": 65454.34755305446,
+        "cycling": 65137.6019861505,
+        "combined": 66468.02924208132
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:562",
+      "source_way_count": 163,
+      "bound_way_count": 134,
+      "source_inventory_length_m": 45025.29332060165,
+      "canonical_inventory_length_m": 45025.29332060165,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 10369.431520245453,
+      "maximum_supported_coverage_m": {
+        "on_foot": 33770.00676387337,
+        "cycling": 34185.8515176849,
+        "combined": 34655.8618003562
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:563",
+      "source_way_count": 46,
+      "bound_way_count": 44,
+      "source_inventory_length_m": 12468.588715861639,
+      "canonical_inventory_length_m": 12411.595918985884,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 910.6257640717722,
+      "maximum_supported_coverage_m": {
+        "on_foot": 10943.051460202465,
+        "cycling": 11500.970154914112,
+        "combined": 11500.970154914112
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:566",
+      "source_way_count": 77,
+      "bound_way_count": 61,
+      "source_inventory_length_m": 27828.35810916888,
+      "canonical_inventory_length_m": 27828.35810916888,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2371.0513177722423,
+      "maximum_supported_coverage_m": {
+        "on_foot": 17261.96512549714,
+        "cycling": 25457.306791396637,
+        "combined": 25457.306791396637
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:568",
+      "source_way_count": 136,
+      "bound_way_count": 66,
+      "source_inventory_length_m": 47632.19824754091,
+      "canonical_inventory_length_m": 47589.64741729969,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 25398.92450928114,
+      "maximum_supported_coverage_m": {
+        "on_foot": 22003.76121530448,
+        "cycling": 22177.439635642597,
+        "combined": 22190.72290801855
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:57",
+      "source_way_count": 466,
+      "bound_way_count": 425,
+      "source_inventory_length_m": 108133.07751596438,
+      "canonical_inventory_length_m": 108133.07751596438,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5198.914084245422,
+      "maximum_supported_coverage_m": {
+        "on_foot": 100645.08476821825,
+        "cycling": 102670.06750726937,
+        "combined": 102934.16343171896
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:573",
+      "source_way_count": 118,
+      "bound_way_count": 116,
+      "source_inventory_length_m": 31019.593236490247,
+      "canonical_inventory_length_m": 31019.593236490247,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 185.78368595978827,
+      "maximum_supported_coverage_m": {
+        "on_foot": 30770.047320070447,
+        "cycling": 30833.80955053046,
+        "combined": 30833.80955053046
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:574",
+      "source_way_count": 23,
+      "bound_way_count": 22,
+      "source_inventory_length_m": 4316.594566746287,
+      "canonical_inventory_length_m": 4316.594566746287,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 95.4842604072901,
+      "maximum_supported_coverage_m": {
+        "on_foot": 4221.110306338996,
+        "cycling": 4212.726197289381,
+        "combined": 4221.110306338996
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:6",
+      "source_way_count": 3632,
+      "bound_way_count": 3184,
+      "source_inventory_length_m": 719667.4766594107,
+      "canonical_inventory_length_m": 719527.3100428093,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 69176.18915561202,
+      "maximum_supported_coverage_m": {
+        "on_foot": 620630.3274704394,
+        "cycling": 646575.3293171064,
+        "combined": 650351.1208871973
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:60",
+      "source_way_count": 90,
+      "bound_way_count": 40,
+      "source_inventory_length_m": 15276.513315706958,
+      "canonical_inventory_length_m": 15276.513315706958,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 8843.555236144144,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6432.9580795628135,
+        "cycling": 6404.808892654652,
+        "combined": 6432.9580795628135
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:606",
+      "source_way_count": 50,
+      "bound_way_count": 40,
+      "source_inventory_length_m": 9916.396617905288,
+      "canonical_inventory_length_m": 9916.396617905288,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2483.918457453574,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5939.445430581568,
+        "cycling": 7432.478160451714,
+        "combined": 7432.478160451714
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:61",
+      "source_way_count": 595,
+      "bound_way_count": 283,
+      "source_inventory_length_m": 96240.39077880484,
+      "canonical_inventory_length_m": 96240.39077880484,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 45591.43845965829,
+      "maximum_supported_coverage_m": {
+        "on_foot": 49480.84088451058,
+        "cycling": 50648.95231914655,
+        "combined": 50648.95231914655
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:62",
+      "source_way_count": 1309,
+      "bound_way_count": 1097,
+      "source_inventory_length_m": 346579.52625026245,
+      "canonical_inventory_length_m": 346579.52625026245,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 35607.589735633286,
+      "maximum_supported_coverage_m": {
+        "on_foot": 277899.61309030466,
+        "cycling": 309578.4878296611,
+        "combined": 310971.93651462917
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:622",
+      "source_way_count": 172,
+      "bound_way_count": 141,
+      "source_inventory_length_m": 35154.35828245309,
+      "canonical_inventory_length_m": 35154.35828245309,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 5077.012195661879,
+      "maximum_supported_coverage_m": {
+        "on_foot": 28747.88602812981,
+        "cycling": 29685.716540874128,
+        "combined": 30077.34608679121
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:626",
+      "source_way_count": 32,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 6635.21067916126,
+      "canonical_inventory_length_m": 6635.21067916126,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6635.21067916126,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:627",
+      "source_way_count": 183,
+      "bound_way_count": 151,
+      "source_inventory_length_m": 42992.141946615026,
+      "canonical_inventory_length_m": 42992.141946615026,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6240.0831771838275,
+      "maximum_supported_coverage_m": {
+        "on_foot": 36568.124005844875,
+        "cycling": 36743.892921185085,
+        "combined": 36752.0587694312
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:63",
+      "source_way_count": 732,
+      "bound_way_count": 549,
+      "source_inventory_length_m": 189520.76465120385,
+      "canonical_inventory_length_m": 189520.76465120385,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 52806.20331634558,
+      "maximum_supported_coverage_m": {
+        "on_foot": 120815.02085823948,
+        "cycling": 136632.8567936035,
+        "combined": 136714.56133485827
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:636",
+      "source_way_count": 20,
+      "bound_way_count": 20,
+      "source_inventory_length_m": 6466.600885676245,
+      "canonical_inventory_length_m": 6466.600885676245,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 49.426842906108504,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6314.428302821563,
+        "cycling": 6417.174042770136,
+        "combined": 6417.174042770136
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:637",
+      "source_way_count": 85,
+      "bound_way_count": 85,
+      "source_inventory_length_m": 17221.569656309486,
+      "canonical_inventory_length_m": 17221.569656309486,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 270.97493910064804,
+      "maximum_supported_coverage_m": {
+        "on_foot": 16950.594717208838,
+        "cycling": 16950.594717208838,
+        "combined": 16950.594717208838
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:64",
+      "source_way_count": 370,
+      "bound_way_count": 220,
+      "source_inventory_length_m": 132875.37850909602,
+      "canonical_inventory_length_m": 132875.37850909602,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 48926.51241688308,
+      "maximum_supported_coverage_m": {
+        "on_foot": 82549.48779273733,
+        "cycling": 83861.03581150692,
+        "combined": 83948.86609221293
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:645",
+      "source_way_count": 47,
+      "bound_way_count": 46,
+      "source_inventory_length_m": 18303.6423251489,
+      "canonical_inventory_length_m": 18248.928674917344,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 45.98284467450139,
+      "maximum_supported_coverage_m": {
+        "on_foot": 18202.945830242843,
+        "cycling": 16952.832209986547,
+        "combined": 18202.945830242843
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:648",
+      "source_way_count": 32,
+      "bound_way_count": 31,
+      "source_inventory_length_m": 8382.722807701874,
+      "canonical_inventory_length_m": 8382.722807701874,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 644.867298421319,
+      "maximum_supported_coverage_m": {
+        "on_foot": 7737.8555092805545,
+        "cycling": 7737.8555092805545,
+        "combined": 7737.8555092805545
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:65",
+      "source_way_count": 781,
+      "bound_way_count": 743,
+      "source_inventory_length_m": 218661.4633423843,
+      "canonical_inventory_length_m": 218499.09208748167,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 7340.792934889701,
+      "maximum_supported_coverage_m": {
+        "on_foot": 207349.44952825367,
+        "cycling": 210493.51078967887,
+        "combined": 211158.29915259196
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:656",
+      "source_way_count": 84,
+      "bound_way_count": 83,
+      "source_inventory_length_m": 29272.92531607665,
+      "canonical_inventory_length_m": 29272.92531607665,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 44.50888242347355,
+      "maximum_supported_coverage_m": {
+        "on_foot": 29228.416433653176,
+        "cycling": 29228.416433653176,
+        "combined": 29228.416433653176
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:658",
+      "source_way_count": 66,
+      "bound_way_count": 55,
+      "source_inventory_length_m": 3956.436470914231,
+      "canonical_inventory_length_m": 3956.436470914231,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 352.8666045112577,
+      "maximum_supported_coverage_m": {
+        "on_foot": 3603.5698664029733,
+        "cycling": 2830.403531036535,
+        "combined": 3603.5698664029733
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:66",
+      "source_way_count": 1147,
+      "bound_way_count": 936,
+      "source_inventory_length_m": 247966.62230152686,
+      "canonical_inventory_length_m": 247966.62230152686,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 43215.60294777877,
+      "maximum_supported_coverage_m": {
+        "on_foot": 193841.42744418647,
+        "cycling": 203911.12814467773,
+        "combined": 204751.0193537481
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:665",
+      "source_way_count": 46,
+      "bound_way_count": 38,
+      "source_inventory_length_m": 17964.89360131559,
+      "canonical_inventory_length_m": 17964.89360131559,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 2074.5135031514055,
+      "maximum_supported_coverage_m": {
+        "on_foot": 15779.32971347453,
+        "cycling": 15890.380098164185,
+        "combined": 15890.380098164185
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:668",
+      "source_way_count": 93,
+      "bound_way_count": 84,
+      "source_inventory_length_m": 10306.848197436173,
+      "canonical_inventory_length_m": 10306.848197436173,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1052.2120905123702,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6918.794444893327,
+        "cycling": 9254.636106923803,
+        "combined": 9254.636106923803
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:67",
+      "source_way_count": 843,
+      "bound_way_count": 729,
+      "source_inventory_length_m": 214982.5537560387,
+      "canonical_inventory_length_m": 214610.30312177096,
+      "roundabout_group_count": 5,
+      "unmapped_inventory_m": 29678.840911713167,
+      "maximum_supported_coverage_m": {
+        "on_foot": 181996.73514123197,
+        "cycling": 184858.8415451308,
+        "combined": 184931.4622100578
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:672",
+      "source_way_count": 16,
+      "bound_way_count": 13,
+      "source_inventory_length_m": 5076.052965780265,
+      "canonical_inventory_length_m": 5076.052965780265,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 55.32434798574468,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5020.728617794521,
+        "cycling": 5020.728617794521,
+        "combined": 5020.728617794521
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:677",
+      "source_way_count": 52,
+      "bound_way_count": 50,
+      "source_inventory_length_m": 8250.639176800112,
+      "canonical_inventory_length_m": 8250.639176800112,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 918.8741813566467,
+      "maximum_supported_coverage_m": {
+        "on_foot": 7331.7649954434655,
+        "cycling": 7004.120716876993,
+        "combined": 7331.7649954434655
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:68",
+      "source_way_count": 1514,
+      "bound_way_count": 1006,
+      "source_inventory_length_m": 564684.6774971528,
+      "canonical_inventory_length_m": 564650.1313863957,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 135007.30217776296,
+      "maximum_supported_coverage_m": {
+        "on_foot": 421936.987799681,
+        "cycling": 429605.82663396845,
+        "combined": 429642.8292086327
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:680",
+      "source_way_count": 86,
+      "bound_way_count": 83,
+      "source_inventory_length_m": 22877.593316552637,
+      "canonical_inventory_length_m": 22877.593316552637,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1264.6640475929526,
+      "maximum_supported_coverage_m": {
+        "on_foot": 21504.983245023104,
+        "cycling": 21612.929268959684,
+        "combined": 21612.929268959684
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:69",
+      "source_way_count": 361,
+      "bound_way_count": 345,
+      "source_inventory_length_m": 80308.65203219163,
+      "canonical_inventory_length_m": 80308.65203219163,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 4520.358989717948,
+      "maximum_supported_coverage_m": {
+        "on_foot": 74038.17662435319,
+        "cycling": 75767.1780679813,
+        "combined": 75788.29304247368
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:696",
+      "source_way_count": 23,
+      "bound_way_count": 18,
+      "source_inventory_length_m": 10574.179158398143,
+      "canonical_inventory_length_m": 10574.179158398143,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 729.1165510849969,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9845.062607313146,
+        "cycling": 9845.062607313146,
+        "combined": 9845.062607313146
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:697",
+      "source_way_count": 11,
+      "bound_way_count": 11,
+      "source_inventory_length_m": 5905.008197478064,
+      "canonical_inventory_length_m": 5905.008197478064,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 59.95239376314112,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5845.055803714923,
+        "cycling": 5845.055803714923,
+        "combined": 5845.055803714923
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:699",
+      "source_way_count": 25,
+      "bound_way_count": 21,
+      "source_inventory_length_m": 3437.8723506661145,
+      "canonical_inventory_length_m": 3437.8723506661145,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 829.406780540804,
+      "maximum_supported_coverage_m": {
+        "on_foot": 2418.313860620677,
+        "cycling": 2608.4655701253105,
+        "combined": 2608.4655701253105
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:7",
+      "source_way_count": 2264,
+      "bound_way_count": 2032,
+      "source_inventory_length_m": 928851.220138947,
+      "canonical_inventory_length_m": 928716.3031261023,
+      "roundabout_group_count": 3,
+      "unmapped_inventory_m": 67790.38105043746,
+      "maximum_supported_coverage_m": {
+        "on_foot": 823258.6590521627,
+        "cycling": 860340.5157049233,
+        "combined": 860925.9220756649
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:71",
+      "source_way_count": 276,
+      "bound_way_count": 274,
+      "source_inventory_length_m": 108200.28184730749,
+      "canonical_inventory_length_m": 108173.07275918528,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 490.94187865591084,
+      "maximum_supported_coverage_m": {
+        "on_foot": 107682.13088052937,
+        "cycling": 107682.13088052937,
+        "combined": 107682.13088052937
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:715",
+      "source_way_count": 70,
+      "bound_way_count": 69,
+      "source_inventory_length_m": 28301.990885010608,
+      "canonical_inventory_length_m": 28264.429929962876,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 114.08979259072657,
+      "maximum_supported_coverage_m": {
+        "on_foot": 27882.499455817302,
+        "cycling": 28123.73179383155,
+        "combined": 28150.34013737215
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:72",
+      "source_way_count": 778,
+      "bound_way_count": 698,
+      "source_inventory_length_m": 261143.0707890254,
+      "canonical_inventory_length_m": 261143.0707890254,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 16501.39283975691,
+      "maximum_supported_coverage_m": {
+        "on_foot": 231148.14839864653,
+        "cycling": 243548.44663429706,
+        "combined": 244641.6779492685
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:73",
+      "source_way_count": 141,
+      "bound_way_count": 123,
+      "source_inventory_length_m": 53429.13368353362,
+      "canonical_inventory_length_m": 53429.13368353362,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6677.014473021103,
+      "maximum_supported_coverage_m": {
+        "on_foot": 44746.4932244007,
+        "cycling": 46188.028346879044,
+        "combined": 46752.119210512516
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:75",
+      "source_way_count": 771,
+      "bound_way_count": 585,
+      "source_inventory_length_m": 158592.99256260885,
+      "canonical_inventory_length_m": 158507.7510763655,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 26895.99568162678,
+      "maximum_supported_coverage_m": {
+        "on_foot": 127411.70287211785,
+        "cycling": 131326.7570482004,
+        "combined": 131611.75539473872
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:753",
+      "source_way_count": 48,
+      "bound_way_count": 46,
+      "source_inventory_length_m": 16211.462414357418,
+      "canonical_inventory_length_m": 16211.462414357418,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1324.7304768667818,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14654.354745240722,
+        "cycling": 14207.50632207476,
+        "combined": 14886.731937490636
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:754",
+      "source_way_count": 174,
+      "bound_way_count": 154,
+      "source_inventory_length_m": 94472.87078538412,
+      "canonical_inventory_length_m": 94472.87078538412,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3948.5147446631163,
+      "maximum_supported_coverage_m": {
+        "on_foot": 90524.356040721,
+        "cycling": 90153.51984502937,
+        "combined": 90524.356040721
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:755",
+      "source_way_count": 32,
+      "bound_way_count": 32,
+      "source_inventory_length_m": 12879.285031705844,
+      "canonical_inventory_length_m": 12879.285031705844,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 0,
+      "maximum_supported_coverage_m": {
+        "on_foot": 12870.217491850883,
+        "cycling": 12879.285031705844,
+        "combined": 12879.285031705844
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:756",
+      "source_way_count": 109,
+      "bound_way_count": 103,
+      "source_inventory_length_m": 20169.63469738221,
+      "canonical_inventory_length_m": 20169.63469738221,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1010.0655770820595,
+      "maximum_supported_coverage_m": {
+        "on_foot": 15573.903452333136,
+        "cycling": 19159.56912030015,
+        "combined": 19159.56912030015
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:76",
+      "source_way_count": 919,
+      "bound_way_count": 666,
+      "source_inventory_length_m": 207778.8970470156,
+      "canonical_inventory_length_m": 207535.70856191363,
+      "roundabout_group_count": 4,
+      "unmapped_inventory_m": 31427.675866974925,
+      "maximum_supported_coverage_m": {
+        "on_foot": 161058.43867274842,
+        "cycling": 176036.38519221148,
+        "combined": 176108.0326949387
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:764",
+      "source_way_count": 63,
+      "bound_way_count": 60,
+      "source_inventory_length_m": 22510.600689237977,
+      "canonical_inventory_length_m": 22510.600689237977,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1885.1077344832229,
+      "maximum_supported_coverage_m": {
+        "on_foot": 20212.36121882001,
+        "cycling": 20625.492954754754,
+        "combined": 20625.492954754754
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:765",
+      "source_way_count": 96,
+      "bound_way_count": 91,
+      "source_inventory_length_m": 18707.16133103798,
+      "canonical_inventory_length_m": 18670.040859400895,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 512.6012335542509,
+      "maximum_supported_coverage_m": {
+        "on_foot": 14171.196644580137,
+        "cycling": 18050.218222379077,
+        "combined": 18157.439625846644
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:766",
+      "source_way_count": 109,
+      "bound_way_count": 106,
+      "source_inventory_length_m": 20672.649330651708,
+      "canonical_inventory_length_m": 20672.649330651708,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 233.9535668239114,
+      "maximum_supported_coverage_m": {
+        "on_foot": 20434.58699850158,
+        "cycling": 20438.695763827796,
+        "combined": 20438.695763827796
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:767",
+      "source_way_count": 34,
+      "bound_way_count": 34,
+      "source_inventory_length_m": 10219.992738316496,
+      "canonical_inventory_length_m": 10219.992738316496,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 56.74797722844596,
+      "maximum_supported_coverage_m": {
+        "on_foot": 10163.24476108805,
+        "cycling": 10163.24476108805,
+        "combined": 10163.24476108805
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:768",
+      "source_way_count": 29,
+      "bound_way_count": 29,
+      "source_inventory_length_m": 9446.026750292815,
+      "canonical_inventory_length_m": 9446.026750292815,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 182.4906696119033,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9231.698179405592,
+        "cycling": 9263.536080680911,
+        "combined": 9263.536080680911
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:77",
+      "source_way_count": 164,
+      "bound_way_count": 160,
+      "source_inventory_length_m": 79249.34009744953,
+      "canonical_inventory_length_m": 79249.34009744953,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1656.6267121084093,
+      "maximum_supported_coverage_m": {
+        "on_foot": 77301.46546448847,
+        "cycling": 77557.94585410449,
+        "combined": 77592.71338534112
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:775",
+      "source_way_count": 95,
+      "bound_way_count": 88,
+      "source_inventory_length_m": 26757.639268095412,
+      "canonical_inventory_length_m": 26757.639268095412,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1661.3442943930204,
+      "maximum_supported_coverage_m": {
+        "on_foot": 25096.294973702392,
+        "cycling": 25068.653349574965,
+        "combined": 25096.294973702392
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:777",
+      "source_way_count": 53,
+      "bound_way_count": 46,
+      "source_inventory_length_m": 26215.792287076292,
+      "canonical_inventory_length_m": 26215.792287076292,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 336.9076326827999,
+      "maximum_supported_coverage_m": {
+        "on_foot": 25878.884654393492,
+        "cycling": 25878.884654393492,
+        "combined": 25878.884654393492
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:78",
+      "source_way_count": 374,
+      "bound_way_count": 334,
+      "source_inventory_length_m": 162037.3445224476,
+      "canonical_inventory_length_m": 161997.28567038997,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 21878.01846140466,
+      "maximum_supported_coverage_m": {
+        "on_foot": 139402.7669314813,
+        "cycling": 139774.4187086133,
+        "combined": 140119.26720898531
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:81",
+      "source_way_count": 734,
+      "bound_way_count": 530,
+      "source_inventory_length_m": 242121.40661432678,
+      "canonical_inventory_length_m": 241979.30459047543,
+      "roundabout_group_count": 4,
+      "unmapped_inventory_m": 46469.788365293934,
+      "maximum_supported_coverage_m": {
+        "on_foot": 176137.07815307373,
+        "cycling": 195368.20751474536,
+        "combined": 195509.5162251815
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:810",
+      "source_way_count": 170,
+      "bound_way_count": 145,
+      "source_inventory_length_m": 31926.569251676443,
+      "canonical_inventory_length_m": 31926.569251676443,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3716.4039828868154,
+      "maximum_supported_coverage_m": {
+        "on_foot": 28112.48810828877,
+        "cycling": 28124.30872195891,
+        "combined": 28210.165268789628
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:82",
+      "source_way_count": 518,
+      "bound_way_count": 417,
+      "source_inventory_length_m": 232740.90200878622,
+      "canonical_inventory_length_m": 232740.90200878622,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 33214.84984070831,
+      "maximum_supported_coverage_m": {
+        "on_foot": 192964.20359198758,
+        "cycling": 199484.1437390195,
+        "combined": 199526.0521680779
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:822",
+      "source_way_count": 34,
+      "bound_way_count": 31,
+      "source_inventory_length_m": 3702.5940977760806,
+      "canonical_inventory_length_m": 3702.5940977760806,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 996.2995927107299,
+      "maximum_supported_coverage_m": {
+        "on_foot": 2615.5357794590045,
+        "cycling": 2706.2945050653507,
+        "combined": 2706.2945050653507
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:825",
+      "source_way_count": 165,
+      "bound_way_count": 163,
+      "source_inventory_length_m": 105917.81334979682,
+      "canonical_inventory_length_m": 105884.2934000762,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 959.6063055540144,
+      "maximum_supported_coverage_m": {
+        "on_foot": 104586.99678539757,
+        "cycling": 104924.68709452219,
+        "combined": 104924.68709452219
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:84",
+      "source_way_count": 64,
+      "bound_way_count": 63,
+      "source_inventory_length_m": 15673.97582329136,
+      "canonical_inventory_length_m": 15673.97582329136,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 239.44888893200732,
+      "maximum_supported_coverage_m": {
+        "on_foot": 15354.783486010487,
+        "cycling": 14942.537689956222,
+        "combined": 15434.526934359352
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:85",
+      "source_way_count": 28,
+      "bound_way_count": 24,
+      "source_inventory_length_m": 10001.354032344463,
+      "canonical_inventory_length_m": 10001.354032344463,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 300.6425224367795,
+      "maximum_supported_coverage_m": {
+        "on_foot": 9490.300074536219,
+        "cycling": 9700.711509907684,
+        "combined": 9700.711509907684
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:862",
+      "source_way_count": 28,
+      "bound_way_count": 26,
+      "source_inventory_length_m": 7713.0423306199755,
+      "canonical_inventory_length_m": 7713.0423306199755,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1845.849704490127,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5211.857558034778,
+        "cycling": 5867.192626129849,
+        "combined": 5867.192626129849
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:88",
+      "source_way_count": 274,
+      "bound_way_count": 180,
+      "source_inventory_length_m": 53274.77862478357,
+      "canonical_inventory_length_m": 53182.622191192306,
+      "roundabout_group_count": 2,
+      "unmapped_inventory_m": 7268.67444790485,
+      "maximum_supported_coverage_m": {
+        "on_foot": 45621.612642091095,
+        "cycling": 45913.947743287456,
+        "combined": 45913.947743287456
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:881",
+      "source_way_count": 70,
+      "bound_way_count": 59,
+      "source_inventory_length_m": 19120.58548765124,
+      "canonical_inventory_length_m": 19120.58548765124,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 4110.593176060349,
+      "maximum_supported_coverage_m": {
+        "on_foot": 8024.64789178985,
+        "cycling": 15009.99231159089,
+        "combined": 15009.99231159089
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:883",
+      "source_way_count": 14,
+      "bound_way_count": 14,
+      "source_inventory_length_m": 6908.256262863044,
+      "canonical_inventory_length_m": 6908.256262863044,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 180.60742822990323,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6092.688701521682,
+        "cycling": 6727.648834633141,
+        "combined": 6727.648834633141
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:884",
+      "source_way_count": 21,
+      "bound_way_count": 6,
+      "source_inventory_length_m": 9019.995880581533,
+      "canonical_inventory_length_m": 9019.995880581533,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6932.887136891648,
+      "maximum_supported_coverage_m": {
+        "on_foot": 90.78889368594098,
+        "cycling": 2087.1087436898856,
+        "combined": 2087.1087436898856
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:885",
+      "source_way_count": 78,
+      "bound_way_count": 64,
+      "source_inventory_length_m": 14243.212731340342,
+      "canonical_inventory_length_m": 14187.805480532686,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 1628.9533761403763,
+      "maximum_supported_coverage_m": {
+        "on_foot": 10397.351861756064,
+        "cycling": 12558.85210439231,
+        "combined": 12558.85210439231
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:887",
+      "source_way_count": 82,
+      "bound_way_count": 77,
+      "source_inventory_length_m": 23078.637268788607,
+      "canonical_inventory_length_m": 23078.637268788607,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 643.1420378545663,
+      "maximum_supported_coverage_m": {
+        "on_foot": 13664.377715909646,
+        "cycling": 22435.49523093404,
+        "combined": 22435.49523093404
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:888",
+      "source_way_count": 14,
+      "bound_way_count": 14,
+      "source_inventory_length_m": 10799.61906685393,
+      "canonical_inventory_length_m": 10799.61906685393,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 19.983154200279387,
+      "maximum_supported_coverage_m": {
+        "on_foot": 10779.63591265365,
+        "cycling": 10779.63591265365,
+        "combined": 10779.63591265365
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:9",
+      "source_way_count": 191,
+      "bound_way_count": 183,
+      "source_inventory_length_m": 67045.77472398925,
+      "canonical_inventory_length_m": 67045.77472398925,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3652.0860049770054,
+      "maximum_supported_coverage_m": {
+        "on_foot": 61511.05001894359,
+        "cycling": 63330.99794653603,
+        "combined": 63393.68871901224
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:91",
+      "source_way_count": 52,
+      "bound_way_count": 35,
+      "source_inventory_length_m": 7132.33299432075,
+      "canonical_inventory_length_m": 7132.33299432075,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 3296.248873424265,
+      "maximum_supported_coverage_m": {
+        "on_foot": 3836.084120896485,
+        "cycling": 3722.1364929303422,
+        "combined": 3836.084120896485
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:92",
+      "source_way_count": 55,
+      "bound_way_count": 47,
+      "source_inventory_length_m": 20956.685629332387,
+      "canonical_inventory_length_m": 20956.685629332387,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 6805.412569861795,
+      "maximum_supported_coverage_m": {
+        "on_foot": 12693.314767441017,
+        "cycling": 14151.273059470592,
+        "combined": 14151.273059470592
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:93",
+      "source_way_count": 286,
+      "bound_way_count": 256,
+      "source_inventory_length_m": 52696.83557062708,
+      "canonical_inventory_length_m": 52696.83557062708,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 8233.725441185801,
+      "maximum_supported_coverage_m": {
+        "on_foot": 43923.60965534118,
+        "cycling": 42793.684446707484,
+        "combined": 44463.11012944128
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:94",
+      "source_way_count": 51,
+      "bound_way_count": 48,
+      "source_inventory_length_m": 13926.013729448492,
+      "canonical_inventory_length_m": 13926.013729448492,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1140.2983724058631,
+      "maximum_supported_coverage_m": {
+        "on_foot": 12724.04496193082,
+        "cycling": 12717.745407468998,
+        "combined": 12785.715357042629
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:96",
+      "source_way_count": 64,
+      "bound_way_count": 55,
+      "source_inventory_length_m": 7819.724613565628,
+      "canonical_inventory_length_m": 7819.724613565628,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 1114.9615312625856,
+      "maximum_supported_coverage_m": {
+        "on_foot": 6214.8228232792335,
+        "cycling": 6691.256940066867,
+        "combined": 6704.763082303042
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "NCN:97",
+      "source_way_count": 8,
+      "bound_way_count": 7,
+      "source_inventory_length_m": 1730.482635548462,
+      "canonical_inventory_length_m": 1730.482635548462,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 524.5299395257557,
+      "maximum_supported_coverage_m": {
+        "on_foot": 1205.9526960227063,
+        "cycling": 1047.723803694183,
+        "combined": 1205.9526960227063
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "RCN:11",
+      "source_way_count": 105,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 51992.997916710716,
+      "canonical_inventory_length_m": 51992.997916710716,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 51992.997916710716,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "RCN:17",
+      "source_way_count": 130,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 39577.56736372988,
+      "canonical_inventory_length_m": 39528.37244421821,
+      "roundabout_group_count": 1,
+      "unmapped_inventory_m": 39528.37244421821,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "RCN:71",
+      "source_way_count": 477,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 121050.8990167502,
+      "canonical_inventory_length_m": 121050.8990167502,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 121050.8990167502,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "RCN:82",
+      "source_way_count": 233,
+      "bound_way_count": 0,
+      "source_inventory_length_m": 58831.77893050474,
+      "canonical_inventory_length_m": 58831.77893050474,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 58831.77893050474,
+      "maximum_supported_coverage_m": {
+        "on_foot": 0,
+        "cycling": 0,
+        "combined": 0
+      },
+      "whole_published_route_ready": false
+    },
+    {
+      "route_key": "RCN:90",
+      "source_way_count": 669,
+      "bound_way_count": 4,
+      "source_inventory_length_m": 238733.76241270287,
+      "canonical_inventory_length_m": 238733.76241270287,
+      "roundabout_group_count": 0,
+      "unmapped_inventory_m": 238449.011749546,
+      "maximum_supported_coverage_m": {
+        "on_foot": 284.75066315685416,
+        "cycling": 284.75066315685416,
+        "combined": 284.75066315685416
+      },
+      "whole_published_route_ready": false
+    }
+  ],
+  "scope_exception_counts": {
+    "inventory_matching_gaps": 177,
+    "official_geometry_outside_source_corridor": 167,
+    "official_geometry_gap_persists_at_25m": 126,
+    "source_geometry_outside_official_corridor": 177,
+    "source_geometry_gap_persists_at_25m": 156,
+    "official_nonqualifying_scope_present": 70,
+    "offset_sensitive_official_geometry": 41,
+    "offset_sensitive_source_geometry": 21,
+    "no_official_open_main_extent": 6
+  }
+}

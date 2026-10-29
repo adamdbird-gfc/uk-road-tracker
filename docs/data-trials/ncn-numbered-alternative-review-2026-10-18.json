@@ -1,0 +1,615 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-18",
+  "official_snapshot_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2",
+  "routes": [
+    {
+      "route_key": "NCN:228",
+      "source_relation_review": {
+        "relation_id": 1239517,
+        "added_way_ids": [],
+        "removed_way_ids": [],
+        "previous_profile_sha256": "080a322966d5d2f3f1790429c6c7a45c19bec0f4f816608d8914cd383d97d57c",
+        "current_profile_sha256": "8dbfeaa341698906cbba2db33adad38fbf322d5ddd7a89656478a83576e4bf4c",
+        "previous_source_relations": [
+          {
+            "id": 1239517,
+            "version": 28,
+            "timestamp": "2024-12-19T21:58:02Z"
+          }
+        ],
+        "current_source_relations": [
+          {
+            "id": 1239517,
+            "version": 28,
+            "timestamp": "2024-12-19T21:58:02Z"
+          }
+        ],
+        "previous_provider_sha256": "21ac867dbb8da3bff723ebfbb29599eab62fc044e93b45997b1b615da932dc63",
+        "refreshed_provider_sha256": "21ac867dbb8da3bff723ebfbb29599eab62fc044e93b45997b1b615da932dc63",
+        "current_source_way_count": 35,
+        "provider_node_maximum_drift_m": 0.0039290662740056135,
+        "representation_tolerance_m": 0.03,
+        "previous_geometry_outside_refreshed_m": 0.0,
+        "refreshed_geometry_outside_previous_m": 0.0,
+        "geometry_review": "same_linework_at_representation_tolerance",
+        "membership_baseline_reconciled": true,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false
+      },
+      "prior_plan_sha256": "c5f21f8d367d6a604994828394128fe1e472835121a2d3c3b9f9a93617120cd8",
+      "official_features_sha256": "6b845cd45fc2024e89cb092478cbae8d7c663b40be17ebc3cd4b18cb62f3a302",
+      "fresh_official_capture_sha256": "2d3c08be764a56fbdd7463148e5b18fdda9b023c85467ffec2b83cca61ede3ea",
+      "fresh_official_classification_and_geometry_agree_with_baseline": true,
+      "official_snapshot_identity_lineage": [
+        {
+          "segment_id": 217,
+          "previous_fid": 3038,
+          "previous_global_id": "4f3f6d77-d761-4b25-8dc9-6487e62b2dab",
+          "refreshed_fid": 3038,
+          "refreshed_global_id": "e615f9bb-d80c-4a31-ba01-4139b9cc97bf"
+        },
+        {
+          "segment_id": 26445,
+          "previous_fid": 6749,
+          "previous_global_id": "bb42c4c7-28bb-4a86-bd02-976183d33c95",
+          "refreshed_fid": 6748,
+          "refreshed_global_id": "26bbfe27-e036-4bca-88fc-3f6abe899fd5"
+        },
+        {
+          "segment_id": 19891,
+          "previous_fid": 6957,
+          "previous_global_id": "a3d2ae8f-17d6-4dff-a371-70bd8544c610",
+          "refreshed_fid": 6956,
+          "refreshed_global_id": "5278c4b6-3d54-4596-b050-528037037852"
+        },
+        {
+          "segment_id": 24394,
+          "previous_fid": 6996,
+          "previous_global_id": "44597028-cd41-42bf-be7e-359fdded40a1",
+          "refreshed_fid": 6995,
+          "refreshed_global_id": "0fffed9c-6f3f-496b-b851-579c51173ac5"
+        },
+        {
+          "segment_id": 27010,
+          "previous_fid": 6997,
+          "previous_global_id": "360abcbc-ac9a-4e47-a396-9f25d9b8b021",
+          "refreshed_fid": 6996,
+          "refreshed_global_id": "6c433d12-5605-47ef-b419-084588fe7812"
+        },
+        {
+          "segment_id": 27011,
+          "previous_fid": 11443,
+          "previous_global_id": "649be552-ce05-452c-867f-493c8ac8618a",
+          "refreshed_fid": 11443,
+          "refreshed_global_id": "4ced4274-d9e9-491d-8860-df34d9263b61"
+        },
+        {
+          "segment_id": 32768,
+          "previous_fid": 11779,
+          "previous_global_id": "9b99e698-356f-480e-bdda-9b5ffabf3f78",
+          "refreshed_fid": 11779,
+          "refreshed_global_id": "f48a1e67-dd61-42e7-aa88-6d07ae420385"
+        },
+        {
+          "segment_id": 7889,
+          "previous_fid": 14852,
+          "previous_global_id": "6f7b8b35-f61f-4f6f-a42d-411bed7d927f",
+          "refreshed_fid": 14853,
+          "refreshed_global_id": "12963e8d-f505-4d3d-8d4e-cf335780f1e6"
+        },
+        {
+          "segment_id": 10583,
+          "previous_fid": 15209,
+          "previous_global_id": "76df953e-509a-4fa0-8355-fae340e27162",
+          "refreshed_fid": 15210,
+          "refreshed_global_id": "43c3cc03-bf17-4224-9a03-df563b87a0aa"
+        },
+        {
+          "segment_id": 53731,
+          "previous_fid": 24915,
+          "previous_global_id": "4b327ad8-5d91-4db7-b07f-4f15740c27ae",
+          "refreshed_fid": 24917,
+          "refreshed_global_id": "4027f628-72fb-43b0-af77-cb72b7b3018a"
+        },
+        {
+          "segment_id": 33480,
+          "previous_fid": 26380,
+          "previous_global_id": "cedfab76-5e56-40e9-ac99-0f05a39fac3d",
+          "refreshed_fid": 26382,
+          "refreshed_global_id": "283d29aa-ffbc-457f-bdd4-9638bd0470c1"
+        },
+        {
+          "segment_id": 28455,
+          "previous_fid": 29253,
+          "previous_global_id": "8f12368e-c880-46a7-95e4-a5414559e5f0",
+          "refreshed_fid": 29254,
+          "refreshed_global_id": "d2f9683f-265b-4cac-a5d6-b27dc4179f9a"
+        },
+        {
+          "segment_id": 24395,
+          "previous_fid": 30388,
+          "previous_global_id": "8dbab25c-8e02-4a9e-9334-eaa75c87a214",
+          "refreshed_fid": 30390,
+          "refreshed_global_id": "513cb8f0-d91f-4981-b69a-109c0848c9a9"
+        },
+        {
+          "segment_id": 27012,
+          "previous_fid": 30389,
+          "previous_global_id": "ce3f83aa-1375-46d8-8e6d-9a7cd7fd0061",
+          "refreshed_fid": 30391,
+          "refreshed_global_id": "e54da1fc-f9ef-45a9-9873-3ddf784246b5"
+        },
+        {
+          "segment_id": 36041,
+          "previous_fid": 37111,
+          "previous_global_id": "b202c738-241f-48b2-b934-25b0ca179bb7",
+          "refreshed_fid": 37114,
+          "refreshed_global_id": "42a8b8b0-4047-46ad-9505-2c453b92a16a"
+        }
+      ],
+      "whole_published_route_ready": false,
+      "cross_route_credit": false,
+      "source_endpoints": [
+        {
+          "node_id": 4607937990,
+          "coordinates": [
+            -0.2620532,
+            51.1026724
+          ],
+          "distance_to_other_official_open_main_m": 6586.515533712965
+        },
+        {
+          "node_id": 134300337,
+          "coordinates": [
+            -0.1969334,
+            51.1133843
+          ],
+          "distance_to_other_official_open_main_m": 2011.7696027070317
+        }
+      ],
+      "decision": "admit_verified_spans_as_own_numbered_route",
+      "catalogue_audit": {
+        "route_key": "NCN:228",
+        "source_relations": [
+          {
+            "id": 1239517,
+            "version": 28,
+            "timestamp": "2024-12-19T21:58:02Z"
+          }
+        ],
+        "accepted_way_count": 35,
+        "held_way_count": 2,
+        "partial_way_count": 2,
+        "roundabout_review": {
+          "reviewed": [],
+          "held": []
+        },
+        "held": [
+          {
+            "way_id": 26946266,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              3
+            ],
+            "partly_accepted": true
+          },
+          {
+            "way_id": 764622251,
+            "reason": "unresolved_official_extent_edges",
+            "edge_indices": [
+              2,
+              3
+            ],
+            "partly_accepted": true
+          }
+        ],
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 2
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "numbered_alternative_review_sha256": "7dddbe15d78d6f18c4c6b2d11ecd6511662852486862751e92d79abebbd472c8",
+        "reviewed_official_feature_ids": [
+          3038,
+          6749,
+          6957,
+          6996,
+          6997,
+          11443,
+          11779,
+          14852,
+          15209,
+          24915,
+          26380,
+          29253,
+          30388,
+          30389,
+          37111
+        ],
+        "cross_route_credit": false
+      },
+      "overlay_manifest_sha256": "080d8d911054558cd0d48da4fc8a236f556a418427d7944698982a75ad77cac4",
+      "source_inventory_length_m": 5649.324723293566,
+      "canonical_inventory_length_m": 5649.324723293566,
+      "maximum_supported_coverage_m": {
+        "on_foot": 5566.852169113226,
+        "cycling": 5566.852169113226,
+        "combined": 5566.852169113226
+      },
+      "unmapped_inventory_m": 82.47255418034001,
+      "extent_review_sha256": "7dddbe15d78d6f18c4c6b2d11ecd6511662852486862751e92d79abebbd472c8"
+    },
+    {
+      "route_key": "NCN:626",
+      "source_relation_review": {
+        "relation_id": 9300597,
+        "added_way_ids": [],
+        "removed_way_ids": [],
+        "previous_profile_sha256": "2a973fd45f3fc43163065a6c8df2871daa94bcac2e8a0643f43c94643b0ff6c7",
+        "current_profile_sha256": "e0deb2a378c7f5b0ed83d28232be1cdde52374b0667ff18dab34ba016e50b0ba",
+        "previous_source_relations": [
+          {
+            "id": 9300597,
+            "version": 16,
+            "timestamp": "2025-12-16T16:22:01Z"
+          }
+        ],
+        "current_source_relations": [
+          {
+            "id": 9300597,
+            "version": 16,
+            "timestamp": "2025-12-16T16:22:01Z"
+          }
+        ],
+        "previous_provider_sha256": "86b4bcb11288e580af9f880c3815ed5a1a2b2965a0fef67da1466a29fc32456e",
+        "refreshed_provider_sha256": "86b4bcb11288e580af9f880c3815ed5a1a2b2965a0fef67da1466a29fc32456e",
+        "current_source_way_count": 32,
+        "provider_node_maximum_drift_m": 0.0040456199619594065,
+        "representation_tolerance_m": 0.03,
+        "previous_geometry_outside_refreshed_m": 0.0,
+        "refreshed_geometry_outside_previous_m": 0.0,
+        "geometry_review": "same_linework_at_representation_tolerance",
+        "membership_baseline_reconciled": true,
+        "old_journey_evidence_transferred": false,
+        "whole_published_route_ready": false
+      },
+      "prior_plan_sha256": "a5485966364f785b4f3f87eae542dde1a5c8191f1715279ddede5c6d1514d684",
+      "official_features_sha256": "188f836c8bed29566401bb0d42926d58b9d6f0bb66665772934c54ea85f903b9",
+      "fresh_official_capture_sha256": "2d3c08be764a56fbdd7463148e5b18fdda9b023c85467ffec2b83cca61ede3ea",
+      "fresh_official_classification_and_geometry_agree_with_baseline": true,
+      "official_snapshot_identity_lineage": [
+        {
+          "segment_id": 37841,
+          "previous_fid": 670,
+          "previous_global_id": "269a46c0-c5ab-4e1e-b46a-ea3dfd3805b0",
+          "refreshed_fid": 670,
+          "refreshed_global_id": "0865dd37-3d43-457c-82cd-14ca313e7c46"
+        },
+        {
+          "segment_id": 51850,
+          "previous_fid": 671,
+          "previous_global_id": "2f33dee0-ef9c-4b7f-b452-c8817abd8cf5",
+          "refreshed_fid": 671,
+          "refreshed_global_id": "129a6117-5a54-486c-bc3d-6c218a4a91b5"
+        },
+        {
+          "segment_id": 1952,
+          "previous_fid": 1879,
+          "previous_global_id": "5564a76c-5ffc-4fb2-9770-eda5c26c2917",
+          "refreshed_fid": 1879,
+          "refreshed_global_id": "190129a4-7e7a-4dec-83e2-8b46c9a798db"
+        },
+        {
+          "segment_id": 17236,
+          "previous_fid": 2250,
+          "previous_global_id": "bc02f75a-cbfb-432d-aec0-daf88a057c14",
+          "refreshed_fid": 2250,
+          "refreshed_global_id": "e68db9a3-5b53-4c9a-bcae-d1c9a8c69c76"
+        },
+        {
+          "segment_id": 54240,
+          "previous_fid": 5917,
+          "previous_global_id": "67768ef8-5465-4bd7-a367-fbe278236ec8",
+          "refreshed_fid": 5916,
+          "refreshed_global_id": "93dd7366-d1ff-4440-8a68-9cfa91d66237"
+        },
+        {
+          "segment_id": 29101,
+          "previous_fid": 6679,
+          "previous_global_id": "5eacdb8c-01d8-4553-a8e9-0b38d205e808",
+          "refreshed_fid": 6678,
+          "refreshed_global_id": "36cda98f-b105-46ac-ba84-b51bef8b89a8"
+        },
+        {
+          "segment_id": 17572,
+          "previous_fid": 9001,
+          "previous_global_id": "334fed36-e2cb-486f-91d2-a979b4f45a69",
+          "refreshed_fid": 9000,
+          "refreshed_global_id": "690dea9b-2fb6-44b4-bdaf-90b9c24219db"
+        },
+        {
+          "segment_id": 1953,
+          "previous_fid": 9659,
+          "previous_global_id": "1c256e81-6533-4fff-a74b-3c90a3482a37",
+          "refreshed_fid": 9658,
+          "refreshed_global_id": "0dc01e30-5362-439c-b9d9-250ca61e35a1"
+        },
+        {
+          "segment_id": 22904,
+          "previous_fid": 13806,
+          "previous_global_id": "25f19d80-7b3f-43d5-86a9-b61cd28fd0f3",
+          "refreshed_fid": 13807,
+          "refreshed_global_id": "45d4e18f-fa1c-4a85-be08-3623dbd63c1e"
+        },
+        {
+          "segment_id": 1406,
+          "previous_fid": 13941,
+          "previous_global_id": "8cf29f86-0789-4983-9963-f56bd40e42df",
+          "refreshed_fid": 13942,
+          "refreshed_global_id": "a69578f4-242c-4f6e-92f3-717b256c09cb"
+        },
+        {
+          "segment_id": 8101,
+          "previous_fid": 14083,
+          "previous_global_id": "a2bda40a-7c36-4753-b7ac-b2112371baa7",
+          "refreshed_fid": 14084,
+          "refreshed_global_id": "9c956406-4d18-4eac-8ccb-429a5e6c47d9"
+        },
+        {
+          "segment_id": 26111,
+          "previous_fid": 14485,
+          "previous_global_id": "c32a53ee-ed09-434f-8a6a-1556cec672b2",
+          "refreshed_fid": 14486,
+          "refreshed_global_id": "c388ab69-58e4-4862-b3fa-f76269930e44"
+        },
+        {
+          "segment_id": 38391,
+          "previous_fid": 14911,
+          "previous_global_id": "c5ef611e-1550-4020-9a85-0d5cca421bce",
+          "refreshed_fid": 14912,
+          "refreshed_global_id": "b029a2b2-77c1-4bc4-9a3b-7e143b21496c"
+        },
+        {
+          "segment_id": 25028,
+          "previous_fid": 16168,
+          "previous_global_id": "9fe5e8ab-1dd1-4eaa-a8f7-dadddd90d2ce",
+          "refreshed_fid": 16169,
+          "refreshed_global_id": "52231dac-7121-4950-b20e-62bc47b632ba"
+        },
+        {
+          "segment_id": 23255,
+          "previous_fid": 16379,
+          "previous_global_id": "8491d673-e510-4219-a11c-a6f5b4380540",
+          "refreshed_fid": 16380,
+          "refreshed_global_id": "a3436e20-094e-4cef-a4a6-7cc6ea17ec94"
+        },
+        {
+          "segment_id": 5710,
+          "previous_fid": 17781,
+          "previous_global_id": "35a08f98-b17a-4ba0-a5dc-bbfdea90aa2d",
+          "refreshed_fid": 17782,
+          "refreshed_global_id": "2483d934-3bca-4681-a941-0936b2c706a6"
+        },
+        {
+          "segment_id": 22903,
+          "previous_fid": 18601,
+          "previous_global_id": "8480a1cf-f61c-4070-a006-7d68d2150dac",
+          "refreshed_fid": 18602,
+          "refreshed_global_id": "a5be5468-2958-4412-993a-703ef7760851"
+        },
+        {
+          "segment_id": 30014,
+          "previous_fid": 18602,
+          "previous_global_id": "dfa4d014-21b3-4801-8584-7419594bfe23",
+          "refreshed_fid": 18603,
+          "refreshed_global_id": "dc2f0992-7dca-47ea-a774-de6a9f6366a9"
+        },
+        {
+          "segment_id": 23254,
+          "previous_fid": 19325,
+          "previous_global_id": "72cb9b44-852e-4cdf-9cb8-b4eb4426e57a",
+          "refreshed_fid": 19326,
+          "refreshed_global_id": "a0247fee-bd3b-46e2-a2d0-1ea47fa6564b"
+        },
+        {
+          "segment_id": 39586,
+          "previous_fid": 19326,
+          "previous_global_id": "f20be4d8-98e6-496d-8c52-aa7eb284d259",
+          "refreshed_fid": 19327,
+          "refreshed_global_id": "384ffd2f-9add-4012-a901-babe3bdf1fe6"
+        },
+        {
+          "segment_id": 55857,
+          "previous_fid": 21778,
+          "previous_global_id": "da56f7e1-3211-4bc3-86db-3a7a638e4c06",
+          "refreshed_fid": 21780,
+          "refreshed_global_id": "b396fa55-d067-472f-86cf-ee8a29d9ae20"
+        },
+        {
+          "segment_id": 2273,
+          "previous_fid": 22987,
+          "previous_global_id": "1488633e-319a-496d-bbd0-aafec76895e8",
+          "refreshed_fid": 22989,
+          "refreshed_global_id": "7c4e57cf-f25d-4e28-8089-5cfc753e7c8f"
+        },
+        {
+          "segment_id": 43396,
+          "previous_fid": 24736,
+          "previous_global_id": "689ec696-1021-4284-a3c8-3d9b686241ff",
+          "refreshed_fid": 24738,
+          "refreshed_global_id": "3e662713-da06-4dc3-9eb8-ffe2eda7dc57"
+        },
+        {
+          "segment_id": 26507,
+          "previous_fid": 25151,
+          "previous_global_id": "f31d31ef-07be-445d-90e5-542450d23e32",
+          "refreshed_fid": 25153,
+          "refreshed_global_id": "562c107e-c058-4bcf-b805-d61869ff26d2"
+        },
+        {
+          "segment_id": 51967,
+          "previous_fid": 27170,
+          "previous_global_id": "d51af073-fc9f-4d79-ab47-337601d98e6d",
+          "refreshed_fid": 27172,
+          "refreshed_global_id": "e658ebdb-cae4-4c33-b293-ebc6622de228"
+        },
+        {
+          "segment_id": 35974,
+          "previous_fid": 27652,
+          "previous_global_id": "d77a5527-219b-420c-b11a-83d4ed620b2d",
+          "refreshed_fid": 27653,
+          "refreshed_global_id": "f52771a3-f5ec-4b51-9965-5e74e6dfc6e3"
+        },
+        {
+          "segment_id": 12032,
+          "previous_fid": 28090,
+          "previous_global_id": "eff69fc0-4f6a-477f-8258-355a5d049e53",
+          "refreshed_fid": 28091,
+          "refreshed_global_id": "d098a214-e109-4f06-b4da-526d749baa7e"
+        },
+        {
+          "segment_id": 828,
+          "previous_fid": 29034,
+          "previous_global_id": "fb4e913b-8b2a-48d2-a9c1-7309329af10e",
+          "refreshed_fid": 29035,
+          "refreshed_global_id": "6978e9d5-6226-4106-be48-82f87b43a396"
+        },
+        {
+          "segment_id": 35973,
+          "previous_fid": 31307,
+          "previous_global_id": "d63dc86d-c774-477e-a4ef-ab1c4490688b",
+          "refreshed_fid": 31309,
+          "refreshed_global_id": "753b45ae-51d2-4410-a84e-c78f641ac53a"
+        },
+        {
+          "segment_id": 32976,
+          "previous_fid": 32316,
+          "previous_global_id": "370e926a-1735-4a28-9f23-2c1d619de861",
+          "refreshed_fid": 32319,
+          "refreshed_global_id": "a3ecd6e0-2924-4f2d-a514-9ec2b5710c0f"
+        },
+        {
+          "segment_id": 16952,
+          "previous_fid": 32317,
+          "previous_global_id": "d589c2b8-e025-444f-a3c0-420518fc23c2",
+          "refreshed_fid": 32320,
+          "refreshed_global_id": "7b7bd408-b02c-4244-8e99-c166fc52ccf2"
+        },
+        {
+          "segment_id": 1484,
+          "previous_fid": 32530,
+          "previous_global_id": "26c84926-935c-4f01-aba0-fff19a3712ca",
+          "refreshed_fid": 32533,
+          "refreshed_global_id": "d8201878-5c4b-4645-a282-abf1eca024b0"
+        },
+        {
+          "segment_id": 1407,
+          "previous_fid": 34087,
+          "previous_global_id": "456bcf23-3081-42fe-bb75-398749e30e59",
+          "refreshed_fid": 34090,
+          "refreshed_global_id": "4d4256c4-aa39-492b-be64-c3dd6c157bfc"
+        },
+        {
+          "segment_id": 37856,
+          "previous_fid": 34901,
+          "previous_global_id": "3c81efff-c9f5-43ce-8d5f-ae3d1d822551",
+          "refreshed_fid": 34904,
+          "refreshed_global_id": "9918d00a-ec3b-4ff6-9eb1-b4a6f5cf48fc"
+        },
+        {
+          "segment_id": 5709,
+          "previous_fid": 36259,
+          "previous_global_id": "4f32f554-6b8d-4347-8c1f-be4a895d7684",
+          "refreshed_fid": 36262,
+          "refreshed_global_id": "5bfb2640-2899-4887-88dc-f19004388020"
+        },
+        {
+          "segment_id": 37015,
+          "previous_fid": 36820,
+          "previous_global_id": "4de70a81-3e7f-43a8-861c-cd58441073b7",
+          "refreshed_fid": 36823,
+          "refreshed_global_id": "5eeb98fa-1c82-4962-9cba-3eeb3f6b8eca"
+        }
+      ],
+      "whole_published_route_ready": false,
+      "cross_route_credit": false,
+      "decision": "retain_identity_conflict_hold_reconcile_against_NCN601",
+      "ncn601_official_feature_count": 35,
+      "ncn601_open_main_length_m": 6316.974171777031,
+      "source626_vs_official601": [
+        {
+          "radius_m": 3,
+          "source_outside_official_m": 827.1322518479458,
+          "official_outside_source_m": 506.63673786746386
+        },
+        {
+          "radius_m": 10,
+          "source_outside_official_m": 544.3167201725615,
+          "official_outside_source_m": 141.5613686389942
+        },
+        {
+          "radius_m": 25,
+          "source_outside_official_m": 513.8017157897219,
+          "official_outside_source_m": 50.47656815571363
+        }
+      ],
+      "construction_way_id": 359405104,
+      "old626_completion_transferred": false,
+      "ncn601_official_groups": [
+        {
+          "category": "Main Route",
+          "status": "Open",
+          "description": "OnRoad",
+          "feature_count": 11
+        },
+        {
+          "category": "Main Route",
+          "status": "Open",
+          "description": "TrafficFree",
+          "feature_count": 19
+        },
+        {
+          "category": "Main Route",
+          "status": "Temporary Closure",
+          "description": "OnRoad",
+          "feature_count": 1
+        },
+        {
+          "category": "Main Route",
+          "status": "Temporary Closure",
+          "description": "TrafficFree",
+          "feature_count": 4
+        }
+      ],
+      "candidate601_membership_approved": false,
+      "existing626_inventory_unchanged": true,
+      "explanation": "Publisher route626 page and source relation retain 626; publisher map and official geometry use 601. Do not invent missing 626 geometry or create blanket 626-to-601 credit. Review source classification spans for 601 separately."
+    }
+  ],
+  "proxy_policy": "Same connection and comparable journey required; no cross-route proxy established here.",
+  "android_internal_trial_route_count": 8,
+  "app_release": false,
+  "counts": {
+    "previous_supported_keys": 181,
+    "supported_keys": 182,
+    "previous_distinct_supported_ways": 43043,
+    "distinct_supported_ways": 43078,
+    "new_distinct_supported_ways": 35,
+    "new_shared_way_ids": 0,
+    "unchanged_inventory_files": 562
+  },
+  "remaining": {
+    "zero_association_inventories": [
+      "NCN:626",
+      "RCN:11",
+      "RCN:17",
+      "RCN:71",
+      "RCN:82"
+    ],
+    "other_review_keys": 66,
+    "NCN601_status": "identified_source626_lead_requires_classification_review"
+  }
+}

@@ -1,0 +1,776 @@
+{
+  "schema_version": 1,
+  "route_keys": [
+    "NCN:16",
+    "NCN:222",
+    "NCN:657",
+    "NCN:688",
+    "NCN:74"
+  ],
+  "scope": "Explicit partial-provider open-span review; not full-route certification",
+  "capture_sha256": "845b72088927ef31dd75329125e9edf407abac9bbde0084ab934dcffd8cbf82c",
+  "official_sha256": "f5e7beebb30007fd750d459a378e97921445b815ff8f65a9b4d99e6bf757b526",
+  "physical_report_sha256": "6e9bf5dacc65fd8946d73e1a48cab022b91022468b7f01fbad68b0f3d98fe196",
+  "membership_profiles_sha256": "a4b695a2632a81a5cf801d4c8a586308723b2e3807a80ed58932ac4964414048",
+  "existing_registry_sha256": "84471c32436079c6a2e8f964d8b64d9a9683d45d1a97e904d62bdea30bc3175f",
+  "previous_supported_catalogues": 189,
+  "supported_catalogues": 194,
+  "previous_distinct_supported_ways": 43615,
+  "distinct_supported_ways": 44622,
+  "new_distinct_supported_ways": 1007,
+  "shared_existing_way_ids": [
+    "276035782",
+    "626752960"
+  ],
+  "whole_published_route_ready": false,
+  "app_release": false,
+  "android_internal_trial_route_count": 8,
+  "checkpoint_kind": "compact_evidence_index",
+  "full_summary_file": "ncn-partial-review-batch2/output/summary.json",
+  "full_summary_sha256": "90948910f67baca58353e7773eb89ef7fe20e7070fd40bdae9bae6d80aab2905",
+  "routes": [
+    {
+      "route_key": "NCN:16",
+      "status": "supported_open_spans",
+      "current_source_way_count": 314,
+      "membership_changes": {
+        "2018704": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 2018704,
+          "version": 35,
+          "tags": {
+            "alt_name": "Western Esplanade Cycle Path",
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "description": "\"National Route 16 of the National Cycle Network is currently in two sections. The first section connects Route 13 near Stansted via Great Dunmow, Braintree and Witham and continues to the intersection of Route 1 near Great Totham. The second section will",
+            "from": "Basildon",
+            "name": "NCN16",
+            "network": "ncn",
+            "operator": "Sustrans;Southend Council",
+            "ref": "16",
+            "route": "bicycle",
+            "source": "https://osmaps.ordnancesurvey.co.uk/ncn",
+            "to": "Shoeburyness",
+            "type": "superroute",
+            "website": "https://www.sustrans.org.uk/find-a-route-on-the-national-cycle-network/route-16/"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "2018704": {
+          "relation_id": 2018704,
+          "expected_way_count": 314,
+          "provider_base_records": 308,
+          "missing_way_ids": [
+            32116474,
+            208095315,
+            208095316,
+            1257752847,
+            1257752848,
+            1450964410
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 151858,
+          "state": null
+        },
+        {
+          "id": 2018704,
+          "state": null
+        },
+        {
+          "id": 5676436,
+          "state": null
+        },
+        {
+          "id": 8031533,
+          "state": "proposed"
+        },
+        {
+          "id": 10582210,
+          "state": null
+        },
+        {
+          "id": 11512374,
+          "state": null
+        },
+        {
+          "id": 11512375,
+          "state": null
+        },
+        {
+          "id": 11512376,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 146,
+      "official_nonqualifying_feature_count": 4,
+      "official_open_union_m": 68120.32815612688,
+      "supported_source_union_m": 67155.62796221704,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 62011.76562328531,
+        "cycling": 66942.74308850183
+      },
+      "official_open_without_supported_source_at_10m_m": 950.3389340255666,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [
+        "276035782",
+        "626752960"
+      ],
+      "manifest_sha256": "c2c0a32347cf482ca1ac15fd1103fe61eeb836187cfb632f770c56b6214aaee2",
+      "catalogue_audit": {
+        "route_key": "NCN:16",
+        "source_relations": [
+          {
+            "id": 2018704,
+            "version": 35,
+            "timestamp": "2020-12-07T12:40:09Z"
+          }
+        ],
+        "accepted_way_count": 286,
+        "held_way_count": 46,
+        "partial_way_count": 18,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 34,
+          "logical_branch_policy_required": 4,
+          "proposed_or_closed_source_membership": 6,
+          "mode_policy_unresolved_or_restricted": 2
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "09c90eb35f23e68639fe540632b752b78babd1d439f5d1006431cbc40a0491ca",
+        "recorded_source_route_key": "NCN:16",
+        "target_route_key": "NCN:16",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabouts": [],
+      "reviewed_roundabout_groups": [
+        {
+          "way_ids": [
+            163416634
+          ],
+          "gate_node_ids": [
+            314983743,
+            314983750
+          ],
+          "policy": "linear_member_arc"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:222",
+      "status": "supported_open_spans",
+      "current_source_way_count": 140,
+      "membership_changes": {
+        "2646359": {
+          "added_way_ids": [
+            1569257821,
+            1569257822,
+            1569257823,
+            1569257824,
+            1569483770,
+            1569483771
+          ],
+          "removed_way_ids": [
+            7734686
+          ]
+        }
+      },
+      "source_roots": [
+        {
+          "id": 2646359,
+          "version": 77,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "network": "ncn",
+            "ref": "222",
+            "route": "bicycle",
+            "source": "Havant B;Walk Wheel Cycle Trust",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "2646359": {
+          "relation_id": 2646359,
+          "expected_way_count": 140,
+          "provider_base_records": 141,
+          "missing_way_ids": [],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [
+            5063256
+          ],
+          "member_lists_complete": true,
+          "provider_geometry_complete": true,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 2646359,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 72,
+      "official_nonqualifying_feature_count": 7,
+      "official_open_union_m": 29083.680720063043,
+      "supported_source_union_m": 26545.89521578135,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 20419.107547244646,
+        "cycling": 26405.169836111258
+      },
+      "official_open_without_supported_source_at_10m_m": 2594.999448087968,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "manifest_sha256": "854d72650eb800d30b4221c6b0446569286102c79942927ee1b05c3d3dc31b1a",
+      "catalogue_audit": {
+        "route_key": "NCN:222",
+        "source_relations": [
+          {
+            "id": 2646359,
+            "version": 77,
+            "timestamp": "2026-10-18T16:01:52Z"
+          }
+        ],
+        "accepted_way_count": 123,
+        "held_way_count": 38,
+        "partial_way_count": 21,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 34,
+          "logical_branch_policy_required": 4
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "8eca761e04f64c4a2397ddf6d6c7a72a1eb0ae2560f48747562557610cd22a57",
+        "recorded_source_route_key": "NCN:222",
+        "target_route_key": "NCN:222",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabouts": [
+        {
+          "way_ids": [
+            1569257821,
+            1569257822,
+            1569257823,
+            1569257824
+          ],
+          "gate_node_ids": [
+            456858208,
+            1111876521,
+            1111876642
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ],
+      "reviewed_roundabout_groups": [
+        {
+          "way_ids": [
+            4983269,
+            1569483770,
+            1569483771
+          ],
+          "gate_node_ids": [
+            33037646,
+            482729272
+          ],
+          "policy": "linear_member_arc"
+        },
+        {
+          "way_ids": [
+            5063256
+          ],
+          "gate_node_ids": [
+            34089697,
+            34089704
+          ],
+          "policy": "either_two_gate_arc"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:657",
+      "status": "supported_open_spans",
+      "current_source_way_count": 138,
+      "membership_changes": {
+        "156095": {
+          "added_way_ids": [],
+          "removed_way_ids": [
+            32772057
+          ]
+        }
+      },
+      "source_roots": [
+        {
+          "id": 156095,
+          "version": 151,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "name": "White Rose Route - Thirsk Variant",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "657",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "156095": {
+          "relation_id": 156095,
+          "expected_way_count": 138,
+          "provider_base_records": 139,
+          "missing_way_ids": [
+            4905421
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            4905421
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 156095,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 33,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 35594.775800555064,
+      "supported_source_union_m": 35557.002984942694,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 34004.549085086015,
+        "cycling": 35557.00298494267
+      },
+      "official_open_without_supported_source_at_10m_m": 0.0,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "manifest_sha256": "ac37bdacdda583dadc5bed1c9dd0c3c5a7ebc2be8dbf83aeb9f885fd1423e230",
+      "catalogue_audit": {
+        "route_key": "NCN:657",
+        "source_relations": [
+          {
+            "id": 156095,
+            "version": 151,
+            "timestamp": "2026-10-16T16:56:00Z"
+          }
+        ],
+        "accepted_way_count": 137,
+        "held_way_count": 1,
+        "partial_way_count": 0,
+        "held_reason_counts": {
+          "provider_geometry_missing_or_conflicting": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "a958079b64a8e0303e4abd65a0b0071bd15905843cf71937f91993b61fe3c26a",
+        "recorded_source_route_key": "NCN:657",
+        "target_route_key": "NCN:657",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabouts": [],
+      "reviewed_roundabout_groups": [
+        {
+          "way_ids": [
+            4905421
+          ],
+          "gate_node_ids": [
+            279471272,
+            4546175081
+          ],
+          "policy": "either_two_gate_arc"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:688",
+      "status": "supported_open_spans",
+      "current_source_way_count": 259,
+      "membership_changes": {
+        "1191478": {
+          "added_way_ids": [
+            1569229154,
+            1569229156,
+            1569229157
+          ],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 1191478,
+          "version": 145,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "name": "NCN Cycle Route 688",
+            "network": "ncn",
+            "ref": "688",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "1191478": {
+          "relation_id": 1191478,
+          "expected_way_count": 259,
+          "provider_base_records": 262,
+          "missing_way_ids": [
+            4900767
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            4900767
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [
+            4901302,
+            30691404
+          ],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 1191478,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 68,
+      "official_nonqualifying_feature_count": 0,
+      "official_open_union_m": 76265.85816081795,
+      "supported_source_union_m": 75699.26863127455,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 75605.18156205885,
+        "cycling": 75699.26863127454
+      },
+      "official_open_without_supported_source_at_10m_m": 784.6450171263946,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "manifest_sha256": "07e6f0f8b7269c8a037dbe639121989fd74a92cf1c26e750b7c52a673fe68909",
+      "catalogue_audit": {
+        "route_key": "NCN:688",
+        "source_relations": [
+          {
+            "id": 1191478,
+            "version": 145,
+            "timestamp": "2026-10-17T20:40:44Z"
+          }
+        ],
+        "accepted_way_count": 254,
+        "held_way_count": 7,
+        "partial_way_count": 2,
+        "held_reason_counts": {
+          "logical_branch_policy_required": 2,
+          "unresolved_official_extent_edges": 5
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "1c50d478d8fc0387adbee1efb865b5467606f4a1380259c00214c0ed22bbc522",
+        "recorded_source_route_key": "NCN:688",
+        "target_route_key": "NCN:688",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabouts": [
+        {
+          "way_ids": [
+            30691404
+          ],
+          "gate_node_ids": [
+            339395051,
+            339395052,
+            339395054,
+            1329422305
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            4900767
+          ],
+          "gate_node_ids": [
+            31941283,
+            31941318,
+            31941367,
+            712736247
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ],
+      "reviewed_roundabout_groups": [
+        {
+          "way_ids": [
+            4901302
+          ],
+          "gate_node_ids": [
+            31944709,
+            31944788
+          ],
+          "policy": "either_two_gate_arc"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:74",
+      "status": "supported_open_spans",
+      "current_source_way_count": 279,
+      "membership_changes": {
+        "184965": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        },
+        "6413919": {
+          "added_way_ids": [],
+          "removed_way_ids": []
+        }
+      },
+      "source_roots": [
+        {
+          "id": 184965,
+          "version": 206,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "fixme": "No longer listed on Walk Wheel Cycle Trust website",
+            "name": "NCN National Route 74",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "74",
+            "route": "bicycle",
+            "type": "route",
+            "wikidata": "Q6972076",
+            "wikipedia": "en:National Cycle Route 74"
+          }
+        },
+        {
+          "id": 6413919,
+          "version": 11,
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "name": "Route 74",
+            "network": "ncn",
+            "note": "not connected to main National Cycle Network Route 74, not shown in Walk Wheel Cycle Trust mapping",
+            "operator": "South Lanarkshire Council",
+            "ref": "74",
+            "route": "bicycle",
+            "type": "route"
+          }
+        }
+      ],
+      "provider_geometry_reviews": {
+        "184965": {
+          "relation_id": 184965,
+          "expected_way_count": 223,
+          "provider_base_records": 226,
+          "missing_way_ids": [
+            11999654,
+            22927529
+          ],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [
+            11999654,
+            22927529
+          ],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [
+            8562972
+          ],
+          "member_lists_complete": true,
+          "provider_geometry_complete": false,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        },
+        "6413919": {
+          "relation_id": 6413919,
+          "expected_way_count": 56,
+          "provider_base_records": 56,
+          "missing_way_ids": [],
+          "unlisted_provider_way_ids": [],
+          "conflicting_way_ids": [],
+          "invalid_way_ids": [],
+          "directional_roundabout_way_ids": [],
+          "member_lists_complete": true,
+          "provider_geometry_complete": true,
+          "osm_node_identity_verified": false,
+          "association_approved": false,
+          "completion_ready": false
+        }
+      },
+      "source_relations": [
+        {
+          "id": 184965,
+          "state": null
+        },
+        {
+          "id": 6413919,
+          "state": null
+        }
+      ],
+      "official_open_feature_count": 112,
+      "official_nonqualifying_feature_count": 17,
+      "official_open_union_m": 62140.0869519665,
+      "supported_source_union_m": 61229.02662623555,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 48972.544987860834,
+        "cycling": 61192.29673801181
+      },
+      "official_open_without_supported_source_at_10m_m": 817.5107555950193,
+      "diagnostic_corridors_grant_credit": false,
+      "completion_binding_ready": false,
+      "existing_registry_identity_conflict_way_ids": [],
+      "shared_existing_way_ids": [],
+      "manifest_sha256": "16e7cf97a7ab2936565c7f937f32c0ca7a427a4afba3ae50366e9cb1d9244320",
+      "catalogue_audit": {
+        "route_key": "NCN:74",
+        "source_relations": [
+          {
+            "id": 184965,
+            "version": 206,
+            "timestamp": "2026-05-19T13:02:22Z"
+          },
+          {
+            "id": 6413919,
+            "version": 11,
+            "timestamp": "2025-10-15T23:06:06Z"
+          }
+        ],
+        "accepted_way_count": 209,
+        "held_way_count": 84,
+        "partial_way_count": 14,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 78,
+          "mode_policy_unresolved_or_restricted": 3,
+          "logical_branch_policy_required": 3
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "021d51416c167af0aea3fa56d8de006106f401f5e3e4d2f64b3f391ca34bb743",
+        "recorded_source_route_key": "NCN:74",
+        "target_route_key": "NCN:74",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabouts": [
+        {
+          "way_ids": [
+            11999654
+          ],
+          "gate_node_ids": [
+            108462532,
+            4631993171,
+            4631993173,
+            4631993174
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            22927529
+          ],
+          "gate_node_ids": [
+            246890408,
+            246890411,
+            258356290,
+            5000802803
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            8562972
+          ],
+          "gate_node_ids": [
+            258354193,
+            258354195,
+            4631993153,
+            4631993157
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ],
+      "reviewed_roundabout_groups": [
+        {
+          "way_ids": [
+            15090980
+          ],
+          "gate_node_ids": [
+            53233909,
+            53233910
+          ],
+          "policy": "linear_member_arc"
+        },
+        {
+          "way_ids": [
+            204868767
+          ],
+          "gate_node_ids": [
+            148900337,
+            549303522
+          ],
+          "policy": "linear_member_arc"
+        }
+      ]
+    }
+  ],
+  "remaining_other_route_cases": 54
+}

@@ -1,0 +1,376 @@
+{
+  "date": "2026-10-29",
+  "base_main": "89ae65dc972d0c7e426e8e87cc74b5c2944ac63b",
+  "checkpoint_source": "17b90d24a6d5b4a2f328c6dac39e9746f7353c4e",
+  "compiler_source": "67e74e7d9e9873552ae98b23397cd9e265fc3517",
+  "prs": [
+    {
+      "n": 187,
+      "sha": "17b90d24a6d5b4a2f328c6dac39e9746f7353c4e",
+      "branch": "data/ncn-completion-checkpoint",
+      "base": "395f8240022101862e814671d3fc6830cfabf73e",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-completion-checkpoint-2026-10-19.json",
+        "docs/ncn-completion-checkpoint.md",
+        "scripts/ncn_trial/completion_checkpoint.py",
+        "scripts/ncn_trial/open_completion.py",
+        "scripts/ncn_trial/test_completion_checkpoint.py"
+      ],
+      "commits": [
+        "17b90d24 Prepare all 219 supported route completion records with preserved alternative scopes"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 186,
+      "sha": "395f8240022101862e814671d3fc6830cfabf73e",
+      "branch": "data/ncn-open-completion",
+      "base": "dc0fcb3bce9d869c1ed46bf2f73c34a7f3f1f33c",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-open-completion-2026-10-19.json",
+        "docs/ncn-open-completion.md",
+        "scripts/ncn_trial/open_completion.py",
+        "scripts/ncn_trial/test_open_completion.py"
+      ],
+      "commits": [
+        "395f8240 Bind 25 reviewed open extents to fixed completion plans and saved-path activation"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 185,
+      "sha": "dc0fcb3bce9d869c1ed46bf2f73c34a7f3f1f33c",
+      "branch": "data/ncn-remainder-54-review",
+      "base": "d3f087e2150b70caea11f9cbf7f05ea0290d168f",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-remainder-54-2026-10-19.json",
+        "docs/ncn-remainder-54-review.md",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/remaining_routes_review.py",
+        "scripts/ncn_trial/source_identity_review.py",
+        "scripts/ncn_trial/test_remaining_routes_review.py",
+        "scripts/ncn_trial/test_source_identity_review.py"
+      ],
+      "commits": [
+        "dc0fcb3b Review all 54 remaining route cases and support 25 bounded open-span catalogues"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 184,
+      "sha": "d3f087e2150b70caea11f9cbf7f05ea0290d168f",
+      "branch": "data/ncn-partial-geometry-batch2",
+      "base": "5ce42face72de638081cf96c13387b444f2edbe4",
+      "paths": [
+        "docs/data-trials/ncn-partial-geometry-batch2-2026-10-18.json",
+        "docs/ncn-partial-geometry-batch2.md"
+      ],
+      "commits": [
+        "d3f087e2 Record five-route open-span review and 194-route data checkpoint"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 183,
+      "sha": "5ce42face72de638081cf96c13387b444f2edbe4",
+      "branch": "data/ncn725-open-sections",
+      "base": "4c4165e1c4aa4fbd405a8ef99bacdbc7cfd7af55",
+      "paths": [
+        "docs/data-trials/ncn725-open-sections-2026-10-18.json",
+        "docs/ncn725-open-sections.md",
+        "scripts/ncn_trial/partial_geometry_review.py",
+        "scripts/ncn_trial/test_partial_geometry_review.py"
+      ],
+      "commits": [
+        "5ce42fac Admit verified NCN725 open spans and exclude five proposed branches"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 181,
+      "sha": "4c4165e1c4aa4fbd405a8ef99bacdbc7cfd7af55",
+      "branch": "data/ncn99-open-scope-review",
+      "base": "b0f644e96e18760283fcdc563e7a255d5f44bf51",
+      "paths": [
+        "docs/data-trials/ncn99-open-scope-review-2026-10-18.json",
+        "docs/ncn99-open-scope-review.md",
+        "scripts/ncn_trial/ncn99_scope_review.py"
+      ],
+      "commits": [
+        "4c4165e1 Audit NCN99 open sections and isolate source-scope discrepancies"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 180,
+      "sha": "b0f644e96e18760283fcdc563e7a255d5f44bf51",
+      "branch": "data/ncn-partial-geometry-batch1",
+      "base": "ab88d9a33fdfaf1a1338d9734fa7a235a44d0f36",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-partial-geometry-batch1-2026-10-18.json",
+        "docs/ncn-partial-geometry-batch1.md",
+        "docs/ncn601-open-sections.md",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/partial_geometry_review.py",
+        "scripts/ncn_trial/source_identity_review.py",
+        "scripts/ncn_trial/test_partial_geometry_review.py"
+      ],
+      "commits": [
+        "b0f644e9 Review five partial-provider NCN cases against current open extents"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 179,
+      "sha": "ab88d9a33fdfaf1a1338d9734fa7a235a44d0f36",
+      "branch": "data/ncn601-open-sections",
+      "base": "9767bdaaf5926d13364697282a770b3fbbb2e8bc",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn601-open-sections-2026-10-18.json",
+        "docs/ncn-numbered-alternative-review.md",
+        "docs/ncn601-open-sections.md",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/source_identity_review.py",
+        "scripts/ncn_trial/test_source_identity_review.py"
+      ],
+      "commits": [
+        "ab88d9a3 Pin complete open geometry into the source identity approval",
+        "89b13f09 Add reviewed NCN601 open spans with original NCN626 source lineage"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 178,
+      "sha": "9767bdaaf5926d13364697282a770b3fbbb2e8bc",
+      "branch": "data/ncn-numbered-alternative-review",
+      "base": "3f884b7c5c25797bd3b354dd9e11ced7c8fe5864",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-numbered-alternative-review-2026-10-18.json",
+        "docs/ncn-numbered-alternative-review.md",
+        "docs/ncn-zero-association-determination.md",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/numbered_alternative_review.py",
+        "scripts/ncn_trial/test_numbered_alternative_review.py"
+      ],
+      "commits": [
+        "9767bdaa Admit reviewed NCN228 spans and locate NCN626/601 identity conflict"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 177,
+      "sha": "3f884b7c5c25797bd3b354dd9e11ced7c8fe5864",
+      "branch": "data/ncn-inventory-determination",
+      "base": "dc78693f6786a9c6b344b50d6592cccad323cd7a",
+      "paths": [
+        "docs/data-trials/ncn-zero-association-determination-2026-10-18.json",
+        "docs/ncn-national-source-reconciliation.md",
+        "docs/ncn-zero-association-determination.md"
+      ],
+      "commits": [
+        "3f884b7c Document dispositions for six zero-association NCN and regional inventories"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 176,
+      "sha": "dc78693f6786a9c6b344b50d6592cccad323cd7a",
+      "branch": "data/ncn-membership-review",
+      "base": "67b02de6ed2ab76e3eefb18fc6278bac748ccd07",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-membership-review-2026-10-18.json",
+        "docs/ncn-membership-review.md",
+        "docs/ncn-national-source-reconciliation.md",
+        "scripts/ncn_trial/membership_review.py",
+        "scripts/ncn_trial/test_membership_review.py"
+      ],
+      "commits": [
+        "dc78693f Reconcile six NCN membership holds with refreshed source geometry"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 175,
+      "sha": "67b02de6ed2ab76e3eefb18fc6278bac748ccd07",
+      "branch": "data/ncn-reconciliation",
+      "base": "3aa0147ca959d66bb3cba1e0b8cae3f1406acfd1",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "docs/data-trials/ncn-national-source-reconciliation-2026-10-18.json",
+        "docs/ncn-national-source-reconciliation.md",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/inventory_completion.py",
+        "scripts/ncn_trial/scope_review.py",
+        "scripts/ncn_trial/source_capture.py",
+        "scripts/ncn_trial/test_source_capture.py"
+      ],
+      "commits": [
+        "67b02de6 Assess 187 pinned NCN source inventories and retain reconciliation holds"
+      ],
+      "absent_from_187": []
+    },
+    {
+      "n": 165,
+      "sha": "3aa0147ca959d66bb3cba1e0b8cae3f1406acfd1",
+      "branch": "trial/ncn-route-coverage",
+      "base": "e4bf25c9854daceda5831a75b528d7498de32cb8",
+      "paths": [
+        ".github/workflows/ncn-trial-checks.yml",
+        "cycling_path_evidence.py",
+        "docs/ncn-confirmation-regional-trial.md",
+        "docs/ncn-confirmed-source-spans.md",
+        "docs/ncn-inventory-completion.md",
+        "docs/ncn-milepost-source-assessment.md",
+        "docs/ncn-named-route-reconciliation.md",
+        "docs/ncn-national-physical-reconciliation.md",
+        "docs/ncn-official-scope-review.md",
+        "docs/ncn-private-journey-replay.md",
+        "docs/ncn-route1-local-trial.md",
+        "docs/ncn-saved-path-association.md",
+        "docs/ncn-section-review-proposal.md",
+        "matched_path_evidence.py",
+        "requirements-ncn-trial.txt",
+        "scripts/ncn_trial/__init__.py",
+        "scripts/ncn_trial/access_evidence.py",
+        "scripts/ncn_trial/activation.py",
+        "scripts/ncn_trial/alternatives.py",
+        "scripts/ncn_trial/association_bundle.py",
+        "scripts/ncn_trial/build_route177_alternatives.py",
+        "scripts/ncn_trial/catalogue_extract.py",
+        "scripts/ncn_trial/confirmed_paths.py",
+        "scripts/ncn_trial/context_audit.py",
+        "scripts/ncn_trial/coverage.py",
+        "scripts/ncn_trial/cycling_saved_paths.py",
+        "scripts/ncn_trial/extent_composition.py",
+        "scripts/ncn_trial/extent_reference.py",
+        "scripts/ncn_trial/fixtures.py",
+        "scripts/ncn_trial/inventory_completion.py",
+        "scripts/ncn_trial/journey_replay.py",
+        "scripts/ncn_trial/matched_context.py",
+        "scripts/ncn_trial/national_discovery.py",
+        "scripts/ncn_trial/network_geometry.py",
+        "scripts/ncn_trial/network_reconciliation.py",
+        "scripts/ncn_trial/numbered_reconciliation.py",
+        "scripts/ncn_trial/physical_crosswalk.py",
+        "scripts/ncn_trial/reference_reconciliation.py",
+        "scripts/ncn_trial/review.py",
+        "scripts/ncn_trial/roundabout_policy.py",
+        "scripts/ncn_trial/route177_alternatives.py",
+        "scripts/ncn_trial/run.py",
+        "scripts/ncn_trial/saved_paths.py",
+        "scripts/ncn_trial/scope_review.py",
+        "scripts/ncn_trial/test_access_evidence.py",
+        "scripts/ncn_trial/test_activation.py",
+        "scripts/ncn_trial/test_alignment_discrepancy.py",
+        "scripts/ncn_trial/test_alternative_activation.py",
+        "scripts/ncn_trial/test_alternatives.py",
+        "scripts/ncn_trial/test_association_bundle.py",
+        "scripts/ncn_trial/test_catalogue_extract.py",
+        "scripts/ncn_trial/test_confirmed_paths.py",
+        "scripts/ncn_trial/test_coverage.py",
+        "scripts/ncn_trial/test_cycling_saved_paths.py",
+        "scripts/ncn_trial/test_extent_composition.py",
+        "scripts/ncn_trial/test_extent_reference.py",
+        "scripts/ncn_trial/test_inventory_completion.py",
+        "scripts/ncn_trial/test_journey_replay.py",
+        "scripts/ncn_trial/test_matched_context.py",
+        "scripts/ncn_trial/test_national_discovery.py",
+        "scripts/ncn_trial/test_network_geometry.py",
+        "scripts/ncn_trial/test_network_reconciliation.py",
+        "scripts/ncn_trial/test_numbered_reconciliation.py",
+        "scripts/ncn_trial/test_physical_crosswalk.py",
+        "scripts/ncn_trial/test_reference_reconciliation.py",
+        "scripts/ncn_trial/test_regions.py",
+        "scripts/ncn_trial/test_review.py",
+        "scripts/ncn_trial/test_roundabout_policy.py",
+        "scripts/ncn_trial/test_route177_alternatives.py",
+        "scripts/ncn_trial/test_route177_joins.py",
+        "scripts/ncn_trial/test_route_memberships.py",
+        "scripts/ncn_trial/test_saved_paths.py",
+        "scripts/ncn_trial/test_scope_review.py",
+        "tests/fixtures/ncn-177-discrepancy/alternative-bindings.json",
+        "tests/fixtures/ncn-177-discrepancy/public-snapshot.json",
+        "tests/fixtures/ncn-confirmed476/NOTICE.md",
+        "tests/fixtures/ncn-confirmed476/public-snapshot.json",
+        "tests/fixtures/ncn-ni-route9/README.md",
+        "tests/fixtures/ncn-ni-route9/reference.geojson",
+        "tests/fixtures/ncn-ni-route9/source.json",
+        "tests/fixtures/ncn-route1-context/README.md",
+        "tests/fixtures/ncn-route1-context/source.json",
+        "tests/fixtures/ncn-route1-context/ways.geojson",
+        "tests/fixtures/ncn-route1/README.md",
+        "tests/fixtures/ncn-route1/reference.geojson",
+        "tests/fixtures/ncn-route1/source.json",
+        "tests/fixtures/ncn-scotland-route7/README.md",
+        "tests/fixtures/ncn-scotland-route7/reference.geojson",
+        "tests/fixtures/ncn-scotland-route7/source.json",
+        "tests/fixtures/ncn-wales-route8/README.md",
+        "tests/fixtures/ncn-wales-route8/reference.geojson",
+        "tests/fixtures/ncn-wales-route8/source.json",
+        "tests/test_cycling_path_evidence.py"
+      ],
+      "commits": [
+        "3aa0147c Locate official NCN scope exceptions and separate mode eligibility",
+        "5b1531df Retain full NCN source inventory totals and review two-gate alternatives",
+        "cfe21ad2 Build current node-backed NCN source-span catalogues for strongest candidates",
+        "9bc49472 Complete national NCN physical diagnostics with resumable indexed comparisons",
+        "3ec62b67 Add nationwide physical reconciliation and identity-anchored geometry extraction",
+        "df6cd658 Complete reviewed NCN177 joins and preserve alternative activation checkpoints",
+        "7cad4bb3 Account for explicit NCN alternatives without duplicate route completion",
+        "be397184 Pin NCN177 parallel-path disagreement and regression evidence",
+        "622ddf76 Add bidirectional NCN physical correspondence pilot",
+        "22e13519 Inventory national route member identities and preserve unresolved source gaps",
+        "e396089b Assess cycling saved-node provenance against versioned named extents",
+        "efa0df8d Bind named extents to saved-path trial with exact source-span clipping",
+        "604e8f19 Audit selected route access evidence without changing journey credit",
+        "4e3cf93c Reconcile Viking route scopes and add checksum-pinned extent replay",
+        "9d00164d Compose source-backed named extents and resolve Heron circuit composition",
+        "82a780c6 Flag pedestrian-area route members and document Kent named-route extent checks",
+        "844c067b Record Geograph milepost source assessment and named-route discovery leads",
+        "b8749527 Expand named-route extraction to nested and mode-specific Wales and NI sources",
+        "aa9a7272 Screen named-route geometry against versioned NCN references without awarding credit",
+        "95c91d47 Add validated versioned NCN association bundle trial",
+        "42bc0af2 Keep pedestrian saved-path evidence separate from cycling provenance",
+        "2e6c846e Connect snapshot-scoped saved path identities to NCN activation assessment",
+        "c38f4ce9 Trial activation-only NCN history assessment without bulk review prompts",
+        "5948fa09 Propose NCN section review for supported alternatives and sparse imports",
+        "76ee4abd Add private journey diagnostic replay without promoting proximity to credit",
+        "0ef92d1a Extend isolated NCN trial with confirmations and regional evidence",
+        "e4ad3894 Trial NCN Route1 coverage on isolated public geometry and synthetic observations"
+      ],
+      "absent_from_187": []
+    }
+  ],
+  "active_manifest": "android-prototype/app/src/main/assets/ncn-national/manifest.json",
+  "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+  "database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+  "local_ncn_tests": {
+    "tests": 322,
+    "passed": 322,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "real_data_validation": {
+    "input_files_verified": 1147,
+    "route_manifests_read_back": 219,
+    "exact_route_way_rows_compared": 62487,
+    "identical_fields": [
+      "coordinates",
+      "osm_nodes",
+      "modes"
+    ],
+    "database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+    "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+    "held_identities": 34,
+    "result": "pass"
+  },
+  "live_firebase_manifest_equals_android_pin": true
+}

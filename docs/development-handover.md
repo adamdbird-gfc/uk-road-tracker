@@ -6,6 +6,9 @@ Last reviewed: 2026-10-28. This is the **entrypoint**, not a replacement for iss
 
 Android **0.25.220 (266)** is integrated through #233 (`51d693f2`); #234's
 four router regressions are merged at `89ae65dc` with deployment skipped.
+NCN maintenance tools, fixtures, regression tests and provenance are integrated
+through #235 at `8c1e50ca` (333 tests passed, no catalogue/runtime changes).
+#236 completes the permanent record; resume normal feature work from current main.
 The Android subtree is byte-identical to packaged `67e74e7d`, and main's later
 backend/Dover corrections are preserved. The fresh #234 gate passed 810 Android
 and 130 backend/PostgreSQL tests with zero failures/errors/skips. Start from

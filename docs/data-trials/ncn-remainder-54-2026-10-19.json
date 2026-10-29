@@ -1,0 +1,2810 @@
+{
+  "schema_version": 1,
+  "input_pins_sha256": "25ca8b2d5ec1d0e97baa0ef7b2689d6cf7bb7ba60786bf0edc719ddd2cb71520",
+  "reviewed_route_cases": 54,
+  "supported_new_route_keys": 25,
+  "held_cases": 29,
+  "previous_supported_catalogues": 194,
+  "supported_catalogues": 219,
+  "previous_distinct_supported_ways": 44622,
+  "distinct_supported_ways": 62399,
+  "new_distinct_supported_ways": 17777,
+  "completion_binding_ready": false,
+  "app_release": false,
+  "legacy_holds_outside_this_queue": [
+    "NCN:626",
+    "RCN:11",
+    "RCN:17",
+    "RCN:71",
+    "RCN:82"
+  ],
+  "checkpoint_kind": "compact_evidence_index",
+  "full_summary_sha256": "53781739c89bed4ab0f616f2ee3155c8149df4cabd7dc7ebc416981768fbafe6",
+  "full_summary_file": "ncn-remainder-54/output/summary.json",
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:1",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          1992599,
+          8438340
+        ],
+        "source_hierarchy_ids": [
+          75880,
+          75894,
+          254838,
+          1992599,
+          5525922,
+          5625434,
+          8436589,
+          8438340,
+          8438413,
+          8475800,
+          8555805,
+          9723408,
+          9844017,
+          10041318,
+          10564433,
+          10564434,
+          10564435,
+          10564909,
+          10582206,
+          10582209,
+          10589729,
+          10773222,
+          10926718,
+          10926812,
+          11107866,
+          11319642,
+          11322036,
+          11805875,
+          13389320,
+          13389321,
+          13420707,
+          13512082,
+          13512083,
+          13512084,
+          13512085,
+          13718916,
+          15975674,
+          15977855,
+          15977856,
+          15977857,
+          15977880,
+          15977881,
+          15977882,
+          15977925,
+          15978433,
+          15978434,
+          15978435,
+          15978436,
+          15978437,
+          15978996,
+          15978998,
+          15978999,
+          15979000,
+          15979541,
+          15979543,
+          15979544,
+          17706975,
+          19282449,
+          19282450,
+          19282451,
+          19282452
+        ],
+        "excluded_source_roots": [
+          {
+            "relation_id": 192623,
+            "reason": "Isle of Man numbered route outside UK scope"
+          },
+          {
+            "relation_id": 9067786,
+            "reason": "Source explicitly disputes its NCN1 identity"
+          }
+        ],
+        "selection_is_not_admission": true,
+        "approved_empty_relation_ids": [
+          11319642
+        ]
+      },
+      "official_feature_count": 3761,
+      "official_open_main_feature_count": 3484,
+      "official_classifications": {
+        "('Open', 'Main Route')": 3485,
+        "('Open', 'Alternative Route')": 246,
+        "('Open', 'N/A')": 2,
+        "('Open', 'Temporary Diversion')": 4,
+        "('Temporary Closure', 'Main Route')": 22,
+        "('Temporary Closure', 'Alternative Route')": 1,
+        "(None, 'Main Route')": 1
+      },
+      "current_source_way_count": 8306,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "612db43f34c6eb398259e1d5e530c1b3d8ffedb8691c6301ec04dd71c1e6e8fe",
+      "official_open_union_m": 1943972.418805563,
+      "supported_source_union_m": 1863210.5801498948,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 1822617.1135537012,
+        "cycling": 1859563.9180792675
+      },
+      "official_open_without_supported_source_at_10m_m": 77459.84911747351,
+      "shared_existing_way_ids": [
+        "1322148665",
+        "235759276",
+        "23632712",
+        "24730114",
+        "31430231",
+        "32935532",
+        "4872634",
+        "5184112"
+      ],
+      "supported_way_count": 6890,
+      "catalogue_audit": {
+        "route_key": "NCN:1",
+        "source_relations": [
+          {
+            "id": 1992599,
+            "version": 373,
+            "timestamp": "2026-05-19T01:37:26Z"
+          },
+          {
+            "id": 8438340,
+            "version": 16,
+            "timestamp": "2026-01-25T19:02:07Z"
+          }
+        ],
+        "accepted_way_count": 6890,
+        "held_way_count": 1869,
+        "partial_way_count": 453,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 1564,
+          "logical_branch_policy_required": 246,
+          "mode_policy_unresolved_or_restricted": 59
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "22883498bb50cf0043888bcd92c551cc0e46c2545da8ae201663e6c60025232f",
+        "recorded_source_route_key": "NCN:1",
+        "target_route_key": "NCN:1",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            1302924798,
+            1315770891,
+            1315770892,
+            1333583277
+          ],
+          "gate_node_ids": [
+            493593700,
+            1280204242,
+            1281686138
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            233136674,
+            605750761,
+            605750767
+          ],
+          "gate_node_ids": [
+            26070873,
+            771680521,
+            5744607030,
+            9107948176
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            32566828,
+            125611629,
+            533258161,
+            681892101
+          ],
+          "gate_node_ids": [
+            33609173,
+            581881703,
+            1320290667
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            7724704,
+            904871399,
+            904871401,
+            904878168,
+            904878169,
+            1097775880
+          ],
+          "gate_node_ids": [
+            1489697705,
+            1489697709,
+            1489697710
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            39605631
+          ],
+          "gate_node_ids": [
+            474769499,
+            474769511,
+            474769513
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            575162360
+          ],
+          "gate_node_ids": [
+            2484605296,
+            2484605309,
+            2484605318,
+            7838634944
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:151",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:151",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          9818709
+        ],
+        "source_hierarchy_ids": [
+          9818709
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 14,
+      "official_open_main_feature_count": 14,
+      "official_classifications": {
+        "('Open', 'Main Route')": 14
+      },
+      "current_source_way_count": 50,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "23cbd22d158579970c741771955559790298381aa1d793588582b534198a9df1",
+      "official_open_union_m": 3278.9616528048423,
+      "supported_source_union_m": 3127.1752844349403,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 3110.1229074020043,
+        "cycling": 3127.175284434939
+      },
+      "official_open_without_supported_source_at_10m_m": 174.2022893936496,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 45,
+      "catalogue_audit": {
+        "route_key": "NCN:151",
+        "source_relations": [
+          {
+            "id": 9818709,
+            "version": 10,
+            "timestamp": "2026-09-17T13:06:42Z"
+          }
+        ],
+        "accepted_way_count": 45,
+        "held_way_count": 10,
+        "partial_way_count": 5,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 10
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "ebb79eb7210a1c289274a57c27bfc1efa3c601a2bd47d822ef2919cfe591c168",
+        "recorded_source_route_key": "NCN:151",
+        "target_route_key": "NCN:151",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:2",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:2",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          1950688
+        ],
+        "source_hierarchy_ids": [
+          1901925,
+          1950688,
+          13724198,
+          13724261,
+          13725725,
+          13725878,
+          13725899,
+          13725970,
+          13726038,
+          13726055
+        ],
+        "excluded_source_roots": [
+          {
+            "relation_id": 192635,
+            "reason": "Isle of Man numbered route outside UK scope"
+          }
+        ],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1293,
+      "official_open_main_feature_count": 1232,
+      "official_classifications": {
+        "('Open', 'Main Route')": 1236,
+        "('Open', 'Alternative Route')": 50,
+        "('Temporary Closure', 'Main Route')": 6,
+        "('Open', 'N/A')": 1
+      },
+      "current_source_way_count": 2682,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "375c600b46c616c43316099d0229952eedaa0010e95a353bcb15ebc29b77cbc9",
+      "official_open_union_m": 565505.8691799432,
+      "supported_source_union_m": 549869.2556538259,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 533066.7085146669,
+        "cycling": 539960.251970569
+      },
+      "official_open_without_supported_source_at_10m_m": 14908.68144381355,
+      "shared_existing_way_ids": [
+        "1221535775",
+        "762771339",
+        "891463898"
+      ],
+      "supported_way_count": 2403,
+      "catalogue_audit": {
+        "route_key": "NCN:2",
+        "source_relations": [
+          {
+            "id": 1950688,
+            "version": 679,
+            "timestamp": "2026-01-11T12:31:18Z"
+          }
+        ],
+        "accepted_way_count": 2403,
+        "held_way_count": 442,
+        "partial_way_count": 163,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 411,
+          "mode_policy_unresolved_or_restricted": 16,
+          "logical_branch_policy_required": 15
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "ab9fac26b4ba3b18314820036712a53ce4ce877f878cb7f64fc398dff532ee0d",
+        "recorded_source_route_key": "NCN:2",
+        "target_route_key": "NCN:2",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            271495808
+          ],
+          "gate_node_ids": [
+            29739561,
+            29739564,
+            29739566,
+            2054642491,
+            3349767047
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            671601543
+          ],
+          "gate_node_ids": [],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            4341691,
+            1134105802,
+            1167425950,
+            1167425951
+          ],
+          "gate_node_ids": [
+            22946853,
+            1383208105,
+            1383208112
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            104820041
+          ],
+          "gate_node_ids": [
+            265592462,
+            1209028523,
+            1977645739
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            4634185
+          ],
+          "gate_node_ids": [
+            29444206,
+            29444207,
+            603784732,
+            603784733
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            4347236,
+            822249806
+          ],
+          "gate_node_ids": [
+            26478081,
+            26478082,
+            339452158,
+            355022750,
+            1977645596
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            104820316
+          ],
+          "gate_node_ids": [
+            1209033483,
+            1209033612,
+            3032693057
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            29099868
+          ],
+          "gate_node_ids": [
+            1569212995,
+            1569213010,
+            9087940990
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:207",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:207",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 4,
+      "official_open_main_feature_count": 4,
+      "official_classifications": {
+        "('Open', 'Main Route')": 4
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:21",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:21",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          21909
+        ],
+        "source_hierarchy_ids": [
+          21909,
+          11367232,
+          11367233,
+          13389352,
+          19285324
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 422,
+      "official_open_main_feature_count": 420,
+      "official_classifications": {
+        "('Open', 'Main Route')": 420,
+        "('Open', 'Alternative Route')": 2
+      },
+      "current_source_way_count": 974,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "e9d83d8dbbe9e83b979e43cc4e240f1039c67e0e6cd9535823daa83c66319480",
+      "official_open_union_m": 152539.17817930088,
+      "supported_source_union_m": 149997.16568717934,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 144599.91709735533,
+        "cycling": 149460.9628902663
+      },
+      "official_open_without_supported_source_at_10m_m": 2510.5234372845903,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 938,
+      "catalogue_audit": {
+        "route_key": "NCN:21",
+        "source_relations": [
+          {
+            "id": 21909,
+            "version": 576,
+            "timestamp": "2025-12-06T10:11:09Z"
+          }
+        ],
+        "accepted_way_count": 938,
+        "held_way_count": 75,
+        "partial_way_count": 39,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 68,
+          "logical_branch_policy_required": 6,
+          "mode_policy_unresolved_or_restricted": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "fe7e22af1bec00938c9047480100fe9bf4f4166140899e75abec452c8550649c",
+        "recorded_source_route_key": "NCN:21",
+        "target_route_key": "NCN:21",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            838822117
+          ],
+          "gate_node_ids": [
+            7827816480,
+            7827816484,
+            7827836588,
+            7827836591
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:23",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:23",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          192009,
+          19013994
+        ],
+        "source_hierarchy_ids": [
+          192009,
+          19013994
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 297,
+      "official_open_main_feature_count": 284,
+      "official_classifications": {
+        "('Open', 'Main Route')": 285,
+        "('Open', 'Alternative Route')": 10,
+        "('Open', 'N/A')": 2
+      },
+      "current_source_way_count": 958,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "742a1f87008e13d8c0654f4be696e58c2bcf3873fc7698140046c2aae22642c5",
+      "official_open_union_m": 137132.08932983328,
+      "supported_source_union_m": 135172.2645376121,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 133597.98538322258,
+        "cycling": 133820.55475716482
+      },
+      "official_open_without_supported_source_at_10m_m": 2354.030153118334,
+      "shared_existing_way_ids": [
+        "26433153"
+      ],
+      "supported_way_count": 897,
+      "catalogue_audit": {
+        "route_key": "NCN:23",
+        "source_relations": [
+          {
+            "id": 192009,
+            "version": 707,
+            "timestamp": "2026-09-22T13:04:08Z"
+          },
+          {
+            "id": 19013994,
+            "version": 3,
+            "timestamp": "2025-05-05T00:43:14Z"
+          }
+        ],
+        "accepted_way_count": 897,
+        "held_way_count": 102,
+        "partial_way_count": 41,
+        "held_reason_counts": {
+          "mode_policy_unresolved_or_restricted": 4,
+          "unresolved_official_extent_edges": 98
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "3ad2b84a74b342d715ac27306fe97da95117c529b374fd86be435d01d18cb24a",
+        "recorded_source_route_key": "NCN:23",
+        "target_route_key": "NCN:23",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:248",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:248",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          13368234
+        ],
+        "source_hierarchy_ids": [
+          13368234
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 9,
+      "official_open_main_feature_count": 9,
+      "official_classifications": {
+        "('Open', 'Main Route')": 9
+      },
+      "current_source_way_count": 5,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "411eca2d350b802fc1979b0744f2d4e025607af0714861cf5adac7df6eec75c0",
+      "official_open_union_m": 3434.742169371809,
+      "supported_source_union_m": 2423.473579181455,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 2423.473579181455,
+        "cycling": 2423.473579181455
+      },
+      "official_open_without_supported_source_at_10m_m": 981.3186298611928,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 5,
+      "catalogue_audit": {
+        "route_key": "NCN:248",
+        "source_relations": [
+          {
+            "id": 13368234,
+            "version": 1,
+            "timestamp": "2021-10-25T15:53:42Z"
+          }
+        ],
+        "accepted_way_count": 5,
+        "held_way_count": 2,
+        "partial_way_count": 2,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 2
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "65194260c41c163154aeca480bb546703c4f7365571d831d72e4251ea1698d8a",
+        "recorded_source_route_key": "NCN:248",
+        "target_route_key": "NCN:248",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:253",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:253",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'Alternative Route')": 1
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:267",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:267",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          13248353
+        ],
+        "source_hierarchy_ids": [
+          13248353
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 14,
+      "official_open_main_feature_count": 14,
+      "official_classifications": {
+        "('Open', 'Main Route')": 14
+      },
+      "current_source_way_count": 23,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "4dbba2937d559baf60448161f4ff6e4b1c8d3902fb4e6f83261eadebfba73e8b",
+      "official_open_union_m": 4756.6795707602,
+      "supported_source_union_m": 4394.485556181846,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 1981.7352075378362,
+        "cycling": 4366.122481219821
+      },
+      "official_open_without_supported_source_at_10m_m": 304.4070719597913,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 23,
+      "catalogue_audit": {
+        "route_key": "NCN:267",
+        "source_relations": [
+          {
+            "id": 13248353,
+            "version": 4,
+            "timestamp": "2025-04-14T21:43:07Z"
+          }
+        ],
+        "accepted_way_count": 23,
+        "held_way_count": 4,
+        "partial_way_count": 4,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 4
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "20b389f36ffad0c6688b305d62652f7dcc6293106ac0ccc7379baa53b4e1398d",
+        "recorded_source_route_key": "NCN:267",
+        "target_route_key": "NCN:267",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:274",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:274",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 2,
+      "official_open_main_feature_count": 2,
+      "official_classifications": {
+        "('Open', 'Main Route')": 2
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:304",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:304",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          18928305
+        ],
+        "source_hierarchy_ids": [
+          18928305
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 10,
+      "official_open_main_feature_count": 10,
+      "official_classifications": {
+        "('Open', 'Main Route')": 10
+      },
+      "current_source_way_count": 23,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "654d72bdb3136293b5bfe2d1d943c1a71a850660f3c5b571d704d67299a6e311",
+      "official_open_union_m": 17319.24115368731,
+      "supported_source_union_m": 17354.29204484703,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 17354.292044847032,
+        "cycling": 17354.292044847032
+      },
+      "official_open_without_supported_source_at_10m_m": 0.0,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 23,
+      "catalogue_audit": {
+        "route_key": "NCN:304",
+        "source_relations": [
+          {
+            "id": 18928305,
+            "version": 3,
+            "timestamp": "2025-04-29T20:19:54Z"
+          }
+        ],
+        "accepted_way_count": 23,
+        "held_way_count": 0,
+        "partial_way_count": 0,
+        "held_reason_counts": {},
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "96c007b96d3d30e524151e945196fea40f35cac9450e43a2dba6b740ed9b80e1",
+        "recorded_source_route_key": "NCN:304",
+        "target_route_key": "NCN:304",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:305",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:305",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          1848829
+        ],
+        "source_hierarchy_ids": [
+          1848829
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 34,
+      "official_open_main_feature_count": 34,
+      "official_classifications": {
+        "('Open', 'Main Route')": 34
+      },
+      "current_source_way_count": 58,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "542eb0b76d9dc95e931999b438ac77db41591471d709b9e5a0f9966ce21ff415",
+      "official_open_union_m": 25538.669301081536,
+      "supported_source_union_m": 25413.426441727006,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 23530.76199365959,
+        "cycling": 25413.426441727013
+      },
+      "official_open_without_supported_source_at_10m_m": 153.8536031153476,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 58,
+      "catalogue_audit": {
+        "route_key": "NCN:305",
+        "source_relations": [
+          {
+            "id": 1848829,
+            "version": 17,
+            "timestamp": "2025-05-22T19:16:59Z"
+          }
+        ],
+        "accepted_way_count": 58,
+        "held_way_count": 2,
+        "partial_way_count": 2,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 2
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "0873d1df99300ca114be74b8a7d3aaf8df17a211b1392a4ae0875691b8fa0e89",
+        "recorded_source_route_key": "NCN:305",
+        "target_route_key": "NCN:305",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:323",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:323",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 14,
+      "official_open_main_feature_count": 14,
+      "official_classifications": {
+        "('Open', 'Main Route')": 14
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:334",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:334",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          1493227
+        ],
+        "source_hierarchy_ids": [
+          1493227
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 17,
+      "official_open_main_feature_count": 16,
+      "official_classifications": {
+        "('Open', 'Main Route')": 16,
+        "('Open', 'N/A')": 1
+      },
+      "current_source_way_count": 39,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "c3e091f92f46014cc5a1bc42e8c7218dfc09058e5f9896e6151221c0285d3b3f",
+      "official_open_union_m": 10796.310207947887,
+      "supported_source_union_m": 10790.994410766176,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 10790.994410766174,
+        "cycling": 10790.994410766174
+      },
+      "official_open_without_supported_source_at_10m_m": 7.978809372650728,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 33,
+      "catalogue_audit": {
+        "route_key": "NCN:334",
+        "source_relations": [
+          {
+            "id": 1493227,
+            "version": 72,
+            "timestamp": "2026-10-03T07:29:55Z"
+          }
+        ],
+        "accepted_way_count": 33,
+        "held_way_count": 7,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 7
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "087686c3044e3411a75a4e28550d455bda00d32ba07db855d22b22fe48ce0593",
+        "recorded_source_route_key": "NCN:334",
+        "target_route_key": "NCN:334",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:4",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:4",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          1318931
+        ],
+        "source_hierarchy_ids": [
+          1318928,
+          1318929,
+          1318930,
+          1318931,
+          2531380,
+          9242004,
+          9489717,
+          10877015,
+          11184371,
+          11184372,
+          11184374,
+          11184375,
+          14611905,
+          19284712,
+          19285266,
+          19285267
+        ],
+        "excluded_source_roots": [
+          {
+            "relation_id": 192889,
+            "reason": "Isle of Man route-number collision; outside UK NCN scope"
+          }
+        ],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1480,
+      "official_open_main_feature_count": 1432,
+      "official_classifications": {
+        "('Open', 'Main Route')": 1433,
+        "('Open', 'Alternative Route')": 41,
+        "(None, 'Main Route')": 5,
+        "('Open', None)": 1
+      },
+      "current_source_way_count": 3568,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "c07039b7da368422867d716f470d42523e287d7a4358a419fe3dcb7b5365ee63",
+      "official_open_union_m": 680116.3093396596,
+      "supported_source_union_m": 633331.3851272236,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 574956.7268288893,
+        "cycling": 627612.0267178842
+      },
+      "official_open_without_supported_source_at_10m_m": 45616.975253044264,
+      "shared_existing_way_ids": [
+        "1091701447",
+        "27678774"
+      ],
+      "supported_way_count": 3174,
+      "catalogue_audit": {
+        "route_key": "NCN:4",
+        "source_relations": [
+          {
+            "id": 1318931,
+            "version": 130,
+            "timestamp": "2026-09-22T16:06:49Z"
+          }
+        ],
+        "accepted_way_count": 3174,
+        "held_way_count": 606,
+        "partial_way_count": 212,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 421,
+          "mode_policy_unresolved_or_restricted": 14,
+          "logical_branch_policy_required": 170,
+          "current_geometry_differs_from_assessed_provider": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "9322d56f3827f95c0b308700d3d92ca78bbf96671b55f4215c403973c948bbc3",
+        "recorded_source_route_key": "NCN:4",
+        "target_route_key": "NCN:4",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            203644538,
+            1117663064,
+            1409581897,
+            1409581898,
+            1409722191,
+            1409722192
+          ],
+          "gate_node_ids": [
+            21659989,
+            21659994,
+            996758808
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:41",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:41",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          52310
+        ],
+        "source_hierarchy_ids": [
+          52310
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 362,
+      "official_open_main_feature_count": 347,
+      "official_classifications": {
+        "('Open', 'Main Route')": 347,
+        "('Open', 'Alternative Route')": 15
+      },
+      "current_source_way_count": 896,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "83334c261eb889c97ab613c552e6494487484e76aa0254d846bec1d268b90879",
+      "official_open_union_m": 185373.4010565964,
+      "supported_source_union_m": 172441.74389367952,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 168620.98577570464,
+        "cycling": 172297.57973791918
+      },
+      "official_open_without_supported_source_at_10m_m": 12825.49048559475,
+      "shared_existing_way_ids": [
+        "126361083",
+        "164767128",
+        "823779305"
+      ],
+      "supported_way_count": 705,
+      "catalogue_audit": {
+        "route_key": "NCN:41",
+        "source_relations": [
+          {
+            "id": 52310,
+            "version": 479,
+            "timestamp": "2026-10-04T14:18:39Z"
+          }
+        ],
+        "accepted_way_count": 705,
+        "held_way_count": 234,
+        "partial_way_count": 43,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 219,
+          "logical_branch_policy_required": 6,
+          "mode_policy_unresolved_or_restricted": 9
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "680e8d7cbf6ef0fe2b55249bd2a297c28a1e867cba02b78aa7c7dfb9d27f9e8c",
+        "recorded_source_route_key": "NCN:41",
+        "target_route_key": "NCN:41",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            771036092
+          ],
+          "gate_node_ids": [
+            30038943,
+            1345313242,
+            3394426484
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:410",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:410",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 4,
+      "official_open_main_feature_count": 4,
+      "official_classifications": {
+        "('Open', 'Main Route')": 4
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:42",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:42",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          33951
+        ],
+        "source_hierarchy_ids": [
+          33951,
+          1765789,
+          10597725
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 113,
+      "official_open_main_feature_count": 106,
+      "official_classifications": {
+        "('Open', 'Main Route')": 106,
+        "('Open', 'Alternative Route')": 7
+      },
+      "current_source_way_count": 237,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "3aabde5a9bcfa46c1a093074f3637c3c4832ca115158aa0fae0979da6d882da0",
+      "official_open_union_m": 98169.43960479497,
+      "supported_source_union_m": 97249.24427190851,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 95339.01218625646,
+        "cycling": 96885.17655557321
+      },
+      "official_open_without_supported_source_at_10m_m": 896.7954786589904,
+      "shared_existing_way_ids": [
+        "131388207"
+      ],
+      "supported_way_count": 205,
+      "catalogue_audit": {
+        "route_key": "NCN:42",
+        "source_relations": [
+          {
+            "id": 33951,
+            "version": 136,
+            "timestamp": "2026-09-04T20:01:19Z"
+          }
+        ],
+        "accepted_way_count": 205,
+        "held_way_count": 50,
+        "partial_way_count": 18,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 40,
+          "logical_branch_policy_required": 9,
+          "mode_policy_unresolved_or_restricted": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "e041e14f8a17548a1ae1a87546a1bb866f2531ba00817d0a519f1241146fa10d",
+        "recorded_source_route_key": "NCN:42",
+        "target_route_key": "NCN:42",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:422",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:422",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 6,
+      "official_open_main_feature_count": 6,
+      "official_classifications": {
+        "('Open', 'Main Route')": 6
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:439",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:439",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          21209444
+        ],
+        "source_hierarchy_ids": [
+          21209444
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 6,
+      "official_open_main_feature_count": 6,
+      "official_classifications": {
+        "('Open', 'Main Route')": 6
+      },
+      "current_source_way_count": 40,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "4afcddaf203b014dcdaef70865fde11cb8288dbac66d331312e11db0608e914a",
+      "official_open_union_m": 7725.044124851083,
+      "supported_source_union_m": 7107.909045258318,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 2445.5152037661705,
+        "cycling": 6990.101290974794
+      },
+      "official_open_without_supported_source_at_10m_m": 511.85707829247406,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 38,
+      "catalogue_audit": {
+        "route_key": "NCN:439",
+        "source_relations": [
+          {
+            "id": 21209444,
+            "version": 3,
+            "timestamp": "2026-09-01T11:48:28Z"
+          }
+        ],
+        "accepted_way_count": 38,
+        "held_way_count": 9,
+        "partial_way_count": 7,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 9
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "b4ac4ec0f993ed34b8b96595cbb333435eca63d902d47456676d5fc25247bd72",
+        "recorded_source_route_key": "NCN:439",
+        "target_route_key": "NCN:439",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:461",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:461",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          10877009
+        ],
+        "source_hierarchy_ids": [
+          10876999,
+          10877009
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 27,
+      "official_open_main_feature_count": 27,
+      "official_classifications": {
+        "('Open', 'Main Route')": 27
+      },
+      "current_source_way_count": 64,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "f71925d5747b8dcff85201c1744c621d4467386bd0f0ba95bf8808cb6b9ce56d",
+      "official_open_union_m": 8879.847272777675,
+      "supported_source_union_m": 8783.651659490344,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 8779.49486035056,
+        "cycling": 8783.651659490344
+      },
+      "official_open_without_supported_source_at_10m_m": 43.278134273516955,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 50,
+      "catalogue_audit": {
+        "route_key": "NCN:461",
+        "source_relations": [
+          {
+            "id": 10877009,
+            "version": 16,
+            "timestamp": "2026-08-17T20:29:52Z"
+          }
+        ],
+        "accepted_way_count": 50,
+        "held_way_count": 15,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "logical_branch_policy_required": 14,
+          "unresolved_official_extent_edges": 1
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "ee868dbd19e04b69df61d4d595f1ccc931b5fa21b60856d51df007dd6498a943",
+        "recorded_source_route_key": "NCN:461",
+        "target_route_key": "NCN:461",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:47",
+      "original_state": "partial_source_geometry",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:47",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          22696,
+          6291978,
+          8201445
+        ],
+        "source_hierarchy_ids": [
+          22696,
+          6291978,
+          8201445
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 279,
+      "official_open_main_feature_count": 273,
+      "official_classifications": {
+        "('Open', 'Main Route')": 273,
+        "('Temporary Closure', 'Main Route')": 3,
+        "('Open', None)": 1,
+        "('Open', 'Alternative Route')": 2
+      },
+      "current_source_way_count": 463,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "f3b86d701f4bbabb1dcd945fff2f3241fa045f7c78d7002751b54bf89bb4f7b2",
+      "official_open_union_m": 184931.76130866315,
+      "supported_source_union_m": 178338.23515502023,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 177072.32572850474,
+        "cycling": 178338.23515502037
+      },
+      "official_open_without_supported_source_at_10m_m": 6018.503038898993,
+      "shared_existing_way_ids": [
+        "622803772",
+        "654979122"
+      ],
+      "supported_way_count": 385,
+      "catalogue_audit": {
+        "route_key": "NCN:47",
+        "source_relations": [
+          {
+            "id": 22696,
+            "version": 298,
+            "timestamp": "2026-09-15T23:21:13Z"
+          },
+          {
+            "id": 6291978,
+            "version": 21,
+            "timestamp": "2026-07-12T12:09:22Z"
+          },
+          {
+            "id": 8201445,
+            "version": 2,
+            "timestamp": "2020-01-14T05:29:32Z"
+          }
+        ],
+        "accepted_way_count": 385,
+        "held_way_count": 133,
+        "partial_way_count": 55,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 120,
+          "mode_policy_unresolved_or_restricted": 5,
+          "logical_branch_policy_required": 8
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "45bee8c7aefa403ed95a498bdd88d63b4016193cdcc36792ff47ce2d18f5713e",
+        "recorded_source_route_key": "NCN:47",
+        "target_route_key": "NCN:47",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            358555411
+          ],
+          "gate_node_ids": [
+            31258426,
+            253242395,
+            253242396
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:524",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:524",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 10,
+      "official_open_main_feature_count": 10,
+      "official_classifications": {
+        "('Open', 'Main Route')": 10
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:533",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:533",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          11954765
+        ],
+        "source_hierarchy_ids": [
+          11954765
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 18,
+      "official_open_main_feature_count": 18,
+      "official_classifications": {
+        "('Open', 'Main Route')": 18
+      },
+      "current_source_way_count": 9,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "d9527d5ca60d9b34e897eb7658f492620dbc576f6ff72df53100bfae7e6b1f3b",
+      "official_open_union_m": 5268.1303311374895,
+      "supported_source_union_m": 5233.6421587629075,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 5233.6421587629075,
+        "cycling": 5233.6421587629075
+      },
+      "official_open_without_supported_source_at_10m_m": 24.402804622269223,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 7,
+      "catalogue_audit": {
+        "route_key": "NCN:533",
+        "source_relations": [
+          {
+            "id": 11954765,
+            "version": 3,
+            "timestamp": "2025-02-11T12:19:39Z"
+          }
+        ],
+        "accepted_way_count": 7,
+        "held_way_count": 3,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 3
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "0be3942713a51801f830fda61d36e987d86e99b98c4796526e13ff6b54e54aa0",
+        "recorded_source_route_key": "NCN:533",
+        "target_route_key": "NCN:533",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:604",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:604",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          10011902
+        ],
+        "source_hierarchy_ids": [
+          10011902
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 23,
+      "official_open_main_feature_count": 23,
+      "official_classifications": {
+        "('Open', 'Main Route')": 23
+      },
+      "current_source_way_count": 36,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "c57cd328ad2b900ffd27b43c9e2dc04bba5f90395509a4007f8eb63d6ba416f9",
+      "official_open_union_m": 4956.233362279653,
+      "supported_source_union_m": 4928.400200214078,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 4928.400200214079,
+        "cycling": 4928.400200214079
+      },
+      "official_open_without_supported_source_at_10m_m": 2.8911902946408325,
+      "shared_existing_way_ids": [
+        "722563297"
+      ],
+      "supported_way_count": 36,
+      "catalogue_audit": {
+        "route_key": "NCN:604",
+        "source_relations": [
+          {
+            "id": 10011902,
+            "version": 7,
+            "timestamp": "2023-12-27T23:24:50Z"
+          }
+        ],
+        "accepted_way_count": 36,
+        "held_way_count": 2,
+        "partial_way_count": 2,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 2
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "705c9f7155d9c8e97d291317355bec5badce61d11291843fb0a79f45d092e44d",
+        "recorded_source_route_key": "NCN:604",
+        "target_route_key": "NCN:604",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:674",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:674",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          12151562
+        ],
+        "source_hierarchy_ids": [
+          12151562
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 31,
+      "official_open_main_feature_count": 31,
+      "official_classifications": {
+        "('Open', 'Main Route')": 31
+      },
+      "current_source_way_count": 42,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "72f9e7371b01180ed0c5726831d06801265ddf5d4a3de91923332079b594f7f3",
+      "official_open_union_m": 10834.785888602524,
+      "supported_source_union_m": 10522.851720297855,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 10522.851720297853,
+        "cycling": 10519.496974496264
+      },
+      "official_open_without_supported_source_at_10m_m": 286.2310286301762,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 40,
+      "catalogue_audit": {
+        "route_key": "NCN:674",
+        "source_relations": [
+          {
+            "id": 12151562,
+            "version": 15,
+            "timestamp": "2026-01-13T13:48:23Z"
+          }
+        ],
+        "accepted_way_count": 40,
+        "held_way_count": 7,
+        "partial_way_count": 5,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 7
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "efe069d0c102fc95c1b0828e055313406bb98e7dd86756b0b6bfa798926ec662",
+        "recorded_source_route_key": "NCN:674",
+        "target_route_key": "NCN:674",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:685",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:685",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          10008682
+        ],
+        "source_hierarchy_ids": [
+          10008682
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 13,
+      "official_open_main_feature_count": 13,
+      "official_classifications": {
+        "('Open', 'Main Route')": 13
+      },
+      "current_source_way_count": 31,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "87bd9b6e6ea381ed5df0a1664206abe19be494cc46fe113078e1b51c32cb6645",
+      "official_open_union_m": 3596.179172436124,
+      "supported_source_union_m": 3406.6968636991346,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 3406.6968636991346,
+        "cycling": 3406.6968636991346
+      },
+      "official_open_without_supported_source_at_10m_m": 84.91557844898124,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 21,
+      "catalogue_audit": {
+        "route_key": "NCN:685",
+        "source_relations": [
+          {
+            "id": 10008682,
+            "version": 7,
+            "timestamp": "2025-10-21T18:36:49Z"
+          }
+        ],
+        "accepted_way_count": 21,
+        "held_way_count": 10,
+        "partial_way_count": 0,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 10
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "4bc4c0dead40324bb8e652a629685b806628681587e78aadbad96edd305a036f",
+        "recorded_source_route_key": "NCN:685",
+        "target_route_key": "NCN:685",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "NCN:689",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:689",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 5,
+      "official_open_main_feature_count": 5,
+      "official_classifications": {
+        "('Open', 'Main Route')": 5
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:70",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:70",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          11113
+        ],
+        "source_hierarchy_ids": [
+          11113
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 233,
+      "official_open_main_feature_count": 233,
+      "official_classifications": {
+        "('Open', 'Main Route')": 233
+      },
+      "current_source_way_count": 915,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "343e8fd2e450ac5347b720340cbb42e49aebe0340c9ba43040e6c545772780e7",
+      "official_open_union_m": 188009.1410617022,
+      "supported_source_union_m": 185322.77374706801,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 183147.4621899798,
+        "cycling": 185026.616517001
+      },
+      "official_open_without_supported_source_at_10m_m": 2866.1499931606927,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 636,
+      "catalogue_audit": {
+        "route_key": "NCN:70",
+        "source_relations": [
+          {
+            "id": 11113,
+            "version": 491,
+            "timestamp": "2026-09-18T19:57:39Z"
+          }
+        ],
+        "accepted_way_count": 636,
+        "held_way_count": 297,
+        "partial_way_count": 18,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 291,
+          "logical_branch_policy_required": 6
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "eb1359e5c7f44e5823dad344257a3438b3fa565b3a1f86b2b735e47a60eac151",
+        "recorded_source_route_key": "NCN:70",
+        "target_route_key": "NCN:70",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            370659208,
+            1368684566,
+            1370504338,
+            1370504345,
+            1370504346,
+            1370514324
+          ],
+          "gate_node_ids": [
+            3743540300,
+            3743540308,
+            3743540311,
+            4538038754
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:700",
+      "original_state": "missing_source_membership",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:700",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [
+          7024538
+        ],
+        "source_hierarchy_ids": [
+          7024538
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 104,
+      "official_open_main_feature_count": 104,
+      "official_classifications": {
+        "('Open', 'Main Route')": 104
+      },
+      "current_source_way_count": 490,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "448ad4265baa7108d745452a2d536a86f8b917f1ee484e84053397286f544b7c",
+      "official_open_union_m": 61345.89951115469,
+      "supported_source_union_m": 59541.01184962064,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 59383.48099743177,
+        "cycling": 59541.01184962068
+      },
+      "official_open_without_supported_source_at_10m_m": 2155.5086672268017,
+      "shared_existing_way_ids": [
+        "194857409",
+        "8117451"
+      ],
+      "supported_way_count": 241,
+      "catalogue_audit": {
+        "route_key": "NCN:700",
+        "source_relations": [
+          {
+            "id": 7024538,
+            "version": 184,
+            "timestamp": "2026-08-25T17:24:16Z"
+          }
+        ],
+        "accepted_way_count": 241,
+        "held_way_count": 268,
+        "partial_way_count": 19,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 255,
+          "logical_branch_policy_required": 13
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "642484c250fb1f4add8e9b348fd81ea91d020119f0fcb9d384593b8dc5ab25f4",
+        "recorded_source_route_key": "NCN:700",
+        "target_route_key": "NCN:700",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            19794345,
+            1194322378,
+            1194322396,
+            1194322397,
+            1207807503,
+            1384832242
+          ],
+          "gate_node_ids": [
+            206239526,
+            252149902,
+            8693962666
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            332220744,
+            1370504339,
+            1370504349,
+            1370514323,
+            1370821913,
+            1370821918,
+            1370828797
+          ],
+          "gate_node_ids": [
+            3393310097,
+            3451358158,
+            3457973885,
+            3488973765
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:776",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:776",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1,
+      "official_open_main_feature_count": 1,
+      "official_classifications": {
+        "('Open', 'Main Route')": 1
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "NCN:8",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:8",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          5487294
+        ],
+        "source_hierarchy_ids": [
+          5487291,
+          5487292,
+          5487293,
+          5487294
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 516,
+      "official_open_main_feature_count": 494,
+      "official_classifications": {
+        "('Open', 'Main Route')": 494,
+        "('Open', 'Alternative Route')": 21,
+        "('Temporary Closure', 'Main Route')": 1
+      },
+      "current_source_way_count": 1262,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "02e30ba1946c1bdbc931612f7df9d3ed0c1c39612db80628fb04b53a5611cdf0",
+      "official_open_union_m": 383185.1131689047,
+      "supported_source_union_m": 368536.783585892,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 347811.5556660433,
+        "cycling": 368284.0781358569
+      },
+      "official_open_without_supported_source_at_10m_m": 13690.68756411869,
+      "shared_existing_way_ids": [
+        "1151872683",
+        "37856269",
+        "37921402",
+        "45728264",
+        "4924141",
+        "6522219",
+        "745451259"
+      ],
+      "supported_way_count": 955,
+      "catalogue_audit": {
+        "route_key": "NCN:8",
+        "source_relations": [
+          {
+            "id": 5487294,
+            "version": 13,
+            "timestamp": "2025-09-24T22:41:16Z"
+          }
+        ],
+        "accepted_way_count": 955,
+        "held_way_count": 415,
+        "partial_way_count": 108,
+        "held_reason_counts": {
+          "mode_policy_unresolved_or_restricted": 13,
+          "unresolved_official_extent_edges": 375,
+          "logical_branch_policy_required": 27
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "047d90f2608ae35684a4add636e2b48d98907aafbef41dde215cf41a904e538d",
+        "recorded_source_route_key": "NCN:8",
+        "target_route_key": "NCN:8",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": [
+        {
+          "way_ids": [
+            372977455,
+            1195017264,
+            1195022337,
+            1195022376,
+            1195022426,
+            1487834720
+          ],
+          "gate_node_ids": [
+            31923542,
+            1075203562,
+            1674428794
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        },
+        {
+          "way_ids": [
+            4958596,
+            772694539,
+            772694540,
+            784291252,
+            784291253,
+            1559260869,
+            1569476467,
+            1569476468
+          ],
+          "gate_node_ids": [
+            330007787,
+            330007791,
+            330007793,
+            2276880332
+          ],
+          "reason": "not_a_simple_two_gate_roundabout"
+        }
+      ]
+    },
+    {
+      "route_key": "NCN:820",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "NCN:820",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1,
+      "official_open_main_feature_count": 1,
+      "official_classifications": {
+        "('Open', 'Main Route')": 1
+      },
+      "reason": "current_numbered_source_membership_unresolved",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:12",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:12",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          21899,
+          1186346,
+          7436212
+        ],
+        "source_hierarchy_ids": [
+          21899,
+          1186346,
+          7436212
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 39,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 39
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:15",
+      "original_state": "partial_source_geometry",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:15",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          8824,
+          7436209
+        ],
+        "source_hierarchy_ids": [
+          8824,
+          7436209
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 158,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 158
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:16",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:16",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          7588613
+        ],
+        "source_hierarchy_ids": [
+          7588613
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 50,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 50
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:21",
+      "original_state": "partial_source_geometry",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:21",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          180060,
+          7371337
+        ],
+        "source_hierarchy_ids": [
+          180060,
+          7371337
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 17,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 17
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:30",
+      "original_state": "partial_source_geometry",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:30",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          23668,
+          297415,
+          2174529,
+          8033867,
+          17851741
+        ],
+        "source_hierarchy_ids": [
+          23668,
+          297415,
+          2174529,
+          8033867,
+          17851741
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 151,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 151
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:31",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:31",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          1561929
+        ],
+        "source_hierarchy_ids": [
+          1561929
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 40,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 40
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:32",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:32",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          6677165
+        ],
+        "source_hierarchy_ids": [
+          6677165
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 17,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 17
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:40",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:40",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          2149265,
+          4143953
+        ],
+        "source_hierarchy_ids": [
+          2149265,
+          4143953
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 37,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 37
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:41",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:41",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          2851,
+          2224950
+        ],
+        "source_hierarchy_ids": [
+          2851,
+          2224950
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 9,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 9
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:50",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:50",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          5544574
+        ],
+        "source_hierarchy_ids": [
+          5544574,
+          5625374,
+          5676436,
+          10582207,
+          10582208,
+          11552843
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 25,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 25
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:51",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:51",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          8495916
+        ],
+        "source_hierarchy_ids": [
+          8495916
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 50,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 50
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:55",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:55",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          163962
+        ],
+        "source_hierarchy_ids": [
+          163962
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 32,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 32
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:61",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:61",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          3347713
+        ],
+        "source_hierarchy_ids": [
+          3347713
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 14,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 14
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:67",
+      "original_state": "partial_source_geometry",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:67",
+        "original_state": "partial_source_geometry",
+        "source_relation_ids": [
+          2742
+        ],
+        "source_hierarchy_ids": [
+          2742
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 5,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 5
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:70",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:70",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          23552
+        ],
+        "source_hierarchy_ids": [
+          23552
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 14,
+      "official_open_main_feature_count": 4,
+      "official_classifications": {
+        "('Open', 'Main Route')": 4,
+        "('Open', 'N/A')": 10
+      },
+      "current_source_way_count": 962,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "5e02b2bd599465cb733c8579b92363aa9d48127f60f9ebed5768056e27fb2f61",
+      "official_open_union_m": 3791.6971916789616,
+      "supported_source_union_m": 3809.3503356074634,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 3809.3503356074634,
+        "cycling": 3809.3503356074634
+      },
+      "official_open_without_supported_source_at_10m_m": 0.0,
+      "shared_existing_way_ids": [
+        "235044932",
+        "42406774"
+      ],
+      "supported_way_count": 4,
+      "catalogue_audit": {
+        "route_key": "RCN:70",
+        "source_relations": [
+          {
+            "id": 23552,
+            "version": 503,
+            "timestamp": "2026-09-24T19:26:30Z"
+          }
+        ],
+        "accepted_way_count": 4,
+        "held_way_count": 959,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 953,
+          "mode_policy_unresolved_or_restricted": 6
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "ba100bd0ed2f5cff1c5705be397960678e1cd9577008ff1dab7a99f7de71a3b4",
+        "recorded_source_route_key": "RCN:70",
+        "target_route_key": "RCN:70",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    },
+    {
+      "route_key": "RCN:80",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:80",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          92257
+        ],
+        "source_hierarchy_ids": [
+          92257
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 28,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 28
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:81",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:81",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          3719157
+        ],
+        "source_hierarchy_ids": [
+          3719157
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 3,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 3
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:83",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:83",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          116231
+        ],
+        "source_hierarchy_ids": [
+          116231
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 1,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 1
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:85",
+      "original_state": "source_scope_review_required",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:85",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          12762,
+          93599
+        ],
+        "source_hierarchy_ids": [
+          12762,
+          93599
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 21,
+      "official_open_main_feature_count": 1,
+      "official_classifications": {
+        "('Open', 'N/A')": 20,
+        "('Open', 'Main Route')": 1
+      },
+      "reason": "no_approved_source_edges_on_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:89",
+      "original_state": "missing_source_membership",
+      "status": "held",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:89",
+        "original_state": "missing_source_membership",
+        "source_relation_ids": [],
+        "source_hierarchy_ids": [],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 46,
+      "official_open_main_feature_count": 0,
+      "official_classifications": {
+        "('Open', 'N/A')": 46
+      },
+      "reason": "no_explicit_open_main_extent",
+      "supported_way_count": 0
+    },
+    {
+      "route_key": "RCN:92",
+      "original_state": "source_scope_review_required",
+      "status": "supported_open_spans",
+      "completion_binding_ready": false,
+      "plan": {
+        "route_key": "RCN:92",
+        "original_state": "source_scope_review_required",
+        "source_relation_ids": [
+          2514475
+        ],
+        "source_hierarchy_ids": [
+          2514475
+        ],
+        "excluded_source_roots": [],
+        "selection_is_not_admission": true
+      },
+      "official_feature_count": 69,
+      "official_open_main_feature_count": 2,
+      "official_classifications": {
+        "('Open', 'N/A')": 67,
+        "('Open', 'Main Route')": 2
+      },
+      "current_source_way_count": 93,
+      "existing_registry_identity_conflict_way_ids": [],
+      "manifest_sha256": "b6ec2cb103b2f4ed0277aae34729ac523e9d5906c02cb2cec49ddf7f7d7a56e8",
+      "official_open_union_m": 273.6785876331362,
+      "supported_source_union_m": 117.92864804995546,
+      "supported_source_union_m_by_mode": {
+        "on_foot": 117.92864804995546,
+        "cycling": 117.92864804995546
+      },
+      "official_open_without_supported_source_at_10m_m": 140.64935842484465,
+      "shared_existing_way_ids": [],
+      "supported_way_count": 1,
+      "catalogue_audit": {
+        "route_key": "RCN:92",
+        "source_relations": [
+          {
+            "id": 2514475,
+            "version": 38,
+            "timestamp": "2025-12-16T22:13:32Z"
+          }
+        ],
+        "accepted_way_count": 1,
+        "held_way_count": 93,
+        "partial_way_count": 1,
+        "held_reason_counts": {
+          "unresolved_official_extent_edges": 93
+        },
+        "whole_route_completion_ready": false,
+        "accepted_source_node_geometry_verified": true,
+        "scope": "explicit_member_source_spans_only_not_full_official_route",
+        "mode_policy": "Current static tags with mode overrides; recognised highway defaults. Conditional/directional restrictions held. Not historical access certification.",
+        "source_identity_review_sha256": "255537815078b3be52f1d5b8c69e7cfb9e27f1096c7dc0362853c70773327898",
+        "recorded_source_route_key": "RCN:92",
+        "target_route_key": "RCN:92",
+        "route_alias": false,
+        "old_journey_evidence_transferred": false
+      },
+      "held_roundabout_groups": []
+    }
+  ]
+}
