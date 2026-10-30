@@ -3,7 +3,35 @@
   "cross_route": [
     {
       "actual_admitted_source_present": false,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "11017",
+                "network": "ncn",
+                "ref": "7"
+              }
+            ],
+            "retained_ncn_row": {
+              "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection.",
+              "present": false
+            }
+          },
+          "requested": "NCN:6",
+          "status": "unproved_requested_route"
+        }
+      },
       "eligibility_note": "No admitted NCN6 source row; bounded observed membership NCN7. Proximity cannot establish NCN6 identity.",
+      "existing_binding_count": null,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "23385711",
       "name": "Cumbria NCN6/NCN7 identity",
@@ -249,7 +277,28 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "same_identified_feature_with_documented_geometry_update",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 0,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "RCN:90",
+            "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c"
+          },
+          "requested": "RCN:90",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Admitted RCN90 source, zero bindings. Stable-chain node movement is supported by pinned histories; proposal note is not NCN90 membership.",
+      "existing_binding_count": 0,
+      "history_status": "documented_shared_node_movement",
       "hypothetical_only": true,
       "key": "1289002662",
       "name": "East Sussex source-version update RCN90",
@@ -309,7 +358,28 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 2,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:1",
+            "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa"
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Only source vertices1..2 admitted. Vertex0 prefix excluded regardless of geometry metric.",
+      "existing_binding_count": 2,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "1050757473",
       "name": "London NCN1 Mudlarks Boulevard",
@@ -561,7 +631,28 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 32,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:9",
+            "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486"
+          },
+          "requested": "NCN:9",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 32,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "59306268",
       "name": "Newry Canal Towpath NCN9",
@@ -762,7 +853,37 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "75880",
+                "network": "ncn",
+                "ref": "1"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 10,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:1",
+              "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+            }
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 10,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "4471747",
       "name": "Deal NCN1",
@@ -1506,7 +1627,28 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 27,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:8",
+            "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01"
+          },
+          "requested": "NCN:8",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 27,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "31252441",
       "name": "Mid-Wales NCN8",
@@ -1707,7 +1849,28 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 58,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:81",
+            "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d"
+          },
+          "requested": "NCN:81",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 58,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "44807950",
       "name": "West Midlands NCN81 hairpin",
@@ -1891,7 +2054,37 @@
     },
     {
       "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "17883",
+                "network": "ncn",
+                "ref": "66"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 3,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:66",
+              "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c"
+            }
+          },
+          "requested": "NCN:66",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Source admitted in part; investigated historical target remains direction_gate. Local proxy cannot recreate route-wide original decision.",
+      "existing_binding_count": 3,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "159311690",
       "name": "Bradford NCN66",
@@ -2058,7 +2251,23 @@
     },
     {
       "actual_admitted_source_present": false,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "incompatible_or_unsupported_correspondence",
+        "mode_access": {
+          "reference": "incompatible",
+          "requested": "cycling",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
       "eligibility_note": "Distinct private identity; no confirmed NCN membership; no geometric identity transfer.",
+      "existing_binding_count": null,
+      "history_status": "unavailable",
       "hypothetical_only": true,
       "key": "deal-private-parallel",
       "name": "Deal private parallel negative",

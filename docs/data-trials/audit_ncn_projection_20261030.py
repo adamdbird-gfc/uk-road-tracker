@@ -13,6 +13,7 @@ from shapely.ops import unary_union
 from scripts.ncn_trial.network_geometry import metric_projector
 from scripts.ncn_trial.journey_replay import projector
 from scripts.ncn_trial.open_completion import edge_interval, ordinary_seam_partition
+from scripts.ncn_source_compatibility import compare as compatibility_compare
 
 ROOT = Path(__file__).resolve().parents[2]
 R = 6371008.8
@@ -183,12 +184,18 @@ def prepare_cross(inputs):
     cases = []
     for c in controls:
         key = c['key']; origin = origins.get(key)
+        diagnostic = compatibility_compare(c)
         case = {'key': key, 'name': names[key], 'route': c['route'],
             'source': c['source']['coordinates'], 'reference': c['reference']['coordinates'],
             'actual_admitted_source_present': c.get('context',{}).get('admitted_ncn_source_present'),
             'existing_binding_count': c.get('context',{}).get('binding_count'),
             'eligibility_note': 'Preserved evidence only; source presence is not whole-way admission or target entitlement.',
-            'target_pairs': []}
+            'target_pairs': [],
+            'identity_access': {'source_provider':c['source']['provider'], 'source_id':c['source']['feature_id'],
+                'reference_provider':c['reference']['provider'], 'reference_id':c['reference']['feature_id'],
+                'source_memberships':c['source'].get('route_memberships'), 'reference_tags':c['reference'].get('tags')},
+            'compatibility': {k:diagnostic[k] for k in ('classification','route_identity','mode_access','attribution_eligibility')},
+            'history_status':diagnostic['history']['status']}
         if key == 'deal-private-parallel':
             case['actual_admitted_source_present'] = False
             case['eligibility_note'] = 'Distinct private identity; no confirmed NCN membership; no geometric identity transfer.'
@@ -237,7 +244,8 @@ def compare_cross(fixture):
         if c['operational_origin'] is not None: origins['route']=c['operational_origin']
         result={'key':c['key'],'name':c['name'],'origin_provenance':c['origin_provenance'],
             'actual_admitted_source_present':c['actual_admitted_source_present'], 'eligibility_note':c['eligibility_note'],
-            'spaces':{},'hypothetical_only':True}
+            'spaces':{},'hypothetical_only':True, 'compatibility':c['compatibility'],
+            'history_status':c['history_status'], 'existing_binding_count':c['existing_binding_count']}
         for scope,origin in origins.items():
             for projection in ('aeqd','eq'):
                 label=scope+'_'+projection; source=project(c['source'],origin,projection); ref=project(c['reference'],origin,projection)

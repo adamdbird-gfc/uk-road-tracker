@@ -1,0 +1,115 @@
+{
+  "baseline_main": "0f8199651dad6014410274dc1b968e2417efe1b2",
+  "checkpoints": {
+    "all_independently_read_back_exactly": true,
+    "cross_route": "e3ee6566ab2778be0f3efda33639d31f8499a00f",
+    "inventory_deal": "221a8cf937f464211f21d7bdce89ded4e2bb84cf",
+    "scope": "310e4c50498f30aaa88d807ea37b21680e9ee6c1"
+  },
+  "date": "2026-10-30",
+  "deliverable_sha256_excluding_this_receipt": {
+    "docs/data-trials/audit_ncn_projection_20261030.py": "73a86da51da37461740a43a13a26dcd483092230268e00cb93bf2a164981139e",
+    "docs/data-trials/ncn-projection-cases-20261030.json": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963",
+    "docs/data-trials/ncn-projection-deal-results-20261030.json": "736c871e6d04f8ee660836bd50ed7301756a6d636651cec8295c5d88cda36dae",
+    "docs/data-trials/ncn-projection-results-20261030.json": "43c23a8bddda07b7bf28f1a44c5e3ed058e4cd0e76550c7d2e31fcf55295c10a",
+    "docs/ncn-measurement-conventions-20261030.md": "a3251b243066c4d12d5f72c178fa36e2f652136f3e671fd73d3b1f6444e8f4d4",
+    "docs/ncn-projection-audit-20261030.md": "ca02d3cb2cea527cd1ec7029ba6fd41c7655abccab98d6dd35e6fb52306ca841"
+  },
+  "environment": {
+    "packages": {
+      "numpy": "2.3.5",
+      "osmium": "4.3.1",
+      "psycopg": "3.2.10",
+      "psycopg-binary": "3.2.10",
+      "shapely": "2.2.0"
+    },
+    "python": "3.12.14"
+  },
+  "existing_restored_file_mismatches": [],
+  "existing_restored_files_verified": 112,
+  "input_sha256": {
+    "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+    "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e"
+  },
+  "integration_246": {
+    "branch_retained": true,
+    "changed_files": 4,
+    "expected_head": "65b8eab1450b7065d8969de1247f3c1f57e72089",
+    "main_protected": false,
+    "merge_commit": "0f8199651dad6014410274dc1b968e2417efe1b2",
+    "merge_method": "supported GitHub connector merge commit; expected head; skip ci/skip render",
+    "pre_merge_main": "da7bf0e0739ed260b15fe332c37b6e160832f594",
+    "protection_endpoint_limitation": "403 integration permission; main protection summary independently read",
+    "required_contexts_checks_empty": true,
+    "rulesets_reviews_threads_statuses_check_runs_empty": true,
+    "tests_passed": 67,
+    "verified_head_and_main_tree": "f483c88541c4c33e6e4c27fd71ae95f1cde39b24"
+  },
+  "limitations": [
+    "Bradford/Cumbria original route origins unavailable; local projection only",
+    "Newry/Mid-Wales/NCN81 route origins uniquely inferred from pinned metric source endpoints; not full original metadata",
+    "Non-Deal published endpoint controls can be rounded or reconstructed; not new publisher observations",
+    "Approved Deal nearby union sufficient for necessary-corridor rejection; complete excluded feature set unavailable",
+    "No national prevalence or eligible recovery extrapolation",
+    "Installed APK/live backend/active Firebase pins not queried; unknown; no CI or Android/device acceptance claimed"
+  ],
+  "reproduction": {
+    "compatibility_controls_byte_identical": true,
+    "compatibility_results_byte_identical": true,
+    "deal_original_results_byte_identical": true,
+    "new_cross_fixture_byte_identical": true,
+    "new_cross_results_byte_identical": true,
+    "new_deal_results_byte_identical": true,
+    "original_deal_archive_extraction_repeated": false
+  },
+  "schema_version": 1,
+  "scope": {
+    "apk_build_distribution": false,
+    "bounded_cases": 9,
+    "candidate_catalogue": false,
+    "firebase_publication": false,
+    "issue_closures": 0,
+    "journey_changes": false,
+    "national_assessment": false,
+    "native_operational_changes": false,
+    "new_admissions": 0,
+    "new_completion_credit_m": 0,
+    "new_pr_must_remain_open_unmerged": true,
+    "render_deployment": false
+  },
+  "source_audit_git_blob_sha1": {
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnCatalogue.java": "5ae70a2cdf20217687d1dc4253e185202833daca",
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnGeometry.java": "50e6672c332452c29f0c0a72a81bb345f3be986c",
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnJson.java": "4f9a829ba4bdd8f3c766810ef4d61cbccce67c1b",
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnLedger.java": "23a60e25415b63e42b050ad8b86d955a980b50e7",
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnMapOverlay.java": "a4605f7babfd5c0babddb2c199262fd16e051f99",
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnMatcher.java": "0f12009e4032968044c22674bf17899f94e1fb8a",
+    "cycling_path_evidence.py": "c47f719a88c707655caaddcd47d12794f8e9c965",
+    "matched_path_evidence.py": "3e86749fbe62e0c56a975765b6dfb294318d14e6",
+    "scripts/build_ncn_national.py": "61ed5ea61cc27a2b5bd6675eceeb373ca804aba0",
+    "scripts/ncn_source_compatibility.py": "7443ec416d0df17270cd1be705d87c29b71446ee",
+    "scripts/ncn_trial/association_bundle.py": "a812be69d35c1c5782d3e58f9bccd0a70b70deaa",
+    "scripts/ncn_trial/confirmed_paths.py": "cc140600164b4faf2fa36bc9574db5ff48e309ea",
+    "scripts/ncn_trial/coverage.py": "3461ad8fdd335a10c0df6b8beeeffab306ff06e1",
+    "scripts/ncn_trial/cycling_saved_paths.py": "4347952c0f4bb1122b7169d3956b4efe9bfcc1c3",
+    "scripts/ncn_trial/inventory_completion.py": "aca988e6baea93747f9cdce5c600559607859078",
+    "scripts/ncn_trial/journey_replay.py": "7bcde0a3e1850361c9ac9f030000fc340d2b1a13",
+    "scripts/ncn_trial/network_geometry.py": "8650607c0b688db200da381b1a1ce134718cc2fd",
+    "scripts/ncn_trial/open_completion.py": "191bbac2ed348fc5c3b31c330891ba041fbbd807",
+    "scripts/ncn_trial/physical_crosswalk.py": "a2c2332dab6224b2b247db6049158065e5e3bf3b",
+    "scripts/ncn_trial/saved_paths.py": "ef09986c8ec43fbc89b8a7915b9d004c2026a524"
+  },
+  "validation": {
+    "edge_pair_orientation_and_midpoint_partition_checks": 158,
+    "errors": 0,
+    "existing_evidence_tests_passed": 15,
+    "failures": 0,
+    "focused_existing_tests_passed": 95,
+    "independent_projection_and_finite_pair_checks": true,
+    "note": "Geometric finite-pair invariants only; new segmentation can still change multi-target ambiguity policy.",
+    "skips": 0,
+    "total_passed": 110
+  }
+}
