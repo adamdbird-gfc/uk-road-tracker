@@ -1,0 +1,79 @@
+{
+  "feature": {
+    "coordinates": [
+      [
+        1.4035031,
+        51.1968475
+      ],
+      [
+        1.4035106,
+        51.1957298
+      ],
+      [
+        1.40354,
+        51.1953761
+      ],
+      [
+        1.4035688,
+        51.1948438
+      ],
+      [
+        1.4036157,
+        51.1943884
+      ],
+      [
+        1.4037018,
+        51.1936519
+      ],
+      [
+        1.4037922,
+        51.1929293
+      ],
+      [
+        1.404002,
+        51.1915102
+      ],
+      [
+        1.4041083,
+        51.1906894
+      ],
+      [
+        1.4043375,
+        51.1893056
+      ]
+    ],
+    "feature_id": "77611523",
+    "modes": null,
+    "node_ids": [
+      913199043,
+      913199039,
+      913199035,
+      913199037,
+      913199036,
+      913199038,
+      913199041,
+      913199042,
+      913199034,
+      913199040
+    ],
+    "provenance": {
+      "capture_or_extraction_date": null,
+      "feature_timestamp": "2026-01-29T17:30:24Z",
+      "input_file_sha256": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+      "source": "PR243 frozen OSM bbox NCN1_unadmitted_Deal.osm",
+      "transformation": "select way77611523; retain ordered nd chain and node lon/lat, tags and way version; strip usernames"
+    },
+    "provider": "osm",
+    "route_memberships": [],
+    "tags": {
+      "access": "private",
+      "highway": "residential",
+      "lanes": "1",
+      "maxspeed": "20 mph",
+      "name": "Wellington Parade",
+      "surface": "gravel"
+    },
+    "version": 8
+  },
+  "schema_version": 1
+}
