@@ -7,6 +7,8 @@ on:
       - 'scripts/ncn_trial/test_ordinary_seams.py'
       - 'scripts/validate_ncn_ordinary_seams.py'
       - 'scripts/reproduce_ncn_ordinary_seams.py'
+      - 'scripts/pack_ncn_ordinary_seam_delta.py'
+      - 'scripts/audit_ncn_ordinary_seam_bindings.py'
       - '.github/ncn-reference/ordinary-seams/**'
       - 'docs/data-trials/ncn-ordinary-seam-validation-2026-10-30.json'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/NcnOrdinarySeamCandidateTest.java'
