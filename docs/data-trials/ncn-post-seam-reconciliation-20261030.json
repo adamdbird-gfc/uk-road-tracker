@@ -4,7 +4,7 @@
   "input_sha256": {
     "database": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
     "classified_intervals": "1ebb14d7489e5add77dac77dcb25c5beda2ce53c7c3994eccc22696944955dcb",
-    "delta_index": "daddc890ba1763739f44c923d7944560ecf7f6d659a53c434752aa2ff5df2e4b",
+    "delta_index": "261aff88eef218a55c977fffc61fd009afa5e0f1b175a10f761f86282bcb9b29",
     "delta_compressed": "f98df308ccf4120939e705e498f6cfdbbb36373298060f29a230a88929e6957d",
     "validation": "6e6f80eba3fea64a9797e4e76b5273f44fe7fccada33cb41e95d7ea10a74f7ee"
   },
