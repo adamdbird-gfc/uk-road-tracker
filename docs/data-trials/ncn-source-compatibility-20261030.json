@@ -1,0 +1,2046 @@
+{
+  "attribution_eligibility": "not_assessed_no_entitlement",
+  "classification_counts": {
+    "exact_match": 7,
+    "incompatible_or_unsupported_correspondence": 1,
+    "same_identified_feature_with_documented_geometry_update": 1
+  },
+  "comparison_count": 9,
+  "documented_geometry_update_count": 1,
+  "examined_feature_count": 9,
+  "input_provenance": {
+    "baseline": "8dea49475e287bfefad7fa93b75e201e94a44230",
+    "controls": "Eight PR243/244 source ways plus one pinned private parallel negative; no journeys or national assessment",
+    "pinned_input_sha256": {
+      "docs/data-trials/national-mapping-source-evidence-20261030.json": "a277ee02df110f21dfe6161924047c4d1e95b3adc87b8ff0156501759c824316",
+      "docs/data-trials/ncn-post-seam-source-provenance-20261030.json": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+      "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+      "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+      "tests/fixtures/ncn-source-compatibility/deal-private-control.json": "d1495882af2d292790754191659581a6fd11732d335bc4415666334ee13e877d"
+    },
+    "reconstruction_policy": "Matching normalized geometry hash reconstructs shape only; never original feature/node versions or missing node chains."
+  },
+  "input_sha256": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e",
+  "original_import_feature_versions_recovered": 0,
+  "policy": "ncn-offline-compatibility-v1",
+  "results": [
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": false,
+        "binding_count": null,
+        "preserved_sample_observation": {
+          "bicycle_relation_memberships": [
+            {
+              "id": "11017",
+              "network": "ncn",
+              "ref": "7"
+            }
+          ],
+          "min_sampled_target_distance_m": 0.004712335260882379,
+          "tags": {
+            "cycleway:both": "no",
+            "highway": "tertiary",
+            "lane_markings": "no",
+            "lit": "no",
+            "maxspeed": "60 mph",
+            "maxspeed:type": "GB:nsl_single",
+            "ncn_name": "C2C",
+            "surface": "asphalt"
+          },
+          "target_sample_count": 101,
+          "target_samples_within_10m": 101,
+          "way": "23385711"
+        },
+        "target_alignment": {
+          "best_endpoint_orientation": "forward",
+          "compatible_extents_screen": true,
+          "endpoint_directed_angle_deg": 0.15095663983509708,
+          "endpoint_displacement_m": 4.155472242355055,
+          "length_ratio": 1.00083367198128,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 2.0035398234564723,
+          "max_sampled_bidirectional_distance_m": 4.701749560556315,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 1040.6601399634617,
+          "sample_count": 422,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            0.7359258320835623,
+            2.0035398234564723,
+            2.0028929106846407,
+            0.40443619170858885,
+            0.18225789156406405,
+            0.1781441631220029,
+            1.7954130175434349,
+            0.4285493819395463
+          ],
+          "source_length_m": 1039.7932934284074,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            -2.9243489714,
+            54.6523350266
+          ],
+          [
+            -2.9231262017,
+            54.6430029324
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 1.2074182697257333e-06,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 8.537736462515939e-07,
+        "max_sampled_bidirectional_distance_m": 1.1457157353758233e-13,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 1039.7932934284074,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 424,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 1039.7932934284074,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "23385711",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "feature_id": "23385711",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "4fb4f230126ea8e883edaadca0f87ca760be2d071c05800c5c3883f099523a1d",
+              "dataset_key": "uk-cumbria_walkable_network_v1",
+              "loaded_at": "2026-09-22T21:03:20.716383Z",
+              "retrieved_at": "2026-09-23T06:27:28.378689Z",
+              "row_count": 116388,
+              "source_key": "osm_geofabrik_cumbria",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "highway": "tertiary",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "route_identity_requires_independent_evidence",
+        "mode_access_unknown_do_not_infer_cycling_from_walking"
+      ],
+      "route_identity": {
+        "evidence": {
+          "bounded_osm_memberships": [
+            {
+              "id": "11017",
+              "network": "ncn",
+              "ref": "7"
+            }
+          ],
+          "retained_ncn_row": {
+            "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection.",
+            "present": false
+          }
+        },
+        "requested": "NCN:6",
+        "status": "unproved_requested_route"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "feature_id": "23385711",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "e4697584468ee8a389e55e43d09ca8428f0c267539006992ca92d9ce8cd81c22",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/23385711/full.json",
+          "current_observed_node_chain": [
+            244056391,
+            11812200271,
+            2996076233,
+            11807541981,
+            243355629,
+            11812444963,
+            243355628,
+            6121813815,
+            244056344
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2024-04-12T19:15:36Z",
+          "current_observed_way_version": 12,
+          "geometry_origin": "physical OSM observation; no admitted NCN source row",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:7"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "same_identified_feature_with_documented_geometry_update",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 0,
+        "proposal_note": "Proposed to become part of NCN Route 90"
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [
+          0,
+          1
+        ],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 2.6544336131187594,
+        "endpoint_displacement_m": 0.6102156974900913,
+        "exact_equal": false,
+        "length_ratio": 0.9898684139238503,
+        "max_corresponding_vertex_displacement_m": 1.5051883056380368,
+        "max_nearest_segment_undirected_angle_deg": 4.232659491132381,
+        "max_sampled_bidirectional_distance_m": 0.6102156974900913,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 12.829688045305303,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 10,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          0.521842388268977,
+          4.232659491132381
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 12.961003568593796,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "changed_shared_nodes": [
+          6925348794,
+          6925348793
+        ],
+        "limitation": "History-compatible states do not recover missing original import/capture versions. Access/tag/topology changes need review.",
+        "reference_compatible_node_states": [
+          {
+            "compatible_versions": [
+              2
+            ],
+            "node_id": 6925348794,
+            "timestamps": [
+              "2024-06-02T23:40:49Z"
+            ]
+          },
+          {
+            "compatible_versions": [
+              4
+            ],
+            "node_id": 6925348793,
+            "timestamps": [
+              "2024-06-02T23:40:49Z"
+            ]
+          },
+          {
+            "compatible_versions": [
+              2
+            ],
+            "node_id": 6925348792,
+            "timestamps": [
+              "2024-06-02T23:40:49Z"
+            ]
+          }
+        ],
+        "source_compatible_node_states": [
+          {
+            "compatible_versions": [
+              3
+            ],
+            "node_id": 6925348794,
+            "timestamps": [
+              "2026-10-07T16:15:07Z"
+            ]
+          },
+          {
+            "compatible_versions": [
+              5
+            ],
+            "node_id": 6925348793,
+            "timestamps": [
+              "2026-10-07T16:15:07Z"
+            ]
+          },
+          {
+            "compatible_versions": [
+              2
+            ],
+            "node_id": 6925348792,
+            "timestamps": [
+              "2024-06-02T23:40:49Z"
+            ]
+          }
+        ],
+        "stable_node_chain": [
+          6925348794,
+          6925348793,
+          6925348792
+        ],
+        "status": "documented_shared_node_movement",
+        "way_history_versions": [
+          1,
+          2
+        ]
+      },
+      "identity_equal": true,
+      "key": "1289002662",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "supported"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "78d6e31864bab90f8caf0c3d6fc256fc5696cc80158768dab11b9ec76e8fc02c",
+        "feature_id": "1289002662",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "c7fee978db7dc57ccd9a4dbd13e43f4e6f4eac5a8c3831ca95811f5e6e92e2d4",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "b255032f23946a18d33b87cbd736d46301c5b13a2165074c482e389f17cee11a",
+              "dataset_key": "uk-east-sussex_walkable_network_v1",
+              "loaded_at": "2026-09-22T21:28:41.801116Z",
+              "retrieved_at": "2026-09-23T06:27:28.389598Z",
+              "row_count": 72757,
+              "source_key": "osm_geofabrik_east_sussex",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "upstream_node_coordinate_edit_not_import_version_recovery",
+        "no_existing_bindings",
+        "proposal_note_does_not_confirm_route_membership"
+      ],
+      "route_identity": {
+        "evidence": {
+          "binding_count": 0,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "RCN:90",
+          "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c"
+        },
+        "requested": "RCN:90",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c",
+        "feature_id": "1289002662",
+        "missing_metadata": [
+          "version"
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "node_ids": [
+          6925348794,
+          6925348793,
+          6925348792
+        ],
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "5825b5f9a09e432da336e0c325f21ee6c9c8e0dd9302d9aba612ed6555bcd3d4",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "bdd50ffad451710dbfde05c97b4e7fec74d6fbb92b6e8e1d7876f7d5a252abf4",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/1289002662/full.json",
+          "current_observed_node_chain": [
+            6925348794,
+            6925348793,
+            6925348792
+          ],
+          "current_observed_tags": {
+            "bicycle": "designated",
+            "crossing": "traffic_signals",
+            "crossing:island": "no",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "cycleway": "crossing",
+            "foot": "designated",
+            "highway": "cycleway",
+            "note": "Proposed to become part of NCN Route 90",
+            "surface": "asphalt",
+            "tactile_paving": "yes"
+          },
+          "current_observed_way_timestamp": "2026-10-07T16:15:07Z",
+          "current_observed_way_version": 2,
+          "geometry_origin": "pinned source fixture",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": "847afcc532ab4c680dff85fcdd04d5f8cc9f799443a551f4ed7252939d4b33f5"
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "RCN:90"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "admitted_vertex_ranges": [
+          [
+            1,
+            2
+          ]
+        ],
+        "binding_count": 2,
+        "existing_section_bindings": [
+          {
+            "logical_end": 43.92619292902086,
+            "logical_key": "open-edge:a8ca541bdf459a04bf09e2501626bbc7be148517d0d4aeb46d5623f7d85c655f",
+            "logical_start": 43.12345995405339,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "physical_end": 0.8035436271370092,
+            "physical_key": "1050757473:1:2",
+            "physical_start": 0.0
+          },
+          {
+            "logical_end": 34.762510423932916,
+            "logical_key": "open-edge:4f4e915cca294a47ada777fe867ead4b2b22dda8fd12b6ca2e0899cf737b596a",
+            "logical_start": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "physical_end": 35.64379897211701,
+            "physical_key": "1050757473:1:2",
+            "physical_start": 0.8691691116716636
+          }
+        ],
+        "requested_span_within_admitted_section": false,
+        "requested_vertex_range": [
+          0,
+          2
+        ],
+        "section_keys": [
+          "1050757473:1:2"
+        ],
+        "source_section_offset_policy": "PR239 section-local anchors translate to full-way positions; prefix vertex 0 remains excluded"
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 1.2074182697257333e-06,
+        "max_sampled_bidirectional_distance_m": 7.105427357601002e-15,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 73.98805786396811,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 34,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          1.2074182697257333e-06,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 73.98805786396811,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "1050757473",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "supported"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "feature_id": "1050757473",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "8b4ac76b6f238d63611f8c8b098e18993d0ba22f90f2263f5dba4e85a8f629ab",
+              "dataset_key": "uk-greater-london_walkable_network_v1",
+              "loaded_at": "2026-09-23T06:27:28.398056Z",
+              "retrieved_at": "2026-09-23T06:27:28.398056Z",
+              "row_count": 562484,
+              "source_key": "osm_geofabrik_greater_london",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Mudlarks Boulevard",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "requested_extent_outside_preserved_admission"
+      ],
+      "route_identity": {
+        "evidence": {
+          "binding_count": 2,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "NCN:1",
+          "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa"
+        },
+        "requested": "NCN:1",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "feature_id": "1050757473",
+        "missing_metadata": [
+          "version"
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "node_ids": [
+          9655853597,
+          1349538585,
+          283886
+        ],
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "298aee230aa7810d1a7e03402ec684cf74f062f81dbb1608762e792bd0e5ca3d",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/1050757473/full.json",
+          "current_observed_node_chain": [
+            9655853597,
+            1349538585,
+            283886
+          ],
+          "current_observed_tags": {
+            "bicycle": "designated",
+            "cycleway:surface": "asphalt",
+            "foot": "designated",
+            "footway:surface": "asphalt",
+            "highway": "cycleway",
+            "lit": "yes",
+            "name": "Mudlarks Boulevard",
+            "oneway": "no",
+            "segregated": "yes",
+            "surface": "asphalt"
+          },
+          "current_observed_way_timestamp": "2022-09-09T00:46:50Z",
+          "current_observed_way_version": 2,
+          "geometry_origin": "pinned source fixture",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 32,
+        "source_section_key": "59306268:4:27",
+        "witness_source_window_m": [
+          2.3745290501574208,
+          6.08240710865381
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 1.2074182697257333e-06,
+        "max_sampled_bidirectional_distance_m": 8.526512829121202e-14,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 2840.473255801131,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 1168,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 2840.473255801131,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "59306268",
+      "manual_review": false,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "supported"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "feature_id": "59306268",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "969b178c166dbcc36a330892b6b3325544386245661b9fd1be3e67701ea03538",
+              "dataset_key": "uk-ireland-and-northern-ireland_walkable_network_v1",
+              "loaded_at": "2026-09-22T22:39:23.723458Z",
+              "retrieved_at": "2026-09-23T07:04:16.822953Z",
+              "row_count": 1520463,
+              "source_key": "osm_geofabrik_ireland_and_northern_ireland",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Newry Canal Towpath",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [],
+      "route_identity": {
+        "evidence": {
+          "binding_count": 32,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "NCN:9",
+          "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486"
+        },
+        "requested": "NCN:9",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "feature_id": "59306268",
+        "missing_metadata": [
+          "version",
+          "node_ids"
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "b41573c670118b1929be30e59514b5411e25c95cf47c3f3786cedd9c9d90b885",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/59306268/full.json",
+          "current_observed_node_chain": [
+            735553268,
+            735553387,
+            735553448,
+            854001035,
+            3252817741,
+            735553228,
+            5691425298,
+            735553487,
+            735553223,
+            735553529,
+            11034771297,
+            11034771296,
+            735553383,
+            11034771295,
+            735553181,
+            11034771294,
+            735553159,
+            11034771289,
+            11034771288,
+            735553205,
+            735553234,
+            735553499,
+            735553534,
+            735553359,
+            11034716203,
+            11034716204,
+            11034716202,
+            735553292
+          ],
+          "current_observed_tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "cycleway",
+            "name": "Newry Canal Towpath",
+            "name:ga": "Cos\u00e1n Tarraingtha an I\u00fair",
+            "oneway": "no",
+            "segregated": "no",
+            "surface": "asphalt"
+          },
+          "current_observed_way_timestamp": "2023-09-12T23:09:04Z",
+          "current_observed_way_version": 12,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:9"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 10,
+        "preserved_sample_observation": {
+          "bicycle_relation_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ],
+          "min_sampled_target_distance_m": 7.0625438345954334,
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "cycleway",
+            "lit": "no",
+            "segregated": "no",
+            "smoothness": "good",
+            "surface": "asphalt"
+          },
+          "target_sample_count": 101,
+          "target_samples_within_10m": 25,
+          "way": "4471747"
+        },
+        "target_alignment": {
+          "best_endpoint_orientation": "forward",
+          "compatible_extents_screen": false,
+          "endpoint_directed_angle_deg": 1.2224064975824422,
+          "endpoint_displacement_m": 223.58944492418973,
+          "length_ratio": 0.5886910704441402,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 57.912826459267734,
+          "max_sampled_bidirectional_distance_m": 223.58944492418973,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 495.6526584958975,
+          "sample_count": 277,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            4.396893912338933,
+            1.5084528465051839,
+            2.0036570432955383,
+            2.9471889033450025,
+            5.506400580590271,
+            1.7048888142358476,
+            1.3265176785380735,
+            0.1185278027868821,
+            0.030553641830940084,
+            0.09291628095886101,
+            0.7586598165738513,
+            4.275882523773616,
+            57.912826459267734
+          ],
+          "source_length_m": 841.9571544068956,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 8.537736462515939e-07,
+        "max_sampled_bidirectional_distance_m": 1.4212589332811784e-14,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 841.9571544068956,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 352,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 841.9571544068956,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "4471747",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "bd54187eaa7856a229e3fdba8a943b911c30bdc2d2dd7088ffe29c5620dc1afe",
+              "dataset_key": "uk-kent_walkable_network_v1",
+              "loaded_at": "2026-09-23T00:34:49.429362Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215163,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            },
+            {
+              "checksum": "dbb8b5c9ca5adf6603f203f6154bf99e484c2937109792adc0891ea7d4f9623a",
+              "dataset_key": "kent_walkable_network_v1",
+              "loaded_at": "2026-09-22T14:54:58.975507Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215140,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "mode_access_unknown_do_not_infer_cycling_from_walking",
+        "target_direction_evidence_exceeds_unchanged_15_degree_gate",
+        "target_extent_not_proved_by_full_way_identity"
+      ],
+      "route_identity": {
+        "evidence": {
+          "bounded_osm_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ],
+          "retained_ncn_row": {
+            "binding_count": 10,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:1",
+            "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+          }
+        },
+        "requested": "NCN:1",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 27,
+        "source_section_key": "31252441:47:55",
+        "witness_source_window_m": [
+          3.2276419724314396,
+          7.613829870460352
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 1.4787793334710982e-06,
+        "max_sampled_bidirectional_distance_m": 5.684341886080802e-14,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 1496.7246151999932,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 658,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.4787793334710982e-06,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 1496.7246151999932,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "31252441",
+      "manual_review": false,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "supported"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "feature_id": "31252441",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "65224ab7c60063ff8e6de6eb1f374f8932b0e1e7f6edc5cdb568577334043663",
+              "dataset_key": "uk-wales_walkable_network_v1",
+              "loaded_at": "2026-09-23T04:30:40.933951Z",
+              "retrieved_at": "2026-09-23T07:04:16.942481Z",
+              "row_count": 479366,
+              "source_key": "osm_geofabrik_wales",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "highway": "unclassified",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [],
+      "route_identity": {
+        "evidence": {
+          "binding_count": 27,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "NCN:8",
+          "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01"
+        },
+        "requested": "NCN:8",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "feature_id": "31252441",
+        "missing_metadata": [
+          "version",
+          "node_ids"
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "dadc8bf2ba9fc1b72572a8550f88f7aec84e9c1a28814b7f3b1bfb67cede62a4",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/31252441/full.json",
+          "current_observed_node_chain": [
+            254391796,
+            6237855466,
+            347459658,
+            6237855467,
+            13241201088,
+            13241201089,
+            13241201087,
+            13241201086,
+            13241201085,
+            13241201084,
+            13241201083,
+            13241201082,
+            13241201081,
+            13241201080,
+            347459664,
+            13241201079,
+            13241201078,
+            13241201077,
+            13241201076,
+            13241201075,
+            13241201074,
+            13241201073,
+            13241201072,
+            13241201070,
+            13241201071,
+            13241201069,
+            13241201068,
+            13241201067,
+            347459670,
+            1259370055,
+            1259370203,
+            347459671,
+            13241201066,
+            13241201065,
+            13241201064,
+            13241201063,
+            13241201062,
+            13241201061,
+            13241201060,
+            13241201059,
+            13241201058,
+            13241201057,
+            13241201056,
+            13241201055,
+            13241201054,
+            13241201053,
+            13241201052,
+            13241201051,
+            13241201050,
+            13241201049,
+            13241201048,
+            347459683,
+            347459684,
+            347459685,
+            2418026709,
+            1259369967
+          ],
+          "current_observed_tags": {
+            "highway": "unclassified",
+            "surface": "asphalt"
+          },
+          "current_observed_way_timestamp": "2025-10-18T17:33:48Z",
+          "current_observed_way_version": 8,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:8"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 58,
+        "outward_target_angle_deg": 6.813084406089308,
+        "source_section_key": "44807950",
+        "target_edges_metric": [
+          [
+            [
+              58203.72603574418,
+              -24088.87114412689
+            ],
+            [
+              58217.29087786532,
+              -24037.38938233535
+            ]
+          ],
+          [
+            [
+              58210.11170746015,
+              -24088.8092191421
+            ],
+            [
+              58217.29087786532,
+              -24037.38938233535
+            ]
+          ]
+        ],
+        "witness_source_section_key": "44807950",
+        "witness_source_window_m": [
+          2.8834142337607873,
+          49.567804449628284
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 1.2074182697257333e-06,
+        "max_sampled_bidirectional_distance_m": 1.1368683772161603e-13,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 1003.8632557385416,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 448,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          1.2074182697257333e-06,
+          1.2074182697257333e-06,
+          8.537736462515939e-07,
+          0.0,
+          1.2074182697257333e-06,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          0.0,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 1003.8632557385416,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "44807950",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "supported"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "feature_id": "44807950",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "14231e747b2caf61a3ec007b6396db5b772b42e916c1d9cf29fcab0d3bcc127e",
+              "dataset_key": "uk-west-midlands_walkable_network_v1",
+              "loaded_at": "2026-09-23T05:11:31.017346Z",
+              "retrieved_at": "2026-09-23T07:04:16.94786Z",
+              "row_count": 189221,
+              "source_key": "osm_geofabrik_west_midlands",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "highway": "footway",
+          "surface": "unpaved"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "hairpin_or_parallel_target_ambiguity_retained"
+      ],
+      "route_identity": {
+        "evidence": {
+          "binding_count": 58,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "NCN:81",
+          "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d"
+        },
+        "requested": "NCN:81",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "feature_id": "44807950",
+        "missing_metadata": [
+          "version",
+          "node_ids"
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "77aecdb326cc1ada4060270e6e75d6d8f7497c1b8f8a0fa81a4be889dfdf679a",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/44807950/full.json",
+          "current_observed_node_chain": [
+            568123110,
+            568123111,
+            1459319987,
+            1459181446,
+            568123112,
+            568123113,
+            2547191243,
+            1459181425,
+            2547191242,
+            568123114,
+            2547191241,
+            568123115,
+            2547191240,
+            568123116,
+            2547191234,
+            568123117,
+            2547191232,
+            2547191231,
+            2547203079,
+            2547191230,
+            568123118,
+            2547191229,
+            2547191228,
+            2547191227,
+            568123119,
+            7504397284,
+            2547191220,
+            568123120,
+            2547191213,
+            568123121,
+            2547191210,
+            568123122,
+            2547191209,
+            568123123,
+            2547191208,
+            12428682170,
+            12428682161,
+            1815400833
+          ],
+          "current_observed_tags": {
+            "bicycle": "yes",
+            "highway": "footway",
+            "surface": "unpaved",
+            "towpath": "yes"
+          },
+          "current_observed_way_timestamp": "2024-12-18T01:26:39Z",
+          "current_observed_way_version": 13,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:81"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 3,
+        "preserved_sample_observation": {
+          "bicycle_relation_memberships": [
+            {
+              "id": "17883",
+              "network": "ncn",
+              "ref": "66"
+            }
+          ],
+          "min_sampled_target_distance_m": 0.048838031280881475,
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "path",
+            "segregated": "no"
+          },
+          "target_sample_count": 101,
+          "target_samples_within_10m": 101,
+          "way": "159311690"
+        },
+        "target_alignment": {
+          "best_endpoint_orientation": "reversed",
+          "compatible_extents_screen": false,
+          "endpoint_directed_angle_deg": 168.45537283287865,
+          "endpoint_displacement_m": 30.260147401442662,
+          "length_ratio": 0.5767811791297166,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 32.294966782035374,
+          "max_sampled_bidirectional_distance_m": 30.260147401442662,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 54.07250038342341,
+          "sample_count": 35,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            16.651418393934705,
+            16.620294735623105,
+            28.711787525105592,
+            28.72563300322261,
+            9.731710309518064,
+            3.8947827579905265,
+            32.294966782035374
+          ],
+          "source_length_m": 93.74872540919482,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            -1.7540549428,
+            53.7925165755
+          ],
+          [
+            -1.7537186154,
+            53.7920727269
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 8.537736462515939e-07,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 1.2074182697257333e-06,
+        "max_sampled_bidirectional_distance_m": 7.105427357601002e-15,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 93.74872540919482,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 46,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          1.2074182697257333e-06,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 93.74872540919482,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "159311690",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+        "feature_id": "159311690",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "a0b0bbc8ddbd4974fa76c34da1c2168537a965cf6dd01f2558393a9e4c062e95",
+              "dataset_key": "uk-west-yorkshire_walkable_network_v1",
+              "loaded_at": "2026-09-23T05:35:37.526896Z",
+              "retrieved_at": "2026-09-23T07:04:16.953419Z",
+              "row_count": 215121,
+              "source_key": "osm_geofabrik_west_yorkshire",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "path"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "mode_access_unknown_do_not_infer_cycling_from_walking",
+        "target_direction_evidence_exceeds_unchanged_15_degree_gate",
+        "target_extent_not_proved_by_full_way_identity"
+      ],
+      "route_identity": {
+        "evidence": {
+          "bounded_osm_memberships": [
+            {
+              "id": "17883",
+              "network": "ncn",
+              "ref": "66"
+            }
+          ],
+          "retained_ncn_row": {
+            "binding_count": 3,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:66",
+            "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c"
+          }
+        },
+        "requested": "NCN:66",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+        "feature_id": "159311690",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "9df01d327eefcd19244fa75644cfffd9f19a9f54f335365b5fcb18fa895f488c",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/159311690/full.json",
+          "current_observed_node_chain": [
+            1711398757,
+            9749366767,
+            1714147807,
+            5324349854,
+            5324349855,
+            1860824502,
+            6927371803,
+            6841163437
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2022-07-30T17:41:51Z",
+          "current_observed_way_version": 5,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:66"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "incompatible_or_unsupported_correspondence",
+      "context": {
+        "target_alignment": {
+          "best_endpoint_orientation": "forward",
+          "compatible_extents_screen": false,
+          "endpoint_directed_angle_deg": 1.2224064975824422,
+          "endpoint_displacement_m": 223.58944492418973,
+          "length_ratio": 0.5886910704441402,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 57.912826459267734,
+          "max_sampled_bidirectional_distance_m": 223.58944492418973,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 495.6526584958975,
+          "sample_count": 277,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            4.396893912338933,
+            1.5084528465051839,
+            2.0036570432955383,
+            2.9471889033450025,
+            5.506400580590271,
+            1.7048888142358476,
+            1.3265176785380735,
+            0.1185278027868821,
+            0.030553641830940084,
+            0.09291628095886101,
+            0.7586598165738513,
+            4.275882523773616,
+            57.912826459267734
+          ],
+          "source_length_m": 841.9571544068956,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": null,
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.17975039073389437,
+        "endpoint_displacement_m": 2.660763914735376,
+        "exact_equal": false,
+        "length_ratio": 0.9989633267983473,
+        "max_corresponding_vertex_displacement_m": null,
+        "max_nearest_segment_undirected_angle_deg": 58.82987303755601,
+        "max_sampled_bidirectional_distance_m": 4.554073756893226,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 841.0843199879822,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 349,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          0.3707643600363363,
+          3.5353247029275243,
+          0.023214813116431362,
+          0.11954532179753057,
+          2.439666355448075,
+          0.38883156657484136,
+          0.5078074621551038,
+          0.40746893828549063,
+          0.25384151696467744,
+          0.46179072923501807,
+          0.15838676171607086,
+          5.192929102061961,
+          58.82987303755601
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 841.9571544068956,
+        "vertex_count_difference": -4,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": false,
+      "key": "deal-private-parallel",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "incompatible",
+        "requested": "cycling",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+        "feature_id": "77611523",
+        "missing_metadata": [
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": [
+          913199043,
+          913199039,
+          913199035,
+          913199037,
+          913199036,
+          913199038,
+          913199041,
+          913199042,
+          913199034,
+          913199040
+        ],
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "feature_timestamp": "2026-01-29T17:30:24Z",
+          "input_file_sha256": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+          "source": "PR243 frozen OSM bbox NCN1_unadmitted_Deal.osm",
+          "transformation": "select way77611523; retain ordered nd chain and node lon/lat, tags and way version; strip usernames"
+        },
+        "provider": "osm",
+        "route_memberships": [],
+        "tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "version": 8
+      },
+      "review_reasons": [
+        "different_feature_identity_or_incompatible_mode_access",
+        "mode_access_unknown_do_not_infer_cycling_from_walking",
+        "target_direction_evidence_exceeds_unchanged_15_degree_gate",
+        "target_extent_not_proved_by_full_way_identity"
+      ],
+      "route_identity": {
+        "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+        "requested": "NCN:1",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    }
+  ],
+  "review_queue": [
+    "23385711",
+    "1289002662",
+    "1050757473",
+    "4471747",
+    "44807950",
+    "159311690",
+    "deal-private-parallel"
+  ],
+  "schema_version": 1
+}
