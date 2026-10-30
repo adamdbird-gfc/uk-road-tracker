@@ -139,7 +139,7 @@ def check_registry(root,pins,files):
         raise ValueError('Pinned supported physical registry differs')
 
 
-def read_checkpoint_route(folder,expected_manifest_sha256):
+def read_checkpoint_route(folder,expected_manifest_sha256, *, ordinary_seams=False):
     """Dispatch a trusted checkpoint record without mixing denominator scopes."""
     folder=Path(folder);raw=(folder/'manifest.json').read_bytes()
     if sha(raw)!=expected_manifest_sha256:
@@ -151,16 +151,17 @@ def read_checkpoint_route(folder,expected_manifest_sha256):
         consumer=read_inventory
     else:
         raise ValueError('Unknown or reclassified checkpoint scope')
+    options = {'ordinary_seams': ordinary_seams} if consumer is read_completion else {}
     ledger,paths,plan=consumer(gzip.decompress((folder/'plan.json.gz').read_bytes()),
         gzip.decompress((folder/'associations.json.gz').read_bytes()),
-        manifest['plan_sha256'],manifest['association_sha256'])
+        manifest['plan_sha256'],manifest['association_sha256'], **options)
     if (plan['route_key']!=manifest['route_key'] or plan['reference_version']!=manifest['reference_version']
             or folder.name!=manifest['route_key'].replace(':','-')):
         raise ValueError('Completion checkpoint route identity differs')
     return ledger,paths,plan,manifest
 
 
-def compile_checkpoint(root,expected_pins_sha256,output):
+def compile_checkpoint(root,expected_pins_sha256,output, *, ordinary_seams=False):
     root=Path(root).resolve();raw=(root/'input-pins.json').read_bytes()
     if sha(raw)!=expected_pins_sha256:
         raise ValueError('Independent checkpoint input hash required')
@@ -193,9 +194,9 @@ def compile_checkpoint(root,expected_pins_sha256,output):
         else:
             extent=loaded['extent']or open_extent(key,network['features'],loaded['metadata'],network_hash)
             ledger,bundle,plan=build_verified_completion(loaded['reference'],loaded['metadata'],loaded['paths'],
-                extent,source_pin,loaded['provenance'],loaded['deferred_way_ids'])
+                extent,source_pin,loaded['provenance'],loaded['deferred_way_ids'], ordinary_seams=ordinary_seams)
             planraw=json.dumps(plan,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
-            _,paths,_=read_completion(planraw,bundle,sha(planraw),sha(bundle))
+            _,paths,_=read_completion(planraw,bundle,sha(planraw),sha(bundle), ordinary_seams=ordinary_seams)
             if json.loads(bundle)['paths']!=json.loads(gzip.decompress(files[row['folder']+'/associations.json.gz']))['paths']:
                 raise ValueError('Checkpoint compilation changed admitted path rows')
             extra={'completion_kind':'captured_open_main','canonical_open_length_m':plan['canonical_open_length_m'],
@@ -214,6 +215,9 @@ def compile_checkpoint(root,expected_pins_sha256,output):
         'distinct_supported_ways':62399,'routes':results,'held_route_keys':pins['held_route_keys'],
         'new_source_admissions':0,'whole_published_route_ready':False,'android_activation_ready':False,
         'source_inventory_and_reviewed_alternative_contracts_preserved':True}
+    if ordinary_seams:
+        from .open_completion import SEAM_POLICY
+        summary['binding_policy'] = SEAM_POLICY
     (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     return summary
 
@@ -223,4 +227,5 @@ if __name__=='__main__':
     parser.add_argument('--inputs',type=Path,required=True)
     parser.add_argument('--expected-pins-sha256',required=True)
     parser.add_argument('--output',type=Path,required=True)
-    a=parser.parse_args();compile_checkpoint(a.inputs,a.expected_pins_sha256,a.output)
+    parser.add_argument('--ordinary-seams', action='store_true', help='Opt in to versioned ordinary seam correspondence')
+    a=parser.parse_args();compile_checkpoint(a.inputs,a.expected_pins_sha256,a.output, ordinary_seams=a.ordinary_seams)
