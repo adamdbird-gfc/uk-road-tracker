@@ -1,0 +1,1472 @@
+{
+  "adjoining_admitted_paths": [
+    {
+      "coordinates": [
+        [
+          1.4034346,
+          51.1985949
+        ],
+        [
+          1.4034425,
+          51.1985534
+        ],
+        [
+          1.4035149,
+          51.1970554
+        ],
+        [
+          1.4035412,
+          51.1968459
+        ]
+      ],
+      "modes": [
+        "cycling"
+      ],
+      "osm_node_ids": [
+        27411862,
+        977988769,
+        1181940659,
+        978142881
+      ],
+      "section_keys": [
+        "84079387"
+      ],
+      "source_geometry_sha256": "d41dcea55a045f6555560f1a1df96838f9bc08a0bb8bf2fcf17f4375de256068",
+      "target_geometry": "exact_source_spans",
+      "way_id": "84079387"
+    },
+    {
+      "coordinates": [
+        [
+          1.4043375,
+          51.1893056
+        ],
+        [
+          1.4033959,
+          51.1890941
+        ],
+        [
+          1.4025199,
+          51.1889034
+        ]
+      ],
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "osm_node_ids": [
+        913199040,
+        627875177,
+        5598877562
+      ],
+      "section_keys": [
+        "84079705"
+      ],
+      "source_geometry_sha256": "2a6072054a1a9bd85d698c20d9c257816a38d692d8ca432399121b89e5257002",
+      "target_geometry": "exact_source_spans",
+      "way_id": "84079705"
+    }
+  ],
+  "admission_projection_origin": [
+    -1.3437774293553804,
+    54.4699892643778
+  ],
+  "admitted_sections": [
+    {
+      "coordinates": [
+        [
+          177528.21042795083,
+          -363957.43901784555
+        ],
+        [
+          177529.43818361123,
+          -364081.4437713221
+        ],
+        [
+          177531.22166025476,
+          -364098.2787064694
+        ],
+        [
+          177532.25555975825,
+          -364119.51696679415
+        ],
+        [
+          177533.2959211337,
+          -364150.6849477836
+        ],
+        [
+          177533.08267936108,
+          -364177.14937687875
+        ],
+        [
+          177535.9517504833,
+          -364230.74540555186
+        ]
+      ],
+      "key": "4471747:0:6",
+      "routes": [
+        "NCN:1:eligible-source-spans"
+      ]
+    },
+    {
+      "coordinates": [
+        [
+          177581.5984135628,
+          -364790.45696141507
+        ],
+        [
+          177581.6436466661,
+          -364794.2709526666
+        ],
+        [
+          177579.66631386566,
+          -364795.8832813307
+        ]
+      ],
+      "key": "4471747:11:13",
+      "routes": [
+        "NCN:1:eligible-source-spans"
+      ]
+    }
+  ],
+  "approved_nearby_feature_ids": [
+    1079,
+    1820,
+    10909
+  ],
+  "association_provenance": {
+    "attribution": "OpenStreetMap contributors; official extent Walk Wheel Cycle Trust",
+    "licence": "ODbL 1.0; official extent OGL 3.0 with original source attribution",
+    "membership_evidence_sha256": "bb650ac123b9b95236d66a6b0259aa6f8744cd348912766bdca822a4d515212f",
+    "source_snapshot_sha256": "4a6e8e28715d1c87aa256016b30b11c4989bc663a2df24d6e0fb70a3ff21e7fb"
+  },
+  "audit_hold": {
+    "edge_indices": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "partly_accepted": true,
+    "reason": "unresolved_official_extent_edges",
+    "way_id": 4471747
+  },
+  "baseline": "da7bf0e0739ed260b15fe332c37b6e160832f594",
+  "compatibility_controls": [
+    {
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 10,
+        "preserved_sample_observation": {
+          "bicycle_relation_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ],
+          "min_sampled_target_distance_m": 7.0625438345954334,
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "cycleway",
+            "lit": "no",
+            "segregated": "no",
+            "smoothness": "good",
+            "surface": "asphalt"
+          },
+          "target_sample_count": 101,
+          "target_samples_within_10m": 25,
+          "way": "4471747"
+        },
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "key": "4471747",
+      "mode": "on_foot",
+      "reference": {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "feature_id": "4471747",
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "bd54187eaa7856a229e3fdba8a943b911c30bdc2d2dd7088ffe29c5620dc1afe",
+              "dataset_key": "uk-kent_walkable_network_v1",
+              "loaded_at": "2026-09-23T00:34:49.429362Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215163,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            },
+            {
+              "checksum": "dbb8b5c9ca5adf6603f203f6154bf99e484c2937109792adc0891ea7d4f9623a",
+              "dataset_key": "kent_walkable_network_v1",
+              "loaded_at": "2026-09-22T14:54:58.975507Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215140,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "route": "NCN:1",
+      "route_evidence": {
+        "bounded_osm_memberships": [
+          {
+            "id": "75880",
+            "network": "ncn",
+            "ref": "1"
+          }
+        ],
+        "retained_ncn_row": {
+          "binding_count": 10,
+          "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+          "route": "NCN:1",
+          "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+        }
+      },
+      "source": {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "feature_id": "4471747",
+        "modes": null,
+        "node_ids": null,
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "context": {
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "key": "deal-private-parallel",
+      "mode": "cycling",
+      "reference": {
+        "coordinates": [
+          [
+            1.4035031,
+            51.1968475
+          ],
+          [
+            1.4035106,
+            51.1957298
+          ],
+          [
+            1.40354,
+            51.1953761
+          ],
+          [
+            1.4035688,
+            51.1948438
+          ],
+          [
+            1.4036157,
+            51.1943884
+          ],
+          [
+            1.4037018,
+            51.1936519
+          ],
+          [
+            1.4037922,
+            51.1929293
+          ],
+          [
+            1.404002,
+            51.1915102
+          ],
+          [
+            1.4041083,
+            51.1906894
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "feature_id": "77611523",
+        "modes": null,
+        "node_ids": [
+          913199043,
+          913199039,
+          913199035,
+          913199037,
+          913199036,
+          913199038,
+          913199041,
+          913199042,
+          913199034,
+          913199040
+        ],
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "feature_timestamp": "2026-01-29T17:30:24Z",
+          "input_file_sha256": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+          "source": "PR243 frozen OSM bbox NCN1_unadmitted_Deal.osm",
+          "transformation": "select way77611523; retain ordered nd chain and node lon/lat, tags and way version; strip usernames"
+        },
+        "provider": "osm",
+        "route_memberships": [],
+        "tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "version": 8
+      },
+      "route": "NCN:1",
+      "route_evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+      "source": {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "feature_id": "4471747",
+        "modes": null,
+        "node_ids": null,
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    }
+  ],
+  "corrected_full_way_bindings": [
+    {
+      "end": 0.2497710656997851,
+      "high": 2.7641040115115336e-05,
+      "low": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 0.24974341181233056,
+      "target": "open-edge:a4d1d2a80d0233087e951863f993d064aa38e84d27aebd9a6916f8df2eb06473"
+    },
+    {
+      "end": 124.01083125573051,
+      "high": 123.7035651479665,
+      "low": 1.5566776395493637e-06,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 0.24977262310093853,
+      "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "end": 140.9399727092217,
+      "high": 140.59677802946277,
+      "low": 123.70356514796651,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 124.01083125573051,
+      "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "end": 162.20338376684194,
+      "high": 161.85946385152255,
+      "low": 140.59677802946277,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 140.9399727092217,
+      "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "end": 180.53671748924404,
+      "high": 180.1923462788814,
+      "low": 161.85946385152255,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 162.20338376684194,
+      "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "end": 193.38872312285446,
+      "high": 12.846413203457399,
+      "low": 0.2481144574621953,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 180.7849399583941,
+      "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7"
+    },
+    {
+      "end": 219.85401132053053,
+      "high": 39.30982039812807,
+      "low": 12.846413203457404,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 193.38872312285446,
+      "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7"
+    },
+    {
+      "end": 223.41209599269723,
+      "high": 42.863526559622784,
+      "low": 39.30982039812806,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 219.85401132053053,
+      "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7"
+    },
+    {
+      "end": 273.52677777274164,
+      "high": 49.58955939202579,
+      "low": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 223.91830395603452,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 838.9412927163988,
+      "high": 119.60054532246994,
+      "low": 115.79462765684286,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 835.1270332469487,
+      "target": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b"
+    }
+  ],
+  "deferred_source": false,
+  "excluded_original_features_complete": false,
+  "exclusion_limitation": "Only hash-verified approved original extent is needed to prove outside-corridor failure; original non-approved feature set is not reconstructed.",
+  "existing_plan_bindings": [
+    {
+      "logical_end": 2.7641040115115336e-05,
+      "logical_key": "open-edge:a4d1d2a80d0233087e951863f993d064aa38e84d27aebd9a6916f8df2eb06473",
+      "logical_start": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 0.2497710656997851,
+      "physical_key": "4471747:0:6",
+      "physical_start": 0.24974341181233056
+    },
+    {
+      "logical_end": 123.7035651479665,
+      "logical_key": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+      "logical_start": 1.5566776395493637e-06,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 124.01083125573051,
+      "physical_key": "4471747:0:6",
+      "physical_start": 0.24977262310093853
+    },
+    {
+      "logical_end": 140.59677802946277,
+      "logical_key": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+      "logical_start": 123.70356514796651,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 140.9399727092217,
+      "physical_key": "4471747:0:6",
+      "physical_start": 124.01083125573051
+    },
+    {
+      "logical_end": 161.85946385152255,
+      "logical_key": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+      "logical_start": 140.59677802946277,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 162.20338376684194,
+      "physical_key": "4471747:0:6",
+      "physical_start": 140.9399727092217
+    },
+    {
+      "logical_end": 180.1923462788814,
+      "logical_key": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+      "logical_start": 161.85946385152255,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 180.53671748924404,
+      "physical_key": "4471747:0:6",
+      "physical_start": 162.20338376684194
+    },
+    {
+      "logical_end": 12.846413203457399,
+      "logical_key": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+      "logical_start": 0.2481144574621953,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 193.38872312285446,
+      "physical_key": "4471747:0:6",
+      "physical_start": 180.7849399583941
+    },
+    {
+      "logical_end": 39.30982039812807,
+      "logical_key": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+      "logical_start": 12.846413203457404,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 219.85401132053053,
+      "physical_key": "4471747:0:6",
+      "physical_start": 193.38872312285446
+    },
+    {
+      "logical_end": 42.863526559622784,
+      "logical_key": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+      "logical_start": 39.30982039812806,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 223.41209599269723,
+      "physical_key": "4471747:0:6",
+      "physical_start": 219.85401132053053
+    },
+    {
+      "logical_end": 49.58955939202579,
+      "logical_key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+      "logical_start": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 273.52677777274164,
+      "physical_key": "4471747:0:6",
+      "physical_start": 223.91830395603452
+    },
+    {
+      "logical_end": 119.60054532246994,
+      "logical_key": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b",
+      "logical_start": 115.79462765684286,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 3.814259469450162,
+      "physical_key": "4471747:11:13",
+      "physical_start": 0.0
+    }
+  ],
+  "existing_target_bindings": [
+    {
+      "logical_end": 49.58955939202579,
+      "logical_key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+      "logical_start": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "physical_end": 273.52677777274164,
+      "physical_key": "4471747:0:6",
+      "physical_start": 223.91830395603452
+    }
+  ],
+  "historical_target_classification": [
+    {
+      "cause": "ambiguous_target_correspondence",
+      "high_m": 49.5895593920258,
+      "low_m": 49.58955939202579,
+      "route_key": "NCN:1",
+      "target_coordinates": [
+        [
+          1.4037210386,
+          51.1948382751
+        ],
+        [
+          1.404342062,
+          51.1903977902
+        ]
+      ],
+      "target_key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+      "target_length_m": 495.388143301922
+    },
+    {
+      "cause": "unadmitted_span_of_known_way",
+      "high_m": 495.388143301922,
+      "low_m": 49.5895593920258,
+      "route_key": "NCN:1",
+      "target_coordinates": [
+        [
+          1.4037210386,
+          51.1948382751
+        ],
+        [
+          1.404342062,
+          51.1903977902
+        ]
+      ],
+      "target_key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+      "target_length_m": 495.388143301922
+    }
+  ],
+  "identity_policy": "partial_provider_verified_spans_only",
+  "identity_review_spans": [
+    {
+      "from_vertex": 0,
+      "to_vertex": 6,
+      "way_id": 4471747
+    },
+    {
+      "from_vertex": 11,
+      "to_vertex": 13,
+      "way_id": 4471747
+    }
+  ],
+  "membership_observation": {
+    "relation_id": 75880,
+    "root_id": 1992599,
+    "root_membership": [
+      {
+        "ref": "75880",
+        "role": "main",
+        "type": "relation"
+      }
+    ],
+    "root_timestamp": "2026-05-19T01:37:26Z",
+    "root_version": 373,
+    "source_members": [
+      {
+        "ref": "4471747",
+        "role": "",
+        "type": "way"
+      }
+    ],
+    "tags": {
+      "colour": "red",
+      "cycle_network": "UK:National Cycle Network",
+      "from": "Dover",
+      "name": "NCN National Route 1 Dover to Canterbury",
+      "network": "ncn",
+      "operator": "Walk Wheel Cycle Trust",
+      "operator:wikidata": "Q606877",
+      "ref": "1",
+      "ref:colour": "red",
+      "ref:colour_bg": "white",
+      "ref:colour_tx": "white",
+      "route": "bicycle",
+      "to": "Canterbury",
+      "type": "route"
+    },
+    "timestamp": "2026-04-05T20:40:23Z",
+    "version": 747
+  },
+  "nearby_official_features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.40319707552852,
+            51.2122129874342
+          ],
+          [
+            1.40319423941097,
+            51.2117751682717
+          ],
+          [
+            1.40319776553501,
+            51.2111722640375
+          ],
+          [
+            1.40319280460883,
+            51.2101900744867
+          ],
+          [
+            1.40319309513064,
+            51.2094228510036
+          ],
+          [
+            1.40321885328127,
+            51.2091805547664
+          ],
+          [
+            1.40328238286515,
+            51.2085828180142
+          ],
+          [
+            1.40335863330634,
+            51.2078782911053
+          ],
+          [
+            1.40340669415386,
+            51.2074317431197
+          ],
+          [
+            1.40351101518687,
+            51.2064816929002
+          ],
+          [
+            1.40352049344715,
+            51.2063671236711
+          ],
+          [
+            1.40348674792282,
+            51.2062569238346
+          ],
+          [
+            1.40340190490984,
+            51.2061852896554
+          ],
+          [
+            1.40328499733267,
+            51.2061291249333
+          ],
+          [
+            1.40314794563449,
+            51.2061138002535
+          ],
+          [
+            1.40304252966007,
+            51.2061088169748
+          ],
+          [
+            1.40322873562899,
+            51.2029151558877
+          ],
+          [
+            1.40330240819,
+            51.2017720310213
+          ],
+          [
+            1.40330868782477,
+            51.2016898119594
+          ],
+          [
+            1.40334028324966,
+            51.2011308693898
+          ],
+          [
+            1.40331276843278,
+            51.1998974967262
+          ],
+          [
+            1.40335089905597,
+            51.1986441717105
+          ],
+          [
+            1.4034055980154,
+            51.1985674043209
+          ],
+          [
+            1.40348309668198,
+            51.1969698905924
+          ],
+          [
+            1.40360573934931,
+            51.196845168388
+          ]
+        ],
+        "type": "LineString"
+      },
+      "id": 1079,
+      "properties": {
+        "Desc_": "TrafficFree",
+        "FID": 1079,
+        "GlobalID": "f671a6f6-3ac5-44d9-af56-b95d05783273",
+        "GlobalID_": null,
+        "Greenway": "Yes",
+        "Lighting": "NotLit",
+        "LinkNo": 0,
+        "OpenStatus": "Open",
+        "Quality": "Standard",
+        "RoadClass": null,
+        "RouteCat": "Main Route",
+        "RouteNo": 1,
+        "RouteType": "NCN",
+        "SegmentID": 1506,
+        "Shape__Length": 2771.208448618477,
+        "Surface": "Asphalt"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.4025440251032,
+            51.1889141368012
+          ],
+          [
+            1.40436606306928,
+            51.1892789322101
+          ],
+          [
+            1.40436453585292,
+            51.1892902480495
+          ]
+        ],
+        "type": "LineString"
+      },
+      "id": 1820,
+      "properties": {
+        "Desc_": "OnRoad",
+        "FID": 1820,
+        "GlobalID": "8859d248-6439-46a2-b184-4d95f71547f2",
+        "GlobalID_": null,
+        "Greenway": "No",
+        "Lighting": "NotLit",
+        "LinkNo": 0,
+        "OpenStatus": "Open",
+        "Quality": "Acceptable",
+        "RoadClass": "Private Road Publicly Accessible",
+        "RouteCat": "Main Route",
+        "RouteNo": 1,
+        "RouteType": "NCN",
+        "SegmentID": 6761,
+        "Shape__Length": 214.94284617323797,
+        "Surface": "Asphalt"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.40360573931963,
+            51.196845168662
+          ],
+          [
+            1.40371847472366,
+            51.1952237526897
+          ],
+          [
+            1.40372103860818,
+            51.1948382751462
+          ],
+          [
+            1.40434206204827,
+            51.1903977901992
+          ],
+          [
+            1.40449020929879,
+            51.1892963843347
+          ],
+          [
+            1.40436453585292,
+            51.1892902480495
+          ]
+        ],
+        "type": "LineString"
+      },
+      "id": 10909,
+      "properties": {
+        "Desc_": "TrafficFree",
+        "FID": 10909,
+        "GlobalID": "27e00ced-c023-4847-8974-9797eba54dd9",
+        "GlobalID_": null,
+        "Greenway": "No",
+        "Lighting": "NotLit",
+        "LinkNo": 0,
+        "OpenStatus": "Open",
+        "Quality": "Standard",
+        "RoadClass": null,
+        "RouteCat": "Main Route",
+        "RouteNo": 1,
+        "RouteType": "NCN",
+        "SegmentID": 28182,
+        "Shape__Length": 1358.9037970979734,
+        "Surface": "Asphalt"
+      },
+      "type": "Feature"
+    }
+  ],
+  "nearby_targets_metric": [
+    {
+      "coordinates": [
+        [
+          177581.41333604758,
+          -364797.5903426977
+        ],
+        [
+          177581.51202281236,
+          -364798.84860836784
+        ]
+      ],
+      "key": "open-edge:08fd3f60fcde96caa4bfb087f10aecfb6317270eba5e0d41ad7d9a752a545860"
+    },
+    {
+      "coordinates": [
+        [
+          177532.3808772872,
+          -363957.52036820684
+        ],
+        [
+          177532.38087802634,
+          -363957.5203695003
+        ]
+      ],
+      "key": "open-edge:46322f449a1b47737240184fa91de5356ae3ab5d26635ce4e099b93905bdd420"
+    },
+    {
+      "coordinates": [
+        [
+          177581.41333604758,
+          -364797.5903426977
+        ],
+        [
+          177589.5341931281,
+          -364796.9080179724
+        ]
+      ],
+      "key": "open-edge:6b780c94e9af4fd7dec6523f35ea9758724bf66d56f0afbc7253475ac2b34826"
+    },
+    {
+      "coordinates": [
+        [
+          177539.66569349926,
+          -364137.8138181649
+        ],
+        [
+          177539.83136843255,
+          -364180.67702454224
+        ]
+      ],
+      "key": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7"
+    },
+    {
+      "coordinates": [
+        [
+          177524.45586597256,
+          -363943.65187397547
+        ],
+        [
+          177532.3808772872,
+          -363957.52036820684
+        ]
+      ],
+      "key": "open-edge:9b6b6150127c7e408d9c0184e7b752fe5b60caaf9aaa0fe5ff3752bc2132447d"
+    },
+    {
+      "coordinates": [
+        [
+          177539.83136843255,
+          -364180.67702454224
+        ],
+        [
+          177579.96110758072,
+          -364674.43710450013
+        ]
+      ],
+      "key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "coordinates": [
+        [
+          177532.3808772872,
+          -363957.52036820684
+        ],
+        [
+          177539.66569349926,
+          -364137.8138181649
+        ]
+      ],
+      "key": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "coordinates": [
+        [
+          177463.7742635318,
+          -364839.41206312925
+        ],
+        [
+          177581.51202281236,
+          -364798.84860836784
+        ]
+      ],
+      "key": "open-edge:a4a6fd81ccde062557f8c7606b1279a7f2167d05d0e4521734fab5b987dc4698"
+    },
+    {
+      "coordinates": [
+        [
+          177532.38087610842,
+          -363957.5203390329
+        ],
+        [
+          177532.3808772872,
+          -363957.52036820684
+        ]
+      ],
+      "key": "open-edge:a4d1d2a80d0233087e951863f993d064aa38e84d27aebd9a6916f8df2eb06473"
+    },
+    {
+      "coordinates": [
+        [
+          177579.96110758072,
+          -364674.43710450013
+        ],
+        [
+          177589.5341931281,
+          -364796.9080179724
+        ]
+      ],
+      "key": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b"
+    }
+  ],
+  "nearest_deferred_section_to_target_m": 96304.36356730695,
+  "path": {
+    "coordinates": [
+      [
+        1.4035412,
+        51.1968459
+      ],
+      [
+        1.4035602,
+        51.1957307
+      ],
+      [
+        1.4035878,
+        51.1955793
+      ],
+      [
+        1.4036038,
+        51.1953883
+      ],
+      [
+        1.4036199,
+        51.195108
+      ],
+      [
+        1.4036166,
+        51.19487
+      ],
+      [
+        1.403661,
+        51.194388
+      ],
+      [
+        1.4037361,
+        51.1936567
+      ],
+      [
+        1.4038375,
+        51.192914
+      ],
+      [
+        1.4040362,
+        51.1915019
+      ],
+      [
+        1.4041498,
+        51.1907045
+      ],
+      [
+        1.4043674,
+        51.1893544
+      ],
+      [
+        1.4043681,
+        51.1893201
+      ],
+      [
+        1.4043375,
+        51.1893056
+      ]
+    ],
+    "modes": [
+      "on_foot",
+      "cycling"
+    ],
+    "osm_node_ids": [
+      978142881,
+      978142882,
+      1181940231,
+      978142883,
+      1181941130,
+      978142884,
+      978142885,
+      978142886,
+      978142887,
+      978142888,
+      978142889,
+      978142890,
+      27411872,
+      913199040
+    ],
+    "section_keys": [
+      "4471747:0:6",
+      "4471747:11:13"
+    ],
+    "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+    "target_geometry": "exact_source_spans",
+    "way_id": "4471747"
+  },
+  "pins": {
+    "association_decoded": "1e41883f506438d70c961653657c342b2c27b2451922b8cf8247d0f0ef7d2ec0",
+    "classified": "1ebb14d7489e5add77dac77dcb25c5beda2ce53c7c3994eccc22696944955dcb",
+    "consumed_files": {
+      "inputs/catalogues/NCN-1/associations.json.gz": "c542b23a29ee4bfa55148923d5d5c65593512347536f3e730b5442d48cfc0674",
+      "inputs/catalogues/NCN-1/audit.json.gz": "30a4bcd9db4a7c120a9a16cb20f632cdafeb3a56607168bebbe6785712043e47",
+      "inputs/catalogues/NCN-1/identity-review.json": "22883498bb50cf0043888bcd92c551cc0e46c2545da8ae201663e6c60025232f",
+      "inputs/catalogues/NCN-1/manifest.json": "612db43f34c6eb398259e1d5e530c1b3d8ffedb8691c6301ec04dd71c1e6e8fe",
+      "inputs/catalogues/NCN-1/open-extent.json": "8f82941728348889cd0200b33bfe9be3ef95429eaa20373732314298c591ae18",
+      "inputs/catalogues/NCN-1/reference.json.gz": "5a9b5ab56a80901c0546c567b8734a81adcbc3d766872bc15e4897929ae4e910",
+      "plans/NCN-1/associations.json.gz": "18965f6557e6a9289410fadd3ca017357317cbe312ea0fd95fe11724cf107185",
+      "plans/NCN-1/plan.json.gz": "a949c9d590d4f2bf8673c521894a2781f4b2dc5e7606fa3bba68caea18047ff9"
+    },
+    "input_pins": "a706b3ce8c0307c5410954045e68d938ae7f2616dc8c6e32c29b48ca5b8d0641",
+    "osm_capture": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+    "plan_decoded": "3a78e0553adf20180238d357b0153cd0c35180608ac332fb7b65fed410f5d6dd",
+    "seam_delta": "f98df308ccf4120939e705e498f6cfdbbb36373298060f29a230a88929e6957d",
+    "summary": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b"
+  },
+  "projection_origin": [
+    -1.3437774293553804,
+    54.4699892643778
+  ],
+  "schema_version": 1,
+  "seam_source_insertions": [
+    {
+      "end": 180.73725720088015,
+      "high": 180.44056263776415,
+      "insertion_position": 5,
+      "low": 180.1923462788814,
+      "mode_mask": 3,
+      "source_way": "4471747",
+      "start": 180.53671748924404,
+      "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0"
+    },
+    {
+      "end": 180.7849399583941,
+      "high": 0.2481144574621953,
+      "insertion_position": 6,
+      "low": 0.0,
+      "mode_mask": 3,
+      "source_way": "4471747",
+      "start": 180.73725720088015,
+      "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7"
+    }
+  ],
+  "seam_target_insertions": [],
+  "target_key": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+  "target_length_m": 495.388143301922,
+  "target_original": {
+    "coordinates": [
+      [
+        1.40372103860818,
+        51.1948382751462
+      ],
+      [
+        1.40434206204827,
+        51.1903977901992
+      ]
+    ],
+    "edge_index": 2,
+    "feature_properties": {
+      "Desc_": "TrafficFree",
+      "FID": 10909,
+      "GlobalID": "27e00ced-c023-4847-8974-9797eba54dd9",
+      "GlobalID_": null,
+      "Greenway": "No",
+      "Lighting": "NotLit",
+      "LinkNo": 0,
+      "OpenStatus": "Open",
+      "Quality": "Standard",
+      "RoadClass": null,
+      "RouteCat": "Main Route",
+      "RouteNo": 1,
+      "RouteType": "NCN",
+      "SegmentID": 28182,
+      "Shape__Length": 1358.9037970979734,
+      "Surface": "Asphalt"
+    },
+    "metric": [
+      [
+        177539.83136843255,
+        -364180.67702454224
+      ],
+      [
+        177579.96110758072,
+        -364674.43710450013
+      ]
+    ]
+  }
+}
