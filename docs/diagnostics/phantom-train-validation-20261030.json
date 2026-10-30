@@ -1,0 +1,77 @@
+{
+  "CI": {
+    "Android_unit_tests": "passed; 821 passed, four explicit unrelated opt-in national-candidate skips",
+    "compile": "passed",
+    "conclusion": "success",
+    "final_delivery_difference": "Documentation and validation receipt only; operational/test/workflow tree unchanged",
+    "lint": "passed",
+    "recovery_partition_tests": "5 passed",
+    "run_id": 41140869292,
+    "tested_source_commit": "407f7f6534dde70d301ac8d11a9364f0e4777399",
+    "url": "https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/41140869292"
+  },
+  "baseline_main": "a87d60d4d5b2c4651c571e7f4316e514154734eb",
+  "branch": "fix/phantom-train-capture-20261030",
+  "date": "2026-10-30",
+  "incident_export_version": "0.25.220",
+  "incident_export_version_code": 266,
+  "limitations": [
+    "Crash stack absent; resource-risk guard is not a proof of the original exception",
+    "First-day callbacks, timer/lifecycle and live context responses unavailable",
+    "Monday located export is walking, not the requested successful evening train",
+    "Recovery slices are review-only and are not imported into the app",
+    "No installed APK or physical Android acceptance"
+  ],
+  "private_recovery": {
+    "all_original_rows_once": true,
+    "applied_to_device": false,
+    "original_export_bytes_preserved": true,
+    "partitions": 8,
+    "requires_reviewed_app_import": true,
+    "road_or_NCN_credit_added": false
+  },
+  "reference_controls": {
+    "Android_unit_tests_network_isolated": true,
+    "SDK_downloads_disabled": true,
+    "cache_only": true,
+    "fail_on_cache_miss": true,
+    "hash_and_size_checks": true
+  },
+  "schema_version": 1,
+  "scope": {
+    "APK_built_or_distributed": false,
+    "NCN_completion_changes": false,
+    "backend_or_Firebase_deployed": false,
+    "capture_PR": 250,
+    "main_merged": false,
+    "matcher_algorithm_changes": false,
+    "private_GPS_in_repository": false,
+    "source_admission_or_tolerance_changes": false,
+    "viewer_separate_PR": 251
+  },
+  "source_version_changed": false,
+  "tested_source_commit": "407f7f6534dde70d301ac8d11a9364f0e4777399",
+  "tests": {
+    "android_errors": 0,
+    "android_expected_opt_in_skips": 4,
+    "android_failures": 0,
+    "android_passed": 821,
+    "android_tests_total": 825,
+    "new_capture_model_service_restart_UI_tests": 11,
+    "physical_phone_acceptance": false,
+    "python_partition_tests_passed": 5,
+    "skipped_classes": [
+      "NcnBindingCandidateTest",
+      "NcnOrdinarySeamCandidateTest"
+    ]
+  },
+  "verified_incident": {
+    "derived_reliability_replay_exact": true,
+    "derived_route_samples": 32767,
+    "exact_crash_exception_available": false,
+    "maximum_positive_raw_timestamp_gap_ms": 25398,
+    "original_evening_Monday_train_export_available": false,
+    "raw_original_preserved": true,
+    "raw_samples": 39120
+  }
+}
