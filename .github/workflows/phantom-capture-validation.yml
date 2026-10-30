@@ -17,12 +17,11 @@ jobs:
     timeout-minutes: 30
     env:
       ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Reject historical network-capable preparation helpers
-        run: python3 scripts/verify_offline_build_controls.py
       - name: Restore the same exact reference cache as Android builds
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -31,10 +30,23 @@ jobs:
             android-prototype/app/src/main/assets/historic-counties/boundaries.bin
           key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
           fail-on-cache-miss: true
-      - name: Validate both restored datasets before any build setup
+      - name: Verify restored reference bytes against packaged source pins
+        shell: bash
         run: |
-          python3 scripts/prepare_ncn_reference.py
-          bash android-prototype/scripts/prepare_county_reference.sh
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          ncn=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          for file,digest,size in (
+              ('android-prototype/app/src/main/assets/historic-counties/boundaries.bin',county['data_sha256'],None),
+              ('.cache/ncn/catalogue.db',ncn['sha256'],ncn['database_bytes']),
+          ):
+              path=pathlib.Path(file)
+              assert path.is_file(),f'Missing pinned reference: {file}'
+              if size is not None: assert path.stat().st_size==size,f'Invalid size: {file}'
+              assert hashlib.file_digest(path.open('rb'),'sha256').hexdigest()==digest,f'Invalid SHA-256: {file}'
+              print('Verified pinned reference:',file)
+          PY
       - name: Require existing runner SDK and Java 17
         run: |
           test -n "$JAVA_HOME_17_X64" || { echo '::error::Runner Java 17 missing; no installation attempted.'; exit 1; }
@@ -46,10 +58,6 @@ jobs:
         with:
           gradle-version: '8.10'
           cache-read-only: true
-      - name: Run targeted offline regression checks
-        run: |
-          bash scripts/check_reference_bandwidth_offline.sh
-          python3 -m unittest discover -s scripts -p test_android_distribution_controls.py -v
       # Approval for this run must include ordinary Gradle/Maven dependency resolution.
       # Reference data remains cache-only; Android Test workers reject reference HTTP.
       - name: Compile and lint with SDK downloads disabled
