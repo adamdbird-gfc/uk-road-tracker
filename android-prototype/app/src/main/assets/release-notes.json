@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.221",
+      "version_code": 267,
+      "release_date": "2026-10-30",
+      "since": "0.25.220",
+      "changes": [
+        {
+          "title": "Close train captures after evidenced arrivals",
+          "description": "Use GPS stop evidence for train-labelled recordings, including after capture recovery. Preserve evidenced station waits and allow off-rail arrivals and sustained road transitions."
+        },
+        {
+          "title": "Review unusually large recordings safely",
+          "description": "Show original and filtered point counts and offer export for review instead of attempting one oversized match or changing the entire recording to another transport mode. Original GPS evidence is retained."
+        },
+        {
+          "title": "Historical recovery still needs review",
+          "description": "This update does not automatically split or repair previously saved recordings. The precise previously reported phone crash has not been reproduced; on-device validation remains outstanding."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.220",
       "version_code": 266,
       "release_date": "2026-10-28",

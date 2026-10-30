@@ -3,7 +3,7 @@ on:
   push:
     branches: [release/phantom-capture-025221]
     paths:
-      - '.github/release-requests/android/0.25.221.json'
+      - '.github/release-requests/android/0.25.221-notes-corrected.json'
 permissions:
   contents: read
 concurrency:
@@ -25,7 +25,7 @@ jobs:
         run: |
           python3 - <<'PYREQ'
           import json,pathlib,subprocess
-          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.221.json').read_text())
+          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.221-notes-corrected.json').read_text())
           assert request==dict(schema_version=1,version_name='0.25.221',version_code=267,baseline='40f3c0d00e171800a157af4b3db5d4125134203b',firebase_upload=False,distribute_existing_testers=False)
           subprocess.run(['git','merge-base','--is-ancestor',request['baseline'],'HEAD'],check=True)
           PYREQ
