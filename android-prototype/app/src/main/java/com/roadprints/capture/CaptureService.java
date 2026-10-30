@@ -286,7 +286,7 @@ public class CaptureService extends Service {
             // as travelled distance or let them reset the stop timer.
             points.add(observation);
             if(evaluateFerryLocation(observation))return;
-            if (trusted && automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
+            if (trusted && automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "train".equals(mode) || "walking".equals(mode) || "running".equals(mode)))
                 observeWalkingStillness(observation);
             if (trusted) {
                 if (lastPoint != null && !gpsStillness) distanceMetres += lastPoint.distanceTo(observation);
@@ -839,7 +839,7 @@ public class CaptureService extends Service {
     }
 
     private void observeWalkingStillness(Location location) {
-        walkingStillness.accept(footSample(location,points.size()-1),roadMode(mode) || "unknown".equals(mode));
+        walkingStillness.accept(footSample(location,points.size()-1),roadMode(mode) || "unknown".equals(mode) || "train".equals(mode));
         long now=wallClock.millis();
         if(!walkingStillness.quiet(now)) {
             if(gpsStillness) {
@@ -1897,8 +1897,8 @@ public class CaptureService extends Service {
             }
 
             walkingStillness.reset(); gpsStillness=snapshot.optBoolean("gps_stillness", false);
-            if(automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "walking".equals(mode) || "running".equals(mode))) {
-                for(int i=0;i<points.size();i++) walkingStillness.accept(footSample(points.get(i),i),roadMode(mode) || "unknown".equals(mode));
+            if(automaticCapture && (roadMode(mode) || "unknown".equals(mode) || "train".equals(mode) || "walking".equals(mode) || "running".equals(mode))) {
+                for(int i=0;i<points.size();i++) walkingStillness.accept(footSample(points.get(i),i),roadMode(mode) || "unknown".equals(mode) || "train".equals(mode));
                 if(walkingStillness.quiet(wallClock.millis())) {
                     FootTraceValidator.Sample anchor=walkingStillness.anchor();
                     gpsStillness=true; stationarySince=anchor.time;

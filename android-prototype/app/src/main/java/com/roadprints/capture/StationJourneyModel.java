@@ -125,7 +125,10 @@ final class StationJourneyModel {
         return null;
     }
     boolean holdStill(String mode, long now) {
-        return "train".equals(mode) || (station!=null && stopEvidence && now-arrivalTime<45*60000L);
+        // A label is not rail-location evidence. Keep real intermediate station stops,
+        // but do not hold a train-labelled recording at an unrelated destination.
+        return ("train".equals(mode) && station!=null)
+                || (station!=null && stopEvidence && now-arrivalTime<45*60000L);
     }
     boolean ownsModeChange(String mode) {
         return "train".equals(mode) || (station!=null && stopEvidence && ("walking".equals(mode)||"running".equals(mode)));
