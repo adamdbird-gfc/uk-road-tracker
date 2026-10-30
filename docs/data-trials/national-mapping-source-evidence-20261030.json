@@ -1,0 +1,2448 @@
+{
+  "date": "2026-10-30",
+  "baseline": "1030b726c4640e04a9c6051667886812daf39fcc",
+  "scope": "Read-only bounded samples; no new NCN candidate or national physical-network comparison",
+  "live_walking_reference": {
+    "samples": [
+      {
+        "coordinates": [
+          [
+            -2.9242844,
+            54.652334
+          ],
+          [
+            -2.9242236,
+            54.6519376
+          ],
+          [
+            -2.9241516,
+            54.6509145
+          ],
+          [
+            -2.9240962,
+            54.6501275
+          ],
+          [
+            -2.9235402,
+            54.6462477
+          ],
+          [
+            -2.9232326,
+            54.6437967
+          ],
+          [
+            -2.9231974,
+            54.6435165
+          ],
+          [
+            -2.9231089,
+            54.6430398
+          ],
+          [
+            -2.9231053,
+            54.6430093
+          ]
+        ],
+        "segment_kind": "tertiary",
+        "source_feature_id": "23385711",
+        "source_key": "osm_geofabrik_cumbria",
+        "source_version": "latest",
+        "tags": {
+          "highway": "tertiary",
+          "surface": "asphalt"
+        },
+        "geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            0.0810242,
+            50.8539885
+          ],
+          [
+            0.0810205,
+            50.8539279
+          ],
+          [
+            0.0810174,
+            50.8538732
+          ]
+        ],
+        "segment_kind": "cycleway",
+        "source_feature_id": "1289002662",
+        "source_key": "osm_geofabrik_east_sussex",
+        "source_version": "latest",
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway"
+        },
+        "geometry_sha256": "c7fee978db7dc57ccd9a4dbd13e43f4e6f4eac5a8c3831ca95811f5e6e92e2d4",
+        "comparison_geometry_equal": false,
+        "comparison_source": "pinned fixture"
+      },
+      {
+        "coordinates": [
+          [
+            0.0147904,
+            51.4962583
+          ],
+          [
+            0.0152153,
+            51.4960612
+          ],
+          [
+            0.0156588,
+            51.4958706
+          ]
+        ],
+        "segment_kind": "cycleway",
+        "source_feature_id": "1050757473",
+        "source_key": "osm_geofabrik_greater_london",
+        "source_version": "latest",
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Mudlarks Boulevard",
+          "surface": "asphalt"
+        },
+        "geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            -6.3675359,
+            54.3064421
+          ],
+          [
+            -6.3677499,
+            54.3067505
+          ],
+          [
+            -6.3686063,
+            54.3079129
+          ],
+          [
+            -6.3685185,
+            54.3081177
+          ],
+          [
+            -6.3672173,
+            54.3096013
+          ],
+          [
+            -6.3663494,
+            54.3106557
+          ],
+          [
+            -6.3663227,
+            54.3108159
+          ],
+          [
+            -6.3661436,
+            54.3128707
+          ],
+          [
+            -6.3659959,
+            54.3132402
+          ],
+          [
+            -6.364745,
+            54.3142181
+          ],
+          [
+            -6.3644272,
+            54.3144769
+          ],
+          [
+            -6.3643079,
+            54.3145213
+          ],
+          [
+            -6.3637533,
+            54.3149061
+          ],
+          [
+            -6.3636664,
+            54.3149904
+          ],
+          [
+            -6.3635585,
+            54.3152066
+          ],
+          [
+            -6.3635507,
+            54.3152945
+          ],
+          [
+            -6.3646614,
+            54.3206556
+          ],
+          [
+            -6.3645924,
+            54.321954
+          ],
+          [
+            -6.3644235,
+            54.323877
+          ],
+          [
+            -6.3642436,
+            54.3257461
+          ],
+          [
+            -6.3648428,
+            54.3270033
+          ],
+          [
+            -6.3659765,
+            54.3286466
+          ],
+          [
+            -6.3660462,
+            54.3290408
+          ],
+          [
+            -6.3658795,
+            54.3297252
+          ],
+          [
+            -6.3655382,
+            54.330693
+          ],
+          [
+            -6.3655118,
+            54.3307501
+          ],
+          [
+            -6.3654975,
+            54.3307811
+          ],
+          [
+            -6.3654881,
+            54.3308069
+          ]
+        ],
+        "segment_kind": "cycleway",
+        "source_feature_id": "59306268",
+        "source_key": "osm_geofabrik_ireland_and_northern_ireland",
+        "source_version": "latest",
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Newry Canal Towpath",
+          "surface": "asphalt"
+        },
+        "geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "segment_kind": "cycleway",
+        "source_feature_id": "4471747",
+        "source_key": "osm_geofabrik_kent",
+        "source_version": "latest",
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "surface": "asphalt"
+        },
+        "geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            -3.6826247,
+            52.4765612
+          ],
+          [
+            -3.6822921,
+            52.4770464
+          ],
+          [
+            -3.6822331,
+            52.4773764
+          ],
+          [
+            -3.6822049,
+            52.4776672
+          ],
+          [
+            -3.6822385,
+            52.4778289
+          ],
+          [
+            -3.6821969,
+            52.4780331
+          ],
+          [
+            -3.682044,
+            52.4782087
+          ],
+          [
+            -3.6818455,
+            52.4783362
+          ],
+          [
+            -3.6814606,
+            52.4788205
+          ],
+          [
+            -3.6810905,
+            52.4792093
+          ],
+          [
+            -3.6810422,
+            52.4794805
+          ],
+          [
+            -3.6810154,
+            52.4797321
+          ],
+          [
+            -3.6810905,
+            52.4799085
+          ],
+          [
+            -3.6812447,
+            52.4800335
+          ],
+          [
+            -3.6814392,
+            52.4801315
+          ],
+          [
+            -3.6815116,
+            52.4801985
+          ],
+          [
+            -3.6815397,
+            52.4803193
+          ],
+          [
+            -3.6813962,
+            52.4804541
+          ],
+          [
+            -3.6812273,
+            52.480566
+          ],
+          [
+            -3.6810744,
+            52.480811
+          ],
+          [
+            -3.6809658,
+            52.4810079
+          ],
+          [
+            -3.6807807,
+            52.4811696
+          ],
+          [
+            -3.6805688,
+            52.4812978
+          ],
+          [
+            -3.6803287,
+            52.4813942
+          ],
+          [
+            -3.6799693,
+            52.4814669
+          ],
+          [
+            -3.6796394,
+            52.4815829
+          ],
+          [
+            -3.6790895,
+            52.4818761
+          ],
+          [
+            -3.6788066,
+            52.4820517
+          ],
+          [
+            -3.6786939,
+            52.4821399
+          ],
+          [
+            -3.6785531,
+            52.4823784
+          ],
+          [
+            -3.6784016,
+            52.4826446
+          ],
+          [
+            -3.6784136,
+            52.4827337
+          ],
+          [
+            -3.6785182,
+            52.48275
+          ],
+          [
+            -3.6787328,
+            52.4827329
+          ],
+          [
+            -3.6789903,
+            52.4827206
+          ],
+          [
+            -3.6791499,
+            52.482781
+          ],
+          [
+            -3.6792907,
+            52.4829607
+          ],
+          [
+            -3.6793685,
+            52.4833209
+          ],
+          [
+            -3.6791003,
+            52.4836933
+          ],
+          [
+            -3.6785451,
+            52.4841082
+          ],
+          [
+            -3.6779845,
+            52.4847044
+          ],
+          [
+            -3.6778852,
+            52.4849282
+          ],
+          [
+            -3.6779174,
+            52.4851993
+          ],
+          [
+            -3.6780354,
+            52.485379
+          ],
+          [
+            -3.6782581,
+            52.4855146
+          ],
+          [
+            -3.678419,
+            52.4856289
+          ],
+          [
+            -3.678537,
+            52.4858837
+          ],
+          [
+            -3.6786309,
+            52.4862398
+          ],
+          [
+            -3.6787677,
+            52.4864113
+          ],
+          [
+            -3.6790144,
+            52.4865877
+          ],
+          [
+            -3.6793792,
+            52.4867183
+          ],
+          [
+            -3.6796401,
+            52.4867647
+          ],
+          [
+            -3.6802517,
+            52.4868464
+          ],
+          [
+            -3.6808364,
+            52.4869787
+          ],
+          [
+            -3.6808767,
+            52.4870718
+          ],
+          [
+            -3.6809464,
+            52.4871682
+          ]
+        ],
+        "segment_kind": "unclassified",
+        "source_feature_id": "31252441",
+        "source_key": "osm_geofabrik_wales",
+        "source_version": "latest",
+        "tags": {
+          "highway": "unclassified",
+          "surface": "asphalt"
+        },
+        "geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            -2.1664558,
+            52.6290006
+          ],
+          [
+            -2.1666372,
+            52.6285685
+          ],
+          [
+            -2.1666501,
+            52.6285304
+          ],
+          [
+            -2.1666858,
+            52.6284738
+          ],
+          [
+            -2.1666942,
+            52.6282802
+          ],
+          [
+            -2.1666544,
+            52.6282031
+          ],
+          [
+            -2.1666612,
+            52.6279868
+          ],
+          [
+            -2.1666449,
+            52.6277938
+          ],
+          [
+            -2.1665948,
+            52.6275547
+          ],
+          [
+            -2.1665093,
+            52.6273276
+          ],
+          [
+            -2.1664266,
+            52.6271378
+          ],
+          [
+            -2.1663031,
+            52.6269174
+          ],
+          [
+            -2.1659058,
+            52.6263069
+          ],
+          [
+            -2.1654832,
+            52.6256764
+          ],
+          [
+            -2.1651961,
+            52.6252675
+          ],
+          [
+            -2.1648562,
+            52.6248794
+          ],
+          [
+            -2.1644018,
+            52.6244129
+          ],
+          [
+            -2.1642232,
+            52.6242336
+          ],
+          [
+            -2.1641514,
+            52.6241691
+          ],
+          [
+            -2.1640378,
+            52.6240669
+          ],
+          [
+            -2.1638874,
+            52.6239321
+          ],
+          [
+            -2.1636395,
+            52.62375
+          ],
+          [
+            -2.1633923,
+            52.6235819
+          ],
+          [
+            -2.1631244,
+            52.623411
+          ],
+          [
+            -2.1628608,
+            52.6232573
+          ],
+          [
+            -2.1627819,
+            52.6232174
+          ],
+          [
+            -2.1626071,
+            52.6231289
+          ],
+          [
+            -2.1623509,
+            52.6230115
+          ],
+          [
+            -2.162005,
+            52.6228773
+          ],
+          [
+            -2.1616626,
+            52.6227596
+          ],
+          [
+            -2.161245,
+            52.6226286
+          ],
+          [
+            -2.1608262,
+            52.6225194
+          ],
+          [
+            -2.1601874,
+            52.6223776
+          ],
+          [
+            -2.1595332,
+            52.6222713
+          ],
+          [
+            -2.1591734,
+            52.6222023
+          ],
+          [
+            -2.1591709,
+            52.6222018
+          ],
+          [
+            -2.1590227,
+            52.6221959
+          ],
+          [
+            -2.1589416,
+            52.6222015
+          ]
+        ],
+        "segment_kind": "footway",
+        "source_feature_id": "44807950",
+        "source_key": "osm_geofabrik_west_midlands",
+        "source_version": "latest",
+        "tags": {
+          "highway": "footway",
+          "surface": "unpaved"
+        },
+        "geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      },
+      {
+        "coordinates": [
+          [
+            -1.7535763,
+            53.7920704
+          ],
+          [
+            -1.7536411,
+            53.7921148
+          ],
+          [
+            -1.7540493,
+            53.7923948
+          ],
+          [
+            -1.7540412,
+            53.7924543
+          ],
+          [
+            -1.754031,
+            53.792529
+          ],
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7541235,
+            53.7926244
+          ],
+          [
+            -1.7543636,
+            53.7927186
+          ]
+        ],
+        "segment_kind": "path",
+        "source_feature_id": "159311690",
+        "source_key": "osm_geofabrik_west_yorkshire",
+        "source_version": "latest",
+        "tags": {
+          "foot": "designated",
+          "highway": "path"
+        },
+        "geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+        "comparison_geometry_equal": true,
+        "comparison_source": "current OSM bounded read"
+      }
+    ],
+    "metadata": [
+      {
+        "checksum": "06f8d99c8fd7fe3b1452749b3c5153fa46917ed1a152883e5ee798cffc180e77",
+        "dataset_key": "uk-bedfordshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:35:59.85538Z",
+        "retrieved_at": "2026-09-23T06:27:26.603128Z",
+        "row_count": 73009,
+        "source_key": "osm_geofabrik_bedfordshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "4715191cd484873d1f45076c73ae6e16c9bfd59f23755ea65bb05e62ef28884c",
+        "dataset_key": "uk-berkshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:39:12.706837Z",
+        "retrieved_at": "2026-09-23T06:27:28.363442Z",
+        "row_count": 102366,
+        "source_key": "osm_geofabrik_berkshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "68f1ec86953a183e2915571a4e79558a4a2ee802a2eb720bf688ed710a4cf0e1",
+        "dataset_key": "uk-bristol_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:42:56.410035Z",
+        "retrieved_at": "2026-09-23T06:27:28.365937Z",
+        "row_count": 36328,
+        "source_key": "osm_geofabrik_bristol",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "a5445362c301ab5c99e715cbacb2408c581a6e1b294cb62b62b6b94c327dfc69",
+        "dataset_key": "uk-buckinghamshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:44:37.111995Z",
+        "retrieved_at": "2026-09-23T06:27:28.368485Z",
+        "row_count": 108491,
+        "source_key": "osm_geofabrik_buckinghamshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "0e728ec7b9d317211463312f703af9676d1e18f3ad97fc24633859e9e1cce3d6",
+        "dataset_key": "uk-cambridgeshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:48:26.506411Z",
+        "retrieved_at": "2026-09-23T06:27:28.370962Z",
+        "row_count": 134819,
+        "source_key": "osm_geofabrik_cambridgeshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "208d1780fb9a95c542f3d3c62c733958c0b0cf19be56e0a0eb7faaa4967e5960",
+        "dataset_key": "uk-cheshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:54:21.507772Z",
+        "retrieved_at": "2026-09-23T06:27:28.373465Z",
+        "row_count": 152340,
+        "source_key": "osm_geofabrik_cheshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "ce4329cda419e6344609888cd6a7d8a98cde84d8aae21a63eea79eb0b460818a",
+        "dataset_key": "uk-cornwall_walkable_network_v1",
+        "loaded_at": "2026-09-22T20:59:18.012468Z",
+        "retrieved_at": "2026-09-23T06:27:28.376488Z",
+        "row_count": 115762,
+        "source_key": "osm_geofabrik_cornwall",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "4fb4f230126ea8e883edaadca0f87ca760be2d071c05800c5c3883f099523a1d",
+        "dataset_key": "uk-cumbria_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:03:20.716383Z",
+        "retrieved_at": "2026-09-23T06:27:28.378689Z",
+        "row_count": 116388,
+        "source_key": "osm_geofabrik_cumbria",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "2595b54421ca8ba7fa414af499cf087b39ee22809f15d2c353390cf73765e46f",
+        "dataset_key": "uk-derbyshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:07:26.410415Z",
+        "retrieved_at": "2026-09-23T06:27:28.380852Z",
+        "row_count": 147418,
+        "source_key": "osm_geofabrik_derbyshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "ce221e8e2513f891f25819e4d521a70bc9a50e6044c727ca4f420557d7d97a71",
+        "dataset_key": "uk-devon_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:12:22.005715Z",
+        "retrieved_at": "2026-09-23T06:27:28.383029Z",
+        "row_count": 204876,
+        "source_key": "osm_geofabrik_devon",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "d8e77b388018549479f2bdef7e41ff093bf350e6c447cb8ad8a6d426cc8dc72f",
+        "dataset_key": "uk-dorset_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:19:51.008573Z",
+        "retrieved_at": "2026-09-23T06:27:28.385238Z",
+        "row_count": 99319,
+        "source_key": "osm_geofabrik_dorset",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "0377aed4fd90146ef156adc92c62fbdd13bf5e3d6b7931d64a699989e4a247b6",
+        "dataset_key": "uk-durham_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:24:16.818593Z",
+        "retrieved_at": "2026-09-23T06:27:28.387479Z",
+        "row_count": 113464,
+        "source_key": "osm_geofabrik_durham",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "b255032f23946a18d33b87cbd736d46301c5b13a2165074c482e389f17cee11a",
+        "dataset_key": "uk-east-sussex_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:28:41.801116Z",
+        "retrieved_at": "2026-09-23T06:27:28.389598Z",
+        "row_count": 72757,
+        "source_key": "osm_geofabrik_east_sussex",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "09429a5ec4bf2edd7bb1492052892f5a73d3541db2cda2af860375b847104be8",
+        "dataset_key": "uk-east-yorkshire-with-hull_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:32:06.606227Z",
+        "retrieved_at": "2026-09-23T06:27:28.391688Z",
+        "row_count": 56947,
+        "source_key": "osm_geofabrik_east_yorkshire_with_hull",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "7c6d0c1d1dfd6852b08e3cdee822e73dd91078f194ff88ad8c3f8e8c00e3edcc",
+        "dataset_key": "uk-essex_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:47:18.876312Z",
+        "retrieved_at": "2026-09-23T06:27:28.39378Z",
+        "row_count": 190340,
+        "source_key": "osm_geofabrik_essex",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "5a4f4ab3f1229df553ebf4178b92bd443b40b0521d14c1051f100cb1678bb117",
+        "dataset_key": "uk-gloucestershire_walkable_network_v1",
+        "loaded_at": "2026-09-22T21:55:26.9023Z",
+        "retrieved_at": "2026-09-23T06:27:28.395849Z",
+        "row_count": 149194,
+        "source_key": "osm_geofabrik_gloucestershire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "8b4ac76b6f238d63611f8c8b098e18993d0ba22f90f2263f5dba4e85a8f629ab",
+        "dataset_key": "uk-greater-london_walkable_network_v1",
+        "loaded_at": "2026-09-23T06:27:28.398056Z",
+        "retrieved_at": "2026-09-23T06:27:28.398056Z",
+        "row_count": 562484,
+        "source_key": "osm_geofabrik_greater_london",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "9e3353d007b87a7808ef8915d0eafbc87efd91af16801a0cb01299423e2e56fc",
+        "dataset_key": "uk-greater-manchester_walkable_network_v1",
+        "loaded_at": "2026-09-22T22:02:38.907004Z",
+        "retrieved_at": "2026-09-23T07:04:16.81173Z",
+        "row_count": 268608,
+        "source_key": "osm_geofabrik_greater_manchester",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "b5132e8ea89934b67612ae907fb543572113267f3b588a55050e44a600e3bb77",
+        "dataset_key": "uk-hampshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T22:15:21.706945Z",
+        "retrieved_at": "2026-09-23T07:04:16.814483Z",
+        "row_count": 268981,
+        "source_key": "osm_geofabrik_hampshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "18f12aae5bdd7e0a23bebb2a0ea481bd1dc3dae072d0b56fc3a5b659ba82dbcb",
+        "dataset_key": "uk-herefordshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T22:29:21.904994Z",
+        "retrieved_at": "2026-09-23T07:04:16.817225Z",
+        "row_count": 36006,
+        "source_key": "osm_geofabrik_herefordshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "cc6a38879a8c3b2a4325ebbee16b22199be0712c0f5846383336132a3542978c",
+        "dataset_key": "uk-hertfordshire_walkable_network_v1",
+        "loaded_at": "2026-09-22T22:31:57.925086Z",
+        "retrieved_at": "2026-09-23T07:04:16.820238Z",
+        "row_count": 147180,
+        "source_key": "osm_geofabrik_hertfordshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "969b178c166dbcc36a330892b6b3325544386245661b9fd1be3e67701ea03538",
+        "dataset_key": "uk-ireland-and-northern-ireland_walkable_network_v1",
+        "loaded_at": "2026-09-22T22:39:23.723458Z",
+        "retrieved_at": "2026-09-23T07:04:16.822953Z",
+        "row_count": 1520463,
+        "source_key": "osm_geofabrik_ireland_and_northern_ireland",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "14cb1a129aea1809adc461683228b5b84022460c859b1dee59676209c741f46c",
+        "dataset_key": "uk-isle-of-wight_walkable_network_v1",
+        "loaded_at": "2026-09-23T00:30:35.204669Z",
+        "retrieved_at": "2026-09-23T07:04:16.825854Z",
+        "row_count": 29804,
+        "source_key": "osm_geofabrik_isle_of_wight",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "bd54187eaa7856a229e3fdba8a943b911c30bdc2d2dd7088ffe29c5620dc1afe",
+        "dataset_key": "uk-kent_walkable_network_v1",
+        "loaded_at": "2026-09-23T00:34:49.429362Z",
+        "retrieved_at": "2026-10-30T12:49:04.501088Z",
+        "row_count": 215163,
+        "source_key": "osm_geofabrik_kent",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "dbb8b5c9ca5adf6603f203f6154bf99e484c2937109792adc0891ea7d4f9623a",
+        "dataset_key": "kent_walkable_network_v1",
+        "loaded_at": "2026-09-22T14:54:58.975507Z",
+        "retrieved_at": "2026-10-30T12:49:04.501088Z",
+        "row_count": 215140,
+        "source_key": "osm_geofabrik_kent",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "bbfaafd6dff31bf4e438bbdb6c5c2e5dfd9b7f593c557961f14d7c1b95fe490e",
+        "dataset_key": "uk-lancashire_walkable_network_v1",
+        "loaded_at": "2026-09-23T00:48:45.508664Z",
+        "retrieved_at": "2026-09-23T07:04:16.831285Z",
+        "row_count": 180186,
+        "source_key": "osm_geofabrik_lancashire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "461ff893bee73a9905bd446b5dbd6b8af3c21c7f3cec2766237b1db0ddecd27f",
+        "dataset_key": "uk-leicestershire_walkable_network_v1",
+        "loaded_at": "2026-09-23T00:59:46.611219Z",
+        "retrieved_at": "2026-09-23T07:04:16.834281Z",
+        "row_count": 100465,
+        "source_key": "osm_geofabrik_leicestershire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "d2dfbcef778ade0398a414b53b74d30c389a9faf0b878e6ad74b1c043ab8f09c",
+        "dataset_key": "uk-lincolnshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:07:38.018184Z",
+        "retrieved_at": "2026-09-23T07:04:16.83702Z",
+        "row_count": 144591,
+        "source_key": "osm_geofabrik_lincolnshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "2f874bf726dd3be525018faf7d0ff8fe9da724c1fdcc68c2bae8735081591224",
+        "dataset_key": "uk-merseyside_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:17:09.102344Z",
+        "retrieved_at": "2026-09-23T07:04:16.839672Z",
+        "row_count": 100148,
+        "source_key": "osm_geofabrik_merseyside",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "3e314ba2c4696b0646d106e78bba27d08d25b9db402b104b3a06ac70628bcc7c",
+        "dataset_key": "uk-norfolk_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:23:43.014777Z",
+        "retrieved_at": "2026-09-23T07:04:16.901069Z",
+        "row_count": 172617,
+        "source_key": "osm_geofabrik_norfolk",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "ee71de7a538189fef86212a034af6332c6ac3e237939692791a809c31b54f8c2",
+        "dataset_key": "uk-northamptonshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:47:50.628569Z",
+        "retrieved_at": "2026-09-23T07:04:16.907241Z",
+        "row_count": 102513,
+        "source_key": "osm_geofabrik_northamptonshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "10c6e10bae2bc867b28aad42d263107dcda4d9f6196dcd0a1d342e002b424a20",
+        "dataset_key": "uk-northumberland_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:55:06.40679Z",
+        "retrieved_at": "2026-09-23T07:04:16.910022Z",
+        "row_count": 58311,
+        "source_key": "osm_geofabrik_northumberland",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "53f96b282112abab3497d8eb81ed114e893507445a6919a025e688738d2f63f3",
+        "dataset_key": "uk-north-yorkshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:34:51.919022Z",
+        "retrieved_at": "2026-09-23T07:04:16.904465Z",
+        "row_count": 196750,
+        "source_key": "osm_geofabrik_north_yorkshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "0e60f0a8fd889bcaafe1e21aa2e2feecd79df6ff74a51324cd795b2e8ac11d5e",
+        "dataset_key": "uk-nottinghamshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T01:59:07.527243Z",
+        "retrieved_at": "2026-09-23T07:04:16.912911Z",
+        "row_count": 145296,
+        "source_key": "osm_geofabrik_nottinghamshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "f077087a949612d285b178847575b492d17e16237080496c5cda7e17610a0f9f",
+        "dataset_key": "uk-oxfordshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T02:08:35.13357Z",
+        "retrieved_at": "2026-09-23T07:04:16.915645Z",
+        "row_count": 112274,
+        "source_key": "osm_geofabrik_oxfordshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "12500fd9e68d443080f923d567a0cbf0bd7cb64aa32522991b9e6b7523bd6b23",
+        "dataset_key": "uk-rutland_walkable_network_v1",
+        "loaded_at": "2026-09-23T02:15:56.001837Z",
+        "retrieved_at": "2026-09-23T07:04:16.918224Z",
+        "row_count": 7180,
+        "source_key": "osm_geofabrik_rutland",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "29a0fe6ac8cae56e3f228197e8dc885e1ae22e6bde0318ec6d882bafdea70f20",
+        "dataset_key": "uk-scotland_walkable_network_v1",
+        "loaded_at": "2026-09-23T02:16:24.131288Z",
+        "retrieved_at": "2026-09-23T07:04:16.920994Z",
+        "row_count": 886075,
+        "source_key": "osm_geofabrik_scotland",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "245cbc674db02ddf0a90af03985f20edacee5e7146bd5b210e9c02856308546a",
+        "dataset_key": "uk-shropshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T03:26:50.808886Z",
+        "retrieved_at": "2026-09-23T07:04:16.923634Z",
+        "row_count": 93132,
+        "source_key": "osm_geofabrik_shropshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "8bad94ae40567e9390694fdf220bbf7eddcb87a4c965edec85f0da3b2a0960d0",
+        "dataset_key": "uk-somerset_walkable_network_v1",
+        "loaded_at": "2026-09-23T03:34:43.613584Z",
+        "retrieved_at": "2026-09-23T07:04:16.92635Z",
+        "row_count": 173160,
+        "source_key": "osm_geofabrik_somerset",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "01bec7f319f9d0fac6f30282934402f88a1163b9d2895a630e4643c22443e98d",
+        "dataset_key": "uk-south-yorkshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T03:46:35.621786Z",
+        "retrieved_at": "2026-09-23T07:04:16.92906Z",
+        "row_count": 124083,
+        "source_key": "osm_geofabrik_south_yorkshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "7a7fd8125dc51665238c8bf15eb090532771888e16cbff2ab693611a130ee604",
+        "dataset_key": "uk-staffordshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T03:55:09.812922Z",
+        "retrieved_at": "2026-09-23T07:04:16.93165Z",
+        "row_count": 122841,
+        "source_key": "osm_geofabrik_staffordshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "72a136ea64f6fa6bf2656be8696ce60647e8943b8d9ad2a02e5033b668cd9d6f",
+        "dataset_key": "uk-suffolk_walkable_network_v1",
+        "loaded_at": "2026-09-23T04:03:41.006186Z",
+        "retrieved_at": "2026-09-23T07:04:16.934452Z",
+        "row_count": 128025,
+        "source_key": "osm_geofabrik_suffolk",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "7bb54a3015beee76b67a59514f9a83657a7c1ff1ece04401f80946bdfc49c046",
+        "dataset_key": "uk-surrey_walkable_network_v1",
+        "loaded_at": "2026-09-23T04:12:24.033605Z",
+        "retrieved_at": "2026-09-23T07:04:16.93707Z",
+        "row_count": 167679,
+        "source_key": "osm_geofabrik_surrey",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "3141a330e7cd3d0301bdd9cf31b2bb6e5af6a5a1c3233b53b223b02081e8482d",
+        "dataset_key": "uk-tyne-and-wear_walkable_network_v1",
+        "loaded_at": "2026-09-23T04:23:51.70644Z",
+        "retrieved_at": "2026-09-23T07:04:16.939675Z",
+        "row_count": 93001,
+        "source_key": "osm_geofabrik_tyne_and_wear",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "65224ab7c60063ff8e6de6eb1f374f8932b0e1e7f6edc5cdb568577334043663",
+        "dataset_key": "uk-wales_walkable_network_v1",
+        "loaded_at": "2026-09-23T04:30:40.933951Z",
+        "retrieved_at": "2026-09-23T07:04:16.942481Z",
+        "row_count": 479366,
+        "source_key": "osm_geofabrik_wales",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "edf3c1a8d51cc7b82381da406f8be1477948d914b71c83a0db6b68e0df8e14ca",
+        "dataset_key": "uk-warwickshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:04:40.320613Z",
+        "retrieved_at": "2026-09-23T07:04:16.945178Z",
+        "row_count": 88756,
+        "source_key": "osm_geofabrik_warwickshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "14231e747b2caf61a3ec007b6396db5b772b42e916c1d9cf29fcab0d3bcc127e",
+        "dataset_key": "uk-west-midlands_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:11:31.017346Z",
+        "retrieved_at": "2026-09-23T07:04:16.94786Z",
+        "row_count": 189221,
+        "source_key": "osm_geofabrik_west_midlands",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "50c10bf542780a3889e28a5d605fe874522855dabc05b9eb87b4cde32dc14747",
+        "dataset_key": "uk-west-sussex_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:24:49.931564Z",
+        "retrieved_at": "2026-09-23T07:04:16.950619Z",
+        "row_count": 143309,
+        "source_key": "osm_geofabrik_west_sussex",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "a0b0bbc8ddbd4974fa76c34da1c2168537a965cf6dd01f2558393a9e4c062e95",
+        "dataset_key": "uk-west-yorkshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:35:37.526896Z",
+        "retrieved_at": "2026-09-23T07:04:16.953419Z",
+        "row_count": 215121,
+        "source_key": "osm_geofabrik_west_yorkshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "1db9d410dab512918fbbe199733ccd6e3e3b408820d154647ab212e066c00c52",
+        "dataset_key": "uk-wiltshire_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:50:52.820293Z",
+        "retrieved_at": "2026-09-23T07:04:17.001069Z",
+        "row_count": 123182,
+        "source_key": "osm_geofabrik_wiltshire",
+        "source_version": "latest"
+      },
+      {
+        "checksum": "a1863a7a527a5ad0fc1701e757e634186219d7726f2667e399390859ac730051",
+        "dataset_key": "uk-worcestershire_walkable_network_v1",
+        "loaded_at": "2026-09-23T05:59:54.701842Z",
+        "retrieved_at": "2026-09-23T07:04:17.004338Z",
+        "row_count": 78231,
+        "source_key": "osm_geofabrik_worcestershire",
+        "source_version": "latest"
+      }
+    ]
+  },
+  "historical_classification_reference": "national-mapping-historical-classification-20261030.json",
+  "historical_unique_region_residual_bounds_m": {
+    "ambiguous_target_correspondence": {
+      "historical_m": 109425.06694232498,
+      "residual_lower_m": 63590.605110684526,
+      "residual_upper_m": 109425.06694232498
+    },
+    "direction_gate": {
+      "historical_m": 426477.45380055136,
+      "residual_lower_m": 380642.9919689109,
+      "residual_upper_m": 426477.45380055136
+    },
+    "finite_endpoint_or_alignment": {
+      "historical_m": 69766.9081666798,
+      "residual_lower_m": 23932.44633503935,
+      "residual_upper_m": 69766.9081666798
+    },
+    "no_admitted_source_correspondence": {
+      "historical_m": 618865.7666746903,
+      "residual_lower_m": 573031.3048430498,
+      "residual_upper_m": 618865.7666746903
+    },
+    "unadmitted_span_of_known_way": {
+      "historical_m": 101320.08351992935,
+      "residual_lower_m": 55485.6216882889,
+      "residual_upper_m": 101320.08351992935
+    },
+    "ambiguous_target_correspondence + direction_gate": {
+      "historical_m": 2.775811394365093e-05,
+      "residual_lower_m": 0,
+      "residual_upper_m": 2.775811394365093e-05
+    },
+    "ambiguous_target_correspondence + finite_endpoint_or_alignment": {
+      "historical_m": 2.469267724062197e-05,
+      "residual_lower_m": 0,
+      "residual_upper_m": 2.469267724062197e-05
+    },
+    "direction_gate + finite_endpoint_or_alignment": {
+      "historical_m": 6.471365292419192e-12,
+      "residual_lower_m": 0,
+      "residual_upper_m": 6.471365292419192e-12
+    },
+    "deferred_binding_withheld": {
+      "historical_m": 9303.583383647636,
+      "residual_lower_m": 0,
+      "residual_upper_m": 9303.583383647636
+    },
+    "unadmitted_span_of_known_way + no_admitted_source_correspondence": {
+      "historical_m": 2.1049828546892968e-13,
+      "residual_lower_m": 0,
+      "residual_upper_m": 2.1049828546892968e-13
+    },
+    "ambiguous_target_correspondence + unadmitted_span_of_known_way": {
+      "historical_m": 7.380762667708041e-13,
+      "residual_lower_m": 0,
+      "residual_upper_m": 7.380762667708041e-13
+    },
+    "numerical_projection_residual": {
+      "historical_m": 0.005395951092818195,
+      "residual_lower_m": 0,
+      "residual_upper_m": 0.005395951092818195
+    },
+    "unadmitted_span_of_known_way + finite_endpoint_or_alignment": {
+      "historical_m": 1.9273471707492718e-13,
+      "residual_lower_m": 0,
+      "residual_upper_m": 1.9273471707492718e-13
+    },
+    "deferred_binding_withheld + finite_endpoint_or_alignment": {
+      "historical_m": 1.9984014443252818e-15,
+      "residual_lower_m": 0,
+      "residual_upper_m": 1.9984014443252818e-15
+    }
+  },
+  "bounds_warning": "Bounds are not additive and are not a fresh causal classification. Total new coverage removed from old unbound regions is 45834.46183164045m.",
+  "samples": {
+    "NCN1_unadmitted_Deal.analysis.json": {
+      "target_coordinates": [
+        [
+          1.4037210386,
+          51.1948382751
+        ],
+        [
+          1.404342062,
+          51.1903977902
+        ]
+      ],
+      "comparison_only_not_identity_or_eligibility": true,
+      "top_candidates": [
+        {
+          "way": "4471747",
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "cycleway",
+            "lit": "no",
+            "segregated": "no",
+            "smoothness": "good",
+            "surface": "asphalt"
+          },
+          "min_sampled_target_distance_m": 7.0625438345954334,
+          "target_samples_within_10m": 25,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ]
+        },
+        {
+          "way": "77611523",
+          "tags": {
+            "access": "private",
+            "highway": "residential",
+            "lanes": "1",
+            "maxspeed": "20 mph",
+            "name": "Wellington Parade",
+            "surface": "gravel"
+          },
+          "min_sampled_target_distance_m": 10.54736742717545,
+          "target_samples_within_10m": 0,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": []
+        },
+        {
+          "way": "84079709",
+          "tags": {
+            "highway": "residential",
+            "lit": "no",
+            "maxspeed": "10 mph",
+            "name": "Cecil Road",
+            "surface": "gravel"
+          },
+          "min_sampled_target_distance_m": 10.62673656530724,
+          "target_samples_within_10m": 0,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": []
+        }
+      ]
+    },
+    "NCN66_direction.analysis.json": {
+      "target_coordinates": [
+        [
+          -1.7540549428,
+          53.7925165755
+        ],
+        [
+          -1.7537186154,
+          53.7920727269
+        ]
+      ],
+      "comparison_only_not_identity_or_eligibility": true,
+      "top_candidates": [
+        {
+          "way": "159311690",
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "path",
+            "segregated": "no"
+          },
+          "min_sampled_target_distance_m": 0.048838031280881475,
+          "target_samples_within_10m": 101,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": [
+            {
+              "id": "17883",
+              "network": "ncn",
+              "ref": "66"
+            }
+          ]
+        },
+        {
+          "way": "200365701",
+          "tags": {
+            "highway": "footway"
+          },
+          "min_sampled_target_distance_m": 5.19438539931938,
+          "target_samples_within_10m": 34,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": []
+        },
+        {
+          "way": "200365698",
+          "tags": {
+            "bicycle": "yes",
+            "highway": "pedestrian"
+          },
+          "min_sampled_target_distance_m": 4.536335664708163,
+          "target_samples_within_10m": 11,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": []
+        }
+      ]
+    },
+    "NCN6_no_admitted.analysis.json": {
+      "target_coordinates": [
+        [
+          -2.9243489714,
+          54.6523350266
+        ],
+        [
+          -2.9231262017,
+          54.6430029324
+        ]
+      ],
+      "comparison_only_not_identity_or_eligibility": true,
+      "top_candidates": [
+        {
+          "way": "23385711",
+          "tags": {
+            "cycleway:both": "no",
+            "highway": "tertiary",
+            "lane_markings": "no",
+            "lit": "no",
+            "maxspeed": "60 mph",
+            "maxspeed:type": "GB:nsl_single",
+            "ncn_name": "C2C",
+            "surface": "asphalt"
+          },
+          "min_sampled_target_distance_m": 0.004712335260882379,
+          "target_samples_within_10m": 101,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": [
+            {
+              "id": "11017",
+              "network": "ncn",
+              "ref": "7"
+            }
+          ]
+        },
+        {
+          "way": "796942617",
+          "tags": {
+            "highway": "service"
+          },
+          "min_sampled_target_distance_m": 6.891698430020118,
+          "target_samples_within_10m": 4,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": []
+        },
+        {
+          "way": "36882744",
+          "tags": {
+            "cycleway:both": "no",
+            "highway": "tertiary",
+            "lanes": "2",
+            "lit": "no",
+            "maxspeed": "60 mph",
+            "maxspeed:type": "GB:nsl_single",
+            "old_ref": "A594, A66",
+            "shoulder": "no",
+            "sidewalk": "no",
+            "surface": "asphalt"
+          },
+          "min_sampled_target_distance_m": 0.09846324570641661,
+          "target_samples_within_10m": 2,
+          "target_sample_count": 101,
+          "bicycle_relation_memberships": [
+            {
+              "id": "11017",
+              "network": "ncn",
+              "ref": "7"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "captures": {
+    "1050757473.json": {
+      "sha256": "0df3b93f3ee8544b49e02bcb3ee6ae550c5e717756a7b4b2b48e255747b70cfc",
+      "bytes": 1221,
+      "way": {
+        "type": "way",
+        "id": 1050757473,
+        "timestamp": "2022-09-09T00:46:50Z",
+        "version": 2,
+        "changeset": 125962273,
+        "user": "MacLondon",
+        "uid": 322039,
+        "nodes": [
+          9655853597,
+          1349538585,
+          283886
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "cycleway:surface": "asphalt",
+          "foot": "designated",
+          "footway:surface": "asphalt",
+          "highway": "cycleway",
+          "lit": "yes",
+          "name": "Mudlarks Boulevard",
+          "oneway": "no",
+          "segregated": "yes",
+          "surface": "asphalt"
+        }
+      },
+      "coordinates": [
+        [
+          0.0147904,
+          51.4962583
+        ],
+        [
+          0.0152153,
+          51.4960612
+        ],
+        [
+          0.0156588,
+          51.4958706
+        ]
+      ],
+      "url": "https://api.openstreetmap.org/api/0.6/way/1050757473/full.json"
+    },
+    "1289002662.json": {
+      "sha256": "bdd50ffad451710dbfde05c97b4e7fec74d6fbb92b6e8e1d7876f7d5a252abf4",
+      "bytes": 1429,
+      "way": {
+        "type": "way",
+        "id": 1289002662,
+        "timestamp": "2026-10-07T16:15:07Z",
+        "version": 2,
+        "changeset": 190157057,
+        "user": "Adam Edwards",
+        "uid": 953779,
+        "nodes": [
+          6925348794,
+          6925348793,
+          6925348792
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "crossing": "traffic_signals",
+          "crossing:island": "no",
+          "crossing:markings": "dots",
+          "crossing_ref": "toucan",
+          "cycleway": "crossing",
+          "foot": "designated",
+          "highway": "cycleway",
+          "note": "Proposed to become part of NCN Route 90",
+          "surface": "asphalt",
+          "tactile_paving": "yes"
+        }
+      },
+      "coordinates": [
+        [
+          0.0810328,
+          50.8539893
+        ],
+        [
+          0.0810291,
+          50.8539403
+        ],
+        [
+          0.0810174,
+          50.8538732
+        ]
+      ],
+      "url": "https://api.openstreetmap.org/api/0.6/way/1289002662/full.json"
+    },
+    "31252441.json": {
+      "sha256": "0308c9a8121053a4132b191a4d00721a152140664e820a63f621138e35a887d6",
+      "bytes": 10321,
+      "way": {
+        "type": "way",
+        "id": 31252441,
+        "timestamp": "2025-10-18T17:33:48Z",
+        "version": 8,
+        "changeset": 173461025,
+        "user": "Anna_AG",
+        "uid": 20163,
+        "nodes": [
+          254391796,
+          6237855466,
+          347459658,
+          6237855467,
+          13241201088,
+          13241201089,
+          13241201087,
+          13241201086,
+          13241201085,
+          13241201084,
+          13241201083,
+          13241201082,
+          13241201081,
+          13241201080,
+          347459664,
+          13241201079,
+          13241201078,
+          13241201077,
+          13241201076,
+          13241201075,
+          13241201074,
+          13241201073,
+          13241201072,
+          13241201070,
+          13241201071,
+          13241201069,
+          13241201068,
+          13241201067,
+          347459670,
+          1259370055,
+          1259370203,
+          347459671,
+          13241201066,
+          13241201065,
+          13241201064,
+          13241201063,
+          13241201062,
+          13241201061,
+          13241201060,
+          13241201059,
+          13241201058,
+          13241201057,
+          13241201056,
+          13241201055,
+          13241201054,
+          13241201053,
+          13241201052,
+          13241201051,
+          13241201050,
+          13241201049,
+          13241201048,
+          347459683,
+          347459684,
+          347459685,
+          2418026709,
+          1259369967
+        ],
+        "tags": {
+          "highway": "unclassified",
+          "surface": "asphalt"
+        }
+      },
+      "coordinates": [
+        [
+          -3.6826247,
+          52.4765612
+        ],
+        [
+          -3.6822921,
+          52.4770464
+        ],
+        [
+          -3.6822331,
+          52.4773764
+        ],
+        [
+          -3.6822049,
+          52.4776672
+        ],
+        [
+          -3.6822385,
+          52.4778289
+        ],
+        [
+          -3.6821969,
+          52.4780331
+        ],
+        [
+          -3.682044,
+          52.4782087
+        ],
+        [
+          -3.6818455,
+          52.4783362
+        ],
+        [
+          -3.6814606,
+          52.4788205
+        ],
+        [
+          -3.6810905,
+          52.4792093
+        ],
+        [
+          -3.6810422,
+          52.4794805
+        ],
+        [
+          -3.6810154,
+          52.4797321
+        ],
+        [
+          -3.6810905,
+          52.4799085
+        ],
+        [
+          -3.6812447,
+          52.4800335
+        ],
+        [
+          -3.6814392,
+          52.4801315
+        ],
+        [
+          -3.6815116,
+          52.4801985
+        ],
+        [
+          -3.6815397,
+          52.4803193
+        ],
+        [
+          -3.6813962,
+          52.4804541
+        ],
+        [
+          -3.6812273,
+          52.480566
+        ],
+        [
+          -3.6810744,
+          52.480811
+        ],
+        [
+          -3.6809658,
+          52.4810079
+        ],
+        [
+          -3.6807807,
+          52.4811696
+        ],
+        [
+          -3.6805688,
+          52.4812978
+        ],
+        [
+          -3.6803287,
+          52.4813942
+        ],
+        [
+          -3.6799693,
+          52.4814669
+        ],
+        [
+          -3.6796394,
+          52.4815829
+        ],
+        [
+          -3.6790895,
+          52.4818761
+        ],
+        [
+          -3.6788066,
+          52.4820517
+        ],
+        [
+          -3.6786939,
+          52.4821399
+        ],
+        [
+          -3.6785531,
+          52.4823784
+        ],
+        [
+          -3.6784016,
+          52.4826446
+        ],
+        [
+          -3.6784136,
+          52.4827337
+        ],
+        [
+          -3.6785182,
+          52.48275
+        ],
+        [
+          -3.6787328,
+          52.4827329
+        ],
+        [
+          -3.6789903,
+          52.4827206
+        ],
+        [
+          -3.6791499,
+          52.482781
+        ],
+        [
+          -3.6792907,
+          52.4829607
+        ],
+        [
+          -3.6793685,
+          52.4833209
+        ],
+        [
+          -3.6791003,
+          52.4836933
+        ],
+        [
+          -3.6785451,
+          52.4841082
+        ],
+        [
+          -3.6779845,
+          52.4847044
+        ],
+        [
+          -3.6778852,
+          52.4849282
+        ],
+        [
+          -3.6779174,
+          52.4851993
+        ],
+        [
+          -3.6780354,
+          52.485379
+        ],
+        [
+          -3.6782581,
+          52.4855146
+        ],
+        [
+          -3.678419,
+          52.4856289
+        ],
+        [
+          -3.678537,
+          52.4858837
+        ],
+        [
+          -3.6786309,
+          52.4862398
+        ],
+        [
+          -3.6787677,
+          52.4864113
+        ],
+        [
+          -3.6790144,
+          52.4865877
+        ],
+        [
+          -3.6793792,
+          52.4867183
+        ],
+        [
+          -3.6796401,
+          52.4867647
+        ],
+        [
+          -3.6802517,
+          52.4868464
+        ],
+        [
+          -3.6808364,
+          52.4869787
+        ],
+        [
+          -3.6808767,
+          52.4870718
+        ],
+        [
+          -3.6809464,
+          52.4871682
+        ]
+      ],
+      "url": "https://api.openstreetmap.org/api/0.6/way/31252441/full.json"
+    },
+    "4265b78e4e9048aab0f36085414a8849.json": {
+      "sha256": "b8910ce8440741ad5e0639c79803ed448293d88f9a453b9d7b56aecfccbdee77",
+      "bytes": 7515,
+      "metadata": {
+        "id": "4265b78e4e9048aab0f36085414a8849",
+        "name": null,
+        "title": "National Cycle Network WFS",
+        "owner": "SustransGIS_Public",
+        "url": "https://dservices5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/services/National_Cycle_Network/WFSServer",
+        "licenseInfo": "<div><b><span style='background-image:initial; background-position:initial; background-size:initial; background-repeat:initial; background-attachment:initial; background-origin:initial; background-clip:initial;'>Sustrans\u00a0</span><span style='background-image:initial; background-position:initial; background-size:initial; background-repeat:initial; background-attachment:initial; background-origin:initial; background-clip:initial;'>National Cycle Network data\u00a0<font size='3'>is licensed under the\u00a0</font><a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/' rel='nofollow ugc' target='_blank'>Open Government Licence</a>\u00a0</span></b></div><div><b><br /></b></div><div><b>(https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)</b></div><div><div><br /><p style='text-align:center;'></p><p></p><p><br /></p></div></div>",
+        "copyrightText": null,
+        "editingInfo": null,
+        "extent": [
+          [
+            -8.322951366924038,
+            49.99915364334038
+          ],
+          [
+            2.3074381125762504,
+            57.91811509144518
+          ]
+        ]
+      }
+    },
+    "44807950.json": {
+      "sha256": "70dccd942536dc3a7d6affac0288945a8a6f317f94f1e2a199cb68bbb35f56e1",
+      "bytes": 7213,
+      "way": {
+        "type": "way",
+        "id": 44807950,
+        "timestamp": "2024-12-18T01:26:39Z",
+        "version": 13,
+        "changeset": 160329242,
+        "user": "Dan200",
+        "uid": 20475686,
+        "nodes": [
+          568123110,
+          568123111,
+          1459319987,
+          1459181446,
+          568123112,
+          568123113,
+          2547191243,
+          1459181425,
+          2547191242,
+          568123114,
+          2547191241,
+          568123115,
+          2547191240,
+          568123116,
+          2547191234,
+          568123117,
+          2547191232,
+          2547191231,
+          2547203079,
+          2547191230,
+          568123118,
+          2547191229,
+          2547191228,
+          2547191227,
+          568123119,
+          7504397284,
+          2547191220,
+          568123120,
+          2547191213,
+          568123121,
+          2547191210,
+          568123122,
+          2547191209,
+          568123123,
+          2547191208,
+          12428682170,
+          12428682161,
+          1815400833
+        ],
+        "tags": {
+          "bicycle": "yes",
+          "highway": "footway",
+          "surface": "unpaved",
+          "towpath": "yes"
+        }
+      },
+      "coordinates": [
+        [
+          -2.1664558,
+          52.6290006
+        ],
+        [
+          -2.1666372,
+          52.6285685
+        ],
+        [
+          -2.1666501,
+          52.6285304
+        ],
+        [
+          -2.1666858,
+          52.6284738
+        ],
+        [
+          -2.1666942,
+          52.6282802
+        ],
+        [
+          -2.1666544,
+          52.6282031
+        ],
+        [
+          -2.1666612,
+          52.6279868
+        ],
+        [
+          -2.1666449,
+          52.6277938
+        ],
+        [
+          -2.1665948,
+          52.6275547
+        ],
+        [
+          -2.1665093,
+          52.6273276
+        ],
+        [
+          -2.1664266,
+          52.6271378
+        ],
+        [
+          -2.1663031,
+          52.6269174
+        ],
+        [
+          -2.1659058,
+          52.6263069
+        ],
+        [
+          -2.1654832,
+          52.6256764
+        ],
+        [
+          -2.1651961,
+          52.6252675
+        ],
+        [
+          -2.1648562,
+          52.6248794
+        ],
+        [
+          -2.1644018,
+          52.6244129
+        ],
+        [
+          -2.1642232,
+          52.6242336
+        ],
+        [
+          -2.1641514,
+          52.6241691
+        ],
+        [
+          -2.1640378,
+          52.6240669
+        ],
+        [
+          -2.1638874,
+          52.6239321
+        ],
+        [
+          -2.1636395,
+          52.62375
+        ],
+        [
+          -2.1633923,
+          52.6235819
+        ],
+        [
+          -2.1631244,
+          52.623411
+        ],
+        [
+          -2.1628608,
+          52.6232573
+        ],
+        [
+          -2.1627819,
+          52.6232174
+        ],
+        [
+          -2.1626071,
+          52.6231289
+        ],
+        [
+          -2.1623509,
+          52.6230115
+        ],
+        [
+          -2.162005,
+          52.6228773
+        ],
+        [
+          -2.1616626,
+          52.6227596
+        ],
+        [
+          -2.161245,
+          52.6226286
+        ],
+        [
+          -2.1608262,
+          52.6225194
+        ],
+        [
+          -2.1601874,
+          52.6223776
+        ],
+        [
+          -2.1595332,
+          52.6222713
+        ],
+        [
+          -2.1591734,
+          52.6222023
+        ],
+        [
+          -2.1591709,
+          52.6222018
+        ],
+        [
+          -2.1590227,
+          52.6221959
+        ],
+        [
+          -2.1589416,
+          52.6222015
+        ]
+      ],
+      "url": "https://api.openstreetmap.org/api/0.6/way/44807950/full.json"
+    },
+    "59306268.json": {
+      "sha256": "d135d9d963c34b311095382302663e613f6ac3493dd74f8c5b4134b51221f85f",
+      "bytes": 6487,
+      "way": {
+        "type": "way",
+        "id": 59306268,
+        "timestamp": "2023-09-12T23:09:04Z",
+        "version": 12,
+        "changeset": 141183929,
+        "user": "jonnymccullagh",
+        "uid": 10431956,
+        "nodes": [
+          735553268,
+          735553387,
+          735553448,
+          854001035,
+          3252817741,
+          735553228,
+          5691425298,
+          735553487,
+          735553223,
+          735553529,
+          11034771297,
+          11034771296,
+          735553383,
+          11034771295,
+          735553181,
+          11034771294,
+          735553159,
+          11034771289,
+          11034771288,
+          735553205,
+          735553234,
+          735553499,
+          735553534,
+          735553359,
+          11034716203,
+          11034716204,
+          11034716202,
+          735553292
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Newry Canal Towpath",
+          "name:ga": "Cos\u00e1n Tarraingtha an I\u00fair",
+          "oneway": "no",
+          "segregated": "no",
+          "surface": "asphalt"
+        }
+      },
+      "coordinates": [
+        [
+          -6.3675359,
+          54.3064421
+        ],
+        [
+          -6.3677499,
+          54.3067505
+        ],
+        [
+          -6.3686063,
+          54.3079129
+        ],
+        [
+          -6.3685185,
+          54.3081177
+        ],
+        [
+          -6.3672173,
+          54.3096013
+        ],
+        [
+          -6.3663494,
+          54.3106557
+        ],
+        [
+          -6.3663227,
+          54.3108159
+        ],
+        [
+          -6.3661436,
+          54.3128707
+        ],
+        [
+          -6.3659959,
+          54.3132402
+        ],
+        [
+          -6.364745,
+          54.3142181
+        ],
+        [
+          -6.3644272,
+          54.3144769
+        ],
+        [
+          -6.3643079,
+          54.3145213
+        ],
+        [
+          -6.3637533,
+          54.3149061
+        ],
+        [
+          -6.3636664,
+          54.3149904
+        ],
+        [
+          -6.3635585,
+          54.3152066
+        ],
+        [
+          -6.3635507,
+          54.3152945
+        ],
+        [
+          -6.3646614,
+          54.3206556
+        ],
+        [
+          -6.3645924,
+          54.321954
+        ],
+        [
+          -6.3644235,
+          54.323877
+        ],
+        [
+          -6.3642436,
+          54.3257461
+        ],
+        [
+          -6.3648428,
+          54.3270033
+        ],
+        [
+          -6.3659765,
+          54.3286466
+        ],
+        [
+          -6.3660462,
+          54.3290408
+        ],
+        [
+          -6.3658795,
+          54.3297252
+        ],
+        [
+          -6.3655382,
+          54.330693
+        ],
+        [
+          -6.3655118,
+          54.3307501
+        ],
+        [
+          -6.3654975,
+          54.3307811
+        ],
+        [
+          -6.3654881,
+          54.3308069
+        ]
+      ],
+      "url": "https://api.openstreetmap.org/api/0.6/way/59306268/full.json"
+    },
+    "NCN1_unadmitted_Deal.analysis.json": {
+      "sha256": "729182868443d9d3ff9e5f8bda7d369523c379fbdd28c1a02fe3655da6a0dcc8",
+      "bytes": 1548
+    },
+    "NCN1_unadmitted_Deal.map-url.txt": {
+      "sha256": "a3376e1ff130a4c0031440fd7bc11eb8179efeb86639883c2fc28779f9eb6751",
+      "bytes": 112,
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=1.4031200000000001,51.190099999999994,1.4049399999999999,51.19514"
+    },
+    "NCN1_unadmitted_Deal.osm": {
+      "sha256": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+      "bytes": 162280,
+      "osm_generator": "openstreetmap-cgimap 2.1.0 (3251226 spike-08.openstreetmap.org)",
+      "base_timestamp": null
+    },
+    "NCN66_direction.analysis.json": {
+      "sha256": "302598fd95814599a91db5f5077408ffd22d5a646965f2a502d7f0782688294a",
+      "bytes": 1239
+    },
+    "NCN66_direction.map-url.txt": {
+      "sha256": "3109ab8eef6926ba200090b3dcd9479697fc0951fcc9c0fb95a81c0fae5c7649",
+      "bytes": 92,
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-1.75465,53.79177,-1.75312,53.792820000000006"
+    },
+    "NCN66_direction.osm": {
+      "sha256": "05c04eabc1483995d435866117d02d21d24b53b5140362d292c5a5d7bd0cd6be",
+      "bytes": 147284,
+      "osm_generator": "openstreetmap-cgimap 2.1.0 (3291760 spike-08.openstreetmap.org)",
+      "base_timestamp": null
+    },
+    "NCN6_no_admitted.analysis.json": {
+      "sha256": "fe4dcbed326b34de0596551b8c044da3b1cf1d9e1dcb65b95bb73b54f4264015",
+      "bytes": 1695
+    },
+    "NCN6_no_admitted.map-url.txt": {
+      "sha256": "fc82477af60d21e53d99e9a15f1c80aee126e199db8dcb2b2a7cff9ff69f6af7",
+      "bytes": 91,
+      "url": "https://api.openstreetmap.org/api/0.6/map?bbox=-2.92495,54.6427,-2.92253,54.652640000000005"
+    },
+    "NCN6_no_admitted.osm": {
+      "sha256": "24608ff03f2df2d6baee1c58c7819c2621c6ab26589171e689b477e28320afdd",
+      "bytes": 393263,
+      "osm_generator": "openstreetmap-cgimap 2.1.0 (3480174 spike-08.openstreetmap.org)",
+      "base_timestamp": null
+    },
+    "db4ddf6b02394897ad2ef8137685590a.json": {
+      "sha256": "6236cd13aefd1e63192f5b9bc3399d9c0851a3248164b45ace42ec86d6fe7346",
+      "bytes": 2771
+    },
+    "live_ncn_manifest.json": {
+      "sha256": "32a40b9b729abffbeec4ae5d19d99e73294a9c440b04718a20651473a36a92c0",
+      "bytes": 1313,
+      "metadata": {
+        "schema_version": 2,
+        "scope": "national-verified-open-checkpoint",
+        "supported_identities": 219,
+        "source_ways": 62399,
+        "held_route_keys": [
+          "NCN:207",
+          "NCN:253",
+          "NCN:274",
+          "NCN:323",
+          "NCN:410",
+          "NCN:422",
+          "NCN:524",
+          "NCN:626",
+          "NCN:689",
+          "NCN:776",
+          "NCN:820",
+          "RCN:11",
+          "RCN:12",
+          "RCN:15",
+          "RCN:16",
+          "RCN:17",
+          "RCN:21",
+          "RCN:30",
+          "RCN:31",
+          "RCN:32",
+          "RCN:40",
+          "RCN:41",
+          "RCN:50",
+          "RCN:51",
+          "RCN:55",
+          "RCN:61",
+          "RCN:67",
+          "RCN:71",
+          "RCN:80",
+          "RCN:81",
+          "RCN:82",
+          "RCN:83",
+          "RCN:85",
+          "RCN:89"
+        ],
+        "network_length_m": 17435132.494005967,
+        "whole_published_route_ready": false,
+        "attribution": "\u00a9 OpenStreetMap contributors (ODbL 1.0); official open scope: Walk Wheel Cycle Trust (OGL 3.0).",
+        "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+        "sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+        "database_bytes": 243724288,
+        "revision": 1,
+        "compressed_sha256": "91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91",
+        "compressed_bytes": 142796162,
+        "filename": "collections/published/ncn/973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093/catalogue.db.gz"
+      }
+    },
+    "live_settlement_manifest.json": {
+      "sha256": "8dc2a62941e79f627badfed93077caede2aa8077d982c2f2bf24dc0aff772da9",
+      "bytes": 788222,
+      "inventory_count": 9072,
+      "note": "Full inventory list intentionally omitted; public response hash and size preserved."
+    },
+    "official_ncn_layer_metadata.json": {
+      "sha256": "708ccbad64386fe7d5926ec91181e6446a51812ec052c39c9b1dc54036b9b181",
+      "bytes": 22324,
+      "metadata": {
+        "id": 0,
+        "name": "National_Cycle_Network_Public",
+        "title": null,
+        "owner": null,
+        "url": null,
+        "licenseInfo": null,
+        "description": "",
+        "copyrightText": "",
+        "editingInfo": {
+          "lastEditDate": 1792886822537,
+          "schemaLastEditDate": 1792886584731,
+          "dataLastEditDate": 1792886822537
+        },
+        "extent": {
+          "xmin": -851603.6467455677,
+          "ymin": 6457144.396961002,
+          "xmax": 196208.77141733404,
+          "ymax": 8176707.898289103,
+          "spatialReference": {
+            "wkid": 102100,
+            "latestWkid": 3857
+          }
+        }
+      }
+    }
+  },
+  "version_mismatch_1289002662": {
+    "current_osm_equals_pinned_fixture": true,
+    "live_equals_current": false,
+    "max_corresponding_vertex_displacement_m": 1.5051875383180653,
+    "warning": "Diagnostic only; current API v2 dated 2026-10-07 after September reference load. Do not weaken source hash matching."
+  }
+}
