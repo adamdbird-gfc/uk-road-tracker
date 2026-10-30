@@ -1,0 +1,96 @@
+name: NCN ordinary seam candidate validation (no release)
+on:
+  pull_request:
+    paths:
+      - 'scripts/ncn_trial/open_completion.py'
+      - 'scripts/ncn_trial/completion_checkpoint.py'
+      - 'scripts/ncn_trial/test_ordinary_seams.py'
+      - 'scripts/validate_ncn_ordinary_seams.py'
+      - 'scripts/reproduce_ncn_ordinary_seams.py'
+      - 'scripts/pack_ncn_ordinary_seam_delta.py'
+      - 'scripts/audit_ncn_ordinary_seam_bindings.py'
+      - '.github/ncn-reference/ordinary-seams/**'
+      - 'docs/data-trials/ncn-ordinary-seam-validation-2026-10-30.json'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/NcnOrdinarySeamCandidateTest.java'
+      - '.github/workflows/ncn-ordinary-seam-validation.yml'
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-trial.txt
+      - name: Reproduce focused compiler regressions
+        run: |
+          python -m unittest discover -s scripts/ncn_trial -t . -p 'test_*.py' -q
+          python -m unittest scripts.test_ncn_binding_attainability -q
+          python -m unittest discover -s tests -p 'test_cycling_path_evidence.py' -q
+          python scripts/test_ncn_reference.py -q
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify immutable shipped inputs and reproduce candidate
+        run: |
+          python - <<'PY'
+          import hashlib,json,pathlib
+          from scripts.ncn_reference import verify_database
+          manifest=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          verify_database(pathlib.Path('.cache/ncn/catalogue.db'),manifest)
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          data=pathlib.Path('android-prototype/app/src/main/assets/historic-counties/boundaries.bin')
+          assert hashlib.file_digest(data.open('rb'),'sha256').hexdigest()==county['data_sha256']
+          PY
+          python -m scripts.reproduce_ncn_ordinary_seams --database .cache/ncn/catalogue.db --output .cache/ncn/seam-candidate/ncn-national.db
+      - name: Select candidate only in disposable test checkout
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          from scripts.finalize_ncn_android import pack
+          report_path=pathlib.Path('docs/data-trials/ncn-ordinary-seam-validation-2026-10-30.json')
+          report=json.loads(report_path.read_text())
+          folder=pathlib.Path('.cache/ncn/seam-candidate')
+          (folder/'manifest.json').write_text(json.dumps(report['candidate_manifest']))
+          pack(folder)
+          manifest=json.loads((folder/'manifest.json').read_text())
+          report['candidate_manifest']=manifest;report['candidate_sha256']=manifest['sha256']
+          report_path.write_text(json.dumps(report))
+          pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').write_text(json.dumps(manifest))
+          PY
+      - name: Validate candidate and every target-to-network mapping
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/seam-candidate/ncn-national.db
+        run: python scripts/test_ncn_national.py -v
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.10'}
+      - name: Existing Android 0.25.220 consumer and seam-specific regressions
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/seam-candidate/ncn-national.db
+          NCN_ATTAINABILITY_REPORT: ${{ github.workspace }}/docs/data-trials/ncn-ordinary-seam-validation-2026-10-30.json
+        run: |
+          gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests 'com.roadprints.capture.Ncn*' --tests 'com.roadprints.capture.AchievementCelebrationsTest'
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          suites=[ET.parse(p).getroot() for p in Path('android-prototype/app/build/test-results/testDebugUnitTest').glob('TEST-*.xml')]
+          totals={k:sum(int(s.get(k,0)) for s in suites) for k in ('tests','failures','errors','skipped')}
+          assert totals['tests']>=43,totals
+          assert totals['failures']==totals['errors']==totals['skipped']==0,totals
+          print('Candidate Android totals:',totals)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-ordinary-seam-candidate-tests
+          path: android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 7

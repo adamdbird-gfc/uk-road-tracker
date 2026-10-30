@@ -5,6 +5,7 @@ does not match GPS, create route membership, or colour the publisher's line as
 travelled. Ambiguous correspondence stays unbound in a fixed denominator.
 """
 from dataclasses import asdict, replace
+from collections import Counter
 import gzip
 import hashlib
 import json
@@ -28,6 +29,59 @@ POLICY = {'name': 'unique_monotone_open_edge_correspondence_v1',
           'maximum_offset_m': 10.0, 'maximum_angle_degrees': 15.0,
           'ambiguous_intervals': 'unbound', 'endpoint_extrapolation': False,
           'grants_source_membership': False, 'changes_travelled_geometry': False}
+
+# Explicit opt-in: old checkpoint compilation/readers retain their exact policy.
+SEAM_POLICY = dict(POLICY, name='bracketed_ordinary_target_seams_v2',
+                   ordinary_seams='degree_two_interior_source_partition')
+
+
+def ordinary_seam_partition(first, last, active, target_edges, degrees, a, z):
+    """Partition one ambiguous window; never copy its evidence to both edges.
+
+    Both candidates already passed edge_interval's unchanged finite 10 m /
+    15 degree gates. Only their overlap is remapped to an interior seam anchor;
+    unique correspondence outside this window is left byte-for-byte unchanged.
+    """
+    if len(active) != 2:
+        return None
+    nodes = [set(map(tuple, target_edges[c[0]][1].coords)) for c in active]
+    shared = nodes[0] & nodes[1]
+    if len(shared) != 1:
+        return None
+    vertex = next(iter(shared))
+    if degrees[vertex] != 2:
+        return None
+    ends = [next(iter(n - {vertex})) for n in nodes]
+    vectors = [(p[0]-vertex[0], p[1]-vertex[1]) for p in ends]
+    norms = [math.hypot(*v) for v in vectors]
+    if min(norms) <= 1e-7:
+        return None
+    cosine = sum(x*y for x, y in zip(*vectors)) / (norms[0]*norms[1])
+    if cosine > -math.cos(math.radians(2*POLICY['maximum_angle_degrees'])) + 1e-12:
+        return None  # Genuine returns/hairpins are not ordinary seams.
+    dx, dy = last[0]-first[0], last[1]-first[1]
+    length = math.hypot(dx, dy)
+    if length <= 1e-7:
+        return None
+    station = ((vertex[0]-first[0])*dx + (vertex[1]-first[1])*dy) / length
+    distance = abs((vertex[0]-first[0])*dy - (vertex[1]-first[1])*dx) / length
+    if not a+1e-7 < station < z-1e-7 or distance > POLICY['maximum_offset_m']:
+        return None  # No source endpoint extrapolation or one-sided support.
+    incoming = [i for i, v in enumerate(vectors) if v[0]*dx+v[1]*dy < 0]
+    outgoing = [i for i, v in enumerate(vectors) if v[0]*dx+v[1]*dy > 0]
+    if len(incoming) != 1 or len(outgoing) != 1:
+        return None
+    result = []
+    for index, low, high in ((incoming[0], a, station), (outgoing[0], station, z)):
+        i, lo, hi, ta, tz = active[index]
+        line = target_edges[i][1]
+        anchor = 0. if tuple(line.coords[0]) == vertex else line.length
+        at = lambda value: ta + (value-lo)/(hi-lo)*(tz-ta)
+        start, end = (at(low), anchor) if index == incoming[0] else (anchor, at(high))
+        if abs(end-start) <= 1e-7 or (end-start)*(tz-ta) <= 0:
+            return None
+        result.append((i, low, high, start, end))
+    return result
 
 
 def sha(raw):
@@ -67,10 +121,11 @@ def edge_interval(first, last, target):
     return lo, hi, max(0., min(total, origin+lo*slope)), max(0., min(total, origin+hi*slope))
 
 
-def bind_edges(reference, paths, target_edges, scope):
+def bind_edges(reference, paths, target_edges, scope, *, ordinary_seams=False):
     """Keep only uniquely corresponding physical intervals, per source section."""
     logical = [LogicalSection(key, line.length, (scope,)) for key, line in target_edges]
     tree = STRtree([line for _, line in target_edges])
+    degrees = Counter(tuple(p) for _, line in target_edges for p in line.coords)
     modes = {}
     for path in paths:
         if path.target_geometry != 'exact_source_spans':
@@ -94,17 +149,27 @@ def bind_edges(reference, paths, target_edges, scope):
                 if interval:
                     candidates.append((i, *interval))
             cuts = sorted({0., length, *(x for c in candidates for x in c[1:3])})
+            # Each source station belongs to at most one target. Add the seam
+            # station to this local partition, retaining all old unique spans.
+            partitions = []
             for a, z in zip(cuts, cuts[1:]):
                 if z-a <= 1e-7:
                     continue
                 mid = (a+z)/2
                 active = [c for c in candidates if c[1] < mid < c[2]]
+                seam = (ordinary_seam_partition(first, last, active, target_edges, degrees, a, z)
+                        if ordinary_seams and len(active) == 2 else None)
+                if seam:
+                    partitions.extend((lo, hi, (i, lo, hi, ta, tz)) for i, lo, hi, ta, tz in seam)
+                    continue
                 if len(active) != 1:
                     unbound += z-a
                     if len(active) > 1:
                         ambiguous += z-a
                     continue
-                i, lo, hi, ta, tz = active[0]
+                partitions.append((a, z, active[0]))
+            for a, z, candidate in partitions:
+                i, lo, hi, ta, tz = candidate
                 def at(value):
                     return max(0.,min(target_edges[i][1].length,ta+(value-lo)/(hi-lo)*(tz-ta)))
                 first=max(0.,min(section.line.length,offset+a))
@@ -120,15 +185,16 @@ def bind_edges(reference, paths, target_edges, scope):
                                 'unbound_source_occurrence_m': unbound}
 
 
-def build_completion(folder, expected_manifest_sha256):
+def build_completion(folder, expected_manifest_sha256, *, ordinary_seams=False):
     """Consume a trusted reviewed catalogue; preserve every open target edge."""
     folder = Path(folder)
     source, metadata, paths, extent = read_catalogue(folder, expected_manifest_sha256)
     provenance = json.loads(gzip.decompress((folder/'associations.json.gz').read_bytes()))['provenance']
-    return build_verified_completion(source,metadata,paths,extent,expected_manifest_sha256,provenance)
+    return build_verified_completion(source,metadata,paths,extent,expected_manifest_sha256,provenance,
+                                     ordinary_seams=ordinary_seams)
 
 
-def build_verified_completion(source,metadata,paths,extent,input_sha256,provenance,deferred_way_ids=()):
+def build_verified_completion(source,metadata,paths,extent,input_sha256,provenance,deferred_way_ids=(), *, ordinary_seams=False):
     """Internal compiler boundary: callers must validate admitted inputs first.
 
     Existing either-arc source contracts are not reinterpreted as ordinary
@@ -150,7 +216,8 @@ def build_verified_completion(source,metadata,paths,extent,input_sha256,provenan
             if line.length > 1e-7:
                 # Full precision; never coalesce distinct nearby paths.
                 edges['open-edge:'+digest((a, z))] = line
-    logical, bindings, diagnostics = bind_edges(source, paths, sorted(edges.items()), scope)
+    logical, bindings, diagnostics = bind_edges(source, paths, sorted(edges.items()), scope,
+                                               ordinary_seams=ordinary_seams)
     deferred=sorted(set(str(w)for w in deferred_way_ids)&{p.way_id for p in paths})
     if deferred:
         blocked={key for p in paths if p.way_id in deferred for key in p.section_keys}
@@ -167,7 +234,7 @@ def build_verified_completion(source,metadata,paths,extent,input_sha256,provenan
         raise ValueError('Complete open target denominator changed')
     physical = [{'key': s.key, 'coordinates': list(s.line.coords), 'routes': list(s.routes)}
                 for s in sorted(source.sections.values(), key=lambda s:s.key)]
-    payload = {'schema_version': 1, 'route_key': key, 'scope': scope, 'policy': POLICY,
+    payload = {'schema_version': 1, 'route_key': key, 'scope': scope, 'policy': SEAM_POLICY if ordinary_seams else POLICY,
         'catalogue_manifest_sha256': input_sha256,
         'source_reference_version': source.version, 'projection_origin': metadata['projection_origin'],
         'physical_sections_metric': physical,
@@ -196,12 +263,12 @@ def build_verified_completion(source,metadata,paths,extent,input_sha256,provenan
     return ledger, bundle, payload
 
 
-def read_completion(raw, bundle, expected_plan_sha256, expected_bundle_sha256):
+def read_completion(raw, bundle, expected_plan_sha256, expected_bundle_sha256, *, ordinary_seams=False):
     """Portable consumer; the two hashes must come from a trusted checkpoint."""
     if sha(raw)!=expected_plan_sha256 or sha(bundle)!=expected_bundle_sha256:
         raise ValueError('Open completion checksum differs')
     plan = json.loads(raw); unsigned = {k:v for k,v in plan.items() if k!='reference_version'}
-    if (plan.get('schema_version')!=1 or plan.get('policy')!=POLICY
+    if (plan.get('schema_version')!=1 or plan.get('policy')!=(SEAM_POLICY if ordinary_seams else POLICY)
             or plan.get('reference_version')!='open-completion:'+digest(unsigned)
             or plan.get('scope')!=plan.get('route_key','')+':captured-open-main'
             or plan.get('whole_published_route_ready') is not False

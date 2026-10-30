@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-30",
+  "implementation_commit": "c0566c6421a2d2b155f738e0411a526143bc385c",
+  "tree": "e3e348843df25ad04a8280d75c5e9a808a9ebd94",
+  "base_main": "cc088b828982a3ff9399e2bd930978ce02ecba4a",
+  "files": {
+    "docs/ncn-ordinary-seam-checkpoint-20261030.md": "46f2382f56ebae63998501051461d4fbc401e0e7",
+    "scripts/ncn_trial/completion_checkpoint.py": "1ab55388a531485d0ffeff381bfcb052cec368af",
+    "scripts/ncn_trial/open_completion.py": "191bbac2ed348fc5c3b31c330891ba041fbbd807",
+    "scripts/ncn_trial/test_ordinary_seams.py": "4f029bb851d168199dd8c35547b6b5a929c8f712",
+    "tests/fixtures/ncn-gap-seams/NOTICE.md": "b6ee72a7ef03d49590c041af62df6ef26ae7b15c",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "17498c6072d92ae8c23fc9875cc0afc98076fa4a"
+  },
+  "tracked_implementation_files_clean": true,
+  "provenance": {
+    "input_files_verified": 1147,
+    "route_manifests_read_back": 219,
+    "exact_route_way_rows_compared": 62487,
+    "identical_fields": [
+      "coordinates",
+      "osm_nodes",
+      "modes"
+    ],
+    "database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+    "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+    "held_identities": 34,
+    "result": "pass"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "shapely": "2.1.2"
+  },
+  "focused_tests": {
+    "ncn_trial": 333,
+    "offset_attainability": 7,
+    "cycling_evidence": 5,
+    "reference": 5,
+    "total": 350,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "source_android_baseline": "0.25.220 (266)",
+  "installed_apk_backend_and_active_firebase_versions": "not queried; not inferred from source",
+  "research_refs": {
+    "240": "21ab3fb2951c2d6539c37a0387a7c2887e7e6fe7",
+    "241": "24428cb4ad35e563113d7a86f7edc13652dc2844"
+  }
+}

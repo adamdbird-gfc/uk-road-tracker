@@ -1,0 +1,5470 @@
+{
+  "schema_version": 1,
+  "status": "candidate_assessed_not_published",
+  "implementation_commit": "c0566c6421a2d2b155f738e0411a526143bc385c",
+  "baseline_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+  "integrated_content_sha256": "936c347468a0f14ed6d2a6d3a31765674e059d48a625c1bce96339032456a57a",
+  "candidate_sha256": "1b9f419bf82edcef1d1ae8d3a2cf475d2cb0072e9ce4aea890f00f382a0bfa38",
+  "candidate_content_sha256": "cf25e006e79782c9458895bf4b68179b7829fe3b6e7d5ded96be0ccd07929dc0",
+  "candidate_manifest": {
+    "attribution": "\u00a9 OpenStreetMap contributors (ODbL 1.0); official open scope: Walk Wheel Cycle Trust (OGL 3.0).",
+    "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+    "compressed_bytes": 145856438,
+    "compressed_sha256": "69a856bb49e55f2efbb12895f610f225c237ade1956bfc3bb6efc621f8b232d5",
+    "database_bytes": 247291904,
+    "filename": "collections/published/ncn/1b9f419bf82edcef1d1ae8d3a2cf475d2cb0072e9ce4aea890f00f382a0bfa38/catalogue.db.gz",
+    "held_route_keys": [
+      "NCN:207",
+      "NCN:253",
+      "NCN:274",
+      "NCN:323",
+      "NCN:410",
+      "NCN:422",
+      "NCN:524",
+      "NCN:626",
+      "NCN:689",
+      "NCN:776",
+      "NCN:820",
+      "RCN:11",
+      "RCN:12",
+      "RCN:15",
+      "RCN:16",
+      "RCN:17",
+      "RCN:21",
+      "RCN:30",
+      "RCN:31",
+      "RCN:32",
+      "RCN:40",
+      "RCN:41",
+      "RCN:50",
+      "RCN:51",
+      "RCN:55",
+      "RCN:61",
+      "RCN:67",
+      "RCN:71",
+      "RCN:80",
+      "RCN:81",
+      "RCN:82",
+      "RCN:83",
+      "RCN:85",
+      "RCN:89"
+    ],
+    "network_length_m": 17435132.494005967,
+    "revision": 3,
+    "schema_version": 2,
+    "scope": "national-verified-open-checkpoint",
+    "sha256": "1b9f419bf82edcef1d1ae8d3a2cf475d2cb0072e9ce4aea890f00f382a0bfa38",
+    "source_ways": 62399,
+    "supported_identities": 219,
+    "whole_published_route_ready": false
+  },
+  "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+  "input_pins_sha256": "a706b3ce8c0307c5410954045e68d938ae7f2616dc8c6e32c29b48ca5b8d0641",
+  "policy": {
+    "name": "bracketed_ordinary_target_seams_v2",
+    "maximum_offset_m": 10.0,
+    "maximum_angle_degrees": 15.0,
+    "ambiguous_intervals": "unbound",
+    "endpoint_extrapolation": false,
+    "grants_source_membership": false,
+    "changes_travelled_geometry": false,
+    "ordinary_seams": "degree_two_interior_source_partition"
+  },
+  "measurable_routes": 218,
+  "affected_routes": 217,
+  "attainable_routes": 0,
+  "newly_attainable_routes": [],
+  "before_network": {
+    "target_m": 17435132.494005967,
+    "on_foot_m": 15449071.826687733,
+    "cycling_m": 16049033.4245956,
+    "combined_m": 16099973.626061544,
+    "unbound_m": 1335158.867944423,
+    "attainable": false,
+    "combined_percent": 92.34213523525882
+  },
+  "after_network": {
+    "target_m": 17435132.494005967,
+    "on_foot_m": 15492362.935085183,
+    "cycling_m": 16094679.53682007,
+    "combined_m": 16145808.087893184,
+    "unbound_m": 1289324.4061127827,
+    "attainable": false,
+    "combined_percent": 92.60502088781922
+  },
+  "route_local_recovery_m": 45814.69779516963,
+  "unique_network_recovery_m": 45834.46183164045,
+  "route_local_remaining_deficit_m": 1288222.0231713618,
+  "legacy_plans_reproduced": 218,
+  "deferred_routes_checked": 49,
+  "added_bindings": 159711,
+  "changed_source_rows": 25577,
+  "patch_source_rows": 26711,
+  "complete_witness_checks": [
+    {
+      "route": "NCN:8",
+      "section": "31252441:47:55",
+      "complete_source_hash_verified": true,
+      "source_edge_verified": true
+    },
+    {
+      "route": "NCN:81",
+      "section": "44807950",
+      "complete_source_hash_verified": true,
+      "source_edge_verified": true
+    },
+    {
+      "route": "NCN:9",
+      "section": "59306268:4:27",
+      "complete_source_hash_verified": true,
+      "source_edge_verified": true
+    },
+    {
+      "route": "NCN:93",
+      "section": "204990559:52:56",
+      "complete_source_hash_verified": true,
+      "source_edge_verified": true
+    }
+  ],
+  "geometry_identity_and_mode_changes": 0,
+  "previous_supported_intervals_preserved": true,
+  "source_interval_nonoverlap_checked": true,
+  "deferred_mask_violations": 0,
+  "capacity_is_synthetic_not_personal_travel": true,
+  "correction_artifact_sha256": "73f8d01913094fcd69cf542cf4f1abb936224da393ebe1c6dbae2b89cc65c1fc",
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "before": {
+        "target_m": 1943972.4188039866,
+        "on_foot_m": 1764266.4141314537,
+        "cycling_m": 1798125.3915329014,
+        "combined_m": 1801243.7111433605,
+        "unbound_m": 142728.70766062615,
+        "attainable": false,
+        "combined_percent": 92.65788412016468
+      },
+      "after": {
+        "target_m": 1943972.4188039866,
+        "on_foot_m": 1768144.4646668704,
+        "cycling_m": 1802136.1924608725,
+        "combined_m": 1805264.6044685298,
+        "unbound_m": 138707.81433545682,
+        "attainable": false,
+        "combined_percent": 92.86472313116481
+      },
+      "recovery_m": 4020.893325169338,
+      "changed_source_rows": 2651,
+      "added_bindings": 14618
+    },
+    {
+      "route_key": "NCN:10",
+      "before": {
+        "target_m": 232324.24870637778,
+        "on_foot_m": 209148.05529437948,
+        "cycling_m": 210562.10207524098,
+        "combined_m": 210625.22919238114,
+        "unbound_m": 21699.019513996638,
+        "attainable": false,
+        "combined_percent": 90.6600281138019
+      },
+      "after": {
+        "target_m": 232324.24870637778,
+        "on_foot_m": 209616.56182562478,
+        "cycling_m": 211031.14634581245,
+        "combined_m": 211094.3221832612,
+        "unbound_m": 21229.926523116592,
+        "attainable": false,
+        "combined_percent": 90.86194117001193
+      },
+      "recovery_m": 469.0929908800463,
+      "changed_source_rows": 183,
+      "added_bindings": 1562
+    },
+    {
+      "route_key": "NCN:11",
+      "before": {
+        "target_m": 94198.79094601293,
+        "on_foot_m": 88011.74424076143,
+        "cycling_m": 89333.1485195352,
+        "combined_m": 89445.68473737499,
+        "unbound_m": 4753.106208637939,
+        "attainable": false,
+        "combined_percent": 94.95417493058692
+      },
+      "after": {
+        "target_m": 94198.79094601293,
+        "on_foot_m": 88199.4128855991,
+        "cycling_m": 89524.82446067691,
+        "combined_m": 89637.3606785167,
+        "unbound_m": 4561.430267496224,
+        "attainable": false,
+        "combined_percent": 95.15765518677361
+      },
+      "recovery_m": 191.67594114171516,
+      "changed_source_rows": 148,
+      "added_bindings": 708
+    },
+    {
+      "route_key": "NCN:110",
+      "before": {
+        "target_m": 6843.589006917979,
+        "on_foot_m": 6545.6244754409545,
+        "cycling_m": 6555.157805290374,
+        "combined_m": 6555.157805290374,
+        "unbound_m": 288.4312016276044,
+        "attainable": false,
+        "combined_percent": 95.78538101373363
+      },
+      "after": {
+        "target_m": 6843.589006917979,
+        "on_foot_m": 6562.543966788628,
+        "cycling_m": 6572.209839715999,
+        "combined_m": 6572.209839715999,
+        "unbound_m": 271.3791672019797,
+        "attainable": false,
+        "combined_percent": 96.03454902204602
+      },
+      "recovery_m": 17.052034425624697,
+      "changed_source_rows": 6,
+      "added_bindings": 34
+    },
+    {
+      "route_key": "NCN:12",
+      "before": {
+        "target_m": 196613.73559746594,
+        "on_foot_m": 180865.7526428625,
+        "cycling_m": 184219.3042892975,
+        "combined_m": 184233.21558133038,
+        "unbound_m": 12380.52001613556,
+        "attainable": false,
+        "combined_percent": 93.70312558351334
+      },
+      "after": {
+        "target_m": 196613.73559746594,
+        "on_foot_m": 181403.01820182038,
+        "cycling_m": 184763.19545932222,
+        "combined_m": 184779.18989772376,
+        "unbound_m": 11834.545699742186,
+        "attainable": false,
+        "combined_percent": 93.9808143801451
+      },
+      "recovery_m": 545.9743163933745,
+      "changed_source_rows": 374,
+      "added_bindings": 1952
+    },
+    {
+      "route_key": "NCN:125",
+      "before": {
+        "target_m": 5515.472328023311,
+        "on_foot_m": 2491.6879201801644,
+        "cycling_m": 3496.264090138439,
+        "combined_m": 3516.7885807563453,
+        "unbound_m": 1998.6837472669658,
+        "attainable": false,
+        "combined_percent": 63.76223778493194
+      },
+      "after": {
+        "target_m": 5515.472328023311,
+        "on_foot_m": 2499.7907258139085,
+        "cycling_m": 3508.710918793019,
+        "combined_m": 3529.2354094109255,
+        "unbound_m": 1986.2369186123856,
+        "attainable": false,
+        "combined_percent": 63.98790891361008
+      },
+      "recovery_m": 12.446828654580258,
+      "changed_source_rows": 13,
+      "added_bindings": 38
+    },
+    {
+      "route_key": "NCN:13",
+      "before": {
+        "target_m": 240317.03600222626,
+        "on_foot_m": 223155.21765340705,
+        "cycling_m": 225890.21700727532,
+        "combined_m": 227277.05918316508,
+        "unbound_m": 13039.97681906118,
+        "attainable": false,
+        "combined_percent": 94.57384418683478
+      },
+      "after": {
+        "target_m": 240317.03600222626,
+        "on_foot_m": 223621.65089836624,
+        "cycling_m": 226372.91589983323,
+        "combined_m": 227762.74129353784,
+        "unbound_m": 12554.294708688423,
+        "attainable": false,
+        "combined_percent": 94.77594476133098
+      },
+      "recovery_m": 485.68211037275614,
+      "changed_source_rows": 404,
+      "added_bindings": 1848
+    },
+    {
+      "route_key": "NCN:136",
+      "before": {
+        "target_m": 17697.608819588775,
+        "on_foot_m": 15676.779661604802,
+        "cycling_m": 15725.762694465848,
+        "combined_m": 15731.538856973257,
+        "unbound_m": 1966.0699626155183,
+        "attainable": false,
+        "combined_percent": 88.89075929602787
+      },
+      "after": {
+        "target_m": 17697.608819588775,
+        "on_foot_m": 15741.659995326563,
+        "cycling_m": 15790.64302818761,
+        "combined_m": 15796.419190695018,
+        "unbound_m": 1901.189628893757,
+        "attainable": false,
+        "combined_percent": 89.25736438026924
+      },
+      "recovery_m": 64.88033372176142,
+      "changed_source_rows": 38,
+      "added_bindings": 210
+    },
+    {
+      "route_key": "NCN:137",
+      "before": {
+        "target_m": 3053.2766885010283,
+        "on_foot_m": 2655.675229425688,
+        "cycling_m": 697.8367015044678,
+        "combined_m": 2730.5457484671592,
+        "unbound_m": 322.73094003386905,
+        "attainable": false,
+        "combined_percent": 89.43001329524739
+      },
+      "after": {
+        "target_m": 3053.2766885010283,
+        "on_foot_m": 2687.8979742844945,
+        "cycling_m": 704.080435507369,
+        "combined_m": 2762.7684933259657,
+        "unbound_m": 290.5081951750626,
+        "attainable": false,
+        "combined_percent": 90.48536294567906
+      },
+      "recovery_m": 32.222744858806436,
+      "changed_source_rows": 4,
+      "added_bindings": 74
+    },
+    {
+      "route_key": "NCN:14",
+      "before": {
+        "target_m": 139951.6453706928,
+        "on_foot_m": 123690.97220465797,
+        "cycling_m": 130792.56493679622,
+        "combined_m": 131169.6073042281,
+        "unbound_m": 8782.03806646471,
+        "attainable": false,
+        "combined_percent": 93.72494832539944
+      },
+      "after": {
+        "target_m": 139951.6453706928,
+        "on_foot_m": 123969.49529155566,
+        "cycling_m": 131095.7819207089,
+        "combined_m": 131472.95160805195,
+        "unbound_m": 8478.693762640847,
+        "attainable": false,
+        "combined_percent": 93.9416976912396
+      },
+      "recovery_m": 303.344303823862,
+      "changed_source_rows": 259,
+      "added_bindings": 1376
+    },
+    {
+      "route_key": "NCN:141",
+      "before": {
+        "target_m": 10883.645941059687,
+        "on_foot_m": 10073.982501223067,
+        "cycling_m": 10073.982501223067,
+        "combined_m": 10073.982501223067,
+        "unbound_m": 809.6634398366205,
+        "attainable": false,
+        "combined_percent": 92.5607333772033
+      },
+      "after": {
+        "target_m": 10883.645941059687,
+        "on_foot_m": 10089.930815700853,
+        "cycling_m": 10089.930815700853,
+        "combined_m": 10089.930815700853,
+        "unbound_m": 793.7151253588345,
+        "attainable": false,
+        "combined_percent": 92.70726804549511
+      },
+      "recovery_m": 15.94831447778597,
+      "changed_source_rows": 12,
+      "added_bindings": 144
+    },
+    {
+      "route_key": "NCN:15",
+      "before": {
+        "target_m": 52210.77775270417,
+        "on_foot_m": 47287.2183176663,
+        "cycling_m": 47527.12580379562,
+        "combined_m": 47623.62968953816,
+        "unbound_m": 4587.148063166009,
+        "attainable": false,
+        "combined_percent": 91.2141740448821
+      },
+      "after": {
+        "target_m": 52210.77775270417,
+        "on_foot_m": 47417.11163428087,
+        "cycling_m": 47656.79788246117,
+        "combined_m": 47753.523006152725,
+        "unbound_m": 4457.2547465514435,
+        "attainable": false,
+        "combined_percent": 91.46296044915633
+      },
+      "recovery_m": 129.89331661456526,
+      "changed_source_rows": 95,
+      "added_bindings": 430
+    },
+    {
+      "route_key": "NCN:150",
+      "before": {
+        "target_m": 15828.153633279368,
+        "on_foot_m": 9034.953262254185,
+        "cycling_m": 15111.177568982408,
+        "combined_m": 15240.50791813502,
+        "unbound_m": 587.6457151443483,
+        "attainable": false,
+        "combined_percent": 96.28733882195331
+      },
+      "after": {
+        "target_m": 15828.153633279368,
+        "on_foot_m": 9055.810304298462,
+        "cycling_m": 15143.96452173408,
+        "combined_m": 15273.294870886692,
+        "unbound_m": 554.858762392676,
+        "attainable": false,
+        "combined_percent": 96.49448207764384
+      },
+      "recovery_m": 32.78695275167229,
+      "changed_source_rows": 25,
+      "added_bindings": 168
+    },
+    {
+      "route_key": "NCN:151",
+      "before": {
+        "target_m": 3278.961652804842,
+        "on_foot_m": 2099.5512359823388,
+        "cycling_m": 2099.5512359823388,
+        "combined_m": 2099.5512359823388,
+        "unbound_m": 1179.410416822503,
+        "attainable": false,
+        "combined_percent": 64.03097865406176
+      },
+      "after": {
+        "target_m": 3278.961652804842,
+        "on_foot_m": 2106.394083147909,
+        "cycling_m": 2106.394083147909,
+        "combined_m": 2106.394083147909,
+        "unbound_m": 1172.5675696569328,
+        "attainable": false,
+        "combined_percent": 64.23966810792336
+      },
+      "recovery_m": 6.84284716557022,
+      "changed_source_rows": 5,
+      "added_bindings": 14
+    },
+    {
+      "route_key": "NCN:155",
+      "before": {
+        "target_m": 11920.213141195401,
+        "on_foot_m": 11469.765455451274,
+        "cycling_m": 11477.89887145282,
+        "combined_m": 11477.89887145282,
+        "unbound_m": 442.314269742581,
+        "attainable": false,
+        "combined_percent": 96.2893761671595
+      },
+      "after": {
+        "target_m": 11920.213141195401,
+        "on_foot_m": 11504.764821995184,
+        "cycling_m": 11512.898237996731,
+        "combined_m": 11512.898237996731,
+        "unbound_m": 407.31490319867044,
+        "attainable": false,
+        "combined_percent": 96.58298976390766
+      },
+      "recovery_m": 34.99936654391058,
+      "changed_source_rows": 14,
+      "added_bindings": 106
+    },
+    {
+      "route_key": "NCN:16",
+      "before": {
+        "target_m": 68120.32815612688,
+        "on_foot_m": 59401.2603565818,
+        "cycling_m": 64227.716259880835,
+        "combined_m": 64418.47445458551,
+        "unbound_m": 3701.853701541375,
+        "attainable": false,
+        "combined_percent": 94.56571363975671
+      },
+      "after": {
+        "target_m": 68120.32815612688,
+        "on_foot_m": 59577.221780428416,
+        "cycling_m": 64419.198075470704,
+        "combined_m": 64609.956270175375,
+        "unbound_m": 3510.3718859515066,
+        "attainable": false,
+        "combined_percent": 94.84680714117232
+      },
+      "recovery_m": 191.48181558986835,
+      "changed_source_rows": 112,
+      "added_bindings": 542
+    },
+    {
+      "route_key": "NCN:164",
+      "before": {
+        "target_m": 60897.599967122376,
+        "on_foot_m": 55720.96110466627,
+        "cycling_m": 55687.92606457592,
+        "combined_m": 55758.74008230573,
+        "unbound_m": 5138.859884816644,
+        "attainable": false,
+        "combined_percent": 91.56147387156304
+      },
+      "after": {
+        "target_m": 60897.599967122376,
+        "on_foot_m": 55820.91805609261,
+        "cycling_m": 55789.092055744746,
+        "combined_m": 55860.37007092942,
+        "unbound_m": 5037.2298961929555,
+        "attainable": false,
+        "combined_percent": 91.72836056115106
+      },
+      "recovery_m": 101.6299886236884,
+      "changed_source_rows": 67,
+      "added_bindings": 362
+    },
+    {
+      "route_key": "NCN:165",
+      "before": {
+        "target_m": 115211.78998202892,
+        "on_foot_m": 112337.36547263141,
+        "cycling_m": 112337.36547263141,
+        "combined_m": 112337.36547263141,
+        "unbound_m": 2874.424509397504,
+        "attainable": false,
+        "combined_percent": 97.50509517311912
+      },
+      "after": {
+        "target_m": 115211.78998202892,
+        "on_foot_m": 112571.00535787105,
+        "cycling_m": 112571.00535787105,
+        "combined_m": 112571.00535787105,
+        "unbound_m": 2640.7846241578663,
+        "attainable": false,
+        "combined_percent": 97.70788681907487
+      },
+      "recovery_m": 233.6398852396378,
+      "changed_source_rows": 141,
+      "added_bindings": 916
+    },
+    {
+      "route_key": "NCN:166",
+      "before": {
+        "target_m": 56994.74351098911,
+        "on_foot_m": 56356.02829371332,
+        "cycling_m": 56356.02829371332,
+        "combined_m": 56356.02829371332,
+        "unbound_m": 638.7152172757851,
+        "attainable": false,
+        "combined_percent": 98.87934364130854
+      },
+      "after": {
+        "target_m": 56994.74351098911,
+        "on_foot_m": 56421.1631521791,
+        "cycling_m": 56421.1631521791,
+        "combined_m": 56421.1631521791,
+        "unbound_m": 573.5803588100098,
+        "attainable": false,
+        "combined_percent": 98.9936258618316
+      },
+      "recovery_m": 65.13485846577532,
+      "changed_source_rows": 50,
+      "added_bindings": 292
+    },
+    {
+      "route_key": "NCN:167",
+      "before": {
+        "target_m": 28789.982924431253,
+        "on_foot_m": 28089.15241458156,
+        "cycling_m": 28432.903836992395,
+        "combined_m": 28432.903836992395,
+        "unbound_m": 357.07908743885855,
+        "attainable": false,
+        "combined_percent": 98.7597106661156
+      },
+      "after": {
+        "target_m": 28789.982924431253,
+        "on_foot_m": 28139.33978182407,
+        "cycling_m": 28485.743246917413,
+        "combined_m": 28485.743246917413,
+        "unbound_m": 304.23967751384043,
+        "attainable": false,
+        "combined_percent": 98.94324467537054
+      },
+      "recovery_m": 52.83940992501812,
+      "changed_source_rows": 37,
+      "added_bindings": 206
+    },
+    {
+      "route_key": "NCN:168",
+      "before": {
+        "target_m": 20715.667331420744,
+        "on_foot_m": 18585.18643287359,
+        "cycling_m": 17422.812529783405,
+        "combined_m": 19196.934720149806,
+        "unbound_m": 1518.732611270938,
+        "attainable": false,
+        "combined_percent": 92.6686763840459
+      },
+      "after": {
+        "target_m": 20715.667331420744,
+        "on_foot_m": 18635.944571040425,
+        "cycling_m": 17476.488813033557,
+        "combined_m": 19258.242576180077,
+        "unbound_m": 1457.4247552406669,
+        "attainable": false,
+        "combined_percent": 92.96462560474652
+      },
+      "recovery_m": 61.30785603027107,
+      "changed_source_rows": 26,
+      "added_bindings": 164
+    },
+    {
+      "route_key": "NCN:169",
+      "before": {
+        "target_m": 9074.277925675058,
+        "on_foot_m": 5316.879171067287,
+        "cycling_m": 6476.755572210489,
+        "combined_m": 6476.755572210489,
+        "unbound_m": 2597.5223534645693,
+        "attainable": false,
+        "combined_percent": 71.37488652276062
+      },
+      "after": {
+        "target_m": 9074.277925675058,
+        "on_foot_m": 5337.136991927506,
+        "cycling_m": 6500.654499773988,
+        "combined_m": 6500.654499773988,
+        "unbound_m": 2573.62342590107,
+        "attainable": false,
+        "combined_percent": 71.63825654249386
+      },
+      "recovery_m": 23.898927563499456,
+      "changed_source_rows": 15,
+      "added_bindings": 88
+    },
+    {
+      "route_key": "NCN:17",
+      "before": {
+        "target_m": 55782.942694001285,
+        "on_foot_m": 47028.231450052896,
+        "cycling_m": 47848.72994128511,
+        "combined_m": 47949.35605015156,
+        "unbound_m": 7833.586643849725,
+        "attainable": false,
+        "combined_percent": 85.95702150956599
+      },
+      "after": {
+        "target_m": 55782.942694001285,
+        "on_foot_m": 47225.376692869904,
+        "cycling_m": 48055.89347150471,
+        "combined_m": 48157.13605984198,
+        "unbound_m": 7625.806634159308,
+        "attainable": false,
+        "combined_percent": 86.32950098027123
+      },
+      "recovery_m": 207.7800096904175,
+      "changed_source_rows": 83,
+      "added_bindings": 631
+    },
+    {
+      "route_key": "NCN:174",
+      "before": {
+        "target_m": 14579.384412601963,
+        "on_foot_m": 12850.653497517802,
+        "cycling_m": 12786.685131028724,
+        "combined_m": 12918.565118926557,
+        "unbound_m": 1660.8192936754058,
+        "attainable": false,
+        "combined_percent": 88.6084402010839
+      },
+      "after": {
+        "target_m": 14579.384412601963,
+        "on_foot_m": 12895.6417031091,
+        "cycling_m": 12831.463731738713,
+        "combined_m": 12963.553324517856,
+        "unbound_m": 1615.8310880841073,
+        "attainable": false,
+        "combined_percent": 88.91701431037491
+      },
+      "recovery_m": 44.98820559129854,
+      "changed_source_rows": 18,
+      "added_bindings": 124
+    },
+    {
+      "route_key": "NCN:177",
+      "before": {
+        "target_m": 15147.377380842527,
+        "on_foot_m": 12426.376443243544,
+        "cycling_m": 12430.259506584684,
+        "combined_m": 12430.259506584684,
+        "unbound_m": 2717.117874257843,
+        "attainable": false,
+        "combined_percent": 82.0621233237756
+      },
+      "after": {
+        "target_m": 15147.377380842527,
+        "on_foot_m": 12465.425813894488,
+        "cycling_m": 12469.308877235628,
+        "combined_m": 12469.308877235628,
+        "unbound_m": 2678.068503606899,
+        "attainable": false,
+        "combined_percent": 82.31991957238779
+      },
+      "recovery_m": 39.049370650944184,
+      "changed_source_rows": 31,
+      "added_bindings": 180
+    },
+    {
+      "route_key": "NCN:179",
+      "before": {
+        "target_m": 19687.07554122239,
+        "on_foot_m": 18142.849481641115,
+        "cycling_m": 18905.50785557219,
+        "combined_m": 18905.50785557219,
+        "unbound_m": 781.5676856502032,
+        "attainable": false,
+        "combined_percent": 96.03004679890778
+      },
+      "after": {
+        "target_m": 19687.07554122239,
+        "on_foot_m": 18187.346633587116,
+        "cycling_m": 18954.022798097707,
+        "combined_m": 18954.022798097707,
+        "unbound_m": 733.0527431246846,
+        "attainable": false,
+        "combined_percent": 96.27647721679251
+      },
+      "recovery_m": 48.51494252551856,
+      "changed_source_rows": 26,
+      "added_bindings": 170
+    },
+    {
+      "route_key": "NCN:18",
+      "before": {
+        "target_m": 99544.7683300006,
+        "on_foot_m": 92750.05521289608,
+        "cycling_m": 94851.52513679968,
+        "combined_m": 94851.52513679968,
+        "unbound_m": 4693.24319320092,
+        "attainable": false,
+        "combined_percent": 95.2852939718114
+      },
+      "after": {
+        "target_m": 99544.7683300006,
+        "on_foot_m": 93091.35781670237,
+        "cycling_m": 95198.49983969767,
+        "combined_m": 95198.49983969767,
+        "unbound_m": 4346.268490302929,
+        "attainable": false,
+        "combined_percent": 95.63385543688781
+      },
+      "recovery_m": 346.97470289799094,
+      "changed_source_rows": 161,
+      "added_bindings": 924
+    },
+    {
+      "route_key": "NCN:195",
+      "before": {
+        "target_m": 65274.05421072938,
+        "on_foot_m": 44671.10295832742,
+        "cycling_m": 60925.33480212062,
+        "combined_m": 60925.33480212062,
+        "unbound_m": 4348.719408608762,
+        "attainable": false,
+        "combined_percent": 93.33775194264868
+      },
+      "after": {
+        "target_m": 65274.05421072938,
+        "on_foot_m": 44807.362906345916,
+        "cycling_m": 61093.103296965615,
+        "combined_m": 61093.103296965615,
+        "unbound_m": 4180.950913763765,
+        "attainable": false,
+        "combined_percent": 93.59477365958291
+      },
+      "recovery_m": 167.7684948449969,
+      "changed_source_rows": 82,
+      "added_bindings": 546
+    },
+    {
+      "route_key": "NCN:196",
+      "before": {
+        "target_m": 32590.165606541403,
+        "on_foot_m": 31957.555917568105,
+        "cycling_m": 31957.555917568105,
+        "combined_m": 31957.555917568105,
+        "unbound_m": 632.609688973298,
+        "attainable": false,
+        "combined_percent": 98.05889391109346
+      },
+      "after": {
+        "target_m": 32590.165606541403,
+        "on_foot_m": 32029.918479482327,
+        "cycling_m": 32029.918479482327,
+        "combined_m": 32029.918479482327,
+        "unbound_m": 560.2471270590759,
+        "attainable": false,
+        "combined_percent": 98.2809319417922
+      },
+      "recovery_m": 72.36256191422217,
+      "changed_source_rows": 44,
+      "added_bindings": 306
+    },
+    {
+      "route_key": "NCN:2",
+      "before": {
+        "target_m": 565505.8691796699,
+        "on_foot_m": 513225.6616508574,
+        "cycling_m": 519193.7674183935,
+        "combined_m": 528757.7266742943,
+        "unbound_m": 36748.14250537555,
+        "attainable": false,
+        "combined_percent": 93.50172217333785
+      },
+      "after": {
+        "target_m": 565505.8691796699,
+        "on_foot_m": 514649.50312701793,
+        "cycling_m": 520644.13461684715,
+        "combined_m": 530224.8331683282,
+        "unbound_m": 35281.03601134173,
+        "attainable": false,
+        "combined_percent": 93.76115475821307
+      },
+      "recovery_m": 1467.1064940338256,
+      "changed_source_rows": 925,
+      "added_bindings": 5434
+    },
+    {
+      "route_key": "NCN:20",
+      "before": {
+        "target_m": 45357.414128543474,
+        "on_foot_m": 36472.85065468313,
+        "cycling_m": 37397.99031370255,
+        "combined_m": 37404.06889968604,
+        "unbound_m": 7953.3452288574335,
+        "attainable": false,
+        "combined_percent": 82.4651705092412
+      },
+      "after": {
+        "target_m": 45357.414128543474,
+        "on_foot_m": 36594.16855240296,
+        "cycling_m": 37522.92899658331,
+        "combined_m": 37529.0075825668,
+        "unbound_m": 7828.406545976672,
+        "attainable": false,
+        "combined_percent": 82.74062422564288
+      },
+      "recovery_m": 124.93868288076192,
+      "changed_source_rows": 111,
+      "added_bindings": 428
+    },
+    {
+      "route_key": "NCN:208",
+      "before": {
+        "target_m": 8571.52567737116,
+        "on_foot_m": 7153.207142762858,
+        "cycling_m": 7346.2413788897065,
+        "combined_m": 7624.820951213717,
+        "unbound_m": 946.7047261574435,
+        "attainable": false,
+        "combined_percent": 88.95523665458127
+      },
+      "after": {
+        "target_m": 8571.52567737116,
+        "on_foot_m": 7172.134053646799,
+        "cycling_m": 7364.029763243693,
+        "combined_m": 7645.067320750432,
+        "unbound_m": 926.4583566207284,
+        "attainable": false,
+        "combined_percent": 89.19144162320391
+      },
+      "recovery_m": 20.246369536715065,
+      "changed_source_rows": 27,
+      "added_bindings": 96
+    },
+    {
+      "route_key": "NCN:21",
+      "before": {
+        "target_m": 152539.17817917062,
+        "on_foot_m": 136446.104284463,
+        "cycling_m": 140988.35764109687,
+        "combined_m": 141364.21712327644,
+        "unbound_m": 11174.961055894179,
+        "attainable": false,
+        "combined_percent": 92.67403876873638
+      },
+      "after": {
+        "target_m": 152539.17817917062,
+        "on_foot_m": 137026.59064249363,
+        "cycling_m": 141606.13384187565,
+        "combined_m": 141985.1819113423,
+        "unbound_m": 10553.996267828305,
+        "attainable": false,
+        "combined_percent": 93.08112421096716
+      },
+      "recovery_m": 620.964788065874,
+      "changed_source_rows": 303,
+      "added_bindings": 1889
+    },
+    {
+      "route_key": "NCN:22",
+      "before": {
+        "target_m": 153629.2253777585,
+        "on_foot_m": 140545.96459549025,
+        "cycling_m": 141324.96488107598,
+        "combined_m": 141486.07640745366,
+        "unbound_m": 12143.148970304843,
+        "attainable": false,
+        "combined_percent": 92.09580798155685
+      },
+      "after": {
+        "target_m": 153629.2253777585,
+        "on_foot_m": 141077.29920510767,
+        "cycling_m": 141856.8257003632,
+        "combined_m": 142020.6782149953,
+        "unbound_m": 11608.547162763192,
+        "attainable": false,
+        "combined_percent": 92.4437898230503
+      },
+      "recovery_m": 534.6018075416505,
+      "changed_source_rows": 322,
+      "added_bindings": 1745
+    },
+    {
+      "route_key": "NCN:221",
+      "before": {
+        "target_m": 13989.638926882943,
+        "on_foot_m": 13088.176425290585,
+        "cycling_m": 12695.980150060965,
+        "combined_m": 13088.176425290585,
+        "unbound_m": 901.4625015923575,
+        "attainable": false,
+        "combined_percent": 93.55621323535321
+      },
+      "after": {
+        "target_m": 13989.638926882943,
+        "on_foot_m": 13183.610066889749,
+        "cycling_m": 12790.532816205156,
+        "combined_m": 13183.610066889749,
+        "unbound_m": 806.0288599931937,
+        "attainable": false,
+        "combined_percent": 94.23838696476788
+      },
+      "recovery_m": 95.43364159916382,
+      "changed_source_rows": 52,
+      "added_bindings": 600
+    },
+    {
+      "route_key": "NCN:222",
+      "before": {
+        "target_m": 29083.680720021734,
+        "on_foot_m": 19336.96728405124,
+        "cycling_m": 25027.230754028864,
+        "combined_m": 25133.580581222144,
+        "unbound_m": 3950.1001387995893,
+        "attainable": false,
+        "combined_percent": 86.41815602080837
+      },
+      "after": {
+        "target_m": 29083.680720021734,
+        "on_foot_m": 19376.41575335747,
+        "cycling_m": 25084.832207298685,
+        "combined_m": 25192.853362715283,
+        "unbound_m": 3890.8273573064507,
+        "attainable": false,
+        "combined_percent": 86.62195684665203
+      },
+      "recovery_m": 59.27278149313861,
+      "changed_source_rows": 41,
+      "added_bindings": 244
+    },
+    {
+      "route_key": "NCN:223",
+      "before": {
+        "target_m": 73185.21237161152,
+        "on_foot_m": 67911.10162687338,
+        "cycling_m": 67773.33516417004,
+        "combined_m": 68098.62772260074,
+        "unbound_m": 5086.58464901078,
+        "attainable": false,
+        "combined_percent": 93.04970979221498
+      },
+      "after": {
+        "target_m": 73185.21237161152,
+        "on_foot_m": 68280.98488510479,
+        "cycling_m": 68142.97484353157,
+        "combined_m": 68470.38978169867,
+        "unbound_m": 4714.822589912845,
+        "attainable": false,
+        "combined_percent": 93.5576840769793
+      },
+      "recovery_m": 371.762059097935,
+      "changed_source_rows": 172,
+      "added_bindings": 1194
+    },
+    {
+      "route_key": "NCN:224",
+      "before": {
+        "target_m": 21114.715469931736,
+        "on_foot_m": 16677.858457168953,
+        "cycling_m": 19999.740544308403,
+        "combined_m": 20020.04603963316,
+        "unbound_m": 1094.669430298578,
+        "attainable": false,
+        "combined_percent": 94.81560889675528
+      },
+      "after": {
+        "target_m": 21114.715469931736,
+        "on_foot_m": 16723.53039468604,
+        "cycling_m": 20043.50716223511,
+        "combined_m": 20065.849032431346,
+        "unbound_m": 1048.86643750039,
+        "attainable": false,
+        "combined_percent": 95.03253340546303
+      },
+      "recovery_m": 45.802992798187915,
+      "changed_source_rows": 39,
+      "added_bindings": 234
+    },
+    {
+      "route_key": "NCN:23",
+      "before": {
+        "target_m": 137132.0893298333,
+        "on_foot_m": 128091.98706368198,
+        "cycling_m": 128557.81159755058,
+        "combined_m": 129463.99720742102,
+        "unbound_m": 7668.092122412287,
+        "attainable": false,
+        "combined_percent": 94.40824378897283
+      },
+      "after": {
+        "target_m": 137132.0893298333,
+        "on_foot_m": 128389.0343479989,
+        "cycling_m": 128855.16164429275,
+        "combined_m": 129767.451905101,
+        "unbound_m": 7364.637424732311,
+        "attainable": false,
+        "combined_percent": 94.62953021373524
+      },
+      "recovery_m": 303.45469767997565,
+      "changed_source_rows": 282,
+      "added_bindings": 1196
+    },
+    {
+      "route_key": "NCN:236",
+      "before": {
+        "target_m": 26753.387321512477,
+        "on_foot_m": 20306.70821369657,
+        "cycling_m": 24615.287763097862,
+        "combined_m": 24791.64971945737,
+        "unbound_m": 1961.7376020551055,
+        "attainable": false,
+        "combined_percent": 92.66733001515038
+      },
+      "after": {
+        "target_m": 26753.387321512477,
+        "on_foot_m": 20352.61440084733,
+        "cycling_m": 24673.356168827966,
+        "combined_m": 24850.898030936154,
+        "unbound_m": 1902.4892905763227,
+        "attainable": false,
+        "combined_percent": 92.88879098667807
+      },
+      "recovery_m": 59.24831147878285,
+      "changed_source_rows": 59,
+      "added_bindings": 220
+    },
+    {
+      "route_key": "NCN:24",
+      "before": {
+        "target_m": 110853.60799587631,
+        "on_foot_m": 103291.619395764,
+        "cycling_m": 104378.7491320608,
+        "combined_m": 104579.36012222862,
+        "unbound_m": 6274.247873647691,
+        "attainable": false,
+        "combined_percent": 94.3400598437165
+      },
+      "after": {
+        "target_m": 110853.60799587631,
+        "on_foot_m": 103533.46343419047,
+        "cycling_m": 104623.50648382344,
+        "combined_m": 104825.24002567868,
+        "unbound_m": 6028.367970197636,
+        "attainable": false,
+        "combined_percent": 94.56186579834021
+      },
+      "recovery_m": 245.87990345005528,
+      "changed_source_rows": 183,
+      "added_bindings": 926
+    },
+    {
+      "route_key": "NCN:244",
+      "before": {
+        "target_m": 5904.109210270869,
+        "on_foot_m": 5519.178320417063,
+        "cycling_m": 5519.178320417063,
+        "combined_m": 5519.178320417063,
+        "unbound_m": 384.93088985380564,
+        "attainable": false,
+        "combined_percent": 93.4802884542824
+      },
+      "after": {
+        "target_m": 5904.109210270869,
+        "on_foot_m": 5535.517643785335,
+        "cycling_m": 5535.517643785335,
+        "combined_m": 5535.517643785335,
+        "unbound_m": 368.5915664855338,
+        "attainable": false,
+        "combined_percent": 93.75703339219527
+      },
+      "recovery_m": 16.339323368271835,
+      "changed_source_rows": 22,
+      "added_bindings": 106
+    },
+    {
+      "route_key": "NCN:246",
+      "before": {
+        "target_m": 50758.047762516886,
+        "on_foot_m": 48829.26234327992,
+        "cycling_m": 48954.23114281562,
+        "combined_m": 48996.407645517946,
+        "unbound_m": 1761.6401169989404,
+        "attainable": false,
+        "combined_percent": 96.52933831253483
+      },
+      "after": {
+        "target_m": 50758.047762516886,
+        "on_foot_m": 48931.34659671537,
+        "cycling_m": 49054.56546958474,
+        "combined_m": 49098.49189895339,
+        "unbound_m": 1659.5558635634952,
+        "attainable": false,
+        "combined_percent": 96.73045765800903
+      },
+      "recovery_m": 102.08425343544513,
+      "changed_source_rows": 74,
+      "added_bindings": 370
+    },
+    {
+      "route_key": "NCN:248",
+      "before": {
+        "target_m": 3434.7421693718084,
+        "on_foot_m": 2365.7859219315883,
+        "cycling_m": 2365.7859219315883,
+        "combined_m": 2365.7859219315883,
+        "unbound_m": 1068.95624744022,
+        "attainable": false,
+        "combined_percent": 68.87812258596036
+      },
+      "after": {
+        "target_m": 3434.7421693718084,
+        "on_foot_m": 2377.8873650987184,
+        "cycling_m": 2377.8873650987184,
+        "combined_m": 2377.8873650987184,
+        "unbound_m": 1056.85480427309,
+        "attainable": false,
+        "combined_percent": 69.2304472313163
+      },
+      "recovery_m": 12.101443167130128,
+      "changed_source_rows": 3,
+      "added_bindings": 22
+    },
+    {
+      "route_key": "NCN:25",
+      "before": {
+        "target_m": 92727.72491444714,
+        "on_foot_m": 84121.78561894633,
+        "cycling_m": 87861.90659906609,
+        "combined_m": 87861.90659906609,
+        "unbound_m": 4865.818315381053,
+        "attainable": false,
+        "combined_percent": 94.75257446478885
+      },
+      "after": {
+        "target_m": 92727.72491444714,
+        "on_foot_m": 84305.42856338034,
+        "cycling_m": 88059.52255459805,
+        "combined_m": 88059.52255459805,
+        "unbound_m": 4668.202359849092,
+        "attainable": false,
+        "combined_percent": 94.96568867169329
+      },
+      "recovery_m": 197.61595553196094,
+      "changed_source_rows": 158,
+      "added_bindings": 776
+    },
+    {
+      "route_key": "NCN:250",
+      "before": {
+        "target_m": 10268.168307751277,
+        "on_foot_m": 9592.082158036701,
+        "cycling_m": 9845.513510313776,
+        "combined_m": 9845.513510313776,
+        "unbound_m": 422.65479743750075,
+        "attainable": false,
+        "combined_percent": 95.88383453825503
+      },
+      "after": {
+        "target_m": 10268.168307751277,
+        "on_foot_m": 9616.273722066402,
+        "cycling_m": 9870.323203479224,
+        "combined_m": 9870.323203479224,
+        "unbound_m": 397.8451042720535,
+        "attainable": false,
+        "combined_percent": 96.12545205388066
+      },
+      "recovery_m": 24.809693165447243,
+      "changed_source_rows": 22,
+      "added_bindings": 184
+    },
+    {
+      "route_key": "NCN:256",
+      "before": {
+        "target_m": 22542.96045870898,
+        "on_foot_m": 17722.095987295215,
+        "cycling_m": 20047.87303819481,
+        "combined_m": 20047.87303819481,
+        "unbound_m": 2495.08742051417,
+        "attainable": false,
+        "combined_percent": 88.93185557822223
+      },
+      "after": {
+        "target_m": 22542.96045870898,
+        "on_foot_m": 17753.988981138627,
+        "cycling_m": 20080.16351862899,
+        "combined_m": 20080.16351862899,
+        "unbound_m": 2462.796940079992,
+        "attainable": false,
+        "combined_percent": 89.07509532924482
+      },
+      "recovery_m": 32.29048043417788,
+      "changed_source_rows": 41,
+      "added_bindings": 222
+    },
+    {
+      "route_key": "NCN:26",
+      "before": {
+        "target_m": 112890.46183617889,
+        "on_foot_m": 101900.73836271545,
+        "cycling_m": 108262.53757085785,
+        "combined_m": 108274.48530274205,
+        "unbound_m": 4615.976533436842,
+        "attainable": false,
+        "combined_percent": 95.91110138238666
+      },
+      "after": {
+        "target_m": 112890.46183617889,
+        "on_foot_m": 102127.8068063645,
+        "cycling_m": 108523.97683732794,
+        "combined_m": 108536.17015569958,
+        "unbound_m": 4354.291680479306,
+        "attainable": false,
+        "combined_percent": 96.14290560100814
+      },
+      "recovery_m": 261.68485295753635,
+      "changed_source_rows": 184,
+      "added_bindings": 1042
+    },
+    {
+      "route_key": "NCN:267",
+      "before": {
+        "target_m": 4756.679570760199,
+        "on_foot_m": 1839.3083217750143,
+        "cycling_m": 4116.51219194813,
+        "combined_m": 4136.571949995828,
+        "unbound_m": 620.107620764371,
+        "attainable": false,
+        "combined_percent": 86.96343506978614
+      },
+      "after": {
+        "target_m": 4756.679570760199,
+        "on_foot_m": 1844.7940491113304,
+        "cycling_m": 4124.03450004987,
+        "combined_m": 4144.094258097568,
+        "unbound_m": 612.5853126626307,
+        "attainable": false,
+        "combined_percent": 87.12157706757765
+      },
+      "recovery_m": 7.5223081017402365,
+      "changed_source_rows": 9,
+      "added_bindings": 48
+    },
+    {
+      "route_key": "NCN:27",
+      "before": {
+        "target_m": 120675.59053580389,
+        "on_foot_m": 100144.50524248168,
+        "cycling_m": 112852.0947349787,
+        "combined_m": 112914.18519676689,
+        "unbound_m": 7761.405339036995,
+        "attainable": false,
+        "combined_percent": 93.56837177711243
+      },
+      "after": {
+        "target_m": 120675.59053580389,
+        "on_foot_m": 100460.72014903155,
+        "cycling_m": 113206.63110622171,
+        "combined_m": 113269.86578011951,
+        "unbound_m": 7405.7247556843795,
+        "attainable": false,
+        "combined_percent": 93.86311289399728
+      },
+      "recovery_m": 355.68058335261594,
+      "changed_source_rows": 207,
+      "added_bindings": 1261
+    },
+    {
+      "route_key": "NCN:270",
+      "before": {
+        "target_m": 2690.162858361819,
+        "on_foot_m": 2117.5559340050713,
+        "cycling_m": 2430.2202085106283,
+        "combined_m": 2430.2202085106283,
+        "unbound_m": 259.9426498511907,
+        "attainable": false,
+        "combined_percent": 90.33728946769105
+      },
+      "after": {
+        "target_m": 2690.162858361819,
+        "on_foot_m": 2129.9899175811593,
+        "cycling_m": 2445.900114352548,
+        "combined_m": 2445.900114352548,
+        "unbound_m": 244.26274400927105,
+        "attainable": false,
+        "combined_percent": 90.92015030799973
+      },
+      "recovery_m": 15.679905841919663,
+      "changed_source_rows": 9,
+      "added_bindings": 38
+    },
+    {
+      "route_key": "NCN:272",
+      "before": {
+        "target_m": 40547.439064213366,
+        "on_foot_m": 38429.81195184736,
+        "cycling_m": 38429.81195184736,
+        "combined_m": 38429.81195184736,
+        "unbound_m": 2117.6271123660044,
+        "attainable": false,
+        "combined_percent": 94.77740848438688
+      },
+      "after": {
+        "target_m": 40547.439064213366,
+        "on_foot_m": 38549.31593170539,
+        "cycling_m": 38549.31593170539,
+        "combined_m": 38549.31593170539,
+        "unbound_m": 1998.1231325079789,
+        "attainable": false,
+        "combined_percent": 95.07213481634776
+      },
+      "recovery_m": 119.50397985802556,
+      "changed_source_rows": 51,
+      "added_bindings": 292
+    },
+    {
+      "route_key": "NCN:278",
+      "before": {
+        "target_m": 11894.907413788353,
+        "on_foot_m": 11611.811826168452,
+        "cycling_m": 11611.811826168452,
+        "combined_m": 11611.811826168452,
+        "unbound_m": 283.09558761990047,
+        "attainable": false,
+        "combined_percent": 97.62002697648794
+      },
+      "after": {
+        "target_m": 11894.907413788353,
+        "on_foot_m": 11641.817060869767,
+        "cycling_m": 11641.817060869767,
+        "combined_m": 11641.817060869767,
+        "unbound_m": 253.09035291858527,
+        "attainable": false,
+        "combined_percent": 97.87227975708993
+      },
+      "recovery_m": 30.005234701315203,
+      "changed_source_rows": 20,
+      "added_bindings": 100
+    },
+    {
+      "route_key": "NCN:28",
+      "before": {
+        "target_m": 127236.55390914512,
+        "on_foot_m": 118025.18685762712,
+        "cycling_m": 118608.10754150226,
+        "combined_m": 118608.10754150226,
+        "unbound_m": 8628.446367642857,
+        "attainable": false,
+        "combined_percent": 93.21857901479783
+      },
+      "after": {
+        "target_m": 127236.55390914512,
+        "on_foot_m": 118512.90654236493,
+        "cycling_m": 119100.6529678067,
+        "combined_m": 119100.6529678067,
+        "unbound_m": 8135.900941338419,
+        "attainable": false,
+        "combined_percent": 93.60568901673652
+      },
+      "recovery_m": 492.54542630443757,
+      "changed_source_rows": 204,
+      "added_bindings": 1284
+    },
+    {
+      "route_key": "NCN:288",
+      "before": {
+        "target_m": 5836.8657617204535,
+        "on_foot_m": 5080.447014054321,
+        "cycling_m": 5080.447014054321,
+        "combined_m": 5080.447014054321,
+        "unbound_m": 756.4187476661327,
+        "attainable": false,
+        "combined_percent": 87.04066911000582
+      },
+      "after": {
+        "target_m": 5836.8657617204535,
+        "on_foot_m": 5093.046019103513,
+        "cycling_m": 5093.046019103513,
+        "combined_m": 5093.046019103513,
+        "unbound_m": 743.8197426169409,
+        "attainable": false,
+        "combined_percent": 87.25652134241142
+      },
+      "recovery_m": 12.599005049191874,
+      "changed_source_rows": 9,
+      "added_bindings": 48
+    },
+    {
+      "route_key": "NCN:3",
+      "before": {
+        "target_m": 505702.3423116841,
+        "on_foot_m": 471701.2869953141,
+        "cycling_m": 482519.48395651934,
+        "combined_m": 483452.57429543335,
+        "unbound_m": 22249.768016250746,
+        "attainable": false,
+        "combined_percent": 95.60022444931899
+      },
+      "after": {
+        "target_m": 505702.3423116841,
+        "on_foot_m": 472965.146514482,
+        "cycling_m": 483836.9092885676,
+        "combined_m": 484772.7341165667,
+        "unbound_m": 20929.608195117384,
+        "attainable": false,
+        "combined_percent": 95.86127916682307
+      },
+      "recovery_m": 1320.1598211333621,
+      "changed_source_rows": 741,
+      "added_bindings": 4578
+    },
+    {
+      "route_key": "NCN:304",
+      "before": {
+        "target_m": 17319.24115368731,
+        "on_foot_m": 17024.679218265195,
+        "cycling_m": 17024.679218265195,
+        "combined_m": 17024.679218265195,
+        "unbound_m": 294.5619354221162,
+        "attainable": false,
+        "combined_percent": 98.29922146814496
+      },
+      "after": {
+        "target_m": 17319.24115368731,
+        "on_foot_m": 17062.03994576735,
+        "cycling_m": 17062.03994576735,
+        "combined_m": 17062.03994576735,
+        "unbound_m": 257.20120791996305,
+        "attainable": false,
+        "combined_percent": 98.51493950781324
+      },
+      "recovery_m": 37.36072750215317,
+      "changed_source_rows": 15,
+      "added_bindings": 138
+    },
+    {
+      "route_key": "NCN:305",
+      "before": {
+        "target_m": 25538.669301081536,
+        "on_foot_m": 22681.892531881505,
+        "cycling_m": 24436.453980939536,
+        "combined_m": 24436.453980939536,
+        "unbound_m": 1102.2153201420006,
+        "attainable": false,
+        "combined_percent": 95.68413174880916
+      },
+      "after": {
+        "target_m": 25538.669301081536,
+        "on_foot_m": 22742.71980420357,
+        "cycling_m": 24508.098599961402,
+        "combined_m": 24508.098599961402,
+        "unbound_m": 1030.570701120134,
+        "attainable": false,
+        "combined_percent": 95.96466562540715
+      },
+      "recovery_m": 71.64461902186667,
+      "changed_source_rows": 34,
+      "added_bindings": 264
+    },
+    {
+      "route_key": "NCN:32",
+      "before": {
+        "target_m": 62299.214264844246,
+        "on_foot_m": 56860.43707334998,
+        "cycling_m": 56554.09118508836,
+        "combined_m": 57095.61721087259,
+        "unbound_m": 5203.597053971658,
+        "attainable": false,
+        "combined_percent": 91.64741142344057
+      },
+      "after": {
+        "target_m": 62299.214264844246,
+        "on_foot_m": 57006.093729097855,
+        "cycling_m": 56700.411520349895,
+        "combined_m": 57242.463124498434,
+        "unbound_m": 5056.751140345812,
+        "attainable": false,
+        "combined_percent": 91.88312212277874
+      },
+      "recovery_m": 146.84591362584615,
+      "changed_source_rows": 82,
+      "added_bindings": 514
+    },
+    {
+      "route_key": "NCN:327",
+      "before": {
+        "target_m": 38655.40714205914,
+        "on_foot_m": 37730.74244422575,
+        "cycling_m": 37725.73632383882,
+        "combined_m": 37730.74244422575,
+        "unbound_m": 924.6646978333956,
+        "attainable": false,
+        "combined_percent": 97.60792922336779
+      },
+      "after": {
+        "target_m": 38655.40714205914,
+        "on_foot_m": 37812.13262443365,
+        "cycling_m": 37807.12650404672,
+        "combined_m": 37812.13262443365,
+        "unbound_m": 843.2745176254903,
+        "attainable": false,
+        "combined_percent": 97.81848238067589
+      },
+      "recovery_m": 81.39018020790536,
+      "changed_source_rows": 33,
+      "added_bindings": 272
+    },
+    {
+      "route_key": "NCN:33",
+      "before": {
+        "target_m": 87159.06599962362,
+        "on_foot_m": 73759.82740234536,
+        "cycling_m": 76204.21244994306,
+        "combined_m": 76236.00908888047,
+        "unbound_m": 10923.056910743151,
+        "attainable": false,
+        "combined_percent": 87.4676755820326
+      },
+      "after": {
+        "target_m": 87159.06599962362,
+        "on_foot_m": 73998.62135524879,
+        "cycling_m": 76451.50365344509,
+        "combined_m": 76483.3002923825,
+        "unbound_m": 10675.765707241124,
+        "attainable": false,
+        "combined_percent": 87.75139959934033
+      },
+      "recovery_m": 247.2912035020272,
+      "changed_source_rows": 157,
+      "added_bindings": 814
+    },
+    {
+      "route_key": "NCN:334",
+      "before": {
+        "target_m": 10796.310207947883,
+        "on_foot_m": 10468.565056654788,
+        "cycling_m": 10468.565056654788,
+        "combined_m": 10468.565056654788,
+        "unbound_m": 327.74515129309475,
+        "attainable": false,
+        "combined_percent": 96.96428552921887
+      },
+      "after": {
+        "target_m": 10796.310207947883,
+        "on_foot_m": 10502.08906660484,
+        "cycling_m": 10502.08906660484,
+        "combined_m": 10502.08906660484,
+        "unbound_m": 294.2211413430432,
+        "attainable": false,
+        "combined_percent": 97.27479911491939
+      },
+      "recovery_m": 33.52400995005155,
+      "changed_source_rows": 15,
+      "added_bindings": 88
+    },
+    {
+      "route_key": "NCN:339",
+      "before": {
+        "target_m": 14534.47315879236,
+        "on_foot_m": 14306.847237008875,
+        "cycling_m": 14306.847237008875,
+        "combined_m": 14306.847237008875,
+        "unbound_m": 227.62592178348496,
+        "attainable": false,
+        "combined_percent": 98.43388942071294
+      },
+      "after": {
+        "target_m": 14534.47315879236,
+        "on_foot_m": 14330.302803730474,
+        "cycling_m": 14330.302803730474,
+        "combined_m": 14330.302803730474,
+        "unbound_m": 204.17035506188586,
+        "attainable": false,
+        "combined_percent": 98.59526827817369
+      },
+      "recovery_m": 23.455566721599098,
+      "changed_source_rows": 15,
+      "added_bindings": 124
+    },
+    {
+      "route_key": "NCN:34",
+      "before": {
+        "target_m": 10227.76422690689,
+        "on_foot_m": 5063.23783322026,
+        "cycling_m": 5882.643599293526,
+        "combined_m": 5882.643599293526,
+        "unbound_m": 4345.1206276133635,
+        "attainable": false,
+        "combined_percent": 57.51641775059349
+      },
+      "after": {
+        "target_m": 10227.76422690689,
+        "on_foot_m": 5077.9954252802345,
+        "cycling_m": 5899.004012711571,
+        "combined_m": 5899.004012711571,
+        "unbound_m": 4328.760214195318,
+        "attainable": false,
+        "combined_percent": 57.67637854999288
+      },
+      "recovery_m": 16.360413418045027,
+      "changed_source_rows": 14,
+      "added_bindings": 98
+    },
+    {
+      "route_key": "NCN:344",
+      "before": {
+        "target_m": 14273.240651508411,
+        "on_foot_m": 13942.513357280937,
+        "cycling_m": 13942.513357280937,
+        "combined_m": 13942.513357280937,
+        "unbound_m": 330.727294227474,
+        "attainable": false,
+        "combined_percent": 97.68288574191088
+      },
+      "after": {
+        "target_m": 14273.240651508411,
+        "on_foot_m": 13971.114319538854,
+        "cycling_m": 13971.114319538854,
+        "combined_m": 13971.114319538854,
+        "unbound_m": 302.1263319695572,
+        "attainable": false,
+        "combined_percent": 97.88326744187817
+      },
+      "recovery_m": 28.600962257916763,
+      "changed_source_rows": 14,
+      "added_bindings": 112
+    },
+    {
+      "route_key": "NCN:4",
+      "before": {
+        "target_m": 680116.3093395459,
+        "on_foot_m": 549135.9676482534,
+        "cycling_m": 598275.2557078548,
+        "combined_m": 603468.3243497016,
+        "unbound_m": 76647.98498984426,
+        "attainable": false,
+        "combined_percent": 88.73016512950905
+      },
+      "after": {
+        "target_m": 680116.3093395459,
+        "on_foot_m": 551109.2484920366,
+        "cycling_m": 600427.3421581212,
+        "combined_m": 605641.860571206,
+        "unbound_m": 74474.44876833993,
+        "attainable": false,
+        "combined_percent": 89.04974814665725
+      },
+      "recovery_m": 2173.536221504328,
+      "changed_source_rows": 1106,
+      "added_bindings": 7492
+    },
+    {
+      "route_key": "NCN:403",
+      "before": {
+        "target_m": 64313.7273574212,
+        "on_foot_m": 61479.048270786574,
+        "cycling_m": 61514.469521605235,
+        "combined_m": 61537.30880520493,
+        "unbound_m": 2776.4185522162734,
+        "attainable": false,
+        "combined_percent": 95.68300786426757
+      },
+      "after": {
+        "target_m": 64313.7273574212,
+        "on_foot_m": 61625.890523343915,
+        "cycling_m": 61661.311774162576,
+        "combined_m": 61684.15105776227,
+        "unbound_m": 2629.576299658933,
+        "attainable": false,
+        "combined_percent": 95.91132965277357
+      },
+      "recovery_m": 146.84225255734054,
+      "changed_source_rows": 100,
+      "added_bindings": 436
+    },
+    {
+      "route_key": "NCN:41",
+      "before": {
+        "target_m": 185373.40105659203,
+        "on_foot_m": 163178.3681432178,
+        "cycling_m": 166538.45201750216,
+        "combined_m": 166680.0953781244,
+        "unbound_m": 18693.305678467645,
+        "attainable": false,
+        "combined_percent": 89.91586410352322
+      },
+      "after": {
+        "target_m": 185373.40105659203,
+        "on_foot_m": 163547.22366153423,
+        "cycling_m": 166916.29889442166,
+        "combined_m": 167061.5384938931,
+        "unbound_m": 18311.862562698923,
+        "attainable": false,
+        "combined_percent": 90.12163424831994
+      },
+      "recovery_m": 381.4431157687213,
+      "changed_source_rows": 288,
+      "added_bindings": 1630
+    },
+    {
+      "route_key": "NCN:411",
+      "before": {
+        "target_m": 1563.4202583650522,
+        "on_foot_m": 841.2640469479153,
+        "cycling_m": 899.5182472144787,
+        "combined_m": 940.5395411792566,
+        "unbound_m": 622.8807171857956,
+        "attainable": false,
+        "combined_percent": 60.15909901044947
+      },
+      "after": {
+        "target_m": 1563.4202583650522,
+        "on_foot_m": 845.8599745806118,
+        "cycling_m": 909.8081331270291,
+        "combined_m": 950.829427091807,
+        "unbound_m": 612.5908312732452,
+        "attainable": false,
+        "combined_percent": 60.81726407243421
+      },
+      "recovery_m": 10.289885912550403,
+      "changed_source_rows": 4,
+      "added_bindings": 22
+    },
+    {
+      "route_key": "NCN:416",
+      "before": {
+        "target_m": 20709.886177553035,
+        "on_foot_m": 16514.417442342725,
+        "cycling_m": 18321.499990911732,
+        "combined_m": 18341.631737093478,
+        "unbound_m": 2368.2544404595574,
+        "attainable": false,
+        "combined_percent": 88.5646187518575
+      },
+      "after": {
+        "target_m": 20709.886177553035,
+        "on_foot_m": 16591.129283386275,
+        "cycling_m": 18405.94199011778,
+        "combined_m": 18426.073736299524,
+        "unbound_m": 2283.8124412535108,
+        "attainable": false,
+        "combined_percent": 88.97235638248517
+      },
+      "recovery_m": 84.4419992060466,
+      "changed_source_rows": 47,
+      "added_bindings": 320
+    },
+    {
+      "route_key": "NCN:42",
+      "before": {
+        "target_m": 98169.43960473515,
+        "on_foot_m": 92615.43588686793,
+        "cycling_m": 94056.28140382975,
+        "combined_m": 94400.64801463966,
+        "unbound_m": 3768.791590095483,
+        "attainable": false,
+        "combined_percent": 96.16093195064578
+      },
+      "after": {
+        "target_m": 98169.43960473515,
+        "on_foot_m": 92910.31082207775,
+        "cycling_m": 94358.49503506876,
+        "combined_m": 94703.26307868634,
+        "unbound_m": 3466.1765260488028,
+        "attainable": false,
+        "combined_percent": 96.46918986193172
+      },
+      "recovery_m": 302.61506404668035,
+      "changed_source_rows": 105,
+      "added_bindings": 797
+    },
+    {
+      "route_key": "NCN:423",
+      "before": {
+        "target_m": 41316.05507546004,
+        "on_foot_m": 37850.15542379506,
+        "cycling_m": 37953.080154172814,
+        "combined_m": 37953.080154172814,
+        "unbound_m": 3362.9749212872266,
+        "attainable": false,
+        "combined_percent": 91.86036780339978
+      },
+      "after": {
+        "target_m": 41316.05507546004,
+        "on_foot_m": 37971.15934395974,
+        "cycling_m": 38074.084074337494,
+        "combined_m": 38074.084074337494,
+        "unbound_m": 3241.971001122547,
+        "attainable": false,
+        "combined_percent": 92.15324165097229
+      },
+      "recovery_m": 121.00392016467958,
+      "changed_source_rows": 37,
+      "added_bindings": 324
+    },
+    {
+      "route_key": "NCN:425",
+      "before": {
+        "target_m": 7414.787144544135,
+        "on_foot_m": 6619.263116239114,
+        "cycling_m": 6630.793656127967,
+        "combined_m": 6630.793656127967,
+        "unbound_m": 783.9934884161685,
+        "attainable": false,
+        "combined_percent": 89.42662178788183
+      },
+      "after": {
+        "target_m": 7414.787144544135,
+        "on_foot_m": 6637.928284165402,
+        "cycling_m": 6649.458824054254,
+        "combined_m": 6649.458824054254,
+        "unbound_m": 765.3283204898808,
+        "attainable": false,
+        "combined_percent": 89.67835076623857
+      },
+      "recovery_m": 18.665167926287722,
+      "changed_source_rows": 16,
+      "added_bindings": 48
+    },
+    {
+      "route_key": "NCN:426",
+      "before": {
+        "target_m": 8726.228262760314,
+        "on_foot_m": 8398.773986981088,
+        "cycling_m": 8398.773986981088,
+        "combined_m": 8398.773986981088,
+        "unbound_m": 327.454275779226,
+        "attainable": false,
+        "combined_percent": 96.24747066064435
+      },
+      "after": {
+        "target_m": 8726.228262760314,
+        "on_foot_m": 8433.76328762148,
+        "cycling_m": 8433.76328762148,
+        "combined_m": 8433.76328762148,
+        "unbound_m": 292.46497513883514,
+        "attainable": false,
+        "combined_percent": 96.64843771750796
+      },
+      "recovery_m": 34.989300640390866,
+      "changed_source_rows": 5,
+      "added_bindings": 80
+    },
+    {
+      "route_key": "NCN:43",
+      "before": {
+        "target_m": 49936.51875903693,
+        "on_foot_m": 34686.35940846972,
+        "cycling_m": 44649.298679422616,
+        "combined_m": 44649.298679422616,
+        "unbound_m": 5287.220079614315,
+        "attainable": false,
+        "combined_percent": 89.41211720198758
+      },
+      "after": {
+        "target_m": 49936.51875903693,
+        "on_foot_m": 34817.56690912537,
+        "cycling_m": 44850.82949925124,
+        "combined_m": 44850.82949925124,
+        "unbound_m": 5085.689259785693,
+        "attainable": false,
+        "combined_percent": 89.81569122924624
+      },
+      "recovery_m": 201.53081982862204,
+      "changed_source_rows": 56,
+      "added_bindings": 470
+    },
+    {
+      "route_key": "NCN:437",
+      "before": {
+        "target_m": 13052.109319117035,
+        "on_foot_m": 8932.997389060063,
+        "cycling_m": 9976.041292179407,
+        "combined_m": 9976.041292179407,
+        "unbound_m": 3076.068026937628,
+        "attainable": false,
+        "combined_percent": 76.43240681081178
+      },
+      "after": {
+        "target_m": 13052.109319117035,
+        "on_foot_m": 8979.865392018408,
+        "cycling_m": 10024.169037959957,
+        "combined_m": 10024.169037959957,
+        "unbound_m": 3027.940281157078,
+        "attainable": false,
+        "combined_percent": 76.8011421975899
+      },
+      "recovery_m": 48.12774578054996,
+      "changed_source_rows": 17,
+      "added_bindings": 94
+    },
+    {
+      "route_key": "NCN:439",
+      "before": {
+        "target_m": 7725.044124851083,
+        "on_foot_m": 2270.1593624215266,
+        "cycling_m": 6811.46547361475,
+        "combined_m": 6848.5945846386385,
+        "unbound_m": 876.4495402124448,
+        "attainable": false,
+        "combined_percent": 88.65443968930934
+      },
+      "after": {
+        "target_m": 7725.044124851083,
+        "on_foot_m": 2276.6785163699265,
+        "cycling_m": 6825.402657427384,
+        "combined_m": 6862.531768451272,
+        "unbound_m": 862.5123563998113,
+        "attainable": false,
+        "combined_percent": 88.83485527771742
+      },
+      "recovery_m": 13.93718381263352,
+      "changed_source_rows": 10,
+      "added_bindings": 42
+    },
+    {
+      "route_key": "NCN:44",
+      "before": {
+        "target_m": 70772.93724637254,
+        "on_foot_m": 67889.34282332698,
+        "cycling_m": 67719.03507287467,
+        "combined_m": 67889.34282332698,
+        "unbound_m": 2883.5944230455643,
+        "attainable": false,
+        "combined_percent": 95.92556910135397
+      },
+      "after": {
+        "target_m": 70772.93724637254,
+        "on_foot_m": 68085.06901635224,
+        "cycling_m": 67913.96390316747,
+        "combined_m": 68085.06901635224,
+        "unbound_m": 2687.8682300203072,
+        "attainable": false,
+        "combined_percent": 96.20212423759752
+      },
+      "recovery_m": 195.7261930252571,
+      "changed_source_rows": 70,
+      "added_bindings": 572
+    },
+    {
+      "route_key": "NCN:440",
+      "before": {
+        "target_m": 5712.416149784283,
+        "on_foot_m": 5521.797309133281,
+        "cycling_m": 5521.797309133281,
+        "combined_m": 5521.797309133281,
+        "unbound_m": 190.61884065100276,
+        "attainable": false,
+        "combined_percent": 96.66307853537243
+      },
+      "after": {
+        "target_m": 5712.416149784283,
+        "on_foot_m": 5574.956438632268,
+        "cycling_m": 5574.956438632268,
+        "combined_m": 5574.956438632268,
+        "unbound_m": 137.4597111520152,
+        "attainable": false,
+        "combined_percent": 97.59366776600817
+      },
+      "recovery_m": 53.15912949898757,
+      "changed_source_rows": 11,
+      "added_bindings": 102
+    },
+    {
+      "route_key": "NCN:442",
+      "before": {
+        "target_m": 81122.70543550097,
+        "on_foot_m": 75894.3033779535,
+        "cycling_m": 78832.37009661121,
+        "combined_m": 79310.17870490477,
+        "unbound_m": 1812.5267305962043,
+        "attainable": false,
+        "combined_percent": 97.7656973829142
+      },
+      "after": {
+        "target_m": 81122.70543550097,
+        "on_foot_m": 76051.1391345185,
+        "cycling_m": 78996.1276556363,
+        "combined_m": 79474.92685095788,
+        "unbound_m": 1647.7785845430917,
+        "attainable": false,
+        "combined_percent": 97.96878250583838
+      },
+      "recovery_m": 164.74814605311258,
+      "changed_source_rows": 110,
+      "added_bindings": 570
+    },
+    {
+      "route_key": "NCN:45",
+      "before": {
+        "target_m": 369345.28314196225,
+        "on_foot_m": 338263.3137949285,
+        "cycling_m": 349792.32354209805,
+        "combined_m": 349869.2013993775,
+        "unbound_m": 19476.081742584764,
+        "attainable": false,
+        "combined_percent": 94.72686328172252
+      },
+      "after": {
+        "target_m": 369345.28314196225,
+        "on_foot_m": 339044.6508416723,
+        "cycling_m": 350608.86375320534,
+        "combined_m": 350685.7416104848,
+        "unbound_m": 18659.541531477473,
+        "attainable": false,
+        "combined_percent": 94.94794102343918
+      },
+      "recovery_m": 816.5402111072908,
+      "changed_source_rows": 531,
+      "added_bindings": 2910
+    },
+    {
+      "route_key": "NCN:451",
+      "before": {
+        "target_m": 22019.040570968482,
+        "on_foot_m": 18487.611631680033,
+        "cycling_m": 18793.842034713,
+        "combined_m": 18829.274111890314,
+        "unbound_m": 3189.766459078168,
+        "attainable": false,
+        "combined_percent": 85.51359924699085
+      },
+      "after": {
+        "target_m": 22019.040570968482,
+        "on_foot_m": 18528.121814104994,
+        "cycling_m": 18836.33652628381,
+        "combined_m": 18871.76860346112,
+        "unbound_m": 3147.2719675073604,
+        "attainable": false,
+        "combined_percent": 85.70658899799224
+      },
+      "recovery_m": 42.49449157080744,
+      "changed_source_rows": 55,
+      "added_bindings": 202
+    },
+    {
+      "route_key": "NCN:455",
+      "before": {
+        "target_m": 36832.00579237813,
+        "on_foot_m": 35509.09384331213,
+        "cycling_m": 35641.78690869403,
+        "combined_m": 35641.78690869403,
+        "unbound_m": 1190.2188836840942,
+        "attainable": false,
+        "combined_percent": 96.76852004641465
+      },
+      "after": {
+        "target_m": 36832.00579237813,
+        "on_foot_m": 35620.359048286286,
+        "cycling_m": 35753.60228496038,
+        "combined_m": 35753.60228496038,
+        "unbound_m": 1078.4035074177445,
+        "attainable": false,
+        "combined_percent": 97.07210214535505
+      },
+      "recovery_m": 111.81537626634963,
+      "changed_source_rows": 43,
+      "added_bindings": 350
+    },
+    {
+      "route_key": "NCN:46",
+      "before": {
+        "target_m": 140478.50541859912,
+        "on_foot_m": 121409.70053433726,
+        "cycling_m": 127789.04764669188,
+        "combined_m": 127815.59067313786,
+        "unbound_m": 12662.914745461254,
+        "attainable": false,
+        "combined_percent": 90.98587025272786
+      },
+      "after": {
+        "target_m": 140478.50541859912,
+        "on_foot_m": 121794.2106535754,
+        "cycling_m": 128198.86303902617,
+        "combined_m": 128225.40606547215,
+        "unbound_m": 12253.099353126963,
+        "attainable": false,
+        "combined_percent": 91.27759843641911
+      },
+      "recovery_m": 409.81539233429066,
+      "changed_source_rows": 200,
+      "added_bindings": 1228
+    },
+    {
+      "route_key": "NCN:461",
+      "before": {
+        "target_m": 8879.847272777675,
+        "on_foot_m": 8171.888030424215,
+        "cycling_m": 8175.795258434682,
+        "combined_m": 8175.795258434682,
+        "unbound_m": 704.0520143429931,
+        "attainable": false,
+        "combined_percent": 92.0713499600229
+      },
+      "after": {
+        "target_m": 8879.847272777675,
+        "on_foot_m": 8234.380924816349,
+        "cycling_m": 8238.288152826817,
+        "combined_m": 8238.288152826817,
+        "unbound_m": 641.5591199508581,
+        "attainable": false,
+        "combined_percent": 92.77511087473722
+      },
+      "recovery_m": 62.492894392134986,
+      "changed_source_rows": 26,
+      "added_bindings": 194
+    },
+    {
+      "route_key": "NCN:465",
+      "before": {
+        "target_m": 17957.874976326962,
+        "on_foot_m": 13135.447352244517,
+        "cycling_m": 16032.255094182941,
+        "combined_m": 16032.255094182941,
+        "unbound_m": 1925.6198821440212,
+        "attainable": false,
+        "combined_percent": 89.27701699292106
+      },
+      "after": {
+        "target_m": 17957.874976326962,
+        "on_foot_m": 13193.673108535955,
+        "cycling_m": 16097.818062182007,
+        "combined_m": 16097.818062182007,
+        "unbound_m": 1860.056914144956,
+        "attainable": false,
+        "combined_percent": 89.64211012384827
+      },
+      "recovery_m": 65.56296799906522,
+      "changed_source_rows": 26,
+      "added_bindings": 172
+    },
+    {
+      "route_key": "NCN:466",
+      "before": {
+        "target_m": 21787.26600326609,
+        "on_foot_m": 15763.05027777839,
+        "cycling_m": 17819.40926185954,
+        "combined_m": 17898.821612112803,
+        "unbound_m": 3888.444391153287,
+        "attainable": false,
+        "combined_percent": 82.15267399512
+      },
+      "after": {
+        "target_m": 21787.26600326609,
+        "on_foot_m": 15807.955944054944,
+        "cycling_m": 17871.965352432177,
+        "combined_m": 17951.37770268544,
+        "unbound_m": 3835.8883005806492,
+        "attainable": false,
+        "combined_percent": 82.39389788509665
+      },
+      "recovery_m": 52.55609057263791,
+      "changed_source_rows": 22,
+      "added_bindings": 117
+    },
+    {
+      "route_key": "NCN:467",
+      "before": {
+        "target_m": 13563.035800785958,
+        "on_foot_m": 9525.48939624395,
+        "cycling_m": 12180.072303432311,
+        "combined_m": 12180.072303432311,
+        "unbound_m": 1382.9634973536467,
+        "attainable": false,
+        "combined_percent": 89.80343694681166
+      },
+      "after": {
+        "target_m": 13563.035800785958,
+        "on_foot_m": 9594.094727447022,
+        "cycling_m": 12257.897836749982,
+        "combined_m": 12257.897836749982,
+        "unbound_m": 1305.1379640359755,
+        "attainable": false,
+        "combined_percent": 90.37724309508684
+      },
+      "recovery_m": 77.82553331767122,
+      "changed_source_rows": 21,
+      "added_bindings": 138
+    },
+    {
+      "route_key": "NCN:468",
+      "before": {
+        "target_m": 15500.377360150824,
+        "on_foot_m": 13430.106864541767,
+        "cycling_m": 13864.045901087267,
+        "combined_m": 13864.045901087267,
+        "unbound_m": 1636.3314590635564,
+        "attainable": false,
+        "combined_percent": 89.44327985671934
+      },
+      "after": {
+        "target_m": 15500.377360150824,
+        "on_foot_m": 13502.800898349959,
+        "cycling_m": 13937.178266292054,
+        "combined_m": 13937.178266292054,
+        "unbound_m": 1563.1990938587696,
+        "attainable": false,
+        "combined_percent": 89.91509008111296
+      },
+      "recovery_m": 73.13236520478677,
+      "changed_source_rows": 34,
+      "added_bindings": 172
+    },
+    {
+      "route_key": "NCN:469",
+      "before": {
+        "target_m": 8671.706914217304,
+        "on_foot_m": 7323.417375515892,
+        "cycling_m": 7415.840053786296,
+        "combined_m": 7420.041393786189,
+        "unbound_m": 1251.6655204311155,
+        "attainable": false,
+        "combined_percent": 85.56609981387858
+      },
+      "after": {
+        "target_m": 8671.706914217304,
+        "on_foot_m": 7340.758718776582,
+        "cycling_m": 7433.181397046987,
+        "combined_m": 7437.38273704688,
+        "unbound_m": 1234.3241771704243,
+        "attainable": false,
+        "combined_percent": 85.76607593659854
+      },
+      "recovery_m": 17.341343260691247,
+      "changed_source_rows": 19,
+      "added_bindings": 98
+    },
+    {
+      "route_key": "NCN:47",
+      "before": {
+        "target_m": 184931.7613086619,
+        "on_foot_m": 170523.48954167071,
+        "cycling_m": 171612.26872592748,
+        "combined_m": 171612.26872592748,
+        "unbound_m": 13319.492582734412,
+        "attainable": false,
+        "combined_percent": 92.79761762475002
+      },
+      "after": {
+        "target_m": 184931.7613086619,
+        "on_foot_m": 171238.55323487223,
+        "cycling_m": 172336.12897814286,
+        "combined_m": 172336.12897814286,
+        "unbound_m": 12595.63233051903,
+        "attainable": false,
+        "combined_percent": 93.18903781514513
+      },
+      "recovery_m": 723.8602522153815,
+      "changed_source_rows": 196,
+      "added_bindings": 2008
+    },
+    {
+      "route_key": "NCN:475",
+      "before": {
+        "target_m": 7613.161127810138,
+        "on_foot_m": 4681.177407845153,
+        "cycling_m": 5960.32102072341,
+        "combined_m": 5960.32102072341,
+        "unbound_m": 1652.8401070867285,
+        "attainable": false,
+        "combined_percent": 78.289700173965
+      },
+      "after": {
+        "target_m": 7613.161127810138,
+        "on_foot_m": 4702.549825825659,
+        "cycling_m": 5987.512363632548,
+        "combined_m": 5987.512363632548,
+        "unbound_m": 1625.6487641775902,
+        "attainable": false,
+        "combined_percent": 78.64686249396124
+      },
+      "recovery_m": 27.191342909138257,
+      "changed_source_rows": 10,
+      "added_bindings": 50
+    },
+    {
+      "route_key": "NCN:476",
+      "before": {
+        "target_m": 2717.324286412442,
+        "on_foot_m": 853.5713324080297,
+        "cycling_m": 2635.566320049964,
+        "combined_m": 2635.566320049964,
+        "unbound_m": 81.75796636247787,
+        "attainable": false,
+        "combined_percent": 96.99123263383412
+      },
+      "after": {
+        "target_m": 2717.324286412442,
+        "on_foot_m": 854.8693607343955,
+        "cycling_m": 2643.927237294814,
+        "combined_m": 2643.927237294814,
+        "unbound_m": 73.39704911762783,
+        "attainable": false,
+        "combined_percent": 97.29892197686385
+      },
+      "recovery_m": 8.360917244850043,
+      "changed_source_rows": 5,
+      "added_bindings": 34
+    },
+    {
+      "route_key": "NCN:477",
+      "before": {
+        "target_m": 9522.154349713079,
+        "on_foot_m": 6644.824067162274,
+        "cycling_m": 7749.931201568754,
+        "combined_m": 7749.931201568754,
+        "unbound_m": 1772.223148144325,
+        "attainable": false,
+        "combined_percent": 81.38842237736121
+      },
+      "after": {
+        "target_m": 9522.154349713079,
+        "on_foot_m": 6663.308670009644,
+        "cycling_m": 7771.557418580697,
+        "combined_m": 7771.557418580697,
+        "unbound_m": 1750.5969311323815,
+        "attainable": false,
+        "combined_percent": 81.61553712700392
+      },
+      "recovery_m": 21.62621701194348,
+      "changed_source_rows": 12,
+      "added_bindings": 82
+    },
+    {
+      "route_key": "NCN:478",
+      "before": {
+        "target_m": 19779.29904811811,
+        "on_foot_m": 10432.302878145962,
+        "cycling_m": 16748.638666504106,
+        "combined_m": 16804.4042087144,
+        "unbound_m": 2974.8948394037106,
+        "attainable": false,
+        "combined_percent": 84.95955376291884
+      },
+      "after": {
+        "target_m": 19779.29904811811,
+        "on_foot_m": 10466.141228850425,
+        "cycling_m": 16810.824227006768,
+        "combined_m": 16866.589769217062,
+        "unbound_m": 2912.7092789010494,
+        "attainable": false,
+        "combined_percent": 85.27395095339247
+      },
+      "recovery_m": 62.18556050266125,
+      "changed_source_rows": 32,
+      "added_bindings": 160
+    },
+    {
+      "route_key": "NCN:48",
+      "before": {
+        "target_m": 127200.89158957911,
+        "on_foot_m": 116100.4177480633,
+        "cycling_m": 117958.75205474219,
+        "combined_m": 117958.75205474219,
+        "unbound_m": 9242.139534836926,
+        "attainable": false,
+        "combined_percent": 92.73421796078505
+      },
+      "after": {
+        "target_m": 127200.89158957911,
+        "on_foot_m": 116383.11774351446,
+        "cycling_m": 118249.87441078489,
+        "combined_m": 118249.87441078489,
+        "unbound_m": 8951.017178794224,
+        "attainable": false,
+        "combined_percent": 92.96308613333059
+      },
+      "recovery_m": 291.12235604270245,
+      "changed_source_rows": 153,
+      "added_bindings": 848
+    },
+    {
+      "route_key": "NCN:482",
+      "before": {
+        "target_m": 11682.13393199029,
+        "on_foot_m": 11365.912337416681,
+        "cycling_m": 11365.912337416681,
+        "combined_m": 11365.912337416681,
+        "unbound_m": 316.22159457360976,
+        "attainable": false,
+        "combined_percent": 97.29311788056401
+      },
+      "after": {
+        "target_m": 11682.13393199029,
+        "on_foot_m": 11387.40349238107,
+        "cycling_m": 11387.40349238107,
+        "combined_m": 11387.40349238107,
+        "unbound_m": 294.7304396092204,
+        "attainable": false,
+        "combined_percent": 97.47708388445939
+      },
+      "recovery_m": 21.491154964389352,
+      "changed_source_rows": 13,
+      "added_bindings": 64
+    },
+    {
+      "route_key": "NCN:49",
+      "before": {
+        "target_m": 32491.138514928367,
+        "on_foot_m": 30029.244177140787,
+        "cycling_m": 30040.090186024845,
+        "combined_m": 30040.090186024845,
+        "unbound_m": 2451.048328903522,
+        "attainable": false,
+        "combined_percent": 92.45625594874933
+      },
+      "after": {
+        "target_m": 32491.138514928367,
+        "on_foot_m": 30264.74209466606,
+        "cycling_m": 30275.58810355012,
+        "combined_m": 30275.58810355012,
+        "unbound_m": 2215.550411378248,
+        "attainable": false,
+        "combined_percent": 93.18106255230086
+      },
+      "recovery_m": 235.4979175252738,
+      "changed_source_rows": 25,
+      "added_bindings": 590
+    },
+    {
+      "route_key": "NCN:492",
+      "before": {
+        "target_m": 25062.215209911737,
+        "on_foot_m": 20732.2552216485,
+        "cycling_m": 22416.448315088113,
+        "combined_m": 22416.448315088113,
+        "unbound_m": 2645.766894823624,
+        "attainable": false,
+        "combined_percent": 89.44320415149392
+      },
+      "after": {
+        "target_m": 25062.215209911737,
+        "on_foot_m": 20828.919109775794,
+        "cycling_m": 22518.957156102246,
+        "combined_m": 22518.957156102246,
+        "unbound_m": 2543.2580538094917,
+        "attainable": false,
+        "combined_percent": 89.85222163121611
+      },
+      "recovery_m": 102.50884101413249,
+      "changed_source_rows": 32,
+      "added_bindings": 242
+    },
+    {
+      "route_key": "NCN:5",
+      "before": {
+        "target_m": 578924.210829198,
+        "on_foot_m": 509858.67088627536,
+        "cycling_m": 528935.5070011315,
+        "combined_m": 530173.7729094642,
+        "unbound_m": 48750.43791973381,
+        "attainable": false,
+        "combined_percent": 91.57913298358896
+      },
+      "after": {
+        "target_m": 578924.210829198,
+        "on_foot_m": 511086.9778718905,
+        "cycling_m": 530257.487312892,
+        "combined_m": 531498.0184298764,
+        "unbound_m": 47426.19239932159,
+        "attainable": false,
+        "combined_percent": 91.80787545033007
+      },
+      "recovery_m": 1324.2455204122234,
+      "changed_source_rows": 937,
+      "added_bindings": 5261
+    },
+    {
+      "route_key": "NCN:50",
+      "before": {
+        "target_m": 106028.33956517752,
+        "on_foot_m": 98363.23039217634,
+        "cycling_m": 99497.67893140361,
+        "combined_m": 99627.82223920152,
+        "unbound_m": 6400.517325976005,
+        "attainable": false,
+        "combined_percent": 93.96339002173896
+      },
+      "after": {
+        "target_m": 106028.33956517752,
+        "on_foot_m": 98612.32513874695,
+        "cycling_m": 99751.82148031307,
+        "combined_m": 99881.96478811096,
+        "unbound_m": 6146.374777066565,
+        "attainable": false,
+        "combined_percent": 94.20308306036588
+      },
+      "recovery_m": 254.14254890943994,
+      "changed_source_rows": 142,
+      "added_bindings": 752
+    },
+    {
+      "route_key": "NCN:51",
+      "before": {
+        "target_m": 303551.461226709,
+        "on_foot_m": 270339.4552446181,
+        "cycling_m": 280599.79529566603,
+        "combined_m": 281430.60272306576,
+        "unbound_m": 22120.85850364325,
+        "attainable": false,
+        "combined_percent": 92.71264963962003
+      },
+      "after": {
+        "target_m": 303551.461226709,
+        "on_foot_m": 270993.87393474265,
+        "cycling_m": 281281.5969519951,
+        "combined_m": 282117.0254590462,
+        "unbound_m": 21434.435767662828,
+        "attainable": false,
+        "combined_percent": 92.93878023810453
+      },
+      "recovery_m": 686.4227359804208,
+      "changed_source_rows": 551,
+      "added_bindings": 2922
+    },
+    {
+      "route_key": "NCN:517",
+      "before": {
+        "target_m": 38763.32459916615,
+        "on_foot_m": 13675.602912131213,
+        "cycling_m": 14887.334825236228,
+        "combined_m": 14953.897269712863,
+        "unbound_m": 23809.42732945329,
+        "attainable": false,
+        "combined_percent": 38.57743736984454
+      },
+      "after": {
+        "target_m": 38763.32459916615,
+        "on_foot_m": 13697.625126625408,
+        "cycling_m": 14924.988108397089,
+        "combined_m": 14991.550552873721,
+        "unbound_m": 23771.774046292434,
+        "attainable": false,
+        "combined_percent": 38.67457373147041
+      },
+      "recovery_m": 37.65328316085834,
+      "changed_source_rows": 23,
+      "added_bindings": 130
+    },
+    {
+      "route_key": "NCN:52",
+      "before": {
+        "target_m": 71272.3008735003,
+        "on_foot_m": 63295.51059079322,
+        "cycling_m": 66075.41104743628,
+        "combined_m": 66156.59645876879,
+        "unbound_m": 5115.704414731503,
+        "attainable": false,
+        "combined_percent": 92.82231055819109
+      },
+      "after": {
+        "target_m": 71272.3008735003,
+        "on_foot_m": 63466.38843731108,
+        "cycling_m": 66253.25492384887,
+        "combined_m": 66334.44033518138,
+        "unbound_m": 4937.860538318913,
+        "attainable": false,
+        "combined_percent": 93.07183789803136
+      },
+      "recovery_m": 177.84387641258945,
+      "changed_source_rows": 119,
+      "added_bindings": 934
+    },
+    {
+      "route_key": "NCN:523",
+      "before": {
+        "target_m": 3727.5864819481912,
+        "on_foot_m": 1788.0043499422618,
+        "cycling_m": 2803.727857128094,
+        "combined_m": 2803.727857128094,
+        "unbound_m": 923.8586248200972,
+        "attainable": false,
+        "combined_percent": 75.2156353905101
+      },
+      "after": {
+        "target_m": 3727.5864819481912,
+        "on_foot_m": 1791.1464124285337,
+        "cycling_m": 2806.8699196143657,
+        "combined_m": 2806.8699196143657,
+        "unbound_m": 920.7165623338256,
+        "attainable": false,
+        "combined_percent": 75.29992753239569
+      },
+      "recovery_m": 3.1420624862716977,
+      "changed_source_rows": 2,
+      "added_bindings": 8
+    },
+    {
+      "route_key": "NCN:53",
+      "before": {
+        "target_m": 17950.151734545958,
+        "on_foot_m": 15256.259270751196,
+        "cycling_m": 15513.261857091691,
+        "combined_m": 15560.340951869255,
+        "unbound_m": 2389.8107826767027,
+        "attainable": false,
+        "combined_percent": 86.68640344651018
+      },
+      "after": {
+        "target_m": 17950.151734545958,
+        "on_foot_m": 15293.061794423675,
+        "cycling_m": 15550.566571809848,
+        "combined_m": 15597.645666587412,
+        "unbound_m": 2352.506067958546,
+        "attainable": false,
+        "combined_percent": 86.89422739847356
+      },
+      "recovery_m": 37.3047147181569,
+      "changed_source_rows": 40,
+      "added_bindings": 212
+    },
+    {
+      "route_key": "NCN:533",
+      "before": {
+        "target_m": 5268.130331137489,
+        "on_foot_m": 5165.091556950632,
+        "cycling_m": 5165.091556950632,
+        "combined_m": 5165.091556950632,
+        "unbound_m": 103.03877418685624,
+        "attainable": false,
+        "combined_percent": 98.0441111417111
+      },
+      "after": {
+        "target_m": 5268.130331137489,
+        "on_foot_m": 5172.782042018505,
+        "cycling_m": 5172.782042018505,
+        "combined_m": 5172.782042018505,
+        "unbound_m": 95.3482891189833,
+        "attainable": false,
+        "combined_percent": 98.19009244028335
+      },
+      "recovery_m": 7.690485067872942,
+      "changed_source_rows": 4,
+      "added_bindings": 76
+    },
+    {
+      "route_key": "NCN:534",
+      "before": {
+        "target_m": 9895.689573545467,
+        "on_foot_m": 5063.57320450483,
+        "cycling_m": 9029.610469160067,
+        "combined_m": 9043.405587288204,
+        "unbound_m": 852.2839862572637,
+        "attainable": false,
+        "combined_percent": 91.38732091459592
+      },
+      "after": {
+        "target_m": 9895.689573545467,
+        "on_foot_m": 5087.300084910082,
+        "cycling_m": 9061.982769619006,
+        "combined_m": 9075.777887747143,
+        "unbound_m": 819.9116857983245,
+        "attainable": false,
+        "combined_percent": 91.71445628215515
+      },
+      "recovery_m": 32.37230045893921,
+      "changed_source_rows": 26,
+      "added_bindings": 150
+    },
+    {
+      "route_key": "NCN:535",
+      "before": {
+        "target_m": 13178.287158652187,
+        "on_foot_m": 8857.707372382489,
+        "cycling_m": 11486.444920510323,
+        "combined_m": 11516.906298194392,
+        "unbound_m": 1661.3808604577953,
+        "attainable": false,
+        "combined_percent": 87.39304402418476
+      },
+      "after": {
+        "target_m": 13178.287158652187,
+        "on_foot_m": 8879.947181983203,
+        "cycling_m": 11514.168146611932,
+        "combined_m": 11544.629524296002,
+        "unbound_m": 1633.6576343561846,
+        "attainable": false,
+        "combined_percent": 87.60341450532432
+      },
+      "recovery_m": 27.723226101610635,
+      "changed_source_rows": 27,
+      "added_bindings": 208
+    },
+    {
+      "route_key": "NCN:536",
+      "before": {
+        "target_m": 5378.219133708998,
+        "on_foot_m": 4619.568960518184,
+        "cycling_m": 4645.018701836542,
+        "combined_m": 4645.018701836542,
+        "unbound_m": 733.2004318724557,
+        "attainable": false,
+        "combined_percent": 86.36722651784521
+      },
+      "after": {
+        "target_m": 5378.219133708998,
+        "on_foot_m": 4632.181854405802,
+        "cycling_m": 4657.63159572416,
+        "combined_m": 4657.63159572416,
+        "unbound_m": 720.5875379848376,
+        "attainable": false,
+        "combined_percent": 86.60174455390968
+      },
+      "recovery_m": 12.612893887618156,
+      "changed_source_rows": 19,
+      "added_bindings": 84
+    },
+    {
+      "route_key": "NCN:539",
+      "before": {
+        "target_m": 28717.50568196975,
+        "on_foot_m": 16261.601875572725,
+        "cycling_m": 25921.203679413837,
+        "combined_m": 25940.81034671426,
+        "unbound_m": 2776.6953352554883,
+        "attainable": false,
+        "combined_percent": 90.331001006822
+      },
+      "after": {
+        "target_m": 28717.50568196975,
+        "on_foot_m": 16309.530727323801,
+        "cycling_m": 26005.546958106916,
+        "combined_m": 26025.15362540734,
+        "unbound_m": 2692.3520565624094,
+        "attainable": false,
+        "combined_percent": 90.6247008832219
+      },
+      "recovery_m": 84.3432786930789,
+      "changed_source_rows": 65,
+      "added_bindings": 368
+    },
+    {
+      "route_key": "NCN:54",
+      "before": {
+        "target_m": 93783.53373191033,
+        "on_foot_m": 81216.31095856793,
+        "cycling_m": 86781.09114115693,
+        "combined_m": 86797.12853910412,
+        "unbound_m": 6986.405192806211,
+        "attainable": false,
+        "combined_percent": 92.55049909637916
+      },
+      "after": {
+        "target_m": 93783.53373191033,
+        "on_foot_m": 81450.95306321449,
+        "cycling_m": 87042.46903636366,
+        "combined_m": 87058.50643431087,
+        "unbound_m": 6725.027297599459,
+        "attainable": false,
+        "combined_percent": 92.82920249430606
+      },
+      "recovery_m": 261.3778952067514,
+      "changed_source_rows": 177,
+      "added_bindings": 1112
+    },
+    {
+      "route_key": "NCN:544",
+      "before": {
+        "target_m": 16428.91764023934,
+        "on_foot_m": 15817.364505291907,
+        "cycling_m": 15817.364505291907,
+        "combined_m": 15817.364505291907,
+        "unbound_m": 611.5531349474313,
+        "attainable": false,
+        "combined_percent": 96.27758110218073
+      },
+      "after": {
+        "target_m": 16428.91764023934,
+        "on_foot_m": 15847.92632607494,
+        "cycling_m": 15847.92632607494,
+        "combined_m": 15847.92632607494,
+        "unbound_m": 580.9913141643992,
+        "attainable": false,
+        "combined_percent": 96.46360565627661
+      },
+      "recovery_m": 30.56182078303209,
+      "changed_source_rows": 47,
+      "added_bindings": 230
+    },
+    {
+      "route_key": "NCN:547",
+      "before": {
+        "target_m": 194.43272809547824,
+        "on_foot_m": 180.07969356264877,
+        "cycling_m": 180.07969356264877,
+        "combined_m": 180.07969356264877,
+        "unbound_m": 14.353034532829469,
+        "attainable": false,
+        "combined_percent": 92.61799457662227
+      },
+      "after": {
+        "target_m": 194.43272809547824,
+        "on_foot_m": 180.25482780474013,
+        "cycling_m": 180.25482780474013,
+        "combined_m": 180.25482780474013,
+        "unbound_m": 14.177900290738108,
+        "attainable": false,
+        "combined_percent": 92.70806904289492
+      },
+      "recovery_m": 0.1751342420913602,
+      "changed_source_rows": 1,
+      "added_bindings": 2
+    },
+    {
+      "route_key": "NCN:548",
+      "before": {
+        "target_m": 8393.42973937798,
+        "on_foot_m": 8312.710883381558,
+        "cycling_m": 8312.710883381558,
+        "combined_m": 8312.710883381558,
+        "unbound_m": 80.71885599642155,
+        "attainable": false,
+        "combined_percent": 99.03830902857591
+      },
+      "after": {
+        "target_m": 8393.42973937798,
+        "on_foot_m": 8325.84498725233,
+        "cycling_m": 8325.84498725233,
+        "combined_m": 8325.84498725233,
+        "unbound_m": 67.58475212564917,
+        "attainable": false,
+        "combined_percent": 99.19478980316504
+      },
+      "recovery_m": 13.134103870772378,
+      "changed_source_rows": 13,
+      "added_bindings": 70
+    },
+    {
+      "route_key": "NCN:549",
+      "before": {
+        "target_m": 31899.914637477385,
+        "on_foot_m": 30195.993552462052,
+        "cycling_m": 30207.876702583064,
+        "combined_m": 30207.876702583064,
+        "unbound_m": 1692.0379348943206,
+        "attainable": false,
+        "combined_percent": 94.6957916529769
+      },
+      "after": {
+        "target_m": 31899.914637477385,
+        "on_foot_m": 30312.625550368302,
+        "cycling_m": 30324.508700489314,
+        "combined_m": 30324.508700489314,
+        "unbound_m": 1575.4059369880706,
+        "attainable": false,
+        "combined_percent": 95.061410179646
+      },
+      "recovery_m": 116.63199790625004,
+      "changed_source_rows": 66,
+      "added_bindings": 354
+    },
+    {
+      "route_key": "NCN:55",
+      "before": {
+        "target_m": 175701.3586063826,
+        "on_foot_m": 152833.32375548847,
+        "cycling_m": 156814.40419951561,
+        "combined_m": 156942.87021941866,
+        "unbound_m": 18758.48838696393,
+        "attainable": false,
+        "combined_percent": 89.32365205610738
+      },
+      "after": {
+        "target_m": 175701.3586063826,
+        "on_foot_m": 153284.22032797887,
+        "cycling_m": 157272.33445993045,
+        "combined_m": 157402.52858581982,
+        "unbound_m": 18298.830020562775,
+        "attainable": false,
+        "combined_percent": 89.58526549498289
+      },
+      "recovery_m": 459.65836640115594,
+      "changed_source_rows": 278,
+      "added_bindings": 1690
+    },
+    {
+      "route_key": "NCN:550",
+      "before": {
+        "target_m": 33087.82900521009,
+        "on_foot_m": 30331.221787107097,
+        "cycling_m": 31462.911990876095,
+        "combined_m": 31514.781457405294,
+        "unbound_m": 1573.0475478047993,
+        "attainable": false,
+        "combined_percent": 95.24584236833095
+      },
+      "after": {
+        "target_m": 33087.82900521009,
+        "on_foot_m": 30420.947353568263,
+        "cycling_m": 31556.85748086472,
+        "combined_m": 31608.72694739392,
+        "unbound_m": 1479.1020578161733,
+        "attainable": false,
+        "combined_percent": 95.5297700021864
+      },
+      "recovery_m": 93.94548998862592,
+      "changed_source_rows": 24,
+      "added_bindings": 268
+    },
+    {
+      "route_key": "NCN:551",
+      "before": {
+        "target_m": 37983.23978800673,
+        "on_foot_m": 32336.090257747917,
+        "cycling_m": 32345.315303646592,
+        "combined_m": 32345.315303646592,
+        "unbound_m": 5637.924484360137,
+        "attainable": false,
+        "combined_percent": 85.1568099092476
+      },
+      "after": {
+        "target_m": 37983.23978800673,
+        "on_foot_m": 32393.772188444473,
+        "cycling_m": 32402.997234343147,
+        "combined_m": 32402.997234343147,
+        "unbound_m": 5580.242553663582,
+        "attainable": false,
+        "combined_percent": 85.30867144348873
+      },
+      "recovery_m": 57.681930696555355,
+      "changed_source_rows": 55,
+      "added_bindings": 256
+    },
+    {
+      "route_key": "NCN:552",
+      "before": {
+        "target_m": 52109.918722171984,
+        "on_foot_m": 41257.04776022935,
+        "cycling_m": 41262.98208798971,
+        "combined_m": 41262.98208798971,
+        "unbound_m": 10846.936634182275,
+        "attainable": false,
+        "combined_percent": 79.18450671164247
+      },
+      "after": {
+        "target_m": 52109.918722171984,
+        "on_foot_m": 41360.57682860683,
+        "cycling_m": 41366.51115636719,
+        "combined_m": 41366.51115636719,
+        "unbound_m": 10743.407565804795,
+        "attainable": false,
+        "combined_percent": 79.38318111167263
+      },
+      "recovery_m": 103.52906837748014,
+      "changed_source_rows": 46,
+      "added_bindings": 292
+    },
+    {
+      "route_key": "NCN:555",
+      "before": {
+        "target_m": 1428.451944098782,
+        "on_foot_m": 702.2755131304235,
+        "cycling_m": 1155.5710371938794,
+        "combined_m": 1155.5710371938794,
+        "unbound_m": 272.88090690490253,
+        "attainable": false,
+        "combined_percent": 80.89673873648829
+      },
+      "after": {
+        "target_m": 1428.451944098782,
+        "on_foot_m": 702.7938031562473,
+        "cycling_m": 1157.7734236905771,
+        "combined_m": 1157.7734236905771,
+        "unbound_m": 270.6785204082048,
+        "attainable": false,
+        "combined_percent": 81.05091868673416
+      },
+      "recovery_m": 2.202386496697727,
+      "changed_source_rows": 6,
+      "added_bindings": 12
+    },
+    {
+      "route_key": "NCN:558",
+      "before": {
+        "target_m": 7545.378744140329,
+        "on_foot_m": 5102.165185002437,
+        "cycling_m": 5258.880262022812,
+        "combined_m": 5258.880262022812,
+        "unbound_m": 2286.4984821175176,
+        "attainable": false,
+        "combined_percent": 69.69670364270063
+      },
+      "after": {
+        "target_m": 7545.378744140329,
+        "on_foot_m": 5113.645456011943,
+        "cycling_m": 5270.360533032317,
+        "combined_m": 5270.360533032317,
+        "unbound_m": 2275.018211108012,
+        "attainable": false,
+        "combined_percent": 69.8488533411955
+      },
+      "recovery_m": 11.480271009505486,
+      "changed_source_rows": 13,
+      "added_bindings": 52
+    },
+    {
+      "route_key": "NCN:559",
+      "before": {
+        "target_m": 11495.72333704716,
+        "on_foot_m": 10928.533410547916,
+        "cycling_m": 10928.533410547916,
+        "combined_m": 10928.533410547916,
+        "unbound_m": 567.1899264992444,
+        "attainable": false,
+        "combined_percent": 95.06607883758504
+      },
+      "after": {
+        "target_m": 11495.72333704716,
+        "on_foot_m": 10982.48742227524,
+        "cycling_m": 10982.48742227524,
+        "combined_m": 10982.48742227524,
+        "unbound_m": 513.2359147719199,
+        "attainable": false,
+        "combined_percent": 95.53541869681294
+      },
+      "recovery_m": 53.95401172732454,
+      "changed_source_rows": 19,
+      "added_bindings": 138
+    },
+    {
+      "route_key": "NCN:56",
+      "before": {
+        "target_m": 72499.3363175313,
+        "on_foot_m": 62584.286318719955,
+        "cycling_m": 62138.528346076964,
+        "combined_m": 63362.969038308554,
+        "unbound_m": 9136.367279222744,
+        "attainable": false,
+        "combined_percent": 87.3979987358678
+      },
+      "after": {
+        "target_m": 72499.3363175313,
+        "on_foot_m": 62787.47244023877,
+        "cycling_m": 62346.03099451573,
+        "combined_m": 63571.647969876205,
+        "unbound_m": 8927.688347655094,
+        "attainable": false,
+        "combined_percent": 87.68583437984347
+      },
+      "recovery_m": 208.67893156765058,
+      "changed_source_rows": 124,
+      "added_bindings": 640
+    },
+    {
+      "route_key": "NCN:562",
+      "before": {
+        "target_m": 35913.19399175898,
+        "on_foot_m": 32733.88952238998,
+        "cycling_m": 33098.93308083691,
+        "combined_m": 33558.04667587487,
+        "unbound_m": 2355.1473158841036,
+        "attainable": false,
+        "combined_percent": 93.4421112295817
+      },
+      "after": {
+        "target_m": 35913.19399175898,
+        "on_foot_m": 32808.42012380454,
+        "cycling_m": 33173.494414491426,
+        "combined_m": 33632.853468119705,
+        "unbound_m": 2280.340523639272,
+        "attainable": false,
+        "combined_percent": 93.65041014129085
+      },
+      "recovery_m": 74.80679224483174,
+      "changed_source_rows": 57,
+      "added_bindings": 422
+    },
+    {
+      "route_key": "NCN:563",
+      "before": {
+        "target_m": 13065.48909065947,
+        "on_foot_m": 10439.80621280897,
+        "cycling_m": 10969.413633385191,
+        "combined_m": 10969.413633385191,
+        "unbound_m": 2096.075457274279,
+        "attainable": false,
+        "combined_percent": 83.9571604037941
+      },
+      "after": {
+        "target_m": 13065.48909065947,
+        "on_foot_m": 10467.319845098062,
+        "cycling_m": 10997.402799493006,
+        "combined_m": 10997.402799493006,
+        "unbound_m": 2068.0862911664644,
+        "attainable": false,
+        "combined_percent": 84.17138251146723
+      },
+      "recovery_m": 27.989166107814526,
+      "changed_source_rows": 14,
+      "added_bindings": 115
+    },
+    {
+      "route_key": "NCN:566",
+      "before": {
+        "target_m": 25580.59982508976,
+        "on_foot_m": 16561.7237282118,
+        "cycling_m": 24388.815257780883,
+        "combined_m": 24388.815257780883,
+        "unbound_m": 1191.7845673088777,
+        "attainable": false,
+        "combined_percent": 95.34106089983096
+      },
+      "after": {
+        "target_m": 25580.59982508976,
+        "on_foot_m": 16623.316340193243,
+        "cycling_m": 24479.784220268564,
+        "combined_m": 24479.784220268564,
+        "unbound_m": 1100.8156048211968,
+        "attainable": false,
+        "combined_percent": 95.6966779029884
+      },
+      "recovery_m": 90.96896248768098,
+      "changed_source_rows": 26,
+      "added_bindings": 224
+    },
+    {
+      "route_key": "NCN:568",
+      "before": {
+        "target_m": 24063.956367706294,
+        "on_foot_m": 21253.12811039471,
+        "cycling_m": 21415.83935815565,
+        "combined_m": 21428.956821885575,
+        "unbound_m": 2634.9995458207195,
+        "attainable": false,
+        "combined_percent": 89.05001527779997
+      },
+      "after": {
+        "target_m": 24063.956367706294,
+        "on_foot_m": 21289.72860841007,
+        "cycling_m": 21452.528563598942,
+        "combined_m": 21465.64602732887,
+        "unbound_m": 2598.3103403774257,
+        "attainable": false,
+        "combined_percent": 89.20248066995191
+      },
+      "recovery_m": 36.68920544329376,
+      "changed_source_rows": 25,
+      "added_bindings": 144
+    },
+    {
+      "route_key": "NCN:57",
+      "before": {
+        "target_m": 103821.81953631551,
+        "on_foot_m": 98306.85486740421,
+        "cycling_m": 100245.86973763116,
+        "combined_m": 100498.6729488598,
+        "unbound_m": 3323.1465874557034,
+        "attainable": false,
+        "combined_percent": 96.79918286705299
+      },
+      "after": {
+        "target_m": 103821.81953631551,
+        "on_foot_m": 98536.52373722699,
+        "cycling_m": 100484.44147422494,
+        "combined_m": 100737.7669103411,
+        "unbound_m": 3084.0526259744074,
+        "attainable": false,
+        "combined_percent": 97.02947546118122
+      },
+      "recovery_m": 239.093961481296,
+      "changed_source_rows": 175,
+      "added_bindings": 1012
+    },
+    {
+      "route_key": "NCN:573",
+      "before": {
+        "target_m": 31417.66866968013,
+        "on_foot_m": 30062.112140369798,
+        "cycling_m": 30115.1243215584,
+        "combined_m": 30115.1243215584,
+        "unbound_m": 1302.5443481217299,
+        "attainable": false,
+        "combined_percent": 95.85410247394086
+      },
+      "after": {
+        "target_m": 31417.66866968013,
+        "on_foot_m": 30109.807000155233,
+        "cycling_m": 30162.819181343835,
+        "combined_m": 30162.819181343835,
+        "unbound_m": 1254.8494883362946,
+        "attainable": false,
+        "combined_percent": 96.00591150944533
+      },
+      "recovery_m": 47.694859785435256,
+      "changed_source_rows": 43,
+      "added_bindings": 206
+    },
+    {
+      "route_key": "NCN:574",
+      "before": {
+        "target_m": 4364.303872886899,
+        "on_foot_m": 4025.401649593625,
+        "cycling_m": 4017.146965130599,
+        "combined_m": 4025.401649593625,
+        "unbound_m": 338.9022232932739,
+        "attainable": false,
+        "combined_percent": 92.23467858416795
+      },
+      "after": {
+        "target_m": 4364.303872886899,
+        "on_foot_m": 4040.1368510979,
+        "cycling_m": 4031.882166634874,
+        "combined_m": 4040.1368510979,
+        "unbound_m": 324.1670217889987,
+        "attainable": false,
+        "combined_percent": 92.57230863774458
+      },
+      "recovery_m": 14.73520150427521,
+      "changed_source_rows": 10,
+      "added_bindings": 46
+    },
+    {
+      "route_key": "NCN:6",
+      "before": {
+        "target_m": 690038.1387238943,
+        "on_foot_m": 594495.3501322345,
+        "cycling_m": 619229.5935378277,
+        "combined_m": 622529.0237052332,
+        "unbound_m": 67509.11501866102,
+        "attainable": false,
+        "combined_percent": 90.21661104942585
+      },
+      "after": {
+        "target_m": 690038.1387238943,
+        "on_foot_m": 596122.5242491852,
+        "cycling_m": 620951.0669633099,
+        "combined_m": 624257.9848885003,
+        "unbound_m": 65780.15383539395,
+        "attainable": false,
+        "combined_percent": 90.46717128461292
+      },
+      "recovery_m": 1728.9611832670635,
+      "changed_source_rows": 1219,
+      "added_bindings": 7263
+    },
+    {
+      "route_key": "NCN:60",
+      "before": {
+        "target_m": 7000.400426460651,
+        "on_foot_m": 6286.80904359404,
+        "cycling_m": 6262.87719169361,
+        "combined_m": 6286.80904359404,
+        "unbound_m": 713.5913828666107,
+        "attainable": false,
+        "combined_percent": 89.80642049889998
+      },
+      "after": {
+        "target_m": 7000.400426460651,
+        "on_foot_m": 6296.9298660668,
+        "cycling_m": 6272.998014166371,
+        "combined_m": 6296.9298660668,
+        "unbound_m": 703.470560393851,
+        "attainable": false,
+        "combined_percent": 89.95099540685102
+      },
+      "recovery_m": 10.120822472759755,
+      "changed_source_rows": 19,
+      "added_bindings": 90
+    },
+    {
+      "route_key": "NCN:601",
+      "before": {
+        "target_m": 6316.974761359787,
+        "on_foot_m": 5705.710438161613,
+        "cycling_m": 5705.710438161613,
+        "combined_m": 5705.710438161613,
+        "unbound_m": 611.2643231981747,
+        "attainable": false,
+        "combined_percent": 90.32346421680819
+      },
+      "after": {
+        "target_m": 6316.974761359787,
+        "on_foot_m": 5720.944240409251,
+        "cycling_m": 5720.944240409251,
+        "combined_m": 5720.944240409251,
+        "unbound_m": 596.0305209505368,
+        "attainable": false,
+        "combined_percent": 90.56462082773567
+      },
+      "recovery_m": 15.233802247637868,
+      "changed_source_rows": 13,
+      "added_bindings": 80
+    },
+    {
+      "route_key": "NCN:604",
+      "before": {
+        "target_m": 4956.233362279653,
+        "on_foot_m": 4723.649720808951,
+        "cycling_m": 4723.649720808951,
+        "combined_m": 4723.649720808951,
+        "unbound_m": 232.58364147070188,
+        "attainable": false,
+        "combined_percent": 95.30724999268955
+      },
+      "after": {
+        "target_m": 4956.233362279653,
+        "on_foot_m": 4748.976674521879,
+        "cycling_m": 4748.976674521879,
+        "combined_m": 4748.976674521879,
+        "unbound_m": 207.25668775777376,
+        "attainable": false,
+        "combined_percent": 95.81826212350815
+      },
+      "recovery_m": 25.326953712928116,
+      "changed_source_rows": 15,
+      "added_bindings": 156
+    },
+    {
+      "route_key": "NCN:606",
+      "before": {
+        "target_m": 9735.312875253405,
+        "on_foot_m": 5872.510113052044,
+        "cycling_m": 7351.502778537022,
+        "combined_m": 7351.502778537022,
+        "unbound_m": 2383.8100967163828,
+        "attainable": false,
+        "combined_percent": 75.5137803246582
+      },
+      "after": {
+        "target_m": 9735.312875253405,
+        "on_foot_m": 5883.570264074889,
+        "cycling_m": 7365.512709441013,
+        "combined_m": 7365.512709441013,
+        "unbound_m": 2369.800165812392,
+        "attainable": false,
+        "combined_percent": 75.65768870319222
+      },
+      "recovery_m": 14.009930903990607,
+      "changed_source_rows": 7,
+      "added_bindings": 24
+    },
+    {
+      "route_key": "NCN:61",
+      "before": {
+        "target_m": 53240.21539614796,
+        "on_foot_m": 47599.32337588127,
+        "cycling_m": 48575.54698747811,
+        "combined_m": 48575.54698747811,
+        "unbound_m": 4664.6684086698515,
+        "attainable": false,
+        "combined_percent": 91.23844940528292
+      },
+      "after": {
+        "target_m": 53240.21539614796,
+        "on_foot_m": 47788.426482345654,
+        "cycling_m": 48771.71499425535,
+        "combined_m": 48771.71499425535,
+        "unbound_m": 4468.500401892612,
+        "attainable": false,
+        "combined_percent": 91.60690773197751
+      },
+      "recovery_m": 196.1680067772395,
+      "changed_source_rows": 122,
+      "added_bindings": 960
+    },
+    {
+      "route_key": "NCN:62",
+      "before": {
+        "target_m": 338924.29846813553,
+        "on_foot_m": 267517.86644992745,
+        "cycling_m": 298534.55129837716,
+        "combined_m": 299793.0924339642,
+        "unbound_m": 39131.20603417134,
+        "attainable": false,
+        "combined_percent": 88.45429312355712
+      },
+      "after": {
+        "target_m": 338924.29846813553,
+        "on_foot_m": 268185.48010500893,
+        "cycling_m": 299273.1420574941,
+        "combined_m": 300535.45062039857,
+        "unbound_m": 38388.847847736964,
+        "attainable": false,
+        "combined_percent": 88.67332675135826
+      },
+      "recovery_m": 742.3581864343723,
+      "changed_source_rows": 458,
+      "added_bindings": 2970
+    },
+    {
+      "route_key": "NCN:622",
+      "before": {
+        "target_m": 31718.931232180934,
+        "on_foot_m": 27054.733207329304,
+        "cycling_m": 28002.506030856013,
+        "combined_m": 28328.864389327548,
+        "unbound_m": 3390.0668428533863,
+        "attainable": false,
+        "combined_percent": 89.31216560218164
+      },
+      "after": {
+        "target_m": 31718.931232180934,
+        "on_foot_m": 27157.45969190886,
+        "cycling_m": 28107.056080168255,
+        "combined_m": 28437.2054863585,
+        "unbound_m": 3281.725745822434,
+        "attainable": false,
+        "combined_percent": 89.65373164120705
+      },
+      "recovery_m": 108.34109703095237,
+      "changed_source_rows": 82,
+      "added_bindings": 574
+    },
+    {
+      "route_key": "NCN:627",
+      "before": {
+        "target_m": 37656.51934611396,
+        "on_foot_m": 34908.86059375922,
+        "cycling_m": 35016.982090069476,
+        "combined_m": 35024.186807036196,
+        "unbound_m": 2632.332539077761,
+        "attainable": false,
+        "combined_percent": 93.00962334069409
+      },
+      "after": {
+        "target_m": 37656.51934611396,
+        "on_foot_m": 35010.66764326962,
+        "cycling_m": 35116.95920438044,
+        "combined_m": 35125.9938565466,
+        "unbound_m": 2530.525489567357,
+        "attainable": false,
+        "combined_percent": 93.27998037654933
+      },
+      "recovery_m": 101.80704951040389,
+      "changed_source_rows": 49,
+      "added_bindings": 286
+    },
+    {
+      "route_key": "NCN:63",
+      "before": {
+        "target_m": 140724.80609465364,
+        "on_foot_m": 117424.41249015507,
+        "cycling_m": 132446.72720191983,
+        "combined_m": 132478.11022538797,
+        "unbound_m": 8246.695869265677,
+        "attainable": false,
+        "combined_percent": 94.13984208035161
+      },
+      "after": {
+        "target_m": 140724.80609465364,
+        "on_foot_m": 117614.3845812512,
+        "cycling_m": 132690.3358686163,
+        "combined_m": 132721.71889208443,
+        "unbound_m": 8003.087202569208,
+        "attainable": false,
+        "combined_percent": 94.3129520482791
+      },
+      "recovery_m": 243.6086666964693,
+      "changed_source_rows": 208,
+      "added_bindings": 1072
+    },
+    {
+      "route_key": "NCN:636",
+      "before": {
+        "target_m": 6423.323986635142,
+        "on_foot_m": 5976.420994611063,
+        "cycling_m": 6063.832285367973,
+        "combined_m": 6063.832285367973,
+        "unbound_m": 359.49170126716945,
+        "attainable": false,
+        "combined_percent": 94.40333848930624
+      },
+      "after": {
+        "target_m": 6423.323986635142,
+        "on_foot_m": 5996.030511163355,
+        "cycling_m": 6083.4547559638095,
+        "combined_m": 6083.4547559638095,
+        "unbound_m": 339.86923067133284,
+        "attainable": false,
+        "combined_percent": 94.70882628093351
+      },
+      "recovery_m": 19.622470595836603,
+      "changed_source_rows": 11,
+      "added_bindings": 50
+    },
+    {
+      "route_key": "NCN:637",
+      "before": {
+        "target_m": 17191.77240150979,
+        "on_foot_m": 15761.725576646579,
+        "cycling_m": 15761.725576646579,
+        "combined_m": 15761.725576646579,
+        "unbound_m": 1430.0468248632096,
+        "attainable": false,
+        "combined_percent": 91.68179527122159
+      },
+      "after": {
+        "target_m": 17191.77240150979,
+        "on_foot_m": 15850.765845136719,
+        "cycling_m": 15850.765845136719,
+        "combined_m": 15850.765845136719,
+        "unbound_m": 1341.0065563730695,
+        "attainable": false,
+        "combined_percent": 92.1997189989829
+      },
+      "recovery_m": 89.04026849014008,
+      "changed_source_rows": 39,
+      "added_bindings": 234
+    },
+    {
+      "route_key": "NCN:64",
+      "before": {
+        "target_m": 85632.64387732472,
+        "on_foot_m": 79870.90640127448,
+        "cycling_m": 81118.54909705941,
+        "combined_m": 81206.37020408188,
+        "unbound_m": 4426.273673242846,
+        "attainable": false,
+        "combined_percent": 94.83109072331828
+      },
+      "after": {
+        "target_m": 85632.64387732472,
+        "on_foot_m": 79999.76159434611,
+        "cycling_m": 81247.44862503343,
+        "combined_m": 81335.2697320559,
+        "unbound_m": 4297.374145268826,
+        "attainable": false,
+        "combined_percent": 94.98161688032762
+      },
+      "recovery_m": 128.8995279740193,
+      "changed_source_rows": 93,
+      "added_bindings": 496
+    },
+    {
+      "route_key": "NCN:645",
+      "before": {
+        "target_m": 18214.284545133625,
+        "on_foot_m": 17908.855411282715,
+        "cycling_m": 16678.33891374754,
+        "combined_m": 17908.855411282715,
+        "unbound_m": 305.42913385091015,
+        "attainable": false,
+        "combined_percent": 98.32313405945713
+      },
+      "after": {
+        "target_m": 18214.284545133625,
+        "on_foot_m": 17924.72459249356,
+        "cycling_m": 16694.155954925478,
+        "combined_m": 17924.72459249356,
+        "unbound_m": 289.5599526400656,
+        "attainable": false,
+        "combined_percent": 98.41025898150127
+      },
+      "recovery_m": 15.869181210844545,
+      "changed_source_rows": 20,
+      "added_bindings": 119
+    },
+    {
+      "route_key": "NCN:647",
+      "before": {
+        "target_m": 20989.61590260895,
+        "on_foot_m": 17214.929930174454,
+        "cycling_m": 17237.988291721398,
+        "combined_m": 17237.988291721398,
+        "unbound_m": 3751.6276108875536,
+        "attainable": false,
+        "combined_percent": 82.12626839721618
+      },
+      "after": {
+        "target_m": 20989.61590260895,
+        "on_foot_m": 17240.19328180872,
+        "cycling_m": 17263.251643355663,
+        "combined_m": 17263.251643355663,
+        "unbound_m": 3726.3642592532888,
+        "attainable": false,
+        "combined_percent": 82.24662958796634
+      },
+      "recovery_m": 25.263351634264836,
+      "changed_source_rows": 17,
+      "added_bindings": 100
+    },
+    {
+      "route_key": "NCN:648",
+      "before": {
+        "target_m": 8350.59175159792,
+        "on_foot_m": 7480.742250640817,
+        "cycling_m": 7480.742250640817,
+        "combined_m": 7480.742250640817,
+        "unbound_m": 869.8495009571034,
+        "attainable": false,
+        "combined_percent": 89.58337891694137
+      },
+      "after": {
+        "target_m": 8350.59175159792,
+        "on_foot_m": 7493.254996308556,
+        "cycling_m": 7493.254996308556,
+        "combined_m": 7493.254996308556,
+        "unbound_m": 857.3367552893642,
+        "attainable": false,
+        "combined_percent": 89.73322153935608
+      },
+      "recovery_m": 12.512745667739182,
+      "changed_source_rows": 13,
+      "added_bindings": 52
+    },
+    {
+      "route_key": "NCN:65",
+      "before": {
+        "target_m": 218438.02013695257,
+        "on_foot_m": 202066.10263574385,
+        "cycling_m": 204891.97741862238,
+        "combined_m": 205538.35551320997,
+        "unbound_m": 12899.664623742603,
+        "attainable": false,
+        "combined_percent": 94.09458819684642
+      },
+      "after": {
+        "target_m": 218438.02013695257,
+        "on_foot_m": 202458.38674420025,
+        "cycling_m": 205298.54266451235,
+        "combined_m": 205945.43743773503,
+        "unbound_m": 12492.582699217543,
+        "attainable": false,
+        "combined_percent": 94.28094857690748
+      },
+      "recovery_m": 407.08192452506046,
+      "changed_source_rows": 332,
+      "added_bindings": 1674
+    },
+    {
+      "route_key": "NCN:656",
+      "before": {
+        "target_m": 29232.819742229913,
+        "on_foot_m": 28682.828205706537,
+        "cycling_m": 28682.828205706537,
+        "combined_m": 28682.828205706537,
+        "unbound_m": 549.9915365233755,
+        "attainable": false,
+        "combined_percent": 98.11858198636632
+      },
+      "after": {
+        "target_m": 29232.819742229913,
+        "on_foot_m": 28726.200024256097,
+        "cycling_m": 28726.200024256097,
+        "combined_m": 28726.200024256097,
+        "unbound_m": 506.61971797381557,
+        "attainable": false,
+        "combined_percent": 98.26694885255304
+      },
+      "recovery_m": 43.371818549559976,
+      "changed_source_rows": 38,
+      "added_bindings": 188
+    },
+    {
+      "route_key": "NCN:657",
+      "before": {
+        "target_m": 35594.77580055506,
+        "on_foot_m": 33497.7927603592,
+        "cycling_m": 34981.415326883725,
+        "combined_m": 34981.415326883725,
+        "unbound_m": 613.3604736713314,
+        "attainable": false,
+        "combined_percent": 98.27682445000323
+      },
+      "after": {
+        "target_m": 35594.77580055506,
+        "on_foot_m": 33565.00671167293,
+        "cycling_m": 35050.99880312558,
+        "combined_m": 35050.99880312558,
+        "unbound_m": 543.7769974294788,
+        "attainable": false,
+        "combined_percent": 98.4723123402255
+      },
+      "recovery_m": 69.58347624185262,
+      "changed_source_rows": 51,
+      "added_bindings": 214
+    },
+    {
+      "route_key": "NCN:658",
+      "before": {
+        "target_m": 3687.4645868073194,
+        "on_foot_m": 3400.889572699953,
+        "cycling_m": 2677.0960182210342,
+        "combined_m": 3400.889572699953,
+        "unbound_m": 286.5750141073663,
+        "attainable": false,
+        "combined_percent": 92.22839955853003
+      },
+      "after": {
+        "target_m": 3687.4645868073194,
+        "on_foot_m": 3414.6381712850202,
+        "cycling_m": 2688.470577668754,
+        "combined_m": 3414.6381712850202,
+        "unbound_m": 272.82641552229916,
+        "attainable": false,
+        "combined_percent": 92.60124649065395
+      },
+      "recovery_m": 13.748598585067157,
+      "changed_source_rows": 15,
+      "added_bindings": 38
+    },
+    {
+      "route_key": "NCN:66",
+      "before": {
+        "target_m": 215638.88901677128,
+        "on_foot_m": 186578.34519267414,
+        "cycling_m": 195904.66631367026,
+        "combined_m": 196669.3848128037,
+        "unbound_m": 18969.504203967575,
+        "attainable": false,
+        "combined_percent": 91.2031154072157
+      },
+      "after": {
+        "target_m": 215638.88901677128,
+        "on_foot_m": 187074.04486916226,
+        "cycling_m": 196439.20902589033,
+        "combined_m": 197206.67974107317,
+        "unbound_m": 18432.209275698115,
+        "attainable": false,
+        "combined_percent": 91.45227961443237
+      },
+      "recovery_m": 537.2949282694608,
+      "changed_source_rows": 372,
+      "added_bindings": 2268
+    },
+    {
+      "route_key": "NCN:665",
+      "before": {
+        "target_m": 16808.800782153143,
+        "on_foot_m": 15224.706142995761,
+        "cycling_m": 15332.756895309289,
+        "combined_m": 15332.756895309289,
+        "unbound_m": 1476.0438868438541,
+        "attainable": false,
+        "combined_percent": 91.21862465993972
+      },
+      "after": {
+        "target_m": 16808.800782153143,
+        "on_foot_m": 15261.893743137922,
+        "cycling_m": 15372.303506722747,
+        "combined_m": 15372.303506722747,
+        "unbound_m": 1436.4972754303963,
+        "attainable": false,
+        "combined_percent": 91.45389790712727
+      },
+      "recovery_m": 39.54661141345787,
+      "changed_source_rows": 24,
+      "added_bindings": 116
+    },
+    {
+      "route_key": "NCN:668",
+      "before": {
+        "target_m": 9837.578239243261,
+        "on_foot_m": 6187.53726241731,
+        "cycling_m": 8343.308335350639,
+        "combined_m": 8343.308335350639,
+        "unbound_m": 1494.269903892622,
+        "attainable": false,
+        "combined_percent": 84.81059192056229
+      },
+      "after": {
+        "target_m": 9837.578239243261,
+        "on_foot_m": 6198.925965307339,
+        "cycling_m": 8371.846012702614,
+        "combined_m": 8371.846012702614,
+        "unbound_m": 1465.7322265406474,
+        "attainable": false,
+        "combined_percent": 85.1006803616192
+      },
+      "recovery_m": 28.537677351974708,
+      "changed_source_rows": 25,
+      "added_bindings": 72
+    },
+    {
+      "route_key": "NCN:67",
+      "before": {
+        "target_m": 196329.0055925534,
+        "on_foot_m": 174058.37553901848,
+        "cycling_m": 176823.43646182708,
+        "combined_m": 176874.22478908722,
+        "unbound_m": 19454.780803466187,
+        "attainable": false,
+        "combined_percent": 90.09072513521451
+      },
+      "after": {
+        "target_m": 196329.0055925534,
+        "on_foot_m": 174681.70810677923,
+        "cycling_m": 177455.2959394897,
+        "combined_m": 177506.08426674985,
+        "unbound_m": 18822.92132580356,
+        "attainable": false,
+        "combined_percent": 90.41256218407827
+      },
+      "recovery_m": 631.8594776626269,
+      "changed_source_rows": 324,
+      "added_bindings": 1872
+    },
+    {
+      "route_key": "NCN:672",
+      "before": {
+        "target_m": 4992.132649461029,
+        "on_foot_m": 4849.17525619567,
+        "cycling_m": 4849.17525619567,
+        "combined_m": 4849.17525619567,
+        "unbound_m": 142.95739326535931,
+        "attainable": false,
+        "combined_percent": 97.13634626113564
+      },
+      "after": {
+        "target_m": 4992.132649461029,
+        "on_foot_m": 4868.275600267226,
+        "cycling_m": 4868.275600267226,
+        "combined_m": 4868.275600267226,
+        "unbound_m": 123.8570491938035,
+        "attainable": false,
+        "combined_percent": 97.51895516624192
+      },
+      "recovery_m": 19.10034407155581,
+      "changed_source_rows": 5,
+      "added_bindings": 54
+    },
+    {
+      "route_key": "NCN:674",
+      "before": {
+        "target_m": 10834.785888602526,
+        "on_foot_m": 10162.317687556158,
+        "cycling_m": 10159.087758405229,
+        "combined_m": 10162.317687556158,
+        "unbound_m": 672.4682010463675,
+        "attainable": false,
+        "combined_percent": 93.79343341012618
+      },
+      "after": {
+        "target_m": 10834.785888602526,
+        "on_foot_m": 10206.903171976337,
+        "cycling_m": 10203.673242825407,
+        "combined_m": 10206.903171976337,
+        "unbound_m": 627.882716626189,
+        "attainable": false,
+        "combined_percent": 94.20493655267632
+      },
+      "recovery_m": 44.585484420178545,
+      "changed_source_rows": 22,
+      "added_bindings": 110
+    },
+    {
+      "route_key": "NCN:677",
+      "before": {
+        "target_m": 8183.130613271826,
+        "on_foot_m": 6582.0725140683835,
+        "cycling_m": 6268.00788434008,
+        "combined_m": 6582.0725140683835,
+        "unbound_m": 1601.058099203443,
+        "attainable": false,
+        "combined_percent": 80.43465056506902
+      },
+      "after": {
+        "target_m": 8183.130613271826,
+        "on_foot_m": 6617.570720004106,
+        "cycling_m": 6303.277892900152,
+        "combined_m": 6617.570720004106,
+        "unbound_m": 1565.5598932677203,
+        "attainable": false,
+        "combined_percent": 80.86844794181076
+      },
+      "recovery_m": 35.49820593572258,
+      "changed_source_rows": 22,
+      "added_bindings": 92
+    },
+    {
+      "route_key": "NCN:68",
+      "before": {
+        "target_m": 437586.7546747344,
+        "on_foot_m": 411391.33318377397,
+        "cycling_m": 418819.1081348363,
+        "combined_m": 418850.80715194286,
+        "unbound_m": 18735.94752279151,
+        "attainable": false,
+        "combined_percent": 95.71834674550004
+      },
+      "after": {
+        "target_m": 437586.7546747344,
+        "on_foot_m": 412374.42007069534,
+        "cycling_m": 419822.69838383107,
+        "combined_m": 419854.3974009377,
+        "unbound_m": 17732.35727379669,
+        "attainable": false,
+        "combined_percent": 95.94769332381244
+      },
+      "recovery_m": 1003.5902489948203,
+      "changed_source_rows": 481,
+      "added_bindings": 3676
+    },
+    {
+      "route_key": "NCN:680",
+      "before": {
+        "target_m": 22457.229408294024,
+        "on_foot_m": 21280.722538845977,
+        "cycling_m": 21370.860810319504,
+        "combined_m": 21370.860810319504,
+        "unbound_m": 1086.3685979745205,
+        "attainable": false,
+        "combined_percent": 95.16249944183542
+      },
+      "after": {
+        "target_m": 22457.229408294024,
+        "on_foot_m": 21328.582192058973,
+        "cycling_m": 21420.930745610305,
+        "combined_m": 21420.930745610305,
+        "unbound_m": 1036.2986626837192,
+        "attainable": false,
+        "combined_percent": 95.38545630966843
+      },
+      "recovery_m": 50.06993529080137,
+      "changed_source_rows": 36,
+      "added_bindings": 210
+    },
+    {
+      "route_key": "NCN:685",
+      "before": {
+        "target_m": 3596.1791724361246,
+        "on_foot_m": 3220.4609136701124,
+        "cycling_m": 3220.4609136701124,
+        "combined_m": 3220.4609136701124,
+        "unbound_m": 375.71825876601224,
+        "attainable": false,
+        "combined_percent": 89.55229312138269
+      },
+      "after": {
+        "target_m": 3596.1791724361246,
+        "on_foot_m": 3225.070615323351,
+        "cycling_m": 3225.070615323351,
+        "combined_m": 3225.070615323351,
+        "unbound_m": 371.1085571127737,
+        "attainable": false,
+        "combined_percent": 89.68047643573394
+      },
+      "recovery_m": 4.609701653238517,
+      "changed_source_rows": 9,
+      "added_bindings": 58
+    },
+    {
+      "route_key": "NCN:688",
+      "before": {
+        "target_m": 76265.85816081791,
+        "on_foot_m": 73331.3640461671,
+        "cycling_m": 73331.3640461671,
+        "combined_m": 73331.3640461671,
+        "unbound_m": 2934.4941146508063,
+        "attainable": false,
+        "combined_percent": 96.15228336057926
+      },
+      "after": {
+        "target_m": 76265.85816081791,
+        "on_foot_m": 73455.09030551974,
+        "cycling_m": 73455.09030551974,
+        "combined_m": 73455.09030551974,
+        "unbound_m": 2810.767855298167,
+        "attainable": false,
+        "combined_percent": 96.3145135673013
+      },
+      "recovery_m": 123.72625935263932,
+      "changed_source_rows": 104,
+      "added_bindings": 462
+    },
+    {
+      "route_key": "NCN:69",
+      "before": {
+        "target_m": 79796.67482613277,
+        "on_foot_m": 70447.57996449224,
+        "cycling_m": 72050.99207741972,
+        "combined_m": 72064.39412638628,
+        "unbound_m": 7732.280699746494,
+        "attainable": false,
+        "combined_percent": 90.31002141806762
+      },
+      "after": {
+        "target_m": 79796.67482613277,
+        "on_foot_m": 70657.03877278022,
+        "cycling_m": 72267.75590947339,
+        "combined_m": 72281.15795843996,
+        "unbound_m": 7515.516867692815,
+        "attainable": false,
+        "combined_percent": 90.58166661196321
+      },
+      "recovery_m": 216.76383205367893,
+      "changed_source_rows": 144,
+      "added_bindings": 684
+    },
+    {
+      "route_key": "NCN:696",
+      "before": {
+        "target_m": 9931.478566816857,
+        "on_foot_m": 9619.751709012611,
+        "cycling_m": 9619.751709012611,
+        "combined_m": 9619.751709012611,
+        "unbound_m": 311.7268578042458,
+        "attainable": false,
+        "combined_percent": 96.86122407950624
+      },
+      "after": {
+        "target_m": 9931.478566816857,
+        "on_foot_m": 9671.838230152398,
+        "cycling_m": 9671.838230152398,
+        "combined_m": 9671.838230152398,
+        "unbound_m": 259.640336664459,
+        "attainable": false,
+        "combined_percent": 97.3856829583062
+      },
+      "recovery_m": 52.08652113978678,
+      "changed_source_rows": 13,
+      "added_bindings": 164
+    },
+    {
+      "route_key": "NCN:697",
+      "before": {
+        "target_m": 5848.093335381122,
+        "on_foot_m": 5721.298414864455,
+        "cycling_m": 5721.298414864455,
+        "combined_m": 5721.298414864455,
+        "unbound_m": 126.79492051666784,
+        "attainable": false,
+        "combined_percent": 97.83185880858716
+      },
+      "after": {
+        "target_m": 5848.093335381122,
+        "on_foot_m": 5731.375993278522,
+        "cycling_m": 5731.375993278522,
+        "combined_m": 5731.375993278522,
+        "unbound_m": 116.71734210260001,
+        "attainable": false,
+        "combined_percent": 98.00418127056118
+      },
+      "recovery_m": 10.07757841406783,
+      "changed_source_rows": 5,
+      "added_bindings": 52
+    },
+    {
+      "route_key": "NCN:699",
+      "before": {
+        "target_m": 3241.1074644769174,
+        "on_foot_m": 2308.9535578506407,
+        "cycling_m": 2410.3189984292767,
+        "combined_m": 2410.3189984292767,
+        "unbound_m": 830.7884660476407,
+        "attainable": false,
+        "combined_percent": 74.36714224525963
+      },
+      "after": {
+        "target_m": 3241.1074644769174,
+        "on_foot_m": 2321.05973282361,
+        "cycling_m": 2422.425173402246,
+        "combined_m": 2422.425173402246,
+        "unbound_m": 818.6822910746714,
+        "attainable": false,
+        "combined_percent": 74.74066194819002
+      },
+      "recovery_m": 12.106174972969256,
+      "changed_source_rows": 9,
+      "added_bindings": 26
+    },
+    {
+      "route_key": "NCN:7",
+      "before": {
+        "target_m": 884853.9902621717,
+        "on_foot_m": 797327.169794073,
+        "cycling_m": 832815.8081024275,
+        "combined_m": 833317.3532917125,
+        "unbound_m": 51536.63697045925,
+        "attainable": false,
+        "combined_percent": 94.17569027911716
+      },
+      "after": {
+        "target_m": 884853.9902621717,
+        "on_foot_m": 799680.9864252614,
+        "cycling_m": 835261.4040723159,
+        "combined_m": 835765.8909762042,
+        "unbound_m": 49088.09928596753,
+        "attainable": false,
+        "combined_percent": 94.45240685738182
+      },
+      "recovery_m": 2448.537684491719,
+      "changed_source_rows": 962,
+      "added_bindings": 7578
+    },
+    {
+      "route_key": "NCN:70",
+      "before": {
+        "target_m": 188009.14106165027,
+        "on_foot_m": 177496.75872008112,
+        "cycling_m": 179325.40407584558,
+        "combined_m": 179605.87192510016,
+        "unbound_m": 8403.269136550109,
+        "attainable": false,
+        "combined_percent": 95.53039331540025
+      },
+      "after": {
+        "target_m": 188009.14106165027,
+        "on_foot_m": 177965.22641511852,
+        "cycling_m": 179804.64569529681,
+        "combined_m": 180085.71313992355,
+        "unbound_m": 7923.427921726718,
+        "attainable": false,
+        "combined_percent": 95.78561559454785
+      },
+      "recovery_m": 479.84121482339106,
+      "changed_source_rows": 284,
+      "added_bindings": 1448
+    },
+    {
+      "route_key": "NCN:700",
+      "before": {
+        "target_m": 61345.89951115468,
+        "on_foot_m": 57441.511880063495,
+        "cycling_m": 57441.511880063495,
+        "combined_m": 57441.511880063495,
+        "unbound_m": 3904.3876310911874,
+        "attainable": false,
+        "combined_percent": 93.63545459076488
+      },
+      "after": {
+        "target_m": 61345.89951115468,
+        "on_foot_m": 57563.233906367976,
+        "cycling_m": 57563.233906367976,
+        "combined_m": 57563.233906367976,
+        "unbound_m": 3782.6656047867073,
+        "attainable": false,
+        "combined_percent": 93.83387376347967
+      },
+      "recovery_m": 121.7220263044801,
+      "changed_source_rows": 88,
+      "added_bindings": 470
+    },
+    {
+      "route_key": "NCN:71",
+      "before": {
+        "target_m": 108568.85693519148,
+        "on_foot_m": 105467.02295202667,
+        "cycling_m": 105467.02295202667,
+        "combined_m": 105467.02295202667,
+        "unbound_m": 3101.8339831648045,
+        "attainable": false,
+        "combined_percent": 97.14297997535665
+      },
+      "after": {
+        "target_m": 108568.85693519148,
+        "on_foot_m": 105664.26257597288,
+        "cycling_m": 105664.26257597288,
+        "combined_m": 105664.26257597288,
+        "unbound_m": 2904.594359218594,
+        "attainable": false,
+        "combined_percent": 97.32465235315829
+      },
+      "recovery_m": 197.2396239462105,
+      "changed_source_rows": 146,
+      "added_bindings": 727
+    },
+    {
+      "route_key": "NCN:715",
+      "before": {
+        "target_m": 28301.72045796345,
+        "on_foot_m": 27107.828814598488,
+        "cycling_m": 27347.05387289172,
+        "combined_m": 27373.654128189883,
+        "unbound_m": 928.0663297735664,
+        "attainable": false,
+        "combined_percent": 96.7208130291866
+      },
+      "after": {
+        "target_m": 28301.72045796345,
+        "on_foot_m": 27166.719058327155,
+        "cycling_m": 27405.944116620387,
+        "combined_m": 27432.54437191855,
+        "unbound_m": 869.1760860448994,
+        "attainable": false,
+        "combined_percent": 96.92889311327951
+      },
+      "recovery_m": 58.890243728666974,
+      "changed_source_rows": 33,
+      "added_bindings": 174
+    },
+    {
+      "route_key": "NCN:72",
+      "before": {
+        "target_m": 252022.06756572152,
+        "on_foot_m": 225365.99648286702,
+        "cycling_m": 237404.34559716223,
+        "combined_m": 238452.76226912127,
+        "unbound_m": 13569.305296600243,
+        "attainable": false,
+        "combined_percent": 94.61582653151527
+      },
+      "after": {
+        "target_m": 252022.06756572152,
+        "on_foot_m": 225879.42105518113,
+        "cycling_m": 237961.13572243793,
+        "combined_m": 239018.0760014566,
+        "unbound_m": 13003.991564264928,
+        "attainable": false,
+        "combined_percent": 94.84013773481412
+      },
+      "recovery_m": 565.3137323353149,
+      "changed_source_rows": 339,
+      "added_bindings": 2144
+    },
+    {
+      "route_key": "NCN:725",
+      "before": {
+        "target_m": 14988.691482009013,
+        "on_foot_m": 11543.781266863924,
+        "cycling_m": 12249.44035356441,
+        "combined_m": 12253.124085856485,
+        "unbound_m": 2735.567396152528,
+        "attainable": false,
+        "combined_percent": 81.74912466884757
+      },
+      "after": {
+        "target_m": 14988.691482009013,
+        "on_foot_m": 11564.969730939054,
+        "cycling_m": 12275.331385671987,
+        "combined_m": 12279.015117964062,
+        "unbound_m": 2709.6763640449517,
+        "attainable": false,
+        "combined_percent": 81.92186177627723
+      },
+      "recovery_m": 25.891032107576393,
+      "changed_source_rows": 45,
+      "added_bindings": 128
+    },
+    {
+      "route_key": "NCN:73",
+      "before": {
+        "target_m": 47840.14523237535,
+        "on_foot_m": 43231.81598057539,
+        "cycling_m": 44660.801705626945,
+        "combined_m": 45177.22378453923,
+        "unbound_m": 2662.9214478361173,
+        "attainable": false,
+        "combined_percent": 94.43370952387075
+      },
+      "after": {
+        "target_m": 47840.14523237535,
+        "on_foot_m": 43416.24918550263,
+        "cycling_m": 44850.75690928467,
+        "combined_m": 45368.52974771772,
+        "unbound_m": 2471.6154846576246,
+        "attainable": false,
+        "combined_percent": 94.83359535667759
+      },
+      "recovery_m": 191.30596317849268,
+      "changed_source_rows": 56,
+      "added_bindings": 500
+    },
+    {
+      "route_key": "NCN:74",
+      "before": {
+        "target_m": 62140.08695196648,
+        "on_foot_m": 47249.54183793022,
+        "cycling_m": 59050.30875579668,
+        "combined_m": 59082.19570920852,
+        "unbound_m": 3057.891242757956,
+        "attainable": false,
+        "combined_percent": 95.07903610575623
+      },
+      "after": {
+        "target_m": 62140.08695196648,
+        "on_foot_m": 47412.98519403689,
+        "cycling_m": 59238.02057103134,
+        "combined_m": 59269.90752444317,
+        "unbound_m": 2870.179427523304,
+        "attainable": false,
+        "combined_percent": 95.38111456177731
+      },
+      "recovery_m": 187.71181523465202,
+      "changed_source_rows": 88,
+      "added_bindings": 586
+    },
+    {
+      "route_key": "NCN:75",
+      "before": {
+        "target_m": 135061.48866621556,
+        "on_foot_m": 121904.4792373507,
+        "cycling_m": 125625.21313226044,
+        "combined_m": 125866.72029050339,
+        "unbound_m": 9194.76837571217,
+        "attainable": false,
+        "combined_percent": 93.19216123965901
+      },
+      "after": {
+        "target_m": 135061.48866621556,
+        "on_foot_m": 122353.59565888514,
+        "cycling_m": 126083.5833149912,
+        "combined_m": 126328.98156016252,
+        "unbound_m": 8732.507106053046,
+        "attainable": false,
+        "combined_percent": 93.53442110531289
+      },
+      "recovery_m": 462.2612696591241,
+      "changed_source_rows": 268,
+      "added_bindings": 2153
+    },
+    {
+      "route_key": "NCN:753",
+      "before": {
+        "target_m": 16170.416035812383,
+        "on_foot_m": 14186.261805232396,
+        "cycling_m": 13741.879153731743,
+        "combined_m": 14404.73144116859,
+        "unbound_m": 1765.6845946437934,
+        "attainable": false,
+        "combined_percent": 89.0807720052882
+      },
+      "after": {
+        "target_m": 16170.416035812383,
+        "on_foot_m": 14238.359576398594,
+        "cycling_m": 13794.000524762385,
+        "combined_m": 14456.956758327677,
+        "unbound_m": 1713.459277484706,
+        "attainable": false,
+        "combined_percent": 89.40374030148679
+      },
+      "recovery_m": 52.22531715908735,
+      "changed_source_rows": 19,
+      "added_bindings": 216
+    },
+    {
+      "route_key": "NCN:754",
+      "before": {
+        "target_m": 90769.69226735673,
+        "on_foot_m": 88716.23666354464,
+        "cycling_m": 88349.16459057573,
+        "combined_m": 88716.23666354464,
+        "unbound_m": 2053.4556038120936,
+        "attainable": false,
+        "combined_percent": 97.73772990464289
+      },
+      "after": {
+        "target_m": 90769.69226735673,
+        "on_foot_m": 89027.66211030835,
+        "cycling_m": 88660.24213890673,
+        "combined_m": 89027.66211030835,
+        "unbound_m": 1742.0301570483862,
+        "attainable": false,
+        "combined_percent": 98.08082399142951
+      },
+      "recovery_m": 311.42544676370744,
+      "changed_source_rows": 89,
+      "added_bindings": 1712
+    },
+    {
+      "route_key": "NCN:755",
+      "before": {
+        "target_m": 12867.13221580012,
+        "on_foot_m": 12690.700012357342,
+        "cycling_m": 12699.730029000886,
+        "combined_m": 12699.730029000886,
+        "unbound_m": 167.4021867992342,
+        "attainable": false,
+        "combined_percent": 98.69899380847527
+      },
+      "after": {
+        "target_m": 12867.13221580012,
+        "on_foot_m": 12716.864977721763,
+        "cycling_m": 12725.963554533744,
+        "combined_m": 12725.963554533744,
+        "unbound_m": 141.16866126637615,
+        "attainable": false,
+        "combined_percent": 98.90287393570861
+      },
+      "recovery_m": 26.23352553285804,
+      "changed_source_rows": 16,
+      "added_bindings": 130
+    },
+    {
+      "route_key": "NCN:756",
+      "before": {
+        "target_m": 19681.717418114684,
+        "on_foot_m": 14705.847649046384,
+        "cycling_m": 17915.283197638342,
+        "combined_m": 17915.283197638342,
+        "unbound_m": 1766.4342204763416,
+        "attainable": false,
+        "combined_percent": 91.02499958235073
+      },
+      "after": {
+        "target_m": 19681.717418114684,
+        "on_foot_m": 14759.014639584022,
+        "cycling_m": 17981.419221785927,
+        "combined_m": 17981.419221785927,
+        "unbound_m": 1700.2981963287566,
+        "attainable": false,
+        "combined_percent": 91.3610272914302
+      },
+      "recovery_m": 66.13602414758498,
+      "changed_source_rows": 45,
+      "added_bindings": 238
+    },
+    {
+      "route_key": "NCN:76",
+      "before": {
+        "target_m": 181295.64194056354,
+        "on_foot_m": 155128.06846066614,
+        "cycling_m": 169458.88702836723,
+        "combined_m": 169529.64271444656,
+        "unbound_m": 11765.999226116983,
+        "attainable": false,
+        "combined_percent": 93.51004850410338
+      },
+      "after": {
+        "target_m": 181295.64194056354,
+        "on_foot_m": 155577.5410359025,
+        "cycling_m": 169942.43741040758,
+        "combined_m": 170013.6415001943,
+        "unbound_m": 11282.000440369244,
+        "attainable": false,
+        "combined_percent": 93.77701509004393
+      },
+      "recovery_m": 483.998785747739,
+      "changed_source_rows": 313,
+      "added_bindings": 1878
+    },
+    {
+      "route_key": "NCN:764",
+      "before": {
+        "target_m": 23394.938524679696,
+        "on_foot_m": 19762.922563482654,
+        "cycling_m": 20129.254888624517,
+        "combined_m": 20129.254888624517,
+        "unbound_m": 3265.683636055179,
+        "attainable": false,
+        "combined_percent": 86.04106767534286
+      },
+      "after": {
+        "target_m": 23394.938524679696,
+        "on_foot_m": 19783.512561785272,
+        "cycling_m": 20152.414772722805,
+        "combined_m": 20152.414772722805,
+        "unbound_m": 3242.523751956891,
+        "attainable": false,
+        "combined_percent": 86.14006295192313
+      },
+      "recovery_m": 23.159884098287876,
+      "changed_source_rows": 22,
+      "added_bindings": 96
+    },
+    {
+      "route_key": "NCN:765",
+      "before": {
+        "target_m": 18430.75794632012,
+        "on_foot_m": 13506.729951847283,
+        "cycling_m": 17246.017984163816,
+        "combined_m": 17347.918495210717,
+        "unbound_m": 1082.8394511094011,
+        "attainable": false,
+        "combined_percent": 94.12482408882376
+      },
+      "after": {
+        "target_m": 18430.75794632012,
+        "on_foot_m": 13546.992489628921,
+        "cycling_m": 17293.215846775624,
+        "combined_m": 17395.849878286794,
+        "unbound_m": 1034.9080680333245,
+        "attainable": false,
+        "combined_percent": 94.38488600931383
+      },
+      "recovery_m": 47.9313830760766,
+      "changed_source_rows": 38,
+      "added_bindings": 164
+    },
+    {
+      "route_key": "NCN:766",
+      "before": {
+        "target_m": 21209.63625018927,
+        "on_foot_m": 18905.41139351377,
+        "cycling_m": 18905.41139351377,
+        "combined_m": 18905.41139351377,
+        "unbound_m": 2304.2248566755006,
+        "attainable": false,
+        "combined_percent": 89.13595297206034
+      },
+      "after": {
+        "target_m": 21209.63625018927,
+        "on_foot_m": 18968.013074300496,
+        "cycling_m": 18968.013074300496,
+        "combined_m": 18968.013074300496,
+        "unbound_m": 2241.6231758887734,
+        "attainable": false,
+        "combined_percent": 89.43110975857132
+      },
+      "recovery_m": 62.60168078672723,
+      "changed_source_rows": 39,
+      "added_bindings": 174
+    },
+    {
+      "route_key": "NCN:767",
+      "before": {
+        "target_m": 10175.961322334866,
+        "on_foot_m": 9819.959855104235,
+        "cycling_m": 9819.959855104235,
+        "combined_m": 9819.959855104235,
+        "unbound_m": 356.00146723063153,
+        "attainable": false,
+        "combined_percent": 96.50154461132576
+      },
+      "after": {
+        "target_m": 10175.961322334866,
+        "on_foot_m": 9851.102208448185,
+        "cycling_m": 9851.102208448185,
+        "combined_m": 9851.102208448185,
+        "unbound_m": 324.85911388668137,
+        "attainable": false,
+        "combined_percent": 96.80758305189644
+      },
+      "recovery_m": 31.142353343950163,
+      "changed_source_rows": 17,
+      "added_bindings": 96
+    },
+    {
+      "route_key": "NCN:768",
+      "before": {
+        "target_m": 9469.514396139022,
+        "on_foot_m": 8906.358048944829,
+        "cycling_m": 8937.98322098497,
+        "combined_m": 8937.98322098497,
+        "unbound_m": 531.5311751540521,
+        "attainable": false,
+        "combined_percent": 94.3869225715442
+      },
+      "after": {
+        "target_m": 9469.514396139022,
+        "on_foot_m": 8930.229131645458,
+        "cycling_m": 8961.854303685597,
+        "combined_m": 8961.854303685597,
+        "unbound_m": 507.660092453425,
+        "attainable": false,
+        "combined_percent": 94.63900606497401
+      },
+      "recovery_m": 23.871082700627085,
+      "changed_source_rows": 11,
+      "added_bindings": 54
+    },
+    {
+      "route_key": "NCN:77",
+      "before": {
+        "target_m": 78837.45815447891,
+        "on_foot_m": 75030.65218122555,
+        "cycling_m": 75281.36185034088,
+        "combined_m": 75300.86944515338,
+        "unbound_m": 3536.5887093255296,
+        "attainable": false,
+        "combined_percent": 95.51407567910711
+      },
+      "after": {
+        "target_m": 78837.45815447891,
+        "on_foot_m": 75249.58966305923,
+        "cycling_m": 75500.88625128212,
+        "combined_m": 75520.39384609462,
+        "unbound_m": 3317.064308384288,
+        "attainable": false,
+        "combined_percent": 95.79252758011981
+      },
+      "recovery_m": 219.52440094124177,
+      "changed_source_rows": 67,
+      "added_bindings": 584
+    },
+    {
+      "route_key": "NCN:775",
+      "before": {
+        "target_m": 26429.063714035612,
+        "on_foot_m": 24507.250661622587,
+        "cycling_m": 24490.857092181588,
+        "combined_m": 24507.250661622587,
+        "unbound_m": 1921.8130524130247,
+        "attainable": false,
+        "combined_percent": 92.72841038484306
+      },
+      "after": {
+        "target_m": 26429.063714035612,
+        "on_foot_m": 24564.835724545883,
+        "cycling_m": 24548.442155104884,
+        "combined_m": 24564.835724545883,
+        "unbound_m": 1864.2279894897292,
+        "attainable": false,
+        "combined_percent": 92.9462957535658
+      },
+      "recovery_m": 57.58506292329548,
+      "changed_source_rows": 33,
+      "added_bindings": 154
+    },
+    {
+      "route_key": "NCN:777",
+      "before": {
+        "target_m": 25839.43584036547,
+        "on_foot_m": 25438.327250013805,
+        "cycling_m": 25438.327250013805,
+        "combined_m": 25438.327250013805,
+        "unbound_m": 401.10859035166504,
+        "attainable": false,
+        "combined_percent": 98.44768828224544
+      },
+      "after": {
+        "target_m": 25839.43584036547,
+        "on_foot_m": 25489.484479004564,
+        "cycling_m": 25489.484479004564,
+        "combined_m": 25489.484479004564,
+        "unbound_m": 349.95136136090514,
+        "attainable": false,
+        "combined_percent": 98.64566949710944
+      },
+      "recovery_m": 51.157228990759904,
+      "changed_source_rows": 22,
+      "added_bindings": 176
+    },
+    {
+      "route_key": "NCN:78",
+      "before": {
+        "target_m": 143351.2386428014,
+        "on_foot_m": 134931.36368681965,
+        "cycling_m": 135382.15647889144,
+        "combined_m": 135642.74794828793,
+        "unbound_m": 7708.490694513486,
+        "attainable": false,
+        "combined_percent": 94.62265497843288
+      },
+      "after": {
+        "target_m": 143351.2386428014,
+        "on_foot_m": 135473.70530274318,
+        "cycling_m": 135926.57718400235,
+        "combined_m": 136187.25624815942,
+        "unbound_m": 7163.982394641993,
+        "attainable": false,
+        "combined_percent": 95.00249703981073
+      },
+      "recovery_m": 544.5082998714934,
+      "changed_source_rows": 171,
+      "added_bindings": 2010
+    },
+    {
+      "route_key": "NCN:8",
+      "before": {
+        "target_m": 383185.1131687598,
+        "on_foot_m": 335293.1477796255,
+        "cycling_m": 355037.5551415163,
+        "combined_m": 355252.32935895614,
+        "unbound_m": 27932.78380980366,
+        "attainable": false,
+        "combined_percent": 92.71036821373025
+      },
+      "after": {
+        "target_m": 383185.1131687598,
+        "on_foot_m": 336493.04925660294,
+        "cycling_m": 356338.7896678231,
+        "combined_m": 356553.95466496685,
+        "unbound_m": 26631.158503792947,
+        "attainable": false,
+        "combined_percent": 93.05005398472663
+      },
+      "recovery_m": 1301.625306010712,
+      "changed_source_rows": 441,
+      "added_bindings": 3643
+    },
+    {
+      "route_key": "NCN:81",
+      "before": {
+        "target_m": 204255.01529156585,
+        "on_foot_m": 169851.80759943495,
+        "cycling_m": 188173.7771216484,
+        "combined_m": 188302.70213518306,
+        "unbound_m": 15952.313156382792,
+        "attainable": false,
+        "combined_percent": 92.19000173209382
+      },
+      "after": {
+        "target_m": 204255.01529156585,
+        "on_foot_m": 170413.95692390657,
+        "cycling_m": 188905.28122507053,
+        "combined_m": 189034.78465850902,
+        "unbound_m": 15220.230633056839,
+        "attainable": false,
+        "combined_percent": 92.54841766733092
+      },
+      "recovery_m": 732.0825233259529,
+      "changed_source_rows": 245,
+      "added_bindings": 2034
+    },
+    {
+      "route_key": "NCN:810",
+      "before": {
+        "target_m": 29022.28425846992,
+        "on_foot_m": 26996.418455496954,
+        "cycling_m": 26972.874215597592,
+        "combined_m": 27045.940005181496,
+        "unbound_m": 1976.3442532884255,
+        "attainable": false,
+        "combined_percent": 93.1902525807849
+      },
+      "after": {
+        "target_m": 29022.28425846992,
+        "on_foot_m": 27049.180402666214,
+        "cycling_m": 27025.636162766852,
+        "combined_m": 27098.701952350755,
+        "unbound_m": 1923.5823061191659,
+        "attainable": false,
+        "combined_percent": 93.37205063189406
+      },
+      "recovery_m": 52.761947169259656,
+      "changed_source_rows": 50,
+      "added_bindings": 346
+    },
+    {
+      "route_key": "NCN:82",
+      "before": {
+        "target_m": 207019.97944444488,
+        "on_foot_m": 186915.96328302534,
+        "cycling_m": 193033.36659477712,
+        "combined_m": 193042.927130814,
+        "unbound_m": 13977.052313630877,
+        "attainable": false,
+        "combined_percent": 93.24845246766064
+      },
+      "after": {
+        "target_m": 207019.97944444488,
+        "on_foot_m": 187548.648459286,
+        "cycling_m": 193721.72935741465,
+        "combined_m": 193731.28989345153,
+        "unbound_m": 13288.689550993353,
+        "attainable": false,
+        "combined_percent": 93.58096277148967
+      },
+      "recovery_m": 688.3627626375237,
+      "changed_source_rows": 218,
+      "added_bindings": 1852
+    },
+    {
+      "route_key": "NCN:822",
+      "before": {
+        "target_m": 3644.073615129793,
+        "on_foot_m": 2524.653633562223,
+        "cycling_m": 2615.1879102724192,
+        "combined_m": 2615.1879102724192,
+        "unbound_m": 1028.8857048573736,
+        "attainable": false,
+        "combined_percent": 71.76550713504926
+      },
+      "after": {
+        "target_m": 3644.073615129793,
+        "on_foot_m": 2530.854456083255,
+        "cycling_m": 2621.3887327934513,
+        "combined_m": 2621.3887327934513,
+        "unbound_m": 1022.6848823363416,
+        "attainable": false,
+        "combined_percent": 71.93566896974127
+      },
+      "recovery_m": 6.200822521032023,
+      "changed_source_rows": 6,
+      "added_bindings": 16
+    },
+    {
+      "route_key": "NCN:825",
+      "before": {
+        "target_m": 106188.63139313507,
+        "on_foot_m": 101596.3763088956,
+        "cycling_m": 101911.2833319908,
+        "combined_m": 101911.2833319908,
+        "unbound_m": 4277.348061144279,
+        "attainable": false,
+        "combined_percent": 95.97193409028078
+      },
+      "after": {
+        "target_m": 106188.63139313507,
+        "on_foot_m": 101832.47088137515,
+        "cycling_m": 102148.27477231923,
+        "combined_m": 102148.27477231923,
+        "unbound_m": 4040.3566208158445,
+        "attainable": false,
+        "combined_percent": 96.19511376330156
+      },
+      "recovery_m": 236.9914403284347,
+      "changed_source_rows": 92,
+      "added_bindings": 827
+    },
+    {
+      "route_key": "NCN:83",
+      "before": {
+        "target_m": 55776.23693540978,
+        "on_foot_m": 51820.91169668904,
+        "cycling_m": 54524.444778562385,
+        "combined_m": 54584.30326177949,
+        "unbound_m": 1191.933673630294,
+        "attainable": false,
+        "combined_percent": 97.86300808530596
+      },
+      "after": {
+        "target_m": 55776.23693540978,
+        "on_foot_m": 51924.71962562216,
+        "cycling_m": 54639.86927110616,
+        "combined_m": 54699.72775432326,
+        "unbound_m": 1076.5091810865197,
+        "attainable": false,
+        "combined_percent": 98.0699501432247
+      },
+      "recovery_m": 115.42449254377425,
+      "changed_source_rows": 43,
+      "added_bindings": 418
+    },
+    {
+      "route_key": "NCN:84",
+      "before": {
+        "target_m": 15757.9187089353,
+        "on_foot_m": 14785.849489114944,
+        "cycling_m": 14380.511099240504,
+        "combined_m": 14865.358508174075,
+        "unbound_m": 892.5602007612251,
+        "attainable": false,
+        "combined_percent": 94.33579892593866
+      },
+      "after": {
+        "target_m": 15757.9187089353,
+        "on_foot_m": 14839.649706427399,
+        "cycling_m": 14434.31131655296,
+        "combined_m": 14919.15872548653,
+        "unbound_m": 838.7599834487701,
+        "attainable": false,
+        "combined_percent": 94.67721595128447
+      },
+      "recovery_m": 53.80021731245506,
+      "changed_source_rows": 24,
+      "added_bindings": 238
+    },
+    {
+      "route_key": "NCN:85",
+      "before": {
+        "target_m": 9874.45490281918,
+        "on_foot_m": 9274.858340079696,
+        "cycling_m": 9453.736296069084,
+        "combined_m": 9453.736296069084,
+        "unbound_m": 420.7186067500952,
+        "attainable": false,
+        "combined_percent": 95.73932322451562
+      },
+      "after": {
+        "target_m": 9874.45490281918,
+        "on_foot_m": 9322.067341432956,
+        "cycling_m": 9508.167788693181,
+        "combined_m": 9508.167788693181,
+        "unbound_m": 366.2871141259984,
+        "attainable": false,
+        "combined_percent": 96.29055864115169
+      },
+      "recovery_m": 54.43149262409679,
+      "changed_source_rows": 11,
+      "added_bindings": 140
+    },
+    {
+      "route_key": "NCN:862",
+      "before": {
+        "target_m": 6783.376267934729,
+        "on_foot_m": 4939.098856660788,
+        "cycling_m": 5550.573854894895,
+        "combined_m": 5550.573854894895,
+        "unbound_m": 1232.8024130398344,
+        "attainable": false,
+        "combined_percent": 81.82612368316738
+      },
+      "after": {
+        "target_m": 6783.376267934729,
+        "on_foot_m": 4946.1945716483215,
+        "cycling_m": 5558.366184323829,
+        "combined_m": 5558.366184323829,
+        "unbound_m": 1225.0100836109004,
+        "attainable": false,
+        "combined_percent": 81.94099759139753
+      },
+      "recovery_m": 7.792329428933954,
+      "changed_source_rows": 9,
+      "added_bindings": 38
+    },
+    {
+      "route_key": "NCN:88",
+      "before": {
+        "target_m": 49734.1209056837,
+        "on_foot_m": 43737.65184206556,
+        "cycling_m": 43907.64664094877,
+        "combined_m": 43907.64664094877,
+        "unbound_m": 5826.474264734934,
+        "attainable": false,
+        "combined_percent": 88.28475469429866
+      },
+      "after": {
+        "target_m": 49734.1209056837,
+        "on_foot_m": 43853.657552879195,
+        "cycling_m": 44023.6523517624,
+        "combined_m": 44023.6523517624,
+        "unbound_m": 5710.468553921302,
+        "attainable": false,
+        "combined_percent": 88.51800645124362
+      },
+      "recovery_m": 116.0057108136316,
+      "changed_source_rows": 62,
+      "added_bindings": 357
+    },
+    {
+      "route_key": "NCN:881",
+      "before": {
+        "target_m": 19410.835868063525,
+        "on_foot_m": 7661.341982928695,
+        "cycling_m": 14067.560173109261,
+        "combined_m": 14067.560173109261,
+        "unbound_m": 5343.275694954264,
+        "attainable": false,
+        "combined_percent": 72.47271713968019
+      },
+      "after": {
+        "target_m": 19410.835868063525,
+        "on_foot_m": 7692.923873179359,
+        "cycling_m": 14129.390951097528,
+        "combined_m": 14129.390951097528,
+        "unbound_m": 5281.4449169659965,
+        "attainable": false,
+        "combined_percent": 72.79125457108465
+      },
+      "recovery_m": 61.83077798826707,
+      "changed_source_rows": 26,
+      "added_bindings": 142
+    },
+    {
+      "route_key": "NCN:883",
+      "before": {
+        "target_m": 6913.942873913505,
+        "on_foot_m": 6018.034953790493,
+        "cycling_m": 6644.92438215235,
+        "combined_m": 6644.92438215235,
+        "unbound_m": 269.018491761155,
+        "attainable": false,
+        "combined_percent": 96.10904375886344
+      },
+      "after": {
+        "target_m": 6913.942873913505,
+        "on_foot_m": 6034.117707667861,
+        "cycling_m": 6661.7682376874245,
+        "combined_m": 6661.7682376874245,
+        "unbound_m": 252.1746362260801,
+        "attainable": false,
+        "combined_percent": 96.35266531955968
+      },
+      "recovery_m": 16.84385553507491,
+      "changed_source_rows": 10,
+      "added_bindings": 82
+    },
+    {
+      "route_key": "NCN:884",
+      "before": {
+        "target_m": 2480.3081545137265,
+        "on_foot_m": 76.54752759853919,
+        "cycling_m": 1996.2238615031638,
+        "combined_m": 1996.2238615031638,
+        "unbound_m": 484.08429301056276,
+        "attainable": false,
+        "combined_percent": 80.48289717027241
+      },
+      "after": {
+        "target_m": 2480.3081545137265,
+        "on_foot_m": 76.54752759853919,
+        "cycling_m": 2011.3657199724419,
+        "combined_m": 2011.3657199724419,
+        "unbound_m": 468.9424345412847,
+        "attainable": false,
+        "combined_percent": 81.09338012343783
+      },
+      "recovery_m": 15.141858469278077,
+      "changed_source_rows": 3,
+      "added_bindings": 26
+    },
+    {
+      "route_key": "NCN:885",
+      "before": {
+        "target_m": 13057.157460890732,
+        "on_foot_m": 9748.634225107422,
+        "cycling_m": 11580.852509083446,
+        "combined_m": 11580.852509083446,
+        "unbound_m": 1476.3049518072858,
+        "attainable": false,
+        "combined_percent": 88.69351957936352
+      },
+      "after": {
+        "target_m": 13057.157460890732,
+        "on_foot_m": 9800.7566604748,
+        "cycling_m": 11644.957870516459,
+        "combined_m": 11644.957870516459,
+        "unbound_m": 1412.1995903742736,
+        "attainable": false,
+        "combined_percent": 89.1844791287526
+      },
+      "recovery_m": 64.10536143301215,
+      "changed_source_rows": 30,
+      "added_bindings": 174
+    },
+    {
+      "route_key": "NCN:887",
+      "before": {
+        "target_m": 23035.904208027056,
+        "on_foot_m": 12906.667620372278,
+        "cycling_m": 21041.1465242768,
+        "combined_m": 21041.1465242768,
+        "unbound_m": 1994.7576837502565,
+        "attainable": false,
+        "combined_percent": 91.34065819280858
+      },
+      "after": {
+        "target_m": 23035.904208027056,
+        "on_foot_m": 13000.546890143438,
+        "cycling_m": 21189.07682584515,
+        "combined_m": 21189.07682584515,
+        "unbound_m": 1846.8273821819057,
+        "attainable": false,
+        "combined_percent": 91.98283095161351
+      },
+      "recovery_m": 147.93030156835084,
+      "changed_source_rows": 37,
+      "added_bindings": 372
+    },
+    {
+      "route_key": "NCN:888",
+      "before": {
+        "target_m": 10773.457724125212,
+        "on_foot_m": 10596.039900996853,
+        "cycling_m": 10596.039900996853,
+        "combined_m": 10596.039900996853,
+        "unbound_m": 177.41782312835858,
+        "attainable": false,
+        "combined_percent": 98.35319516100144
+      },
+      "after": {
+        "target_m": 10773.457724125212,
+        "on_foot_m": 10617.083395929618,
+        "cycling_m": 10617.083395929618,
+        "combined_m": 10617.083395929618,
+        "unbound_m": 156.374328195594,
+        "attainable": false,
+        "combined_percent": 98.54852237601098
+      },
+      "recovery_m": 21.043494932764588,
+      "changed_source_rows": 10,
+      "added_bindings": 74
+    },
+    {
+      "route_key": "NCN:9",
+      "before": {
+        "target_m": 66635.79732580522,
+        "on_foot_m": 58788.478412570534,
+        "cycling_m": 60543.82990787296,
+        "combined_m": 60572.51015845511,
+        "unbound_m": 6063.287167350114,
+        "attainable": false,
+        "combined_percent": 90.90085598030046
+      },
+      "after": {
+        "target_m": 66635.79732580522,
+        "on_foot_m": 59313.87681097659,
+        "cycling_m": 61090.95137412777,
+        "combined_m": 61125.459740083636,
+        "unbound_m": 5510.337585721587,
+        "attainable": false,
+        "combined_percent": 91.7306645874144
+      },
+      "recovery_m": 552.9495816285271,
+      "changed_source_rows": 82,
+      "added_bindings": 906
+    },
+    {
+      "route_key": "NCN:91",
+      "before": {
+        "target_m": 6215.045995132424,
+        "on_foot_m": 3300.591605873094,
+        "cycling_m": 3200.50337330663,
+        "combined_m": 3300.591605873094,
+        "unbound_m": 2914.4543892593297,
+        "attainable": false,
+        "combined_percent": 53.10647110991764
+      },
+      "after": {
+        "target_m": 6215.045995132424,
+        "on_foot_m": 3336.2998425325654,
+        "cycling_m": 3236.2116099661007,
+        "combined_m": 3336.2998425325654,
+        "unbound_m": 2878.7461525998583,
+        "attainable": false,
+        "combined_percent": 53.68101612032364
+      },
+      "recovery_m": 35.70823665947137,
+      "changed_source_rows": 10,
+      "added_bindings": 52
+    },
+    {
+      "route_key": "NCN:92",
+      "before": {
+        "target_m": 27685.00404690001,
+        "on_foot_m": 12051.860588197109,
+        "cycling_m": 13336.944767133244,
+        "combined_m": 13336.944767133244,
+        "unbound_m": 14348.059279766765,
+        "attainable": false,
+        "combined_percent": 48.17389495244315
+      },
+      "after": {
+        "target_m": 27685.00404690001,
+        "on_foot_m": 12114.05529753588,
+        "cycling_m": 13428.097460489687,
+        "combined_m": 13428.097460489687,
+        "unbound_m": 14256.906586410321,
+        "attainable": false,
+        "combined_percent": 48.50314429335719
+      },
+      "recovery_m": 91.1526933564437,
+      "changed_source_rows": 17,
+      "added_bindings": 128
+    },
+    {
+      "route_key": "NCN:93",
+      "before": {
+        "target_m": 54252.8680600422,
+        "on_foot_m": 40655.82834213853,
+        "cycling_m": 39635.86119841516,
+        "combined_m": 41076.183951566505,
+        "unbound_m": 13176.684108475696,
+        "attainable": false,
+        "combined_percent": 75.71246538728067
+      },
+      "after": {
+        "target_m": 54252.8680600422,
+        "on_foot_m": 40897.49152123882,
+        "cycling_m": 39880.83502832962,
+        "combined_m": 41324.34454111299,
+        "unbound_m": 12928.523518929214,
+        "attainable": false,
+        "combined_percent": 76.16988007966494
+      },
+      "recovery_m": 248.1605895464818,
+      "changed_source_rows": 86,
+      "added_bindings": 478
+    },
+    {
+      "route_key": "NCN:94",
+      "before": {
+        "target_m": 13864.280973130317,
+        "on_foot_m": 12122.074093919291,
+        "cycling_m": 12117.207250649655,
+        "combined_m": 12183.425595707435,
+        "unbound_m": 1680.8553774228822,
+        "attainable": false,
+        "combined_percent": 87.87636098344757
+      },
+      "after": {
+        "target_m": 13864.280973130317,
+        "on_foot_m": 12204.453415490825,
+        "cycling_m": 12199.58657222119,
+        "combined_m": 12265.80491727897,
+        "unbound_m": 1598.4760558513462,
+        "attainable": false,
+        "combined_percent": 88.47054485588343
+      },
+      "recovery_m": 82.37932157153591,
+      "changed_source_rows": 17,
+      "added_bindings": 132
+    },
+    {
+      "route_key": "NCN:96",
+      "before": {
+        "target_m": 7758.711396697638,
+        "on_foot_m": 5486.3227584562765,
+        "cycling_m": 5953.314482361583,
+        "combined_m": 5953.314482361583,
+        "unbound_m": 1805.3969143360546,
+        "attainable": false,
+        "combined_percent": 76.73071181505101
+      },
+      "after": {
+        "target_m": 7758.711396697638,
+        "on_foot_m": 5527.239246908547,
+        "cycling_m": 5995.940989175272,
+        "combined_m": 5995.940989175272,
+        "unbound_m": 1762.7704075223655,
+        "attainable": false,
+        "combined_percent": 77.28011370196528
+      },
+      "recovery_m": 42.62650681368905,
+      "changed_source_rows": 13,
+      "added_bindings": 52
+    },
+    {
+      "route_key": "NCN:97",
+      "before": {
+        "target_m": 1724.1004336038345,
+        "on_foot_m": 987.6495378212536,
+        "cycling_m": 844.7219793754998,
+        "combined_m": 987.6495378212536,
+        "unbound_m": 736.4508957825809,
+        "attainable": false,
+        "combined_percent": 57.2849190552548
+      },
+      "after": {
+        "target_m": 1724.1004336038345,
+        "on_foot_m": 1007.7246013610678,
+        "cycling_m": 863.5189747014718,
+        "combined_m": 1007.7246013610678,
+        "unbound_m": 716.3758322427667,
+        "attainable": false,
+        "combined_percent": 58.44929806407227
+      },
+      "recovery_m": 20.07506353981421,
+      "changed_source_rows": 4,
+      "added_bindings": 22
+    },
+    {
+      "route_key": "NCN:99",
+      "before": {
+        "target_m": 22604.475348755277,
+        "on_foot_m": 10763.724055075028,
+        "cycling_m": 10781.732492863925,
+        "combined_m": 10781.732492863925,
+        "unbound_m": 11822.742855891353,
+        "attainable": false,
+        "combined_percent": 47.697335711256066
+      },
+      "after": {
+        "target_m": 22604.475348755277,
+        "on_foot_m": 10784.904972481118,
+        "cycling_m": 10802.913410270014,
+        "combined_m": 10802.913410270014,
+        "unbound_m": 11801.561938485263,
+        "attainable": false,
+        "combined_percent": 47.791038029400134
+      },
+      "recovery_m": 21.180917406089065,
+      "changed_source_rows": 17,
+      "added_bindings": 144
+    },
+    {
+      "route_key": "RCN:70",
+      "before": {
+        "target_m": 3791.6971916789616,
+        "on_foot_m": 3769.980348697722,
+        "cycling_m": 3769.980348697722,
+        "combined_m": 3769.980348697722,
+        "unbound_m": 21.71684298123955,
+        "attainable": false,
+        "combined_percent": 99.42725270813033
+      },
+      "after": {
+        "target_m": 3791.6971916789616,
+        "on_foot_m": 3775.4982634875087,
+        "cycling_m": 3775.4982634875087,
+        "combined_m": 3775.4982634875087,
+        "unbound_m": 16.19892819145298,
+        "attainable": false,
+        "combined_percent": 99.5727789595909
+      },
+      "recovery_m": 5.517914789786573,
+      "changed_source_rows": 2,
+      "added_bindings": 88
+    },
+    {
+      "route_key": "RCN:90",
+      "before": {
+        "target_m": 2934.5068413689805,
+        "on_foot_m": 276.8224097022896,
+        "cycling_m": 276.8224097022896,
+        "combined_m": 276.8224097022896,
+        "unbound_m": 2657.684431666691,
+        "attainable": false,
+        "combined_percent": 9.4333537001791
+      },
+      "after": {
+        "target_m": 2934.5068413689805,
+        "on_foot_m": 276.91855588472464,
+        "cycling_m": 276.91855588472464,
+        "combined_m": 276.91855588472464,
+        "unbound_m": 2657.5882854842557,
+        "attainable": false,
+        "combined_percent": 9.436630100188793
+      },
+      "recovery_m": 0.09614618243506357,
+      "changed_source_rows": 1,
+      "added_bindings": 2
+    },
+    {
+      "route_key": "RCN:92",
+      "before": {
+        "target_m": 273.6785876331362,
+        "on_foot_m": 115.01743201999898,
+        "cycling_m": 115.01743201999898,
+        "combined_m": 115.01743201999898,
+        "unbound_m": 158.66115561313723,
+        "attainable": false,
+        "combined_percent": 42.026463602691074
+      },
+      "after": {
+        "target_m": 273.6785876331362,
+        "on_foot_m": 115.01743201999898,
+        "cycling_m": 115.01743201999898,
+        "combined_m": 115.01743201999898,
+        "unbound_m": 158.66115561313723,
+        "attainable": false,
+        "combined_percent": 42.026463602691074
+      },
+      "recovery_m": 0.0,
+      "changed_source_rows": 0,
+      "added_bindings": 0
+    }
+  ],
+  "consumer_witnesses": [
+    {
+      "route": "NCN:9",
+      "way": "59306268",
+      "source_vertex": 12,
+      "bindings": [
+        {
+          "end": 1045.6404775403926,
+          "high": 101.78357511892844,
+          "low": 98.13545571726964,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1043.5641094065502,
+          "target": "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29"
+        },
+        {
+          "end": 1047.2719874650465,
+          "high": 3.612506905826045,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1045.6404775403926,
+          "target": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+        }
+      ],
+      "source_edge_target_m": 14.322246481471424
+    },
+    {
+      "route": "NCN:8",
+      "way": "31252441",
+      "source_vertex": 48,
+      "bindings": [
+        {
+          "end": 1322.9881362848316,
+          "high": 0.0,
+          "low": 4.267923077310941,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1320.7646185655733,
+          "target": "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00"
+        },
+        {
+          "end": 1325.1508064636023,
+          "high": 37.112096151249425,
+          "low": 41.37355595656215,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1322.9881362848316,
+          "target": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+        }
+      ],
+      "source_edge_target_m": 29.328126611684798
+    }
+  ],
+  "independent_geometric_audit": {
+    "status": "pass",
+    "added_bindings_geometrically_verified": 159711,
+    "maximum_anchor_offset_m": 9.996631938168063,
+    "maximum_source_target_angle_degrees": 14.999283922229523,
+    "direction_gate_degrees": 15,
+    "offset_gate_m": 10,
+    "all_other_tables_identical": true,
+    "checks": [
+      "finite monotone anchors",
+      "two active finite candidates",
+      "complete graph degree two",
+      "opposing outward directions",
+      "interior source-supported vertex",
+      "no source endpoint extrapolation",
+      "unchanged source fields and existing bindings"
+    ]
+  },
+  "previous_report_comparison": {
+    "previous_route_local_m": 44369.0,
+    "previous_unique_network_m": 44388.0,
+    "route_local_difference_m": 1445.6977951696317,
+    "unique_network_difference_m": 1446.4618316404521,
+    "previous_figures_rounded_and_original_implementation_unavailable": true
+  },
+  "compact_delta_artifact_sha256": "f98df308ccf4120939e705e498f6cfdbbb36373298060f29a230a88929e6957d",
+  "compact_delta_chunks": 96,
+  "candidate_mapping_tests": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "compact_delta_reproduction": {
+    "status": "pass",
+    "all_reference_table_values_match": true,
+    "reproduced_database_sha256": "d5745713acc746630f4fd9d4b6f789bb00ccfd13d320310bb7ca00bbf21d4b78",
+    "candidate_content_sha256": "cf25e006e79782c9458895bf4b68179b7829fe3b6e7d5ded96be0ccd07929dc0"
+  }
+}
