@@ -1,0 +1,181 @@
+name: Private capture-fix APK 0.25.221 (no distribution)
+on:
+  push:
+    branches: [release/phantom-capture-025221]
+    paths:
+      - '.github/release-requests/android/0.25.221.json'
+permissions:
+  contents: read
+concurrency:
+  group: private-capture-apk-025221
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate this one private packaging request
+        run: |
+          python3 - <<'PYREQ'
+          import json,pathlib,subprocess
+          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.221.json').read_text())
+          assert request==dict(schema_version=1,version_name='0.25.221',version_code=267,baseline='40f3c0d00e171800a157af4b3db5d4125134203b',firebase_upload=False,distribute_existing_testers=False)
+          subprocess.run(['git','merge-base','--is-ancestor',request['baseline'],'HEAD'],check=True)
+          PYREQ
+      - name: Restore the same exact reference cache as Android builds
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify restored reference bytes against packaged source pins
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          ncn=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          for file,digest,size in (
+              ('android-prototype/app/src/main/assets/historic-counties/boundaries.bin',county['data_sha256'],None),
+              ('.cache/ncn/catalogue.db',ncn['sha256'],ncn['database_bytes']),
+          ):
+              path=pathlib.Path(file)
+              assert path.is_file(),f'Missing pinned reference: {file}'
+              if size is not None: assert path.stat().st_size==size,f'Invalid size: {file}'
+              assert hashlib.file_digest(path.open('rb'),'sha256').hexdigest()==digest,f'Invalid SHA-256: {file}'
+              print('Verified pinned reference:',file)
+          PY
+      - name: Require existing runner SDK and Java 17
+        run: |
+          test -n "$JAVA_HOME_17_X64" || { echo '::error::Runner Java 17 missing; no installation attempted.'; exit 1; }
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar" || { echo '::error::Runner Android SDK 35 missing; no SDK download allowed.'; exit 1; }
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Restore Gradle tooling and dependency cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      # Approval for this run must include ordinary Gradle/Maven dependency resolution.
+      # Reference data remains cache-only; Android Test workers reject reference HTTP.
+      - name: Compile and lint with SDK downloads disabled
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac
+      - name: Resolve the three required Robolectric test fixtures before isolation
+        run: |
+          mkdir -p "$RUNNER_TEMP/robolectric-offline"
+          cat > "$RUNNER_TEMP/robolectric-fixtures.init.gradle" <<'GRADLE'
+          gradle.projectsEvaluated {
+              def app = gradle.rootProject.project(':app')
+              // Resolve each SDK separately; one configuration would select only the newest version.
+              def sdks = [
+                  'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7',
+                  'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7',
+                  'org.robolectric:android-all-instrumented:15-robolectric-12650502-i7'
+              ].collect { coordinate ->
+                  def files = app.configurations.detachedConfiguration(app.dependencies.create(coordinate))
+                  files.transitive = false
+                  files
+              }
+              app.tasks.register('prepareRobolectricOffline', Copy) {
+                  from(sdks)
+                  into(new File(System.getenv('RUNNER_TEMP'), 'robolectric-offline'))
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/robolectric-fixtures.init.gradle" :app:prepareRobolectricOffline
+      - name: Run unit tests without external network access
+        run: |
+          gradle_path="$(command -v gradle)"
+          sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE unshare --net bash -c '
+            set -e
+            ip link set lo up
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
+          ' _ "$gradle_path"
+      - name: Verify recovery partition tool and summarise Android XML results
+        run: |
+          python3 -m unittest scripts.test_review_capture_partition -q
+          python3 - <<'PY'
+          import pathlib,json,xml.etree.ElementTree as E
+          files=list(pathlib.Path('android-prototype/app/build/test-results').rglob('TEST-*.xml'))
+          assert files, 'Missing Android test results'
+          total={k:0 for k in ('tests','failures','errors','skipped')}
+          skipped=[]
+          for path in files:
+              root=E.parse(path).getroot()
+              for key in total:total[key]+=int(root.attrib.get(key,0))
+              for case in root.findall('testcase'):
+                  if case.find('skipped') is not None:skipped.append((case.attrib.get('classname'),case.attrib.get('name')))
+          print(json.dumps(dict(total,skipped_cases=skipped),sort_keys=True))
+          assert total['failures']==total['errors']==0,total
+          # These four pre-existing suites explicitly require an external national candidate receipt.
+          # This capture task must not create/select a candidate to activate them.
+          allowed={'com.roadprints.capture.NcnBindingCandidateTest','com.roadprints.capture.NcnOrdinarySeamCandidateTest'}
+          assert len(skipped)==4 and all(name in allowed for name,test in skipped),skipped
+          for name in ('PhantomTrainRegressionTest','PhantomTrainServiceTest','OversizedJourneyReviewTest','CaptureRecoveryIntegrationTest'):
+              suites=[E.parse(path).getroot() for path in files if path.name=='TEST-com.roadprints.capture.'+name+'.xml']
+              assert len(suites)==1 and int(suites[0].attrib['tests'])>0,name
+              assert int(suites[0].attrib.get('skipped',0))==0,name
+          PY
+      - name: Retain test and lint verification reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: capture-apk-validation
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Assemble one update using the established stable signing key
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          gradle --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          mkdir -p private-apk
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk private-apk/Roadprints-0.25.221-267.apk
+      - name: Verify update identity, certificate and immutable artifact receipt
+        run: |
+          set -euo pipefail
+          apk=private-apk/Roadprints-0.25.221-267.apk
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --verbose --print-certs "$apk" | tee private-apk/certificate.txt
+          grep -Fq 'certificate SHA-256 digest: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031' private-apk/certificate.txt
+          aapt=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)
+          "$aapt" dump badging "$apk" > private-apk/package.txt
+          grep -Fq "package: name='com.roadprints.capture' versionCode='267' versionName='0.25.221'" private-apk/package.txt
+          python3 - <<'PYAPK'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('private-apk/Roadprints-0.25.221-267.apk')
+          receipt=dict(schema_version=1,source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],application_id='com.roadprints.capture',version_name='0.25.221',version_code=267,bytes=p.stat().st_size,sha256=hashlib.file_digest(p.open('rb'),'sha256').hexdigest(),certificate_sha256='5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031',firebase_distribution=False,device_acceptance=False)
+          pathlib.Path('private-apk/receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt,sort_keys=True))
+          PYAPK
+      - name: Retain signed APK and public verification receipt for owner download
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: roadprints-capture-prototype-debug
+          path: private-apk/
+          if-no-files-found: error
+          retention-days: 7
