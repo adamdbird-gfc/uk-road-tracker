@@ -1,0 +1,2643 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "baseline": "668292c306dd937c3a424164ea9c75f934751401",
+  "integration_243": {
+    "head": "ef4d229368ad517ddac2ebbe2c7b6621a65e8991",
+    "main_before": "1030b726c4640e04a9c6051667886812daf39fcc",
+    "merge_and_main": "668292c306dd937c3a424164ea9c75f934751401",
+    "changed_files": 3,
+    "required_contexts": [],
+    "rulesets": [],
+    "check_runs": 0,
+    "commit_statuses": 0,
+    "independent_merged_blob_checks": true
+  },
+  "samples": [
+    {
+      "osm_way_id": "23385711",
+      "current_way_version": 12,
+      "current_way_timestamp": "2024-04-12T19:15:36Z",
+      "current_node_versions": [
+        {
+          "id": 244056391,
+          "version": 2,
+          "timestamp": "2010-09-21T07:04:40Z"
+        },
+        {
+          "id": 11812200271,
+          "version": 1,
+          "timestamp": "2024-04-12T16:25:35Z"
+        },
+        {
+          "id": 2996076233,
+          "version": 1,
+          "timestamp": "2014-08-04T15:33:39Z"
+        },
+        {
+          "id": 11807541981,
+          "version": 1,
+          "timestamp": "2024-04-10T16:37:05Z"
+        },
+        {
+          "id": 243355629,
+          "version": 2,
+          "timestamp": "2024-04-10T16:23:57Z"
+        },
+        {
+          "id": 11812444963,
+          "version": 1,
+          "timestamp": "2024-04-12T19:15:36Z"
+        },
+        {
+          "id": 243355628,
+          "version": 3,
+          "timestamp": "2024-04-10T16:23:57Z"
+        },
+        {
+          "id": 6121813815,
+          "version": 1,
+          "timestamp": "2018-12-06T16:06:07Z"
+        },
+        {
+          "id": 244056344,
+          "version": 3,
+          "timestamp": "2018-07-11T20:57:46Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          -2.9242844,
+          54.652334
+        ],
+        [
+          -2.9242236,
+          54.6519376
+        ],
+        [
+          -2.9241516,
+          54.6509145
+        ],
+        [
+          -2.9240962,
+          54.6501275
+        ],
+        [
+          -2.9235402,
+          54.6462477
+        ],
+        [
+          -2.9232326,
+          54.6437967
+        ],
+        [
+          -2.9231974,
+          54.6435165
+        ],
+        [
+          -2.9231089,
+          54.6430398
+        ],
+        [
+          -2.9231053,
+          54.6430093
+        ]
+      ],
+      "current_source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+      "walking_coordinates": [
+        [
+          -2.9242844,
+          54.652334
+        ],
+        [
+          -2.9242236,
+          54.6519376
+        ],
+        [
+          -2.9241516,
+          54.6509145
+        ],
+        [
+          -2.9240962,
+          54.6501275
+        ],
+        [
+          -2.9235402,
+          54.6462477
+        ],
+        [
+          -2.9232326,
+          54.6437967
+        ],
+        [
+          -2.9231974,
+          54.6435165
+        ],
+        [
+          -2.9231089,
+          54.6430398
+        ],
+        [
+          -2.9231053,
+          54.6430093
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+      "walking_consumer_source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "4fb4f230126ea8e883edaadca0f87ca760be2d071c05800c5c3883f099523a1d",
+          "dataset_key": "uk-cumbria_walkable_network_v1",
+          "loaded_at": "2026-09-22T21:03:20.716383Z",
+          "retrieved_at": "2026-09-23T06:27:28.378689Z",
+          "row_count": 116388,
+          "source_key": "osm_geofabrik_cumbria",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/23385711/full.json",
+      "capture_sha256": "e4697584468ee8a389e55e43d09ca8428f0c267539006992ca92d9ce8cd81c22",
+      "capture_bytes": 2226,
+      "retained_shipped_ncn_row": {
+        "present": false,
+        "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection."
+      }
+    },
+    {
+      "osm_way_id": "1289002662",
+      "current_way_version": 2,
+      "current_way_timestamp": "2026-10-07T16:15:07Z",
+      "current_node_versions": [
+        {
+          "id": 6925348794,
+          "version": 3,
+          "timestamp": "2026-10-07T16:15:07Z"
+        },
+        {
+          "id": 6925348793,
+          "version": 5,
+          "timestamp": "2026-10-07T16:15:07Z"
+        },
+        {
+          "id": 6925348792,
+          "version": 2,
+          "timestamp": "2024-06-02T23:40:49Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          0.0810328,
+          50.8539893
+        ],
+        [
+          0.0810291,
+          50.8539403
+        ],
+        [
+          0.0810174,
+          50.8538732
+        ]
+      ],
+      "current_source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c",
+      "walking_coordinates": [
+        [
+          0.0810242,
+          50.8539885
+        ],
+        [
+          0.0810205,
+          50.8539279
+        ],
+        [
+          0.0810174,
+          50.8538732
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "c7fee978db7dc57ccd9a4dbd13e43f4e6f4eac5a8c3831ca95811f5e6e92e2d4",
+      "walking_consumer_source_geometry_sha256": "78d6e31864bab90f8caf0c3d6fc256fc5696cc80158768dab11b9ec76e8fc02c",
+      "live_equals_current": false,
+      "walking_load_receipts": [
+        {
+          "checksum": "b255032f23946a18d33b87cbd736d46301c5b13a2165074c482e389f17cee11a",
+          "dataset_key": "uk-east-sussex_walkable_network_v1",
+          "loaded_at": "2026-09-22T21:28:41.801116Z",
+          "retrieved_at": "2026-09-23T06:27:28.389598Z",
+          "row_count": 72757,
+          "source_key": "osm_geofabrik_east_sussex",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/1289002662/full.json",
+      "capture_sha256": "bdd50ffad451710dbfde05c97b4e7fec74d6fbb92b6e8e1d7876f7d5a252abf4",
+      "capture_bytes": 1429,
+      "retained_shipped_ncn_row": {
+        "route": "RCN:90",
+        "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c",
+        "binding_count": 0,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "1050757473",
+      "current_way_version": 2,
+      "current_way_timestamp": "2022-09-09T00:46:50Z",
+      "current_node_versions": [
+        {
+          "id": 9655853597,
+          "version": 1,
+          "timestamp": "2022-04-10T12:31:37Z"
+        },
+        {
+          "id": 1349538585,
+          "version": 2,
+          "timestamp": "2022-04-10T12:31:37Z"
+        },
+        {
+          "id": 283886,
+          "version": 5,
+          "timestamp": "2022-04-10T12:31:37Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          0.0147904,
+          51.4962583
+        ],
+        [
+          0.0152153,
+          51.4960612
+        ],
+        [
+          0.0156588,
+          51.4958706
+        ]
+      ],
+      "current_source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+      "walking_coordinates": [
+        [
+          0.0147904,
+          51.4962583
+        ],
+        [
+          0.0152153,
+          51.4960612
+        ],
+        [
+          0.0156588,
+          51.4958706
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+      "walking_consumer_source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "8b4ac76b6f238d63611f8c8b098e18993d0ba22f90f2263f5dba4e85a8f629ab",
+          "dataset_key": "uk-greater-london_walkable_network_v1",
+          "loaded_at": "2026-09-23T06:27:28.398056Z",
+          "retrieved_at": "2026-09-23T06:27:28.398056Z",
+          "row_count": 562484,
+          "source_key": "osm_geofabrik_greater_london",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/1050757473/full.json",
+      "capture_sha256": "298aee230aa7810d1a7e03402ec684cf74f062f81dbb1608762e792bd0e5ca3d",
+      "capture_bytes": 1221,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:1",
+        "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "binding_count": 2,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "59306268",
+      "current_way_version": 12,
+      "current_way_timestamp": "2023-09-12T23:09:04Z",
+      "current_node_versions": [
+        {
+          "id": 735553268,
+          "version": 7,
+          "timestamp": "2025-10-16T08:39:13Z"
+        },
+        {
+          "id": 735553387,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:53Z"
+        },
+        {
+          "id": 735553448,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:54Z"
+        },
+        {
+          "id": 854001035,
+          "version": 2,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 3252817741,
+          "version": 2,
+          "timestamp": "2017-07-18T15:33:05Z"
+        },
+        {
+          "id": 735553228,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:51Z"
+        },
+        {
+          "id": 5691425298,
+          "version": 2,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 735553487,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:54Z"
+        },
+        {
+          "id": 735553223,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:51Z"
+        },
+        {
+          "id": 735553529,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:55Z"
+        },
+        {
+          "id": 11034771297,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 11034771296,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 735553383,
+          "version": 2,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 11034771295,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 735553181,
+          "version": 2,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 11034771294,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 735553159,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:50Z"
+        },
+        {
+          "id": 11034771289,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 11034771288,
+          "version": 1,
+          "timestamp": "2023-07-08T20:52:10Z"
+        },
+        {
+          "id": 735553205,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:51Z"
+        },
+        {
+          "id": 735553234,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:51Z"
+        },
+        {
+          "id": 735553499,
+          "version": 2,
+          "timestamp": "2014-01-26T18:07:14Z"
+        },
+        {
+          "id": 735553534,
+          "version": 2,
+          "timestamp": "2014-01-26T18:07:14Z"
+        },
+        {
+          "id": 735553359,
+          "version": 1,
+          "timestamp": "2010-05-15T19:58:53Z"
+        },
+        {
+          "id": 11034716203,
+          "version": 1,
+          "timestamp": "2023-07-08T20:34:44Z"
+        },
+        {
+          "id": 11034716204,
+          "version": 1,
+          "timestamp": "2023-07-08T20:34:44Z"
+        },
+        {
+          "id": 11034716202,
+          "version": 1,
+          "timestamp": "2023-07-08T20:34:44Z"
+        },
+        {
+          "id": 735553292,
+          "version": 2,
+          "timestamp": "2010-05-17T23:03:30Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          -6.3675359,
+          54.3064421
+        ],
+        [
+          -6.3677499,
+          54.3067505
+        ],
+        [
+          -6.3686063,
+          54.3079129
+        ],
+        [
+          -6.3685185,
+          54.3081177
+        ],
+        [
+          -6.3672173,
+          54.3096013
+        ],
+        [
+          -6.3663494,
+          54.3106557
+        ],
+        [
+          -6.3663227,
+          54.3108159
+        ],
+        [
+          -6.3661436,
+          54.3128707
+        ],
+        [
+          -6.3659959,
+          54.3132402
+        ],
+        [
+          -6.364745,
+          54.3142181
+        ],
+        [
+          -6.3644272,
+          54.3144769
+        ],
+        [
+          -6.3643079,
+          54.3145213
+        ],
+        [
+          -6.3637533,
+          54.3149061
+        ],
+        [
+          -6.3636664,
+          54.3149904
+        ],
+        [
+          -6.3635585,
+          54.3152066
+        ],
+        [
+          -6.3635507,
+          54.3152945
+        ],
+        [
+          -6.3646614,
+          54.3206556
+        ],
+        [
+          -6.3645924,
+          54.321954
+        ],
+        [
+          -6.3644235,
+          54.323877
+        ],
+        [
+          -6.3642436,
+          54.3257461
+        ],
+        [
+          -6.3648428,
+          54.3270033
+        ],
+        [
+          -6.3659765,
+          54.3286466
+        ],
+        [
+          -6.3660462,
+          54.3290408
+        ],
+        [
+          -6.3658795,
+          54.3297252
+        ],
+        [
+          -6.3655382,
+          54.330693
+        ],
+        [
+          -6.3655118,
+          54.3307501
+        ],
+        [
+          -6.3654975,
+          54.3307811
+        ],
+        [
+          -6.3654881,
+          54.3308069
+        ]
+      ],
+      "current_source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+      "walking_coordinates": [
+        [
+          -6.3675359,
+          54.3064421
+        ],
+        [
+          -6.3677499,
+          54.3067505
+        ],
+        [
+          -6.3686063,
+          54.3079129
+        ],
+        [
+          -6.3685185,
+          54.3081177
+        ],
+        [
+          -6.3672173,
+          54.3096013
+        ],
+        [
+          -6.3663494,
+          54.3106557
+        ],
+        [
+          -6.3663227,
+          54.3108159
+        ],
+        [
+          -6.3661436,
+          54.3128707
+        ],
+        [
+          -6.3659959,
+          54.3132402
+        ],
+        [
+          -6.364745,
+          54.3142181
+        ],
+        [
+          -6.3644272,
+          54.3144769
+        ],
+        [
+          -6.3643079,
+          54.3145213
+        ],
+        [
+          -6.3637533,
+          54.3149061
+        ],
+        [
+          -6.3636664,
+          54.3149904
+        ],
+        [
+          -6.3635585,
+          54.3152066
+        ],
+        [
+          -6.3635507,
+          54.3152945
+        ],
+        [
+          -6.3646614,
+          54.3206556
+        ],
+        [
+          -6.3645924,
+          54.321954
+        ],
+        [
+          -6.3644235,
+          54.323877
+        ],
+        [
+          -6.3642436,
+          54.3257461
+        ],
+        [
+          -6.3648428,
+          54.3270033
+        ],
+        [
+          -6.3659765,
+          54.3286466
+        ],
+        [
+          -6.3660462,
+          54.3290408
+        ],
+        [
+          -6.3658795,
+          54.3297252
+        ],
+        [
+          -6.3655382,
+          54.330693
+        ],
+        [
+          -6.3655118,
+          54.3307501
+        ],
+        [
+          -6.3654975,
+          54.3307811
+        ],
+        [
+          -6.3654881,
+          54.3308069
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+      "walking_consumer_source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "969b178c166dbcc36a330892b6b3325544386245661b9fd1be3e67701ea03538",
+          "dataset_key": "uk-ireland-and-northern-ireland_walkable_network_v1",
+          "loaded_at": "2026-09-22T22:39:23.723458Z",
+          "retrieved_at": "2026-09-23T07:04:16.822953Z",
+          "row_count": 1520463,
+          "source_key": "osm_geofabrik_ireland_and_northern_ireland",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/59306268/full.json",
+      "capture_sha256": "b41573c670118b1929be30e59514b5411e25c95cf47c3f3786cedd9c9d90b885",
+      "capture_bytes": 6487,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:9",
+        "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "binding_count": 32,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "4471747",
+      "current_way_version": 11,
+      "current_way_timestamp": "2023-10-14T20:30:22Z",
+      "current_node_versions": [
+        {
+          "id": 978142881,
+          "version": 3,
+          "timestamp": "2022-05-03T14:33:55Z"
+        },
+        {
+          "id": 978142882,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:43Z"
+        },
+        {
+          "id": 1181940231,
+          "version": 1,
+          "timestamp": "2011-03-02T02:31:15Z"
+        },
+        {
+          "id": 978142883,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:12Z"
+        },
+        {
+          "id": 1181941130,
+          "version": 1,
+          "timestamp": "2011-03-02T02:31:33Z"
+        },
+        {
+          "id": 978142884,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:08Z"
+        },
+        {
+          "id": 978142885,
+          "version": 2,
+          "timestamp": "2011-03-02T02:31:53Z"
+        },
+        {
+          "id": 978142886,
+          "version": 2,
+          "timestamp": "2011-03-02T02:31:44Z"
+        },
+        {
+          "id": 978142887,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:23Z"
+        },
+        {
+          "id": 978142888,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:20Z"
+        },
+        {
+          "id": 978142889,
+          "version": 2,
+          "timestamp": "2011-03-02T02:32:04Z"
+        },
+        {
+          "id": 978142890,
+          "version": 2,
+          "timestamp": "2011-03-02T02:31:58Z"
+        },
+        {
+          "id": 27411872,
+          "version": 3,
+          "timestamp": "2011-03-02T02:32:42Z"
+        },
+        {
+          "id": 913199040,
+          "version": 3,
+          "timestamp": "2011-03-02T02:32:19Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          1.4035412,
+          51.1968459
+        ],
+        [
+          1.4035602,
+          51.1957307
+        ],
+        [
+          1.4035878,
+          51.1955793
+        ],
+        [
+          1.4036038,
+          51.1953883
+        ],
+        [
+          1.4036199,
+          51.195108
+        ],
+        [
+          1.4036166,
+          51.19487
+        ],
+        [
+          1.403661,
+          51.194388
+        ],
+        [
+          1.4037361,
+          51.1936567
+        ],
+        [
+          1.4038375,
+          51.192914
+        ],
+        [
+          1.4040362,
+          51.1915019
+        ],
+        [
+          1.4041498,
+          51.1907045
+        ],
+        [
+          1.4043674,
+          51.1893544
+        ],
+        [
+          1.4043681,
+          51.1893201
+        ],
+        [
+          1.4043375,
+          51.1893056
+        ]
+      ],
+      "current_source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+      "walking_coordinates": [
+        [
+          1.4035412,
+          51.1968459
+        ],
+        [
+          1.4035602,
+          51.1957307
+        ],
+        [
+          1.4035878,
+          51.1955793
+        ],
+        [
+          1.4036038,
+          51.1953883
+        ],
+        [
+          1.4036199,
+          51.195108
+        ],
+        [
+          1.4036166,
+          51.19487
+        ],
+        [
+          1.403661,
+          51.194388
+        ],
+        [
+          1.4037361,
+          51.1936567
+        ],
+        [
+          1.4038375,
+          51.192914
+        ],
+        [
+          1.4040362,
+          51.1915019
+        ],
+        [
+          1.4041498,
+          51.1907045
+        ],
+        [
+          1.4043674,
+          51.1893544
+        ],
+        [
+          1.4043681,
+          51.1893201
+        ],
+        [
+          1.4043375,
+          51.1893056
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+      "walking_consumer_source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "bd54187eaa7856a229e3fdba8a943b911c30bdc2d2dd7088ffe29c5620dc1afe",
+          "dataset_key": "uk-kent_walkable_network_v1",
+          "loaded_at": "2026-09-23T00:34:49.429362Z",
+          "retrieved_at": "2026-10-30T12:49:04.501088Z",
+          "row_count": 215163,
+          "source_key": "osm_geofabrik_kent",
+          "source_version": "latest"
+        },
+        {
+          "checksum": "dbb8b5c9ca5adf6603f203f6154bf99e484c2937109792adc0891ea7d4f9623a",
+          "dataset_key": "kent_walkable_network_v1",
+          "loaded_at": "2026-09-22T14:54:58.975507Z",
+          "retrieved_at": "2026-10-30T12:49:04.501088Z",
+          "row_count": 215140,
+          "source_key": "osm_geofabrik_kent",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+      "capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+      "capture_bytes": 2923,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:1",
+        "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "binding_count": 10,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "31252441",
+      "current_way_version": 8,
+      "current_way_timestamp": "2025-10-18T17:33:48Z",
+      "current_node_versions": [
+        {
+          "id": 254391796,
+          "version": 17,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 6237855466,
+          "version": 1,
+          "timestamp": "2019-01-26T12:11:16Z"
+        },
+        {
+          "id": 347459658,
+          "version": 5,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 6237855467,
+          "version": 2,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201088,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201089,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201087,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201086,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201085,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201084,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201083,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201082,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201081,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201080,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 347459664,
+          "version": 5,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201079,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201078,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201077,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201076,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201075,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201074,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201073,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201072,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201070,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201071,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201069,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201068,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201067,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 347459670,
+          "version": 6,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 1259370055,
+          "version": 4,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 1259370203,
+          "version": 4,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 347459671,
+          "version": 6,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201066,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201065,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201064,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201063,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201062,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201061,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201060,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201059,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201058,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201057,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201056,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201055,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201054,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201053,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201052,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201051,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201050,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201049,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 13241201048,
+          "version": 1,
+          "timestamp": "2025-10-18T17:33:48Z"
+        },
+        {
+          "id": 347459683,
+          "version": 4,
+          "timestamp": "2013-08-13T17:22:34Z"
+        },
+        {
+          "id": 347459684,
+          "version": 4,
+          "timestamp": "2013-08-13T17:22:34Z"
+        },
+        {
+          "id": 347459685,
+          "version": 5,
+          "timestamp": "2013-08-13T17:22:34Z"
+        },
+        {
+          "id": 2418026709,
+          "version": 2,
+          "timestamp": "2013-08-13T17:22:34Z"
+        },
+        {
+          "id": 1259369967,
+          "version": 3,
+          "timestamp": "2013-08-13T17:22:34Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          -3.6826247,
+          52.4765612
+        ],
+        [
+          -3.6822921,
+          52.4770464
+        ],
+        [
+          -3.6822331,
+          52.4773764
+        ],
+        [
+          -3.6822049,
+          52.4776672
+        ],
+        [
+          -3.6822385,
+          52.4778289
+        ],
+        [
+          -3.6821969,
+          52.4780331
+        ],
+        [
+          -3.682044,
+          52.4782087
+        ],
+        [
+          -3.6818455,
+          52.4783362
+        ],
+        [
+          -3.6814606,
+          52.4788205
+        ],
+        [
+          -3.6810905,
+          52.4792093
+        ],
+        [
+          -3.6810422,
+          52.4794805
+        ],
+        [
+          -3.6810154,
+          52.4797321
+        ],
+        [
+          -3.6810905,
+          52.4799085
+        ],
+        [
+          -3.6812447,
+          52.4800335
+        ],
+        [
+          -3.6814392,
+          52.4801315
+        ],
+        [
+          -3.6815116,
+          52.4801985
+        ],
+        [
+          -3.6815397,
+          52.4803193
+        ],
+        [
+          -3.6813962,
+          52.4804541
+        ],
+        [
+          -3.6812273,
+          52.480566
+        ],
+        [
+          -3.6810744,
+          52.480811
+        ],
+        [
+          -3.6809658,
+          52.4810079
+        ],
+        [
+          -3.6807807,
+          52.4811696
+        ],
+        [
+          -3.6805688,
+          52.4812978
+        ],
+        [
+          -3.6803287,
+          52.4813942
+        ],
+        [
+          -3.6799693,
+          52.4814669
+        ],
+        [
+          -3.6796394,
+          52.4815829
+        ],
+        [
+          -3.6790895,
+          52.4818761
+        ],
+        [
+          -3.6788066,
+          52.4820517
+        ],
+        [
+          -3.6786939,
+          52.4821399
+        ],
+        [
+          -3.6785531,
+          52.4823784
+        ],
+        [
+          -3.6784016,
+          52.4826446
+        ],
+        [
+          -3.6784136,
+          52.4827337
+        ],
+        [
+          -3.6785182,
+          52.48275
+        ],
+        [
+          -3.6787328,
+          52.4827329
+        ],
+        [
+          -3.6789903,
+          52.4827206
+        ],
+        [
+          -3.6791499,
+          52.482781
+        ],
+        [
+          -3.6792907,
+          52.4829607
+        ],
+        [
+          -3.6793685,
+          52.4833209
+        ],
+        [
+          -3.6791003,
+          52.4836933
+        ],
+        [
+          -3.6785451,
+          52.4841082
+        ],
+        [
+          -3.6779845,
+          52.4847044
+        ],
+        [
+          -3.6778852,
+          52.4849282
+        ],
+        [
+          -3.6779174,
+          52.4851993
+        ],
+        [
+          -3.6780354,
+          52.485379
+        ],
+        [
+          -3.6782581,
+          52.4855146
+        ],
+        [
+          -3.678419,
+          52.4856289
+        ],
+        [
+          -3.678537,
+          52.4858837
+        ],
+        [
+          -3.6786309,
+          52.4862398
+        ],
+        [
+          -3.6787677,
+          52.4864113
+        ],
+        [
+          -3.6790144,
+          52.4865877
+        ],
+        [
+          -3.6793792,
+          52.4867183
+        ],
+        [
+          -3.6796401,
+          52.4867647
+        ],
+        [
+          -3.6802517,
+          52.4868464
+        ],
+        [
+          -3.6808364,
+          52.4869787
+        ],
+        [
+          -3.6808767,
+          52.4870718
+        ],
+        [
+          -3.6809464,
+          52.4871682
+        ]
+      ],
+      "current_source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+      "walking_coordinates": [
+        [
+          -3.6826247,
+          52.4765612
+        ],
+        [
+          -3.6822921,
+          52.4770464
+        ],
+        [
+          -3.6822331,
+          52.4773764
+        ],
+        [
+          -3.6822049,
+          52.4776672
+        ],
+        [
+          -3.6822385,
+          52.4778289
+        ],
+        [
+          -3.6821969,
+          52.4780331
+        ],
+        [
+          -3.682044,
+          52.4782087
+        ],
+        [
+          -3.6818455,
+          52.4783362
+        ],
+        [
+          -3.6814606,
+          52.4788205
+        ],
+        [
+          -3.6810905,
+          52.4792093
+        ],
+        [
+          -3.6810422,
+          52.4794805
+        ],
+        [
+          -3.6810154,
+          52.4797321
+        ],
+        [
+          -3.6810905,
+          52.4799085
+        ],
+        [
+          -3.6812447,
+          52.4800335
+        ],
+        [
+          -3.6814392,
+          52.4801315
+        ],
+        [
+          -3.6815116,
+          52.4801985
+        ],
+        [
+          -3.6815397,
+          52.4803193
+        ],
+        [
+          -3.6813962,
+          52.4804541
+        ],
+        [
+          -3.6812273,
+          52.480566
+        ],
+        [
+          -3.6810744,
+          52.480811
+        ],
+        [
+          -3.6809658,
+          52.4810079
+        ],
+        [
+          -3.6807807,
+          52.4811696
+        ],
+        [
+          -3.6805688,
+          52.4812978
+        ],
+        [
+          -3.6803287,
+          52.4813942
+        ],
+        [
+          -3.6799693,
+          52.4814669
+        ],
+        [
+          -3.6796394,
+          52.4815829
+        ],
+        [
+          -3.6790895,
+          52.4818761
+        ],
+        [
+          -3.6788066,
+          52.4820517
+        ],
+        [
+          -3.6786939,
+          52.4821399
+        ],
+        [
+          -3.6785531,
+          52.4823784
+        ],
+        [
+          -3.6784016,
+          52.4826446
+        ],
+        [
+          -3.6784136,
+          52.4827337
+        ],
+        [
+          -3.6785182,
+          52.48275
+        ],
+        [
+          -3.6787328,
+          52.4827329
+        ],
+        [
+          -3.6789903,
+          52.4827206
+        ],
+        [
+          -3.6791499,
+          52.482781
+        ],
+        [
+          -3.6792907,
+          52.4829607
+        ],
+        [
+          -3.6793685,
+          52.4833209
+        ],
+        [
+          -3.6791003,
+          52.4836933
+        ],
+        [
+          -3.6785451,
+          52.4841082
+        ],
+        [
+          -3.6779845,
+          52.4847044
+        ],
+        [
+          -3.6778852,
+          52.4849282
+        ],
+        [
+          -3.6779174,
+          52.4851993
+        ],
+        [
+          -3.6780354,
+          52.485379
+        ],
+        [
+          -3.6782581,
+          52.4855146
+        ],
+        [
+          -3.678419,
+          52.4856289
+        ],
+        [
+          -3.678537,
+          52.4858837
+        ],
+        [
+          -3.6786309,
+          52.4862398
+        ],
+        [
+          -3.6787677,
+          52.4864113
+        ],
+        [
+          -3.6790144,
+          52.4865877
+        ],
+        [
+          -3.6793792,
+          52.4867183
+        ],
+        [
+          -3.6796401,
+          52.4867647
+        ],
+        [
+          -3.6802517,
+          52.4868464
+        ],
+        [
+          -3.6808364,
+          52.4869787
+        ],
+        [
+          -3.6808767,
+          52.4870718
+        ],
+        [
+          -3.6809464,
+          52.4871682
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+      "walking_consumer_source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "65224ab7c60063ff8e6de6eb1f374f8932b0e1e7f6edc5cdb568577334043663",
+          "dataset_key": "uk-wales_walkable_network_v1",
+          "loaded_at": "2026-09-23T04:30:40.933951Z",
+          "retrieved_at": "2026-09-23T07:04:16.942481Z",
+          "row_count": 479366,
+          "source_key": "osm_geofabrik_wales",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/31252441/full.json",
+      "capture_sha256": "dadc8bf2ba9fc1b72572a8550f88f7aec84e9c1a28814b7f3b1bfb67cede62a4",
+      "capture_bytes": 10321,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:8",
+        "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "binding_count": 27,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "44807950",
+      "current_way_version": 13,
+      "current_way_timestamp": "2024-12-18T01:26:39Z",
+      "current_node_versions": [
+        {
+          "id": 568123110,
+          "version": 4,
+          "timestamp": "2026-05-19T20:45:41Z"
+        },
+        {
+          "id": 568123111,
+          "version": 4,
+          "timestamp": "2026-05-19T20:45:41Z"
+        },
+        {
+          "id": 1459319987,
+          "version": 3,
+          "timestamp": "2026-05-19T20:45:41Z"
+        },
+        {
+          "id": 1459181446,
+          "version": 4,
+          "timestamp": "2026-05-19T20:45:41Z"
+        },
+        {
+          "id": 568123112,
+          "version": 5,
+          "timestamp": "2026-05-19T20:45:41Z"
+        },
+        {
+          "id": 568123113,
+          "version": 3,
+          "timestamp": "2013-11-23T16:04:27Z"
+        },
+        {
+          "id": 2547191243,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:20Z"
+        },
+        {
+          "id": 1459181425,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:26Z"
+        },
+        {
+          "id": 2547191242,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:20Z"
+        },
+        {
+          "id": 568123114,
+          "version": 4,
+          "timestamp": "2017-09-28T06:53:39Z"
+        },
+        {
+          "id": 2547191241,
+          "version": 2,
+          "timestamp": "2017-09-28T06:53:43Z"
+        },
+        {
+          "id": 568123115,
+          "version": 3,
+          "timestamp": "2017-09-28T06:53:39Z"
+        },
+        {
+          "id": 2547191240,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:19Z"
+        },
+        {
+          "id": 568123116,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:27Z"
+        },
+        {
+          "id": 2547191234,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:19Z"
+        },
+        {
+          "id": 568123117,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:27Z"
+        },
+        {
+          "id": 2547191232,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:19Z"
+        },
+        {
+          "id": 2547191231,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:19Z"
+        },
+        {
+          "id": 2547203079,
+          "version": 2,
+          "timestamp": "2017-09-28T06:53:43Z"
+        },
+        {
+          "id": 2547191230,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:19Z"
+        },
+        {
+          "id": 568123118,
+          "version": 1,
+          "timestamp": "2009-11-21T22:37:49Z"
+        },
+        {
+          "id": 2547191229,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 2547191228,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 2547191227,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 568123119,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:27Z"
+        },
+        {
+          "id": 7504397284,
+          "version": 1,
+          "timestamp": "2020-05-10T20:32:33Z"
+        },
+        {
+          "id": 2547191220,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 568123120,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:28Z"
+        },
+        {
+          "id": 2547191213,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 568123121,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:28Z"
+        },
+        {
+          "id": 2547191210,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 568123122,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:28Z"
+        },
+        {
+          "id": 2547191209,
+          "version": 1,
+          "timestamp": "2013-11-23T16:04:18Z"
+        },
+        {
+          "id": 568123123,
+          "version": 2,
+          "timestamp": "2013-11-23T16:04:28Z"
+        },
+        {
+          "id": 2547191208,
+          "version": 3,
+          "timestamp": "2024-12-18T01:26:39Z"
+        },
+        {
+          "id": 12428682170,
+          "version": 1,
+          "timestamp": "2024-12-18T01:26:39Z"
+        },
+        {
+          "id": 12428682161,
+          "version": 1,
+          "timestamp": "2024-12-18T01:26:39Z"
+        },
+        {
+          "id": 1815400833,
+          "version": 5,
+          "timestamp": "2024-12-18T01:26:39Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          -2.1664558,
+          52.6290006
+        ],
+        [
+          -2.1666372,
+          52.6285685
+        ],
+        [
+          -2.1666501,
+          52.6285304
+        ],
+        [
+          -2.1666858,
+          52.6284738
+        ],
+        [
+          -2.1666942,
+          52.6282802
+        ],
+        [
+          -2.1666544,
+          52.6282031
+        ],
+        [
+          -2.1666612,
+          52.6279868
+        ],
+        [
+          -2.1666449,
+          52.6277938
+        ],
+        [
+          -2.1665948,
+          52.6275547
+        ],
+        [
+          -2.1665093,
+          52.6273276
+        ],
+        [
+          -2.1664266,
+          52.6271378
+        ],
+        [
+          -2.1663031,
+          52.6269174
+        ],
+        [
+          -2.1659058,
+          52.6263069
+        ],
+        [
+          -2.1654832,
+          52.6256764
+        ],
+        [
+          -2.1651961,
+          52.6252675
+        ],
+        [
+          -2.1648562,
+          52.6248794
+        ],
+        [
+          -2.1644018,
+          52.6244129
+        ],
+        [
+          -2.1642232,
+          52.6242336
+        ],
+        [
+          -2.1641514,
+          52.6241691
+        ],
+        [
+          -2.1640378,
+          52.6240669
+        ],
+        [
+          -2.1638874,
+          52.6239321
+        ],
+        [
+          -2.1636395,
+          52.62375
+        ],
+        [
+          -2.1633923,
+          52.6235819
+        ],
+        [
+          -2.1631244,
+          52.623411
+        ],
+        [
+          -2.1628608,
+          52.6232573
+        ],
+        [
+          -2.1627819,
+          52.6232174
+        ],
+        [
+          -2.1626071,
+          52.6231289
+        ],
+        [
+          -2.1623509,
+          52.6230115
+        ],
+        [
+          -2.162005,
+          52.6228773
+        ],
+        [
+          -2.1616626,
+          52.6227596
+        ],
+        [
+          -2.161245,
+          52.6226286
+        ],
+        [
+          -2.1608262,
+          52.6225194
+        ],
+        [
+          -2.1601874,
+          52.6223776
+        ],
+        [
+          -2.1595332,
+          52.6222713
+        ],
+        [
+          -2.1591734,
+          52.6222023
+        ],
+        [
+          -2.1591709,
+          52.6222018
+        ],
+        [
+          -2.1590227,
+          52.6221959
+        ],
+        [
+          -2.1589416,
+          52.6222015
+        ]
+      ],
+      "current_source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+      "walking_coordinates": [
+        [
+          -2.1664558,
+          52.6290006
+        ],
+        [
+          -2.1666372,
+          52.6285685
+        ],
+        [
+          -2.1666501,
+          52.6285304
+        ],
+        [
+          -2.1666858,
+          52.6284738
+        ],
+        [
+          -2.1666942,
+          52.6282802
+        ],
+        [
+          -2.1666544,
+          52.6282031
+        ],
+        [
+          -2.1666612,
+          52.6279868
+        ],
+        [
+          -2.1666449,
+          52.6277938
+        ],
+        [
+          -2.1665948,
+          52.6275547
+        ],
+        [
+          -2.1665093,
+          52.6273276
+        ],
+        [
+          -2.1664266,
+          52.6271378
+        ],
+        [
+          -2.1663031,
+          52.6269174
+        ],
+        [
+          -2.1659058,
+          52.6263069
+        ],
+        [
+          -2.1654832,
+          52.6256764
+        ],
+        [
+          -2.1651961,
+          52.6252675
+        ],
+        [
+          -2.1648562,
+          52.6248794
+        ],
+        [
+          -2.1644018,
+          52.6244129
+        ],
+        [
+          -2.1642232,
+          52.6242336
+        ],
+        [
+          -2.1641514,
+          52.6241691
+        ],
+        [
+          -2.1640378,
+          52.6240669
+        ],
+        [
+          -2.1638874,
+          52.6239321
+        ],
+        [
+          -2.1636395,
+          52.62375
+        ],
+        [
+          -2.1633923,
+          52.6235819
+        ],
+        [
+          -2.1631244,
+          52.623411
+        ],
+        [
+          -2.1628608,
+          52.6232573
+        ],
+        [
+          -2.1627819,
+          52.6232174
+        ],
+        [
+          -2.1626071,
+          52.6231289
+        ],
+        [
+          -2.1623509,
+          52.6230115
+        ],
+        [
+          -2.162005,
+          52.6228773
+        ],
+        [
+          -2.1616626,
+          52.6227596
+        ],
+        [
+          -2.161245,
+          52.6226286
+        ],
+        [
+          -2.1608262,
+          52.6225194
+        ],
+        [
+          -2.1601874,
+          52.6223776
+        ],
+        [
+          -2.1595332,
+          52.6222713
+        ],
+        [
+          -2.1591734,
+          52.6222023
+        ],
+        [
+          -2.1591709,
+          52.6222018
+        ],
+        [
+          -2.1590227,
+          52.6221959
+        ],
+        [
+          -2.1589416,
+          52.6222015
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+      "walking_consumer_source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "14231e747b2caf61a3ec007b6396db5b772b42e916c1d9cf29fcab0d3bcc127e",
+          "dataset_key": "uk-west-midlands_walkable_network_v1",
+          "loaded_at": "2026-09-23T05:11:31.017346Z",
+          "retrieved_at": "2026-09-23T07:04:16.94786Z",
+          "row_count": 189221,
+          "source_key": "osm_geofabrik_west_midlands",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/44807950/full.json",
+      "capture_sha256": "77aecdb326cc1ada4060270e6e75d6d8f7497c1b8f8a0fa81a4be889dfdf679a",
+      "capture_bytes": 7213,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:81",
+        "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "binding_count": 58,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    },
+    {
+      "osm_way_id": "159311690",
+      "current_way_version": 5,
+      "current_way_timestamp": "2022-07-30T17:41:51Z",
+      "current_node_versions": [
+        {
+          "id": 1711398757,
+          "version": 3,
+          "timestamp": "2012-08-10T21:52:20Z"
+        },
+        {
+          "id": 9749366767,
+          "version": 1,
+          "timestamp": "2022-05-17T15:39:04Z"
+        },
+        {
+          "id": 1714147807,
+          "version": 1,
+          "timestamp": "2012-04-13T10:06:55Z"
+        },
+        {
+          "id": 5324349854,
+          "version": 1,
+          "timestamp": "2018-01-06T19:22:20Z"
+        },
+        {
+          "id": 5324349855,
+          "version": 1,
+          "timestamp": "2018-01-06T19:22:20Z"
+        },
+        {
+          "id": 1860824502,
+          "version": 2,
+          "timestamp": "2019-10-29T14:24:57Z"
+        },
+        {
+          "id": 6927371803,
+          "version": 1,
+          "timestamp": "2019-10-29T14:24:57Z"
+        },
+        {
+          "id": 6841163437,
+          "version": 2,
+          "timestamp": "2019-10-29T14:24:57Z"
+        }
+      ],
+      "current_coordinates": [
+        [
+          -1.7535763,
+          53.7920704
+        ],
+        [
+          -1.7536411,
+          53.7921148
+        ],
+        [
+          -1.7540493,
+          53.7923948
+        ],
+        [
+          -1.7540412,
+          53.7924543
+        ],
+        [
+          -1.754031,
+          53.792529
+        ],
+        [
+          -1.7540629,
+          53.7925571
+        ],
+        [
+          -1.7541235,
+          53.7926244
+        ],
+        [
+          -1.7543636,
+          53.7927186
+        ]
+      ],
+      "current_source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+      "walking_coordinates": [
+        [
+          -1.7535763,
+          53.7920704
+        ],
+        [
+          -1.7536411,
+          53.7921148
+        ],
+        [
+          -1.7540493,
+          53.7923948
+        ],
+        [
+          -1.7540412,
+          53.7924543
+        ],
+        [
+          -1.754031,
+          53.792529
+        ],
+        [
+          -1.7540629,
+          53.7925571
+        ],
+        [
+          -1.7541235,
+          53.7926244
+        ],
+        [
+          -1.7543636,
+          53.7927186
+        ]
+      ],
+      "walking_ordered_coordinate_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+      "walking_consumer_source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+      "live_equals_current": true,
+      "walking_load_receipts": [
+        {
+          "checksum": "a0b0bbc8ddbd4974fa76c34da1c2168537a965cf6dd01f2558393a9e4c062e95",
+          "dataset_key": "uk-west-yorkshire_walkable_network_v1",
+          "loaded_at": "2026-09-23T05:35:37.526896Z",
+          "retrieved_at": "2026-09-23T07:04:16.953419Z",
+          "row_count": 215121,
+          "source_key": "osm_geofabrik_west_yorkshire",
+          "source_version": "latest"
+        }
+      ],
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/159311690/full.json",
+      "capture_sha256": "9df01d327eefcd19244fa75644cfffd9f19a9f54f335365b5fcb18fa895f488c",
+      "capture_bytes": 1918,
+      "retained_shipped_ncn_row": {
+        "route": "NCN:66",
+        "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+        "binding_count": 3,
+        "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history."
+      }
+    }
+  ],
+  "osm_histories": [
+    {
+      "source_url": "https://api.openstreetmap.org/api/0.6/node/6925348792/history.json",
+      "capture_sha256": "ca51d62d335e982e71f40336bdbd346be669e7db50199faab58d67e9dbc74611",
+      "elements": [
+        {
+          "type": "node",
+          "id": 6925348792,
+          "lat": 50.8538724,
+          "lon": 0.0809001,
+          "timestamp": "2019-10-28T19:17:29Z",
+          "version": 1,
+          "changeset": 76312441
+        },
+        {
+          "type": "node",
+          "id": 6925348792,
+          "lat": 50.8538732,
+          "lon": 0.0810174,
+          "timestamp": "2024-06-02T23:40:49Z",
+          "version": 2,
+          "changeset": 152179510
+        }
+      ]
+    },
+    {
+      "source_url": "https://api.openstreetmap.org/api/0.6/node/6925348793/history.json",
+      "capture_sha256": "71e3981c64b36123864d5acc0a330a285b6da146ee83772cda1b1d006f09ab3a",
+      "elements": [
+        {
+          "type": "node",
+          "id": 6925348793,
+          "lat": 50.8539271,
+          "lon": 0.0808991,
+          "timestamp": "2019-10-28T19:17:29Z",
+          "version": 1,
+          "changeset": 76312441
+        },
+        {
+          "type": "node",
+          "id": 6925348793,
+          "lat": 50.8539271,
+          "lon": 0.0808991,
+          "timestamp": "2023-12-14T12:51:24Z",
+          "version": 2,
+          "changeset": 145111215,
+          "tags": {
+            "highway": "crossing"
+          }
+        },
+        {
+          "type": "node",
+          "id": 6925348793,
+          "lat": 50.8539271,
+          "lon": 0.0808991,
+          "timestamp": "2024-03-02T10:21:05Z",
+          "version": 3,
+          "changeset": 148124820,
+          "tags": {
+            "bicycle": "yes",
+            "crossing": "traffic_signals",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "highway": "crossing",
+            "kerb": "lowered",
+            "tactile_paving": "yes"
+          }
+        },
+        {
+          "type": "node",
+          "id": 6925348793,
+          "lat": 50.8539279,
+          "lon": 0.0810205,
+          "timestamp": "2024-06-02T23:40:49Z",
+          "version": 4,
+          "changeset": 152179510,
+          "tags": {
+            "bicycle": "yes",
+            "button_operated": "yes",
+            "crossing": "traffic_signals",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "highway": "crossing",
+            "kerb": "lowered",
+            "tactile_paving": "yes"
+          }
+        },
+        {
+          "type": "node",
+          "id": 6925348793,
+          "lat": 50.8539403,
+          "lon": 0.0810291,
+          "timestamp": "2026-10-07T16:15:07Z",
+          "version": 5,
+          "changeset": 190157057,
+          "tags": {
+            "bicycle": "yes",
+            "button_operated": "yes",
+            "crossing": "traffic_signals",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "highway": "crossing",
+            "kerb": "lowered",
+            "tactile_paving": "yes"
+          }
+        }
+      ]
+    },
+    {
+      "source_url": "https://api.openstreetmap.org/api/0.6/node/6925348794/history.json",
+      "capture_sha256": "231da5ef5d44e4d3d8f5a3386dd2f9f90f78948f7c1ac58a3cd977c20b6aa742",
+      "elements": [
+        {
+          "type": "node",
+          "id": 6925348794,
+          "lat": 50.8539898,
+          "lon": 0.0809001,
+          "timestamp": "2019-10-28T19:17:29Z",
+          "version": 1,
+          "changeset": 76312441
+        },
+        {
+          "type": "node",
+          "id": 6925348794,
+          "lat": 50.8539885,
+          "lon": 0.0810242,
+          "timestamp": "2024-06-02T23:40:49Z",
+          "version": 2,
+          "changeset": 152179510
+        },
+        {
+          "type": "node",
+          "id": 6925348794,
+          "lat": 50.8539893,
+          "lon": 0.0810328,
+          "timestamp": "2026-10-07T16:15:07Z",
+          "version": 3,
+          "changeset": 190157057
+        }
+      ]
+    },
+    {
+      "source_url": "https://api.openstreetmap.org/api/0.6/way/1289002662/history.json",
+      "capture_sha256": "f094f239e9a3af04a1bb1a8b8ef9614195d11bcd1c760dd13c84ba5b7d564be6",
+      "elements": [
+        {
+          "type": "way",
+          "id": 1289002662,
+          "timestamp": "2024-06-02T23:40:49Z",
+          "version": 1,
+          "changeset": 152179510,
+          "nodes": [
+            6925348794,
+            6925348793,
+            6925348792
+          ],
+          "tags": {
+            "bicycle": "designated",
+            "crossing": "traffic_signals",
+            "crossing:island": "no",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "cycleway": "crossing",
+            "foot": "designated",
+            "highway": "cycleway",
+            "note": "Proposed to become part of NCN Route 90",
+            "tactile_paving": "yes"
+          }
+        },
+        {
+          "type": "way",
+          "id": 1289002662,
+          "timestamp": "2026-10-07T16:15:07Z",
+          "version": 2,
+          "changeset": 190157057,
+          "nodes": [
+            6925348794,
+            6925348793,
+            6925348792
+          ],
+          "tags": {
+            "bicycle": "designated",
+            "crossing": "traffic_signals",
+            "crossing:island": "no",
+            "crossing:markings": "dots",
+            "crossing_ref": "toucan",
+            "cycleway": "crossing",
+            "foot": "designated",
+            "highway": "cycleway",
+            "note": "Proposed to become part of NCN Route 90",
+            "surface": "asphalt",
+            "tactile_paving": "yes"
+          }
+        }
+      ]
+    }
+  ],
+  "post_seam_examples": [
+    {
+      "route": "NCN:6",
+      "target": "open-edge:f4db91e04be47d51d111ae8c547b42073e5ac4bb448b903aede00030c9b63ec0",
+      "cause": "no_admitted_source_correspondence",
+      "remaining_intervals_m": [
+        [
+          0.0,
+          1040.8725334057726
+        ]
+      ],
+      "seam_recovery_m": 0.0,
+      "remaining_m": 1040.8725334057726,
+      "verification": "Exact historical examples minus decoded validated seam insertion coverage; completed and logged before interruption."
+    },
+    {
+      "route": "NCN:66",
+      "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a",
+      "cause": "direction_gate",
+      "remaining_intervals_m": [
+        [
+          0.0,
+          54.08486405222375
+        ]
+      ],
+      "seam_recovery_m": 0.0,
+      "remaining_m": 54.08486405222375,
+      "verification": "Exact historical examples minus decoded validated seam insertion coverage; completed and logged before interruption."
+    },
+    {
+      "route": "NCN:1",
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+      "cause": "unadmitted_span_of_known_way",
+      "remaining_intervals_m": [
+        [
+          49.5895593920258,
+          495.388143301922
+        ]
+      ],
+      "seam_recovery_m": 0.0,
+      "remaining_m": 445.7985839098962,
+      "verification": "Exact historical examples minus decoded validated seam insertion coverage; completed and logged before interruption."
+    }
+  ],
+  "hash_conventions": {
+    "pr243": "sha256 compact ordered coordinate JSON",
+    "consumer": "OSM seven-decimal precision; remove adjacent duplicates; lexicographic minimum of forward/reverse coordinate array; sha256 compact JSON"
+  },
+  "rcn90_provenance": {
+    "source_snapshot_sha256": "847afcc532ab4c680dff85fcdd04d5f8cc9f799443a551f4ed7252939d4b33f5",
+    "membership_evidence_sha256": "51fe6d5644c0e048b1867e9fdacc89e9a56202cb28439e5f9b00cb73ebe01934",
+    "capture_time": "not recorded in consumed association; geometry includes 7 October update and was consumed by 19 October checkpoint",
+    "original_versions": "not stored; walking-compatible versions inferred from coordinate equality with historical nodes"
+  },
+  "verification": {
+    "current_eight_way_and_four_history_reads": "Repeated after interruption; hashes and coordinates checked",
+    "shipped_database_and_all_1147_input_pins": "Verified before interruption; retained recorded result, not rerun",
+    "national_reconciliation": "Recovered unchanged from independently verified GitHub checkpoint1c04a6c; no national reassessment",
+    "three_sample_residuals": "Prior decoded seam interval subtraction; exact recorded outputs carried forward"
+  },
+  "new_recoverable_coverage_demonstrated_m": null,
+  "negative_controls": [
+    "RCN90 proposed NCN90 note and zero bindings cannot yield automatic credit",
+    "Cumbria NCN7 relation does not prove NCN6 membership",
+    "Bradford same geometry does not imply all directional gates pass",
+    "Deal private parallel road77611523 stays excluded",
+    "NCN81 hairpin and NCN1 unadmitted prefix stay excluded"
+  ],
+  "limitations": [
+    "No national current-cause replay",
+    "No original PBF replication timestamp or original stored OSM feature versions",
+    "No active bicycle/car graph snapshot comparison",
+    "A content hash or close geometry is not route membership"
+  ]
+}
