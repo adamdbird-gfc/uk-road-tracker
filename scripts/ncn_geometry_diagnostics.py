@@ -18,7 +18,7 @@ from scripts.ncn_trial.network_geometry import metric_projector
 from scripts.ncn_trial.journey_replay import projector
 from scripts.ncn_trial.open_completion import edge_interval, ordinary_seam_partition
 from collections import Counter
-from scripts.ncn_source_compatibility import angle, vector
+from scripts.ncn_source_compatibility import angle, vector, metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE_PATH = 'docs/data-trials/ncn-projection-cases-20261030.json'
@@ -109,8 +109,11 @@ def measure(case, description, approved_features=None):
             outside = LineString([a,z]).difference(corridor).length
             whole.append({'source_edge': i, 'outside_approved_union_m': outside,
                           'necessary_corridor_pass': outside <= 1e-5})
+    headings = metrics(list(source.coords), list(reference.coords), metric=True)
     return {'status': 'diagnostic_only', 'values': {
         'source_length_m': source.length, 'reference_length_m': reference.length,
+        'source_reference_max_nearest_segment_undirected_direction_deg': headings['max_nearest_segment_undirected_angle_deg'],
+        'source_reference_endpoint_directed_direction_deg': headings['endpoint_directed_angle_deg'],
         'continuous_source_reference_hausdorff_m': source.hausdorff_distance(reference),
         'continuous_source_reference_min_distance_m': source.distance(reference),
         'finite_target_pairs': rows, 'topology': topology,
@@ -166,8 +169,8 @@ def run(root=ROOT):
             'predicates': {'finite_pair':'Existing edge_interval: finite along-target clipping, perpendicular corridor <=10 m, undirected angle <=15 degrees, nonzero interval >1e-7 m.',
                 'whole_edge':'Necessary approved-union corridor only: Shapely buffer(10), outside length <=1e-5 m; not full admission.',
                 'source_reference':'Continuous planar Hausdorff and minimum distance; not sampled source-version classification.',
-                'direction':'Undirected planar segment angle in degrees; separate from topology/identity/access.'},
-            'cases':[report_case(c,data[DEAL_PATH]) for c in cases['cases']],
+                'direction':'Finite target pairs: undirected planar segment angle. Source/reference: source segment midpoint nearest reference segment maximum undirected angle plus directed endpoint heading. Descriptive only; separate from topology/identity/access.'},
+            'cases':[{**report_case(c,data[DEAL_PATH]), 'input_snapshot': {'path':CASE_PATH, 'sha256':PINS[CASE_PATH]}} for c in cases['cases']],
             'operational_changes':False, 'new_assessable_m':0, 'new_completion_credit_m':0}
 
 
