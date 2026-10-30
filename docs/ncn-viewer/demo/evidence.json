@@ -9779,5 +9779,11 @@
     "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
     "docs/data-trials/ncn1-deal-results-20261030.json": "2976c849204b458576bd268f2386665c888d9a03e70890bf5746ced80aba3bdd"
   },
+  "reproduction_code_sha256": {
+    "docs/data-trials/audit_ncn_projection_20261030.py": "73a86da51da37461740a43a13a26dcd483092230268e00cb93bf2a164981139e",
+    "scripts/ncn_trial/journey_replay.py": "6b9682d45cbe744d69c9b294ffe485e63aa3a391020f77cb3a2b4cff7142d5dd",
+    "scripts/ncn_trial/network_geometry.py": "19e13a75e3fa7ecf5ae81d2bff284378f264d902f6d7b9088d76de42b9e574d6",
+    "scripts/ncn_trial/open_completion.py": "03412340ba1b658600418ab11a87d4adde7cd14532f3a8ccd04a0fee9b51b8e2"
+  },
   "schema_version": 1
 }

@@ -18,6 +18,7 @@ PINS = {
     'docs/data-trials/ncn-projection-cases-20261030.json': '26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963',
     'docs/data-trials/ncn-projection-results-20261030.json': '43c23a8bddda07b7bf28f1a44c5e3ed058e4cd0e76550c7d2e31fcf55295c10a',
 }
+REPRODUCTION_PINS = {'docs/data-trials/audit_ncn_projection_20261030.py': '73a86da51da37461740a43a13a26dcd483092230268e00cb93bf2a164981139e', 'scripts/ncn_trial/network_geometry.py': '19e13a75e3fa7ecf5ae81d2bff284378f264d902f6d7b9088d76de42b9e574d6', 'scripts/ncn_trial/journey_replay.py': '6b9682d45cbe744d69c9b294ffe485e63aa3a391020f77cb3a2b4cff7142d5dd', 'scripts/ncn_trial/open_completion.py': '03412340ba1b658600418ab11a87d4adde7cd14532f3a8ccd04a0fee9b51b8e2'}
 R = 6371008.8
 
 
@@ -45,6 +46,9 @@ def inverse(x, y, origin, space):
 
 
 def audit_module():
+    for name, pin in REPRODUCTION_PINS.items():
+        if hashlib.sha256((ROOT/name).read_bytes()).hexdigest() != pin:
+            raise ValueError('Reproduction code pin mismatch: ' + name)
     spec = importlib.util.spec_from_file_location('pinned_audit', ROOT / 'docs/data-trials/audit_ncn_projection_20261030.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -175,7 +179,7 @@ def build():
             'default_feature':fs[0]['id'], 'target_unavailable':not c['target_pairs'],
             'demonstrated_additional_eligible_recovery_m':0})
     return {'schema_version':1,'contract':'roadprints.ncn.visual-diagnostics','baseline':BASELINE,
-            'input_sha256':PINS, 'crs':'WGS84 longitude,latitude (derived rings explicitly labelled)',
+            'input_sha256':PINS, 'reproduction_code_sha256':REPRODUCTION_PINS, 'crs':'WGS84 longitude,latitude (derived rings explicitly labelled)',
             'diagnostic_only':True,'cases':output_cases}
 
 
