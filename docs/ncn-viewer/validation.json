@@ -1,0 +1,115 @@
+{
+  "CI": "No new CI/Android/device validation claimed; local regression and real headless-browser checks recorded",
+  "baseline_main": "a87d60d4d5b2c4651c571e7f4316e514154734eb",
+  "baseline_tree_matches_validated_247_head": "c7e0ba326b82b72c2e4f05cff1d2f2991e5d94c3",
+  "branch": "dev/ncn-visual-viewer-20261030",
+  "date": "2026-10-30",
+  "deliverable_sha256_excluding_receipt": {
+    "docs/ncn-viewer/.gitignore": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+    "docs/ncn-viewer/README.md": "2aa48542007e7189a948e1162bd3e0a12ace90ce843279d7c8824cc75c524e51",
+    "docs/ncn-viewer/browser-test.cjs": "0438ee1112a3c2a6f547fb3957965870d74172606f3f25ff18d8b12a014a8b5c",
+    "docs/ncn-viewer/demo/evidence.json": "692bea32a1cb4693e50efe55c3bea8fb83529911376db786dedcef1e8407183b",
+    "docs/ncn-viewer/demo/index.html": "b2da01d979afa696ca9affedef721cbb96cdc932c6128c2a591708e54e0bbba7",
+    "docs/ncn-viewer/generate.py": "0cc513bc8646134669e181001793a9ee3d60338195544f50de4b925b8cd88f69",
+    "docs/ncn-viewer/test_viewer.py": "b482787b430345dea5072f9e3b19eb8a0db1bb65e2895d5b747462cafe91264d",
+    "docs/ncn-viewer/viewer.template.html": "1a1ea383d35a9cd0b91d5f2934a2586cc5d69dcd4955056b109bf7692efc1ec7"
+  },
+  "deployments": {
+    "APK_build_distribution": "none",
+    "Firebase": "none",
+    "backend": "none",
+    "national_assessment": "none"
+  },
+  "early_checkpoint_files_read_back_exactly": 4,
+  "early_remote_checkpoint": "6f3d75414f1f3aee5c2772f135b7b12d6b38603f",
+  "environment": {
+    "generation_dependency_check": "psycopg, osmium, requests and pyproj blocked; generation still succeeds with Shapely",
+    "python": "3.12.14",
+    "shapely": "2.2.0",
+    "test_osmium": "4.3.1",
+    "test_psycopg": "3.2.10"
+  },
+  "generation": {
+    "cases": 8,
+    "deal_source_edges": 13,
+    "demonstrated_additional_eligible_recovery_m": 0,
+    "flipped_corridor_edges": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "private_control": "77611523"
+  },
+  "installed_APK_live_backend_active_Firebase_pins": "not queried; unknown; not required for isolated offline diagnosis",
+  "integration": "new viewer PR must remain open and unmerged",
+  "issues": "#79/#190/#194 linked for scope; no issue closures or unrelated PR actions",
+  "limitations": [
+    "No basemap tiles; real geographic coordinate grid instead",
+    "Approved Deal nearby union only; full excluded-feature set unavailable",
+    "Other cases retain bounded source/reference/target evidence, not whole-route admission replays",
+    "Bradford/Cumbria operational origins absent; Newry/Wales/NCN81 origins inferred and labelled",
+    "East Sussex RCN90 target unavailable",
+    "Spherical display and discretised diagnostic corridor rings are not surveyed truth",
+    "Historical 445.799 m ceiling is not eligible recovery"
+  ],
+  "next_task": "Triage one bounded identity/access-supported unbound target in the viewer; none currently proves a new correction. Review publication readiness of the validated 45.834 km seam correction, without publishing.",
+  "operational_changes": false,
+  "schema_version": 1,
+  "status": "implemented and browser-tested; awaiting source integration and owner review",
+  "validated_247_head": "efca603f73f6877fb64d3c8bf37796ee31f2635e",
+  "validated_checkpoint_files_read_back_exactly": 8,
+  "validated_remote_checkpoint": "58dc00aebb19ebc4948e28f3a0f310e87297f579",
+  "validation": {
+    "browser": {
+      "browser_setup_limitation": "Default Playwright browser download unavailable; executed with separately installed Chromium binary. No browser dependency shipped in the viewer.",
+      "checks": 78,
+      "desktop_viewport": [
+        1440,
+        1080
+      ],
+      "engine": "Chromium 153.0.8010.0 via Playwright",
+      "external_requests": 0,
+      "interactions": [
+        "eight cases",
+        "all layer toggles",
+        "five Deal flips",
+        "real geographic map clicks changing source selection",
+        "timeline -> map",
+        "map -> timeline",
+        "keyboard tiny-edge selection",
+        "pan",
+        "button zoom",
+        "wheel zoom",
+        "private exclusion",
+        "missing/inferred origins",
+        "missing East Sussex target",
+        "narrow-screen overflow"
+      ],
+      "mobile_viewport": [
+        390,
+        844
+      ],
+      "offline_context": true,
+      "page_errors": [],
+      "screenshots_captured": [
+        "deal-selected.png",
+        "deal-closeup.png",
+        "deal-mobile.png"
+      ],
+      "visual_inspection": "Desktop overview, selected close-up and narrow-screen full-page rendering inspected as images. No phone/device or cross-browser acceptance claim."
+    },
+    "errors": 0,
+    "existing_ncn_focused_tests": 95,
+    "existing_path_evidence_tests": 15,
+    "failures": 0,
+    "new_contract_tests": 9,
+    "original_deal_receipt_byte_identical": true,
+    "projection_audit_cases_byte_identical": true,
+    "projection_audit_results_byte_identical": true,
+    "python_total": 119,
+    "skips": 0,
+    "viewer_regeneration_byte_identical": true
+  }
+}
