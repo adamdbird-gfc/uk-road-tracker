@@ -102,11 +102,22 @@ jobs:
           files=list(pathlib.Path('android-prototype/app/build/test-results').rglob('TEST-*.xml'))
           assert files, 'Missing Android test results'
           total={k:0 for k in ('tests','failures','errors','skipped')}
+          skipped=[]
           for path in files:
               root=E.parse(path).getroot()
               for key in total:total[key]+=int(root.attrib.get(key,0))
-          print(json.dumps(total,sort_keys=True))
-          assert total['failures']==total['errors']==total['skipped']==0,total
+              for case in root.findall('testcase'):
+                  if case.find('skipped') is not None:skipped.append((case.attrib.get('classname'),case.attrib.get('name')))
+          print(json.dumps(dict(total,skipped_cases=skipped),sort_keys=True))
+          assert total['failures']==total['errors']==0,total
+          # These four pre-existing suites explicitly require an external national candidate receipt.
+          # This capture task must not create/select a candidate to activate them.
+          allowed={'com.roadprints.capture.NcnBindingCandidateTest','com.roadprints.capture.NcnOrdinarySeamCandidateTest'}
+          assert len(skipped)==4 and all(name in allowed for name,test in skipped),skipped
+          for name in ('PhantomTrainRegressionTest','PhantomTrainServiceTest','OversizedJourneyReviewTest','CaptureRecoveryIntegrationTest'):
+              suites=[E.parse(path).getroot() for path in files if path.name=='TEST-com.roadprints.capture.'+name+'.xml']
+              assert len(suites)==1 and int(suites[0].attrib['tests'])>0,name
+              assert int(suites[0].attrib.get('skipped',0))==0,name
           PY
       - name: Retain verification reports without APKs or credentials
         if: always()
