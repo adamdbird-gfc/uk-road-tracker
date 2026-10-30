@@ -47,7 +47,7 @@ final class ContextJourneyModel {
             }
             pauseContext=context;
             clearProposal();
-            if(!atStation && !"train".equals(mode) && context.destination && accuracy<=25 && time-pauseSince>=(context.site?120000:60000))
+            if(!atStation && (!"train".equals(mode) || !context.rail) && context.destination && accuracy<=25 && time-pauseSince>=(context.site?120000:60000))
                 return new Decision(Math.max(1,pauseIndex),null,"arrival_"+context.kind);
             return null;
         }
@@ -55,7 +55,7 @@ final class ContextJourneyModel {
             // A new departure confirms the preceding stay. Ordinary road/rail
             // pauses remain one journey; unknown places require a longer dwell.
             long dwell=time-pauseSince;
-            if(!atStation && !"train".equals(mode) && dwell>=(pauseContext.site?120000:60000) && pauseContext.destination) {
+            if(!atStation && (!"train".equals(mode) || !pauseContext.rail) && dwell>=(pauseContext.site?120000:60000) && pauseContext.destination) {
                 Decision d=new Decision(Math.max(1,pauseIndex),mode,"departure_after_place_stay");pauseSince=0;clearProposal();return d;
             }
             pauseSince=0;pauseIndex=-1;
@@ -66,7 +66,7 @@ final class ContextJourneyModel {
         else if(!foot && !"cycling".equals(mode) && !"train".equals(mode) && speed>=.5 && speed<=2.5) suggested="walking";
         else if("walking".equals(mode) && speed>=2.6 && speed<=4.8) suggested="running";
         else if("running".equals(mode) && speed>=.5 && speed<=1.8) suggested="walking";
-        else if("unknown".equals(mode) && context.road && !context.rail && speed>=6) suggested="driving";
+        else if(("unknown".equals(mode) || "train".equals(mode)) && (!"train".equals(mode) || !atStation) && context.available && context.road && !context.rail && speed>=6) suggested="driving";
         else if("unknown".equals(mode) && context.rail && !context.road && speed>=6) suggested="train";
         if(suggested.isEmpty()){clearProposal();return null;}
         if(!suggested.equals(proposal)||gap>60000) {
@@ -86,7 +86,9 @@ final class ContextJourneyModel {
         Decision d=new Decision(proposalIndex,suggested,"context_mode_"+suggested);clearProposal();return d;
     }
     boolean holdPause(String mode,long dwell,ContextMap.Evidence context) {
-        return "train".equals(mode) || (!context.destination && (context.rail
+        // Rail/station evidence protects real train pauses; the old train label alone
+        // must not veto a GPS-corroborated arrival at a home or other destination.
+        return (!context.destination && (context.rail
                 || context.road&&context.throughRoad&&!context.routeAmbiguous
                 || ((context.road&&!context.available)||context.outdoor)&&dwell<900000));
     }

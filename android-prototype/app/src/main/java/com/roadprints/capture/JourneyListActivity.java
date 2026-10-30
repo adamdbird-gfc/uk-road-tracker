@@ -1151,7 +1151,9 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
         fields.addView(detailRow("Duration", journeyDuration(journey)));
         fields.addView(detailRow("Distance", DistanceUnits.format(this, metres)));
-        fields.addView(detailRow("GPS points", DistanceUnits.formatPointCount(points)));
+        fields.addView(detailRow("GPS route points", DistanceUnits.formatPointCount(points)));
+        if (journey.optJSONArray("raw_capture_samples") != null)
+            fields.addView(detailRow("Original GPS samples", DistanceUnits.formatPointCount(JourneySizeGuard.rawCount(journey))));
         fields.addView(detailRow("Transport", displayMode(journey.optString("mode", "unknown"))));
         addPlaceReviewFields(fields,journey);
 
@@ -1315,6 +1317,10 @@ public class JourneyListActivity extends Activity {
         Runnable saveEdits = () -> {
             String updatedTitle = titleInput.getText().toString().trim();
             String updatedMode = transportModes[transport.getSelectedItemPosition()];
+            if(JourneySizeGuard.requiresReview(journey) && !updatedMode.equals(savedMode[0])) {
+                status.setText(JourneySizeGuard.message(journey));
+                return;
+            }
             JourneyStore.updateTitle(this, journey.optString("journey_id"), updatedTitle);
             JourneyStore.updateMode(this, journey.optString("journey_id"), updatedMode);
             try {
@@ -1354,7 +1360,15 @@ public class JourneyListActivity extends Activity {
         LinearLayout.LayoutParams secondaryParams = actionLayoutParams();
         secondaryParams.topMargin = dp(8);
         Button matchJourney = null;
-        if (processableMode && enoughEvidence) {
+        if(JourneySizeGuard.requiresReview(journey)) {
+            Button review=styledModalButton("EXPORT RECORDING FOR SAFE REVIEW",0xFFF7C450,0xFF0B1C50);
+            review.setTag("journey_oversized_review");
+            review.setOnClickListener(v -> new RoadprintsDialog.Builder(this)
+                    .setTitle("Review original recording").setMessage(JourneySizeGuard.message(journey))
+                    .setNegativeButton("Close",null).setPositiveButton("Export original",(d,w)->exportJourneyDebug(journey.optString("journey_id"))).show());
+            actions.addView(review,secondaryParams);
+        }
+        if (processableMode && enoughEvidence && !JourneySizeGuard.requiresReview(journey)) {
             boolean matched = "complete".equals(processingStatus) && hasMatchedGeometry;
             boolean matching = "processing".equals(processingStatus);
             String actionText = matched ? "VIEW & EDIT ON MAP"
@@ -1692,6 +1706,10 @@ public class JourneyListActivity extends Activity {
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
             String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
+        if(JourneySizeGuard.requiresReview(journey)) {
+            status.setText(JourneySizeGuard.message(journey));
+            return;
+        }
         if (!canMatchJourney(journey)) {
             status.setText("This journey does not have enough route points to match.");
             return;

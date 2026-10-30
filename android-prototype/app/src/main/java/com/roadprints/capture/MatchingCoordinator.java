@@ -143,12 +143,14 @@ public final class MatchingCoordinator {
             List<String> cycle = new ArrayList<>();
             Map<String, String> queuedModes = new HashMap<>();
             boolean qualityHeld=false;
+            String sizeReview=null;
             if (journeyId != null) {
                 // A per-journey request must not parse every large archived journey.
                 JSONObject journey = JourneyStore.get(app, journeyId);
                 if (journey != null) {
                     enqueueIfMatchable(journey, road, foot, cycle, queuedModes, forceRematch);
-                    qualityHeld=MatchRetryPolicy.qualityBlocked(journey);
+                    if(JourneySizeGuard.requiresReview(journey))sizeReview=JourneySizeGuard.message(journey);
+                    else qualityHeld=MatchRetryPolicy.qualityBlocked(journey);
                 }
             } else {
                 // Keep only IDs in the work queue; full GeoJSON stays on disk until a
@@ -163,7 +165,7 @@ public final class MatchingCoordinator {
             roadChecked.set(0); roadMatched.set(0); footChecked.set(0); footMatched.set(0); cycleChecked.set(0); cycleMatched.set(0);
             if (total == 0) {
                 state = State.COMPLETE;
-                message = qualityHeld?"GPS quality review required · original recording preserved":"No journeys currently eligible for matching";
+                message = sizeReview!=null?sizeReview:qualityHeld?"GPS quality review required · original recording preserved":"No journeys currently eligible for matching";
                 return;
             }
             state = State.RUNNING;
@@ -233,6 +235,7 @@ public final class MatchingCoordinator {
     private void enqueueIfMatchable(
             JSONObject journey, List<String> road, List<String> foot, List<String> cycle,
             Map<String, String> queuedModes, boolean forceRematch) {
+        if(JourneySizeGuard.requiresReview(journey))return;
         try{if(MatchRetryPolicy.adoptLegacy(journey))JourneyStore.save(app,journey);}
         catch(Exception ignored){return;}
         if(MatchRetryPolicy.qualityBlocked(journey)||MatchRetryPolicy.coolingDown(journey))return;
@@ -290,6 +293,7 @@ public final class MatchingCoordinator {
     }
 
     private void matchJourney(JSONObject journey) throws Exception {
+        if(JourneySizeGuard.requiresReview(journey))throw new IllegalStateException(JourneySizeGuard.message(journey));
         long preparationStarted = android.os.SystemClock.elapsedRealtime();
         if(isFoot(journey.optString("mode"))&&!DestinationJourneyEvidence.purposeful(journey)&&ResortJourneyPolicy.internal(new DestinationCatalog(app),journey.optJSONArray("capture_route_samples")))
             throw new IllegalStateException("Movement inside a recognised resort does not require road matching. The original recording is preserved.");
