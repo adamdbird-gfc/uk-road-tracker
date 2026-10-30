@@ -1,0 +1,3244 @@
+{
+  "baseline": "0f8199651dad6014410274dc1b968e2417efe1b2",
+  "cross_route": [
+    {
+      "actual_admitted_source_present": false,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "11017",
+                "network": "ncn",
+                "ref": "7"
+              }
+            ],
+            "retained_ncn_row": {
+              "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection.",
+              "present": false
+            }
+          },
+          "requested": "NCN:6",
+          "status": "unproved_requested_route"
+        }
+      },
+      "eligibility_note": "No admitted NCN6 source row; bounded observed membership NCN7. Proximity cannot establish NCN6 identity.",
+      "existing_binding_count": null,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "23385711",
+      "name": "Cumbria NCN6/NCN7 identity",
+      "origin_provenance": "operational route origin unavailable; local proxy only",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            -2.9242844,
+            54.652334
+          ],
+          "reference_length_m": 1039.7940393053552,
+          "source_length_m": 1039.7940393053552,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.7350335329304627,
+              "finite_pair": [
+                0.0,
+                44.25092756772878,
+                0.42788080851210714,
+                44.675167084577645
+              ],
+              "max_distance_m": 4.701053213654246,
+              "min_distance_m": 4.133384464927683,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.004350534747006,
+              "finite_pair": [
+                0.0,
+                113.85794136676107,
+                44.67516708457765,
+                158.46344722288134
+              ],
+              "max_distance_m": 4.701053213654246,
+              "min_distance_m": 0.7188282772997736,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.00359977276567,
+              "finite_pair": [
+                0.0,
+                87.58307531919901,
+                158.46344722288134,
+                245.99297708620716
+              ],
+              "max_distance_m": 2.343276272456727,
+              "min_distance_m": 0.0,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4043560890647382,
+              "finite_pair": [
+                0.0,
+                432.8951479135114,
+                245.99297708620716,
+                678.8773446306363
+              ],
+              "max_distance_m": 2.343276272456727,
+              "min_distance_m": 0.0,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.18172265168927185,
+              "finite_pair": [
+                0.0,
+                273.2568220899752,
+                678.8773446306363,
+                952.1327923194309
+              ],
+              "max_distance_m": 0.7117888202075332,
+              "min_distance_m": 0.0,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.17732922140665766,
+              "finite_pair": [
+                0.0,
+                31.239075705278598,
+                952.1327923194308,
+                983.3717184069375
+              ],
+              "max_distance_m": 0.25157119769753505,
+              "min_distance_m": 0.15488707583881275,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.7967495767821453,
+              "finite_pair": [
+                0.0,
+                53.31169778992189,
+                983.3717184069376,
+                1036.6572050052769
+              ],
+              "max_distance_m": 1.4199667833732783,
+              "min_distance_m": 0.0,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4276388152874976,
+              "finite_pair": [
+                0.0,
+                3.399351552979495,
+                1036.6572050052769,
+                1040.0564618750318
+              ],
+              "max_distance_m": 1.4199667833732783,
+              "min_distance_m": 1.3945952606110474,
+              "source_edge": 7,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            -2.9242844,
+            54.652334
+          ],
+          "reference_length_m": 1039.7932934284072,
+          "source_length_m": 1039.7932934284072,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.7359258320835623,
+              "finite_pair": [
+                0.0,
+                44.25092588176817,
+                0.4278109771499953,
+                44.67508672140597
+              ],
+              "max_distance_m": 4.701749560556315,
+              "min_distance_m": 4.133391745868436,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.0035398234564723,
+              "finite_pair": [
+                0.0,
+                113.85793715709748,
+                44.67508672140596,
+                158.46341898804425
+              ],
+              "max_distance_m": 4.701749560556315,
+              "min_distance_m": 0.7211348282967271,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.0028929106846407,
+              "finite_pair": [
+                0.0,
+                87.58306884901242,
+                158.46341898804425,
+                245.9929801558755
+              ],
+              "max_distance_m": 2.3398896370970554,
+              "min_distance_m": 0.0,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.40443619170858885,
+              "finite_pair": [
+                0.0,
+                432.89484638372113,
+                245.99298015587547,
+                678.8770419064548
+              ],
+              "max_distance_m": 2.3398896370970554,
+              "min_distance_m": 0.0,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.18225789156406405,
+              "finite_pair": [
+                0.0,
+                273.25656426202204,
+                678.8770419064548,
+                952.1322236604531
+              ],
+              "max_distance_m": 0.7157785232432603,
+              "min_distance_m": 0.0,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.1781441631220029,
+              "finite_pair": [
+                0.0,
+                31.239040655819036,
+                952.1322236604531,
+                983.3711133203312
+              ],
+              "max_distance_m": 0.250577559613048,
+              "min_distance_m": 0.15344922249550275,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.7954130175434349,
+              "finite_pair": [
+                0.0,
+                53.31156230016311,
+                983.3711133203311,
+                1036.6565034734965
+              ],
+              "max_distance_m": 1.4197131663140747,
+              "min_distance_m": 0.0,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4285493819395463,
+              "finite_pair": [
+                0.0,
+                3.399347938803973,
+                1036.6565034734967,
+                1040.055756325534
+              ],
+              "max_distance_m": 1.4197131663140747,
+              "min_distance_m": 1.3942876482846276,
+              "source_edge": 7,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": []
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "same_identified_feature_with_documented_geometry_update",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 0,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "RCN:90",
+            "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c"
+          },
+          "requested": "RCN:90",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Admitted RCN90 source, zero bindings. Stable-chain node movement is supported by pinned histories; proposal note is not NCN90 membership.",
+      "existing_binding_count": 0,
+      "history_status": "documented_shared_node_movement",
+      "hypothetical_only": true,
+      "key": "1289002662",
+      "name": "East Sussex source-version update RCN90",
+      "origin_provenance": "pinned source-section fixture",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            0.0810328,
+            50.8539893
+          ],
+          "reference_length_m": 12.829688067142751,
+          "source_length_m": 12.9610037342383,
+          "source_reference_hausdorff_m": 0.6102157025727383,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            0.0810328,
+            50.8539893
+          ],
+          "reference_length_m": 12.829688045305303,
+          "source_length_m": 12.961003568593796,
+          "source_reference_hausdorff_m": 0.6102156974900913,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -1.412814772702716,
+            52.49513027523595
+          ],
+          "reference_length_m": 12.830301465006576,
+          "source_length_m": 12.96172207764592,
+          "source_reference_hausdorff_m": 0.6103122672770134,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -1.412814772702716,
+            52.49513027523595
+          ],
+          "reference_length_m": 12.829066292214783,
+          "source_length_m": 12.957428890982115,
+          "source_reference_hausdorff_m": 0.5889660665487615,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": []
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 2,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:1",
+            "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa"
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Only source vertices1..2 admitted. Vertex0 prefix excluded regardless of geometry metric.",
+      "existing_binding_count": 2,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "1050757473",
+      "name": "London NCN1 Mudlarks Boulevard",
+      "origin_provenance": "pinned source-section fixture",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            0.0147904,
+            51.4962583
+          ],
+          "reference_length_m": 73.98827094230252,
+          "source_length_m": 73.98827094230252,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 3.5496378733842056,
+              "finite_pair": null,
+              "max_distance_m": 37.605870274902564,
+              "min_distance_m": 1.3347615896836869,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4523893289855185,
+              "finite_pair": [
+                0.0,
+                36.68154854577969,
+                8.25603728439791,
+                44.936442438967596
+              ],
+              "max_distance_m": 1.2716870013354977,
+              "min_distance_m": 0.9820641206606546,
+              "source_edge": 0,
+              "target_index": 1
+            },
+            {
+              "angle_deg": 1.4770833011142042,
+              "finite_pair": [
+                0.9706154566455808,
+                37.30672239652282,
+                0.0,
+                36.32403299863104
+              ],
+              "max_distance_m": 1.878240208077813,
+              "min_distance_m": 0.9412874507328614,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.5249439012550288,
+              "finite_pair": [
+                0.0,
+                0.9048356408379911,
+                44.93644243896759,
+                45.840399608420846
+              ],
+              "max_distance_m": 36.372560530774805,
+              "min_distance_m": 0.9412874507328614,
+              "source_edge": 1,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            0.0147904,
+            51.4962583
+          ],
+          "reference_length_m": 73.98805786396811,
+          "source_length_m": 73.98805786396811,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 3.5489533615639823,
+              "finite_pair": null,
+              "max_distance_m": 37.60581657699977,
+              "min_distance_m": 1.3347560303351342,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4523472027045778,
+              "finite_pair": [
+                0.0,
+                36.681497549472176,
+                8.25604482835295,
+                44.93639920113748
+              ],
+              "max_distance_m": 1.2716537507226655,
+              "min_distance_m": 0.9820582416429398,
+              "source_edge": 0,
+              "target_index": 1
+            },
+            {
+              "angle_deg": 1.476851063794963,
+              "finite_pair": [
+                0.9706014986426423,
+                37.30656031449593,
+                0.0,
+                36.32388872000052
+              ],
+              "max_distance_m": 1.8780914332484167,
+              "min_distance_m": 0.9412898235540311,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.5244495004727088,
+              "finite_pair": [
+                0.0,
+                0.9048334729948126,
+                44.93639920113749,
+                45.840354548783154
+              ],
+              "max_distance_m": 36.37240876233828,
+              "min_distance_m": 0.9412898235540311,
+              "source_edge": 1,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 74.00274551591991,
+          "source_length_m": 74.00274551591991,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 3.54993262472041,
+              "finite_pair": null,
+              "max_distance_m": 37.61336336197475,
+              "min_distance_m": 1.3354022691110672,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.45244091973560513,
+              "finite_pair": [
+                0.0,
+                36.68840743478869,
+                8.256954173266395,
+                44.94421774220006
+              ],
+              "max_distance_m": 1.2720686735340498,
+              "min_distance_m": 0.9823586035511415,
+              "source_edge": 0,
+              "target_index": 1
+            },
+            {
+              "angle_deg": 1.4771798547961812,
+              "finite_pair": [
+                0.9712663294663759,
+                37.314338081131226,
+                0.0,
+                36.33099391735597
+              ],
+              "max_distance_m": 1.8787435816768396,
+              "min_distance_m": 0.9415499391710236,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.5251936896587943,
+              "finite_pair": [
+                0.0,
+                0.9054624696999866,
+                44.94421774220007,
+                45.8488009580382
+              ],
+              "max_distance_m": 36.37953815634069,
+              "min_distance_m": 0.9415499391710236,
+              "source_edge": 1,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 70.7748994873487,
+          "source_length_m": 70.7748994873487,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 3.6265037064846983,
+              "finite_pair": null,
+              "max_distance_m": 35.95404577138467,
+              "min_distance_m": 1.2488161458133815,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4600863458028976,
+              "finite_pair": [
+                0.0,
+                35.131100515231694,
+                7.993490728803778,
+                43.123458601544925
+              ],
+              "max_distance_m": 1.2387419737266094,
+              "min_distance_m": 0.9566415102602048,
+              "source_edge": 0,
+              "target_index": 1
+            },
+            {
+              "angle_deg": 1.512726956829312,
+              "finite_pair": [
+                0.869168133867208,
+                35.64379897211701,
+                0.0,
+                34.76251138208821
+              ],
+              "max_distance_m": 1.837963953352635,
+              "min_distance_m": 0.9196278988672111,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.573863095459446,
+              "finite_pair": [
+                0.0,
+                0.8035427232488273,
+                43.123458601544925,
+                43.92619067820017
+              ],
+              "max_distance_m": 34.81106589984909,
+              "min_distance_m": 0.9196278988672111,
+              "source_edge": 1,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": []
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 32,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:9",
+            "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486"
+          },
+          "requested": "NCN:9",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 32,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "59306268",
+      "name": "Newry Canal Towpath NCN9",
+      "origin_provenance": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            -6.3675359,
+            54.3064421
+          ],
+          "reference_length_m": 2840.4235215458425,
+          "source_length_m": 2840.4235215458425,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 10.306982842103015,
+              "finite_pair": [
+                0.0,
+                6.102760413231826,
+                95.86271477299599,
+                101.86699640219364
+              ],
+              "max_distance_m": 11.075722519268036,
+              "min_distance_m": 8.045012083453814,
+              "source_edge": 12,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.039306988469898,
+              "finite_pair": [
+                2.386077070181211,
+                10.937945135600387,
+                0.0,
+                8.331362516514123
+              ],
+              "max_distance_m": 10.038606342796708,
+              "min_distance_m": 7.297946830598629,
+              "source_edge": 12,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            -6.3675359,
+            54.3064421
+          ],
+          "reference_length_m": 2840.4732558011315,
+          "source_length_m": 2840.4732558011315,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 10.307022460909776,
+              "finite_pair": [
+                0.0,
+                6.104890234474542,
+                95.8693775741832,
+                101.87575390090448
+              ],
+              "max_distance_m": 11.076078749940562,
+              "min_distance_m": 8.04600744337075,
+              "source_edge": 12,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.040856094948024,
+              "finite_pair": [
+                2.387383222465551,
+                10.938545601105464,
+                0.0,
+                8.33062285973024
+              ],
+              "max_distance_m": 10.040656968394817,
+              "min_distance_m": 7.299331698438209,
+              "source_edge": 12,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -6.176521313597284,
+            54.39183809942985
+          ],
+          "reference_length_m": 2840.4250892327077,
+          "source_length_m": 2840.4250892327077,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 10.306989995410513,
+              "finite_pair": [
+                0.0,
+                6.102757460015682,
+                95.86272267440046,
+                101.8670012617126
+              ],
+              "max_distance_m": 11.075732079170113,
+              "min_distance_m": 8.045018961513657,
+              "source_edge": 12,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.039312623569982,
+              "finite_pair": [
+                2.386069222539205,
+                10.93794673396906,
+                0.0,
+                8.331371529198805
+              ],
+              "max_distance_m": 10.038610035516344,
+              "min_distance_m": 7.2979510502615375,
+              "source_edge": 12,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -6.176521313597284,
+            54.39183809942985
+          ],
+          "reference_length_m": 2839.96600349762,
+          "source_length_m": 2839.96600349762,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 10.300548123814552,
+              "finite_pair": [
+                0.0,
+                6.082407108653811,
+                95.79919617447482,
+                101.78357511892844
+              ],
+              "max_distance_m": 11.072501846828105,
+              "min_distance_m": 8.036577397719238,
+              "source_edge": 12,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.023230510098813,
+              "finite_pair": [
+                2.3745290501574208,
+                10.93251852978953,
+                0.0,
+                8.337867537017802
+              ],
+              "max_distance_m": 10.019948483917053,
+              "min_distance_m": 7.2856202263881755,
+              "source_edge": 12,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": [
+        {
+          "angle_deg": 13.039306988469898,
+          "max_distance_m": 10.038606342796708,
+          "min_distance_m": 7.297946830598629,
+          "source_edge": 12,
+          "space": "local_aeqd",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.040856094948024,
+          "max_distance_m": 10.040656968394817,
+          "min_distance_m": 7.299331698438209,
+          "source_edge": 12,
+          "space": "local_eq",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.039312623569982,
+          "max_distance_m": 10.038610035516344,
+          "min_distance_m": 7.2979510502615375,
+          "source_edge": 12,
+          "space": "route_aeqd",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.023230510098813,
+          "max_distance_m": 10.019948483917053,
+          "min_distance_m": 7.2856202263881755,
+          "source_edge": 12,
+          "space": "route_eq",
+          "target_index": 1
+        }
+      ]
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "75880",
+                "network": "ncn",
+                "ref": "1"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 10,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:1",
+              "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+            }
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 10,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "4471747",
+      "name": "Deal NCN1",
+      "origin_provenance": "exact PR246 fixture",
+      "projection_classification_changes": [
+        {
+          "aeqd_angle_deg": 0.1188523826297447,
+          "aeqd_pair_present": false,
+          "eq_angle_deg": 0.11003327353584888,
+          "eq_pair_present": true,
+          "scope": "route",
+          "source_edge": 7,
+          "target_index": 0
+        },
+        {
+          "aeqd_angle_deg": 0.030534611216008714,
+          "aeqd_pair_present": false,
+          "eq_angle_deg": 0.02836453504337233,
+          "eq_pair_present": true,
+          "scope": "route",
+          "source_edge": 8,
+          "target_index": 0
+        },
+        {
+          "aeqd_angle_deg": 0.09316220060552897,
+          "aeqd_pair_present": false,
+          "eq_angle_deg": 0.08626068015352706,
+          "eq_pair_present": true,
+          "scope": "route",
+          "source_edge": 9,
+          "target_index": 0
+        }
+      ],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            1.4035412,
+            51.1968459
+          ],
+          "reference_length_m": 841.9579529174812,
+          "source_length_m": 841.9579529174812,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.397718760641679,
+              "finite_pair": null,
+              "max_distance_m": 223.58945512801898,
+              "min_distance_m": 99.86415408162695,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.507805759315122,
+              "finite_pair": null,
+              "max_distance_m": 99.86415408162695,
+              "min_distance_m": 82.91973776085287,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.004365472540248,
+              "finite_pair": null,
+              "max_distance_m": 82.91973776085287,
+              "min_distance_m": 61.70326852645132,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.947902075099913,
+              "finite_pair": null,
+              "max_distance_m": 61.70326852645132,
+              "min_distance_m": 30.808987759436548,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 5.507200253455983,
+              "finite_pair": null,
+              "max_distance_m": 30.808987759436548,
+              "min_distance_m": 8.087506500066594,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.7054937967402333,
+              "finite_pair": [
+                4.151477055763454,
+                53.6852565259231,
+                0.0,
+                49.51183654980197
+              ],
+              "max_distance_m": 8.539562106586432,
+              "min_distance_m": 7.0622036078529336,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.3270096797867126,
+              "finite_pair": [
+                0.0,
+                63.06239527674366,
+                49.511836549801984,
+                112.55731869721477
+              ],
+              "max_distance_m": 10.426646383601481,
+              "min_distance_m": 8.539562106586432,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.11879999234521735,
+              "finite_pair": null,
+              "max_distance_m": 10.598507005064342,
+              "min_distance_m": 10.426646383601481,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.030526957139804717,
+              "finite_pair": null,
+              "max_distance_m": 10.598507005064342,
+              "min_distance_m": 10.514523488456925,
+              "source_edge": 8,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.09313913012776108,
+              "finite_pair": null,
+              "max_distance_m": 10.514523488456925,
+              "min_distance_m": 10.369814550881657,
+              "source_edge": 9,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.7592266910038835,
+              "finite_pair": [
+                27.909230957529303,
+                35.14730418810396,
+                488.41557285817333,
+                495.6530106344923
+              ],
+              "max_distance_m": 116.03329395544553,
+              "min_distance_m": 9.903221545706023,
+              "source_edge": 10,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 4.2759586951192174,
+              "finite_pair": null,
+              "max_distance_m": 119.8475862979694,
+              "min_distance_m": 116.03329395544553,
+              "source_edge": 11,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 57.91753995433838,
+              "finite_pair": null,
+              "max_distance_m": 121.44659298625874,
+              "min_distance_m": 119.8475862979694,
+              "source_edge": 12,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            1.4035412,
+            51.1968459
+          ],
+          "reference_length_m": 841.9571544068956,
+          "source_length_m": 841.9571544068956,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.39689418126927,
+              "finite_pair": null,
+              "max_distance_m": 223.58943982626403,
+              "min_distance_m": 99.86411145627143,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.5084525775752877,
+              "finite_pair": null,
+              "max_distance_m": 99.86411145627143,
+              "min_distance_m": 82.91970082338419,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.003657312225813,
+              "finite_pair": null,
+              "max_distance_m": 82.91970082338419,
+              "min_distance_m": 61.70322785322756,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.9471891722752415,
+              "finite_pair": null,
+              "max_distance_m": 61.70322785322756,
+              "min_distance_m": 30.808922232449344,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 5.506400849520547,
+              "finite_pair": null,
+              "max_distance_m": 30.808922232449344,
+              "min_distance_m": 8.087223402702556,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.7048890831660435,
+              "finite_pair": [
+                4.151358584797548,
+                53.68524794689083,
+                0.0,
+                49.51196194969868
+              ],
+              "max_distance_m": 8.538735681329234,
+              "min_distance_m": 7.061898828077114,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.3265179474683328,
+              "finite_pair": [
+                0.0,
+                63.121466609949714,
+                49.51196194969868,
+                112.61651213098096
+              ],
+              "max_distance_m": 10.425120334810702,
+              "min_distance_m": 8.538735681329234,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.11852807171401368,
+              "finite_pair": null,
+              "max_distance_m": 10.596587489741905,
+              "min_distance_m": 10.425120334810702,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.030553372897576956,
+              "finite_pair": null,
+              "max_distance_m": 10.596587489741905,
+              "min_distance_m": 10.512531365332222,
+              "source_edge": 8,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.09291601203130573,
+              "finite_pair": null,
+              "max_distance_m": 10.512531365332222,
+              "min_distance_m": 10.368169225139255,
+              "source_edge": 9,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.7586595476438003,
+              "finite_pair": [
+                27.805830997663136,
+                35.14708724110965,
+                488.3120512541037,
+                495.652663947049
+              ],
+              "max_distance_m": 116.03328989046241,
+              "min_distance_m": 9.901928380269922,
+              "source_edge": 10,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 4.2758827927038645,
+              "finite_pair": null,
+              "max_distance_m": 119.84758213109792,
+              "min_distance_m": 116.03328989046241,
+              "source_edge": 11,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 57.91282672819797,
+              "finite_pair": null,
+              "max_distance_m": 121.44659285785956,
+              "min_distance_m": 119.84758213109792,
+              "source_edge": 12,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 842.0397681124243,
+          "source_length_m": 842.0397681124243,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.399750369023305,
+              "finite_pair": null,
+              "max_distance_m": 223.6120202179924,
+              "min_distance_m": 99.87165781203461,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.5086409649319432,
+              "finite_pair": null,
+              "max_distance_m": 99.87165781203461,
+              "min_distance_m": 82.92597758550404,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.0053155021995948,
+              "finite_pair": null,
+              "max_distance_m": 82.92597758550404,
+              "min_distance_m": 61.7073818542027,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.9493002518203135,
+              "finite_pair": null,
+              "max_distance_m": 61.7073818542027,
+              "min_distance_m": 30.809986263060374,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 5.509727814288317,
+              "finite_pair": null,
+              "max_distance_m": 30.809986263060374,
+              "min_distance_m": 8.089638292222448,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.7063143746411604,
+              "finite_pair": [
+                4.148678020783312,
+                53.69063276960545,
+                0.0,
+                49.519987084755286
+              ],
+              "max_distance_m": 8.54464639614256,
+              "min_distance_m": 7.066330524859012,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.3276555970163515,
+              "finite_pair": [
+                0.0,
+                62.81228507706751,
+                49.519987084755286,
+                112.31540970846677
+              ],
+              "max_distance_m": 10.432832116552019,
+              "min_distance_m": 8.54464639614256,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.1188523826297447,
+              "finite_pair": null,
+              "max_distance_m": 10.604783506462384,
+              "min_distance_m": 10.432832116552019,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.030534611216008714,
+              "finite_pair": null,
+              "max_distance_m": 10.604783506462384,
+              "min_distance_m": 10.520771713925557,
+              "source_edge": 8,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.09316220060552897,
+              "finite_pair": null,
+              "max_distance_m": 10.520771713925557,
+              "min_distance_m": 10.376014565674833,
+              "source_edge": 9,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.7595803035040958,
+              "finite_pair": [
+                28.363924963720148,
+                35.14562539181701,
+                488.9146245942887,
+                495.6957290798703
+              ],
+              "max_distance_m": 116.04740190825437,
+              "min_distance_m": 9.909225578442452,
+              "source_edge": 10,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 4.278054821402536,
+              "finite_pair": null,
+              "max_distance_m": 119.86216286716568,
+              "min_distance_m": 116.04740190825437,
+              "source_edge": 11,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 57.912137590200416,
+              "finite_pair": null,
+              "max_distance_m": 121.46251115569216,
+              "min_distance_m": 119.86216286716568,
+              "source_edge": 12,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 841.4926548476631,
+          "source_length_m": 841.4926548476631,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.079171087532988,
+              "finite_pair": null,
+              "max_distance_m": 223.5402735338529,
+              "min_distance_m": 99.77603337167454,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.4008723598597952,
+              "finite_pair": null,
+              "max_distance_m": 99.77603337167454,
+              "min_distance_m": 82.84690637639785,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.8594159752776311,
+              "finite_pair": null,
+              "max_distance_m": 82.84690637639785,
+              "min_distance_m": 61.62747391236155,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.734655113956336,
+              "finite_pair": null,
+              "max_distance_m": 61.62747391236155,
+              "min_distance_m": 30.695874962162645,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 5.108091735602723,
+              "finite_pair": null,
+              "max_distance_m": 30.695874962162645,
+              "min_distance_m": 7.615057598024208,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.5822316395475788,
+              "finite_pair": [
+                4.0642926355040006,
+                53.672766452211114,
+                0.0,
+                49.5895593920258
+              ],
+              "max_distance_m": 7.922740161187911,
+              "min_distance_m": 6.550470269745374,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.2311614453540756,
+              "finite_pair": [
+                0.0,
+                81.4616390930493,
+                49.589559392025805,
+                131.03239271218774
+              ],
+              "max_distance_m": 9.673038567329044,
+              "min_distance_m": 7.922740161187911,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.11003327353584888,
+              "finite_pair": [
+                0.0,
+                82.84411260985993,
+                131.03239271218771,
+                213.87635255336855
+              ],
+              "max_distance_m": 9.832135858229687,
+              "min_distance_m": 9.673038567329044,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.02836453504337233,
+              "finite_pair": [
+                0.0,
+                157.5426644212676,
+                213.87635255336858,
+                371.41899766943845
+              ],
+              "max_distance_m": 9.832135858229687,
+              "min_distance_m": 9.754143652189573,
+              "source_edge": 8,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.08626068015352706,
+              "finite_pair": [
+                0.0,
+                88.97030368395411,
+                371.4189976694384,
+                460.3892005220646
+              ],
+              "max_distance_m": 9.754143652189573,
+              "min_distance_m": 9.620195984928236,
+              "source_edge": 9,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.7044241042847365,
+              "finite_pair": [
+                0.0,
+                35.00158808292383,
+                460.3892005220646,
+                495.388143301922
+              ],
+              "max_distance_m": 116.03140940900975,
+              "min_distance_m": 9.189184562566632,
+              "source_edge": 10,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.9669473722056954,
+              "finite_pair": null,
+              "max_distance_m": 119.84565951320327,
+              "min_distance_m": 116.03140940900975,
+              "source_edge": 11,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 55.452428270274304,
+              "finite_pair": null,
+              "max_distance_m": 121.44653461542144,
+              "min_distance_m": 119.84565951320327,
+              "source_edge": 12,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": [
+        {
+          "angle_deg": 1.3270096797867126,
+          "max_distance_m": 10.426646383601481,
+          "min_distance_m": 8.539562106586432,
+          "source_edge": 6,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.11879999234521735,
+          "max_distance_m": 10.598507005064342,
+          "min_distance_m": 10.426646383601481,
+          "source_edge": 7,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.030526957139804717,
+          "max_distance_m": 10.598507005064342,
+          "min_distance_m": 10.514523488456925,
+          "source_edge": 8,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.09313913012776108,
+          "max_distance_m": 10.514523488456925,
+          "min_distance_m": 10.369814550881657,
+          "source_edge": 9,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.7592266910038835,
+          "max_distance_m": 116.03329395544553,
+          "min_distance_m": 9.903221545706023,
+          "source_edge": 10,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.3265179474683328,
+          "max_distance_m": 10.425120334810702,
+          "min_distance_m": 8.538735681329234,
+          "source_edge": 6,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.11852807171401368,
+          "max_distance_m": 10.596587489741905,
+          "min_distance_m": 10.425120334810702,
+          "source_edge": 7,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.030553372897576956,
+          "max_distance_m": 10.596587489741905,
+          "min_distance_m": 10.512531365332222,
+          "source_edge": 8,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.09291601203130573,
+          "max_distance_m": 10.512531365332222,
+          "min_distance_m": 10.368169225139255,
+          "source_edge": 9,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.7586595476438003,
+          "max_distance_m": 116.03328989046241,
+          "min_distance_m": 9.901928380269922,
+          "source_edge": 10,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.3276555970163515,
+          "max_distance_m": 10.432832116552019,
+          "min_distance_m": 8.54464639614256,
+          "source_edge": 6,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.1188523826297447,
+          "max_distance_m": 10.604783506462384,
+          "min_distance_m": 10.432832116552019,
+          "source_edge": 7,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.030534611216008714,
+          "max_distance_m": 10.604783506462384,
+          "min_distance_m": 10.520771713925557,
+          "source_edge": 8,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.09316220060552897,
+          "max_distance_m": 10.520771713925557,
+          "min_distance_m": 10.376014565674833,
+          "source_edge": 9,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.7595803035040958,
+          "max_distance_m": 116.04740190825437,
+          "min_distance_m": 9.909225578442452,
+          "source_edge": 10,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.2311614453540756,
+          "max_distance_m": 9.673038567329044,
+          "min_distance_m": 7.922740161187911,
+          "source_edge": 6,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.11003327353584888,
+          "max_distance_m": 9.832135858229687,
+          "min_distance_m": 9.673038567329044,
+          "source_edge": 7,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.02836453504337233,
+          "max_distance_m": 9.832135858229687,
+          "min_distance_m": 9.754143652189573,
+          "source_edge": 8,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.08626068015352706,
+          "max_distance_m": 9.754143652189573,
+          "min_distance_m": 9.620195984928236,
+          "source_edge": 9,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.7044241042847365,
+          "max_distance_m": 116.03140940900975,
+          "min_distance_m": 9.189184562566632,
+          "source_edge": 10,
+          "space": "route_eq",
+          "target_index": 0
+        }
+      ]
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 27,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:8",
+            "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01"
+          },
+          "requested": "NCN:8",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 27,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "31252441",
+      "name": "Mid-Wales NCN8",
+      "origin_provenance": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            -3.6826247,
+            52.4765612
+          ],
+          "reference_length_m": 1496.6529016139239,
+          "source_length_m": 1496.6529016139239,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 13.32347164622705,
+              "finite_pair": [
+                0.0,
+                7.624323540534531,
+                7.419111437825836,
+                0.0
+              ],
+              "max_distance_m": 22.24879126181576,
+              "min_distance_m": 7.606570617274248,
+              "source_edge": 48,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.698894661425546,
+              "finite_pair": [
+                3.245528432785371,
+                25.763993532876686,
+                41.3114104965609,
+                19.43351266131816
+              ],
+              "max_distance_m": 10.625588505229162,
+              "min_distance_m": 4.045528262480714,
+              "source_edge": 48,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            -3.6826247,
+            52.4765612
+          ],
+          "reference_length_m": 1496.7246151999927,
+          "source_length_m": 1496.7246151999927,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 13.324913068181345,
+              "finite_pair": [
+                0.0,
+                7.623320595016782,
+                7.4180912883456624,
+                8.881784197001252e-16
+              ],
+              "max_distance_m": 22.25291130332059,
+              "min_distance_m": 7.607905854464067,
+              "source_edge": 48,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.698779191282254,
+              "finite_pair": [
+                3.243725324059637,
+                25.766440557604508,
+                41.3176061337505,
+                19.4355683162956
+              ],
+              "max_distance_m": 10.625832195767934,
+              "min_distance_m": 4.045798120139826,
+              "source_edge": 48,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -3.896190400994655,
+            52.3857856778366
+          ],
+          "reference_length_m": 1496.6538231361396,
+          "source_length_m": 1496.6538231361396,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 13.32345359621652,
+              "finite_pair": [
+                0.0,
+                7.624329653471574,
+                7.419117939746039,
+                0.0
+              ],
+              "max_distance_m": 22.24881580461038,
+              "min_distance_m": 7.606570889444889,
+              "source_edge": 48,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.698876991774744,
+              "finite_pair": [
+                3.245540534304329,
+                25.764029551280164,
+                41.31146349224908,
+                19.43354077586403
+              ],
+              "max_distance_m": 10.625593239909568,
+              "min_distance_m": 4.045528682800739,
+              "source_edge": 48,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -3.896190400994655,
+            52.3857856778366
+          ],
+          "reference_length_m": 1497.7062938701986,
+          "source_length_m": 1497.7062938701986,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 13.335290675919897,
+              "finite_pair": [
+                0.0,
+                7.6138298704603535,
+                7.408538112436995,
+                0.0
+              ],
+              "max_distance_m": 22.29035629697113,
+              "min_distance_m": 7.62032826442688,
+              "source_edge": 48,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 13.696535137236028,
+              "finite_pair": [
+                3.2276419724314396,
+                25.788791953316696,
+                41.37355595656215,
+                19.45396745731435
+              ],
+              "max_distance_m": 10.6280684896671,
+              "min_distance_m": 4.048657045189656,
+              "source_edge": 48,
+              "target_index": 1
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": [
+        {
+          "angle_deg": 13.698894661425546,
+          "max_distance_m": 10.625588505229162,
+          "min_distance_m": 4.045528262480714,
+          "source_edge": 48,
+          "space": "local_aeqd",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.698779191282254,
+          "max_distance_m": 10.625832195767934,
+          "min_distance_m": 4.045798120139826,
+          "source_edge": 48,
+          "space": "local_eq",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.698876991774744,
+          "max_distance_m": 10.625593239909568,
+          "min_distance_m": 4.045528682800739,
+          "source_edge": 48,
+          "space": "route_aeqd",
+          "target_index": 1
+        },
+        {
+          "angle_deg": 13.696535137236028,
+          "max_distance_m": 10.6280684896671,
+          "min_distance_m": 4.048657045189656,
+          "source_edge": 48,
+          "space": "route_eq",
+          "target_index": 1
+        }
+      ]
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 58,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:81",
+            "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d"
+          },
+          "requested": "NCN:81",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+      "existing_binding_count": 58,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "44807950",
+      "name": "West Midlands NCN81 hairpin",
+      "origin_provenance": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            -2.1664558,
+            52.6290006
+          ],
+          "reference_length_m": 1003.9110483807672,
+          "source_length_m": 1003.9110483807672,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.5359265511439588,
+              "finite_pair": [
+                2.885827306128104,
+                49.58273858861534,
+                53.25610647001725,
+                6.561237961314973
+              ],
+              "max_distance_m": 2.948351002077107,
+              "min_distance_m": 0.6315335310592937,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 6.308382850530421,
+              "finite_pair": [
+                2.810104492222998,
+                49.58273858861534,
+                51.92354392170924,
+                5.4341232804412485
+              ],
+              "max_distance_m": 4.503983793505488,
+              "min_distance_m": 0.0,
+              "source_edge": 0,
+              "target_index": 1
+            }
+          ],
+          "topology": {
+            "active_finite_pairs": 2,
+            "overlap_source_m": 46.696911282487235,
+            "seam_partition_rejected": true
+          }
+        },
+        "local_eq": {
+          "origin": [
+            -2.1664558,
+            52.6290006
+          ],
+          "reference_length_m": 1003.8632557385416,
+          "source_length_m": 1003.8632557385416,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.5358878018597425,
+              "finite_pair": [
+                2.8858253944913237,
+                49.58272366357655,
+                53.25608612078503,
+                6.561230329529636
+              ],
+              "max_distance_m": 2.9483508412071067,
+              "min_distance_m": 0.6315398177197348,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 6.308347065985721,
+              "finite_pair": [
+                2.810102653199358,
+                49.58272366357655,
+                51.92353808187685,
+                5.434127237564752
+              ],
+              "max_distance_m": 4.5039470391902,
+              "min_distance_m": 0.0,
+              "source_edge": 0,
+              "target_index": 1
+            }
+          ],
+          "topology": {
+            "active_finite_pairs": 2,
+            "overlap_source_m": 46.696898269085224,
+            "seam_partition_rejected": true
+          }
+        },
+        "route_aeqd": {
+          "origin": [
+            -3.0333377811158853,
+            52.8451500423325
+          ],
+          "reference_length_m": 1003.9171423458525,
+          "source_length_m": 1003.9171423458525,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.535918420407575,
+              "finite_pair": [
+                2.8858763287880795,
+                49.583532253400136,
+                53.25696120745246,
+                6.561348027216617
+              ],
+              "max_distance_m": 2.9483990058980316,
+              "min_distance_m": 0.6315336842229959,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 6.308287969379912,
+              "finite_pair": [
+                2.810154644739074,
+                49.583532253400136,
+                51.92433830649827,
+                5.434170144210164
+              ],
+              "max_distance_m": 4.503988465480958,
+              "min_distance_m": 0.0,
+              "source_edge": 0,
+              "target_index": 1
+            }
+          ],
+          "topology": {
+            "active_finite_pairs": 2,
+            "overlap_source_m": 46.69765592461206,
+            "seam_partition_rejected": true
+          }
+        },
+        "route_eq": {
+          "origin": [
+            -3.0333377811158853,
+            52.8451500423325
+          ],
+          "reference_length_m": 1002.0299728665856,
+          "source_length_m": 1002.0299728665856,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 0.5335699824135627,
+              "finite_pair": [
+                2.8834142337607864,
+                49.567804449628284,
+                53.23886492903848,
+                6.556499018738101
+              ],
+              "max_distance_m": 2.945419610362653,
+              "min_distance_m": 0.6286050287008003,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 6.279514423674637,
+              "finite_pair": [
+                2.8083889879475388,
+                49.567804449628284,
+                51.91859113014447,
+                5.439726250319907
+              ],
+              "max_distance_m": 4.482095136651634,
+              "min_distance_m": 0.0,
+              "source_edge": 0,
+              "target_index": 1
+            }
+          ],
+          "topology": {
+            "active_finite_pairs": 2,
+            "overlap_source_m": 46.684390215867495,
+            "seam_partition_rejected": true
+          }
+        }
+      },
+      "threshold_adjacent_pairs": []
+    },
+    {
+      "actual_admitted_source_present": true,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "exact_match",
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "17883",
+                "network": "ncn",
+                "ref": "66"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 3,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:66",
+              "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c"
+            }
+          },
+          "requested": "NCN:66",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Source admitted in part; investigated historical target remains direction_gate. Local proxy cannot recreate route-wide original decision.",
+      "existing_binding_count": 3,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "159311690",
+      "name": "Bradford NCN66",
+      "origin_provenance": "operational route origin unavailable; local proxy only",
+      "projection_classification_changes": [],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            -1.7535763,
+            53.7920704
+          ],
+          "reference_length_m": 93.74842152132966,
+          "source_length_m": 93.74842152132966,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 16.651741995074506,
+              "finite_pair": null,
+              "max_distance_m": 9.351547314733805,
+              "min_distance_m": 6.558603983991217,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 16.620317964188118,
+              "finite_pair": null,
+              "max_distance_m": 6.558603983991217,
+              "min_distance_m": 0.0,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 28.711762517193968,
+              "finite_pair": null,
+              "max_distance_m": 5.193889408342478,
+              "min_distance_m": 2.0052274621958563,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 28.725593151780245,
+              "finite_pair": null,
+              "max_distance_m": 2.0933058430946256,
+              "min_distance_m": 0.0,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 9.731396645331778,
+              "finite_pair": null,
+              "max_distance_m": 4.5363353175326155,
+              "min_distance_m": 2.0933058430946256,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.8944357362210775,
+              "finite_pair": null,
+              "max_distance_m": 12.807320647980099,
+              "min_distance_m": 4.5363353175326155,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 32.29441472656054,
+              "finite_pair": null,
+              "max_distance_m": 30.25997020585652,
+              "min_distance_m": 12.807320647980099,
+              "source_edge": 6,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            -1.7535763,
+            53.7920704
+          ],
+          "reference_length_m": 93.74872540919482,
+          "source_length_m": 93.74872540919482,
+          "source_reference_hausdorff_m": 0.0,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 16.65141839393472,
+              "finite_pair": null,
+              "max_distance_m": 9.35154757389833,
+              "min_distance_m": 6.558617319468343,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 16.620294735623112,
+              "finite_pair": null,
+              "max_distance_m": 6.558617319468343,
+              "min_distance_m": 0.0,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 28.711787525105603,
+              "finite_pair": null,
+              "max_distance_m": 5.193882111378579,
+              "min_distance_m": 2.0052174512192917,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 28.725633003222637,
+              "finite_pair": null,
+              "max_distance_m": 2.093318585786327,
+              "min_distance_m": 0.0,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 9.731710309518075,
+              "finite_pair": null,
+              "max_distance_m": 4.536335986656362,
+              "min_distance_m": 2.093318585786327,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.894782757990521,
+              "finite_pair": null,
+              "max_distance_m": 12.807339524097202,
+              "min_distance_m": 4.536335986656362,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 32.294966782035374,
+              "finite_pair": null,
+              "max_distance_m": 30.260147401442662,
+              "min_distance_m": 12.807339524097202,
+              "source_edge": 6,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": [
+        {
+          "angle_deg": 16.651741995074506,
+          "max_distance_m": 9.351547314733805,
+          "min_distance_m": 6.558603983991217,
+          "source_edge": 0,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 16.65141839393472,
+          "max_distance_m": 9.35154757389833,
+          "min_distance_m": 6.558617319468343,
+          "source_edge": 0,
+          "space": "local_eq",
+          "target_index": 0
+        }
+      ]
+    },
+    {
+      "actual_admitted_source_present": false,
+      "compatibility": {
+        "attribution_eligibility": "not_assessed_no_entitlement",
+        "classification": "incompatible_or_unsupported_correspondence",
+        "mode_access": {
+          "reference": "incompatible",
+          "requested": "cycling",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        }
+      },
+      "eligibility_note": "Distinct private identity; no confirmed NCN membership; no geometric identity transfer.",
+      "existing_binding_count": null,
+      "history_status": "unavailable",
+      "hypothetical_only": true,
+      "key": "deal-private-parallel",
+      "name": "Deal private parallel negative",
+      "origin_provenance": "exact PR246 fixture",
+      "projection_classification_changes": [
+        {
+          "aeqd_angle_deg": 1.3173107126424848,
+          "aeqd_pair_present": false,
+          "eq_angle_deg": 1.2214552033556676,
+          "eq_pair_present": true,
+          "scope": "route",
+          "source_edge": 3,
+          "target_index": 0
+        }
+      ],
+      "spaces": {
+        "local_aeqd": {
+          "origin": [
+            1.4035412,
+            51.1968459
+          ],
+          "reference_length_m": 841.0848558583931,
+          "source_length_m": 841.9579529174812,
+          "source_reference_hausdorff_m": 4.554239616676268,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.768521781496218,
+              "finite_pair": null,
+              "max_distance_m": 223.93145487412883,
+              "min_distance_m": 100.21185496130566,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.027640375466528,
+              "finite_pair": null,
+              "max_distance_m": 100.21185496130566,
+              "min_distance_m": 61.11955935547067,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.067490482568809,
+              "finite_pair": null,
+              "max_distance_m": 61.11955935547067,
+              "min_distance_m": 10.626225877259202,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.316678904852519,
+              "finite_pair": null,
+              "max_distance_m": 11.680295155750539,
+              "min_distance_m": 10.54686211506914,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.8192022067141496,
+              "finite_pair": null,
+              "max_distance_m": 12.85431218261925,
+              "min_distance_m": 11.680295155750539,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.5263315233518192,
+              "finite_pair": null,
+              "max_distance_m": 13.59467544369673,
+              "min_distance_m": 12.85431218261925,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.28436128868878774,
+              "finite_pair": null,
+              "max_distance_m": 13.59467544369673,
+              "min_distance_m": 12.808171712420863,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.3687374813285259,
+              "finite_pair": null,
+              "max_distance_m": 13.397477115986252,
+              "min_distance_m": 12.808171712420863,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.9176126593693572,
+              "finite_pair": null,
+              "max_distance_m": 121.44659298625874,
+              "min_distance_m": 12.855678403446563,
+              "source_edge": 8,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "local_eq": {
+          "origin": [
+            1.4035412,
+            51.1968459
+          ],
+          "reference_length_m": 841.0843199879823,
+          "source_length_m": 841.9571544068956,
+          "source_reference_hausdorff_m": 4.554073756893225,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.767658541304294,
+              "finite_pair": null,
+              "max_distance_m": 223.93143245458256,
+              "min_distance_m": 100.21178222373462,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.026872125352618,
+              "finite_pair": null,
+              "max_distance_m": 100.21178222373462,
+              "min_distance_m": 61.11946109640511,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.066734494072224,
+              "finite_pair": null,
+              "max_distance_m": 61.11946109640511,
+              "min_distance_m": 10.625765039750544,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.3160575165926753,
+              "finite_pair": null,
+              "max_distance_m": 11.679305257165922,
+              "min_distance_m": 10.546404567117749,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.8187104853127134,
+              "finite_pair": null,
+              "max_distance_m": 12.852617250906935,
+              "min_distance_m": 11.679305257165922,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.5259970100011302,
+              "finite_pair": null,
+              "max_distance_m": 13.592509633852606,
+              "min_distance_m": 12.852617250906935,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.2843948898788205,
+              "finite_pair": null,
+              "max_distance_m": 13.592509633852606,
+              "min_distance_m": 12.805913639277772,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.36887471720641407,
+              "finite_pair": null,
+              "max_distance_m": 13.395437885063965,
+              "min_distance_m": 12.805913639277772,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.917046309358448,
+              "finite_pair": null,
+              "max_distance_m": 121.44659285785956,
+              "min_distance_m": 12.853979122680256,
+              "source_edge": 8,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "route_aeqd": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 841.164864614083,
+          "source_length_m": 842.0397681124243,
+          "source_reference_hausdorff_m": 4.556847928119533,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.770714345829812,
+              "finite_pair": null,
+              "max_distance_m": 223.95278770287027,
+              "min_distance_m": 100.21797417279379,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.0286011609656804,
+              "finite_pair": null,
+              "max_distance_m": 100.21797417279379,
+              "min_distance_m": 61.12196693702696,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 3.068947009870476,
+              "finite_pair": null,
+              "max_distance_m": 61.12196693702696,
+              "min_distance_m": 10.631779586804601,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.3173107126424848,
+              "finite_pair": null,
+              "max_distance_m": 11.687259187684674,
+              "min_distance_m": 10.553059470846744,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.8195972716716895,
+              "finite_pair": null,
+              "max_distance_m": 12.86195131957129,
+              "min_distance_m": 11.687259187684674,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.5265910998672194,
+              "finite_pair": null,
+              "max_distance_m": 13.602746655913817,
+              "min_distance_m": 12.86195131957129,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.2844995286501195,
+              "finite_pair": null,
+              "max_distance_m": 13.602746655913817,
+              "min_distance_m": 12.815794534094536,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.3689510173223122,
+              "finite_pair": null,
+              "max_distance_m": 13.405493748153587,
+              "min_distance_m": 12.815794534094536,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.9180487775707065,
+              "finite_pair": null,
+              "max_distance_m": 121.46251115569216,
+              "min_distance_m": 12.863486644431703,
+              "source_edge": 8,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        },
+        "route_eq": {
+          "origin": [
+            -1.3437774293553804,
+            54.4699892643778
+          ],
+          "reference_length_m": 840.7402256665177,
+          "source_length_m": 841.4926548476631,
+          "source_reference_hausdorff_m": 4.223621326526899,
+          "source_reference_min_distance_m": 0.0,
+          "target_edge_pairs": [
+            {
+              "angle_deg": 4.423007260671389,
+              "finite_pair": null,
+              "max_distance_m": 223.85933360457753,
+              "min_distance_m": 100.06148083517466,
+              "source_edge": 0,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.8809527677798172,
+              "finite_pair": null,
+              "max_distance_m": 100.06148083517466,
+              "min_distance_m": 60.93693835837309,
+              "source_edge": 1,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 2.8455360268164656,
+              "finite_pair": null,
+              "max_distance_m": 60.93693835837309,
+              "min_distance_m": 9.856627424140301,
+              "source_edge": 2,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 1.2214552033556676,
+              "finite_pair": [
+                1.4095379622310933,
+                11.476006994157004,
+                0.0,
+                10.064181640224568
+              ],
+              "max_distance_m": 10.836744954909825,
+              "min_distance_m": 9.78319156257058,
+              "source_edge": 3,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.7599280686527843,
+              "finite_pair": null,
+              "max_distance_m": 11.925412692271408,
+              "min_distance_m": 10.836744954909825,
+              "source_edge": 4,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.4882587644756894,
+              "finite_pair": null,
+              "max_distance_m": 12.61192827446079,
+              "min_distance_m": 11.925412692271408,
+              "source_edge": 5,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.2640354477508298,
+              "finite_pair": null,
+              "max_distance_m": 12.61192827446079,
+              "min_distance_m": 11.882078340089421,
+              "source_edge": 6,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.34242015510250684,
+              "finite_pair": null,
+              "max_distance_m": 12.429073538434535,
+              "min_distance_m": 11.882078340089421,
+              "source_edge": 7,
+              "target_index": 0
+            },
+            {
+              "angle_deg": 0.8515198934926879,
+              "finite_pair": null,
+              "max_distance_m": 121.44653461542144,
+              "min_distance_m": 11.929214282405425,
+              "source_edge": 8,
+              "target_index": 0
+            }
+          ],
+          "topology": null
+        }
+      },
+      "threshold_adjacent_pairs": [
+        {
+          "angle_deg": 3.067490482568809,
+          "max_distance_m": 61.11955935547067,
+          "min_distance_m": 10.626225877259202,
+          "source_edge": 2,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.316678904852519,
+          "max_distance_m": 11.680295155750539,
+          "min_distance_m": 10.54686211506914,
+          "source_edge": 3,
+          "space": "local_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 3.066734494072224,
+          "max_distance_m": 61.11946109640511,
+          "min_distance_m": 10.625765039750544,
+          "source_edge": 2,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.3160575165926753,
+          "max_distance_m": 11.679305257165922,
+          "min_distance_m": 10.546404567117749,
+          "source_edge": 3,
+          "space": "local_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 3.068947009870476,
+          "max_distance_m": 61.12196693702696,
+          "min_distance_m": 10.631779586804601,
+          "source_edge": 2,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.3173107126424848,
+          "max_distance_m": 11.687259187684674,
+          "min_distance_m": 10.553059470846744,
+          "source_edge": 3,
+          "space": "route_aeqd",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 2.8455360268164656,
+          "max_distance_m": 60.93693835837309,
+          "min_distance_m": 9.856627424140301,
+          "source_edge": 2,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 1.2214552033556676,
+          "max_distance_m": 10.836744954909825,
+          "min_distance_m": 9.78319156257058,
+          "source_edge": 3,
+          "space": "route_eq",
+          "target_index": 0
+        },
+        {
+          "angle_deg": 0.7599280686527843,
+          "max_distance_m": 11.925412692271408,
+          "min_distance_m": 10.836744954909825,
+          "source_edge": 4,
+          "space": "route_eq",
+          "target_index": 0
+        }
+      ]
+    }
+  ],
+  "deal": {
+    "actual_held_edges": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "common_parameter_sampling": [
+      {
+        "aeqd_samples_over_10m": 19,
+        "edge": 6,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7597935492229748,
+        "same_parameter_sample_count": 83
+      },
+      {
+        "aeqd_samples_over_10m": 84,
+        "edge": 7,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7726476482326969,
+        "same_parameter_sample_count": 84
+      },
+      {
+        "aeqd_samples_over_10m": 159,
+        "edge": 8,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7726476482326969,
+        "same_parameter_sample_count": 159
+      },
+      {
+        "aeqd_samples_over_10m": 91,
+        "edge": 9,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7666280617359842,
+        "same_parameter_sample_count": 91
+      },
+      {
+        "aeqd_samples_over_10m": 144,
+        "edge": 10,
+        "eq_samples_over_10m": 112,
+        "maximum_sample_distance_difference_m": 0.7558185807465971,
+        "same_parameter_sample_count": 152
+      }
+    ],
+    "differences": [
+      {
+        "edge": 0,
+        "eq_minus_aeqd_angle_deg": -0.32057928149031767,
+        "eq_minus_aeqd_max_distance_m": -0.07174668413949803,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 1,
+        "eq_minus_aeqd_angle_deg": -0.10776860507214803,
+        "eq_minus_aeqd_max_distance_m": -0.09562444036006923,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 2,
+        "eq_minus_aeqd_angle_deg": -0.14589952692196362,
+        "eq_minus_aeqd_max_distance_m": -0.07907120910618914,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 3,
+        "eq_minus_aeqd_angle_deg": -0.21464513786397754,
+        "eq_minus_aeqd_max_distance_m": -0.07990794184114947,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 4,
+        "eq_minus_aeqd_angle_deg": -0.4016360786855939,
+        "eq_minus_aeqd_max_distance_m": -0.11411130089772925,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 5,
+        "eq_minus_aeqd_angle_deg": -0.12408273509358159,
+        "eq_minus_aeqd_max_distance_m": -0.6219062349546496,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 6,
+        "eq_minus_aeqd_angle_deg": -0.09649415166227593,
+        "eq_minus_aeqd_max_distance_m": -0.7597935492229748,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 7,
+        "eq_minus_aeqd_angle_deg": -0.008819109093895813,
+        "eq_minus_aeqd_max_distance_m": -0.7726476482326969,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 8,
+        "eq_minus_aeqd_angle_deg": -0.0021700761726363843,
+        "eq_minus_aeqd_max_distance_m": -0.7726476482326969,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 9,
+        "eq_minus_aeqd_angle_deg": -0.006901520452001916,
+        "eq_minus_aeqd_max_distance_m": -0.7666280617359842,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 10,
+        "eq_minus_aeqd_angle_deg": -0.055156199219359325,
+        "eq_minus_aeqd_max_distance_m": -0.015992499244617875,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 11,
+        "eq_minus_aeqd_angle_deg": -0.31110744919684086,
+        "eq_minus_aeqd_max_distance_m": -0.01650335396240621,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 12,
+        "eq_minus_aeqd_angle_deg": -2.4597093199261124,
+        "eq_minus_aeqd_max_distance_m": -0.015976540270713713,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      }
+    ],
+    "hypothetical_eq_corridor_pass_does_not_override_identity_review": true,
+    "limits": "Approved nearby feature set only. No complete excluded-feature set, identity review rewrite, admission replay or new entitlement.",
+    "new_credit_m": 0,
+    "origin": [
+      -1.3437774293553804,
+      54.4699892643778
+    ],
+    "private_eligible": false,
+    "spaces": {
+      "aeqd": {
+        "edges": [
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.399750369023305,
+            "edge": 0,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 223.6120202179924,
+            "finite_target_min_distance_m": 99.87165781203461,
+            "length_m": 124.02718723968547,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.5086409649319432,
+            "edge": 1,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 99.87165781203461,
+            "finite_target_min_distance_m": 82.92597758550404,
+            "length_m": 16.945696968888008,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.0053155021995948,
+            "edge": 2,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 82.92597758550404,
+            "finite_target_min_distance_m": 61.7073818542027,
+            "length_m": 21.2696879972423,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.9493002518203135,
+            "edge": 3,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 61.7073818542027,
+            "finite_target_min_distance_m": 30.809986263060374,
+            "length_m": 31.19162314000777,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 5.509727814288317,
+            "edge": 4,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 30.809986263060374,
+            "finite_target_min_distance_m": 8.089638292222448,
+            "length_m": 26.468982045501846,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.7063143746411604,
+            "edge": 5,
+            "finite_pair": [
+              4.148678020783312,
+              53.69063276960545,
+              0.0,
+              49.519987084755286
+            ],
+            "finite_target_max_distance_m": 8.54464639614256,
+            "finite_target_min_distance_m": 7.066330524859012,
+            "length_m": 53.69063276960544,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 1.3276555970163515,
+            "edge": 6,
+            "finite_pair": [
+              0.0,
+              62.81228507706751,
+              49.519987084755286,
+              112.31540970846677
+            ],
+            "finite_target_max_distance_m": 10.432832116552019,
+            "finite_target_min_distance_m": 8.54464639614256,
+            "length_m": 81.49308830132584,
+            "outside_approved_union_10m_m": 18.68080322376776,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.1188523826297447,
+            "edge": 7,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.604783506462384,
+            "finite_target_min_distance_m": 10.432832116552019,
+            "length_m": 82.89355056142496,
+            "outside_approved_union_10m_m": 82.89355056142496,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.030534611216008714,
+            "edge": 8,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.604783506462384,
+            "finite_target_min_distance_m": 10.520771713925557,
+            "length_m": 157.64148220749746,
+            "outside_approved_union_10m_m": 157.64148220749746,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.09316220060552897,
+            "edge": 9,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.520771713925557,
+            "finite_target_min_distance_m": 10.376014565674833,
+            "length_m": 89.02727983817353,
+            "outside_approved_union_10m_m": 89.02727983817353,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.7595803035040958,
+            "edge": 10,
+            "finite_pair": [
+              28.363924963720148,
+              35.14562539181701,
+              488.9146245942887,
+              495.6957290798703
+            ],
+            "finite_target_max_distance_m": 116.04740190825437,
+            "finite_target_min_distance_m": 9.909225578442452,
+            "length_m": 150.90055760387952,
+            "outside_approved_union_10m_m": 28.36392496241386,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.278054821402536,
+            "edge": 11,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 119.86216286716568,
+            "finite_target_min_distance_m": 116.04740190825437,
+            "length_m": 3.814771861081883,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 57.912137590200416,
+            "edge": 12,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 121.46251115569216,
+            "finite_target_min_distance_m": 119.86216286716568,
+            "length_m": 2.6752275781102437,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          }
+        ],
+        "private_min_distance_m": 10.553059470846744,
+        "vertices_finite_target_distance_m": [
+          223.6120202179924,
+          99.87165781203461,
+          82.92597758550404,
+          61.7073818542027,
+          30.809986263060374,
+          8.089638292222448,
+          8.54464639614256,
+          10.432832116552019,
+          10.604783506462384,
+          10.520771713925557,
+          10.376014565674833,
+          116.04740190825437,
+          119.86216286716568,
+          121.46251115569216
+        ]
+      },
+      "eq": {
+        "edges": [
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.079171087532988,
+            "edge": 0,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 223.5402735338529,
+            "finite_target_min_distance_m": 99.77603337167454,
+            "length_m": 124.01083125573051,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.4008723598597952,
+            "edge": 1,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 99.77603337167454,
+            "finite_target_min_distance_m": 82.84690637639785,
+            "length_m": 16.929141453491205,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.8594159752776311,
+            "edge": 2,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 82.84690637639785,
+            "finite_target_min_distance_m": 61.62747391236155,
+            "length_m": 21.263411057620228,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.734655113956336,
+            "edge": 3,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 61.62747391236155,
+            "finite_target_min_distance_m": 30.695874962162645,
+            "length_m": 31.18533935601251,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 5.108091735602723,
+            "edge": 4,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 30.695874962162645,
+            "finite_target_min_distance_m": 7.615057598024208,
+            "length_m": 26.465288197676074,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.5822316395475788,
+            "edge": 5,
+            "finite_pair": [
+              4.0642926355040006,
+              53.672766452211114,
+              0.0,
+              49.5895593920258
+            ],
+            "finite_target_max_distance_m": 7.922740161187911,
+            "finite_target_min_distance_m": 6.550470269745374,
+            "length_m": 53.67276645221111,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 1.2311614453540756,
+            "edge": 6,
+            "finite_pair": [
+              0.0,
+              81.4616390930493,
+              49.589559392025805,
+              131.03239271218774
+            ],
+            "finite_target_max_distance_m": 9.673038567329044,
+            "finite_target_min_distance_m": 7.922740161187911,
+            "length_m": 81.4616390930493,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.11003327353584888,
+            "edge": 7,
+            "finite_pair": [
+              0.0,
+              82.84411260985993,
+              131.03239271218771,
+              213.87635255336855
+            ],
+            "finite_target_max_distance_m": 9.832135858229687,
+            "finite_target_min_distance_m": 9.673038567329044,
+            "length_m": 82.84411260985993,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.02836453504337233,
+            "edge": 8,
+            "finite_pair": [
+              0.0,
+              157.5426644212676,
+              213.87635255336858,
+              371.41899766943845
+            ],
+            "finite_target_max_distance_m": 9.832135858229687,
+            "finite_target_min_distance_m": 9.754143652189573,
+            "length_m": 157.54266442126757,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.08626068015352706,
+            "edge": 9,
+            "finite_pair": [
+              0.0,
+              88.97030368395411,
+              371.4189976694384,
+              460.3892005220646
+            ],
+            "finite_target_max_distance_m": 9.754143652189573,
+            "finite_target_min_distance_m": 9.620195984928236,
+            "length_m": 88.97030368395411,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.7044241042847365,
+            "edge": 10,
+            "finite_pair": [
+              0.0,
+              35.00158808292383,
+              460.3892005220646,
+              495.388143301922
+            ],
+            "finite_target_max_distance_m": 116.03140940900975,
+            "finite_target_min_distance_m": 9.189184562566632,
+            "length_m": 150.78153566607605,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 3.9669473722056954,
+            "edge": 11,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 119.84565951320327,
+            "finite_target_min_distance_m": 116.03140940900975,
+            "length_m": 3.8142594694501626,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 55.452428270274304,
+            "edge": 12,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 121.44653461542144,
+            "finite_target_min_distance_m": 119.84565951320327,
+            "length_m": 2.5513621312644426,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          }
+        ],
+        "private_min_distance_m": 9.78319156257058,
+        "vertices_finite_target_distance_m": [
+          223.5402735338529,
+          99.77603337167454,
+          82.84690637639785,
+          61.62747391236155,
+          30.695874962162645,
+          7.615057598024208,
+          7.922740161187911,
+          9.673038567329044,
+          9.832135858229687,
+          9.754143652189573,
+          9.620195984928236,
+          116.03140940900975,
+          119.84565951320327,
+          121.44653461542144
+        ]
+      }
+    }
+  },
+  "input_sha256": {
+    "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+    "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e"
+  },
+  "new_completion_credit_m": 0,
+  "no_operational_changes": true,
+  "schema_version": 1,
+  "validation": {
+    "edge_pair_orientation_and_midpoint_partition_checks": 158,
+    "note": "Geometric finite-pair invariants only; new segmentation can still change multi-target ambiguity policy."
+  }
+}

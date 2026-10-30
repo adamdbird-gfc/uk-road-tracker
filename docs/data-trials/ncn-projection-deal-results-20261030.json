@@ -1,0 +1,535 @@
+{
+  "baseline": "0f8199651dad6014410274dc1b968e2417efe1b2",
+  "cross_route": [],
+  "deal": {
+    "actual_held_edges": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "common_parameter_sampling": [
+      {
+        "aeqd_samples_over_10m": 19,
+        "edge": 6,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7597935492229748,
+        "same_parameter_sample_count": 83
+      },
+      {
+        "aeqd_samples_over_10m": 84,
+        "edge": 7,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7726476482326969,
+        "same_parameter_sample_count": 84
+      },
+      {
+        "aeqd_samples_over_10m": 159,
+        "edge": 8,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7726476482326969,
+        "same_parameter_sample_count": 159
+      },
+      {
+        "aeqd_samples_over_10m": 91,
+        "edge": 9,
+        "eq_samples_over_10m": 0,
+        "maximum_sample_distance_difference_m": 0.7666280617359842,
+        "same_parameter_sample_count": 91
+      },
+      {
+        "aeqd_samples_over_10m": 144,
+        "edge": 10,
+        "eq_samples_over_10m": 112,
+        "maximum_sample_distance_difference_m": 0.7558185807465971,
+        "same_parameter_sample_count": 152
+      }
+    ],
+    "differences": [
+      {
+        "edge": 0,
+        "eq_minus_aeqd_angle_deg": -0.32057928149031767,
+        "eq_minus_aeqd_max_distance_m": -0.07174668413949803,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 1,
+        "eq_minus_aeqd_angle_deg": -0.10776860507214803,
+        "eq_minus_aeqd_max_distance_m": -0.09562444036006923,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 2,
+        "eq_minus_aeqd_angle_deg": -0.14589952692196362,
+        "eq_minus_aeqd_max_distance_m": -0.07907120910618914,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 3,
+        "eq_minus_aeqd_angle_deg": -0.21464513786397754,
+        "eq_minus_aeqd_max_distance_m": -0.07990794184114947,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 4,
+        "eq_minus_aeqd_angle_deg": -0.4016360786855939,
+        "eq_minus_aeqd_max_distance_m": -0.11411130089772925,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 5,
+        "eq_minus_aeqd_angle_deg": -0.12408273509358159,
+        "eq_minus_aeqd_max_distance_m": -0.6219062349546496,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 6,
+        "eq_minus_aeqd_angle_deg": -0.09649415166227593,
+        "eq_minus_aeqd_max_distance_m": -0.7597935492229748,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 7,
+        "eq_minus_aeqd_angle_deg": -0.008819109093895813,
+        "eq_minus_aeqd_max_distance_m": -0.7726476482326969,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 8,
+        "eq_minus_aeqd_angle_deg": -0.0021700761726363843,
+        "eq_minus_aeqd_max_distance_m": -0.7726476482326969,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 9,
+        "eq_minus_aeqd_angle_deg": -0.006901520452001916,
+        "eq_minus_aeqd_max_distance_m": -0.7666280617359842,
+        "finite_pair_presence_changed": true,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 10,
+        "eq_minus_aeqd_angle_deg": -0.055156199219359325,
+        "eq_minus_aeqd_max_distance_m": -0.015992499244617875,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": true
+      },
+      {
+        "edge": 11,
+        "eq_minus_aeqd_angle_deg": -0.31110744919684086,
+        "eq_minus_aeqd_max_distance_m": -0.01650335396240621,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      },
+      {
+        "edge": 12,
+        "eq_minus_aeqd_angle_deg": -2.4597093199261124,
+        "eq_minus_aeqd_max_distance_m": -0.015976540270713713,
+        "finite_pair_presence_changed": false,
+        "whole_edge_corridor_classification_changed": false
+      }
+    ],
+    "hypothetical_eq_corridor_pass_does_not_override_identity_review": true,
+    "limits": "Approved nearby feature set only. No complete excluded-feature set, identity review rewrite, admission replay or new entitlement.",
+    "new_credit_m": 0,
+    "origin": [
+      -1.3437774293553804,
+      54.4699892643778
+    ],
+    "private_eligible": false,
+    "spaces": {
+      "aeqd": {
+        "edges": [
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.399750369023305,
+            "edge": 0,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 223.6120202179924,
+            "finite_target_min_distance_m": 99.87165781203461,
+            "length_m": 124.02718723968547,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.5086409649319432,
+            "edge": 1,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 99.87165781203461,
+            "finite_target_min_distance_m": 82.92597758550404,
+            "length_m": 16.945696968888008,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.0053155021995948,
+            "edge": 2,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 82.92597758550404,
+            "finite_target_min_distance_m": 61.7073818542027,
+            "length_m": 21.2696879972423,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.9493002518203135,
+            "edge": 3,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 61.7073818542027,
+            "finite_target_min_distance_m": 30.809986263060374,
+            "length_m": 31.19162314000777,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 5.509727814288317,
+            "edge": 4,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 30.809986263060374,
+            "finite_target_min_distance_m": 8.089638292222448,
+            "length_m": 26.468982045501846,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.7063143746411604,
+            "edge": 5,
+            "finite_pair": [
+              4.148678020783312,
+              53.69063276960545,
+              0.0,
+              49.519987084755286
+            ],
+            "finite_target_max_distance_m": 8.54464639614256,
+            "finite_target_min_distance_m": 7.066330524859012,
+            "length_m": 53.69063276960544,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 1.3276555970163515,
+            "edge": 6,
+            "finite_pair": [
+              0.0,
+              62.81228507706751,
+              49.519987084755286,
+              112.31540970846677
+            ],
+            "finite_target_max_distance_m": 10.432832116552019,
+            "finite_target_min_distance_m": 8.54464639614256,
+            "length_m": 81.49308830132584,
+            "outside_approved_union_10m_m": 18.68080322376776,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.1188523826297447,
+            "edge": 7,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.604783506462384,
+            "finite_target_min_distance_m": 10.432832116552019,
+            "length_m": 82.89355056142496,
+            "outside_approved_union_10m_m": 82.89355056142496,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.030534611216008714,
+            "edge": 8,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.604783506462384,
+            "finite_target_min_distance_m": 10.520771713925557,
+            "length_m": 157.64148220749746,
+            "outside_approved_union_10m_m": 157.64148220749746,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.09316220060552897,
+            "edge": 9,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 10.520771713925557,
+            "finite_target_min_distance_m": 10.376014565674833,
+            "length_m": 89.02727983817353,
+            "outside_approved_union_10m_m": 89.02727983817353,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.7595803035040958,
+            "edge": 10,
+            "finite_pair": [
+              28.363924963720148,
+              35.14562539181701,
+              488.9146245942887,
+              495.6957290798703
+            ],
+            "finite_target_max_distance_m": 116.04740190825437,
+            "finite_target_min_distance_m": 9.909225578442452,
+            "length_m": 150.90055760387952,
+            "outside_approved_union_10m_m": 28.36392496241386,
+            "whole_edge_approved_corridor_only": false
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.278054821402536,
+            "edge": 11,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 119.86216286716568,
+            "finite_target_min_distance_m": 116.04740190825437,
+            "length_m": 3.814771861081883,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 57.912137590200416,
+            "edge": 12,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 121.46251115569216,
+            "finite_target_min_distance_m": 119.86216286716568,
+            "length_m": 2.6752275781102437,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          }
+        ],
+        "private_min_distance_m": 10.553059470846744,
+        "vertices_finite_target_distance_m": [
+          223.6120202179924,
+          99.87165781203461,
+          82.92597758550404,
+          61.7073818542027,
+          30.809986263060374,
+          8.089638292222448,
+          8.54464639614256,
+          10.432832116552019,
+          10.604783506462384,
+          10.520771713925557,
+          10.376014565674833,
+          116.04740190825437,
+          119.86216286716568,
+          121.46251115569216
+        ]
+      },
+      "eq": {
+        "edges": [
+          {
+            "actual_admitted": true,
+            "angle_deg": 4.079171087532988,
+            "edge": 0,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 223.5402735338529,
+            "finite_target_min_distance_m": 99.77603337167454,
+            "length_m": 124.01083125573051,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.4008723598597952,
+            "edge": 1,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 99.77603337167454,
+            "finite_target_min_distance_m": 82.84690637639785,
+            "length_m": 16.929141453491205,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.8594159752776311,
+            "edge": 2,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 82.84690637639785,
+            "finite_target_min_distance_m": 61.62747391236155,
+            "length_m": 21.263411057620228,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 2.734655113956336,
+            "edge": 3,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 61.62747391236155,
+            "finite_target_min_distance_m": 30.695874962162645,
+            "length_m": 31.18533935601251,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 5.108091735602723,
+            "edge": 4,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 30.695874962162645,
+            "finite_target_min_distance_m": 7.615057598024208,
+            "length_m": 26.465288197676074,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 1.5822316395475788,
+            "edge": 5,
+            "finite_pair": [
+              4.0642926355040006,
+              53.672766452211114,
+              0.0,
+              49.5895593920258
+            ],
+            "finite_target_max_distance_m": 7.922740161187911,
+            "finite_target_min_distance_m": 6.550470269745374,
+            "length_m": 53.67276645221111,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 1.2311614453540756,
+            "edge": 6,
+            "finite_pair": [
+              0.0,
+              81.4616390930493,
+              49.589559392025805,
+              131.03239271218774
+            ],
+            "finite_target_max_distance_m": 9.673038567329044,
+            "finite_target_min_distance_m": 7.922740161187911,
+            "length_m": 81.4616390930493,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.11003327353584888,
+            "edge": 7,
+            "finite_pair": [
+              0.0,
+              82.84411260985993,
+              131.03239271218771,
+              213.87635255336855
+            ],
+            "finite_target_max_distance_m": 9.832135858229687,
+            "finite_target_min_distance_m": 9.673038567329044,
+            "length_m": 82.84411260985993,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.02836453504337233,
+            "edge": 8,
+            "finite_pair": [
+              0.0,
+              157.5426644212676,
+              213.87635255336858,
+              371.41899766943845
+            ],
+            "finite_target_max_distance_m": 9.832135858229687,
+            "finite_target_min_distance_m": 9.754143652189573,
+            "length_m": 157.54266442126757,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.08626068015352706,
+            "edge": 9,
+            "finite_pair": [
+              0.0,
+              88.97030368395411,
+              371.4189976694384,
+              460.3892005220646
+            ],
+            "finite_target_max_distance_m": 9.754143652189573,
+            "finite_target_min_distance_m": 9.620195984928236,
+            "length_m": 88.97030368395411,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": false,
+            "angle_deg": 0.7044241042847365,
+            "edge": 10,
+            "finite_pair": [
+              0.0,
+              35.00158808292383,
+              460.3892005220646,
+              495.388143301922
+            ],
+            "finite_target_max_distance_m": 116.03140940900975,
+            "finite_target_min_distance_m": 9.189184562566632,
+            "length_m": 150.78153566607605,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 3.9669473722056954,
+            "edge": 11,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 119.84565951320327,
+            "finite_target_min_distance_m": 116.03140940900975,
+            "length_m": 3.8142594694501626,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          },
+          {
+            "actual_admitted": true,
+            "angle_deg": 55.452428270274304,
+            "edge": 12,
+            "finite_pair": null,
+            "finite_target_max_distance_m": 121.44653461542144,
+            "finite_target_min_distance_m": 119.84565951320327,
+            "length_m": 2.5513621312644426,
+            "outside_approved_union_10m_m": 0.0,
+            "whole_edge_approved_corridor_only": true
+          }
+        ],
+        "private_min_distance_m": 9.78319156257058,
+        "vertices_finite_target_distance_m": [
+          223.5402735338529,
+          99.77603337167454,
+          82.84690637639785,
+          61.62747391236155,
+          30.695874962162645,
+          7.615057598024208,
+          7.922740161187911,
+          9.673038567329044,
+          9.832135858229687,
+          9.754143652189573,
+          9.620195984928236,
+          116.03140940900975,
+          119.84565951320327,
+          121.44653461542144
+        ]
+      }
+    }
+  },
+  "input_sha256": {
+    "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+    "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e"
+  },
+  "new_completion_credit_m": 0,
+  "no_operational_changes": true,
+  "schema_version": 1
+}
