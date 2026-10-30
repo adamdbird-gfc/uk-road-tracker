@@ -1,0 +1,2493 @@
+{
+  "schema_version": 1,
+  "method": "subtract validated inserted coverage; historical cause regions, not rerun current causes",
+  "input_sha256": {
+    "database": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+    "classified_intervals": "1ebb14d7489e5add77dac77dcb25c5beda2ce53c7c3994eccc22696944955dcb",
+    "delta_index": "daddc890ba1763739f44c923d7944560ecf7f6d659a53c434752aa2ff5df2e4b",
+    "delta_compressed": "f98df308ccf4120939e705e498f6cfdbbb36373298060f29a230a88929e6957d",
+    "validation": "6e6f80eba3fea64a9797e4e76b5273f44fe7fccada33cb41e95d7ea10a74f7ee"
+  },
+  "candidate_content_sha256": "cf25e006e79782c9458895bf4b68179b7829fe3b6e7d5ded96be0ccd07929dc0",
+  "numerical_assertion_tolerance_m": 0.0001,
+  "counts": {
+    "historical_intervals": 442910,
+    "remaining_subintervals": 279501,
+    "delta_rows": 25577,
+    "added_bindings": 159711,
+    "measurable_routes": 218
+  },
+  "network": {
+    "target_m": 17435132.494005967,
+    "historical_gap_m": 1335158.8679444368,
+    "remaining_gap_m": 1289324.4061127824,
+    "recovered_m": 45834.46183165442,
+    "historical_cause_sets_m": {
+      "unclassified_numerical_projection_residual": 0.0054038506515756545,
+      "ambiguous_target_correspondence": 109425.06694252492,
+      "direction_gate": 426477.45380055136,
+      "finite_endpoint_or_alignment": 69766.90816677842,
+      "no_admitted_source_correspondence": 618865.7666746903,
+      "unadmitted_span_of_known_way": 101320.08351992935,
+      "deferred_binding_withheld": 9303.583383647636,
+      "direction_gate + finite_endpoint_or_alignment": 5.434559902482667e-14,
+      "ambiguous_target_correspondence + direction_gate": 2.7758102802562877e-05,
+      "ambiguous_target_correspondence + finite_endpoint_or_alignment": 2.4692650620186948e-05
+    },
+    "remaining_historical_cause_sets_m": {
+      "unclassified_numerical_projection_residual": 0.0054038506514915,
+      "ambiguous_target_correspondence": 63668.797495128856,
+      "direction_gate": 426410.66464127763,
+      "finite_endpoint_or_alignment": 69755.50494180714,
+      "no_admitted_source_correspondence": 618865.7666746903,
+      "unadmitted_span_of_known_way": 101320.08351992935,
+      "deferred_binding_withheld": 9303.583383647636,
+      "direction_gate + finite_endpoint_or_alignment": 5.434559902482667e-14,
+      "ambiguous_target_correspondence + direction_gate": 2.7758102802562877e-05,
+      "ambiguous_target_correspondence + finite_endpoint_or_alignment": 2.4692650620186948e-05
+    }
+  },
+  "route_local": {
+    "historical_gap_m": 1334036.7209665326,
+    "remaining_gap_m": 1288222.0231620774,
+    "recovered_m": 45814.69780445518,
+    "historical_region_remaining_m": {
+      "no_admitted_source_correspondence": 618189.3135539362,
+      "direction_gate": 426015.0344528482,
+      "ambiguous_target_correspondence": 63722.438930533375,
+      "finite_endpoint_or_alignment": 69682.16300722386,
+      "deferred_binding_withheld": 9322.323977425987,
+      "unadmitted_span_of_known_way": 101290.74924010987
+    },
+    "historical_region_recovered_m": {
+      "deferred_binding_withheld": 0.0,
+      "ambiguous_target_correspondence": 45736.49244836605,
+      "unadmitted_span_of_known_way": 0.0,
+      "direction_gate": 66.8014887961917,
+      "finite_endpoint_or_alignment": 11.403858007396323,
+      "no_admitted_source_correspondence": 0.0
+    },
+    "remaining_intervals": {
+      "no_admitted_source_correspondence": 22650,
+      "direction_gate": 93273,
+      "ambiguous_target_correspondence": 117594,
+      "finite_endpoint_or_alignment": 40479,
+      "deferred_binding_withheld": 463,
+      "unadmitted_span_of_known_way": 5042
+    },
+    "affected_routes": {
+      "deferred_binding_withheld": 49,
+      "ambiguous_target_correspondence": 217,
+      "unadmitted_span_of_known_way": 175,
+      "direction_gate": 217,
+      "finite_endpoint_or_alignment": 217,
+      "no_admitted_source_correspondence": 202
+    },
+    "validated_remaining_gap_m": 1288222.0231713618,
+    "unclassified_numerical_residual_m": 9.284354746341705e-06
+  },
+  "validated_network": {
+    "target_m": 17435132.494005967,
+    "on_foot_m": 15492362.935085183,
+    "cycling_m": 16094679.53682007,
+    "combined_m": 16145808.087893184,
+    "unbound_m": 1289324.4061127827,
+    "attainable": false,
+    "combined_percent": 92.60502088781922
+  },
+  "routes": [
+    {
+      "route_key": "NCN:1",
+      "remaining_m": 138707.8143354569,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 68887.56978104275,
+        "direction_gate": 42432.432385815395,
+        "ambiguous_target_correspondence": 8196.417794836147,
+        "finite_endpoint_or_alignment": 7159.11477866658,
+        "deferred_binding_withheld": 1015.6254613683807,
+        "unadmitted_span_of_known_way": 11016.654133462771
+      }
+    },
+    {
+      "route_key": "NCN:10",
+      "remaining_m": 21229.926523116585,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 101.91509449837199,
+        "direction_gate": 4643.7956840607585,
+        "finite_endpoint_or_alignment": 454.51478403508963,
+        "no_admitted_source_correspondence": 15305.90159037262,
+        "unadmitted_span_of_known_way": 723.7993701497468
+      }
+    },
+    {
+      "route_key": "NCN:11",
+      "remaining_m": 4561.4302674962355,
+      "historical_region_remaining_m": {
+        "direction_gate": 2252.3758358482364,
+        "ambiguous_target_correspondence": 374.5044362971129,
+        "finite_endpoint_or_alignment": 460.06430789373593,
+        "no_admitted_source_correspondence": 1134.1221138875267,
+        "unadmitted_span_of_known_way": 326.9328681372343,
+        "deferred_binding_withheld": 13.430705428241467
+      }
+    },
+    {
+      "route_key": "NCN:110",
+      "remaining_m": 271.37916720198,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.686476372765223,
+        "direction_gate": 181.07226045994054,
+        "unadmitted_span_of_known_way": 38.597762976416114,
+        "finite_endpoint_or_alignment": 10.579889797078375,
+        "no_admitted_source_correspondence": 38.44277759577943
+      }
+    },
+    {
+      "route_key": "NCN:12",
+      "remaining_m": 11834.545699742219,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 687.8191328844398,
+        "direction_gate": 5891.203979249637,
+        "finite_endpoint_or_alignment": 1077.602671945842,
+        "no_admitted_source_correspondence": 3421.8870243106385,
+        "unadmitted_span_of_known_way": 622.6987611233826,
+        "deferred_binding_withheld": 133.33413022826534
+      }
+    },
+    {
+      "route_key": "NCN:125",
+      "remaining_m": 1986.2369186123858,
+      "historical_region_remaining_m": {
+        "direction_gate": 331.0592275834988,
+        "ambiguous_target_correspondence": 12.182912176415146,
+        "no_admitted_source_correspondence": 1552.7783278146835,
+        "finite_endpoint_or_alignment": 90.2164510377883
+      }
+    },
+    {
+      "route_key": "NCN:13",
+      "remaining_m": 12554.294708688436,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 1056.6847645459986,
+        "ambiguous_target_correspondence": 233.72176582135535,
+        "no_admitted_source_correspondence": 4278.766339294308,
+        "direction_gate": 5766.783286244531,
+        "unadmitted_span_of_known_way": 1218.3385525426916
+      }
+    },
+    {
+      "route_key": "NCN:136",
+      "remaining_m": 1901.1896288937603,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 295.25703881174854,
+        "unadmitted_span_of_known_way": 189.63982476001945,
+        "no_admitted_source_correspondence": 388.83207326164506,
+        "direction_gate": 819.0075785565265,
+        "finite_endpoint_or_alignment": 208.45311350381976
+      }
+    },
+    {
+      "route_key": "NCN:137",
+      "remaining_m": 290.50819517506255,
+      "historical_region_remaining_m": {
+        "direction_gate": 192.14939712578553,
+        "finite_endpoint_or_alignment": 38.95020564450622,
+        "ambiguous_target_correspondence": 2.5225390495490836,
+        "no_admitted_source_correspondence": 44.102675764796274,
+        "unadmitted_span_of_known_way": 12.783377590425347
+      }
+    },
+    {
+      "route_key": "NCN:14",
+      "remaining_m": 8478.693762640847,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 217.06975596628166,
+        "no_admitted_source_correspondence": 2983.16401516643,
+        "direction_gate": 3687.098158952415,
+        "finite_endpoint_or_alignment": 707.8492819232245,
+        "unadmitted_span_of_known_way": 645.3195741623396,
+        "deferred_binding_withheld": 238.1929764655542
+      }
+    },
+    {
+      "route_key": "NCN:141",
+      "remaining_m": 793.7151253588335,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.239704592772571,
+        "direction_gate": 254.0668256788156,
+        "finite_endpoint_or_alignment": 57.291303203157796,
+        "no_admitted_source_correspondence": 480.11729188408697
+      }
+    },
+    {
+      "route_key": "NCN:15",
+      "remaining_m": 4457.254746551451,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1885.5248925366593,
+        "direction_gate": 1159.2682625300708,
+        "finite_endpoint_or_alignment": 250.1328802305031,
+        "no_admitted_source_correspondence": 935.0737796322901,
+        "unadmitted_span_of_known_way": 227.2549316219227
+      }
+    },
+    {
+      "route_key": "NCN:150",
+      "remaining_m": 554.8587623926774,
+      "historical_region_remaining_m": {
+        "direction_gate": 353.80717877569106,
+        "finite_endpoint_or_alignment": 31.041909498187962,
+        "ambiguous_target_correspondence": 103.68922811407921,
+        "no_admitted_source_correspondence": 65.55551293351999,
+        "unadmitted_span_of_known_way": 0.7649330392637168
+      }
+    },
+    {
+      "route_key": "NCN:151",
+      "remaining_m": 1172.5675696569333,
+      "historical_region_remaining_m": {
+        "direction_gate": 132.41878622137347,
+        "ambiguous_target_correspondence": 812.7528580148681,
+        "unadmitted_span_of_known_way": 6.103805770288403,
+        "finite_endpoint_or_alignment": 47.08983025675393,
+        "no_admitted_source_correspondence": 174.2022893936496
+      }
+    },
+    {
+      "route_key": "NCN:155",
+      "remaining_m": 407.31490319867083,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 7.261904459579322,
+        "direction_gate": 299.01916641846947,
+        "finite_endpoint_or_alignment": 23.314291268520407,
+        "unadmitted_span_of_known_way": 51.222152153142616,
+        "no_admitted_source_correspondence": 26.497388898958683
+      }
+    },
+    {
+      "route_key": "NCN:16",
+      "remaining_m": 3510.371885951512,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 482.5654747190963,
+        "direction_gate": 1783.1036819315138,
+        "finite_endpoint_or_alignment": 266.56904938257975,
+        "unadmitted_span_of_known_way": 376.9660583701143,
+        "no_admitted_source_correspondence": 601.1676213735616
+      }
+    },
+    {
+      "route_key": "NCN:164",
+      "remaining_m": 5037.229896192958,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 251.74031403729518,
+        "no_admitted_source_correspondence": 3256.4439531358094,
+        "direction_gate": 780.145318321712,
+        "finite_endpoint_or_alignment": 138.01757528190075,
+        "unadmitted_span_of_known_way": 610.8827354162363
+      }
+    },
+    {
+      "route_key": "NCN:165",
+      "remaining_m": 2640.7846241578663,
+      "historical_region_remaining_m": {
+        "direction_gate": 1696.3486862472062,
+        "ambiguous_target_correspondence": 22.82573685855596,
+        "finite_endpoint_or_alignment": 121.93952752179695,
+        "no_admitted_source_correspondence": 610.3390599262964,
+        "unadmitted_span_of_known_way": 189.33161351979743
+      }
+    },
+    {
+      "route_key": "NCN:166",
+      "remaining_m": 573.5803588100135,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 9.890786466554333,
+        "direction_gate": 492.5319267122047,
+        "finite_endpoint_or_alignment": 25.748440180001754,
+        "no_admitted_source_correspondence": 45.409205451247125
+      }
+    },
+    {
+      "route_key": "NCN:167",
+      "remaining_m": 304.2396775138438,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 3.568145301189541,
+        "direction_gate": 287.55764506781804,
+        "finite_endpoint_or_alignment": 13.113887144833948
+      }
+    },
+    {
+      "route_key": "NCN:168",
+      "remaining_m": 1457.4247552406696,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 9.780458838047373,
+        "direction_gate": 279.0342658993143,
+        "unadmitted_span_of_known_way": 645.4579169794322,
+        "finite_endpoint_or_alignment": 64.49032792528399,
+        "no_admitted_source_correspondence": 402.36122122171764,
+        "deferred_binding_withheld": 56.30056437687276
+      }
+    },
+    {
+      "route_key": "NCN:169",
+      "remaining_m": 2573.62342590107,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 1519.2501519293926,
+        "finite_endpoint_or_alignment": 329.979131213644,
+        "direction_gate": 572.0755886614305,
+        "ambiguous_target_correspondence": 34.75718682355376,
+        "unadmitted_span_of_known_way": 117.56136727304808
+      }
+    },
+    {
+      "route_key": "NCN:17",
+      "remaining_m": 7625.806634159307,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 376.9291785662846,
+        "direction_gate": 1611.1728648535434,
+        "unadmitted_span_of_known_way": 1654.3403156523032,
+        "no_admitted_source_correspondence": 3656.562023464366,
+        "finite_endpoint_or_alignment": 293.8246583792131,
+        "deferred_binding_withheld": 32.97759321119207
+      }
+    },
+    {
+      "route_key": "NCN:174",
+      "remaining_m": 1615.8310880841077,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 746.0876851725423,
+        "ambiguous_target_correspondence": 160.99901315101695,
+        "finite_endpoint_or_alignment": 199.6497641405263,
+        "unadmitted_span_of_known_way": 180.3861918762851,
+        "direction_gate": 328.70843371742166
+      }
+    },
+    {
+      "route_key": "NCN:177",
+      "remaining_m": 2678.0685036069,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 25.32031309019703,
+        "no_admitted_source_correspondence": 2265.1017763146124,
+        "direction_gate": 298.8709403781691,
+        "finite_endpoint_or_alignment": 88.77547382391988
+      }
+    },
+    {
+      "route_key": "NCN:179",
+      "remaining_m": 733.0527431246892,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 106.69695359455051,
+        "direction_gate": 514.2763775853684,
+        "unadmitted_span_of_known_way": 27.25179935060343,
+        "finite_endpoint_or_alignment": 45.55909288336665,
+        "no_admitted_source_correspondence": 39.26851971079798
+      }
+    },
+    {
+      "route_key": "NCN:18",
+      "remaining_m": 4346.26849030293,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 105.02136323747928,
+        "finite_endpoint_or_alignment": 260.26958330062894,
+        "no_admitted_source_correspondence": 401.46492697106834,
+        "direction_gate": 2960.9884438443682,
+        "unadmitted_span_of_known_way": 618.524172949377
+      }
+    },
+    {
+      "route_key": "NCN:195",
+      "remaining_m": 4180.950913763767,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 122.85749930383463,
+        "direction_gate": 1801.4340569395627,
+        "no_admitted_source_correspondence": 1415.9429213238916,
+        "finite_endpoint_or_alignment": 246.57730473091362,
+        "unadmitted_span_of_known_way": 594.1391312910791
+      }
+    },
+    {
+      "route_key": "NCN:196",
+      "remaining_m": 560.2471270590781,
+      "historical_region_remaining_m": {
+        "direction_gate": 478.4336008647574,
+        "ambiguous_target_correspondence": 11.592922790003582,
+        "finite_endpoint_or_alignment": 32.296477274351176,
+        "no_admitted_source_correspondence": 21.16823878203997,
+        "unadmitted_span_of_known_way": 16.75588734792406
+      }
+    },
+    {
+      "route_key": "NCN:2",
+      "remaining_m": 35281.03601134177,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2491.0773126887702,
+        "unadmitted_span_of_known_way": 2985.7090038936585,
+        "direction_gate": 13726.416830661881,
+        "finite_endpoint_or_alignment": 2750.6838677071564,
+        "no_admitted_source_correspondence": 12606.906570406358,
+        "deferred_binding_withheld": 720.2424258748393
+      }
+    },
+    {
+      "route_key": "NCN:20",
+      "remaining_m": 7828.40654597667,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 685.8595078704129,
+        "no_admitted_source_correspondence": 4196.894391882751,
+        "direction_gate": 2112.125608944448,
+        "ambiguous_target_correspondence": 580.1928265086251,
+        "unadmitted_span_of_known_way": 253.33421066202243
+      }
+    },
+    {
+      "route_key": "NCN:208",
+      "remaining_m": 926.458356620729,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 14.692788229798113,
+        "finite_endpoint_or_alignment": 133.78242075288819,
+        "no_admitted_source_correspondence": 240.82469057586147,
+        "direction_gate": 316.5614305064687,
+        "unadmitted_span_of_known_way": 220.5970265419143
+      }
+    },
+    {
+      "route_key": "NCN:21",
+      "remaining_m": 10553.99626782834,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 477.500020709971,
+        "no_admitted_source_correspondence": 2009.6003768440178,
+        "direction_gate": 6209.730188706222,
+        "finite_endpoint_or_alignment": 935.4730615563517,
+        "unadmitted_span_of_known_way": 660.1667933046632,
+        "deferred_binding_withheld": 261.52582660020056
+      }
+    },
+    {
+      "route_key": "NCN:22",
+      "remaining_m": 11608.547162763192,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 611.0195143155871,
+        "direction_gate": 5290.6707380597,
+        "finite_endpoint_or_alignment": 767.6329652873651,
+        "unadmitted_span_of_known_way": 932.2698038333072,
+        "no_admitted_source_correspondence": 3557.6197394061796,
+        "deferred_binding_withheld": 449.3344016183312
+      }
+    },
+    {
+      "route_key": "NCN:221",
+      "remaining_m": 806.0288599931957,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 67.15144536314536,
+        "finite_endpoint_or_alignment": 68.36724595419956,
+        "direction_gate": 470.0327137236825,
+        "no_admitted_source_correspondence": 199.70835459634165,
+        "unadmitted_span_of_known_way": 0.7691003558257492
+      }
+    },
+    {
+      "route_key": "NCN:222",
+      "remaining_m": 3890.827357306453,
+      "historical_region_remaining_m": {
+        "direction_gate": 721.0100853348946,
+        "ambiguous_target_correspondence": 132.21502521088033,
+        "no_admitted_source_correspondence": 2290.212799574554,
+        "finite_endpoint_or_alignment": 280.97284687633066,
+        "unadmitted_span_of_known_way": 416.5600987567074,
+        "deferred_binding_withheld": 49.856501553084385
+      }
+    },
+    {
+      "route_key": "NCN:223",
+      "remaining_m": 4714.822589912851,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 161.08423641272498,
+        "direction_gate": 1831.1504896017286,
+        "finite_endpoint_or_alignment": 239.5968917376988,
+        "no_admitted_source_correspondence": 2063.453597598674,
+        "unadmitted_span_of_known_way": 419.5373744228717
+      }
+    },
+    {
+      "route_key": "NCN:224",
+      "remaining_m": 1048.866437500389,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 12.69970701949033,
+        "direction_gate": 523.1449680565785,
+        "finite_endpoint_or_alignment": 85.7565869108314,
+        "no_admitted_source_correspondence": 281.446508209114,
+        "unadmitted_span_of_known_way": 145.8186673043736
+      }
+    },
+    {
+      "route_key": "NCN:23",
+      "remaining_m": 7364.637424732332,
+      "historical_region_remaining_m": {
+        "direction_gate": 3759.5513721001676,
+        "finite_endpoint_or_alignment": 717.2694195312517,
+        "ambiguous_target_correspondence": 417.35068091385966,
+        "no_admitted_source_correspondence": 2242.6882998773817,
+        "unadmitted_span_of_known_way": 227.77765223348567
+      }
+    },
+    {
+      "route_key": "NCN:236",
+      "remaining_m": 1902.4892905763238,
+      "historical_region_remaining_m": {
+        "direction_gate": 999.4166597197458,
+        "ambiguous_target_correspondence": 41.620766733302304,
+        "finite_endpoint_or_alignment": 197.28653206122732,
+        "no_admitted_source_correspondence": 600.9734772401158,
+        "unadmitted_span_of_known_way": 63.19185468299432
+      }
+    },
+    {
+      "route_key": "NCN:24",
+      "remaining_m": 6028.367970197644,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 115.3783832679114,
+        "finite_endpoint_or_alignment": 258.7270523270719,
+        "direction_gate": 2260.3121213808863,
+        "no_admitted_source_correspondence": 2667.2191563700662,
+        "unadmitted_span_of_known_way": 659.7724065391888,
+        "deferred_binding_withheld": 66.95885031251242
+      }
+    },
+    {
+      "route_key": "NCN:244",
+      "remaining_m": 368.59156648553375,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 52.059727659125166,
+        "direction_gate": 64.02710452369845,
+        "finite_endpoint_or_alignment": 44.782560895237886,
+        "no_admitted_source_correspondence": 104.59517999145538,
+        "unadmitted_span_of_known_way": 103.12699341601672
+      }
+    },
+    {
+      "route_key": "NCN:246",
+      "remaining_m": 1659.5558635634973,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 107.51938151315224,
+        "direction_gate": 895.6465204420119,
+        "finite_endpoint_or_alignment": 147.37211160820638,
+        "no_admitted_source_correspondence": 152.46280932685372,
+        "unadmitted_span_of_known_way": 356.5550406732686
+      }
+    },
+    {
+      "route_key": "NCN:248",
+      "remaining_m": 1056.8548042730902,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.8030328124292554,
+        "no_admitted_source_correspondence": 896.763868203636,
+        "unadmitted_span_of_known_way": 110.4026095967138,
+        "direction_gate": 42.80038467608214,
+        "finite_endpoint_or_alignment": 5.0849089842290525
+      }
+    },
+    {
+      "route_key": "NCN:25",
+      "remaining_m": 4668.202359849105,
+      "historical_region_remaining_m": {
+        "direction_gate": 1927.526733043145,
+        "finite_endpoint_or_alignment": 362.1853674653461,
+        "ambiguous_target_correspondence": 379.03991441316685,
+        "no_admitted_source_correspondence": 1627.076790533821,
+        "unadmitted_span_of_known_way": 372.3735542207881
+      }
+    },
+    {
+      "route_key": "NCN:250",
+      "remaining_m": 397.8451042720541,
+      "historical_region_remaining_m": {
+        "direction_gate": 102.50814392262492,
+        "ambiguous_target_correspondence": 4.536325642688767,
+        "no_admitted_source_correspondence": 238.3242597055066,
+        "finite_endpoint_or_alignment": 52.47637500123312
+      }
+    },
+    {
+      "route_key": "NCN:256",
+      "remaining_m": 2462.796940079995,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 7.886064274750586,
+        "finite_endpoint_or_alignment": 137.87529323657552,
+        "no_admitted_source_correspondence": 1810.4459379148898,
+        "direction_gate": 454.7846047441182,
+        "deferred_binding_withheld": 43.44892844427174,
+        "unadmitted_span_of_known_way": 8.356111465387457
+      }
+    },
+    {
+      "route_key": "NCN:26",
+      "remaining_m": 4354.291680479312,
+      "historical_region_remaining_m": {
+        "direction_gate": 2588.407468524703,
+        "ambiguous_target_correspondence": 90.62063754374759,
+        "finite_endpoint_or_alignment": 403.4610932169746,
+        "no_admitted_source_correspondence": 908.7100670084271,
+        "unadmitted_span_of_known_way": 363.0924141854502
+      }
+    },
+    {
+      "route_key": "NCN:267",
+      "remaining_m": 612.5853126626315,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 91.52095790829623,
+        "direction_gate": 209.42062805405888,
+        "ambiguous_target_correspondence": 7.236654740484815,
+        "no_admitted_source_correspondence": 304.4070719597914
+      }
+    },
+    {
+      "route_key": "NCN:27",
+      "remaining_m": 7405.7247556843895,
+      "historical_region_remaining_m": {
+        "direction_gate": 3195.3002415056135,
+        "ambiguous_target_correspondence": 336.8357918607744,
+        "finite_endpoint_or_alignment": 449.74966028071753,
+        "no_admitted_source_correspondence": 1505.6051654461369,
+        "unadmitted_span_of_known_way": 1879.0321935707098,
+        "deferred_binding_withheld": 39.20170282411613
+      }
+    },
+    {
+      "route_key": "NCN:270",
+      "remaining_m": 244.2627440092715,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 31.120000823086283,
+        "direction_gate": 192.2141696663861,
+        "finite_endpoint_or_alignment": 20.928573519799
+      }
+    },
+    {
+      "route_key": "NCN:272",
+      "remaining_m": 1998.1231325079839,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 219.21535080267148,
+        "direction_gate": 1032.0216777226312,
+        "ambiguous_target_correspondence": 16.445971744714548,
+        "unadmitted_span_of_known_way": 268.5213928750219,
+        "no_admitted_source_correspondence": 461.91873936294223
+      }
+    },
+    {
+      "route_key": "NCN:278",
+      "remaining_m": 253.09035291858547,
+      "historical_region_remaining_m": {
+        "direction_gate": 213.29787074974104,
+        "ambiguous_target_correspondence": 2.3229105314566545,
+        "finite_endpoint_or_alignment": 16.032112046277508,
+        "no_admitted_source_correspondence": 21.43745959110928
+      }
+    },
+    {
+      "route_key": "NCN:28",
+      "remaining_m": 8135.900941338426,
+      "historical_region_remaining_m": {
+        "direction_gate": 4063.123034680579,
+        "ambiguous_target_correspondence": 152.17855435046704,
+        "finite_endpoint_or_alignment": 392.2816657141145,
+        "no_admitted_source_correspondence": 2574.1430189992507,
+        "unadmitted_span_of_known_way": 903.138024597675,
+        "deferred_binding_withheld": 51.03664299633513
+      }
+    },
+    {
+      "route_key": "NCN:288",
+      "remaining_m": 743.8197426169409,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.9412415687235192,
+        "direction_gate": 292.02914663971313,
+        "finite_endpoint_or_alignment": 75.54104057254408,
+        "no_admitted_source_correspondence": 312.5431010642896,
+        "unadmitted_span_of_known_way": 61.76521277167007
+      }
+    },
+    {
+      "route_key": "NCN:3",
+      "remaining_m": 20929.608195117402,
+      "historical_region_remaining_m": {
+        "unadmitted_span_of_known_way": 2140.2307029133785,
+        "direction_gate": 12790.284917964727,
+        "ambiguous_target_correspondence": 473.7809781386005,
+        "no_admitted_source_correspondence": 3944.914716731779,
+        "finite_endpoint_or_alignment": 1135.1750387120958,
+        "deferred_binding_withheld": 445.2218404305327
+      }
+    },
+    {
+      "route_key": "NCN:304",
+      "remaining_m": 257.201207919966,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.5897031031954034,
+        "direction_gate": 249.75196523983573,
+        "finite_endpoint_or_alignment": 4.859539576933401
+      }
+    },
+    {
+      "route_key": "NCN:305",
+      "remaining_m": 1030.5707011201378,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 13.050519077346658,
+        "direction_gate": 803.2271315121095,
+        "finite_endpoint_or_alignment": 48.2788147856863,
+        "no_admitted_source_correspondence": 98.3994531532714,
+        "unadmitted_span_of_known_way": 67.61478259172206
+      }
+    },
+    {
+      "route_key": "NCN:32",
+      "remaining_m": 5056.751140345811,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 54.0290541349477,
+        "finite_endpoint_or_alignment": 198.14451743327632,
+        "no_admitted_source_correspondence": 3343.214666676625,
+        "direction_gate": 1334.745797308075,
+        "unadmitted_span_of_known_way": 126.61710479288233
+      }
+    },
+    {
+      "route_key": "NCN:327",
+      "remaining_m": 843.2745176254969,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 15.660148663054501,
+        "direction_gate": 567.098355653115,
+        "unadmitted_span_of_known_way": 190.22925695086735,
+        "no_admitted_source_correspondence": 48.33160104488314,
+        "finite_endpoint_or_alignment": 21.955155313574686
+      }
+    },
+    {
+      "route_key": "NCN:33",
+      "remaining_m": 10675.765707241128,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 348.55961488855417,
+        "direction_gate": 3066.5746620871178,
+        "finite_endpoint_or_alignment": 396.19729295209345,
+        "no_admitted_source_correspondence": 5848.658880660292,
+        "unadmitted_span_of_known_way": 967.0326838033029,
+        "deferred_binding_withheld": 48.742572849763235
+      }
+    },
+    {
+      "route_key": "NCN:334",
+      "remaining_m": 294.2211413430442,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 77.9918819693501,
+        "direction_gate": 186.90402782880932,
+        "finite_endpoint_or_alignment": 12.000648171170429,
+        "unadmitted_span_of_known_way": 9.345774001062537,
+        "no_admitted_source_correspondence": 7.978809372650727
+      }
+    },
+    {
+      "route_key": "NCN:339",
+      "remaining_m": 204.17035506188785,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 3.715105160348602,
+        "direction_gate": 178.15529208815963,
+        "finite_endpoint_or_alignment": 10.061971271892848,
+        "no_admitted_source_correspondence": 12.237986541485357
+      }
+    },
+    {
+      "route_key": "NCN:34",
+      "remaining_m": 4328.7602141953175,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 7.8946859525639645,
+        "finite_endpoint_or_alignment": 21.359268280983244,
+        "no_admitted_source_correspondence": 4104.974464775662,
+        "direction_gate": 194.5317951861075
+      }
+    },
+    {
+      "route_key": "NCN:344",
+      "remaining_m": 302.1263319695568,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.444604207343159,
+        "direction_gate": 289.47514403112507,
+        "finite_endpoint_or_alignment": 10.20658373108742
+      }
+    },
+    {
+      "route_key": "NCN:4",
+      "remaining_m": 74474.44876834005,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 3765.1488309239558,
+        "direction_gate": 20796.71563435747,
+        "no_admitted_source_correspondence": 40539.721059244985,
+        "finite_endpoint_or_alignment": 2955.7577070051684,
+        "unadmitted_span_of_known_way": 6273.135348976374,
+        "deferred_binding_withheld": 143.97018783199812
+      }
+    },
+    {
+      "route_key": "NCN:403",
+      "remaining_m": 2629.5762996589424,
+      "historical_region_remaining_m": {
+        "direction_gate": 1405.0369766802178,
+        "finite_endpoint_or_alignment": 279.7381754562018,
+        "ambiguous_target_correspondence": 97.43549483627199,
+        "unadmitted_span_of_known_way": 249.52861727412846,
+        "no_admitted_source_correspondence": 597.8370354121165
+      }
+    },
+    {
+      "route_key": "NCN:41",
+      "remaining_m": 18311.86256269892,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 12483.28199853823,
+        "ambiguous_target_correspondence": 682.5100264216636,
+        "direction_gate": 3921.7032484065808,
+        "finite_endpoint_or_alignment": 682.0944819646091,
+        "unadmitted_span_of_known_way": 477.8046620679485,
+        "deferred_binding_withheld": 64.46814527802707
+      }
+    },
+    {
+      "route_key": "NCN:411",
+      "remaining_m": 612.5908312732453,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 476.53288117859097,
+        "direction_gate": 85.05192137253698,
+        "finite_endpoint_or_alignment": 49.721386589572916,
+        "ambiguous_target_correspondence": 1.2846421325443775
+      }
+    },
+    {
+      "route_key": "NCN:416",
+      "remaining_m": 2283.812441253513,
+      "historical_region_remaining_m": {
+        "direction_gate": 882.3721758445671,
+        "finite_endpoint_or_alignment": 173.89111429627997,
+        "ambiguous_target_correspondence": 161.66924242598674,
+        "no_admitted_source_correspondence": 900.1730311852755,
+        "unadmitted_span_of_known_way": 165.70687750140243
+      }
+    },
+    {
+      "route_key": "NCN:42",
+      "remaining_m": 3466.176526048807,
+      "historical_region_remaining_m": {
+        "direction_gate": 2110.461572325051,
+        "finite_endpoint_or_alignment": 120.76163146400569,
+        "ambiguous_target_correspondence": 107.73039166960112,
+        "unadmitted_span_of_known_way": 409.6355192646125,
+        "no_admitted_source_correspondence": 614.3688450202899,
+        "deferred_binding_withheld": 103.21856630524132
+      }
+    },
+    {
+      "route_key": "NCN:423",
+      "remaining_m": 3241.971001122551,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 35.036712676231744,
+        "direction_gate": 624.7620868529079,
+        "finite_endpoint_or_alignment": 183.86349137733276,
+        "no_admitted_source_correspondence": 2066.3659964552044,
+        "deferred_binding_withheld": 63.388180292779936,
+        "unadmitted_span_of_known_way": 268.5545334680917
+      }
+    },
+    {
+      "route_key": "NCN:425",
+      "remaining_m": 765.3283204898809,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 5.206388989756173,
+        "finite_endpoint_or_alignment": 90.5765951730351,
+        "direction_gate": 430.4803315008455,
+        "no_admitted_source_correspondence": 239.06500478772975
+      }
+    },
+    {
+      "route_key": "NCN:426",
+      "remaining_m": 292.4649751388359,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 5.968452038156988,
+        "direction_gate": 279.593196420252,
+        "finite_endpoint_or_alignment": 6.903326680426503
+      }
+    },
+    {
+      "route_key": "NCN:43",
+      "remaining_m": 5085.6892597856995,
+      "historical_region_remaining_m": {
+        "direction_gate": 1500.8425129285258,
+        "ambiguous_target_correspondence": 59.72965891328384,
+        "finite_endpoint_or_alignment": 251.63657479837875,
+        "no_admitted_source_correspondence": 2579.0058252416306,
+        "unadmitted_span_of_known_way": 694.474687903878
+      }
+    },
+    {
+      "route_key": "NCN:437",
+      "remaining_m": 3027.9402811570794,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 7.08793325497078,
+        "direction_gate": 550.4980831270111,
+        "unadmitted_span_of_known_way": 446.47248419719807,
+        "finite_endpoint_or_alignment": 213.4015264014886,
+        "no_admitted_source_correspondence": 1810.4802541764097
+      }
+    },
+    {
+      "route_key": "NCN:439",
+      "remaining_m": 862.5123563998117,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 47.43046815818177,
+        "direction_gate": 173.53134562145758,
+        "no_admitted_source_correspondence": 348.3460102698425,
+        "finite_endpoint_or_alignment": 95.13360828748924,
+        "unadmitted_span_of_known_way": 198.07092406284002
+      }
+    },
+    {
+      "route_key": "NCN:44",
+      "remaining_m": 2687.8682300203045,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 184.93900503477124,
+        "direction_gate": 1603.6475554806043,
+        "ambiguous_target_correspondence": 20.902970025589596,
+        "unadmitted_span_of_known_way": 74.80330068856662,
+        "no_admitted_source_correspondence": 803.5753987907678
+      }
+    },
+    {
+      "route_key": "NCN:440",
+      "remaining_m": 137.45971115201547,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 4.001274136511225,
+        "direction_gate": 129.9697082849743,
+        "finite_endpoint_or_alignment": 3.4887287305294015
+      }
+    },
+    {
+      "route_key": "NCN:442",
+      "remaining_m": 1647.7785845430844,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 161.8654820171166,
+        "ambiguous_target_correspondence": 17.7276120476002,
+        "direction_gate": 1130.7504842913124,
+        "finite_endpoint_or_alignment": 78.45168541818705,
+        "unadmitted_span_of_known_way": 258.9833207688633
+      }
+    },
+    {
+      "route_key": "NCN:45",
+      "remaining_m": 18659.54153147749,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1530.860746939197,
+        "finite_endpoint_or_alignment": 1087.343001812465,
+        "direction_gate": 7400.873968769128,
+        "unadmitted_span_of_known_way": 1379.6430296732938,
+        "no_admitted_source_correspondence": 7260.820783942534
+      }
+    },
+    {
+      "route_key": "NCN:451",
+      "remaining_m": 3147.2719675073618,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 2267.1918856395664,
+        "finite_endpoint_or_alignment": 161.76973528029882,
+        "direction_gate": 509.0454494789047,
+        "ambiguous_target_correspondence": 8.84399513696809,
+        "unadmitted_span_of_known_way": 200.4209019289037
+      }
+    },
+    {
+      "route_key": "NCN:455",
+      "remaining_m": 1078.4035074177484,
+      "historical_region_remaining_m": {
+        "direction_gate": 827.6003307835044,
+        "ambiguous_target_correspondence": 2.8332987828668643,
+        "finite_endpoint_or_alignment": 56.53755690208853,
+        "no_admitted_source_correspondence": 8.766661533053233,
+        "deferred_binding_withheld": 177.67354782125702,
+        "unadmitted_span_of_known_way": 4.992111594974556
+      }
+    },
+    {
+      "route_key": "NCN:46",
+      "remaining_m": 12253.099353126969,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 5257.94556498482,
+        "finite_endpoint_or_alignment": 810.8660072334005,
+        "direction_gate": 3928.565563977827,
+        "ambiguous_target_correspondence": 596.8825227395871,
+        "unadmitted_span_of_known_way": 1509.6307313422724,
+        "deferred_binding_withheld": 149.20896270202599
+      }
+    },
+    {
+      "route_key": "NCN:461",
+      "remaining_m": 641.5591199508578,
+      "historical_region_remaining_m": {
+        "direction_gate": 445.063204103318,
+        "ambiguous_target_correspondence": 99.47932278459618,
+        "finite_endpoint_or_alignment": 53.73845877468027,
+        "no_admitted_source_correspondence": 43.27813427351696
+      }
+    },
+    {
+      "route_key": "NCN:465",
+      "remaining_m": 1860.0569141449575,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 254.09151239507773,
+        "no_admitted_source_correspondence": 722.3051643117749,
+        "ambiguous_target_correspondence": 20.574199021926436,
+        "unadmitted_span_of_known_way": 173.4125364686805,
+        "direction_gate": 689.6735019474972
+      }
+    },
+    {
+      "route_key": "NCN:466",
+      "remaining_m": 3835.88830058065,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 311.26235311968003,
+        "direction_gate": 642.9642011746076,
+        "finite_endpoint_or_alignment": 206.56572889608225,
+        "no_admitted_source_correspondence": 2429.2012917989878,
+        "deferred_binding_withheld": 97.1960201726247,
+        "unadmitted_span_of_known_way": 148.69870541866618
+      }
+    },
+    {
+      "route_key": "NCN:467",
+      "remaining_m": 1305.137964035976,
+      "historical_region_remaining_m": {
+        "direction_gate": 338.4563032804669,
+        "ambiguous_target_correspondence": 28.93823531673047,
+        "no_admitted_source_correspondence": 758.4095006533137,
+        "unadmitted_span_of_known_way": 82.14148432314389,
+        "finite_endpoint_or_alignment": 97.19244046232009
+      }
+    },
+    {
+      "route_key": "NCN:468",
+      "remaining_m": 1563.1990938587712,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 45.04056401654887,
+        "direction_gate": 778.5031947486209,
+        "finite_endpoint_or_alignment": 176.7529677923995,
+        "unadmitted_span_of_known_way": 77.66054894032055,
+        "no_admitted_source_correspondence": 485.24181836088013
+      }
+    },
+    {
+      "route_key": "NCN:469",
+      "remaining_m": 1234.3241771704243,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 5.147639249118939,
+        "direction_gate": 226.21167525766313,
+        "no_admitted_source_correspondence": 853.560885781075,
+        "unadmitted_span_of_known_way": 100.5204910300282,
+        "finite_endpoint_or_alignment": 48.8834858525384
+      }
+    },
+    {
+      "route_key": "NCN:47",
+      "remaining_m": 12595.63233051904,
+      "historical_region_remaining_m": {
+        "direction_gate": 5338.57611110552,
+        "finite_endpoint_or_alignment": 574.3883695445228,
+        "ambiguous_target_correspondence": 230.22918592983692,
+        "no_admitted_source_correspondence": 5113.707854399837,
+        "unadmitted_span_of_known_way": 1278.3969065916049,
+        "deferred_binding_withheld": 60.333902946044304
+      }
+    },
+    {
+      "route_key": "NCN:475",
+      "remaining_m": 1625.6487641775898,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 752.1848799217679,
+        "finite_endpoint_or_alignment": 62.45267080129342,
+        "no_admitted_source_correspondence": 441.7395609167277,
+        "direction_gate": 320.37716435150094,
+        "unadmitted_span_of_known_way": 48.89448801081852
+      }
+    },
+    {
+      "route_key": "NCN:476",
+      "remaining_m": 73.39704911762843,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.1279873734118353,
+        "direction_gate": 72.0867844228029,
+        "finite_endpoint_or_alignment": 0.1822773214134874
+      }
+    },
+    {
+      "route_key": "NCN:477",
+      "remaining_m": 1750.5969311323818,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 5.642907164592615,
+        "no_admitted_source_correspondence": 1130.3832803888681,
+        "direction_gate": 299.71204575885315,
+        "finite_endpoint_or_alignment": 52.434526203834835,
+        "unadmitted_span_of_known_way": 262.4241716162322
+      }
+    },
+    {
+      "route_key": "NCN:478",
+      "remaining_m": 2912.7092789010503,
+      "historical_region_remaining_m": {
+        "direction_gate": 1206.61398189775,
+        "finite_endpoint_or_alignment": 186.8347480109788,
+        "no_admitted_source_correspondence": 1220.2962245616402,
+        "ambiguous_target_correspondence": 35.9682001127653,
+        "unadmitted_span_of_known_way": 262.9961243179149
+      }
+    },
+    {
+      "route_key": "NCN:48",
+      "remaining_m": 8951.017178794227,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 5465.128515026558,
+        "direction_gate": 2299.7866954334495,
+        "finite_endpoint_or_alignment": 367.85721633075275,
+        "ambiguous_target_correspondence": 38.34117628676459,
+        "unadmitted_span_of_known_way": 779.9035755927428
+      }
+    },
+    {
+      "route_key": "NCN:482",
+      "remaining_m": 294.730439609222,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 36.988600286943566,
+        "direction_gate": 178.71368678057513,
+        "finite_endpoint_or_alignment": 37.39413434085049,
+        "no_admitted_source_correspondence": 37.9643897557424,
+        "unadmitted_span_of_known_way": 3.6696284451092804
+      }
+    },
+    {
+      "route_key": "NCN:49",
+      "remaining_m": 2215.55041137825,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 166.84053626683652,
+        "finite_endpoint_or_alignment": 120.27943873920272,
+        "direction_gate": 1330.0010842210465,
+        "unadmitted_span_of_known_way": 130.47585207743737,
+        "no_admitted_source_correspondence": 467.9535000216511
+      }
+    },
+    {
+      "route_key": "NCN:492",
+      "remaining_m": 2543.258053809491,
+      "historical_region_remaining_m": {
+        "direction_gate": 849.1806374292786,
+        "finite_endpoint_or_alignment": 220.75159371320413,
+        "unadmitted_span_of_known_way": 391.39127845984916,
+        "no_admitted_source_correspondence": 1058.585983149094,
+        "ambiguous_target_correspondence": 23.348561058063435
+      }
+    },
+    {
+      "route_key": "NCN:5",
+      "remaining_m": 47426.19239932172,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 26163.058853585233,
+        "ambiguous_target_correspondence": 1573.0455275576146,
+        "direction_gate": 13667.141755358574,
+        "finite_endpoint_or_alignment": 2661.1272047908456,
+        "unadmitted_span_of_known_way": 2691.5158393024553,
+        "deferred_binding_withheld": 670.3032184240345
+      }
+    },
+    {
+      "route_key": "NCN:50",
+      "remaining_m": 6146.374777066565,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 305.23253848466,
+        "direction_gate": 2542.7867907045656,
+        "finite_endpoint_or_alignment": 453.86258140240227,
+        "no_admitted_source_correspondence": 2076.4441425543964,
+        "unadmitted_span_of_known_way": 740.6786445825594,
+        "deferred_binding_withheld": 27.37007931367593
+      }
+    },
+    {
+      "route_key": "NCN:51",
+      "remaining_m": 21434.435767662813,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1476.983190160316,
+        "finite_endpoint_or_alignment": 1500.0785460199759,
+        "direction_gate": 7002.03315974317,
+        "no_admitted_source_correspondence": 9976.529553989605,
+        "unadmitted_span_of_known_way": 1401.0064897257241,
+        "deferred_binding_withheld": 77.80482745553239
+      }
+    },
+    {
+      "route_key": "NCN:517",
+      "remaining_m": 23771.774046292434,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 23091.449624480992,
+        "ambiguous_target_correspondence": 8.482488902420865,
+        "finite_endpoint_or_alignment": 131.954455781291,
+        "direction_gate": 539.8874771277395
+      }
+    },
+    {
+      "route_key": "NCN:52",
+      "remaining_m": 4937.86053831891,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 193.6717111950878,
+        "finite_endpoint_or_alignment": 335.0785101367275,
+        "direction_gate": 1532.705101961246,
+        "no_admitted_source_correspondence": 1999.4846471543635,
+        "unadmitted_span_of_known_way": 412.54761408901373,
+        "deferred_binding_withheld": 464.3729537824644
+      }
+    },
+    {
+      "route_key": "NCN:523",
+      "remaining_m": 920.7165623338254,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 687.4135550587273,
+        "ambiguous_target_correspondence": 0.7270562641409738,
+        "unadmitted_span_of_known_way": 212.701906193227,
+        "finite_endpoint_or_alignment": 19.874044817730105
+      }
+    },
+    {
+      "route_key": "NCN:53",
+      "remaining_m": 2352.506067958547,
+      "historical_region_remaining_m": {
+        "direction_gate": 618.4905515099545,
+        "ambiguous_target_correspondence": 470.6022547687401,
+        "finite_endpoint_or_alignment": 182.7160317701262,
+        "no_admitted_source_correspondence": 1048.1175932021868,
+        "unadmitted_span_of_known_way": 32.57963669873286
+      }
+    },
+    {
+      "route_key": "NCN:533",
+      "remaining_m": 95.34828911898354,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.3230930790753437,
+        "finite_endpoint_or_alignment": 17.427590477723694,
+        "direction_gate": 52.19480093991487,
+        "no_admitted_source_correspondence": 24.402804622269223
+      }
+    },
+    {
+      "route_key": "NCN:534",
+      "remaining_m": 819.9116857983242,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 32.257280952903336,
+        "direction_gate": 271.9736252168394,
+        "finite_endpoint_or_alignment": 139.4684801054947,
+        "no_admitted_source_correspondence": 344.4692228757291,
+        "unadmitted_span_of_known_way": 31.743076647357242
+      }
+    },
+    {
+      "route_key": "NCN:535",
+      "remaining_m": 1633.6576343561849,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 36.7748902989404,
+        "finite_endpoint_or_alignment": 137.72212507492029,
+        "direction_gate": 381.94609573703843,
+        "no_admitted_source_correspondence": 965.5583952767547,
+        "unadmitted_span_of_known_way": 111.65612790301299
+      }
+    },
+    {
+      "route_key": "NCN:536",
+      "remaining_m": 720.5875379848377,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 3.112785389793809,
+        "direction_gate": 155.61087816928276,
+        "finite_endpoint_or_alignment": 83.38819557212905,
+        "no_admitted_source_correspondence": 441.8663284343362,
+        "unadmitted_span_of_known_way": 36.60935041929568
+      }
+    },
+    {
+      "route_key": "NCN:539",
+      "remaining_m": 2692.3520565624135,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 69.44458392748587,
+        "direction_gate": 935.1847314008368,
+        "finite_endpoint_or_alignment": 353.63658062936696,
+        "no_admitted_source_correspondence": 1148.0321298915908,
+        "unadmitted_span_of_known_way": 186.05403071313157
+      }
+    },
+    {
+      "route_key": "NCN:54",
+      "remaining_m": 6725.027297599476,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 854.421792912232,
+        "direction_gate": 2389.3101835625903,
+        "finite_endpoint_or_alignment": 360.1285152986577,
+        "no_admitted_source_correspondence": 2390.2182988950494,
+        "unadmitted_span_of_known_way": 697.0526684712474,
+        "deferred_binding_withheld": 33.895838083053754
+      }
+    },
+    {
+      "route_key": "NCN:544",
+      "remaining_m": 580.9913141644004,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 24.784443940037676,
+        "direction_gate": 168.34731550462635,
+        "no_admitted_source_correspondence": 339.29647040232237,
+        "unadmitted_span_of_known_way": 16.518365849586353,
+        "finite_endpoint_or_alignment": 32.04471846782653
+      }
+    },
+    {
+      "route_key": "NCN:547",
+      "remaining_m": 14.177900290738123,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 0.05243290499284825,
+        "finite_endpoint_or_alignment": 2.5806954357783782,
+        "unadmitted_span_of_known_way": 6.1141434296181645,
+        "direction_gate": 5.430628520348716
+      }
+    },
+    {
+      "route_key": "NCN:548",
+      "remaining_m": 67.58475212565051,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.846314184198185,
+        "finite_endpoint_or_alignment": 4.821715646377796,
+        "direction_gate": 59.91672229507398
+      }
+    },
+    {
+      "route_key": "NCN:549",
+      "remaining_m": 1575.4059369880697,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 12.879960085257961,
+        "no_admitted_source_correspondence": 911.9931268389621,
+        "direction_gate": 551.5110816812498,
+        "finite_endpoint_or_alignment": 92.06952850929757,
+        "unadmitted_span_of_known_way": 6.952239873300209
+      }
+    },
+    {
+      "route_key": "NCN:55",
+      "remaining_m": 18298.8300205628,
+      "historical_region_remaining_m": {
+        "direction_gate": 5018.231156448947,
+        "ambiguous_target_correspondence": 1212.1163952137056,
+        "no_admitted_source_correspondence": 9695.652209783644,
+        "finite_endpoint_or_alignment": 1231.6005447544308,
+        "unadmitted_span_of_known_way": 1141.229714011347
+      }
+    },
+    {
+      "route_key": "NCN:550",
+      "remaining_m": 1479.1020578161763,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 42.339808205660425,
+        "direction_gate": 1123.2992431855955,
+        "ambiguous_target_correspondence": 19.574955164426022,
+        "no_admitted_source_correspondence": 260.4529049504743,
+        "unadmitted_span_of_known_way": 33.43514630588642
+      }
+    },
+    {
+      "route_key": "NCN:551",
+      "remaining_m": 5580.242553663581,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 338.924567451544,
+        "no_admitted_source_correspondence": 4097.274421205914,
+        "finite_endpoint_or_alignment": 154.965865325994,
+        "direction_gate": 654.9269696516124,
+        "deferred_binding_withheld": 103.31341704829818,
+        "unadmitted_span_of_known_way": 230.8373129802136
+      }
+    },
+    {
+      "route_key": "NCN:552",
+      "remaining_m": 10743.407565804799,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 12.194775015581163,
+        "direction_gate": 567.502649374989,
+        "finite_endpoint_or_alignment": 50.685157384360906,
+        "no_admitted_source_correspondence": 9979.973636939927,
+        "unadmitted_span_of_known_way": 133.0513470899398
+      }
+    },
+    {
+      "route_key": "NCN:555",
+      "remaining_m": 270.6785204082048,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 38.474062937025856,
+        "no_admitted_source_correspondence": 52.416635860835925,
+        "direction_gate": 101.42624604235729,
+        "finite_endpoint_or_alignment": 42.12528031828666,
+        "unadmitted_span_of_known_way": 36.23629524969904
+      }
+    },
+    {
+      "route_key": "NCN:558",
+      "remaining_m": 2275.018211108013,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 11.365596592857312,
+        "direction_gate": 131.26739189255744,
+        "finite_endpoint_or_alignment": 62.55090423144958,
+        "no_admitted_source_correspondence": 2068.3084792334494,
+        "unadmitted_span_of_known_way": 1.5258391576991912
+      }
+    },
+    {
+      "route_key": "NCN:559",
+      "remaining_m": 513.2359147719216,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 6.694775898628224,
+        "direction_gate": 386.41826711039846,
+        "finite_endpoint_or_alignment": 51.611561594145435,
+        "no_admitted_source_correspondence": 68.51131016874858
+      }
+    },
+    {
+      "route_key": "NCN:56",
+      "remaining_m": 8927.6883476551,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 545.378355430978,
+        "finite_endpoint_or_alignment": 654.9911526886527,
+        "direction_gate": 1897.0036829604576,
+        "no_admitted_source_correspondence": 5072.936463496336,
+        "unadmitted_span_of_known_way": 757.3786927985317
+      }
+    },
+    {
+      "route_key": "NCN:562",
+      "remaining_m": 2280.3405236392723,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 139.9637248718714,
+        "direction_gate": 715.4413883131185,
+        "finite_endpoint_or_alignment": 166.0998312854032,
+        "no_admitted_source_correspondence": 1258.8355791688766
+      }
+    },
+    {
+      "route_key": "NCN:563",
+      "remaining_m": 2068.0862911664644,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 113.46887717051831,
+        "ambiguous_target_correspondence": 10.306959239615683,
+        "no_admitted_source_correspondence": 1272.9770747099237,
+        "direction_gate": 329.52314447121375,
+        "deferred_binding_withheld": 70.18438240669595,
+        "unadmitted_span_of_known_way": 271.62585315463093
+      }
+    },
+    {
+      "route_key": "NCN:566",
+      "remaining_m": 1100.815604821197,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 67.56243087436496,
+        "finite_endpoint_or_alignment": 97.9442826107366,
+        "direction_gate": 794.7462042503744,
+        "no_admitted_source_correspondence": 129.2317740951932,
+        "unadmitted_span_of_known_way": 11.330912990525832
+      }
+    },
+    {
+      "route_key": "NCN:568",
+      "remaining_m": 2598.3103403774253,
+      "historical_region_remaining_m": {
+        "direction_gate": 546.0239944426659,
+        "ambiguous_target_correspondence": 67.95480661262255,
+        "no_admitted_source_correspondence": 1687.74960379871,
+        "finite_endpoint_or_alignment": 119.6375640547133,
+        "unadmitted_span_of_known_way": 176.94437146871292
+      }
+    },
+    {
+      "route_key": "NCN:57",
+      "remaining_m": 3084.05262597441,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 87.91140563318316,
+        "direction_gate": 1767.5424075621117,
+        "unadmitted_span_of_known_way": 347.02180708909674,
+        "no_admitted_source_correspondence": 574.989512580549,
+        "finite_endpoint_or_alignment": 306.5874929202634
+      }
+    },
+    {
+      "route_key": "NCN:573",
+      "remaining_m": 1254.8494883362976,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 7.851729175982037,
+        "direction_gate": 583.4077957381049,
+        "finite_endpoint_or_alignment": 80.77595176698858,
+        "no_admitted_source_correspondence": 563.6771751700318,
+        "unadmitted_span_of_known_way": 19.136836485187477
+      }
+    },
+    {
+      "route_key": "NCN:574",
+      "remaining_m": 324.16702178899845,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2.017975843014857,
+        "direction_gate": 164.89697674607962,
+        "finite_endpoint_or_alignment": 58.000438555741916,
+        "no_admitted_source_correspondence": 99.25163064416176
+      }
+    },
+    {
+      "route_key": "NCN:6",
+      "remaining_m": 65780.15383539398,
+      "historical_region_remaining_m": {
+        "direction_gate": 19265.564525751415,
+        "finite_endpoint_or_alignment": 3406.368454858535,
+        "ambiguous_target_correspondence": 4746.902206678293,
+        "no_admitted_source_correspondence": 34730.47637379266,
+        "unadmitted_span_of_known_way": 3305.3720600541074,
+        "deferred_binding_withheld": 325.470213738856
+      }
+    },
+    {
+      "route_key": "NCN:60",
+      "remaining_m": 703.4705603938511,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 49.34056754730981,
+        "direction_gate": 79.9348725702886,
+        "ambiguous_target_correspondence": 70.29227052794973,
+        "no_admitted_source_correspondence": 503.9028497469357
+      }
+    },
+    {
+      "route_key": "NCN:601",
+      "remaining_m": 596.0305209505372,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 144.62250645094633,
+        "finite_endpoint_or_alignment": 83.93592376531221,
+        "ambiguous_target_correspondence": 120.48858693022231,
+        "direction_gate": 203.98551335380253,
+        "unadmitted_span_of_known_way": 42.99799045025351
+      }
+    },
+    {
+      "route_key": "NCN:604",
+      "remaining_m": 207.2566877577745,
+      "historical_region_remaining_m": {
+        "direction_gate": 157.73876304362582,
+        "ambiguous_target_correspondence": 5.0459848918223855,
+        "finite_endpoint_or_alignment": 38.33031358678387,
+        "no_admitted_source_correspondence": 2.8911902946408325,
+        "unadmitted_span_of_known_way": 3.2504359409012324
+      }
+    },
+    {
+      "route_key": "NCN:606",
+      "remaining_m": 2369.800165812392,
+      "historical_region_remaining_m": {
+        "unadmitted_span_of_known_way": 443.93747079836385,
+        "no_admitted_source_correspondence": 1821.8116244387115,
+        "ambiguous_target_correspondence": 4.777628162410892,
+        "finite_endpoint_or_alignment": 83.4418160771614,
+        "direction_gate": 15.831626335743831
+      }
+    },
+    {
+      "route_key": "NCN:61",
+      "remaining_m": 4468.500401892612,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 131.53733368045803,
+        "direction_gate": 1559.050218684459,
+        "finite_endpoint_or_alignment": 289.95050719304686,
+        "no_admitted_source_correspondence": 2125.237817127494,
+        "unadmitted_span_of_known_way": 362.72452511398
+      }
+    },
+    {
+      "route_key": "NCN:62",
+      "remaining_m": 38388.847847736986,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 4287.5983059010905,
+        "finite_endpoint_or_alignment": 1726.0645544011963,
+        "unadmitted_span_of_known_way": 3626.393051698195,
+        "no_admitted_source_correspondence": 21489.14804135824,
+        "direction_gate": 7259.643893905559
+      }
+    },
+    {
+      "route_key": "NCN:622",
+      "remaining_m": 3281.7257458224367,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 64.92583363731035,
+        "finite_endpoint_or_alignment": 290.2738011971757,
+        "no_admitted_source_correspondence": 1479.0059179700327,
+        "direction_gate": 1329.8085942449543,
+        "unadmitted_span_of_known_way": 117.71159877296398
+      }
+    },
+    {
+      "route_key": "NCN:627",
+      "remaining_m": 2530.525489567362,
+      "historical_region_remaining_m": {
+        "direction_gate": 1466.61470692554,
+        "finite_endpoint_or_alignment": 156.2751655399886,
+        "ambiguous_target_correspondence": 30.490007807192775,
+        "unadmitted_span_of_known_way": 367.7657806601545,
+        "no_admitted_source_correspondence": 509.3798286344832
+      }
+    },
+    {
+      "route_key": "NCN:63",
+      "remaining_m": 8003.087202569216,
+      "historical_region_remaining_m": {
+        "direction_gate": 3090.237530893101,
+        "ambiguous_target_correspondence": 218.09149573510828,
+        "no_admitted_source_correspondence": 3105.0378806466097,
+        "finite_endpoint_or_alignment": 724.1151051855801,
+        "unadmitted_span_of_known_way": 865.6051901058491
+      }
+    },
+    {
+      "route_key": "NCN:636",
+      "remaining_m": 339.8692306713329,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 4.8514574867705615,
+        "direction_gate": 287.0093540075206,
+        "finite_endpoint_or_alignment": 12.287027444146826,
+        "no_admitted_source_correspondence": 35.72139173289448
+      }
+    },
+    {
+      "route_key": "NCN:637",
+      "remaining_m": 1341.0065563730718,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 19.799457350230938,
+        "direction_gate": 1019.7233195454503,
+        "finite_endpoint_or_alignment": 102.25798505120252,
+        "no_admitted_source_correspondence": 121.39684118311601,
+        "unadmitted_span_of_known_way": 77.82895324307111
+      }
+    },
+    {
+      "route_key": "NCN:64",
+      "remaining_m": 4297.374145268829,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1170.9933263331911,
+        "finite_endpoint_or_alignment": 266.8963567667105,
+        "direction_gate": 1570.8861890142712,
+        "no_admitted_source_correspondence": 1169.6993743789692,
+        "unadmitted_span_of_known_way": 118.89889877567988
+      }
+    },
+    {
+      "route_key": "NCN:645",
+      "remaining_m": 289.5599526400661,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 13.251295777558164,
+        "direction_gate": 189.32914617110987,
+        "finite_endpoint_or_alignment": 21.435512688367048,
+        "no_admitted_source_correspondence": 14.585314402401684,
+        "deferred_binding_withheld": 50.95868360062774
+      }
+    },
+    {
+      "route_key": "NCN:647",
+      "remaining_m": 3726.3642592532883,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 6.140841581290526,
+        "direction_gate": 192.03850498617552,
+        "no_admitted_source_correspondence": 3383.5780831704587,
+        "finite_endpoint_or_alignment": 42.562595147337234,
+        "unadmitted_span_of_known_way": 102.04423436802476
+      }
+    },
+    {
+      "route_key": "NCN:648",
+      "remaining_m": 857.3367552893649,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 5.202695556799325,
+        "unadmitted_span_of_known_way": 301.7484982716462,
+        "no_admitted_source_correspondence": 327.69909321194655,
+        "direction_gate": 202.4485598719781,
+        "finite_endpoint_or_alignment": 20.237908376994092
+      }
+    },
+    {
+      "route_key": "NCN:65",
+      "remaining_m": 12492.582699217573,
+      "historical_region_remaining_m": {
+        "direction_gate": 4193.509895346086,
+        "finite_endpoint_or_alignment": 603.4004795226546,
+        "ambiguous_target_correspondence": 406.06782822316177,
+        "deferred_binding_withheld": 294.19128274275545,
+        "no_admitted_source_correspondence": 6282.700789199435,
+        "unadmitted_span_of_known_way": 712.7124240489957
+      }
+    },
+    {
+      "route_key": "NCN:656",
+      "remaining_m": 506.61971797382023,
+      "historical_region_remaining_m": {
+        "direction_gate": 419.46887736650814,
+        "finite_endpoint_or_alignment": 22.379099408079583,
+        "ambiguous_target_correspondence": 64.77174119922935
+      }
+    },
+    {
+      "route_key": "NCN:657",
+      "remaining_m": 543.776997429485,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 6.087010121408613,
+        "finite_endpoint_or_alignment": 37.703982559903544,
+        "direction_gate": 499.98600474817
+      }
+    },
+    {
+      "route_key": "NCN:658",
+      "remaining_m": 272.8264155222997,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 3.736747077517977,
+        "finite_endpoint_or_alignment": 89.74805708287603,
+        "direction_gate": 145.99886684952207,
+        "no_admitted_source_correspondence": 12.475658014653444,
+        "unadmitted_span_of_known_way": 20.867086497729815
+      }
+    },
+    {
+      "route_key": "NCN:66",
+      "remaining_m": 18432.209275698136,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 536.6380544291725,
+        "finite_endpoint_or_alignment": 1168.7968918379179,
+        "no_admitted_source_correspondence": 10106.677604457434,
+        "direction_gate": 5734.318794390888,
+        "unadmitted_span_of_known_way": 885.7779305688883
+      }
+    },
+    {
+      "route_key": "NCN:665",
+      "remaining_m": 1436.4972754303983,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 17.21498511308036,
+        "direction_gate": 461.3809989765684,
+        "finite_endpoint_or_alignment": 74.24876561472676,
+        "no_admitted_source_correspondence": 747.2457987495079,
+        "unadmitted_span_of_known_way": 136.40672697651428
+      }
+    },
+    {
+      "route_key": "NCN:668",
+      "remaining_m": 1465.732226540649,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 415.7931027316253,
+        "ambiguous_target_correspondence": 13.767434129162584,
+        "finite_endpoint_or_alignment": 227.05776595184327,
+        "direction_gate": 704.9567079286736,
+        "unadmitted_span_of_known_way": 104.15721563873741
+      }
+    },
+    {
+      "route_key": "NCN:67",
+      "remaining_m": 18822.921325803567,
+      "historical_region_remaining_m": {
+        "direction_gate": 6174.075912782922,
+        "finite_endpoint_or_alignment": 960.5344024169381,
+        "ambiguous_target_correspondence": 495.5690993679494,
+        "no_admitted_source_correspondence": 9312.562216604698,
+        "deferred_binding_withheld": 594.56041293356,
+        "unadmitted_span_of_known_way": 1285.619281346407
+      }
+    },
+    {
+      "route_key": "NCN:672",
+      "remaining_m": 123.8570491938034,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.8670386683092308,
+        "direction_gate": 118.75597321629236,
+        "finite_endpoint_or_alignment": 3.2340373092014474
+      }
+    },
+    {
+      "route_key": "NCN:674",
+      "remaining_m": 627.8827166261889,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 14.150596237200432,
+        "unadmitted_span_of_known_way": 241.382184378567,
+        "no_admitted_source_correspondence": 73.40931859421542,
+        "finite_endpoint_or_alignment": 29.512426068295365,
+        "direction_gate": 269.4281913479102
+      }
+    },
+    {
+      "route_key": "NCN:677",
+      "remaining_m": 1565.5598932677208,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 108.09186065854539,
+        "direction_gate": 601.1373672838725,
+        "ambiguous_target_correspondence": 12.782921284206973,
+        "no_admitted_source_correspondence": 633.8104824640429,
+        "unadmitted_span_of_known_way": 209.7372615770523
+      }
+    },
+    {
+      "route_key": "NCN:68",
+      "remaining_m": 17732.35727379673,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 245.52397176763463,
+        "direction_gate": 8659.052566725142,
+        "finite_endpoint_or_alignment": 624.9231577186337,
+        "no_admitted_source_correspondence": 7015.116042878875,
+        "unadmitted_span_of_known_way": 1187.7415346986
+      }
+    },
+    {
+      "route_key": "NCN:680",
+      "remaining_m": 1036.2986626837226,
+      "historical_region_remaining_m": {
+        "direction_gate": 144.01187490932486,
+        "finite_endpoint_or_alignment": 55.71754141900807,
+        "ambiguous_target_correspondence": 10.837376204148525,
+        "no_admitted_source_correspondence": 778.8947276094854,
+        "unadmitted_span_of_known_way": 46.83714254175463
+      }
+    },
+    {
+      "route_key": "NCN:685",
+      "remaining_m": 371.10855711277355,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 70.1799058656934,
+        "direction_gate": 162.59787003240717,
+        "finite_endpoint_or_alignment": 53.41520276569161,
+        "no_admitted_source_correspondence": 84.91557844898124
+      }
+    },
+    {
+      "route_key": "NCN:688",
+      "remaining_m": 2810.7678552981724,
+      "historical_region_remaining_m": {
+        "direction_gate": 1768.5151283032583,
+        "ambiguous_target_correspondence": 17.277369929746815,
+        "finite_endpoint_or_alignment": 160.17300948568925,
+        "no_admitted_source_correspondence": 784.6450171263953,
+        "deferred_binding_withheld": 80.1573304475001
+      }
+    },
+    {
+      "route_key": "NCN:69",
+      "remaining_m": 7515.516867692829,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 2865.555468154903,
+        "ambiguous_target_correspondence": 1297.732972830345,
+        "finite_endpoint_or_alignment": 435.3269628784723,
+        "direction_gate": 2310.884937152842,
+        "unadmitted_span_of_known_way": 606.0165266762643
+      }
+    },
+    {
+      "route_key": "NCN:696",
+      "remaining_m": 259.64033666446,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 16.696457922295817,
+        "direction_gate": 186.9360683149265,
+        "finite_endpoint_or_alignment": 9.837637029842242,
+        "no_admitted_source_correspondence": 46.17017339739473
+      }
+    },
+    {
+      "route_key": "NCN:697",
+      "remaining_m": 116.7173421026005,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 0.7397653844739971,
+        "finite_endpoint_or_alignment": 15.52999787074778,
+        "direction_gate": 100.44757884737832
+      }
+    },
+    {
+      "route_key": "NCN:699",
+      "remaining_m": 818.6822910746714,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 42.325651663335435,
+        "direction_gate": 154.3330022387604,
+        "unadmitted_span_of_known_way": 80.69879271834695,
+        "no_admitted_source_correspondence": 540.6358484711158,
+        "ambiguous_target_correspondence": 0.6889959831126404
+      }
+    },
+    {
+      "route_key": "NCN:7",
+      "remaining_m": 49088.09928596764,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 2080.0386934149615,
+        "direction_gate": 20298.247003382225,
+        "finite_endpoint_or_alignment": 1883.8936196256295,
+        "unadmitted_span_of_known_way": 5149.992600410319,
+        "no_admitted_source_correspondence": 19560.874337963323,
+        "deferred_binding_withheld": 115.05303107686478
+      }
+    },
+    {
+      "route_key": "NCN:70",
+      "remaining_m": 7923.427921726711,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 359.09317573327405,
+        "direction_gate": 4086.3034914377217,
+        "finite_endpoint_or_alignment": 372.5261596208968,
+        "no_admitted_source_correspondence": 2111.8764128175444,
+        "deferred_binding_withheld": 169.00779116393568,
+        "unadmitted_span_of_known_way": 824.620890607779
+      }
+    },
+    {
+      "route_key": "NCN:700",
+      "remaining_m": 3782.6656047867123,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 292.29029258755054,
+        "direction_gate": 1227.406452934075,
+        "ambiguous_target_correspondence": 76.21720595270342,
+        "no_admitted_source_correspondence": 1962.9117100704718,
+        "unadmitted_span_of_known_way": 223.8399432319027
+      }
+    },
+    {
+      "route_key": "NCN:71",
+      "remaining_m": 2904.594359218604,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 27.45800233269282,
+        "direction_gate": 1729.4375533942557,
+        "finite_endpoint_or_alignment": 91.00832988296752,
+        "no_admitted_source_correspondence": 946.667589712171,
+        "unadmitted_span_of_known_way": 57.161880494018284,
+        "deferred_binding_withheld": 52.86100340248917
+      }
+    },
+    {
+      "route_key": "NCN:715",
+      "remaining_m": 869.1760860448977,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 90.36697777013505,
+        "direction_gate": 553.7073550229145,
+        "finite_endpoint_or_alignment": 67.72199531207023,
+        "unadmitted_span_of_known_way": 45.471927982226084,
+        "no_admitted_source_correspondence": 60.48284368902383,
+        "deferred_binding_withheld": 51.42498626852658
+      }
+    },
+    {
+      "route_key": "NCN:72",
+      "remaining_m": 13003.99156426496,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 6595.278524276972,
+        "ambiguous_target_correspondence": 230.0194829936018,
+        "direction_gate": 4774.8035160781465,
+        "finite_endpoint_or_alignment": 617.3037520155759,
+        "unadmitted_span_of_known_way": 786.5862887799614
+      }
+    },
+    {
+      "route_key": "NCN:725",
+      "remaining_m": 2709.6763640449526,
+      "historical_region_remaining_m": {
+        "finite_endpoint_or_alignment": 261.52900367468686,
+        "no_admitted_source_correspondence": 751.435696633247,
+        "direction_gate": 592.6143052216706,
+        "ambiguous_target_correspondence": 884.8680387135138,
+        "unadmitted_span_of_known_way": 219.22931979322533
+      }
+    },
+    {
+      "route_key": "NCN:73",
+      "remaining_m": 2471.6154846576287,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 313.6504812074992,
+        "finite_endpoint_or_alignment": 99.30871980166427,
+        "direction_gate": 942.4341188154831,
+        "no_admitted_source_correspondence": 999.5643335505741,
+        "unadmitted_span_of_known_way": 116.6578311005936
+      }
+    },
+    {
+      "route_key": "NCN:74",
+      "remaining_m": 2870.1794275233096,
+      "historical_region_remaining_m": {
+        "direction_gate": 1597.5150206064684,
+        "ambiguous_target_correspondence": 92.57479285175906,
+        "finite_endpoint_or_alignment": 353.1777263634004,
+        "no_admitted_source_correspondence": 816.8444796188938,
+        "unadmitted_span_of_known_way": 10.067408081099478
+      }
+    },
+    {
+      "route_key": "NCN:75",
+      "remaining_m": 8732.507106053059,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 450.91140310780827,
+        "direction_gate": 4272.760127489913,
+        "finite_endpoint_or_alignment": 633.0522810849541,
+        "no_admitted_source_correspondence": 2590.7547784390613,
+        "unadmitted_span_of_known_way": 660.5015327114614,
+        "deferred_binding_withheld": 124.52698306372073
+      }
+    },
+    {
+      "route_key": "NCN:753",
+      "remaining_m": 1713.4592774847076,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 15.602187086781088,
+        "direction_gate": 305.4351534218835,
+        "finite_endpoint_or_alignment": 94.64423743482276,
+        "unadmitted_span_of_known_way": 227.43623483505,
+        "no_admitted_source_correspondence": 1070.341464584616
+      }
+    },
+    {
+      "route_key": "NCN:754",
+      "remaining_m": 1742.0301570483905,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 188.4991738888319,
+        "direction_gate": 1318.9320740282044,
+        "finite_endpoint_or_alignment": 66.19834488287117,
+        "no_admitted_source_correspondence": 168.40056424847748
+      }
+    },
+    {
+      "route_key": "NCN:755",
+      "remaining_m": 141.16866126637723,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 9.991168162797916,
+        "direction_gate": 113.6469335430016,
+        "finite_endpoint_or_alignment": 17.53055956057701
+      }
+    },
+    {
+      "route_key": "NCN:756",
+      "remaining_m": 1700.2981963287568,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 51.967708454263274,
+        "finite_endpoint_or_alignment": 227.36399072590842,
+        "no_admitted_source_correspondence": 394.5761453637404,
+        "direction_gate": 963.2404844115703,
+        "unadmitted_span_of_known_way": 63.14986737327309
+      }
+    },
+    {
+      "route_key": "NCN:76",
+      "remaining_m": 11282.000440369242,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 560.390326032599,
+        "direction_gate": 4794.820437116613,
+        "finite_endpoint_or_alignment": 611.4789583519251,
+        "no_admitted_source_correspondence": 4119.124264593059,
+        "unadmitted_span_of_known_way": 803.4694228826467,
+        "deferred_binding_withheld": 392.71703132546304
+      }
+    },
+    {
+      "route_key": "NCN:764",
+      "remaining_m": 3242.5237519568905,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 2524.5893535277373,
+        "finite_endpoint_or_alignment": 167.5439300993851,
+        "direction_gate": 227.90240504304595,
+        "ambiguous_target_correspondence": 322.4880632798738
+      }
+    },
+    {
+      "route_key": "NCN:765",
+      "remaining_m": 1034.9080680333266,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 165.24055590892831,
+        "direction_gate": 493.1380996291205,
+        "finite_endpoint_or_alignment": 94.07136447781842,
+        "no_admitted_source_correspondence": 69.76984953087738,
+        "deferred_binding_withheld": 76.01991369292527,
+        "unadmitted_span_of_known_way": 136.66828479365543
+      }
+    },
+    {
+      "route_key": "NCN:766",
+      "remaining_m": 2241.623175888774,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1530.3658652300508,
+        "unadmitted_span_of_known_way": 47.425662204742196,
+        "finite_endpoint_or_alignment": 75.56530671318518,
+        "direction_gate": 513.8475009638048,
+        "no_admitted_source_correspondence": 74.41884077212616
+      }
+    },
+    {
+      "route_key": "NCN:767",
+      "remaining_m": 324.859113886682,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 8.222788759938286,
+        "direction_gate": 286.66041428842635,
+        "no_admitted_source_correspondence": 17.32541175811455,
+        "finite_endpoint_or_alignment": 12.650499015377953
+      }
+    },
+    {
+      "route_key": "NCN:768",
+      "remaining_m": 507.6600924534248,
+      "historical_region_remaining_m": {
+        "direction_gate": 272.3453287936284,
+        "ambiguous_target_correspondence": 6.406782984046898,
+        "unadmitted_span_of_known_way": 109.05347728735762,
+        "no_admitted_source_correspondence": 86.28030787075734,
+        "finite_endpoint_or_alignment": 33.574195370003274
+      }
+    },
+    {
+      "route_key": "NCN:77",
+      "remaining_m": 3317.064308384299,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 40.10562173590396,
+        "direction_gate": 1879.800790884018,
+        "no_admitted_source_correspondence": 507.6040665436983,
+        "finite_endpoint_or_alignment": 121.33426017002489,
+        "unadmitted_span_of_known_way": 768.2195690506479
+      }
+    },
+    {
+      "route_key": "NCN:775",
+      "remaining_m": 1864.2279894897313,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 408.8905597633139,
+        "direction_gate": 265.9455232218735,
+        "finite_endpoint_or_alignment": 66.75150022438078,
+        "no_admitted_source_correspondence": 1030.8958883180223,
+        "unadmitted_span_of_known_way": 91.74451796150343
+      }
+    },
+    {
+      "route_key": "NCN:777",
+      "remaining_m": 349.95136136090616,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 60.088169125484896,
+        "direction_gate": 283.238587333351,
+        "finite_endpoint_or_alignment": 6.624604902068351
+      }
+    },
+    {
+      "route_key": "NCN:78",
+      "remaining_m": 7163.982394641989,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 294.341073453171,
+        "finite_endpoint_or_alignment": 464.560911713668,
+        "direction_gate": 3270.0244500203344,
+        "unadmitted_span_of_known_way": 888.0571239854555,
+        "no_admitted_source_correspondence": 2204.512295534238,
+        "deferred_binding_withheld": 42.48653993510723
+      }
+    },
+    {
+      "route_key": "NCN:8",
+      "remaining_m": 26631.158503792933,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 376.8224689729445,
+        "direction_gate": 10413.765664499664,
+        "no_admitted_source_correspondence": 11781.787873997819,
+        "unadmitted_span_of_known_way": 2558.210438256163,
+        "finite_endpoint_or_alignment": 1329.2876638132052,
+        "deferred_binding_withheld": 171.2843941110392
+      }
+    },
+    {
+      "route_key": "NCN:81",
+      "remaining_m": 15220.230633056866,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 6444.328716041175,
+        "unadmitted_span_of_known_way": 2082.773713735776,
+        "ambiguous_target_correspondence": 500.527233986832,
+        "direction_gate": 4936.685851545209,
+        "finite_endpoint_or_alignment": 796.117261851608,
+        "deferred_binding_withheld": 459.79785587826336
+      }
+    },
+    {
+      "route_key": "NCN:810",
+      "remaining_m": 1923.5823061191668,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 114.31544226313301,
+        "direction_gate": 651.2077530727408,
+        "finite_endpoint_or_alignment": 132.67816742484413,
+        "no_admitted_source_correspondence": 997.0616670663732,
+        "unadmitted_span_of_known_way": 28.319276292073837
+      }
+    },
+    {
+      "route_key": "NCN:82",
+      "remaining_m": 13288.689550993386,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 4998.658239195221,
+        "direction_gate": 5227.191185851698,
+        "finite_endpoint_or_alignment": 467.00518381116103,
+        "ambiguous_target_correspondence": 124.30947682276562,
+        "unadmitted_span_of_known_way": 2471.52546531253
+      }
+    },
+    {
+      "route_key": "NCN:822",
+      "remaining_m": 1022.6848823363417,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 824.7632746429878,
+        "ambiguous_target_correspondence": 1.2265464765453287,
+        "direction_gate": 63.9544111668978,
+        "finite_endpoint_or_alignment": 47.21847278670131,
+        "unadmitted_span_of_known_way": 85.52217726320922
+      }
+    },
+    {
+      "route_key": "NCN:825",
+      "remaining_m": 4040.3566208158445,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 26.54425633176863,
+        "direction_gate": 2457.5379669588815,
+        "no_admitted_source_correspondence": 976.4810826431822,
+        "unadmitted_span_of_known_way": 416.8013586117683,
+        "finite_endpoint_or_alignment": 121.17513951007075,
+        "deferred_binding_withheld": 41.81681676016754
+      }
+    },
+    {
+      "route_key": "NCN:83",
+      "remaining_m": 1076.509181086522,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 18.138253360219906,
+        "direction_gate": 949.5384229931626,
+        "finite_endpoint_or_alignment": 42.39680182459953,
+        "unadmitted_span_of_known_way": 45.53861988486854,
+        "no_admitted_source_correspondence": 20.89708302366824
+      }
+    },
+    {
+      "route_key": "NCN:84",
+      "remaining_m": 838.75998344877,
+      "historical_region_remaining_m": {
+        "direction_gate": 349.7945800114191,
+        "ambiguous_target_correspondence": 245.66523092958786,
+        "unadmitted_span_of_known_way": 70.00161061486402,
+        "finite_endpoint_or_alignment": 68.46744073321734,
+        "no_admitted_source_correspondence": 104.83112115968066
+      }
+    },
+    {
+      "route_key": "NCN:85",
+      "remaining_m": 366.287114125999,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 8.307397874995766,
+        "direction_gate": 152.4054413050459,
+        "unadmitted_span_of_known_way": 55.3368786771384,
+        "no_admitted_source_correspondence": 129.4926580723042,
+        "finite_endpoint_or_alignment": 20.7447381345149
+      }
+    },
+    {
+      "route_key": "NCN:862",
+      "remaining_m": 1225.0100836109002,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 68.56953449846492,
+        "finite_endpoint_or_alignment": 105.6768478751747,
+        "direction_gate": 234.17530692128304,
+        "no_admitted_source_correspondence": 694.8845895603225,
+        "unadmitted_span_of_known_way": 121.70380475565459
+      }
+    },
+    {
+      "route_key": "NCN:88",
+      "remaining_m": 5710.4685539213,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 104.33061828427512,
+        "direction_gate": 1307.6105157249863,
+        "finite_endpoint_or_alignment": 459.78749243803907,
+        "deferred_binding_withheld": 258.9058545190007,
+        "no_admitted_source_correspondence": 3284.281388137357,
+        "unadmitted_span_of_known_way": 295.5526848176383
+      }
+    },
+    {
+      "route_key": "NCN:881",
+      "remaining_m": 5281.444916965998,
+      "historical_region_remaining_m": {
+        "unadmitted_span_of_known_way": 421.86618323512266,
+        "finite_endpoint_or_alignment": 216.3149563946873,
+        "ambiguous_target_correspondence": 16.90965842302978,
+        "no_admitted_source_correspondence": 3836.503083387445,
+        "direction_gate": 789.8510355257149
+      }
+    },
+    {
+      "route_key": "NCN:883",
+      "remaining_m": 252.17463622607988,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 36.61700931872274,
+        "finite_endpoint_or_alignment": 1.1208880956504093,
+        "direction_gate": 46.037379620455084,
+        "unadmitted_span_of_known_way": 85.27627275559107,
+        "no_admitted_source_correspondence": 83.12308643566038
+      }
+    },
+    {
+      "route_key": "NCN:884",
+      "remaining_m": 468.9424345412849,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 0.9076889894327731,
+        "finite_endpoint_or_alignment": 34.05896513941814,
+        "direction_gate": 74.29476475877877,
+        "no_admitted_source_correspondence": 312.34486234819326,
+        "unadmitted_span_of_known_way": 47.33615330546172
+      }
+    },
+    {
+      "route_key": "NCN:885",
+      "remaining_m": 1412.199590374273,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 24.62055679026617,
+        "finite_endpoint_or_alignment": 177.45758608029402,
+        "direction_gate": 770.3289162641842,
+        "unadmitted_span_of_known_way": 133.57917269363793,
+        "no_admitted_source_correspondence": 257.26286022694984,
+        "deferred_binding_withheld": 48.95049831894019
+      }
+    },
+    {
+      "route_key": "NCN:887",
+      "remaining_m": 1846.8273821819073,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 280.64979640477594,
+        "finite_endpoint_or_alignment": 148.31554750306236,
+        "direction_gate": 836.1820331630307,
+        "no_admitted_source_correspondence": 380.707911196643,
+        "unadmitted_span_of_known_way": 200.97209385075993
+      }
+    },
+    {
+      "route_key": "NCN:888",
+      "remaining_m": 156.37432819559453,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.5768190562683033,
+        "direction_gate": 144.337509129969,
+        "finite_endpoint_or_alignment": 9.925408694357982,
+        "no_admitted_source_correspondence": 0.5345913149987263
+      }
+    },
+    {
+      "route_key": "NCN:9",
+      "remaining_m": 5510.337585721581,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 334.196405773671,
+        "direction_gate": 1765.4949927678156,
+        "finite_endpoint_or_alignment": 267.6056015641376,
+        "no_admitted_source_correspondence": 1786.8123930794134,
+        "unadmitted_span_of_known_way": 1356.2281925365392
+      }
+    },
+    {
+      "route_key": "NCN:91",
+      "remaining_m": 2878.7461525998588,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 2264.339402137086,
+        "unadmitted_span_of_known_way": 108.798674011293,
+        "ambiguous_target_correspondence": 22.137763562183668,
+        "direction_gate": 365.4394173736879,
+        "finite_endpoint_or_alignment": 118.03089543163216
+      }
+    },
+    {
+      "route_key": "NCN:92",
+      "remaining_m": 14256.90658641032,
+      "historical_region_remaining_m": {
+        "direction_gate": 508.23685868420495,
+        "finite_endpoint_or_alignment": 267.28912728430834,
+        "ambiguous_target_correspondence": 55.09663845038834,
+        "no_admitted_source_correspondence": 11993.924197929458,
+        "unadmitted_span_of_known_way": 1432.3597640619541
+      }
+    },
+    {
+      "route_key": "NCN:93",
+      "remaining_m": 12928.523518929218,
+      "historical_region_remaining_m": {
+        "unadmitted_span_of_known_way": 860.4007254562414,
+        "direction_gate": 2444.821807817309,
+        "ambiguous_target_correspondence": 229.87743732818262,
+        "no_admitted_source_correspondence": 8697.120496718599,
+        "finite_endpoint_or_alignment": 696.3030515046149
+      }
+    },
+    {
+      "route_key": "NCN:94",
+      "remaining_m": 1598.4760558513487,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 86.83321816269374,
+        "direction_gate": 352.04646382796324,
+        "no_admitted_source_correspondence": 772.5011225838213,
+        "finite_endpoint_or_alignment": 153.4286184174996,
+        "unadmitted_span_of_known_way": 233.66663285937005
+      }
+    },
+    {
+      "route_key": "NCN:96",
+      "remaining_m": 1762.7704075223658,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 20.111113301300573,
+        "direction_gate": 541.1372805960066,
+        "no_admitted_source_correspondence": 680.5835509222433,
+        "finite_endpoint_or_alignment": 228.17607395601146,
+        "unadmitted_span_of_known_way": 292.7623887468035
+      }
+    },
+    {
+      "route_key": "NCN:97",
+      "remaining_m": 716.3758322427667,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 475.66322047369454,
+        "finite_endpoint_or_alignment": 30.91627689675212,
+        "unadmitted_span_of_known_way": 41.70826828494038,
+        "direction_gate": 159.83482956979725,
+        "ambiguous_target_correspondence": 8.253237017582268
+      }
+    },
+    {
+      "route_key": "NCN:99",
+      "remaining_m": 11801.561938485265,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 11202.357874398467,
+        "ambiguous_target_correspondence": 46.519962353314405,
+        "direction_gate": 295.0585334335879,
+        "finite_endpoint_or_alignment": 71.01798681866522,
+        "unadmitted_span_of_known_way": 186.60758148122258
+      }
+    },
+    {
+      "route_key": "RCN:70",
+      "remaining_m": 16.198928191452904,
+      "historical_region_remaining_m": {
+        "ambiguous_target_correspondence": 1.0196906294058021,
+        "direction_gate": 15.17923755877569,
+        "finite_endpoint_or_alignment": 7.647867257022656e-15
+      }
+    },
+    {
+      "route_key": "RCN:90",
+      "remaining_m": 2657.5882854842557,
+      "historical_region_remaining_m": {
+        "no_admitted_source_correspondence": 2646.5535783408495,
+        "ambiguous_target_correspondence": 0.14221297137181566,
+        "finite_endpoint_or_alignment": 10.006292813807553,
+        "direction_gate": 0.8862013582270958
+      }
+    },
+    {
+      "route_key": "RCN:92",
+      "remaining_m": 158.66115561313723,
+      "historical_region_remaining_m": {
+        "unadmitted_span_of_known_way": 53.74234196285729,
+        "ambiguous_target_correspondence": 7.105427357601002e-15,
+        "no_admitted_source_correspondence": 96.23723647841086,
+        "finite_endpoint_or_alignment": 8.30125414870249,
+        "direction_gate": 0.38032302316656175
+      }
+    }
+  ],
+  "limitations": [
+    "Current semantic causes not reclassified.",
+    "Physical absence and eligibility not inferred.",
+    "No candidate database generated.",
+    "Millimetre-scale network and micrometre-scale route-local numerical residues remain explicit."
+  ]
+}
