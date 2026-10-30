@@ -200,6 +200,15 @@ class PinnedTests(unittest.TestCase):
         import hashlib
         for path, pin in PINS.items(): self.assertEqual(hashlib.sha256((ROOT/path).read_bytes()).hexdigest(), pin)
 
+    def test_all_preserved_hash_conventions(self):
+        from scripts.ncn_source_compatibility import digest
+        receipt = json.loads((ROOT/'docs/data-trials/ncn-post-seam-source-provenance-20261030.json').read_text())
+        for sample in receipt['samples']:
+            result = self.results[sample['osm_way_id']]
+            self.assertEqual(result['source']['consumer_normalized_geometry_sha256'], sample['current_source_geometry_sha256'])
+            self.assertEqual(result['reference']['consumer_normalized_geometry_sha256'], sample['walking_consumer_source_geometry_sha256'])
+            self.assertEqual(result['reference']['ordered_geometry_sha256'], sample['walking_ordered_coordinate_sha256'])
+
     def test_pin_tamper_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); first = next(iter(PINS)); (root/first).parent.mkdir(parents=True)

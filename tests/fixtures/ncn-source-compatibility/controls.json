@@ -686,7 +686,12 @@
     {
       "context": {
         "admitted_ncn_source_present": true,
-        "binding_count": 32
+        "binding_count": 32,
+        "source_section_key": "59306268:4:27",
+        "witness_source_window_m": [
+          2.3745290501574208,
+          6.08240710865381
+        ]
       },
       "key": "59306268",
       "mode": "on_foot",
@@ -962,7 +967,10 @@
           ]
         ],
         "feature_id": "59306268",
-        "modes": null,
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
         "node_ids": null,
         "provenance": {
           "capture_or_extraction_date": null,
@@ -1280,7 +1288,12 @@
     {
       "context": {
         "admitted_ncn_source_present": true,
-        "binding_count": 27
+        "binding_count": 27,
+        "source_section_key": "31252441:47:55",
+        "witness_source_window_m": [
+          3.2276419724314396,
+          7.613829870460352
+        ]
       },
       "key": "31252441",
       "mode": "on_foot",
@@ -1778,7 +1791,10 @@
           ]
         ],
         "feature_id": "31252441",
-        "modes": null,
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
         "node_ids": null,
         "provenance": {
           "capture_or_extraction_date": null,
@@ -1865,6 +1881,7 @@
       "context": {
         "admitted_ncn_source_present": true,
         "binding_count": 58,
+        "source_section_key": "44807950",
         "target_edges_metric": [
           [
             [
@@ -1887,7 +1904,11 @@
             ]
           ]
         ],
-        "witness_source_section_key": "44807950"
+        "witness_source_section_key": "44807950",
+        "witness_source_window_m": [
+          2.8834142337607873,
+          49.567804449628284
+        ]
       },
       "key": "44807950",
       "mode": "on_foot",
@@ -2241,7 +2262,10 @@
           ]
         ],
         "feature_id": "44807950",
-        "modes": null,
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
         "node_ids": null,
         "provenance": {
           "capture_or_extraction_date": null,

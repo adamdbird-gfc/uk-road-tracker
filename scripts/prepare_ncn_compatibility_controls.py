@@ -57,6 +57,11 @@ def prepare(root):
                   'mode': 'on_foot', 'route_evidence': row, 'context': context}
         if way == '1289002662':
             record['histories'] = provenance['osm_histories']; context['proposal_note'] = captured['way']['tags']['note']
+        if way in ('59306268', '31252441', '44807950'):
+            witness = witnesses['genuine_hairpin_negative'] if way == '44807950' else next(w for w in witnesses['ordinary_candidates'] if w['source_way_id'] == way)
+            source['modes'] = witness['admitted_modes']
+            context['source_section_key'] = witness['source_section_key']
+            context['witness_source_window_m'] = witness['source_window_m']
         if way == '44807950':
             context['target_edges_metric'] = witnesses['genuine_hairpin_negative']['target_edges_metric']
             context['witness_source_section_key'] = witnesses['genuine_hairpin_negative']['source_section_key']

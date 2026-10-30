@@ -147,7 +147,7 @@ def history_evidence(source, reference, histories):
     states, not a claim about which versions an old importer actually consumed.
     """
     unavailable = {'status': 'unavailable', 'limitation': 'Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.'}
-    if not histories or source.get('provider') != 'osm' or source.get('feature_id') != reference.get('feature_id'):
+    if not histories or source.get('provider') != 'osm' or str(source.get('feature_id')) != str(reference.get('feature_id')):
         return unavailable
     ways = [e for h in histories for e in h['elements'] if e.get('type') == 'way'
             and str(e['id']) == str(source.get('feature_id')) and e.get('version')]
@@ -157,6 +157,10 @@ def history_evidence(source, reference, histories):
                 'limitation': 'Stable membership not proved; topology, access and route identity require review.'}
     nodes = list(next(iter(chains)))
     a, b = source['coordinates'], reference['coordinates']
+    for feature in (source, reference):
+        supplied = feature.get('node_ids')
+        if supplied is not None and supplied not in (nodes, nodes[::-1]):
+            return {'status': 'changed_or_unproved_way_membership', 'limitation': 'Supplied node chain disagrees with stable historical chain.'}
     if len(a) != len(nodes) or len(b) != len(nodes):
         return unavailable
     # Historical chain may be reverse-oriented relative to either snapshot.
@@ -281,6 +285,8 @@ def compare(record):
         reasons.append('deferred_mask_retained')
     if context.get('proposal_note'):
         reasons.append('proposal_note_does_not_confirm_route_membership')
+    if history['status'] == 'changed_or_unproved_way_membership':
+        reasons.append('historical_way_membership_requires_review')
     if context.get('target_coordinates'):
         alignment = context_result['target_alignment']
         if (alignment['max_nearest_segment_undirected_angle_deg'] or 0) > ANGLE_DEG:
@@ -292,7 +298,10 @@ def compare(record):
             'identity_equal': same, 'geometry': {**m, 'exact_equal': exact, 'reversed_equal': reverse,
                 'vertex_count_difference': len(b)-len(a),
                 'changed_coordinate_indices_in_best_orientation': [i for i, (x, y) in enumerate(zip(a, b[::-1] if m['best_endpoint_orientation'] == 'reversed' else b)) if x != y] if len(a) == len(b) else None,
-                'node_chain_comparison': node_status},
+                'node_chain_comparison': node_status,
+                'shared_node_ids': sorted(set(nodes_a) & set(nodes_b)) if nodes_a is not None and nodes_b is not None else None,
+                'removed_node_ids': sorted(set(nodes_a)-set(nodes_b)) if nodes_a is not None and nodes_b is not None else None,
+                'added_node_ids': sorted(set(nodes_b)-set(nodes_a)) if nodes_a is not None and nodes_b is not None else None},
             'history': history, 'classification': classification,
             'route_identity': {'requested': route, 'status': route_state, 'evidence': record.get('route_evidence')},
             'mode_access': {'requested': mode, **access}, 'context': context_result,

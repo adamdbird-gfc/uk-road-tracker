@@ -1,0 +1,141 @@
+{
+  "available_existing_python_java_files_checked_against_main": 319,
+  "baseline_main": "8dea49475e287bfefad7fa93b75e201e94a44230",
+  "bounded_summary": {
+    "classification_counts": {
+      "exact_match": 7,
+      "incompatible_or_unsupported_correspondence": 1,
+      "same_identified_feature_with_documented_geometry_update": 1
+    },
+    "comparison_count": 9,
+    "documented_geometry_update_count": 1,
+    "examined_feature_count": 9,
+    "original_import_feature_versions_recovered": 0,
+    "review_queue": [
+      "23385711",
+      "1289002662",
+      "1050757473",
+      "4471747",
+      "44807950",
+      "159311690",
+      "deal-private-parallel"
+    ]
+  },
+  "checkpoints": {
+    "implementation_and_tests": "7cff4e37a3a5db58a0f54178fea6a953484151e2",
+    "independent_remote_file_reads": true,
+    "scope": "3fe422c2b145221adbf3fc6c5aea51e0a50f8482"
+  },
+  "date": "2026-10-30",
+  "delivery": {
+    "apk_build_or_distribution": false,
+    "catalogue_generation_or_publication": false,
+    "ci_pass_claimed": false,
+    "development_pr_merge_authorised": false,
+    "firebase_changes": false,
+    "installed_apk_live_backend_and_active_reference_versions": "not queried; unknown, not inferred from source baseline",
+    "issues_closed": 0,
+    "journey_changes": false,
+    "national_assessment": false,
+    "render_deployment": false,
+    "runtime_changes": false
+  },
+  "existing_code_mismatches": [],
+  "implementation_fixture_sha256": {
+    "scripts/ncn_source_compatibility.py": "54ad0631db592a810b619065056e8fc91e812d55ab242e3e8c2834a2d59b236d",
+    "scripts/prepare_ncn_compatibility_controls.py": "9308463c0117da7b510939eb24c7feb1ca9c59d0977a9e8b05066a05a320eadd",
+    "scripts/test_ncn_source_compatibility.py": "e3089359518a44dc7714ad565d3c61967b5692a14fc413e0cb16d7f7d66b8901",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e",
+    "tests/fixtures/ncn-source-compatibility/deal-private-control.json": "d1495882af2d292790754191659581a6fd11732d335bc4415666334ee13e877d"
+  },
+  "input_provenance": {
+    "baseline": "8dea49475e287bfefad7fa93b75e201e94a44230",
+    "controls": "Eight PR243/244 source ways plus one pinned private parallel negative; no journeys or national assessment",
+    "pinned_input_sha256": {
+      "docs/data-trials/national-mapping-source-evidence-20261030.json": "a277ee02df110f21dfe6161924047c4d1e95b3adc87b8ff0156501759c824316",
+      "docs/data-trials/ncn-post-seam-source-provenance-20261030.json": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+      "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+      "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+      "tests/fixtures/ncn-source-compatibility/deal-private-control.json": "d1495882af2d292790754191659581a6fd11732d335bc4415666334ee13e877d"
+    },
+    "reconstruction_policy": "Matching normalized geometry hash reconstructs shape only; never original feature/node versions or missing node chains."
+  },
+  "integration_244": {
+    "expected_and_verified_head": "bfe31f6715780908bd8b2a24ad6ea982ba2e79cf",
+    "file_count": 4,
+    "independent_merged_blob_reads": true,
+    "merged_and_independent_main_read": "8dea49475e287bfefad7fa93b75e201e94a44230",
+    "method": "GitHub merge commit with expected head and skip ci/skip render",
+    "network_numerical_residual_m": 0.0054038506514915,
+    "pre_merge_main": "668292c306dd937c3a424164ea9c75f934751401",
+    "remaining_unique_m": 1289324.4061127824,
+    "route_local_numerical_residual_m": 9.284354746341705e-06,
+    "verified_blobs": {
+      "docs/data-trials/ncn-post-seam-reconciliation-20261030.json": "d02ff9919b020259e324b37b0e612dd7f5c27fd4",
+      "docs/data-trials/ncn-post-seam-source-provenance-20261030.json": "33a8528d10eecf8eb5fe8bf67968b948fab2cc97",
+      "docs/data-trials/reconcile_ncn_post_seam_20261030.py": "27e64fd0ab8b76928a0a5362544aa4f06a6e8874",
+      "docs/ncn-post-seam-reconciliation-20261030.md": "6052739641600cecea3174faa5164aa580eb3ffa"
+    },
+    "verified_open_and_targets_main": true
+  },
+  "new_completion_credit": false,
+  "new_recoverable_km_estimate": null,
+  "previously_unrecognised_eligible_correspondence": false,
+  "reproduction": {
+    "fixture_regenerated_byte_identical": true,
+    "results_regenerated_byte_identical": true
+  },
+  "results_file": "docs/data-trials/ncn-source-compatibility-20261030.json",
+  "results_sha256": "e413e2dde46014ba6a4429a7b86d6e3d7f54b0a42ba67daaba30d96bf0414f75",
+  "schema_version": 1,
+  "source_audit_git_blob_sha1": {
+    "android-prototype/app/src/main/java/com/roadprints/capture/NcnMatcher.java": "0f12009e4032968044c22674bf17899f94e1fb8a",
+    "api.py": "936f43b91fb15872ed5e76ce89ed4836c1936cab",
+    "cycling_path_evidence.py": "c47f719a88c707655caaddcd47d12794f8e9c965",
+    "matched_path_evidence.py": "3e86749fbe62e0c56a975765b6dfb294318d14e6",
+    "pedestrian_reference.py": "f98e5b871c8fa968911283aac4a6ab4a064f841b",
+    "scripts/build_ncn_national.py": "61ed5ea61cc27a2b5bd6675eceeb373ca804aba0",
+    "scripts/ncn_binding_attainability.py": "cd4215b91b25828a1943d592ff9f243961fd959a",
+    "scripts/ncn_trial/association_bundle.py": "a812be69d35c1c5782d3e58f9bccd0a70b70deaa",
+    "scripts/ncn_trial/open_completion.py": "191bbac2ed348fc5c3b31c330891ba041fbbd807",
+    "scripts/ncn_trial/source_capture.py": "0f98efb70ac8d5c2b5e33f3dbe9ce01291418c19",
+    "scripts/ncn_trial/test_open_completion.py": "9feb4e3555f5ad71057dae459ec0b904a8268b85",
+    "scripts/test_ncn_binding_attainability.py": "6701b32c46349f316f7cf0e215b4a636a733a966",
+    "tests/test_cycling_path_evidence.py": "8a246dfabd8c859514b613c9684a7577ac191265",
+    "tests/test_matched_path_evidence.py": "67e42b82a6f636135b69696219906f075bb3f809",
+    "tests/test_pedestrian_matching.py": "94e654e0303909f448dd3238f71c1afaabec1356"
+  },
+  "tests": {
+    "diagnostic": {
+      "command": "python -m unittest scripts.test_ncn_source_compatibility -v",
+      "passed": 34
+    },
+    "existing_offsets_and_finite_controls": {
+      "command": "PYTHONPATH=/tmp/ncn-diag-deps python -m unittest scripts.test_ncn_binding_attainability scripts.ncn_trial.test_open_completion -q",
+      "passed": 18
+    },
+    "existing_walking_cycling_evidence": {
+      "command": "PYTHONPATH=/tmp/ncn-diag-deps:/workspace/scratch/edcacb1336ba/mapping-audit python -m unittest discover -s regressions/tests -p 'test_*path_evidence.py' -q",
+      "passed": 15
+    },
+    "final_errors": 0,
+    "final_failures": 0,
+    "final_skips": 0,
+    "initial_optional_suite_import_errors": "Missing test-only shapely/psycopg/osmium and sparse test helper resolved; final specified suites all pass. No test was skipped or behavioural failure suppressed.",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "test_only_dependencies": {
+      "certifi": "2026.10.23",
+      "charset_normalizer": "3.5.2",
+      "idna": "3.20",
+      "numpy": "2.5.4",
+      "osmium": "4.3.2",
+      "psycopg": "3.3.6",
+      "psycopg-binary": "3.3.6",
+      "requests": "2.34.2",
+      "shapely": "2.2.0",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0"
+    },
+    "total_final_passed": 67
+  }
+}
