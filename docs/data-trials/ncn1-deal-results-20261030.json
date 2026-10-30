@@ -1,0 +1,1075 @@
+{
+  "admitted_full_way_intervals_m": [
+    [
+      0.0,
+      273.52677777274164
+    ],
+    [
+      835.1270332469487,
+      841.4926548476633
+    ]
+  ],
+  "assertions": "Pins, exact target identity/length, source sections, full-way offsets, held edges, both diagnostics, existing target coverage and unchanged seam/deferred status checked.",
+  "baseline": "da7bf0e0739ed260b15fe332c37b6e160832f594",
+  "compatibility_results": [
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "exact_match",
+      "context": {
+        "admitted_ncn_source_present": true,
+        "binding_count": 10,
+        "preserved_sample_observation": {
+          "bicycle_relation_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ],
+          "min_sampled_target_distance_m": 7.0625438345954334,
+          "tags": {
+            "bicycle": "designated",
+            "foot": "designated",
+            "highway": "cycleway",
+            "lit": "no",
+            "segregated": "no",
+            "smoothness": "good",
+            "surface": "asphalt"
+          },
+          "target_sample_count": 101,
+          "target_samples_within_10m": 25,
+          "way": "4471747"
+        },
+        "target_alignment": {
+          "best_endpoint_orientation": "forward",
+          "compatible_extents_screen": false,
+          "endpoint_directed_angle_deg": 1.2224064975824422,
+          "endpoint_displacement_m": 223.58944492418973,
+          "length_ratio": 0.5886910704441402,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 57.912826459267734,
+          "max_sampled_bidirectional_distance_m": 223.58944492418973,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 495.6526584958975,
+          "sample_count": 277,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            4.396893912338933,
+            1.5084528465051839,
+            2.0036570432955383,
+            2.9471889033450025,
+            5.506400580590271,
+            1.7048888142358476,
+            1.3265176785380735,
+            0.1185278027868821,
+            0.030553641830940084,
+            0.09291628095886101,
+            0.7586598165738513,
+            4.275882523773616,
+            57.912826459267734
+          ],
+          "source_length_m": 841.9571544068956,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": [],
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.0,
+        "endpoint_displacement_m": 0.0,
+        "exact_equal": true,
+        "length_ratio": 1.0,
+        "max_corresponding_vertex_displacement_m": 0.0,
+        "max_nearest_segment_undirected_angle_deg": 8.537736462515939e-07,
+        "max_sampled_bidirectional_distance_m": 1.4212589332811784e-14,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 841.9571544068956,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 352,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0,
+          0.0,
+          0.0,
+          8.537736462515939e-07,
+          8.537736462515939e-07,
+          0.0
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 841.9571544068956,
+        "vertex_count_difference": 0,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": true,
+      "key": "4471747",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "supported",
+        "requested": "on_foot",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "route_memberships"
+        ],
+        "modes": [
+          "on_foot"
+        ],
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "checksum_semantics": "regional downloaded PBF file SHA256; Kent retains both receipts, edition not resolved",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null,
+          "source_version_label": "latest is not an OSM feature version or immutable snapshot",
+          "walking_load_receipts": [
+            {
+              "checksum": "bd54187eaa7856a229e3fdba8a943b911c30bdc2d2dd7088ffe29c5620dc1afe",
+              "dataset_key": "uk-kent_walkable_network_v1",
+              "loaded_at": "2026-09-23T00:34:49.429362Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215163,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            },
+            {
+              "checksum": "dbb8b5c9ca5adf6603f203f6154bf99e484c2937109792adc0891ea7d4f9623a",
+              "dataset_key": "kent_walkable_network_v1",
+              "loaded_at": "2026-09-22T14:54:58.975507Z",
+              "retrieved_at": "2026-10-30T12:49:04.501088Z",
+              "row_count": 215140,
+              "source_key": "osm_geofabrik_kent",
+              "source_version": "latest"
+            }
+          ]
+        },
+        "provider": "osm",
+        "route_memberships": null,
+        "tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "surface": "asphalt"
+        },
+        "version": null
+      },
+      "review_reasons": [
+        "mode_access_unknown_do_not_infer_cycling_from_walking",
+        "target_direction_evidence_exceeds_unchanged_15_degree_gate",
+        "target_extent_not_proved_by_full_way_identity"
+      ],
+      "route_identity": {
+        "evidence": {
+          "bounded_osm_memberships": [
+            {
+              "id": "75880",
+              "network": "ncn",
+              "ref": "1"
+            }
+          ],
+          "retained_ncn_row": {
+            "binding_count": 10,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:1",
+            "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+          }
+        },
+        "requested": "NCN:1",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    },
+    {
+      "attribution_eligibility": "not_assessed_no_entitlement",
+      "classification": "incompatible_or_unsupported_correspondence",
+      "context": {
+        "target_alignment": {
+          "best_endpoint_orientation": "forward",
+          "compatible_extents_screen": false,
+          "endpoint_directed_angle_deg": 1.2224064975824422,
+          "endpoint_displacement_m": 223.58944492418973,
+          "length_ratio": 0.5886910704441402,
+          "max_corresponding_vertex_displacement_m": null,
+          "max_nearest_segment_undirected_angle_deg": 57.912826459267734,
+          "max_sampled_bidirectional_distance_m": 223.58944492418973,
+          "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+          "reference_length_m": 495.6526584958975,
+          "sample_count": 277,
+          "sample_spacing_max_m": 5,
+          "segment_angle_differences_deg": [
+            4.396893912338933,
+            1.5084528465051839,
+            2.0036570432955383,
+            2.9471889033450025,
+            5.506400580590271,
+            1.7048888142358476,
+            1.3265176785380735,
+            0.1185278027868821,
+            0.030553641830940084,
+            0.09291628095886101,
+            0.7586598165738513,
+            4.275882523773616,
+            57.912826459267734
+          ],
+          "source_length_m": 841.9571544068956,
+          "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+        },
+        "target_coordinates": [
+          [
+            1.4037210386,
+            51.1948382751
+          ],
+          [
+            1.404342062,
+            51.1903977902
+          ]
+        ]
+      },
+      "geometry": {
+        "added_node_ids": null,
+        "best_endpoint_orientation": "forward",
+        "changed_coordinate_indices_in_best_orientation": null,
+        "compatible_extents_screen": true,
+        "endpoint_directed_angle_deg": 0.17975039073389437,
+        "endpoint_displacement_m": 2.660763914735376,
+        "exact_equal": false,
+        "length_ratio": 0.9989633267983473,
+        "max_corresponding_vertex_displacement_m": null,
+        "max_nearest_segment_undirected_angle_deg": 58.82987303755601,
+        "max_sampled_bidirectional_distance_m": 4.554073756893226,
+        "node_chain_comparison": "unknown",
+        "projection": "local equirectangular; radius 6371008.8 m; first source vertex origin",
+        "reference_length_m": 841.0843199879822,
+        "removed_node_ids": null,
+        "reversed_equal": false,
+        "sample_count": 349,
+        "sample_spacing_max_m": 5,
+        "segment_angle_differences_deg": [
+          0.3707643600363363,
+          3.5353247029275243,
+          0.023214813116431362,
+          0.11954532179753057,
+          2.439666355448075,
+          0.38883156657484136,
+          0.5078074621551038,
+          0.40746893828549063,
+          0.25384151696467744,
+          0.46179072923501807,
+          0.15838676171607086,
+          5.192929102061961,
+          58.82987303755601
+        ],
+        "shared_node_ids": null,
+        "source_length_m": 841.9571544068956,
+        "vertex_count_difference": -4,
+        "warning": "Sampled distances and nearest-segment headings are descriptive, not continuous Hausdorff bounds or finite admission proof."
+      },
+      "history": {
+        "limitation": "Original chains/history unavailable; geometry alone cannot distinguish node movement, changed membership or independent redraw.",
+        "status": "unavailable"
+      },
+      "identity_equal": false,
+      "key": "deal-private-parallel",
+      "manual_review": true,
+      "mode_access": {
+        "reference": "incompatible",
+        "requested": "cycling",
+        "source": "unknown"
+      },
+      "new_completion_credit": false,
+      "reference": {
+        "consumer_normalized_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+        "feature_id": "77611523",
+        "missing_metadata": [
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": [
+          913199043,
+          913199039,
+          913199035,
+          913199037,
+          913199036,
+          913199038,
+          913199041,
+          913199042,
+          913199034,
+          913199040
+        ],
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "feature_timestamp": "2026-01-29T17:30:24Z",
+          "input_file_sha256": "00ed20d1a729c2da039984c42c19752c233acfc0c0c9faed8e6fe1d34a14b5fb",
+          "source": "PR243 frozen OSM bbox NCN1_unadmitted_Deal.osm",
+          "transformation": "select way77611523; retain ordered nd chain and node lon/lat, tags and way version; strip usernames"
+        },
+        "provider": "osm",
+        "route_memberships": [],
+        "tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "version": 8
+      },
+      "review_reasons": [
+        "different_feature_identity_or_incompatible_mode_access",
+        "mode_access_unknown_do_not_infer_cycling_from_walking",
+        "target_direction_evidence_exceeds_unchanged_15_degree_gate",
+        "target_extent_not_proved_by_full_way_identity"
+      ],
+      "route_identity": {
+        "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+        "requested": "NCN:1",
+        "status": "supported_bounded_membership"
+      },
+      "source": {
+        "consumer_normalized_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "feature_id": "4471747",
+        "missing_metadata": [
+          "version",
+          "node_ids",
+          "modes"
+        ],
+        "modes": null,
+        "node_ids": null,
+        "normalization_policy": "OSM seven decimals; adjacent duplicate removal; lexicographic forward/reverse minimum; compact JSON SHA256",
+        "ordered_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "provenance": {
+          "capture_or_extraction_date": null,
+          "current_capture_sha256": "97596c6a225e0355550948d2feaebf218b89e7c32ae93ad5bae3dbe22aa8ac51",
+          "current_capture_url": "https://api.openstreetmap.org/api/0.6/way/4471747/full.json",
+          "current_observed_node_chain": [
+            978142881,
+            978142882,
+            1181940231,
+            978142883,
+            1181941130,
+            978142884,
+            978142885,
+            978142886,
+            978142887,
+            978142888,
+            978142889,
+            978142890,
+            27411872,
+            913199040
+          ],
+          "current_observed_tags": null,
+          "current_observed_way_timestamp": "2023-10-14T20:30:22Z",
+          "current_observed_way_version": 11,
+          "geometry_origin": "observed geometry matches preserved NCN source hash",
+          "input_receipt_sha256": "839d7c8cf1097a9fbb321529faac63384a63d662698246e1596680a08e0c763f",
+          "original_feature_version": null,
+          "snapshot_id": null
+        },
+        "provider": "osm",
+        "route_memberships": [
+          "NCN:1"
+        ],
+        "tags": null,
+        "version": null
+      }
+    }
+  ],
+  "decision": "Existing exclusion justified under current whole-edge source-admission rules; no correction authorised or supported.",
+  "demonstrated_eligible_route_local_recovery_m": 0.0,
+  "demonstrated_eligible_unique_network_recovery_m": 0.0,
+  "edge_results": [
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 124.02718723968547,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.2497710656997851,
+            124.01083125573051
+          ],
+          "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+          "target_m": [
+            0.0,
+            123.7035651479665
+          ]
+        },
+        {
+          "source_local_m": [
+            0.24974341181233056,
+            0.24977262310093853
+          ],
+          "target": "open-edge:a4d1d2a80d0233087e951863f993d064aa38e84d27aebd9a6916f8df2eb06473",
+          "target_m": [
+            0.0,
+            2.9197717736951495e-05
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 4.079171087532988,
+      "edge_index": 0,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        978142881,
+        978142882
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        0.0,
+        124.01083125573051
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 16.945696968888008,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            16.92914145349121
+          ],
+          "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+          "target_m": [
+            123.70356514796651,
+            140.59677802946277
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 1.4008723598597952,
+      "edge_index": 1,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        978142882,
+        1181940231
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        124.01083125573051,
+        140.9399727092217
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 21.2696879972423,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            21.263411057620228
+          ],
+          "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+          "target_m": [
+            140.59677802946277,
+            161.85946385152255
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 1.8594159752776311,
+      "edge_index": 2,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        1181940231,
+        978142883
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        140.9399727092217,
+        162.20338376684194
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 31.19162314000777,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            18.33333372240209,
+            31.185339356012506
+          ],
+          "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+          "target_m": [
+            0.0,
+            12.846413203457399
+          ]
+        },
+        {
+          "source_local_m": [
+            0.0,
+            18.581556191552167
+          ],
+          "target": "open-edge:a433f9a66a046f9387aef4ec430c72f40fc6390690390bebb8086a4d84a23bf0",
+          "target_m": [
+            161.85946385152255,
+            180.44056263776415
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 2.734655113956336,
+      "edge_index": 3,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        978142883,
+        1181941130
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        162.20338376684194,
+        193.38872312285446
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 26.468982045501846,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            26.465288197676074
+          ],
+          "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+          "target_m": [
+            12.846413203457404,
+            39.30982039812807
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 5.108091735602723,
+      "edge_index": 4,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        1181941130,
+        978142884
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        193.38872312285446,
+        219.85401132053053
+      ]
+    },
+    {
+      "admission_metric_finite_pair": [
+        4.148678020783312,
+        53.69063276960545,
+        0.0,
+        49.51998708475528
+      ],
+      "admission_metric_length_m": 53.69063276960544,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            3.5580846721666917
+          ],
+          "target": "open-edge:6ffb00f2454d3c97134c3ca25180a4a734d8b8d09e15c3a4b4213028aa260be7",
+          "target_m": [
+            39.30982039812806,
+            42.863526559622784
+          ]
+        },
+        {
+          "source_local_m": [
+            4.0642926355040006,
+            53.672766452211114
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            0.0,
+            49.5895593920258
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": true,
+        "source_full_way_m": [
+          223.91830395603452,
+          273.52677777274164
+        ],
+        "target_m": [
+          0.0,
+          49.5895593920258
+        ]
+      },
+      "completion_undirected_angle_deg": 1.5822316395475788,
+      "edge_index": 5,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        978142884,
+        978142885
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        219.85401132053053,
+        273.52677777274164
+      ]
+    },
+    {
+      "admission_metric_finite_pair": [
+        0.0,
+        62.81228507706753,
+        49.519987084755286,
+        112.31540970846679
+      ],
+      "admission_metric_length_m": 81.49308830132584,
+      "admitted": false,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            81.4616390930493
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            49.589559392025805,
+            131.03239271218774
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": false,
+        "source_full_way_m": [
+          273.52677777274164,
+          354.98841686579095
+        ],
+        "target_m": [
+          49.589559392025805,
+          131.03239271218774
+        ]
+      },
+      "completion_undirected_angle_deg": 1.2311614453540756,
+      "edge_index": 6,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": false,
+      "nodes": [
+        978142885,
+        978142886
+      ],
+      "outside_approved_10m_corridor_m": 18.68080322376776,
+      "source_full_way_m": [
+        273.52677777274164,
+        354.98841686579095
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 82.89355056142496,
+      "admitted": false,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            82.84411260985993
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            131.03239271218771,
+            213.87635255336855
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": false,
+        "source_full_way_m": [
+          354.98841686579095,
+          437.83252947565086
+        ],
+        "target_m": [
+          131.03239271218771,
+          213.87635255336855
+        ]
+      },
+      "completion_undirected_angle_deg": 0.11003327353584888,
+      "edge_index": 7,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": false,
+      "nodes": [
+        978142886,
+        978142887
+      ],
+      "outside_approved_10m_corridor_m": 82.89355056142496,
+      "source_full_way_m": [
+        354.98841686579095,
+        437.83252947565086
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 157.64148220749746,
+      "admitted": false,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            157.5426644212676
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            213.87635255336858,
+            371.41899766943845
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": false,
+        "source_full_way_m": [
+          437.83252947565086,
+          595.3751938969185
+        ],
+        "target_m": [
+          213.87635255336858,
+          371.41899766943845
+        ]
+      },
+      "completion_undirected_angle_deg": 0.02836453504337233,
+      "edge_index": 8,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": false,
+      "nodes": [
+        978142887,
+        978142888
+      ],
+      "outside_approved_10m_corridor_m": 157.64148220749746,
+      "source_full_way_m": [
+        437.83252947565086,
+        595.3751938969185
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 89.02727983817353,
+      "admitted": false,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            88.97030368395411
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            371.4189976694384,
+            460.3892005220646
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": false,
+        "source_full_way_m": [
+          595.3751938969185,
+          684.3454975808727
+        ],
+        "target_m": [
+          371.4189976694384,
+          460.3892005220646
+        ]
+      },
+      "completion_undirected_angle_deg": 0.08626068015352706,
+      "edge_index": 9,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": false,
+      "nodes": [
+        978142888,
+        978142889
+      ],
+      "outside_approved_10m_corridor_m": 89.02727983817353,
+      "source_full_way_m": [
+        595.3751938969185,
+        684.3454975808727
+      ]
+    },
+    {
+      "admission_metric_finite_pair": [
+        28.363924963720176,
+        35.145625391817006,
+        488.9146245942887,
+        495.6957290798703
+      ],
+      "admission_metric_length_m": 150.90055760387952,
+      "admitted": false,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            35.00158808292383
+          ],
+          "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+          "target_m": [
+            460.3892005220646,
+            495.388143301922
+          ]
+        },
+        {
+          "source_local_m": [
+            34.973206995755405,
+            150.78153566607608
+          ],
+          "target": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b",
+          "target_m": [
+            0.0,
+            115.79462765684286
+          ]
+        }
+      ],
+      "completion_finite_candidate": {
+        "admitted_source": false,
+        "source_full_way_m": [
+          684.3454975808727,
+          719.3470856637965
+        ],
+        "target_m": [
+          460.3892005220646,
+          495.388143301922
+        ]
+      },
+      "completion_undirected_angle_deg": 0.7044241042847365,
+      "edge_index": 10,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": false,
+      "nodes": [
+        978142889,
+        978142890
+      ],
+      "outside_approved_10m_corridor_m": 28.36392496241386,
+      "source_full_way_m": [
+        684.3454975808727,
+        835.1270332469487
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 3.814771861081883,
+      "admitted": true,
+      "competing_completion_candidates": [
+        {
+          "source_local_m": [
+            0.0,
+            3.814259469450162
+          ],
+          "target": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b",
+          "target_m": [
+            115.79462765684286,
+            119.60054532246994
+          ]
+        }
+      ],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 3.9669473722056954,
+      "edge_index": 11,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        978142890,
+        27411872
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        835.1270332469487,
+        838.9412927163988
+      ]
+    },
+    {
+      "admission_metric_finite_pair": null,
+      "admission_metric_length_m": 2.6752275781102437,
+      "admitted": true,
+      "competing_completion_candidates": [],
+      "completion_finite_candidate": null,
+      "completion_undirected_angle_deg": 55.452428270274304,
+      "edge_index": 12,
+      "inside_excluded_corridor_m": null,
+      "necessary_whole_edge_approved_corridor_gate": true,
+      "nodes": [
+        27411872,
+        913199040
+      ],
+      "outside_approved_10m_corridor_m": 0.0,
+      "source_full_way_m": [
+        838.9412927163988,
+        841.4926548476633
+      ]
+    }
+  ],
+  "existing_target_coverage_m": [
+    [
+      0.0,
+      49.58955939202579
+    ]
+  ],
+  "fixture_sha256": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+  "geometric_only_target_candidate_union_m": [
+    [
+      0.0,
+      49.5895593920258
+    ],
+    [
+      49.589559392025805,
+      213.87635255336855
+    ],
+    [
+      213.87635255336858,
+      495.388143301922
+    ]
+  ],
+  "geometric_only_unadmitted_upper_bound_m": 445.7985839098962,
+  "geometric_only_unique_network_upper_bound_m": null,
+  "historical_known_way_residual_length_m": 445.7985839098962,
+  "historical_known_way_residual_m": [
+    49.5895593920258,
+    495.388143301922
+  ],
+  "nearest_deferred_section_to_target_m": 96304.36356730695,
+  "new_bindings": 0,
+  "new_completion_credit": false,
+  "other_route_changes": 0,
+  "post_seam_target_additions": [],
+  "private_negative": {
+    "admission_projection_min_distance_m": 10.553059470846744,
+    "completion_projection_min_distance_m": 9.78319156257058,
+    "eligible": false,
+    "feature_id": "77611523",
+    "geometric_only_completion_candidates": [
+      {
+        "edge_index": 3,
+        "source_local_m": [
+          1.4095379622310933,
+          11.476006994157002
+        ],
+        "target_m": [
+          0.0,
+          10.064181640224568
+        ]
+      }
+    ],
+    "reason": "Different identity, private access, no confirmed NCN membership; proximity transfers no entitlement.",
+    "tags": {
+      "access": "private",
+      "highway": "residential",
+      "lanes": "1",
+      "maxspeed": "20 mph",
+      "name": "Wellington Parade",
+      "surface": "gravel"
+    }
+  },
+  "projection_origin": [
+    -1.3437774293553804,
+    54.4699892643778
+  ],
+  "schema_version": 1,
+  "source_positions_m": [
+    0.0,
+    124.01083125573051,
+    140.9399727092217,
+    162.20338376684194,
+    193.38872312285446,
+    219.85401132053053,
+    273.52677777274164,
+    354.98841686579095,
+    437.83252947565086,
+    595.3751938969185,
+    684.3454975808727,
+    835.1270332469487,
+    838.9412927163988,
+    841.4926548476633
+  ],
+  "source_way": "4471747",
+  "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188",
+  "unadmitted_full_way_interval_m": [
+    273.52677777274164,
+    835.1270332469487
+  ],
+  "unique_network_limit": "No pinned target-to-network mappings materialized; no exact nonzero network increment claimed."
+}
