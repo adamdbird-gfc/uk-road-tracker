@@ -59,6 +59,18 @@ public class CaptureRecoveryIntegrationTest {
         assertEquals(android.app.Service.START_STICKY,service.onStartCommand(null,0,1));
         assertTrue(CaptureService.isActive(service));
     }
+    @Test public void trainCheckpointReplaysGpsDwellAndNullIntentKeepsEvidence()throws Exception {
+        JSONArray rows=new JSONArray();long first=System.currentTimeMillis()-360000;
+        for(int i=0;i<=12;i++)rows.put(new JSONArray().put(0).put(0).put(5).put(first+i*30000L).put(0));
+        JSONObject state=new JSONObject().put("journey_id","train-restart").put("mode","train")
+                .put("started_at",Instant.ofEpochMilli(first).toString()).put("automatic_capture",true).put("points",rows);
+        restore(state);
+        assertEquals(13,points().size());assertTrue(field("gpsStillness").getBoolean(service));
+        assertEquals(first,field("stationarySince").getLong(service));
+        assertEquals(android.app.Service.START_STICKY,service.onStartCommand(null,0,1));
+        assertEquals("train-restart",field("journeyId").get(service));
+        assertEquals(first,points().get(0).getTime());
+    }
     @Test public void samplingGapIsPreservedAsUnresolvedEvidenceRatherThanInventingGeometry()throws Exception {
         JSONObject state=snapshot("gap",0,3);state.getJSONArray("points").getJSONArray(3).put(0,.02).put(3,start+600000);
         restore(state);assertEquals(4,points().size());assertEquals(start+600000,points().get(3).getTime());

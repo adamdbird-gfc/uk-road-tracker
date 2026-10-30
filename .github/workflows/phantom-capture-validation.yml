@@ -94,6 +94,20 @@ jobs:
             ip link set lo up
             exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
           ' _ "$gradle_path"
+      - name: Verify recovery partition tool and summarise Android XML results
+        run: |
+          python3 -m unittest scripts.test_review_capture_partition -q
+          python3 - <<'PY'
+          import pathlib,json,xml.etree.ElementTree as E
+          files=list(pathlib.Path('android-prototype/app/build/test-results').rglob('TEST-*.xml'))
+          assert files, 'Missing Android test results'
+          total={k:0 for k in ('tests','failures','errors','skipped')}
+          for path in files:
+              root=E.parse(path).getroot()
+              for key in total:total[key]+=int(root.attrib.get(key,0))
+          print(json.dumps(total,sort_keys=True))
+          assert total['failures']==total['errors']==total['skipped']==0,total
+          PY
       - name: Retain verification reports without APKs or credentials
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
