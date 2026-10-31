@@ -1,0 +1,19 @@
+{
+  "all_target_candidates_within_10_eq_m_of_held_source_in_bounded_fixture": true,
+  "complete_approved_target_edge_count": 31194,
+  "input_pins_sha256": "a706b3ce8c0307c5410954045e68d938ae7f2616dc8c6e32c29b48ca5b8d0641",
+  "interpretation": "The full original national snapshot has no excluded geometry in the held source corridor; the exact reviewed extent contains both bound target keys. GlobalID metadata differs between national snapshot and later catalogue extent; keys and authoritative geometry use the latter, pinned separately.",
+  "national_geometry_sha256": "331023ba1d8ca175471700b1bdb5d7828984d535792c0c54e7a4b465d48cf3f2",
+  "nearest_nonapproved_feature": [
+    [
+      19309,
+      251.27045818005837
+    ]
+  ],
+  "nonapproved_features_checked": 2533,
+  "original_ncn1_features_checked": 3761,
+  "pinned_target_count": 10,
+  "reviewed_open_extent_sha256": "8f82941728348889cd0200b33bfe9be3ef95429eaa20373732314298c591ae18",
+  "schema_version": 1,
+  "shared_target_vertex_complete_graph_degree": 2
+}

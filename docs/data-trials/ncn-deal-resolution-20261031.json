@@ -1,0 +1,542 @@
+{
+  "candidate_audit": {
+    "added_bindings": 6,
+    "all_existing_bindings_preserved": true,
+    "all_other_source_fields_tables_targets_lengths_network_mappings_preserved": true,
+    "all_rows_checked": 1376616,
+    "changed_rows": [
+      [
+        "paths",
+        "NCN:1",
+        "4471747"
+      ]
+    ],
+    "finite_anchor_checks": 30,
+    "maximum_eq_anchor_distance_m": 9.83213585822932,
+    "new_user_completion_credit": false
+  },
+  "distance_effect": {
+    "affected_network_edges": [
+      9584,
+      9585
+    ],
+    "affected_target_route_identities": 2,
+    "route_local_added_m": 561.593211566739,
+    "route_local_after_m": 614.9886886243919,
+    "route_local_before_m": 53.39547705765287,
+    "unique_network_added_m": 561.8887365344943,
+    "unique_network_after_m": 615.3125933358124,
+    "unique_network_before_m": 53.423856801318074
+  },
+  "edge_verdicts": [
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 4.409355333205398,
+      "approved_union_max_upper_bound_m": 8.639564776883114,
+      "approved_union_sampled_max_m": 8.589587056934576,
+      "correction_scope": "retained unchanged",
+      "edge_index": 0,
+      "finite_focus_max_m": 223.65051128689305,
+      "finite_focus_min_m": 99.893917590196,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142881,
+        978142882
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        -7.029694394126409,
+        2.507088871424673
+      ],
+      "source_local_length_m": 124.04470091227044,
+      "supporting_target_stations_m": [
+        -223.54000670039773,
+        -99.86245178698373
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 1.511661207127443,
+      "approved_union_max_upper_bound_m": 8.639438519610014,
+      "approved_union_sampled_max_m": 8.589587056934576,
+      "correction_scope": "retained unchanged",
+      "edge_index": 1,
+      "finite_focus_max_m": 99.893917590196,
+      "finite_focus_min_m": 82.94443708972503,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142882,
+        1181940231
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        2.507088871424673,
+        2.0599542766635
+      ],
+      "source_local_length_m": 16.949497309648688,
+      "supporting_target_stations_m": [
+        -99.86245178698373,
+        -82.9188532995326
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 2.0096681380203973,
+      "approved_union_max_upper_bound_m": 7.447509369040679,
+      "approved_union_sampled_max_m": 7.3975720721520215,
+      "correction_scope": "retained unchanged",
+      "edge_index": 2,
+      "finite_focus_max_m": 82.94443708972503,
+      "finite_focus_min_m": 61.722463668893305,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        1181940231,
+        978142883
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        2.0599542766635,
+        2.8059688129025164
+      ],
+      "source_local_length_m": 21.27328847456806,
+      "supporting_target_stations_m": [
+        -82.9188532995326,
+        -61.65864951796197
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 2.9556879154576086,
+      "approved_union_max_upper_bound_m": 7.397628397335443,
+      "approved_union_sampled_max_m": 7.347633963812104,
+      "correction_scope": "retained unchanged",
+      "edge_index": 3,
+      "finite_focus_max_m": 61.722463668893305,
+      "finite_focus_min_m": 30.82141307703661,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142883,
+        1181941130
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        2.8059688129025164,
+        4.41457430225007
+      ],
+      "source_local_length_m": 31.196526518563292,
+      "supporting_target_stations_m": [
+        -61.65864951796197,
+        -30.503623355189077
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 5.521750473054566,
+      "approved_union_max_upper_bound_m": 7.333928227805809,
+      "approved_union_sampled_max_m": 7.2839802346603015,
+      "correction_scope": "retained unchanged",
+      "edge_index": 4,
+      "finite_focus_max_m": 30.82141307703661,
+      "finite_focus_min_m": 8.106988137378696,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        1181941130,
+        978142884
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        4.41457430225007,
+        6.961847835045138
+      ],
+      "source_local_length_m": 26.47243636711881,
+      "supporting_target_stations_m": [
+        -30.503623355189077,
+        -4.154025924482928
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 1.7099950951381115,
+      "approved_union_max_upper_bound_m": 8.61428670248575,
+      "approved_union_sampled_max_m": 8.564286766437556,
+      "correction_scope": "retained unchanged",
+      "edge_index": 5,
+      "finite_focus_max_m": 8.564286766437556,
+      "finite_focus_min_m": 7.082706198221672,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142884,
+        978142885
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        6.961847835045138,
+        8.564286766437556
+      ],
+      "source_local_length_m": 53.69993131576034,
+      "supporting_target_stations_m": [
+        -4.154025924482928,
+        49.521991185475365
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 1.3305059580503444,
+      "approved_union_max_upper_bound_m": 10.506806467201491,
+      "approved_union_sampled_max_m": 10.456863069439937,
+      "correction_scope": "new exact correspondence",
+      "edge_index": 6,
+      "finite_focus_max_m": 10.456863069439937,
+      "finite_focus_min_m": 8.564286766437556,
+      "geometry_failure_only": true,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142885,
+        978142886
+      ],
+      "original_outside_10m_m": 18.68080322376776,
+      "original_reason": "unresolved_official_extent_edges; outside reviewed source spans and whole-edge 10 m corridor",
+      "prior_status": "held",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        8.564286766437556,
+        10.456863069439937
+      ],
+      "source_local_length_m": 81.50762514685714,
+      "supporting_target_stations_m": [
+        49.521991185475365,
+        131.0076409160745
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 0.11912133210611629,
+      "approved_union_max_upper_bound_m": 10.679183099889858,
+      "approved_union_sampled_max_m": 10.62923741737661,
+      "correction_scope": "new exact correspondence",
+      "edge_index": 7,
+      "finite_focus_max_m": 10.62923741737661,
+      "finite_focus_min_m": 10.456863069439937,
+      "geometry_failure_only": true,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142886,
+        978142887
+      ],
+      "original_outside_10m_m": 82.89355056142496,
+      "original_reason": "unresolved_official_extent_edges; outside reviewed source spans and whole-edge 10 m corridor",
+      "prior_status": "held",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        10.456863069439937,
+        10.62923741737661
+      ],
+      "source_local_length_m": 82.90983297199404,
+      "supporting_target_stations_m": [
+        131.0076409160745,
+        213.9172946997451
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 0.030614083366653895,
+      "approved_union_max_upper_bound_m": 10.679228790009105,
+      "approved_union_sampled_max_m": 10.62923741737661,
+      "correction_scope": "new exact correspondence",
+      "edge_index": 8,
+      "finite_focus_max_m": 10.62923741737661,
+      "finite_focus_min_m": 10.54499024023687,
+      "geometry_failure_only": true,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142887,
+        978142888
+      ],
+      "original_outside_10m_m": 157.64148220749746,
+      "original_reason": "unresolved_official_extent_edges; outside reviewed source spans and whole-edge 10 m corridor",
+      "prior_status": "held",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        10.62923741737661,
+        10.544990240236869
+      ],
+      "source_local_length_m": 157.67278928289363,
+      "supporting_target_stations_m": [
+        213.9172946997451,
+        371.59006147530755
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 0.09340903760841675,
+      "approved_union_max_upper_bound_m": 10.594959393423785,
+      "approved_union_sampled_max_m": 10.54499024023687,
+      "correction_scope": "new exact correspondence",
+      "edge_index": 9,
+      "finite_focus_max_m": 10.54499024023687,
+      "finite_focus_min_m": 10.3998206128544,
+      "geometry_failure_only": true,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142888,
+        978142889
+      ],
+      "original_outside_10m_m": 89.02727983817353,
+      "original_reason": "unresolved_official_extent_edges; outside reviewed source spans and whole-edge 10 m corridor",
+      "prior_status": "held",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        10.544990240236869,
+        10.3998206128544
+      ],
+      "source_local_length_m": 89.04503097908304,
+      "supporting_target_stations_m": [
+        371.59006147530755,
+        460.63497411968683
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 0.7612471879218204,
+      "approved_union_max_upper_bound_m": 10.449798187519576,
+      "approved_union_sampled_max_m": 10.3998206128544,
+      "correction_scope": "new exact correspondence",
+      "edge_index": 10,
+      "finite_focus_max_m": 116.0639540509329,
+      "finite_focus_min_m": 9.931784835928795,
+      "geometry_failure_only": true,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142889,
+        978142890
+      ],
+      "original_outside_10m_m": 28.36392496241386,
+      "original_reason": "unresolved_official_extent_edges; outside reviewed source spans and whole-edge 10 m corridor",
+      "prior_status": "held",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        10.3998206128544,
+        8.394552669376395
+      ],
+      "source_local_length_m": 150.93227548883218,
+      "supporting_target_stations_m": [
+        460.63497411968683,
+        611.5539281470442
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 4.287152685368425,
+      "approved_union_max_upper_bound_m": 7.1472252626221255,
+      "approved_union_sampled_max_m": 7.098311030972574,
+      "correction_scope": "retained unchanged",
+      "edge_index": 11,
+      "finite_focus_max_m": 119.87925317079224,
+      "finite_focus_min_m": 116.0639540509329,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        978142890,
+        27411872
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        8.394552669376395,
+        8.679766662585502
+      ],
+      "source_local_length_m": 3.81531006866507,
+      "supporting_target_stations_m": [
+        611.5539281470442,
+        615.3585626758965
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    },
+    {
+      "access": "designated cycling and foot; public route corroborated by operator and council",
+      "angle_degrees": 58.00352041906298,
+      "approved_union_max_upper_bound_m": 3.340594023243818,
+      "approved_union_sampled_max_m": 3.2909889397089374,
+      "correction_scope": "retained unchanged",
+      "edge_index": 12,
+      "finite_focus_max_m": 121.47861095246174,
+      "finite_focus_min_m": 119.87925317079224,
+      "geometry_failure_only": false,
+      "identity": "4471747 / NCN1 relation 75880; exact ordered node pair",
+      "identity_or_access_failure": false,
+      "node_ids": [
+        27411872,
+        913199040
+      ],
+      "original_outside_10m_m": 0.0,
+      "original_reason": "existing approved section",
+      "prior_status": "admitted",
+      "sampling_step_limit_m": 0.1,
+      "signed_lateral_offsets_m": [
+        8.679766662585502,
+        10.95149869452325
+      ],
+      "source_local_length_m": 2.678674510883537,
+      "supporting_target_stations_m": [
+        615.3585626758965,
+        616.7779043226909
+      ],
+      "thresholds": {
+        "operational_angle_degrees": 15,
+        "operational_corridor_m": 10,
+        "review": "Exact pinned source/target correspondence; no replacement national distance threshold"
+      },
+      "verdict": "Admit"
+    }
+  ],
+  "geodesic_crosscheck": [
+    {
+      "difference_m": -0.0020877913691794703,
+      "utm31n_finite_m": 8.564286766437556,
+      "vertex": 6,
+      "wgs84_geodesic_finite_m": 8.566374557806736
+    },
+    {
+      "difference_m": -0.0025208454214968867,
+      "utm31n_finite_m": 10.456863069439937,
+      "vertex": 7,
+      "wgs84_geodesic_finite_m": 10.459383914861434
+    },
+    {
+      "difference_m": -0.0025465340329446917,
+      "utm31n_finite_m": 10.62923741737661,
+      "vertex": 8,
+      "wgs84_geodesic_finite_m": 10.631783951409554
+    },
+    {
+      "difference_m": -0.002545338208797432,
+      "utm31n_finite_m": 10.54499024023687,
+      "vertex": 9,
+      "wgs84_geodesic_finite_m": 10.547535578445668
+    },
+    {
+      "difference_m": -0.0025505503600609103,
+      "utm31n_finite_m": 10.3998206128544,
+      "vertex": 10,
+      "wgs84_geodesic_finite_m": 10.402371163214461
+    }
+  ],
+  "metric": "WGS84 / UTM zone 31N, EPSG:32631; local independent WGS84 geodesic minima",
+  "parallel_path_decision": "The published NCN target and designated OSM cycleway are corresponding representations of NCN1. Independent council-linked route coordinates follow the cycleway. A nearby footpath description does not transfer identity or modes to another feature.",
+  "positional_accuracy": "Evidence establishes route correspondence, not which dataset has surveyed-accurate coordinates.",
+  "private_control": {
+    "reason": "Private residential way, different identity, no NCN1 bicycle membership; cannot consume reviewed cycleway correspondence.",
+    "verdict": "Exclude",
+    "way": "77611523"
+  },
+  "source_station_warning": "Source and target storage stations retain historical route-wide EQ metres; do not equate them with local ground lengths."
+}
