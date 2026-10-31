@@ -1,0 +1,51 @@
+{
+  "base_main": "40f3c0d00e171800a157af4b3db5d4125134203b",
+  "browser": {
+    "checks": 114,
+    "external_requests": 0,
+    "offline": true,
+    "page_errors": [],
+    "version": "143.0.7499.0",
+    "viewports": [
+      "1440x1080",
+      "390x844"
+    ]
+  },
+  "candidate": {
+    "base_content_sha256": "cf25e006e79782c9458895bf4b68179b7829fe3b6e7d5ded96be0ccd07929dc0",
+    "content_sha256": "d3486a38fc33a78dd9314720a4677906fa7315e28c15feedb1577a1847caac2d",
+    "local_sqlite_sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+    "note": "SQLite byte layout may vary; full canonical values and independently audited row changes are authoritative."
+  },
+  "date": "2026-10-31",
+  "deliverable_sha256": {
+    "docs/data-trials/ncn-deal-resolution-20261031.json": "d69a713edfa5a3621dfcb048e89da0fcef5144d34b6c0c38b50cdaf5d704773b",
+    "docs/ncn-viewer/demo/evidence.json": "040d170065c3573d436a6f4f92bcfcc6fa1861a519bac95419045520e5e56b05",
+    "docs/ncn-viewer/demo/index.html": "73fc3d43b3f984588636b19ac739a1000966e8ae321ff32e81b12507d8bad03e",
+    "scripts/inspect_ncn_deal_resolution.py": "21123333a921b0c9e234095fc492febb688d9bcee3ae1c3ddbbe3600c5412884",
+    "scripts/ncn_deal_correspondence.py": "258d420ad7afa260c2b2d859fd63e5b58ec249d853c8477cfbda9e2a4a1935be",
+    "scripts/verify_ncn_deal_extent.py": "199260436ab403b4c207c64e746b578db7d7dce230c18bb120d366bf723d224d",
+    "tests/fixtures/ncn-deal-resolution/full-extent-check.json": "277ffad867567a4e2f886a838a3c5cd7d55d8f1488e0becf04bbca7c88fdb445",
+    "tests/fixtures/ncn-deal-resolution/observations.json": "0af498de3d055caf8acf9c258975eb5b47d0d3db5f4f5d07c39b3ec875422096",
+    "tests/fixtures/ncn-deal-resolution/review.json": "ab02c12fb0c1183ca4e6024c71dee9cf31f4717aa261a62b74765ec7c16a6a63"
+  },
+  "limitations": [
+    "Phone acceptance not performed",
+    "No hosted viewer update",
+    "No integration/publication/deployment/APK/journey credit",
+    "Original projection receipts preserved as historical measurements",
+    "One initial reference test invocation used an incomplete PYTHONPATH; corrected invocation includes scripts. Initial mobile badge overflow fixed and browser checks rerun. Standard Chromium download was unavailable; local npm-packaged Chromium used for browser tests."
+  ],
+  "python": {
+    "compatibility_offset_deal_reference": 55,
+    "errors": 0,
+    "failures": 0,
+    "ncn_trial": 333,
+    "skipped": 0,
+    "total": 413,
+    "viewer": 10,
+    "walking_cycling_path_evidence": 15
+  },
+  "scope_checkpoint": "cde040f88e83dc957d4d603a923d480427f7bec0",
+  "status": "implemented; local validation passed; candidate-specific Android CI pending"
+}
