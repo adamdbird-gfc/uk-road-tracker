@@ -18,6 +18,8 @@ The bounded OSM map has one designated cycleway here, the parallel private resid
 
 Evidence is compactly retained in [observations.json](../tests/fixtures/ncn-deal-resolution/observations.json), with source URLs, versions, raw-response SHA-256 values, extracted geometries and paraphrased factual instructions. No private journey data is used.
 
+![Selected Deal edge: historical exclusion and reviewed admission](ncn-viewer/deal-resolution.png)
+
 ## Edge-by-edge verdict and measurements
 
 Local distances use **WGS84 / UTM zone 31N (EPSG:32631)**. Independent WGS84 geodesic minimisation agrees with the five shared vertex minima within **0.002551 m**. These local ground measurements are deliberately separate from the preserved route-wide EQ source/target storage stationing.
@@ -70,7 +72,7 @@ An independent read-back of **1,376,616 rows** finds exactly one changed row: `p
 
 The [offline viewer](ncn-viewer/demo/index.html) retains baseline operational decisions and adds the 31 October verdict, source/node/route identity, public access/cycling evidence, local separation, alignment, old exclusion cause and applicable thresholds. All eight original cases remain. **114 offline Chromium checks pass**, zero network requests/page exceptions, including all five selected sections and mobile overflow. The historical baseline colouring is explicitly labelled; the new candidate decision is separate. The hosted viewer is not redeployed.
 
-Python, candidate-specific Android and CI results are recorded in the delivery receipt/PR. Candidate-specific Android compatibility must pass before this is described as validated for the Android consumer. Physical phone acceptance and any future reference publication remain separate gates.
+Final validation: **413 local Python tests**, zero failures/errors/skips; **114 offline browser checks**; and **45 candidate-specific Android tests**, zero failures/errors/skips. [Dedicated CI run 41184546990](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/41184546990) passed on implementation commit `d2c9d4cf01102f1fe1abf5b0b1e0791a7d042d36`, including immutable cache restoration, exact candidate reproduction, byte-identical independent audit receipt, every national target-to-network mapping and existing consumer/seam regressions. The separate NCN local trial CI also passed. The later delivery-only commit adds this validation record and screenshot; implementation and generated viewer bytes are unchanged. Physical phone acceptance and any future reference publication remain separate gates.
 
 ## Reproduce
 
@@ -92,4 +94,4 @@ Original shipped DB SHA-256: `973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b5
 
 ## Delivery state
 
-Source branch `fix/ncn1-deal-correspondence-20261031`, directly from main `40f3c0d00e171800a157af4b3db5d4125134203b`; dedicated PR targets main. Scope checkpoint `cde040f88e83dc957d4d603a923d480427f7bec0` independently fetched back. #242/#247 findings and seam corrections preserved. Exact #249 viewer source is carried forward with the requested improvements; #248/#249/#251 remain unmerged. No integration, deployment, Firebase change, hosted-viewer update, APK build/distribution, production modification or issue closure. Installed APK/live backend/active Firebase pins remain unknown; archived bytes are not a live-state claim. Android journey split/join stays separate under #253.
+Source branch `fix/ncn1-deal-correspondence-20261031`, directly from main `40f3c0d00e171800a157af4b3db5d4125134203b`; [PR #254](https://github.com/adamdbird-gfc/uk-road-tracker/pull/254) targets main and remains open/unmerged. Scope checkpoint `cde040f88e83dc957d4d603a923d480427f7bec0` independently fetched back. #242/#247 findings and seam corrections preserved. Exact #249 viewer source is carried forward with the requested improvements; #248/#249/#251 remain unmerged. No integration, deployment, Firebase change, hosted-viewer update, APK build/distribution, production modification or issue closure. Installed APK/live backend/active Firebase pins remain unknown; archived bytes are not a live-state claim. Android journey split/join stays separate under #253.

@@ -17,9 +17,28 @@
     "local_sqlite_sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
     "note": "SQLite byte layout may vary; full canonical values and independently audited row changes are authoritative."
   },
+  "ci": {
+    "all_canonical_network_mappings_pass": true,
+    "android": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 45
+    },
+    "conclusion": "success",
+    "implementation_commit": "d2c9d4cf01102f1fe1abf5b0b1e0791a7d042d36",
+    "independent_candidate_receipt_matches": true,
+    "job_id": 124488651158,
+    "run_id": 41184546990,
+    "separate_ncn_trial_conclusion": "success",
+    "separate_ncn_trial_run_id": 41184546952,
+    "url": "https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/41184546990"
+  },
   "date": "2026-10-31",
   "deliverable_sha256": {
     "docs/data-trials/ncn-deal-resolution-20261031.json": "d69a713edfa5a3621dfcb048e89da0fcef5144d34b6c0c38b50cdaf5d704773b",
+    "docs/ncn-deal-resolution-20261031.md": "24ca6e7aa70622f313c249c14eb25eb05b2c894d4b719794dfa34026ccfaf7f4",
+    "docs/ncn-viewer/deal-resolution.png": "3e7a9607f1d2a2c2777b77c1139c0b087254bd056576619b496f75f5ab485fcc",
     "docs/ncn-viewer/demo/evidence.json": "040d170065c3573d436a6f4f92bcfcc6fa1861a519bac95419045520e5e56b05",
     "docs/ncn-viewer/demo/index.html": "73fc3d43b3f984588636b19ac739a1000966e8ae321ff32e81b12507d8bad03e",
     "scripts/inspect_ncn_deal_resolution.py": "21123333a921b0c9e234095fc492febb688d9bcee3ae1c3ddbbe3600c5412884",
@@ -47,5 +66,6 @@
     "walking_cycling_path_evidence": 15
   },
   "scope_checkpoint": "cde040f88e83dc957d4d603a923d480427f7bec0",
-  "status": "implemented; local validation passed; candidate-specific Android CI pending"
+  "screenshot": "docs/ncn-viewer/deal-resolution.png",
+  "status": "implemented and validated; awaiting owner review/integration; no publication"
 }
