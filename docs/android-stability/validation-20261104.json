@@ -1,0 +1,106 @@
+{
+  "execution_date": "2026-11-04",
+  "repository": "adamdbird-gfc/uk-road-tracker",
+  "baseline_main": "40f3c0d00e171800a157af4b3db5d4125134203b",
+  "reported_installed_android": "0.25.221 (267)",
+  "main_android": "0.25.220 (266)",
+  "installed_device_verified": false,
+  "live_backend_sha": null,
+  "active_firebase_pins": null,
+  "driving": {
+    "pr": 258,
+    "branch": "fix/driving-transition-gate-20261104",
+    "tested_commit": "a81403c7ec211db15e7f3b19fdda2dafa0f37b47",
+    "final_report_commit": "6f4b7891a72bf0e51e51aa5a037f2dcc683c96e7",
+    "ci_run": 41815192472,
+    "tests": 841,
+    "passed": 837,
+    "skipped": 4,
+    "errors": 0,
+    "failures": 0,
+    "new_evidence_tests": 7,
+    "new_service_tests": 9,
+    "partition_tests_passed": 5,
+    "artifact_id": 13315100171,
+    "artifact_sha256": "84ed2e932f38bdcf12a5b61eebe1fdfd4ea0f05d89d3e90c583b210b58734e1a",
+    "artifact_xml_independently_verified": true,
+    "defect_confidence": "high",
+    "nine_actual_journeys_attribution": "unverified",
+    "field_recall_latency_battery": null,
+    "final_head_ci_run": 41815743449
+  },
+  "memory": {
+    "pr": 257,
+    "branch": "fix/achievement-memory-20261104",
+    "tested_commit": "f862e16037253f721ea13366d7231ad433ab91b0",
+    "ci_run": 41816755374,
+    "status": "ci_validated_awaiting_integration_and_device",
+    "retention_mechanism_confidence": "high",
+    "specific_device_crash_attribution_confidence": "medium",
+    "private_archive_and_ART_heap_available": false,
+    "probe": {
+      "jvm_max_heap_mib": 256,
+      "journeys_per_scan": 1605,
+      "full_road_vertices_per_scan": 802500,
+      "fresh_scans": 3,
+      "baseline_retained_heap_bytes": [
+        167009936,
+        167066800,
+        166730488
+      ],
+      "candidate_local_retained_heap_bytes": [
+        47321960,
+        46817416,
+        46813800
+      ],
+      "candidate_independent_ci_retained_heap_bytes": [
+        47295120,
+        46859744,
+        46873304
+      ],
+      "median_reduction_percent": 71.96728702416844,
+      "unique_metres_both": 69.29801236185972,
+      "scope": "CoreAchievementEvidence retention; not full app/ART heap",
+      "candidate_final_ci_retained_heap_bytes": [
+        47358752,
+        46892936,
+        46814728
+      ]
+    },
+    "tests": 830,
+    "passed": 826,
+    "skipped": 4,
+    "errors": 0,
+    "failures": 0,
+    "partition_tests_passed": 5,
+    "artifact_id": 13314843416,
+    "artifact_sha256": "8a0818857f851201e3f6002015a9c5e25ba584f6fd0567db30ebba8e9189db0c",
+    "artifact_xml_independently_verified": true,
+    "full_archive_calculations": 3,
+    "archives_byte_preserved": 1605,
+    "full_archive_original_fixture_run": 41815381327,
+    "full_archive_original_fixture_duration_seconds": 451.005,
+    "full_archive_final_fixture_duration_seconds": 17.15
+  },
+  "four_skips": "Pre-existing opt-in NcnBindingCandidateTest and NcnOrdinarySeamCandidateTest require separately authorised candidate evidence.",
+  "delivery": {
+    "merged": false,
+    "deployed": false,
+    "firebase_published": false,
+    "apk_built": false,
+    "tester_distribution": false,
+    "historical_journeys_rewritten": false,
+    "physical_device_acceptance": false
+  },
+  "remaining": [
+    "Pixel achievements refresh/reopen/restart heap and latency acceptance",
+    "Aligned Roadprints recordings, activity history and map-context settings for actual driving failures",
+    "Disabled/unavailable context, short/slow-only drives, long creeping traffic, road/rail and car/bus uncertainty",
+    "Mode-edit UI stall already retained in issue 255"
+  ],
+  "validation_notes": [
+    "Full archive tests run under Robolectric; durations are not Pixel latency.",
+    "Final report commit restores previously tested non-cancelling workflow policy. Runtime and test code remain identical to tested source.",
+    "No universal upper bound for arbitrary histories; both compact geometry and coverage still scale with distinct evidence."
+  ]
+}
