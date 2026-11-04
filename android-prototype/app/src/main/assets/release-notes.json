@@ -2,6 +2,42 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.222",
+      "version_code": 268,
+      "release_date": "2026-11-04",
+      "since": "0.25.221",
+      "changes": [
+        {
+          "title": "Lower achievement memory use",
+          "description": "Reduce memory retained while calculating achievements, preserving your journey history, achievement evidence and unlocks."
+        },
+        {
+          "title": "Improved automatic driving recognition",
+          "description": "Allow sustained vehicle GPS evidence to correct an early walking label when enabled map context supports driving. Short or uncertain journeys may still need manual confirmation."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.221",
+      "version_code": 267,
+      "release_date": "2026-10-30",
+      "since": "0.25.220",
+      "changes": [
+        {
+          "title": "Close train captures after evidenced arrivals",
+          "description": "Use GPS stop evidence for train-labelled recordings, including after capture recovery. Preserve evidenced station waits and allow off-rail arrivals and sustained road transitions."
+        },
+        {
+          "title": "Review unusually large recordings safely",
+          "description": "Show original and filtered point counts and offer export for review instead of attempting one oversized match or changing the entire recording to another transport mode. Original GPS evidence is retained."
+        },
+        {
+          "title": "Historical recovery still needs review",
+          "description": "This update does not automatically split or repair previously saved recordings. The precise previously reported phone crash has not been reproduced; on-device validation remains outstanding."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.220",
       "version_code": 266,
       "release_date": "2026-10-28",
