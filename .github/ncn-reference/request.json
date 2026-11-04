@@ -1,0 +1,7 @@
+{
+  "action": "publish",
+  "revision": 4,
+  "database_sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+  "compressed_sha256": "c40117278069777b38c13a099f319855e99878d24b95128f140f8d2f34a6020d",
+  "source_baseline": "2ae2b89276f5541bf5c13d61c6371a5cbc7c2c6e"
+}
