@@ -2,6 +2,18 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.223",
+      "version_code": 269,
+      "release_date": "2026-11-04",
+      "since": "0.25.222",
+      "changes": [
+        {
+          "title": "Keep continuous walks and runs together",
+          "description": "Preserve one continuous on-foot journey through walking and running pace changes. Genuine arrivals and transport changes still end or change the journey. Previously saved journeys are preserved and are not automatically joined."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.222",
       "version_code": 268,
       "release_date": "2026-11-04",

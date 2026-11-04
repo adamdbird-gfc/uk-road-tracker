@@ -1,13 +1,13 @@
-name: Private stability APK 0.25.222 (no distribution)
+name: Private stability APK 0.25.223 (no distribution)
 on:
   push:
     branches: [main]
     paths:
-      - '.github/release-requests/android/0.25.222-pin-corrected.json'
+      - '.github/release-requests/android/0.25.223.json'
 permissions:
   contents: read
 concurrency:
-  group: private-capture-apk-025222
+  group: private-capture-apk-025223
   cancel-in-progress: false
 jobs:
   verify:
@@ -25,8 +25,8 @@ jobs:
         run: |
           python3 - <<'PYREQ'
           import json,pathlib,subprocess
-          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.222-pin-corrected.json').read_text())
-          assert request==dict(schema_version=1,version_name='0.25.222',version_code=268,baseline='d571aa21b0d2884792bf5bab80574e401d2ad21c',firebase_upload=False,distribute_existing_testers=False)
+          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.223.json').read_text())
+          assert request==dict(schema_version=1,version_name='0.25.223',version_code=269,baseline='efa9d397b621603c8d911a638b24e0ded3b49319',firebase_upload=False,distribute_existing_testers=False)
           subprocess.run(['git','merge-base','--is-ancestor',request['baseline'],'HEAD'],check=True)
           PYREQ
       - name: Restore the same exact reference cache as Android builds
@@ -127,13 +127,13 @@ jobs:
               for case in root.findall('testcase'):
                   if case.find('skipped') is not None:skipped.append((case.attrib.get('classname'),case.attrib.get('name')))
           print(json.dumps(dict(total,skipped_cases=skipped),sort_keys=True))
-          assert total['tests']==845,total
+          assert total['tests']==851,total
           assert total['failures']==total['errors']==0,total
           # These four pre-existing suites explicitly require an external national candidate receipt.
           # This capture task must not create/select a candidate to activate them.
           allowed={'com.roadprints.capture.NcnBindingCandidateTest','com.roadprints.capture.NcnOrdinarySeamCandidateTest'}
           assert len(skipped)==4 and all(name in allowed for name,test in skipped),skipped
-          for name in ('PhantomTrainRegressionTest','PhantomTrainServiceTest','OversizedJourneyReviewTest','CaptureRecoveryIntegrationTest','DrivingTransitionEvidenceTest','DrivingTransitionServiceTest','AchievementGeometryMemoryTest','WhatsNewActivityTest'):
+          for name in ('PhantomTrainRegressionTest','PhantomTrainServiceTest','OversizedJourneyReviewTest','CaptureRecoveryIntegrationTest','DrivingTransitionEvidenceTest','DrivingTransitionServiceTest','AchievementGeometryMemoryTest','WhatsNewActivityTest','OnFootContinuityServiceTest','OnFootContinuityReplayTest'):
               suites=[E.parse(path).getroot() for path in files if path.name=='TEST-com.roadprints.capture.'+name+'.xml']
               assert len(suites)==1 and int(suites[0].attrib['tests'])>0,name
               assert int(suites[0].attrib.get('skipped',0))==0,name
@@ -166,21 +166,21 @@ jobs:
           printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
           gradle --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
           mkdir -p private-apk
-          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk private-apk/Roadprints-0.25.222-268.apk
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk private-apk/Roadprints-0.25.223-269.apk
       - name: Verify update identity, certificate and immutable artifact receipt
         run: |
           set -euo pipefail
-          apk=private-apk/Roadprints-0.25.222-268.apk
+          apk=private-apk/Roadprints-0.25.223-269.apk
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
           "$signer" verify --verbose --print-certs "$apk" | tee private-apk/certificate.txt
           grep -Fq 'certificate SHA-256 digest: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031' private-apk/certificate.txt
           aapt=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -n 1)
           "$aapt" dump badging "$apk" > private-apk/package.txt
-          grep -Fq "package: name='com.roadprints.capture' versionCode='268' versionName='0.25.222'" private-apk/package.txt
+          grep -Fq "package: name='com.roadprints.capture' versionCode='269' versionName='0.25.223'" private-apk/package.txt
           python3 - <<'PYAPK'
           import hashlib,json,os,pathlib
-          p=pathlib.Path('private-apk/Roadprints-0.25.222-268.apk')
-          receipt=dict(schema_version=1,source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],application_id='com.roadprints.capture',version_name='0.25.222',version_code=268,bytes=p.stat().st_size,sha256=hashlib.file_digest(p.open('rb'),'sha256').hexdigest(),certificate_sha256='5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031',firebase_distribution=False,device_acceptance=False)
+          p=pathlib.Path('private-apk/Roadprints-0.25.223-269.apk')
+          receipt=dict(schema_version=1,source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],application_id='com.roadprints.capture',version_name='0.25.223',version_code=269,bytes=p.stat().st_size,sha256=hashlib.file_digest(p.open('rb'),'sha256').hexdigest(),certificate_sha256='5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031',firebase_distribution=False,device_acceptance=False)
           pathlib.Path('private-apk/receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
           print(json.dumps(receipt,sort_keys=True))
           PYAPK
