@@ -30,3 +30,7 @@ Target is exactly proposed revision 4, DB `be0c803d508ff548db8458a57a2fba18b4f75
 ## Result
 
 Implementation prepared and locally validated. Authenticated Actions preflight/publication result, run/PR/merge identifiers and measured transfer evidence will be recorded in the completion receipt after the authorised main request executes. Issue #265 is untouched. No app/APK/backend/geometry changes are included.
+
+### Integrated checkpoint
+
+PR #267 merged at `e51a95660b8f29cc368ae7d237f488fd3e8927cb`. The main request run 41864030136 is queued at this checkpoint, created 16:05:31 UTC. Hosted PR checks are also queued, not claimed passed. The main workflow requires its own offline checks before authenticated work. No runner has executed preflight; current credentials/quota remain unverified. No Firebase request, catalogue transfer or Hosting write occurred in this recovery session. The precise remaining operational blocker is runner scheduling. Monitor the existing run and read its quota/publication receipt when assigned; do not start a duplicate. The last served revision verified in the preceding task is 1; revision 4 has not been published by this session. [Completion receipt](data-trials/ncn-publication-path-recovery-20261104.json).

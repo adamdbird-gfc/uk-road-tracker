@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-04",
+  "starting_main": "2ae2b89276f5541bf5c13d61c6371a5cbc7c2c6e",
+  "implementation_pr": 267,
+  "implementation_head": "e8af0f5d51a67c43aaee72b045caa61f9950a2bb",
+  "implementation_merge": "e51a95660b8f29cc368ae7d237f488fd3e8927cb",
+  "historical_success": {
+    "run_id": 39330952075,
+    "job_id": 118328781110,
+    "status": "live_verified",
+    "revision": 1,
+    "preserved_files": 18155,
+    "overall_run_failure": "later Android build"
+  },
+  "existing_configuration": {
+    "project": "roadprints-822cc",
+    "site": "roadprints-data-822cc",
+    "secret_name": "FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON",
+    "variable_name": "ROADPRINTS_DATA_HOSTING_SITE",
+    "concurrency": "firebase-reference-publication"
+  },
+  "new_credentials_accounts_sites_billing_changes": false,
+  "minimal_changes": [
+    "Recover historical NCN workflow on main",
+    "Reconstruct exact revision 4 using verified GitHub reference cache only",
+    "Read existing Hosting access and project quota before payload transfers",
+    "Verify preview once and promote identical version; live verification uses stored hashes, release pointer and manifest",
+    "Retain source config and before/after inventories for rollback"
+  ],
+  "local_tests_passed": 12,
+  "workflow_yaml_embedded_python_diff_checks": "pass offline",
+  "github_blobs_verified": 8,
+  "pr_checks": "queued; not claimed passed",
+  "main_run": {
+    "id": 41864030136,
+    "status": "queued",
+    "conclusion": null,
+    "head_sha": "e51a95660b8f29cc368ae7d237f488fd3e8927cb",
+    "created_at": "2026-11-04T16:05:31Z",
+    "updated_at": "2026-11-04T16:05:31Z"
+  },
+  "publication_result": "queued_pending_runner",
+  "current_credentials_and_quota": "unverified until Actions run starts",
+  "live_revision": "last verified 1 in preceding readiness task; not freshly requested in recovery session",
+  "firebase_payload_bytes_this_session": 0,
+  "hosting_writes_this_session": 0,
+  "planned_asset_verification_bytes": 145856489,
+  "avoided_second_asset_download_bytes": 145856489,
+  "rollback_manifest": "docs/data-trials/ncn-publication-readiness-20261104/rollback-manifest.json",
+  "remaining_blocker": "GitHub Actions runner scheduling; not demonstrated quota exhaustion or credential failure",
+  "next_action": "Monitor existing run 41864030136; do not start a duplicate. If access/quota fails, read retained quota.json and resolve only that blocker. If publication succeeds later, retain hosting/publication.json/source config/file inventories and verify revision 4 checksums.",
+  "issue_265_changed": false,
+  "android_apk_backend_geometry_changes": false
+}
