@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/release-requests/android/0.25.222.json'
+      - '.github/release-requests/android/0.25.222-pin-corrected.json'
 permissions:
   contents: read
 concurrency:
@@ -17,7 +17,7 @@ jobs:
       ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
       NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
     steps:
-      - uses: actions/checkout@11d5960a326850d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -25,7 +25,7 @@ jobs:
         run: |
           python3 - <<'PYREQ'
           import json,pathlib,subprocess
-          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.222.json').read_text())
+          request=json.loads(pathlib.Path('.github/release-requests/android/0.25.222-pin-corrected.json').read_text())
           assert request==dict(schema_version=1,version_name='0.25.222',version_code=268,baseline='d571aa21b0d2884792bf5bab80574e401d2ad21c',firebase_upload=False,distribute_existing_testers=False)
           subprocess.run(['git','merge-base','--is-ancestor',request['baseline'],'HEAD'],check=True)
           PYREQ
