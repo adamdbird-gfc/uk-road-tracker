@@ -64,8 +64,7 @@ final class ContextJourneyModel {
         String suggested="";
         if(foot && speed>=6) suggested="unknown";
         else if(!foot && !"cycling".equals(mode) && !"train".equals(mode) && speed>=.5 && speed<=2.5) suggested="walking";
-        else if("walking".equals(mode) && speed>=2.6 && speed<=4.8) suggested="running";
-        else if("running".equals(mode) && speed>=.5 && speed<=1.8) suggested="walking";
+        // Walking/running pace changes do not establish a transport boundary.
         else if(("unknown".equals(mode) || "train".equals(mode)) && (!"train".equals(mode) || !atStation) && context.available && context.road && !context.rail && speed>=6) suggested="driving";
         else if("unknown".equals(mode) && context.rail && !context.road && speed>=6) suggested="train";
         if(suggested.isEmpty()){clearProposal();return null;}
@@ -75,8 +74,7 @@ final class ContextJourneyModel {
         }
         if(proposalSamples>0)path+=Math.max(0,step-(accuracy+previousAccuracy)*.35);
         proposalSamples++;
-        long duration=("running".equals(suggested)||"walking".equals(mode)&&"walking".equals(suggested))?60000:40000;
-        if(proposalSamples<4 || time-proposalSince<duration || path<("walking".equals(suggested)?40:100))return null;
+        if(proposalSamples<4 || time-proposalSince<40000 || path<("walking".equals(suggested)?40:100))return null;
         // Jitter can accumulate path length inside a home or station. A mode
         // change also needs departure from the proposal's uncertainty area.
         double extent=RailStationCatalog.metres(proposalLat,proposalLon,lat,lon)-proposalAccuracy-accuracy;

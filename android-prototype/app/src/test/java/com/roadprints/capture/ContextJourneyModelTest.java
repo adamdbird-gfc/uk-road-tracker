@@ -62,14 +62,14 @@ public class ContextJourneyModelTest {
         for(int i=1;i<=6&&d==null;i++)d=fix(m,"unknown",i,1000+i*10000,i*15,1.5f,"unknown",false);
         assertNotNull(d);assertEquals("walking",d.nextMode);assertEquals(1,d.boundary);
     }
-    @Test public void walkRunWalkBecomesDistinctLegs() {
+    @Test public void walkRunWalkStaysOneOnFootJourney() {
         ContextJourneyModel m=new ContextJourneyModel();ContextJourneyModel.Decision d=null;
         for(int i=0;i<7;i++)d=fix(m,"walking",i,1000+i*10000,i*30,3,"park",false);
-        assertNotNull(d);assertEquals("running",d.nextMode);
+        assertNull(d);
         m=new ContextJourneyModel();
         d=null;
         for(int i=0;i<6&&d==null;i++)d=fix(m,"running",i,1000+i*10000,i*15,1.5f,"park",false);
-        assertNotNull(d);assertEquals("walking",d.nextMode);
+        assertNull(d);
     }
     @Test public void poorAndOutOfOrderGpsCannotEstablishArrivalOrChangeMode() {
         ContextJourneyModel m=new ContextJourneyModel();
@@ -82,13 +82,13 @@ public class ContextJourneyModelTest {
         ContextJourneyModel m=new ContextJourneyModel();
         for(int i=0;i<15;i++)assertNull(fix(m,"cycling",i,1000+i*10000,i*100,10,"road",false));
     }
-    @Test public void pendingRunningTransitionSurvivesCheckpoint() {
+    @Test public void paceChangesStayOnFootAfterCheckpoint() {
         ContextJourneyModel m=new ContextJourneyModel();
         for(int i=0;i<4;i++)assertNull(fix(m,"walking",i,1000+i*10000,i*30,3,"park",false));
         ContextJourneyModel recovered=new ContextJourneyModel();recovered.restore(m.checkpoint(),4);
         ContextJourneyModel.Decision d=null;
         for(int i=4;i<7;i++)d=fix(recovered,"walking",i,1000+i*10000,i*30,3,"park",false);
-        assertNotNull(d);assertEquals("running",d.nextMode);assertEquals(1,d.boundary);
+        assertNull(d);
     }
     @Test public void networkFixesDoNotCancelVehicleTransition() {
         ContextJourneyModel m=new ContextJourneyModel();

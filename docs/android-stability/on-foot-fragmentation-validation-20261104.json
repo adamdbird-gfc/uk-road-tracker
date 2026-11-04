@@ -1,0 +1,771 @@
+{
+  "apk_built": false,
+  "artifact_id": 13327706366,
+  "base": "3a89e6074eed420609116f20e2ad64fc123484dd",
+  "branch": "fix/on-foot-fragmentation-20261104",
+  "ci_run_id": 41836944570,
+  "deployed": false,
+  "historical_mutations": false,
+  "lint_errors": 0,
+  "lint_warnings": 310,
+  "local_model_tests": 30,
+  "negative_control_old_model_expected_failures": 3,
+  "physical_device_acceptance": false,
+  "pr": 262,
+  "python_recovery_tests": 5,
+  "schema_version": 1,
+  "skips": [
+    {
+      "classname": "com.roadprints.capture.NcnBindingCandidateTest",
+      "name": "exactSupportedSourceCreditsAndUnadmittedPrefixDoesNot",
+      "time": "0.016"
+    },
+    {
+      "classname": "com.roadprints.capture.NcnBindingCandidateTest",
+      "name": "syntheticSourceCapacityAgreesWithReceiptAndCannotClaimCompleteRoutes",
+      "time": "0.011"
+    },
+    {
+      "classname": "com.roadprints.capture.NcnOrdinarySeamCandidateTest",
+      "name": "existingMatcherConsumesRealSourceEdgeAcrossEachSeam",
+      "time": "0.013"
+    },
+    {
+      "classname": "com.roadprints.capture.NcnOrdinarySeamCandidateTest",
+      "name": "partialSeamEvidenceCannotAwardTheOtherHalf",
+      "time": "0.011"
+    }
+  ],
+  "status": "implemented_ci_validated_awaiting_owner_integration_and_device_acceptance",
+  "suite_count": 120,
+  "suites": {
+    "com.roadprints.capture.ARoadProgressCalculatorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.AchievementArchiveVolumeTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.AchievementCelebrationsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.AchievementGeometryMemoryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.AchievementsAvailabilityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 20
+    },
+    "com.roadprints.capture.ArrivalDwellIntegrationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.Beta201RegressionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.Beta205FilterRecoveryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 16
+    },
+    "com.roadprints.capture.Beta206PresentationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.BetaMeasurementTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.BetaUiRefinementTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 17
+    },
+    "com.roadprints.capture.CaptureModeBoundaryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.CaptureMovementEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.CaptureQualityValidatorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.CaptureRecoveryIntegrationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.CaptureStartGateTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 10
+    },
+    "com.roadprints.capture.CollectionAccessAndMapTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "com.roadprints.capture.CollectionCatalogueUpdatesTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.ContextConsentTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.ContextJourneyModelTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 18
+    },
+    "com.roadprints.capture.ContextMapCacheTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.ContextMapTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 10
+    },
+    "com.roadprints.capture.ContextualJourneyActionsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.CoreAchievementsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 21
+    },
+    "com.roadprints.capture.CountyCollectorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.CrashReporterTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.CyclingAchievementsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.CyclingTraceSimplifierTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.DebugClipboardTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.DiagnosticNotificationLifecycleTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.DisneylandRegressionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.DistanceUnitsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.DrivingJourneyPreparationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.DrivingTransitionEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.DrivingTransitionServiceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 9
+    },
+    "com.roadprints.capture.FinalTravelAchievementsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 15
+    },
+    "com.roadprints.capture.FootTraceValidatorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 9
+    },
+    "com.roadprints.capture.GrowingStatusControlTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.HistoricCountyGeometryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.HistoricSettlementCountiesTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.HistoryStabilisationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.JourneyCorrectionUtilsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.JourneyDebugExporterTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.JourneyFiltersTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.JourneyMatchedPreviewTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.JourneyPointToPointPreviewTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.JourneyRouteCompletionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.JourneyStoreDeletionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.JourneyStoreSummaryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.LateJourneyRecapTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.MapJourneyFiltersTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.MapLegendTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.MapLoadingNavigationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.MapPerformanceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "com.roadprints.capture.MapRenderIdentityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.MatchRetryLifecycleTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.MatchedEditReconciliationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.MatchingCoordinatorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 19
+    },
+    "com.roadprints.capture.MotorwayProgressCalculatorTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.MovementDiagnosticsExportTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.MultimodalFerryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 20
+    },
+    "com.roadprints.capture.NavigationPerformanceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 10
+    },
+    "com.roadprints.capture.NcnAchievementThresholdTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.NcnAndroidTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.NcnBindingCandidateTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "tests": 2
+    },
+    "com.roadprints.capture.NcnCatalogueFilesTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.NcnGeometryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.NcnNationalTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.NcnOrdinarySeamCandidateTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 2,
+      "tests": 2
+    },
+    "com.roadprints.capture.NcnPresentationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.NcnResponsivenessTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.NcnUiTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.OnFootContinuityReplayTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.OnFootContinuityServiceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.OnboardingTrackingTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.OnboardingWelcomeTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.OversizedJourneyReviewTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.PedestrianPlaceStayTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.PhantomTrainRegressionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.PhantomTrainServiceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.PlaceBoundaryEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.PlaceVisitCaptureServiceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 16
+    },
+    "com.roadprints.capture.PlaceVisitEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.PlaceVisitReliabilityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.PortableJourneyIntelligenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.ProgressAvailabilityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    },
+    "com.roadprints.capture.PubAchievementsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.PubLocationFeedbackTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.PubTimelineImportTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.PubVisitsScreenTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.PubVisitsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "com.roadprints.capture.RailStationCatalogTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.ReturnExperienceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 19
+    },
+    "com.roadprints.capture.RoadDetailTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.RoadprintsBackupTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1
+    },
+    "com.roadprints.capture.RoadprintsDialogTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.RoutePreviewEmptyGeometryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.RouteStrokeContinuityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.SamplingRecoveryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.ServiceSiteBoundaryTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 8
+    },
+    "com.roadprints.capture.ServiceStationCollectionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 12
+    },
+    "com.roadprints.capture.SettlementBoundaryValidationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 2
+    },
+    "com.roadprints.capture.StationCaptureHandoffTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.StationJourneyModelTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 17
+    },
+    "com.roadprints.capture.StationPlaceEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 5
+    },
+    "com.roadprints.capture.TimelineImportEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.TimelineRoadMatchingIntegrationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 9
+    },
+    "com.roadprints.capture.TimelineRoadPreparationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 15
+    },
+    "com.roadprints.capture.TownAchievementsTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "com.roadprints.capture.VehicleArrivalEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.VenueCollectionFrameworkTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 11
+    },
+    "com.roadprints.capture.VenueCompletionTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 10
+    },
+    "com.roadprints.capture.VenueConfigurationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 4
+    },
+    "com.roadprints.capture.WalkingArrivalTimingTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.WalkingCaptureEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 7
+    },
+    "com.roadprints.capture.WalkingCaptureServiceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 13
+    },
+    "com.roadprints.capture.WalkingJourneyPreparationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 9
+    },
+    "com.roadprints.capture.WalkingMatchingIntegrationTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 10
+    },
+    "com.roadprints.capture.WalkingStartEvidenceTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 3
+    },
+    "com.roadprints.capture.WhatsNewActivityTest": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 6
+    }
+  },
+  "tested_source": "f883adbc0ae13ef5273126cc1a77bc1a9e1a737f",
+  "totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 4,
+    "tests": 852
+  },
+  "zip_sha256": "984aee5f2572c91d72f45e07e8e41be544854f22404ff1d5e7cff7bb3d87eac6"
+}
