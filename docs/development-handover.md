@@ -1,8 +1,18 @@
 # Roadprints development handover
 
-Last reviewed: 2026-10-29. This is the **entrypoint**, not a replacement for issue specifications or code review.
+Last reviewed: 2026-11-04. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
-## Current development instructions — 29 October 2026
+## Current development baseline — 4 November 2026
+
+Use latest validated main with integrated #262 on-foot continuity, #263 Android
+0.25.223 (269) release, and #254 reviewed Deal correspondence. See the
+[controlled integration, release receipt, acceptance and precise next NCN task](controlled-integration-20261104.md).
+Source integration, signed owner APK, reference publication and physical acceptance
+remain separate states. The Deal/seam corrections are offline candidates; no new
+NCN catalogue or user credit has been published. Do not restart settled capture or
+projection investigations. Follow the current record above older delivery states.
+
+## Prior development instructions — 29 October 2026
 
 The authoritative source integration baseline is the **latest validated main**.
 The completed reconciliation commit is
