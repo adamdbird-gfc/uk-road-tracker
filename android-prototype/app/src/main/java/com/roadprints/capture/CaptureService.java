@@ -280,6 +280,11 @@ public class CaptureService extends Service {
                 finishCapture();
                 return;
             }
+            // A provisional foot label must not veto evidence of a vehicle transition.
+            // This is only input to the existing context model, never foot mileage,
+            // arrival, matching or a direct driving assignment.
+            boolean contextTrusted = fresh && CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
+                    footSample(observation, 1), false);
             boolean trusted = fresh && CaptureQualityValidator.reliable(lastPoint == null ? null : footSample(lastPoint, 0),
                     footSample(observation, 1), "walking".equals(mode) || "running".equals(mode));
             // Retain rejected fixes as evidence, but do not credit their jumps
@@ -298,7 +303,7 @@ public class CaptureService extends Service {
             if (trusted)
                 evaluateStationLocation(observation, points.size() - 1);
             if (captureFinishing) return;
-            if(trusted && automaticCapture) evaluateContextLocation(observation,points.size()-1);
+            if(contextTrusted && automaticCapture) evaluateContextLocation(observation,points.size()-1);
             if(captureFinishing)return;
             updateNotification();
             broadcastUpdate(gpsStillness
