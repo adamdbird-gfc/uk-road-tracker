@@ -12,8 +12,8 @@ final class CoreAchievementEvidence {
     boolean captured;
     final Set<String> edited=new HashSet<>();
     final Set<String> refs=new TreeSet<>();
-    final Map<String,LinkedHashMap<String,JSONObject>> named=new TreeMap<>();
-    final Map<String,LinkedHashMap<String,JSONObject>> townRoads=new TreeMap<>();
+    final Map<String,LinkedHashSet<String>> named=new TreeMap<>();
+    final Map<String,LinkedHashSet<String>> townRoads=new TreeMap<>();
     final Coverage roadCoverage=new Coverage(), footCoverage=new Coverage(), cycleCoverage=new Coverage();
 
     void add(JSONObject journey) {
@@ -80,7 +80,7 @@ final class CoreAchievementEvidence {
                 if(numbered)continue;
                 String name=normalize(props.optString("name",props.optString("road_name","")));
                 if(name.isEmpty()||name.matches("[0-9.,]+"))continue;
-                named.computeIfAbsent(name,k->new LinkedHashMap<>()).putIfAbsent(geometry.toString(),geometry);
+                named.computeIfAbsent(name,k->new LinkedHashSet<>()).add(geometry.toString());
             }
         }
     }
@@ -93,8 +93,8 @@ final class CoreAchievementEvidence {
     }
     Map<String,List<String>> roadLists(Context context) {
         List<String> all=new ArrayList<>(refs), high=new ArrayList<>(), station=new ArrayList<>();
-        for(Map.Entry<String,LinkedHashMap<String,JSONObject>> row:named.entrySet()) {
-            List<JSONObject> geometries=new ArrayList<>(row.getValue().values());
+        for(Map.Entry<String,LinkedHashSet<String>> row:named.entrySet()) {
+            List<JSONObject> geometries=geometries(row.getValue());
             List<String> towns=AchievementStore.roadSettlements(context,"name:"+row.getKey(),geometries);
             // Unresolved names count once conservatively, matching existing discovery.
             if(towns.isEmpty())all.add(row.getKey());
@@ -106,6 +106,14 @@ final class CoreAchievementEvidence {
         }
         Map<String,List<String>> result=new HashMap<>();
         result.put("the-knowledge",all);result.put("mary-high-streets",high);result.put("mastered-monopoly",station);
+        return result;
+    }
+    /** Keep one lossless representation, not every archive's parsed coordinate tree.
+     * Only materialise the road currently being attributed. No simplification or cap. */
+    static List<JSONObject> geometries(Set<String> values) {
+        List<JSONObject> result=new ArrayList<>();
+        try {for(String value:values)result.add(new JSONObject(value));}
+        catch(org.json.JSONException invalid){throw new IllegalStateException("Invalid retained road geometry",invalid);}
         return result;
     }
     static List<JSONArray> lines(JSONObject geometry) {
