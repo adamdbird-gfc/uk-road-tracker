@@ -1,7 +1,9 @@
-import copy,gzip,hashlib,json,tempfile,unittest
+import copy,gzip,hashlib,json,tempfile,unittest,sys
+from types import SimpleNamespace
+from unittest.mock import Mock,patch
 from pathlib import Path
 from ncn_reference import validate,verify_database
-from publish_ncn_reference import configuration,preservation,next_manifest
+from publish_ncn_reference import configuration,preservation,next_manifest,served_manifest
 
 class ReferenceTests(unittest.TestCase):
  def setUp(self):self.m=json.loads((Path(__file__).resolve().parents[1]/'android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
@@ -28,4 +30,14 @@ class ReferenceTests(unittest.TestCase):
   with tempfile.TemporaryDirectory()as work:
    p=Path(work)/'db';p.write_bytes(b'not the catalogue')
    with self.assertRaises(ValueError):verify_database(p,self.m)
+ def test_live_manifest_check_does_not_download_asset_again(self):
+  get=Mock(return_value=SimpleNamespace(status_code=200,content=b'{}',json=lambda:self.m))
+  with patch.dict(sys.modules,{'requests':SimpleNamespace(get=get)}):served_manifest('https://example.invalid',self.m)
+  self.assertEqual(1,get.call_count)
+  self.assertTrue(get.call_args.args[0].endswith('/collections/published/ncn/manifest-v2.json'))
+  self.assertFalse(get.call_args.kwargs['allow_redirects'])
+ def test_live_manifest_mismatch_or_redirect_rejected(self):
+  for status,m in [(302,self.m),(200,{**self.m,'revision':99})]:
+   get=Mock(return_value=SimpleNamespace(status_code=status,content=b'{}',json=lambda:m))
+   with patch.dict(sys.modules,{'requests':SimpleNamespace(get=get)}),self.assertRaises(ValueError):served_manifest('https://example.invalid',self.m)
 if __name__=='__main__':unittest.main()

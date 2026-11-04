@@ -43,6 +43,11 @@ def local_check(asset,m):
                 target.write(chunk)
         verify_database(database,m)
 
+def served_manifest(base,m):
+    import requests
+    response=requests.get(base+'/'+MANIFEST,timeout=60,allow_redirects=False)
+    if response.status_code!=200 or len(response.content)>32768 or response.json()!=m:raise ValueError('Hosted NCN manifest differs')
+
 def served(base,m):
     import requests
     # Hosting upload protocol gzips transport; the file itself is a .gz object.
@@ -55,8 +60,7 @@ def served(base,m):
             if total>m['compressed_bytes']:raise ValueError('Hosted NCN exceeds size pin')
             h.update(chunk)
         if total!=m['compressed_bytes'] or h.hexdigest()!=m['compressed_sha256']:raise ValueError('Hosted NCN compressed bytes differ')
-    response=requests.get(base+'/'+MANIFEST,timeout=60,allow_redirects=False)
-    if response.status_code!=200 or len(response.content)>32768 or response.json()!=m:raise ValueError('Hosted NCN manifest differs')
+    served_manifest(base,m)
 
 def run(args):
     import requests
@@ -77,6 +81,8 @@ def run(args):
     next_manifest(old,m)
     config=configuration(hosting.request('GET',source).get('config',{}))
     args.work.mkdir(parents=True,exist_ok=True)
+    (args.work/'source-files.json').write_text(json.dumps(before,sort_keys=True)+'\n')
+    (args.work/'source-config.json').write_text(json.dumps(hosting.request('GET',source).get('config',{}),sort_keys=True)+'\n')
     # Firebase Hosting content hashes are SHA256 of gzip-encoded upload bodies.
     # Stream the large already-compressed catalogue through one additional transport layer.
     transport=args.work/'hosting-upload.gz'
@@ -101,6 +107,7 @@ def run(args):
             if response.status_code not in (200,201):raise RuntimeError('NCN upload failed HTTP '+str(response.status_code))
     hosting.request('PATCH',target,params={'updateMask':'status,config'},json={'status':'FINALIZED','config':config})
     after=hosting.files(target);preservation(before,after,added)
+    (args.work/'target-files.json').write_text(json.dumps(after,sort_keys=True)+'\n')
     if hosting.request('GET',target).get('config',{})!=config:raise ValueError('Hosting configuration changed unexpectedly')
     channel=session.get('https://firebasehosting.googleapis.com/v1beta1/'+f'sites/{SITE}/channels/{CHANNEL}',timeout=60)
     if channel.status_code==404:hosting.request('POST',f'sites/{SITE}/channels',params={'channelId':CHANNEL},json={'ttl':'86400s','retainedReleaseCount':1})
@@ -110,11 +117,15 @@ def run(args):
     if not url.startswith('https://'+SITE+'--'+CHANNEL+'-') or not url.endswith('.web.app'):raise ValueError('Unexpected preview origin')
     served(url,m)
     if hosting.request('GET',live_path)['release']['version']['name']!=source:raise ValueError('Live changed during preparation')
-    result={'status':'preview_verified','source_version':source,'version':target,'preview_url':url,'preserved_files':len(before)-(MANIFEST in before),'revision':m['revision'],'database_sha256':m['sha256'],'compressed_sha256':m['compressed_sha256']}
+    result={'status':'preview_verified','source_version':source,'version':target,'preview_url':url,'preserved_files':len(before)-(MANIFEST in before),'revision':m['revision'],'database_sha256':m['sha256'],'compressed_sha256':m['compressed_sha256'],'full_asset_verification_downloads':1,'verified_asset_body_bytes':m['compressed_bytes']}
     (args.work/'publication.json').write_text(json.dumps(result,indent=2)+'\n')
     if args.promote:
         hosting.request('POST',f'sites/{SITE}/releases',params={'versionName':target},json={'message':'NCN reference revision '+str(m['revision'])+'; preserve all other reference assets'})
-        served('https://'+SITE+'.web.app',m)
+        # Preview already verified every asset byte. Promotion points live at that
+        # exact immutable version; check its complete stored hashes and manifest
+        # instead of downloading the same 146 MB a second time.
+        if hosting.files(target)!=after:raise ValueError('Verified version files changed')
+        served_manifest('https://'+SITE+'.web.app',m)
         if hosting.request('GET',live_path)['release']['version']['name']!=target:raise ValueError('Live changed after release')
         result.update(status='live_verified',url='https://'+SITE+'.web.app/'+m['filename'])
         (args.work/'publication.json').write_text(json.dumps(result,indent=2)+'\n')
