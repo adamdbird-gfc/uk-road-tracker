@@ -1,0 +1,11 @@
+# Deal NCN1 resolution scope — 31 October 2026
+
+Owner request: decide each held edge, verify eligible route identity/access/connectivity independently of the old geometric rejection, implement a narrowly pinned correction if supported, improve section evidence in the viewer. Parent NCN work #79/#190/#194. Journey editing remains separate in #253.
+
+Baseline: main `40f3c0d00e171800a157af4b3db5d4125134203b`, independently cloned from GitHub. #242 (ordinary seams) and #247 (projection audit) merged; #248 at `4eb331b4d3547755d0f3d83e826888fc833fd8c7`, #249 at `e274261bf4b60219ba473f4d8f0c78ef4ffb4154`, #251 at `7fa7dae887e03bf73d32c8da0fd76ad70cfc7420` remain open/unmerged. No prior PR is merged here. Viewer source is explicitly carried forward from exact #249 head into this main-based branch because the requested viewer is absent from main. Existing cases and historical results remain intact.
+
+Evidence: pinned Deal source/target fixture, fresh bounded OSM API map and way read, council-linked Kingsdown Cruise coordinates and instructions, route operator and council route descriptions. Source way v11, designated cycleway and hiking memberships, complete ordered source nodes and both endpoint neighbours must agree. Local UTM31N and independent WGS84 geodesics will distinguish finite endpoint distance from lateral offset. Private 77611523 is a mandatory rejection even when geometrically close.
+
+Candidate design: exact reviewed source-to-target correspondence, not a national tolerance increase. Only verified source geometry/nodes/modes, exact target and pinned prior candidate can qualify; changed identity, access, membership, geometry or scope fail closed. Preserve all old bindings, ordinary seams, targets, lengths, network mappings, unrelated paths and reference coverage. No default catalogue build change. Replay against disposable original/shipped and seam candidate bytes, independently verify added mappings and unique-network delta, retain existing Android consumer schema. No real journey award or migration.
+
+Delivery: dedicated PR targeting main, open/unmerged; no deployment, APK, Firebase publication or issue closure. Installed APK/live backend/active Firebase versions unknown and not inferred from source or archived publication. Physical Android and future publication acceptance remain separate.

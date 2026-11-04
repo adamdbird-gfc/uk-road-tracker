@@ -1,0 +1,3 @@
+# Offline Deal correspondence audit only; not production dependencies.
+shapely==2.2.0
+pyproj==3.8.0

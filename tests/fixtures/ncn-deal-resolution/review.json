@@ -1,0 +1,164 @@
+{
+  "approved_edges": [
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "base_content_sha256": "cf25e006e79782c9458895bf4b68179b7829fe3b6e7d5ded96be0ccd07929dc0",
+  "basis": [
+    "Fresh exact OSM cycleway nodes, designated cycling and walking, open NCN1 direct membership, connected endpoint neighbours.",
+    "Route operator and council identify the same public NCN1 corridor. Council-linked route follows this cycleway beside the private gravel road.",
+    "Reviewed correspondence identifies two contiguous exact published traffic-free main target edges, with a finite closest-point source anchor at their shared degree-two vertex.",
+    "No path identity transfer, geometric snapping, source length change, route denominator change or real journey credit."
+  ],
+  "bindings": [
+    {
+      "end": 354.98841686579095,
+      "high": 131.03239271218774,
+      "low": 49.589559392025805,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 273.52677777274164,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 437.83252947565086,
+      "high": 213.87635255336855,
+      "low": 131.03239271218771,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 354.98841686579095,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 595.3751938969184,
+      "high": 371.41899766943845,
+      "low": 213.87635255336858,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 437.83252947565086,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 684.3454975808725,
+      "high": 460.3892005220646,
+      "low": 371.4189976694384,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 595.3751938969184,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 719.4600679694057,
+      "high": 495.388143301922,
+      "low": 460.3892005220646,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 684.3454975808725,
+      "target": "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188"
+    },
+    {
+      "end": 835.1270332469486,
+      "high": 115.79462765684283,
+      "low": 0.0,
+      "modes": [
+        "on_foot",
+        "cycling"
+      ],
+      "start": 719.4600679694057,
+      "target": "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b"
+    }
+  ],
+  "decision": "Admit designated NCN1 source edges 6\u201310 using exact reviewed source/target correspondence. National geometry gates remain unchanged.",
+  "fixture_sha256": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+  "full_extent_check_sha256": "277ffad867567a4e2f886a838a3c5cd7d55d8f1488e0becf04bbca7c88fdb445",
+  "junction": {
+    "automatic_unbound_source_m": 0.02838108716842669,
+    "junction_eq_offset_m": 9.189184562566632,
+    "reviewed_junction_source_m": 719.4600679694057,
+    "reviewed_junction_target": [
+      177579.96110758072,
+      -364674.43710450013
+    ]
+  },
+  "observations_sha256": "0af498de3d055caf8acf9c258975eb5b47d0d3db5f4f5d07c39b3ec875422096",
+  "policy": "exact_reviewed_route_correspondence",
+  "previous_bindings_sha256": "5cfb4ec33e0d28e41053540da8feb9673a8b78df3b86199a1fdcf441879fc36a",
+  "private_control_eligible": false,
+  "route": "NCN:1",
+  "schema_version": 1,
+  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+  "source_nodes": [
+    978142881,
+    978142882,
+    1181940231,
+    978142883,
+    1181941130,
+    978142884,
+    978142885,
+    978142886,
+    978142887,
+    978142888,
+    978142889,
+    978142890,
+    27411872,
+    913199040
+  ],
+  "targets": {
+    "open-edge:a25d7e26207940a4e9df96e7a4c74582ba53cb3f575a95dd1c8c536813c5d188": [
+      495.388143301922,
+      [
+        [
+          1.4037210386,
+          51.1948382751
+        ],
+        [
+          1.404342062,
+          51.1903977902
+        ]
+      ],
+      [
+        [
+          9584,
+          0.0,
+          495.388143301922,
+          495.65282312333665
+        ]
+      ]
+    ],
+    "open-edge:e4fa74c3b8c7537c0812c5b97bbcd40f47a09b0572b72b3d58336eda878b2b2b": [
+      122.84448955340002,
+      [
+        [
+          1.404342062,
+          51.1903977902
+        ],
+        [
+          1.4044902093,
+          51.1892963843
+        ]
+      ],
+      [
+        [
+          9585,
+          0.0,
+          122.84448955340002,
+          122.9053208093278
+        ]
+      ]
+    ]
+  },
+  "way": "4471747"
+}

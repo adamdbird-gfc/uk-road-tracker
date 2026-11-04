@@ -1,0 +1,412 @@
+{
+  "council_route": {
+    "coordinates": [
+      [
+        1.40338,
+        51.19856
+      ],
+      [
+        1.40356,
+        51.19573
+      ],
+      [
+        1.4036,
+        51.19538
+      ],
+      [
+        1.40361,
+        51.19486
+      ],
+      [
+        1.40373,
+        51.19365
+      ],
+      [
+        1.40416,
+        51.19061
+      ],
+      [
+        1.40436,
+        51.18932
+      ]
+    ],
+    "id": 32553600,
+    "instruction_evidence": "At the northern entrance, the council-linked route directs riders onto the shared path beside gravel Wellington Parade; at its southern end it turns into Boundary Road. This identifies the cycleway rather than the parallel private carriageway.",
+    "linked_by": "https://www.deal.gov.uk/Cycle_Friendly_Deal_34792.aspx",
+    "name": "Kingsdown Cruise",
+    "precision": "Track coordinates have 5 decimal places; corroboration of route identity, not a survey.",
+    "raw_sha256": "2288272dd5cb17490ab0bd5dbb32f6109cc2929361177a3f93817e61051a7261",
+    "updated_at": 1615566245,
+    "url": "https://ridewithgps.com/routes/32553600.json"
+  },
+  "licences": {
+    "external_route": "Coordinate facts and paraphrased route instructions only; no redistribution of full guide.",
+    "osm": "\u00a9 OpenStreetMap contributors, ODbL 1.0",
+    "publisher": "Walk Wheel Cycle Trust, OGL 3.0; original attribution retained in pinned fixture"
+  },
+  "observed_on": "2026-10-31",
+  "osm": {
+    "raw_sha256": "3e6c720a2143e39d944b67b4d95f931640f722861565e3938e7a9f42f8550b8d",
+    "relations": [
+      {
+        "id": "8864",
+        "relevant_members": [
+          {
+            "ref": "4471747",
+            "role": "",
+            "type": "way"
+          }
+        ],
+        "tags": {
+          "distance": "262 km",
+          "from": "Gravesend",
+          "name": "Saxon Shore Way",
+          "network": "rwn",
+          "osmc:symbol": "black:black:SSW:white",
+          "route": "hiking",
+          "to": "Hastings",
+          "type": "route",
+          "wikidata": "Q7428841",
+          "wikipedia": "en:Saxon Shore Way"
+        },
+        "timestamp": "2026-10-11T14:41:13Z",
+        "version": 597
+      },
+      {
+        "id": "75880",
+        "relevant_members": [
+          {
+            "ref": "84079705",
+            "role": "",
+            "type": "way"
+          },
+          {
+            "ref": "4471747",
+            "role": "",
+            "type": "way"
+          },
+          {
+            "ref": "84079387",
+            "role": "",
+            "type": "way"
+          }
+        ],
+        "tags": {
+          "colour": "red",
+          "cycle_network": "UK:National Cycle Network",
+          "from": "Dover",
+          "name": "NCN National Route 1 Dover to Canterbury",
+          "network": "ncn",
+          "operator": "Walk Wheel Cycle Trust",
+          "operator:wikidata": "Q606877",
+          "ref": "1",
+          "ref:colour": "red",
+          "ref:colour_bg": "white",
+          "ref:colour_tx": "white",
+          "route": "bicycle",
+          "to": "Canterbury",
+          "type": "route"
+        },
+        "timestamp": "2026-04-05T20:40:23Z",
+        "version": 747
+      },
+      {
+        "id": "11738490",
+        "relevant_members": [
+          {
+            "ref": "4471747",
+            "role": "",
+            "type": "way"
+          }
+        ],
+        "tags": {
+          "from": "Folkestone",
+          "name": "King Charles III England Coast Path: Folkestone to Ramsgate",
+          "network": "nwn",
+          "operator": "National Trails",
+          "ref": "ECP",
+          "route": "hiking",
+          "to": "Ramsgate",
+          "type": "route"
+        },
+        "timestamp": "2026-04-05T20:40:23Z",
+        "version": 68
+      }
+    ],
+    "selection": "All mapped highway ways within 45 UTM metres of finite target, plus endpoint neighbours; complete source way node chain. Not evidence of absence of unmapped paths.",
+    "url": "https://api.openstreetmap.org/api/0.6/map?bbox=1.4028,51.1888,1.4052,51.1971",
+    "ways": [
+      {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "id": "4471747",
+        "nodes": [
+          "978142881",
+          "978142882",
+          "1181940231",
+          "978142883",
+          "1181941130",
+          "978142884",
+          "978142885",
+          "978142886",
+          "978142887",
+          "978142888",
+          "978142889",
+          "978142890",
+          "27411872",
+          "913199040"
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "cycleway",
+          "lit": "no",
+          "segregated": "no",
+          "smoothness": "good",
+          "surface": "asphalt"
+        },
+        "timestamp": "2023-10-14T20:30:22Z",
+        "version": 11
+      },
+      {
+        "coordinates": [
+          [
+            1.4035031,
+            51.1968475
+          ],
+          [
+            1.4035106,
+            51.1957298
+          ],
+          [
+            1.40354,
+            51.1953761
+          ],
+          [
+            1.4035688,
+            51.1948438
+          ],
+          [
+            1.4036157,
+            51.1943884
+          ],
+          [
+            1.4037018,
+            51.1936519
+          ],
+          [
+            1.4037922,
+            51.1929293
+          ],
+          [
+            1.404002,
+            51.1915102
+          ],
+          [
+            1.4041083,
+            51.1906894
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "id": "77611523",
+        "nodes": [
+          "913199043",
+          "913199039",
+          "913199035",
+          "913199037",
+          "913199036",
+          "913199038",
+          "913199041",
+          "913199042",
+          "913199034",
+          "913199040"
+        ],
+        "tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "timestamp": "2026-01-29T17:30:24Z",
+        "version": 8
+      },
+      {
+        "coordinates": [
+          [
+            1.4034346,
+            51.1985949
+          ],
+          [
+            1.4034425,
+            51.1985534
+          ],
+          [
+            1.4035149,
+            51.1970554
+          ],
+          [
+            1.4035412,
+            51.1968459
+          ]
+        ],
+        "id": "84079387",
+        "nodes": [
+          "27411862",
+          "977988769",
+          "1181940659",
+          "978142881"
+        ],
+        "tags": {
+          "est_width": "1.75",
+          "highway": "cycleway",
+          "lit": "no",
+          "segregated": "yes",
+          "smoothness": "good",
+          "surface": "asphalt"
+        },
+        "timestamp": "2023-10-14T20:31:12Z",
+        "version": 8
+      },
+      {
+        "coordinates": [
+          [
+            1.4043375,
+            51.1893056
+          ],
+          [
+            1.4033959,
+            51.1890941
+          ],
+          [
+            1.4025199,
+            51.1889034
+          ]
+        ],
+        "id": "84079705",
+        "nodes": [
+          "913199040",
+          "627875177",
+          "5598877562"
+        ],
+        "tags": {
+          "highway": "residential",
+          "lane_markings": "no",
+          "lit": "no",
+          "maxspeed": "20 mph",
+          "name": "Boundary Road",
+          "surface": "asphalt",
+          "width": "5"
+        },
+        "timestamp": "2025-01-21T08:55:16Z",
+        "version": 12
+      },
+      {
+        "coordinates": [
+          [
+            1.4035688,
+            51.1948438
+          ],
+          [
+            1.4028294,
+            51.194833
+          ],
+          [
+            1.4024504,
+            51.194826
+          ]
+        ],
+        "id": "84079709",
+        "nodes": [
+          "913199037",
+          "8606553563",
+          "913195772"
+        ],
+        "tags": {
+          "highway": "residential",
+          "lit": "no",
+          "maxspeed": "10 mph",
+          "name": "Cecil Road",
+          "surface": "gravel"
+        },
+        "timestamp": "2025-01-21T08:55:16Z",
+        "version": 3
+      }
+    ]
+  },
+  "primary_sources": [
+    {
+      "fact": "Route operator identifies NCN1 via Deal, Walmer, Wellington Parade and Kingsdown, for cycling and walking.",
+      "url": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/kent-coastal-castles-ride/"
+    },
+    {
+      "fact": "Town Council identifies NCN1 as traffic free along this seafront between Deal Pier and Kingsdown and links the Kingsdown Cruise route.",
+      "url": "https://www.deal.gov.uk/Cycle_Friendly_Deal_34792.aspx"
+    },
+    {
+      "fact": "Local countryside partnership identifies NCN1 beside the coast footpath, open for public recreation; parallel footpath does not authorise identity transfer.",
+      "url": "https://www.whitecliffscountryside.org.uk/visit-us/kingsdown-and-walmer-beach"
+    }
+  ],
+  "schema_version": 1
+}
