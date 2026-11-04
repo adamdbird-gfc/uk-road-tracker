@@ -9,7 +9,7 @@ permissions:
   contents: read
 concurrency:
   group: android-stability-${{ github.head_ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   verify:
     if: github.head_ref == 'fix/achievement-memory-20261104' || github.head_ref == 'fix/driving-transition-gate-20261104'
