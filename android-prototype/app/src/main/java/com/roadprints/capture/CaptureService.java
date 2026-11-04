@@ -568,7 +568,9 @@ public class CaptureService extends Service {
             } else if (gpsQuiet) {
                 clearPendingActivityMode();
                 broadcastUpdate("Checking arrival; small local movements do not start a new journey leg...");
-            } else if (detectedMode.equals(mode)) {
+            } else if (detectedMode.equals(mode)
+                    || MatchingCoordinator.isFoot(mode) && MatchingCoordinator.isFoot(detectedMode)) {
+                // Pace changes are evidence within one on-foot journey.
                 clearPendingActivityMode();
             } else {
                 if (!detectedMode.equals(pendingActivityMode)) pendingActivitySince = wallClock.millis();
@@ -609,7 +611,8 @@ public class CaptureService extends Service {
 
     private void commitPendingActivityMode() {
         String confirmedMode = pendingActivityMode;
-        if (confirmedMode == null || !isActive(this) || confirmedMode.equals(mode)) {
+        if (confirmedMode == null || !isActive(this) || confirmedMode.equals(mode)
+                || MatchingCoordinator.isFoot(mode) && MatchingCoordinator.isFoot(confirmedMode)) {
             clearPendingActivityMode();
             return;
         }
