@@ -2,6 +2,19 @@
 
 Last reviewed: 2026-11-04. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Latest NCN publication checkpoint — 4 November 2026
+
+The combined ordinary-seam + Deal candidate was reproduced from checksum-verified
+live revision 1 and packaged as proposed revision 4. Exact prior canonical and
+SQLite hashes match; capacity is +46.396 km / 92.6082% assessability. **Not published**:
+the current execution environment has no Hosting credentials and no current NCN
+workflow invokes the existing publisher. The next task is a bounded credentialed
+publication entrypoint, preview/live verification and retained rollback receipt.
+See [readiness decision, exact manifests and reproduction](ncn-publication-readiness-20261104.md).
+Owner-authorised parallel-way corridor equivalence is separately preserved in
+[#265](https://github.com/adamdbird-gfc/uk-road-tracker/issues/265); not implemented.
+Android 269 needs no demonstrated NCN compatibility correction or new APK.
+
 ## Current development baseline — 4 November 2026
 
 Use latest validated main with integrated #262 on-foot continuity, #263 Android
