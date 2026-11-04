@@ -43,13 +43,24 @@ def local_check(asset,m):
                 target.write(chunk)
         verify_database(database,m)
 
-def served_manifest(base,m):
+def served_manifest(base,m,transfers=None):
     import requests
+    if transfers:
+        raw,op=transfers.fetch(base+'/'+MANIFEST,32768,'manifest')
+        if json.loads(raw)!=m:raise ValueError('Hosted NCN manifest differs')
+        op['status']='integrity_verified';transfers.save();return
     response=requests.get(base+'/'+MANIFEST,timeout=60,allow_redirects=False)
     if response.status_code!=200 or len(response.content)>32768 or response.json()!=m:raise ValueError('Hosted NCN manifest differs')
 
-def served(base,m):
+def served(base,m,transfers=None):
     import requests
+    if transfers:
+        h=hashlib.sha256()
+        _,op=transfers.fetch(base+'/'+m['filename'],m['compressed_bytes'],'catalogue',h.update)
+        if op['consumed_body_bytes']!=m['compressed_bytes'] or h.hexdigest()!=m['compressed_sha256']:
+            op['status']='integrity_failed_no_retry';transfers.save();raise ValueError('Hosted NCN compressed bytes differ')
+        op['status']='integrity_verified';op['sha256']=h.hexdigest();transfers.save()
+        served_manifest(base,m,transfers);return
     # Hosting upload protocol gzips transport; the file itself is a .gz object.
     # Do not ask requests to auto-decode a Content-Encoding representation here.
     with requests.get(base+'/'+m['filename'],headers={'Accept-Encoding':'identity'},stream=True,timeout=(30,90),allow_redirects=False) as response:
@@ -68,21 +79,41 @@ def run(args):
     from google.auth.transport.requests import AuthorizedSession
     from google.oauth2.service_account import Credentials
     m=json.loads(args.manifest.read_text());local_check(args.asset,m)
+    auth=None;transfers=None
+    if os.environ.get('NCN_CONTROLLED_AUTHORISATION'):
+        from controlled_ncn_publication import publication_guard
+        from ncn_publication_transfers import Transfers
+        auth=publication_guard(m,args.work.parent)
+        transfers=Transfers(args.work,auth['max_preview_transfer_bytes'])
     credentials=json.loads(os.environ['FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON'])
     if credentials.get('project_id')!='roadprints-822cc' or credentials.get('type')!='service_account' or os.environ.get('ROADPRINTS_DATA_HOSTING_SITE')!=SITE:raise ValueError('Unexpected Firebase destination')
-    session=AuthorizedSession(Credentials.from_service_account_info(credentials,scopes=['https://www.googleapis.com/auth/firebase.hosting']))
+    session=AuthorizedSession(Credentials.from_service_account_info(credentials,scopes=['https://www.googleapis.com/auth/firebase.hosting']),max_refresh_attempts=0)
     hosting=Publisher(session);live_path=f'sites/{SITE}/channels/live'
-    source=version_name(hosting.request('GET',live_path)['release']['version']['name']);before=hosting.files(source)
+    source=version_name(hosting.request('GET',live_path)['release']['version']['name'])
+    if auth and source!=auth['expected_live_version']:raise ValueError('Unexpected live Hosting baseline')
+    before=hosting.files(source)
     old=None
     if MANIFEST in before:
-        response=requests.get('https://'+SITE+'.web.app/'+MANIFEST,timeout=60,allow_redirects=False)
-        if response.status_code!=200 or len(response.content)>32768:raise ValueError('Cannot inspect existing NCN manifest')
-        old=response.json()
+        if transfers:
+            raw,op=transfers.fetch('https://'+SITE+'.web.app/'+MANIFEST,32768,'manifest')
+            old=json.loads(raw)
+            from controlled_ncn_publication import read
+            if old!=read(auth['baseline_manifest']):raise ValueError('Live NCN baseline manifest changed')
+            op['status']='baseline_verified';transfers.save()
+        else:
+            response=requests.get('https://'+SITE+'.web.app/'+MANIFEST,timeout=60,allow_redirects=False)
+            if response.status_code!=200 or len(response.content)>32768:raise ValueError('Cannot inspect existing NCN manifest')
+            old=response.json()
     next_manifest(old,m)
     config=configuration(hosting.request('GET',source).get('config',{}))
     args.work.mkdir(parents=True,exist_ok=True)
     (args.work/'source-files.json').write_text(json.dumps(before,sort_keys=True)+'\n')
     (args.work/'source-config.json').write_text(json.dumps(hosting.request('GET',source).get('config',{}),sort_keys=True)+'\n')
+    if auth:
+        from controlled_ncn_publication import read
+        rollback=read(auth['rollback_manifest'])
+        if rollback['filename'] not in before:raise ValueError('Original rollback asset not retained')
+        (args.work/'rollback.json').write_text(json.dumps({'source_version':source,'manifest':rollback,'source_asset_transport_sha256':before[rollback['filename']]},indent=2)+'\n')
     # Firebase Hosting content hashes are SHA256 of gzip-encoded upload bodies.
     # Stream the large already-compressed catalogue through one additional transport layer.
     transport=args.work/'hosting-upload.gz'
@@ -103,7 +134,10 @@ def run(args):
     for h in required:
         with transport.open('rb') as packed:
             data=packed if h==content_hash else manifest_body
+            op=transfers.operation('upload',hosting_transport_bytes=transport.stat().st_size if h==content_hash else len(manifest_body),sha256=h) if transfers else None
             response=session.post(upload+'/'+h,data=data,headers={'Content-Type':'application/octet-stream'},timeout=(30,600),allow_redirects=False)
+            if op is not None:
+                op.update(status='uploaded' if response.status_code in (200,201) else 'failed_no_retry',http_status=response.status_code);transfers.save()
             if response.status_code not in (200,201):raise RuntimeError('NCN upload failed HTTP '+str(response.status_code))
     hosting.request('PATCH',target,params={'updateMask':'status,config'},json={'status':'FINALIZED','config':config})
     after=hosting.files(target);preservation(before,after,added)
@@ -115,21 +149,30 @@ def run(args):
     hosting.request('POST',f'sites/{SITE}/channels/{CHANNEL}/releases',params={'versionName':target},json={})
     url=hosting.request('GET',f'sites/{SITE}/channels/{CHANNEL}')['url']
     if not url.startswith('https://'+SITE+'--'+CHANNEL+'-') or not url.endswith('.web.app'):raise ValueError('Unexpected preview origin')
-    served(url,m)
+    served(url,m,transfers)
     if hosting.request('GET',live_path)['release']['version']['name']!=source:raise ValueError('Live changed during preparation')
     result={'status':'preview_verified','source_version':source,'version':target,'preview_url':url,'preserved_files':len(before)-(MANIFEST in before),'revision':m['revision'],'database_sha256':m['sha256'],'compressed_sha256':m['compressed_sha256'],'full_asset_verification_downloads':1,'verified_asset_body_bytes':m['compressed_bytes']}
     (args.work/'publication.json').write_text(json.dumps(result,indent=2)+'\n')
     if args.promote:
+        if transfers:transfers.operation('promote_identical_version',version=target)
         hosting.request('POST',f'sites/{SITE}/releases',params={'versionName':target},json={'message':'NCN reference revision '+str(m['revision'])+'; preserve all other reference assets'})
         # Preview already verified every asset byte. Promotion points live at that
         # exact immutable version; check its complete stored hashes and manifest
         # instead of downloading the same 146 MB a second time.
         if hosting.files(target)!=after:raise ValueError('Verified version files changed')
-        served_manifest('https://'+SITE+'.web.app',m)
+        served_manifest('https://'+SITE+'.web.app',m,transfers)
         if hosting.request('GET',live_path)['release']['version']['name']!=target:raise ValueError('Live changed after release')
         result.update(status='live_verified',url='https://'+SITE+'.web.app/'+m['filename'])
+        (args.work/'publication.json').write_text(json.dumps(result,indent=2)+'\n')
+    if transfers:
+        result['controlled_authorisation_id']=auth['authorisation_id']
+        result['consumed_cdn_body_bytes']=sum(o.get('consumed_body_bytes',0) for o in transfers.operations)
+        result['estimated_monthly_download_bytes']=auth['usage_evidence']['reported_download_bytes']+result['consumed_cdn_body_bytes']
+        result['traffic_and_lag_reserve_bytes']=auth['usage_evidence']['traffic_and_lag_reserve_bytes']
+        result['attempt_ref']='refs/tags/ncn-publication-attempt-'+auth['authorisation_id']
         (args.work/'publication.json').write_text(json.dumps(result,indent=2)+'\n')
     transport.unlink();print(json.dumps(result,indent=2))
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--asset',type=Path,required=True);p.add_argument('--manifest',type=Path,required=True);p.add_argument('--work',type=Path,default=Path('ncn-publication-evidence'));p.add_argument('--promote',action='store_true');run(p.parse_args())
+

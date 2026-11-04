@@ -111,6 +111,9 @@ def assess(metrics, now, transfer, storage):
 
 
 def run(work=Path('ncn-publication-evidence')):
+    if os.environ.get('NCN_CONTROLLED_AUTHORISATION'):
+        from controlled_ncn_publication import preflight
+        return preflight(work)
     work.mkdir(parents=True, exist_ok=True)
     result = {'status': 'blocked', 'payload_bytes_downloaded': 0,
               'hosting_writes': False}
@@ -178,3 +181,4 @@ def run(work=Path('ncn-publication-evidence')):
 
 if __name__ == '__main__':
     run()
+

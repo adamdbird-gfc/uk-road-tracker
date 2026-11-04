@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "authorisation_id": "ncn-r4-20261104-owner-console",
+  "owner_authorised": true,
+  "project": "roadprints-822cc",
+  "site": "roadprints-data-822cc",
+  "max_attempts": 1,
+  "candidate": {
+    "revision": 4,
+    "sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+    "compressed_sha256": "c40117278069777b38c13a099f319855e99878d24b95128f140f8d2f34a6020d",
+    "compressed_bytes": 145856489,
+    "database_bytes": 247291904
+  },
+  "expected_live_version": "sites/roadprints-data-822cc/versions/758e86605707677e",
+  "max_preview_transfer_bytes": 200000000,
+  "baseline_manifest": "docs/data-trials/ncn-publication-readiness-20261104/live-manifest.json",
+  "rollback_manifest": "docs/data-trials/ncn-publication-readiness-20261104/rollback-manifest.json",
+  "monitoring_unavailable": {
+    "http_status": 403,
+    "google_status": "PERMISSION_DENIED",
+    "diagnostic_run": 41871940004,
+    "decision": "Owner authorises fresh console evidence instead; no new Monitoring request required"
+  },
+  "usage_evidence": {
+    "source": "owner_firebase_console_all_sites",
+    "observed_on": "2026-11-04",
+    "period": "2026-11",
+    "plan": "Spark",
+    "displayed_downloads": "136.2 MB / 10 GB (1.3%)",
+    "displayed_storage": "491.6 MB / 10 GB (4.8%)",
+    "reported_download_bytes": 142868480,
+    "monthly_download_limit_bytes": 10000000000,
+    "reported_storage_bytes": 515532391,
+    "storage_limit_bytes": 10000000000,
+    "unit_assumption": "Conservatively interpret displayed MB as MiB, round usage up; limits use decimal GB",
+    "traffic_and_lag_reserve_bytes": 2000000000,
+    "storage_reserve_bytes": 1073741824,
+    "screenshot_sha256": "ef120e3d9675537e6656749ee5333037c93608eb40aca07ac9a6148e176831c3",
+    "backend_reporting_timestamp": "Unknown; explicitly accepted by owner with reserve"
+  }
+}
