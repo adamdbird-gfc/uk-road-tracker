@@ -1,0 +1,31 @@
+{
+  "baseline": "8c04b7eb1ac1bc8a6e8700ed19a14ba7ec34149c",
+  "python_tests": {
+    "passed": 13,
+    "failed": 0,
+    "log": "test-results.log"
+  },
+  "browser": {
+    "checks": 55,
+    "errors": [],
+    "offline": true,
+    "desktop": "1440x1050",
+    "mobile": "390x844",
+    "browser": "153.0.8010.0",
+    "physical_android": false
+  },
+  "source_validation": {
+    "input_files_hash_verified": 438,
+    "candidate_source_edges_verified": 47869
+  },
+  "full_national_spatial_scans": 1,
+  "full_catalogue_downloads": 0,
+  "production_changes": false,
+  "physical_android": "not tested",
+  "canonical_unique_recovery": "not established",
+  "limitations": [
+    "The same-route retained-source search is not an all-roads national OSM search.",
+    "Exact-chain geodesic union is a discovery proxy, not canonical unique-network recovery.",
+    "Distinct new public parallel alternatives were not established."
+  ]
+}

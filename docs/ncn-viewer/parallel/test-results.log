@@ -1,0 +1,22 @@
+test_confidence_and_zero_credit (__main__.DiscoveryTests.test_confidence_and_zero_credit) ... ok
+test_evidence_retained (__main__.DiscoveryTests.test_evidence_retained) ... ok
+test_finite_section_no_whole_way_transfer (__main__.DiscoveryTests.test_finite_section_no_whole_way_transfer) ... ok
+test_metric_against_geodesic (__main__.DiscoveryTests.test_metric_against_geodesic) ... /workspace/scratch/188c62dea8ba/uk-road-tracker/docs/ncn-viewer/parallel/test_discovery.py:19: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  fw,_=mod.metric(coords);n=transform(fw.transform,LineString(coords)).length;expected=Geod(ellps='WGS84').line_length(*zip(*coords));self.assertAlmostEqual(n,expected,places=5)
+ok
+test_negative_controls (__main__.DiscoveryTests.test_negative_controls) ... ok
+test_register_total_independent_sum (__main__.DiscoveryTests.test_register_total_independent_sum) ... ok
+test_revision4_residual_arithmetic (__main__.DiscoveryTests.test_revision4_residual_arithmetic) ... ok
+test_selected_measurements_reproduce (__main__.DiscoveryTests.test_selected_measurements_reproduce) ... /workspace/scratch/188c62dea8ba/uk-road-tracker/docs/ncn-viewer/parallel/test_discovery.py:38: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  fw,_=mod.metric(r['target_coordinates']);t=transform(fw.transform,LineString(r['target_coordinates']));gap=substring(t,r['low_m']/r['target_length_m'],r['high_m']/r['target_length_m'],normalized=True);e=transform(fw.transform,LineString(r['source_coordinates']));ds=[gap.interpolate(v,normalized=True).distance(e) for v in (0,.25,.5,.75,1)];self.assertAlmostEqual(max(ds),r['separation_sampled_max_m'],places=7);self.assertAlmostEqual(sum(ds)/5,r['separation_mean_m'],places=7)
+ok
+test_stable_ids_and_no_duplicate_alternative_rows (__main__.DiscoveryTests.test_stable_ids_and_no_duplicate_alternative_rows) ... ok
+test_subtraction_preserves_holes (__main__.DiscoveryTests.test_subtraction_preserves_holes) ... ok
+test_twelve_geographical_examples (__main__.DiscoveryTests.test_twelve_geographical_examples) ... ok
+test_union_partial_repeats_and_routes (__main__.DiscoveryTests.test_union_partial_repeats_and_routes) ... ok
+test_viewer_geometry_corresponds (__main__.DiscoveryTests.test_viewer_geometry_corresponds) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 3.276s
+
+OK
