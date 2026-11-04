@@ -1,0 +1,51 @@
+name: Read NCN Hosting quota diagnostics
+# Read-only: no cache restore, catalogue preparation, CDN reads or Hosting writes.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ncn-quota-preflight.yml'
+      - 'scripts/*ncn_publication_quota*'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ncn-quota-preflight.yml'
+      - 'scripts/check_ncn_publication_quota.py'
+permissions:
+  contents: read
+concurrency:
+  group: firebase-reference-publication
+  cancel-in-progress: false
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Offline publication and diagnostic regression tests
+        env: {PYTHONPATH: scripts}
+        run: python -m unittest scripts.test_ncn_reference scripts.test_ncn_publication_quota -v
+  read-current-quota:
+    needs: offline
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install google-auth==2.40.3 requests==2.32.5
+      - name: Read existing Hosting identity and quota only
+        env:
+          FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_HOSTING_SERVICE_ACCOUNT_JSON }}
+          ROADPRINTS_DATA_HOSTING_SITE: ${{ vars.ROADPRINTS_DATA_HOSTING_SITE }}
+        run: python scripts/check_ncn_publication_quota.py
+      - name: Preserve bounded quota diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncn-quota-diagnostics-${{ github.run_id }}
+          retention-days: 90
+          if-no-files-found: error
+          path: ncn-publication-evidence/quota.json
