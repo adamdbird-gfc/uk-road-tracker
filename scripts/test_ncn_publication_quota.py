@@ -149,6 +149,13 @@ class PreflightTests(unittest.TestCase):
             self.assertNotIn('quota_request', result)
 
     def test_unexpected_api_shapes_or_private_values_fail_safely(self):
+        for value in [True, 1.5, -1, '-1', '1.5', 'PRIVATE_SECRET', str(2**63)]:
+            metrics = self.fresh_metrics()
+            metrics[METRICS[0]][0]['points'][0]['value']['int64Value'] = value
+            code, result, _, _ = self.execute([self.live()] + [
+                self.response(200, {'timeSeries': metrics[name]}) for name in METRICS])
+            self.assertEqual(1, code)
+            self.assertEqual('blocked', result['status'])
         for body in [[], {'error': {}}, {'timeSeries': {}}, {'nextPageToken': []},
                      {'timeSeries': ['PRIVATE_SECRET']}, {'timeSeries': []}]:
             code, result, _, _ = self.execute([self.live(), self.response(200, body)])

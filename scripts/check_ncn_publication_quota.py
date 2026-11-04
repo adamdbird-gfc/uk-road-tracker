@@ -81,8 +81,12 @@ def latest_values(series, now):
         # Hosting monthly gauges sample every eight hours plus reporting delay.
         if not dt.timedelta(0) <= now - stamp <= dt.timedelta(hours=10):
             raise PreflightBlocked('Quota metric stale or future-dated')
-        value = int(point['value']['int64Value'])
-        if value < 0:
+        raw_value = point['value']['int64Value']
+        if (not isinstance(raw_value, str) or not raw_value.isascii()
+                or not raw_value.isdecimal()):
+            raise PreflightBlocked('Invalid quota metric')
+        value = int(raw_value)
+        if value > 2**63 - 1:
             raise PreflightBlocked('Invalid quota metric')
         values.append(value)
     return values
