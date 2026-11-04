@@ -24,6 +24,15 @@ public class AchievementArchiveVolumeTest {
             for(int i=0;i<1605;i++) {
                 JSONObject j=AchievementGeometryMemoryTest.journey(i,500).put("started_at","2026-11-01T09:00:00Z").put("ended_at","2026-11-01T09:05:00Z").put("timezone","Europe/London")
                         .put("source",new JSONObject().put("type","timeline_import"));
+                // Keep this retention/recognition fixture inside one county, away from
+                // the unrelated repeated polygon-edge work at the London county border.
+                JSONObject result=j.getJSONObject("processing_result");
+                for(String field:new String[]{"road_geojson","geojson"}) {
+                    JSONArray line=result.getJSONObject(field).getJSONArray("features").getJSONObject(0).getJSONObject("geometry").getJSONArray("coordinates");
+                    for(int p=0;p<line.length();p++) {
+                        JSONArray point=line.getJSONArray(p);point.put(0,point.getDouble(0)+.7);point.put(1,point.getDouble(1)-.25);
+                    }
+                }
                 byte[] bytes=j.toString().getBytes(StandardCharsets.UTF_8);before.update(bytes);
                 // Test fixture archives bypass observer/matcher work; production calculation reads them normally.
                 Files.write(new File(app.getFilesDir(),"journey_j"+i+".json").toPath(),bytes);
