@@ -1,0 +1,3779 @@
+{
+  "retrieved_utc": "2026-11-04",
+  "url": "https://api.openstreetmap.org/api/0.6/map.json?bbox=1.401,51.189,1.406,51.200",
+  "note": "Bounded live context; not original import version. Only highway ways, required nodes, bicycle relations retained.",
+  "elements": [
+    {
+      "type": "node",
+      "id": 27411850,
+      "lon": 1.4030496,
+      "lat": 51.2060768,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411851,
+      "lon": 1.4031382,
+      "lat": 51.2046166,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411853,
+      "lon": 1.4032134,
+      "lat": 51.2033728,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411854,
+      "lon": 1.4032571,
+      "lat": 51.2029074,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411855,
+      "lon": 1.4032879,
+      "lat": 51.2023849,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 27411857,
+      "lon": 1.4033246,
+      "lat": 51.2016754,
+      "version": 5
+    },
+    {
+      "type": "node",
+      "id": 27411858,
+      "lon": 1.4033273,
+      "lat": 51.2007472,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411860,
+      "lon": 1.403301,
+      "lat": 51.1995697,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411861,
+      "lon": 1.4033329,
+      "lat": 51.1987334,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 27411862,
+      "lon": 1.4034346,
+      "lat": 51.1985949,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 27411872,
+      "lon": 1.4043681,
+      "lat": 51.1893201,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 252688020,
+      "lon": 1.4022683,
+      "lat": 51.2015244,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 252688119,
+      "lon": 1.4022933,
+      "lat": 51.2031785,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 252688835,
+      "lon": 1.4023057,
+      "lat": 51.2034877,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 252689778,
+      "lon": 1.402399,
+      "lat": 51.2060562,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 252689783,
+      "lon": 1.4024527,
+      "lat": 51.2012694,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689784,
+      "lon": 1.4026742,
+      "lat": 51.2010239,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689785,
+      "lon": 1.4028025,
+      "lat": 51.2007455,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689787,
+      "lon": 1.402823,
+      "lat": 51.2005426,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689788,
+      "lon": 1.4027409,
+      "lat": 51.2003562,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689789,
+      "lon": 1.4025901,
+      "lat": 51.2001511,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689790,
+      "lon": 1.4024111,
+      "lat": 51.1999019,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252689791,
+      "lon": 1.4023045,
+      "lat": 51.1996686,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 252689792,
+      "lon": 1.4023303,
+      "lat": 51.1990863,
+      "version": 6
+    },
+    {
+      "type": "node",
+      "id": 252690147,
+      "lon": 1.3981973,
+      "lat": 51.1981027,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252690149,
+      "lon": 1.398022,
+      "lat": 51.1978247,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 252690150,
+      "lon": 1.3980557,
+      "lat": 51.1979545,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 252690151,
+      "lon": 1.3981295,
+      "lat": 51.1980533,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 252690161,
+      "lon": 1.4023021,
+      "lat": 51.1993569,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 255890728,
+      "lon": 1.3984865,
+      "lat": 51.1982159,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890730,
+      "lon": 1.4010463,
+      "lat": 51.1987499,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890732,
+      "lon": 1.4017685,
+      "lat": 51.1989318,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890734,
+      "lon": 1.4019859,
+      "lat": 51.1990398,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890736,
+      "lon": 1.4021858,
+      "lat": 51.199205,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890738,
+      "lon": 1.4022401,
+      "lat": 51.1992686,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 255890740,
+      "lon": 1.4022684,
+      "lat": 51.1993105,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 255890742,
+      "lon": 1.4023064,
+      "lat": 51.1981749,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 255890745,
+      "lon": 1.4024333,
+      "lat": 51.1951845,
+      "version": 5
+    },
+    {
+      "type": "node",
+      "id": 255890747,
+      "lon": 1.4024264,
+      "lat": 51.194473,
+      "version": 5
+    },
+    {
+      "type": "node",
+      "id": 255890757,
+      "lon": 1.4023571,
+      "lat": 51.1927118,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 255890763,
+      "lon": 1.4024137,
+      "lat": 51.1905123,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 469802467,
+      "lon": 1.402329,
+      "lat": 51.2014066,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802494,
+      "lon": 1.4015253,
+      "lat": 51.200252,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 469802495,
+      "lon": 1.4010877,
+      "lat": 51.1995561,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802496,
+      "lon": 1.4014346,
+      "lat": 51.1996231,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802497,
+      "lon": 1.4016113,
+      "lat": 51.2000464,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802498,
+      "lon": 1.4015944,
+      "lat": 51.2001562,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802500,
+      "lon": 1.4017854,
+      "lat": 51.2001389,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 469802501,
+      "lon": 1.402151,
+      "lat": 51.2001323,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 469802502,
+      "lon": 1.4021296,
+      "lat": 51.1997734,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 469802503,
+      "lon": 1.40177,
+      "lat": 51.1997819,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 469802504,
+      "lon": 1.4014694,
+      "lat": 51.1996784,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802533,
+      "lon": 1.4001288,
+      "lat": 51.199411,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 469802534,
+      "lon": 1.4007099,
+      "lat": 51.1994743,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843113,
+      "lon": 1.4030958,
+      "lat": 51.2003192,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843116,
+      "lon": 1.4030063,
+      "lat": 51.2001588,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843118,
+      "lon": 1.4028563,
+      "lat": 51.2000352,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843119,
+      "lon": 1.4025983,
+      "lat": 51.1998767,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843121,
+      "lon": 1.4024657,
+      "lat": 51.1997709,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843123,
+      "lon": 1.4024037,
+      "lat": 51.1997356,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 626843126,
+      "lon": 1.4031462,
+      "lat": 51.200682,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843128,
+      "lon": 1.4031248,
+      "lat": 51.2005121,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843130,
+      "lon": 1.4031166,
+      "lat": 51.2009866,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843131,
+      "lon": 1.4031718,
+      "lat": 51.2008175,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843132,
+      "lon": 1.4027982,
+      "lat": 51.2014914,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 626843133,
+      "lon": 1.4028351,
+      "lat": 51.2013777,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 626843134,
+      "lon": 1.4030033,
+      "lat": 51.2011703,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 627875177,
+      "lon": 1.4033959,
+      "lat": 51.1890941,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 769158923,
+      "lon": 1.4013167,
+      "lat": 51.1893273,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158924,
+      "lon": 1.4022855,
+      "lat": 51.1894134,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158927,
+      "lon": 1.4010416,
+      "lat": 51.189198,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158929,
+      "lon": 1.4019417,
+      "lat": 51.1892998,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158937,
+      "lon": 1.4016854,
+      "lat": 51.1892998,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158938,
+      "lon": 1.402501,
+      "lat": 51.1894331,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 769158941,
+      "lon": 1.4011604,
+      "lat": 51.1893468,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158942,
+      "lon": 1.4021042,
+      "lat": 51.1893351,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769158945,
+      "lon": 1.4010354,
+      "lat": 51.1890961,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 769215917,
+      "lon": 1.4047138,
+      "lat": 51.1870723,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 847767842,
+      "lon": 1.4015638,
+      "lat": 51.1998546,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 847767872,
+      "lon": 1.401718,
+      "lat": 51.1996826,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 847767874,
+      "lon": 1.4004147,
+      "lat": 51.1994122,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 913195772,
+      "lon": 1.4024504,
+      "lat": 51.194826,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 913199034,
+      "lon": 1.4041083,
+      "lat": 51.1906894,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 913199035,
+      "lon": 1.40354,
+      "lat": 51.1953761,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 913199036,
+      "lon": 1.4036157,
+      "lat": 51.1943884,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 913199037,
+      "lon": 1.4035688,
+      "lat": 51.1948438,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 913199038,
+      "lon": 1.4037018,
+      "lat": 51.1936519,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 913199039,
+      "lon": 1.4035106,
+      "lat": 51.1957298,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 913199040,
+      "lon": 1.4043375,
+      "lat": 51.1893056,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 913199041,
+      "lon": 1.4037922,
+      "lat": 51.1929293,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 913199042,
+      "lon": 1.404002,
+      "lat": 51.1915102,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 913199043,
+      "lon": 1.4035031,
+      "lat": 51.1968475,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 977975053,
+      "lon": 1.4002913,
+      "lat": 51.1897293,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 977988766,
+      "lon": 1.4033,
+      "lat": 51.1997465,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 977988769,
+      "lon": 1.4034425,
+      "lat": 51.1985534,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 977988778,
+      "lon": 1.4029228,
+      "lat": 51.1997446,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 977988779,
+      "lon": 1.4023509,
+      "lat": 51.1986547,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 977988780,
+      "lon": 1.3977458,
+      "lat": 51.1942085,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978138996,
+      "lon": 1.4034873,
+      "lat": 51.1968836,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 978139002,
+      "lon": 1.4033655,
+      "lat": 51.2016742,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978139003,
+      "lon": 1.4033728,
+      "lat": 51.2007463,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978139005,
+      "lon": 1.4033568,
+      "lat": 51.1997458,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978139006,
+      "lon": 1.4033625,
+      "lat": 51.1995642,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978142881,
+      "lon": 1.4035412,
+      "lat": 51.1968459,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 978142882,
+      "lon": 1.4035602,
+      "lat": 51.1957307,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142883,
+      "lon": 1.4036038,
+      "lat": 51.1953883,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142884,
+      "lon": 1.4036166,
+      "lat": 51.19487,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142885,
+      "lon": 1.403661,
+      "lat": 51.194388,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142886,
+      "lon": 1.4037361,
+      "lat": 51.1936567,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142887,
+      "lon": 1.4038375,
+      "lat": 51.192914,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142888,
+      "lon": 1.4040362,
+      "lat": 51.1915019,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142889,
+      "lon": 1.4041498,
+      "lat": 51.1907045,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 978142890,
+      "lon": 1.4043674,
+      "lat": 51.1893544,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181939757,
+      "lon": 1.4023578,
+      "lat": 51.2040403,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181939823,
+      "lon": 1.402372,
+      "lat": 51.1959692,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 1181939942,
+      "lon": 1.4027921,
+      "lat": 51.2004447,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940092,
+      "lon": 1.4033944,
+      "lat": 51.1986582,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 1181940093,
+      "lon": 1.4033649,
+      "lat": 51.1991494,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181940166,
+      "lon": 1.402417,
+      "lat": 51.2049319,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181940172,
+      "lon": 1.403159,
+      "lat": 51.2008801,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940231,
+      "lon": 1.4035878,
+      "lat": 51.1955793,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940264,
+      "lon": 1.4033902,
+      "lat": 51.2013593,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181940576,
+      "lon": 1.4028219,
+      "lat": 51.2006416,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940659,
+      "lon": 1.4035149,
+      "lat": 51.1970554,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181940676,
+      "lon": 1.402572,
+      "lat": 51.2011545,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940700,
+      "lon": 1.4026912,
+      "lat": 51.1997493,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1181940736,
+      "lon": 1.4046627,
+      "lat": 51.187097,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 1181940800,
+      "lon": 1.4033351,
+      "lat": 51.2013564,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181940951,
+      "lon": 1.4024051,
+      "lat": 51.2058305,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1181941130,
+      "lon": 1.4036199,
+      "lat": 51.195108,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1681360959,
+      "lon": 1.4036168,
+      "lat": 51.1877974,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 1681360963,
+      "lon": 1.4035582,
+      "lat": 51.1881413,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 1681360978,
+      "lon": 1.404501,
+      "lat": 51.1881951,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 1681360980,
+      "lon": 1.4024184,
+      "lat": 51.1899673,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 1681360981,
+      "lon": 1.4024162,
+      "lat": 51.1902147,
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 1793214941,
+      "lon": 1.4023472,
+      "lat": 51.1933859,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 1793214943,
+      "lon": 1.4022827,
+      "lat": 51.1933843,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1793214944,
+      "lon": 1.4022118,
+      "lat": 51.1933843,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1793214945,
+      "lon": 1.4021122,
+      "lat": 51.1936336,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1793214951,
+      "lon": 1.4020946,
+      "lat": 51.1936362,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 1793214953,
+      "lon": 1.4020682,
+      "lat": 51.1946637,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1793214955,
+      "lon": 1.4017086,
+      "lat": 51.1947454,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 1793214964,
+      "lon": 1.402201,
+      "lat": 51.1996445,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 2940657073,
+      "lon": 1.4029546,
+      "lat": 51.1898713,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 2940657074,
+      "lon": 1.4024347,
+      "lat": 51.1898619,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 3980714979,
+      "lon": 1.4010305,
+      "lat": 51.1893937,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 5598877562,
+      "lon": 1.4025199,
+      "lat": 51.1889034,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6493372603,
+      "lon": 1.4011193,
+      "lat": 51.18969,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6493372604,
+      "lon": 1.4010521,
+      "lat": 51.1904695,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6493372605,
+      "lon": 1.4017225,
+      "lat": 51.1904906,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 7553698082,
+      "lon": 1.403484,
+      "lat": 51.1885769,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8184524624,
+      "lon": 1.4023013,
+      "lat": 51.2033673,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 8606553563,
+      "lon": 1.4028294,
+      "lat": 51.194833,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8606553564,
+      "lon": 1.402882,
+      "lat": 51.1945414,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8606553565,
+      "lon": 1.4029021,
+      "lat": 51.1943151,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8606553566,
+      "lon": 1.4029322,
+      "lat": 51.1941439,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8868694536,
+      "lon": 1.4022562,
+      "lat": 51.2015738,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8868694537,
+      "lon": 1.4022937,
+      "lat": 51.2014746,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8878457881,
+      "lon": 1.4023702,
+      "lat": 51.1939238,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9084073614,
+      "lon": 1.4024111,
+      "lat": 51.204527,
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 9084073616,
+      "lon": 1.4022936,
+      "lat": 51.2032009,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9084120336,
+      "lon": 1.4023038,
+      "lat": 51.2034411,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9084120456,
+      "lon": 1.4032067,
+      "lat": 51.2034596,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9711497990,
+      "lon": 1.4027256,
+      "lat": 51.2069601,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9711497991,
+      "lon": 1.4024995,
+      "lat": 51.2064658,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9711497992,
+      "lon": 1.4024287,
+      "lat": 51.2062668,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9711497997,
+      "lon": 1.4040193,
+      "lat": 51.1986575,
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9711497998,
+      "lon": 1.4033941,
+      "lat": 51.198592,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761348,
+      "lon": 1.4010949,
+      "lat": 51.1900751,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761349,
+      "lon": 1.4012082,
+      "lat": 51.1901351,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761350,
+      "lon": 1.4012785,
+      "lat": 51.1901695,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761351,
+      "lon": 1.4015118,
+      "lat": 51.1901968,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761352,
+      "lon": 1.401584,
+      "lat": 51.1901854,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761353,
+      "lon": 1.4016341,
+      "lat": 51.1901639,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761354,
+      "lon": 1.4017474,
+      "lat": 51.1901673,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761355,
+      "lon": 1.4013963,
+      "lat": 51.1901886,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761356,
+      "lon": 1.4011036,
+      "lat": 51.1899381,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761357,
+      "lon": 1.4017854,
+      "lat": 51.1899628,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9832761358,
+      "lon": 1.401756,
+      "lat": 51.1897028,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768698180,
+      "lon": 1.4021273,
+      "lat": 51.1935886,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768698181,
+      "lon": 1.4023198,
+      "lat": 51.1963977,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768910126,
+      "lon": 1.4022683,
+      "lat": 51.2029263,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768910127,
+      "lon": 1.4022504,
+      "lat": 51.2020363,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768910131,
+      "lon": 1.3980292,
+      "lat": 51.1976661,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768910134,
+      "lon": 1.4022441,
+      "lat": 51.2016486,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10768990137,
+      "lon": 1.4007474,
+      "lat": 51.1993385,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12163650831,
+      "lon": 1.4011302,
+      "lat": 51.1889144,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12163679104,
+      "lon": 1.4024679,
+      "lat": 51.1986551,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12163679105,
+      "lon": 1.4024219,
+      "lat": 51.1986549,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12163679106,
+      "lon": 1.4024724,
+      "lat": 51.1986849,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12163679107,
+      "lon": 1.4025378,
+      "lat": 51.1986553,
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 13709541005,
+      "lon": 1.4033639,
+      "lat": 51.2017086,
+      "version": 1
+    },
+    {
+      "type": "way",
+      "id": 4471747,
+      "timestamp": "2023-10-14T20:30:22Z",
+      "version": 11,
+      "changeset": 142591723,
+      "user": "Adam Edwards",
+      "uid": 953779,
+      "nodes": [
+        978142881,
+        978142882,
+        1181940231,
+        978142883,
+        1181941130,
+        978142884,
+        978142885,
+        978142886,
+        978142887,
+        978142888,
+        978142889,
+        978142890,
+        27411872,
+        913199040
+      ],
+      "tags": {
+        "bicycle": "designated",
+        "foot": "designated",
+        "highway": "cycleway",
+        "lit": "no",
+        "segregated": "no",
+        "smoothness": "good",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 4471748,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 13,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        769158938,
+        5598877562
+      ],
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "20 mph",
+        "name": "Cliffe Road"
+      }
+    },
+    {
+      "type": "way",
+      "id": 23336212,
+      "timestamp": "2023-03-28T15:41:20Z",
+      "version": 8,
+      "changeset": 134225952,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        252689791,
+        1793214964,
+        10768990137
+      ],
+      "tags": {
+        "bicycle": "no",
+        "designation": "public_footpath",
+        "highway": "footway",
+        "prow_ref": "ED5A",
+        "source:designation": "kent_county_council_prow_gis_data",
+        "surface": "ground",
+        "width": "1.5"
+      }
+    },
+    {
+      "type": "way",
+      "id": 23622828,
+      "timestamp": "2023-03-28T14:49:12Z",
+      "version": 3,
+      "changeset": 134224071,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        10768910131,
+        252690149,
+        252690150,
+        252690151,
+        252690147,
+        255890728,
+        255890730,
+        255890732,
+        255890734,
+        255890736,
+        255890738,
+        255890740,
+        252690161
+      ],
+      "tags": {
+        "access": "private",
+        "highway": "residential",
+        "name": "Hawkshill Road"
+      }
+    },
+    {
+      "type": "way",
+      "id": 39217963,
+      "timestamp": "2014-08-12T14:18:09Z",
+      "version": 3,
+      "changeset": 24702868,
+      "user": "robgeb",
+      "uid": 336460,
+      "nodes": [
+        469802495,
+        469802496,
+        469802504,
+        847767842,
+        469802497,
+        469802498,
+        469802494
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 39217964,
+      "timestamp": "2022-07-28T15:42:45Z",
+      "version": 4,
+      "changeset": 124192746,
+      "user": "SvenTX",
+      "uid": 1784239,
+      "nodes": [
+        469802498,
+        469802500,
+        469802501,
+        469802502,
+        469802503,
+        847767872,
+        469802504
+      ],
+      "tags": {
+        "highway": "footway",
+        "lit": "no",
+        "surface": "pebblestone"
+      }
+    },
+    {
+      "type": "way",
+      "id": 39217965,
+      "timestamp": "2022-07-28T15:42:40Z",
+      "version": 3,
+      "changeset": 124192746,
+      "user": "SvenTX",
+      "uid": 1784239,
+      "nodes": [
+        469802503,
+        469802500
+      ],
+      "tags": {
+        "highway": "footway",
+        "lit": "no",
+        "surface": "pebblestone"
+      }
+    },
+    {
+      "type": "way",
+      "id": 39217968,
+      "timestamp": "2010-08-06T13:35:59Z",
+      "version": 2,
+      "changeset": 5417015,
+      "user": "IJMacD",
+      "uid": 47487,
+      "nodes": [
+        469802533,
+        847767874,
+        469802534,
+        469802495
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 49357250,
+      "timestamp": "2026-06-19T12:04:05Z",
+      "version": 6,
+      "changeset": 184312776,
+      "user": "Robert Whittaker",
+      "uid": 84263,
+      "nodes": [
+        626843132,
+        626843133,
+        626843134,
+        626843130,
+        1181940172,
+        626843131,
+        626843126,
+        626843128,
+        626843113,
+        626843116,
+        626843118,
+        626843119,
+        626843121,
+        626843123,
+        252689791
+      ],
+      "tags": {
+        "highway": "path",
+        "surface": "grass"
+      }
+    },
+    {
+      "type": "way",
+      "id": 49431756,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 10,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        627875177,
+        7553698082,
+        1681360963,
+        1681360959
+      ],
+      "tags": {
+        "highway": "unclassified",
+        "maxspeed": "20 mph",
+        "name": "No Name Lane"
+      }
+    },
+    {
+      "type": "way",
+      "id": 61726660,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 8,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        769158938,
+        769158924,
+        769158942,
+        769158929,
+        769158937,
+        769158923,
+        769158941,
+        769158927,
+        769158945,
+        12163650831
+      ],
+      "tags": {
+        "highway": "residential",
+        "maxspeed": "20 mph",
+        "name": "Courtlands",
+        "source": "OS_OpenData_StreetView"
+      }
+    },
+    {
+      "type": "way",
+      "id": 77611523,
+      "timestamp": "2026-01-29T17:30:24Z",
+      "version": 8,
+      "changeset": 177858750,
+      "user": "Adam Edwards",
+      "uid": 953779,
+      "nodes": [
+        913199043,
+        913199039,
+        913199035,
+        913199037,
+        913199036,
+        913199038,
+        913199041,
+        913199042,
+        913199034,
+        913199040
+      ],
+      "tags": {
+        "access": "private",
+        "highway": "residential",
+        "lanes": "1",
+        "maxspeed": "20 mph",
+        "name": "Wellington Parade",
+        "surface": "gravel"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84060614,
+      "timestamp": "2018-06-28T06:23:12Z",
+      "version": 9,
+      "changeset": 60236834,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        913199040,
+        1681360978,
+        1181940736,
+        769215917
+      ],
+      "tags": {
+        "highway": "footway",
+        "prow_ref": "ER292"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84068127,
+      "timestamp": "2018-07-17T17:00:24Z",
+      "version": 7,
+      "changeset": 60807805,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        626843121,
+        1181940700,
+        977988778,
+        977988766
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "highway": "footway",
+        "prow_ref": "ED26"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84068129,
+      "timestamp": "2023-03-28T13:35:23Z",
+      "version": 7,
+      "changeset": 134221297,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        977988780,
+        1793214955,
+        1793214953,
+        1793214951,
+        1793214945
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "highway": "footway",
+        "prow_ref": "ED64",
+        "source:designation": "kent_county_council_prow_gis_data",
+        "surface": "ground",
+        "width": "0.6"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079387,
+      "timestamp": "2023-10-14T20:31:12Z",
+      "version": 8,
+      "changeset": 142591756,
+      "user": "Adam Edwards",
+      "uid": 953779,
+      "nodes": [
+        27411862,
+        977988769,
+        1181940659,
+        978142881
+      ],
+      "tags": {
+        "est_width": "1.75",
+        "highway": "cycleway",
+        "lit": "no",
+        "segregated": "yes",
+        "smoothness": "good",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079388,
+      "timestamp": "2018-02-14T04:14:59Z",
+      "version": 4,
+      "changeset": 56341582,
+      "user": "MacLondon",
+      "uid": 322039,
+      "nodes": [
+        27411861,
+        1181940092,
+        27411862
+      ],
+      "tags": {
+        "est_width": "1.75",
+        "highway": "cycleway",
+        "lit": "no",
+        "segregated": "yes",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079389,
+      "timestamp": "2026-01-29T17:30:24Z",
+      "version": 8,
+      "changeset": 177858750,
+      "user": "Adam Edwards",
+      "uid": 953779,
+      "nodes": [
+        27411850,
+        27411851,
+        9084120456,
+        27411853,
+        27411854,
+        27411855,
+        27411857,
+        1181940800,
+        27411858,
+        977988766,
+        27411860,
+        27411861
+      ],
+      "tags": {
+        "est_width": "1.75",
+        "foot": "no",
+        "footway:surface": "asphalt",
+        "highway": "cycleway",
+        "lit": "no",
+        "segregated": "yes",
+        "smoothness": "good",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079635,
+      "timestamp": "2024-09-08T15:16:23Z",
+      "version": 5,
+      "changeset": 156356762,
+      "user": "Palgrave Peter",
+      "uid": 11471297,
+      "nodes": [
+        1181940092,
+        12163679107,
+        12163679104,
+        12163679105,
+        977988779
+      ],
+      "tags": {
+        "foot": "yes",
+        "highway": "service",
+        "surface": "dirt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079636,
+      "timestamp": "2018-07-17T17:00:24Z",
+      "version": 5,
+      "changeset": 60807805,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        977988766,
+        978139005
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "highway": "footway",
+        "prow_ref": "ED26"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079705,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 12,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        913199040,
+        627875177,
+        5598877562
+      ],
+      "tags": {
+        "highway": "residential",
+        "lane_markings": "no",
+        "lit": "no",
+        "maxspeed": "20 mph",
+        "name": "Boundary Road",
+        "surface": "asphalt",
+        "width": "5"
+      }
+    },
+    {
+      "type": "way",
+      "id": 84079709,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 3,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        913199037,
+        8606553563,
+        913195772
+      ],
+      "tags": {
+        "highway": "residential",
+        "lit": "no",
+        "maxspeed": "10 mph",
+        "name": "Cecil Road",
+        "surface": "gravel"
+      }
+    },
+    {
+      "type": "way",
+      "id": 147988666,
+      "timestamp": "2026-04-05T20:40:23Z",
+      "version": 11,
+      "changeset": 180915240,
+      "user": "Tallguy",
+      "uid": 30636,
+      "nodes": [
+        13709541005,
+        978139002,
+        1181940264,
+        978139003,
+        978139005,
+        978139006,
+        1181940093,
+        1181940092
+      ],
+      "tags": {
+        "bicycle": "no",
+        "highway": "footway",
+        "lit": "no",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 155775675,
+      "timestamp": "2025-01-21T08:55:16Z",
+      "version": 6,
+      "changeset": 161591239,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        1681360981,
+        1681360980,
+        2940657074,
+        769158938
+      ],
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "20 mph",
+        "name": "Kingsdown Road"
+      }
+    },
+    {
+      "type": "way",
+      "id": 155775676,
+      "timestamp": "2023-03-28T16:47:47Z",
+      "version": 17,
+      "changeset": 134228498,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        9711497990,
+        9711497991,
+        9711497992,
+        252689778,
+        1181940951,
+        1181940166,
+        9084073614,
+        1181939757,
+        252688835,
+        9084120336,
+        8184524624,
+        9084073616,
+        252688119,
+        10768910126,
+        10768910127,
+        10768910134,
+        8868694536,
+        252688020,
+        8868694537,
+        469802467,
+        252689783,
+        1181940676,
+        252689784,
+        252689785,
+        1181940576,
+        252689787,
+        1181939942,
+        252689788,
+        252689789,
+        252689790,
+        252689791,
+        252690161,
+        252689792,
+        977988779,
+        255890742,
+        10768698181,
+        1181939823,
+        255890745,
+        913195772,
+        255890747,
+        8878457881,
+        1793214941,
+        255890757,
+        255890763,
+        1681360981
+      ],
+      "tags": {
+        "cycleway:left": "separate",
+        "cycleway:right": "no",
+        "highway": "tertiary",
+        "maxspeed": "40 mph",
+        "name": "Kingsdown Road",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 168001308,
+      "timestamp": "2023-03-28T13:35:23Z",
+      "version": 3,
+      "changeset": 134221297,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        10768698180,
+        1793214944
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "handrail": "left",
+        "highway": "steps",
+        "incline": "down",
+        "material": "wood",
+        "prow_ref": "ED64",
+        "source:designation": "kent_county_council_prow_gis_data",
+        "step_count": "15",
+        "surface": "ground"
+      }
+    },
+    {
+      "type": "way",
+      "id": 290548397,
+      "timestamp": "2016-02-05T07:46:59Z",
+      "version": 3,
+      "changeset": 37014168,
+      "user": "Gregory Williams",
+      "uid": 7037,
+      "nodes": [
+        2940657073,
+        2940657074
+      ],
+      "tags": {
+        "highway": "service",
+        "name": "Beach Mews"
+      }
+    },
+    {
+      "type": "way",
+      "id": 395170955,
+      "timestamp": "2017-12-09T07:20:33Z",
+      "version": 2,
+      "changeset": 54477738,
+      "user": "Nice but Tim",
+      "uid": 279806,
+      "nodes": [
+        977975053,
+        3980714979,
+        769158941
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 691846784,
+      "timestamp": "2022-06-20T08:53:54Z",
+      "version": 2,
+      "changeset": 122610481,
+      "user": "Olga418",
+      "uid": 15062731,
+      "nodes": [
+        769158941,
+        6493372603,
+        9832761356,
+        9832761348,
+        6493372604,
+        6493372605
+      ],
+      "tags": {
+        "highway": "residential"
+      }
+    },
+    {
+      "type": "way",
+      "id": 927685935,
+      "timestamp": "2021-04-08T12:14:29Z",
+      "version": 1,
+      "changeset": 102563389,
+      "user": "harinikh",
+      "uid": 10219376,
+      "nodes": [
+        8606553563,
+        8606553564,
+        8606553565,
+        8606553566
+      ],
+      "tags": {
+        "highway": "service"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1056889614,
+      "timestamp": "2022-05-03T14:33:55Z",
+      "version": 1,
+      "changeset": 120502763,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        1181940092,
+        9711497997
+      ],
+      "tags": {
+        "highway": "service",
+        "surface": "concrete"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1056889615,
+      "timestamp": "2026-01-29T17:30:24Z",
+      "version": 3,
+      "changeset": 177858750,
+      "user": "Adam Edwards",
+      "uid": 953779,
+      "nodes": [
+        1181940092,
+        9711497998,
+        978138996,
+        913199043,
+        978142881
+      ],
+      "tags": {
+        "bicycle": "yes",
+        "highway": "footway",
+        "surface": "asphalt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1071510206,
+      "timestamp": "2022-06-20T08:53:54Z",
+      "version": 1,
+      "changeset": 122610481,
+      "user": "Olga418",
+      "uid": 15062731,
+      "nodes": [
+        9832761348,
+        9832761349,
+        9832761350,
+        9832761355,
+        9832761351,
+        9832761352,
+        9832761353,
+        9832761354
+      ],
+      "tags": {
+        "highway": "service",
+        "service": "driveway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1071510207,
+      "timestamp": "2022-06-20T08:53:54Z",
+      "version": 1,
+      "changeset": 122610481,
+      "user": "Olga418",
+      "uid": 15062731,
+      "nodes": [
+        9832761356,
+        9832761357
+      ],
+      "tags": {
+        "highway": "service",
+        "service": "driveway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1071510208,
+      "timestamp": "2022-06-20T08:53:54Z",
+      "version": 1,
+      "changeset": 122610481,
+      "user": "Olga418",
+      "uid": 15062731,
+      "nodes": [
+        6493372603,
+        9832761358
+      ],
+      "tags": {
+        "highway": "service",
+        "service": "driveway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1157929816,
+      "timestamp": "2023-03-28T13:35:23Z",
+      "version": 1,
+      "changeset": 134221297,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        1793214945,
+        10768698180
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "handrail": "no",
+        "highway": "steps",
+        "incline": "down",
+        "material": "wood",
+        "prow_ref": "ED64",
+        "source:designation": "kent_county_council_prow_gis_data",
+        "step_count": "5",
+        "surface": "ground"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1157929817,
+      "timestamp": "2023-03-28T13:35:23Z",
+      "version": 1,
+      "changeset": 134221297,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        1793214943,
+        1793214941
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1157929818,
+      "timestamp": "2023-03-28T13:35:23Z",
+      "version": 1,
+      "changeset": 134221297,
+      "user": "motogs",
+      "uid": 4833194,
+      "nodes": [
+        1793214944,
+        1793214943
+      ],
+      "tags": {
+        "designation": "public_footpath",
+        "foot": "yes",
+        "handrail": "left",
+        "highway": "steps",
+        "incline": "down",
+        "material": "wood",
+        "prow_ref": "ED64",
+        "source:designation": "kent_county_council_prow_gis_data",
+        "step_count": "6",
+        "surface": "ground"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1314180900,
+      "timestamp": "2024-09-08T15:16:23Z",
+      "version": 1,
+      "changeset": 156356762,
+      "user": "Palgrave Peter",
+      "uid": 11471297,
+      "nodes": [
+        12163679105,
+        12163679106,
+        12163679107
+      ],
+      "tags": {
+        "highway": "path"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 75880,
+      "timestamp": "2026-04-05T20:40:23Z",
+      "version": 747,
+      "changeset": 180915240,
+      "user": "Tallguy",
+      "uid": 30636,
+      "members": [
+        {
+          "type": "way",
+          "ref": 95798005,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1316679746,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9503035,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1316679745,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1316679744,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1039922437,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9503037,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9503039,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1219082405,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1219082404,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 95798007,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 762128183,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9503038,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1304439435,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 55400283,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 82098247,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26588571,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 67962955,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 67962887,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1353432531,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1353432533,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 147124947,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1353432532,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26588623,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 940782342,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 165811878,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 165811877,
+          "role": "backward"
+        },
+        {
+          "type": "way",
+          "ref": 4434843,
+          "role": "backward"
+        },
+        {
+          "type": "way",
+          "ref": 147124919,
+          "role": "backward"
+        },
+        {
+          "type": "way",
+          "ref": 1353432530,
+          "role": "backward"
+        },
+        {
+          "type": "way",
+          "ref": 146172260,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 1353432529,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 146172257,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 165811874,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 165811875,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007915,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007920,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007918,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007919,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007916,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007921,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007917,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007914,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1274661054,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169007913,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1303164588,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169006650,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169006649,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 30671833,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4627875,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 114618428,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9504321,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9504323,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1009212303,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1293403885,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4627874,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 223418024,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 223418022,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26588798,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26588800,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1082405207,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26588801,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 9503929,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 103969632,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 103969631,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169005113,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471921,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169004647,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471919,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471917,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 137108121,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1225222565,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 137108120,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 137108122,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 764453710,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471916,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 155775681,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1254582467,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471749,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 585929582,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 84079705,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471747,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 84079387,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 84079388,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 84079389,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1472435273,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1472435274,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 102371981,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1496741002,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1496741008,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 169003634,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471745,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 102404264,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 123008127,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471744,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1279870755,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168963711,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471743,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1279870758,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1279870756,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471742,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168962588,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471741,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 166013060,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 166013062,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471739,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 95795020,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 979347832,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 979347833,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471740,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 73899351,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 73899343,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 52460391,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 95795025,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27222722,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471737,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 147979785,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1215639735,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 147979788,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471587,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27223326,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 977923650,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1126587885,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471583,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4471575,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 148567237,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 871040516,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 148567242,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4471579,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 921245299,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4471580,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4471581,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 102686959,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 5032986,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 84359778,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27222718,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 979351699,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27215735,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 31486074,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27215738,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168961228,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168961230,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 102868439,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27215739,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 205325647,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 205325648,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27215740,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469596,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 991988513,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 991988514,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469597,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469548,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1292851585,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1292851584,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 302798165,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 302798167,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 148565277,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 148565273,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469410,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469409,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27228939,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469408,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 27228941,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 148727611,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 183140590,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4469352,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 145746980,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 375917883,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468837,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468834,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168827206,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468671,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468537,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 120785306,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1379247697,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 52163597,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468514,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468516,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468515,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468502,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468479,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468481,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4468480,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1177961162,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 113516575,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 113516584,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4452699,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1177961163,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 301567634,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 301567632,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 301567631,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4452698,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 301567633,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 120137312,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 631620156,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4356062,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 62230689,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 26389677,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 62230688,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 26389678,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 28053319,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4689412,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4463218,
+          "role": "forward"
+        },
+        {
+          "type": "way",
+          "ref": 4356061,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 59535030,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4439512,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1434130296,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1434130297,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 132619131,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 500524831,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 500524829,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 500524830,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 500526549,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1434130295,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 132619130,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1434130294,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 76743111,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 168164154,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 76743109,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 301567635,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 632406202,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 643122405,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 154658411,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 23242338,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 23242337,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4419553,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 26960394,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 121607313,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 1334247337,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 643372576,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 4412478,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 643372575,
+          "role": ""
+        },
+        {
+          "type": "way",
+          "ref": 121607324,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 13718916,
+          "role": "alternative"
+        }
+      ],
+      "tags": {
+        "colour": "red",
+        "cycle_network": "UK:National Cycle Network",
+        "from": "Dover",
+        "name": "NCN National Route 1 Dover to Canterbury",
+        "network": "ncn",
+        "operator": "Walk Wheel Cycle Trust",
+        "operator:wikidata": "Q606877",
+        "ref": "1",
+        "ref:colour": "red",
+        "ref:colour_bg": "white",
+        "ref:colour_tx": "white",
+        "route": "bicycle",
+        "to": "Canterbury",
+        "type": "route"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 1992599,
+      "timestamp": "2026-05-19T01:37:26Z",
+      "version": 373,
+      "changeset": 182857221,
+      "user": "MacLondon",
+      "uid": 322039,
+      "members": [
+        {
+          "type": "relation",
+          "ref": 75880,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 13512083,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 10926812,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 13512085,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 13512082,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 13389320,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 13420707,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 11322036,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 75894,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978999,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15979000,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978996,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15975674,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15977857,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15977855,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15977925,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978436,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978435,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978434,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 15978437,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 254838,
+          "role": "main"
+        },
+        {
+          "type": "relation",
+          "ref": 10773222,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 13512084,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 13389321,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 8436589,
+          "role": "approach"
+        },
+        {
+          "type": "relation",
+          "ref": 11319642,
+          "role": "approach"
+        },
+        {
+          "type": "relation",
+          "ref": 11805875,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 10041318,
+          "role": "approach"
+        },
+        {
+          "type": "relation",
+          "ref": 10564435,
+          "role": "detour"
+        },
+        {
+          "type": "relation",
+          "ref": 8555805,
+          "role": "detour"
+        },
+        {
+          "type": "relation",
+          "ref": 8475800,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 8438413,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 10564909,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 11107866,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 10564434,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 10589729,
+          "role": "excursion"
+        },
+        {
+          "type": "relation",
+          "ref": 9723408,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 9844017,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 5625434,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 17706975,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 10582206,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 5525922,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 10582209,
+          "role": "connection"
+        },
+        {
+          "type": "relation",
+          "ref": 19282452,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 19282451,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 19282450,
+          "role": "alternative"
+        },
+        {
+          "type": "relation",
+          "ref": 19282449,
+          "role": "alternative"
+        }
+      ],
+      "tags": {
+        "cycle_network": "UK:National Cycle Network",
+        "description": "NCN National Route 1",
+        "distance": "2034",
+        "from": "Dover",
+        "network": "ncn",
+        "note": "superroute to collect other relations that contain the actual route",
+        "operator": "Walk Wheel Cycle Trust",
+        "operator:wikidata": "Q606877",
+        "ref": "1",
+        "ref:colour": "red",
+        "ref:colour_bg": "white",
+        "ref:colour_tx": "white",
+        "route": "bicycle",
+        "to": "Tain",
+        "type": "superroute",
+        "website": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-1/",
+        "wikipedia": "en:National Cycle Route 1"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 16156320,
+      "timestamp": "2025-05-23T08:35:50Z",
+      "version": 4,
+      "changeset": 166644493,
+      "user": "geozeisig",
+      "uid": 66391,
+      "members": [
+        {
+          "type": "relation",
+          "ref": 75880,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 13512083,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 10926812,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 13512085,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 13512082,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 13389320,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 16906782,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 14611352,
+          "role": ""
+        },
+        {
+          "type": "relation",
+          "ref": 16906781,
+          "role": ""
+        }
+      ],
+      "tags": {
+        "name": "Euroroute R1 - part England",
+        "name:de": "Europaradweg R1 - Abschnitt England",
+        "name:nl": "Euroroute R1 - deel Engeland",
+        "network": "icn",
+        "ref": "R1",
+        "route": "bicycle",
+        "type": "superroute"
+      }
+    }
+  ]
+}
