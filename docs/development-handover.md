@@ -2,6 +2,18 @@
 
 Last reviewed: 2026-11-04. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Quota preflight follow-up — 4 November 2026
+
+Run 41864030136 has **failed**, superseding the queued checkpoint below. Hosting
+access was verified but the first Cloud Monitoring quota request returned 403;
+0 catalogue bytes downloaded, no Hosting writes. HTTP 403 alone is not evidence
+of exhausted bandwidth. See [bounded diagnosis, correction and execution rules](ncn-quota-preflight-20261104.md)
+and the implementing PR/issue #194 discussion for the final authenticated result.
+The read-only quota diagnostic uses the existing identity and publication lock;
+it cannot publish. Unavailable quota must continue to block revision 4. Do not
+repeat the failed publication until that exact blocker is resolved. No Android,
+backend, geometry or automatic user-completion changes are part of this follow-up.
+
 ## Firebase publication recovery — 4 November 2026
 
 The historical NCN workflow is recovered and merged in [#267](https://github.com/adamdbird-gfc/uk-road-tracker/pull/267), implementation main `e51a95660b8f29cc368ae7d237f488fd3e8927cb`. It reuses the existing Hosting identity, secret, site and publication lock. The earlier missing-workflow blocker is superseded. [Main request run 41864030136](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/41864030136) is queued at this checkpoint; current credentials/quota and publication remain unverified. No Firebase payload transfer or Hosting write occurred in this recovery session. Monitor that existing run; do not start a duplicate. Its offline tests and quota/access checks must pass before any catalogue transfer. See [recovery details](ncn-publication-path-recovery-20261104.md) and [completion receipt](data-trials/ncn-publication-path-recovery-20261104.json).
