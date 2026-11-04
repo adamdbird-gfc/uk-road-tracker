@@ -16,7 +16,7 @@ import controlled_ncn_publication as control
 from ncn_publication_transfers import Transfers
 import publish_ncn_reference as publisher
 
-POLICY = '.github/ncn-reference/controlled-authorisation.json'
+POLICY = '.github/ncn-reference/recovery-authorisation.json'
 NOW = dt.datetime(2026, 11, 4, 18, tzinfo=dt.timezone.utc)
 
 
@@ -109,6 +109,14 @@ class ControlledTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError):control.claim(work)
             self.assertEqual(1,opener.open.call_count)
             with patch.dict(os.environ,{'GITHUB_RUN_ATTEMPT':'2'}),self.assertRaises(ValueError):control.claim(work)
+
+    def test_distinct_recovery_authorisation_retains_original_consumed_identity(self):
+        original=control.read('.github/ncn-reference/controlled-authorisation.json')
+        self.assertNotEqual(original['authorisation_id'], self.auth['authorisation_id'])
+        self.assertEqual(original['candidate'], self.auth['candidate'])
+        self.assertEqual(original['authorisation_id'], self.auth['recovery']['consumed_authorisation_id'])
+        self.assertEqual(1, self.auth['max_attempts'])
+        self.assertEqual('controlled_budget_verified',control.assess(self.auth,self.manifest,NOW)['status'])
 
     def test_workflow_lock_claim_order_and_single_promoting_invocation(self):
         text=Path('.github/workflows/ncn-reference-publication.yml').read_text()

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "status": "original_exact_candidate_reproduced",
+  "revision": 4,
+  "source_run_id": 41900022422,
+  "source_job_id": 126819626610,
+  "source_commit": "f2b3934ba2790c2c7608d6a8fe2005357494bbf3",
+  "artifact_id": 13357563539,
+  "artifact_name": "ncn-r4-original-41900022422",
+  "artifact_zip_sha256": "856439159d35e161d7a324fc3224e66f419c206db5a3e5c79dee437675d90448",
+  "candidate": {
+    "revision": 4,
+    "sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+    "compressed_sha256": "c40117278069777b38c13a099f319855e99878d24b95128f140f8d2f34a6020d",
+    "database_bytes": 247291904,
+    "compressed_bytes": 145856489
+  },
+  "canonical_content_sha256": "d3486a38fc33a78dd9314720a4677906fa7315e28c15feedb1577a1847caac2d",
+  "schema_sha256": "39ab3df68bc5c65962ff5ed1bc35598dfab02d9cf104480afa03a1b2966e9d33",
+  "table_counts": {
+    "meta": 1,
+    "network": 333497,
+    "nodes": 645186,
+    "overview": 219,
+    "paths": 62487,
+    "routes": 219,
+    "targets": 335007
+  },
+  "original_writer": {
+    "sqlite": "3.53.1",
+    "zlib": "1.3.2",
+    "secure_delete": 0
+  },
+  "failed_writer": {
+    "sqlite": "3.45.1",
+    "secure_delete": 1
+  },
+  "original_manifest_unchanged": true,
+  "replacement_candidate_approved": false,
+  "validation": "Original complete database and gzip hashes/sizes reproduced independently locally and in credential-free GitHub candidate job. Every stored SQL value and compressed BLOB identical between physical variants. Final-head CI must independently reverify retained archive before merge.",
+  "source_workflow_note": "Candidate job passed; overall run had two synthetic fixture assertions using the host writer version as a mutation. Final tests use a distinct fixed version stamp."
+}

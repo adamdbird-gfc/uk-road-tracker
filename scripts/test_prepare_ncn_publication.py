@@ -72,7 +72,7 @@ class ArtifactTests(unittest.TestCase):
     def test_equivalent_sqlite_layout_is_not_approved_database_bytes(self):
         from scripts.ncn_binding_attainability import content_sha
         with self.db.open('r+b') as out:
-            out.seek(96);out.write(struct.pack('>I', 3045001))
+            out.seek(96);out.write(struct.pack('>I', 3001002))
         self.assertEqual(self.canonical, content_sha(self.db))
         raw = gzip.compress(self.db.read_bytes(), mtime=0)
         (self.folder/'catalogue.db.gz').write_bytes(raw)
@@ -90,19 +90,31 @@ class ArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Combined canonical candidate differs'):
             self.verify()
 
-    def test_header_recovery_requires_complete_original_digest(self):
-        original = sha_file(self.db)
-        with self.db.open('r+b') as out:
-            out.seek(96);old=out.read(4);out.seek(96);out.write(struct.pack('>I', 3045001))
-        n = struct.unpack('>I', old)[0]
-        writer = f'{n//1000000}.{n//1000%1000}.{n%1000}'
-        result = prep.recover_writer_header(self.db, original, writer)
-        self.assertEqual(original, sha_file(self.db))
-        self.assertTrue(result['changed_offsets'])
-        before = self.db.read_bytes()
-        with self.assertRaisesRegex(ValueError, 'cannot be recovered'):
-            prep.recover_writer_header(self.db, '0'*64, '3.1.2')
-        self.assertEqual(before, self.db.read_bytes())
+    def test_missing_archive_never_silently_regenerates(self):
+        with patch.object(prep, 'verify_database'), patch.object(Path, 'exists', return_value=False):
+            with self.assertRaisesRegex(ValueError, 'regeneration is explicit only'):
+                prep.run()
+
+    def test_unreviewed_writer_is_rejected_before_reconstruction(self):
+        with patch.object(prep, 'verify_database'), patch.object(Path, 'exists', return_value=False), \
+             patch.object(prep.sqlite3, 'sqlite_version', '3.45.1'):
+            with self.assertRaisesRegex(ValueError, 'reviewed SQLite and zlib writer versions required'):
+                prep.run(reconstruct=True)
+
+    def test_secure_delete_changes_physical_bytes_but_preserves_all_reference_values(self):
+        from scripts.ncn_binding_attainability import content_sha
+        import shutil
+        hashes=[]
+        for flag in [0,1]:
+            database=self.folder/('secure-'+str(flag)+'.db')
+            shutil.copyfile(self.db,database)
+            with sqlite3.connect(database) as db:
+                db.execute('PRAGMA secure_delete='+str(flag))
+                db.execute('UPDATE meta SET value=?', ('x'*1000,))
+                db.execute("UPDATE meta SET value='synthetic integrity fixture'")
+            self.assertEqual(self.canonical,content_sha(database))
+            hashes.append(sha_file(database))
+        self.assertNotEqual(*hashes)
 
     def test_exact_archive_reuse_does_not_invoke_writer(self):
         # The production path requires the existing verified seed cache first.
@@ -130,3 +142,4 @@ class ArtifactTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
