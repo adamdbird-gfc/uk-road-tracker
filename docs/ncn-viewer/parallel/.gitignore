@@ -1,0 +1,6 @@
+__pycache__/
+results/*.csv
+results/*.json
+!results/national-summary.json
+finalize_register.py
+results/.*
